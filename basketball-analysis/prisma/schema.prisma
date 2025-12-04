@@ -1,0 +1,327 @@
+// Basketball Shooting Analysis System - Prisma Schema
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model for authentication and profile
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Player Profile
+  playerProfile PlayerProfile?
+  analyses      Analysis[]
+  accounts      Account[]
+  sessions      Session[]
+}
+
+// NextAuth Account model
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([provider, providerAccountId])
+}
+
+// NextAuth Session model
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Player physical profile for personalized analysis
+model PlayerProfile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Physical Attributes
+  height      String?  // e.g., "6ft 2in" or "188cm"
+  weight      String?  // e.g., "180 lbs" or "82 kg"
+  wingspan    String?  // e.g., "6ft 6in" or "200cm"
+  age         Int?
+  position    Position?
+  skillLevel  SkillLevel?
+  bodyType    BodyType?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Elite shooter reference database
+model EliteShooter {
+  id              String   @id @default(cuid())
+  name            String
+  team            String?
+  position        Position
+  era             String?  // e.g., "1990s-2000s", "2010s-present"
+
+  // Physical Attributes
+  height          String
+  weight          String
+  wingspan        String?
+  bodyType        BodyType
+
+  // Shooting Mechanics Profile
+  shootingStyle   String?  @db.Text
+  releaseHeight   Float?   // in inches relative to height
+  releaseAngle    Float?   // optimal release angle
+  elbowAngle      Float?   // at release
+  kneeAngle       Float?   // at start of shot
+  shoulderAngle   Float?
+  hipAngle        Float?
+  ankleAngle      Float?
+
+  // Additional metrics
+  careerFGPercent Float?
+  career3PPercent Float?
+  ftPercent       Float?
+
+  // Media references
+  imageUrls       String[] // Array of reference image URLs
+  videoUrls       String[] // Array of reference video URLs
+
+  // Descriptive content
+  description     String?  @db.Text
+  keyStrengths    String[] // Array of key shooting strengths
+
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  matchedAnalyses Analysis[]
+}
+
+// Analysis model for storing shooting analysis results
+model Analysis {
+  id              String       @id @default(cuid())
+  userId          String?
+  user            User?        @relation(fields: [userId], references: [id])
+
+  // Player Info (for non-registered users)
+  playerName      String
+  playerEmail     String
+  playerPosition  Position?
+  playerSkillLevel SkillLevel?
+  playerAge       Int?
+  playerHeight    String?
+  playerWeight    String?
+  playerWingspan  String?
+  playerBodyType  BodyType?
+
+  // Media
+  mediaType       MediaType
+  mediaUrl        String
+  thumbnailUrl    String?
+  originalFileName String?
+
+  // Analysis Results
+  status          AnalysisStatus @default(PENDING)
+  reportTier      ReportTier     @default(BASIC)
+
+  // Biomechanical Measurements
+  measurements    BiomechanicalMeasurement?
+
+  // Performance scores
+  overallScore    Float?
+  formCategory    FormCategory?
+
+  // Matched elite shooter
+  matchedShooterId String?
+  matchedShooter   EliteShooter? @relation(fields: [matchedShooterId], references: [id])
+  similarityScore  Float?
+
+  // Generated report
+  report          Report?
+
+  // Identified flaws
+  flaws           Flaw[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  completedAt     DateTime?
+}
+
+// Biomechanical measurements from pose detection
+model BiomechanicalMeasurement {
+  id              String   @id @default(cuid())
+  analysisId      String   @unique
+  analysis        Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+
+  // Joint Angles (in degrees)
+  shoulderAngle   Float?   // SA - Shoulder angle
+  elbowAngle      Float?   // EA - Elbow angle
+  hipAngle        Float?   // HA - Hip angle
+  kneeAngle       Float?   // KA - Knee angle
+  ankleAngle      Float?   // AA - Ankle angle
+
+  // Heights (relative measurements)
+  elbowHeight     Float?   // EH - Elbow height
+  releaseHeight   Float?   // RH - Release height
+  hipHeight       Float?   // HH - Hip height
+
+  // Release metrics
+  releaseAngle    Float?   // RA - Release angle
+  entryAngle      Float?   // ENA - Entry angle
+
+  // Other measurements
+  verticalDisplacement Float? // VD
+  maxTrajectory   Float?   // MTJ - Maximum trajectory
+
+  // Pose detection confidence
+  poseConfidence  Float?
+
+  // Raw pose data (JSON)
+  rawPoseData     Json?
+
+  createdAt       DateTime @default(now())
+}
+
+// Identified flaws in shooting form
+model Flaw {
+  id              String   @id @default(cuid())
+  analysisId      String
+  analysis        Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+
+  category        FlawCategory
+  severity        FlawSeverity
+  title           String
+  description     String   @db.Text
+
+  // Affected body part/measurement
+  affectedArea    String?
+  currentValue    Float?
+  optimalRange    String?
+
+  // Correction guidance
+  correction      String   @db.Text
+  drills          String[] // Array of recommended drills
+
+  priority        Int      @default(1) // 1 = highest priority
+
+  createdAt       DateTime @default(now())
+}
+
+// Generated analysis report
+model Report {
+  id              String     @id @default(cuid())
+  analysisId      String     @unique
+  analysis        Analysis   @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+
+  tier            ReportTier
+
+  // Report sections (stored as JSON for flexibility)
+  executiveSummary String?   @db.Text
+  detailedAnalysis Json?
+  flawsAnalysis   Json?
+  corrections     Json?
+  trainingPlan    Json?
+  shooterComparison Json?
+
+  // PDF generation
+  pdfUrl          String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// Enums
+enum Position {
+  POINT_GUARD
+  SHOOTING_GUARD
+  SMALL_FORWARD
+  POWER_FORWARD
+  CENTER
+  GUARD
+  FORWARD
+}
+
+enum SkillLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  PROFESSIONAL
+}
+
+enum BodyType {
+  ECTOMORPH    // Lean/tall
+  MESOMORPH    // Athletic/muscular
+  ENDOMORPH   // Stocky/broader
+  GUARD_BUILD  // Smaller, quick
+  FORWARD_BUILD // Medium, versatile
+  CENTER_BUILD  // Tall, powerful
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+enum AnalysisStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum ReportTier {
+  BASIC
+  ULTRA
+  PREMIUM
+}
+
+enum FormCategory {
+  OPTIMAL
+  GOOD
+  NEEDS_IMPROVEMENT
+  CRITICAL
+}
+
+enum FlawCategory {
+  SHOULDER_POSITION
+  ELBOW_ALIGNMENT
+  HIP_ANGLE
+  KNEE_BEND
+  ANKLE_POSITION
+  RELEASE_POINT
+  RELEASE_ANGLE
+  FOLLOW_THROUGH
+  BALANCE
+  TIMING
+  FOOTWORK
+  GUIDE_HAND
+  SET_POINT
+  OTHER
+}
+
+enum FlawSeverity {
+  MINOR
+  MODERATE
+  MAJOR
+  CRITICAL
+}
