@@ -9,6 +9,12 @@ opencv-python==4.9.0.80
 Pillow==10.2.0
 numpy==1.26.4
 
+# AI/ML APIs
+replicate==0.25.1
+
+# HTTP requests
+requests==2.31.0
+
 # Utilities
 pydantic==2.6.1
 python-dotenv==1.0.1

@@ -6,6 +6,7 @@ import io
 import os
 import base64
 from typing import Optional
+from dotenv import load_dotenv
 
 import cv2
 import numpy as np
@@ -26,8 +27,14 @@ from .models import (
 from .pose_detection import detect_pose_from_image
 from .skeleton_drawing import draw_skeleton
 
-# Set Replicate API token
-os.environ["REPLICATE_API_TOKEN"] = "r8_XVbSqNpDmahHdfRWDjmivN2ZNPk3MUH2w1N4x"
+# Load environment variables from .env file
+load_dotenv()
+
+# Get Replicate API token from environment
+REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN")
+if not REPLICATE_API_TOKEN:
+    raise ValueError("REPLICATE_API_TOKEN environment variable is required")
+os.environ["REPLICATE_API_TOKEN"] = REPLICATE_API_TOKEN
 
 # App version
 VERSION = "1.0.0"
