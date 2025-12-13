@@ -1,0 +1,186 @@
+{
+  "created_at": "2025-12-13T21:21:00.997175",
+  "total_images": 25,
+  "images": [
+    {
+      "id": 1,
+      "filename": "stock_image_013.jpg",
+      "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/stock_image_013.jpg",
+      "status": "pending",
+      "reviewed_at": null
+    },
+    {
+      "id": 2,
+      "filename": "stock_image_004.jpg",
+      "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/stock_image_004.jpg",
+      "status": "pending",
+      "reviewed_at": null
+    },
+    {
+      "id": 3,
+      "filename": "stock_image_017.jpg",
+      "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/stock_image_017.jpg",
+      "status": "pending",
+      "reviewed_at": null
+    },
+    {
+      "id": 4,
+      "filename": "stock_image_008.jpg",
+      "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/stock_image_008.jpg",
+      "status": "pending",
+      "reviewed_at": null
+    },
+    {
+      "id": 5,
+      "filename": "stock_image_015.jpg",
+      "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/stock_image_015.jpg",
+      "status": "pending",
+      "reviewed_at": null
+    },
+    {
+      "id": 6,
+      "filename": "stock_image_006.jpg",
+      "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/stock_image_006.jpg",
+      "status": "pending",
+      "reviewed_at": null
+    },
+    {
+      "id": 7,
+      "filename": "stock_image_002.jpg",
+      "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/stock_image_002.jpg",
+      "status": "pending",
+      "reviewed_at": null
+    },
+    {
+      "id": 8,
+      "filename": "stock_image_014.jpg",
+      "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/stock_image_014.jpg",
+      "status": "pending",
+      "reviewed_at": null
+    },
+    {
+      "id": 9,
+      "filename": "stock_image_001.jpg",
+      "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/stock_image_001.jpg",
+      "status": "pending",
+      "reviewed_at": null
+    },
+    {
+      "id": 10,
+      "filename": "stock_image_018.jpg",
+      "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/stock_image_018.jpg",
+      "status": "pending",
+      "reviewed_at": null
+    },
+    {
+      "id": 11,
+      "filename": "stock_image_009.jpg",
+      "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/stock_image_009.jpg",
+      "status": "pending",
+      "reviewed_at": null
+    },
+    {
+      "id": 12,
+      "filename": "stock_image_016.jpg",
+      "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/stock_image_016.jpg",
+      "status": "pending",
+      "reviewed_at": null
+    },
+    {
+      "id": 13,
+      "filename": "stock_image_007.jpg",
+      "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/stock_image_007.jpg",
+      "status": "pending",
+      "reviewed_at": null
+    },
+    {
+      "id": 14,
+      "filename": "stock_image_012.jpg",
+      "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/stock_image_012.jpg",
+      "status": "pending",
+      "reviewed_at": null
+    },
+    {
+      "id": 15,
+      "filename": "stock_image_003.jpg",
+      "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/stock_image_003.jpg",
+      "status": "pending",
+      "reviewed_at": null
+    },
+    {
+      "id": 16,
+      "filename": "stock_image_010.jpeg",
+      "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/stock_image_010.jpeg",
+      "status": "pending",
+      "reviewed_at": null
+    },
+    {
+      "id": 17,
+      "filename": "CleanShot 2025-12-13 at 12.59.53.png",
+      "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/CleanShot 2025-12-13 at 12.59.53.png",
+      "status": "pending",
+      "reviewed_at": null
+    },
+    {
+      "id": 18,
+      "filename": "CleanShot 2025-12-13 at 15.18.22.png",
+      "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/CleanShot 2025-12-13 at 15.18.22.png",
+      "status": "pending",
+      "reviewed_at": null
+    },
+    {
+      "id": 19,
+      "filename": "stock_image_011.png",
+      "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/stock_image_011.png",
+      "status": "pending",
+      "reviewed_at": null
+    },
+    {
+      "id": 20,
+      "filename": "applsci-13-07611-g001.png",
+      "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/applsci-13-07611-g001.png",
+      "status": "pending",
+      "reviewed_at": null
+    },
+    {
+      "id": 21,
+      "filename": "R2EhfAhMroUFxcZKlwXgfMkXfqE2_71dcd771-0257-435f-9b91-959121fa74d4.png",
+      "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/R2EhfAhMroUFxcZKlwXgfMkXfqE2_71dcd771-0257-435f-9b91-959121fa74d4.png",
+      "status": "pending",
+      "reviewed_at": null
+    },
+    {
+      "id": 22,
+      "filename": "pixabay-api-.png",
+      "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/pixabay-api-.png",
+      "status": "pending",
+      "reviewed_at": null
+    },
+    {
+      "id": 23,
+      "filename": "CleanShot 2025-12-13 at 13.00.22.png",
+      "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/CleanShot 2025-12-13 at 13.00.22.png",
+      "status": "pending",
+      "reviewed_at": null
+    },
+    {
+      "id": 24,
+      "filename": "jfmk-08-00129-g002.png",
+      "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/jfmk-08-00129-g002.png",
+      "status": "pending",
+      "reviewed_at": null
+    },
+    {
+      "id": 25,
+      "filename": "stock_image_005.webp",
+      "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/stock_image_005.webp",
+      "status": "pending",
+      "reviewed_at": null
+    }
+  ],
+  "statistics": {
+    "pending": 25,
+    "approved": 0,
+    "rejected": 0
+  }
+}
