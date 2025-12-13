@@ -1,0 +1,59 @@
+# Project Memory - Basketball Analysis Tool
+
+This file stores critical rules and decisions for this project.
+
+## CRITICAL RULES - NEVER FORGET
+
+### Rule #1: FIND THE ROUND BALL FIRST
+
+**THE FIRST JOB IS TO FIND THE ROUND BALL.**
+
+When analyzing a basketball shooting form image:
+1. FIRST: Find the ROUND BALL - it is a CIRCLE
+2. Draw a circle around the ball
+3. DO NOT DO ANYTHING ELSE until the round ball is found
+4. The ball is the anchor point for everything else
+
+This is NON-NEGOTIABLE. The round ball comes FIRST. Always.
+
+### How to Find the Ball
+- The ball is ORANGE with BLACK STRIPES/LINES
+- The ball is ROUND (circle shape)
+- The ball is in the HANDS
+- One hand on SIDE, one hand UNDERNEATH
+- The ball may look like a HALF CIRCLE (hands covering part)
+- The ball is FIRST FROM THE TOP of the image
+- The ball is near HEAD level, where ARMS are RAISED UP
+- Look for the ORANGE thing between the hands
+
+### Ball Position Calibration
+- Add +3% to x (move right) from detected position
+- Add +3% to y (move down) from detected position
+- The ball is at the TOP of the image
+
+### Detection Chain (starts from the ball)
+
+After finding the round ball, chain detection follows this order:
+1. BALL (round, orange, black stripes - FIRST FROM TOP - find this FIRST)
+2. HANDS (touching the ball - one on side, one underneath)
+3. WRISTS (below hands)
+4. ELBOWS (below wrists)
+5. SHOULDERS (above elbows)
+6. CHEST (between shoulders)
+7. ABS/CORE (below chest)
+8. HIPS (below abs)
+9. KNEES (below hips)
+10. ANKLES (below knees)
+11. FEET (at the ground)
+
+Each body part position is relative to the previous one in the chain.
+
+## Technical Decisions
+
+* **Vision AI**: Using OpenAI GPT-4 Vision (gpt-4o) for image analysis
+* **No Python**: User explicitly does not want Python backend
+* **Canvas Annotations**: Using HTML Canvas to draw annotations on images
+* **Auto Screenshots**: Automatically crop key body regions when image is uploaded
+
+
+

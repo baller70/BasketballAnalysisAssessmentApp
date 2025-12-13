@@ -1,0 +1,1 @@
+{"sessionId":"debug-session","runId":"connectivity-test","hypothesisId":"TEST","location":"manual","message":"ping","data":{},"timestamp":$(date +%s%3N)}

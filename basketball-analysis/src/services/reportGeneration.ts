@@ -1,8 +1,26 @@
 // Report Generation Service
 // Generates Basic, Ultra, and Premium reports based on analysis
 
-import { BiomechanicalAnalysis, FormFlaw } from "./poseDetection"
 import { EliteShooterData } from "./eliteShooters"
+
+// Types inlined from deleted module
+export interface BiomechanicalAnalysis {
+  elbowAngle: number;
+  kneeAngle: number;
+  shoulderAngle: number;
+  hipAngle: number;
+  releaseHeight: number;
+  releaseAngle: number;
+  balance: number;
+}
+
+export interface FormFlaw {
+  id: number;
+  title: string;
+  description: string;
+  severity: 'critical' | 'moderate' | 'minor';
+  drills: string[];
+}
 
 export type ReportTier = "BASIC" | "ULTRA" | "PREMIUM"
 

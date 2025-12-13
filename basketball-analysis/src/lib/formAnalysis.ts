@@ -1,6 +1,29 @@
-import type { DetectedKeypoint } from './tensorflowPoseDetection'
-import type { AngleMeasurement, FormIssue } from '@/components/analysis/AnalysisOverlay'
 import type { MetricScore, PriorityIssue } from '@/components/analysis/FormScoreCard'
+
+// Types inlined from deleted modules
+export interface DetectedKeypoint {
+  name: string
+  x: number
+  y: number
+  confidence: number
+}
+
+export interface AngleMeasurement {
+  name: string
+  angle: number
+  optimalMin: number
+  optimalMax: number
+  points: string[]
+  status: 'good' | 'warning' | 'critical'
+}
+
+export interface FormIssue {
+  id: number
+  title: string
+  description: string
+  severity: 'critical' | 'moderate' | 'minor'
+  location: string
+}
 
 // Calculate angle between three points (vertex is middle point)
 function calculateAngle(p1: {x: number, y: number}, vertex: {x: number, y: number}, p2: {x: number, y: number}): number {

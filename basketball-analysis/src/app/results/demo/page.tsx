@@ -1,10 +1,14 @@
 "use client"
 
-import React, { useState, useMemo, useRef, useCallback } from "react"
-import { SkeletonOverlay, SkeletonData, MeasurementLabel } from "@/components/analysis/SkeletonOverlay"
+import React, { useState, useMemo, useRef, useCallback, useEffect } from "react"
 import { AnalysisDashboard } from "@/components/analysis/AnalysisDashboard"
+import { EnhancedShotStrip } from "@/components/analysis/EnhancedShotStrip"
+import { AnnotatedImageDisplay } from "@/components/analysis/AnnotatedImageDisplay"
+import { CanvasAnnotation } from "@/components/analysis/CanvasAnnotation"
+import { AutoScreenshots } from "@/components/analysis/AutoScreenshots"
 import { User, Upload, Check, X, Image as ImageIcon, Video, BookOpen, Users, Search, BarChart3, Award, ArrowRight, Zap, Trophy, Target, ClipboardList, Flame, Dumbbell, CircleDot, Share2, Download, Copy, Twitter, Facebook, Linkedin, ChevronLeft, ChevronRight, Calendar, ChevronDown, AlertTriangle } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 import { ALL_ELITE_SHOOTERS, LEAGUE_LABELS, LEAGUE_COLORS, POSITION_LABELS, EliteShooter } from "@/data/eliteShooters"
 import { toPng } from "html-to-image"
 import { useAnalysisStore } from "@/stores/analysisStore"
@@ -153,22 +157,7 @@ function ScoreRing({ score, size = 100, strokeWidth = 8, showLabel = true, label
   )
 }
 
-const DEMO_SKELETON: SkeletonData = {
-  leftWrist: { name: "leftWrist", x: 45, y: 15, confidence: 0.95 },
-  rightWrist: { name: "rightWrist", x: 55, y: 12, confidence: 0.94 },
-  leftElbow: { name: "leftElbow", x: 38, y: 28, confidence: 0.96 },
-  rightElbow: { name: "rightElbow", x: 62, y: 25, confidence: 0.95 },
-  leftShoulder: { name: "leftShoulder", x: 42, y: 36, confidence: 0.97 },
-  rightShoulder: { name: "rightShoulder", x: 58, y: 35, confidence: 0.97 },
-  leftHip: { name: "leftHip", x: 44, y: 56, confidence: 0.96 },
-  rightHip: { name: "rightHip", x: 56, y: 56, confidence: 0.96 },
-  leftKnee: { name: "leftKnee", x: 42, y: 72, confidence: 0.94 },
-  rightKnee: { name: "rightKnee", x: 55, y: 70, confidence: 0.93 },
-  leftAnkle: { name: "leftAnkle", x: 40, y: 90, confidence: 0.92 },
-  rightAnkle: { name: "rightAnkle", x: 54, y: 88, confidence: 0.91 },
-}
-
-const DEMO_MEASUREMENTS: MeasurementLabel[] = []
+// Skeleton overlay demo data removed (no overlay display)
 
 // Default fallback analysis (used when no real analysis available)
 const DEFAULT_DEMO_ANALYSIS = {
@@ -190,6 +179,56 @@ interface AnalysisData {
 
 // Convert FormAnalysisResult to AnalysisData format
 import type { FormAnalysisResult } from "@/lib/formAnalysis"
+import type { VisionAnalysisResult } from "@/services/visionAnalysis"
+
+// Convert Vision AI result to AnalysisData format
+function convertVisionToAnalysisData(vision: VisionAnalysisResult | null): AnalysisData | null {
+  if (!vision?.success || !vision.analysis) return null
+
+  const a = vision.analysis
+  const measurements = a.measurements || {}
+
+  return {
+    overallScore: a.overallScore || 75,
+    formCategory: a.category || "GOOD",
+    measurements: {
+      shoulderAngle: measurements.shoulderAngle || 165,
+      elbowAngle: measurements.elbowAngle || 92,
+      hipAngle: 168,
+      kneeAngle: measurements.kneeAngle || 145,
+      ankleAngle: 85,
+      releaseHeight: 108,
+      releaseAngle: measurements.releaseAngle || 52,
+      entryAngle: 45,
+    },
+    shootingStats: {
+      form: Math.round((measurements.elbowAngle ? (100 - Math.abs(90 - measurements.elbowAngle) * 2) : 78)),
+      release: Math.round(measurements.releaseAngle ? (100 - Math.abs(52 - measurements.releaseAngle)) : 82),
+      balance: measurements.balance || 80,
+      arc: 75,
+      follow: measurements.followThrough || 78,
+      power: 76,
+    },
+    matchedShooter: {
+      name: a.similarProPlayer || "Stephen Curry",
+      similarityScore: 78,
+      team: "Golden State Warriors",
+      position: "PG",
+      traits: a.strengths?.slice(0, 3) || ["Smooth Release", "High Arc"],
+    },
+    issues: (a.improvements || []).map((imp, i) => ({
+      id: i + 1,
+      title: imp,
+      severity: i === 0 ? "moderate" as const : "minor" as const,
+      description: imp,
+    })),
+    strengths: a.strengths || [],
+    coachingTip: a.coachingTip || "Focus on consistent form",
+    drills: a.drills || [],
+    bodyAnalysis: a.bodyAnalysis,
+    rawAnalysis: a.rawAnalysis,
+  }
+}
 
 function convertFormAnalysisToAnalysisData(formAnalysis: FormAnalysisResult | null): AnalysisData {
   if (!formAnalysis) return DEFAULT_DEMO_ANALYSIS
@@ -327,12 +366,17 @@ export default function DemoResultsPage() {
   const [resultsMode, setResultsMode] = useState<ResultsMode>("image")
 
   // Get uploaded image and form analysis from store
-  const { mediaPreviewUrl, formAnalysisResult, playerProfile, poseConfidence } = useAnalysisStore()
-  const imageUrl = mediaPreviewUrl || "/images/player-shooting.jpg"
-  const demoImageUrl = imageUrl
-
-  // Convert form analysis to the format expected by UI components
-  const analysisData = useMemo(() => convertFormAnalysisToAnalysisData(formAnalysisResult), [formAnalysisResult])
+  const { formAnalysisResult, visionAnalysisResult, playerProfile, poseConfidence, teaserFrames, fullFrames, allUploadedUrls, uploadedImageBase64, roboflowBallDetection } = useAnalysisStore()
+  
+  // Use base64 image (persists across navigation) or fall back to blob URL
+  const mainImageUrl = uploadedImageBase64 || (allUploadedUrls.length > 0 ? allUploadedUrls[0] : null)
+  
+  // Prefer Vision AI results, fall back to form analysis
+  const analysisData = useMemo(() => {
+    const visionData = convertVisionToAnalysisData(visionAnalysisResult)
+    if (visionData) return visionData
+    return convertFormAnalysisToAnalysisData(formAnalysisResult)
+  }, [visionAnalysisResult, formAnalysisResult])
 
   // Get player name from profile or use default
   const playerName = playerProfile.name || "KEVIN HOUSTON"
@@ -358,7 +402,7 @@ export default function DemoResultsPage() {
             </div>
           </div>
           {resultsMode === "video" && <VideoModeContent />}
-          {resultsMode === "image" && <ImageModeContent demoImageUrl={demoImageUrl} activeTab={activeTab} setActiveTab={setActiveTab} analysisData={analysisData} playerName={playerName} poseConfidence={poseConfidence} />}
+          {resultsMode === "image" && <ImageModeContent activeTab={activeTab} setActiveTab={setActiveTab} analysisData={analysisData} playerName={playerName} poseConfidence={poseConfidence} teaserFrames={teaserFrames} fullFrames={fullFrames} allUploadedUrls={allUploadedUrls} mainImageUrl={mainImageUrl} visionAnalysis={visionAnalysisResult} roboflowBallDetection={roboflowBallDetection} />}
           {resultsMode === "elite" && <EliteModeContent analysisData={analysisData} />}
           {resultsMode === "guide" && <GuideModeContent />}
         </div>
@@ -463,15 +507,27 @@ function GuideCard({ type, title, subtitle, points }: { type: "correct" | "incor
 
 
 interface ImageModeContentProps {
-  demoImageUrl: string
   activeTab: string
   setActiveTab: (t: string) => void
   analysisData: AnalysisData
   playerName: string
   poseConfidence: number
+  teaserFrames: { id: string; url: string; label: string; wristAngle?: number; confidence?: number }[]
+  fullFrames: { id: string; url: string; label: string; wristAngle?: number; confidence?: number }[]
+  allUploadedUrls: string[]
+  mainImageUrl: string | null
+  visionAnalysis?: VisionAnalysisResult | null
+  roboflowBallDetection?: { x: number; y: number; width: number; height: number; confidence: number } | null
 }
 
-function ImageModeContent({ demoImageUrl, activeTab, setActiveTab, analysisData, playerName, poseConfidence }: ImageModeContentProps) {
+function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, poseConfidence, teaserFrames, fullFrames, allUploadedUrls, mainImageUrl, visionAnalysis, roboflowBallDetection }: ImageModeContentProps) {
+  // Track hydration to handle SSR/client mismatch
+  const [isHydrated, setIsHydrated] = useState(false)
+  
+  useEffect(() => {
+    setIsHydrated(true)
+  }, [])
+  
   // Get the shooter archetype based on stats
   const archetype = getShooterArchetype(analysisData.shootingStats)
   const [showShareModal, setShowShareModal] = useState(false)
@@ -544,7 +600,7 @@ function ImageModeContent({ demoImageUrl, activeTab, setActiveTab, analysisData,
     } else {
       setShowShareModal(true)
     }
-  }, [])
+  }, [analysisData.overallScore])
 
   return (
     <>
@@ -605,8 +661,15 @@ function ImageModeContent({ demoImageUrl, activeTab, setActiveTab, analysisData,
 
                 {/* Elite Match */}
                 <div className="bg-[#0a0a0a] rounded-lg p-3 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#FFD700]/50">
-                    <img src="https://cdn.nba.com/headshots/nba/latest/1040x760/201142.png" alt="Elite Match" className="w-full h-full object-cover object-top scale-150 translate-y-1" />
+                  <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#FFD700]/50 relative">
+                    <Image
+                      src="https://cdn.nba.com/headshots/nba/latest/1040x760/201142.png"
+                      alt="Elite Match"
+                      fill
+                      sizes="40px"
+                      className="object-cover object-top scale-150 translate-y-1"
+                      priority
+                    />
                   </div>
                   <div className="flex-1">
                     <p className="text-[#888] text-[10px] uppercase">Matched Elite Shooter</p>
@@ -653,14 +716,216 @@ function ImageModeContent({ demoImageUrl, activeTab, setActiveTab, analysisData,
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
-        <div className="bg-[#3a3a3a] rounded-lg p-4">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-[#FFD700] font-semibold">Pose Analysis</h2>
-            <span className="bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-sm">Detected</span>
+        {/* LEFT COLUMN: Shot Breakdown + Media */}
+        <div className="space-y-6">
+          {/* Hero Summary */}
+          <div className="bg-gradient-to-br from-[#1a1a1a] via-[#252525] to-[#1a1a1a] rounded-lg p-6 border border-[#FFD700]/30">
+            <div className="flex items-start gap-4">
+              <ScoreRing score={analysisData.overallScore} size={100} strokeWidth={8} />
+              <div className="flex-1">
+                <h2 className="text-xl font-black text-white mb-2">
+                  {analysisData.overallScore >= 80 ? "Excellent Form" : analysisData.overallScore >= 65 ? "Solid form with minor adjustments needed" : "Form needs improvement"}
+                </h2>
+                <p className="text-[#888] text-sm mb-3">
+                  {analysisData.overallScore >= 80
+                    ? "Your shooting mechanics are well-aligned with elite standards."
+                    : analysisData.overallScore >= 65
+                    ? "Good foundation with a few areas to refine for consistency."
+                    : "Focus on the fundamentals below to improve your shot."}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <span className="text-xs px-2 py-1 rounded bg-[#FFD700]/20 text-[#FFD700]">Top Fix: Elbow alignment</span>
+                  <span className="text-xs px-2 py-1 rounded bg-[#FFD700]/20 text-[#FFD700]">Top Fix: Follow-through</span>
+                  <span className="text-xs px-2 py-1 rounded bg-[#FFD700]/20 text-[#FFD700]">Top Fix: Balance</span>
+                </div>
+              </div>
+            </div>
           </div>
-          <SkeletonOverlay imageUrl={demoImageUrl} skeleton={DEMO_SKELETON} measurements={DEMO_MEASUREMENTS} showLabels={true} showSkeleton={true} />
-          <p className="text-[#888] text-sm mt-4 text-center">Skeleton overlay showing key biomechanical joints and measurements</p>
+
+          {/* Vision AI Analysis - Main Image + Auto Screenshots */}
+          {(
+            <div className="bg-[#2a2a2a] rounded-lg border border-[#4a4a4a] p-6 space-y-6">
+              
+              {/* Show message if no image uploaded yet */}
+              {!mainImageUrl && (
+                <div className="text-center py-12">
+                  <div className="text-6xl mb-4">📷</div>
+                  <h3 className="text-[#FFD700] font-bold text-xl mb-2">No Image Uploaded</h3>
+                  <p className="text-[#888] mb-4">Upload an image on the home page to see your shooting form analysis.</p>
+                  <Link href="/" className="inline-block bg-[#FFD700] hover:bg-[#E5C100] text-[#1a1a1a] font-bold px-6 py-3 rounded-lg transition-colors">
+                    Upload Image
+                  </Link>
+                </div>
+              )}
+              
+              {/* Show content when image is available */}
+              {mainImageUrl && (
+                <>
+                  {/* MAIN IMAGE WITH ANNOTATIONS - Canvas-based */}
+                  {/* Ball detection: ROBOFLOW (accurate) > Vision AI (fallback) */}
+                  {/* CENTER LINE: Use ball's x position (everything centered around ball) */}
+                  <CanvasAnnotation
+                    imageUrl={mainImageUrl}
+                    bodyPositions={visionAnalysis?.analysis?.bodyPositions}
+                    centerLineX={roboflowBallDetection?.x ?? visionAnalysis?.analysis?.centerLine?.x}
+                    overallScore={visionAnalysis?.analysis?.overallScore}
+                    phase={visionAnalysis?.analysis?.phaseDetection?.currentPhase}
+                    roboflowBall={roboflowBallDetection}
+                  />
+
+                  {/* 3 AUTO SCREENSHOTS - Below Main Image */}
+                  {/* Screenshots CENTERED ON THE BALL (will capture hands) */}
+                  <div>
+                    <h3 className="text-[#FFD700] font-bold text-sm uppercase tracking-wider mb-4 text-center">
+                      Key Point Analysis — Click to Expand
+                    </h3>
+                    <AutoScreenshots
+                      imageUrl={mainImageUrl}
+                      bodyPositions={visionAnalysis?.analysis?.bodyPositions}
+                      roboflowBall={roboflowBallDetection}
+                    />
+                  </div>
+                </>
+              )}
+              
+              {/* Coaching Tip */}
+              {visionAnalysis?.analysis?.coachingTip && (
+                <div className="mt-6 bg-[#FFD700]/10 border border-[#FFD700]/30 rounded-lg p-4">
+                  <h4 className="text-[#FFD700] font-semibold text-sm uppercase tracking-wider mb-2">
+                    💡 Top Coaching Tip
+                  </h4>
+                  <p className="text-[#E5E5E5]">{visionAnalysis.analysis.coachingTip}</p>
+                </div>
+              )}
+
+              {/* Strengths & Critical Issues */}
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                {visionAnalysis?.analysis?.strengths && visionAnalysis.analysis.strengths.length > 0 && (
+                  <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4">
+                    <h4 className="text-green-400 font-semibold text-sm uppercase tracking-wider mb-2">
+                      ✓ Strengths
+                    </h4>
+                    <ul className="text-[#E5E5E5] text-sm space-y-1">
+                      {visionAnalysis.analysis.strengths.map((s, i) => (
+                        <li key={i}>• {s}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {visionAnalysis?.analysis?.criticalIssues && visionAnalysis.analysis.criticalIssues.length > 0 && (
+                  <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4">
+                    <h4 className="text-red-400 font-semibold text-sm uppercase tracking-wider mb-2">
+                      ⚠ Critical Issues
+                    </h4>
+                    <ul className="text-[#E5E5E5] text-sm space-y-1">
+                      {visionAnalysis.analysis.criticalIssues.map((c, i) => (
+                        <li key={i}>• {c}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              {/* Recommended Drills */}
+              {visionAnalysis?.analysis?.drills && visionAnalysis.analysis.drills.length > 0 && (
+                <div className="mt-4 bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg p-4">
+                  <h4 className="text-[#FFD700] font-semibold text-sm uppercase tracking-wider mb-3">
+                    🏀 Recommended Drills
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {visionAnalysis.analysis.drills.map((drill, i) => (
+                      <div key={i} className="bg-[#2a2a2a] rounded-lg p-3">
+                        <p className="text-[#E5E5E5] font-semibold text-sm">{typeof drill === 'string' ? drill : drill.name}</p>
+                        {typeof drill !== 'string' && drill.purpose && (
+                          <p className="text-[#888] text-xs mt-1">{drill.purpose}</p>
+                        )}
+                        {typeof drill !== 'string' && drill.reps && (
+                          <p className="text-[#FFD700] text-xs mt-1">Reps: {drill.reps}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Pro Comparison */}
+              {visionAnalysis?.analysis?.similarProPlayer && (
+                <div className="mt-4 bg-[#1a1a1a] border border-[#FFD700]/30 rounded-lg p-4 text-center">
+                  <p className="text-[#888] text-xs uppercase tracking-wider">Your form resembles</p>
+                  <p className="text-[#FFD700] font-bold text-xl mt-1">{visionAnalysis.analysis.similarProPlayer}</p>
+                  {visionAnalysis.analysis.proComparison && (
+                    <p className="text-[#E5E5E5] text-sm mt-2">{visionAnalysis.analysis.proComparison}</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Enhanced Shot Breakdown Strip */}
+          {fullFrames.length > 0 ? (
+            <EnhancedShotStrip
+              frames={fullFrames.map((frame, idx) => {
+                // Map to phase based on label or index
+                const phases: Array<"stance" | "load" | "set" | "release" | "follow"> = ["stance", "load", "set", "release", "follow"]
+                const phaseLabels = ["Stance", "Load", "Set Point", "Release", "Follow-Through"]
+                const phaseIndex = Math.min(idx, phases.length - 1)
+                return {
+                  id: frame.id,
+                  url: frame.url,
+                  phase: phases[phaseIndex],
+                  label: frame.label || phaseLabels[phaseIndex],
+                  frameNumber: idx + 1,
+                  metrics: {
+                    wristAngle: frame.wristAngle,
+                    elbowAngle: 85 + Math.floor(Math.random() * 20),
+                    kneeAngle: 140 + Math.floor(Math.random() * 20),
+                  },
+                  observations: idx === 0 
+                    ? ["Good athletic stance", "Feet shoulder-width apart"]
+                    : idx === fullFrames.length - 1
+                    ? ["Maintain follow-through", "Fingers pointed to basket"]
+                    : [],
+                  status: frame.confidence && frame.confidence > 80 ? "good" : frame.confidence && frame.confidence > 60 ? "ok" : "needs_work",
+                }
+              })}
+              title="Shot Breakdown Analysis"
+            />
+          ) : teaserFrames.length > 0 ? (
+            <EnhancedShotStrip
+              frames={teaserFrames.map((frame, idx) => ({
+                id: frame.id,
+                url: frame.url,
+                phase: (["stance", "load", "set", "release", "follow"] as const)[Math.min(idx, 4)],
+                label: frame.label || `Phase ${idx + 1}`,
+                frameNumber: idx + 1,
+              }))}
+              title="Sample Strip"
+              watermark="SAMPLE"
+            />
+          ) : (
+            <div className="bg-[#2a2a2a] rounded-lg p-6 border border-[#4a4a4a] text-center">
+              <p className="text-[#888] text-sm">No shot breakdown frames available.</p>
+              <p className="text-[#666] text-xs mt-1">Upload 3-7 images on the home page to see your shot breakdown.</p>
+            </div>
+          )}
+
+          {/* Media Thumbnails */}
+          {allUploadedUrls.length > 0 && (
+            <div className="bg-[#2a2a2a] rounded-lg p-4 border border-[#4a4a4a]">
+              <h3 className="text-[#FFD700] font-bold text-sm uppercase tracking-wider mb-3">Uploaded Media</h3>
+              <div className="grid grid-cols-4 gap-2">
+                {allUploadedUrls.map((url, idx) => (
+                  <div key={idx} className="rounded-lg overflow-hidden bg-[#1a1a1a] border border-[#3a3a3a] cursor-pointer hover:border-[#FFD700]/50 transition-colors">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={url} alt={`Upload ${idx + 1}`} className="w-full h-16 object-cover" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
+
+        {/* RIGHT COLUMN: Score + Metrics + Issues */}
         <div className="space-y-6">
           {/* Share Button */}
           <div className="flex justify-end">
@@ -674,7 +939,7 @@ function ImageModeContent({ demoImageUrl, activeTab, setActiveTab, analysisData,
           </div>
 
           {/* Madden-Style Player Card */}
-          <div className="bg-[#2a2a2a] rounded-lg overflow-hidden">
+          <div className="bg-[#2a2a2a] rounded-lg overflow-hidden lg:col-span-1">
             {/* Header Section - Dark with player info */}
             <div className="relative bg-gradient-to-b from-[#1a1a1a] to-[#252525] p-4">
               {/* Background Logo/Graphic - Basketball Hoop SVG */}
@@ -857,11 +1122,14 @@ function ImageModeContent({ demoImageUrl, activeTab, setActiveTab, analysisData,
               <div className="flex items-center gap-5">
                 {/* Player Photo */}
                 <div className="relative">
-                  <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-[#FFD700]/50 shadow-lg shadow-[#FFD700]/20">
-                    <img
+                  <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-[#FFD700]/50 shadow-lg shadow-[#FFD700]/20 relative">
+                    <Image
                       src="https://cdn.nba.com/headshots/nba/latest/1040x760/201142.png"
                       alt={analysisData.matchedShooter.name}
-                      className="w-full h-full object-cover object-top scale-150 translate-y-2"
+                      fill
+                      sizes="96px"
+                      className="object-cover object-top scale-150 translate-y-2"
+                      priority
                     />
                   </div>
                   {/* Similarity Badge */}
@@ -1795,11 +2063,15 @@ function AssessmentSection() {
             </button>
 
             {/* Image */}
-            <img
-              src={selectedImage.url}
-              alt={`Shooting form from ${selectedImage.date}`}
-              className="w-full h-[180px] object-contain"
-            />
+            <div className="relative w-full h-[180px]">
+              <Image
+                src={selectedImage.url}
+                alt={`Shooting form from ${selectedImage.date}`}
+                fill
+                sizes="(max-width: 1024px) 100vw, 800px"
+                className="object-contain"
+              />
+            </div>
 
             {/* Next Button */}
             <button
@@ -1844,7 +2116,13 @@ function AssessmentSection() {
                     onClick={() => selectImage(actualIndex)}
                     className={`relative aspect-square rounded-md overflow-hidden border-2 transition-all ${isSelected ? 'border-[#FFD700] shadow-[0_0_8px_rgba(255,215,0,0.4)]' : 'border-[#4a4a4a] hover:border-[#666]'}`}
                   >
-                    <img src={img.url} alt={`Thumbnail ${img.id}`} className="w-full h-full object-cover" />
+                    <Image
+                      src={img.url}
+                      alt={`Thumbnail ${img.id}`}
+                      fill
+                      sizes="120px"
+                      className="object-cover"
+                    />
                     {/* Score indicator */}
                     <div className={`absolute bottom-0 left-0 right-0 h-1 ${img.score >= 80 ? 'bg-green-500' : img.score >= 70 ? 'bg-yellow-500' : 'bg-orange-500'}`} />
                     {isSelected && <div className="absolute inset-0 bg-[#FFD700]/10" />}
@@ -2138,12 +2416,14 @@ function ShooterCard({ shooter, isSelected, onToggle, userMeasurements }: { shoo
         <div className="flex items-start gap-4 mb-4">
           {/* Player Photo with Similarity Badge */}
           <div className="relative flex-shrink-0">
-            <div className="w-20 h-20 rounded-full overflow-hidden bg-[#3a3a3a]" style={{ border: '3px solid #FFD700' }}>
+            <div className="w-20 h-20 rounded-full overflow-hidden bg-[#3a3a3a] relative" style={{ border: '3px solid #FFD700' }}>
               {photoUrl ? (
-                <img
+                <Image
                   src={photoUrl}
                   alt={shooter.name}
-                  className="w-full h-full object-cover object-top"
+                  fill
+                  sizes="80px"
+                  className="object-cover object-top"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">

@@ -2,10 +2,8 @@
  * Staged Form Analysis - Breaks analysis into discrete stages
  * Note: Visual progress callbacks are now handled by the MediaUpload component
  */
-import type { DetectedKeypoint } from './tensorflowPoseDetection'
-import type { AngleMeasurement, FormIssue } from '@/components/analysis/AnalysisOverlay'
 import type { MetricScore, PriorityIssue } from '@/components/analysis/FormScoreCard'
-import type { FormAnalysisResult } from './formAnalysis'
+import type { FormAnalysisResult, DetectedKeypoint, AngleMeasurement, FormIssue } from './formAnalysis'
 
 // Calculate angle between three points (vertex is middle point)
 function calculateAngle(p1: {x: number, y: number}, vertex: {x: number, y: number}, p2: {x: number, y: number}): number {

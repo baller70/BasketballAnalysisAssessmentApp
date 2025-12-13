@@ -4,7 +4,13 @@
  * Matches user's form to elite shooters database
  */
 
-import type { PoseKeypoint } from './poseDetection';
+// Type inlined from deleted module
+export interface PoseKeypoint {
+  name: string;
+  x: number;
+  y: number;
+  confidence: number;
+}
 
 export interface BiomechanicalMetrics {
   // Joint angles (degrees)

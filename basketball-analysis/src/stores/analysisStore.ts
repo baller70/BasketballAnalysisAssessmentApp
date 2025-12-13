@@ -7,6 +7,16 @@ import type {
   AnalysisResult,
 } from "@/types"
 import type { FormAnalysisResult } from "@/lib/formAnalysis"
+import type { VisionAnalysisResult } from "@/services/visionAnalysis"
+
+// Roboflow basketball detection result
+export interface RoboflowBallDetection {
+  x: number // center x as percentage
+  y: number // center y as percentage
+  width: number // width as percentage
+  height: number // height as percentage
+  confidence: number
+}
 
 // Detected keypoint from TensorFlow pose detection
 export interface DetectedKeypoint {
@@ -14,6 +24,15 @@ export interface DetectedKeypoint {
   x: number
   y: number
   confidence: number
+}
+
+// Shot breakdown frame (for the strip)
+export interface ShotBreakdownFrame {
+  id: string
+  url: string
+  label: string
+  wristAngle?: number
+  confidence?: number
 }
 
 interface AnalysisState {
@@ -25,6 +44,13 @@ interface AnalysisState {
   uploadedFile: File | null
   mediaType: MediaType
   mediaPreviewUrl: string | null
+  // Base64 image data (persists across navigation)
+  uploadedImageBase64: string | null
+
+  // Shot breakdown strip frames
+  teaserFrames: ShotBreakdownFrame[]
+  fullFrames: ShotBreakdownFrame[]
+  allUploadedUrls: string[]
 
   // Player profile
   playerProfile: PlayerProfile
@@ -37,6 +63,12 @@ interface AnalysisState {
   poseConfidence: number
   formAnalysisResult: FormAnalysisResult | null
 
+  // Vision AI analysis result
+  visionAnalysisResult: VisionAnalysisResult | null
+
+  // Roboflow basketball detection
+  roboflowBallDetection: RoboflowBallDetection | null
+
   // UI state
   isAnalyzing: boolean
   analysisProgress: number
@@ -46,6 +78,10 @@ interface AnalysisState {
   setUploadedFile: (file: File | null) => void
   setMediaType: (type: MediaType) => void
   setMediaPreviewUrl: (url: string | null) => void
+  setUploadedImageBase64: (base64: string | null) => void
+  setTeaserFrames: (frames: ShotBreakdownFrame[]) => void
+  setFullFrames: (frames: ShotBreakdownFrame[]) => void
+  setAllUploadedUrls: (urls: string[]) => void
   setPlayerProfile: (profile: Partial<PlayerProfile>) => void
   setReportTier: (tier: ReportTier) => void
   setCurrentAnalysis: (analysis: AnalysisResult | null) => void
@@ -56,6 +92,8 @@ interface AnalysisState {
   setDetectedKeypoints: (keypoints: DetectedKeypoint[]) => void
   setPoseConfidence: (confidence: number) => void
   setFormAnalysisResult: (result: FormAnalysisResult | null) => void
+  setVisionAnalysisResult: (result: VisionAnalysisResult | null) => void
+  setRoboflowBallDetection: (detection: RoboflowBallDetection | null) => void
   resetUpload: () => void
   resetAll: () => void
 }
@@ -82,11 +120,17 @@ export const useAnalysisStore = create<AnalysisState>()(
         uploadedFile: null,
         mediaType: "IMAGE",
         mediaPreviewUrl: null,
+        uploadedImageBase64: null,
+        teaserFrames: [],
+        fullFrames: [],
+        allUploadedUrls: [],
         playerProfile: initialPlayerProfile,
         reportTier: "BASIC",
         detectedKeypoints: [],
         poseConfidence: 0,
         formAnalysisResult: null,
+        visionAnalysisResult: null,
+        roboflowBallDetection: null,
         isAnalyzing: false,
         analysisProgress: 0,
         error: null,
@@ -100,6 +144,18 @@ export const useAnalysisStore = create<AnalysisState>()(
 
         setMediaPreviewUrl: (url) =>
           set({ mediaPreviewUrl: url }, false, "setMediaPreviewUrl"),
+
+        setUploadedImageBase64: (base64) =>
+          set({ uploadedImageBase64: base64 }, false, "setUploadedImageBase64"),
+
+        setTeaserFrames: (frames) =>
+          set({ teaserFrames: frames }, false, "setTeaserFrames"),
+
+        setFullFrames: (frames) =>
+          set({ fullFrames: frames }, false, "setFullFrames"),
+
+        setAllUploadedUrls: (urls) =>
+          set({ allUploadedUrls: urls }, false, "setAllUploadedUrls"),
 
         setPlayerProfile: (profile) =>
           set(
@@ -142,14 +198,26 @@ export const useAnalysisStore = create<AnalysisState>()(
         setFormAnalysisResult: (result) =>
           set({ formAnalysisResult: result }, false, "setFormAnalysisResult"),
 
+        setVisionAnalysisResult: (result) =>
+          set({ visionAnalysisResult: result }, false, "setVisionAnalysisResult"),
+
+        setRoboflowBallDetection: (detection) =>
+          set({ roboflowBallDetection: detection }, false, "setRoboflowBallDetection"),
+
         resetUpload: () =>
           set(
             {
               uploadedFile: null,
               mediaPreviewUrl: null,
+              uploadedImageBase64: null,
+              teaserFrames: [],
+              fullFrames: [],
+              allUploadedUrls: [],
               detectedKeypoints: [],
               poseConfidence: 0,
               formAnalysisResult: null,
+              visionAnalysisResult: null,
+              roboflowBallDetection: null,
               error: null,
             },
             false,
@@ -163,11 +231,17 @@ export const useAnalysisStore = create<AnalysisState>()(
               uploadedFile: null,
               mediaType: "IMAGE",
               mediaPreviewUrl: null,
+              uploadedImageBase64: null,
+              teaserFrames: [],
+              fullFrames: [],
+              allUploadedUrls: [],
               playerProfile: initialPlayerProfile,
               reportTier: "BASIC",
               detectedKeypoints: [],
               poseConfidence: 0,
               formAnalysisResult: null,
+              visionAnalysisResult: null,
+              roboflowBallDetection: null,
               isAnalyzing: false,
               analysisProgress: 0,
               error: null,
@@ -181,6 +255,9 @@ export const useAnalysisStore = create<AnalysisState>()(
         partialize: (state) => ({
           analysisHistory: state.analysisHistory,
           playerProfile: state.playerProfile,
+          uploadedImageBase64: state.uploadedImageBase64,
+          visionAnalysisResult: state.visionAnalysisResult,
+          roboflowBallDetection: state.roboflowBallDetection,
         }),
       }
     )

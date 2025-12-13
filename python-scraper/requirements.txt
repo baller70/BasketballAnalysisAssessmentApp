@@ -1,0 +1,49 @@
+# Basketball Shooter Data Scraping Pipeline
+# Deploy to: Render or Railway
+
+# HTTP Requests
+requests==2.31.0
+
+# AWS S3
+boto3==1.34.100
+
+# HTML Parsing
+beautifulsoup4==4.12.3
+lxml==5.2.2
+
+# Image Processing
+Pillow==10.3.0
+opencv-python-headless==4.9.0.80  # Headless for server deployment
+
+# YouTube Video Download
+yt-dlp==2024.4.9  # Modern fork of youtube-dl
+
+# Browser Automation (for JavaScript-heavy pages)
+selenium==4.21.0
+webdriver-manager==4.0.1
+
+# Data Processing
+pandas==2.2.2
+numpy==1.26.4
+
+# Database Connection (PostgreSQL)
+psycopg2-binary==2.9.9
+sqlalchemy==2.0.30
+
+# API Framework (for webhook endpoints)
+flask==3.0.3
+gunicorn==22.0.0
+
+# Environment Variables
+python-dotenv==1.0.1
+
+# Scheduling (for automated scraping)
+apscheduler==3.10.4
+
+# Rate Limiting
+ratelimit==2.2.1
+
+# Logging
+loguru==0.7.2
+
+

@@ -1,4 +1,6 @@
-// Basketball Shooting Analysis System - Prisma Schema
+// Basketball Shooting Analysis System - New Schema
+// Database: PostgreSQL (compatible with Abacus AI)
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,320 +10,334 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// User model for authentication and profile
-model User {
-  id            String    @id @default(cuid())
-  name          String
-  email         String    @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  // Player Profile
-  playerProfile PlayerProfile?
-  analyses      Analysis[]
-  accounts      Account[]
-  sessions      Session[]
+// ============================================
+// USER PROFILE (App users who want analysis)
+// ============================================
+model UserProfile {
+  id                    String    @id @default(cuid())
+  
+  // Physical Measurements
+  heightInches          Int?      @map("height_inches")
+  weightLbs             Int?      @map("weight_lbs")
+  wingspanInches        Int?      @map("wingspan_inches")
+  
+  // Demographics
+  age                   Int?
+  
+  // Experience & Body Type
+  experienceLevel       String?   @map("experience_level") @db.VarChar(50) // beginner/intermediate/advanced/professional
+  bodyType              String?   @map("body_type") @db.VarChar(50)        // ectomorph/mesomorph/endomorph
+  
+  // Derived Values
+  coachingTier          String?   @map("coaching_tier") @db.VarChar(50)    // elementary/middle_school/high_school/college/professional
+  wingspanToHeightRatio Decimal?  @map("wingspan_to_height_ratio") @db.Decimal(5, 2)
+  bmi                   Decimal?  @db.Decimal(5, 2)
+  
+  // Metadata
+  profileComplete       Boolean   @default(false) @map("profile_complete")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+  
+  // Relations
+  analyses              UserAnalysis[]
+  
+  // Indexes
+  @@index([experienceLevel], name: "idx_user_experience")
+  @@index([bodyType], name: "idx_user_body_type")
+  @@index([coachingTier], name: "idx_user_coaching_tier")
+  @@index([heightInches], name: "idx_user_height")
+  
+  @@map("user_profiles")
 }
 
-// NextAuth Account model
-model Account {
-  id                String  @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String? @db.Text
-  session_state     String?
-  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  @@unique([provider, providerAccountId])
+// ============================================
+// USER ANALYSIS (Analysis sessions for app users)
+// ============================================
+model UserAnalysis {
+  id                    String    @id @default(cuid())
+  userProfileId         String    @map("user_profile_id")
+  
+  // Image Data
+  imageUrl              String?   @map("image_url") @db.VarChar(500)
+  s3Path                String?   @map("s3_path") @db.VarChar(500)
+  
+  // Analysis Results (JSON)
+  visionAnalysis        Json?     @map("vision_analysis")      // GPT-4 Vision response
+  bodyPositions         Json?     @map("body_positions")       // Detected body part positions
+  roboflowDetection     Json?     @map("roboflow_detection")   // Basketball detection
+  
+  // Scores
+  overallScore          Decimal?  @map("overall_score") @db.Decimal(5, 2)
+  formScore             Decimal?  @map("form_score") @db.Decimal(5, 2)
+  balanceScore          Decimal?  @map("balance_score") @db.Decimal(5, 2)
+  releaseScore          Decimal?  @map("release_score") @db.Decimal(5, 2)
+  
+  // Feedback
+  strengths             Json?                                   // Array of strength objects
+  improvements          Json?                                   // Array of improvement objects
+  coachingNotes         String?   @map("coaching_notes") @db.Text
+  
+  // Matched Shooter (who they're most similar to)
+  matchedShooterId      Int?      @map("matched_shooter_id")
+  matchConfidence       Decimal?  @map("match_confidence") @db.Decimal(3, 2)
+  
+  // Metadata
+  createdAt             DateTime  @default(now()) @map("created_at")
+  
+  // Relations
+  userProfile           UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  
+  // Indexes
+  @@index([userProfileId], name: "idx_analysis_user")
+  @@index([createdAt], name: "idx_analysis_date")
+  @@index([matchedShooterId], name: "idx_analysis_matched")
+  
+  @@map("user_analyses")
 }
 
-// NextAuth Session model
-model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-// Player physical profile for personalized analysis
-model PlayerProfile {
-  id          String   @id @default(cuid())
-  userId      String   @unique
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // Physical Attributes
-  height      String?  // e.g., "6ft 2in" or "188cm"
-  weight      String?  // e.g., "180 lbs" or "82 kg"
-  wingspan    String?  // e.g., "6ft 6in" or "200cm"
-  age         Int?
-  position    Position?
-  skillLevel  SkillLevel?
-  bodyType    BodyType?
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-// Elite shooter reference database
-model EliteShooter {
-  id              String   @id @default(cuid())
-  name            String
-  team            String?
-  position        Position
-  era             String?  // e.g., "1990s-2000s", "2010s-present"
-
-  // Physical Attributes
-  height          String
-  weight          String
-  wingspan        String?
-  bodyType        BodyType
-
-  // Shooting Mechanics Profile
-  shootingStyle   String?  @db.Text
-  releaseHeight   Float?   // in inches relative to height
-  releaseAngle    Float?   // optimal release angle
-  elbowAngle      Float?   // at release
-  kneeAngle       Float?   // at start of shot
-  shoulderAngle   Float?
-  hipAngle        Float?
-  ankleAngle      Float?
-
-  // Additional metrics
-  careerFGPercent Float?
-  career3PPercent Float?
-  ftPercent       Float?
-
-  // Media references
-  imageUrls       String[] // Array of reference image URLs
-  videoUrls       String[] // Array of reference video URLs
-
-  // Descriptive content
-  description     String?  @db.Text
-  keyStrengths    String[] // Array of key shooting strengths
-
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+// ============================================
+// TABLE 1: shooters (Professional shooter database)
+// ============================================
+model Shooter {
+  id                    Int       @id @default(autoincrement()) @map("shooter_id")
+  name                  String    @db.VarChar(255)
+  position              String?   @db.VarChar(50)       // Guard/Forward/Center
+  heightInches          Int?      @map("height_inches")
+  weightLbs             Int?      @map("weight_lbs")
+  wingspanInches        Int?      @map("wingspan_inches")
+  armLengthInches       Int?      @map("arm_length_inches")
+  bodyType              String?   @map("body_type") @db.VarChar(100)
+  dominantHand          String?   @map("dominant_hand") @db.VarChar(20) // Left/Right/Ambidextrous
+  careerFgPercentage    Decimal?  @map("career_fg_percentage") @db.Decimal(5, 2)
+  career3ptPercentage   Decimal?  @map("career_3pt_percentage") @db.Decimal(5, 2)
+  careerFtPercentage    Decimal?  @map("career_ft_percentage") @db.Decimal(5, 2)
+  shootingStyle         String?   @map("shooting_style") @db.VarChar(100) // One-motion/Two-motion/Set shot
+  era                   String?   @db.VarChar(50)       // Modern/Classic/Historical
+  skillLevel            String?   @map("skill_level") @db.VarChar(50) // Professional/College/High School/Amateur
+  profileImageUrl       String?   @map("profile_image_url") @db.VarChar(500)
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @default(now()) @updatedAt @map("updated_at")
 
   // Relations
-  matchedAnalyses Analysis[]
+  biomechanics          ShootingBiomechanics?
+  images                ShooterImage[]
+  stats                 ShootingStats[]
+  strengths             ShootingStrength[]
+  weaknesses            ShootingWeakness[]
+  habitualMechanics     HabitualMechanics[]
+
+  // ==========================================
+  // INDEXES FOR FAST RETRIEVAL
+  // ==========================================
+  
+  // Search by name (most common query)
+  @@index([name], name: "idx_shooter_name")
+  
+  // Filter by skill level (Professional/College/Amateur)
+  @@index([skillLevel], name: "idx_skill_level")
+  
+  // Filter by shooting style (One-motion/Two-motion)
+  @@index([shootingStyle], name: "idx_shooting_style")
+  
+  // Filter by position (Guard/Forward/Center)
+  @@index([position], name: "idx_position")
+  
+  // Filter by era (Modern/Classic/Historical)
+  @@index([era], name: "idx_era")
+  
+  // Sort by shooting percentages (find best shooters)
+  @@index([career3ptPercentage], name: "idx_3pt_percentage")
+  @@index([careerFgPercentage], name: "idx_fg_percentage")
+  @@index([careerFtPercentage], name: "idx_ft_percentage")
+  
+  // Composite index for common filter combinations
+  @@index([skillLevel, position], name: "idx_skill_position")
+  @@index([skillLevel, shootingStyle], name: "idx_skill_style")
+  @@index([era, skillLevel], name: "idx_era_skill")
+  
+  // Physical attributes (for matching similar body types)
+  @@index([heightInches], name: "idx_height")
+  @@index([bodyType], name: "idx_body_type")
+  
+  @@map("shooters")
 }
 
-// Analysis model for storing shooting analysis results
-model Analysis {
-  id              String       @id @default(cuid())
-  userId          String?
-  user            User?        @relation(fields: [userId], references: [id])
+// ============================================
+// TABLE 2: shooting_biomechanics (Detailed form analysis)
+// ============================================
+model ShootingBiomechanics {
+  id                      Int       @id @default(autoincrement()) @map("biomech_id")
+  shooterId               Int       @unique @map("shooter_id")
+  elbowAngle              Decimal?  @map("elbow_angle") @db.Decimal(5, 2)        // Degrees at release
+  shoulderAngle           Decimal?  @map("shoulder_angle") @db.Decimal(5, 2)     // Shoulder rotation
+  hipAngle                Decimal?  @map("hip_angle") @db.Decimal(5, 2)          // Hip alignment
+  kneeAngle               Decimal?  @map("knee_angle") @db.Decimal(5, 2)         // Knee bend
+  ankleAngle              Decimal?  @map("ankle_angle") @db.Decimal(5, 2)        // Ankle position
+  releaseHeight           Decimal?  @map("release_height") @db.Decimal(5, 2)     // Height of release in inches
+  releaseAngle            Decimal?  @map("release_angle") @db.Decimal(5, 2)      // Ball trajectory angle
+  entryAngle              Decimal?  @map("entry_angle") @db.Decimal(5, 2)        // Ball entry angle to hoop
+  followThroughExtension  Decimal?  @map("follow_through_extension") @db.Decimal(5, 2)
+  balanceScore            Decimal?  @map("balance_score") @db.Decimal(3, 2)      // 0-1 scale
+  arcConsistency          Decimal?  @map("arc_consistency") @db.Decimal(3, 2)    // 0-1 scale
+  createdAt               DateTime  @default(now()) @map("created_at")
 
-  // Player Info (for non-registered users)
-  playerName      String
-  playerEmail     String
-  playerPosition  Position?
-  playerSkillLevel SkillLevel?
-  playerAge       Int?
-  playerHeight    String?
-  playerWeight    String?
-  playerWingspan  String?
-  playerBodyType  BodyType?
+  // Relations
+  shooter                 Shooter   @relation(fields: [shooterId], references: [id], onDelete: Cascade)
 
-  // Media
-  mediaType       MediaType
-  mediaUrl        String
-  thumbnailUrl    String?
-  originalFileName String?
-
-  // Analysis Results
-  status          AnalysisStatus @default(PENDING)
-  reportTier      ReportTier     @default(BASIC)
-
-  // Biomechanical Measurements
-  measurements    BiomechanicalMeasurement?
-
-  // Performance scores
-  overallScore    Float?
-  formCategory    FormCategory?
-
-  // Matched elite shooter
-  matchedShooterId String?
-  matchedShooter   EliteShooter? @relation(fields: [matchedShooterId], references: [id])
-  similarityScore  Float?
-
-  // Generated report
-  report          Report?
-
-  // Identified flaws
-  flaws           Flaw[]
-
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  completedAt     DateTime?
+  // ==========================================
+  // INDEXES FOR BIOMECHANICS QUERIES
+  // ==========================================
+  
+  @@index([shooterId], name: "idx_biomech_shooter_id")
+  
+  // Find shooters with similar elbow angle
+  @@index([elbowAngle], name: "idx_elbow_angle")
+  
+  // Find shooters with similar release angle
+  @@index([releaseAngle], name: "idx_release_angle")
+  
+  // Find shooters with similar knee bend
+  @@index([kneeAngle], name: "idx_knee_angle")
+  
+  // Composite: Find similar shooting form
+  @@index([elbowAngle, kneeAngle], name: "idx_elbow_knee")
+  @@index([releaseAngle, releaseHeight], name: "idx_release_metrics")
+  
+  @@map("shooting_biomechanics")
 }
 
-// Biomechanical measurements from pose detection
-model BiomechanicalMeasurement {
-  id              String   @id @default(cuid())
-  analysisId      String   @unique
-  analysis        Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+// ============================================
+// TABLE 3: shooter_images (Image library)
+// ============================================
+model ShooterImage {
+  id                Int       @id @default(autoincrement()) @map("image_id")
+  shooterId         Int       @map("shooter_id")
+  imageCategory     String?   @map("image_category") @db.VarChar(50)  // form_front/form_side/release_point/follow_through
+  imageUrl          String?   @map("image_url") @db.VarChar(500)
+  s3Path            String?   @map("s3_path") @db.VarChar(500)        // AWS S3 storage path
+  imageResolution   String?   @map("image_resolution") @db.VarChar(20) // 1920x1080 format
+  capturePhase      String?   @map("capture_phase") @db.VarChar(50)   // setup/dip/release/follow_through
+  shootingAngle     String?   @map("shooting_angle") @db.VarChar(50)  // front/side/45_degree
+  isPrimary         Boolean   @default(false) @map("is_primary")
+  createdAt         DateTime  @default(now()) @map("created_at")
 
-  // Joint Angles (in degrees)
-  shoulderAngle   Float?   // SA - Shoulder angle
-  elbowAngle      Float?   // EA - Elbow angle
-  hipAngle        Float?   // HA - Hip angle
-  kneeAngle       Float?   // KA - Knee angle
-  ankleAngle      Float?   // AA - Ankle angle
+  // Relations
+  shooter           Shooter   @relation(fields: [shooterId], references: [id], onDelete: Cascade)
 
-  // Heights (relative measurements)
-  elbowHeight     Float?   // EH - Elbow height
-  releaseHeight   Float?   // RH - Release height
-  hipHeight       Float?   // HH - Hip height
-
-  // Release metrics
-  releaseAngle    Float?   // RA - Release angle
-  entryAngle      Float?   // ENA - Entry angle
-
-  // Other measurements
-  verticalDisplacement Float? // VD
-  maxTrajectory   Float?   // MTJ - Maximum trajectory
-
-  // Pose detection confidence
-  poseConfidence  Float?
-
-  // Raw pose data (JSON)
-  rawPoseData     Json?
-
-  createdAt       DateTime @default(now())
+  // ==========================================
+  // INDEXES FOR FAST IMAGE RETRIEVAL
+  // ==========================================
+  
+  // Find all images for a shooter
+  @@index([shooterId], name: "idx_images_shooter_id")
+  
+  // Filter by image category (form_front, form_side, release_point)
+  @@index([imageCategory], name: "idx_image_category")
+  
+  // Filter by capture phase (setup, dip, release, follow-through)
+  @@index([capturePhase], name: "idx_capture_phase")
+  
+  // Filter by shooting angle (front, side, 45-degree)
+  @@index([shootingAngle], name: "idx_shooting_angle")
+  
+  // Find primary images quickly
+  @@index([isPrimary], name: "idx_is_primary")
+  
+  // Composite: Get specific phase/angle for a shooter
+  @@index([shooterId, capturePhase], name: "idx_shooter_phase")
+  @@index([shooterId, shootingAngle], name: "idx_shooter_angle")
+  @@index([shooterId, imageCategory], name: "idx_shooter_category")
+  
+  // Composite: Get primary image for a shooter
+  @@index([shooterId, isPrimary], name: "idx_shooter_primary")
+  
+  @@map("shooter_images")
 }
 
-// Identified flaws in shooting form
-model Flaw {
-  id              String   @id @default(cuid())
-  analysisId      String
-  analysis        Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+// ============================================
+// TABLE 4: shooting_stats (Season statistics)
+// ============================================
+model ShootingStats {
+  id                Int       @id @default(autoincrement()) @map("stat_id")
+  shooterId         Int       @map("shooter_id")
+  season            String?   @db.VarChar(20)         // 2023-24 format
+  gamesPlayed       Int?      @map("games_played")
+  fgAttempts        Int?      @map("fg_attempts")     // Field goal attempts
+  fgMade            Int?      @map("fg_made")         // Field goals made
+  threePtAttempts   Int?      @map("three_pt_attempts")
+  threePtMade       Int?      @map("three_pt_made")
+  ftAttempts        Int?      @map("ft_attempts")     // Free throw attempts
+  ftMade            Int?      @map("ft_made")         // Free throws made
+  pointsPerGame     Decimal?  @map("points_per_game") @db.Decimal(5, 2)
+  createdAt         DateTime  @default(now()) @map("created_at")
 
-  category        FlawCategory
-  severity        FlawSeverity
-  title           String
-  description     String   @db.Text
+  // Relations
+  shooter           Shooter   @relation(fields: [shooterId], references: [id], onDelete: Cascade)
 
-  // Affected body part/measurement
-  affectedArea    String?
-  currentValue    Float?
-  optimalRange    String?
-
-  // Correction guidance
-  correction      String   @db.Text
-  drills          String[] // Array of recommended drills
-
-  priority        Int      @default(1) // 1 = highest priority
-
-  createdAt       DateTime @default(now())
+  // ==========================================
+  // INDEXES FOR STATS QUERIES
+  // ==========================================
+  
+  @@index([shooterId], name: "idx_stats_shooter_id")
+  @@index([season], name: "idx_season")
+  
+  // Composite: Get stats for shooter in a season
+  @@index([shooterId, season], name: "idx_shooter_season")
+  
+  @@map("shooting_stats")
 }
 
-// Generated analysis report
-model Report {
-  id              String     @id @default(cuid())
-  analysisId      String     @unique
-  analysis        Analysis   @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+// ============================================
+// TABLE 5: shooting_strengths (What they do well)
+// ============================================
+model ShootingStrength {
+  id                  Int       @id @default(autoincrement()) @map("strength_id")
+  shooterId           Int       @map("shooter_id")
+  strengthCategory    String?   @map("strength_category") @db.VarChar(100) // Release consistency/Arc/Balance/etc
+  description         String?   @db.Text              // Detailed explanation
+  confidenceScore     Decimal?  @map("confidence_score") @db.Decimal(3, 2) // 0-1 scale
+  createdAt           DateTime  @default(now()) @map("created_at")
 
-  tier            ReportTier
+  // Relations
+  shooter             Shooter   @relation(fields: [shooterId], references: [id], onDelete: Cascade)
 
-  // Report sections (stored as JSON for flexibility)
-  executiveSummary String?   @db.Text
-  detailedAnalysis Json?
-  flawsAnalysis   Json?
-  corrections     Json?
-  trainingPlan    Json?
-  shooterComparison Json?
-
-  // PDF generation
-  pdfUrl          String?
-
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  @@index([shooterId], name: "idx_strengths_shooter_id")
+  @@map("shooting_strengths")
 }
 
-// Enums
-enum Position {
-  POINT_GUARD
-  SHOOTING_GUARD
-  SMALL_FORWARD
-  POWER_FORWARD
-  CENTER
-  GUARD
-  FORWARD
+// ============================================
+// TABLE 6: shooting_weaknesses (Areas for improvement)
+// ============================================
+model ShootingWeakness {
+  id                  Int       @id @default(autoincrement()) @map("weakness_id")
+  shooterId           Int       @map("shooter_id")
+  weaknessCategory    String?   @map("weakness_category") @db.VarChar(100) // Footwork/Release/Balance/etc
+  description         String?   @db.Text              // Detailed explanation
+  severityScore       Decimal?  @map("severity_score") @db.Decimal(3, 2) // 0-1 scale (1 = severe)
+  createdAt           DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  shooter             Shooter   @relation(fields: [shooterId], references: [id], onDelete: Cascade)
+
+  @@index([shooterId], name: "idx_weaknesses_shooter_id")
+  @@map("shooting_weaknesses")
 }
 
-enum SkillLevel {
-  BEGINNER
-  INTERMEDIATE
-  ADVANCED
-  PROFESSIONAL
-}
+// ============================================
+// TABLE 7: habitual_mechanics (Shooting habits)
+// ============================================
+model HabitualMechanics {
+  id                    Int       @id @default(autoincrement()) @map("habit_id")
+  shooterId             Int       @map("shooter_id")
+  habitName             String?   @map("habit_name") @db.VarChar(100)  // Specific habit description
+  habitType             String?   @map("habit_type") @db.VarChar(50)   // Good/Bad/Neutral
+  frequency             String?   @db.VarChar(50)     // Always/Often/Sometimes/Rarely
+  impactOnPerformance   String?   @map("impact_on_performance") @db.Text
+  createdAt             DateTime  @default(now()) @map("created_at")
 
-enum BodyType {
-  ECTOMORPH    // Lean/tall
-  MESOMORPH    // Athletic/muscular
-  ENDOMORPH   // Stocky/broader
-  GUARD_BUILD  // Smaller, quick
-  FORWARD_BUILD // Medium, versatile
-  CENTER_BUILD  // Tall, powerful
-}
+  // Relations
+  shooter               Shooter   @relation(fields: [shooterId], references: [id], onDelete: Cascade)
 
-enum MediaType {
-  IMAGE
-  VIDEO
-}
-
-enum AnalysisStatus {
-  PENDING
-  PROCESSING
-  COMPLETED
-  FAILED
-}
-
-enum ReportTier {
-  BASIC
-  ULTRA
-  PREMIUM
-}
-
-enum FormCategory {
-  OPTIMAL
-  GOOD
-  NEEDS_IMPROVEMENT
-  CRITICAL
-}
-
-enum FlawCategory {
-  SHOULDER_POSITION
-  ELBOW_ALIGNMENT
-  HIP_ANGLE
-  KNEE_BEND
-  ANKLE_POSITION
-  RELEASE_POINT
-  RELEASE_ANGLE
-  FOLLOW_THROUGH
-  BALANCE
-  TIMING
-  FOOTWORK
-  GUIDE_HAND
-  SET_POINT
-  OTHER
-}
-
-enum FlawSeverity {
-  MINOR
-  MODERATE
-  MAJOR
-  CRITICAL
+  @@index([shooterId], name: "idx_habits_shooter_id")
+  @@map("habitual_mechanics")
 }

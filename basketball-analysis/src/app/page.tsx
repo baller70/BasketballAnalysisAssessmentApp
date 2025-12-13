@@ -6,32 +6,107 @@ import { Upload, User, Sparkles } from "lucide-react"
 import { MediaUpload } from "@/components/upload/MediaUpload"
 import { PlayerProfileForm } from "@/components/upload/PlayerProfileForm"
 import { useAnalysisStore } from "@/stores/analysisStore"
+import { analyzeShootingForm } from "@/services/visionAnalysis"
 
 export default function Home() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const { uploadedFile, playerProfile, setIsAnalyzing, setAnalysisProgress } = useAnalysisStore()
+  const [analysisError, setAnalysisError] = useState<string | null>(null)
+  const { 
+    uploadedFile, 
+    setIsAnalyzing, 
+    setAnalysisProgress, 
+    setVisionAnalysisResult, 
+    setUploadedImageBase64, 
+    setRoboflowBallDetection,
+    setError 
+  } = useAnalysisStore()
 
-  const isFormValid = uploadedFile && playerProfile.name && playerProfile.email && playerProfile.position
+  // Allow analysis once an upload exists (3+ images from MediaUpload)
+  const isFormValid = Boolean(uploadedFile)
 
   const handleAnalyze = async () => {
-    if (!isFormValid) return
+    if (!isFormValid || !uploadedFile) return
 
     setIsSubmitting(true)
     setIsAnalyzing(true)
     setAnalysisProgress(0)
+    setAnalysisError(null)
 
     try {
-      // Simulate progress for demo
-      for (let i = 0; i <= 100; i += 10) {
-        setAnalysisProgress(i)
-        await new Promise((resolve) => setTimeout(resolve, 200))
+      setAnalysisProgress(10)
+      
+      // Convert file to base64 for persistence across navigation
+      const reader = new FileReader()
+      const base64Promise = new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string)
+        reader.onerror = reject
+        reader.readAsDataURL(uploadedFile)
+      })
+      
+      const base64 = await base64Promise
+      setUploadedImageBase64(base64)
+      
+      setAnalysisProgress(20)
+      
+      // STEP 1: Call Roboflow to detect the basketball FIRST
+      console.log("🏀 Step 1: Detecting basketball with Roboflow...")
+      let roboflowBall: { x: number; y: number; width: number; height: number; confidence: number } | null = null
+      try {
+        const roboflowResponse = await fetch('/api/detect-basketball', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: base64 }),
+        })
+        const roboflowResult = await roboflowResponse.json()
+        
+        if (roboflowResult.success && roboflowResult.basketball) {
+          console.log("🏀 Basketball FOUND:", roboflowResult.basketball)
+          roboflowBall = roboflowResult.basketball
+          setRoboflowBallDetection(roboflowBall)
+        } else {
+          console.log("🏀 No basketball detected by Roboflow:", roboflowResult.message || roboflowResult.error)
+          setRoboflowBallDetection(null)
+        }
+      } catch (roboflowError) {
+        console.error("🏀 Roboflow detection failed (continuing with Vision AI):", roboflowError)
+        setRoboflowBallDetection(null)
       }
+      
+      setAnalysisProgress(40)
+      
+      // STEP 2: Call Vision AI to analyze the image
+      // Pass Roboflow ball position as anchor point if available
+      console.log("🤖 Step 2: Analyzing with Vision AI...")
+      const ballPositionForVision = roboflowBall ? {
+        x: roboflowBall.x,
+        y: roboflowBall.y,
+        confidence: roboflowBall.confidence
+      } : null
+      
+      if (ballPositionForVision) {
+        console.log("🎯 Using Roboflow ball position as anchor:", ballPositionForVision)
+      }
+      
+      const result = await analyzeShootingForm(uploadedFile, ballPositionForVision)
+      
+      setAnalysisProgress(80)
+
+      if (!result.success) {
+        throw new Error(result.error || "Analysis failed")
+      }
+
+      // Store the result
+      setVisionAnalysisResult(result)
+      setAnalysisProgress(100)
 
       // Navigate to results page
       router.push("/results/demo")
     } catch (error) {
       console.error("Analysis failed:", error)
+      const message = error instanceof Error ? error.message : "Analysis failed"
+      setAnalysisError(message)
+      setError(message)
     } finally {
       setIsSubmitting(false)
       setIsAnalyzing(false)
@@ -88,8 +163,13 @@ export default function Home() {
               )}
             </button>
             <p className="text-[#888] text-sm text-center mt-3">
-              Required fields: Name, Email, Position, and Video Upload
+              Requires at least 3 uploaded images; profile is optional.
             </p>
+            {analysisError && (
+              <p className="text-red-400 text-sm text-center mt-3 bg-red-900/20 p-3 rounded-md">
+                ⚠️ {analysisError}
+              </p>
+            )}
           </div>
         </div>
       </div>

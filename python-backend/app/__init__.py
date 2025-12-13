@@ -1,2 +1,0 @@
-# Basketball Analysis Python Backend
-
