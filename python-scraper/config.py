@@ -5,7 +5,8 @@ Configuration for Basketball Shooter Scraping Pipeline
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+# Load .env file but don't override existing environment variables
+load_dotenv(override=False)
 
 # Database Configuration (PostgreSQL on Abacus AI)
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5432/basketball_shooting_db")
