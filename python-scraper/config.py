@@ -11,6 +11,11 @@ load_dotenv(override=False)
 # Database Configuration (PostgreSQL on Abacus AI)
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5432/basketball_shooting_db")
 
+# Debug: Log the DATABASE_URL (mask password for security)
+import re
+masked_url = re.sub(r'://([^:]+):([^@]+)@', r'://\1:****@', DATABASE_URL)
+print(f"[CONFIG] Using DATABASE_URL: {masked_url}")
+
 # Next.js API URL (Abacus AI deployment)
 NEXTJS_API_URL = os.getenv("NEXTJS_API_URL", "http://localhost:3000/api")
 API_SECRET_KEY = os.getenv("API_SECRET_KEY", "")  # For authenticating with Next.js API
