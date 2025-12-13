@@ -16,28 +16,102 @@ import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import REQUEST_HEADERS, SCRAPE_DELAY_SECONDS, MAX_RETRIES
+from utils import AntiDetectionScraper
 
 
 BASE_URL = "https://www.basketball-reference.com"
 
+# Create a session for persistent connections with cookies
+session = requests.Session()
+session.headers.update(REQUEST_HEADERS)
+
+# Initialize anti-detection scraper with browser automation support
+anti_detection_scraper = AntiDetectionScraper(
+    rotate_user_agents=True,
+    min_delay=SCRAPE_DELAY_SECONDS,
+    max_delay=SCRAPE_DELAY_SECONDS + 2,
+    max_retries=MAX_RETRIES,
+    use_browser=False,  # Will auto-fallback to browser if needed
+)
+
 
 @sleep_and_retry
 @limits(calls=1, period=SCRAPE_DELAY_SECONDS)
-def fetch_page(url: str) -> BeautifulSoup:
+def fetch_page(url: str, use_anti_detection: bool = False) -> BeautifulSoup:
     """
-    Fetch and parse a page with rate limiting
+    Fetch and parse a page with rate limiting and improved error handling
+    
+    Args:
+        url: URL to fetch
+        use_anti_detection: Use anti-detection scraper (fallback for blocked requests)
+    
+    Returns:
+        BeautifulSoup object
     """
+    # If explicitly requested to use anti-detection, use it directly
+    if use_anti_detection:
+        try:
+            logger.info(f"Using anti-detection scraper for {url}")
+            soup = anti_detection_scraper.get_soup(url, fallback_to_browser=True)
+            return soup
+        except Exception as e:
+            logger.error(f"Anti-detection scraper failed for {url}: {e}")
+            raise
+    
+    # Try normal session-based approach first
     for attempt in range(MAX_RETRIES):
         try:
-            response = requests.get(url, headers=REQUEST_HEADERS, timeout=30)
+            # Use session for persistent connections and cookie management
+            response = session.get(url, timeout=30)
+            
+            # Log the status code for debugging
+            logger.info(f"Request to {url}: Status {response.status_code}")
+            
             response.raise_for_status()
             return BeautifulSoup(response.content, "lxml")
+            
+        except requests.exceptions.HTTPError as e:
+            status_code = e.response.status_code if e.response else None
+            logger.warning(f"Attempt {attempt + 1}/{MAX_RETRIES} failed with HTTP {status_code}: {e}")
+            
+            # For 403/429 errors, wait longer before retrying
+            if status_code in [403, 429, 503]:
+                wait_time = SCRAPE_DELAY_SECONDS * (attempt + 2) * 3
+                logger.info(f"Server blocking/rate limit {status_code}, waiting {wait_time}s before retry...")
+                time.sleep(wait_time)
+                
+                # On last attempt, try anti-detection scraper
+                if attempt == MAX_RETRIES - 1:
+                    logger.info("Normal requests failed, trying anti-detection scraper with browser")
+                    try:
+                        soup = anti_detection_scraper.get_soup(url, fallback_to_browser=True)
+                        return soup
+                    except Exception as e2:
+                        logger.error(f"Anti-detection scraper also failed: {e2}")
+                        raise e
+            elif attempt < MAX_RETRIES - 1:
+                time.sleep(SCRAPE_DELAY_SECONDS * (attempt + 1))
+            else:
+                logger.error(f"All retry attempts exhausted for {url}")
+                # Last resort: try anti-detection
+                try:
+                    soup = anti_detection_scraper.get_soup(url, fallback_to_browser=True)
+                    return soup
+                except:
+                    raise e
+                
         except requests.exceptions.RequestException as e:
-            logger.warning(f"Attempt {attempt + 1} failed for {url}: {e}")
+            logger.warning(f"Attempt {attempt + 1}/{MAX_RETRIES} failed: {e}")
             if attempt < MAX_RETRIES - 1:
                 time.sleep(SCRAPE_DELAY_SECONDS * (attempt + 1))
             else:
-                raise
+                logger.error(f"All retry attempts exhausted for {url}")
+                # Last resort: try anti-detection
+                try:
+                    soup = anti_detection_scraper.get_soup(url, fallback_to_browser=True)
+                    return soup
+                except:
+                    raise
     
     return None
 

@@ -12,6 +12,10 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, Session
 from loguru import logger
 import pandas as pd
+from dotenv import load_dotenv
+
+# Load .env file first
+load_dotenv(override=False)
 
 # Load DATABASE_URL from environment (optional for deployment)
 DATABASE_URL = os.getenv("DATABASE_URL", None)

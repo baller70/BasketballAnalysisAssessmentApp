@@ -14,26 +14,62 @@ import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import NBA_STATS_HEADERS, NBA_STATS_API_BASE, SCRAPE_DELAY_SECONDS, MAX_RETRIES
+from utils import AntiDetectionScraper
+
+# Create a session for persistent connections
+session = requests.Session()
+session.headers.update(NBA_STATS_HEADERS)
+
+# Initialize anti-detection scraper for fallback
+anti_detection_scraper = AntiDetectionScraper(
+    rotate_user_agents=True,
+    min_delay=SCRAPE_DELAY_SECONDS,
+    max_delay=SCRAPE_DELAY_SECONDS + 2,
+    max_retries=MAX_RETRIES,
+    use_browser=False,  # Start with requests, can enable browser if needed
+)
 
 
 @sleep_and_retry
 @limits(calls=1, period=SCRAPE_DELAY_SECONDS)
 def make_nba_api_request(endpoint: str, params: dict) -> dict:
     """
-    Make a rate-limited request to NBA Stats API
+    Make a rate-limited request to NBA Stats API with improved error handling
     """
     url = f"{NBA_STATS_API_BASE}/{endpoint}"
     
     for attempt in range(MAX_RETRIES):
         try:
-            response = requests.get(url, headers=NBA_STATS_HEADERS, params=params, timeout=30)
+            # Use session for persistent connections
+            response = session.get(url, params=params, timeout=30)
+            
+            # Log the status code for debugging
+            logger.info(f"Request to {endpoint}: Status {response.status_code}")
+            
             response.raise_for_status()
             return response.json()
+            
+        except requests.exceptions.HTTPError as e:
+            status_code = e.response.status_code if e.response else None
+            logger.warning(f"Attempt {attempt + 1}/{MAX_RETRIES} failed with HTTP {status_code}: {e}")
+            
+            # For 403/500 errors, wait longer before retrying
+            if status_code in [403, 500, 503]:
+                wait_time = SCRAPE_DELAY_SECONDS * (attempt + 2) * 2
+                logger.info(f"Server error {status_code}, waiting {wait_time}s before retry...")
+                time.sleep(wait_time)
+            elif attempt < MAX_RETRIES - 1:
+                time.sleep(SCRAPE_DELAY_SECONDS * (attempt + 1))
+            else:
+                logger.error(f"All retry attempts exhausted for {endpoint}")
+                raise
+                
         except requests.exceptions.RequestException as e:
-            logger.warning(f"Attempt {attempt + 1} failed: {e}")
+            logger.warning(f"Attempt {attempt + 1}/{MAX_RETRIES} failed: {e}")
             if attempt < MAX_RETRIES - 1:
                 time.sleep(SCRAPE_DELAY_SECONDS * (attempt + 1))
             else:
+                logger.error(f"All retry attempts exhausted for {endpoint}")
                 raise
     
     return {}
