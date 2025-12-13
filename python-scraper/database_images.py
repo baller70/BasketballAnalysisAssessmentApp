@@ -7,7 +7,7 @@ import os
 from sqlalchemy import text
 from loguru import logger
 from typing import List, Dict, Optional
-from database import get_db_session, engine
+from database import get_db_session, get_engine
 
 
 def insert_shooter_image(

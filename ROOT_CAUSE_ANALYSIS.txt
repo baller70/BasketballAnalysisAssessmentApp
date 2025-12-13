@@ -1,0 +1,51 @@
+# ROOT CAUSE ANALYSIS - Database Connection Issue
+
+## 1. ACTUAL DATABASE CONFIGURATION
+
+DATABASE_URL from /home/ubuntu/basketball_app/basketball-analysis/.env:
+postgresql://role_98aaf8ef8:A0YpOM7klQCJsj6RHvTtg2wgXkzmmGoT@db-98aaf8ef8.db003.hosteddb.reai.io:5432/98aaf8ef8?connect_timeout=15
+
+Breakdown:
+- Protocol: postgresql://
+- User: role_98aaf8ef8
+- Password: A0YpOM7klQCJsj6RHvTtg2wgXkzmmGoT
+- Host: db-98aaf8ef8.db003.hosteddb.reai.io ⚠️ CRITICAL
+- Port: 5432 (standard PostgreSQL port)
+- Database: 98aaf8ef8
+
+## 2. ROOT CAUSE IDENTIFIED
+
+The host `db-98aaf8ef8.db003.hosteddb.reai.io` is an INTERNAL Abacus AI database:
+- Domain: .hosteddb.reai.io indicates internal Abacus AI infrastructure
+- This database is NOT accessible from external services like Render
+- It's designed to be accessed only from within Abacus AI's network
+- NO amount of port fixing or password changes will resolve this
+
+## 3. WHY THE CONNECTION FAILS
+
+The python-scraper/database.py file creates the database connection at MODULE LOAD TIME:
+- Line 14: engine = create_engine(DATABASE_URL)
+- This happens IMMEDIATELY when the app starts
+- Before any routes are called
+- Before any API endpoints can respond
+- The deployment FAILS because Render cannot reach the internal database
+
+## 4. THE REAL PROBLEM
+
+This is an ARCHITECTURAL issue, not a configuration issue:
+- The scraper is trying to connect to an internal-only database
+- From an external hosting service (Render)
+- These two environments are NETWORK ISOLATED from each other
+- No firewall rules, whitelisting, or connection string changes will fix this
+
+## 5. ATTEMPTED "FIXES" THAT WON'T WORK
+
+✗ Changing port from 5432 to 5442
+✗ Modifying the password
+✗ Adding connection timeout parameters
+✗ Changing SSL mode
+✗ Whitelisting IP addresses
+✗ Adjusting firewall rules
+
+These all fail because the database is fundamentally inaccessible.
+

@@ -9,12 +9,16 @@ from dotenv import load_dotenv
 load_dotenv(override=False)
 
 # Database Configuration (PostgreSQL on Abacus AI)
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@localhost:5432/basketball_shooting_db")
+# Optional: Can deploy without DATABASE_URL (database operations will fail gracefully)
+DATABASE_URL = os.getenv("DATABASE_URL", None)
 
-# Debug: Log the DATABASE_URL (mask password for security)
-import re
-masked_url = re.sub(r'://([^:]+):([^@]+)@', r'://\1:****@', DATABASE_URL)
-print(f"[CONFIG] Using DATABASE_URL: {masked_url}")
+# Debug: Log the DATABASE_URL status (mask password for security)
+if DATABASE_URL:
+    import re
+    masked_url = re.sub(r'://([^:]+):([^@]+)@', r'://\1:****@', DATABASE_URL)
+    print(f"[CONFIG] ✅ DATABASE_URL configured: {masked_url}")
+else:
+    print(f"[CONFIG] ⚠️  DATABASE_URL not configured (scraper will deploy but database operations will fail)")
 
 # Next.js API URL (Abacus AI deployment)
 NEXTJS_API_URL = os.getenv("NEXTJS_API_URL", "http://localhost:3000/api")

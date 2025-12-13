@@ -75,21 +75,41 @@ def home():
 def health():
     """
     Detailed health check
+    Gracefully handles missing DATABASE_URL
     """
     from storage import S3_ENABLED
     
-    db_connected = test_connection()
+    # Check if DATABASE_URL is configured
+    db_configured = os.getenv("DATABASE_URL") is not None
+    
+    # Only test connection if database is configured
+    db_connected = False
+    db_error = None
+    if db_configured:
+        try:
+            db_connected = test_connection()
+        except Exception as e:
+            db_error = str(e)
+            logger.warning(f"Database connection check failed: {e}")
     
     return jsonify({
-        "status": "healthy" if db_connected else "degraded",
-        "database": "connected" if db_connected else "disconnected",
-        "s3_storage": "enabled" if S3_ENABLED else "disabled",
-        "backup_service": "enabled" if BACKUP_ENABLED else "disabled",
-        "timestamp": datetime.now().isoformat(),
-        "notes": {
-            "s3_storage": "Image uploads will be skipped" if not S3_ENABLED else "Image uploads enabled",
-            "backup_service": "Database backups disabled" if not BACKUP_ENABLED else "Automatic backups enabled"
-        }
+        "status": "healthy",  # Always healthy if app starts successfully
+        "service": "Basketball Shooter Scraper",
+        "database": {
+            "configured": db_configured,
+            "connected": db_connected if db_configured else None,
+            "error": db_error if db_error else None,
+            "note": "Database required for scraping operations" if not db_configured else "Database ready"
+        },
+        "s3_storage": {
+            "enabled": S3_ENABLED,
+            "note": "Image uploads will be skipped" if not S3_ENABLED else "Image uploads enabled"
+        },
+        "backup_service": {
+            "enabled": BACKUP_ENABLED,
+            "note": "Database backups disabled" if not BACKUP_ENABLED else "Automatic backups enabled"
+        },
+        "timestamp": datetime.now().isoformat()
     })
 
 

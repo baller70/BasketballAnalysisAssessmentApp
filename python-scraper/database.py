@@ -1,25 +1,70 @@
 """
 Database Connection and Operations
 Connects to PostgreSQL on Abacus AI
+
+IMPORTANT: Database connection is LAZY (only created when needed)
+This allows the app to start without DATABASE_URL for deployment
 """
 
 import os
+from typing import Optional, Any
 from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 from loguru import logger
 import pandas as pd
-from config import DATABASE_URL
+
+# Load DATABASE_URL from environment (optional for deployment)
+DATABASE_URL = os.getenv("DATABASE_URL", None)
+
+# Global engine and session maker (created lazily)
+_engine: Optional[Any] = None
+_SessionLocal: Optional[Any] = None
 
 
-# Create database engine
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+def get_engine():
+    """
+    Lazy database engine creation
+    Only connects when actually needed
+    
+    Raises:
+        Exception: If DATABASE_URL is not configured
+    """
+    global _engine
+    
+    if DATABASE_URL is None:
+        raise Exception(
+            "❌ DATABASE_URL not configured. "
+            "Database operations require a valid DATABASE_URL environment variable. "
+            "Set DATABASE_URL to enable scraping functionality."
+        )
+    
+    if _engine is None:
+        logger.info(f"Creating database engine for: {DATABASE_URL.split('@')[1] if '@' in DATABASE_URL else 'database'}")
+        _engine = create_engine(DATABASE_URL)
+        logger.info("✅ Database engine created successfully")
+    
+    return _engine
 
 
-def get_db_session():
+def get_session_maker():
+    """
+    Get or create the session maker
+    """
+    global _SessionLocal
+    
+    if _SessionLocal is None:
+        engine = get_engine()
+        _SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    
+    return _SessionLocal
+
+
+def get_db_session() -> Session:
     """
     Get a database session
+    Only connects to database when this is called
     """
+    SessionLocal = get_session_maker()
     session = SessionLocal()
     try:
         return session
@@ -223,7 +268,8 @@ def insert_players_to_db(df: pd.DataFrame, table_name: str = "shooters", if_exis
         # Rename columns to match database schema
         insert_df = insert_df.rename(columns={k: v for k, v in column_mapping.items() if k in existing_cols})
         
-        # Insert using pandas to_sql
+        # Insert using pandas to_sql (uses lazy engine)
+        engine = get_engine()
         rows_inserted = insert_df.to_sql(
             table_name, 
             con=engine, 
