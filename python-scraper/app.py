@@ -12,8 +12,12 @@ from datetime import datetime
 from main import run_nba_only, run_historical_only, run_full_scrape, run_image_pipeline
 from database import test_connection, get_all_shooters, get_shooter_by_name
 from database_images import get_shooter_images, get_shooters_without_images
-from backup import backup_service, BackupManager
-from backup.backup_manager import backup_database, verify_backup
+from backup import BACKUP_ENABLED, backup_service, BackupManager
+try:
+    from backup.backup_manager import backup_database, verify_backup
+except ImportError:
+    backup_database = None
+    verify_backup = None
 
 app = Flask(__name__)
 
@@ -30,6 +34,24 @@ def require_api_key(f):
         
         if API_KEY and api_key != API_KEY:
             return jsonify({"error": "Unauthorized"}), 401
+        
+        return f(*args, **kwargs)
+    
+    decorated.__name__ = f.__name__
+    return decorated
+
+
+def require_backup_enabled(f):
+    """
+    Decorator to check if backup is enabled
+    """
+    def decorated(*args, **kwargs):
+        if not BACKUP_ENABLED:
+            return jsonify({
+                "error": "Backup not configured",
+                "message": "S3 credentials required for backup operations",
+                "hint": "Set AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and BACKUP_BUCKET"
+            }), 503
         
         return f(*args, **kwargs)
     
@@ -54,12 +76,20 @@ def health():
     """
     Detailed health check
     """
+    from storage import S3_ENABLED
+    
     db_connected = test_connection()
     
     return jsonify({
         "status": "healthy" if db_connected else "degraded",
         "database": "connected" if db_connected else "disconnected",
+        "s3_storage": "enabled" if S3_ENABLED else "disabled",
+        "backup_service": "enabled" if BACKUP_ENABLED else "disabled",
         "timestamp": datetime.now().isoformat(),
+        "notes": {
+            "s3_storage": "Image uploads will be skipped" if not S3_ENABLED else "Image uploads enabled",
+            "backup_service": "Database backups disabled" if not BACKUP_ENABLED else "Automatic backups enabled"
+        }
     })
 
 
@@ -287,6 +317,7 @@ def nextjs_webhook():
 
 @app.route("/api/backup/daily", methods=["POST"])
 @require_api_key
+@require_backup_enabled
 def backup_daily():
     """
     Simple daily backup - single SQL file to S3
@@ -306,6 +337,7 @@ def backup_daily():
 
 @app.route("/api/backup/full", methods=["POST"])
 @require_api_key
+@require_backup_enabled
 def backup_full():
     """
     Trigger full database backup
@@ -331,6 +363,7 @@ def backup_full():
 
 @app.route("/api/backup/critical", methods=["POST"])
 @require_api_key
+@require_backup_enabled
 def backup_critical():
     """
     Backup critical tables only (shooters, images)
@@ -355,6 +388,7 @@ def backup_critical():
 
 @app.route("/api/backup/list", methods=["GET"])
 @require_api_key
+@require_backup_enabled
 def list_backups():
     """
     List available backups
@@ -380,6 +414,7 @@ def list_backups():
 
 @app.route("/api/backup/restore", methods=["POST"])
 @require_api_key
+@require_backup_enabled
 def restore_backup():
     """
     Restore from a backup
@@ -413,6 +448,7 @@ def restore_backup():
 
 @app.route("/api/backup/verify", methods=["POST"])
 @require_api_key
+@require_backup_enabled
 def verify_backup_endpoint():
     """
     Verify backup integrity
@@ -447,6 +483,7 @@ def verify_backup_endpoint():
 
 @app.route("/api/backup/cleanup", methods=["POST"])
 @require_api_key
+@require_backup_enabled
 def cleanup_backups():
     """
     Remove old backups
@@ -474,6 +511,7 @@ def cleanup_backups():
 
 @app.route("/api/backup/scheduler/status", methods=["GET"])
 @require_api_key
+@require_backup_enabled
 def backup_scheduler_status():
     """
     Get backup scheduler status
@@ -483,6 +521,7 @@ def backup_scheduler_status():
 
 @app.route("/api/backup/scheduler/start", methods=["POST"])
 @require_api_key
+@require_backup_enabled
 def start_backup_scheduler():
     """
     Start the backup scheduler
@@ -504,6 +543,7 @@ def start_backup_scheduler():
 
 @app.route("/api/backup/scheduler/stop", methods=["POST"])
 @require_api_key
+@require_backup_enabled
 def stop_backup_scheduler():
     """
     Stop the backup scheduler

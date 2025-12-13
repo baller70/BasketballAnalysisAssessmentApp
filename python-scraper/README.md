@@ -4,6 +4,14 @@ Python web scraping service for collecting NBA player data.
 
 **Deploy to:** Render or Railway (NOT Abacus AI)
 
+## 🚀 Quick Deploy (No AWS Required)
+
+**NEW**: You can now deploy without AWS S3 credentials! The scraper will populate the database with player data while skipping image uploads.
+
+- ✅ **Required**: `DATABASE_URL` + `API_SECRET_KEY` only
+- ⚠️ **Optional**: AWS S3 credentials (for image storage)
+- 📖 **Guide**: See [RENDER_DEPLOYMENT_GUIDE.md](./RENDER_DEPLOYMENT_GUIDE.md) for step-by-step instructions
+
 ## Architecture
 
 ```

@@ -4,7 +4,8 @@
 # HTTP Requests
 requests==2.31.0
 
-# AWS S3
+# AWS S3 (OPTIONAL - skip if deploying without S3)
+# Leave this installed; the code will auto-detect if credentials are configured
 boto3==1.34.100
 
 # HTML Parsing

@@ -12,7 +12,7 @@ import pandas as pd
 from scrapers import scrape_nba_players, scrape_basketball_reference, batch_download_images
 from database import insert_shooters_bulk, test_connection, get_all_shooters
 from utils import clean_player_data, validate_shooter_data
-from storage import batch_upload_to_s3
+from storage import batch_upload_to_s3, S3_ENABLED
 from database_images import insert_shooter_images_bulk, update_shooter_profile_image
 
 
@@ -148,34 +148,43 @@ def run_image_pipeline(limit: int = 50):
         logger.warning("No images downloaded")
         return False
     
-    # Step 2: Upload to S3
-    logger.info("\n--- PHASE 2: Uploading to S3 ---")
-    all_uploaded = batch_upload_to_s3(all_downloads, players_info)
-    
-    total_uploaded = sum(len(imgs) for imgs in all_uploaded.values())
-    logger.info(f"Uploaded {total_uploaded} images to S3")
-    
-    # Step 3: Insert image records into database
-    logger.info("\n--- PHASE 3: Database Insertion ---")
-    for player_name, images in all_uploaded.items():
-        shooter_info = players_info.get(player_name, {})
-        shooter_id = shooter_info.get("shooter_id")
+    # Step 2: Upload to S3 (OPTIONAL - skip if S3 not configured)
+    if S3_ENABLED:
+        logger.info("\n--- PHASE 2: Uploading to S3 ---")
+        all_uploaded = batch_upload_to_s3(all_downloads, players_info)
         
-        if shooter_id and images:
-            # Insert image records
-            insert_shooter_images_bulk(shooter_id, images)
+        total_uploaded = sum(len(imgs) for imgs in all_uploaded.values())
+        logger.info(f"Uploaded {total_uploaded} images to S3")
+        
+        # Step 3: Insert image records into database
+        logger.info("\n--- PHASE 3: Database Insertion ---")
+        for player_name, images in all_uploaded.items():
+            shooter_info = players_info.get(player_name, {})
+            shooter_id = shooter_info.get("shooter_id")
             
-            # Update profile image (use first primary image)
-            primary_images = [img for img in images if img.get("is_primary")]
-            if primary_images:
-                update_shooter_profile_image(shooter_id, primary_images[0]["s3_url"])
-            elif images:
-                update_shooter_profile_image(shooter_id, images[0]["s3_url"])
-    
-    logger.info("\n" + "=" * 50)
-    logger.info("IMAGE PIPELINE COMPLETE")
-    logger.info(f"Total images processed: {total_uploaded}")
-    logger.info("=" * 50)
+            if shooter_id and images:
+                # Insert image records
+                insert_shooter_images_bulk(shooter_id, images)
+                
+                # Update profile image (use first primary image)
+                primary_images = [img for img in images if img.get("is_primary")]
+                if primary_images:
+                    update_shooter_profile_image(shooter_id, primary_images[0]["s3_url"])
+                elif images:
+                    update_shooter_profile_image(shooter_id, images[0]["s3_url"])
+        
+        logger.info("\n" + "=" * 50)
+        logger.info("IMAGE PIPELINE COMPLETE")
+        logger.info(f"Total images processed: {total_uploaded}")
+        logger.info("=" * 50)
+    else:
+        logger.warning("\n⚠️  PHASE 2 & 3 SKIPPED: S3 storage not configured")
+        logger.warning("Images downloaded locally but not uploaded to cloud storage")
+        logger.warning("To enable S3 storage, set AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and S3_BUCKET_NAME")
+        logger.info("\n" + "=" * 50)
+        logger.info("IMAGE PIPELINE COMPLETE (S3 DISABLED)")
+        logger.info(f"Total images downloaded: {total_downloaded}")
+        logger.info("=" * 50)
     
     return True
 
