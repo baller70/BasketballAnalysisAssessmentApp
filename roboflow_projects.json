@@ -1,0 +1,31 @@
+{
+  "workspace": "tbf-inc",
+  "api_key_private": "rDWynPrytSysASUlyGvK",
+  "api_key_publishable": "rf_qisv7ZQd27SzKITWRc2blZZo5F83",
+  "projects": {
+    "keypoint_detection": {
+      "name": "Basketball-Shooting-Form-Keypoints",
+      "type": "object-detection",
+      "license": "MIT",
+      "annotation": "bounding-box",
+      "project_id": "basketball_shooting_form_keypoints",
+      "url": "https://app.roboflow.com/tbf-inc/basketball-shooting-form-keypoints"
+    },
+    "classification": {
+      "name": "Basketball-Form-Quality-Classifier",
+      "type": "multi-label-classification",
+      "license": "MIT",
+      "annotation": "classification",
+      "project_id": "basketball_form_quality_classifier",
+      "url": "https://app.roboflow.com/tbf-inc/basketball-form-quality-classifier"
+    },
+    "object_detection": {
+      "name": "Basketball-Ball-Trajectory-Tracker",
+      "type": "object-detection",
+      "license": "MIT",
+      "annotation": "bounding-box",
+      "project_id": "basketball_ball_trajectory_tracker",
+      "url": "https://app.roboflow.com/tbf-inc/basketball-ball-trajectory-tracker"
+    }
+  }
+}

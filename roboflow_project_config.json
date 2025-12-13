@@ -1,0 +1,47 @@
+{
+  "workspace": {
+    "name": "TBF Inc",
+    "id": "tbf-inc",
+    "url": "https://app.roboflow.com/tbf-inc"
+  },
+  "api_keys": {
+    "private": "rDWynPrytSysASUlyGvK",
+    "publishable": "rf_qisv7ZQd27SzKITWRc2blZZo5F83"
+  },
+  "projects": [
+    {
+      "name": "basketball-ball-trajectory-tracker",
+      "id": "basketball-ball-trajectory-tracker",
+      "full_id": "tbf-inc/basketball-ball-trajectory-tracker",
+      "type": "detection/classification",
+      "url": "https://app.roboflow.com/tbf-inc/basketball-ball-trajectory-tracker",
+      "api_endpoint": "https://detect.roboflow.com/tbf-inc/basketball-ball-trajectory-tracker/{version}",
+      "inference_ready": false
+    },
+    {
+      "name": "basketball-form-quality-classifier",
+      "id": "basketball-form-quality-classifier",
+      "full_id": "tbf-inc/basketball-form-quality-classifier",
+      "type": "detection/classification",
+      "url": "https://app.roboflow.com/tbf-inc/basketball-form-quality-classifier",
+      "api_endpoint": "https://detect.roboflow.com/tbf-inc/basketball-form-quality-classifier/{version}",
+      "inference_ready": false
+    },
+    {
+      "name": "basketball-shooting-form-keypoints",
+      "id": "basketball-shooting-form-keypoints",
+      "full_id": "tbf-inc/basketball-shooting-form-keypoints",
+      "type": "detection/classification",
+      "url": "https://app.roboflow.com/tbf-inc/basketball-shooting-form-keypoints",
+      "api_endpoint": "https://detect.roboflow.com/tbf-inc/basketball-shooting-form-keypoints/{version}",
+      "inference_ready": false
+    }
+  ],
+  "next_steps": [
+    "Upload training images to each project",
+    "Annotate images using RoboFlow Annotate tool",
+    "Generate dataset version with preprocessing",
+    "Train models on RoboFlow platform",
+    "Deploy trained models for inference"
+  ]
+}
