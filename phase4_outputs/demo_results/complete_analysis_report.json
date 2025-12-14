@@ -1,0 +1,11 @@
+{
+  "success": false,
+  "error": "All RoboFlow analyses failed",
+  "roboflow_results": [
+    {
+      "image_path": "/home/ubuntu/basketball_app/training_data/form_quality_classifier/good_form/10.jpg",
+      "error": "Keypoint detection failed",
+      "success": false
+    }
+  ]
+}

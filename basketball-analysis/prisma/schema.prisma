@@ -61,38 +61,111 @@ model UserAnalysis {
   imageUrl              String?   @map("image_url") @db.VarChar(500)
   s3Path                String?   @map("s3_path") @db.VarChar(500)
   
+  // Phase 4: RoboFlow Pose Detection Data
+  roboflowPoseData      Json?     @map("roboflow_pose_data")    // 10 body points from pose estimation
+  roboflowDetection     Json?     @map("roboflow_detection")    // Basketball detection
+  shootingPhase         String?   @map("shooting_phase") @db.VarChar(50) // stance/dip/rise/release/follow_through
+  
+  // Phase 4: Calculated Angles
+  elbowAngle            Decimal?  @map("elbow_angle") @db.Decimal(5, 2)
+  kneeAngle             Decimal?  @map("knee_angle") @db.Decimal(5, 2)
+  wristAngle            Decimal?  @map("wrist_angle") @db.Decimal(5, 2)
+  shoulderAngle         Decimal?  @map("shoulder_angle") @db.Decimal(5, 2)
+  hipAngle              Decimal?  @map("hip_angle") @db.Decimal(5, 2)
+  releaseAngle          Decimal?  @map("release_angle") @db.Decimal(5, 2)
+  
   // Analysis Results (JSON)
-  visionAnalysis        Json?     @map("vision_analysis")      // GPT-4 Vision response
-  bodyPositions         Json?     @map("body_positions")       // Detected body part positions
-  roboflowDetection     Json?     @map("roboflow_detection")   // Basketball detection
+  visionAnalysis        Json?     @map("vision_analysis")       // GPT-4 Vision response
+  bodyPositions         Json?     @map("body_positions")        // Detected body part positions
+  
+  // Phase 4: Visual Enhancements
+  annotatedImageUrl     String?   @map("annotated_image_url") @db.VarChar(500) // ShotStack/Custom annotated image
+  annotatedS3Path       String?   @map("annotated_s3_path") @db.VarChar(500)
+  visualOverlays        Json?     @map("visual_overlays")       // Overlay configuration data
   
   // Scores
   overallScore          Decimal?  @map("overall_score") @db.Decimal(5, 2)
   formScore             Decimal?  @map("form_score") @db.Decimal(5, 2)
   balanceScore          Decimal?  @map("balance_score") @db.Decimal(5, 2)
   releaseScore          Decimal?  @map("release_score") @db.Decimal(5, 2)
+  consistencyScore      Decimal?  @map("consistency_score") @db.Decimal(5, 2)
   
   // Feedback
   strengths             Json?                                   // Array of strength objects
   improvements          Json?                                   // Array of improvement objects
+  drills                Json?                                   // Array of recommended drills
   coachingNotes         String?   @map("coaching_notes") @db.Text
   
   // Matched Shooter (who they're most similar to)
   matchedShooterId      Int?      @map("matched_shooter_id")
   matchConfidence       Decimal?  @map("match_confidence") @db.Decimal(3, 2)
+  similarShooters       Json?     @map("similar_shooters")      // Top 3-5 similar shooters
+  
+  // Processing Status
+  processingStatus      String?   @map("processing_status") @db.VarChar(50) @default("pending") // pending/processing/completed/failed
+  processingError       String?   @map("processing_error") @db.Text
   
   // Metadata
   createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
   
   // Relations
   userProfile           UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  historyEntries        AnalysisHistory[]
   
   // Indexes
   @@index([userProfileId], name: "idx_analysis_user")
   @@index([createdAt], name: "idx_analysis_date")
   @@index([matchedShooterId], name: "idx_analysis_matched")
+  @@index([shootingPhase], name: "idx_shooting_phase")
+  @@index([processingStatus], name: "idx_processing_status")
   
   @@map("user_analyses")
+}
+
+// ============================================
+// ANALYSIS HISTORY (Track progress over time)
+// ============================================
+model AnalysisHistory {
+  id                    String    @id @default(cuid())
+  userProfileId         String    @map("user_profile_id")
+  analysisId            String    @map("analysis_id")
+  
+  // Snapshot of key metrics at time of analysis
+  overallScore          Decimal   @map("overall_score") @db.Decimal(5, 2)
+  formScore             Decimal?  @map("form_score") @db.Decimal(5, 2)
+  balanceScore          Decimal?  @map("balance_score") @db.Decimal(5, 2)
+  releaseScore          Decimal?  @map("release_score") @db.Decimal(5, 2)
+  consistencyScore      Decimal?  @map("consistency_score") @db.Decimal(5, 2)
+  
+  // Improvement tracking
+  scoreChange           Decimal?  @map("score_change") @db.Decimal(5, 2) // Change from previous analysis
+  improvementAreas      Json?     @map("improvement_areas")              // What improved
+  regressionAreas       Json?     @map("regression_areas")               // What got worse
+  
+  // Key angles snapshot
+  elbowAngle            Decimal?  @map("elbow_angle") @db.Decimal(5, 2)
+  kneeAngle             Decimal?  @map("knee_angle") @db.Decimal(5, 2)
+  releaseAngle          Decimal?  @map("release_angle") @db.Decimal(5, 2)
+  
+  // Progress notes
+  progressNotes         String?   @map("progress_notes") @db.Text
+  milestonesAchieved    Json?     @map("milestones_achieved")           // Array of milestone objects
+  
+  // Metadata
+  analysisDate          DateTime  @map("analysis_date") @default(now())
+  createdAt             DateTime  @default(now()) @map("created_at")
+  
+  // Relations
+  analysis              UserAnalysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  
+  // Indexes
+  @@index([userProfileId], name: "idx_history_user")
+  @@index([analysisDate], name: "idx_history_date")
+  @@index([analysisId], name: "idx_history_analysis")
+  @@index([userProfileId, analysisDate], name: "idx_history_user_date")
+  
+  @@map("analysis_history")
 }
 
 // ============================================

@@ -1,0 +1,42 @@
+{
+  "upload_date": "2025-12-13 15:53:29",
+  "total_images": 7279,
+  "projects": {
+    "basketball-shooting-keypoints": {
+      "type": "instance-segmentation",
+      "description": "Basketball player pose keypoint detection for shooting form analysis",
+      "local_path": "/home/ubuntu/basketball_app/training_data/shooting_form_keypoints",
+      "image_count": 1731,
+      "subcategories": {
+        "45_degree": 198,
+        "professional": 773,
+        "front_view": 480,
+        "side_view": 252,
+        "amateur": 28
+      }
+    },
+    "basketball-form-quality": {
+      "type": "classification",
+      "description": "Basketball shooting form quality classification",
+      "local_path": "/home/ubuntu/basketball_app/training_data/form_quality_classifier",
+      "image_count": 352,
+      "subcategories": {
+        "good_form": 28,
+        "needs_work": 15,
+        "poor_form": 9,
+        "excellent_form": 300
+      }
+    },
+    "basketball-ball-tracking": {
+      "type": "object-detection",
+      "description": "Basketball ball detection and trajectory tracking",
+      "local_path": "/home/ubuntu/basketball_app/training_data/ball_trajectory",
+      "image_count": 5196,
+      "subcategories": {
+        "free_throws": 200,
+        "jump_shots": 300,
+        "various_angles": 4696
+      }
+    }
+  }
+}

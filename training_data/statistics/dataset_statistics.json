@@ -1,0 +1,34 @@
+{
+  "total_images": 7280,
+  "by_category": {
+    "shooting_form_keypoints": 1731,
+    "form_quality_classifier": 353,
+    "ball_trajectory": 5196
+  },
+  "by_subcategory": {
+    "shooting_form_keypoints/45_degree": 198,
+    "shooting_form_keypoints/professional": 773,
+    "shooting_form_keypoints/front_view": 480,
+    "shooting_form_keypoints/side_view": 252,
+    "shooting_form_keypoints/amateur": 28,
+    "form_quality_classifier/good_form": 28,
+    "form_quality_classifier/needs_work": 15,
+    "form_quality_classifier/poor_form": 10,
+    "form_quality_classifier/excellent_form": 300,
+    "ball_trajectory/free_throws": 200,
+    "ball_trajectory/jump_shots": 300,
+    "ball_trajectory/various_angles": 4696
+  },
+  "formats": {
+    ".png": 1569,
+    ".jpg": 5711
+  },
+  "resolution_stats": {
+    "average_width": 860.1611263736264,
+    "average_height": 708.5163461538461
+  },
+  "file_size_stats": {
+    "total_mb": 3955.8543519973755,
+    "average_mb": 0.5433865868128263
+  }
+}

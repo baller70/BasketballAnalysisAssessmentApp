@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShotStack Template Samples - Basketball Analysis</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #ffffff;
+            padding: 40px 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+        
+        h1 {
+            font-size: 3em;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            font-size: 1.2em;
+            color: #a0a0a0;
+            margin-bottom: 20px;
+        }
+        
+        .note {
+            background: rgba(0, 255, 136, 0.1);
+            border-left: 4px solid #00ff88;
+            padding: 20px;
+            margin: 30px auto;
+            border-radius: 8px;
+            max-width: 800px;
+        }
+        
+        .note h3 {
+            color: #00ff88;
+            margin-bottom: 10px;
+        }
+        
+        .note p {
+            color: #c0c0c0;
+            font-size: 0.95em;
+        }
+        
+        .samples {
+            display: flex;
+            flex-direction: column;
+            gap: 60px;
+            margin-top: 40px;
+        }
+        
+        .sample {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 15px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .sample h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 2em;
+        }
+        
+        .sample-image {
+            width: 100%;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        
+        .sample-image:hover {
+            transform: scale(1.02);
+        }
+        
+        .description {
+            color: #c0c0c0;
+            font-size: 1.1em;
+            margin: 20px 0;
+        }
+        
+        .features {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 25px 0;
+        }
+        
+        .features li {
+            padding: 12px 15px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 8px;
+            color: #a0a0a0;
+            font-size: 0.9em;
+            border-left: 3px solid #667eea;
+        }
+        
+        .features li:before {
+            content: "✓ ";
+            color: #00ff88;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        
+        footer {
+            margin-top: 80px;
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+            padding-top: 40px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 6px 12px;
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏀 Basketball Analysis Templates</h1>
+            <p class="subtitle">Visual Mockups - ShotStack Video Editing API Integration</p>
+            <span class="badge">3 Templates</span>
+            <span class="badge">Real-Time Analysis</span>
+            <span class="badge">Professional Overlays</span>
+        </header>
+        
+        <div class="note">
+            <h3>📝 About These Samples</h3>
+            <p>
+                These are static mockups demonstrating what the ShotStack video templates will produce. 
+                In production, these overlays will be applied to actual basketball shooting videos with 
+                real-time pose detection data from RoboFlow. The templates are fully functional and ready 
+                to integrate with your analysis pipeline.
+            </p>
+        </div>
+        
+        <div class="samples">
+
+            <div class="sample">
+                <h2>Shooting Form Analysis</h2>
+                <p class="description">Shows skeleton overlay with angle measurements and score metrics</p>
+                
+                <img src="sample_1_form_analysis.jpg" alt="Shooting Form Analysis" class="sample-image" 
+                     onclick="window.open('sample_1_form_analysis.jpg', '_blank')">
+                
+                <ul class="features">
+                    <li>Real-time skeleton pose detection</li>
+                    <li>Angle measurements (elbow, knee, release)</li>
+                    <li>Overall score display</li>
+                    <li>Professional overlay visualization</li>
+                </ul>
+            </div>
+
+            <div class="sample">
+                <h2>Coaching Feedback</h2>
+                <p class="description">Displays coaching cues and improvement suggestions with error highlighting</p>
+                
+                <img src="sample_2_coaching_feedback.jpg" alt="Coaching Feedback" class="sample-image" 
+                     onclick="window.open('sample_2_coaching_feedback.jpg', '_blank')">
+                
+                <ul class="features">
+                    <li>Real-time feedback annotations</li>
+                    <li>Color-coded coaching tips</li>
+                    <li>Error highlighting with visual indicators</li>
+                    <li>Improvement suggestions</li>
+                </ul>
+            </div>
+
+            <div class="sample">
+                <h2>Split-Screen Comparison</h2>
+                <p class="description">Side-by-side comparison of user form vs elite shooter with metrics</p>
+                
+                <img src="sample_3_split_screen.jpg" alt="Split-Screen Comparison" class="sample-image" 
+                     onclick="window.open('sample_3_split_screen.jpg', '_blank')">
+                
+                <ul class="features">
+                    <li>Split-screen layout</li>
+                    <li>Clear visual divider</li>
+                    <li>Side-by-side labels</li>
+                    <li>Comparative metrics display</li>
+                </ul>
+            </div>
+
+        </div>
+        
+        <footer>
+            <p><strong>Integration Ready:</strong> These templates can be activated with your ShotStack API credentials.</p>
+            <p>Click any image to view full size</p>
+            <p style="margin-top: 20px; color: #444;">Generated: 2025-12-13 17:31:01</p>
+        </footer>
+    </div>
+</body>
+</html>

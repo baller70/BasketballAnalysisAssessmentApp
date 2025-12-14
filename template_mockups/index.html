@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basketball Shooting Form Analysis - Professional Mockups</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #ffffff;
+            padding: 40px 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+            padding: 40px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            border: 2px solid rgba(16, 185, 129, 0.3);
+        }
+
+        h1 {
+            font-size: 3em;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.3em;
+            color: #a0a0a0;
+            margin-bottom: 20px;
+        }
+
+        .description {
+            max-width: 800px;
+            margin: 20px auto;
+            font-size: 1.1em;
+            color: #c0c0c0;
+            line-height: 1.8;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 40px 0;
+        }
+
+        .feature {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 25px;
+            border-radius: 15px;
+            border-left: 4px solid #10b981;
+            transition: transform 0.3s ease;
+        }
+
+        .feature:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature h3 {
+            color: #10b981;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .feature p {
+            color: #b0b0b0;
+            font-size: 0.95em;
+        }
+
+        .mockups-section {
+            margin: 60px 0;
+        }
+
+        .section-title {
+            font-size: 2.2em;
+            margin-bottom: 30px;
+            text-align: center;
+            color: #10b981;
+        }
+
+        .mockup-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 50px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .mockup-card:hover {
+            border-color: #10b981;
+            box-shadow: 0 10px 40px rgba(16, 185, 129, 0.2);
+        }
+
+        .mockup-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mockup-title {
+            font-size: 1.8em;
+            color: #ffffff;
+        }
+
+        .mockup-badge {
+            padding: 10px 25px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .badge-good {
+            background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+            color: white;
+        }
+
+        .badge-needs-work {
+            background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+            color: white;
+        }
+
+        .mockup-description {
+            margin-bottom: 25px;
+            color: #c0c0c0;
+            font-size: 1.05em;
+            line-height: 1.8;
+        }
+
+        .mockup-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .detail-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 3px solid #10b981;
+        }
+
+        .detail-label {
+            color: #888;
+            font-size: 0.85em;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .mockup-image {
+            width: 100%;
+            border-radius: 15px;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease;
+        }
+
+        .mockup-image:hover {
+            transform: scale(1.02);
+        }
+
+        .technical-specs {
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 60px;
+        }
+
+        .technical-specs h2 {
+            color: #10b981;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .specs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .spec-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .spec-item h4 {
+            color: #10b981;
+            margin-bottom: 10px;
+        }
+
+        .spec-item ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .spec-item li {
+            color: #c0c0c0;
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .spec-item li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #10b981;
+            font-weight: bold;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 80px;
+            padding: 30px;
+            border-top: 2px solid rgba(255, 255, 255, 0.1);
+            color: #888;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+
+            .mockup-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .mockup-details {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏀 Basketball Shooting Form Analysis</h1>
+            <p class="subtitle">Professional Individual Player Assessment Mockups</p>
+            <div class="description">
+                These mockups demonstrate a personal shooting coach approach to analyzing individual player shooting form. 
+                Each analysis focuses on a single player, providing detailed biomechanical feedback with skeleton overlays 
+                and actionable coaching points.
+            </div>
+        </header>
+
+        <div class="features">
+            <div class="feature">
+                <h3>👤 Individual Focus</h3>
+                <p>Single player analysis with full-body assessment from head to feet</p>
+            </div>
+            <div class="feature">
+                <h3>🦴 Skeleton Overlay</h3>
+                <p>Accurate pose estimation showing body structure and joint alignment</p>
+            </div>
+            <div class="feature">
+                <h3>📊 Detailed Metrics</h3>
+                <p>Specific measurements: knee bend angles, elbow alignment, release point</p>
+            </div>
+            <div class="feature">
+                <h3>💡 Actionable Feedback</h3>
+                <p>Professional coaching advice with specific improvement areas</p>
+            </div>
+        </div>
+
+        <div class="mockups-section">
+            <h2 class="section-title">Professional Mockup Examples</h2>
+
+            <!-- Example 1: Good Form -->
+            <div class="mockup-card">
+                <div class="mockup-header">
+                    <h3 class="mockup-title">Example 1: Good Form Analysis</h3>
+                    <span class="mockup-badge badge-good">87/100 - Grade A-</span>
+                </div>
+
+                <p class="mockup-description">
+                    This mockup demonstrates analysis of a player with solid shooting mechanics. 
+                    The skeleton overlay highlights proper form elements including good knee flexion (105°), 
+                    elbow alignment under the ball, high release point, and stable base. The professional 
+                    coaching feedback points out strengths while suggesting minor refinements.
+                </p>
+
+                <div class="mockup-details">
+                    <div class="detail-item">
+                        <div class="detail-label">Form Type</div>
+                        <div class="detail-value">Good Form</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Overall Score</div>
+                        <div class="detail-value">87/100</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Grade</div>
+                        <div class="detail-value">A-</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Key Strengths</div>
+                        <div class="detail-value">5 Identified</div>
+                    </div>
+                </div>
+
+                <img src="example1_good_form_analysis.png" alt="Good Form Analysis Mockup" class="mockup-image">
+            </div>
+
+            <!-- Example 2: Needs Work -->
+            <div class="mockup-card">
+                <div class="mockup-header">
+                    <h3 class="mockup-title">Example 2: Needs Work Analysis</h3>
+                    <span class="mockup-badge badge-needs-work">64/100 - Grade D+</span>
+                </div>
+
+                <p class="mockup-description">
+                    This mockup illustrates analysis of a player with form issues that need correction. 
+                    The skeleton overlay identifies specific problems: insufficient knee bend (165°), 
+                    chicken wing elbow (18° out), low release point, and guide hand interference. 
+                    The coaching feedback provides clear, actionable steps for improvement.
+                </p>
+
+                <div class="mockup-details">
+                    <div class="detail-item">
+                        <div class="detail-label">Form Type</div>
+                        <div class="detail-value">Needs Work</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Overall Score</div>
+                        <div class="detail-value">64/100</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Grade</div>
+                        <div class="detail-value">D+</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Issues Found</div>
+                        <div class="detail-value">4 Major</div>
+                    </div>
+                </div>
+
+                <img src="example2_needs_work_analysis.png" alt="Needs Work Analysis Mockup" class="mockup-image">
+            </div>
+        </div>
+
+        <div class="technical-specs">
+            <h2>Analysis Features & Metrics</h2>
+            <div class="specs-grid">
+                <div class="spec-item">
+                    <h4>Skeleton Overlay</h4>
+                    <ul>
+                        <li>Head positioning</li>
+                        <li>Shoulder alignment</li>
+                        <li>Elbow tracking</li>
+                        <li>Wrist angle</li>
+                        <li>Hip stability</li>
+                        <li>Knee flexion</li>
+                        <li>Ankle positioning</li>
+                    </ul>
+                </div>
+
+                <div class="spec-item">
+                    <h4>Form Analysis Points</h4>
+                    <ul>
+                        <li>Knee Bend Angle (90-110° ideal)</li>
+                        <li>Elbow Alignment (under ball)</li>
+                        <li>Guide Hand Position</li>
+                        <li>Release Point (high/low)</li>
+                        <li>Follow-Through Quality</li>
+                        <li>Balance & Stability</li>
+                    </ul>
+                </div>
+
+                <div class="spec-item">
+                    <h4>Coaching Feedback</h4>
+                    <ul>
+                        <li>Overall Form Score (0-100)</li>
+                        <li>Letter Grade (A-F)</li>
+                        <li>Key Strengths List</li>
+                        <li>Specific Issues Identified</li>
+                        <li>Actionable Improvements</li>
+                        <li>Focus Areas for Practice</li>
+                    </ul>
+                </div>
+
+                <div class="spec-item">
+                    <h4>Visual Elements</h4>
+                    <ul>
+                        <li>Color-coded annotations</li>
+                        <li>Joint highlighting</li>
+                        <li>Angle measurements</li>
+                        <li>Professional layout</li>
+                        <li>Clear typography</li>
+                        <li>High-quality rendering</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Basketball Shooting Form Analysis Mockups - Professional Individual Player Assessment</p>
+            <p style="margin-top: 10px; font-size: 0.9em;">
+                Created with focus on individual player development and coaching excellence
+            </p>
+        </footer>
+    </div>
+</body>
+</html>

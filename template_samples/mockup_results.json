@@ -1,0 +1,35 @@
+[
+  {
+    "name": "Shooting Form Analysis",
+    "path": "/home/ubuntu/basketball_app/template_samples/sample_1_form_analysis.jpg",
+    "description": "Shows skeleton overlay with angle measurements and score metrics",
+    "features": [
+      "Real-time skeleton pose detection",
+      "Angle measurements (elbow, knee, release)",
+      "Overall score display",
+      "Professional overlay visualization"
+    ]
+  },
+  {
+    "name": "Coaching Feedback",
+    "path": "/home/ubuntu/basketball_app/template_samples/sample_2_coaching_feedback.jpg",
+    "description": "Displays coaching cues and improvement suggestions with error highlighting",
+    "features": [
+      "Real-time feedback annotations",
+      "Color-coded coaching tips",
+      "Error highlighting with visual indicators",
+      "Improvement suggestions"
+    ]
+  },
+  {
+    "name": "Split-Screen Comparison",
+    "path": "/home/ubuntu/basketball_app/template_samples/sample_3_split_screen.jpg",
+    "description": "Side-by-side comparison of user form vs elite shooter with metrics",
+    "features": [
+      "Split-screen layout",
+      "Clear visual divider",
+      "Side-by-side labels",
+      "Comparative metrics display"
+    ]
+  }
+]

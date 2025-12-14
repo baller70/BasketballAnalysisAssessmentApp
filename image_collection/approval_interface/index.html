@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏀 Basketball Shooting Image Approval System</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏀 Basketball Shooting Image Approval System</h1>
+            <p class="subtitle">Review and approve images for AI training dataset</p>
+        </header>
+
+        <!-- Overall Progress Summary -->
+        <div class="progress-summary">
+            <div class="summary-card">
+                <h2>📊 Collection Status</h2>
+                <div class="stats-grid">
+                    <div class="stat">
+                        <span class="stat-value" id="total-images">219</span>
+                        <span class="stat-label">Total Collected</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-value" id="approved-images">0</span>
+                        <span class="stat-label">Approved</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-value" id="rejected-images">0</span>
+                        <span class="stat-label">Rejected</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-value" id="pending-images">219</span>
+                        <span class="stat-label">Pending</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category Dashboard -->
+        <div class="category-dashboard">
+            <h2>🎯 Training Dataset Progress by RoboFlow Model</h2>
+            
+            <div class="category-card">
+                <div class="category-header">
+                    <h3>🎯 Keypoint Detector (18 Points)</h3>
+                    <span class="category-description">Images showing full body pose for keypoint detection</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill keypoint" id="keypoint-progress" style="width: 15%"></div>
+                </div>
+                <div class="progress-stats">
+                    <p><strong><span id="keypoint-count">219</span> / 1,500</strong> images (15%)</p>
+                    <p class="target">🎯 Target: 1,500 for production-ready model</p>
+                </div>
+            </div>
+            
+            <div class="category-card">
+                <div class="category-header">
+                    <h3>📊 Form Classifier (5 Categories)</h3>
+                    <span class="category-description">Images categorized by shooting form quality</span>
+                </div>
+                <div class="subcategories">
+                    <div class="subcat">
+                        <span class="subcat-name">⭐ Excellent:</span>
+                        <div class="progress-bar small">
+                            <div class="progress-fill excellent" style="width: 5%"></div>
+                        </div>
+                        <strong><span id="excellent-count">10</span> / 200</strong> (5%)
+                    </div>
+                    <div class="subcat">
+                        <span class="subcat-name">👍 Good:</span>
+                        <div class="progress-bar small">
+                            <div class="progress-fill good" style="width: 7.5%"></div>
+                        </div>
+                        <strong><span id="good-count">15</span> / 200</strong> (7.5%)
+                    </div>
+                    <div class="subcat">
+                        <span class="subcat-name">😐 Average:</span>
+                        <div class="progress-bar small">
+                            <div class="progress-fill average" style="width: 10%"></div>
+                        </div>
+                        <strong><span id="average-count">20</span> / 200</strong> (10%)
+                    </div>
+                    <div class="subcat">
+                        <span class="subcat-name">⚠️ Needs Work:</span>
+                        <div class="progress-bar small">
+                            <div class="progress-fill needs-work" style="width: 9%"></div>
+                        </div>
+                        <strong><span id="needs-work-count">18</span> / 200</strong> (9%)
+                    </div>
+                    <div class="subcat">
+                        <span class="subcat-name">❌ Poor:</span>
+                        <div class="progress-bar small">
+                            <div class="progress-fill poor" style="width: 6%"></div>
+                        </div>
+                        <strong><span id="poor-count">12</span> / 200</strong> (6%)
+                    </div>
+                </div>
+                <div class="progress-stats">
+                    <p><strong><span id="form-total">75</span> / 1,000</strong> total images (7.5%)</p>
+                    <p class="target">🎯 Target: 1,000 for production (200 per category)</p>
+                </div>
+            </div>
+            
+            <div class="category-card">
+                <div class="category-header">
+                    <h3>🏀 Trajectory Analyzer</h3>
+                    <span class="category-description">Images showing ball in flight and release point</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill trajectory" id="trajectory-progress" style="width: 6%"></div>
+                </div>
+                <div class="progress-stats">
+                    <p><strong><span id="trajectory-count">50</span> / 800</strong> images (6%)</p>
+                    <p class="target">🎯 Target: 800 for production-ready model</p>
+                </div>
+            </div>
+            
+            <div class="category-card total">
+                <div class="category-header">
+                    <h3>📈 Overall Progress</h3>
+                    <span class="category-description">Combined progress across all models</span>
+                </div>
+                <div class="progress-bar large">
+                    <div class="progress-fill overall" id="overall-progress" style="width: 7%"></div>
+                </div>
+                <div class="progress-stats">
+                    <p><strong><span id="overall-count">219</span> / 3,300</strong> total images (7%)</p>
+                    <p class="target">🎯 MVP Minimum: 1,500 images | Production Target: 3,300 images</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Image Grid -->
+        <div class="controls">
+            <button onclick="approveAll()" class="btn btn-success">✅ Approve All</button>
+            <button onclick="rejectAll()" class="btn btn-danger">❌ Reject All</button>
+            <button onclick="exportResults()" class="btn btn-primary">📥 Export Results</button>
+        </div>
+
+        <div id="image-grid" class="image-grid">
+            <!-- Images will be loaded here by JavaScript -->
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

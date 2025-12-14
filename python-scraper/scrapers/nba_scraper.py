@@ -83,7 +83,7 @@ def get_all_players() -> pd.DataFrame:
     
     params = {
         "LeagueID": "00",  # NBA
-        "Season": "2023-24",
+        "Season": "2024-25",
         "IsOnlyCurrentSeason": "0",
     }
     
@@ -176,33 +176,36 @@ def get_top_shooters(limit: int = 100) -> pd.DataFrame:
     """
     logger.info(f"Fetching top {limit} NBA shooters...")
     
-    # Get league leaders in 3PT%
+    # Get all current season players
     params = {
-        "LeagueID": "00",
-        "PerMode": "PerGame",
-        "Scope": "S",  # Season
-        "Season": "2023-24",
-        "SeasonType": "Regular Season",
-        "StatCategory": "FG3_PCT",
+        "LeagueID": "00",  # NBA
+        "Season": "2024-25",
+        "IsOnlyCurrentSeason": "1",  # Only current season players
     }
     
-    data = make_nba_api_request("leagueleaders", params)
+    data = make_nba_api_request("commonallplayers", params)
     
-    if not data or "resultSet" not in data:
-        logger.error("Failed to fetch league leaders")
+    if not data or "resultSets" not in data:
+        logger.error("Failed to fetch players from commonallplayers")
         return pd.DataFrame()
     
-    headers = data["resultSet"]["headers"]
-    rows = data["resultSet"]["rowSet"][:limit]
+    headers = data["resultSets"][0]["headers"]
+    rows = data["resultSets"][0]["rowSet"]
     
+    # Get all players, then we'll filter to top shooters
     df = pd.DataFrame(rows, columns=headers)
+    logger.info(f"Found {len(df)} total players for 2024-25 season")
     
-    # Get detailed info for each player
+    # Get detailed info for each player (limit to first N players)
     shooters = []
     
-    for idx, row in df.iterrows():
-        player_id = row["PLAYER_ID"]
-        logger.info(f"Processing player {idx + 1}/{len(df)}: {row['PLAYER']}")
+    # Take only the first 'limit' players
+    players_to_process = df.head(limit)
+    
+    for idx, row in players_to_process.iterrows():
+        player_id = row.get("PERSON_ID") or row.get("PLAYER_ID")
+        player_name = row.get("DISPLAY_FIRST_LAST") or row.get("PLAYER", "Unknown")
+        logger.info(f"Processing player {idx + 1}/{len(players_to_process)}: {player_name}")
         
         # Get player info
         player_info = get_player_info(player_id)
@@ -222,7 +225,7 @@ def get_top_shooters(limit: int = 100) -> pd.DataFrame:
                 career_ft_pct = round((career_stats.get("FTM", 0) / career_stats.get("FTA", 1)) * 100, 2)
         
         shooter_data = {
-            "name": row["PLAYER"],
+            "name": player_name,
             "position": player_info.get("POSITION", ""),
             "height_inches": height_to_inches(player_info.get("HEIGHT", "0-0")),
             "weight_lbs": int(player_info.get("WEIGHT", 0) or 0),

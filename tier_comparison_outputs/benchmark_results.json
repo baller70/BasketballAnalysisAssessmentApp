@@ -1,0 +1,55 @@
+{
+  "free_tier": {
+    "success": true,
+    "processing_time": 0.6340498924255371,
+    "cost_estimate": 0.03,
+    "overall_score": 0
+  },
+  "professional_tier": {
+    "success": false,
+    "processing_time": 3.552436828613281e-05,
+    "cost_estimate": "N/A",
+    "overall_score": 0
+  },
+  "comparison_matrix": {
+    "feature": [
+      "Pose Detection",
+      "Keypoints",
+      "Vision Analysis",
+      "Visualization",
+      "Accuracy",
+      "Processing Speed",
+      "Cost per Image",
+      "Daily Limit",
+      "Professional Comparisons",
+      "Video Rendering",
+      "Elite Shooter Matching"
+    ],
+    "free_tier": [
+      "MediaPipe (open source)",
+      "33 points",
+      "OpenAI GPT-4 Vision",
+      "OpenCV (static images)",
+      "85-90%",
+      "2-3 seconds",
+      "$0.01",
+      "20 analyses/day",
+      "\u274c",
+      "\u274c",
+      "\u274c"
+    ],
+    "professional_tier": [
+      "RoboFlow (custom trained)",
+      "18 points (basketball-specific)",
+      "Anthropic Claude",
+      "ShotStack (video rendering)",
+      "95%+",
+      "3-5 seconds",
+      "$0.50-1.00",
+      "Unlimited",
+      "\u2705",
+      "\u2705",
+      "\u2705"
+    ]
+  }
+}

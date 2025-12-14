@@ -18,3 +18,27 @@ out
 .deploy
 .logs
 *.tsbuildinfo
+
+# Large dataset directories (use Git LFS or S3 for these)
+training_data/raw_downloads/
+training_data/raw_images/
+training_data/shooting_form_keypoints/
+training_data/temp_downloads/
+training_data/ball_trajectory/
+training_data/form_quality_classifier/
+training_data/temp_pexels_downloads/
+training_data/api_downloads/
+training_data/temp_web_downloads/
+training_data/kaggle_downloads/
+image_collection/raw_images/
+image_collection/approval_interface/images/
+youtube_collection/extracted_frames/
+youtube_collection/approved_images/
+youtube_collection/youtube_videos/
+vision_ai_results/
+test_filter_output/
+test_images/
+__pycache__/
+**/__pycache__/
+*.pyc
+*.log

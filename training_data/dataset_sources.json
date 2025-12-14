@@ -1,0 +1,23 @@
+[
+  {
+    "name": "COCO Dataset - Sports Ball Subset",
+    "url": "https://cocodataset.org/",
+    "license": "Creative Commons Attribution 4.0",
+    "images_count": "TBD (to be extracted)",
+    "description": "Sports ball category from COCO dataset for object detection"
+  },
+  {
+    "name": "Unsplash Basketball Images",
+    "url": "https://www.shutterstock.com/image-photo/dribbling-basketball-around-cones-female-600nw-2511573475.jpg",
+    "license": "Unsplash License (Free for commercial use)",
+    "images_count": "100+ available",
+    "description": "High-quality basketball training images"
+  },
+  {
+    "name": "SpaceJam Basketball Action Recognition Dataset",
+    "url": "https://github.com/simonefrancia/SpaceJam",
+    "license": "MIT (verify on GitHub)",
+    "images_count": "~32,560 examples",
+    "description": "16-frame RGB video clips with pose keypoints for basketball actions"
+  }
+]

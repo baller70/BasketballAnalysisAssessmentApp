@@ -14,6 +14,9 @@ from ratelimit import limits, sleep_and_retry
 import sys
 import os
 
+# Set Playwright browser path before any other imports
+os.environ['PLAYWRIGHT_BROWSERS_PATH'] = os.path.expanduser('~/.cache/ms-playwright')
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import REQUEST_HEADERS, SCRAPE_DELAY_SECONDS, MAX_RETRIES
 from utils import AntiDetectionScraper
@@ -31,7 +34,8 @@ anti_detection_scraper = AntiDetectionScraper(
     min_delay=SCRAPE_DELAY_SECONDS,
     max_delay=SCRAPE_DELAY_SECONDS + 2,
     max_retries=MAX_RETRIES,
-    use_browser=False,  # Will auto-fallback to browser if needed
+    use_browser=True,  # Enable Playwright browser automation to bypass 403 errors
+    headless=True,  # Run in headless mode for better performance
 )
 
 

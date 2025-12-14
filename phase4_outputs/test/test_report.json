@@ -1,0 +1,114 @@
+{
+  "timestamp": "2025-12-13T18:48:47.347807",
+  "total_tests": 7,
+  "passed": 5,
+  "failed": 2,
+  "success_rate": 71.42857142857143,
+  "results": {
+    "Configuration Validation": {
+      "success": true
+    },
+    "RoboFlow Integration": {
+      "success": false
+    },
+    "Vision API - Anthropic": {
+      "success": true,
+      "provider": "anthropic",
+      "model": "claude-3-opus-20240229",
+      "result": {
+        "form_assessment": "good",
+        "habits_identified": {
+          "good": [
+            "Consistent elbow alignment",
+            "Good follow-through extension",
+            "Balanced base"
+          ],
+          "needs_improvement": [
+            "Slight shoulder rotation",
+            "Inconsistent release point"
+          ]
+        },
+        "professional_comparison": "Similar mechanics to Ray Allen",
+        "recommendations": [
+          "Focus on keeping shoulders square to basket",
+          "Practice release point consistency drills",
+          "Maintain current follow-through mechanics"
+        ],
+        "expected_impact": "15-20% improvement in consistency with these adjustments",
+        "biomechanical_context": {},
+        "shooting_phase": "unknown",
+        "user_profile": {
+          "height": 74,
+          "wingspan": 76,
+          "experience_level": "intermediate",
+          "body_type": "mesomorph",
+          "age": null,
+          "shooting_hand": "right"
+        }
+      },
+      "metadata": {
+        "provider": "anthropic",
+        "fallback_used": false,
+        "processing_time": 0.0,
+        "timestamp": "2025-12-13T18:47:54.833358Z",
+        "error_log": null
+      }
+    },
+    "Vision API - Fallback": {
+      "success": true,
+      "provider": "anthropic",
+      "model": "claude-3-opus-20240229",
+      "result": {
+        "form_assessment": "good",
+        "habits_identified": {
+          "good": [
+            "Consistent elbow alignment",
+            "Good follow-through extension",
+            "Balanced base"
+          ],
+          "needs_improvement": [
+            "Slight shoulder rotation",
+            "Inconsistent release point"
+          ]
+        },
+        "professional_comparison": "Similar mechanics to Ray Allen",
+        "recommendations": [
+          "Focus on keeping shoulders square to basket",
+          "Practice release point consistency drills",
+          "Maintain current follow-through mechanics"
+        ],
+        "expected_impact": "15-20% improvement in consistency with these adjustments",
+        "biomechanical_context": {},
+        "shooting_phase": "unknown",
+        "user_profile": {
+          "height": 74,
+          "wingspan": 76,
+          "experience_level": "intermediate",
+          "body_type": "mesomorph",
+          "age": null,
+          "shooting_hand": "right"
+        }
+      },
+      "metadata": {
+        "provider": "anthropic",
+        "fallback_used": false,
+        "processing_time": 0.0,
+        "timestamp": "2025-12-13T18:48:11.551138Z",
+        "error_log": null
+      }
+    },
+    "ShotStack Integration": {
+      "success": true,
+      "note": "Skipped - no input data"
+    },
+    "Complete Pipeline": {
+      "success": false
+    },
+    "Forced Fallback": {
+      "success": true,
+      "provider": "openai",
+      "fallback_used": true,
+      "simulation": true
+    }
+  }
+}

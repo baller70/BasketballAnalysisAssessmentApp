@@ -6,120 +6,120 @@
       "id": 1,
       "filename": "stock_image_013.jpg",
       "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/stock_image_013.jpg",
-      "status": "pending",
-      "reviewed_at": null
+      "status": "approved",
+      "reviewed_at": "2025-12-13T21:35:09.227278"
     },
     {
       "id": 2,
       "filename": "stock_image_004.jpg",
       "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/stock_image_004.jpg",
-      "status": "pending",
-      "reviewed_at": null
+      "status": "approved",
+      "reviewed_at": "2025-12-13T21:35:11.876254"
     },
     {
       "id": 3,
       "filename": "stock_image_017.jpg",
       "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/stock_image_017.jpg",
-      "status": "pending",
-      "reviewed_at": null
+      "status": "approved",
+      "reviewed_at": "2025-12-13T21:35:21.478522"
     },
     {
       "id": 4,
       "filename": "stock_image_008.jpg",
       "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/stock_image_008.jpg",
-      "status": "pending",
-      "reviewed_at": null
+      "status": "approved",
+      "reviewed_at": "2025-12-13T21:35:25.758172"
     },
     {
       "id": 5,
       "filename": "stock_image_015.jpg",
       "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/stock_image_015.jpg",
-      "status": "pending",
-      "reviewed_at": null
+      "status": "rejected",
+      "reviewed_at": "2025-12-13T21:35:36.189059"
     },
     {
       "id": 6,
       "filename": "stock_image_006.jpg",
       "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/stock_image_006.jpg",
-      "status": "pending",
-      "reviewed_at": null
+      "status": "approved",
+      "reviewed_at": "2025-12-13T21:35:48.686040"
     },
     {
       "id": 7,
       "filename": "stock_image_002.jpg",
       "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/stock_image_002.jpg",
-      "status": "pending",
-      "reviewed_at": null
+      "status": "approved",
+      "reviewed_at": "2025-12-13T21:35:54.831055"
     },
     {
       "id": 8,
       "filename": "stock_image_014.jpg",
       "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/stock_image_014.jpg",
-      "status": "pending",
-      "reviewed_at": null
+      "status": "approved",
+      "reviewed_at": "2025-12-13T21:36:00.775509"
     },
     {
       "id": 9,
       "filename": "stock_image_001.jpg",
       "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/stock_image_001.jpg",
-      "status": "pending",
-      "reviewed_at": null
+      "status": "approved",
+      "reviewed_at": "2025-12-13T21:36:03.832863"
     },
     {
       "id": 10,
       "filename": "stock_image_018.jpg",
       "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/stock_image_018.jpg",
-      "status": "pending",
-      "reviewed_at": null
+      "status": "approved",
+      "reviewed_at": "2025-12-13T21:36:11.191337"
     },
     {
       "id": 11,
       "filename": "stock_image_009.jpg",
       "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/stock_image_009.jpg",
-      "status": "pending",
-      "reviewed_at": null
+      "status": "approved",
+      "reviewed_at": "2025-12-13T21:36:15.152435"
     },
     {
       "id": 12,
       "filename": "stock_image_016.jpg",
       "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/stock_image_016.jpg",
-      "status": "pending",
-      "reviewed_at": null
+      "status": "approved",
+      "reviewed_at": "2025-12-13T21:36:20.389263"
     },
     {
       "id": 13,
       "filename": "stock_image_007.jpg",
       "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/stock_image_007.jpg",
-      "status": "pending",
-      "reviewed_at": null
+      "status": "approved",
+      "reviewed_at": "2025-12-13T21:36:22.818799"
     },
     {
       "id": 14,
       "filename": "stock_image_012.jpg",
       "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/stock_image_012.jpg",
-      "status": "pending",
-      "reviewed_at": null
+      "status": "rejected",
+      "reviewed_at": "2025-12-13T21:36:27.896061"
     },
     {
       "id": 15,
       "filename": "stock_image_003.jpg",
       "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/stock_image_003.jpg",
-      "status": "pending",
-      "reviewed_at": null
+      "status": "approved",
+      "reviewed_at": "2025-12-13T21:36:30.723366"
     },
     {
       "id": 16,
       "filename": "stock_image_010.jpeg",
       "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/stock_image_010.jpeg",
-      "status": "pending",
-      "reviewed_at": null
+      "status": "approved",
+      "reviewed_at": "2025-12-13T21:36:43.146077"
     },
     {
       "id": 17,
       "filename": "CleanShot 2025-12-13 at 12.59.53.png",
       "filepath": "/home/ubuntu/basketball_app/youtube_collection/extracted_frames/CleanShot 2025-12-13 at 12.59.53.png",
-      "status": "pending",
-      "reviewed_at": null
+      "status": "rejected",
+      "reviewed_at": "2025-12-13T21:36:48.090551"
     },
     {
       "id": 18,
@@ -179,8 +179,8 @@
     }
   ],
   "statistics": {
-    "pending": 25,
-    "approved": 0,
-    "rejected": 0
+    "pending": 8,
+    "approved": 14,
+    "rejected": 3
   }
 }

@@ -1,0 +1,36 @@
+{
+  "pixabay_api_key": "48543316-1ec6cfe8c61c7b0fe4e38bbf3",
+  "anthropic_api_key": "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",
+  "collection_targets": {
+    "pixabay": 300,
+    "pexels": 300,
+    "unsplash": 300,
+    "total_target": 900
+  },
+  "search_queries": [
+    "basketball shooting",
+    "basketball player shooting",
+    "basketball free throw",
+    "basketball jump shot",
+    "basketball shooting form",
+    "basketball player throwing ball",
+    "basketball shooting technique",
+    "basketball shot release",
+    "basketball shooting posture",
+    "basketball shooting stance"
+  ],
+  "category_targets": {
+    "keypoint_detector": 1500,
+    "form_classifier": {
+      "excellent": 200,
+      "good": 200,
+      "average": 200,
+      "needs_work": 200,
+      "poor": 200,
+      "total": 1000
+    },
+    "trajectory_analyzer": 800,
+    "mvp_minimum": 1500,
+    "production_target": 3300
+  }
+}
