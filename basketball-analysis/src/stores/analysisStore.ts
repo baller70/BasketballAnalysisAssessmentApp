@@ -6,8 +6,37 @@ import type {
   ReportTier,
   AnalysisResult,
 } from "@/types"
-import type { FormAnalysisResult } from "@/lib/formAnalysis"
-import type { VisionAnalysisResult } from "@/services/visionAnalysis"
+
+// Form analysis result type (previously from formAnalysis.ts)
+export interface FormAnalysisResult {
+  overall_score: number
+  feedback: string[]
+  keypoints: Record<string, { x: number; y: number; confidence: number; source?: string }>
+  basketball?: { x: number; y: number; radius: number }
+  // Legacy fields for backwards compatibility with results page
+  metrics: Array<{ name: string; value: number; status?: string }>
+  angles: Array<{ name: string; angle: number; optimal?: number }>
+  bodyAngles: Array<{ name: string; value: number; optimal?: number }>
+  overallScore: number
+  category: string
+  strengths: string[]
+  improvements: string[]
+}
+
+// Vision analysis result type (previously from visionAnalysis.ts)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface VisionAnalysisResult {
+  success: boolean
+  error?: string
+  overall_score?: number
+  feedback?: string[]
+  angles?: Record<string, number>
+  keypoints?: Record<string, { x: number; y: number; confidence: number; source?: string }>
+  basketball?: { x: number; y: number; radius: number }
+  // Legacy nested analysis object for backwards compatibility - allow any additional properties
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  analysis?: any
+}
 
 // Roboflow basketball detection result
 export interface RoboflowBallDetection {

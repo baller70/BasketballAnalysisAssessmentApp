@@ -1,0 +1,672 @@
+[
+  {
+    "image": "load_000.jpg",
+    "phase": "load",
+    "annotation": "load_000.json"
+  },
+  {
+    "image": "load_001.jpg",
+    "phase": "load",
+    "annotation": "load_001.json"
+  },
+  {
+    "image": "load_002.jpg",
+    "phase": "load",
+    "annotation": "load_002.json"
+  },
+  {
+    "image": "load_003.jpg",
+    "phase": "load",
+    "annotation": "load_003.json"
+  },
+  {
+    "image": "load_004.jpg",
+    "phase": "load",
+    "annotation": "load_004.json"
+  },
+  {
+    "image": "load_005.jpg",
+    "phase": "load",
+    "annotation": "load_005.json"
+  },
+  {
+    "image": "load_006.jpg",
+    "phase": "load",
+    "annotation": "load_006.json"
+  },
+  {
+    "image": "load_007.jpg",
+    "phase": "load",
+    "annotation": "load_007.json"
+  },
+  {
+    "image": "load_008.jpg",
+    "phase": "load",
+    "annotation": "load_008.json"
+  },
+  {
+    "image": "load_009.jpg",
+    "phase": "load",
+    "annotation": "load_009.json"
+  },
+  {
+    "image": "load_010.jpg",
+    "phase": "load",
+    "annotation": "load_010.json"
+  },
+  {
+    "image": "load_011.jpg",
+    "phase": "load",
+    "annotation": "load_011.json"
+  },
+  {
+    "image": "load_012.jpg",
+    "phase": "load",
+    "annotation": "load_012.json"
+  },
+  {
+    "image": "load_013.jpg",
+    "phase": "load",
+    "annotation": "load_013.json"
+  },
+  {
+    "image": "set_000.jpg",
+    "phase": "set",
+    "annotation": "set_000.json"
+  },
+  {
+    "image": "set_001.jpg",
+    "phase": "set",
+    "annotation": "set_001.json"
+  },
+  {
+    "image": "set_002.jpg",
+    "phase": "set",
+    "annotation": "set_002.json"
+  },
+  {
+    "image": "set_003.jpg",
+    "phase": "set",
+    "annotation": "set_003.json"
+  },
+  {
+    "image": "set_004.jpg",
+    "phase": "set",
+    "annotation": "set_004.json"
+  },
+  {
+    "image": "set_005.jpg",
+    "phase": "set",
+    "annotation": "set_005.json"
+  },
+  {
+    "image": "set_006.jpg",
+    "phase": "set",
+    "annotation": "set_006.json"
+  },
+  {
+    "image": "set_007.jpg",
+    "phase": "set",
+    "annotation": "set_007.json"
+  },
+  {
+    "image": "set_008.jpg",
+    "phase": "set",
+    "annotation": "set_008.json"
+  },
+  {
+    "image": "set_009.jpg",
+    "phase": "set",
+    "annotation": "set_009.json"
+  },
+  {
+    "image": "set_010.jpg",
+    "phase": "set",
+    "annotation": "set_010.json"
+  },
+  {
+    "image": "set_011.jpg",
+    "phase": "set",
+    "annotation": "set_011.json"
+  },
+  {
+    "image": "set_012.jpg",
+    "phase": "set",
+    "annotation": "set_012.json"
+  },
+  {
+    "image": "set_013.jpg",
+    "phase": "set",
+    "annotation": "set_013.json"
+  },
+  {
+    "image": "set_014.jpg",
+    "phase": "set",
+    "annotation": "set_014.json"
+  },
+  {
+    "image": "set_015.jpg",
+    "phase": "set",
+    "annotation": "set_015.json"
+  },
+  {
+    "image": "set_016.jpg",
+    "phase": "set",
+    "annotation": "set_016.json"
+  },
+  {
+    "image": "set_017.jpg",
+    "phase": "set",
+    "annotation": "set_017.json"
+  },
+  {
+    "image": "set_018.jpg",
+    "phase": "set",
+    "annotation": "set_018.json"
+  },
+  {
+    "image": "set_019.jpg",
+    "phase": "set",
+    "annotation": "set_019.json"
+  },
+  {
+    "image": "set_020.jpg",
+    "phase": "set",
+    "annotation": "set_020.json"
+  },
+  {
+    "image": "set_021.jpg",
+    "phase": "set",
+    "annotation": "set_021.json"
+  },
+  {
+    "image": "set_022.jpg",
+    "phase": "set",
+    "annotation": "set_022.json"
+  },
+  {
+    "image": "set_023.jpg",
+    "phase": "set",
+    "annotation": "set_023.json"
+  },
+  {
+    "image": "set_024.jpg",
+    "phase": "set",
+    "annotation": "set_024.json"
+  },
+  {
+    "image": "set_025.jpg",
+    "phase": "set",
+    "annotation": "set_025.json"
+  },
+  {
+    "image": "set_026.jpg",
+    "phase": "set",
+    "annotation": "set_026.json"
+  },
+  {
+    "image": "set_027.jpg",
+    "phase": "set",
+    "annotation": "set_027.json"
+  },
+  {
+    "image": "set_028.jpg",
+    "phase": "set",
+    "annotation": "set_028.json"
+  },
+  {
+    "image": "set_029.jpg",
+    "phase": "set",
+    "annotation": "set_029.json"
+  },
+  {
+    "image": "set_030.jpg",
+    "phase": "set",
+    "annotation": "set_030.json"
+  },
+  {
+    "image": "set_031.jpg",
+    "phase": "set",
+    "annotation": "set_031.json"
+  },
+  {
+    "image": "set_032.jpg",
+    "phase": "set",
+    "annotation": "set_032.json"
+  },
+  {
+    "image": "set_033.jpg",
+    "phase": "set",
+    "annotation": "set_033.json"
+  },
+  {
+    "image": "set_034.jpg",
+    "phase": "set",
+    "annotation": "set_034.json"
+  },
+  {
+    "image": "set_035.jpg",
+    "phase": "set",
+    "annotation": "set_035.json"
+  },
+  {
+    "image": "set_036.jpg",
+    "phase": "set",
+    "annotation": "set_036.json"
+  },
+  {
+    "image": "set_037.jpg",
+    "phase": "set",
+    "annotation": "set_037.json"
+  },
+  {
+    "image": "set_038.jpg",
+    "phase": "set",
+    "annotation": "set_038.json"
+  },
+  {
+    "image": "release_000.jpg",
+    "phase": "release",
+    "annotation": "release_000.json"
+  },
+  {
+    "image": "release_001.jpg",
+    "phase": "release",
+    "annotation": "release_001.json"
+  },
+  {
+    "image": "release_002.jpg",
+    "phase": "release",
+    "annotation": "release_002.json"
+  },
+  {
+    "image": "release_003.jpg",
+    "phase": "release",
+    "annotation": "release_003.json"
+  },
+  {
+    "image": "release_004.jpg",
+    "phase": "release",
+    "annotation": "release_004.json"
+  },
+  {
+    "image": "release_005.jpg",
+    "phase": "release",
+    "annotation": "release_005.json"
+  },
+  {
+    "image": "release_006.jpg",
+    "phase": "release",
+    "annotation": "release_006.json"
+  },
+  {
+    "image": "release_007.jpg",
+    "phase": "release",
+    "annotation": "release_007.json"
+  },
+  {
+    "image": "release_008.jpg",
+    "phase": "release",
+    "annotation": "release_008.json"
+  },
+  {
+    "image": "release_009.jpg",
+    "phase": "release",
+    "annotation": "release_009.json"
+  },
+  {
+    "image": "release_010.jpg",
+    "phase": "release",
+    "annotation": "release_010.json"
+  },
+  {
+    "image": "release_011.jpg",
+    "phase": "release",
+    "annotation": "release_011.json"
+  },
+  {
+    "image": "release_012.jpg",
+    "phase": "release",
+    "annotation": "release_012.json"
+  },
+  {
+    "image": "release_013.jpg",
+    "phase": "release",
+    "annotation": "release_013.json"
+  },
+  {
+    "image": "release_014.jpg",
+    "phase": "release",
+    "annotation": "release_014.json"
+  },
+  {
+    "image": "release_015.jpg",
+    "phase": "release",
+    "annotation": "release_015.json"
+  },
+  {
+    "image": "release_016.jpg",
+    "phase": "release",
+    "annotation": "release_016.json"
+  },
+  {
+    "image": "release_017.jpg",
+    "phase": "release",
+    "annotation": "release_017.json"
+  },
+  {
+    "image": "release_018.jpg",
+    "phase": "release",
+    "annotation": "release_018.json"
+  },
+  {
+    "image": "release_019.jpg",
+    "phase": "release",
+    "annotation": "release_019.json"
+  },
+  {
+    "image": "release_020.jpg",
+    "phase": "release",
+    "annotation": "release_020.json"
+  },
+  {
+    "image": "release_021.jpg",
+    "phase": "release",
+    "annotation": "release_021.json"
+  },
+  {
+    "image": "release_022.jpg",
+    "phase": "release",
+    "annotation": "release_022.json"
+  },
+  {
+    "image": "release_023.jpg",
+    "phase": "release",
+    "annotation": "release_023.json"
+  },
+  {
+    "image": "release_024.jpg",
+    "phase": "release",
+    "annotation": "release_024.json"
+  },
+  {
+    "image": "release_025.jpg",
+    "phase": "release",
+    "annotation": "release_025.json"
+  },
+  {
+    "image": "release_026.jpg",
+    "phase": "release",
+    "annotation": "release_026.json"
+  },
+  {
+    "image": "release_027.jpg",
+    "phase": "release",
+    "annotation": "release_027.json"
+  },
+  {
+    "image": "release_028.jpg",
+    "phase": "release",
+    "annotation": "release_028.json"
+  },
+  {
+    "image": "release_029.jpg",
+    "phase": "release",
+    "annotation": "release_029.json"
+  },
+  {
+    "image": "release_030.jpg",
+    "phase": "release",
+    "annotation": "release_030.json"
+  },
+  {
+    "image": "release_031.jpg",
+    "phase": "release",
+    "annotation": "release_031.json"
+  },
+  {
+    "image": "release_032.jpg",
+    "phase": "release",
+    "annotation": "release_032.json"
+  },
+  {
+    "image": "release_033.jpg",
+    "phase": "release",
+    "annotation": "release_033.json"
+  },
+  {
+    "image": "release_034.jpg",
+    "phase": "release",
+    "annotation": "release_034.json"
+  },
+  {
+    "image": "release_035.jpg",
+    "phase": "release",
+    "annotation": "release_035.json"
+  },
+  {
+    "image": "release_036.jpg",
+    "phase": "release",
+    "annotation": "release_036.json"
+  },
+  {
+    "image": "release_037.jpg",
+    "phase": "release",
+    "annotation": "release_037.json"
+  },
+  {
+    "image": "release_038.jpg",
+    "phase": "release",
+    "annotation": "release_038.json"
+  },
+  {
+    "image": "release_039.jpg",
+    "phase": "release",
+    "annotation": "release_039.json"
+  },
+  {
+    "image": "release_040.jpg",
+    "phase": "release",
+    "annotation": "release_040.json"
+  },
+  {
+    "image": "release_041.jpg",
+    "phase": "release",
+    "annotation": "release_041.json"
+  },
+  {
+    "image": "release_042.jpg",
+    "phase": "release",
+    "annotation": "release_042.json"
+  },
+  {
+    "image": "release_043.jpg",
+    "phase": "release",
+    "annotation": "release_043.json"
+  },
+  {
+    "image": "release_044.jpg",
+    "phase": "release",
+    "annotation": "release_044.json"
+  },
+  {
+    "image": "follow_through_000.jpg",
+    "phase": "follow_through",
+    "annotation": "follow_through_000.json"
+  },
+  {
+    "image": "follow_through_001.jpg",
+    "phase": "follow_through",
+    "annotation": "follow_through_001.json"
+  },
+  {
+    "image": "follow_through_002.jpg",
+    "phase": "follow_through",
+    "annotation": "follow_through_002.json"
+  },
+  {
+    "image": "follow_through_003.jpg",
+    "phase": "follow_through",
+    "annotation": "follow_through_003.json"
+  },
+  {
+    "image": "follow_through_004.jpg",
+    "phase": "follow_through",
+    "annotation": "follow_through_004.json"
+  },
+  {
+    "image": "follow_through_005.jpg",
+    "phase": "follow_through",
+    "annotation": "follow_through_005.json"
+  },
+  {
+    "image": "follow_through_006.jpg",
+    "phase": "follow_through",
+    "annotation": "follow_through_006.json"
+  },
+  {
+    "image": "follow_through_007.jpg",
+    "phase": "follow_through",
+    "annotation": "follow_through_007.json"
+  },
+  {
+    "image": "follow_through_008.jpg",
+    "phase": "follow_through",
+    "annotation": "follow_through_008.json"
+  },
+  {
+    "image": "follow_through_009.jpg",
+    "phase": "follow_through",
+    "annotation": "follow_through_009.json"
+  },
+  {
+    "image": "follow_through_010.jpg",
+    "phase": "follow_through",
+    "annotation": "follow_through_010.json"
+  },
+  {
+    "image": "follow_through_011.jpg",
+    "phase": "follow_through",
+    "annotation": "follow_through_011.json"
+  },
+  {
+    "image": "follow_through_012.jpg",
+    "phase": "follow_through",
+    "annotation": "follow_through_012.json"
+  },
+  {
+    "image": "follow_through_013.jpg",
+    "phase": "follow_through",
+    "annotation": "follow_through_013.json"
+  },
+  {
+    "image": "follow_through_014.jpg",
+    "phase": "follow_through",
+    "annotation": "follow_through_014.json"
+  },
+  {
+    "image": "follow_through_015.jpg",
+    "phase": "follow_through",
+    "annotation": "follow_through_015.json"
+  },
+  {
+    "image": "follow_through_016.jpg",
+    "phase": "follow_through",
+    "annotation": "follow_through_016.json"
+  },
+  {
+    "image": "follow_through_017.jpg",
+    "phase": "follow_through",
+    "annotation": "follow_through_017.json"
+  },
+  {
+    "image": "follow_through_018.jpg",
+    "phase": "follow_through",
+    "annotation": "follow_through_018.json"
+  },
+  {
+    "image": "follow_through_019.jpg",
+    "phase": "follow_through",
+    "annotation": "follow_through_019.json"
+  },
+  {
+    "image": "follow_through_020.jpg",
+    "phase": "follow_through",
+    "annotation": "follow_through_020.json"
+  },
+  {
+    "image": "follow_through_021.jpg",
+    "phase": "follow_through",
+    "annotation": "follow_through_021.json"
+  },
+  {
+    "image": "follow_through_022.jpg",
+    "phase": "follow_through",
+    "annotation": "follow_through_022.json"
+  },
+  {
+    "image": "follow_through_023.jpg",
+    "phase": "follow_through",
+    "annotation": "follow_through_023.json"
+  },
+  {
+    "image": "follow_through_024.jpg",
+    "phase": "follow_through",
+    "annotation": "follow_through_024.json"
+  },
+  {
+    "image": "follow_through_025.jpg",
+    "phase": "follow_through",
+    "annotation": "follow_through_025.json"
+  },
+  {
+    "image": "follow_through_026.jpg",
+    "phase": "follow_through",
+    "annotation": "follow_through_026.json"
+  },
+  {
+    "image": "follow_through_027.jpg",
+    "phase": "follow_through",
+    "annotation": "follow_through_027.json"
+  },
+  {
+    "image": "follow_through_028.jpg",
+    "phase": "follow_through",
+    "annotation": "follow_through_028.json"
+  },
+  {
+    "image": "follow_through_029.jpg",
+    "phase": "follow_through",
+    "annotation": "follow_through_029.json"
+  },
+  {
+    "image": "follow_through_030.jpg",
+    "phase": "follow_through",
+    "annotation": "follow_through_030.json"
+  },
+  {
+    "image": "follow_through_031.jpg",
+    "phase": "follow_through",
+    "annotation": "follow_through_031.json"
+  },
+  {
+    "image": "follow_through_032.jpg",
+    "phase": "follow_through",
+    "annotation": "follow_through_032.json"
+  },
+  {
+    "image": "follow_through_033.jpg",
+    "phase": "follow_through",
+    "annotation": "follow_through_033.json"
+  },
+  {
+    "image": "follow_through_034.jpg",
+    "phase": "follow_through",
+    "annotation": "follow_through_034.json"
+  },
+  {
+    "image": "follow_through_035.jpg",
+    "phase": "follow_through",
+    "annotation": "follow_through_035.json"
+  }
+]

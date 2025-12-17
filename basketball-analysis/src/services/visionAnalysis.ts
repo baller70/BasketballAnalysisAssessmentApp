@@ -1,25 +1,13 @@
 /**
- * Vision AI Analysis Service
- * Uses GPT-4 Vision to analyze basketball shooting form
+ * Vision Analysis Service
+ * Connects to the hybrid pose detection backend (YOLOv8-pose + MediaPipe + OpenCV)
  */
 
-interface AnnotationItem {
-  position?: string
-  angle?: string
-  alignment?: string
-  status?: "good" | "warning" | "critical"
-  [key: string]: string | undefined
-}
+const HYBRID_API_URL = process.env.NEXT_PUBLIC_HYBRID_API_URL || 'http://localhost:5001'
 
-interface DrillItem {
-  name: string
-  purpose?: string
-  reps?: string
-}
-
-export interface BodyPosition {
-  x: number
-  y: number
+interface BodyPosition {
+  x: number  // 0-100 percentage
+  y: number  // 0-100 percentage
   label: string
   angle?: number | null
   status?: "good" | "warning" | "critical"
@@ -29,142 +17,279 @@ export interface BodyPosition {
 export interface VisionAnalysisResult {
   success: boolean
   error?: string
+  // Format expected by results page
   analysis?: {
     overallScore: number
-    category: "EXCELLENT" | "GOOD" | "NEEDS_IMPROVEMENT" | "CRITICAL"
-    measurements: {
-      elbowAngle?: number
-      kneeAngle?: number
-      shoulderAngle?: number
-      releaseAngle?: number
-      hipAngle?: number
-      ankleAngle?: number
-      spineAngle?: number
-      balance?: number
-      followThrough?: number
-    }
-    annotations?: {
-      ball?: AnnotationItem
-      shootingHand?: AnnotationItem
-      guideHand?: AnnotationItem
-      shootingElbow?: AnnotationItem
-      shootingShoulder?: AnnotationItem
-      head?: AnnotationItem
-      core?: AnnotationItem
-      hips?: AnnotationItem
-      knees?: AnnotationItem
-      feet?: AnnotationItem
-      ankles?: AnnotationItem
-    }
-    centerLineAnalysis?: {
-      verticalAlignment?: string
-      shoulderHipAlignment?: string
-      balancePoint?: string
-    }
-    phaseDetection?: {
-      currentPhase?: string
-      phaseQuality?: string
-    }
-    bodyPositions?: Record<string, BodyPosition>
-    centerLine?: {
-      x: number
-    }
-    bodyAnalysis?: {
-      head?: string
-      shoulders?: string
-      elbow?: string
-      wrist?: string
-      hips?: string
-      knees?: string
-      feet?: string
-    }
-    strengths: string[]
-    criticalIssues?: string[]
-    improvements: string[]
-    drills: (string | DrillItem)[]
-    coachingTip: string
-    similarProPlayer?: string
-    proComparison?: string
-    rawAnalysis?: string
+    category: string
+    bodyPositions: Record<string, BodyPosition>
+    centerLine?: { x: number }
+    phaseDetection?: { currentPhase: string }
+    coachingTip?: string
+    strengths?: string[]
+    improvements?: string[]
+    measurements?: Record<string, number>
   }
+  // Raw hybrid data
+  keypoints?: Record<string, { x: number; y: number; confidence: number; source?: string }>
+  angles?: Record<string, number>
+  basketball?: { x: number; y: number; radius: number }
+  confidence?: number
+  image_size?: { width: number; height: number }
+  feedback?: Array<{ type: string; area: string; message: string }>
+  overall_score?: number
 }
 
 /**
- * Analyze a basketball shooting image using Vision AI
- * @param imageFile - The image file to analyze
- * @param ballPosition - Optional: Roboflow-detected ball position to use as anchor
+ * Convert hybrid keypoints to bodyPositions format for the results page
+ */
+function convertKeypointsToBodyPositions(
+  keypoints: Record<string, { x: number; y: number; confidence: number; source?: string }>,
+  angles: Record<string, number>,
+  imageSize: { width: number; height: number },
+  basketball?: { x: number; y: number; radius: number } | null
+): Record<string, BodyPosition> {
+  const positions: Record<string, BodyPosition> = {}
+  
+  // Convert each keypoint to percentage-based position
+  Object.entries(keypoints).forEach(([name, kp]) => {
+    if (kp.confidence < 0.3) return // Skip low confidence
+    
+    const xPercent = (kp.x / imageSize.width) * 100
+    const yPercent = (kp.y / imageSize.height) * 100
+    
+    // Determine status based on angles
+    let status: "good" | "warning" | "critical" = "good"
+    let angle: number | null = null
+    let note = ""
+    
+    // Map angle data to relevant keypoints
+    if (name === 'left_elbow' || name === 'right_elbow') {
+      const elbowAngle = angles[`${name.split('_')[0]}_elbow_angle`]
+      if (elbowAngle) {
+        angle = Math.round(elbowAngle)
+        if (elbowAngle >= 80 && elbowAngle <= 100) {
+          status = "good"
+          note = "Good L-shape"
+        } else if (elbowAngle >= 70 && elbowAngle <= 110) {
+          status = "warning"
+          note = "Adjust slightly"
+        } else {
+          status = "critical"
+          note = elbowAngle < 70 ? "Too tight" : "Too flared"
+        }
+      }
+    }
+    
+    if (name === 'left_knee' || name === 'right_knee') {
+      const kneeAngle = angles[`${name.split('_')[0]}_knee_angle`]
+      if (kneeAngle) {
+        angle = Math.round(kneeAngle)
+        if (kneeAngle < 150) {
+          status = "good"
+          note = "Good bend"
+        } else if (kneeAngle > 170) {
+          status = "warning"
+          note = "Bend more"
+        }
+      }
+    }
+    
+    // Format label
+    const label = name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+    
+    positions[name] = {
+      x: xPercent,
+      y: yPercent,
+      label,
+      angle,
+      status,
+      note: note || undefined
+    }
+  })
+  
+  // Add basketball position if detected
+  if (basketball) {
+    positions['ball'] = {
+      x: (basketball.x / imageSize.width) * 100,
+      y: (basketball.y / imageSize.height) * 100,
+      label: 'Basketball',
+      status: 'good'
+    }
+  }
+  
+  return positions
+}
+
+/**
+ * Convert a File to base64 string (without data URL prefix)
+ */
+async function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      const result = reader.result as string
+      const base64 = result.split(',')[1]
+      resolve(base64)
+    }
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
+/**
+ * Analyze shooting form using the hybrid backend
  */
 export async function analyzeShootingForm(
   imageFile: File,
   ballPosition?: { x: number; y: number; confidence: number } | null
 ): Promise<VisionAnalysisResult> {
-  const formData = new FormData()
-  formData.append("image", imageFile)
-  
-  // Pass ball position if available (from Roboflow)
-  if (ballPosition) {
-    formData.append("ballPosition", JSON.stringify(ballPosition))
-  }
-
-  const response = await fetch("/api/analyze-vision", {
-    method: "POST",
-    body: formData,
-  })
-
-  const data = await response.json()
-  return data
-}
-
-/**
- * Analyze from a blob URL (converts to File first)
- */
-export async function analyzeFromUrl(imageUrl: string, filename = "image.jpg"): Promise<VisionAnalysisResult> {
   try {
-    const response = await fetch(imageUrl)
-    const blob = await response.blob()
-    const file = new File([blob], filename, { type: blob.type })
-    return analyzeShootingForm(file)
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Failed to fetch image",
-    }
-  }
-}
+    const base64Image = await fileToBase64(imageFile)
 
-/**
- * Check if the Vision API is configured
- */
-export async function checkVisionApiHealth(): Promise<boolean> {
-  try {
-    // Create a tiny test image (1x1 pixel)
-    const canvas = document.createElement("canvas")
-    canvas.width = 1
-    canvas.height = 1
-    const blob = await new Promise<Blob>((resolve) => 
-      canvas.toBlob((b) => resolve(b!), "image/png")
-    )
-    const file = new File([blob], "test.png", { type: "image/png" })
-    
-    const formData = new FormData()
-    formData.append("image", file)
-
-    const response = await fetch("/api/analyze-vision", {
-      method: "POST",
-      body: formData,
+    console.log('🎯 Calling hybrid pose detection...')
+    const poseResponse = await fetch(`${HYBRID_API_URL}/api/detect-pose`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        image: base64Image,
+        ball_hint: ballPosition
+      })
     })
 
-    // If we get a 500 with "API key not configured", it's not healthy
-    if (!response.ok) {
-      const data = await response.json()
-      return !data.error?.includes("API key")
+    if (!poseResponse.ok) {
+      const errorText = await poseResponse.text()
+      throw new Error(`Pose detection failed: ${errorText}`)
     }
+
+    const poseResult = await poseResponse.json()
+
+    if (!poseResult.success) {
+      return {
+        success: false,
+        error: poseResult.error || 'Pose detection failed'
+      }
+    }
+
+    console.log('✅ Pose detection complete:', {
+      keypoints: Object.keys(poseResult.keypoints || {}).length,
+      confidence: poseResult.confidence,
+      basketball: poseResult.basketball ? 'detected' : 'not found'
+    })
+
+    // Call form analysis
+    console.log('📊 Analyzing shooting form...')
+    let analysisResult = { overall_score: 75, feedback: [] }
     
-    return true
+    try {
+      const analysisResponse = await fetch(`${HYBRID_API_URL}/api/analyze-form`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          keypoints: poseResult.keypoints,
+          angles: poseResult.angles
+        })
+      })
+      
+      if (analysisResponse.ok) {
+        analysisResult = await analysisResponse.json()
+      }
+    } catch (e) {
+      console.warn('Form analysis failed, using defaults:', e)
+    }
+
+    console.log('✅ Form analysis complete:', {
+      score: analysisResult.overall_score,
+      feedback: analysisResult.feedback?.length || 0
+    })
+
+    // Convert keypoints to bodyPositions format for the results page
+    const bodyPositions = convertKeypointsToBodyPositions(
+      poseResult.keypoints,
+      poseResult.angles || {},
+      poseResult.image_size,
+      poseResult.basketball
+    )
+
+    // Determine form category
+    const score = analysisResult.overall_score || 75
+    let category = "GOOD"
+    if (score >= 85) category = "EXCELLENT"
+    else if (score >= 65) category = "GOOD"
+    else if (score >= 50) category = "NEEDS_IMPROVEMENT"
+    else category = "CRITICAL"
+
+    // Extract strengths and improvements from feedback
+    const strengths: string[] = []
+    const improvements: string[] = []
+    
+    analysisResult.feedback?.forEach((fb: { type: string; message: string }) => {
+      if (fb.type === 'success') {
+        strengths.push(fb.message)
+      } else {
+        improvements.push(fb.message)
+      }
+    })
+
+    // Build measurements from angles
+    const measurements: Record<string, number> = {}
+    if (poseResult.angles) {
+      Object.entries(poseResult.angles).forEach(([key, value]) => {
+        const cleanKey = key.replace(/_angle$/, '').replace(/^(left|right)_/, '')
+        measurements[cleanKey + 'Angle'] = Math.round(value as number)
+      })
+    }
+
+    return {
+      success: true,
+      analysis: {
+        overallScore: score,
+        category,
+        bodyPositions,
+        centerLine: poseResult.basketball ? { x: (poseResult.basketball.x / poseResult.image_size.width) * 100 } : undefined,
+        phaseDetection: { currentPhase: 'RELEASE' },
+        coachingTip: improvements[0] || 'Keep practicing your form!',
+        strengths,
+        improvements,
+        measurements
+      },
+      keypoints: poseResult.keypoints,
+      angles: poseResult.angles,
+      basketball: poseResult.basketball,
+      confidence: poseResult.confidence,
+      image_size: poseResult.image_size,
+      feedback: analysisResult.feedback,
+      overall_score: score
+    }
+
+  } catch (error) {
+    console.error('Vision analysis error:', error)
+    
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      return {
+        success: false,
+        error: 'Cannot connect to hybrid server. Run: python3 python-scraper/hybrid_pose_detection.py'
+      }
+    }
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Analysis failed'
+    }
+  }
+}
+
+/**
+ * Check if the hybrid server is online
+ */
+export async function checkHybridServerHealth(): Promise<boolean> {
+  try {
+    const response = await fetch(`${HYBRID_API_URL}/health`, {
+      method: 'GET',
+      signal: AbortSignal.timeout(3000)
+    })
+    const data = await response.json()
+    return data.status === 'ok'
   } catch {
     return false
   }
 }
-
-
-

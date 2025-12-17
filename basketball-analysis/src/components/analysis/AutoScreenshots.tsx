@@ -3,13 +3,11 @@
 import React, { useRef, useEffect, useState, useCallback } from "react"
 import { Download, X, CheckCircle, AlertTriangle, XCircle } from "lucide-react"
 
-interface BodyPosition {
+interface Keypoint {
   x: number
   y: number
-  label: string
-  angle?: number | null
-  status?: "good" | "warning" | "critical"
-  note?: string
+  confidence: number
+  source?: string
 }
 
 interface Screenshot {
@@ -17,22 +15,15 @@ interface Screenshot {
   name: string
   dataUrl: string
   status: "good" | "warning" | "critical"
-  bodyParts: BodyPosition[]
   analysis: string
-}
-
-interface RoboflowBallDetection {
-  x: number // center x as percentage
-  y: number // center y as percentage
-  width: number // width as percentage
-  height: number // height as percentage
-  confidence: number
 }
 
 interface AutoScreenshotsProps {
   imageUrl: string
-  bodyPositions?: Record<string, BodyPosition>
-  roboflowBall?: RoboflowBallDetection | null // Ball position from Roboflow (use as center)
+  keypoints?: Record<string, Keypoint>
+  basketball?: { x: number; y: number; radius: number } | null
+  imageSize?: { width: number; height: number }
+  angles?: Record<string, number>
 }
 
 const STATUS_STYLES = {
@@ -41,26 +32,15 @@ const STATUS_STYLES = {
   critical: { border: "border-red-500", bg: "bg-red-500/10", text: "text-red-400", icon: XCircle },
 }
 
-export function AutoScreenshots({ imageUrl, bodyPositions, roboflowBall }: AutoScreenshotsProps) {
+export function AutoScreenshots({ imageUrl, keypoints, basketball, imageSize, angles }: AutoScreenshotsProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [screenshots, setScreenshots] = useState<Screenshot[]>([])
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [isProcessing, setIsProcessing] = useState(true)
 
-  // Get worst status from positions
-  const getWorstStatus = (positions: BodyPosition[]): "good" | "warning" | "critical" => {
-    if (positions.some(p => p.status === "critical")) return "critical"
-    if (positions.some(p => p.status === "warning")) return "warning"
-    return "good"
-  }
-
-  // Auto-capture screenshots when image loads
   const captureScreenshots = useCallback(async () => {
-    console.log("[AutoScreenshots] Starting capture, imageUrl:", imageUrl ? "present" : "missing")
-    console.log("[AutoScreenshots] bodyPositions:", bodyPositions)
-    
-    if (!imageUrl) {
-      console.log("[AutoScreenshots] No imageUrl, skipping")
+    if (!imageUrl || !keypoints || Object.keys(keypoints).length === 0) {
+      console.log("[AutoScreenshots] Missing data, skipping")
       setIsProcessing(false)
       return
     }
@@ -72,87 +52,106 @@ export function AutoScreenshots({ imageUrl, bodyPositions, roboflowBall }: AutoS
       img.crossOrigin = "anonymous"
       
       await new Promise<void>((resolve, reject) => {
-        img.onload = () => {
-          console.log("[AutoScreenshots] Image loaded:", img.width, "x", img.height)
-          resolve()
-        }
-        img.onerror = (e) => {
-          console.error("[AutoScreenshots] Image load failed:", e)
-          reject(new Error("Failed to load image"))
-        }
+        img.onload = () => resolve()
+        img.onerror = () => reject(new Error("Failed to load image"))
         img.src = imageUrl
       })
 
       const canvas = canvasRef.current
       if (!canvas) {
-        console.error("[AutoScreenshots] Canvas ref is null!")
         setIsProcessing(false)
         return
       }
       const ctx = canvas.getContext("2d")
       if (!ctx) {
-        console.error("[AutoScreenshots] Canvas context is null!")
         setIsProcessing(false)
         return
       }
-      
-      console.log("[AutoScreenshots] Canvas ready, starting crop...")
 
-      // CENTER EVERYTHING AROUND THE BALL
-      // If Roboflow detected the ball, use it as the anchor point
-      const ballX = roboflowBall?.x ?? bodyPositions?.ball?.x ?? 50
-      const ballY = roboflowBall?.y ?? bodyPositions?.ball?.y ?? 30
+      const imgW = imageSize?.width || img.naturalWidth
+      const imgH = imageSize?.height || img.naturalHeight
 
-      console.log("🏀 Centering screenshots around ball at:", { x: ballX, y: ballY })
-
-      // Define 3 crop regions - ALL CENTERED ON THE BALL
+      // Define 3 crop regions: Ball Area, Shoulder Area, Legs
       const regions = [
         {
-          id: "ball-and-hands",
+          id: "ball-area",
           name: "Ball & Hands",
-          centerX: ballX, // CENTER ON BALL X
-          centerY: ballY, // CENTER ON BALL Y
-          width: 40, // Crop around ball (will capture hands)
-          height: 35,
-          partKeys: ["ball", "shootingHand", "guideHand", "shootingWrist"]
+          // Center on ball if detected, otherwise use wrists
+          centerX: basketball?.x || keypoints.left_wrist?.x || keypoints.right_wrist?.x || imgW * 0.5,
+          centerY: basketball?.y || keypoints.left_wrist?.y || keypoints.right_wrist?.y || imgH * 0.3,
+          width: imgW * 0.4,
+          height: imgH * 0.35,
+          getStatus: () => {
+            const elbowAngle = angles?.left_elbow_angle || angles?.right_elbow_angle
+            if (elbowAngle && elbowAngle >= 80 && elbowAngle <= 100) return "good"
+            if (elbowAngle && (elbowAngle >= 70 || elbowAngle <= 110)) return "warning"
+            return "good"
+          },
+          getAnalysis: () => {
+            const elbowAngle = angles?.left_elbow_angle || angles?.right_elbow_angle
+            if (elbowAngle) {
+              if (elbowAngle >= 80 && elbowAngle <= 100) return `Good elbow angle: ${elbowAngle.toFixed(0)}°`
+              return `Elbow angle: ${elbowAngle.toFixed(0)}° - aim for 90°`
+            }
+            return "Ball and hand position"
+          }
         },
         {
-          id: "upper-body",
-          name: "Upper Body & Arms",
-          centerX: ballX, // CENTER ON BALL X (vertical line)
-          centerY: bodyPositions?.shootingShoulder?.y ?? (ballY + 15), // Below ball
-          width: 50,
-          height: 45,
-          partKeys: ["head", "shootingShoulder", "shootingElbow", "shootingWrist", "guideHand", "ball"]
+          id: "shoulder-area",
+          name: "Shoulder & Arms",
+          // Center on shoulders
+          centerX: ((keypoints.left_shoulder?.x || 0) + (keypoints.right_shoulder?.x || 0)) / 2 || imgW * 0.5,
+          centerY: keypoints.left_shoulder?.y || keypoints.right_shoulder?.y || imgH * 0.35,
+          width: imgW * 0.5,
+          height: imgH * 0.4,
+          getStatus: () => {
+            const shoulderTilt = angles?.shoulder_tilt
+            if (shoulderTilt && Math.abs(shoulderTilt) < 10) return "good"
+            if (shoulderTilt && Math.abs(shoulderTilt) < 20) return "warning"
+            return "good"
+          },
+          getAnalysis: () => {
+            const shoulderTilt = angles?.shoulder_tilt
+            if (shoulderTilt) {
+              if (Math.abs(shoulderTilt) < 10) return `Shoulders level: ${shoulderTilt.toFixed(1)}° tilt`
+              return `Shoulder tilt: ${shoulderTilt.toFixed(1)}° - keep level`
+            }
+            return "Upper body alignment"
+          }
         },
         {
-          id: "shooting-arm",
-          name: "Shooting Arm",
-          centerX: ballX, // CENTER ON BALL X (vertical line)
-          centerY: bodyPositions?.shootingElbow?.y ?? (ballY + 20), // Below ball
-          width: 35,
-          height: 40,
-          partKeys: ["shootingShoulder", "shootingElbow", "shootingWrist", "ball"]
+          id: "legs-area",
+          name: "Legs & Base",
+          // Center on hips/knees
+          centerX: ((keypoints.left_hip?.x || 0) + (keypoints.right_hip?.x || 0)) / 2 || imgW * 0.5,
+          centerY: ((keypoints.left_knee?.y || 0) + (keypoints.right_knee?.y || 0)) / 2 || imgH * 0.7,
+          width: imgW * 0.5,
+          height: imgH * 0.45,
+          getStatus: () => {
+            const kneeAngle = angles?.left_knee_angle || angles?.right_knee_angle
+            if (kneeAngle && kneeAngle < 160) return "good"
+            if (kneeAngle && kneeAngle > 170) return "warning"
+            return "good"
+          },
+          getAnalysis: () => {
+            const kneeAngle = angles?.left_knee_angle || angles?.right_knee_angle
+            if (kneeAngle) {
+              if (kneeAngle < 160) return `Good knee bend: ${kneeAngle.toFixed(0)}°`
+              return `Knee angle: ${kneeAngle.toFixed(0)}° - bend more for power`
+            }
+            return "Lower body and balance"
+          }
         }
       ]
 
       const captured: Screenshot[] = []
-
-      console.log("[AutoScreenshots] Processing", regions.length, "regions")
       
       for (const region of regions) {
-        console.log("[AutoScreenshots] Capturing region:", region.name)
-        
-        // Get body parts for this region
-        const parts: BodyPosition[] = region.partKeys
-          .map(key => bodyPositions?.[key])
-          .filter((p): p is BodyPosition => p !== undefined)
-
-        // Calculate crop area
-        const cropX = Math.max(0, (region.centerX / 100) * img.width - (region.width / 100) * img.width / 2)
-        const cropY = Math.max(0, (region.centerY / 100) * img.height - (region.height / 100) * img.height / 2)
-        const cropW = Math.min((region.width / 100) * img.width, img.width - cropX)
-        const cropH = Math.min((region.height / 100) * img.height, img.height - cropY)
+        // Calculate crop bounds
+        const cropX = Math.max(0, region.centerX - region.width / 2)
+        const cropY = Math.max(0, region.centerY - region.height / 2)
+        const cropW = Math.min(region.width, imgW - cropX)
+        const cropH = Math.min(region.height, imgH - cropY)
 
         // Set canvas size
         canvas.width = cropW
@@ -162,51 +161,36 @@ export function AutoScreenshots({ imageUrl, bodyPositions, roboflowBall }: AutoS
         ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH)
 
         // Get data URL
-        const dataUrl = canvas.toDataURL("image/png")
-        
-        // Build analysis text
-        const notes = parts
-          .filter(p => p.note)
-          .map(p => `${p.label}: ${p.note}`)
-          .join(". ")
-        
-        const angles = parts
-          .filter(p => p.angle)
-          .map(p => `${p.label} ${p.angle}°`)
-          .join(", ")
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.9)
 
         captured.push({
           id: region.id,
           name: region.name,
           dataUrl,
-          status: getWorstStatus(parts),
-          bodyParts: parts,
-          analysis: notes || angles || "Click to view details"
+          status: region.getStatus(),
+          analysis: region.getAnalysis()
         })
       }
 
       console.log("[AutoScreenshots] Captured", captured.length, "screenshots")
       setScreenshots(captured)
     } catch (error) {
-      console.error("[AutoScreenshots] Failed to capture screenshots:", error)
+      console.error("[AutoScreenshots] Failed:", error)
     } finally {
       setIsProcessing(false)
     }
-  }, [imageUrl, bodyPositions, roboflowBall])
+  }, [imageUrl, keypoints, basketball, imageSize, angles])
 
-  // Auto-trigger after component mounts and canvas is ready
   useEffect(() => {
-    // Small delay to ensure canvas is mounted
     const timer = setTimeout(() => {
       if (canvasRef.current) {
         captureScreenshots()
       }
-    }, 100)
+    }, 500) // Small delay to ensure image is ready
     
     return () => clearTimeout(timer)
   }, [captureScreenshots])
 
-  // Download screenshot
   const downloadScreenshot = (screenshot: Screenshot) => {
     const link = document.createElement("a")
     link.download = `${screenshot.id}-${Date.now()}.png`
@@ -214,76 +198,66 @@ export function AutoScreenshots({ imageUrl, bodyPositions, roboflowBall }: AutoS
     link.click()
   }
 
-  // Get expanded screenshot
   const expandedScreenshot = expandedId ? screenshots.find(s => s.id === expandedId) : null
 
-  // Always render the canvas (hidden) so it's available for processing
   return (
     <div className="space-y-4">
-      {/* Hidden canvas for processing - MUST be outside conditionals */}
       <canvas ref={canvasRef} className="hidden" />
       
-      {/* Processing state */}
       {isProcessing && (
         <div className="flex items-center justify-center py-8">
           <div className="flex items-center gap-3 text-[#888]">
             <div className="w-5 h-5 border-2 border-[#FFD700] border-t-transparent rounded-full animate-spin" />
-            <span>Generating key point screenshots...</span>
+            <span>Generating screenshots...</span>
           </div>
         </div>
       )}
       
-      {/* Empty state */}
       {!isProcessing && screenshots.length === 0 && (
         <div className="text-center py-4 text-[#888]">
-          No screenshots could be generated
+          No screenshots available
         </div>
       )}
 
-      {/* 3 Screenshot Grid - only show when we have screenshots */}
       {!isProcessing && screenshots.length > 0 && (
-      <div className="grid grid-cols-3 gap-4">
-        {screenshots.map((screenshot) => {
-          const styles = STATUS_STYLES[screenshot.status]
-          const Icon = styles.icon
-          
-          return (
-            <div
-              key={screenshot.id}
-              onClick={() => setExpandedId(screenshot.id)}
-              className={`rounded-lg border-2 ${styles.border} ${styles.bg} overflow-hidden cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg`}
-            >
-              {/* Screenshot Image */}
-              <div className="relative aspect-[4/3] bg-[#1a1a1a]">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={screenshot.dataUrl}
-                  alt={screenshot.name}
-                  className="w-full h-full object-cover"
-                />
-                
-                {/* Status badge */}
-                <div className={`absolute top-2 right-2 ${styles.bg} ${styles.text} p-1 rounded-full`}>
-                  <Icon className="w-4 h-4" />
+        <div className="grid grid-cols-3 gap-4">
+          {screenshots.map((screenshot) => {
+            const styles = STATUS_STYLES[screenshot.status]
+            const Icon = styles.icon
+            
+            return (
+              <div
+                key={screenshot.id}
+                onClick={() => setExpandedId(screenshot.id)}
+                className={`rounded-lg border-2 ${styles.border} ${styles.bg} overflow-hidden cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg`}
+              >
+                <div className="relative aspect-[4/3] bg-[#1a1a1a]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={screenshot.dataUrl}
+                    alt={screenshot.name}
+                    className="w-full h-full object-cover"
+                  />
+                  
+                  <div className={`absolute top-2 right-2 ${styles.bg} ${styles.text} p-1 rounded-full`}>
+                    <Icon className="w-4 h-4" />
+                  </div>
+
+                  <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
+                    <span className="text-white text-sm font-semibold bg-black/50 px-3 py-1 rounded-full">
+                      Click to expand
+                    </span>
+                  </div>
                 </div>
 
-                {/* Click to expand overlay */}
-                <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
-                  <span className="text-white text-sm font-semibold bg-black/50 px-3 py-1 rounded-full">
-                    Click to expand
-                  </span>
+                <div className="p-3">
+                  <h4 className={`font-bold text-sm ${styles.text} mb-1`}>{screenshot.name}</h4>
+                  <p className="text-[#888] text-xs line-clamp-2">{screenshot.analysis}</p>
                 </div>
               </div>
-
-              {/* Info */}
-              <div className="p-3">
-                <h4 className={`font-bold text-sm ${styles.text} mb-1`}>{screenshot.name}</h4>
-                <p className="text-[#888] text-xs line-clamp-2">{screenshot.analysis}</p>
-              </div>
-            </div>
-          )
-        })}
-      </div>
+            )
+          })}
+        </div>
       )}
 
       {/* Expanded Modal */}
@@ -296,7 +270,6 @@ export function AutoScreenshots({ imageUrl, bodyPositions, roboflowBall }: AutoS
             className="bg-[#2a2a2a] rounded-xl max-w-3xl w-full max-h-[90vh] overflow-auto"
             onClick={e => e.stopPropagation()}
           >
-            {/* Header */}
             <div className="p-4 border-b border-[#3a3a3a] flex items-center justify-between">
               <h3 className="text-[#FFD700] font-bold text-lg">{expandedScreenshot.name}</h3>
               <button
@@ -307,7 +280,6 @@ export function AutoScreenshots({ imageUrl, bodyPositions, roboflowBall }: AutoS
               </button>
             </div>
             
-            {/* Large Image */}
             <div className="p-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -317,9 +289,7 @@ export function AutoScreenshots({ imageUrl, bodyPositions, roboflowBall }: AutoS
               />
             </div>
             
-            {/* Analysis Details */}
             <div className="p-4 border-t border-[#3a3a3a] space-y-4">
-              {/* Status Badge */}
               {(() => {
                 const styles = STATUS_STYLES[expandedScreenshot.status]
                 const Icon = styles.icon
@@ -334,31 +304,8 @@ export function AutoScreenshots({ imageUrl, bodyPositions, roboflowBall }: AutoS
                 )
               })()}
               
-              {/* Body Parts Analysis */}
-              {expandedScreenshot.bodyParts.length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="text-[#FFD700] font-semibold text-sm uppercase tracking-wider">Detailed Analysis</h4>
-                  {expandedScreenshot.bodyParts.map((part, i) => {
-                    const partStyles = STATUS_STYLES[part.status || "good"]
-                    return (
-                      <div key={i} className={`${partStyles.bg} border ${partStyles.border} rounded-lg p-3`}>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className={`font-bold ${partStyles.text}`}>
-                            {part.label}
-                            {part.angle && ` — ${part.angle}°`}
-                          </span>
-                          <span className={`text-xs ${partStyles.text} uppercase`}>{part.status}</span>
-                        </div>
-                        {part.note && (
-                          <p className="text-[#E5E5E5] text-sm">{part.note}</p>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
+              <p className="text-[#E5E5E5]">{expandedScreenshot.analysis}</p>
               
-              {/* Download Button */}
               <button
                 onClick={() => downloadScreenshot(expandedScreenshot)}
                 className="w-full bg-[#FFD700] hover:bg-[#E5C100] text-[#1a1a1a] font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-colors"
@@ -373,6 +320,4 @@ export function AutoScreenshots({ imageUrl, bodyPositions, roboflowBall }: AutoS
     </div>
   )
 }
-
-
 

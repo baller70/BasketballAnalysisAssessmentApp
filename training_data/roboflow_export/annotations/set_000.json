@@ -1,0 +1,141 @@
+{
+  "image": "set_000.jpg",
+  "phase": "set",
+  "annotations": [
+    {
+      "category": "person",
+      "keypoints": [
+        {
+          "name": "nose",
+          "x": 0,
+          "y": 0,
+          "visibility": 0
+        },
+        {
+          "name": "left_eye",
+          "x": 0,
+          "y": 0,
+          "visibility": 0
+        },
+        {
+          "name": "right_eye",
+          "x": 0,
+          "y": 0,
+          "visibility": 0
+        },
+        {
+          "name": "left_ear",
+          "x": 0,
+          "y": 0,
+          "visibility": 0
+        },
+        {
+          "name": "right_ear",
+          "x": 0,
+          "y": 0,
+          "visibility": 0
+        },
+        {
+          "name": "left_shoulder",
+          "x": 0,
+          "y": 0,
+          "visibility": 0
+        },
+        {
+          "name": "right_shoulder",
+          "x": 0,
+          "y": 0,
+          "visibility": 0
+        },
+        {
+          "name": "left_elbow",
+          "x": 0,
+          "y": 0,
+          "visibility": 0
+        },
+        {
+          "name": "right_elbow",
+          "x": 0,
+          "y": 0,
+          "visibility": 0
+        },
+        {
+          "name": "left_wrist",
+          "x": 0,
+          "y": 0,
+          "visibility": 0
+        },
+        {
+          "name": "right_wrist",
+          "x": 0,
+          "y": 0,
+          "visibility": 0
+        },
+        {
+          "name": "left_hip",
+          "x": 0,
+          "y": 0,
+          "visibility": 0
+        },
+        {
+          "name": "right_hip",
+          "x": 0,
+          "y": 0,
+          "visibility": 0
+        },
+        {
+          "name": "left_knee",
+          "x": 0,
+          "y": 0,
+          "visibility": 0
+        },
+        {
+          "name": "right_knee",
+          "x": 0,
+          "y": 0,
+          "visibility": 0
+        },
+        {
+          "name": "left_ankle",
+          "x": 0,
+          "y": 0,
+          "visibility": 0
+        },
+        {
+          "name": "right_ankle",
+          "x": 0,
+          "y": 0,
+          "visibility": 0
+        }
+      ],
+      "bbox": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "category": "basketball",
+      "keypoints": [
+        {
+          "name": "center",
+          "x": 0,
+          "y": 0,
+          "visibility": 0
+        }
+      ],
+      "bbox": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ],
+  "metadata": {
+    "phase": "set",
+    "shooting_hand": "unknown",
+    "source": "training_collection"
+  }
+}

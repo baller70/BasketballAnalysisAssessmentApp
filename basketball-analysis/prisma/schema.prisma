@@ -173,7 +173,7 @@ model AnalysisHistory {
 // ============================================
 model Shooter {
   id                    Int       @id @default(autoincrement()) @map("shooter_id")
-  name                  String    @db.VarChar(255)
+  name                  String    @unique @db.VarChar(255)
   position              String?   @db.VarChar(50)       // Guard/Forward/Center
   heightInches          Int?      @map("height_inches")
   weightLbs             Int?      @map("weight_lbs")

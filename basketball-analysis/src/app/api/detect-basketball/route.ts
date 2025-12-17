@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import axios from 'axios'
 
-// Roboflow basketball detection API
-// Uses hosted inference API for object detection
+const HYBRID_API_URL = process.env.NEXT_PUBLIC_HYBRID_API_URL || 'http://localhost:5001'
 
 export async function POST(request: NextRequest) {
   try {
-    const { image } = await request.json()
+    const body = await request.json()
+    const { image } = body
 
     if (!image) {
       return NextResponse.json(
@@ -15,110 +14,74 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const apiKey = process.env.ROBOFLOW_API_KEY
+    // Extract base64 data (remove data URL prefix if present)
+    const base64Image = image.includes(',') ? image.split(',')[1] : image
 
-    if (!apiKey) {
+    // Call the hybrid backend for pose detection (which includes basketball detection)
+    const response = await fetch(`${HYBRID_API_URL}/api/detect-pose`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: base64Image })
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('Hybrid API error:', errorText)
       return NextResponse.json(
-        { success: false, error: 'ROBOFLOW_API_KEY not configured' },
-        { status: 500 }
+        { success: false, error: 'Basketball detection failed', message: errorText },
+        { status: response.status }
       )
     }
 
-    // Extract base64 data from data URL if needed
-    let base64Image = image
-    if (image.startsWith('data:')) {
-      base64Image = image.split(',')[1]
-    }
+    const result = await response.json()
 
-    // Call Roboflow's hosted inference API
-    // Using a basketball detection model from Roboflow Universe
-    // Model: basketball-w2xcw (detects basketballs)
-    const response = await axios({
-      method: 'POST',
-      url: 'https://detect.roboflow.com/basketball-w2xcw/1',
-      params: {
-        api_key: apiKey,
-      },
-      data: base64Image,
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-    })
-
-    const predictions = response.data.predictions || []
-
-    // Find basketball in predictions
-    // Look for class names that indicate basketball
-    const basketballPrediction = predictions.find(
-      (p: { class: string }) =>
-        p.class.toLowerCase().includes('ball') ||
-        p.class.toLowerCase().includes('basketball') ||
-        p.class.toLowerCase() === 'sports ball'
-    )
-
-    if (basketballPrediction) {
-      // Roboflow returns x, y as center coordinates and width, height
-      // Convert to percentage of image dimensions
-      const imageWidth = response.data.image?.width || 1
-      const imageHeight = response.data.image?.height || 1
-
-      const ballPosition = {
-        x: (basketballPrediction.x / imageWidth) * 100,
-        y: (basketballPrediction.y / imageHeight) * 100,
-        width: (basketballPrediction.width / imageWidth) * 100,
-        height: (basketballPrediction.height / imageHeight) * 100,
-        confidence: basketballPrediction.confidence,
-      }
-
+    if (!result.success) {
       return NextResponse.json({
-        success: true,
-        basketball: ballPosition,
-        allPredictions: predictions,
-        imageSize: { width: imageWidth, height: imageHeight },
+        success: false,
+        error: result.error || 'Detection failed',
+        message: 'Could not detect pose/basketball'
       })
     }
 
-    // No basketball found - return all predictions for debugging
-    return NextResponse.json({
-      success: true,
-      basketball: null,
-      allPredictions: predictions,
-      message: 'No basketball detected in image',
-    })
+    // Extract basketball info from the hybrid result
+    if (result.basketball) {
+      return NextResponse.json({
+        success: true,
+        basketball: {
+          x: result.basketball.x,
+          y: result.basketball.y,
+          width: result.basketball.radius * 2,
+          height: result.basketball.radius * 2,
+          confidence: 0.9 // Hybrid detection is reliable
+        },
+        image_size: result.image_size
+      })
+    } else {
+      return NextResponse.json({
+        success: false,
+        message: 'No basketball detected in image'
+      })
+    }
+
   } catch (error) {
-    console.error('Roboflow detection error:', error)
-
-    // Check if it's an API error
-    if (axios.isAxiosError(error)) {
-      const status = error.response?.status
-      const message = error.response?.data?.message || error.message
-
-      if (status === 401) {
-        return NextResponse.json(
-          { success: false, error: 'Invalid Roboflow API key' },
-          { status: 401 }
-        )
-      }
-
-      if (status === 404) {
-        return NextResponse.json(
-          { success: false, error: 'Model not found. Trying alternative...' },
-          { status: 404 }
-        )
-      }
-
+    console.error('Basketball detection error:', error)
+    
+    // Check if it's a connection error to the hybrid server
+    if (error instanceof TypeError && error.message.includes('fetch')) {
       return NextResponse.json(
-        { success: false, error: `Roboflow API error: ${message}` },
-        { status: status || 500 }
+        { 
+          success: false, 
+          error: 'Cannot connect to hybrid server',
+          message: 'Run: python3 python-scraper/hybrid_pose_detection.py'
+        },
+        { status: 503 }
       )
     }
 
     return NextResponse.json(
-      { success: false, error: 'Failed to detect basketball' },
+      { success: false, error: 'Internal server error' },
       { status: 500 }
     )
   }
 }
-
-
 

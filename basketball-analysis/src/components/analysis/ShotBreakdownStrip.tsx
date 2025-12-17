@@ -56,3 +56,10 @@ export function ShotBreakdownStrip({ title, frames, watermark, dense = false }: 
 
 
 
+
+
+
+
+
+
+

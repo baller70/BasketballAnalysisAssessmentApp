@@ -1,17 +1,29 @@
 "use client"
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-import React, { useState } from "react"
+import React, { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Upload, User, Sparkles } from "lucide-react"
 import { MediaUpload } from "@/components/upload/MediaUpload"
 import { PlayerProfileForm } from "@/components/upload/PlayerProfileForm"
 import { useAnalysisStore } from "@/stores/analysisStore"
 import { analyzeShootingForm } from "@/services/visionAnalysis"
+import { AnalysisProgressScreen, type InputType } from "@/components/analysis/AnalysisProgressScreen"
+import { 
+  saveSession, 
+  createSessionFromAnalysis,
+  type SessionScreenshot 
+} from "@/services/sessionStorage"
+import { detectFlawsFromAngles, getShooterLevel } from "@/data/shootingFlawsDatabase"
 
 export default function Home() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showProgressScreen, setShowProgressScreen] = useState(false)
   const [analysisError, setAnalysisError] = useState<string | null>(null)
+  const [processingComplete, setProcessingComplete] = useState(false)
+  const analysisResultRef = useRef<any>(null)
+  
   const { 
     uploadedFile, 
     setIsAnalyzing, 
@@ -25,13 +37,23 @@ export default function Home() {
   // Allow analysis once an upload exists (3+ images from MediaUpload)
   const isFormValid = Boolean(uploadedFile)
 
+  // Determine input type for processing time estimate
+  const getInputType = (): InputType => {
+    // For now, default to 3 images since we're handling single file upload
+    // This can be expanded when multi-file upload is implemented
+    return "3_images"
+  }
+
   const handleAnalyze = async () => {
     if (!isFormValid || !uploadedFile) return
 
     setIsSubmitting(true)
     setIsAnalyzing(true)
+    setShowProgressScreen(true)
+    setProcessingComplete(false)
     setAnalysisProgress(0)
     setAnalysisError(null)
+    analysisResultRef.current = null
 
     try {
       setAnalysisProgress(10)
@@ -96,26 +118,104 @@ export default function Home() {
         throw new Error(result.error || "Analysis failed")
       }
 
-      // Store the result
-      setVisionAnalysisResult(result)
+      // Store result for later use
+      analysisResultRef.current = result
+      
+      // Store the result (cast to any to handle type mismatch between service and store)
+      setVisionAnalysisResult(result as any)
       setAnalysisProgress(100)
+      
+      // Signal that actual processing is complete
+      // The progress screen will fast-forward through remaining stages
+      setProcessingComplete(true)
+      
+      // Auto-save session to localStorage
+      try {
+        const overallScore = result.overall_score || 70
+        const detectedFlaws = result.angles 
+          ? detectFlawsFromAngles(result.angles).map(f => f.name)
+          : []
+        const shooterLevel = getShooterLevel(overallScore)
+        
+        // Create screenshots array (will be empty for now, can be populated later)
+        const screenshots: SessionScreenshot[] = []
+        
+        const session = createSessionFromAnalysis(
+          base64, // main image
+          base64, // skeleton image (same for now)
+          screenshots,
+          {
+            overallScore,
+            shooterLevel: shooterLevel.name,
+            angles: result.angles || {},
+            detectedFlaws,
+            measurements: {}
+          },
+          useAnalysisStore.getState().playerProfile.name || 'Player'
+        )
+        
+        const saved = saveSession(session)
+        if (saved) {
+          console.log("✅ Session saved to localStorage:", session.id)
+        } else {
+          console.warn("⚠️ Failed to save session to localStorage")
+        }
+      } catch (saveError) {
+        console.error("Error saving session:", saveError)
+        // Don't fail the analysis if session save fails
+      }
 
-      // Navigate to results page
-      router.push("/results/demo")
     } catch (error) {
       console.error("Analysis failed:", error)
       const message = error instanceof Error ? error.message : "Analysis failed"
       setAnalysisError(message)
       setError(message)
-    } finally {
+      setShowProgressScreen(false)
       setIsSubmitting(false)
       setIsAnalyzing(false)
     }
   }
 
+  // Called when progress screen animation completes
+  const handleProgressComplete = () => {
+    setShowProgressScreen(false)
+    setIsSubmitting(false)
+    setIsAnalyzing(false)
+    // Navigate to results page
+    router.push("/results/demo")
+  }
+
+  // Called when user cancels during processing
+  const handleCancel = () => {
+    setShowProgressScreen(false)
+    setIsSubmitting(false)
+    setIsAnalyzing(false)
+    setProcessingComplete(false)
+    setAnalysisError(null)
+  }
+
+  // Called when user wants to retry after error
+  const handleRetry = () => {
+    setAnalysisError(null)
+    handleAnalyze()
+  }
+
   return (
-    <main className="min-h-[calc(100vh-200px)] py-8 px-4">
-      <div className="container mx-auto max-w-4xl">
+    <>
+      {/* Phase 5: Processing Experience & User Engagement */}
+      {/* 7-Stage Processing Pipeline with Perceived Value Creation */}
+      <AnalysisProgressScreen 
+        isVisible={showProgressScreen}
+        inputType={getInputType()}
+        actualProcessingComplete={processingComplete}
+        errorMessage={analysisError}
+        onComplete={handleProgressComplete}
+        onCancel={handleCancel}
+        onRetry={handleRetry}
+      />
+      
+      <main className="min-h-[calc(100vh-200px)] py-8 px-4">
+        <div className="container mx-auto max-w-4xl">
         {/* Main Card Container */}
         <div className="bg-[#2C2C2C] rounded-lg overflow-hidden shadow-lg">
           {/* Upload Section */}
@@ -174,5 +274,6 @@ export default function Home() {
         </div>
       </div>
     </main>
+    </>
   )
 }

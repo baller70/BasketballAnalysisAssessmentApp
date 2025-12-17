@@ -1,0 +1,60 @@
+{
+  "keypoints": {
+    "nose": [
+      65,
+      48
+    ],
+    "right_shoulder": [
+      73,
+      110
+    ],
+    "right_elbow": [
+      103,
+      82
+    ],
+    "right_wrist": [
+      115,
+      52
+    ],
+    "left_shoulder": [
+      33,
+      122
+    ],
+    "left_elbow": [
+      48,
+      115
+    ],
+    "left_wrist": [
+      73,
+      92
+    ],
+    "right_hip": [
+      70,
+      191
+    ],
+    "left_hip": [
+      43,
+      195
+    ],
+    "right_knee": [
+      90,
+      243
+    ],
+    "right_ankle": [
+      88,
+      292
+    ],
+    "left_knee": [
+      62,
+      253
+    ],
+    "left_ankle": [
+      61,
+      305
+    ]
+  },
+  "image_size": [
+    176,
+    380
+  ]
+}
