@@ -131,6 +131,11 @@ def detect_pose_yolo(image_np, bbox=None):
     if not results or results[0].keypoints is None:
         return None
     
+    # Check if keypoints were actually detected
+    if len(results[0].keypoints) == 0:
+        print("⚠️ YOLO detected no keypoints")
+        return None
+    
     # Find best person (largest or closest to bbox)
     best_idx = 0
     best_score = -1
@@ -157,6 +162,11 @@ def detect_pose_yolo(image_np, bbox=None):
             if score > best_score:
                 best_score = score
                 best_idx = idx
+    
+    # Verify the index is valid
+    if best_idx >= len(results[0].keypoints):
+        print(f"⚠️ Invalid index {best_idx} for {len(results[0].keypoints)} keypoints")
+        return None
     
     # Extract keypoints
     kpts = results[0].keypoints[best_idx]
