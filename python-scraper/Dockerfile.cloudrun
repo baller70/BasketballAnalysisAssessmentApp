@@ -18,10 +18,12 @@ COPY requirements-hybrid.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements-hybrid.txt
 
+# Download YOLO model files
+# These are downloaded during build to avoid storing large files in Git
+RUN python -c "from ultralytics import YOLO; YOLO('yolov8n.pt'); YOLO('yolov8x-pose.pt'); print('Models downloaded successfully')"
+
 # Copy application code
 COPY hybrid_pose_detection.py .
-COPY yolov8n.pt .
-COPY yolov8x-pose.pt .
 
 # Set environment variables for Cloud Run
 ENV PORT=8080
