@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-      const pythonResponse = await fetch(`${HYBRID_SERVER_URL}/detect-pose`, {
+      const pythonResponse = await fetch(`${HYBRID_SERVER_URL}/api/detect-pose`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image: base64Image }),

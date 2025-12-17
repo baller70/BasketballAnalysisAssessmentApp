@@ -28,6 +28,15 @@ import ssl
 import math
 ssl._create_default_https_context = ssl._create_unverified_context
 
+# Fix for PyTorch 2.6+ weights_only default change
+import torch
+_original_load = torch.load
+def _patched_load(*args, **kwargs):
+    if 'weights_only' not in kwargs:
+        kwargs['weights_only'] = False
+    return _original_load(*args, **kwargs)
+torch.load = _patched_load
+
 app = Flask(__name__)
 CORS(app)
 
