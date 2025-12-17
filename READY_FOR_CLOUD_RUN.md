@@ -22,9 +22,10 @@ All files are now in your GitHub repository and ready to deploy:
    - More than enough for YOLO + MediaPipe + large model
    - Render was crashing with only 512MB
 
-3. **Removed large .pt files from Git**
-   - No more GitHub size limit errors
-   - Models download automatically on first run
+3. **Models Downloaded During Build**
+   - No large .pt files stored in Git repository
+   - Models automatically downloaded during Docker build from Ultralytics
+   - No GitHub size limit errors
 
 ## When You Log Into Google Cloud
 
@@ -91,7 +92,7 @@ For a basketball analysis app with moderate usage (100-500 analyses/month), you'
 
 1. 🏗️ Cloud Build creates a Docker container
 2. 📚 Installs Python 3.11 + all dependencies
-3. 🤖 Includes YOLO models (yolov8n.pt 6MB, yolov8x-pose.pt 133MB)
+3. 🤖 Downloads YOLO models from Ultralytics (yolov8n.pt 6MB, yolov8x-pose.pt 133MB)
 4. 🚀 Deploys to Cloud Run in us-central1 with 2GB RAM
 5. 🌎 Makes service publicly accessible
 6. ✅ Returns your service URL
