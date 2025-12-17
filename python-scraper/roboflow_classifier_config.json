@@ -1,0 +1,900 @@
+{
+  "project_name": "Basketball-Form-Quality-Classifier",
+  "project_description": "Comprehensive multi-label classifier for basketball shooting form analysis. Analyzes 18 distinct aspects of shooting mechanics including hand positioning, body mechanics, release phases, and shot types. Designed for production-grade biomechanical analysis with detailed labels for coaching feedback.",
+  "version": "2.0",
+  "categories": [
+    {
+      "id": 1,
+      "name": "shooting_hand_mechanics",
+      "display_name": "Shooting Hand Mechanics",
+      "description": "Analysis of shooting hand wrist, finger, and palm positioning during shot execution",
+      "labels": [
+        {
+          "name": "optimal_wrist_snap",
+          "display": "Optimal Wrist Snap (90°+)",
+          "description": "Full wrist flexion with 90+ degree snap, creates ideal backspin",
+          "biomechanical_range": "90-110 degrees",
+          "severity": "excellent"
+        },
+        {
+          "name": "good_wrist_action",
+          "display": "Good Wrist Action (70-89°)",
+          "description": "Strong wrist snap with 70-89 degree flexion, adequate backspin",
+          "biomechanical_range": "70-89 degrees",
+          "severity": "good"
+        },
+        {
+          "name": "moderate_wrist_action",
+          "display": "Moderate Wrist Action (50-69°)",
+          "description": "Moderate wrist flexion, some backspin but inconsistent",
+          "biomechanical_range": "50-69 degrees",
+          "severity": "moderate"
+        },
+        {
+          "name": "limited_wrist_snap",
+          "display": "Limited Wrist Snap (30-49°)",
+          "description": "Minimal wrist flexion, insufficient backspin generation",
+          "biomechanical_range": "30-49 degrees",
+          "severity": "needs_improvement"
+        },
+        {
+          "name": "stiff_wrist",
+          "display": "Stiff Wrist (<30°)",
+          "description": "Very limited or no wrist flexion, poor shot control",
+          "biomechanical_range": "0-29 degrees",
+          "severity": "poor"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "guide_hand_placement",
+      "display_name": "Guide Hand Placement",
+      "description": "Non-shooting hand positioning and influence on ball trajectory",
+      "labels": [
+        {
+          "name": "perfect_side_placement",
+          "display": "Perfect Side Placement",
+          "description": "Guide hand on side of ball, no interference with release",
+          "biomechanical_range": "85-95 degrees to shooting hand",
+          "severity": "excellent"
+        },
+        {
+          "name": "good_side_support",
+          "display": "Good Side Support",
+          "description": "Slight angle but mostly on side, minimal influence",
+          "biomechanical_range": "75-84 or 96-105 degrees",
+          "severity": "good"
+        },
+        {
+          "name": "slight_thumb_interference",
+          "display": "Slight Thumb Interference",
+          "description": "Guide hand thumb slightly affects trajectory",
+          "biomechanical_range": "65-74 or 106-115 degrees",
+          "severity": "moderate"
+        },
+        {
+          "name": "moderate_interference",
+          "display": "Moderate Guide Hand Push",
+          "description": "Guide hand noticeably affects shot direction",
+          "biomechanical_range": "45-64 or 116-135 degrees",
+          "severity": "needs_improvement"
+        },
+        {
+          "name": "severe_two_hand_push",
+          "display": "Severe Two-Hand Push",
+          "description": "Both hands pushing ball, major trajectory issues",
+          "biomechanical_range": "<45 or >135 degrees",
+          "severity": "poor"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "elbow_alignment",
+      "display_name": "Elbow Alignment",
+      "description": "Shooting arm elbow positioning relative to shoulder and target",
+      "labels": [
+        {
+          "name": "perfect_inline",
+          "display": "Perfect Inline (±5°)",
+          "description": "Elbow directly under ball, perfectly aligned with target",
+          "biomechanical_range": "0-5 degrees deviation",
+          "severity": "excellent"
+        },
+        {
+          "name": "excellent_alignment",
+          "display": "Excellent Alignment (±6-10°)",
+          "description": "Elbow nearly inline, minimal lateral deviation",
+          "biomechanical_range": "6-10 degrees deviation",
+          "severity": "good"
+        },
+        {
+          "name": "good_with_minor_wing",
+          "display": "Good with Minor Wing (±11-15°)",
+          "description": "Slight elbow wing, still functional mechanics",
+          "biomechanical_range": "11-15 degrees deviation",
+          "severity": "moderate"
+        },
+        {
+          "name": "moderate_elbow_wing",
+          "display": "Moderate Elbow Wing (±16-25°)",
+          "description": "Noticeable lateral elbow deviation, affects accuracy",
+          "biomechanical_range": "16-25 degrees deviation",
+          "severity": "needs_improvement"
+        },
+        {
+          "name": "severe_chicken_wing",
+          "display": "Severe Chicken Wing (>25°)",
+          "description": "Extreme elbow deviation, major mechanical flaw",
+          "biomechanical_range": ">25 degrees deviation",
+          "severity": "poor"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "shoulder_position",
+      "display_name": "Shoulder Position & Rotation",
+      "description": "Shoulder alignment, level, and rotation during shot execution",
+      "labels": [
+        {
+          "name": "level_squared_shoulders",
+          "display": "Level & Squared (±3°)",
+          "description": "Shoulders level and square to target throughout",
+          "biomechanical_range": "0-3 degrees tilt/rotation",
+          "severity": "excellent"
+        },
+        {
+          "name": "slight_natural_turn",
+          "display": "Slight Natural Turn (±4-8°)",
+          "description": "Minor natural shoulder turn, still balanced",
+          "biomechanical_range": "4-8 degrees rotation",
+          "severity": "good"
+        },
+        {
+          "name": "moderate_shoulder_drop",
+          "display": "Moderate Shoulder Drop (±9-15°)",
+          "description": "Noticeable shoulder tilt, affects release consistency",
+          "biomechanical_range": "9-15 degrees tilt",
+          "severity": "moderate"
+        },
+        {
+          "name": "significant_rotation",
+          "display": "Significant Rotation (±16-25°)",
+          "description": "Excessive shoulder rotation or tilt, major issue",
+          "biomechanical_range": "16-25 degrees",
+          "severity": "needs_improvement"
+        },
+        {
+          "name": "extreme_misalignment",
+          "display": "Extreme Misalignment (>25°)",
+          "description": "Severe shoulder imbalance, compensatory mechanics",
+          "biomechanical_range": ">25 degrees",
+          "severity": "poor"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "finger_release",
+      "display_name": "Finger Placement & Release",
+      "description": "Finger positioning on ball and release mechanics for backspin generation",
+      "labels": [
+        {
+          "name": "perfect_fingertip_release",
+          "display": "Perfect Fingertip Release",
+          "description": "Ball released from fingertips, index/middle finger last touch",
+          "biomechanical_range": "Release from distal phalanges",
+          "severity": "excellent"
+        },
+        {
+          "name": "good_finger_control",
+          "display": "Good Finger Control",
+          "description": "Strong fingertip control with consistent backspin",
+          "biomechanical_range": "Minimal palm contact",
+          "severity": "good"
+        },
+        {
+          "name": "moderate_palm_contact",
+          "display": "Moderate Palm Contact",
+          "description": "Some palm involvement, reduces feel and control",
+          "biomechanical_range": "Proximal phalanges involved",
+          "severity": "moderate"
+        },
+        {
+          "name": "excessive_palm_grip",
+          "display": "Excessive Palm Grip",
+          "description": "Too much ball in palm, limited finger control",
+          "biomechanical_range": "Metacarpal contact",
+          "severity": "needs_improvement"
+        },
+        {
+          "name": "palm_shot",
+          "display": "Palm Shot",
+          "description": "Shot pushed from palm, minimal backspin",
+          "biomechanical_range": "Full palm contact",
+          "severity": "poor"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "name": "follow_through",
+      "display_name": "Follow-Through Extension",
+      "description": "Arm and wrist extension after ball release, gooseneck formation",
+      "labels": [
+        {
+          "name": "full_gooseneck_hold",
+          "display": "Full Gooseneck Hold (2+ sec)",
+          "description": "Complete arm extension with held gooseneck position",
+          "biomechanical_range": "Full elbow extension, 2+ seconds",
+          "severity": "excellent"
+        },
+        {
+          "name": "complete_extension",
+          "display": "Complete Extension (1-2 sec)",
+          "description": "Full arm extension with brief hold",
+          "biomechanical_range": "Full extension, 1-2 seconds",
+          "severity": "good"
+        },
+        {
+          "name": "moderate_followthrough",
+          "display": "Moderate Follow-Through (0.5-1 sec)",
+          "description": "Adequate extension but quick return",
+          "biomechanical_range": "80-95% extension",
+          "severity": "moderate"
+        },
+        {
+          "name": "shortened_followthrough",
+          "display": "Shortened Follow-Through (<0.5 sec)",
+          "description": "Abbreviated extension, affects consistency",
+          "biomechanical_range": "60-79% extension",
+          "severity": "needs_improvement"
+        },
+        {
+          "name": "no_followthrough",
+          "display": "No Follow-Through",
+          "description": "Immediate arm retraction, poor shot control",
+          "biomechanical_range": "<60% extension",
+          "severity": "poor"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "name": "lower_body_knee_bend",
+      "display_name": "Lower Body: Knee Bend",
+      "description": "Knee flexion depth and power generation from legs",
+      "labels": [
+        {
+          "name": "optimal_athletic_bend",
+          "display": "Optimal Athletic Bend (90-110°)",
+          "description": "Ideal knee flexion for power and balance",
+          "biomechanical_range": "90-110 degrees flexion",
+          "severity": "excellent"
+        },
+        {
+          "name": "good_bend_range",
+          "display": "Good Bend Range (75-89° or 111-125°)",
+          "description": "Adequate knee flexion for power generation",
+          "biomechanical_range": "75-89 or 111-125 degrees",
+          "severity": "good"
+        },
+        {
+          "name": "moderate_bend",
+          "display": "Moderate Bend (60-74° or 126-140°)",
+          "description": "Less optimal knee bend, reduces power",
+          "biomechanical_range": "60-74 or 126-140 degrees",
+          "severity": "moderate"
+        },
+        {
+          "name": "shallow_bend",
+          "display": "Shallow Bend (140-160°)",
+          "description": "Minimal knee flexion, mostly arm shooting",
+          "biomechanical_range": "140-160 degrees",
+          "severity": "needs_improvement"
+        },
+        {
+          "name": "no_leg_involvement",
+          "display": "No Leg Involvement (>160°)",
+          "description": "Straight legs, all arm power, inconsistent range",
+          "biomechanical_range": ">160 degrees",
+          "severity": "poor"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "name": "hip_rotation",
+      "display_name": "Hip Rotation & Core Engagement",
+      "description": "Hip and torso rotation, core stability during shot",
+      "labels": [
+        {
+          "name": "stable_minimal_rotation",
+          "display": "Stable, Minimal Rotation (±5°)",
+          "description": "Hips stable and square to target throughout",
+          "biomechanical_range": "0-5 degrees rotation",
+          "severity": "excellent"
+        },
+        {
+          "name": "controlled_slight_turn",
+          "display": "Controlled Slight Turn (±6-10°)",
+          "description": "Minor natural hip turn, maintains balance",
+          "biomechanical_range": "6-10 degrees rotation",
+          "severity": "good"
+        },
+        {
+          "name": "moderate_rotation",
+          "display": "Moderate Rotation (±11-20°)",
+          "description": "Noticeable hip rotation, affects shot direction",
+          "biomechanical_range": "11-20 degrees rotation",
+          "severity": "moderate"
+        },
+        {
+          "name": "excessive_turn",
+          "display": "Excessive Turn (±21-35°)",
+          "description": "Significant hip rotation, major alignment issue",
+          "biomechanical_range": "21-35 degrees rotation",
+          "severity": "needs_improvement"
+        },
+        {
+          "name": "severe_misalignment",
+          "display": "Severe Misalignment (>35°)",
+          "description": "Extreme hip rotation or instability",
+          "biomechanical_range": ">35 degrees rotation",
+          "severity": "poor"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "name": "foot_placement",
+      "display_name": "Foot Placement & Base Width",
+      "description": "Foot positioning, stance width, and base stability",
+      "labels": [
+        {
+          "name": "optimal_shoulder_width",
+          "display": "Optimal Shoulder Width",
+          "description": "Feet shoulder-width apart, balanced stance",
+          "biomechanical_range": "45-55 cm separation",
+          "severity": "excellent"
+        },
+        {
+          "name": "slightly_wide_narrow",
+          "display": "Slightly Wide/Narrow",
+          "description": "Minor deviation from optimal width, still stable",
+          "biomechanical_range": "40-44 or 56-65 cm",
+          "severity": "good"
+        },
+        {
+          "name": "moderately_wide_narrow",
+          "display": "Moderately Wide/Narrow",
+          "description": "Noticeable stance width issue, affects balance",
+          "biomechanical_range": "30-39 or 66-80 cm",
+          "severity": "moderate"
+        },
+        {
+          "name": "very_wide_narrow",
+          "display": "Very Wide/Narrow Stance",
+          "description": "Extreme stance width, major balance concerns",
+          "biomechanical_range": "20-29 or 81-100 cm",
+          "severity": "needs_improvement"
+        },
+        {
+          "name": "unstable_base",
+          "display": "Unstable Base",
+          "description": "Feet together or extremely wide, no foundation",
+          "biomechanical_range": "<20 or >100 cm",
+          "severity": "poor"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "name": "balance_stability",
+      "display_name": "Balance & Weight Distribution",
+      "description": "Overall body balance and weight transfer during shot",
+      "labels": [
+        {
+          "name": "perfect_balance",
+          "display": "Perfect Balance & Control",
+          "description": "Centered weight, lands in same spot, no drift",
+          "biomechanical_range": "COG within 2cm of start",
+          "severity": "excellent"
+        },
+        {
+          "name": "well_balanced",
+          "display": "Well Balanced",
+          "description": "Minimal movement, good body control",
+          "biomechanical_range": "COG within 2-5cm",
+          "severity": "good"
+        },
+        {
+          "name": "slight_imbalance",
+          "display": "Slight Imbalance",
+          "description": "Minor weight shift or drift during shot",
+          "biomechanical_range": "COG moves 5-10cm",
+          "severity": "moderate"
+        },
+        {
+          "name": "moderate_instability",
+          "display": "Moderate Instability",
+          "description": "Noticeable drift or weight transfer issue",
+          "biomechanical_range": "COG moves 10-20cm",
+          "severity": "needs_improvement"
+        },
+        {
+          "name": "poor_balance",
+          "display": "Poor Balance/Falling Away",
+          "description": "Significant drift, fading, or loss of control",
+          "biomechanical_range": "COG moves >20cm",
+          "severity": "poor"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "name": "ball_positioning",
+      "display_name": "Ball Position & Grip",
+      "description": "Ball starting position and hand grip configuration",
+      "labels": [
+        {
+          "name": "optimal_forehead_pocket",
+          "display": "Optimal Forehead Pocket",
+          "description": "Ball starts at forehead level, ideal shooting pocket",
+          "biomechanical_range": "Eye to hairline level",
+          "severity": "excellent"
+        },
+        {
+          "name": "high_shoulder_start",
+          "display": "High Shoulder Start",
+          "description": "Ball starts above shoulder, slightly high release",
+          "biomechanical_range": "Shoulder to eye level",
+          "severity": "good"
+        },
+        {
+          "name": "chest_level_start",
+          "display": "Chest Level Start",
+          "description": "Ball starts at chest, requires more lift",
+          "biomechanical_range": "Mid-chest to shoulder",
+          "severity": "moderate"
+        },
+        {
+          "name": "low_waist_start",
+          "display": "Low Waist Start",
+          "description": "Ball dips to waist, extra motion increases variance",
+          "biomechanical_range": "Waist to chest level",
+          "severity": "needs_improvement"
+        },
+        {
+          "name": "extreme_low_high",
+          "display": "Extreme Low/High Start",
+          "description": "Ball starts below waist or above head, inefficient",
+          "biomechanical_range": "Below waist or above head",
+          "severity": "poor"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "name": "release_point_arc",
+      "display_name": "Release Point & Arc",
+      "description": "Ball release height and trajectory arc angle",
+      "labels": [
+        {
+          "name": "optimal_high_arc",
+          "display": "Optimal High Arc (48-52°)",
+          "description": "Perfect release angle, ideal basket entry",
+          "biomechanical_range": "48-52 degrees",
+          "severity": "excellent"
+        },
+        {
+          "name": "good_arc_range",
+          "display": "Good Arc Range (45-47° or 53-55°)",
+          "description": "Effective arc angle, good make percentage",
+          "biomechanical_range": "45-47 or 53-55 degrees",
+          "severity": "good"
+        },
+        {
+          "name": "moderate_arc",
+          "display": "Moderate Arc (40-44° or 56-60°)",
+          "description": "Acceptable but less optimal arc",
+          "biomechanical_range": "40-44 or 56-60 degrees",
+          "severity": "moderate"
+        },
+        {
+          "name": "flat_high_trajectory",
+          "display": "Flat/High Trajectory (35-39° or 61-70°)",
+          "description": "Suboptimal arc reduces target size",
+          "biomechanical_range": "35-39 or 61-70 degrees",
+          "severity": "needs_improvement"
+        },
+        {
+          "name": "line_drive_rainbow",
+          "display": "Line Drive/Rainbow (<35° or >70°)",
+          "description": "Extreme arc angle, very low success rate",
+          "biomechanical_range": "<35 or >70 degrees",
+          "severity": "poor"
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "name": "shooting_phase",
+      "display_name": "Shooting Phase Detection",
+      "description": "Current phase of shot execution for phase-specific analysis",
+      "labels": [
+        {
+          "name": "pre_shot_stance",
+          "display": "Pre-Shot Stance",
+          "description": "Ready position before shot initiation",
+          "biomechanical_range": "Static ready position",
+          "severity": "neutral"
+        },
+        {
+          "name": "dip_loading",
+          "display": "Dip/Loading Phase",
+          "description": "Downward ball movement and knee bend",
+          "biomechanical_range": "Ball moving down",
+          "severity": "neutral"
+        },
+        {
+          "name": "rise_elevation",
+          "display": "Rise/Elevation Phase",
+          "description": "Upward movement toward release",
+          "biomechanical_range": "Ball moving up, pre-release",
+          "severity": "neutral"
+        },
+        {
+          "name": "release_point",
+          "display": "Release Point",
+          "description": "Ball leaving shooting hand",
+          "biomechanical_range": "Ball separation moment",
+          "severity": "neutral"
+        },
+        {
+          "name": "follow_through_phase",
+          "display": "Follow-Through Phase",
+          "description": "Post-release arm extension",
+          "biomechanical_range": "After ball release",
+          "severity": "neutral"
+        },
+        {
+          "name": "recovery_landing",
+          "display": "Recovery/Landing",
+          "description": "Return to ready position",
+          "biomechanical_range": "Post-shot landing",
+          "severity": "neutral"
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "name": "shot_type",
+      "display_name": "Shot Type Classification",
+      "description": "Classification of shooting motion type and context",
+      "labels": [
+        {
+          "name": "jump_shot",
+          "display": "Jump Shot",
+          "description": "Standard jump shot with vertical leap",
+          "biomechanical_range": "Vertical jump with release",
+          "severity": "neutral"
+        },
+        {
+          "name": "set_shot",
+          "display": "Set Shot",
+          "description": "Shot from standing position, no jump",
+          "biomechanical_range": "Feet remain on ground",
+          "severity": "neutral"
+        },
+        {
+          "name": "free_throw",
+          "display": "Free Throw",
+          "description": "Uncontested shot from free throw line",
+          "biomechanical_range": "Static free throw motion",
+          "severity": "neutral"
+        },
+        {
+          "name": "catch_and_shoot",
+          "display": "Catch-and-Shoot",
+          "description": "Shot immediately after receiving pass",
+          "biomechanical_range": "Minimal preparation time",
+          "severity": "neutral"
+        },
+        {
+          "name": "off_dribble",
+          "display": "Off-the-Dribble",
+          "description": "Shot following dribble moves",
+          "biomechanical_range": "Post-dribble transition",
+          "severity": "neutral"
+        },
+        {
+          "name": "fadeaway",
+          "display": "Fadeaway/Contest",
+          "description": "Shot with backward lean or under pressure",
+          "biomechanical_range": "Backward momentum",
+          "severity": "neutral"
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "name": "body_type_adjustment",
+      "display_name": "Body Type Considerations",
+      "description": "Adjustments and considerations for different physical profiles",
+      "labels": [
+        {
+          "name": "tall_shooter",
+          "display": "Tall Shooter (>6'6\")",
+          "description": "High release point, longer lever arms",
+          "biomechanical_range": ">198cm height",
+          "severity": "neutral"
+        },
+        {
+          "name": "average_height",
+          "display": "Average Height (6'0\"-6'6\")",
+          "description": "Standard proportions and mechanics",
+          "biomechanical_range": "183-198cm height",
+          "severity": "neutral"
+        },
+        {
+          "name": "shorter_shooter",
+          "display": "Shorter Shooter (<6'0\")",
+          "description": "Quicker release, higher arc needed",
+          "biomechanical_range": "<183cm height",
+          "severity": "neutral"
+        },
+        {
+          "name": "long_wingspan",
+          "display": "Long Wingspan (+6\" vs height)",
+          "description": "Extended reach affects shooting pocket",
+          "biomechanical_range": "Wingspan > height + 15cm",
+          "severity": "neutral"
+        },
+        {
+          "name": "short_wingspan",
+          "display": "Short Wingspan (<height)",
+          "description": "Compensatory adjustments needed",
+          "biomechanical_range": "Wingspan < height",
+          "severity": "neutral"
+        },
+        {
+          "name": "athletic_style",
+          "display": "Athletic/Quick Release Style",
+          "description": "Fast, athletic shooting motion",
+          "biomechanical_range": "Quick motion style",
+          "severity": "neutral"
+        },
+        {
+          "name": "fundamental_style",
+          "display": "Fundamental/Set Style",
+          "description": "Traditional, methodical shooting form",
+          "biomechanical_range": "Deliberate motion style",
+          "severity": "neutral"
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "name": "common_errors",
+      "display_name": "Common Form Errors",
+      "description": "Detection of frequent shooting mistakes and compensations",
+      "labels": [
+        {
+          "name": "no_errors_detected",
+          "display": "No Major Errors Detected",
+          "description": "Clean shooting form without common flaws",
+          "biomechanical_range": "N/A",
+          "severity": "excellent"
+        },
+        {
+          "name": "thumb_flick",
+          "display": "Thumb Flick",
+          "description": "Thumb on shooting hand affects ball trajectory",
+          "biomechanical_range": "Thumb involvement in release",
+          "severity": "needs_improvement"
+        },
+        {
+          "name": "guide_hand_push",
+          "display": "Guide Hand Push",
+          "description": "Non-shooting hand influences shot direction",
+          "biomechanical_range": "Bilateral force application",
+          "severity": "needs_improvement"
+        },
+        {
+          "name": "dip_inconsistency",
+          "display": "Dip Inconsistency",
+          "description": "Variable ball dip depth, timing issues",
+          "biomechanical_range": "Inconsistent loading phase",
+          "severity": "moderate"
+        },
+        {
+          "name": "fading_away",
+          "display": "Fading Away/Drifting",
+          "description": "Unnecessary backward or lateral movement",
+          "biomechanical_range": "Excessive COG displacement",
+          "severity": "needs_improvement"
+        },
+        {
+          "name": "low_release",
+          "display": "Low Release Point",
+          "description": "Ball released below optimal height",
+          "biomechanical_range": "Below eye level release",
+          "severity": "needs_improvement"
+        },
+        {
+          "name": "early_release",
+          "display": "Early Release/Shot Put",
+          "description": "Releasing before reaching apex of jump",
+          "biomechanical_range": "Pre-apex release",
+          "severity": "poor"
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "name": "correction_priority",
+      "display_name": "Correction Priority Level",
+      "description": "Urgency of mechanical corrections needed",
+      "labels": [
+        {
+          "name": "elite_maintain",
+          "display": "Elite - Maintain Form",
+          "description": "Excellent mechanics, focus on consistency",
+          "biomechanical_range": "90-100% overall score",
+          "severity": "excellent"
+        },
+        {
+          "name": "advanced_minor_tweaks",
+          "display": "Advanced - Minor Tweaks",
+          "description": "Strong foundation, small adjustments",
+          "biomechanical_range": "80-89% overall score",
+          "severity": "good"
+        },
+        {
+          "name": "intermediate_focused_work",
+          "display": "Intermediate - Focused Work",
+          "description": "Solid base, specific areas need attention",
+          "biomechanical_range": "70-79% overall score",
+          "severity": "moderate"
+        },
+        {
+          "name": "developing_major_corrections",
+          "display": "Developing - Major Corrections",
+          "description": "Multiple mechanical issues to address",
+          "biomechanical_range": "60-69% overall score",
+          "severity": "needs_improvement"
+        },
+        {
+          "name": "beginner_rebuild_needed",
+          "display": "Beginner - Rebuild Needed",
+          "description": "Fundamental overhaul required",
+          "biomechanical_range": "<60% overall score",
+          "severity": "poor"
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "name": "overall_form_quality",
+      "display_name": "Overall Form Quality Assessment",
+      "description": "Comprehensive holistic evaluation of shooting form",
+      "labels": [
+        {
+          "name": "elite_textbook",
+          "display": "Elite/Textbook Form",
+          "description": "Professional-level mechanics across all categories",
+          "biomechanical_range": "95-100% composite score",
+          "severity": "excellent"
+        },
+        {
+          "name": "excellent_form",
+          "display": "Excellent Form",
+          "description": "Very strong mechanics with minor imperfections",
+          "biomechanical_range": "85-94% composite score",
+          "severity": "good"
+        },
+        {
+          "name": "good_solid_foundation",
+          "display": "Good - Solid Foundation",
+          "description": "Fundamentally sound with areas for improvement",
+          "biomechanical_range": "75-84% composite score",
+          "severity": "moderate"
+        },
+        {
+          "name": "developing_needs_work",
+          "display": "Developing - Needs Work",
+          "description": "Basic structure present, multiple corrections needed",
+          "biomechanical_range": "65-74% composite score",
+          "severity": "needs_improvement"
+        },
+        {
+          "name": "poor_significant_flaws",
+          "display": "Poor - Significant Flaws",
+          "description": "Major mechanical issues throughout form",
+          "biomechanical_range": "55-64% composite score",
+          "severity": "poor"
+        },
+        {
+          "name": "needs_complete_rebuild",
+          "display": "Needs Complete Rebuild",
+          "description": "Fundamental reconstruction required",
+          "biomechanical_range": "<55% composite score",
+          "severity": "critical"
+        }
+      ]
+    }
+  ],
+  "annotation_guidelines": {
+    "multi_label_approach": "Each image should be labeled across ALL applicable categories. Not all categories apply to every image (e.g., shooting_phase depends on timing of photo).",
+    "quality_standards": {
+      "image_requirements": [
+        "Clear view of shooter's full body or relevant body segment",
+        "Adequate lighting to see joint angles",
+        "Minimal blur (shot in progress acceptable)",
+        "Basketball visible when relevant to category",
+        "Resolution minimum 640x480 pixels"
+      ],
+      "annotation_accuracy": [
+        "Use angle measurement tools when possible",
+        "Compare to reference images of elite shooters",
+        "Consider body type and shot type context",
+        "Mark uncertain labels for review",
+        "Cross-reference multiple categories for consistency"
+      ]
+    },
+    "priority_categories": [
+      "shooting_hand_mechanics",
+      "elbow_alignment",
+      "follow_through",
+      "balance_stability",
+      "release_point_arc"
+    ],
+    "context_categories": [
+      "shooting_phase",
+      "shot_type",
+      "body_type_adjustment"
+    ]
+  },
+  "scoring_algorithm": {
+    "category_weights": {
+      "shooting_hand_mechanics": 0.10,
+      "guide_hand_placement": 0.08,
+      "elbow_alignment": 0.10,
+      "shoulder_position": 0.07,
+      "finger_release": 0.09,
+      "follow_through": 0.09,
+      "lower_body_knee_bend": 0.08,
+      "hip_rotation": 0.06,
+      "foot_placement": 0.06,
+      "balance_stability": 0.09,
+      "ball_positioning": 0.06,
+      "release_point_arc": 0.10,
+      "common_errors": 0.02
+    },
+    "severity_scores": {
+      "excellent": 100,
+      "good": 85,
+      "moderate": 70,
+      "needs_improvement": 55,
+      "poor": 35,
+      "critical": 10,
+      "neutral": 0
+    },
+    "composite_calculation": "Weighted average of all applicable non-neutral categories"
+  },
+  "api_configuration": {
+    "workspace": "basketball-analysis-epv7a",
+    "project_id": "basketball-form-quality-classifier",
+    "model_type": "multi-label-classification",
+    "min_confidence": 0.40,
+    "max_predictions_per_category": 1,
+    "auto_orient": true,
+    "preprocessing": {
+      "auto_contrast": false,
+      "grayscale": false
+    }
+  }
+}

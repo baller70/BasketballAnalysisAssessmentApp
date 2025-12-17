@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hybrid Pose Detection Test</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+        }
+        .upload-area {
+            border: 3px dashed #444;
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .upload-area:hover {
+            border-color: #f97316;
+            background: rgba(249, 115, 22, 0.1);
+        }
+        .upload-area.dragover {
+            border-color: #f97316;
+            background: rgba(249, 115, 22, 0.2);
+        }
+        input[type="file"] { display: none; }
+        .btn {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover { opacity: 0.9; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .results {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 900px) {
+            .results { grid-template-columns: 1fr; }
+        }
+        .panel {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .panel h3 {
+            margin-bottom: 15px;
+            color: #f97316;
+        }
+        .canvas-container {
+            position: relative;
+            display: inline-block;
+            max-width: 100%;
+        }
+        canvas {
+            max-width: 100%;
+            border-radius: 8px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .stat {
+            background: rgba(255,255,255,0.1);
+            padding: 12px;
+            border-radius: 8px;
+        }
+        .stat-label { color: #888; font-size: 12px; }
+        .stat-value { font-size: 20px; font-weight: bold; color: #4ade80; }
+        .keypoints-list {
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 13px;
+        }
+        .keypoint-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 10px;
+            border-radius: 4px;
+            margin: 2px 0;
+        }
+        .keypoint-item:nth-child(odd) { background: rgba(255,255,255,0.05); }
+        .source-yolo { color: #4ade80; }
+        .source-mediapipe { color: #60a5fa; }
+        .source-fused { color: #facc15; }
+        .source-ball_refined { color: #f87171; }
+        .angles-list { margin-top: 10px; }
+        .angle-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 6px;
+            margin: 4px 0;
+        }
+        .angle-value { color: #f97316; font-weight: bold; }
+        .feedback {
+            margin-top: 15px;
+        }
+        .feedback-item {
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin: 8px 0;
+        }
+        .feedback-success { background: rgba(74, 222, 128, 0.2); border-left: 3px solid #4ade80; }
+        .feedback-warning { background: rgba(251, 191, 36, 0.2); border-left: 3px solid #fbbf24; }
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+        .loading.active { display: block; }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #333;
+            border-top-color: #f97316;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .legend {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+        }
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .error {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid #ef4444;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+        .error.active { display: block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏀 Hybrid Pose Detection Test</h1>
+        <p class="subtitle">YOLOv8x-pose + MediaPipe + OpenCV Basketball Detection</p>
+        
+        <div class="upload-area" id="uploadArea">
+            <p style="font-size: 48px; margin-bottom: 15px;">📷</p>
+            <p style="font-size: 18px; margin-bottom: 10px;">Drop a basketball shooting image here</p>
+            <p style="color: #666;">or click to browse</p>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+        
+        <div style="text-align: center; margin-bottom: 20px;">
+            <button class="btn" onclick="document.getElementById('fileInput').click()">Upload Image</button>
+            <button class="btn" id="analyzeBtn" disabled onclick="analyze()">Analyze Pose</button>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Running hybrid detection...</p>
+            <p style="color: #666; font-size: 14px;">YOLOv8x-pose → MediaPipe → Ball Detection → Fusion</p>
+        </div>
+        
+        <div class="error" id="error"></div>
+        
+        <div class="results" id="results" style="display: none;">
+            <div class="panel">
+                <h3>Detection Result</h3>
+                <div class="canvas-container">
+                    <canvas id="resultCanvas"></canvas>
+                </div>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #4ade80;"></div>
+                        <span>YOLO</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #60a5fa;"></div>
+                        <span>MediaPipe</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #facc15;"></div>
+                        <span>Fused</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #f87171;"></div>
+                        <span>Ball Refined</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #f97316;"></div>
+                        <span>Basketball</span>
+                    </div>
+                </div>
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-label">Confidence</div>
+                        <div class="stat-value" id="confidence">-</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Keypoints</div>
+                        <div class="stat-value" id="keypointCount">-</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="panel">
+                <h3>Analysis</h3>
+                
+                <h4 style="margin-top: 15px; color: #888;">Angles</h4>
+                <div class="angles-list" id="anglesList"></div>
+                
+                <h4 style="margin-top: 20px; color: #888;">Keypoints</h4>
+                <div class="keypoints-list" id="keypointsList"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentImage = null;
+        const API_URL = 'http://localhost:5001';
+        
+        // Drag and drop
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                handleFile(e.target.files[0]);
+            }
+        });
+        
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                showError('Please upload an image file');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                currentImage = e.target.result;
+                document.getElementById('analyzeBtn').disabled = false;
+                
+                // Preview
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.getElementById('resultCanvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Scale to fit
+                    const maxW = 500;
+                    const scale = Math.min(1, maxW / img.width);
+                    canvas.width = img.width * scale;
+                    canvas.height = img.height * scale;
+                    
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                };
+                img.src = currentImage;
+                
+                document.getElementById('results').style.display = 'grid';
+                hideError();
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        async function analyze() {
+            if (!currentImage) return;
+            
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('analyzeBtn').disabled = true;
+            hideError();
+            
+            try {
+                // Extract base64 data
+                const base64 = currentImage.split(',')[1];
+                
+                const response = await fetch(`${API_URL}/api/detect-pose`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: base64 })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    displayResults(result);
+                } else {
+                    showError(result.error || 'Detection failed');
+                }
+            } catch (err) {
+                showError(`Connection error: ${err.message}. Is the server running?`);
+            } finally {
+                document.getElementById('loading').classList.remove('active');
+                document.getElementById('analyzeBtn').disabled = false;
+            }
+        }
+        
+        function displayResults(result) {
+            const canvas = document.getElementById('resultCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            const img = new Image();
+            img.onload = () => {
+                const maxW = 500;
+                const scale = Math.min(1, maxW / img.width);
+                canvas.width = img.width * scale;
+                canvas.height = img.height * scale;
+                
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                
+                const kp = result.keypoints;
+                const imgW = result.image_size.width;
+                const imgH = result.image_size.height;
+                
+                // Scale factor for drawing
+                const sx = canvas.width / imgW;
+                const sy = canvas.height / imgH;
+                
+                // Draw basketball
+                if (result.basketball) {
+                    const ball = result.basketball;
+                    ctx.beginPath();
+                    ctx.arc(ball.x * sx, ball.y * sy, ball.radius * sx, 0, Math.PI * 2);
+                    ctx.strokeStyle = '#f97316';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                    ctx.fillStyle = '#f97316';
+                    ctx.beginPath();
+                    ctx.arc(ball.x * sx, ball.y * sy, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                // Skeleton connections
+                const skeleton = [
+                    ['nose', 'left_shoulder'], ['nose', 'right_shoulder'],
+                    ['left_shoulder', 'right_shoulder'],
+                    ['left_shoulder', 'left_elbow'], ['left_elbow', 'left_wrist'],
+                    ['right_shoulder', 'right_elbow'], ['right_elbow', 'right_wrist'],
+                    ['left_shoulder', 'left_hip'], ['right_shoulder', 'right_hip'],
+                    ['left_hip', 'right_hip'],
+                    ['left_hip', 'left_knee'], ['left_knee', 'left_ankle'],
+                    ['right_hip', 'right_knee'], ['right_knee', 'right_ankle'],
+                ];
+                
+                // Draw skeleton
+                ctx.strokeStyle = '#facc15';
+                ctx.lineWidth = 2;
+                skeleton.forEach(([start, end]) => {
+                    if (kp[start] && kp[end]) {
+                        ctx.beginPath();
+                        ctx.moveTo(kp[start].x * sx, kp[start].y * sy);
+                        ctx.lineTo(kp[end].x * sx, kp[end].y * sy);
+                        ctx.stroke();
+                    }
+                });
+                
+                // Colors by source
+                const colors = {
+                    'yolo': '#4ade80',
+                    'mediapipe': '#60a5fa',
+                    'fused': '#facc15',
+                    'ball_refined': '#f87171'
+                };
+                
+                // Draw keypoints
+                Object.entries(kp).forEach(([name, pt]) => {
+                    const x = pt.x * sx;
+                    const y = pt.y * sy;
+                    const color = colors[pt.source] || '#ffffff';
+                    const radius = name.includes('wrist') ? 8 : 5;
+                    
+                    ctx.beginPath();
+                    ctx.arc(x, y, radius, 0, Math.PI * 2);
+                    ctx.fillStyle = color;
+                    ctx.fill();
+                    ctx.strokeStyle = 'white';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                });
+            };
+            img.src = currentImage;
+            
+            // Stats
+            document.getElementById('confidence').textContent = 
+                (result.confidence * 100).toFixed(0) + '%';
+            document.getElementById('keypointCount').textContent = 
+                Object.keys(result.keypoints).length;
+            
+            // Angles
+            const anglesList = document.getElementById('anglesList');
+            anglesList.innerHTML = '';
+            Object.entries(result.angles || {}).forEach(([name, value]) => {
+                const div = document.createElement('div');
+                div.className = 'angle-item';
+                div.innerHTML = `
+                    <span>${formatAngleName(name)}</span>
+                    <span class="angle-value">${value.toFixed(1)}°</span>
+                `;
+                anglesList.appendChild(div);
+            });
+            
+            // Keypoints
+            const keypointsList = document.getElementById('keypointsList');
+            keypointsList.innerHTML = '';
+            Object.entries(result.keypoints).forEach(([name, pt]) => {
+                const div = document.createElement('div');
+                div.className = 'keypoint-item';
+                div.innerHTML = `
+                    <span>${name}</span>
+                    <span class="source-${pt.source}">(${pt.x.toFixed(0)}, ${pt.y.toFixed(0)}) [${pt.source}]</span>
+                `;
+                keypointsList.appendChild(div);
+            });
+        }
+        
+        function formatAngleName(name) {
+            return name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        }
+        
+        function showError(msg) {
+            const el = document.getElementById('error');
+            el.textContent = msg;
+            el.classList.add('active');
+        }
+        
+        function hideError() {
+            document.getElementById('error').classList.remove('active');
+        }
+    </script>
+</body>
+</html>
+
+
+
+

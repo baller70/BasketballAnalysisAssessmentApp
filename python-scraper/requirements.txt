@@ -1,0 +1,89 @@
+# Basketball Shooter Data Scraping Pipeline
+# Deploy to: Render or Railway
+
+# HTTP Requests
+requests==2.31.0
+
+# AWS S3 (OPTIONAL - skip if deploying without S3)
+# Leave this installed; the code will auto-detect if credentials are configured
+boto3==1.34.100
+
+# HTML Parsing
+beautifulsoup4==4.12.3
+lxml==5.2.2
+
+# Image Processing
+Pillow==10.3.0
+opencv-python-headless==4.9.0.80  # Headless for server deployment
+
+# YouTube Video Download
+yt-dlp==2024.4.9  # Modern fork of youtube-dl
+
+# Browser Automation (for JavaScript-heavy pages)
+selenium==4.21.0
+webdriver-manager==4.0.1
+
+# Advanced Browser Automation with Playwright
+playwright==1.42.0
+playwright-stealth==1.0.2
+
+# Advanced Anti-Detection
+fake-useragent==1.5.1
+user-agents==2.2.0
+
+# HTTP/2 and TLS Fingerprinting
+httpx==0.27.0
+curl-cffi==0.6.2
+
+# Proxy Management
+requests[socks]==2.31.0
+PySocks==1.7.1
+
+# Data Processing
+pandas==2.2.2
+numpy==1.26.4
+
+# Database Connection (PostgreSQL)
+psycopg2-binary==2.9.9
+sqlalchemy==2.0.30
+
+# API Framework (for webhook endpoints)
+flask==3.0.3
+gunicorn==22.0.0
+
+# Environment Variables
+python-dotenv==1.0.1
+
+# Scheduling (for automated scraping)
+apscheduler==3.10.4
+
+# Rate Limiting
+ratelimit==2.2.1
+
+# Logging
+loguru==0.7.2
+
+# ========================================
+# Phase 4: Computer Vision Pipeline
+# ========================================
+
+# Anthropic Claude API (Vision fallback)
+anthropic==0.28.0
+
+# OpenAI API (Vision primary)
+openai==1.30.0
+
+# Abacus AI SDK (optional - for Abacus AI hosted deployment)
+# abacusai>=1.0.0
+
+# ShotStack Video Editing API
+# (uses requests, no separate package needed)
+
+# RoboFlow Integration
+# (uses requests, no separate package needed)
+
+
+
+
+
+
