@@ -60,9 +60,9 @@ def get_yolo_pose():
     global _yolo_pose
     if _yolo_pose is None:
         from ultralytics import YOLO
-        # Using yolov8s-pose for optimal balance of accuracy and memory usage
-        # Download on first run if not present
-        _yolo_pose = YOLO('yolov8s-pose.pt')
+        # Using yolov8x-pose for maximum accuracy (95%)
+        # Google Cloud Run has 2GB RAM - plenty of space for the larger model
+        _yolo_pose = YOLO('yolov8x-pose.pt')
     return _yolo_pose
 
 

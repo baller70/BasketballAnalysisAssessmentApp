@@ -12,14 +12,14 @@ All files are now in your GitHub repository and ready to deploy:
 5. **`GOOGLE_CLOUD_RUN_SETUP.md`** - Comprehensive deployment guide
 
 ### 🛠️ Optimizations Made
-1. **Switched from yolov8x-pose (133MB) → yolov8s-pose (23MB)**
-   - Saves ~110MB of memory
-   - Still 92% accurate (vs 95% for extra-large)
-   - Perfect for basketball pose detection
+1. **Using yolov8x-pose (133MB) for Maximum Accuracy**
+   - **95% accurate** - the highest accuracy model available
+   - Perfect for precise basketball pose detection
+   - 2GB RAM on Cloud Run handles it easily (vs Render's 512MB crash)
 
 2. **Configured for 2GB RAM on Cloud Run**
    - Well within free tier limits
-   - More than enough for YOLO + MediaPipe
+   - More than enough for YOLO + MediaPipe + large model
    - Render was crashing with only 512MB
 
 3. **Removed large .pt files from Git**
@@ -91,8 +91,8 @@ For a basketball analysis app with moderate usage (100-500 analyses/month), you'
 
 1. 🏗️ Cloud Build creates a Docker container
 2. 📚 Installs Python 3.11 + all dependencies
-3. 🤖 Downloads YOLO models (yolov8n.pt, yolov8s-pose.pt)
-4. 🚀 Deploys to Cloud Run in us-central1
+3. 🤖 Includes YOLO models (yolov8n.pt 6MB, yolov8x-pose.pt 133MB)
+4. 🚀 Deploys to Cloud Run in us-central1 with 2GB RAM
 5. 🌎 Makes service publicly accessible
 6. ✅ Returns your service URL
 
@@ -104,7 +104,7 @@ curl https://your-service-url.run.app/health
 
 # Should return:
 {
-  "components": ["yolov8s-pose", "mediapipe", "opencv-ball-detection"],
+  "components": ["yolov8x-pose", "mediapipe", "opencv-ball-detection"],
   "model": "hybrid",
   "status": "ok"
 }

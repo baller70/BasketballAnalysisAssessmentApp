@@ -21,7 +21,7 @@ RUN pip install --no-cache-dir -r requirements-hybrid.txt
 # Copy application code
 COPY hybrid_pose_detection.py .
 COPY yolov8n.pt .
-COPY yolov8s-pose.pt .
+COPY yolov8x-pose.pt .
 
 # Set environment variables for Cloud Run
 ENV PORT=8080
