@@ -1,0 +1,25 @@
+# Hybrid Pose Detection Requirements
+# For deploying hybrid_pose_detection.py to Render/Abacus AI
+
+# Flask API Framework
+flask==3.0.3
+flask-cors==4.0.0
+gunicorn==22.0.0
+
+# Image Processing
+Pillow==10.3.0
+opencv-python-headless==4.9.0.80
+numpy==1.26.4
+
+# YOLOv8 for person detection and pose estimation
+ultralytics==8.2.0
+
+# MediaPipe for secondary pose estimation
+mediapipe==0.10.14
+
+# Environment Variables
+python-dotenv==1.0.1
+
+# Logging
+loguru==0.7.2
+
