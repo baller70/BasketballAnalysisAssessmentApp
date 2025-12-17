@@ -1,0 +1,38 @@
+# Google Cloud Run Optimized Dockerfile for Basketball Pose Detection
+# Uses Python 3.11 with efficient layer caching
+
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies (minimal for Cloud Run)
+RUN apt-get update && apt-get install -y \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first (for Docker layer caching)
+COPY requirements-hybrid.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements-hybrid.txt
+
+# Copy application code
+COPY hybrid_pose_detection.py .
+COPY yolov8n.pt .
+COPY yolov8s-pose.pt .
+
+# Set environment variables for Cloud Run
+ENV PORT=8080
+ENV PYTHONUNBUFFERED=1
+
+# Create non-root user for security
+RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+USER appuser
+
+# Expose port
+EXPOSE 8080
+
+# Run with gunicorn (production-ready WSGI server)
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "--threads", "4", "--timeout", "300", "--worker-class", "sync", "hybrid_pose_detection:app"]

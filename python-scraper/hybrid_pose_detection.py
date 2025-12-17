@@ -60,7 +60,9 @@ def get_yolo_pose():
     global _yolo_pose
     if _yolo_pose is None:
         from ultralytics import YOLO
-        _yolo_pose = YOLO('yolov8x-pose.pt')  # Using largest for best accuracy
+        # Using yolov8s-pose for optimal balance of accuracy and memory usage
+        # Download on first run if not present
+        _yolo_pose = YOLO('yolov8s-pose.pt')
     return _yolo_pose
 
 
