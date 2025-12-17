@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const HYBRID_API_URL = process.env.NEXT_PUBLIC_HYBRID_API_URL || 'http://localhost:5001'
-
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -17,8 +15,8 @@ export async function POST(request: NextRequest) {
     // Extract base64 data (remove data URL prefix if present)
     const base64Image = image.includes(',') ? image.split(',')[1] : image
 
-    // Call the hybrid backend for pose detection (which includes basketball detection)
-    const response = await fetch(`${HYBRID_API_URL}/api/detect-pose`, {
+    // Call the pose detection API route which includes basketball detection
+    const response = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/pose-detection`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ image: base64Image })
@@ -26,7 +24,7 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('Hybrid API error:', errorText)
+      console.error('Pose detection error:', errorText)
       return NextResponse.json(
         { success: false, error: 'Basketball detection failed', message: errorText },
         { status: response.status }

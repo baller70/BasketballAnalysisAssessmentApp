@@ -1,0 +1,6 @@
+# Python dependencies for hybrid pose detection
+ultralytics==8.0.200
+mediapipe==0.10.9
+opencv-python-headless==4.9.0.80
+numpy==1.26.4
+Pillow==10.3.0
