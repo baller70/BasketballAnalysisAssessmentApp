@@ -1,9 +1,8 @@
 /**
  * Vision Analysis Service
  * Connects to the hybrid pose detection backend (YOLOv8-pose + MediaPipe + OpenCV)
+ * via Next.js API routes that proxy to the Python backend
  */
-
-const HYBRID_API_URL = process.env.NEXT_PUBLIC_HYBRID_API_URL || 'http://localhost:5001'
 
 interface BodyPosition {
   x: number  // 0-100 percentage
@@ -137,70 +136,7 @@ async function fileToBase64(file: File): Promise<string> {
 }
 
 /**
- * Generate fallback analysis when hybrid server is unavailable
- * This provides realistic mock data for demonstration/production use
- */
-function generateFallbackAnalysis(imageSize: { width: number; height: number } = { width: 1920, height: 1080 }): {
-  keypoints: Record<string, { x: number; y: number; confidence: number; source: string }>
-  angles: Record<string, number>
-  basketball: { x: number; y: number; radius: number }
-  confidence: number
-  image_size: { width: number; height: number }
-} {
-  // Generate realistic keypoints for a shooting form (right-handed shooter)
-  const centerX = imageSize.width * 0.5
-  const keypoints: Record<string, { x: number; y: number; confidence: number; source: string }> = {
-    nose: { x: centerX, y: imageSize.height * 0.15, confidence: 0.95, source: 'fallback' },
-    left_eye: { x: centerX - 20, y: imageSize.height * 0.14, confidence: 0.93, source: 'fallback' },
-    right_eye: { x: centerX + 20, y: imageSize.height * 0.14, confidence: 0.93, source: 'fallback' },
-    left_ear: { x: centerX - 35, y: imageSize.height * 0.145, confidence: 0.90, source: 'fallback' },
-    right_ear: { x: centerX + 35, y: imageSize.height * 0.145, confidence: 0.90, source: 'fallback' },
-    left_shoulder: { x: centerX - 80, y: imageSize.height * 0.25, confidence: 0.95, source: 'fallback' },
-    right_shoulder: { x: centerX + 80, y: imageSize.height * 0.25, confidence: 0.95, source: 'fallback' },
-    left_elbow: { x: centerX - 120, y: imageSize.height * 0.40, confidence: 0.92, source: 'fallback' },
-    right_elbow: { x: centerX + 150, y: imageSize.height * 0.35, confidence: 0.94, source: 'fallback' },
-    left_wrist: { x: centerX - 140, y: imageSize.height * 0.50, confidence: 0.90, source: 'fallback' },
-    right_wrist: { x: centerX + 180, y: imageSize.height * 0.20, confidence: 0.95, source: 'fallback' },
-    left_hip: { x: centerX - 60, y: imageSize.height * 0.55, confidence: 0.93, source: 'fallback' },
-    right_hip: { x: centerX + 60, y: imageSize.height * 0.55, confidence: 0.93, source: 'fallback' },
-    left_knee: { x: centerX - 70, y: imageSize.height * 0.75, confidence: 0.91, source: 'fallback' },
-    right_knee: { x: centerX + 70, y: imageSize.height * 0.75, confidence: 0.91, source: 'fallback' },
-    left_ankle: { x: centerX - 80, y: imageSize.height * 0.95, confidence: 0.88, source: 'fallback' },
-    right_ankle: { x: centerX + 80, y: imageSize.height * 0.95, confidence: 0.88, source: 'fallback' }
-  }
-
-  // Generate realistic angles
-  const angles: Record<string, number> = {
-    right_elbow_angle: 92, // Good L-shape
-    left_elbow_angle: 95,
-    right_knee_angle: 145, // Good bend
-    left_knee_angle: 148,
-    right_shoulder_angle: 85,
-    left_shoulder_angle: 88,
-    right_hip_angle: 170,
-    left_hip_angle: 172,
-    right_ankle_angle: 105,
-    left_ankle_angle: 108
-  }
-
-  // Basketball position (in release position)
-  const basketball = {
-    x: centerX + 180,
-    y: imageSize.height * 0.18,
-    radius: 30
-  }
-
-  return {
-    keypoints,
-    angles,
-    basketball,
-    confidence: 0.87,
-    image_size: imageSize
-  }
-}
-
-/**
- * Analyze shooting form using the hybrid backend with fallback support
+ * Analyze shooting form using the hybrid backend via Next.js API proxy
  */
 export async function analyzeShootingForm(
   imageFile: File,
@@ -209,93 +145,58 @@ export async function analyzeShootingForm(
   try {
     const base64Image = await fileToBase64(imageFile)
 
-    // Try hybrid server first with a short timeout
-    console.log('🎯 Attempting to connect to hybrid pose detection server...')
+    // Call pose detection via Next.js API proxy (which forwards to Python backend)
+    console.log('🎯 Calling pose detection API...')
     
-    let poseResult: any
-    let usedFallback = false
-    
-    try {
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 3000) // 3 second timeout
-      
-      const poseResponse = await fetch(`${HYBRID_API_URL}/api/detect-pose`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          image: base64Image,
-          ball_hint: ballPosition
-        }),
-        signal: controller.signal
+    const poseResponse = await fetch('/api/pose-detection', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        image: base64Image,
+        ball_hint: ballPosition
       })
-      
-      clearTimeout(timeoutId)
+    })
 
-      if (!poseResponse.ok) {
-        throw new Error(`Pose detection failed: ${poseResponse.statusText}`)
-      }
+    if (!poseResponse.ok) {
+      const errorData = await poseResponse.json()
+      throw new Error(errorData.error || `Pose detection failed: ${poseResponse.statusText}`)
+    }
 
-      poseResult = await poseResponse.json()
+    const poseResult = await poseResponse.json()
 
-      if (!poseResult.success) {
-        throw new Error(poseResult.error || 'Pose detection failed')
-      }
-
-      console.log('✅ Hybrid server connected - Using real pose detection')
-    } catch (hybridError) {
-      // Hybrid server unavailable - use fallback
-      console.log('⚠️ Hybrid server unavailable - Using fallback analysis')
-      console.log('   This is normal for production deployment without local Python server')
-      usedFallback = true
-      
-      // Generate fallback data
-      const fallbackData = generateFallbackAnalysis()
-      poseResult = {
-        success: true,
-        keypoints: fallbackData.keypoints,
-        angles: fallbackData.angles,
-        basketball: fallbackData.basketball,
-        confidence: fallbackData.confidence,
-        image_size: fallbackData.image_size
-      }
+    if (!poseResult.success) {
+      throw new Error(poseResult.error || 'Pose detection failed')
     }
 
     console.log('✅ Pose detection complete:', {
       keypoints: Object.keys(poseResult.keypoints || {}).length,
       confidence: poseResult.confidence,
       basketball: poseResult.basketball ? 'detected' : 'not found',
-      mode: usedFallback ? 'fallback' : 'hybrid-server'
+      method: poseResult.method || 'hybrid'
     })
 
-    // Call form analysis (or use fallback)
+    // Call form analysis via Next.js API proxy
     console.log('📊 Analyzing shooting form...')
     let analysisResult = { 
-      overall_score: usedFallback ? 78 : 75, 
-      feedback: usedFallback ? [
-        { type: 'success', area: 'elbow', message: 'Good elbow position - maintains proper L-shape' },
-        { type: 'success', area: 'knees', message: 'Excellent knee bend - generating good power' },
-        { type: 'warning', area: 'balance', message: 'Consider widening your base slightly for better stability' },
-        { type: 'info', area: 'follow-through', message: 'Follow-through looks solid - maintain this consistency' }
-      ] : []
+      overall_score: 75, 
+      feedback: []
     }
     
-    if (!usedFallback) {
-      try {
-        const analysisResponse = await fetch(`${HYBRID_API_URL}/api/analyze-form`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            keypoints: poseResult.keypoints,
-            angles: poseResult.angles
-          })
+    try {
+      const analysisResponse = await fetch('/api/analyze-form', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          keypoints: poseResult.keypoints,
+          angles: poseResult.angles
         })
-        
-        if (analysisResponse.ok) {
-          analysisResult = await analysisResponse.json()
-        }
-      } catch (e) {
-        console.warn('Form analysis failed, using defaults:', e)
+      })
+      
+      if (analysisResponse.ok) {
+        analysisResult = await analysisResponse.json()
       }
+    } catch (e) {
+      console.warn('Form analysis failed, using defaults:', e)
     }
 
     console.log('✅ Form analysis complete:', {
@@ -365,46 +266,9 @@ export async function analyzeShootingForm(
   } catch (error) {
     console.error('Vision analysis error:', error)
     
-    // Even if everything fails, provide fallback analysis instead of error
-    console.log('🔄 Final fallback - Generating demo analysis')
-    const fallbackData = generateFallbackAnalysis()
-    
-    const bodyPositions = convertKeypointsToBodyPositions(
-      fallbackData.keypoints,
-      fallbackData.angles,
-      fallbackData.image_size,
-      fallbackData.basketball
-    )
-    
     return {
-      success: true,
-      analysis: {
-        overallScore: 78,
-        category: 'GOOD',
-        bodyPositions,
-        centerLine: { x: 50 },
-        phaseDetection: { currentPhase: 'RELEASE' },
-        coachingTip: 'Analysis complete - Review your form details below',
-        strengths: [
-          'Good elbow position - maintains proper L-shape',
-          'Excellent knee bend - generating good power'
-        ],
-        improvements: [
-          'Consider widening your base slightly for better stability'
-        ],
-        measurements: fallbackData.angles
-      },
-      keypoints: fallbackData.keypoints,
-      angles: fallbackData.angles,
-      basketball: fallbackData.basketball,
-      confidence: fallbackData.confidence,
-      image_size: fallbackData.image_size,
-      feedback: [
-        { type: 'success', area: 'elbow', message: 'Good elbow position - maintains proper L-shape' },
-        { type: 'success', area: 'knees', message: 'Excellent knee bend - generating good power' },
-        { type: 'warning', area: 'balance', message: 'Consider widening your base slightly for better stability' }
-      ],
-      overall_score: 78
+      success: false,
+      error: error instanceof Error ? error.message : 'Vision analysis failed. Please try again.'
     }
   }
 }
@@ -414,7 +278,7 @@ export async function analyzeShootingForm(
  */
 export async function checkHybridServerHealth(): Promise<boolean> {
   try {
-    const response = await fetch(`${HYBRID_API_URL}/health`, {
+    const response = await fetch('/api/pose-detection', {
       method: 'GET',
       signal: AbortSignal.timeout(3000)
     })
