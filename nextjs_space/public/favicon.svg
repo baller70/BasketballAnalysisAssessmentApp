@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="ballGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF8C00;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FF6B00;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" fill="#1a1a1a"/>
+  <path d="M 60 200 Q 80 120, 120 80 T 200 40" stroke="#FF8C00" stroke-width="8" fill="none" opacity="0.3" stroke-linecap="round"/>
+  <circle cx="80" cy="180" r="6" fill="#FF8C00" opacity="0.4"/>
+  <circle cx="110" cy="140" r="8" fill="#FF8C00" opacity="0.5"/>
+  <circle cx="150" cy="90" r="10" fill="#FF8C00" opacity="0.6"/>
+  <circle cx="128" cy="128" r="60" fill="url(#ballGrad)"/>
+  <path d="M 128 68 Q 128 98, 128 128 Q 128 158, 128 188" stroke="#1a1a1a" stroke-width="3" fill="none"/>
+  <path d="M 68 128 Q 98 128, 128 128 Q 158 128, 188 128" stroke="#1a1a1a" stroke-width="3" fill="none"/>
+  <path d="M 88 88 Q 108 108, 128 128 Q 148 148, 168 168" stroke="#1a1a1a" stroke-width="3" fill="none"/>
+  <path d="M 168 88 Q 148 108, 128 128 Q 108 148, 88 168" stroke="#1a1a1a" stroke-width="3" fill="none"/>
+  <ellipse cx="128" cy="128" rx="60" ry="30" fill="none" stroke="#1a1a1a" stroke-width="3"/>
+  <ellipse cx="128" cy="128" rx="30" ry="60" fill="none" stroke="#1a1a1a" stroke-width="3"/>
+</svg>
