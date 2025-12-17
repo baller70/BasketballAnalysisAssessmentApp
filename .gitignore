@@ -18,6 +18,3 @@ out
 .deploy
 .logs
 *.tsbuildinfo
-
-# YOLO model files (too large for GitHub)
-*.pt
