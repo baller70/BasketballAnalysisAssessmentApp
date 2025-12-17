@@ -471,3 +471,8 @@ def get_shooters_without_images() -> List[Dict]:
         session.close()
 
 
+
+
+
+
+

@@ -2,7 +2,7 @@
 
 import React from "react"
 import Link from "next/link"
-import { Activity } from "lucide-react"
+import { Activity, Settings } from "lucide-react"
 
 export function Header() {
   return (
@@ -32,6 +32,10 @@ export function Header() {
             </Link>
             <Link href="/elite-shooters" className="text-[#E5E5E5] hover:text-[#FFD700] transition-colors font-medium uppercase tracking-wider">
               ELITE SHOOTERS
+            </Link>
+            <Link href="/settings" className="text-[#E5E5E5] hover:text-[#FFD700] transition-colors font-medium uppercase tracking-wider flex items-center gap-2">
+              <Settings className="w-4 h-4" />
+              SETTINGS
             </Link>
           </nav>
         </div>

@@ -1,0 +1,198 @@
+{
+  "project_name": "basketball-shooting-form",
+  "project_type": "keypoint-detection",
+  "classes": [
+    "person",
+    "basketball"
+  ],
+  "keypoints": [
+    {
+      "id": 0,
+      "name": "nose",
+      "color": "#FF0000"
+    },
+    {
+      "id": 1,
+      "name": "left_eye",
+      "color": "#FF0000"
+    },
+    {
+      "id": 2,
+      "name": "right_eye",
+      "color": "#FF0000"
+    },
+    {
+      "id": 3,
+      "name": "left_ear",
+      "color": "#FF0000"
+    },
+    {
+      "id": 4,
+      "name": "right_ear",
+      "color": "#FF0000"
+    },
+    {
+      "id": 5,
+      "name": "left_shoulder",
+      "color": "#00FF00"
+    },
+    {
+      "id": 6,
+      "name": "right_shoulder",
+      "color": "#00FF00"
+    },
+    {
+      "id": 7,
+      "name": "left_elbow",
+      "color": "#0000FF"
+    },
+    {
+      "id": 8,
+      "name": "right_elbow",
+      "color": "#0000FF"
+    },
+    {
+      "id": 9,
+      "name": "left_wrist",
+      "color": "#FFFF00"
+    },
+    {
+      "id": 10,
+      "name": "right_wrist",
+      "color": "#FFFF00"
+    },
+    {
+      "id": 11,
+      "name": "left_hip",
+      "color": "#FF00FF"
+    },
+    {
+      "id": 12,
+      "name": "right_hip",
+      "color": "#FF00FF"
+    },
+    {
+      "id": 13,
+      "name": "left_knee",
+      "color": "#00FFFF"
+    },
+    {
+      "id": 14,
+      "name": "right_knee",
+      "color": "#00FFFF"
+    },
+    {
+      "id": 15,
+      "name": "left_ankle",
+      "color": "#FFA500"
+    },
+    {
+      "id": 16,
+      "name": "right_ankle",
+      "color": "#FFA500"
+    },
+    {
+      "id": 17,
+      "name": "basketball",
+      "color": "#FF8C00"
+    }
+  ],
+  "skeleton": [
+    [
+      0,
+      1
+    ],
+    [
+      0,
+      2
+    ],
+    [
+      1,
+      3
+    ],
+    [
+      2,
+      4
+    ],
+    [
+      5,
+      6
+    ],
+    [
+      5,
+      7
+    ],
+    [
+      7,
+      9
+    ],
+    [
+      6,
+      8
+    ],
+    [
+      8,
+      10
+    ],
+    [
+      5,
+      11
+    ],
+    [
+      6,
+      12
+    ],
+    [
+      11,
+      12
+    ],
+    [
+      11,
+      13
+    ],
+    [
+      13,
+      15
+    ],
+    [
+      12,
+      14
+    ],
+    [
+      14,
+      16
+    ]
+  ],
+  "phases": [
+    "load",
+    "set",
+    "release",
+    "follow_through"
+  ],
+  "annotation_format": "coco-keypoints",
+  "preprocessing": {
+    "resize": {
+      "width": 640,
+      "height": 640
+    },
+    "auto_orient": true
+  },
+  "augmentation": {
+    "flip_horizontal": true,
+    "brightness": {
+      "min": 0.8,
+      "max": 1.2
+    },
+    "blur": {
+      "max": 1.5
+    },
+    "noise": {
+      "max": 2
+    }
+  },
+  "split": {
+    "train": 70,
+    "valid": 20,
+    "test": 10
+  }
+}

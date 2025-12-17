@@ -63,4 +63,27 @@ ratelimit==2.2.1
 # Logging
 loguru==0.7.2
 
+# ========================================
+# Phase 4: Computer Vision Pipeline
+# ========================================
+
+# Anthropic Claude API (Vision fallback)
+anthropic==0.28.0
+
+# OpenAI API (Vision primary)
+openai==1.30.0
+
+# Abacus AI SDK (optional - for Abacus AI hosted deployment)
+# abacusai>=1.0.0
+
+# ShotStack Video Editing API
+# (uses requests, no separate package needed)
+
+# RoboFlow Integration
+# (uses requests, no separate package needed)
+
+
+
+
+
 
