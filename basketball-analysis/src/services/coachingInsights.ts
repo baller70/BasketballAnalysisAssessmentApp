@@ -3,7 +3,7 @@
 // Generates personalized coaching content
 // ============================================
 
-import { SkillLevel, DrillFocusArea } from '@/data/drillDatabase'
+import { SkillLevel } from '@/data/drillDatabase'
 import { ShootingFlaw } from '@/data/shootingFlawsDatabase'
 
 // ============================================
@@ -136,7 +136,7 @@ export function generateWeeklyPerformanceSummary(
   const allFlaws = [...new Set(sessions.flatMap(s => s.flaws))]
   
   // Generate level-appropriate messages
-  const tone = LEVEL_TONES[level]
+  const _tone = LEVEL_TONES[level] // eslint-disable-line @typescript-eslint/no-unused-vars
   
   let whatsWorking = ''
   let focusArea = ''
@@ -220,7 +220,7 @@ export function generateCoachingTip(
   currentValue: number,
   optimalValue: number
 ): CoachingTip {
-  const tone = LEVEL_TONES[level]
+  const _tone = LEVEL_TONES[level] // eslint-disable-line @typescript-eslint/no-unused-vars
   const difference = Math.abs(currentValue - optimalValue)
   
   let whatINoticed = ''
@@ -252,12 +252,12 @@ export function generateCoachingTip(
         `Use video to check your form`,
         `Track your progress over the week`
       ]
-      expectedResult = `In 1-2 weeks, you should see your ${flaw.metric} improve by ${Math.round(difference / 2)}°.`
+      expectedResult = `In 1-2 weeks, you should see your ${flaw.detection.metric} improve by ${Math.round(difference / 2)}°.`
       drillRecommendation = flaw.drills[0] || 'Form Correction Drill'
       break
       
     case 'HIGH_SCHOOL':
-      whatINoticed = `Your ${flaw.metric} is ${currentValue}° (optimal: ${optimalValue}°). This ${difference}° variance is causing inconsistency in your shot.`
+      whatINoticed = `Your ${flaw.detection.metric} is ${currentValue}° (optimal: ${optimalValue}°). This ${difference}° variance is causing inconsistency in your shot.`
       whyItMatters = `Data shows this variance reduces shooting percentage by ${Math.round(difference * 0.8)}%. Correcting this could add 2-4 points to your per-game average.`
       whatToDo = [
         `Implement "${flaw.drills[0]}" drill (15-20 min/day)`,
@@ -270,7 +270,7 @@ export function generateCoachingTip(
       break
       
     case 'COLLEGE':
-      whatINoticed = `${flaw.metric} variance: ${currentValue}° vs. NCAA optimal ${optimalValue}°. This ${difference}° deviation correlates with ${Math.round(difference * 1.2)}% efficiency loss.`
+      whatINoticed = `${flaw.detection.metric} variance: ${currentValue}° vs. NCAA optimal ${optimalValue}°. This ${difference}° deviation correlates with ${Math.round(difference * 1.2)}% efficiency loss.`
       whyItMatters = `NCAA data indicates this issue affects shot selection under pressure. Your current form is in the ${100 - Math.round(difference * 2)}th percentile.`
       whatToDo = [
         `Protocol: "${flaw.drills[0]}" (20-30 min sessions)`,
@@ -284,7 +284,7 @@ export function generateCoachingTip(
       break
       
     case 'PROFESSIONAL':
-      whatINoticed = `${flaw.metric} shows ${difference}° deviation from optimal. Analysis indicates this contributes to ${Math.round(difference * 1.5)}% efficiency variance, particularly under fatigue conditions.`
+      whatINoticed = `${flaw.detection.metric} shows ${difference}° deviation from optimal. Analysis indicates this contributes to ${Math.round(difference * 1.5)}% efficiency variance, particularly under fatigue conditions.`
       whyItMatters = `NBA data: Elite shooters maintain <${Math.round(optimalValue * 0.05)}° variance. Your current variance places you in the ${100 - Math.round(difference * 3)}th percentile for this metric.`
       whatToDo = [
         `Micro-adjustment protocol: "${flaw.drills[0]}"`,
@@ -305,7 +305,7 @@ export function generateCoachingTip(
     whatToDo,
     expectedResult,
     drillRecommendation,
-    icon: getFlawIcon(flaw.metric)
+    icon: getFlawIcon(flaw.detection.metric)
   }
 }
 
@@ -336,7 +336,7 @@ export function generateMotivationalMessage(
     formDegraded?: boolean
   }
 ): MotivationalMessage {
-  const tone = LEVEL_TONES[level]
+  const _tone = LEVEL_TONES[level] // eslint-disable-line @typescript-eslint/no-unused-vars
   
   // Milestone achieved
   if (context.milestoneReached) {

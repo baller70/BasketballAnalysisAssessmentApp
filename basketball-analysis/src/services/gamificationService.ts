@@ -59,7 +59,7 @@ export interface Challenge {
 
 export interface LeaderboardEntry {
   rank: number
-  odentifier: string // Anonymous identifier
+  identifier: string // Anonymous identifier
   score: number
   level: number
   isCurrentUser: boolean
