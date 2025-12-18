@@ -1,0 +1,26 @@
+# Basketball Analysis API - Hugging Face Spaces
+# Hybrid Pose Detection Requirements
+
+# Flask API Framework
+flask==3.0.3
+flask-cors==4.0.1
+gunicorn==22.0.0
+
+# Image Processing
+Pillow==10.3.0
+opencv-python-headless==4.9.0.80
+numpy==1.26.4
+
+# PyTorch (CPU only for HF Spaces free tier)
+torch==2.2.0
+torchvision==0.17.0
+
+# YOLOv8 for person detection and pose estimation
+ultralytics==8.2.0
+
+# MediaPipe for secondary pose estimation
+mediapipe==0.10.14
+
+# Environment Variables
+python-dotenv==1.0.1
+

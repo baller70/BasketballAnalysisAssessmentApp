@@ -4,18 +4,13 @@ import React, { useState, useEffect, useMemo } from "react"
 import {
   Trophy,
   Flame,
-  Star,
-  Medal,
   Target,
   TrendingUp,
   ChevronRight,
   ChevronDown,
   ChevronUp,
-  Award,
   Zap,
   Crown,
-  Clock,
-  Users,
   Share2,
   Lock
 } from "lucide-react"
@@ -25,17 +20,14 @@ import {
   getLevelProgress,
   getEarnedBadges,
   getUnearnedBadges,
-  getBadgesByCategory,
   getActiveChallenges,
   getLeaderboard,
   checkStreakStatus,
   getRarityColor,
   getDifficultyColor,
   ALL_BADGES,
-  USER_LEVELS,
   type Badge,
   type Challenge,
-  type UserProgress,
   type LeaderboardData
 } from "@/services/gamificationService"
 
@@ -123,7 +115,8 @@ interface BadgesShowcaseProps {
 export function BadgesShowcase({ maxDisplay = 8, showAll = false }: BadgesShowcaseProps) {
   const [expanded, setExpanded] = useState(false)
   const earnedBadges = getEarnedBadges()
-  const unearnedBadges = getUnearnedBadges()
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _unearnedBadges = getUnearnedBadges()
   
   const displayBadges = expanded || showAll ? ALL_BADGES : ALL_BADGES.slice(0, maxDisplay)
   const progress = getUserProgress()

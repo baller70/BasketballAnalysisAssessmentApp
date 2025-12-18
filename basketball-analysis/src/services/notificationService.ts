@@ -375,7 +375,8 @@ export function getScheduledTasks(): ScheduledTask[] {
 
 function generateDefaultTasks(): ScheduledTask[] {
   const settings = getAutomationSettings()
-  const now = new Date()
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _now = new Date()
   
   return [
     {
@@ -478,8 +479,8 @@ export function updateTaskStatus(taskId: string, status: ScheduledTask['status']
       tasks[index].lastRun = new Date().toISOString()
       // Calculate next run
       const task = tasks[index]
-      if (task.time) {
-        tasks[index].nextRun = getNextRunTime(task.type, task.time, task.day)
+      if (task.time && task.type !== 'immediate') {
+        tasks[index].nextRun = getNextRunTime(task.type as 'daily' | 'weekly' | 'monthly', task.time, task.day)
       }
     }
     

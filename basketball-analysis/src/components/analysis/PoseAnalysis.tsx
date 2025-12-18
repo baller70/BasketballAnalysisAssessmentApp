@@ -50,8 +50,8 @@ const SOURCE_COLORS: Record<string, string> = {
   'detected': '#22c55e',
 }
 
-// Hybrid API URL
-const HYBRID_API_URL = 'http://localhost:5001'
+// Hybrid API URL - Use environment variable for production (Hugging Face)
+const HYBRID_API_URL = process.env.NEXT_PUBLIC_HYBRID_API_URL || 'http://localhost:5001'
 
 export function PoseAnalysis({ imageFile, imageBase64 }: PoseAnalysisProps) {
   const [imageUrl, setImageUrl] = useState<string | null>(null)
