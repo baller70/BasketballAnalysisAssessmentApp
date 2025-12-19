@@ -333,10 +333,21 @@ function HomeContent() {
     }
     
     // 🎒 RED BACKPACK: Save VIDEO session separately
-    const videoSessionData = {
+    // NOTE: We only save essential data, NOT the full video frames (too large for localStorage)
+    // The full videoData is kept in the Zustand store for the current session
+    const videoSessionDataLite = {
       mainImageBase64: sessionData.mainImageBase64,
       skeletonImageBase64: sessionData.skeletonImageBase64,
-      videoData: videoData,
+      // Only save first frame as cover image, not all frames
+      coverFrame: videoData.annotatedFramesBase64?.[0] || null,
+      // Save metadata but not the heavy frame arrays
+      videoMetadata: {
+        frameCount: videoData.frameCount,
+        duration: videoData.duration,
+        fps: videoData.fps,
+        phases: videoData.phases,
+        metrics: videoData.metrics
+      },
       visionAnalysis: visionResult,
       overallScore: sessionData.overallScore,
       angles: sessionData.angles,
@@ -346,8 +357,13 @@ function HomeContent() {
       timestamp: Date.now(),
       playerName: useAnalysisStore.getState().playerProfile.name || 'Player'
     }
-    localStorage.setItem('basketball_video_session', JSON.stringify(videoSessionData))
-    console.log("🎒 VIDEO session saved to red backpack")
+    try {
+      localStorage.setItem('basketball_video_session', JSON.stringify(videoSessionDataLite))
+      console.log("🎒 VIDEO session saved to red backpack (lite version)")
+    } catch (storageError) {
+      console.warn("⚠️ Could not save video session to localStorage (data too large):", storageError)
+      // Still continue - the session is in the Zustand store
+    }
 
     setAnalysisProgress(100)
     setProcessingComplete(true)
