@@ -1296,7 +1296,15 @@ export default function DemoResultsPage() {
   const [savedVideoSession, setSavedVideoSession] = useState<{
     mainImageBase64: string
     skeletonImageBase64: string
-    videoData: typeof videoAnalysisData
+    coverFrame?: string | null  // Single cover frame instead of full videoData
+    videoMetadata?: {
+      frameCount: number
+      duration: number
+      fps: number
+      phases: Array<{ phase: string; frame: number; timestamp: number }>
+      metrics: Record<string, unknown>
+    }
+    videoData?: typeof videoAnalysisData  // May not be present in lite version
     visionAnalysis: typeof visionAnalysisResult
     overallScore: number
     angles: Record<string, number>
@@ -1361,10 +1369,11 @@ export default function DemoResultsPage() {
   
   // 🎒 VIDEO TAB: Use store data first, fall back to saved session (red backpack)
   const videoMainUrl = useMemo(() => {
-    // First try store data
+    // First try store data (full video frames)
     if (videoAnalysisData?.annotatedFramesBase64?.[0]) return videoAnalysisData.annotatedFramesBase64[0]
     if (uploadedImageBase64 && mediaType === "VIDEO") return uploadedImageBase64
-    // Fall back to saved session
+    // Fall back to saved session - try coverFrame first, then mainImageBase64
+    if (savedVideoSession?.coverFrame) return savedVideoSession.coverFrame
     if (savedVideoSession?.mainImageBase64) return savedVideoSession.mainImageBase64
     return null
   }, [videoAnalysisData, uploadedImageBase64, mediaType, savedVideoSession])
