@@ -9,7 +9,7 @@ import React, { useState, useMemo, useRef, useCallback, useEffect } from "react"
 import { AnalysisDashboard } from "@/components/analysis/AnalysisDashboard"
 import { EnhancedShotStrip } from "@/components/analysis/EnhancedShotStrip"
 import { AutoScreenshots } from "@/components/analysis/AutoScreenshots"
-import { User, Upload, Check, X, Image as ImageIcon, Video, BookOpen, Users, Search, BarChart3, Award, ArrowRight, Zap, Trophy, Target, ClipboardList, Flame, Dumbbell, CircleDot, Share2, Download, Copy, Twitter, Facebook, Linkedin, ChevronLeft, ChevronRight, Calendar, ChevronDown, AlertTriangle, Lightbulb, Plus, Eye, EyeOff, Layers, GitBranch, Circle, Tag } from "lucide-react"
+import { User, Upload, Check, X, Image as ImageIcon, Video, BookOpen, Users, Search, BarChart3, Award, ArrowRight, Zap, Trophy, Target, ClipboardList, Flame, Dumbbell, CircleDot, Share2, Download, Copy, Twitter, Facebook, Linkedin, ChevronLeft, ChevronRight, Calendar, ChevronDown, ChevronUp, AlertTriangle, Lightbulb, Plus, Eye, EyeOff, Layers, GitBranch, Circle, Tag, Camera, Play } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { ALL_ELITE_SHOOTERS, LEAGUE_LABELS, LEAGUE_COLORS, POSITION_LABELS, EliteShooter } from "@/data/eliteShooters"
@@ -80,6 +80,50 @@ import {
 } from "@/services/gamificationService"
 
 type ResultsMode = "video" | "image" | "elite" | "guide"
+
+// ============================================
+// COLLAPSIBLE DROPDOWN COMPONENT
+// For organizing sections with expand/collapse
+// ============================================
+interface CollapsibleDropdownProps {
+  title: string
+  icon?: React.ReactNode
+  defaultOpen?: boolean
+  children: React.ReactNode
+}
+
+function CollapsibleDropdown({ title, icon, defaultOpen = false, children }: CollapsibleDropdownProps) {
+  const [isOpen, setIsOpen] = useState(defaultOpen)
+
+  return (
+    <div className="bg-[#2a2a2a] rounded-lg border border-[#4a4a4a] overflow-hidden">
+      {/* Header - Always visible, clickable */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between p-4 hover:bg-[#3a3a3a]/50 transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          {icon && <span className="text-[#FFD700]">{icon}</span>}
+          <h3 className="text-[#FFD700] font-bold text-sm uppercase tracking-wider">{title}</h3>
+        </div>
+        <div className={`text-[#888] transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
+          <ChevronDown className="w-5 h-5" />
+        </div>
+      </button>
+
+      {/* Content - Collapsible with animation */}
+      <div 
+        className={`transition-all duration-300 ease-in-out overflow-hidden ${
+          isOpen ? 'max-h-[3000px] opacity-100' : 'max-h-0 opacity-0'
+        }`}
+      >
+        <div className="p-4 pt-0 border-t border-[#3a3a3a]">
+          {children}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // ============================================
 // HYBRID SKELETON DISPLAY - Exactly like test_hybrid.html
@@ -2447,6 +2491,41 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
     }
   }, [isPlaying, videoData?.annotatedFramesBase64?.length, videoData?.fps, sequencePhase])
   
+  // Calculate video data values (needed for useMemo before early return)
+  const totalFrames = videoData?.annotatedFramesBase64?.length || 0
+  const currentFrameData = videoData?.frameData?.[currentFrame]
+  const currentPhase = currentFrameData?.phase || 'Unknown'
+  const currentTimestamp = currentFrameData?.timestamp || (currentFrame / (videoData?.fps || 10))
+  
+  // Use the release frame as the "main image" for ImageModeContent
+  // Check for both 'Release' and 'RELEASE' since backend might use either
+  const releaseFrameIndex = videoData?.phases?.find(p => p.phase === 'Release' || p.phase === 'RELEASE')?.frame ?? Math.floor(totalFrames / 2)
+  const mainVideoFrameBase64 = videoData?.annotatedFramesBase64?.[releaseFrameIndex] || videoData?.annotatedFramesBase64?.[0] || ''
+  const videoMainImageUrl = mainVideoFrameBase64 ? `data:image/jpeg;base64,${mainVideoFrameBase64}` : ''
+  
+  // Get keypoints from release frame for screenshots
+  const releaseKeypoints = videoData?.allKeypoints?.[releaseFrameIndex] || 
+    (videoData?.frameData?.[releaseFrameIndex] as any)?.keypoints || {}
+  const releaseMetrics = videoData?.frameData?.[releaseFrameIndex]?.metrics || {}
+  const releaseBall = videoData?.frameData?.[releaseFrameIndex]?.ball
+  
+  // Construct a visionAnalysis object for video mode with keypoints from release frame
+  // This ensures AutoScreenshots can properly crop based on body part positions
+  // Must be called before early return to maintain consistent hook order
+  const videoVisionAnalysisForScreenshots = useMemo(() => {
+    // If we have keypoints from video data, use those
+    if (releaseKeypoints && Object.keys(releaseKeypoints).length > 0) {
+      return {
+        keypoints: releaseKeypoints,
+        basketball: releaseBall || null,
+        angles: releaseMetrics,
+        image_size: { width: 640, height: 480 } // Default video frame size
+      }
+    }
+    // Fall back to passed visionAnalysis if available
+    return visionAnalysis
+  }, [releaseKeypoints, releaseBall, releaseMetrics, visionAnalysis])
+  
   // If no video data, just render ImageModeContent
   if (!videoData || !videoData.annotatedFramesBase64 || videoData.annotatedFramesBase64.length === 0) {
     return (
@@ -2465,39 +2544,6 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
       />
     )
   }
-  
-  const totalFrames = videoData.annotatedFramesBase64.length
-  const currentFrameData = videoData.frameData?.[currentFrame]
-  const currentPhase = currentFrameData?.phase || 'Unknown'
-  const currentTimestamp = currentFrameData?.timestamp || (currentFrame / (videoData.fps || 10))
-  
-  // Use the release frame as the "main image" for ImageModeContent
-  // Check for both 'Release' and 'RELEASE' since backend might use either
-  const releaseFrameIndex = videoData.phases?.find(p => p.phase === 'Release' || p.phase === 'RELEASE')?.frame ?? Math.floor(totalFrames / 2)
-  const mainVideoFrameBase64 = videoData.annotatedFramesBase64[releaseFrameIndex] || videoData.annotatedFramesBase64[0]
-  const videoMainImageUrl = `data:image/jpeg;base64,${mainVideoFrameBase64}`
-  
-  // Get keypoints from release frame for screenshots
-  const releaseKeypoints = videoData.allKeypoints?.[releaseFrameIndex] || 
-    (videoData.frameData?.[releaseFrameIndex] as any)?.keypoints || {}
-  const releaseMetrics = videoData.frameData?.[releaseFrameIndex]?.metrics || {}
-  const releaseBall = videoData.frameData?.[releaseFrameIndex]?.ball
-  
-  // Construct a visionAnalysis object for video mode with keypoints from release frame
-  // This ensures AutoScreenshots can properly crop based on body part positions
-  const videoVisionAnalysisForScreenshots = useMemo(() => {
-    // If we have keypoints from video data, use those
-    if (releaseKeypoints && Object.keys(releaseKeypoints).length > 0) {
-      return {
-        keypoints: releaseKeypoints,
-        basketball: releaseBall || null,
-        angles: releaseMetrics,
-        image_size: { width: 640, height: 480 } // Default video frame size
-      }
-    }
-    // Fall back to passed visionAnalysis if available
-    return visionAnalysis
-  }, [releaseKeypoints, releaseBall, releaseMetrics, visionAnalysis])
   
   return (
     <>
@@ -3105,104 +3151,112 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
-        {/* LEFT COLUMN: Shot Breakdown + Media */}
+        {/* LEFT COLUMN: Reorganized Layout */}
         <div className="space-y-6">
-          {/* Hero Summary - No progress ring here (already on right sidebar) */}
-          <div className="bg-gradient-to-br from-[#1a1a1a] via-[#252525] to-[#1a1a1a] rounded-lg p-6 border border-[#FFD700]/30">
-            <div>
-              <h2 className="text-xl font-black text-white mb-2 uppercase tracking-wide">
-                {analysisData.overallScore >= 80 ? "EXCELLENT FORM" : analysisData.overallScore >= 65 ? "SOLID FORM WITH MINOR ADJUSTMENTS NEEDED" : "FORM NEEDS IMPROVEMENT"}
-              </h2>
-              <p className="text-[#888] text-sm mb-3">
-                {analysisData.overallScore >= 80
-                  ? "Your shooting mechanics are well-aligned with elite standards."
-                  : analysisData.overallScore >= 65
-                  ? "Good foundation with a few areas to refine for consistency."
-                  : "Focus on the fundamentals below to improve your shot."}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <span className="text-xs px-2 py-1 rounded bg-[#FFD700]/20 text-[#FFD700]">Top Fix: Elbow alignment</span>
-                <span className="text-xs px-2 py-1 rounded bg-[#FFD700]/20 text-[#FFD700]">Top Fix: Follow-through</span>
-                <span className="text-xs px-2 py-1 rounded bg-[#FFD700]/20 text-[#FFD700]">Top Fix: Balance</span>
+          
+          {/* ============================================ */}
+          {/* 1. MAIN ANALYSIS IMAGE (at the top) */}
+          {/* ============================================ */}
+          {mainImageUrl ? (
+            <div className="bg-[#2a2a2a] rounded-lg border border-[#4a4a4a] p-6">
+              <h3 className="text-[#FFD700] font-bold text-sm uppercase tracking-wider mb-4 flex items-center gap-2">
+                <Camera className="w-4 h-4" />
+                Main Analysis Image
+              </h3>
+              <HybridSkeletonDisplay
+                imageUrl={mainImageUrl}
+                keypoints={visionAnalysis?.keypoints}
+                basketball={visionAnalysis?.basketball}
+                imageSize={visionAnalysis?.image_size}
+                angles={visionAnalysis?.angles}
+                confidence={visionAnalysis?.confidence}
+                showStats={false}
+                overlayToggles={overlayToggles}
+              />
+              {/* Overlay Controls directly under main image */}
+              <div className="mt-4">
+                <OverlayControls toggles={overlayToggles} setToggles={setOverlayToggles} />
               </div>
             </div>
-          </div>
-
-          {/* Vision AI Analysis - Main Image + Auto Screenshots */}
-          {(
-            <div className="bg-[#2a2a2a] rounded-lg border border-[#4a4a4a] p-6 space-y-6">
-              
-              {/* Show message if no image uploaded yet */}
-              {!mainImageUrl && (
-                <div className="text-center py-12">
-                  <div className="text-6xl mb-4">📷</div>
-                  <h3 className="text-[#FFD700] font-bold text-xl mb-2">No Image Uploaded</h3>
-                  <p className="text-[#888] mb-4">Upload an image on the home page to see your shooting form analysis.</p>
-                  <Link href="/" className="inline-block bg-[#FFD700] hover:bg-[#E5C100] text-[#1a1a1a] font-bold px-6 py-3 rounded-lg transition-colors">
-                    Upload Image
-                  </Link>
-                </div>
-              )}
-              
-              {/* Show content when image is available */}
-              {mainImageUrl && (
-                <>
-                  {/* HYBRID SKELETON OVERLAY - Direct from hybrid backend */}
-                  {/* showStats=false hides Confidence, Keypoints, Joint Angles, Legend on results page */}
-                  <HybridSkeletonDisplay
-                    imageUrl={mainImageUrl}
-                    keypoints={visionAnalysis?.keypoints}
-                    basketball={visionAnalysis?.basketball}
-                    imageSize={visionAnalysis?.image_size}
-                    angles={visionAnalysis?.angles}
-                    confidence={visionAnalysis?.confidence}
-                    showStats={false}
-                    overlayToggles={overlayToggles}
-                  />
-
-                  {/* ANIMATED IMAGE WALKTHROUGH - Zooms into each annotation (IMAGE MODE ONLY) */}
-                  {!hideAnimatedWalkthrough && (
-                    <div className="mt-6 border-t border-[#3a3a3a] pt-6">
-                      <AnimatedImageWalkthrough
-                        imageUrl={mainImageUrl}
-                        keypoints={visionAnalysis?.keypoints}
-                        angles={visionAnalysis?.angles}
-                        imageSize={visionAnalysis?.image_size}
-                      />
-                    </div>
-                  )}
-
-                  {/* 3 AUTO SCREENSHOTS - Ball, Shoulders, Legs (IMAGE MODE ONLY) */}
-                  {/* Hidden in video mode because we don't have clean frames */}
-                  {!hideAutoScreenshots && (
-                    <div className="mt-6">
-                      <h3 className="text-[#FFD700] font-bold text-sm uppercase tracking-wider mb-4 text-center">
-                        Key Point Analysis — Click to Expand
-                      </h3>
-                      <AutoScreenshots
-                        imageUrl={cleanImageUrl || mainImageUrl}
-                        keypoints={visionAnalysis?.keypoints}
-                        basketball={visionAnalysis?.basketball}
-                        imageSize={visionAnalysis?.image_size}
-                        angles={visionAnalysis?.angles}
-                      />
-                    </div>
-                  )}
-                  
-                  {/* ============================================ */}
-                  {/* ANNOTATION DROPDOWN LIST - Directly below screenshots */}
-                  {/* ============================================ */}
-                  <AnnotationDropdownList fixes={generateFixesFromAngles(visionAnalysis?.angles || {})} />
-                  
-                  {/* ============================================ */}
-                  {/* OVERLAY TOGGLE CONTROLS */}
-                  {/* ============================================ */}
-                  <div className="mt-6">
-                    <OverlayControls toggles={overlayToggles} setToggles={setOverlayToggles} />
-                  </div>
-                </>
-              )}
+          ) : (
+            <div className="bg-[#2a2a2a] rounded-lg border border-[#4a4a4a] p-6">
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">📷</div>
+                <h3 className="text-[#FFD700] font-bold text-xl mb-2">No Image Uploaded</h3>
+                <p className="text-[#888] mb-4">Upload an image on the home page to see your shooting form analysis.</p>
+                <Link href="/" className="inline-block bg-[#FFD700] hover:bg-[#E5C100] text-[#1a1a1a] font-bold px-6 py-3 rounded-lg transition-colors">
+                  Upload Image
+                </Link>
+              </div>
             </div>
+          )}
+
+          {/* ============================================ */}
+          {/* 2. FORM ANALYSIS BREAKDOWN (always visible) */}
+          {/* ============================================ */}
+          {mainImageUrl && (
+            <div className="bg-gradient-to-br from-[#1a1a1a] via-[#252525] to-[#1a1a1a] rounded-lg p-6 border border-[#FFD700]/30">
+              <h3 className="text-[#FFD700] font-bold text-sm uppercase tracking-wider mb-4 flex items-center gap-2">
+                <BarChart3 className="w-4 h-4" />
+                Form Analysis Breakdown
+              </h3>
+              <div>
+                <h2 className="text-xl font-black text-white mb-2 uppercase tracking-wide">
+                  {analysisData.overallScore >= 80 ? "EXCELLENT FORM" : analysisData.overallScore >= 65 ? "SOLID FORM WITH MINOR ADJUSTMENTS NEEDED" : "FORM NEEDS IMPROVEMENT"}
+                </h2>
+                <p className="text-[#888] text-sm mb-3">
+                  {analysisData.overallScore >= 80
+                    ? "Your shooting mechanics are well-aligned with elite standards."
+                    : analysisData.overallScore >= 65
+                    ? "Good foundation with a few areas to refine for consistency."
+                    : "Focus on the fundamentals below to improve your shot."}
+                </p>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <span className="text-xs px-2 py-1 rounded bg-[#FFD700]/20 text-[#FFD700]">Top Fix: Elbow alignment</span>
+                  <span className="text-xs px-2 py-1 rounded bg-[#FFD700]/20 text-[#FFD700]">Top Fix: Follow-through</span>
+                  <span className="text-xs px-2 py-1 rounded bg-[#FFD700]/20 text-[#FFD700]">Top Fix: Balance</span>
+                </div>
+              </div>
+              {/* Annotation Dropdown List - detailed fixes */}
+              <AnnotationDropdownList fixes={generateFixesFromAngles(visionAnalysis?.angles || {})} />
+            </div>
+          )}
+
+          {/* ============================================ */}
+          {/* 3. ANIMATED FORM WALKTHROUGH (collapsible dropdown) */}
+          {/* ============================================ */}
+          {mainImageUrl && !hideAnimatedWalkthrough && (
+            <CollapsibleDropdown
+              title="Animated Form Walkthrough"
+              icon={<Play className="w-4 h-4" />}
+              defaultOpen={false}
+            >
+              <AnimatedImageWalkthrough
+                imageUrl={mainImageUrl}
+                keypoints={visionAnalysis?.keypoints}
+                angles={visionAnalysis?.angles}
+                imageSize={visionAnalysis?.image_size}
+              />
+            </CollapsibleDropdown>
+          )}
+
+          {/* ============================================ */}
+          {/* 4. KEY POINT ANALYSIS SCREENSHOTS (collapsible dropdown) */}
+          {/* ============================================ */}
+          {mainImageUrl && !hideAutoScreenshots && (
+            <CollapsibleDropdown
+              title="Key Point Analysis Screenshots"
+              icon={<Camera className="w-4 h-4" />}
+              defaultOpen={false}
+            >
+              <AutoScreenshots
+                imageUrl={cleanImageUrl || mainImageUrl}
+                keypoints={visionAnalysis?.keypoints}
+                basketball={visionAnalysis?.basketball}
+                imageSize={visionAnalysis?.image_size}
+                angles={visionAnalysis?.angles}
+              />
+            </CollapsibleDropdown>
           )}
 
           {/* Enhanced Shot Breakdown Strip */}

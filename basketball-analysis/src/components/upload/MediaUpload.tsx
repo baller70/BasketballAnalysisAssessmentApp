@@ -139,13 +139,6 @@ export function MediaUpload() {
 
   return (
     <div className="space-y-4">
-      <div className="space-y-2">
-        <label className="text-[#E5E5E5] text-sm font-medium">Media Type</label>
-        <div className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-black text-sm">
-          Image (Angles 1–7)
-        </div>
-      </div>
-
       {/* Image Requirements + Angle Slots (images) */}
       {
         <div className="bg-[#2a2a2a] border border-[#4a4a4a] rounded-lg p-4 space-y-4">
