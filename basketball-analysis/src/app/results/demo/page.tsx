@@ -173,41 +173,50 @@ function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, ang
         return
       }
 
-      // Scale to fit max 500px width
+      // Scale to fit max 500px width for the IMAGE portion
       const maxW = 500
       const scale = Math.min(1, maxW / img.width)
-      const canvasW = img.width * scale
-      const canvasH = img.height * scale
+      const imageW = img.width * scale
+      const imageH = img.height * scale
+      
+      // ADD BLACK PADDING on each side for labels (only if annotations are on)
+      const LABEL_PADDING = toggles.annotations ? 180 : 0
+      const canvasW = imageW + (LABEL_PADDING * 2)
+      const canvasH = imageH
       
       // Set canvas size (this clears the canvas)
       canvas.width = canvasW
       canvas.height = canvasH
+      
+      // Fill entire canvas with black first
+      ctx.fillStyle = '#000000'
+      ctx.fillRect(0, 0, canvasW, canvasH)
 
-      // Draw image IMMEDIATELY after setting size
-      ctx.drawImage(img, 0, 0, canvasW, canvasH)
-      console.log('🖼️ Image drawn to canvas:', canvasW, 'x', canvasH)
+      // Draw image CENTERED (offset by left padding)
+      ctx.drawImage(img, LABEL_PADDING, 0, imageW, imageH)
+      console.log('🖼️ Image drawn to canvas with padding:', canvasW, 'x', canvasH, 'padding:', LABEL_PADDING)
 
       const kp = keypoints || {}
       // Use imageSize from props if available, otherwise use actual image dimensions
       const imgW = imageSize?.width || img.naturalWidth
       const imgH = imageSize?.height || img.naturalHeight
 
-      console.log('🖼️ Drawing skeleton:', { imgW, imgH, canvasW: canvas.width, canvasH: canvas.height })
+      console.log('🖼️ Drawing skeleton:', { imgW, imgH, imageW, imageH, canvasW: canvas.width, canvasH: canvas.height })
 
-      // Scale factor for drawing
-      const sx = canvas.width / imgW
-      const sy = canvas.height / imgH
+      // Scale factor for drawing (relative to image portion, not full canvas)
+      const sx = imageW / imgW
+      const sy = imageH / imgH
 
       // Draw basketball if detected AND toggle is on
       if (basketball && toggles.basketball) {
         ctx.beginPath()
-        ctx.arc(basketball.x * sx, basketball.y * sy, basketball.radius * sx, 0, Math.PI * 2)
+        ctx.arc(basketball.x * sx + LABEL_PADDING, basketball.y * sy, basketball.radius * sx, 0, Math.PI * 2)
         ctx.strokeStyle = "#f97316"
         ctx.lineWidth = 3
         ctx.stroke()
         ctx.fillStyle = "#f97316"
         ctx.beginPath()
-        ctx.arc(basketball.x * sx, basketball.y * sy, 4, 0, Math.PI * 2)
+        ctx.arc(basketball.x * sx + LABEL_PADDING, basketball.y * sy, 4, 0, Math.PI * 2)
         ctx.fill()
       }
 
@@ -230,8 +239,8 @@ function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, ang
         skeleton.forEach(([start, end]) => {
           if (kp[start] && kp[end]) {
             ctx.beginPath()
-            ctx.moveTo(kp[start].x * sx, kp[start].y * sy)
-            ctx.lineTo(kp[end].x * sx, kp[end].y * sy)
+            ctx.moveTo(kp[start].x * sx + LABEL_PADDING, kp[start].y * sy)
+            ctx.lineTo(kp[end].x * sx + LABEL_PADDING, kp[end].y * sy)
             ctx.stroke()
           }
         })
@@ -248,7 +257,7 @@ function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, ang
       // Draw keypoints - only if toggle is on
       if (toggles.joints && Object.keys(kp).length > 0) {
         Object.entries(kp).forEach(([name, pt]) => {
-          const x = pt.x * sx
+          const x = pt.x * sx + LABEL_PADDING  // Offset by padding
           const y = pt.y * sy
           const color = colors[pt.source || "fused"] || "#ffffff"
           const radius = name.includes("wrist") ? 8 : 5
@@ -264,11 +273,11 @@ function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, ang
       }
       
       // ============================================
-      // BIG ANGLE LABELS - Same as video mode
-      // Labels positioned FAR AWAY from body, HIPS ON UP
+      // BIG ANGLE LABELS - ALTERNATING RIGHT/LEFT IN BLACK PADDING
+      // Labels positioned in black padding areas on sides
       // ============================================
       if (toggles.annotations && angles && Object.keys(kp).length > 0) {
-        ctx.textAlign = 'left'
+        console.log('🏷️ Drawing labels with alternating sides, padding:', LABEL_PADDING)
         
         // Angle ranges for feedback
         const angleRanges: Record<string, { ideal: number; range: [number, number] }> = {
@@ -289,44 +298,43 @@ function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, ang
           
           const [min, max] = config.range
           if (value >= min && value <= max) {
-            return { text: 'EXCELLENT! WITHIN ELITE RANGE', status: 'good' }
+            return { text: 'EXCELLENT!', status: 'good' }
           } else if (Math.abs(value - config.ideal) <= 15) {
             const diff = value < min ? Math.round(min - value) : Math.round(value - max)
             return { 
-              text: value < min ? `INCREASE BY ${diff}°` : `DECREASE BY ${diff}°`, 
+              text: value < min ? `+${diff}° NEEDED` : `-${diff}° NEEDED`, 
               status: 'warning' 
             }
           } else {
             const diff = value < min ? Math.round(min - value) : Math.round(value - max)
             return { 
-              text: value < min ? `TOO LOW - NEED ${diff}° MORE` : `TOO HIGH - REDUCE ${diff}°`, 
+              text: value < min ? `TOO LOW` : `TOO HIGH`, 
               status: 'bad' 
             }
           }
         }
         
-        // Labels config - positioned FAR from body, HIPS ON UP, WELL SPACED APART
+        // Labels config with unique labels only
         const annotationConfig: Array<{
           angleKey: string
           label: string
           keypointName: string
           color: string
         }> = [
-          { angleKey: 'elbow_angle', label: 'ELBOW ANGLE', keypointName: 'right_elbow', color: '#4ade80' },
-          { angleKey: 'right_elbow_angle', label: 'ELBOW ANGLE', keypointName: 'right_elbow', color: '#4ade80' },
-          { angleKey: 'left_elbow_angle', label: 'ELBOW ANGLE', keypointName: 'left_elbow', color: '#4ade80' },
-          { angleKey: 'knee_angle', label: 'KNEE BEND', keypointName: 'right_knee', color: '#60a5fa' },
-          { angleKey: 'right_knee_angle', label: 'KNEE BEND', keypointName: 'right_knee', color: '#60a5fa' },
-          { angleKey: 'left_knee_angle', label: 'KNEE BEND', keypointName: 'left_knee', color: '#60a5fa' },
+          { angleKey: 'elbow_angle', label: 'ELBOW', keypointName: 'right_elbow', color: '#4ade80' },
+          { angleKey: 'right_elbow_angle', label: 'ELBOW', keypointName: 'right_elbow', color: '#4ade80' },
+          { angleKey: 'knee_angle', label: 'KNEE', keypointName: 'right_knee', color: '#60a5fa' },
+          { angleKey: 'right_knee_angle', label: 'KNEE', keypointName: 'right_knee', color: '#60a5fa' },
           { angleKey: 'shoulder_tilt', label: 'SHOULDER', keypointName: 'right_shoulder', color: '#facc15' },
-          { angleKey: 'hip_tilt', label: 'HIP ALIGN', keypointName: 'right_hip', color: '#f97316' },
+          { angleKey: 'hip_tilt', label: 'HIP', keypointName: 'right_hip', color: '#f97316' },
         ]
         
         const drawnLabels = new Set<string>()
+        let labelIndex = 0  // For alternating sides
         
-        // Label dimensions - scaled for image canvas (smaller than video)
-        const labelWidth = 160
-        const labelHeight = 70
+        // Label dimensions for padding areas
+        const labelWidth = LABEL_PADDING - 20  // Fit in padding with margin
+        const labelHeight = 55
         
         annotationConfig.forEach(({ angleKey, label, keypointName, color }) => {
           const angleValue = angles[angleKey]
@@ -339,74 +347,84 @@ function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, ang
             const feedback = getFeedback(angleKey, angleValue)
             const feedbackColor = feedback.status === 'good' ? '#4ade80' : feedback.status === 'warning' ? '#facc15' : '#ef4444'
             
-            // Body part position (scaled)
-            const kpX = keypoint.x * sx
+            // Body part position (scaled, with padding offset)
+            const kpX = keypoint.x * sx + LABEL_PADDING
             const kpY = keypoint.y * sy
             
-            // RULE: Label on SAME SIDE as the BODY PART (not image position)
-            // right_elbow, right_knee, right_shoulder, right_hip = label on RIGHT side
-            // left_elbow, left_knee, left_shoulder, left_hip = label on LEFT side
-            // This prevents the connecting line from crossing over the player's body
-            const isRightBodyPart = keypointName.includes('right')
-            const baseOffsetX = isRightBodyPart ? 120 : -120 - labelWidth  // Right body part = label to the right
-            const baseOffsetY = -80  // Above the keypoint (hips on up rule)
+            // ALTERNATE: even index = RIGHT side padding, odd index = LEFT side padding
+            const isRightSide = labelIndex % 2 === 0
+            labelIndex++
             
-            // Scale offsets for canvas size
-            const scaledOffsetX = baseOffsetX * (canvasW / 640)
-            const scaledOffsetY = baseOffsetY * (canvasH / 480)
-            const labelX = Math.max(10, Math.min(canvasW - labelWidth - 10, kpX + scaledOffsetX))
-            const labelY = Math.max(10, Math.min(canvasH - labelHeight - 10, kpY + scaledOffsetY))
+            // Position label in the black padding area
+            let labelX: number
+            if (isRightSide) {
+              // RIGHT PADDING AREA: after the image
+              labelX = LABEL_PADDING + imageW + 10
+            } else {
+              // LEFT PADDING AREA: before the image
+              labelX = 10
+            }
             
-            // Draw connecting line
+            // Vertical position - align with keypoint but keep in bounds
+            const labelY = Math.max(10, Math.min(canvasH - labelHeight - 10, kpY - labelHeight / 2))
+            
+            console.log(`🏷️ Label ${label}: side=${isRightSide ? 'RIGHT' : 'LEFT'}, x=${labelX}, y=${labelY}`)
+            
+            // Draw connecting line from keypoint to label
             ctx.strokeStyle = color
             ctx.lineWidth = 2
-            ctx.shadowColor = color
-            ctx.shadowBlur = 6
+            ctx.setLineDash([5, 3])  // Dashed line
             ctx.beginPath()
-            ctx.moveTo(labelX + labelWidth / 2, labelY + labelHeight / 2)
-            ctx.lineTo(kpX, kpY)
+            ctx.moveTo(kpX, kpY)
+            if (isRightSide) {
+              ctx.lineTo(labelX, labelY + labelHeight / 2)
+            } else {
+              ctx.lineTo(labelX + labelWidth, labelY + labelHeight / 2)
+            }
             ctx.stroke()
-            ctx.shadowBlur = 0
+            ctx.setLineDash([])  // Reset to solid
             
             // Draw circle at keypoint
             ctx.beginPath()
-            ctx.arc(kpX, kpY, 8, 0, Math.PI * 2)
+            ctx.arc(kpX, kpY, 6, 0, Math.PI * 2)
             ctx.fillStyle = color
             ctx.fill()
-            ctx.strokeStyle = 'white'
+            ctx.strokeStyle = '#000'
             ctx.lineWidth = 2
             ctx.stroke()
             
-            // Label background
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.9)'
+            // Label background (in padding area)
+            ctx.fillStyle = 'rgba(30, 30, 30, 0.95)'
             ctx.beginPath()
-            ctx.roundRect(labelX, labelY, labelWidth, labelHeight, 8)
+            ctx.roundRect(labelX, labelY, labelWidth, labelHeight, 6)
             ctx.fill()
             
             // Label border
             ctx.strokeStyle = color
             ctx.lineWidth = 2
             ctx.beginPath()
-            ctx.roundRect(labelX, labelY, labelWidth, labelHeight, 8)
+            ctx.roundRect(labelX, labelY, labelWidth, labelHeight, 6)
             ctx.stroke()
             
-            // Label text - scaled font sizes
+            // Label text
             ctx.fillStyle = 'white'
-            ctx.font = 'bold 14px system-ui'
-            ctx.textAlign = 'left'
-            ctx.fillText(label, labelX + 8, labelY + 18)
+            ctx.font = 'bold 12px system-ui'
+            ctx.textAlign = 'center'
+            ctx.fillText(label, labelX + labelWidth / 2, labelY + 16)
             
-            // Angle value
+            // Angle value (big)
             ctx.fillStyle = color
-            ctx.font = 'bold 24px monospace'
-            ctx.fillText(`${Math.round(angleValue)}°`, labelX + 8, labelY + 45)
+            ctx.font = 'bold 22px monospace'
+            ctx.fillText(`${Math.round(angleValue)}°`, labelX + labelWidth / 2, labelY + 40)
             
-            // Feedback comment
+            // Feedback text
             ctx.fillStyle = feedbackColor
             ctx.font = 'bold 9px system-ui'
-            ctx.fillText(feedback.text, labelX + 8, labelY + 62)
+            ctx.fillText(feedback.text, labelX + labelWidth / 2, labelY + 52)
           }
         })
+        
+        ctx.textAlign = 'left'  // Reset
       }
     }
 
