@@ -1,10 +1,11 @@
 /**
  * Video Analysis Service
- * Connects to the hybrid pose detection backend for video analysis
+ * Connects to the video analysis backend for video analysis
  * Mirrors the image analysis flow but for video input
  */
 
-const HYBRID_API_URL = process.env.NEXT_PUBLIC_HYBRID_API_URL || 'http://localhost:5001'
+// Video analysis runs on a separate server (port 5002)
+const VIDEO_API_URL = process.env.NEXT_PUBLIC_VIDEO_API_URL || 'http://localhost:5002'
 
 export interface KeyScreenshot {
   label: string  // SETUP, RELEASE, FOLLOW_THROUGH
@@ -112,7 +113,7 @@ export async function analyzeVideoShooting(videoFile: File): Promise<VideoAnalys
 
     // Call the hybrid backend
     console.log('🎯 Sending video to hybrid backend for analysis...')
-    const response = await fetch(`${HYBRID_API_URL}/api/analyze-video`, {
+    const response = await fetch(`${VIDEO_API_URL}/api/analyze-video`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -284,7 +285,7 @@ export function convertVideoToSessionFormat(
  */
 export async function checkVideoAnalysisSupport(): Promise<boolean> {
   try {
-    const response = await fetch(`${HYBRID_API_URL}/health`, {
+    const response = await fetch(`${VIDEO_API_URL}/health`, {
       method: 'GET',
       signal: AbortSignal.timeout(3000)
     })

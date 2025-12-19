@@ -71,26 +71,43 @@ export function AutoScreenshots({ imageUrl, keypoints, basketball, imageSize, an
       const imgW = imageSize?.width || img.naturalWidth
       const imgH = imageSize?.height || img.naturalHeight
 
-      // Define 3 crop regions: Ball Area, Shoulder Area, Legs
+      // Find the bounding box of the person using keypoints
+      const allX = Object.values(keypoints).map(kp => kp.x).filter(x => x > 0)
+      const allY = Object.values(keypoints).map(kp => kp.y).filter(y => y > 0)
+      
+      const personMinX = Math.min(...allX)
+      const personMaxX = Math.max(...allX)
+      const personMinY = Math.min(...allY)
+      const personMaxY = Math.max(...allY)
+      const personCenterX = (personMinX + personMaxX) / 2
+      const personWidth = personMaxX - personMinX
+      const personHeight = personMaxY - personMinY
+
+      // Define 3 crop regions based on actual body parts
       const regions = [
         {
           id: "ball-area",
           name: "Ball & Hands",
-          // Center on ball if detected, otherwise use wrists
-          centerX: basketball?.x || keypoints.left_wrist?.x || keypoints.right_wrist?.x || imgW * 0.5,
-          centerY: basketball?.y || keypoints.left_wrist?.y || keypoints.right_wrist?.y || imgH * 0.3,
-          width: imgW * 0.4,
-          height: imgH * 0.35,
+          // Focus on the hands/wrists area - use ball position if available, otherwise wrists
+          centerX: basketball?.x || 
+                   ((keypoints.right_wrist?.x || 0) + (keypoints.left_wrist?.x || 0)) / 2 || 
+                   personCenterX,
+          centerY: basketball?.y || 
+                   Math.min(keypoints.right_wrist?.y || imgH, keypoints.left_wrist?.y || imgH) ||
+                   personMinY + personHeight * 0.2,
+          // Crop size - focus tightly on hands
+          width: personWidth * 1.2,
+          height: personHeight * 0.4,
           getStatus: () => {
-            const elbowAngle = angles?.left_elbow_angle || angles?.right_elbow_angle
-            if (elbowAngle && elbowAngle >= 80 && elbowAngle <= 100) return "good"
-            if (elbowAngle && (elbowAngle >= 70 || elbowAngle <= 110)) return "warning"
+            const elbowAngle = angles?.elbow_angle || angles?.left_elbow_angle || angles?.right_elbow_angle
+            if (elbowAngle && elbowAngle >= 80 && elbowAngle <= 110) return "good"
+            if (elbowAngle && (elbowAngle >= 70 || elbowAngle <= 120)) return "warning"
             return "good"
           },
           getAnalysis: () => {
-            const elbowAngle = angles?.left_elbow_angle || angles?.right_elbow_angle
+            const elbowAngle = angles?.elbow_angle || angles?.left_elbow_angle || angles?.right_elbow_angle
             if (elbowAngle) {
-              if (elbowAngle >= 80 && elbowAngle <= 100) return `Good elbow angle: ${elbowAngle.toFixed(0)}°`
+              if (elbowAngle >= 80 && elbowAngle <= 110) return `Good elbow angle: ${elbowAngle.toFixed(0)}°`
               return `Elbow angle: ${elbowAngle.toFixed(0)}° - aim for 90°`
             }
             return "Ball and hand position"
@@ -99,11 +116,12 @@ export function AutoScreenshots({ imageUrl, keypoints, basketball, imageSize, an
         {
           id: "shoulder-area",
           name: "Shoulder & Arms",
-          // Center on shoulders
-          centerX: ((keypoints.left_shoulder?.x || 0) + (keypoints.right_shoulder?.x || 0)) / 2 || imgW * 0.5,
-          centerY: keypoints.left_shoulder?.y || keypoints.right_shoulder?.y || imgH * 0.35,
-          width: imgW * 0.5,
-          height: imgH * 0.4,
+          // Center on the upper body - shoulders to elbows
+          centerX: ((keypoints.left_shoulder?.x || personCenterX) + (keypoints.right_shoulder?.x || personCenterX)) / 2,
+          centerY: ((keypoints.left_shoulder?.y || 0) + (keypoints.right_shoulder?.y || 0)) / 2 ||
+                   personMinY + personHeight * 0.25,
+          width: personWidth * 1.4,
+          height: personHeight * 0.45,
           getStatus: () => {
             const shoulderTilt = angles?.shoulder_tilt
             if (shoulderTilt && Math.abs(shoulderTilt) < 10) return "good"
@@ -122,19 +140,21 @@ export function AutoScreenshots({ imageUrl, keypoints, basketball, imageSize, an
         {
           id: "legs-area",
           name: "Legs & Base",
-          // Center on hips/knees
-          centerX: ((keypoints.left_hip?.x || 0) + (keypoints.right_hip?.x || 0)) / 2 || imgW * 0.5,
-          centerY: ((keypoints.left_knee?.y || 0) + (keypoints.right_knee?.y || 0)) / 2 || imgH * 0.7,
-          width: imgW * 0.5,
-          height: imgH * 0.45,
+          // Center on lower body - hips to ankles
+          centerX: ((keypoints.left_hip?.x || personCenterX) + (keypoints.right_hip?.x || personCenterX)) / 2,
+          centerY: ((keypoints.left_knee?.y || 0) + (keypoints.right_knee?.y || 0) + 
+                    (keypoints.left_ankle?.y || 0) + (keypoints.right_ankle?.y || 0)) / 4 ||
+                   personMinY + personHeight * 0.75,
+          width: personWidth * 1.3,
+          height: personHeight * 0.55,
           getStatus: () => {
-            const kneeAngle = angles?.left_knee_angle || angles?.right_knee_angle
+            const kneeAngle = angles?.knee_angle || angles?.left_knee_angle || angles?.right_knee_angle
             if (kneeAngle && kneeAngle < 160) return "good"
             if (kneeAngle && kneeAngle > 170) return "warning"
             return "good"
           },
           getAnalysis: () => {
-            const kneeAngle = angles?.left_knee_angle || angles?.right_knee_angle
+            const kneeAngle = angles?.knee_angle || angles?.left_knee_angle || angles?.right_knee_angle
             if (kneeAngle) {
               if (kneeAngle < 160) return `Good knee bend: ${kneeAngle.toFixed(0)}°`
               return `Knee angle: ${kneeAngle.toFixed(0)}° - bend more for power`
@@ -147,17 +167,22 @@ export function AutoScreenshots({ imageUrl, keypoints, basketball, imageSize, an
       const captured: Screenshot[] = []
       
       for (const region of regions) {
-        // Calculate crop bounds
-        const cropX = Math.max(0, region.centerX - region.width / 2)
-        const cropY = Math.max(0, region.centerY - region.height / 2)
-        const cropW = Math.min(region.width, imgW - cropX)
-        const cropH = Math.min(region.height, imgH - cropY)
+        // Calculate crop bounds with padding
+        const padding = 30 // Add some padding around the region
+        let cropX = Math.max(0, region.centerX - region.width / 2 - padding)
+        let cropY = Math.max(0, region.centerY - region.height / 2 - padding)
+        let cropW = Math.min(region.width + padding * 2, imgW - cropX)
+        let cropH = Math.min(region.height + padding * 2, imgH - cropY)
+        
+        // Ensure minimum crop size
+        cropW = Math.max(cropW, 100)
+        cropH = Math.max(cropH, 100)
 
         // Set canvas size
         canvas.width = cropW
         canvas.height = cropH
 
-        // Draw cropped region
+        // Draw cropped region - CLEAN image, no overlays
         ctx.drawImage(img, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH)
 
         // Get data URL

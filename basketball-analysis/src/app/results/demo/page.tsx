@@ -266,18 +266,16 @@ function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, ang
           angleKey: string
           label: string
           keypointName: string
-          offsetX: number
-          offsetY: number
           color: string
         }> = [
-          { angleKey: 'elbow_angle', label: 'ELBOW ANGLE', keypointName: 'right_elbow', offsetX: -200, offsetY: -100, color: '#4ade80' },
-          { angleKey: 'right_elbow_angle', label: 'ELBOW ANGLE', keypointName: 'right_elbow', offsetX: -200, offsetY: -100, color: '#4ade80' },
-          { angleKey: 'left_elbow_angle', label: 'ELBOW ANGLE', keypointName: 'left_elbow', offsetX: -200, offsetY: -100, color: '#4ade80' },
-          { angleKey: 'knee_angle', label: 'KNEE BEND', keypointName: 'right_knee', offsetX: 180, offsetY: -180, color: '#60a5fa' },
-          { angleKey: 'right_knee_angle', label: 'KNEE BEND', keypointName: 'right_knee', offsetX: 180, offsetY: -180, color: '#60a5fa' },
-          { angleKey: 'left_knee_angle', label: 'KNEE BEND', keypointName: 'left_knee', offsetX: 180, offsetY: -180, color: '#60a5fa' },
-          { angleKey: 'shoulder_tilt', label: 'SHOULDER', keypointName: 'right_shoulder', offsetX: 180, offsetY: -50, color: '#facc15' },
-          { angleKey: 'hip_tilt', label: 'HIP ALIGN', keypointName: 'right_hip', offsetX: -200, offsetY: -50, color: '#f97316' },
+          { angleKey: 'elbow_angle', label: 'ELBOW ANGLE', keypointName: 'right_elbow', color: '#4ade80' },
+          { angleKey: 'right_elbow_angle', label: 'ELBOW ANGLE', keypointName: 'right_elbow', color: '#4ade80' },
+          { angleKey: 'left_elbow_angle', label: 'ELBOW ANGLE', keypointName: 'left_elbow', color: '#4ade80' },
+          { angleKey: 'knee_angle', label: 'KNEE BEND', keypointName: 'right_knee', color: '#60a5fa' },
+          { angleKey: 'right_knee_angle', label: 'KNEE BEND', keypointName: 'right_knee', color: '#60a5fa' },
+          { angleKey: 'left_knee_angle', label: 'KNEE BEND', keypointName: 'left_knee', color: '#60a5fa' },
+          { angleKey: 'shoulder_tilt', label: 'SHOULDER', keypointName: 'right_shoulder', color: '#facc15' },
+          { angleKey: 'hip_tilt', label: 'HIP ALIGN', keypointName: 'right_hip', color: '#f97316' },
         ]
         
         const drawnLabels = new Set<string>()
@@ -286,7 +284,7 @@ function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, ang
         const labelWidth = 160
         const labelHeight = 70
         
-        annotationConfig.forEach(({ angleKey, label, keypointName, offsetX, offsetY, color }) => {
+        annotationConfig.forEach(({ angleKey, label, keypointName, color }) => {
           const angleValue = angles[angleKey]
           const keypoint = kp[keypointName]
           
@@ -301,9 +299,17 @@ function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, ang
             const kpX = keypoint.x * sx
             const kpY = keypoint.y * sy
             
-            // Label position - offset from keypoint, scaled for canvas size
-            const scaledOffsetX = offsetX * (canvasW / 640)
-            const scaledOffsetY = offsetY * (canvasH / 480)
+            // RULE: Label on SAME SIDE as the BODY PART (not image position)
+            // right_elbow, right_knee, right_shoulder, right_hip = label on RIGHT side
+            // left_elbow, left_knee, left_shoulder, left_hip = label on LEFT side
+            // This prevents the connecting line from crossing over the player's body
+            const isRightBodyPart = keypointName.includes('right')
+            const baseOffsetX = isRightBodyPart ? 120 : -120 - labelWidth  // Right body part = label to the right
+            const baseOffsetY = -80  // Above the keypoint (hips on up rule)
+            
+            // Scale offsets for canvas size
+            const scaledOffsetX = baseOffsetX * (canvasW / 640)
+            const scaledOffsetY = baseOffsetY * (canvasH / 480)
             const labelX = Math.max(10, Math.min(canvasW - labelWidth - 10, kpX + scaledOffsetX))
             const labelY = Math.max(10, Math.min(canvasH - labelHeight - 10, kpY + scaledOffsetY))
             
@@ -563,15 +569,6 @@ function AnimatedImageWalkthrough({ imageUrl, keypoints, angles, imageSize }: An
       
       // Draw labels
       if (angles) {
-        const labelOffsets: Record<string, { x: number; y: number }> = {
-          'right_elbow': { x: -200, y: -100 },
-          'left_elbow': { x: -200, y: -100 },
-          'right_knee': { x: 180, y: -180 },
-          'left_knee': { x: 180, y: -180 },
-          'right_shoulder': { x: 180, y: -50 },
-          'right_hip': { x: -200, y: -50 },
-        }
-        
         const angleRanges: Record<string, { ideal: number; range: [number, number] }> = {
           'elbow_angle': { ideal: 90, range: [85, 100] },
           'right_elbow_angle': { ideal: 90, range: [85, 100] },
@@ -591,6 +588,7 @@ function AnimatedImageWalkthrough({ imageUrl, keypoints, angles, imageSize }: An
         }
         
         const drawnLabels = new Set<string>()
+        let labelIndex = 0
         annotations.forEach(({ angleKey, label, keypointName, color }) => {
           if (drawnLabels.has(label)) return
           drawnLabels.add(label)
@@ -605,11 +603,21 @@ function AnimatedImageWalkthrough({ imageUrl, keypoints, angles, imageSize }: An
           const kpX = keypoint.x * sx + offsetX
           const kpY = keypoint.y * sy + offsetY
           
-          const offset = labelOffsets[keypointName] || { x: 100, y: -50 }
+          // RULE: Label on SAME SIDE as the BODY PART (not image position)
+          // right_elbow, right_knee, right_shoulder, right_hip = label on RIGHT side
+          // left_elbow, left_knee, left_shoulder, left_hip = label on LEFT side
+          // This prevents the connecting line from crossing over the player's body
+          const isRightBodyPart = keypointName.includes('right')
           const labelW = 160
           const labelH = 70
-          const labelX = Math.max(10, Math.min(canvasW - labelW - 10, kpX + offset.x * (zoom / 2)))
-          const labelY = Math.max(10, Math.min(canvasH - labelH - 10, kpY + offset.y * (zoom / 2)))
+          const baseOffsetX = isRightBodyPart ? 100 : -100 - labelW  // Right body part = label to the right
+          const verticalSpacing = 90  // Space between labels
+          const baseY = 30 + (labelIndex * verticalSpacing)  // Stack labels vertically
+          
+          const labelX = Math.max(10, Math.min(canvasW - labelW - 10, kpX + baseOffsetX * (zoom / 2)))
+          const labelY = Math.max(10, Math.min(canvasH - labelH - 10, baseY))
+          
+          labelIndex++
           
           // Connecting line
           ctx.strokeStyle = color
@@ -1816,16 +1824,15 @@ function VideoFrameCanvas({
           angleKey: string
           label: string
           keypointName: string
-          offsetX: number
-          offsetY: number
           color: string
+          verticalSlot: number  // 0=top, 1=upper-mid, 2=lower-mid, 3=bottom (for spacing)
         }> = [
-          { angleKey: 'elbow_angle', label: 'ELBOW ANGLE', keypointName: 'right_elbow', offsetX: -500, offsetY: -200, color: '#4ade80' },
-          { angleKey: 'right_elbow_angle', label: 'ELBOW ANGLE', keypointName: 'right_elbow', offsetX: -500, offsetY: -200, color: '#4ade80' },
-          { angleKey: 'knee_angle', label: 'KNEE BEND', keypointName: 'right_knee', offsetX: 400, offsetY: -350, color: '#60a5fa' },
-          { angleKey: 'right_knee_angle', label: 'KNEE BEND', keypointName: 'right_knee', offsetX: 400, offsetY: -350, color: '#60a5fa' },
-          { angleKey: 'shoulder_tilt', label: 'SHOULDER', keypointName: 'right_shoulder', offsetX: 400, offsetY: -100, color: '#facc15' },
-          { angleKey: 'hip_tilt', label: 'HIP ALIGN', keypointName: 'right_hip', offsetX: -500, offsetY: -50, color: '#f97316' },
+          { angleKey: 'elbow_angle', label: 'ELBOW ANGLE', keypointName: 'right_elbow', color: '#4ade80', verticalSlot: 0 },
+          { angleKey: 'right_elbow_angle', label: 'ELBOW ANGLE', keypointName: 'right_elbow', color: '#4ade80', verticalSlot: 0 },
+          { angleKey: 'knee_angle', label: 'KNEE BEND', keypointName: 'right_knee', color: '#60a5fa', verticalSlot: 2 },
+          { angleKey: 'right_knee_angle', label: 'KNEE BEND', keypointName: 'right_knee', color: '#60a5fa', verticalSlot: 2 },
+          { angleKey: 'shoulder_tilt', label: 'SHOULDER', keypointName: 'right_shoulder', color: '#facc15', verticalSlot: 1 },
+          { angleKey: 'hip_tilt', label: 'HIP ALIGN', keypointName: 'right_hip', color: '#f97316', verticalSlot: 3 },
         ]
         
         const drawnLabels = new Set<string>()
@@ -1834,7 +1841,7 @@ function VideoFrameCanvas({
         const labelWidth = 340
         const labelHeight = 130
         
-        annotationConfig.forEach(({ angleKey, label, keypointName, offsetX, offsetY, color }) => {
+        annotationConfig.forEach(({ angleKey, label, keypointName, color, verticalSlot }) => {
           const angleValue = angles[angleKey]
           const keypoint = keypoints[keypointName]
           
@@ -1849,9 +1856,20 @@ function VideoFrameCanvas({
             const kpX = keypoint.x
             const kpY = keypoint.y
             
-            // Label position - offset from keypoint, MOVES WITH IT
-            const labelX = Math.max(20, Math.min(img.width - labelWidth - 20, kpX + offsetX))
-            const labelY = Math.max(20, Math.min(img.height - labelHeight - 20, kpY + offsetY))
+            // RULE: Label on SAME SIDE as the BODY PART (not image position)
+            // right_elbow, right_knee, right_shoulder, right_hip = label on RIGHT side
+            // left_elbow, left_knee, left_shoulder, left_hip = label on LEFT side
+            // This prevents the connecting line from crossing over the player's body
+            const isRightBodyPart = keypointName.includes('right')
+            const baseOffsetX = isRightBodyPart ? 300 : -300 - labelWidth  // Right body part = label to the right
+            
+            // Vertical spacing based on slot to prevent overlap
+            const verticalSpacing = 160  // Space between labels vertically
+            const baseY = 50 + (verticalSlot * verticalSpacing)  // Start from top, space down
+            
+            // Label position - offset from keypoint horizontally, fixed vertical slots
+            const labelX = Math.max(20, Math.min(img.width - labelWidth - 20, kpX + baseOffsetX))
+            const labelY = Math.max(20, Math.min(img.height - labelHeight - 20, baseY))
             
             // Draw connecting line
             ctx.strokeStyle = color
@@ -2253,7 +2271,7 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
     { label: 'HIP ALIGN', keypointName: 'right_hip' },
   ]
   
-  // Overlay toggle state
+  // Overlay toggle state - Default ON to show keypoints and labels
   const [overlayToggles, setOverlayToggles] = useState<OverlayToggles>({
     skeleton: true,
     joints: true,
@@ -2459,6 +2477,28 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
   const mainVideoFrameBase64 = videoData.annotatedFramesBase64[releaseFrameIndex] || videoData.annotatedFramesBase64[0]
   const videoMainImageUrl = `data:image/jpeg;base64,${mainVideoFrameBase64}`
   
+  // Get keypoints from release frame for screenshots
+  const releaseKeypoints = videoData.allKeypoints?.[releaseFrameIndex] || 
+    (videoData.frameData?.[releaseFrameIndex] as any)?.keypoints || {}
+  const releaseMetrics = videoData.frameData?.[releaseFrameIndex]?.metrics || {}
+  const releaseBall = videoData.frameData?.[releaseFrameIndex]?.ball
+  
+  // Construct a visionAnalysis object for video mode with keypoints from release frame
+  // This ensures AutoScreenshots can properly crop based on body part positions
+  const videoVisionAnalysisForScreenshots = useMemo(() => {
+    // If we have keypoints from video data, use those
+    if (releaseKeypoints && Object.keys(releaseKeypoints).length > 0) {
+      return {
+        keypoints: releaseKeypoints,
+        basketball: releaseBall || null,
+        angles: releaseMetrics,
+        image_size: { width: 640, height: 480 } // Default video frame size
+      }
+    }
+    // Fall back to passed visionAnalysis if available
+    return visionAnalysis
+  }, [releaseKeypoints, releaseBall, releaseMetrics, visionAnalysis])
+  
   return (
     <>
       {/* ============================================ */}
@@ -2512,6 +2552,7 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
                     angles={frameMetrics}
                     zoomTarget={zoomTarget}
                     spotlightTarget={spotlightTarget}
+                    playerGlow={overlayToggles.skeleton}
                   />
                 )
               })()}
@@ -2739,6 +2780,8 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
       {/* ============================================ */}
       {/* FULL ANALYSIS CONTENT - Same as Image Mode */}
       {/* Render ImageModeContent with video frame as mainImageUrl */}
+      {/* hideAnimatedWalkthrough=true for video (video has its own player) */}
+      {/* AutoScreenshots use videoVisionAnalysisForScreenshots with keypoints from release frame */}
       {/* ============================================ */}
       <ImageModeContent 
         activeTab={activeTab}
@@ -2750,8 +2793,11 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
         fullFrames={fullFrames}
         allUploadedUrls={allUploadedUrls}
         mainImageUrl={videoMainImageUrl}
-        visionAnalysis={visionAnalysis}
+        cleanImageUrl={videoMainImageUrl}
+        visionAnalysis={videoVisionAnalysisForScreenshots}
         roboflowBallDetection={roboflowBallDetection}
+        hideAnimatedWalkthrough={true}
+        hideAutoScreenshots={false}
       />
     </>
   )
@@ -2837,11 +2883,14 @@ interface ImageModeContentProps {
   fullFrames: { id: string; url: string; label: string; wristAngle?: number; confidence?: number }[]
   allUploadedUrls: string[]
   mainImageUrl: string | null
+  cleanImageUrl?: string | null  // Clean image without skeleton/labels for screenshots
   visionAnalysis?: VisionAnalysisResult | null
   roboflowBallDetection?: { x: number; y: number; width: number; height: number; confidence: number } | null
+  hideAnimatedWalkthrough?: boolean  // Hide animated walkthrough for video mode
+  hideAutoScreenshots?: boolean  // Hide auto screenshots for video mode
 }
 
-function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, poseConfidence, teaserFrames, fullFrames, allUploadedUrls, mainImageUrl, visionAnalysis, roboflowBallDetection }: ImageModeContentProps) {
+function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, poseConfidence, teaserFrames, fullFrames, allUploadedUrls, mainImageUrl, cleanImageUrl, visionAnalysis, roboflowBallDetection, hideAnimatedWalkthrough = false, hideAutoScreenshots = false }: ImageModeContentProps) {
   // Track hydration to handle SSR/client mismatch
   // const [isHydrated, setIsHydrated] = useState(false)
   
@@ -3111,29 +3160,34 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                     overlayToggles={overlayToggles}
                   />
 
-                  {/* ANIMATED IMAGE WALKTHROUGH - Zooms into each annotation */}
-                  <div className="mt-6 border-t border-[#3a3a3a] pt-6">
-                    <AnimatedImageWalkthrough
-                      imageUrl={mainImageUrl}
-                      keypoints={visionAnalysis?.keypoints}
-                      angles={visionAnalysis?.angles}
-                      imageSize={visionAnalysis?.image_size}
-                    />
-                  </div>
+                  {/* ANIMATED IMAGE WALKTHROUGH - Zooms into each annotation (IMAGE MODE ONLY) */}
+                  {!hideAnimatedWalkthrough && (
+                    <div className="mt-6 border-t border-[#3a3a3a] pt-6">
+                      <AnimatedImageWalkthrough
+                        imageUrl={mainImageUrl}
+                        keypoints={visionAnalysis?.keypoints}
+                        angles={visionAnalysis?.angles}
+                        imageSize={visionAnalysis?.image_size}
+                      />
+                    </div>
+                  )}
 
-                  {/* 3 AUTO SCREENSHOTS - Ball, Shoulders, Legs */}
-                  <div className="mt-6">
-                    <h3 className="text-[#FFD700] font-bold text-sm uppercase tracking-wider mb-4 text-center">
-                      Key Point Analysis — Click to Expand
-                    </h3>
-                    <AutoScreenshots
-                      imageUrl={mainImageUrl}
-                      keypoints={visionAnalysis?.keypoints}
-                      basketball={visionAnalysis?.basketball}
-                      imageSize={visionAnalysis?.image_size}
-                      angles={visionAnalysis?.angles}
-                    />
-                  </div>
+                  {/* 3 AUTO SCREENSHOTS - Ball, Shoulders, Legs (IMAGE MODE ONLY) */}
+                  {/* Hidden in video mode because we don't have clean frames */}
+                  {!hideAutoScreenshots && (
+                    <div className="mt-6">
+                      <h3 className="text-[#FFD700] font-bold text-sm uppercase tracking-wider mb-4 text-center">
+                        Key Point Analysis — Click to Expand
+                      </h3>
+                      <AutoScreenshots
+                        imageUrl={cleanImageUrl || mainImageUrl}
+                        keypoints={visionAnalysis?.keypoints}
+                        basketball={visionAnalysis?.basketball}
+                        imageSize={visionAnalysis?.image_size}
+                        angles={visionAnalysis?.angles}
+                      />
+                    </div>
+                  )}
                   
                   {/* ============================================ */}
                   {/* ANNOTATION DROPDOWN LIST - Directly below screenshots */}
@@ -3355,28 +3409,102 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                 </div>
               </div>
 
-              {/* Right: Development */}
-              <div className="p-3 bg-[#252525]">
-                <h3 className="text-[#FFD700] font-bold text-sm uppercase tracking-wider mb-3 text-center">DEVELOPMENT</h3>
+              {/* Right: Development Badge - Medal in Rounded Box */}
+              <div className="p-4 bg-gradient-to-b from-[#252525] to-[#1a1a1a]">
+                <h3 className="text-[#FFD700] font-bold text-xs uppercase tracking-[0.2em] mb-4 text-center">RANK</h3>
                 <div className="flex flex-col items-center">
-                  {/* Player Silhouette */}
-                  <div className="relative w-20 h-24 mb-2">
-                    <svg viewBox="0 0 80 96" className="w-full h-full">
-                      {/* Silhouette body */}
-                      <ellipse cx="40" cy="20" rx="16" ry="18" fill="#FFD700" />
-                      <path d="M20 40 Q20 55 25 70 L25 95 L35 95 L35 70 L45 70 L45 95 L55 95 L55 70 Q60 55 60 40 Q60 30 40 30 Q20 30 20 40" fill="#FFD700" />
-                      {/* Arms */}
-                      <path d="M20 42 Q10 50 8 65" stroke="#FFD700" strokeWidth="8" fill="none" strokeLinecap="round" />
-                      <path d="M60 42 Q70 50 72 65" stroke="#FFD700" strokeWidth="8" fill="none" strokeLinecap="round" />
-                      {/* Star on chest */}
-                      <polygon points="40,45 42,50 48,50 43,54 45,60 40,56 35,60 37,54 32,50 38,50" fill="#1a1a1a" />
-                      {/* Helmet lines */}
-                      <path d="M28 12 Q40 8 52 12" stroke="#1a1a1a" strokeWidth="1.5" fill="none" />
-                      <circle cx="40" cy="6" r="3" fill="#1a1a1a" />
+                  {/* Rounded Box Container */}
+                  <div className={`relative w-24 h-28 mb-2 rounded-xl border-2 ${
+                    analysisData.formCategory === 'EXCELLENT' 
+                      ? 'border-[#FFD700] bg-gradient-to-b from-[#2a2a2a] to-[#1a1a1a] shadow-[0_0_20px_rgba(255,215,0,0.3)]' 
+                      : analysisData.formCategory === 'GOOD'
+                      ? 'border-[#C0C0C0] bg-gradient-to-b from-[#2a2a2a] to-[#1a1a1a] shadow-[0_0_15px_rgba(192,192,192,0.2)]'
+                      : 'border-[#CD7F32] bg-gradient-to-b from-[#2a2a2a] to-[#1a1a1a] shadow-[0_0_10px_rgba(205,127,50,0.2)]'
+                  } flex items-center justify-center p-2`}>
+                    {/* Medal SVG - exact copy of the reference image */}
+                    <svg viewBox="0 0 100 130" className="w-full h-full">
+                      <defs>
+                        <linearGradient id="medalGold" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#FFE55C"/>
+                          <stop offset="50%" stopColor="#FFD700"/>
+                          <stop offset="100%" stopColor="#B8860B"/>
+                        </linearGradient>
+                      </defs>
+                      
+                      {/* Three ribbon tabs at top */}
+                      {/* Left ribbon */}
+                      <path d="M25,5 L25,35 L20,40 L20,10 Q20,5 25,5" 
+                            fill="none" 
+                            stroke={analysisData.formCategory === 'EXCELLENT' ? '#FFD700' : 
+                                   analysisData.formCategory === 'GOOD' ? '#C0C0C0' : '#CD7F32'}
+                            strokeWidth="2"/>
+                      <path d="M30,5 L30,38 L25,43 L25,10 Q25,5 30,5" 
+                            fill="none" 
+                            stroke={analysisData.formCategory === 'EXCELLENT' ? '#FFD700' : 
+                                   analysisData.formCategory === 'GOOD' ? '#C0C0C0' : '#CD7F32'}
+                            strokeWidth="2"/>
+                      
+                      {/* Center ribbon */}
+                      <rect x="42" y="5" width="16" height="35" rx="2"
+                            fill="none" 
+                            stroke={analysisData.formCategory === 'EXCELLENT' ? '#FFD700' : 
+                                   analysisData.formCategory === 'GOOD' ? '#C0C0C0' : '#CD7F32'}
+                            strokeWidth="2"/>
+                      
+                      {/* Right ribbon */}
+                      <path d="M75,5 L75,35 L80,40 L80,10 Q80,5 75,5" 
+                            fill="none" 
+                            stroke={analysisData.formCategory === 'EXCELLENT' ? '#FFD700' : 
+                                   analysisData.formCategory === 'GOOD' ? '#C0C0C0' : '#CD7F32'}
+                            strokeWidth="2"/>
+                      <path d="M70,5 L70,38 L75,43 L75,10 Q75,5 70,5" 
+                            fill="none" 
+                            stroke={analysisData.formCategory === 'EXCELLENT' ? '#FFD700' : 
+                                   analysisData.formCategory === 'GOOD' ? '#C0C0C0' : '#CD7F32'}
+                            strokeWidth="2"/>
+                      
+                      {/* Connector piece */}
+                      <rect x="40" y="42" width="20" height="10" rx="2"
+                            fill="none" 
+                            stroke={analysisData.formCategory === 'EXCELLENT' ? '#FFD700' : 
+                                   analysisData.formCategory === 'GOOD' ? '#C0C0C0' : '#CD7F32'}
+                            strokeWidth="2"/>
+                      
+                      {/* Medal circle - outer */}
+                      <circle cx="50" cy="85" r="30" 
+                              fill="none" 
+                              stroke={analysisData.formCategory === 'EXCELLENT' ? '#FFD700' : 
+                                     analysisData.formCategory === 'GOOD' ? '#C0C0C0' : '#CD7F32'}
+                              strokeWidth="2.5"/>
+                      
+                      {/* Medal circle - inner with basketball */}
+                      <circle cx="50" cy="85" r="22" 
+                              fill={analysisData.formCategory === 'EXCELLENT' ? '#FFD700' : 
+                                   analysisData.formCategory === 'GOOD' ? '#C0C0C0' : '#CD7F32'}/>
+                      
+                      {/* Basketball lines on medal */}
+                      <circle cx="50" cy="85" r="18" 
+                              fill="none" stroke="#1a1a1a" strokeWidth="2"/>
+                      <path d="M32,85 Q50,72 68,85" fill="none" stroke="#1a1a1a" strokeWidth="2"/>
+                      <path d="M32,85 Q50,98 68,85" fill="none" stroke="#1a1a1a" strokeWidth="2"/>
+                      <line x1="50" y1="67" x2="50" y2="103" stroke="#1a1a1a" strokeWidth="2"/>
+                      <line x1="32" y1="85" x2="68" y2="85" stroke="#1a1a1a" strokeWidth="2"/>
                     </svg>
                   </div>
-                  <p className="text-white font-black text-lg uppercase">{analysisData.formCategory === 'GOOD' ? 'NORMAL' : analysisData.formCategory}</p>
-                  <p className="text-[#888] text-[9px] text-center uppercase leading-tight mt-1">THIS PLAYER EARNS XP<br/>AT AN AVERAGE RATE</p>
+                  
+                  {/* Rank name */}
+                  <p className={`font-black text-sm uppercase tracking-wider ${
+                    analysisData.formCategory === 'EXCELLENT' ? 'text-[#FFD700]' :
+                    analysisData.formCategory === 'GOOD' ? 'text-[#C0C0C0]' :
+                    'text-[#CD7F32]'
+                  }`}>
+                    {analysisData.formCategory === 'EXCELLENT' ? 'ELITE' : 
+                     analysisData.formCategory === 'GOOD' ? 'VETERAN' : 
+                     analysisData.formCategory === 'NEEDS_IMPROVEMENT' ? 'RECRUIT' : 'ROOKIE'}
+                  </p>
+                  <p className="text-[#666] text-[10px] text-center uppercase tracking-wide mt-1">
+                    {analysisData.overallScore}% RATING
+                  </p>
                 </div>
               </div>
             </div>
@@ -3460,19 +3588,117 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
               { rank: 4, name: "Klay Thompson", team: "Dallas Mavericks", position: "SG", similarity: Math.max(40, analysisData.matchedShooter.similarityScore - 15), photoId: "202691", trait: "Quick Release" },
               { rank: 5, name: "Devin Booker", team: "Phoenix Suns", position: "SG", similarity: Math.max(35, analysisData.matchedShooter.similarityScore - 20), photoId: "1626164", trait: "Smooth Stroke" },
             ].map((shooter) => (
-              <div key={shooter.rank} className="bg-[#2a2a2a] rounded-lg p-3 border border-[#3a3a3a] hover:border-[#FFD700]/30 transition-colors">
+              <div key={shooter.rank} className={`relative rounded-lg p-3 border transition-all duration-300 hover:scale-[1.02] hover:shadow-lg overflow-hidden ${
+                shooter.rank === 2 
+                  ? 'bg-gradient-to-r from-[#2a2a2a] via-[#2a2a2a] to-[#C0C0C0]/10 border-[#C0C0C0]/40 hover:border-[#C0C0C0]/60 hover:shadow-[#C0C0C0]/20' 
+                  : shooter.rank === 3 
+                  ? 'bg-gradient-to-r from-[#2a2a2a] via-[#2a2a2a] to-[#CD7F32]/10 border-[#CD7F32]/40 hover:border-[#CD7F32]/60 hover:shadow-[#CD7F32]/20'
+                  : 'bg-gradient-to-r from-[#2a2a2a] via-[#2a2a2a] to-[#FFD700]/5 border-[#3a3a3a] hover:border-[#FFD700]/30'
+              }`}>
+                {/* Subtle accent line on left */}
+                <div className={`absolute left-0 top-0 bottom-0 w-1 ${
+                  shooter.rank === 2 ? 'bg-gradient-to-b from-[#C0C0C0] to-[#C0C0C0]/30' :
+                  shooter.rank === 3 ? 'bg-gradient-to-b from-[#CD7F32] to-[#CD7F32]/30' :
+                  'bg-gradient-to-b from-[#FFD700]/50 to-[#FFD700]/10'
+                }`} />
+                
                 <div className="flex items-center gap-3">
-                  {/* Rank Badge */}
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-sm ${
-                    shooter.rank === 2 ? 'bg-[#C0C0C0] text-[#1a1a1a]' :
-                    shooter.rank === 3 ? 'bg-[#CD7F32] text-[#1a1a1a]' :
-                    'bg-[#4a4a4a] text-[#888]'
-                  }`}>
-                    {shooter.rank}
+                  {/* Rank Badge - Medal Style */}
+                  <div className={`relative w-12 h-14 flex items-center justify-center`}>
+                    <svg viewBox="0 0 50 60" className="w-full h-full">
+                      <defs>
+                        <linearGradient id={`medalGrad${shooter.rank}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                          {shooter.rank === 2 && (
+                            <>
+                              <stop offset="0%" stopColor="#F8F8F8"/>
+                              <stop offset="50%" stopColor="#C0C0C0"/>
+                              <stop offset="100%" stopColor="#888888"/>
+                            </>
+                          )}
+                          {shooter.rank === 3 && (
+                            <>
+                              <stop offset="0%" stopColor="#E8A060"/>
+                              <stop offset="50%" stopColor="#CD7F32"/>
+                              <stop offset="100%" stopColor="#8B4513"/>
+                            </>
+                          )}
+                          {shooter.rank === 4 && (
+                            <>
+                              <stop offset="0%" stopColor="#4A90D9"/>
+                              <stop offset="50%" stopColor="#2E6DB4"/>
+                              <stop offset="100%" stopColor="#1A4A7A"/>
+                            </>
+                          )}
+                          {shooter.rank === 5 && (
+                            <>
+                              <stop offset="0%" stopColor="#50C878"/>
+                              <stop offset="50%" stopColor="#228B22"/>
+                              <stop offset="100%" stopColor="#006400"/>
+                            </>
+                          )}
+                        </linearGradient>
+                        <linearGradient id={`ribbonGrad${shooter.rank}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                          {shooter.rank === 2 && (
+                            <>
+                              <stop offset="0%" stopColor="#E0E0E0"/>
+                              <stop offset="100%" stopColor="#909090"/>
+                            </>
+                          )}
+                          {shooter.rank === 3 && (
+                            <>
+                              <stop offset="0%" stopColor="#CD7F32"/>
+                              <stop offset="100%" stopColor="#6B4423"/>
+                            </>
+                          )}
+                          {shooter.rank === 4 && (
+                            <>
+                              <stop offset="0%" stopColor="#5BA3E0"/>
+                              <stop offset="100%" stopColor="#1A4A7A"/>
+                            </>
+                          )}
+                          {shooter.rank === 5 && (
+                            <>
+                              <stop offset="0%" stopColor="#50C878"/>
+                              <stop offset="100%" stopColor="#006400"/>
+                            </>
+                          )}
+                        </linearGradient>
+                      </defs>
+                      
+                      {/* Three ribbon tails */}
+                      <rect x="10" y="2" width="6" height="20" fill={`url(#ribbonGrad${shooter.rank})`} rx="1"/>
+                      <rect x="22" y="2" width="6" height="18" fill={`url(#ribbonGrad${shooter.rank})`} rx="1"/>
+                      <rect x="34" y="2" width="6" height="20" fill={`url(#ribbonGrad${shooter.rank})`} rx="1"/>
+                      
+                      {/* Ribbon connector bar */}
+                      <rect x="8" y="18" width="34" height="6" fill={`url(#ribbonGrad${shooter.rank})`} rx="1"/>
+                      
+                      {/* Medal ring/hanger */}
+                      <circle cx="25" cy="28" r="4" fill="none" stroke={`url(#medalGrad${shooter.rank})`} strokeWidth="2"/>
+                      
+                      {/* Medal body (circle) */}
+                      <circle cx="25" cy="44" r="14" fill={`url(#medalGrad${shooter.rank})`} stroke="#333" strokeWidth="1"/>
+                      
+                      {/* Basketball lines on medal */}
+                      <circle cx="25" cy="44" r="10" fill="none" stroke="#1a1a1a" strokeWidth="1.5"/>
+                      <path d="M15,44 Q25,38 35,44" fill="none" stroke="#1a1a1a" strokeWidth="1"/>
+                      <path d="M15,44 Q25,50 35,44" fill="none" stroke="#1a1a1a" strokeWidth="1"/>
+                      <line x1="25" y1="34" x2="25" y2="54" stroke="#1a1a1a" strokeWidth="1"/>
+                      
+                      {/* Rank number overlay */}
+                      <circle cx="38" cy="14" r="8" fill="#1a1a1a" stroke={shooter.rank === 2 ? '#C0C0C0' : shooter.rank === 3 ? '#CD7F32' : shooter.rank === 4 ? '#2E6DB4' : '#228B22'} strokeWidth="2"/>
+                      <text x="38" y="18" textAnchor="middle" fill={shooter.rank === 2 ? '#C0C0C0' : shooter.rank === 3 ? '#CD7F32' : shooter.rank === 4 ? '#2E6DB4' : '#228B22'} fontSize="12" fontWeight="bold" fontFamily="system-ui">
+                        {shooter.rank}
+                      </text>
+                    </svg>
                   </div>
                   
                   {/* Player Photo */}
-                  <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-[#FFD700]/30 relative flex-shrink-0">
+                  <div className={`w-12 h-12 rounded-full overflow-hidden relative flex-shrink-0 ${
+                    shooter.rank === 2 ? 'ring-2 ring-[#C0C0C0]/50 ring-offset-2 ring-offset-[#2a2a2a]' :
+                    shooter.rank === 3 ? 'ring-2 ring-[#CD7F32]/50 ring-offset-2 ring-offset-[#2a2a2a]' :
+                    'border-2 border-[#FFD700]/20'
+                  }`}>
                     <Image
                       src={`https://cdn.nba.com/headshots/nba/latest/1040x760/${shooter.photoId}.png`}
                       alt={shooter.name}
@@ -3485,13 +3711,21 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                   {/* Player Info */}
                   <div className="flex-1 min-w-0">
                     <p className="text-white font-bold text-sm truncate">{shooter.name}</p>
-                    <p className="text-[#888] text-xs truncate">{shooter.team}</p>
+                    <p className={`text-xs truncate ${
+                      shooter.rank === 2 ? 'text-[#C0C0C0]' :
+                      shooter.rank === 3 ? 'text-[#CD7F32]' :
+                      'text-[#888]'
+                    }`}>{shooter.team}</p>
                   </div>
                   
                   {/* Similarity & Trait */}
                   <div className="text-right flex-shrink-0">
-                    <p className="text-[#FFD700] font-black text-lg">{shooter.similarity}%</p>
-                    <p className="text-[#888] text-[10px]">{shooter.trait}</p>
+                    <p className={`font-black text-xl ${
+                      shooter.rank === 2 ? 'text-[#C0C0C0]' :
+                      shooter.rank === 3 ? 'text-[#CD7F32]' :
+                      'text-[#FFD700]'
+                    }`}>{shooter.similarity}%</p>
+                    <p className="text-[#888] text-[10px] uppercase tracking-wide">{shooter.trait}</p>
                   </div>
                 </div>
               </div>

@@ -20,3 +20,4 @@ console.log('Browser staying open for 60 seconds...');
 await new Promise(r => setTimeout(r, 60000));
 await browser.close();
 
+
