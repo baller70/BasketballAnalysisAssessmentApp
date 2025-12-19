@@ -113,6 +113,9 @@ function HomeContent() {
 
     setAnalysisProgress(10)
     
+    // IMPORTANT: Set media type to IMAGE so results page shows image mode
+    setStoreMediaType("IMAGE")
+    
     // Convert file to base64 for persistence across navigation
     const reader = new FileReader()
     const base64Promise = new Promise<string>((resolve, reject) => {
