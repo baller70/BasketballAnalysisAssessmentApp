@@ -46,6 +46,7 @@ import {
   type DateRangePreset
 } from "@/services/sessionStorage"
 import { Phase6ComparisonPanel } from "@/components/comparison/Phase6ComparisonPanel"
+// Removed: AnnotationWalkthroughVideo - using original video player instead
 import { 
   ALL_DRILLS, 
   getRecommendedDrills, 
@@ -823,9 +824,10 @@ interface VideoFrameCanvasProps {
   toggles: OverlayToggles
   phase?: string
   timestamp?: number
+  angles?: Record<string, number> // Angle measurements to display as annotations
 }
 
-function VideoFrameCanvas({ rawFrame, annotatedFrame, keypoints, ball, toggles, phase, timestamp }: VideoFrameCanvasProps) {
+function VideoFrameCanvas({ rawFrame, annotatedFrame, keypoints, ball, toggles, phase, timestamp, angles }: VideoFrameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [dimensions, setDimensions] = useState({ width: 640, height: 480 })
   
@@ -929,44 +931,112 @@ function VideoFrameCanvas({ rawFrame, annotatedFrame, keypoints, ball, toggles, 
         }
       }
       
-      // Draw phase badge
-      if (phase) {
-        const phaseColors: Record<string, string> = {
-          'SETUP': '#00bcd4',
-          'RISE': '#ff9800',
-          'RELEASE': '#4caf50',
-          'FOLLOW_THROUGH': '#ffd700'
-        }
-        const color = phaseColors[phase] || '#ffffff'
+      // Phase badge removed per user request - top left corner should be empty
+      
+      // Draw timestamp - HUGE timer inside video (upper right corner)
+      // Using large values because canvas is 1920x1080 but displays smaller
+      if (timestamp !== undefined) {
+        const timerWidth = 350
+        const timerHeight = 140
+        const timerX = img.width - timerWidth - 40
+        const timerY = 30
         
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'
-        ctx.roundRect(15, 15, 150, 35, 8)
+        // Background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.95)'
+        ctx.beginPath()
+        ctx.roundRect(timerX, timerY, timerWidth, timerHeight, 20)
         ctx.fill()
         
-        ctx.strokeStyle = color
-        ctx.lineWidth = 2
-        ctx.roundRect(15, 15, 150, 35, 8)
+        // Border
+        ctx.strokeStyle = '#FFD700'
+        ctx.lineWidth = 8
+        ctx.beginPath()
+        ctx.roundRect(timerX, timerY, timerWidth, timerHeight, 20)
         ctx.stroke()
         
-        ctx.fillStyle = color
-        ctx.font = 'bold 14px system-ui'
-        ctx.fillText(phase.replace('_', ' '), 25, 38)
+        // Time text - HUGE 100px font for readability
+        ctx.fillStyle = '#FFD700'
+        ctx.font = 'bold 100px monospace'
+        ctx.textAlign = 'center'
+        ctx.fillText(`${timestamp.toFixed(2)}s`, timerX + timerWidth / 2, timerY + 100)
       }
       
-      // Draw timestamp
-      if (timestamp !== undefined) {
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'
-        ctx.roundRect(img.width - 85, 15, 70, 30, 8)
-        ctx.fill()
+      // Draw angle annotations with labels pointing to body parts
+      if (toggles.annotations && keypoints && angles) {
+        ctx.textAlign = 'left'
         
-        ctx.fillStyle = 'white'
-        ctx.font = '14px monospace'
-        ctx.fillText(`${timestamp.toFixed(2)}s`, img.width - 75, 35)
+        // Annotation config: angle key -> body part keypoint + label
+        const annotationConfig: Array<{
+          angleKey: string
+          label: string
+          keypointName: string
+          offsetX: number
+          offsetY: number
+          color: string
+        }> = [
+          { angleKey: 'elbow_angle', label: 'Elbow', keypointName: 'right_elbow', offsetX: -120, offsetY: -30, color: '#4ade80' },
+          { angleKey: 'right_elbow_angle', label: 'Elbow', keypointName: 'right_elbow', offsetX: -120, offsetY: -30, color: '#4ade80' },
+          { angleKey: 'knee_angle', label: 'Knee', keypointName: 'right_knee', offsetX: 30, offsetY: 20, color: '#60a5fa' },
+          { angleKey: 'right_knee_angle', label: 'Knee', keypointName: 'right_knee', offsetX: 30, offsetY: 20, color: '#60a5fa' },
+          { angleKey: 'shoulder_tilt', label: 'Shoulder', keypointName: 'right_shoulder', offsetX: 30, offsetY: -40, color: '#facc15' },
+          { angleKey: 'hip_tilt', label: 'Hip', keypointName: 'right_hip', offsetX: 30, offsetY: 10, color: '#f97316' },
+        ]
+        
+        const drawnLabels = new Set<string>() // Avoid duplicate labels
+        
+        annotationConfig.forEach(({ angleKey, label, keypointName, offsetX, offsetY, color }) => {
+          const angleValue = angles[angleKey]
+          const keypoint = keypoints[keypointName]
+          
+          if (angleValue !== undefined && keypoint && !drawnLabels.has(label)) {
+            drawnLabels.add(label)
+            
+            const kpX = keypoint.x
+            const kpY = keypoint.y
+            const labelX = Math.max(10, Math.min(img.width - 150, kpX + offsetX))
+            const labelY = Math.max(30, Math.min(img.height - 30, kpY + offsetY))
+            
+            // Draw line from label to keypoint
+            ctx.strokeStyle = color
+            ctx.lineWidth = 2
+            ctx.setLineDash([5, 3])
+            ctx.beginPath()
+            ctx.moveTo(labelX + 60, labelY)
+            ctx.lineTo(kpX, kpY)
+            ctx.stroke()
+            ctx.setLineDash([])
+            
+            // Draw label background
+            const labelWidth = 120
+            const labelHeight = 45
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.85)'
+            ctx.beginPath()
+            ctx.roundRect(labelX, labelY - 35, labelWidth, labelHeight, 8)
+            ctx.fill()
+            
+            // Draw label border
+            ctx.strokeStyle = color
+            ctx.lineWidth = 2
+            ctx.beginPath()
+            ctx.roundRect(labelX, labelY - 35, labelWidth, labelHeight, 8)
+            ctx.stroke()
+            
+            // Draw label text
+            ctx.fillStyle = 'white'
+            ctx.font = 'bold 12px system-ui'
+            ctx.fillText(label, labelX + 8, labelY - 18)
+            
+            // Draw angle value
+            ctx.fillStyle = color
+            ctx.font = 'bold 18px monospace'
+            ctx.fillText(`${Math.round(angleValue)}°`, labelX + 8, labelY + 2)
+          }
+        })
       }
     }
     
     img.src = `data:image/jpeg;base64,${frameToUse}`
-  }, [rawFrame, annotatedFrame, keypoints, ball, toggles, phase, timestamp])
+  }, [rawFrame, annotatedFrame, keypoints, ball, toggles, phase, timestamp, angles])
   
   return (
     <canvas
@@ -1217,6 +1287,7 @@ interface VideoModeContentProps extends ImageModeContentProps {
 function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, playerName, poseConfidence, teaserFrames, fullFrames, allUploadedUrls, mainImageUrl, visionAnalysis, roboflowBallDetection }: VideoModeContentProps) {
   const [currentFrame, setCurrentFrame] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [hasStartedPlaying, setHasStartedPlaying] = useState(false) // For cover screen
   const playIntervalRef = useRef<NodeJS.Timeout | null>(null)
   
   // Overlay toggle state
@@ -1273,7 +1344,8 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
   const currentTimestamp = currentFrameData?.timestamp || (currentFrame / (videoData.fps || 10))
   
   // Use the release frame as the "main image" for ImageModeContent
-  const releaseFrameIndex = videoData.phases?.find(p => p.phase === 'Release')?.frame || Math.floor(totalFrames / 2)
+  // Check for both 'Release' and 'RELEASE' since backend might use either
+  const releaseFrameIndex = videoData.phases?.find(p => p.phase === 'Release' || p.phase === 'RELEASE')?.frame ?? Math.floor(totalFrames / 2)
   const mainVideoFrameBase64 = videoData.annotatedFramesBase64[releaseFrameIndex] || videoData.annotatedFramesBase64[0]
   const videoMainImageUrl = `data:image/jpeg;base64,${mainVideoFrameBase64}`
   
@@ -1284,7 +1356,7 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
       {/* ============================================ */}
       <div className="p-6 border-b border-[#3a3a3a]">
         <div className="text-center mb-4">
-          <h2 className="text-2xl font-bold text-[#FFD700] mb-2">🎬 Video Frame-by-Frame Playback</h2>
+          <h2 className="text-2xl font-bold text-[#FFD700] mb-2">SHOOTING FORM ANALYSIS BREAKDOWN</h2>
           <p className="text-[#888] text-sm">Scrub through your shooting motion to analyze each phase</p>
         </div>
         
@@ -1293,21 +1365,77 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
           <div className="bg-[#1a1a1a] rounded-xl overflow-hidden shadow-2xl">
             {/* Frame Display with Canvas for Toggle Control */}
             <div className="relative aspect-video bg-black flex items-center justify-center">
-              <VideoFrameCanvas
-                rawFrame={videoData.rawFramesBase64?.[currentFrame] || videoData.annotatedFramesBase64?.[currentFrame]}
-                annotatedFrame={videoData.annotatedFramesBase64?.[currentFrame]}
-                keypoints={videoData.allKeypoints?.[currentFrame]}
-                ball={videoData.frameData?.[currentFrame]?.ball}
-                toggles={overlayToggles}
-                phase={currentPhase}
-                timestamp={currentTimestamp}
-              />
+              {/* Video frame canvas - shows annotated frame with overlays */}
+              {(() => {
+                const frameIdx = hasStartedPlaying ? currentFrame : releaseFrameIndex
+                const safeFrameIdx = Math.min(frameIdx, (videoData.annotatedFramesBase64?.length || 1) - 1)
+                const frameBase64 = videoData.annotatedFramesBase64?.[safeFrameIdx] || videoData.annotatedFramesBase64?.[0]
+                const framePhase = hasStartedPlaying ? currentPhase : (videoData.phases?.find(p => p.frame === safeFrameIdx)?.phase || 'RELEASE')
+                const frameTimestamp = hasStartedPlaying ? currentTimestamp : (safeFrameIdx / (videoData.fps || 10))
+                const frameMetrics = videoData.frameData?.[safeFrameIdx]?.metrics
+                // Get keypoints from allKeypoints array OR from frameData.keypoints
+                const frameKeypoints = videoData.allKeypoints?.[safeFrameIdx] || (videoData.frameData?.[safeFrameIdx] as any)?.keypoints
+                const frameBall = videoData.frameData?.[safeFrameIdx]?.ball
+                
+                return (
+                  <VideoFrameCanvas
+                    rawFrame={frameBase64}
+                    annotatedFrame={frameBase64}
+                    keypoints={frameKeypoints}
+                    ball={frameBall}
+                    toggles={overlayToggles}
+                    phase={framePhase}
+                    timestamp={frameTimestamp}
+                    angles={frameMetrics}
+                  />
+                )
+              })()}
+              
+              {/* Play button overlay - only show before playback starts */}
+              {!hasStartedPlaying && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                  <button 
+                    onClick={() => {
+                      setHasStartedPlaying(true)
+                      setIsPlaying(true)
+                    }}
+                    className="p-6 rounded-full bg-[#FFD700] hover:bg-[#E5C100] text-black transition-all transform hover:scale-110 shadow-2xl"
+                  >
+                    <svg className="w-16 h-16" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                  </button>
+                  {/* Label */}
+                  <div className="absolute bottom-4 left-0 right-0 text-center">
+                    <span className="bg-black/70 text-[#FFD700] px-4 py-2 rounded-lg font-semibold">
+                      Click to Play Walkthrough
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
             
             {/* Controls */}
             <div className="p-4 bg-[#2a2a2a]">
-              {/* Progress Bar */}
-              <div className="mb-4">
+              {/* Progress Bar with Keyframe Markers */}
+              <div className="mb-4 relative">
+                {/* Keyframe markers on the timeline */}
+                <div className="absolute top-0 left-0 right-0 h-2 pointer-events-none z-10">
+                  {videoData.phases?.map((phase, idx) => {
+                    const position = totalFrames > 1 ? (phase.frame / (totalFrames - 1)) * 100 : 0
+                    return (
+                      <div
+                        key={idx}
+                        className="absolute top-0 w-1 h-4 bg-[#FFD700] rounded-full transform -translate-x-1/2 -translate-y-1 cursor-pointer pointer-events-auto hover:scale-125 transition-transform"
+                        style={{ left: `${position}%` }}
+                        onClick={() => {
+                          setIsPlaying(false)
+                          setHasStartedPlaying(true)
+                          setCurrentFrame(phase.frame)
+                        }}
+                        title={`${phase.phase} (${phase.timestamp.toFixed(2)}s)`}
+                      />
+                    )
+                  })}
+                </div>
                 <input
                   type="range"
                   min={0}
@@ -1315,11 +1443,18 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
                   value={currentFrame}
                   onChange={(e) => {
                     setIsPlaying(false)
+                    if (!hasStartedPlaying) setHasStartedPlaying(true)
                     setCurrentFrame(parseInt(e.target.value))
                   }}
                   className="w-full h-2 bg-[#4a4a4a] rounded-lg appearance-none cursor-pointer accent-[#FFD700]"
                 />
+                {/* Phase labels below timeline */}
+                <div className="absolute -bottom-5 left-0 right-0 flex justify-between text-xs text-[#888]">
+                  <span>0s</span>
+                  <span>{((totalFrames - 1) / (videoData.fps || 10)).toFixed(1)}s</span>
+                </div>
               </div>
+              <div className="mt-6" /> {/* Spacer for phase labels */}
               
               {/* Playback Controls */}
               <div className="flex items-center justify-between">
@@ -1330,7 +1465,10 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
                   <button onClick={() => setCurrentFrame(prev => Math.max(0, prev - 1))} disabled={currentFrame === 0} className="p-2 rounded-lg bg-[#3a3a3a] hover:bg-[#4a4a4a] text-white transition-colors disabled:opacity-50" title="Previous frame">
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
                   </button>
-                  <button onClick={() => setIsPlaying(!isPlaying)} className="p-3 rounded-full bg-[#FFD700] hover:bg-[#E5C100] text-black transition-colors">
+                  <button onClick={() => {
+                    if (!hasStartedPlaying) setHasStartedPlaying(true)
+                    setIsPlaying(!isPlaying)
+                  }} className="p-3 rounded-full bg-[#FFD700] hover:bg-[#E5C100] text-black transition-colors">
                     {isPlaying ? (
                       <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                     ) : (
@@ -1344,13 +1482,13 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
                   </button>
                 </div>
-                {/* TIMER - Made bigger and more visible */}
-                <div className="bg-[#1a1a1a] border-2 border-[#FFD700] rounded-xl px-6 py-3 shadow-lg">
-                  <div className="text-white font-mono text-2xl font-bold">
+                {/* Frame counter - Regular size (timer inside video is bigger) */}
+                <div className="bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-3 py-2">
+                  <div className="text-white font-mono text-sm">
                     Frame <span className="text-[#FFD700]">{currentFrame + 1}</span> / {totalFrames}
                   </div>
-                  <div className="text-[#FFD700] font-mono text-lg mt-1">
-                    {currentTimestamp.toFixed(1)}s
+                  <div className="text-[#888] font-mono text-xs">
+                    {currentTimestamp.toFixed(2)}s
                   </div>
                 </div>
               </div>
@@ -1436,6 +1574,8 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
           <div className="mt-4">
             <OverlayControls toggles={overlayToggles} setToggles={setOverlayToggles} />
           </div>
+          
+          {/* ============================================ */}
         </div>
       </div>
 

@@ -333,23 +333,50 @@ def analyze_video(video_path, target_fps=10):
             max_elbow = m.get('elbow_angle', 0)
             release_frame = i
     
-    # Generate annotated video
-    with tempfile.NamedTemporaryFile(suffix='.mp4', delete=False) as tmp:
-        output_path = tmp.name
+    # Generate annotated frames as base64 images
+    annotated_frames_base64 = []
+    for i, frame in enumerate(frames):
+        keypoints = all_keypoints[i] if i < len(all_keypoints) else {}
+        phase = all_phases[i] if i < len(all_phases) else None
+        
+        # Draw skeleton on frame
+        annotated = draw_skeleton_on_frame(frame, keypoints, phase)
+        
+        # Add timestamp to frame
+        timestamp = i / target_fps
+        cv2.putText(annotated, f"{timestamp:.2f}s", (annotated.shape[1] - 120, 30), 
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+        
+        # Convert to base64
+        _, buffer = cv2.imencode('.jpg', annotated, [cv2.IMWRITE_JPEG_QUALITY, 85])
+        frame_base64 = base64.b64encode(buffer).decode('utf-8')
+        annotated_frames_base64.append(frame_base64)
     
-    create_annotated_video(frames, all_keypoints, all_phases, output_path, target_fps)
+    # Also create key screenshots for the 3 main phases
+    key_screenshots = []
+    release_idx = release_frame
+    setup_idx = max(0, release_idx - len(frames) // 3)
+    followthrough_idx = min(len(frames) - 1, release_idx + len(frames) // 4)
     
-    # Read annotated video as base64
-    with open(output_path, 'rb') as f:
-        video_base64 = base64.b64encode(f.read()).decode('utf-8')
-    
-    # Clean up
-    os.unlink(output_path)
+    for idx, label in [(setup_idx, 'SETUP'), (release_idx, 'RELEASE'), (followthrough_idx, 'FOLLOW_THROUGH')]:
+        if idx < len(frames):
+            keypoints = all_keypoints[idx] if idx < len(all_keypoints) else {}
+            annotated = draw_skeleton_on_frame(frames[idx], keypoints, label)
+            _, buffer = cv2.imencode('.jpg', annotated, [cv2.IMWRITE_JPEG_QUALITY, 90])
+            key_screenshots.append({
+                'label': label,
+                'frame_index': idx,
+                'phase': label,
+                'metrics': all_metrics[idx] if idx < len(all_metrics) else {},
+                'keypoints': keypoints,
+                'image_base64': base64.b64encode(buffer).decode('utf-8')
+            })
     
     return {
         'success': True,
         'video_info': video_info,
         'frame_count': len(frames),
+        'annotated_frames_base64': annotated_frames_base64,
         'phases': phase_timestamps,
         'metrics': {
             'elbow_angle_range': {
@@ -370,11 +397,14 @@ def analyze_video(video_path, target_fps=10):
                 'timestamp': round(i / target_fps, 2),
                 'phase': all_phases[i],
                 'metrics': all_metrics[i],
-                'keypoint_count': len(all_keypoints[i])
+                'keypoint_count': len(all_keypoints[i]),
+                'keypoints': all_keypoints[i],  # Include keypoints for each frame
+                'ball_detected': False  # Placeholder
             }
             for i in range(len(frames))
         ],
-        'annotated_video': video_base64
+        'all_keypoints': all_keypoints,  # Full keypoints array for all frames
+        'key_screenshots': key_screenshots
     }, None
 
 
