@@ -32,6 +32,27 @@ export interface AnalysisSession {
   coachingLevelUsed?: string // elementary/middle/high/college/pro
   imagesAnalyzed?: number
   profileSnapshot?: UserProfileSnapshot // Snapshot of user profile at time of analysis
+  // Video session data
+  mediaType?: 'image' | 'video' // Type of media analyzed
+  videoData?: {
+    annotatedFramesBase64: string[] // All frames with skeleton overlay
+    frameCount: number
+    duration: number
+    fps: number
+    phases: Array<{ phase: string; frame: number; timestamp: number }>
+    metrics: {
+      elbow_angle_range: { min: number | null; max: number | null; at_release: number | null }
+      knee_angle_range: { min: number | null; max: number | null }
+      release_frame: number
+      release_timestamp: number
+    }
+    frameData: Array<{
+      frame: number
+      timestamp: number
+      phase: string
+      metrics: Record<string, number>
+    }>
+  }
 }
 
 // Phase 9: User profile snapshot for tracking changes
@@ -146,6 +167,18 @@ export function getSessionById(sessionId: string): AnalysisSession | null {
 }
 
 /**
+ * Get the latest session by media type (image or video)
+ * Returns null if no session of that type exists
+ */
+export function getLatestSessionByMediaType(mediaType: 'image' | 'video'): AnalysisSession | null {
+  const sessions = getAllSessions()
+  // Sessions are sorted by timestamp (newest first)
+  // Find the first session that matches the media type
+  // Note: Old sessions without mediaType are treated as 'image'
+  return sessions.find(s => (s.mediaType || 'image') === mediaType) || null
+}
+
+/**
  * Save a new session to localStorage
  */
 export function saveSession(session: AnalysisSession): boolean {
@@ -235,7 +268,9 @@ export function createSessionFromAnalysis(
   playerName?: string,
   coachingLevelUsed?: string,
   profileSnapshot?: UserProfileSnapshot,
-  imagesAnalyzed?: number
+  imagesAnalyzed?: number,
+  mediaType?: 'image' | 'video',
+  videoData?: AnalysisSession['videoData']
 ): AnalysisSession {
   const now = new Date()
   
@@ -251,7 +286,9 @@ export function createSessionFromAnalysis(
     playerName,
     coachingLevelUsed,
     profileSnapshot,
-    imagesAnalyzed
+    imagesAnalyzed,
+    mediaType: mediaType || 'image',
+    videoData
   }
 }
 

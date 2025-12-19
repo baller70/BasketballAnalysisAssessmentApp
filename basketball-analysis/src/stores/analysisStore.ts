@@ -64,6 +64,27 @@ export interface ShotBreakdownFrame {
   confidence?: number
 }
 
+// Video analysis data for frame-by-frame playback
+export interface VideoAnalysisData {
+  annotatedFramesBase64: string[]
+  frameCount: number
+  duration: number
+  fps: number
+  phases: Array<{ phase: string; frame: number; timestamp: number }>
+  metrics: {
+    elbow_angle_range: { min: number | null; max: number | null; at_release: number | null }
+    knee_angle_range: { min: number | null; max: number | null }
+    release_frame: number
+    release_timestamp: number
+  }
+  frameData: Array<{
+    frame: number
+    timestamp: number
+    phase: string
+    metrics: Record<string, number>
+  }>
+}
+
 interface AnalysisState {
   // Current analysis session
   currentAnalysis: AnalysisResult | null
@@ -98,6 +119,9 @@ interface AnalysisState {
   // Roboflow basketball detection
   roboflowBallDetection: RoboflowBallDetection | null
 
+  // Video analysis data (for video mode)
+  videoAnalysisData: VideoAnalysisData | null
+
   // UI state
   isAnalyzing: boolean
   analysisProgress: number
@@ -123,6 +147,7 @@ interface AnalysisState {
   setFormAnalysisResult: (result: FormAnalysisResult | null) => void
   setVisionAnalysisResult: (result: VisionAnalysisResult | null) => void
   setRoboflowBallDetection: (detection: RoboflowBallDetection | null) => void
+  setVideoAnalysisData: (data: VideoAnalysisData | null) => void
   resetUpload: () => void
   resetAll: () => void
 }
@@ -160,6 +185,7 @@ export const useAnalysisStore = create<AnalysisState>()(
         formAnalysisResult: null,
         visionAnalysisResult: null,
         roboflowBallDetection: null,
+        videoAnalysisData: null,
         isAnalyzing: false,
         analysisProgress: 0,
         error: null,
@@ -233,6 +259,9 @@ export const useAnalysisStore = create<AnalysisState>()(
         setRoboflowBallDetection: (detection) =>
           set({ roboflowBallDetection: detection }, false, "setRoboflowBallDetection"),
 
+        setVideoAnalysisData: (data) =>
+          set({ videoAnalysisData: data }, false, "setVideoAnalysisData"),
+
         resetUpload: () =>
           set(
             {
@@ -247,6 +276,7 @@ export const useAnalysisStore = create<AnalysisState>()(
               formAnalysisResult: null,
               visionAnalysisResult: null,
               roboflowBallDetection: null,
+              videoAnalysisData: null,
               error: null,
             },
             false,
@@ -271,6 +301,7 @@ export const useAnalysisStore = create<AnalysisState>()(
               formAnalysisResult: null,
               visionAnalysisResult: null,
               roboflowBallDetection: null,
+              videoAnalysisData: null,
               isAnalyzing: false,
               analysisProgress: 0,
               error: null,

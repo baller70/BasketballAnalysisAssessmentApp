@@ -9,7 +9,7 @@ import React, { useState, useMemo, useRef, useCallback, useEffect } from "react"
 import { AnalysisDashboard } from "@/components/analysis/AnalysisDashboard"
 import { EnhancedShotStrip } from "@/components/analysis/EnhancedShotStrip"
 import { AutoScreenshots } from "@/components/analysis/AutoScreenshots"
-import { User, Upload, Check, X, Image as ImageIcon, Video, BookOpen, Users, Search, BarChart3, Award, ArrowRight, Zap, Trophy, Target, ClipboardList, Flame, Dumbbell, CircleDot, Share2, Download, Copy, Twitter, Facebook, Linkedin, ChevronLeft, ChevronRight, Calendar, ChevronDown, AlertTriangle, Lightbulb } from "lucide-react"
+import { User, Upload, Check, X, Image as ImageIcon, Video, BookOpen, Users, Search, BarChart3, Award, ArrowRight, Zap, Trophy, Target, ClipboardList, Flame, Dumbbell, CircleDot, Share2, Download, Copy, Twitter, Facebook, Linkedin, ChevronLeft, ChevronRight, Calendar, ChevronDown, AlertTriangle, Lightbulb, Plus, Eye, EyeOff, Layers, GitBranch, Circle, Tag } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { ALL_ELITE_SHOOTERS, LEAGUE_LABELS, LEAGUE_COLORS, POSITION_LABELS, EliteShooter } from "@/data/eliteShooters"
@@ -92,19 +92,19 @@ interface HybridSkeletonDisplayProps {
   angles?: Record<string, number>
   confidence?: number
   showStats?: boolean // Controls whether to show Confidence, Keypoints, Joint Angles, and Legend
+  overlayToggles?: OverlayToggles // Controls which overlays to show
 }
 
-function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, angles, confidence, showStats = true }: HybridSkeletonDisplayProps) {
+function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, angles, confidence, showStats = true, overlayToggles }: HybridSkeletonDisplayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  
+  // Default toggles if not provided
+  const toggles = overlayToggles || { skeleton: true, joints: true, annotations: true, basketball: true }
 
   useEffect(() => {
     if (!imageUrl) {
       console.log('❌ No imageUrl')
-      return
-    }
-    if (!keypoints || Object.keys(keypoints).length === 0) {
-      console.log('❌ No keypoints')
       return
     }
 
@@ -142,7 +142,7 @@ function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, ang
       ctx.drawImage(img, 0, 0, canvasW, canvasH)
       console.log('🖼️ Image drawn to canvas:', canvasW, 'x', canvasH)
 
-      const kp = keypoints
+      const kp = keypoints || {}
       // Use imageSize from props if available, otherwise use actual image dimensions
       const imgW = imageSize?.width || img.naturalWidth
       const imgH = imageSize?.height || img.naturalHeight
@@ -153,8 +153,8 @@ function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, ang
       const sx = canvas.width / imgW
       const sy = canvas.height / imgH
 
-      // Draw basketball if detected
-      if (basketball) {
+      // Draw basketball if detected AND toggle is on
+      if (basketball && toggles.basketball) {
         ctx.beginPath()
         ctx.arc(basketball.x * sx, basketball.y * sy, basketball.radius * sx, 0, Math.PI * 2)
         ctx.strokeStyle = "#f97316"
@@ -178,17 +178,19 @@ function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, ang
         ["right_hip", "right_knee"], ["right_knee", "right_ankle"],
       ]
 
-      // Draw skeleton lines
-      ctx.strokeStyle = "#facc15"
-      ctx.lineWidth = 2
-      skeleton.forEach(([start, end]) => {
-        if (kp[start] && kp[end]) {
-          ctx.beginPath()
-          ctx.moveTo(kp[start].x * sx, kp[start].y * sy)
-          ctx.lineTo(kp[end].x * sx, kp[end].y * sy)
-          ctx.stroke()
-        }
-      })
+      // Draw skeleton lines - only if toggle is on
+      if (toggles.skeleton && Object.keys(kp).length > 0) {
+        ctx.strokeStyle = "#facc15"
+        ctx.lineWidth = 2
+        skeleton.forEach(([start, end]) => {
+          if (kp[start] && kp[end]) {
+            ctx.beginPath()
+            ctx.moveTo(kp[start].x * sx, kp[start].y * sy)
+            ctx.lineTo(kp[end].x * sx, kp[end].y * sy)
+            ctx.stroke()
+          }
+        })
+      }
 
       // Colors by source
       const colors: Record<string, string> = {
@@ -198,25 +200,27 @@ function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, ang
         ball_refined: "#f87171"
       }
 
-      // Draw keypoints
-      Object.entries(kp).forEach(([name, pt]) => {
-        const x = pt.x * sx
-        const y = pt.y * sy
-        const color = colors[pt.source || "fused"] || "#ffffff"
-        const radius = name.includes("wrist") ? 8 : 5
+      // Draw keypoints - only if toggle is on
+      if (toggles.joints && Object.keys(kp).length > 0) {
+        Object.entries(kp).forEach(([name, pt]) => {
+          const x = pt.x * sx
+          const y = pt.y * sy
+          const color = colors[pt.source || "fused"] || "#ffffff"
+          const radius = name.includes("wrist") ? 8 : 5
 
-        ctx.beginPath()
-        ctx.arc(x, y, radius, 0, Math.PI * 2)
-        ctx.fillStyle = color
-        ctx.fill()
-        ctx.strokeStyle = "white"
-        ctx.lineWidth = 2
-        ctx.stroke()
-      })
+          ctx.beginPath()
+          ctx.arc(x, y, radius, 0, Math.PI * 2)
+          ctx.fillStyle = color
+          ctx.fill()
+          ctx.strokeStyle = "white"
+          ctx.lineWidth = 2
+          ctx.stroke()
+        })
+      }
     }
 
     img.src = imageUrl
-  }, [imageUrl, keypoints, basketball, imageSize])
+  }, [imageUrl, keypoints, basketball, imageSize, toggles])
 
   // Format angle name for display
   const formatAngleName = (name: string) => {
@@ -696,7 +700,14 @@ export default function DemoResultsPage() {
   const [resultsMode, setResultsMode] = useState<ResultsMode>("image")
 
   // Get uploaded image and form analysis from store
-  const { formAnalysisResult, visionAnalysisResult, playerProfile, poseConfidence, teaserFrames, fullFrames, allUploadedUrls, uploadedImageBase64, roboflowBallDetection } = useAnalysisStore()
+  const { formAnalysisResult, visionAnalysisResult, playerProfile, poseConfidence, teaserFrames, fullFrames, allUploadedUrls, uploadedImageBase64, roboflowBallDetection, videoAnalysisData, mediaType } = useAnalysisStore()
+  
+  // Auto-select Video tab when mediaType is VIDEO
+  useEffect(() => {
+    if (mediaType === "VIDEO" && videoAnalysisData) {
+      setResultsMode("video")
+    }
+  }, [mediaType, videoAnalysisData])
   
   // Use base64 image (persists across navigation) or fall back to blob URL
   const mainImageUrl = uploadedImageBase64 || (allUploadedUrls.length > 0 ? allUploadedUrls[0] : null)
@@ -715,9 +726,19 @@ export default function DemoResultsPage() {
     <main className="min-h-[calc(100vh-200px)] py-8 px-4">
       <div className="container mx-auto max-w-7xl">
         <div className="bg-[#2C2C2C] rounded-lg overflow-hidden shadow-lg">
-          {/* Tab Navigation Only */}
+          {/* Tab Navigation with New Session Button */}
           <div className="p-4 border-b border-[#3a3a3a]">
-            <div className="flex justify-center">
+            <div className="flex items-center justify-between">
+              {/* Left: New Session Button */}
+              <Link 
+                href={`/?mode=${resultsMode === "video" ? "video" : "image"}`}
+                className="flex items-center gap-2 bg-[#FFD700] hover:bg-[#E5C100] text-[#1a1a1a] font-semibold px-4 py-2 rounded-lg transition-colors text-sm"
+              >
+                <Plus className="w-4 h-4" />
+                New {resultsMode === "video" ? "Video" : "Image"}
+              </Link>
+              
+              {/* Center: Tab Navigation */}
               <div className="inline-flex rounded-md bg-[#1a1a1a] p-1 text-sm">
                 {(["video", "image", "elite", "guide"] as ResultsMode[]).map((mode) => (
                   <button key={mode} onClick={() => setResultsMode(mode)} className={`px-6 py-2 rounded-md flex items-center gap-2 transition-colors uppercase font-semibold tracking-wider ${resultsMode === mode ? "bg-[#FFD700] text-[#111827]" : "text-[#9CA3AF] hover:text-[#F9FAFB] hover:bg-[#374151]"}`}>
@@ -729,9 +750,12 @@ export default function DemoResultsPage() {
                   </button>
                 ))}
               </div>
+              
+              {/* Right: Spacer for balance */}
+              <div className="w-[120px]"></div>
             </div>
           </div>
-          {resultsMode === "video" && <VideoModeContent />}
+          {resultsMode === "video" && <VideoModeContent videoData={videoAnalysisData} activeTab={activeTab} setActiveTab={setActiveTab} analysisData={analysisData} playerName={playerName} poseConfidence={poseConfidence} teaserFrames={teaserFrames} fullFrames={fullFrames} allUploadedUrls={allUploadedUrls} mainImageUrl={mainImageUrl} visionAnalysis={visionAnalysisResult} roboflowBallDetection={roboflowBallDetection} />}
           {resultsMode === "image" && <ImageModeContent activeTab={activeTab} setActiveTab={setActiveTab} analysisData={analysisData} playerName={playerName} poseConfidence={poseConfidence} teaserFrames={teaserFrames} fullFrames={fullFrames} allUploadedUrls={allUploadedUrls} mainImageUrl={mainImageUrl} visionAnalysis={visionAnalysisResult} roboflowBallDetection={roboflowBallDetection} />}
           {resultsMode === "elite" && <EliteModeContent analysisData={analysisData} />}
           {resultsMode === "guide" && <GuideModeContent />}
@@ -741,28 +765,698 @@ export default function DemoResultsPage() {
   )
 }
 
-function VideoModeContent() {
+// ============================================================
+// OVERLAY TOGGLE CONTROLS
+// ============================================================
+interface OverlayToggles {
+  skeleton: boolean
+  joints: boolean
+  annotations: boolean
+  basketball: boolean
+}
+
+interface OverlayControlsProps {
+  toggles: OverlayToggles
+  setToggles: React.Dispatch<React.SetStateAction<OverlayToggles>>
+}
+
+function OverlayControls({ toggles, setToggles }: OverlayControlsProps) {
+  const toggleItems = [
+    { key: 'skeleton' as const, label: 'Skeleton Lines', icon: GitBranch },
+    { key: 'joints' as const, label: 'Joint Points', icon: Circle },
+    { key: 'annotations' as const, label: 'Annotations', icon: Tag },
+    { key: 'basketball' as const, label: 'Basketball', icon: CircleDot },
+  ]
+
   return (
-    <div className="p-8">
-      <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-[#FFD700] mb-4">Video Biomechanical Analysis</h2>
-        <p className="text-[#E5E5E5] max-w-2xl mx-auto">Upload your shooting video for real-time pose detection, joint tracking, and detailed biomechanical measurements across all shooting phases</p>
-      </div>
-      <div className="flex justify-center gap-4 mb-8 flex-wrap">
-        <span className="bg-red-500/20 text-red-400 border border-red-500/50 px-4 py-2 rounded-full text-sm">Red Lines: Joint connections</span>
-        <span className="bg-green-500/20 text-green-400 border border-green-500/50 px-4 py-2 rounded-full text-sm">Green Lines: Body segments</span>
-        <span className="bg-blue-500/20 text-blue-400 border border-blue-500/50 px-4 py-2 rounded-full text-sm">Blue Arc: Ball trajectory</span>
-      </div>
-      <div className="max-w-xl mx-auto">
-        <div className="bg-white rounded-xl p-8 text-center">
-          <div className="flex justify-center mb-4"><div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center"><Upload className="w-8 h-8 text-gray-600" /></div></div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">Upload Shooting Video</h3>
-          <p className="text-gray-600 mb-2">Upload a video of your shooting form for comprehensive biomechanical analysis</p>
-          <p className="text-gray-400 text-sm mb-6">Best results: Clear view of full body, good lighting, orange basketball visible</p>
-          <button className="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-3 rounded-lg transition-colors">Select Video File</button>
+    <div className="flex flex-wrap gap-2 p-3 bg-[#1a1a1a] rounded-lg border border-[#3a3a3a]">
+      <span className="text-[#888] text-xs uppercase tracking-wider mr-2 flex items-center">
+        <Layers className="w-3 h-3 mr-1" /> Overlays:
+      </span>
+      {toggleItems.map(({ key, label, icon: Icon }) => (
+        <button
+          key={key}
+          onClick={() => setToggles(prev => ({ ...prev, [key]: !prev[key] }))}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+            toggles[key]
+              ? 'bg-[#FFD700]/20 text-[#FFD700] border border-[#FFD700]/50'
+              : 'bg-[#2a2a2a] text-[#666] border border-[#3a3a3a] hover:border-[#4a4a4a]'
+          }`}
+        >
+          {toggles[key] ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+          <Icon className="w-3 h-3" />
+          {label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// ============================================================
+// VIDEO FRAME CANVAS - Draws overlays based on toggle state
+// ============================================================
+interface VideoFrameCanvasProps {
+  rawFrame?: string // Base64 raw frame (no overlays)
+  annotatedFrame?: string // Base64 annotated frame (with all overlays)
+  keypoints?: Record<string, { x: number; y: number; confidence: number; source?: string }>
+  ball?: { x: number; y: number; radius: number } | null
+  toggles: OverlayToggles
+  phase?: string
+  timestamp?: number
+}
+
+function VideoFrameCanvas({ rawFrame, annotatedFrame, keypoints, ball, toggles, phase, timestamp }: VideoFrameCanvasProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [dimensions, setDimensions] = useState({ width: 640, height: 480 })
+  
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    
+    // Determine which frame to use as base
+    const frameToUse = rawFrame || annotatedFrame
+    if (!frameToUse) return
+    
+    const img = new window.Image()
+    img.crossOrigin = 'anonymous'
+    
+    img.onload = () => {
+      // Set canvas size
+      canvas.width = img.width
+      canvas.height = img.height
+      setDimensions({ width: img.width, height: img.height })
+      
+      // Draw base image
+      ctx.drawImage(img, 0, 0)
+      
+      // If all toggles are on and we have annotated frame, just show it
+      if (toggles.skeleton && toggles.joints && toggles.annotations && toggles.basketball && annotatedFrame && !rawFrame) {
+        return // Already showing annotated frame
+      }
+      
+      // If using raw frame, draw overlays based on toggles
+      if (rawFrame && keypoints) {
+        const w = img.width
+        const h = img.height
+        
+        // Skeleton connections
+        const skeleton = [
+          ['nose', 'left_shoulder'], ['nose', 'right_shoulder'],
+          ['left_shoulder', 'right_shoulder'],
+          ['left_shoulder', 'left_elbow'], ['left_elbow', 'left_wrist'],
+          ['right_shoulder', 'right_elbow'], ['right_elbow', 'right_wrist'],
+          ['left_shoulder', 'left_hip'], ['right_shoulder', 'right_hip'],
+          ['left_hip', 'right_hip'],
+          ['left_hip', 'left_knee'], ['left_knee', 'left_ankle'],
+          ['right_hip', 'right_knee'], ['right_knee', 'right_ankle'],
+        ]
+        
+        // Draw skeleton lines
+        if (toggles.skeleton) {
+          ctx.strokeStyle = '#facc15' // Yellow
+          ctx.lineWidth = 3
+          skeleton.forEach(([start, end]) => {
+            if (keypoints[start] && keypoints[end]) {
+              ctx.beginPath()
+              ctx.moveTo(keypoints[start].x, keypoints[start].y)
+              ctx.lineTo(keypoints[end].x, keypoints[end].y)
+              ctx.stroke()
+            }
+          })
+        }
+        
+        // Draw joint points
+        if (toggles.joints) {
+          Object.entries(keypoints).forEach(([name, pt]) => {
+            const x = pt.x
+            const y = pt.y
+            const radius = name.includes('wrist') ? 8 : 5
+            
+            // Determine color based on body part
+            let color = '#facc15' // Default yellow
+            if (name.includes('wrist') || name.includes('elbow')) {
+              color = '#4ade80' // Green for arms
+            } else if (name.includes('knee') || name.includes('ankle') || name.includes('hip')) {
+              color = '#60a5fa' // Blue for legs
+            }
+            
+            ctx.beginPath()
+            ctx.arc(x, y, radius, 0, Math.PI * 2)
+            ctx.fillStyle = color
+            ctx.fill()
+            ctx.strokeStyle = 'white'
+            ctx.lineWidth = 2
+            ctx.stroke()
+          })
+        }
+        
+        // Draw basketball
+        if (toggles.basketball && ball) {
+          ctx.beginPath()
+          ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2)
+          ctx.strokeStyle = '#f97316' // Orange
+          ctx.lineWidth = 3
+          ctx.stroke()
+          
+          // Center dot
+          ctx.beginPath()
+          ctx.arc(ball.x, ball.y, 4, 0, Math.PI * 2)
+          ctx.fillStyle = '#f97316'
+          ctx.fill()
+        }
+      }
+      
+      // Draw phase badge
+      if (phase) {
+        const phaseColors: Record<string, string> = {
+          'SETUP': '#00bcd4',
+          'RISE': '#ff9800',
+          'RELEASE': '#4caf50',
+          'FOLLOW_THROUGH': '#ffd700'
+        }
+        const color = phaseColors[phase] || '#ffffff'
+        
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'
+        ctx.roundRect(15, 15, 150, 35, 8)
+        ctx.fill()
+        
+        ctx.strokeStyle = color
+        ctx.lineWidth = 2
+        ctx.roundRect(15, 15, 150, 35, 8)
+        ctx.stroke()
+        
+        ctx.fillStyle = color
+        ctx.font = 'bold 14px system-ui'
+        ctx.fillText(phase.replace('_', ' '), 25, 38)
+      }
+      
+      // Draw timestamp
+      if (timestamp !== undefined) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'
+        ctx.roundRect(img.width - 85, 15, 70, 30, 8)
+        ctx.fill()
+        
+        ctx.fillStyle = 'white'
+        ctx.font = '14px monospace'
+        ctx.fillText(`${timestamp.toFixed(2)}s`, img.width - 75, 35)
+      }
+    }
+    
+    img.src = `data:image/jpeg;base64,${frameToUse}`
+  }, [rawFrame, annotatedFrame, keypoints, ball, toggles, phase, timestamp])
+  
+  return (
+    <canvas
+      ref={canvasRef}
+      width={dimensions.width}
+      height={dimensions.height}
+      className="max-w-full max-h-full object-contain"
+    />
+  )
+}
+
+// ============================================================
+// ANNOTATION DROPDOWN LIST
+// ============================================================
+interface AnnotationFix {
+  id: string
+  name: string
+  status: 'good' | 'warning' | 'bad'
+  yourValue: number
+  eliteValue: number
+  feedback: string
+  eliteExample: string
+  explanation: string
+}
+
+interface AnnotationDropdownListProps {
+  fixes: AnnotationFix[]
+}
+
+function AnnotationDropdownList({ fixes }: AnnotationDropdownListProps) {
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+
+  const statusColors = {
+    good: { bg: 'bg-green-500/10', border: 'border-green-500/50', text: 'text-green-400', dot: 'bg-green-500' },
+    warning: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/50', text: 'text-yellow-400', dot: 'bg-yellow-500' },
+    bad: { bg: 'bg-red-500/10', border: 'border-red-500/50', text: 'text-red-400', dot: 'bg-red-500' },
+  }
+
+  const statusLabels = {
+    good: 'GOOD',
+    warning: 'ADJUST',
+    bad: 'FIX THIS',
+  }
+
+  // Show message if no fixes detected
+  if (!fixes || fixes.length === 0) {
+    return (
+      <div className="space-y-2 mt-4">
+        <h4 className="text-[#888] text-xs uppercase tracking-wider flex items-center gap-2 mb-3">
+          <ClipboardList className="w-3 h-3" />
+          Form Analysis Breakdown
+        </h4>
+        <div className="bg-[#1a1a1a] rounded-lg p-4 text-center">
+          <p className="text-[#888]">No angle data available for this frame. Try selecting a different phase.</p>
         </div>
       </div>
+    )
+  }
+
+  return (
+    <div className="space-y-2 mt-4">
+      <h4 className="text-[#888] text-xs uppercase tracking-wider flex items-center gap-2 mb-3">
+        <ClipboardList className="w-3 h-3" />
+        Form Analysis Breakdown
+      </h4>
+      {fixes.map((fix, index) => {
+        const colors = statusColors[fix.status]
+        const isExpanded = expandedId === fix.id
+
+        return (
+          <div
+            key={fix.id}
+            className={`rounded-lg border ${colors.border} ${colors.bg} overflow-hidden transition-all`}
+          >
+            {/* Header - Always visible */}
+            <button
+              onClick={() => setExpandedId(isExpanded ? null : fix.id)}
+              className="w-full flex items-center justify-between p-4 text-left hover:bg-white/5 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                {/* Status indicator */}
+                <div className={`w-3 h-3 rounded-full ${colors.dot}`} />
+                
+                {/* Fix number */}
+                <span className="text-[#888] text-sm font-mono">#{index + 1}</span>
+                
+                {/* Name */}
+                <span className="text-white font-medium">{fix.name}</span>
+                
+                {/* Status badge */}
+                <span className={`text-xs px-2 py-0.5 rounded ${colors.text} ${colors.bg} border ${colors.border}`}>
+                  {statusLabels[fix.status]}
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-4">
+                {/* Quick values */}
+                <div className="text-right hidden sm:block">
+                  <span className="text-white font-mono">{fix.yourValue}°</span>
+                  <span className="text-[#666] mx-2">vs</span>
+                  <span className="text-[#FFD700] font-mono">{fix.eliteValue}°</span>
+                </div>
+                
+                {/* Expand icon */}
+                <ChevronDown className={`w-5 h-5 text-[#888] transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+              </div>
+            </button>
+
+            {/* Expanded content */}
+            {isExpanded && (
+              <div className="px-4 pb-4 border-t border-[#3a3a3a]/50">
+                <div className="pt-4 space-y-4">
+                  {/* Values comparison */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-[#1a1a1a] rounded-lg p-3">
+                      <p className="text-[#888] text-xs uppercase mb-1">Your Angle</p>
+                      <p className="text-2xl font-bold text-white">{fix.yourValue}°</p>
+                    </div>
+                    <div className="bg-[#1a1a1a] rounded-lg p-3">
+                      <p className="text-[#888] text-xs uppercase mb-1">Elite Target</p>
+                      <p className="text-2xl font-bold text-[#FFD700]">{fix.eliteValue}°</p>
+                    </div>
+                  </div>
+
+                  {/* Feedback */}
+                  <div className={`p-3 rounded-lg ${colors.bg} border ${colors.border}`}>
+                    <p className={`font-medium ${colors.text}`}>{fix.feedback}</p>
+                  </div>
+
+                  {/* Explanation */}
+                  <div>
+                    <p className="text-[#888] text-xs uppercase mb-2">How to Fix</p>
+                    <p className="text-[#E5E5E5] text-sm leading-relaxed">{fix.explanation}</p>
+                  </div>
+
+                  {/* Elite example */}
+                  <div className="flex items-start gap-2 text-sm">
+                    <Trophy className="w-4 h-4 text-[#FFD700] mt-0.5 flex-shrink-0" />
+                    <p className="text-[#888]">{fix.eliteExample}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )
+      })}
     </div>
+  )
+}
+
+// Helper function to generate fixes from angles
+function generateFixesFromAngles(angles: Record<string, number>): AnnotationFix[] {
+  const fixes: AnnotationFix[] = []
+  
+  const angleConfig: Record<string, { name: string; ideal: number; range: [number, number]; eliteExample: string; explanation: string }> = {
+    'right_elbow_angle': {
+      name: 'Elbow Angle',
+      ideal: 90,
+      range: [85, 100],
+      eliteExample: 'Steph Curry maintains 88° elbow angle at set position',
+      explanation: 'Your elbow should form roughly a 90° angle at the set position. This creates optimal power transfer and consistency. Practice holding the ball at your set point and checking your elbow position in a mirror.'
+    },
+    'left_elbow_angle': {
+      name: 'Elbow Angle',
+      ideal: 90,
+      range: [85, 100],
+      eliteExample: 'Steph Curry maintains 88° elbow angle at set position',
+      explanation: 'Your elbow should form roughly a 90° angle at the set position. This creates optimal power transfer and consistency. Practice holding the ball at your set point and checking your elbow position in a mirror.'
+    },
+    'right_knee_angle': {
+      name: 'Knee Bend',
+      ideal: 145,
+      range: [135, 160],
+      eliteExample: 'Klay Thompson uses 142° knee bend for explosive lift',
+      explanation: 'Proper knee bend provides the power base for your shot. Too little bend means you\'re using arm strength; too much wastes energy. Focus on a comfortable athletic stance with knees tracking over toes.'
+    },
+    'left_knee_angle': {
+      name: 'Knee Bend',
+      ideal: 145,
+      range: [135, 160],
+      eliteExample: 'Klay Thompson uses 142° knee bend for explosive lift',
+      explanation: 'Proper knee bend provides the power base for your shot. Too little bend means you\'re using arm strength; too much wastes energy. Focus on a comfortable athletic stance with knees tracking over toes.'
+    },
+    'shoulder_tilt': {
+      name: 'Shoulder Alignment',
+      ideal: 0,
+      range: [-5, 5],
+      eliteExample: 'Ray Allen maintained near-perfect 0° shoulder tilt',
+      explanation: 'Your shoulders should be level and square to the basket. Tilting causes the ball to drift left or right. Practice in front of a mirror, focusing on keeping shoulders parallel to the floor.'
+    },
+    'hip_tilt': {
+      name: 'Hip Alignment',
+      ideal: 0,
+      range: [-8, 8],
+      eliteExample: 'Kevin Durant keeps stable hip base throughout shot',
+      explanation: 'Your hips provide the foundation for balance. Uneven hips cause inconsistent shots and can lead to injury. Focus on distributing weight evenly and keeping hips square to the target.'
+    }
+  }
+
+  for (const [key, value] of Object.entries(angles)) {
+    const config = angleConfig[key]
+    if (!config) continue
+
+    const [min, max] = config.range
+    let status: 'good' | 'warning' | 'bad'
+    let feedback: string
+
+    if (value >= min && value <= max) {
+      status = 'good'
+      feedback = 'Excellent! Your angle is within the elite range.'
+    } else if (Math.abs(value - config.ideal) <= 15) {
+      status = 'warning'
+      feedback = value < min 
+        ? `Slightly low - increase by ${Math.round(min - value)}° to reach optimal range`
+        : `Slightly high - decrease by ${Math.round(value - max)}° to reach optimal range`
+    } else {
+      status = 'bad'
+      feedback = value < min
+        ? `Too low - you need ${Math.round(min - value)}° more to reach the minimum elite range`
+        : `Too high - reduce by ${Math.round(value - max)}° to reach the maximum elite range`
+    }
+
+    fixes.push({
+      id: key,
+      name: config.name,
+      status,
+      yourValue: Math.round(value),
+      eliteValue: config.ideal,
+      feedback,
+      eliteExample: config.eliteExample,
+      explanation: config.explanation
+    })
+  }
+
+  // Sort: bad first, then warning, then good
+  const statusOrder = { bad: 0, warning: 1, good: 2 }
+  fixes.sort((a, b) => statusOrder[a.status] - statusOrder[b.status])
+
+  return fixes
+}
+
+// VideoModeContent interface - same as ImageModeContent plus videoData
+interface VideoModeContentProps extends ImageModeContentProps {
+  videoData: ReturnType<typeof useAnalysisStore>['videoAnalysisData']
+}
+
+// VideoModeContent: Video player at top, then EXACT same content as ImageModeContent
+function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, playerName, poseConfidence, teaserFrames, fullFrames, allUploadedUrls, mainImageUrl, visionAnalysis, roboflowBallDetection }: VideoModeContentProps) {
+  const [currentFrame, setCurrentFrame] = useState(0)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const playIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  
+  // Overlay toggle state
+  const [overlayToggles, setOverlayToggles] = useState<OverlayToggles>({
+    skeleton: true,
+    joints: true,
+    annotations: true,
+    basketball: true
+  })
+  
+  // Auto-play functionality for video player
+  useEffect(() => {
+    if (isPlaying && videoData?.annotatedFramesBase64?.length) {
+      playIntervalRef.current = setInterval(() => {
+        setCurrentFrame(prev => {
+          const nextFrame = prev + 1
+          if (nextFrame >= (videoData?.annotatedFramesBase64?.length || 0)) {
+            setIsPlaying(false)
+            return 0
+          }
+          return nextFrame
+        })
+      }, 1000 / (videoData?.fps || 10))
+    } else if (playIntervalRef.current) {
+      clearInterval(playIntervalRef.current)
+    }
+    return () => {
+      if (playIntervalRef.current) clearInterval(playIntervalRef.current)
+    }
+  }, [isPlaying, videoData?.annotatedFramesBase64?.length, videoData?.fps])
+  
+  // If no video data, just render ImageModeContent
+  if (!videoData || !videoData.annotatedFramesBase64 || videoData.annotatedFramesBase64.length === 0) {
+    return (
+      <ImageModeContent 
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        analysisData={analysisData}
+        playerName={playerName}
+        poseConfidence={poseConfidence}
+        teaserFrames={teaserFrames}
+        fullFrames={fullFrames}
+        allUploadedUrls={allUploadedUrls}
+        mainImageUrl={mainImageUrl}
+        visionAnalysis={visionAnalysis}
+        roboflowBallDetection={roboflowBallDetection}
+      />
+    )
+  }
+  
+  const totalFrames = videoData.annotatedFramesBase64.length
+  const currentFrameData = videoData.frameData?.[currentFrame]
+  const currentPhase = currentFrameData?.phase || 'Unknown'
+  const currentTimestamp = currentFrameData?.timestamp || (currentFrame / (videoData.fps || 10))
+  
+  // Use the release frame as the "main image" for ImageModeContent
+  const releaseFrameIndex = videoData.phases?.find(p => p.phase === 'Release')?.frame || Math.floor(totalFrames / 2)
+  const mainVideoFrameBase64 = videoData.annotatedFramesBase64[releaseFrameIndex] || videoData.annotatedFramesBase64[0]
+  const videoMainImageUrl = `data:image/jpeg;base64,${mainVideoFrameBase64}`
+  
+  return (
+    <>
+      {/* ============================================ */}
+      {/* VIDEO PLAYER SECTION - Only in Video Mode */}
+      {/* ============================================ */}
+      <div className="p-6 border-b border-[#3a3a3a]">
+        <div className="text-center mb-4">
+          <h2 className="text-2xl font-bold text-[#FFD700] mb-2">🎬 Video Frame-by-Frame Playback</h2>
+          <p className="text-[#888] text-sm">Scrub through your shooting motion to analyze each phase</p>
+        </div>
+        
+        {/* Video Player */}
+        <div className="max-w-3xl mx-auto">
+          <div className="bg-[#1a1a1a] rounded-xl overflow-hidden shadow-2xl">
+            {/* Frame Display with Canvas for Toggle Control */}
+            <div className="relative aspect-video bg-black flex items-center justify-center">
+              <VideoFrameCanvas
+                rawFrame={videoData.rawFramesBase64?.[currentFrame] || videoData.annotatedFramesBase64?.[currentFrame]}
+                annotatedFrame={videoData.annotatedFramesBase64?.[currentFrame]}
+                keypoints={videoData.allKeypoints?.[currentFrame]}
+                ball={videoData.frameData?.[currentFrame]?.ball}
+                toggles={overlayToggles}
+                phase={currentPhase}
+                timestamp={currentTimestamp}
+              />
+            </div>
+            
+            {/* Controls */}
+            <div className="p-4 bg-[#2a2a2a]">
+              {/* Progress Bar */}
+              <div className="mb-4">
+                <input
+                  type="range"
+                  min={0}
+                  max={totalFrames - 1}
+                  value={currentFrame}
+                  onChange={(e) => {
+                    setIsPlaying(false)
+                    setCurrentFrame(parseInt(e.target.value))
+                  }}
+                  className="w-full h-2 bg-[#4a4a4a] rounded-lg appearance-none cursor-pointer accent-[#FFD700]"
+                />
+              </div>
+              
+              {/* Playback Controls */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <button onClick={() => setCurrentFrame(0)} className="p-2 rounded-lg bg-[#3a3a3a] hover:bg-[#4a4a4a] text-white transition-colors" title="Go to start">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                  </button>
+                  <button onClick={() => setCurrentFrame(prev => Math.max(0, prev - 1))} disabled={currentFrame === 0} className="p-2 rounded-lg bg-[#3a3a3a] hover:bg-[#4a4a4a] text-white transition-colors disabled:opacity-50" title="Previous frame">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                  </button>
+                  <button onClick={() => setIsPlaying(!isPlaying)} className="p-3 rounded-full bg-[#FFD700] hover:bg-[#E5C100] text-black transition-colors">
+                    {isPlaying ? (
+                      <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                    ) : (
+                      <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    )}
+                  </button>
+                  <button onClick={() => setCurrentFrame(prev => Math.min(totalFrames - 1, prev + 1))} disabled={currentFrame === totalFrames - 1} className="p-2 rounded-lg bg-[#3a3a3a] hover:bg-[#4a4a4a] text-white transition-colors disabled:opacity-50" title="Next frame">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                  </button>
+                  <button onClick={() => setCurrentFrame(totalFrames - 1)} className="p-2 rounded-lg bg-[#3a3a3a] hover:bg-[#4a4a4a] text-white transition-colors" title="Go to end">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                  </button>
+                </div>
+                {/* TIMER - Made bigger and more visible */}
+                <div className="bg-[#1a1a1a] border-2 border-[#FFD700] rounded-xl px-6 py-3 shadow-lg">
+                  <div className="text-white font-mono text-2xl font-bold">
+                    Frame <span className="text-[#FFD700]">{currentFrame + 1}</span> / {totalFrames}
+                  </div>
+                  <div className="text-[#FFD700] font-mono text-lg mt-1">
+                    {currentTimestamp.toFixed(1)}s
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Shooting Phases Timeline */}
+          {videoData.phases && videoData.phases.length > 0 && (
+            <div className="mt-4 bg-[#2a2a2a] rounded-xl p-4">
+              <h3 className="text-[#FFD700] font-semibold mb-3 text-sm uppercase tracking-wider">Jump to Phase</h3>
+              <div className="flex gap-2 flex-wrap">
+                {videoData.phases.map((phase, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setIsPlaying(false)
+                      setCurrentFrame(phase.frame)
+                    }}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      currentFrame === phase.frame 
+                        ? 'bg-[#FFD700] text-black' 
+                        : 'bg-[#3a3a3a] text-white hover:bg-[#4a4a4a]'
+                    }`}
+                  >
+                    {phase.phase} ({phase.timestamp.toFixed(2)}s)
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* ============================================ */}
+          {/* ANNOTATION DROPDOWN LIST - Directly below video player */}
+          {/* ============================================ */}
+          {(() => {
+            // Get angles from current frame metrics or analysisData
+            // Video frameData stores angles in the 'metrics' field
+            const currentFrameData = videoData.frameData?.[currentFrame]
+            const frameMetrics = currentFrameData?.metrics || {}
+            
+            // Convert metrics to angles format expected by generateFixesFromAngles
+            // The backend stores angles like 'elbow_angle', 'knee_angle' in metrics
+            const frameAngles: Record<string, number> = {}
+            
+            // Map common metric names to angle names
+            if (frameMetrics.elbow_angle !== undefined) {
+              frameAngles.right_elbow_angle = frameMetrics.elbow_angle
+            }
+            if (frameMetrics.knee_angle !== undefined) {
+              frameAngles.right_knee_angle = frameMetrics.knee_angle
+            }
+            if (frameMetrics.shoulder_tilt !== undefined) {
+              frameAngles.shoulder_tilt = frameMetrics.shoulder_tilt
+            }
+            if (frameMetrics.hip_tilt !== undefined) {
+              frameAngles.hip_tilt = frameMetrics.hip_tilt
+            }
+            if (frameMetrics.left_elbow_angle !== undefined) {
+              frameAngles.left_elbow_angle = frameMetrics.left_elbow_angle
+            }
+            if (frameMetrics.right_elbow_angle !== undefined) {
+              frameAngles.right_elbow_angle = frameMetrics.right_elbow_angle
+            }
+            if (frameMetrics.left_knee_angle !== undefined) {
+              frameAngles.left_knee_angle = frameMetrics.left_knee_angle
+            }
+            if (frameMetrics.right_knee_angle !== undefined) {
+              frameAngles.right_knee_angle = frameMetrics.right_knee_angle
+            }
+            
+            // Fall back to analysisData.angles if no frame-specific angles
+            const finalAngles = Object.keys(frameAngles).length > 0 
+              ? frameAngles 
+              : (analysisData?.angles || {})
+            
+            const fixes = generateFixesFromAngles(finalAngles)
+            return <AnnotationDropdownList fixes={fixes} />
+          })()}
+          
+          {/* ============================================ */}
+          {/* OVERLAY TOGGLE CONTROLS */}
+          {/* ============================================ */}
+          <div className="mt-4">
+            <OverlayControls toggles={overlayToggles} setToggles={setOverlayToggles} />
+          </div>
+        </div>
+      </div>
+
+      {/* ============================================ */}
+      {/* FULL ANALYSIS CONTENT - Same as Image Mode */}
+      {/* Render ImageModeContent with video frame as mainImageUrl */}
+      {/* ============================================ */}
+      <ImageModeContent 
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        analysisData={analysisData}
+        playerName={playerName}
+        poseConfidence={poseConfidence}
+        teaserFrames={teaserFrames}
+        fullFrames={fullFrames}
+        allUploadedUrls={allUploadedUrls}
+        mainImageUrl={videoMainImageUrl}
+        visionAnalysis={visionAnalysis}
+        roboflowBallDetection={roboflowBallDetection}
+      />
+    </>
   )
 }
 
@@ -857,6 +1551,14 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
   // useEffect(() => {
   //   setIsHydrated(true)
   // }, [])
+  
+  // Overlay toggle state for image
+  const [overlayToggles, setOverlayToggles] = useState<OverlayToggles>({
+    skeleton: true,
+    joints: true,
+    annotations: true,
+    basketball: true
+  })
   
   // Get the shooter archetype based on stats
   const archetype = getShooterArchetype(analysisData.shootingStats)
@@ -1109,6 +1811,7 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                     angles={visionAnalysis?.angles}
                     confidence={visionAnalysis?.confidence}
                     showStats={false}
+                    overlayToggles={overlayToggles}
                   />
 
                   {/* 3 AUTO SCREENSHOTS - Ball, Shoulders, Legs */}
@@ -1124,171 +1827,19 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                       angles={visionAnalysis?.angles}
                     />
                   </div>
+                  
+                  {/* ============================================ */}
+                  {/* ANNOTATION DROPDOWN LIST - Directly below screenshots */}
+                  {/* ============================================ */}
+                  <AnnotationDropdownList fixes={generateFixesFromAngles(visionAnalysis?.angles || {})} />
+                  
+                  {/* ============================================ */}
+                  {/* OVERLAY TOGGLE CONTROLS */}
+                  {/* ============================================ */}
+                  <div className="mt-6">
+                    <OverlayControls toggles={overlayToggles} setToggles={setOverlayToggles} />
+                  </div>
                 </>
-              )}
-              
-              {/* Coaching Tip - Generated from Flaws Database */}
-              {(() => {
-                // Detect flaws from hybrid angles
-                const detectedFlaws = visionAnalysis?.angles 
-                  ? detectFlawsFromAngles(visionAnalysis.angles)
-                  : []
-                
-                // Generate coaching feedback
-                const coaching = generateCoachingFeedback(detectedFlaws.map(f => f.id))
-                
-                // If we have detected flaws, show dynamic coaching
-                if (detectedFlaws.length > 0) {
-                  const primaryFlaw = detectedFlaws[0]
-                  return (
-                    <div className="mt-6 space-y-4">
-                      {/* Primary Issue */}
-                      <div className="bg-[#FFD700]/10 border border-[#FFD700]/30 rounded-lg p-4">
-                        <h4 className="text-[#FFD700] font-semibold text-sm uppercase tracking-wider mb-2">
-                          💡 Top Coaching Tip
-                        </h4>
-                        <p className="text-[#E5E5E5] font-medium mb-2">
-                          Primary Issue: {primaryFlaw.name}
-                        </p>
-                        <p className="text-[#888] text-sm mb-3">
-                          {primaryFlaw.description}
-                        </p>
-                        
-                        {/* Cause Chain */}
-                        <div className="bg-[#1a1a1a] rounded-lg p-3 mb-3">
-                          <p className="text-[#FFD700] text-xs uppercase tracking-wider mb-2">
-                            Why This Matters (Cause → Effect)
-                          </p>
-                          <ul className="text-[#E5E5E5] text-sm space-y-1">
-                            {primaryFlaw.causeChain.slice(0, 3).map((effect, i) => (
-                              <li key={i} className="flex items-start gap-2">
-                                <span className={`text-xs px-1.5 py-0.5 rounded ${
-                                  effect.severity === 'major' ? 'bg-red-500/20 text-red-400' :
-                                  effect.severity === 'moderate' ? 'bg-yellow-500/20 text-yellow-400' :
-                                  'bg-blue-500/20 text-blue-400'
-                                }`}>
-                                  {effect.severity}
-                                </span>
-                                <span>{effect.effect}: {effect.explanation}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                        
-                        {/* Quick Fix */}
-                        <p className="text-green-400 text-sm">
-                          <strong>Fix:</strong> {primaryFlaw.fixes[0]}
-                        </p>
-                      </div>
-                      
-                      {/* Additional Flaws */}
-                      {detectedFlaws.length > 1 && (
-                        <div className="bg-orange-900/20 border border-orange-500/30 rounded-lg p-4">
-                          <h4 className="text-orange-400 font-semibold text-sm uppercase tracking-wider mb-2">
-                            ⚠ Additional Issues Detected
-                          </h4>
-                          <ul className="text-[#E5E5E5] text-sm space-y-2">
-                            {detectedFlaws.slice(1).map((flaw, i) => (
-                              <li key={i} className="flex items-start gap-2">
-                                <span className="text-orange-400">•</span>
-                                <div>
-                                  <span className="font-medium">{flaw.name}:</span>{' '}
-                                  <span className="text-[#888]">{flaw.description}</span>
-                                </div>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  )
-                }
-                
-                // Fallback to original coaching tip if no flaws detected
-                if (visionAnalysis?.analysis?.coachingTip) {
-                  return (
-                    <div className="mt-6 bg-[#FFD700]/10 border border-[#FFD700]/30 rounded-lg p-4">
-                      <h4 className="text-[#FFD700] font-semibold text-sm uppercase tracking-wider mb-2">
-                        💡 Top Coaching Tip
-                      </h4>
-                      <p className="text-[#E5E5E5]">{visionAnalysis.analysis.coachingTip}</p>
-                    </div>
-                  )
-                }
-                
-                // If no flaws and no coaching tip, show positive message
-                return (
-                  <div className="mt-6 bg-green-900/20 border border-green-500/30 rounded-lg p-4">
-                    <h4 className="text-green-400 font-semibold text-sm uppercase tracking-wider mb-2">
-                      ✓ Great Form!
-                    </h4>
-                    <p className="text-[#E5E5E5]">
-                      No significant mechanical flaws detected. Your shooting form shows good fundamentals.
-                      Continue practicing to build consistency and muscle memory.
-                    </p>
-                  </div>
-                )
-              })()}
-
-              {/* Strengths & Critical Issues */}
-              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                {visionAnalysis?.analysis?.strengths && visionAnalysis.analysis.strengths.length > 0 && (
-                  <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4">
-                    <h4 className="text-green-400 font-semibold text-sm uppercase tracking-wider mb-2">
-                      ✓ Strengths
-                    </h4>
-                    <ul className="text-[#E5E5E5] text-sm space-y-1">
-                      {visionAnalysis.analysis.strengths.map((s: string, i: number) => (
-                        <li key={i}>• {s}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {visionAnalysis?.analysis?.criticalIssues && visionAnalysis.analysis.criticalIssues.length > 0 && (
-                  <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4">
-                    <h4 className="text-red-400 font-semibold text-sm uppercase tracking-wider mb-2">
-                      ⚠ Critical Issues
-                    </h4>
-                    <ul className="text-[#E5E5E5] text-sm space-y-1">
-                      {visionAnalysis.analysis.criticalIssues.map((c: string, i: number) => (
-                        <li key={i}>• {c}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-
-              {/* Recommended Drills */}
-              {visionAnalysis?.analysis?.drills && visionAnalysis.analysis.drills.length > 0 && (
-                <div className="mt-4 bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg p-4">
-                  <h4 className="text-[#FFD700] font-semibold text-sm uppercase tracking-wider mb-3">
-                    🏀 Recommended Drills
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {visionAnalysis.analysis.drills.map((drill, i) => (
-                      <div key={i} className="bg-[#2a2a2a] rounded-lg p-3">
-                        <p className="text-[#E5E5E5] font-semibold text-sm">{typeof drill === 'string' ? drill : drill.name}</p>
-                        {typeof drill !== 'string' && drill.purpose && (
-                          <p className="text-[#888] text-xs mt-1">{drill.purpose}</p>
-                        )}
-                        {typeof drill !== 'string' && drill.reps && (
-                          <p className="text-[#FFD700] text-xs mt-1">Reps: {drill.reps}</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Pro Comparison */}
-              {visionAnalysis?.analysis?.similarProPlayer && (
-                <div className="mt-4 bg-[#1a1a1a] border border-[#FFD700]/30 rounded-lg p-4 text-center">
-                  <p className="text-[#888] text-xs uppercase tracking-wider">Your form resembles</p>
-                  <p className="text-[#FFD700] font-bold text-xl mt-1">{visionAnalysis.analysis.similarProPlayer}</p>
-                  {visionAnalysis.analysis.proComparison && (
-                    <p className="text-[#E5E5E5] text-sm mt-2">{visionAnalysis.analysis.proComparison}</p>
-                  )}
-                </div>
               )}
             </div>
           )}
