@@ -273,11 +273,10 @@ function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, ang
       }
       
       // ============================================
-      // BIG ANGLE LABELS - ALL ON LEFT SIDE IN BLACK PADDING
-      // Labels positioned in left black padding area
+      // BIG ANGLE LABELS - Same as video mode
+      // Labels positioned FAR AWAY from body, HIPS ON UP
       // ============================================
       if (toggles.annotations && angles && Object.keys(kp).length > 0) {
-        console.log('🏷️ Drawing labels on LEFT side, padding:', LABEL_PADDING)
         ctx.textAlign = 'left'
         
         // Angle ranges for feedback
@@ -292,7 +291,7 @@ function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, ang
           'hip_tilt': { ideal: 0, range: [-8, 8] },
         }
         
-        // Generate feedback comment based on angle value (ORIGINAL LONGER FORMAT)
+        // Generate feedback comment based on angle value
         const getFeedback = (angleKey: string, value: number): { text: string; status: 'good' | 'warning' | 'bad' } => {
           const config = angleRanges[angleKey]
           if (!config) return { text: '', status: 'good' }
@@ -315,7 +314,7 @@ function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, ang
           }
         }
         
-        // Labels config - TWO WORD DESCRIPTIVE TITLES (ORIGINAL FORMAT)
+        // Labels config - positioned FAR from body, HIPS ON UP, WELL SPACED APART
         const annotationConfig: Array<{
           angleKey: string
           label: string
@@ -334,9 +333,9 @@ function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, ang
         
         const drawnLabels = new Set<string>()
         
-        // Label dimensions for LEFT padding area
-        const labelWidth = LABEL_PADDING - 20  // Fit in padding with margin
-        const labelHeight = 70  // Taller to fit longer feedback text
+        // Label dimensions - scaled for image canvas (smaller than video)
+        const labelWidth = 160
+        const labelHeight = 70
         
         annotationConfig.forEach(({ angleKey, label, keypointName, color }) => {
           const angleValue = angles[angleKey]
@@ -349,26 +348,32 @@ function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, ang
             const feedback = getFeedback(angleKey, angleValue)
             const feedbackColor = feedback.status === 'good' ? '#4ade80' : feedback.status === 'warning' ? '#facc15' : '#ef4444'
             
-            // Body part position (scaled, with padding offset)
+            // Body part position (scaled, offset by padding)
             const kpX = keypoint.x * sx + LABEL_PADDING
             const kpY = keypoint.y * sy
             
-            // ALL LABELS ON LEFT SIDE in the black padding area
-            const labelX = 10  // Left padding area
+            // RULE: Label on SAME SIDE as the BODY PART (not image position)
+            // right_elbow, right_knee, right_shoulder, right_hip = label on RIGHT side
+            // left_elbow, left_knee, left_shoulder, left_hip = label on LEFT side
+            // This prevents the connecting line from crossing over the player's body
+            const isRightBodyPart = keypointName.includes('right')
+            const baseOffsetX = isRightBodyPart ? 120 : -120 - labelWidth  // Right body part = label to the right
+            const baseOffsetY = -80  // Above the keypoint (hips on up rule)
             
-            // Vertical position - align with keypoint but keep in bounds
-            const labelY = Math.max(10, Math.min(canvasH - labelHeight - 10, kpY - labelHeight / 2))
+            // Scale offsets for canvas size
+            const scaledOffsetX = baseOffsetX * (imageW / 640)
+            const scaledOffsetY = baseOffsetY * (imageH / 480)
+            const labelX = Math.max(10, Math.min(canvasW - labelWidth - 10, kpX + scaledOffsetX))
+            const labelY = Math.max(10, Math.min(canvasH - labelHeight - 10, kpY + scaledOffsetY))
             
-            console.log(`🏷️ Label ${label}: LEFT side, x=${labelX}, y=${labelY}`)
-            
-            // Draw connecting line from keypoint to label
+            // Draw connecting line
             ctx.strokeStyle = color
             ctx.lineWidth = 2
             ctx.shadowColor = color
             ctx.shadowBlur = 6
             ctx.beginPath()
-            ctx.moveTo(kpX, kpY)
-            ctx.lineTo(labelX + labelWidth, labelY + labelHeight / 2)
+            ctx.moveTo(labelX + labelWidth / 2, labelY + labelHeight / 2)
+            ctx.lineTo(kpX, kpY)
             ctx.stroke()
             ctx.shadowBlur = 0
             
@@ -381,7 +386,7 @@ function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, ang
             ctx.lineWidth = 2
             ctx.stroke()
             
-            // Label background (in LEFT padding area)
+            // Label background
             ctx.fillStyle = 'rgba(0, 0, 0, 0.9)'
             ctx.beginPath()
             ctx.roundRect(labelX, labelY, labelWidth, labelHeight, 8)
@@ -394,18 +399,18 @@ function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, ang
             ctx.roundRect(labelX, labelY, labelWidth, labelHeight, 8)
             ctx.stroke()
             
-            // Label text - TWO WORD TITLE
+            // Label text - scaled font sizes
             ctx.fillStyle = 'white'
             ctx.font = 'bold 14px system-ui'
             ctx.textAlign = 'left'
             ctx.fillText(label, labelX + 8, labelY + 18)
             
-            // Angle value (big)
+            // Angle value
             ctx.fillStyle = color
             ctx.font = 'bold 24px monospace'
             ctx.fillText(`${Math.round(angleValue)}°`, labelX + 8, labelY + 45)
             
-            // Feedback comment (LONGER FORMAT)
+            // Feedback comment
             ctx.fillStyle = feedbackColor
             ctx.font = 'bold 9px system-ui'
             ctx.fillText(feedback.text, labelX + 8, labelY + 62)
