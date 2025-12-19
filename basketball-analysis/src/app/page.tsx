@@ -262,12 +262,15 @@ export default function Home() {
         release_frame: 0,
         release_timestamp: 0
       },
-      frameData: (analysisResult.frame_data || []).map((fd: { frame: number; timestamp: number; phase: string; metrics: Record<string, number> }) => ({
+      frameData: (analysisResult.frame_data || []).map((fd: { frame: number; timestamp: number; phase: string; metrics: Record<string, number>; keypoints?: Record<string, { x: number; y: number; confidence: number }> }) => ({
         frame: fd.frame,
         timestamp: fd.timestamp,
         phase: fd.phase,
-        metrics: fd.metrics
-      }))
+        metrics: fd.metrics,
+        keypoints: fd.keypoints
+      })),
+      // Include keypoints for each frame for drawing overlays
+      allKeypoints: analysisResult.all_keypoints || (analysisResult.frame_data || []).map((fd: { keypoints?: Record<string, { x: number; y: number; confidence: number }> }) => fd.keypoints || {})
     }
     setVideoAnalysisData(videoData)
     setStoreMediaType("VIDEO") // Mark as video in the store
