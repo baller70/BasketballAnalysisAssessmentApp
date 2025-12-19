@@ -201,6 +201,17 @@ export default function Home() {
       if (saved) {
         console.log("✅ Session saved to localStorage:", session.id)
       }
+      
+      // 🎒 BLUE BACKPACK: Save IMAGE session separately
+      const imageSessionData = {
+        imageBase64: base64,
+        visionAnalysis: result,
+        timestamp: Date.now(),
+        playerName: useAnalysisStore.getState().playerProfile.name || 'Player'
+      }
+      localStorage.setItem('basketball_image_session', JSON.stringify(imageSessionData))
+      console.log("🎒 IMAGE session saved to blue backpack")
+      
     } catch (saveError) {
       console.error("Error saving session:", saveError)
     }
@@ -311,6 +322,23 @@ export default function Home() {
     if (saved) {
       console.log("✅ Video session saved with frame data:", session.id)
     }
+    
+    // 🎒 RED BACKPACK: Save VIDEO session separately
+    const videoSessionData = {
+      mainImageBase64: sessionData.mainImageBase64,
+      skeletonImageBase64: sessionData.skeletonImageBase64,
+      videoData: videoData,
+      visionAnalysis: visionResult,
+      overallScore: sessionData.overallScore,
+      angles: sessionData.angles,
+      feedback: sessionData.feedback,
+      strengths: sessionData.strengths,
+      improvements: sessionData.improvements,
+      timestamp: Date.now(),
+      playerName: useAnalysisStore.getState().playerProfile.name || 'Player'
+    }
+    localStorage.setItem('basketball_video_session', JSON.stringify(videoSessionData))
+    console.log("🎒 VIDEO session saved to red backpack")
 
     setAnalysisProgress(100)
     setProcessingComplete(true)

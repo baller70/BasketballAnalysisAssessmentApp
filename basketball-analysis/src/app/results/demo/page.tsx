@@ -218,10 +218,150 @@ function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, ang
           ctx.stroke()
         })
       }
+      
+      // ============================================
+      // BIG ANGLE LABELS - Same as video mode
+      // Labels positioned FAR AWAY from body, HIPS ON UP
+      // ============================================
+      if (toggles.annotations && angles && Object.keys(kp).length > 0) {
+        ctx.textAlign = 'left'
+        
+        // Angle ranges for feedback
+        const angleRanges: Record<string, { ideal: number; range: [number, number] }> = {
+          'elbow_angle': { ideal: 90, range: [85, 100] },
+          'right_elbow_angle': { ideal: 90, range: [85, 100] },
+          'left_elbow_angle': { ideal: 90, range: [85, 100] },
+          'knee_angle': { ideal: 145, range: [135, 160] },
+          'right_knee_angle': { ideal: 145, range: [135, 160] },
+          'left_knee_angle': { ideal: 145, range: [135, 160] },
+          'shoulder_tilt': { ideal: 0, range: [-5, 5] },
+          'hip_tilt': { ideal: 0, range: [-8, 8] },
+        }
+        
+        // Generate feedback comment based on angle value
+        const getFeedback = (angleKey: string, value: number): { text: string; status: 'good' | 'warning' | 'bad' } => {
+          const config = angleRanges[angleKey]
+          if (!config) return { text: '', status: 'good' }
+          
+          const [min, max] = config.range
+          if (value >= min && value <= max) {
+            return { text: 'EXCELLENT! WITHIN ELITE RANGE', status: 'good' }
+          } else if (Math.abs(value - config.ideal) <= 15) {
+            const diff = value < min ? Math.round(min - value) : Math.round(value - max)
+            return { 
+              text: value < min ? `INCREASE BY ${diff}°` : `DECREASE BY ${diff}°`, 
+              status: 'warning' 
+            }
+          } else {
+            const diff = value < min ? Math.round(min - value) : Math.round(value - max)
+            return { 
+              text: value < min ? `TOO LOW - NEED ${diff}° MORE` : `TOO HIGH - REDUCE ${diff}°`, 
+              status: 'bad' 
+            }
+          }
+        }
+        
+        // Labels config - positioned FAR from body, HIPS ON UP, WELL SPACED APART
+        const annotationConfig: Array<{
+          angleKey: string
+          label: string
+          keypointName: string
+          offsetX: number
+          offsetY: number
+          color: string
+        }> = [
+          { angleKey: 'elbow_angle', label: 'ELBOW ANGLE', keypointName: 'right_elbow', offsetX: -200, offsetY: -100, color: '#4ade80' },
+          { angleKey: 'right_elbow_angle', label: 'ELBOW ANGLE', keypointName: 'right_elbow', offsetX: -200, offsetY: -100, color: '#4ade80' },
+          { angleKey: 'left_elbow_angle', label: 'ELBOW ANGLE', keypointName: 'left_elbow', offsetX: -200, offsetY: -100, color: '#4ade80' },
+          { angleKey: 'knee_angle', label: 'KNEE BEND', keypointName: 'right_knee', offsetX: 180, offsetY: -180, color: '#60a5fa' },
+          { angleKey: 'right_knee_angle', label: 'KNEE BEND', keypointName: 'right_knee', offsetX: 180, offsetY: -180, color: '#60a5fa' },
+          { angleKey: 'left_knee_angle', label: 'KNEE BEND', keypointName: 'left_knee', offsetX: 180, offsetY: -180, color: '#60a5fa' },
+          { angleKey: 'shoulder_tilt', label: 'SHOULDER', keypointName: 'right_shoulder', offsetX: 180, offsetY: -50, color: '#facc15' },
+          { angleKey: 'hip_tilt', label: 'HIP ALIGN', keypointName: 'right_hip', offsetX: -200, offsetY: -50, color: '#f97316' },
+        ]
+        
+        const drawnLabels = new Set<string>()
+        
+        // Label dimensions - scaled for image canvas (smaller than video)
+        const labelWidth = 160
+        const labelHeight = 70
+        
+        annotationConfig.forEach(({ angleKey, label, keypointName, offsetX, offsetY, color }) => {
+          const angleValue = angles[angleKey]
+          const keypoint = kp[keypointName]
+          
+          if (angleValue !== undefined && keypoint && !drawnLabels.has(label)) {
+            drawnLabels.add(label)
+            
+            // Get feedback comment
+            const feedback = getFeedback(angleKey, angleValue)
+            const feedbackColor = feedback.status === 'good' ? '#4ade80' : feedback.status === 'warning' ? '#facc15' : '#ef4444'
+            
+            // Body part position (scaled)
+            const kpX = keypoint.x * sx
+            const kpY = keypoint.y * sy
+            
+            // Label position - offset from keypoint, scaled for canvas size
+            const scaledOffsetX = offsetX * (canvasW / 640)
+            const scaledOffsetY = offsetY * (canvasH / 480)
+            const labelX = Math.max(10, Math.min(canvasW - labelWidth - 10, kpX + scaledOffsetX))
+            const labelY = Math.max(10, Math.min(canvasH - labelHeight - 10, kpY + scaledOffsetY))
+            
+            // Draw connecting line
+            ctx.strokeStyle = color
+            ctx.lineWidth = 2
+            ctx.shadowColor = color
+            ctx.shadowBlur = 6
+            ctx.beginPath()
+            ctx.moveTo(labelX + labelWidth / 2, labelY + labelHeight / 2)
+            ctx.lineTo(kpX, kpY)
+            ctx.stroke()
+            ctx.shadowBlur = 0
+            
+            // Draw circle at keypoint
+            ctx.beginPath()
+            ctx.arc(kpX, kpY, 8, 0, Math.PI * 2)
+            ctx.fillStyle = color
+            ctx.fill()
+            ctx.strokeStyle = 'white'
+            ctx.lineWidth = 2
+            ctx.stroke()
+            
+            // Label background
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.9)'
+            ctx.beginPath()
+            ctx.roundRect(labelX, labelY, labelWidth, labelHeight, 8)
+            ctx.fill()
+            
+            // Label border
+            ctx.strokeStyle = color
+            ctx.lineWidth = 2
+            ctx.beginPath()
+            ctx.roundRect(labelX, labelY, labelWidth, labelHeight, 8)
+            ctx.stroke()
+            
+            // Label text - scaled font sizes
+            ctx.fillStyle = 'white'
+            ctx.font = 'bold 14px system-ui'
+            ctx.textAlign = 'left'
+            ctx.fillText(label, labelX + 8, labelY + 18)
+            
+            // Angle value
+            ctx.fillStyle = color
+            ctx.font = 'bold 24px monospace'
+            ctx.fillText(`${Math.round(angleValue)}°`, labelX + 8, labelY + 45)
+            
+            // Feedback comment
+            ctx.fillStyle = feedbackColor
+            ctx.font = 'bold 9px system-ui'
+            ctx.fillText(feedback.text, labelX + 8, labelY + 62)
+          }
+        })
+      }
     }
 
     img.src = imageUrl
-  }, [imageUrl, keypoints, basketball, imageSize, toggles])
+  }, [imageUrl, keypoints, basketball, imageSize, angles, toggles])
 
   // Format angle name for display
   const formatAngleName = (name: string) => {
@@ -289,6 +429,448 @@ function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, ang
             </div>
           </div>
         </>
+      )}
+    </div>
+  )
+}
+
+// ============================================
+// ANIMATED IMAGE WALKTHROUGH - Turns image into animated video
+// Zooms into each annotation, then back to full image
+// ============================================
+interface AnimatedImageWalkthroughProps {
+  imageUrl: string
+  keypoints?: Record<string, { x: number; y: number; confidence: number; source?: string }>
+  angles?: Record<string, number>
+  imageSize?: { width: number; height: number }
+}
+
+function AnimatedImageWalkthrough({ imageUrl, keypoints, angles, imageSize }: AnimatedImageWalkthroughProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const animationRef = useRef<number | null>(null)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [currentPhase, setCurrentPhase] = useState<string>('ready')
+  const [progress, setProgress] = useState(0)
+  
+  // Animation state
+  const [zoomLevel, setZoomLevel] = useState(1)
+  const [panX, setPanX] = useState(0)
+  const [panY, setPanY] = useState(0)
+  
+  // Annotations config - same as HybridSkeletonDisplay
+  const annotations = useMemo(() => {
+    if (!keypoints || !angles) return []
+    
+    const config = [
+      { angleKey: 'elbow_angle', label: 'ELBOW ANGLE', keypointName: 'right_elbow', color: '#4ade80' },
+      { angleKey: 'right_elbow_angle', label: 'ELBOW ANGLE', keypointName: 'right_elbow', color: '#4ade80' },
+      { angleKey: 'knee_angle', label: 'KNEE BEND', keypointName: 'right_knee', color: '#60a5fa' },
+      { angleKey: 'right_knee_angle', label: 'KNEE BEND', keypointName: 'right_knee', color: '#60a5fa' },
+      { angleKey: 'shoulder_tilt', label: 'SHOULDER', keypointName: 'right_shoulder', color: '#facc15' },
+      { angleKey: 'hip_tilt', label: 'HIP ALIGN', keypointName: 'right_hip', color: '#f97316' },
+    ]
+    
+    const seen = new Set<string>()
+    return config.filter(({ angleKey, label, keypointName }) => {
+      if (seen.has(label)) return false
+      if (angles[angleKey] === undefined) return false
+      if (!keypoints[keypointName]) return false
+      seen.add(label)
+      return true
+    })
+  }, [keypoints, angles])
+  
+  // Draw the canvas with current zoom/pan
+  const drawFrame = useCallback((img: HTMLImageElement, zoom: number, px: number, py: number) => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    
+    const canvasW = canvas.width
+    const canvasH = canvas.height
+    
+    // Clear canvas
+    ctx.fillStyle = '#000'
+    ctx.fillRect(0, 0, canvasW, canvasH)
+    
+    // Calculate scaled dimensions
+    const imgW = imageSize?.width || img.naturalWidth
+    const imgH = imageSize?.height || img.naturalHeight
+    const baseScale = Math.min(canvasW / imgW, canvasH / imgH)
+    const scale = baseScale * zoom
+    
+    const drawW = imgW * scale
+    const drawH = imgH * scale
+    
+    // Center point with pan offset
+    const centerX = canvasW / 2 + px * zoom
+    const centerY = canvasH / 2 + py * zoom
+    
+    const drawX = centerX - drawW / 2
+    const drawY = centerY - drawH / 2
+    
+    // Draw image
+    ctx.drawImage(img, drawX, drawY, drawW, drawH)
+    
+    // Draw skeleton and annotations on top
+    if (keypoints) {
+      const kp = keypoints
+      const sx = scale
+      const sy = scale
+      const offsetX = drawX
+      const offsetY = drawY
+      
+      // Skeleton connections
+      const skeleton = [
+        ["nose", "left_shoulder"], ["nose", "right_shoulder"],
+        ["left_shoulder", "right_shoulder"],
+        ["left_shoulder", "left_elbow"], ["left_elbow", "left_wrist"],
+        ["right_shoulder", "right_elbow"], ["right_elbow", "right_wrist"],
+        ["left_shoulder", "left_hip"], ["right_shoulder", "right_hip"],
+        ["left_hip", "right_hip"],
+        ["left_hip", "left_knee"], ["left_knee", "left_ankle"],
+        ["right_hip", "right_knee"], ["right_knee", "right_ankle"],
+      ]
+      
+      // Draw skeleton
+      ctx.strokeStyle = "#facc15"
+      ctx.lineWidth = 3
+      skeleton.forEach(([start, end]) => {
+        if (kp[start] && kp[end]) {
+          ctx.beginPath()
+          ctx.moveTo(kp[start].x * sx + offsetX, kp[start].y * sy + offsetY)
+          ctx.lineTo(kp[end].x * sx + offsetX, kp[end].y * sy + offsetY)
+          ctx.stroke()
+        }
+      })
+      
+      // Draw keypoints
+      Object.entries(kp).forEach(([name, pt]) => {
+        const x = pt.x * sx + offsetX
+        const y = pt.y * sy + offsetY
+        const radius = name.includes("wrist") ? 10 : 7
+        
+        ctx.beginPath()
+        ctx.arc(x, y, radius, 0, Math.PI * 2)
+        ctx.fillStyle = "#facc15"
+        ctx.fill()
+        ctx.strokeStyle = "white"
+        ctx.lineWidth = 2
+        ctx.stroke()
+      })
+      
+      // Draw labels
+      if (angles) {
+        const labelOffsets: Record<string, { x: number; y: number }> = {
+          'right_elbow': { x: -200, y: -100 },
+          'left_elbow': { x: -200, y: -100 },
+          'right_knee': { x: 180, y: -180 },
+          'left_knee': { x: 180, y: -180 },
+          'right_shoulder': { x: 180, y: -50 },
+          'right_hip': { x: -200, y: -50 },
+        }
+        
+        const angleRanges: Record<string, { ideal: number; range: [number, number] }> = {
+          'elbow_angle': { ideal: 90, range: [85, 100] },
+          'right_elbow_angle': { ideal: 90, range: [85, 100] },
+          'knee_angle': { ideal: 145, range: [135, 160] },
+          'right_knee_angle': { ideal: 145, range: [135, 160] },
+          'shoulder_tilt': { ideal: 0, range: [-5, 5] },
+          'hip_tilt': { ideal: 0, range: [-8, 8] },
+        }
+        
+        const getFeedback = (angleKey: string, value: number) => {
+          const config = angleRanges[angleKey]
+          if (!config) return { text: '', status: 'good' }
+          const [min, max] = config.range
+          if (value >= min && value <= max) return { text: 'EXCELLENT!', status: 'good' }
+          if (Math.abs(value - config.ideal) <= 15) return { text: 'ADJUST', status: 'warning' }
+          return { text: 'FIX THIS', status: 'bad' }
+        }
+        
+        const drawnLabels = new Set<string>()
+        annotations.forEach(({ angleKey, label, keypointName, color }) => {
+          if (drawnLabels.has(label)) return
+          drawnLabels.add(label)
+          
+          const angleValue = angles[angleKey]
+          const keypoint = kp[keypointName]
+          if (angleValue === undefined || !keypoint) return
+          
+          const feedback = getFeedback(angleKey, angleValue)
+          const feedbackColor = feedback.status === 'good' ? '#4ade80' : feedback.status === 'warning' ? '#facc15' : '#ef4444'
+          
+          const kpX = keypoint.x * sx + offsetX
+          const kpY = keypoint.y * sy + offsetY
+          
+          const offset = labelOffsets[keypointName] || { x: 100, y: -50 }
+          const labelW = 160
+          const labelH = 70
+          const labelX = Math.max(10, Math.min(canvasW - labelW - 10, kpX + offset.x * (zoom / 2)))
+          const labelY = Math.max(10, Math.min(canvasH - labelH - 10, kpY + offset.y * (zoom / 2)))
+          
+          // Connecting line
+          ctx.strokeStyle = color
+          ctx.lineWidth = 2
+          ctx.beginPath()
+          ctx.moveTo(labelX + labelW / 2, labelY + labelH / 2)
+          ctx.lineTo(kpX, kpY)
+          ctx.stroke()
+          
+          // Circle at keypoint
+          ctx.beginPath()
+          ctx.arc(kpX, kpY, 10, 0, Math.PI * 2)
+          ctx.fillStyle = color
+          ctx.fill()
+          ctx.strokeStyle = 'white'
+          ctx.lineWidth = 2
+          ctx.stroke()
+          
+          // Label background
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.9)'
+          ctx.beginPath()
+          ctx.roundRect(labelX, labelY, labelW, labelH, 8)
+          ctx.fill()
+          
+          // Label border
+          ctx.strokeStyle = color
+          ctx.lineWidth = 2
+          ctx.beginPath()
+          ctx.roundRect(labelX, labelY, labelW, labelH, 8)
+          ctx.stroke()
+          
+          // Label text
+          ctx.fillStyle = 'white'
+          ctx.font = 'bold 14px system-ui'
+          ctx.textAlign = 'left'
+          ctx.fillText(label, labelX + 8, labelY + 18)
+          
+          // Angle value
+          ctx.fillStyle = color
+          ctx.font = 'bold 24px monospace'
+          ctx.fillText(`${Math.round(angleValue)}°`, labelX + 8, labelY + 45)
+          
+          // Feedback
+          ctx.fillStyle = feedbackColor
+          ctx.font = 'bold 10px system-ui'
+          ctx.fillText(feedback.text, labelX + 8, labelY + 62)
+        })
+      }
+    }
+  }, [keypoints, angles, imageSize, annotations])
+  
+  // Animation sequence
+  const startAnimation = useCallback(() => {
+    if (!imageUrl || annotations.length === 0) return
+    
+    setIsPlaying(true)
+    setCurrentPhase('starting')
+    
+    const img = new window.Image()
+    img.crossOrigin = 'anonymous'
+    
+    img.onload = () => {
+      const canvas = canvasRef.current
+      if (!canvas) return
+      
+      // Set canvas size
+      canvas.width = 600
+      canvas.height = 500
+      
+      const imgW = imageSize?.width || img.naturalWidth
+      const imgH = imageSize?.height || img.naturalHeight
+      
+      // Animation timeline
+      const timeline: Array<{
+        phase: string
+        duration: number
+        targetZoom: number
+        targetX: number
+        targetY: number
+      }> = []
+      
+      // Start with full image
+      timeline.push({ phase: 'Full View', duration: 1500, targetZoom: 1, targetX: 0, targetY: 0 })
+      
+      // For each annotation: zoom in, hold, zoom out
+      annotations.forEach(({ label, keypointName }) => {
+        const kp = keypoints?.[keypointName]
+        if (!kp) return
+        
+        // Calculate pan to center on keypoint
+        const centerX = (imgW / 2 - kp.x) * 0.5
+        const centerY = (imgH / 2 - kp.y) * 0.5
+        
+        // Zoom into annotation
+        timeline.push({ phase: `Zoom: ${label}`, duration: 1000, targetZoom: 2.5, targetX: centerX, targetY: centerY })
+        // Hold
+        timeline.push({ phase: label, duration: 2000, targetZoom: 2.5, targetX: centerX, targetY: centerY })
+        // Zoom out
+        timeline.push({ phase: 'Full View', duration: 1000, targetZoom: 1, targetX: 0, targetY: 0 })
+        // Hold full view briefly
+        timeline.push({ phase: 'Full View', duration: 500, targetZoom: 1, targetX: 0, targetY: 0 })
+      })
+      
+      // Run animation
+      let currentStep = 0
+      let stepStartTime = Date.now()
+      let startZoom = 1
+      let startX = 0
+      let startY = 0
+      
+      const animate = () => {
+        if (currentStep >= timeline.length) {
+          setIsPlaying(false)
+          setCurrentPhase('complete')
+          setProgress(100)
+          drawFrame(img, 1, 0, 0)
+          return
+        }
+        
+        const step = timeline[currentStep]
+        const elapsed = Date.now() - stepStartTime
+        const t = Math.min(1, elapsed / step.duration)
+        
+        // Ease in-out
+        const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2
+        
+        // Interpolate
+        const currentZoom = startZoom + (step.targetZoom - startZoom) * eased
+        const currentX = startX + (step.targetX - startX) * eased
+        const currentY = startY + (step.targetY - startY) * eased
+        
+        setZoomLevel(currentZoom)
+        setPanX(currentX)
+        setPanY(currentY)
+        setCurrentPhase(step.phase)
+        
+        // Update progress
+        const totalDuration = timeline.reduce((sum, s) => sum + s.duration, 0)
+        const completedDuration = timeline.slice(0, currentStep).reduce((sum, s) => sum + s.duration, 0) + elapsed
+        setProgress(Math.round((completedDuration / totalDuration) * 100))
+        
+        drawFrame(img, currentZoom, currentX, currentY)
+        
+        if (t >= 1) {
+          // Move to next step
+          currentStep++
+          stepStartTime = Date.now()
+          startZoom = step.targetZoom
+          startX = step.targetX
+          startY = step.targetY
+        }
+        
+        animationRef.current = requestAnimationFrame(animate)
+      }
+      
+      // Initial draw
+      drawFrame(img, 1, 0, 0)
+      animationRef.current = requestAnimationFrame(animate)
+    }
+    
+    img.src = imageUrl
+  }, [imageUrl, annotations, keypoints, imageSize, drawFrame])
+  
+  // Stop animation
+  const stopAnimation = useCallback(() => {
+    if (animationRef.current) {
+      cancelAnimationFrame(animationRef.current)
+      animationRef.current = null
+    }
+    setIsPlaying(false)
+  }, [])
+  
+  // Initial draw
+  useEffect(() => {
+    if (!imageUrl) return
+    
+    const img = new window.Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => {
+      const canvas = canvasRef.current
+      if (!canvas) return
+      canvas.width = 600
+      canvas.height = 500
+      drawFrame(img, 1, 0, 0)
+    }
+    img.src = imageUrl
+  }, [imageUrl, drawFrame])
+  
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current)
+      }
+    }
+  }, [])
+  
+  if (!keypoints || !angles || annotations.length === 0) {
+    return null
+  }
+  
+  return (
+    <div className="space-y-4">
+      <div className="text-center">
+        <h3 className="text-[#FFD700] font-bold text-sm uppercase tracking-wider mb-2">
+          Animated Form Walkthrough
+        </h3>
+        <p className="text-[#888] text-xs">Watch as we highlight each key point of your form</p>
+      </div>
+      
+      {/* Canvas container */}
+      <div ref={containerRef} className="relative flex justify-center">
+        <canvas
+          ref={canvasRef}
+          width={600}
+          height={500}
+          className="rounded-lg border-2 border-[#3a3a3a]"
+        />
+        
+        {/* Play button overlay */}
+        {!isPlaying && currentPhase !== 'complete' && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-lg">
+            <button
+              onClick={startAnimation}
+              className="p-4 rounded-full bg-[#FFD700] hover:bg-[#E5C100] text-black transition-all transform hover:scale-110 shadow-2xl"
+            >
+              <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+            </button>
+          </div>
+        )}
+        
+        {/* Phase indicator */}
+        {isPlaying && (
+          <div className="absolute top-4 left-4 bg-black/80 px-3 py-2 rounded-lg">
+            <span className="text-[#FFD700] text-sm font-bold">{currentPhase}</span>
+          </div>
+        )}
+        
+        {/* Replay button */}
+        {currentPhase === 'complete' && (
+          <div className="absolute bottom-4 right-4">
+            <button
+              onClick={startAnimation}
+              className="px-4 py-2 rounded-lg bg-[#FFD700] hover:bg-[#E5C100] text-black font-bold text-sm transition-colors"
+            >
+              Replay
+            </button>
+          </div>
+        )}
+      </div>
+      
+      {/* Progress bar */}
+      {isPlaying && (
+        <div className="w-full bg-[#3a3a3a] rounded-full h-2">
+          <div
+            className="bg-[#FFD700] h-2 rounded-full transition-all duration-100"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
       )}
     </div>
   )
@@ -703,6 +1285,55 @@ export default function DemoResultsPage() {
   // Get uploaded image and form analysis from store
   const { formAnalysisResult, visionAnalysisResult, playerProfile, poseConfidence, teaserFrames, fullFrames, allUploadedUrls, uploadedImageBase64, roboflowBallDetection, videoAnalysisData, mediaType } = useAnalysisStore()
   
+  // 🎒 BACKPACK SYSTEM: Load saved sessions from localStorage
+  const [savedImageSession, setSavedImageSession] = useState<{
+    imageBase64: string
+    visionAnalysis: typeof visionAnalysisResult
+    timestamp: number
+    playerName: string
+  } | null>(null)
+  
+  const [savedVideoSession, setSavedVideoSession] = useState<{
+    mainImageBase64: string
+    skeletonImageBase64: string
+    videoData: typeof videoAnalysisData
+    visionAnalysis: typeof visionAnalysisResult
+    overallScore: number
+    angles: Record<string, number>
+    feedback: string[]
+    strengths: string[]
+    improvements: string[]
+    timestamp: number
+    playerName: string
+  } | null>(null)
+  
+  // Load saved sessions from localStorage on mount
+  useEffect(() => {
+    // 🎒 BLUE BACKPACK: Load last image session
+    try {
+      const savedImage = localStorage.getItem('basketball_image_session')
+      if (savedImage) {
+        const parsed = JSON.parse(savedImage)
+        setSavedImageSession(parsed)
+        console.log("🎒 Loaded IMAGE session from blue backpack")
+      }
+    } catch (e) {
+      console.error("Error loading image session:", e)
+    }
+    
+    // 🎒 RED BACKPACK: Load last video session
+    try {
+      const savedVideo = localStorage.getItem('basketball_video_session')
+      if (savedVideo) {
+        const parsed = JSON.parse(savedVideo)
+        setSavedVideoSession(parsed)
+        console.log("🎒 Loaded VIDEO session from red backpack")
+      }
+    } catch (e) {
+      console.error("Error loading video session:", e)
+    }
+  }, [])
+  
   // Auto-select Video tab when mediaType is VIDEO
   useEffect(() => {
     if (mediaType === "VIDEO" && videoAnalysisData) {
@@ -710,15 +1341,62 @@ export default function DemoResultsPage() {
     }
   }, [mediaType, videoAnalysisData])
   
+  // 🎒 IMAGE TAB: Use store data first, fall back to saved session (blue backpack)
+  const imageMainUrl = useMemo(() => {
+    // First try store data
+    if (uploadedImageBase64) return uploadedImageBase64
+    if (allUploadedUrls.length > 0) return allUploadedUrls[0]
+    // Fall back to saved session
+    if (savedImageSession?.imageBase64) return savedImageSession.imageBase64
+    return null
+  }, [uploadedImageBase64, allUploadedUrls, savedImageSession])
+  
+  const imageVisionAnalysis = useMemo(() => {
+    // First try store data
+    if (visionAnalysisResult) return visionAnalysisResult
+    // Fall back to saved session
+    if (savedImageSession?.visionAnalysis) return savedImageSession.visionAnalysis
+    return null
+  }, [visionAnalysisResult, savedImageSession])
+  
+  // 🎒 VIDEO TAB: Use store data first, fall back to saved session (red backpack)
+  const videoMainUrl = useMemo(() => {
+    // First try store data
+    if (videoAnalysisData?.annotatedFramesBase64?.[0]) return videoAnalysisData.annotatedFramesBase64[0]
+    if (uploadedImageBase64 && mediaType === "VIDEO") return uploadedImageBase64
+    // Fall back to saved session
+    if (savedVideoSession?.mainImageBase64) return savedVideoSession.mainImageBase64
+    return null
+  }, [videoAnalysisData, uploadedImageBase64, mediaType, savedVideoSession])
+  
+  const videoVisionAnalysis = useMemo(() => {
+    // First try store data
+    if (visionAnalysisResult && mediaType === "VIDEO") return visionAnalysisResult
+    // Fall back to saved session
+    if (savedVideoSession?.visionAnalysis) return savedVideoSession.visionAnalysis
+    return null
+  }, [visionAnalysisResult, mediaType, savedVideoSession])
+  
+  const effectiveVideoData = useMemo(() => {
+    // First try store data
+    if (videoAnalysisData) return videoAnalysisData
+    // Fall back to saved session
+    if (savedVideoSession?.videoData) return savedVideoSession.videoData
+    return null
+  }, [videoAnalysisData, savedVideoSession])
+  
   // Use base64 image (persists across navigation) or fall back to blob URL
+  // This is the original mainImageUrl for backward compatibility
   const mainImageUrl = uploadedImageBase64 || (allUploadedUrls.length > 0 ? allUploadedUrls[0] : null)
   
   // Prefer Vision AI results, fall back to form analysis
+  // For IMAGE tab, use imageVisionAnalysis; for VIDEO tab, use videoVisionAnalysis
   const analysisData = useMemo(() => {
-    const visionData = convertVisionToAnalysisData(visionAnalysisResult)
+    const effectiveVision = resultsMode === "video" ? videoVisionAnalysis : imageVisionAnalysis
+    const visionData = convertVisionToAnalysisData(effectiveVision)
     if (visionData) return visionData
     return convertFormAnalysisToAnalysisData(formAnalysisResult)
-  }, [visionAnalysisResult, formAnalysisResult])
+  }, [resultsMode, imageVisionAnalysis, videoVisionAnalysis, formAnalysisResult])
 
   // Get player name from profile or use default
   const playerName = "KEVIN HOUSTON" // From profile or default
@@ -756,8 +1434,10 @@ export default function DemoResultsPage() {
               <div className="w-[120px]"></div>
             </div>
           </div>
-          {resultsMode === "video" && <VideoModeContent videoData={videoAnalysisData} activeTab={activeTab} setActiveTab={setActiveTab} analysisData={analysisData} playerName={playerName} poseConfidence={poseConfidence} teaserFrames={teaserFrames} fullFrames={fullFrames} allUploadedUrls={allUploadedUrls} mainImageUrl={mainImageUrl} visionAnalysis={visionAnalysisResult} roboflowBallDetection={roboflowBallDetection} />}
-          {resultsMode === "image" && <ImageModeContent activeTab={activeTab} setActiveTab={setActiveTab} analysisData={analysisData} playerName={playerName} poseConfidence={poseConfidence} teaserFrames={teaserFrames} fullFrames={fullFrames} allUploadedUrls={allUploadedUrls} mainImageUrl={mainImageUrl} visionAnalysis={visionAnalysisResult} roboflowBallDetection={roboflowBallDetection} />}
+          {/* 🎒 VIDEO TAB: Uses red backpack (effectiveVideoData, videoMainUrl, videoVisionAnalysis) */}
+          {resultsMode === "video" && <VideoModeContent videoData={effectiveVideoData} activeTab={activeTab} setActiveTab={setActiveTab} analysisData={analysisData} playerName={playerName} poseConfidence={poseConfidence} teaserFrames={teaserFrames} fullFrames={fullFrames} allUploadedUrls={allUploadedUrls} mainImageUrl={videoMainUrl} visionAnalysis={videoVisionAnalysis} roboflowBallDetection={roboflowBallDetection} />}
+          {/* 🎒 IMAGE TAB: Uses blue backpack (imageMainUrl, imageVisionAnalysis) */}
+          {resultsMode === "image" && <ImageModeContent activeTab={activeTab} setActiveTab={setActiveTab} analysisData={analysisData} playerName={playerName} poseConfidence={poseConfidence} teaserFrames={teaserFrames} fullFrames={fullFrames} allUploadedUrls={allUploadedUrls} mainImageUrl={imageMainUrl} visionAnalysis={imageVisionAnalysis} roboflowBallDetection={roboflowBallDetection} />}
           {resultsMode === "elite" && <EliteModeContent analysisData={analysisData} />}
           {resultsMode === "guide" && <GuideModeContent />}
         </div>
@@ -1122,7 +1802,7 @@ function VideoFrameCanvas({
           }
         }
         
-        // Labels offset from body part - MOVES WITH the keypoint
+        // Labels offset from body part - MOVES WITH the keypoint, WELL SPACED APART
         const annotationConfig: Array<{
           angleKey: string
           label: string
@@ -1131,12 +1811,12 @@ function VideoFrameCanvas({
           offsetY: number
           color: string
         }> = [
-          { angleKey: 'elbow_angle', label: 'ELBOW ANGLE', keypointName: 'right_elbow', offsetX: -500, offsetY: -180, color: '#4ade80' },
-          { angleKey: 'right_elbow_angle', label: 'ELBOW ANGLE', keypointName: 'right_elbow', offsetX: -500, offsetY: -180, color: '#4ade80' },
-          { angleKey: 'knee_angle', label: 'KNEE BEND', keypointName: 'right_knee', offsetX: 350, offsetY: -200, color: '#60a5fa' },
-          { angleKey: 'right_knee_angle', label: 'KNEE BEND', keypointName: 'right_knee', offsetX: 350, offsetY: -200, color: '#60a5fa' },
-          { angleKey: 'shoulder_tilt', label: 'SHOULDER', keypointName: 'right_shoulder', offsetX: 350, offsetY: -150, color: '#facc15' },
-          { angleKey: 'hip_tilt', label: 'HIP ALIGN', keypointName: 'right_hip', offsetX: 350, offsetY: -50, color: '#f97316' },
+          { angleKey: 'elbow_angle', label: 'ELBOW ANGLE', keypointName: 'right_elbow', offsetX: -500, offsetY: -200, color: '#4ade80' },
+          { angleKey: 'right_elbow_angle', label: 'ELBOW ANGLE', keypointName: 'right_elbow', offsetX: -500, offsetY: -200, color: '#4ade80' },
+          { angleKey: 'knee_angle', label: 'KNEE BEND', keypointName: 'right_knee', offsetX: 400, offsetY: -350, color: '#60a5fa' },
+          { angleKey: 'right_knee_angle', label: 'KNEE BEND', keypointName: 'right_knee', offsetX: 400, offsetY: -350, color: '#60a5fa' },
+          { angleKey: 'shoulder_tilt', label: 'SHOULDER', keypointName: 'right_shoulder', offsetX: 400, offsetY: -100, color: '#facc15' },
+          { angleKey: 'hip_tilt', label: 'HIP ALIGN', keypointName: 'right_hip', offsetX: -500, offsetY: -50, color: '#f97316' },
         ]
         
         const drawnLabels = new Set<string>()
@@ -2421,6 +3101,16 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                     showStats={false}
                     overlayToggles={overlayToggles}
                   />
+
+                  {/* ANIMATED IMAGE WALKTHROUGH - Zooms into each annotation */}
+                  <div className="mt-6 border-t border-[#3a3a3a] pt-6">
+                    <AnimatedImageWalkthrough
+                      imageUrl={mainImageUrl}
+                      keypoints={visionAnalysis?.keypoints}
+                      angles={visionAnalysis?.angles}
+                      imageSize={visionAnalysis?.image_size}
+                    />
+                  </div>
 
                   {/* 3 AUTO SCREENSHOTS - Ball, Shoulders, Legs */}
                   <div className="mt-6">
