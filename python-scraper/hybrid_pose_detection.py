@@ -590,8 +590,13 @@ def detect_pose():
         if not data or 'image' not in data:
             return jsonify({'error': 'No image provided'}), 400
         
-        # Decode image
-        image_data = base64.b64decode(data['image'])
+        # Decode image - strip data URL prefix if present
+        image_str = data['image']
+        if ',' in image_str:
+            # Remove data URL prefix like "data:image/jpeg;base64,"
+            image_str = image_str.split(',', 1)[1]
+        
+        image_data = base64.b64decode(image_str)
         pil_image = Image.open(io.BytesIO(image_data))
         if pil_image.mode != 'RGB':
             pil_image = pil_image.convert('RGB')
