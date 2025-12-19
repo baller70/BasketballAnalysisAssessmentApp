@@ -815,6 +815,7 @@ function OverlayControls({ toggles, setToggles }: OverlayControlsProps) {
 
 // ============================================================
 // VIDEO FRAME CANVAS - Draws overlays based on toggle state
+// With BIGGER labels, offset wireframe, and video game effects
 // ============================================================
 interface VideoFrameCanvasProps {
   rawFrame?: string // Base64 raw frame (no overlays)
@@ -825,11 +826,40 @@ interface VideoFrameCanvasProps {
   phase?: string
   timestamp?: number
   angles?: Record<string, number> // Angle measurements to display as annotations
+  // Video game effects
+  playerGlow?: boolean
+  glowColor?: string
+  glowIntensity?: number
+  motionTrails?: boolean
+  previousKeypoints?: Array<Record<string, { x: number; y: number; confidence: number }>>
+  // Zoom and spotlight for video sequence
+  zoomTarget?: { x: number; y: number; scale: number } | null
+  spotlightTarget?: { x: number; y: number } | null
 }
 
-function VideoFrameCanvas({ rawFrame, annotatedFrame, keypoints, ball, toggles, phase, timestamp, angles }: VideoFrameCanvasProps) {
+function VideoFrameCanvas({ 
+  rawFrame, 
+  annotatedFrame, 
+  keypoints, 
+  ball, 
+  toggles, 
+  phase, 
+  timestamp, 
+  angles,
+  playerGlow = true,
+  glowColor = '#FFD700',
+  glowIntensity = 5,
+  motionTrails = false,
+  previousKeypoints = [],
+  zoomTarget = null,
+  spotlightTarget = null
+}: VideoFrameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [dimensions, setDimensions] = useState({ width: 640, height: 480 })
+  
+  // SKELETON stays ON the body (no offset)
+  const WIREFRAME_OFFSET_X = 0
+  const WIREFRAME_OFFSET_Y = 0
   
   useEffect(() => {
     const canvas = canvasRef.current
@@ -854,13 +884,65 @@ function VideoFrameCanvas({ rawFrame, annotatedFrame, keypoints, ball, toggles, 
       // Draw base image
       ctx.drawImage(img, 0, 0)
       
-      // If all toggles are on and we have annotated frame, just show it
-      if (toggles.skeleton && toggles.joints && toggles.annotations && toggles.basketball && annotatedFrame && !rawFrame) {
-        return // Already showing annotated frame
+      // ============================================
+      // PLAYER GLOW EFFECT (Video Game Style)
+      // ============================================
+      if (playerGlow && keypoints) {
+        // Create glow around the player silhouette
+        ctx.save()
+        ctx.shadowColor = glowColor
+        ctx.shadowBlur = glowIntensity * 8
+        ctx.strokeStyle = glowColor
+        ctx.lineWidth = 4
+        ctx.globalAlpha = 0.7
+        
+        // Draw glow outline around player
+        const bodyParts = ['left_shoulder', 'right_shoulder', 'right_hip', 'left_hip']
+        const validParts = bodyParts.filter(p => keypoints[p])
+        if (validParts.length >= 3) {
+          ctx.beginPath()
+          const first = keypoints[validParts[0]]
+          ctx.moveTo(first.x + WIREFRAME_OFFSET_X, first.y + WIREFRAME_OFFSET_Y)
+          validParts.forEach(part => {
+            const pt = keypoints[part]
+            ctx.lineTo(pt.x + WIREFRAME_OFFSET_X, pt.y + WIREFRAME_OFFSET_Y)
+          })
+          ctx.closePath()
+          ctx.stroke()
+        }
+        ctx.restore()
       }
       
-      // If using raw frame, draw overlays based on toggles
-      if (rawFrame && keypoints) {
+      // ============================================
+      // MOTION TRAILS (Video Game Style)
+      // ============================================
+      if (motionTrails && previousKeypoints.length > 0) {
+        const trailParts = ['right_wrist', 'left_wrist', 'right_elbow', 'left_elbow']
+        
+        previousKeypoints.forEach((prevKp, idx) => {
+          const alpha = (idx + 1) / previousKeypoints.length * 0.5
+          ctx.globalAlpha = alpha
+          
+          trailParts.forEach(part => {
+            if (prevKp[part]) {
+              const pt = prevKp[part]
+              ctx.beginPath()
+              ctx.arc(pt.x, pt.y, 6, 0, Math.PI * 2)
+              ctx.fillStyle = '#60a5fa'
+              ctx.fill()
+            }
+          })
+        })
+        ctx.globalAlpha = 1
+      }
+      
+      // If all toggles are on and we have annotated frame, just show it
+      if (toggles.skeleton && toggles.joints && toggles.annotations && toggles.basketball && annotatedFrame && !rawFrame) {
+        // Still draw our custom overlays on top
+      }
+      
+      // If using raw frame OR we want custom overlays, draw them
+      if (keypoints) {
         const w = img.width
         const h = img.height
         
@@ -876,26 +958,40 @@ function VideoFrameCanvas({ rawFrame, annotatedFrame, keypoints, ball, toggles, 
           ['right_hip', 'right_knee'], ['right_knee', 'right_ankle'],
         ]
         
-        // Draw skeleton lines
+        // Draw skeleton lines - OFFSET FROM BODY
         if (toggles.skeleton) {
-          ctx.strokeStyle = '#facc15' // Yellow
-          ctx.lineWidth = 3
+          // Outer glow
+          ctx.strokeStyle = 'rgba(250, 204, 21, 0.3)'
+          ctx.lineWidth = 12
           skeleton.forEach(([start, end]) => {
             if (keypoints[start] && keypoints[end]) {
               ctx.beginPath()
-              ctx.moveTo(keypoints[start].x, keypoints[start].y)
-              ctx.lineTo(keypoints[end].x, keypoints[end].y)
+              ctx.moveTo(keypoints[start].x + WIREFRAME_OFFSET_X, keypoints[start].y + WIREFRAME_OFFSET_Y)
+              ctx.lineTo(keypoints[end].x + WIREFRAME_OFFSET_X, keypoints[end].y + WIREFRAME_OFFSET_Y)
+              ctx.stroke()
+            }
+          })
+          
+          // Main line
+          ctx.strokeStyle = '#facc15' // Yellow
+          ctx.lineWidth = 5
+          skeleton.forEach(([start, end]) => {
+            if (keypoints[start] && keypoints[end]) {
+              ctx.beginPath()
+              ctx.moveTo(keypoints[start].x + WIREFRAME_OFFSET_X, keypoints[start].y + WIREFRAME_OFFSET_Y)
+              ctx.lineTo(keypoints[end].x + WIREFRAME_OFFSET_X, keypoints[end].y + WIREFRAME_OFFSET_Y)
               ctx.stroke()
             }
           })
         }
         
-        // Draw joint points
+        // Draw joint points - OFFSET FROM BODY with BIGGER circles
         if (toggles.joints) {
           Object.entries(keypoints).forEach(([name, pt]) => {
-            const x = pt.x
-            const y = pt.y
-            const radius = name.includes('wrist') ? 8 : 5
+            const x = pt.x + WIREFRAME_OFFSET_X
+            const y = pt.y + WIREFRAME_OFFSET_Y
+            // BIGGER joint circles
+            const radius = name.includes('wrist') ? 16 : name.includes('elbow') || name.includes('knee') ? 14 : 10
             
             // Determine color based on body part
             let color = '#facc15' // Default yellow
@@ -905,67 +1001,128 @@ function VideoFrameCanvas({ rawFrame, annotatedFrame, keypoints, ball, toggles, 
               color = '#60a5fa' // Blue for legs
             }
             
+            // Outer glow
+            ctx.beginPath()
+            ctx.arc(x, y, radius + 6, 0, Math.PI * 2)
+            ctx.fillStyle = color.replace(')', ', 0.3)').replace('rgb', 'rgba').replace('#', '')
+            ctx.shadowColor = color
+            ctx.shadowBlur = 15
+            ctx.fill()
+            ctx.shadowBlur = 0
+            
+            // Main circle
             ctx.beginPath()
             ctx.arc(x, y, radius, 0, Math.PI * 2)
             ctx.fillStyle = color
             ctx.fill()
             ctx.strokeStyle = 'white'
-            ctx.lineWidth = 2
+            ctx.lineWidth = 3
             ctx.stroke()
           })
         }
         
-        // Draw basketball
+        // Draw basketball - BIGGER with glow
         if (toggles.basketball && ball) {
+          // Outer glow
+          ctx.beginPath()
+          ctx.arc(ball.x, ball.y, ball.radius + 10, 0, Math.PI * 2)
+          ctx.strokeStyle = 'rgba(249, 115, 22, 0.4)'
+          ctx.lineWidth = 8
+          ctx.stroke()
+          
+          // Main circle
           ctx.beginPath()
           ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2)
           ctx.strokeStyle = '#f97316' // Orange
-          ctx.lineWidth = 3
+          ctx.lineWidth = 5
           ctx.stroke()
           
           // Center dot
           ctx.beginPath()
-          ctx.arc(ball.x, ball.y, 4, 0, Math.PI * 2)
+          ctx.arc(ball.x, ball.y, 8, 0, Math.PI * 2)
           ctx.fillStyle = '#f97316'
           ctx.fill()
         }
       }
       
-      // Phase badge removed per user request - top left corner should be empty
-      
-      // Draw timestamp - HUGE timer inside video (upper right corner)
-      // Using large values because canvas is 1920x1080 but displays smaller
+      // ============================================
+      // HUGE TIMER (upper right corner)
+      // ============================================
       if (timestamp !== undefined) {
-        const timerWidth = 350
-        const timerHeight = 140
-        const timerX = img.width - timerWidth - 40
-        const timerY = 30
+        const timerWidth = 280
+        const timerHeight = 120
+        const timerX = img.width - timerWidth - 30
+        const timerY = 25
         
-        // Background
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.95)'
+        // Background with gradient
+        const gradient = ctx.createLinearGradient(timerX, timerY, timerX, timerY + timerHeight)
+        gradient.addColorStop(0, 'rgba(0, 0, 0, 0.95)')
+        gradient.addColorStop(1, 'rgba(20, 20, 20, 0.95)')
+        ctx.fillStyle = gradient
         ctx.beginPath()
         ctx.roundRect(timerX, timerY, timerWidth, timerHeight, 20)
         ctx.fill()
         
-        // Border
+        // Glowing border
+        ctx.shadowColor = '#FFD700'
+        ctx.shadowBlur = 15
         ctx.strokeStyle = '#FFD700'
-        ctx.lineWidth = 8
+        ctx.lineWidth = 5
         ctx.beginPath()
         ctx.roundRect(timerX, timerY, timerWidth, timerHeight, 20)
         ctx.stroke()
+        ctx.shadowBlur = 0
         
-        // Time text - HUGE 100px font for readability
+        // Time text - MASSIVE 80px font
         ctx.fillStyle = '#FFD700'
-        ctx.font = 'bold 100px monospace'
+        ctx.font = 'bold 80px monospace'
         ctx.textAlign = 'center'
-        ctx.fillText(`${timestamp.toFixed(2)}s`, timerX + timerWidth / 2, timerY + 100)
+        ctx.shadowColor = '#FFD700'
+        ctx.shadowBlur = 10
+        ctx.fillText(`${timestamp.toFixed(2)}s`, timerX + timerWidth / 2, timerY + 90)
+        ctx.shadowBlur = 0
       }
       
-      // Draw angle annotations with labels pointing to body parts
+      // ============================================
+      // ANGLE LABELS - Away from body, MOVES WITH body part
+      // ============================================
       if (toggles.annotations && keypoints && angles) {
         ctx.textAlign = 'left'
         
-        // Annotation config: angle key -> body part keypoint + label
+        // Angle ranges for feedback
+        const angleRanges: Record<string, { ideal: number; range: [number, number] }> = {
+          'elbow_angle': { ideal: 90, range: [85, 100] },
+          'right_elbow_angle': { ideal: 90, range: [85, 100] },
+          'knee_angle': { ideal: 145, range: [135, 160] },
+          'right_knee_angle': { ideal: 145, range: [135, 160] },
+          'shoulder_tilt': { ideal: 0, range: [-5, 5] },
+          'hip_tilt': { ideal: 0, range: [-8, 8] },
+        }
+        
+        // Generate feedback comment based on angle value
+        const getFeedback = (angleKey: string, value: number): { text: string; status: 'good' | 'warning' | 'bad' } => {
+          const config = angleRanges[angleKey]
+          if (!config) return { text: '', status: 'good' }
+          
+          const [min, max] = config.range
+          if (value >= min && value <= max) {
+            return { text: 'EXCELLENT! WITHIN ELITE RANGE', status: 'good' }
+          } else if (Math.abs(value - config.ideal) <= 15) {
+            const diff = value < min ? Math.round(min - value) : Math.round(value - max)
+            return { 
+              text: value < min ? `INCREASE BY ${diff}°` : `DECREASE BY ${diff}°`, 
+              status: 'warning' 
+            }
+          } else {
+            const diff = value < min ? Math.round(min - value) : Math.round(value - max)
+            return { 
+              text: value < min ? `TOO LOW - NEED ${diff}° MORE` : `TOO HIGH - REDUCE ${diff}°`, 
+              status: 'bad' 
+            }
+          }
+        }
+        
+        // Labels offset from body part - MOVES WITH the keypoint
         const annotationConfig: Array<{
           angleKey: string
           label: string
@@ -974,15 +1131,19 @@ function VideoFrameCanvas({ rawFrame, annotatedFrame, keypoints, ball, toggles, 
           offsetY: number
           color: string
         }> = [
-          { angleKey: 'elbow_angle', label: 'Elbow', keypointName: 'right_elbow', offsetX: -120, offsetY: -30, color: '#4ade80' },
-          { angleKey: 'right_elbow_angle', label: 'Elbow', keypointName: 'right_elbow', offsetX: -120, offsetY: -30, color: '#4ade80' },
-          { angleKey: 'knee_angle', label: 'Knee', keypointName: 'right_knee', offsetX: 30, offsetY: 20, color: '#60a5fa' },
-          { angleKey: 'right_knee_angle', label: 'Knee', keypointName: 'right_knee', offsetX: 30, offsetY: 20, color: '#60a5fa' },
-          { angleKey: 'shoulder_tilt', label: 'Shoulder', keypointName: 'right_shoulder', offsetX: 30, offsetY: -40, color: '#facc15' },
-          { angleKey: 'hip_tilt', label: 'Hip', keypointName: 'right_hip', offsetX: 30, offsetY: 10, color: '#f97316' },
+          { angleKey: 'elbow_angle', label: 'ELBOW ANGLE', keypointName: 'right_elbow', offsetX: -500, offsetY: -180, color: '#4ade80' },
+          { angleKey: 'right_elbow_angle', label: 'ELBOW ANGLE', keypointName: 'right_elbow', offsetX: -500, offsetY: -180, color: '#4ade80' },
+          { angleKey: 'knee_angle', label: 'KNEE BEND', keypointName: 'right_knee', offsetX: 350, offsetY: -200, color: '#60a5fa' },
+          { angleKey: 'right_knee_angle', label: 'KNEE BEND', keypointName: 'right_knee', offsetX: 350, offsetY: -200, color: '#60a5fa' },
+          { angleKey: 'shoulder_tilt', label: 'SHOULDER', keypointName: 'right_shoulder', offsetX: 350, offsetY: -150, color: '#facc15' },
+          { angleKey: 'hip_tilt', label: 'HIP ALIGN', keypointName: 'right_hip', offsetX: 350, offsetY: -50, color: '#f97316' },
         ]
         
-        const drawnLabels = new Set<string>() // Avoid duplicate labels
+        const drawnLabels = new Set<string>()
+        
+        // Label dimensions - wider to fit feedback comment text
+        const labelWidth = 340
+        const labelHeight = 130
         
         annotationConfig.forEach(({ angleKey, label, keypointName, offsetX, offsetY, color }) => {
           const angleValue = angles[angleKey]
@@ -991,52 +1152,147 @@ function VideoFrameCanvas({ rawFrame, annotatedFrame, keypoints, ball, toggles, 
           if (angleValue !== undefined && keypoint && !drawnLabels.has(label)) {
             drawnLabels.add(label)
             
+            // Get feedback comment
+            const feedback = getFeedback(angleKey, angleValue)
+            const feedbackColor = feedback.status === 'good' ? '#4ade80' : feedback.status === 'warning' ? '#facc15' : '#ef4444'
+            
+            // Body part position
             const kpX = keypoint.x
             const kpY = keypoint.y
-            const labelX = Math.max(10, Math.min(img.width - 150, kpX + offsetX))
-            const labelY = Math.max(30, Math.min(img.height - 30, kpY + offsetY))
             
-            // Draw line from label to keypoint
+            // Label position - offset from keypoint, MOVES WITH IT
+            const labelX = Math.max(20, Math.min(img.width - labelWidth - 20, kpX + offsetX))
+            const labelY = Math.max(20, Math.min(img.height - labelHeight - 20, kpY + offsetY))
+            
+            // Draw connecting line
             ctx.strokeStyle = color
-            ctx.lineWidth = 2
-            ctx.setLineDash([5, 3])
+            ctx.lineWidth = 3
+            ctx.shadowColor = color
+            ctx.shadowBlur = 10
             ctx.beginPath()
-            ctx.moveTo(labelX + 60, labelY)
+            ctx.moveTo(labelX + labelWidth / 2, labelY + labelHeight / 2)
             ctx.lineTo(kpX, kpY)
             ctx.stroke()
-            ctx.setLineDash([])
+            ctx.shadowBlur = 0
             
-            // Draw label background
-            const labelWidth = 120
-            const labelHeight = 45
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.85)'
+            // Draw circle at keypoint
             ctx.beginPath()
-            ctx.roundRect(labelX, labelY - 35, labelWidth, labelHeight, 8)
+            ctx.arc(kpX, kpY, 12, 0, Math.PI * 2)
+            ctx.fillStyle = color
             ctx.fill()
-            
-            // Draw label border
-            ctx.strokeStyle = color
-            ctx.lineWidth = 2
-            ctx.beginPath()
-            ctx.roundRect(labelX, labelY - 35, labelWidth, labelHeight, 8)
+            ctx.strokeStyle = 'white'
+            ctx.lineWidth = 3
             ctx.stroke()
             
-            // Draw label text
-            ctx.fillStyle = 'white'
-            ctx.font = 'bold 12px system-ui'
-            ctx.fillText(label, labelX + 8, labelY - 18)
+            // Label background
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.9)'
+            ctx.beginPath()
+            ctx.roundRect(labelX, labelY, labelWidth, labelHeight, 14)
+            ctx.fill()
             
-            // Draw angle value
+            // Label border
+            ctx.strokeStyle = color
+            ctx.lineWidth = 4
+            ctx.beginPath()
+            ctx.roundRect(labelX, labelY, labelWidth, labelHeight, 14)
+            ctx.stroke()
+            
+            // Label text - BIG (28px)
+            ctx.fillStyle = 'white'
+            ctx.font = 'bold 28px system-ui'
+            ctx.textAlign = 'left'
+            ctx.fillText(label, labelX + 16, labelY + 36)
+            
+            // Angle value - BIG (48px)
             ctx.fillStyle = color
-            ctx.font = 'bold 18px monospace'
-            ctx.fillText(`${Math.round(angleValue)}°`, labelX + 8, labelY + 2)
+            ctx.font = 'bold 48px monospace'
+            ctx.fillText(`${Math.round(angleValue)}°`, labelX + 16, labelY + 82)
+            
+            // Feedback comment
+            ctx.fillStyle = feedbackColor
+            ctx.font = 'bold 16px system-ui'
+            ctx.fillText(feedback.text, labelX + 16, labelY + 115)
           }
         })
+      }
+      
+      // ============================================
+      // SPOTLIGHT EFFECT (when zooming on body part)
+      // ============================================
+      if (spotlightTarget) {
+        // Draw dark overlay with circular cutout for spotlight
+        ctx.save()
+        
+        // Create a radial gradient for spotlight effect
+        const spotlightRadius = 120
+        const gradient = ctx.createRadialGradient(
+          spotlightTarget.x, spotlightTarget.y, 0,
+          spotlightTarget.x, spotlightTarget.y, spotlightRadius * 2
+        )
+        gradient.addColorStop(0, 'rgba(0, 0, 0, 0)')
+        gradient.addColorStop(0.5, 'rgba(0, 0, 0, 0.3)')
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0.85)')
+        
+        // Draw dark overlay
+        ctx.fillStyle = gradient
+        ctx.fillRect(0, 0, img.width, img.height)
+        
+        // Draw glowing ring around spotlight
+        ctx.beginPath()
+        ctx.arc(spotlightTarget.x, spotlightTarget.y, spotlightRadius, 0, Math.PI * 2)
+        ctx.strokeStyle = '#FFD700'
+        ctx.lineWidth = 6
+        ctx.shadowColor = '#FFD700'
+        ctx.shadowBlur = 30
+        ctx.stroke()
+        ctx.shadowBlur = 0
+        
+        // Draw inner ring
+        ctx.beginPath()
+        ctx.arc(spotlightTarget.x, spotlightTarget.y, spotlightRadius - 15, 0, Math.PI * 2)
+        ctx.strokeStyle = 'rgba(255, 215, 0, 0.5)'
+        ctx.lineWidth = 3
+        ctx.stroke()
+        
+        ctx.restore()
+      }
+      
+      // ============================================
+      // PHASE INDICATOR (bottom left, video game style)
+      // ============================================
+      if (phase) {
+        const phaseWidth = 220
+        const phaseHeight = 60
+        const phaseX = 25
+        const phaseY = img.height - phaseHeight - 25
+        
+        // Background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.9)'
+        ctx.beginPath()
+        ctx.roundRect(phaseX, phaseY, phaseWidth, phaseHeight, 12)
+        ctx.fill()
+        
+        // Border
+        ctx.strokeStyle = '#a855f7'
+        ctx.lineWidth = 3
+        ctx.beginPath()
+        ctx.roundRect(phaseX, phaseY, phaseWidth, phaseHeight, 12)
+        ctx.stroke()
+        
+        // Phase text
+        ctx.fillStyle = '#a855f7'
+        ctx.font = 'bold 14px system-ui'
+        ctx.textAlign = 'left'
+        ctx.fillText('PHASE', phaseX + 15, phaseY + 22)
+        
+        ctx.fillStyle = 'white'
+        ctx.font = 'bold 28px system-ui'
+        ctx.fillText(phase.toUpperCase(), phaseX + 15, phaseY + 50)
       }
     }
     
     img.src = `data:image/jpeg;base64,${frameToUse}`
-  }, [rawFrame, annotatedFrame, keypoints, ball, toggles, phase, timestamp, angles])
+  }, [rawFrame, annotatedFrame, keypoints, ball, toggles, phase, timestamp, angles, playerGlow, glowColor, glowIntensity, motionTrails, previousKeypoints, WIREFRAME_OFFSET_X, WIREFRAME_OFFSET_Y, zoomTarget, spotlightTarget])
   
   return (
     <canvas
@@ -1288,7 +1544,25 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
   const [currentFrame, setCurrentFrame] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [hasStartedPlaying, setHasStartedPlaying] = useState(false) // For cover screen
+  const [isFullscreen, setIsFullscreen] = useState(false)
   const playIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const sequenceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const videoContainerRef = useRef<HTMLDivElement>(null)
+  
+  // Video sequence state
+  type SequencePhase = 'initial' | 'firstPlaythrough' | 'labelZoom' | 'bodyPartZoom' | 'slowMo' | 'complete'
+  const [sequencePhase, setSequencePhase] = useState<SequencePhase>('initial')
+  const [currentAnnotationIndex, setCurrentAnnotationIndex] = useState(0)
+  const [zoomTarget, setZoomTarget] = useState<{ x: number; y: number; scale: number } | null>(null)
+  const [spotlightTarget, setSpotlightTarget] = useState<{ x: number; y: number } | null>(null)
+  
+  // Annotation labels for the sequence
+  const annotationLabels = [
+    { label: 'ELBOW ANGLE', keypointName: 'right_elbow' },
+    { label: 'KNEE BEND', keypointName: 'right_knee' },
+    { label: 'SHOULDER', keypointName: 'right_shoulder' },
+    { label: 'HIP ALIGN', keypointName: 'right_hip' },
+  ]
   
   // Overlay toggle state
   const [overlayToggles, setOverlayToggles] = useState<OverlayToggles>({
@@ -1298,26 +1572,173 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
     basketball: true
   })
   
+  // Clear all timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (playIntervalRef.current) clearInterval(playIntervalRef.current)
+      if (sequenceTimeoutRef.current) clearTimeout(sequenceTimeoutRef.current)
+    }
+  }, [])
+  
+  // Fullscreen toggle function
+  const toggleFullscreen = () => {
+    if (!videoContainerRef.current) return
+    
+    if (!document.fullscreenElement) {
+      videoContainerRef.current.requestFullscreen().then(() => {
+        setIsFullscreen(true)
+      }).catch(err => {
+        console.error('Error entering fullscreen:', err)
+      })
+    } else {
+      document.exitFullscreen().then(() => {
+        setIsFullscreen(false)
+      }).catch(err => {
+        console.error('Error exiting fullscreen:', err)
+      })
+    }
+  }
+  
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement)
+    }
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
+  }, [])
+  
+  // Video sequence controller
+  useEffect(() => {
+    if (!videoData?.annotatedFramesBase64?.length) return
+    
+    const totalFrames = videoData.annotatedFramesBase64.length
+    const fps = videoData.fps || 10
+    
+    // Handle sequence phases
+    if (sequencePhase === 'firstPlaythrough' && isPlaying) {
+      // Normal playback - when it ends, move to label zoom
+      // This is handled in the frame advancement logic below
+    }
+    
+    if (sequencePhase === 'labelZoom') {
+      // Zoom in on current label for 4 seconds
+      const annotation = annotationLabels[currentAnnotationIndex]
+      if (annotation) {
+        // Get keypoint position for this annotation
+        const releaseFrame = videoData.phases?.find(p => p.phase === 'Release' || p.phase === 'RELEASE')?.frame ?? Math.floor(totalFrames / 2)
+        const keypoints = videoData.allKeypoints?.[releaseFrame] || (videoData.frameData?.[releaseFrame] as any)?.keypoints
+        
+        if (keypoints && keypoints[annotation.keypointName]) {
+          // Calculate label position (same offsets as in VideoFrameCanvas)
+          const offsets: Record<string, { x: number; y: number }> = {
+            'right_elbow': { x: -500, y: -180 },
+            'right_knee': { x: 350, y: -200 },
+            'right_shoulder': { x: 350, y: -150 },
+            'right_hip': { x: 350, y: -50 },
+          }
+          const offset = offsets[annotation.keypointName] || { x: 0, y: 0 }
+          const kp = keypoints[annotation.keypointName]
+          
+          // Set zoom target to label position
+          setZoomTarget({
+            x: kp.x + offset.x + 170, // Center of label
+            y: kp.y + offset.y + 65,
+            scale: 2.5
+          })
+          setSpotlightTarget(null)
+          setCurrentFrame(releaseFrame)
+        }
+        
+        // After 4 seconds, pan to body part
+        sequenceTimeoutRef.current = setTimeout(() => {
+          setSequencePhase('bodyPartZoom')
+        }, 4000)
+      }
+    }
+    
+    if (sequencePhase === 'bodyPartZoom') {
+      // Zoom in on body part with spotlight for 2 seconds
+      const annotation = annotationLabels[currentAnnotationIndex]
+      if (annotation) {
+        const releaseFrame = videoData.phases?.find(p => p.phase === 'Release' || p.phase === 'RELEASE')?.frame ?? Math.floor(totalFrames / 2)
+        const keypoints = videoData.allKeypoints?.[releaseFrame] || (videoData.frameData?.[releaseFrame] as any)?.keypoints
+        
+        if (keypoints && keypoints[annotation.keypointName]) {
+          const kp = keypoints[annotation.keypointName]
+          
+          // Set zoom target to body part
+          setZoomTarget({
+            x: kp.x,
+            y: kp.y,
+            scale: 3
+          })
+          // Set spotlight on body part
+          setSpotlightTarget({
+            x: kp.x,
+            y: kp.y
+          })
+        }
+        
+        // After 2 seconds, move to next annotation or slow-mo
+        sequenceTimeoutRef.current = setTimeout(() => {
+          if (currentAnnotationIndex < annotationLabels.length - 1) {
+            setCurrentAnnotationIndex(prev => prev + 1)
+            setSequencePhase('labelZoom')
+          } else {
+            // All annotations done, start slow-mo
+            setSequencePhase('slowMo')
+            setZoomTarget(null)
+            setSpotlightTarget(null)
+            setCurrentFrame(0)
+          }
+        }, 2000)
+      }
+    }
+    
+    if (sequencePhase === 'slowMo') {
+      // Play slow-mo from start to finish
+      setIsPlaying(true)
+    }
+    
+  }, [sequencePhase, currentAnnotationIndex, videoData, annotationLabels])
+  
   // Auto-play functionality for video player
   useEffect(() => {
     if (isPlaying && videoData?.annotatedFramesBase64?.length) {
+      // Determine playback speed based on sequence phase
+      const fps = videoData?.fps || 10
+      const playbackSpeed = sequencePhase === 'slowMo' ? fps * 4 : fps // 4x slower for slow-mo
+      
       playIntervalRef.current = setInterval(() => {
         setCurrentFrame(prev => {
           const nextFrame = prev + 1
           if (nextFrame >= (videoData?.annotatedFramesBase64?.length || 0)) {
             setIsPlaying(false)
+            
+            // Handle end of playthrough based on sequence phase
+            if (sequencePhase === 'firstPlaythrough') {
+              // First playthrough complete - start label zoom sequence
+              setCurrentFrame(0)
+              setCurrentAnnotationIndex(0)
+              setSequencePhase('labelZoom')
+            } else if (sequencePhase === 'slowMo') {
+              // Slow-mo complete - sequence is done
+              setSequencePhase('complete')
+            }
+            
             return 0
           }
           return nextFrame
         })
-      }, 1000 / (videoData?.fps || 10))
+      }, 1000 / playbackSpeed)
     } else if (playIntervalRef.current) {
       clearInterval(playIntervalRef.current)
     }
     return () => {
       if (playIntervalRef.current) clearInterval(playIntervalRef.current)
     }
-  }, [isPlaying, videoData?.annotatedFramesBase64?.length, videoData?.fps])
+  }, [isPlaying, videoData?.annotatedFramesBase64?.length, videoData?.fps, sequencePhase])
   
   // If no video data, just render ImageModeContent
   if (!videoData || !videoData.annotatedFramesBase64 || videoData.annotatedFramesBase64.length === 0) {
@@ -1362,9 +1783,22 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
         
         {/* Video Player */}
         <div className="max-w-3xl mx-auto">
-          <div className="bg-[#1a1a1a] rounded-xl overflow-hidden shadow-2xl">
+          <div ref={videoContainerRef} className="bg-[#1a1a1a] rounded-xl overflow-hidden shadow-2xl">
             {/* Frame Display with Canvas for Toggle Control */}
-            <div className="relative aspect-video bg-black flex items-center justify-center">
+            <div 
+              className="relative aspect-video bg-black flex items-center justify-center overflow-hidden"
+              style={{
+                // Apply zoom transform when zoomTarget is set
+                ...(zoomTarget ? {
+                  transform: `scale(${zoomTarget.scale})`,
+                  transformOrigin: `${(zoomTarget.x / 640) * 100}% ${(zoomTarget.y / 480) * 100}%`,
+                  transition: 'transform 0.8s ease-in-out'
+                } : {
+                  transform: 'scale(1)',
+                  transition: 'transform 0.8s ease-in-out'
+                })
+              }}
+            >
               {/* Video frame canvas - shows annotated frame with overlays */}
               {(() => {
                 const frameIdx = hasStartedPlaying ? currentFrame : releaseFrameIndex
@@ -1387,6 +1821,8 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
                     phase={framePhase}
                     timestamp={frameTimestamp}
                     angles={frameMetrics}
+                    zoomTarget={zoomTarget}
+                    spotlightTarget={spotlightTarget}
                   />
                 )
               })()}
@@ -1398,6 +1834,7 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
                     onClick={() => {
                       setHasStartedPlaying(true)
                       setIsPlaying(true)
+                      setSequencePhase('firstPlaythrough')
                     }}
                     className="p-6 rounded-full bg-[#FFD700] hover:bg-[#E5C100] text-black transition-all transform hover:scale-110 shadow-2xl"
                   >
@@ -1409,6 +1846,18 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
                       Click to Play Walkthrough
                     </span>
                   </div>
+                </div>
+              )}
+              
+              {/* Sequence phase indicator */}
+              {hasStartedPlaying && sequencePhase !== 'initial' && sequencePhase !== 'complete' && (
+                <div className="absolute top-4 left-4 bg-black/80 px-3 py-2 rounded-lg">
+                  <span className="text-[#FFD700] text-sm font-bold">
+                    {sequencePhase === 'firstPlaythrough' && 'PLAYING...'}
+                    {sequencePhase === 'labelZoom' && `ANALYZING: ${annotationLabels[currentAnnotationIndex]?.label}`}
+                    {sequencePhase === 'bodyPartZoom' && 'BODY PART FOCUS'}
+                    {sequencePhase === 'slowMo' && 'SLOW MOTION REPLAY'}
+                  </span>
                 </div>
               )}
             </div>
@@ -1482,14 +1931,33 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
                   </button>
                 </div>
-                {/* Frame counter - Regular size (timer inside video is bigger) */}
-                <div className="bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-3 py-2">
-                  <div className="text-white font-mono text-sm">
-                    Frame <span className="text-[#FFD700]">{currentFrame + 1}</span> / {totalFrames}
+                <div className="flex items-center gap-3">
+                  {/* Frame counter - Regular size (timer inside video is bigger) */}
+                  <div className="bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-3 py-2">
+                    <div className="text-white font-mono text-sm">
+                      Frame <span className="text-[#FFD700]">{currentFrame + 1}</span> / {totalFrames}
+                    </div>
+                    <div className="text-[#888] font-mono text-xs">
+                      {currentTimestamp.toFixed(2)}s
+                    </div>
                   </div>
-                  <div className="text-[#888] font-mono text-xs">
-                    {currentTimestamp.toFixed(2)}s
-                  </div>
+                  
+                  {/* Fullscreen button */}
+                  <button 
+                    onClick={toggleFullscreen}
+                    className="p-2 rounded-lg bg-[#3a3a3a] hover:bg-[#4a4a4a] text-white transition-colors"
+                    title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+                  >
+                    {isFullscreen ? (
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
+                      </svg>
+                    ) : (
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+                      </svg>
+                    )}
+                  </button>
                 </div>
               </div>
             </div>

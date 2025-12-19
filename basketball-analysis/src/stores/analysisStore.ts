@@ -67,7 +67,7 @@ export interface ShotBreakdownFrame {
 // Video analysis data for frame-by-frame playback
 export interface VideoAnalysisData {
   annotatedFramesBase64: string[]
-  rawFramesBase64?: string[] // Optional raw frames without annotations
+  rawFramesBase64?: string[]
   frameCount: number
   duration: number
   fps: number
@@ -85,24 +85,7 @@ export interface VideoAnalysisData {
     metrics: Record<string, number>
     ball?: { x: number; y: number; radius: number }
   }>
-  // Keypoints for each frame (for drawing overlays)
   allKeypoints?: Array<Record<string, { x: number; y: number; confidence: number }>>
-}
-
-// Session data structure for IMAGE or VIDEO mode
-interface SessionData {
-  uploadedFile: File | null
-  mediaPreviewUrl: string | null
-  uploadedImageBase64: string | null
-  teaserFrames: ShotBreakdownFrame[]
-  fullFrames: ShotBreakdownFrame[]
-  allUploadedUrls: string[]
-  detectedKeypoints: DetectedKeypoint[]
-  poseConfidence: number
-  formAnalysisResult: FormAnalysisResult | null
-  visionAnalysisResult: VisionAnalysisResult | null
-  roboflowBallDetection: RoboflowBallDetection | null
-  videoAnalysisData: VideoAnalysisData | null
 }
 
 interface AnalysisState {
@@ -110,12 +93,16 @@ interface AnalysisState {
   currentAnalysis: AnalysisResult | null
   analysisHistory: AnalysisResult[]
 
-  // SEPARATE session data for IMAGE and VIDEO modes
-  imageSessionData: SessionData
-  videoSessionData: SessionData
-  
-  // Current media type (which tab is active)
+  // Upload state
+  uploadedFile: File | null
   mediaType: MediaType
+  mediaPreviewUrl: string | null
+  uploadedImageBase64: string | null
+
+  // Shot breakdown strip frames
+  teaserFrames: ShotBreakdownFrame[]
+  fullFrames: ShotBreakdownFrame[]
+  allUploadedUrls: string[]
 
   // Player profile
   playerProfile: PlayerProfile
@@ -123,14 +110,25 @@ interface AnalysisState {
   // Selected report tier
   reportTier: ReportTier
 
+  // Pose detection results
+  detectedKeypoints: DetectedKeypoint[]
+  poseConfidence: number
+  formAnalysisResult: FormAnalysisResult | null
+
+  // Vision AI analysis result
+  visionAnalysisResult: VisionAnalysisResult | null
+
+  // Roboflow basketball detection
+  roboflowBallDetection: RoboflowBallDetection | null
+
+  // Video analysis data (for video mode)
+  videoAnalysisData: VideoAnalysisData | null
+
   // UI state
   isAnalyzing: boolean
   analysisProgress: number
   error: string | null
 
-  // Getters for current session data (based on mediaType)
-  getCurrentSessionData: () => SessionData
-  
   // Actions
   setUploadedFile: (file: File | null) => void
   setMediaType: (type: MediaType) => void
@@ -154,20 +152,6 @@ interface AnalysisState {
   setVideoAnalysisData: (data: VideoAnalysisData | null) => void
   resetUpload: () => void
   resetAll: () => void
-  
-  // Legacy getters for backwards compatibility (returns data from current session)
-  uploadedFile: File | null
-  mediaPreviewUrl: string | null
-  uploadedImageBase64: string | null
-  teaserFrames: ShotBreakdownFrame[]
-  fullFrames: ShotBreakdownFrame[]
-  allUploadedUrls: string[]
-  detectedKeypoints: DetectedKeypoint[]
-  poseConfidence: number
-  formAnalysisResult: FormAnalysisResult | null
-  visionAnalysisResult: VisionAnalysisResult | null
-  roboflowBallDetection: RoboflowBallDetection | null
-  videoAnalysisData: VideoAnalysisData | null
 }
 
 const initialPlayerProfile: PlayerProfile = {
@@ -182,147 +166,53 @@ const initialPlayerProfile: PlayerProfile = {
   bodyType: undefined,
 }
 
-const initialSessionData: SessionData = {
-  uploadedFile: null,
-  mediaPreviewUrl: null,
-  uploadedImageBase64: null,
-  teaserFrames: [],
-  fullFrames: [],
-  allUploadedUrls: [],
-  detectedKeypoints: [],
-  poseConfidence: 0,
-  formAnalysisResult: null,
-  visionAnalysisResult: null,
-  roboflowBallDetection: null,
-  videoAnalysisData: null,
-}
-
 export const useAnalysisStore = create<AnalysisState>()(
   devtools(
     persist(
-      (set, get) => ({
+      (set) => ({
         // Initial state
         currentAnalysis: null,
         analysisHistory: [],
-        
-        // SEPARATE session data for IMAGE and VIDEO
-        imageSessionData: { ...initialSessionData },
-        videoSessionData: { ...initialSessionData },
-        
+        uploadedFile: null,
         mediaType: "IMAGE",
+        mediaPreviewUrl: null,
+        uploadedImageBase64: null,
+        teaserFrames: [],
+        fullFrames: [],
+        allUploadedUrls: [],
         playerProfile: initialPlayerProfile,
         reportTier: "BASIC",
+        detectedKeypoints: [],
+        poseConfidence: 0,
+        formAnalysisResult: null,
+        visionAnalysisResult: null,
+        roboflowBallDetection: null,
+        videoAnalysisData: null,
         isAnalyzing: false,
         analysisProgress: 0,
         error: null,
-        
-        // Legacy getters - return data from current session based on mediaType
-        get uploadedFile() { 
-          const state = get()
-          return state.mediaType === "VIDEO" ? state.videoSessionData.uploadedFile : state.imageSessionData.uploadedFile 
-        },
-        get mediaPreviewUrl() { 
-          const state = get()
-          return state.mediaType === "VIDEO" ? state.videoSessionData.mediaPreviewUrl : state.imageSessionData.mediaPreviewUrl 
-        },
-        get uploadedImageBase64() { 
-          const state = get()
-          return state.mediaType === "VIDEO" ? state.videoSessionData.uploadedImageBase64 : state.imageSessionData.uploadedImageBase64 
-        },
-        get teaserFrames() { 
-          const state = get()
-          return state.mediaType === "VIDEO" ? state.videoSessionData.teaserFrames : state.imageSessionData.teaserFrames 
-        },
-        get fullFrames() { 
-          const state = get()
-          return state.mediaType === "VIDEO" ? state.videoSessionData.fullFrames : state.imageSessionData.fullFrames 
-        },
-        get allUploadedUrls() { 
-          const state = get()
-          return state.mediaType === "VIDEO" ? state.videoSessionData.allUploadedUrls : state.imageSessionData.allUploadedUrls 
-        },
-        get detectedKeypoints() { 
-          const state = get()
-          return state.mediaType === "VIDEO" ? state.videoSessionData.detectedKeypoints : state.imageSessionData.detectedKeypoints 
-        },
-        get poseConfidence() { 
-          const state = get()
-          return state.mediaType === "VIDEO" ? state.videoSessionData.poseConfidence : state.imageSessionData.poseConfidence 
-        },
-        get formAnalysisResult() { 
-          const state = get()
-          return state.mediaType === "VIDEO" ? state.videoSessionData.formAnalysisResult : state.imageSessionData.formAnalysisResult 
-        },
-        get visionAnalysisResult() { 
-          const state = get()
-          return state.mediaType === "VIDEO" ? state.videoSessionData.visionAnalysisResult : state.imageSessionData.visionAnalysisResult 
-        },
-        get roboflowBallDetection() { 
-          const state = get()
-          return state.mediaType === "VIDEO" ? state.videoSessionData.roboflowBallDetection : state.imageSessionData.roboflowBallDetection 
-        },
-        get videoAnalysisData() { 
-          const state = get()
-          return state.mediaType === "VIDEO" ? state.videoSessionData.videoAnalysisData : state.imageSessionData.videoAnalysisData 
-        },
-        
-        // Getter for current session data
-        getCurrentSessionData: () => {
-          const state = get()
-          return state.mediaType === "VIDEO" ? state.videoSessionData : state.imageSessionData
-        },
 
-        // Actions - update the appropriate session based on mediaType
+        // Actions
         setUploadedFile: (file) =>
-          set((state) => {
-            if (state.mediaType === "VIDEO") {
-              return { videoSessionData: { ...state.videoSessionData, uploadedFile: file } }
-            }
-            return { imageSessionData: { ...state.imageSessionData, uploadedFile: file } }
-          }, false, "setUploadedFile"),
+          set({ uploadedFile: file }, false, "setUploadedFile"),
 
         setMediaType: (type) =>
           set({ mediaType: type }, false, "setMediaType"),
 
         setMediaPreviewUrl: (url) =>
-          set((state) => {
-            if (state.mediaType === "VIDEO") {
-              return { videoSessionData: { ...state.videoSessionData, mediaPreviewUrl: url } }
-            }
-            return { imageSessionData: { ...state.imageSessionData, mediaPreviewUrl: url } }
-          }, false, "setMediaPreviewUrl"),
+          set({ mediaPreviewUrl: url }, false, "setMediaPreviewUrl"),
 
         setUploadedImageBase64: (base64) =>
-          set((state) => {
-            if (state.mediaType === "VIDEO") {
-              return { videoSessionData: { ...state.videoSessionData, uploadedImageBase64: base64 } }
-            }
-            return { imageSessionData: { ...state.imageSessionData, uploadedImageBase64: base64 } }
-          }, false, "setUploadedImageBase64"),
+          set({ uploadedImageBase64: base64 }, false, "setUploadedImageBase64"),
 
         setTeaserFrames: (frames) =>
-          set((state) => {
-            if (state.mediaType === "VIDEO") {
-              return { videoSessionData: { ...state.videoSessionData, teaserFrames: frames } }
-            }
-            return { imageSessionData: { ...state.imageSessionData, teaserFrames: frames } }
-          }, false, "setTeaserFrames"),
+          set({ teaserFrames: frames }, false, "setTeaserFrames"),
 
         setFullFrames: (frames) =>
-          set((state) => {
-            if (state.mediaType === "VIDEO") {
-              return { videoSessionData: { ...state.videoSessionData, fullFrames: frames } }
-            }
-            return { imageSessionData: { ...state.imageSessionData, fullFrames: frames } }
-          }, false, "setFullFrames"),
+          set({ fullFrames: frames }, false, "setFullFrames"),
 
         setAllUploadedUrls: (urls) =>
-          set((state) => {
-            if (state.mediaType === "VIDEO") {
-              return { videoSessionData: { ...state.videoSessionData, allUploadedUrls: urls } }
-            }
-            return { imageSessionData: { ...state.imageSessionData, allUploadedUrls: urls } }
-          }, false, "setAllUploadedUrls"),
+          set({ allUploadedUrls: urls }, false, "setAllUploadedUrls"),
 
         setPlayerProfile: (profile) =>
           set(
@@ -357,71 +247,63 @@ export const useAnalysisStore = create<AnalysisState>()(
         setError: (error) => set({ error }, false, "setError"),
 
         setDetectedKeypoints: (keypoints) =>
-          set((state) => {
-            if (state.mediaType === "VIDEO") {
-              return { videoSessionData: { ...state.videoSessionData, detectedKeypoints: keypoints } }
-            }
-            return { imageSessionData: { ...state.imageSessionData, detectedKeypoints: keypoints } }
-          }, false, "setDetectedKeypoints"),
+          set({ detectedKeypoints: keypoints }, false, "setDetectedKeypoints"),
 
         setPoseConfidence: (confidence) =>
-          set((state) => {
-            if (state.mediaType === "VIDEO") {
-              return { videoSessionData: { ...state.videoSessionData, poseConfidence: confidence } }
-            }
-            return { imageSessionData: { ...state.imageSessionData, poseConfidence: confidence } }
-          }, false, "setPoseConfidence"),
+          set({ poseConfidence: confidence }, false, "setPoseConfidence"),
 
         setFormAnalysisResult: (result) =>
-          set((state) => {
-            if (state.mediaType === "VIDEO") {
-              return { videoSessionData: { ...state.videoSessionData, formAnalysisResult: result } }
-            }
-            return { imageSessionData: { ...state.imageSessionData, formAnalysisResult: result } }
-          }, false, "setFormAnalysisResult"),
+          set({ formAnalysisResult: result }, false, "setFormAnalysisResult"),
 
         setVisionAnalysisResult: (result) =>
-          set((state) => {
-            if (state.mediaType === "VIDEO") {
-              return { videoSessionData: { ...state.videoSessionData, visionAnalysisResult: result } }
-            }
-            return { imageSessionData: { ...state.imageSessionData, visionAnalysisResult: result } }
-          }, false, "setVisionAnalysisResult"),
+          set({ visionAnalysisResult: result }, false, "setVisionAnalysisResult"),
 
         setRoboflowBallDetection: (detection) =>
-          set((state) => {
-            if (state.mediaType === "VIDEO") {
-              return { videoSessionData: { ...state.videoSessionData, roboflowBallDetection: detection } }
-            }
-            return { imageSessionData: { ...state.imageSessionData, roboflowBallDetection: detection } }
-          }, false, "setRoboflowBallDetection"),
+          set({ roboflowBallDetection: detection }, false, "setRoboflowBallDetection"),
 
         setVideoAnalysisData: (data) =>
-          set((state) => {
-            if (state.mediaType === "VIDEO") {
-              return { videoSessionData: { ...state.videoSessionData, videoAnalysisData: data } }
-            }
-            return { imageSessionData: { ...state.imageSessionData, videoAnalysisData: data } }
-          }, false, "setVideoAnalysisData"),
+          set({ videoAnalysisData: data }, false, "setVideoAnalysisData"),
 
         resetUpload: () =>
-          set((state) => {
-            const resetData = { ...initialSessionData }
-            if (state.mediaType === "VIDEO") {
-              return { videoSessionData: resetData, error: null }
-            }
-            return { imageSessionData: resetData, error: null }
-          }, false, "resetUpload"),
+          set(
+            {
+              uploadedFile: null,
+              mediaPreviewUrl: null,
+              uploadedImageBase64: null,
+              teaserFrames: [],
+              fullFrames: [],
+              allUploadedUrls: [],
+              detectedKeypoints: [],
+              poseConfidence: 0,
+              formAnalysisResult: null,
+              visionAnalysisResult: null,
+              roboflowBallDetection: null,
+              videoAnalysisData: null,
+              error: null,
+            },
+            false,
+            "resetUpload"
+          ),
 
         resetAll: () =>
           set(
             {
               currentAnalysis: null,
-              imageSessionData: { ...initialSessionData },
-              videoSessionData: { ...initialSessionData },
+              uploadedFile: null,
               mediaType: "IMAGE",
+              mediaPreviewUrl: null,
+              uploadedImageBase64: null,
+              teaserFrames: [],
+              fullFrames: [],
+              allUploadedUrls: [],
               playerProfile: initialPlayerProfile,
               reportTier: "BASIC",
+              detectedKeypoints: [],
+              poseConfidence: 0,
+              formAnalysisResult: null,
+              visionAnalysisResult: null,
+              roboflowBallDetection: null,
+              videoAnalysisData: null,
               isAnalyzing: false,
               analysisProgress: 0,
               error: null,
@@ -432,14 +314,11 @@ export const useAnalysisStore = create<AnalysisState>()(
       }),
       {
         name: "basketball-analysis-storage",
-        // Only persist small data - DO NOT persist large video/image data
         partialize: (state) => ({
-          analysisHistory: state.analysisHistory.slice(0, 10), // Keep only last 10 sessions
+          analysisHistory: state.analysisHistory,
           playerProfile: state.playerProfile,
-          // Don't persist imageSessionData or videoSessionData - they contain huge base64 data
         }),
       }
     )
   )
 )
-

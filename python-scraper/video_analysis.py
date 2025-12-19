@@ -333,22 +333,14 @@ def analyze_video(video_path, target_fps=10):
             max_elbow = m.get('elbow_angle', 0)
             release_frame = i
     
-    # Generate annotated frames as base64 images
+    # Generate RAW frames as base64 images (NO skeleton - frontend will draw it)
     annotated_frames_base64 = []
     for i, frame in enumerate(frames):
-        keypoints = all_keypoints[i] if i < len(all_keypoints) else {}
-        phase = all_phases[i] if i < len(all_phases) else None
-        
-        # Draw skeleton on frame
-        annotated = draw_skeleton_on_frame(frame, keypoints, phase)
-        
-        # Add timestamp to frame
-        timestamp = i / target_fps
-        cv2.putText(annotated, f"{timestamp:.2f}s", (annotated.shape[1] - 120, 30), 
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+        # DON'T draw skeleton - frontend handles this with offset and effects
+        # Just return the raw frame
         
         # Convert to base64
-        _, buffer = cv2.imencode('.jpg', annotated, [cv2.IMWRITE_JPEG_QUALITY, 85])
+        _, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
         frame_base64 = base64.b64encode(buffer).decode('utf-8')
         annotated_frames_base64.append(frame_base64)
     
