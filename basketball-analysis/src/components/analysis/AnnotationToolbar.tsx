@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useRef, useCallback, useEffect } from "react"
+import React, { useState } from "react"
 import { 
   MousePointer2, 
   MoveRight, 
@@ -17,7 +17,6 @@ import {
   Zap,
   Eye,
   EyeOff,
-  Settings2,
   Download
 } from "lucide-react"
 

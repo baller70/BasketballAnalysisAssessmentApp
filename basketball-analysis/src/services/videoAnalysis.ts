@@ -63,7 +63,11 @@ export interface VideoAnalysisResult {
     metrics: Record<string, number>
     keypoint_count: number
     ball_detected: boolean
+    keypoints?: Record<string, { x: number; y: number; confidence: number }>
   }>
+  
+  // All keypoints for all frames (for overlay rendering)
+  all_keypoints?: Array<Record<string, { x: number; y: number; confidence: number }>>
   
   // The 3 key screenshots for session creation
   key_screenshots?: KeyScreenshot[]
