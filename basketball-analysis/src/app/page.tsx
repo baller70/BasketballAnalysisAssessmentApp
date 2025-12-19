@@ -1,7 +1,7 @@
 "use client"
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import React, { useState, useRef, useEffect } from "react"
+import React, { useState, useRef, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Upload, User, Sparkles, Video, Image as ImageIcon, ChevronDown } from "lucide-react"
 import { MediaUpload } from "@/components/upload/MediaUpload"
@@ -21,7 +21,16 @@ import { cn } from "@/lib/utils"
 
 type MediaType = "image" | "video"
 
+// Wrapper component to handle Suspense for useSearchParams
 export default function Home() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center"><div className="text-[#FFD700] text-xl">Loading...</div></div>}>
+      <HomeContent />
+    </Suspense>
+  )
+}
+
+function HomeContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [mediaType, setMediaType] = useState<MediaType>("image")
