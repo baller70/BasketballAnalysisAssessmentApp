@@ -432,11 +432,11 @@ export const useAnalysisStore = create<AnalysisState>()(
       }),
       {
         name: "basketball-analysis-storage",
+        // Only persist small data - DO NOT persist large video/image data
         partialize: (state) => ({
-          analysisHistory: state.analysisHistory,
+          analysisHistory: state.analysisHistory.slice(0, 10), // Keep only last 10 sessions
           playerProfile: state.playerProfile,
-          imageSessionData: state.imageSessionData,
-          videoSessionData: state.videoSessionData,
+          // Don't persist imageSessionData or videoSessionData - they contain huge base64 data
         }),
       }
     )
