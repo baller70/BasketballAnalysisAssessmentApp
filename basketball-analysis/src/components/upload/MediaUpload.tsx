@@ -1,5 +1,12 @@
 "use client"
 
+// #region agent log
+const DEBUG_VERSION = "v2024-12-19-LATEST";
+const debugLog = (location: string, message: string, data: Record<string, unknown>, hypothesisId: string) => {
+  fetch('http://127.0.0.1:7243/ingest/4f306913-318f-4a0c-bd40-bb3fb22bd959',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location,message,data:{...data,DEBUG_VERSION},timestamp:Date.now(),sessionId:'debug-session',hypothesisId})}).catch(()=>{});
+};
+// #endregion
+
 import React, { useCallback, useEffect, useState } from "react"
 import { AlertTriangle, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -32,7 +39,8 @@ export function MediaUpload() {
     { label: "Angle 7", file: null, url: null },
   ])
 
-  // Ensure no preloaded media shows up on mount
+  // Ensure no preloaded media shows up on INITIAL mount only
+  // Using empty dependency array to run only once
   useEffect(() => {
     setUploadedFile(null)
     setMediaPreviewUrl(null)
@@ -40,8 +48,17 @@ export function MediaUpload() {
     setTeaserFrames([])
     setFullFrames([])
     setShotError(null)
-    setAngleSlots((prev) => prev.map((slot) => ({ ...slot, file: null, url: null })))
-  }, [setMediaPreviewUrl, setUploadedFile])
+    setAngleSlots([
+      { label: "Angle 1", file: null, url: null },
+      { label: "Angle 2", file: null, url: null },
+      { label: "Angle 3", file: null, url: null },
+      { label: "Angle 4", file: null, url: null },
+      { label: "Angle 5", file: null, url: null },
+      { label: "Angle 6", file: null, url: null },
+      { label: "Angle 7", file: null, url: null },
+    ])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])  // Empty array = run only on initial mount
 
   const clearShotBreakdown = () => {
     shotImages.forEach((img) => URL.revokeObjectURL(img.url))
@@ -188,6 +205,7 @@ export function MediaUpload() {
               {angleSlots.map((slot, idx) => (
                 <label
                   key={slot.label}
+                  htmlFor={`angle-slot-${idx}`}
                   className={cn(
                     "border rounded-md p-3 text-xs bg-[#1f1f1f] flex flex-col items-center gap-2 cursor-pointer transition-colors",
                     slot.file ? "border-green-500/60 bg-green-500/10" : "border-[#3a3a3a] hover:border-[#FFD700]/60"
@@ -195,12 +213,19 @@ export function MediaUpload() {
                 >
                   <span className="font-semibold text-[#FFD700]">{slot.label}</span>
                   <input
+                    id={`angle-slot-${idx}`}
                     type="file"
                     accept="image/*"
-                    className="hidden"
+                    className="sr-only"
                     onChange={async (e) => {
+                      // #region agent log
+                      debugLog('MediaUpload.tsx:onChange', 'File input changed', { slotIdx: idx, hasFiles: !!e.target.files?.length }, 'B');
+                      // #endregion
                       const file = e.target.files?.[0]
                       if (!file) return
+                      // #region agent log
+                      debugLog('MediaUpload.tsx:onChange', 'File selected', { fileName: file.name, fileSize: file.size, slotIdx: idx }, 'B');
+                      // #endregion
                       const next = [...angleSlots]
                       if (next[idx].url) URL.revokeObjectURL(next[idx].url as string)
                       next[idx] = { ...next[idx], file, url: URL.createObjectURL(file) }

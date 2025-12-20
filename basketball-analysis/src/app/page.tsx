@@ -1,6 +1,13 @@
 "use client"
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+// #region agent log
+const DEBUG_VERSION = "v2024-12-19-LATEST";
+const debugLog = (location: string, message: string, data: Record<string, unknown>, hypothesisId: string) => {
+  fetch('http://127.0.0.1:7243/ingest/4f306913-318f-4a0c-bd40-bb3fb22bd959',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location,message,data:{...data,DEBUG_VERSION},timestamp:Date.now(),sessionId:'debug-session',hypothesisId})}).catch(()=>{});
+};
+// #endregion
+
 import React, { useState, useRef, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Upload, User, Sparkles, Video, Image as ImageIcon, ChevronDown } from "lucide-react"
