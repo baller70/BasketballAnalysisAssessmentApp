@@ -40,10 +40,10 @@ export default function RootLayout({
         <meta httpEquiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
         <meta httpEquiv="Pragma" content="no-cache" />
         <meta httpEquiv="Expires" content="0" />
-        {/* Unique version tag - updates with each build */}
-        <meta name="version" content={`v-${Date.now()}`} />
-        {/* Cache clearing script */}
-        <Script src="/clear-cache.js" strategy="beforeInteractive" />
+        {/* Static version tag - only change this when deploying new versions */}
+        <meta name="version" content="v-2024-12-19-stable" />
+        {/* DISABLED: Cache clearing script was causing infinite reload loops */}
+        {/* <Script src="/clear-cache.js" strategy="beforeInteractive" /> */}
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} ${russoOne.variable} antialiased min-h-screen flex flex-col`}>
         <Providers>

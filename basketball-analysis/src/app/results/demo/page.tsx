@@ -315,20 +315,26 @@ function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, ang
         }
         
         // Labels config - positioned FAR from body, HIPS ON UP, WELL SPACED APART
+        // ALTERNATING ORDER: 1st RIGHT, 2nd LEFT, 3rd RIGHT, 4th LEFT
+        // Order: ELBOW (right), SHOULDER (left), HIP (right), KNEE (left)
         const annotationConfig: Array<{
           angleKey: string
           label: string
           keypointName: string
           color: string
         }> = [
+          // 1st label - ELBOW - will be on RIGHT
           { angleKey: 'elbow_angle', label: 'ELBOW ANGLE', keypointName: 'right_elbow', color: '#4ade80' },
           { angleKey: 'right_elbow_angle', label: 'ELBOW ANGLE', keypointName: 'right_elbow', color: '#4ade80' },
           { angleKey: 'left_elbow_angle', label: 'ELBOW ANGLE', keypointName: 'left_elbow', color: '#4ade80' },
+          // 2nd label - SHOULDER - will be on LEFT
+          { angleKey: 'shoulder_tilt', label: 'SHOULDER', keypointName: 'right_shoulder', color: '#facc15' },
+          // 3rd label - HIP - will be on RIGHT
+          { angleKey: 'hip_tilt', label: 'HIP ALIGN', keypointName: 'right_hip', color: '#f97316' },
+          // 4th label - KNEE - will be on LEFT
           { angleKey: 'knee_angle', label: 'KNEE BEND', keypointName: 'right_knee', color: '#60a5fa' },
           { angleKey: 'right_knee_angle', label: 'KNEE BEND', keypointName: 'right_knee', color: '#60a5fa' },
           { angleKey: 'left_knee_angle', label: 'KNEE BEND', keypointName: 'left_knee', color: '#60a5fa' },
-          { angleKey: 'shoulder_tilt', label: 'SHOULDER', keypointName: 'right_shoulder', color: '#facc15' },
-          { angleKey: 'hip_tilt', label: 'HIP ALIGN', keypointName: 'right_hip', color: '#f97316' },
         ]
         
         const drawnLabels = new Set<string>()
@@ -337,6 +343,7 @@ function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, ang
         const labelWidth = 160
         const labelHeight = 70
         
+        let labelIndex = 0
         annotationConfig.forEach(({ angleKey, label, keypointName, color }) => {
           const angleValue = angles[angleKey]
           const keypoint = kp[keypointName]
@@ -352,19 +359,19 @@ function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, ang
             const kpX = keypoint.x * sx + LABEL_PADDING
             const kpY = keypoint.y * sy
             
-            // RULE: Label on SAME SIDE as the BODY PART (not image position)
-            // right_elbow, right_knee, right_shoulder, right_hip = label on RIGHT side
-            // left_elbow, left_knee, left_shoulder, left_hip = label on LEFT side
-            // This prevents the connecting line from crossing over the player's body
-            const isRightBodyPart = keypointName.includes('right')
-            const baseOffsetX = isRightBodyPart ? 120 : -120 - labelWidth  // Right body part = label to the right
-            const baseOffsetY = -80  // Above the keypoint (hips on up rule)
+            // RULE: ALTERNATING SIDES - labels close to player, not touching
+            const isRightSide = labelIndex % 2 === 0
             
-            // Scale offsets for canvas size
-            const scaledOffsetX = baseOffsetX * (imageW / 640)
-            const scaledOffsetY = baseOffsetY * (imageH / 480)
-            const labelX = Math.max(10, Math.min(canvasW - labelWidth - 10, kpX + scaledOffsetX))
-            const labelY = Math.max(10, Math.min(canvasH - labelHeight - 10, kpY + scaledOffsetY))
+            // Offset from keypoint - just outside the body (~80px accounts for body width)
+            const bodyOffset = 80
+            const rawX = isRightSide 
+              ? kpX + bodyOffset
+              : kpX - labelWidth - bodyOffset
+            
+            // Keep within canvas
+            const labelX = Math.max(5, Math.min(canvasW - labelWidth - 5, rawX))
+            const labelY = Math.max(10, Math.min(canvasH - labelHeight - 10, kpY - labelHeight / 2))
+            labelIndex++
             
             // Draw connecting line
             ctx.strokeStyle = color
@@ -517,17 +524,21 @@ function AnimatedImageWalkthrough({ imageUrl, keypoints, angles, imageSize }: An
   const [panX, setPanX] = useState(0)
   const [panY, setPanY] = useState(0)
   
-  // Annotations config - same as HybridSkeletonDisplay
+  // Annotations config - ALTERNATING ORDER: 1st RIGHT, 2nd LEFT, 3rd RIGHT, 4th LEFT
   const annotations = useMemo(() => {
     if (!keypoints || !angles) return []
     
     const config = [
+      // 1st label - ELBOW - will be on RIGHT
       { angleKey: 'elbow_angle', label: 'ELBOW ANGLE', keypointName: 'right_elbow', color: '#4ade80' },
       { angleKey: 'right_elbow_angle', label: 'ELBOW ANGLE', keypointName: 'right_elbow', color: '#4ade80' },
+      // 2nd label - SHOULDER - will be on LEFT
+      { angleKey: 'shoulder_tilt', label: 'SHOULDER', keypointName: 'right_shoulder', color: '#facc15' },
+      // 3rd label - HIP - will be on RIGHT
+      { angleKey: 'hip_tilt', label: 'HIP ALIGN', keypointName: 'right_hip', color: '#f97316' },
+      // 4th label - KNEE - will be on LEFT
       { angleKey: 'knee_angle', label: 'KNEE BEND', keypointName: 'right_knee', color: '#60a5fa' },
       { angleKey: 'right_knee_angle', label: 'KNEE BEND', keypointName: 'right_knee', color: '#60a5fa' },
-      { angleKey: 'shoulder_tilt', label: 'SHOULDER', keypointName: 'right_shoulder', color: '#facc15' },
-      { angleKey: 'hip_tilt', label: 'HIP ALIGN', keypointName: 'right_hip', color: '#f97316' },
     ]
     
     const seen = new Set<string>()
@@ -656,19 +667,20 @@ function AnimatedImageWalkthrough({ imageUrl, keypoints, angles, imageSize }: An
           const kpX = keypoint.x * sx + offsetX
           const kpY = keypoint.y * sy + offsetY
           
-          // RULE: Label on SAME SIDE as the BODY PART (not image position)
-          // right_elbow, right_knee, right_shoulder, right_hip = label on RIGHT side
-          // left_elbow, left_knee, left_shoulder, left_hip = label on LEFT side
-          // This prevents the connecting line from crossing over the player's body
-          const isRightBodyPart = keypointName.includes('right')
+          // RULE: ALTERNATING SIDES - labels close to player, not touching
+          const isRightSide = labelIndex % 2 === 0
           const labelW = 160
           const labelH = 70
-          const baseOffsetX = isRightBodyPart ? 100 : -100 - labelW  // Right body part = label to the right
-          const verticalSpacing = 90  // Space between labels
-          const baseY = 30 + (labelIndex * verticalSpacing)  // Stack labels vertically
           
-          const labelX = Math.max(10, Math.min(canvasW - labelW - 10, kpX + baseOffsetX * (zoom / 2)))
-          const labelY = Math.max(10, Math.min(canvasH - labelH - 10, baseY))
+          // Offset from keypoint - just outside the body
+          const bodyOffset = 80
+          const rawX = isRightSide 
+            ? kpX + bodyOffset
+            : kpX - labelW - bodyOffset
+          
+          // Keep within canvas
+          const labelX = Math.max(5, Math.min(canvasW - labelW - 5, rawX))
+          const labelY = Math.max(10, Math.min(canvasH - labelH - 10, kpY - labelH / 2))
           
           labelIndex++
           
@@ -1872,7 +1884,7 @@ function VideoFrameCanvas({
           }
         }
         
-        // Labels offset from body part - MOVES WITH the keypoint, WELL SPACED APART
+        // Labels - ALTERNATING ORDER: 1st RIGHT, 2nd LEFT, 3rd RIGHT, 4th LEFT
         const annotationConfig: Array<{
           angleKey: string
           label: string
@@ -1880,15 +1892,20 @@ function VideoFrameCanvas({
           color: string
           verticalSlot: number  // 0=top, 1=upper-mid, 2=lower-mid, 3=bottom (for spacing)
         }> = [
+          // 1st label - ELBOW - will be on RIGHT
           { angleKey: 'elbow_angle', label: 'ELBOW ANGLE', keypointName: 'right_elbow', color: '#4ade80', verticalSlot: 0 },
           { angleKey: 'right_elbow_angle', label: 'ELBOW ANGLE', keypointName: 'right_elbow', color: '#4ade80', verticalSlot: 0 },
-          { angleKey: 'knee_angle', label: 'KNEE BEND', keypointName: 'right_knee', color: '#60a5fa', verticalSlot: 2 },
-          { angleKey: 'right_knee_angle', label: 'KNEE BEND', keypointName: 'right_knee', color: '#60a5fa', verticalSlot: 2 },
+          // 2nd label - SHOULDER - will be on LEFT
           { angleKey: 'shoulder_tilt', label: 'SHOULDER', keypointName: 'right_shoulder', color: '#facc15', verticalSlot: 1 },
-          { angleKey: 'hip_tilt', label: 'HIP ALIGN', keypointName: 'right_hip', color: '#f97316', verticalSlot: 3 },
+          // 3rd label - HIP - will be on RIGHT
+          { angleKey: 'hip_tilt', label: 'HIP ALIGN', keypointName: 'right_hip', color: '#f97316', verticalSlot: 2 },
+          // 4th label - KNEE - will be on LEFT
+          { angleKey: 'knee_angle', label: 'KNEE BEND', keypointName: 'right_knee', color: '#60a5fa', verticalSlot: 3 },
+          { angleKey: 'right_knee_angle', label: 'KNEE BEND', keypointName: 'right_knee', color: '#60a5fa', verticalSlot: 3 },
         ]
         
         const drawnLabels = new Set<string>()
+        let labelIndex = 0
         
         // Label dimensions - wider to fit feedback comment text
         const labelWidth = 340
@@ -1909,20 +1926,19 @@ function VideoFrameCanvas({
             const kpX = keypoint.x
             const kpY = keypoint.y
             
-            // RULE: Label on SAME SIDE as the BODY PART (not image position)
-            // right_elbow, right_knee, right_shoulder, right_hip = label on RIGHT side
-            // left_elbow, left_knee, left_shoulder, left_hip = label on LEFT side
-            // This prevents the connecting line from crossing over the player's body
-            const isRightBodyPart = keypointName.includes('right')
-            const baseOffsetX = isRightBodyPart ? 300 : -300 - labelWidth  // Right body part = label to the right
+            // RULE: ALTERNATING SIDES - labels close to player, not touching
+            const isRightSide = labelIndex % 2 === 0
             
-            // Vertical spacing based on slot to prevent overlap
-            const verticalSpacing = 160  // Space between labels vertically
-            const baseY = 50 + (verticalSlot * verticalSpacing)  // Start from top, space down
+            // Offset from keypoint - just outside the body
+            const bodyOffset = 150
+            const rawX = isRightSide 
+              ? kpX + bodyOffset
+              : kpX - labelWidth - bodyOffset
             
-            // Label position - offset from keypoint horizontally, fixed vertical slots
-            const labelX = Math.max(20, Math.min(img.width - labelWidth - 20, kpX + baseOffsetX))
-            const labelY = Math.max(20, Math.min(img.height - labelHeight - 20, baseY))
+            // Keep within image
+            const labelX = Math.max(20, Math.min(img.width - labelWidth - 20, rawX))
+            const labelY = Math.max(20, Math.min(img.height - labelHeight - 20, kpY - labelHeight / 2))
+            labelIndex++
             
             // Draw connecting line
             ctx.strokeStyle = color
