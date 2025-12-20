@@ -1,7 +1,8 @@
 "use client"
 
 import React from "react"
-import { CheckCircle, AlertTriangle, XCircle } from "lucide-react"
+import { MedalIcon } from "@/components/icons/MedalIcons"
+import { getMedalTierFromStatus } from "@/lib/medalRanking"
 
 interface Annotation {
   position?: string
@@ -40,10 +41,9 @@ interface Props {
 }
 
 const StatusIcon = ({ status }: { status?: string }) => {
-  if (status === "good") return <CheckCircle className="w-4 h-4 text-green-400" />
-  if (status === "warning") return <AlertTriangle className="w-4 h-4 text-yellow-400" />
-  if (status === "critical") return <XCircle className="w-4 h-4 text-red-400" />
-  return null
+  if (!status) return null
+  const medalTier = getMedalTierFromStatus(status as "good" | "warning" | "critical", undefined)
+  return <MedalIcon tier={medalTier} size={16} />
 }
 
 const statusColor = (status?: string) => {

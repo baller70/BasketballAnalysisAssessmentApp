@@ -1,4 +1,47 @@
-// Type definitions for Basketball Shooting Analysis System
+/**
+ * @file index.ts (Types)
+ * @description Central TypeScript type definitions for the basketball analysis app
+ * 
+ * PURPOSE:
+ * - Defines all shared interfaces and types
+ * - Provides type safety across the application
+ * - Documents data structures used throughout the codebase
+ * 
+ * CATEGORIES:
+ * 
+ * PLAYER & PROFILE:
+ * - PlayerProfile - User profile information
+ * - Position - Basketball position enum
+ * - SkillLevel - Player skill level enum
+ * - BodyType - Body type classification
+ * 
+ * ANALYSIS:
+ * - AnalysisResult - Complete analysis result
+ * - BiomechanicalMeasurement - Angle and position measurements
+ * - Flaw - Detected shooting flaw
+ * - FlawCategory, FlawSeverity - Flaw classification
+ * - FormCategory - Overall form quality category
+ * 
+ * MEDIA:
+ * - MediaType - "IMAGE" or "VIDEO"
+ * - UploadFormData - Upload form data structure
+ * 
+ * POSE DETECTION:
+ * - PoseKeypoint - Single pose keypoint
+ * - PoseData - Complete pose detection result
+ * - MediaPipeKeypoint - MediaPipe-specific keypoint
+ * - SkeletonCallout - Annotation label for skeleton overlay
+ * 
+ * REPORTS:
+ * - ReportTier - "BASIC" | "ULTRA" | "PREMIUM"
+ * - Report - Generated report structure
+ * 
+ * ELITE SHOOTERS:
+ * - EliteShooter - NBA shooter profile
+ * 
+ * USAGE:
+ * import type { PlayerProfile, AnalysisResult, Flaw } from "@/types"
+ */
 
 export interface PlayerProfile {
   name: string

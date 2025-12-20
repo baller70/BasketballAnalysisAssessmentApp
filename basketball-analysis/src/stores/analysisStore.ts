@@ -1,3 +1,38 @@
+/**
+ * @file analysisStore.ts
+ * @description Zustand state store for basketball shooting analysis
+ * 
+ * PURPOSE:
+ * - Central state management for the entire analysis flow
+ * - Stores uploaded files, analysis results, and UI state
+ * - Persists player profile and analysis history to localStorage
+ * 
+ * KEY STATE:
+ * - uploadedFile - Current uploaded file (image/video)
+ * - mediaType - "IMAGE" or "VIDEO"
+ * - uploadedImageBase64 - Base64 encoded image data
+ * - visionAnalysisResult - Analysis results from Vision AI
+ * - videoAnalysisData - Video-specific analysis data
+ * - isAnalyzing - Loading state during analysis
+ * - analysisProgress - Progress percentage (0-100)
+ * - playerProfile - User's profile information
+ * 
+ * KEY ACTIONS:
+ * - setUploadedFile(file) - Set the uploaded file
+ * - setVisionAnalysisResult(result) - Set analysis results
+ * - setVideoAnalysisData(data) - Set video analysis data
+ * - resetUpload() - Clear upload state
+ * - resetAll() - Reset entire store
+ * 
+ * USED BY:
+ * - src/app/page.tsx - Upload and analysis flow
+ * - src/app/results/demo/page.tsx - Display results
+ * - src/components/upload/* - Upload components
+ * 
+ * PERSISTENCE:
+ * - analysisHistory and playerProfile are persisted to localStorage
+ */
+
 import { create } from "zustand"
 import { devtools, persist } from "zustand/middleware"
 import type {
@@ -151,6 +186,7 @@ interface AnalysisState {
   setRoboflowBallDetection: (detection: RoboflowBallDetection | null) => void
   setVideoAnalysisData: (data: VideoAnalysisData | null) => void
   resetUpload: () => void
+  resetByMediaType: (mediaType: MediaType) => void
   resetAll: () => void
 }
 
@@ -283,6 +319,39 @@ export const useAnalysisStore = create<AnalysisState>()(
             },
             false,
             "resetUpload"
+          ),
+
+        resetByMediaType: (mediaType) =>
+          set(
+            () => {
+              if (mediaType === "IMAGE") {
+                // Clear video-specific state when switching to image mode
+                // Keep image-related state (uploadedImageBase64, visionAnalysisResult) as video mode also uses these
+                return {
+                  videoAnalysisData: null,
+                  error: null,
+                }
+              } else {
+                // Clear image upload state when switching to video mode
+                // BUT keep uploadedImageBase64 and visionAnalysisResult as video mode extracts frames to images
+                // and uses the same image analysis components
+                return {
+                  uploadedFile: null, // Clear the File object from image uploads
+                  mediaPreviewUrl: null, // Clear preview URL from image uploads
+                  teaserFrames: [], // Clear image-specific shot breakdown
+                  fullFrames: [], // Clear image-specific shot breakdown
+                  allUploadedUrls: [], // Clear image-specific URLs
+                  // Keep uploadedImageBase64 - video mode sets this with extracted frames
+                  // Keep visionAnalysisResult - video mode uses this for analysis results
+                  // Keep roboflowBallDetection - video mode may use this
+                  // Keep detectedKeypoints, poseConfidence - video mode uses these
+                  formAnalysisResult: null, // Clear form analysis (image-specific)
+                  error: null,
+                }
+              }
+            },
+            false,
+            "resetByMediaType"
           ),
 
         resetAll: () =>

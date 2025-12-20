@@ -1,7 +1,10 @@
 "use client"
 
 import React, { useRef, useEffect, useState, useCallback } from "react"
-import { Download, X, CheckCircle, AlertTriangle, XCircle, Eye, EyeOff } from "lucide-react"
+import { Download, X, Eye, EyeOff, Sparkles, Zap, Loader2 } from "lucide-react"
+import { MedalIcon, type MedalTier } from "@/components/icons/MedalIcons"
+import { getMedalTierFromStatus, getMedalTierFromAngles } from "@/lib/medalRanking"
+import { enhanceImage, type EnhancementTier } from "@/services/imageEnhancement"
 
 const HYBRID_API_URL = process.env.NEXT_PUBLIC_HYBRID_API_URL || 'http://localhost:5001'
 
@@ -37,10 +40,13 @@ interface AutoScreenshotsProps {
   angles?: Record<string, number>
 }
 
-const STATUS_STYLES = {
-  good: { border: "border-green-500", bg: "bg-green-500/10", text: "text-green-400", icon: CheckCircle },
-  warning: { border: "border-yellow-500", bg: "bg-yellow-500/10", text: "text-yellow-400", icon: AlertTriangle },
-  critical: { border: "border-red-500", bg: "bg-red-500/10", text: "text-red-400", icon: XCircle },
+// Medal tier styles matching the medal colors
+const MEDAL_TIER_STYLES: Record<MedalTier, { border: string; bg: string; text: string }> = {
+  gold: { border: "border-[#FFD700]", bg: "bg-[#FFD700]/10", text: "text-[#FFD700]" },
+  silver: { border: "border-[#C0C0C0]", bg: "bg-[#C0C0C0]/10", text: "text-[#C0C0C0]" },
+  bronze: { border: "border-[#CD7F32]", bg: "bg-[#CD7F32]/10", text: "text-[#CD7F32]" },
+  copper: { border: "border-[#B87333]", bg: "bg-[#B87333]/10", text: "text-[#B87333]" },
+  iron: { border: "border-[#6B6B6B]", bg: "bg-[#6B6B6B]/10", text: "text-[#6B6B6B]" },
 }
 
 // Skeleton connections for drawing
@@ -80,6 +86,56 @@ async function imageUrlToBase64(url: string): Promise<string> {
     reader.onerror = reject
     reader.readAsDataURL(blob)
   })
+}
+
+// Apply sharpening filter to canvas using convolution
+function applySharpeningFilter(ctx: CanvasRenderingContext2D, width: number, height: number, strength: number = 0.3) {
+  // Get image data
+  const imageData = ctx.getImageData(0, 0, width, height)
+  const data = imageData.data
+  const tempData = new Uint8ClampedArray(data)
+  
+  // Sharpening kernel (unsharp mask style)
+  // Center weight is boosted, neighbors are subtracted
+  const kernel = [
+    0, -strength, 0,
+    -strength, 1 + 4 * strength, -strength,
+    0, -strength, 0
+  ]
+  
+  // Apply convolution (skip edge pixels)
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      for (let c = 0; c < 3; c++) { // RGB channels only, not alpha
+        let sum = 0
+        for (let ky = -1; ky <= 1; ky++) {
+          for (let kx = -1; kx <= 1; kx++) {
+            const idx = ((y + ky) * width + (x + kx)) * 4 + c
+            sum += tempData[idx] * kernel[(ky + 1) * 3 + (kx + 1)]
+          }
+        }
+        const idx = (y * width + x) * 4 + c
+        data[idx] = Math.min(255, Math.max(0, sum))
+      }
+    }
+  }
+  
+  ctx.putImageData(imageData, 0, 0)
+}
+
+// Apply contrast enhancement
+function applyContrastEnhancement(ctx: CanvasRenderingContext2D, width: number, height: number, contrast: number = 1.1) {
+  const imageData = ctx.getImageData(0, 0, width, height)
+  const data = imageData.data
+  const factor = (259 * (contrast * 255 + 255)) / (255 * (259 - contrast * 255))
+  
+  for (let i = 0; i < data.length; i += 4) {
+    data[i] = Math.min(255, Math.max(0, factor * (data[i] - 128) + 128))     // R
+    data[i + 1] = Math.min(255, Math.max(0, factor * (data[i + 1] - 128) + 128)) // G
+    data[i + 2] = Math.min(255, Math.max(0, factor * (data[i + 2] - 128) + 128)) // B
+  }
+  
+  ctx.putImageData(imageData, 0, 0)
 }
 
 // Call hybrid API to get accurate keypoints from an image
@@ -132,6 +188,12 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
   const [showSkeleton, setShowSkeleton] = useState(false)
   const [showLabels, setShowLabels] = useState(false)
   const [showKeypoints, setShowKeypoints] = useState(false)
+  
+  // Enhancement states
+  const [isEnhancing, setIsEnhancing] = useState(false)
+  const [enhancementTier, setEnhancementTier] = useState<EnhancementTier>('basic')
+  const [enhancedImageUrl, setEnhancedImageUrl] = useState<string | null>(null)
+  const [enhancementError, setEnhancementError] = useState<string | null>(null)
 
   // Process screenshot through hybrid when expanded
   const processScreenshotHybrid = useCallback(async (screenshotId: string, dataUrl: string) => {
@@ -331,7 +393,7 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
       const regions = [
         {
           id: "main-body",
-          name: "Full Body",
+          name: "FULL BODY",
           centerX: imgW / 2,
           centerY: imgH / 2,
           width: imgW,
@@ -354,7 +416,7 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
         },
         {
           id: "hands-area",
-          name: "Hands & Release",
+          name: "HANDS AND RELEASE",
           centerX: handsKeypoint.x,
           centerY: handsKeypoint.y,
           width: cropSize * 1.3,
@@ -376,7 +438,7 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
         },
         {
           id: "ankles-area",
-          name: "Legs & Feet",
+          name: "LEGS AND FEET",
           centerX: anklesKeypoint.x,
           centerY: anklesKeypoint.y,
           width: imgW * 0.8,
@@ -394,7 +456,7 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
         },
         {
           id: "ball-area",
-          name: "Abs & Hips",
+          name: "ABS AND HIPS",
           centerX: (rightShoulder.x + leftShoulder.x + rightHip.x + leftHip.x) / 4,
           centerY: (rightShoulder.y + leftShoulder.y + rightHip.y + leftHip.y) / 4,
           width: cropSize * 1.2,
@@ -480,10 +542,26 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
   const expandedHybridData = expandedId ? hybridCache[expandedId] : null
   const hasHybridData = !!expandedHybridData
   
-  // State for the composite image with overlays
+  // State for the composite image with overlays (for DISPLAY only)
   const [compositeImageUrl, setCompositeImageUrl] = useState<string | null>(null)
   
-  // Generate composite image when toggles change
+  // State for the clean base image WITHOUT overlays (for ENHANCEMENT)
+  // This is the original screenshot without skeleton/labels/keypoints
+  const [cleanBaseImageUrl, setCleanBaseImageUrl] = useState<string | null>(null)
+  
+  // Generate clean base image when expanded screenshot changes (for enhancement)
+  useEffect(() => {
+    if (!expandedScreenshot) {
+      setCleanBaseImageUrl(null)
+      return
+    }
+    
+    // Store the clean base image URL (original screenshot without any overlays)
+    setCleanBaseImageUrl(expandedScreenshot.dataUrl)
+    console.log("[Enhancement] Clean base image stored for enhancement")
+  }, [expandedScreenshot?.dataUrl, expandedScreenshot])
+  
+  // Generate composite image when toggles change (for DISPLAY only)
   useEffect(() => {
     console.log("[Composite] useEffect triggered", {
       hasExpandedScreenshot: !!expandedScreenshot,
@@ -527,12 +605,22 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
       const imgH = img.naturalHeight
       const totalW = imgW + (LABEL_PADDING * 2)
       
-      // Create canvas with padding
+      // Use device pixel ratio for sharper rendering on high-DPI displays
+      const dpr = Math.min(window.devicePixelRatio || 1, 2) // Cap at 2x for performance
+      
+      // Create canvas with padding and higher resolution
       const canvas = document.createElement('canvas')
-      canvas.width = totalW
-      canvas.height = imgH
+      canvas.width = totalW * dpr
+      canvas.height = imgH * dpr
       const ctx = canvas.getContext('2d')
       if (!ctx) return
+      
+      // Scale context for high-DPI rendering
+      ctx.scale(dpr, dpr)
+      
+      // Enable high-quality image rendering
+      ctx.imageSmoothingEnabled = true
+      ctx.imageSmoothingQuality = 'high'
       
       // Fill with black background
       ctx.fillStyle = '#000000'
@@ -540,6 +628,23 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
       
       // Draw image centered
       ctx.drawImage(img, LABEL_PADDING, 0, imgW, imgH)
+      
+      // Apply image enhancement filters for sharper output
+      // Note: We apply these at the scaled resolution for best quality
+      const scaledWidth = Math.round(totalW * dpr)
+      const scaledHeight = Math.round(imgH * dpr)
+      
+      // Reset scale temporarily to apply filters at pixel level
+      ctx.setTransform(1, 0, 0, 1, 0, 0)
+      
+      // Apply mild sharpening (strength 0.25 for subtle enhancement)
+      applySharpeningFilter(ctx, scaledWidth, scaledHeight, 0.25)
+      
+      // Apply slight contrast boost (1.05 = 5% increase)
+      applyContrastEnhancement(ctx, scaledWidth, scaledHeight, 1.05)
+      
+      // Restore scale for overlay drawing
+      ctx.scale(dpr, dpr)
       
       // Helper to get keypoint position (offset by padding)
       const getKp = (name: string) => {
@@ -556,45 +661,189 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
         }
       }
       
-      // Draw skeleton
+      // Draw skeleton - VIDEO GAME STYLE with status-based colors
+      // GREEN = good, YELLOW = warning, RED = problem
       if (showSkeleton) {
-        ctx.strokeStyle = '#FFD700'
-        ctx.lineWidth = 3
+        // Status colors based on form quality
+        const STATUS_COLORS = {
+          good: { main: '#22c55e', glow: 'rgba(34, 197, 94, 0.6)' },      // Green
+          warning: { main: '#eab308', glow: 'rgba(234, 179, 8, 0.6)' },   // Yellow
+          problem: { main: '#ef4444', glow: 'rgba(239, 68, 68, 0.6)' }    // Red
+        }
+        
+        // Get angle measurements to determine status
+        const elbowAngle = angles?.elbow_angle || angles?.right_elbow_angle || angles?.left_elbow_angle
+        const kneeAngle = angles?.knee_angle || angles?.right_knee_angle || angles?.left_knee_angle
+        
+        // Determine status based on body part and angle measurements
+        const getConnectionStatus = (start: string, end: string): 'good' | 'warning' | 'problem' => {
+          // Elbow connections
+          if (start.includes('elbow') || end.includes('elbow') || start.includes('wrist') || end.includes('wrist')) {
+            if (elbowAngle) {
+              if (elbowAngle >= 85 && elbowAngle <= 100) return 'good'
+              if (elbowAngle >= 70 && elbowAngle <= 120) return 'warning'
+              return 'problem'
+            }
+            return 'good'
+          }
+          // Knee connections
+          if (start.includes('knee') || end.includes('knee') || start.includes('ankle') || end.includes('ankle')) {
+            if (kneeAngle) {
+              if (kneeAngle >= 135 && kneeAngle <= 160) return 'good'
+              if (kneeAngle >= 120 && kneeAngle <= 175) return 'warning'
+              return 'problem'
+            }
+            return 'good'
+          }
+          // Default for torso/shoulders
+          return 'good'
+        }
+        
         ctx.lineCap = 'round'
+        ctx.lineJoin = 'round'
         
         for (const [start, end] of SKELETON_CONNECTIONS) {
           const startPt = getKp(start)
           const endPt = getKp(end)
           
           if (startPt && endPt) {
+            const status = getConnectionStatus(start, end)
+            const colors = STATUS_COLORS[status]
+            
+            // Outer glow layer (thickest, most transparent)
+            ctx.strokeStyle = colors.glow
+            ctx.lineWidth = 16
+            ctx.shadowColor = colors.main
+            ctx.shadowBlur = 20
+            ctx.beginPath()
+            ctx.moveTo(startPt.x, startPt.y)
+            ctx.lineTo(endPt.x, endPt.y)
+            ctx.stroke()
+            
+            // Middle glow layer
+            ctx.strokeStyle = colors.glow
+            ctx.lineWidth = 10
+            ctx.shadowBlur = 15
+            ctx.beginPath()
+            ctx.moveTo(startPt.x, startPt.y)
+            ctx.lineTo(endPt.x, endPt.y)
+            ctx.stroke()
+            
+            // Main line (solid color)
+            ctx.strokeStyle = colors.main
+            ctx.lineWidth = 6
+            ctx.shadowBlur = 10
+            ctx.beginPath()
+            ctx.moveTo(startPt.x, startPt.y)
+            ctx.lineTo(endPt.x, endPt.y)
+            ctx.stroke()
+            
+            // Inner bright core
+            ctx.strokeStyle = '#FFFFFF'
+            ctx.lineWidth = 2
+            ctx.shadowBlur = 0
             ctx.beginPath()
             ctx.moveTo(startPt.x, startPt.y)
             ctx.lineTo(endPt.x, endPt.y)
             ctx.stroke()
           }
         }
+        ctx.shadowBlur = 0
       }
       
-      // Draw keypoints
+      // Draw keypoints - VIDEO GAME STYLE with status-based colors
+      // GREEN = good, YELLOW = warning, RED = problem
       if (showKeypoints) {
+        // Status colors based on form quality
+        const STATUS_COLORS = {
+          good: { main: '#22c55e', glow: 'rgba(34, 197, 94, 0.8)' },      // Green
+          warning: { main: '#eab308', glow: 'rgba(234, 179, 8, 0.8)' },   // Yellow
+          problem: { main: '#ef4444', glow: 'rgba(239, 68, 68, 0.8)' }    // Red
+        }
+        
+        // Get angle measurements to determine status
+        const elbowAngle = angles?.elbow_angle || angles?.right_elbow_angle || angles?.left_elbow_angle
+        const kneeAngle = angles?.knee_angle || angles?.right_knee_angle || angles?.left_knee_angle
+        
+        // Determine status based on keypoint name and angle measurements
+        const getKeypointStatus = (name: string): 'good' | 'warning' | 'problem' => {
+          // Elbow and wrist keypoints
+          if (name.includes('elbow') || name.includes('wrist')) {
+            if (elbowAngle) {
+              if (elbowAngle >= 85 && elbowAngle <= 100) return 'good'
+              if (elbowAngle >= 70 && elbowAngle <= 120) return 'warning'
+              return 'problem'
+            }
+            return 'good'
+          }
+          // Knee and ankle keypoints
+          if (name.includes('knee') || name.includes('ankle')) {
+            if (kneeAngle) {
+              if (kneeAngle >= 135 && kneeAngle <= 160) return 'good'
+              if (kneeAngle >= 120 && kneeAngle <= 175) return 'warning'
+              return 'problem'
+            }
+            return 'good'
+          }
+          // Default for other keypoints (shoulders, hips, face)
+          return 'good'
+        }
+        
         for (const [name, kp] of Object.entries(keypoints)) {
           if (kp.x <= 0 || kp.y <= 0) continue
           
           const pt = getKp(name)
           if (!pt) continue
           
-          // Outer circle
+          const status = getKeypointStatus(name)
+          const colors = STATUS_COLORS[status]
+          const isMainJoint = name.includes('elbow') || name.includes('knee') || name.includes('wrist') || name.includes('shoulder') || name.includes('hip')
+          const baseRadius = isMainJoint ? 14 : 10
+          
+          // Outer glow pulse effect
           ctx.beginPath()
-          ctx.arc(pt.x, pt.y, 8, 0, Math.PI * 2)
-          ctx.fillStyle = '#FFD700'
+          ctx.arc(pt.x, pt.y, baseRadius + 8, 0, Math.PI * 2)
+          ctx.fillStyle = colors.glow.replace('0.8', '0.2')
+          ctx.shadowColor = colors.main
+          ctx.shadowBlur = 25
           ctx.fill()
           
-          // Inner circle
+          // Outer ring with glow
           ctx.beginPath()
-          ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2)
-          ctx.fillStyle = '#1a1a1a'
+          ctx.arc(pt.x, pt.y, baseRadius + 4, 0, Math.PI * 2)
+          ctx.strokeStyle = colors.main
+          ctx.lineWidth = 3
+          ctx.shadowBlur = 15
+          ctx.stroke()
+          
+          // Middle filled circle
+          ctx.beginPath()
+          ctx.arc(pt.x, pt.y, baseRadius, 0, Math.PI * 2)
+          ctx.fillStyle = colors.main
+          ctx.shadowBlur = 10
+          ctx.fill()
+          
+          // Inner dark ring
+          ctx.beginPath()
+          ctx.arc(pt.x, pt.y, baseRadius - 3, 0, Math.PI * 2)
+          ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)'
+          ctx.lineWidth = 2
+          ctx.shadowBlur = 0
+          ctx.stroke()
+          
+          // Center bright dot (highlight)
+          ctx.beginPath()
+          ctx.arc(pt.x, pt.y, baseRadius - 5, 0, Math.PI * 2)
+          ctx.fillStyle = '#FFFFFF'
+          ctx.fill()
+          
+          // Tiny center dot for depth
+          ctx.beginPath()
+          ctx.arc(pt.x - 2, pt.y - 2, 2, 0, Math.PI * 2)
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'
           ctx.fill()
         }
+        ctx.shadowBlur = 0
       }
       
       // Draw labels - ALTERNATING RIGHT, LEFT, RIGHT, LEFT
@@ -688,9 +937,10 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
         }
       }
       
-      // Convert to data URL
-      const dataUrl = canvas.toDataURL('image/png')
-      console.log("[Composite] Generated composite image, size:", totalW, "x", imgH, "padding:", LABEL_PADDING)
+      // Convert to high-quality data URL
+      // PNG is lossless, so we get the full quality of our enhanced image
+      const dataUrl = canvas.toDataURL('image/png', 1.0)
+      console.log("[Composite] Generated enhanced composite image, size:", totalW * dpr, "x", imgH * dpr, "(", dpr, "x DPR), padding:", LABEL_PADDING)
       setCompositeImageUrl(dataUrl)
     }
     
@@ -722,14 +972,15 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
         <div className="space-y-4">
           {/* Main Screenshot - Full Body */}
           {screenshots.filter(s => s.id === 'main-body').map((screenshot) => {
-            const styles = STATUS_STYLES[screenshot.status]
-            const Icon = styles.icon
+            // Determine medal tier based on status and angles
+            const medalTier = getMedalTierFromStatus(screenshot.status, undefined)
+            const medalStyles = MEDAL_TIER_STYLES[medalTier]
             
             return (
               <div key={screenshot.id} className="flex justify-center">
                 <div
                   onClick={() => handleExpand(screenshot.id)}
-                  className={`inline-block rounded-lg border-2 ${styles.border} ${styles.bg} overflow-hidden cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg`}
+                  className={`inline-block rounded-lg border-2 ${medalStyles.border} ${medalStyles.bg} overflow-hidden cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg`}
                 >
                 <div className="relative">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -739,8 +990,8 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
                     className="block max-h-[400px] w-full object-cover object-top"
                   />
                   
-                  <div className={`absolute top-2 right-2 ${styles.bg} ${styles.text} p-1 rounded-full`}>
-                    <Icon className="w-5 h-5" />
+                  <div className={`absolute top-2 right-2 ${medalStyles.bg} ${medalStyles.text} p-1.5 rounded-full flex items-center justify-center`}>
+                    <MedalIcon tier={medalTier} size={20} />
                   </div>
 
                   <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
@@ -751,7 +1002,7 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
                 </div>
 
                 <div className="p-3">
-                  <h4 className={`font-bold text-sm ${styles.text} mb-1`}>{screenshot.name}</h4>
+                  <h4 className={`font-bold text-sm ${medalStyles.text} mb-1`}>{screenshot.name}</h4>
                   <p className="text-[#888] text-xs">{screenshot.analysis}</p>
                 </div>
                 </div>
@@ -762,14 +1013,15 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
           {/* Thumbnail Screenshots - 3 columns */}
           <div className="grid grid-cols-3 gap-4">
             {screenshots.filter(s => s.id !== 'main-body').map((screenshot) => {
-              const styles = STATUS_STYLES[screenshot.status]
-              const Icon = styles.icon
+              // Determine medal tier based on status and angles
+              const medalTier = getMedalTierFromStatus(screenshot.status, undefined)
+              const medalStyles = MEDAL_TIER_STYLES[medalTier]
               
               return (
                 <div
                   key={screenshot.id}
                   onClick={() => handleExpand(screenshot.id)}
-                  className={`rounded-lg border-2 ${styles.border} ${styles.bg} overflow-hidden cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg`}
+                  className={`rounded-lg border-2 ${medalStyles.border} ${medalStyles.bg} overflow-hidden cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg`}
                 >
                   <div className="relative aspect-[4/3] bg-[#1a1a1a]">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -779,8 +1031,8 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
                       className="w-full h-full object-cover"
                     />
                     
-                    <div className={`absolute top-2 right-2 ${styles.bg} ${styles.text} p-1 rounded-full`}>
-                      <Icon className="w-4 h-4" />
+                    <div className={`absolute top-2 right-2 ${medalStyles.bg} ${medalStyles.text} p-1.5 rounded-full flex items-center justify-center`}>
+                      <MedalIcon tier={medalTier} size={16} />
                     </div>
 
                     <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition-colors flex items-center justify-center opacity-0 hover:opacity-100">
@@ -791,7 +1043,7 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
                   </div>
 
                   <div className="p-3">
-                    <h4 className={`font-bold text-sm ${styles.text} mb-1`}>{screenshot.name}</h4>
+                    <h4 className={`font-bold text-sm ${medalStyles.text} mb-1`}>{screenshot.name}</h4>
                     <p className="text-[#888] text-xs line-clamp-2">{screenshot.analysis}</p>
                   </div>
                 </div>
@@ -801,14 +1053,14 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
         </div>
       )}
 
-      {/* Expanded Modal with Toggle Controls */}
+      {/* Expanded Modal with Toggle Controls - FULL SIZE */}
       {expandedScreenshot && (
         <div 
-          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
           onClick={() => setExpandedId(null)}
         >
           <div 
-            className="bg-[#2a2a2a] rounded-xl max-w-3xl w-full max-h-[90vh] overflow-auto"
+            className="bg-[#2a2a2a] rounded-xl max-w-5xl w-full max-h-[95vh] overflow-auto"
             onClick={e => e.stopPropagation()}
           >
             <div className="p-4 border-b border-[#3a3a3a] flex items-center justify-between">
@@ -823,6 +1075,7 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
             
             {/* Toggle Controls */}
             <div className="p-4 border-b border-[#3a3a3a] flex items-center gap-4 flex-wrap">
+              {/* Overlay toggles - only show when hybrid data available */}
               {isLoadingHybrid ? (
                 <div className="flex items-center gap-2 text-[#888]">
                   <div className="w-4 h-4 border-2 border-[#FFD700] border-t-transparent rounded-full animate-spin" />
@@ -867,33 +1120,192 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
                   </button>
                 </>
               ) : (
-                <span className="text-[#888] text-sm">Toggle controls will appear after analysis</span>
+                <span className="text-[#888] text-sm">Overlay controls loading...</span>
               )}
+              
+              {/* Enhancement & Download Options - ALWAYS VISIBLE */}
+              <div className="flex items-center gap-2 ml-auto">
+                {/* Enhancement Tier Selector */}
+                <div className="flex items-center bg-[#1a1a1a] rounded-lg p-1">
+                  <button
+                    onClick={() => setEnhancementTier('basic')}
+                    className={`flex items-center gap-1 px-2 py-1.5 rounded text-xs font-medium transition-colors ${
+                      enhancementTier === 'basic'
+                        ? 'bg-[#3a3a3a] text-white'
+                        : 'text-[#888] hover:text-white'
+                    }`}
+                    title="Basic enhancement (instant)"
+                  >
+                    <Zap className="w-3 h-3" />
+                    Basic
+                  </button>
+                  <button
+                    onClick={() => setEnhancementTier('hd')}
+                    className={`flex items-center gap-1 px-2 py-1.5 rounded text-xs font-medium transition-colors ${
+                      enhancementTier === 'hd'
+                        ? 'bg-[#FFD700] text-[#1a1a1a]'
+                        : 'text-[#888] hover:text-white'
+                    }`}
+                    title="HD enhancement (30-60s, AI-powered)"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    HD
+                  </button>
+                  <button
+                    onClick={() => setEnhancementTier('premium')}
+                    className={`flex items-center gap-1 px-2 py-1.5 rounded text-xs font-medium transition-colors ${
+                      enhancementTier === 'premium'
+                        ? 'bg-gradient-to-r from-[#FFD700] to-[#f97316] text-[#1a1a1a]'
+                        : 'text-[#888] hover:text-white'
+                    }`}
+                    title="Premium enhancement (faster, best quality)"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    Premium
+                  </button>
+                </div>
+                
+                {/* Enhance & Download Button */}
+                <button
+                  onClick={async () => {
+                    // IMPORTANT: For enhancement, ALWAYS use the CLEAN base image (without overlays)
+                    // The compositeImageUrl includes skeleton/labels which we don't want to enhance
+                    const sourceImageForEnhancement = cleanBaseImageUrl || expandedScreenshot.dataUrl
+                    // For basic download (no enhancement), use the displayed image (with overlays if toggled)
+                    const sourceImageForDisplay = compositeImageUrl || expandedScreenshot.dataUrl
+                    
+                    if (enhancementTier === 'basic') {
+                      // Basic: just download the current displayed image (may include overlays)
+                      const link = document.createElement('a')
+                      link.download = `${expandedScreenshot.name.replace(/\s+/g, '_')}_basic.png`
+                      link.href = sourceImageForDisplay
+                      link.click()
+                    } else {
+                      // HD or Premium: enhance the CLEAN base image (no overlays), then download
+                      setIsEnhancing(true)
+                      setEnhancementError(null)
+                      
+                      console.log('[Enhancement] Using CLEAN base image for enhancement (no overlays)')
+                      
+                      try {
+                        const result = await enhanceImage(sourceImageForEnhancement, enhancementTier)
+                        
+                        if (result.success) {
+                          setEnhancedImageUrl(result.imageUrl)
+                          
+                          // Auto-download
+                          const link = document.createElement('a')
+                          link.download = `${expandedScreenshot.name.replace(/\s+/g, '_')}_${result.tier}.png`
+                          link.href = result.imageUrl
+                          link.click()
+                        } else {
+                          setEnhancementError(result.error || 'Enhancement failed')
+                        }
+                      } catch (error) {
+                        setEnhancementError(error instanceof Error ? error.message : 'Enhancement failed')
+                      } finally {
+                        setIsEnhancing(false)
+                      }
+                    }
+                  }}
+                  disabled={isEnhancing}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                    isEnhancing
+                      ? 'bg-[#3a3a3a] text-[#888] cursor-wait'
+                      : enhancementTier === 'basic'
+                      ? 'bg-[#22c55e] hover:bg-[#16a34a] text-white'
+                      : enhancementTier === 'hd'
+                      ? 'bg-[#FFD700] hover:bg-[#E5C100] text-[#1a1a1a]'
+                      : 'bg-gradient-to-r from-[#FFD700] to-[#f97316] hover:from-[#E5C100] hover:to-[#ea580c] text-[#1a1a1a]'
+                  }`}
+                >
+                  {isEnhancing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span className="text-sm font-medium">Enhancing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-4 h-4" />
+                      <span className="text-sm font-medium">
+                        {enhancementTier === 'basic' ? 'Download' : `Download ${enhancementTier.toUpperCase()}`}
+                      </span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
+            
+            {/* Enhancement Status Messages */}
+            {isEnhancing && (
+              <div className="px-4 py-2 bg-[#FFD700]/10 border-b border-[#FFD700]/30">
+                <div className="flex items-center gap-2 text-[#FFD700]">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span className="text-sm">
+                    {enhancementTier === 'hd' 
+                      ? 'AI enhancement in progress... This may take 30-60 seconds on free tier.'
+                      : 'Enhancing image with premium AI...'}
+                  </span>
+                </div>
+              </div>
+            )}
+            
+            {enhancementError && (
+              <div className="px-4 py-2 bg-red-500/10 border-b border-red-500/30">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-red-400">⚠️ {enhancementError}</span>
+                  <button 
+                    onClick={() => setEnhancementError(null)}
+                    className="text-red-400 hover:text-red-300 text-xs"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            )}
+            
+            {enhancedImageUrl && !isEnhancing && (
+              <div className="px-4 py-2 bg-[#22c55e]/10 border-b border-[#22c55e]/30">
+                <div className="flex items-center gap-2 text-[#22c55e]">
+                  <Sparkles className="w-4 h-4" />
+                  <span className="text-sm">Image enhanced successfully! Download started.</span>
+                </div>
+              </div>
+            )}
             
             <div className="p-4">
               <div className="flex justify-center">
-                {/* Show composite image with overlays, or plain image */}
+                {/* Show composite image with overlays, or plain image - FULL SIZE */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={compositeImageUrl || expandedScreenshot.dataUrl}
                   alt={expandedScreenshot.name}
-                  className="max-w-full rounded-lg"
-                  style={{ maxHeight: '60vh' }}
+                  className="w-full h-auto rounded-lg"
                 />
               </div>
             </div>
             
             <div className="p-4 border-t border-[#3a3a3a] space-y-4">
               {(() => {
-                const styles = STATUS_STYLES[expandedScreenshot.status]
-                const Icon = styles.icon
+                // Determine medal tier - try to use angles if available, otherwise use status
+                const medalTier = expandedHybridData?.angles 
+                  ? getMedalTierFromAngles(expandedHybridData.angles)
+                  : getMedalTierFromStatus(expandedScreenshot.status, undefined)
+                const medalStyles = MEDAL_TIER_STYLES[medalTier]
+                
+                const statusLabels: Record<MedalTier, string> = {
+                  gold: "Elite Form",
+                  silver: "Excellent Form",
+                  bronze: "Good Form",
+                  copper: "Needs Improvement",
+                  iron: "Needs Work",
+                }
+                
                 return (
-                  <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full ${styles.bg} ${styles.text}`}>
-                    <Icon className="w-4 h-4" />
+                  <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full ${medalStyles.bg} ${medalStyles.text}`}>
+                    <MedalIcon tier={medalTier} size={18} />
                     <span className="font-semibold text-sm">
-                      {expandedScreenshot.status === "good" ? "Good Form" :
-                       expandedScreenshot.status === "warning" ? "Needs Adjustment" : "Critical Issue"}
+                      {statusLabels[medalTier]}
                     </span>
                   </div>
                 )

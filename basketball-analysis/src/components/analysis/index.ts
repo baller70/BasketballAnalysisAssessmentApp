@@ -1,6 +1,33 @@
-// Analysis Components Index
-// Export all components for Phase 4 analysis features
+/**
+ * @file index.ts (Analysis Components)
+ * @description Barrel exports for all analysis-related components
+ * 
+ * DISPLAY COMPONENTS:
+ * - AnalysisDashboard - Main analysis results dashboard
+ * - AnnotatedImageDisplay - Image with pose annotations
+ * - AutoScreenshots - Auto-generated analysis screenshots
+ * - FormScoreCard - Overall form score display
+ * 
+ * POSE VISUALIZATION:
+ * - SkeletonOverlay - Draw pose skeleton on canvas
+ * - AngleIndicators - Display measured angles
+ * - PoseAnalysis - Pose detection results
+ * 
+ * SHOT BREAKDOWN:
+ * - ShotBreakdownStrip - Shot phase strip (Setup, Release, Follow-through)
+ * - EnhancedShotStrip - Enhanced version with more details
+ * 
+ * PROGRESS & TRACKING:
+ * - AnalysisProgress - Analysis progress bar
+ * - ProgressTracker - Multi-step progress tracker
+ * 
+ * COMPARISON & EXPORT:
+ * - SplitScreenComparison - Side-by-side comparison
+ * - VideoFrameCapture - Capture frames from video
+ * - ExportButton - Export analysis results
+ */
 
+// Pose visualization
 export { SkeletonOverlay, drawSkeletonOnCanvas } from "./SkeletonOverlay"
 export type { Keypoint } from "./SkeletonOverlay"
 
@@ -12,21 +39,27 @@ export {
 } from "./AngleIndicators"
 export type { AngleData } from "./AngleIndicators"
 
-export { SplitScreenComparison } from "./SplitScreenComparison"
-export { ProgressTracker } from "./ProgressTracker"
-
-// Existing components - named exports
+// Main display components
 export { AnalysisDashboard } from "./AnalysisDashboard"
-export { FormScoreCard } from "./FormScoreCard"
 export { AnnotatedImageDisplay } from "./AnnotatedImageDisplay"
 export { AutoScreenshots } from "./AutoScreenshots"
-export { VideoFrameCapture } from "./VideoFrameCapture"
-export { ExportButton } from "./ExportButton"
-export { ShotBreakdownStrip } from "./ShotBreakdownStrip"
-export { EnhancedShotStrip } from "./EnhancedShotStrip"
-export { AnalysisProgress } from "./AnalysisProgress"
+export { FormScoreCard } from "./FormScoreCard"
 export { PoseAnalysis } from "./PoseAnalysis"
 
+// Shot breakdown
+export { ShotBreakdownStrip } from "./ShotBreakdownStrip"
+export { EnhancedShotStrip } from "./EnhancedShotStrip"
 
+// Progress tracking
+export { AnalysisProgress } from "./AnalysisProgress"
+export { ProgressTracker } from "./ProgressTracker"
+export { AnalysisProgressScreen } from "./AnalysisProgressScreen"
 
+// Comparison and export
+export { SplitScreenComparison } from "./SplitScreenComparison"
+export { VideoFrameCapture } from "./VideoFrameCapture"
+export { ExportButton } from "./ExportButton"
 
+// GSAP Video Player
+export { GSAPVideoPlayer } from "./GSAPVideoPlayer"
+export { VideoPlayerSection } from "./VideoPlayerSection"

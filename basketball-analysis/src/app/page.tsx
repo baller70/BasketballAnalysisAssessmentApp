@@ -1,14 +1,39 @@
+/**
+ * @file page.tsx (Home Page)
+ * @description Main upload page for basketball shooting analysis
+ * 
+ * PURPOSE:
+ * - Provides the primary upload interface for images and videos
+ * - Handles media type selection (image/video toggle)
+ * - Orchestrates the analysis flow (upload → analyze → results)
+ * - Manages the analysis progress screen
+ * 
+ * KEY FEATURES:
+ * - Image upload: 3-7 photos via MediaUpload component
+ * - Video upload: Up to 10-second video via VideoUploadInline
+ * - Player profile form (optional)
+ * - Analysis progress tracking
+ * - Session saving to localStorage
+ * 
+ * FLOW:
+ * 1. User selects media type (image/video)
+ * 2. User uploads media via respective component
+ * 3. User clicks "Analyze" button
+ * 4. handleAnalyze() → handleImageAnalysis() or handleVideoAnalysis()
+ * 5. Progress screen shows during analysis
+ * 6. Redirects to /results/demo on completion
+ * 
+ * RELATED FILES:
+ * - src/components/upload/MediaUpload.tsx - Image upload component
+ * - src/components/upload/VideoUploadInline.tsx - Video upload component
+ * - src/services/visionAnalysis.ts - Image analysis service
+ * - src/services/videoAnalysis.ts - Video analysis service
+ * - src/stores/analysisStore.ts - State management
+ * - src/app/results/demo/page.tsx - Results display page
+ */
 "use client"
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
-// #region agent log
-const DEBUG_VERSION = "v2024-12-19-LATEST";
-const debugLog = (location: string, message: string, data: Record<string, unknown>, hypothesisId: string) => {
-  fetch('http://127.0.0.1:7243/ingest/4f306913-318f-4a0c-bd40-bb3fb22bd959',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location,message,data:{...data,DEBUG_VERSION},timestamp:Date.now(),sessionId:'debug-session',hypothesisId})}).catch(()=>{});
-};
-// #endregion
-
-import React, { useState, useRef, useEffect, Suspense } from "react"
+import React, { useState, useRef, useEffect, Suspense, useCallback, useMemo } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Upload, User, Sparkles, Video, Image as ImageIcon, ChevronDown } from "lucide-react"
 import { MediaUpload } from "@/components/upload/MediaUpload"
@@ -25,6 +50,7 @@ import {
 } from "@/services/sessionStorage"
 import { detectFlawsFromAngles, getShooterLevel } from "@/data/shootingFlawsDatabase"
 import { cn } from "@/lib/utils"
+import type { VisionAnalysisResult } from "@/stores/analysisStore"
 
 type MediaType = "image" | "video"
 
@@ -42,28 +68,10 @@ function HomeContent() {
   const searchParams = useSearchParams()
   const [mediaType, setMediaType] = useState<MediaType>("image")
   
-  // Check if coming from results page for a new session (skip profile)
-  const isNewSession = searchParams.get('mode') === 'video' || searchParams.get('mode') === 'image'
-  
-  // Set media type from URL query parameter on mount
-  useEffect(() => {
-    const mode = searchParams.get('mode')
-    if (mode === 'video') {
-      setMediaType('video')
-    } else if (mode === 'image') {
-      setMediaType('image')
-    }
-  }, [searchParams])
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [showProgressScreen, setShowProgressScreen] = useState(false)
-  const [analysisError, setAnalysisError] = useState<string | null>(null)
-  const [processingComplete, setProcessingComplete] = useState(false)
-  const analysisResultRef = useRef<any>(null)
-  
-  // Video file state (managed here for unified flow)
+  // Video file state (managed here for unified flow) - declare before useEffect
   const [videoFile, setVideoFile] = useState<File | null>(null)
   
+  // Get store functions first before using them in useEffect
   const { 
     uploadedFile, 
     setIsAnalyzing, 
@@ -73,8 +81,62 @@ function HomeContent() {
     setRoboflowBallDetection,
     setVideoAnalysisData,
     setMediaType: setStoreMediaType,
-    setError 
+    setError,
+    resetUpload,
+    mediaType: storeMediaType,
+    setUploadedFile,
+    setMediaPreviewUrl,
+    setTeaserFrames,
+    setFullFrames,
+    setAllUploadedUrls,
+    setFormAnalysisResult
   } = useAnalysisStore()
+  
+  // Check if coming from results page for a new session (skip profile)
+  const isNewSession = searchParams.get('mode') === 'video' || searchParams.get('mode') === 'image'
+  
+  // Set media type from URL query parameter on mount
+  useEffect(() => {
+    const mode = searchParams.get('mode')
+    if (mode === 'video') {
+      setMediaType('video')
+      setStoreMediaType('VIDEO')
+    } else if (mode === 'image') {
+      setMediaType('image')
+      setStoreMediaType('IMAGE')
+    }
+  }, [searchParams, setStoreMediaType])
+
+  // Clear state when switching between media types
+  useEffect(() => {
+    // When switching to image mode, clear video-specific state
+    // Keep image-related state (uploadedImageBase64, visionAnalysisResult) as both modes use these
+    if (mediaType === 'image' && storeMediaType === 'VIDEO') {
+      setVideoFile(null)
+      setVideoAnalysisData(null)
+      setStoreMediaType('IMAGE')
+    }
+    // When switching to video mode, clear image upload state but keep image processing capabilities
+    // Video mode extracts frames to images and uses the same image analysis components
+    if (mediaType === 'video' && storeMediaType === 'IMAGE') {
+      // Only clear upload-specific state, not image processing state
+      // uploadedImageBase64 and visionAnalysisResult are used by video mode too
+      setUploadedFile(null)
+      setMediaPreviewUrl(null)
+      setTeaserFrames([])
+      setFullFrames([])
+      setAllUploadedUrls([])
+      setFormAnalysisResult(null)
+      setStoreMediaType('VIDEO')
+    }
+  }, [mediaType, storeMediaType, setStoreMediaType, setVideoAnalysisData, setVideoFile, setUploadedFile, setMediaPreviewUrl, setTeaserFrames, setFullFrames, setAllUploadedUrls, setFormAnalysisResult])
+  
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showProgressScreen, setShowProgressScreen] = useState(false)
+  const [analysisError, setAnalysisError] = useState<string | null>(null)
+  const [processingComplete, setProcessingComplete] = useState(false)
+  const analysisResultRef = useRef<VisionAnalysisResult | null>(null)
 
   // Form is valid if we have images (for image mode) or video file (for video mode)
   const isFormValid = mediaType === "image" ? Boolean(uploadedFile) : Boolean(videoFile)
@@ -183,10 +245,10 @@ function HomeContent() {
     }
 
     // Store result for later use
-    analysisResultRef.current = result
+    analysisResultRef.current = result as VisionAnalysisResult
     
     // Store the result
-    setVisionAnalysisResult(result as any)
+    setVisionAnalysisResult(result as VisionAnalysisResult)
     setAnalysisProgress(100)
     
     // Signal that actual processing is complete
@@ -213,23 +275,18 @@ function HomeContent() {
           detectedFlaws,
           measurements: {}
         },
-        useAnalysisStore.getState().playerProfile.name || 'Player'
+        useAnalysisStore.getState().playerProfile.name || 'Player',
+        undefined, // coachingLevelUsed
+        undefined, // profileSnapshot
+        undefined, // imagesAnalyzed
+        'image', // mediaType - explicitly set to 'image'
+        undefined // videoData
       )
       
       const saved = saveSession(session)
       if (saved) {
-        console.log("✅ Session saved to localStorage:", session.id)
+        console.log("✅ Image session saved to localStorage:", session.id, "mediaType:", session.mediaType)
       }
-      
-      // 🎒 BLUE BACKPACK: Save IMAGE session separately
-      const imageSessionData = {
-        imageBase64: base64,
-        visionAnalysis: result,
-        timestamp: Date.now(),
-        playerName: useAnalysisStore.getState().playerProfile.name || 'Player'
-      }
-      localStorage.setItem('basketball_image_session', JSON.stringify(imageSessionData))
-      console.log("🎒 IMAGE session saved to blue backpack")
       
     } catch (saveError) {
       console.error("Error saving session:", saveError)
@@ -276,8 +333,8 @@ function HomeContent() {
       }
     }
     
-    setVisionAnalysisResult(visionResult as any)
-    analysisResultRef.current = visionResult
+    setVisionAnalysisResult(visionResult as unknown as VisionAnalysisResult)
+    analysisResultRef.current = visionResult as unknown as VisionAnalysisResult
     
     // Store video analysis data in the store for results page
     const videoData = {
@@ -339,40 +396,7 @@ function HomeContent() {
     
     const saved = saveSession(session)
     if (saved) {
-      console.log("✅ Video session saved with frame data:", session.id)
-    }
-    
-    // 🎒 RED BACKPACK: Save VIDEO session separately
-    // NOTE: We only save essential data, NOT the full video frames (too large for localStorage)
-    // The full videoData is kept in the Zustand store for the current session
-    const videoSessionDataLite = {
-      mainImageBase64: sessionData.mainImageBase64,
-      skeletonImageBase64: sessionData.skeletonImageBase64,
-      // Only save first frame as cover image, not all frames
-      coverFrame: videoData.annotatedFramesBase64?.[0] || null,
-      // Save metadata but not the heavy frame arrays
-      videoMetadata: {
-        frameCount: videoData.frameCount,
-        duration: videoData.duration,
-        fps: videoData.fps,
-        phases: videoData.phases,
-        metrics: videoData.metrics
-      },
-      visionAnalysis: visionResult,
-      overallScore: sessionData.overallScore,
-      angles: sessionData.angles,
-      feedback: sessionData.feedback,
-      strengths: sessionData.strengths,
-      improvements: sessionData.improvements,
-      timestamp: Date.now(),
-      playerName: useAnalysisStore.getState().playerProfile.name || 'Player'
-    }
-    try {
-      localStorage.setItem('basketball_video_session', JSON.stringify(videoSessionDataLite))
-      console.log("🎒 VIDEO session saved to red backpack (lite version)")
-    } catch (storageError) {
-      console.warn("⚠️ Could not save video session to localStorage (data too large):", storageError)
-      // Still continue - the session is in the Zustand store
+      console.log("✅ Video session saved to localStorage:", session.id, "mediaType:", session.mediaType)
     }
 
     setAnalysisProgress(100)
@@ -380,34 +404,37 @@ function HomeContent() {
   }
 
   // Called when progress screen animation completes
-  const handleProgressComplete = () => {
+  const handleProgressComplete = useCallback(() => {
     setShowProgressScreen(false)
     setIsSubmitting(false)
     setIsAnalyzing(false)
     router.push("/results/demo")
-  }
+  }, [router, setIsAnalyzing])
 
   // Called when user cancels during processing
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     setShowProgressScreen(false)
     setIsSubmitting(false)
     setIsAnalyzing(false)
     setProcessingComplete(false)
     setAnalysisError(null)
-  }
+  }, [setIsAnalyzing])
 
   // Called when user wants to retry after error
-  const handleRetry = () => {
+  const handleRetry = useCallback(() => {
     setAnalysisError(null)
     handleAnalyze()
-  }
+  }, [])
 
-  const mediaOptions = [
+  // Memoize media options to prevent re-creation on every render
+  const mediaOptions = useMemo(() => [
     { value: "image" as MediaType, label: "Images", icon: ImageIcon, description: "Upload 3-7 photos of your shot" },
     { value: "video" as MediaType, label: "Video", icon: Video, description: "Upload a 10-second video" }
-  ]
+  ], [])
 
-  const selectedOption = mediaOptions.find(o => o.value === mediaType)!
+  const selectedOption = useMemo(() => 
+    mediaOptions.find(o => o.value === mediaType)!
+  , [mediaOptions, mediaType])
 
   return (
     <>
@@ -482,11 +509,19 @@ function HomeContent() {
                           key={option.value}
                           type="button"
                           onClick={() => {
-                            setMediaType(option.value)
+                            const newMediaType = option.value
+                            setMediaType(newMediaType)
                             setIsDropdownOpen(false)
-                            // Clear the other type's file when switching
-                            if (option.value === "image") {
+                            
+                            // Clear the other type's state when switching
+                            if (newMediaType === "image") {
                               setVideoFile(null)
+                              setStoreMediaType("IMAGE")
+                              // Clear video-related state from store
+                              setVideoAnalysisData(null)
+                            } else if (newMediaType === "video") {
+                              resetUpload()
+                              setStoreMediaType("VIDEO")
                             }
                           }}
                           className={cn(

@@ -66,12 +66,12 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Basketball detection error:', error)
     
-    // Check if it's a connection error to the hybrid server
+    // Check if it's a connection error to the image analysis server
     if (error instanceof TypeError && error.message.includes('fetch')) {
       return NextResponse.json(
         { 
           success: false, 
-          error: 'Cannot connect to hybrid server',
+          error: 'Cannot connect to image analysis server (port 5001)',
           message: 'Run: python3 python-scraper/hybrid_pose_detection.py'
         },
         { status: 503 }

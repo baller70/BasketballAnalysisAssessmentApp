@@ -1,7 +1,33 @@
 /**
- * Vision Analysis Service
- * Connects to the hybrid pose detection backend (YOLOv8-pose + MediaPipe + OpenCV)
+ * @file visionAnalysis.ts
+ * @description Vision AI service for basketball shooting pose detection and analysis
+ * 
+ * PURPOSE:
+ * - Connects to the Python hybrid pose detection backend
+ * - Sends images for pose detection (YOLOv8-pose + MediaPipe + OpenCV)
+ * - Converts raw pose data to analysis results
+ * - Provides health check for backend connectivity
+ * 
+ * MAIN FUNCTIONS:
+ * - analyzeShootingForm(imageFile, ballPosition?) - Main analysis function
+ * - checkHybridServerHealth() - Check if Python backend is running
+ * 
+ * BACKEND ENDPOINTS CALLED:
+ * - POST {HYBRID_API_URL}/api/detect-pose - Pose detection
+ * - POST {HYBRID_API_URL}/api/analyze-form - Form analysis
+ * - GET {HYBRID_API_URL}/health - Health check
+ * 
+ * USED BY:
+ * - src/app/page.tsx (handleImageAnalysis)
+ * 
+ * RETURNS:
+ * - VisionAnalysisResult with keypoints, angles, score, and feedback
+ * 
+ * ENVIRONMENT:
+ * - NEXT_PUBLIC_HYBRID_API_URL - Python backend URL (default: http://localhost:5001)
  */
+
+import { fileToBase64 } from "@/lib/utils"
 
 const HYBRID_API_URL = process.env.NEXT_PUBLIC_HYBRID_API_URL || 'http://localhost:5001'
 
@@ -118,22 +144,6 @@ function convertKeypointsToBodyPositions(
   }
   
   return positions
-}
-
-/**
- * Convert a File to base64 string (without data URL prefix)
- */
-async function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => {
-      const result = reader.result as string
-      const base64 = result.split(',')[1]
-      resolve(base64)
-    }
-    reader.onerror = reject
-    reader.readAsDataURL(file)
-  })
 }
 
 /**
@@ -267,7 +277,7 @@ export async function analyzeShootingForm(
     if (error instanceof TypeError && error.message.includes('fetch')) {
       return {
         success: false,
-        error: 'Cannot connect to hybrid server. Run: python3 python-scraper/hybrid_pose_detection.py'
+        error: 'Cannot connect to image analysis server (port 5001). Run: python3 python-scraper/hybrid_pose_detection.py'
       }
     }
 
