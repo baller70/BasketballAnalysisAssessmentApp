@@ -1,9 +1,35 @@
-// Elite Shooters Database - Comprehensive database with physical attributes & matching algorithm
-// 4-TIER CLASSIFICATION SYSTEM:
-// - LEGENDARY (Tier 1): Greatest shooters ever (95-99 score)
-// - ELITE (Tier 2): Exceptional shooters (88-94 score)
-// - GREAT (Tier 3): Very good shooters (78-87 score)
-// - GOOD (Tier 4): Competent shooters (70-77 score)
+/**
+ * @file eliteShooters.ts
+ * @description Database of elite NBA shooters with physical attributes and career stats
+ * 
+ * PURPOSE:
+ * - Provides reference data for elite shooter comparisons
+ * - Contains physical measurements, shooting stats, and form characteristics
+ * - Used to match users with similar elite shooters
+ * 
+ * TIER CLASSIFICATION:
+ * - LEGENDARY (Tier 1): Greatest shooters ever (95-99 score) - Curry, Ray Allen
+ * - ELITE (Tier 2): Exceptional shooters (88-94 score) - Klay Thompson, Korver
+ * - GREAT (Tier 3): Very good shooters (78-87 score) - Booker, Mitchell
+ * - GOOD (Tier 4): Competent shooters (70-77 score)
+ * 
+ * DATA INCLUDES:
+ * - Physical: height, weight, wingspan, body type
+ * - Stats: career 3PT%, FT%, era
+ * - Form: shooting style, release characteristics
+ * - Photos: NBA headshot URLs
+ * 
+ * MAIN EXPORTS:
+ * - ALL_ELITE_SHOOTERS - Array of all shooter profiles
+ * - EliteShooter interface - Type definition
+ * - TIER_LABELS, TIER_COLORS - Display constants
+ * - LEAGUE_LABELS, POSITION_LABELS - Enum labels
+ * 
+ * USED BY:
+ * - src/app/results/demo/page.tsx - Elite shooter matching
+ * - src/app/elite-shooters/page.tsx - Shooter database browser
+ * - src/services/comparisonAlgorithm.ts - Matching logic
+ */
 
 export type ShooterTier = 'legendary' | 'elite' | 'great' | 'good';
 export type Position = 'POINT_GUARD' | 'SHOOTING_GUARD' | 'SMALL_FORWARD' | 'POWER_FORWARD' | 'CENTER' | 'GUARD' | 'FORWARD';

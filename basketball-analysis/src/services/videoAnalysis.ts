@@ -1,7 +1,28 @@
 /**
- * Video Analysis Service
- * Connects to the video analysis backend for video analysis
- * Mirrors the image analysis flow but for video input
+ * @file videoAnalysis.ts
+ * @description Video analysis service for basketball shooting form analysis from video
+ * 
+ * PURPOSE:
+ * - Processes video uploads for shooting analysis
+ * - Extracts key frames (Setup, Release, Follow-through)
+ * - Sends video to Python backend for frame-by-frame analysis
+ * - Converts video analysis results to session format
+ * 
+ * MAIN FUNCTIONS:
+ * - analyzeVideoShooting(videoFile) - Main video analysis function
+ * - convertVideoToSessionFormat(result) - Convert to session storage format
+ * 
+ * BACKEND ENDPOINTS CALLED:
+ * - POST {VIDEO_API_URL}/api/analyze-video - Video analysis
+ * 
+ * USED BY:
+ * - src/app/page.tsx (handleVideoAnalysis)
+ * 
+ * RETURNS:
+ * - VideoAnalysisResult with frames, keypoints, phases, and metrics
+ * 
+ * ENVIRONMENT:
+ * - NEXT_PUBLIC_VIDEO_API_URL - Video backend URL (default: http://localhost:5002)
  */
 
 // Video analysis runs on a separate server (port 5002)
@@ -151,7 +172,7 @@ export async function analyzeVideoShooting(videoFile: File): Promise<VideoAnalys
     if (error instanceof TypeError && error.message.includes('fetch')) {
       return {
         success: false,
-        error: 'Cannot connect to hybrid server. Make sure the backend is running.'
+        error: 'Cannot connect to video analysis server (port 5002). Run: python3 python-scraper/video_analysis.py'
       }
     }
 

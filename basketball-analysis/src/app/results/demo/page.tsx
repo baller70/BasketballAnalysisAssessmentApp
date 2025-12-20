@@ -9,6 +9,7 @@ import React, { useState, useMemo, useRef, useCallback, useEffect } from "react"
 import { AnalysisDashboard } from "@/components/analysis/AnalysisDashboard"
 import { EnhancedShotStrip } from "@/components/analysis/EnhancedShotStrip"
 import { AutoScreenshots } from "@/components/analysis/AutoScreenshots"
+import { VideoPlayerSection } from "@/components/analysis/VideoPlayerSection"
 import { User, Upload, Check, X, Image as ImageIcon, Video, BookOpen, Users, Search, BarChart3, Award, ArrowRight, Zap, Trophy, Target, ClipboardList, Flame, Dumbbell, CircleDot, Share2, Download, Copy, Twitter, Facebook, Linkedin, ChevronLeft, ChevronRight, Calendar, ChevronDown, ChevronUp, AlertTriangle, Lightbulb, Plus, Eye, EyeOff, Layers, GitBranch, Circle, Tag, Camera, Play } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
@@ -27,6 +28,8 @@ import {
 } from "@/data/shootingFlawsDatabase"
 import {
   getAllSessions,
+  getLatestSessionByMediaType,
+  getSessionsByMediaType,
   saveSession,
   deleteSession,
   createSessionFromAnalysis,
@@ -232,43 +235,207 @@ function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, ang
         ["right_hip", "right_knee"], ["right_knee", "right_ankle"],
       ]
 
-      // Draw skeleton lines - only if toggle is on
+      // ============================================
+      // STATUS-BASED COLORS (green=good, yellow=warning, red=problem)
+      // ============================================
+      const STATUS_COLORS = {
+        good: "#22c55e",      // Green
+        warning: "#eab308",   // Yellow  
+        critical: "#ef4444",  // Red
+        default: "#00d4ff",   // Cyan (default)
+      }
+      
+      // Body part to color mapping for visual distinction
+      const BODY_PART_COLORS: Record<string, string> = {
+        left_shoulder: '#00d4ff', right_shoulder: '#00d4ff',
+        left_elbow: '#00ffcc', right_elbow: '#00ffcc',
+        left_wrist: '#00ff99', right_wrist: '#00ff99',
+        nose: '#ff00ff', neck: '#ff00ff', mid_hip: '#cc00ff',
+        left_hip: '#ff9900', right_hip: '#ff9900',
+        left_knee: '#ffcc00', right_knee: '#ffcc00',
+        left_ankle: '#ffff00', right_ankle: '#ffff00',
+      }
+      
+      // Get status for keypoint based on angles
+      const getKeypointStatus = (keypointName: string): 'good' | 'warning' | 'critical' | undefined => {
+        if (!angles) return undefined
+        
+        if (keypointName.includes('elbow') || keypointName.includes('wrist')) {
+          const elbow = angles.elbow_angle || angles.right_elbow_angle || angles.left_elbow_angle
+          if (elbow !== undefined) {
+            if (elbow >= 85 && elbow <= 100) return 'good'
+            if (elbow >= 70 && elbow <= 110) return 'warning'
+            return 'critical'
+          }
+        }
+        if (keypointName.includes('knee') || keypointName.includes('ankle')) {
+          const knee = angles.knee_angle || angles.right_knee_angle || angles.left_knee_angle
+          if (knee !== undefined) {
+            if (knee >= 130 && knee <= 160) return 'good'
+            if (knee >= 110 && knee <= 170) return 'warning'
+            return 'critical'
+          }
+        }
+        if (keypointName.includes('shoulder')) {
+          const shoulder = angles.shoulder_tilt
+          if (shoulder !== undefined) {
+            if (Math.abs(shoulder) <= 5) return 'good'
+            if (Math.abs(shoulder) <= 10) return 'warning'
+            return 'critical'
+          }
+        }
+        if (keypointName.includes('hip')) {
+          const hip = angles.hip_tilt
+          if (hip !== undefined) {
+            if (Math.abs(hip) <= 8) return 'good'
+            if (Math.abs(hip) <= 15) return 'warning'
+            return 'critical'
+          }
+        }
+        return undefined
+      }
+      
+      // Get worst status between two keypoints
+      const getWorstStatus = (s1?: string, s2?: string) => {
+        const priority: Record<string, number> = { critical: 3, warning: 2, good: 1 }
+        const p1 = s1 ? priority[s1] || 0 : 0
+        const p2 = s2 ? priority[s2] || 0 : 0
+        if (p1 >= p2) return s1
+        return s2
+      }
+
+      // Draw skeleton lines - PROFESSIONAL VIDEO GAME STYLE
       if (toggles.skeleton && Object.keys(kp).length > 0) {
-        ctx.strokeStyle = "#facc15"
-        ctx.lineWidth = 2
+        ctx.lineCap = 'round'
+        ctx.lineJoin = 'round'
+        
         skeleton.forEach(([start, end]) => {
           if (kp[start] && kp[end]) {
+            const startX = kp[start].x * sx + LABEL_PADDING
+            const startY = kp[start].y * sy
+            const endX = kp[end].x * sx + LABEL_PADDING
+            const endY = kp[end].y * sy
+            
+            // Get status-based color or body part color
+            const startStatus = getKeypointStatus(start)
+            const endStatus = getKeypointStatus(end)
+            const worstStatus = getWorstStatus(startStatus, endStatus)
+            
+            let lineColor: string
+            if (worstStatus) {
+              lineColor = STATUS_COLORS[worstStatus as keyof typeof STATUS_COLORS]
+            } else {
+              lineColor = BODY_PART_COLORS[start] || '#00d4ff'
+            }
+            
+            // Layer 1: Outer glow (largest, most transparent)
+            ctx.strokeStyle = lineColor
+            ctx.lineWidth = 14
+            ctx.globalAlpha = 0.15
             ctx.beginPath()
-            ctx.moveTo(kp[start].x * sx + LABEL_PADDING, kp[start].y * sy)
-            ctx.lineTo(kp[end].x * sx + LABEL_PADDING, kp[end].y * sy)
+            ctx.moveTo(startX, startY)
+            ctx.lineTo(endX, endY)
             ctx.stroke()
+            
+            // Layer 2: Middle glow
+            ctx.lineWidth = 10
+            ctx.globalAlpha = 0.25
+            ctx.beginPath()
+            ctx.moveTo(startX, startY)
+            ctx.lineTo(endX, endY)
+            ctx.stroke()
+            
+            // Layer 3: Inner glow
+            ctx.lineWidth = 6
+            ctx.globalAlpha = 0.4
+            ctx.beginPath()
+            ctx.moveTo(startX, startY)
+            ctx.lineTo(endX, endY)
+            ctx.stroke()
+            
+            // Layer 4: Core line (solid)
+            ctx.lineWidth = 4
+            ctx.globalAlpha = 1.0
+            ctx.beginPath()
+            ctx.moveTo(startX, startY)
+            ctx.lineTo(endX, endY)
+            ctx.stroke()
+            
+            // Layer 5: Bright center highlight
+            ctx.strokeStyle = '#ffffff'
+            ctx.lineWidth = 1.5
+            ctx.globalAlpha = 0.6
+            ctx.beginPath()
+            ctx.moveTo(startX, startY)
+            ctx.lineTo(endX, endY)
+            ctx.stroke()
+            
+            ctx.globalAlpha = 1.0
           }
         })
       }
 
-      // Colors by source
-      const colors: Record<string, string> = {
-        yolo: "#4ade80",
-        mediapipe: "#60a5fa",
-        fused: "#facc15",
-        ball_refined: "#f87171"
-      }
-
-      // Draw keypoints - only if toggle is on
+      // Draw keypoints - PROFESSIONAL VIDEO GAME STYLE
       if (toggles.joints && Object.keys(kp).length > 0) {
+        const pointRadius = 10
+        
         Object.entries(kp).forEach(([name, pt]) => {
-          const x = pt.x * sx + LABEL_PADDING  // Offset by padding
+          const x = pt.x * sx + LABEL_PADDING
           const y = pt.y * sy
-          const color = colors[pt.source || "fused"] || "#ffffff"
-          const radius = name.includes("wrist") ? 8 : 5
-
+          
+          // Get status-based color or body part color
+          const status = getKeypointStatus(name)
+          let color: string
+          if (status) {
+            color = STATUS_COLORS[status as keyof typeof STATUS_COLORS]
+          } else {
+            color = BODY_PART_COLORS[name] || '#00d4ff'
+          }
+          
+          // Layer 1: Outer glow (largest)
           ctx.beginPath()
-          ctx.arc(x, y, radius, 0, Math.PI * 2)
+          ctx.arc(x, y, pointRadius + 8, 0, Math.PI * 2)
           ctx.fillStyle = color
+          ctx.globalAlpha = 0.15
           ctx.fill()
-          ctx.strokeStyle = "white"
+          
+          // Layer 2: Middle glow
+          ctx.beginPath()
+          ctx.arc(x, y, pointRadius + 5, 0, Math.PI * 2)
+          ctx.globalAlpha = 0.25
+          ctx.fill()
+          
+          // Layer 3: Inner glow
+          ctx.beginPath()
+          ctx.arc(x, y, pointRadius + 2, 0, Math.PI * 2)
+          ctx.globalAlpha = 0.4
+          ctx.fill()
+          
+          // Layer 4: Main joint circle (solid)
+          ctx.beginPath()
+          ctx.arc(x, y, pointRadius, 0, Math.PI * 2)
+          ctx.fillStyle = color
+          ctx.globalAlpha = 1.0
+          ctx.fill()
+          
+          // Layer 5: Dark inner ring for depth
+          ctx.beginPath()
+          ctx.arc(x, y, pointRadius * 0.7, 0, Math.PI * 2)
+          ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)'
           ctx.lineWidth = 2
           ctx.stroke()
+          
+          // Layer 6: Bright center highlight
+          ctx.beginPath()
+          ctx.arc(x, y, pointRadius * 0.5, 0, Math.PI * 2)
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.7)'
+          ctx.fill()
+          
+          // Layer 7: Tiny reflection dot
+          ctx.beginPath()
+          ctx.arc(x - pointRadius * 0.25, y - pointRadius * 0.25, pointRadius * 0.2, 0, Math.PI * 2)
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'
+          ctx.fill()
         })
       }
       
@@ -604,31 +771,95 @@ function AnimatedImageWalkthrough({ imageUrl, keypoints, angles, imageSize }: An
         ["right_hip", "right_knee"], ["right_knee", "right_ankle"],
       ]
       
-      // Draw skeleton
-      ctx.strokeStyle = "#facc15"
-      ctx.lineWidth = 3
+      // Status colors and body part colors
+      const STATUS_COLORS_ANIM = { good: "#22c55e", warning: "#eab308", critical: "#ef4444", default: "#00d4ff" }
+      const BODY_PART_COLORS_ANIM: Record<string, string> = {
+        left_shoulder: '#00d4ff', right_shoulder: '#00d4ff',
+        left_elbow: '#00ffcc', right_elbow: '#00ffcc',
+        left_wrist: '#00ff99', right_wrist: '#00ff99',
+        nose: '#ff00ff', left_hip: '#ff9900', right_hip: '#ff9900',
+        left_knee: '#ffcc00', right_knee: '#ffcc00',
+        left_ankle: '#ffff00', right_ankle: '#ffff00',
+      }
+      
+      const getAnimKeypointStatus = (keypointName: string) => {
+        if (!angles) return undefined
+        if (keypointName.includes('elbow') || keypointName.includes('wrist')) {
+          const elbow = angles.elbow_angle || angles.right_elbow_angle
+          if (elbow !== undefined) {
+            if (elbow >= 85 && elbow <= 100) return 'good'
+            if (elbow >= 70 && elbow <= 110) return 'warning'
+            return 'critical'
+          }
+        }
+        if (keypointName.includes('knee') || keypointName.includes('ankle')) {
+          const knee = angles.knee_angle || angles.right_knee_angle
+          if (knee !== undefined) {
+            if (knee >= 130 && knee <= 160) return 'good'
+            if (knee >= 110 && knee <= 170) return 'warning'
+            return 'critical'
+          }
+        }
+        return undefined
+      }
+      
+      const getAnimWorstStatus = (s1?: string, s2?: string) => {
+        const priority: Record<string, number> = { critical: 3, warning: 2, good: 1 }
+        const p1 = s1 ? priority[s1] || 0 : 0
+        const p2 = s2 ? priority[s2] || 0 : 0
+        return p1 >= p2 ? s1 : s2
+      }
+      
+      // Draw skeleton - PROFESSIONAL VIDEO GAME STYLE
+      ctx.lineCap = 'round'
+      ctx.lineJoin = 'round'
       skeleton.forEach(([start, end]) => {
         if (kp[start] && kp[end]) {
-          ctx.beginPath()
-          ctx.moveTo(kp[start].x * sx + offsetX, kp[start].y * sy + offsetY)
-          ctx.lineTo(kp[end].x * sx + offsetX, kp[end].y * sy + offsetY)
-          ctx.stroke()
+          const startX = kp[start].x * sx + offsetX
+          const startY = kp[start].y * sy + offsetY
+          const endX = kp[end].x * sx + offsetX
+          const endY = kp[end].y * sy + offsetY
+          
+          const startStatus = getAnimKeypointStatus(start)
+          const endStatus = getAnimKeypointStatus(end)
+          const worstStatus = getAnimWorstStatus(startStatus, endStatus)
+          const lineColor = worstStatus ? STATUS_COLORS_ANIM[worstStatus as keyof typeof STATUS_COLORS_ANIM] : (BODY_PART_COLORS_ANIM[start] || '#00d4ff')
+          
+          // Glow layers
+          ctx.strokeStyle = lineColor
+          ctx.lineWidth = 12; ctx.globalAlpha = 0.15
+          ctx.beginPath(); ctx.moveTo(startX, startY); ctx.lineTo(endX, endY); ctx.stroke()
+          ctx.lineWidth = 8; ctx.globalAlpha = 0.25
+          ctx.beginPath(); ctx.moveTo(startX, startY); ctx.lineTo(endX, endY); ctx.stroke()
+          ctx.lineWidth = 4; ctx.globalAlpha = 1.0
+          ctx.beginPath(); ctx.moveTo(startX, startY); ctx.lineTo(endX, endY); ctx.stroke()
+          ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.6
+          ctx.beginPath(); ctx.moveTo(startX, startY); ctx.lineTo(endX, endY); ctx.stroke()
+          ctx.globalAlpha = 1.0
         }
       })
       
-      // Draw keypoints
+      // Draw keypoints - PROFESSIONAL VIDEO GAME STYLE
+      const pointRadius = 10
       Object.entries(kp).forEach(([name, pt]) => {
         const x = pt.x * sx + offsetX
         const y = pt.y * sy + offsetY
-        const radius = name.includes("wrist") ? 10 : 7
+        const status = getAnimKeypointStatus(name)
+        const color = status ? STATUS_COLORS_ANIM[status as keyof typeof STATUS_COLORS_ANIM] : (BODY_PART_COLORS_ANIM[name] || '#00d4ff')
         
-        ctx.beginPath()
-        ctx.arc(x, y, radius, 0, Math.PI * 2)
-        ctx.fillStyle = "#facc15"
-        ctx.fill()
-        ctx.strokeStyle = "white"
-        ctx.lineWidth = 2
-        ctx.stroke()
+        // Glow layers
+        ctx.fillStyle = color
+        ctx.globalAlpha = 0.15; ctx.beginPath(); ctx.arc(x, y, pointRadius + 8, 0, Math.PI * 2); ctx.fill()
+        ctx.globalAlpha = 0.25; ctx.beginPath(); ctx.arc(x, y, pointRadius + 5, 0, Math.PI * 2); ctx.fill()
+        ctx.globalAlpha = 1.0; ctx.beginPath(); ctx.arc(x, y, pointRadius, 0, Math.PI * 2); ctx.fill()
+        
+        // Inner details
+        ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.lineWidth = 2
+        ctx.beginPath(); ctx.arc(x, y, pointRadius * 0.7, 0, Math.PI * 2); ctx.stroke()
+        ctx.fillStyle = 'rgba(255,255,255,0.7)'
+        ctx.beginPath(); ctx.arc(x, y, pointRadius * 0.5, 0, Math.PI * 2); ctx.fill()
+        ctx.fillStyle = 'rgba(255,255,255,0.9)'
+        ctx.beginPath(); ctx.arc(x - pointRadius * 0.25, y - pointRadius * 0.25, pointRadius * 0.2, 0, Math.PI * 2); ctx.fill()
       })
       
       // Draw labels
@@ -1012,13 +1243,14 @@ function ScoreRing({ score, size = 100, strokeWidth = 8, showLabel = true, label
   showLabel?: boolean;
   label?: string;
 }) {
+  const uniqueId = React.useId()
   const colors = getScoreRingColors(score)
   const radius = (size - strokeWidth) / 2
   const circumference = 2 * Math.PI * radius
   const dashArray = `${(score / 100) * circumference} ${circumference}`
   const center = size / 2
-  const gradientId = `score-ring-gradient-${score}-${Math.random().toString(36).substr(2, 9)}`
-  const glowId = `score-ring-glow-${score}-${Math.random().toString(36).substr(2, 9)}`
+  const gradientId = `score-ring-gradient-${score}-${uniqueId.replace(/:/g, '')}`
+  const glowId = `score-ring-glow-${score}-${uniqueId.replace(/:/g, '')}`
 
   return (
     <div className="relative" style={{ width: size, height: size }}>
@@ -1358,62 +1590,43 @@ export default function DemoResultsPage() {
   // Get uploaded image and form analysis from store
   const { formAnalysisResult, visionAnalysisResult, playerProfile, poseConfidence, teaserFrames, fullFrames, allUploadedUrls, uploadedImageBase64, roboflowBallDetection, videoAnalysisData, mediaType } = useAnalysisStore()
   
-  // 🎒 BACKPACK SYSTEM: Load saved sessions from localStorage
-  const [savedImageSession, setSavedImageSession] = useState<{
-    imageBase64: string
-    visionAnalysis: typeof visionAnalysisResult
-    timestamp: number
-    playerName: string
-  } | null>(null)
+  // 🎒 BACKPACK SYSTEM: Load latest sessions by media type from session storage
+  const [latestImageSession, setLatestImageSession] = useState<AnalysisSession | null>(null)
+  const [latestVideoSession, setLatestVideoSession] = useState<AnalysisSession | null>(null)
   
-  const [savedVideoSession, setSavedVideoSession] = useState<{
-    mainImageBase64: string
-    skeletonImageBase64: string
-    coverFrame?: string | null  // Single cover frame instead of full videoData
-    videoMetadata?: {
-      frameCount: number
-      duration: number
-      fps: number
-      phases: Array<{ phase: string; frame: number; timestamp: number }>
-      metrics: Record<string, unknown>
-    }
-    videoData?: typeof videoAnalysisData  // May not be present in lite version
-    visionAnalysis: typeof visionAnalysisResult
-    overallScore: number
-    angles: Record<string, number>
-    feedback: string[]
-    strengths: string[]
-    improvements: string[]
-    timestamp: number
-    playerName: string
-  } | null>(null)
-  
-  // Load saved sessions from localStorage on mount
+  // Load latest sessions from unified session storage on mount
   useEffect(() => {
-    // 🎒 BLUE BACKPACK: Load last image session
-    try {
-      const savedImage = localStorage.getItem('basketball_image_session')
-      if (savedImage) {
-        const parsed = JSON.parse(savedImage)
-        setSavedImageSession(parsed)
-        console.log("🎒 Loaded IMAGE session from blue backpack")
-      }
-    } catch (e) {
-      console.error("Error loading image session:", e)
+    // 🎒 BLUE BACKPACK: Load latest IMAGE session
+    const imageSession = getLatestSessionByMediaType('image')
+    if (imageSession) {
+      setLatestImageSession(imageSession)
+      console.log("🎒 Loaded latest IMAGE session:", imageSession.displayDate)
     }
     
-    // 🎒 RED BACKPACK: Load last video session
-    try {
-      const savedVideo = localStorage.getItem('basketball_video_session')
-      if (savedVideo) {
-        const parsed = JSON.parse(savedVideo)
-        setSavedVideoSession(parsed)
-        console.log("🎒 Loaded VIDEO session from red backpack")
-      }
-    } catch (e) {
-      console.error("Error loading video session:", e)
+    // 🎒 RED BACKPACK: Load latest VIDEO session
+    const videoSession = getLatestSessionByMediaType('video')
+    if (videoSession) {
+      setLatestVideoSession(videoSession)
+      console.log("🎒 Loaded latest VIDEO session:", videoSession.displayDate)
     }
   }, [])
+  
+  // Reload sessions when resultsMode changes (switching tabs)
+  useEffect(() => {
+    if (resultsMode === 'image') {
+      const imageSession = getLatestSessionByMediaType('image')
+      if (imageSession) {
+        setLatestImageSession(imageSession)
+        console.log("🎒 Switched to IMAGE tab - loaded session:", imageSession.displayDate)
+      }
+    } else if (resultsMode === 'video') {
+      const videoSession = getLatestSessionByMediaType('video')
+      if (videoSession) {
+        setLatestVideoSession(videoSession)
+        console.log("🎒 Switched to VIDEO tab - loaded session:", videoSession.displayDate)
+      }
+    }
+  }, [resultsMode])
   
   // Auto-select Video tab when mediaType is VIDEO
   useEffect(() => {
@@ -1422,50 +1635,68 @@ export default function DemoResultsPage() {
     }
   }, [mediaType, videoAnalysisData])
   
-  // 🎒 IMAGE TAB: Use store data first, fall back to saved session (blue backpack)
+  // 🎒 IMAGE TAB: Use store data first, fall back to latest image session
   const imageMainUrl = useMemo(() => {
-    // First try store data
-    if (uploadedImageBase64) return uploadedImageBase64
-    if (allUploadedUrls.length > 0) return allUploadedUrls[0]
-    // Fall back to saved session
-    if (savedImageSession?.imageBase64) return savedImageSession.imageBase64
+    // First try store data (current analysis)
+    if (uploadedImageBase64 && mediaType !== "VIDEO") return uploadedImageBase64
+    if (allUploadedUrls.length > 0 && mediaType !== "VIDEO") return allUploadedUrls[0]
+    // Fall back to latest image session from storage
+    if (latestImageSession?.mainImageBase64) return latestImageSession.mainImageBase64
     return null
-  }, [uploadedImageBase64, allUploadedUrls, savedImageSession])
+  }, [uploadedImageBase64, allUploadedUrls, mediaType, latestImageSession])
   
   const imageVisionAnalysis = useMemo(() => {
-    // First try store data
-    if (visionAnalysisResult) return visionAnalysisResult
-    // Fall back to saved session
-    if (savedImageSession?.visionAnalysis) return savedImageSession.visionAnalysis
+    // First try store data (current analysis)
+    if (visionAnalysisResult && mediaType !== "VIDEO") return visionAnalysisResult
+    // Fall back to latest image session - reconstruct vision analysis from session data
+    if (latestImageSession?.analysisData) {
+      return {
+        success: true,
+        angles: latestImageSession.analysisData.angles,
+        keypoints: (latestImageSession.analysisData as any).keypoints,
+        basketball: (latestImageSession.analysisData as any).basketball,
+        image_size: (latestImageSession.analysisData as any).imageSize,
+        overall_score: latestImageSession.analysisData.overallScore,
+      }
+    }
     return null
-  }, [visionAnalysisResult, savedImageSession])
+  }, [visionAnalysisResult, mediaType, latestImageSession])
   
-  // 🎒 VIDEO TAB: Use store data first, fall back to saved session (red backpack)
+  // 🎒 VIDEO TAB: Use store data first, fall back to latest video session
   const videoMainUrl = useMemo(() => {
     // First try store data (full video frames)
     if (videoAnalysisData?.annotatedFramesBase64?.[0]) return videoAnalysisData.annotatedFramesBase64[0]
     if (uploadedImageBase64 && mediaType === "VIDEO") return uploadedImageBase64
-    // Fall back to saved session - try coverFrame first, then mainImageBase64
-    if (savedVideoSession?.coverFrame) return savedVideoSession.coverFrame
-    if (savedVideoSession?.mainImageBase64) return savedVideoSession.mainImageBase64
+    // Fall back to latest video session
+    if (latestVideoSession?.videoData?.annotatedFramesBase64?.[0]) return latestVideoSession.videoData.annotatedFramesBase64[0]
+    if (latestVideoSession?.mainImageBase64) return latestVideoSession.mainImageBase64
     return null
-  }, [videoAnalysisData, uploadedImageBase64, mediaType, savedVideoSession])
+  }, [videoAnalysisData, uploadedImageBase64, mediaType, latestVideoSession])
   
   const videoVisionAnalysis = useMemo(() => {
     // First try store data
     if (visionAnalysisResult && mediaType === "VIDEO") return visionAnalysisResult
-    // Fall back to saved session
-    if (savedVideoSession?.visionAnalysis) return savedVideoSession.visionAnalysis
+    // Fall back to latest video session - reconstruct vision analysis from session data
+    if (latestVideoSession?.analysisData) {
+      return {
+        success: true,
+        angles: latestVideoSession.analysisData.angles,
+        keypoints: (latestVideoSession.analysisData as any).keypoints,
+        basketball: (latestVideoSession.analysisData as any).basketball,
+        image_size: (latestVideoSession.analysisData as any).imageSize,
+        overall_score: latestVideoSession.analysisData.overallScore,
+      }
+    }
     return null
-  }, [visionAnalysisResult, mediaType, savedVideoSession])
+  }, [visionAnalysisResult, mediaType, latestVideoSession])
   
   const effectiveVideoData = useMemo(() => {
     // First try store data
     if (videoAnalysisData) return videoAnalysisData
-    // Fall back to saved session
-    if (savedVideoSession?.videoData) return savedVideoSession.videoData
+    // Fall back to latest video session
+    if (latestVideoSession?.videoData) return latestVideoSession.videoData
     return null
-  }, [videoAnalysisData, savedVideoSession])
+  }, [videoAnalysisData, latestVideoSession])
   
   // Use base64 image (persists across navigation) or fall back to blob URL
   // This is the original mainImageUrl for backward compatibility
@@ -2573,225 +2804,26 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
   return (
     <>
       {/* ============================================ */}
-      {/* VIDEO PLAYER SECTION - Only in Video Mode */}
+      {/* VIDEO PLAYER SECTION - GSAP Player Only */}
+      {/* ============================================ */}
+      <VideoPlayerSection videoData={videoData} overlayToggles={overlayToggles} />
+      
+      {/* ============================================ */}
+      {/* OVERLAY TOGGLE CONTROLS - Directly under video player */}
+      {/* Shows for BOTH GSAP and Legacy players */}
+      {/* ============================================ */}
+      <div className="px-6 py-4 border-b border-[#3a3a3a]">
+        <div className="max-w-3xl mx-auto">
+          <OverlayControls toggles={overlayToggles} setToggles={setOverlayToggles} />
+        </div>
+      </div>
+      
+      {/* ============================================ */}
+      {/* ANNOTATION DROPDOWN LIST - Shows for BOTH GSAP and Legacy players */}
+      {/* Cards with dropdowns that mirror the video labels */}
       {/* ============================================ */}
       <div className="p-6 border-b border-[#3a3a3a]">
-        <div className="text-center mb-4">
-          <h2 className="text-2xl font-bold text-[#FFD700] mb-2">SHOOTING FORM ANALYSIS BREAKDOWN</h2>
-          <p className="text-[#888] text-sm">Scrub through your shooting motion to analyze each phase</p>
-        </div>
-        
-        {/* Video Player */}
         <div className="max-w-3xl mx-auto">
-          <div ref={videoContainerRef} className="bg-[#1a1a1a] rounded-xl overflow-hidden shadow-2xl">
-            {/* Frame Display with Canvas for Toggle Control */}
-            <div 
-              className="relative aspect-video bg-black flex items-center justify-center overflow-hidden"
-              style={{
-                // Apply zoom transform when zoomTarget is set
-                ...(zoomTarget ? {
-                  transform: `scale(${zoomTarget.scale})`,
-                  transformOrigin: `${(zoomTarget.x / 640) * 100}% ${(zoomTarget.y / 480) * 100}%`,
-                  transition: 'transform 0.8s ease-in-out'
-                } : {
-                  transform: 'scale(1)',
-                  transition: 'transform 0.8s ease-in-out'
-                })
-              }}
-            >
-              {/* Video frame canvas - shows annotated frame with overlays */}
-              {(() => {
-                const frameIdx = hasStartedPlaying ? currentFrame : releaseFrameIndex
-                const safeFrameIdx = Math.min(frameIdx, (videoData.annotatedFramesBase64?.length || 1) - 1)
-                const frameBase64 = videoData.annotatedFramesBase64?.[safeFrameIdx] || videoData.annotatedFramesBase64?.[0]
-                const framePhase = hasStartedPlaying ? currentPhase : (videoData.phases?.find(p => p.frame === safeFrameIdx)?.phase || 'RELEASE')
-                const frameTimestamp = hasStartedPlaying ? currentTimestamp : (safeFrameIdx / (videoData.fps || 10))
-                const frameMetrics = videoData.frameData?.[safeFrameIdx]?.metrics
-                // Get keypoints from allKeypoints array OR from frameData.keypoints
-                const frameKeypoints = videoData.allKeypoints?.[safeFrameIdx] || (videoData.frameData?.[safeFrameIdx] as any)?.keypoints
-                const frameBall = videoData.frameData?.[safeFrameIdx]?.ball
-                
-                return (
-                  <VideoFrameCanvas
-                    rawFrame={frameBase64}
-                    annotatedFrame={frameBase64}
-                    keypoints={frameKeypoints}
-                    ball={frameBall}
-                    toggles={overlayToggles}
-                    phase={framePhase}
-                    timestamp={frameTimestamp}
-                    angles={frameMetrics}
-                    zoomTarget={zoomTarget}
-                    spotlightTarget={spotlightTarget}
-                    playerGlow={overlayToggles.skeleton}
-                  />
-                )
-              })()}
-              
-              {/* Play button overlay - only show before playback starts */}
-              {!hasStartedPlaying && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                  <button 
-                    onClick={() => {
-                      setHasStartedPlaying(true)
-                      setIsPlaying(true)
-                      setSequencePhase('firstPlaythrough')
-                    }}
-                    className="p-6 rounded-full bg-[#FFD700] hover:bg-[#E5C100] text-black transition-all transform hover:scale-110 shadow-2xl"
-                  >
-                    <svg className="w-16 h-16" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                  </button>
-                  {/* Label */}
-                  <div className="absolute bottom-4 left-0 right-0 text-center">
-                    <span className="bg-black/70 text-[#FFD700] px-4 py-2 rounded-lg font-semibold">
-                      Click to Play Walkthrough
-                    </span>
-                  </div>
-                </div>
-              )}
-              
-              {/* Sequence phase indicator */}
-              {hasStartedPlaying && sequencePhase !== 'initial' && sequencePhase !== 'complete' && (
-                <div className="absolute top-4 left-4 bg-black/80 px-3 py-2 rounded-lg">
-                  <span className="text-[#FFD700] text-sm font-bold">
-                    {sequencePhase === 'firstPlaythrough' && 'PLAYING...'}
-                    {sequencePhase === 'labelZoom' && `ANALYZING: ${annotationLabels[currentAnnotationIndex]?.label}`}
-                    {sequencePhase === 'bodyPartZoom' && 'BODY PART FOCUS'}
-                    {sequencePhase === 'slowMo' && 'SLOW MOTION REPLAY'}
-                  </span>
-                </div>
-              )}
-            </div>
-            
-            {/* Controls */}
-            <div className="p-4 bg-[#2a2a2a]">
-              {/* Progress Bar with Keyframe Markers */}
-              <div className="mb-4 relative">
-                {/* Keyframe markers on the timeline */}
-                <div className="absolute top-0 left-0 right-0 h-2 pointer-events-none z-10">
-                  {videoData.phases?.map((phase, idx) => {
-                    const position = totalFrames > 1 ? (phase.frame / (totalFrames - 1)) * 100 : 0
-                    return (
-                      <div
-                        key={idx}
-                        className="absolute top-0 w-1 h-4 bg-[#FFD700] rounded-full transform -translate-x-1/2 -translate-y-1 cursor-pointer pointer-events-auto hover:scale-125 transition-transform"
-                        style={{ left: `${position}%` }}
-                        onClick={() => {
-                          setIsPlaying(false)
-                          setHasStartedPlaying(true)
-                          setCurrentFrame(phase.frame)
-                        }}
-                        title={`${phase.phase} (${phase.timestamp.toFixed(2)}s)`}
-                      />
-                    )
-                  })}
-                </div>
-                <input
-                  type="range"
-                  min={0}
-                  max={totalFrames - 1}
-                  value={currentFrame}
-                  onChange={(e) => {
-                    setIsPlaying(false)
-                    if (!hasStartedPlaying) setHasStartedPlaying(true)
-                    setCurrentFrame(parseInt(e.target.value))
-                  }}
-                  className="w-full h-2 bg-[#4a4a4a] rounded-lg appearance-none cursor-pointer accent-[#FFD700]"
-                />
-                {/* Phase labels below timeline */}
-                <div className="absolute -bottom-5 left-0 right-0 flex justify-between text-xs text-[#888]">
-                  <span>0s</span>
-                  <span>{((totalFrames - 1) / (videoData.fps || 10)).toFixed(1)}s</span>
-                </div>
-              </div>
-              <div className="mt-6" /> {/* Spacer for phase labels */}
-              
-              {/* Playback Controls */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <button onClick={() => setCurrentFrame(0)} className="p-2 rounded-lg bg-[#3a3a3a] hover:bg-[#4a4a4a] text-white transition-colors" title="Go to start">
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
-                  </button>
-                  <button onClick={() => setCurrentFrame(prev => Math.max(0, prev - 1))} disabled={currentFrame === 0} className="p-2 rounded-lg bg-[#3a3a3a] hover:bg-[#4a4a4a] text-white transition-colors disabled:opacity-50" title="Previous frame">
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
-                  </button>
-                  <button onClick={() => {
-                    if (!hasStartedPlaying) setHasStartedPlaying(true)
-                    setIsPlaying(!isPlaying)
-                  }} className="p-3 rounded-full bg-[#FFD700] hover:bg-[#E5C100] text-black transition-colors">
-                    {isPlaying ? (
-                      <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-                    ) : (
-                      <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                    )}
-                  </button>
-                  <button onClick={() => setCurrentFrame(prev => Math.min(totalFrames - 1, prev + 1))} disabled={currentFrame === totalFrames - 1} className="p-2 rounded-lg bg-[#3a3a3a] hover:bg-[#4a4a4a] text-white transition-colors disabled:opacity-50" title="Next frame">
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
-                  </button>
-                  <button onClick={() => setCurrentFrame(totalFrames - 1)} className="p-2 rounded-lg bg-[#3a3a3a] hover:bg-[#4a4a4a] text-white transition-colors" title="Go to end">
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
-                  </button>
-                </div>
-                <div className="flex items-center gap-3">
-                  {/* Frame counter - Regular size (timer inside video is bigger) */}
-                  <div className="bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-3 py-2">
-                    <div className="text-white font-mono text-sm">
-                      Frame <span className="text-[#FFD700]">{currentFrame + 1}</span> / {totalFrames}
-                    </div>
-                    <div className="text-[#888] font-mono text-xs">
-                      {currentTimestamp.toFixed(2)}s
-                    </div>
-                  </div>
-                  
-                  {/* Fullscreen button */}
-                  <button 
-                    onClick={toggleFullscreen}
-                    className="p-2 rounded-lg bg-[#3a3a3a] hover:bg-[#4a4a4a] text-white transition-colors"
-                    title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
-                  >
-                    {isFullscreen ? (
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
-                      </svg>
-                    ) : (
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
-                      </svg>
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Shooting Phases Timeline */}
-          {videoData.phases && videoData.phases.length > 0 && (
-            <div className="mt-4 bg-[#2a2a2a] rounded-xl p-4">
-              <h3 className="text-[#FFD700] font-semibold mb-3 text-sm uppercase tracking-wider">Jump to Phase</h3>
-              <div className="flex gap-2 flex-wrap">
-                {videoData.phases.map((phase, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => {
-                      setIsPlaying(false)
-                      setCurrentFrame(phase.frame)
-                    }}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      currentFrame === phase.frame 
-                        ? 'bg-[#FFD700] text-black' 
-                        : 'bg-[#3a3a3a] text-white hover:bg-[#4a4a4a]'
-                    }`}
-                  >
-                    {phase.phase} ({phase.timestamp.toFixed(2)}s)
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          {/* ============================================ */}
-          {/* ANNOTATION DROPDOWN LIST - Directly below video player */}
-          {/* ============================================ */}
           {(() => {
             // Get angles from current frame metrics or analysisData
             // Video frameData stores angles in the 'metrics' field
@@ -2836,15 +2868,27 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
             const fixes = generateFixesFromAngles(finalAngles)
             return <AnnotationDropdownList fixes={fixes} />
           })()}
-          
-          {/* ============================================ */}
-          {/* OVERLAY TOGGLE CONTROLS */}
-          {/* ============================================ */}
-          <div className="mt-4">
-            <OverlayControls toggles={overlayToggles} setToggles={setOverlayToggles} />
-          </div>
-          
-          {/* ============================================ */}
+        </div>
+      </div>
+      
+      {/* ============================================ */}
+      {/* KEY POINT ANALYSIS SCREENSHOTS - Directly under cards */}
+      {/* ============================================ */}
+      <div className="p-6 border-b border-[#3a3a3a]">
+        <div className="max-w-3xl mx-auto">
+          <CollapsibleDropdown
+            title="Key Point Analysis Screenshots"
+            icon={<Camera className="w-4 h-4" />}
+            defaultOpen={false}
+          >
+            <AutoScreenshots
+              imageUrl={videoMainImageUrl}
+              keypoints={videoVisionAnalysisForScreenshots?.keypoints}
+              basketball={videoVisionAnalysisForScreenshots?.basketball}
+              imageSize={videoVisionAnalysisForScreenshots?.image_size}
+              angles={videoVisionAnalysisForScreenshots?.angles}
+            />
+          </CollapsibleDropdown>
         </div>
       </div>
 
@@ -2852,6 +2896,7 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
       {/* FULL ANALYSIS CONTENT - Same as Image Mode */}
       {/* Render ImageModeContent with video frame as mainImageUrl */}
       {/* hideAnimatedWalkthrough=true for video (video has its own player) */}
+      {/* hideMainImage=true to hide the main analysis image (we have GSAP player) */}
       {/* AutoScreenshots use videoVisionAnalysisForScreenshots with keypoints from release frame */}
       {/* ============================================ */}
       <ImageModeContent 
@@ -2869,6 +2914,7 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
         roboflowBallDetection={roboflowBallDetection}
         hideAnimatedWalkthrough={true}
         hideAutoScreenshots={false}
+        hideMainImage={true}
       />
     </>
   )
@@ -2959,9 +3005,10 @@ interface ImageModeContentProps {
   roboflowBallDetection?: { x: number; y: number; width: number; height: number; confidence: number } | null
   hideAnimatedWalkthrough?: boolean  // Hide animated walkthrough for video mode
   hideAutoScreenshots?: boolean  // Hide auto screenshots for video mode
+  hideMainImage?: boolean  // Hide main analysis image for video mode (we have GSAP player)
 }
 
-function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, poseConfidence, teaserFrames, fullFrames, allUploadedUrls, mainImageUrl, cleanImageUrl, visionAnalysis, roboflowBallDetection, hideAnimatedWalkthrough = false, hideAutoScreenshots = false }: ImageModeContentProps) {
+function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, poseConfidence, teaserFrames, fullFrames, allUploadedUrls, mainImageUrl, cleanImageUrl, visionAnalysis, roboflowBallDetection, hideAnimatedWalkthrough = false, hideAutoScreenshots = false, hideMainImage = false }: ImageModeContentProps) {
   // Track hydration to handle SSR/client mismatch
   // const [isHydrated, setIsHydrated] = useState(false)
   
@@ -3179,10 +3226,8 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
         {/* LEFT COLUMN: Reorganized Layout */}
         <div className="space-y-6">
           
-          {/* ============================================ */}
-          {/* 1. MAIN ANALYSIS IMAGE (at the top) */}
-          {/* ============================================ */}
-          {mainImageUrl ? (
+          {/* Main Analysis Image removed for video mode - using GSAP player instead */}
+          {!hideMainImage && mainImageUrl ? (
             <div className="bg-[#2a2a2a] rounded-lg border border-[#4a4a4a] p-6">
               <h3 className="text-[#FFD700] font-bold text-sm uppercase tracking-wider mb-4 flex items-center gap-2">
                 <Camera className="w-4 h-4" />
@@ -3203,7 +3248,7 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                 <OverlayControls toggles={overlayToggles} setToggles={setOverlayToggles} />
               </div>
             </div>
-          ) : (
+          ) : !hideMainImage ? (
             <div className="bg-[#2a2a2a] rounded-lg border border-[#4a4a4a] p-6">
               <div className="text-center py-12">
                 <div className="text-6xl mb-4">📷</div>
@@ -3214,7 +3259,7 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                 </Link>
               </div>
             </div>
-          )}
+          ) : null}
 
           {/* ============================================ */}
           {/* 2. FORM ANALYSIS BREAKDOWN (always visible) */}
@@ -5098,12 +5143,13 @@ function SPARCategory({ category }: { category: typeof SPAR_CATEGORIES[0] }) {
 
 function AssessmentSection() {
   // Get analysis data from store
-  const { visionAnalysisResult, playerProfile, uploadedImageBase64 } = useAnalysisStore()
+  const { visionAnalysisResult, playerProfile, uploadedImageBase64, mediaType } = useAnalysisStore()
   
   // Session management state
   const [sessions, setSessions] = useState<AnalysisSession[]>([])
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
   const [isLoadingSessions, setIsLoadingSessions] = useState(true)
+  const [mediaTypeFilter, setMediaTypeFilter] = useState<'all' | 'image' | 'video'>('all')
   
   // Load sessions from localStorage on mount
   useEffect(() => {
@@ -5115,6 +5161,16 @@ function AssessmentSection() {
     }
     setIsLoadingSessions(false)
   }, [])
+  
+  // Filter sessions by media type
+  const filteredSessions = useMemo(() => {
+    if (mediaTypeFilter === 'all') return sessions
+    return sessions.filter(s => (s.mediaType || 'image') === mediaTypeFilter)
+  }, [sessions, mediaTypeFilter])
+  
+  // Count sessions by type
+  const imageSessions = useMemo(() => sessions.filter(s => (s.mediaType || 'image') === 'image'), [sessions])
+  const videoSessions = useMemo(() => sessions.filter(s => s.mediaType === 'video'), [sessions])
   
   // Get the currently selected session or create a "current" session from live data
   const currentSession = useMemo((): AnalysisSession | null => {
@@ -5200,19 +5256,24 @@ function AssessmentSection() {
     }
   }
 
-  // Build all sessions list (current + saved) for carousel
+  // Build all sessions list (current + filtered saved sessions) for carousel
   const allSessions = useMemo(() => {
     const list: AnalysisSession[] = []
     
-    // Add current live session if exists
-    if (visionAnalysisResult?.success && uploadedImageBase64) {
+    // Add current live session if exists and matches filter
+    const currentMediaType = mediaType === 'VIDEO' ? 'video' : 'image'
+    const shouldShowCurrent = mediaTypeFilter === 'all' || mediaTypeFilter === currentMediaType
+    
+    if (visionAnalysisResult?.success && uploadedImageBase64 && shouldShowCurrent) {
       list.push({
         id: 'current',
         date: new Date().toISOString(),
         displayDate: 'Now',
+        timestamp: Date.now(),
         mainImageBase64: uploadedImageBase64,
         skeletonImageBase64: uploadedImageBase64,
         screenshots: [],
+        mediaType: currentMediaType,
         analysisData: {
           overallScore: visionAnalysisResult.overall_score || 70,
           shooterLevel: getShooterLevel(visionAnalysisResult.overall_score || 70).name,
@@ -5229,11 +5290,11 @@ function AssessmentSection() {
       })
     }
     
-    // Add saved sessions
-    list.push(...sessions)
+    // Add filtered saved sessions
+    list.push(...filteredSessions)
     
     return list
-  }, [visionAnalysisResult, uploadedImageBase64, sessions, playerProfile])
+  }, [visionAnalysisResult, uploadedImageBase64, filteredSessions, mediaType, mediaTypeFilter, playerProfile])
 
   // Get current index in carousel
   const currentIndex = useMemo(() => {
@@ -5263,28 +5324,69 @@ function AssessmentSection() {
     <div className="space-y-6">
       {/* ==================== SESSION GALLERY CAROUSEL (TOP) ==================== */}
       <div className="bg-gradient-to-r from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a] rounded-xl p-6 border border-[#3a3a3a]">
-        {/* Header with Date Dropdown */}
+        {/* Header with Media Type Filter and Date Dropdown */}
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-[#FFD700]/10 flex items-center justify-center border border-[#FFD700]/30">
               <ImageIcon className="w-6 h-6 text-[#FFD700]" />
             </div>
             <div>
-              <h2 className="text-xl font-black text-[#FFD700] uppercase tracking-wider">Session Gallery</h2>
-              <p className="text-[#888] text-sm">{allSessions.length} session{allSessions.length !== 1 ? 's' : ''} • Scroll to browse</p>
+              <h2 className="text-xl font-black text-[#FFD700] uppercase tracking-wider">Session History</h2>
+              <p className="text-[#888] text-sm">
+                {allSessions.length} session{allSessions.length !== 1 ? 's' : ''} 
+                {mediaTypeFilter !== 'all' && ` (${mediaTypeFilter})`}
+                {' • '}{imageSessions.length} image, {videoSessions.length} video
+              </p>
             </div>
           </div>
           
-          {/* Date Dropdown - Quick Jump */}
+          {/* Media Type Filter + Date Dropdown */}
           <div className="flex items-center gap-3">
+            {/* Media Type Filter Buttons */}
+            <div className="flex rounded-lg bg-[#1a1a1a] p-1">
+              <button
+                onClick={() => setMediaTypeFilter('all')}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold uppercase transition-colors ${
+                  mediaTypeFilter === 'all' 
+                    ? 'bg-[#FFD700] text-[#1a1a1a]' 
+                    : 'text-[#888] hover:text-white'
+                }`}
+              >
+                All ({sessions.length})
+              </button>
+              <button
+                onClick={() => setMediaTypeFilter('image')}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold uppercase transition-colors flex items-center gap-1 ${
+                  mediaTypeFilter === 'image' 
+                    ? 'bg-[#60a5fa] text-white' 
+                    : 'text-[#888] hover:text-white'
+                }`}
+              >
+                <ImageIcon className="w-3 h-3" />
+                Image ({imageSessions.length})
+              </button>
+              <button
+                onClick={() => setMediaTypeFilter('video')}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold uppercase transition-colors flex items-center gap-1 ${
+                  mediaTypeFilter === 'video' 
+                    ? 'bg-[#ef4444] text-white' 
+                    : 'text-[#888] hover:text-white'
+                }`}
+              >
+                <Video className="w-3 h-3" />
+                Video ({videoSessions.length})
+              </button>
+            </div>
+            
+            {/* Date Dropdown - Quick Jump */}
             <select
               value={selectedSessionId || allSessions[0]?.id || ''}
               onChange={(e) => setSelectedSessionId(e.target.value)}
               className="bg-[#2a2a2a] border border-[#4a4a4a] rounded-lg px-3 py-2 text-[#E5E5E5] text-sm focus:outline-none focus:border-[#FFD700] cursor-pointer"
             >
-              {allSessions.map((session, idx) => (
+              {allSessions.map((session) => (
                 <option key={session.id} value={session.id}>
-                  {session.id === 'current' ? '📍 Now (Live)' : `📅 ${session.displayDate}`} - {session.analysisData.overallScore}%
+                  {session.mediaType === 'video' ? '🎬' : '📷'} {session.id === 'current' ? 'Now (Live)' : session.displayDate} - {session.analysisData.overallScore}%
                 </option>
               ))}
             </select>

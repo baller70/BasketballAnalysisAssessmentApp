@@ -1,7 +1,39 @@
+/**
+ * @file VideoUploadInline.tsx
+ * @description Video upload component for basketball shooting video analysis
+ * 
+ * PURPOSE:
+ * - Provides UI for uploading shooting form videos
+ * - Validates video requirements (max 10 seconds, under 50MB)
+ * - Shows video preview before analysis
+ * - Stores video file for analysis
+ * 
+ * FEATURES:
+ * - Drag and drop or click to upload
+ * - Video preview with playback controls
+ * - File size and duration validation
+ * - Clear/change video functionality
+ * 
+ * PROPS:
+ * - videoFile: File | null - Current video file
+ * - onVideoFileChange: (file: File | null) => void - File change handler
+ * 
+ * USED BY:
+ * - src/app/page.tsx - Main upload page (video mode)
+ * 
+ * RELATED FILES:
+ * - src/services/videoAnalysis.ts - Video analysis service
+ * - src/stores/analysisStore.ts - State storage
+ */
 "use client"
 
-import React, { useRef, useState, useEffect } from "react"
+import React, { useRef, useState, useEffect, useCallback } from "react"
 import { AlertTriangle, X, Video } from "lucide-react"
+import { useAnalysisStore } from "@/stores/analysisStore"
+
+// Constants for validation
+const MAX_FILE_SIZE_MB = 50
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
 
 interface VideoUploadInlineProps {
   videoFile: File | null
@@ -12,21 +44,40 @@ export function VideoUploadInline({ videoFile, onVideoFileChange }: VideoUploadI
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  
+  const { 
+    setMediaType: setStoreMediaType,
+    setUploadedFile,
+    setMediaPreviewUrl,
+    setTeaserFrames,
+    setFullFrames,
+    setAllUploadedUrls,
+    setFormAnalysisResult
+  } = useAnalysisStore()
+  
+  // Clear image upload state when video upload component mounts
+  useEffect(() => {
+    setUploadedFile(null)
+    setMediaPreviewUrl(null)
+    setTeaserFrames([])
+    setFullFrames([])
+    setAllUploadedUrls([])
+    setFormAnalysisResult(null)
+    setStoreMediaType("VIDEO")
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Create and cleanup object URL when videoFile changes
   useEffect(() => {
     if (videoFile) {
       const url = URL.createObjectURL(videoFile)
       setVideoPreviewUrl(url)
-      return () => {
-        URL.revokeObjectURL(url)
-      }
-    } else {
-      setVideoPreviewUrl(null)
+      return () => URL.revokeObjectURL(url)
     }
+    setVideoPreviewUrl(null)
   }, [videoFile])
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -38,20 +89,20 @@ export function VideoUploadInline({ videoFile, onVideoFileChange }: VideoUploadI
       return
     }
 
-    // Validate file size (max 50MB)
-    if (file.size > 50 * 1024 * 1024) {
-      setError('Video must be under 50MB')
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      setError(`Video must be under ${MAX_FILE_SIZE_MB}MB`)
       return
     }
 
     onVideoFileChange(file)
-  }
+  }, [onVideoFileChange])
 
-  const clearVideo = () => {
+  const clearVideo = useCallback(() => {
     onVideoFileChange(null)
     setError(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
-  }
+  }, [onVideoFileChange])
 
   return (
     <div className="space-y-4">

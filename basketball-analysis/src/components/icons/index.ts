@@ -1,8 +1,39 @@
 /**
- * Icon System Exports
+ * @file index.ts (Icons)
+ * @description Barrel exports for all icon components
  * 
- * Central export point for all professional icons used in the app.
+ * MEDAL ICONS (for rankings):
+ * - MedalIcon - Main medal component with tier
+ * - GoldMedal, SilverMedal, BronzeMedal, CopperMedal, IronMedal
+ * 
+ * STATUS ICONS:
+ * - StatusIcon - Good/Warning/Critical status
+ * - StatusBadge - Status with label
+ * 
+ * FORM METRIC ICONS:
+ * - FormMetricIcon - Icons for form metrics (elbow, knee, etc.)
+ * - FormMetricCard - Card with metric icon and value
+ * 
+ * COACHING ICONS:
+ * - CoachingLevelIcon - Coaching tier icons
+ * - CoachingLevelBadge - Badge with tier info
+ * - CoachingLevelSelector - Tier selection UI
+ * 
+ * CORE ICONS:
+ * - Icon - Universal icon wrapper
+ * - IconSystem exports (BasketballIcon, etc.)
  */
+
+// Medal icons for rankings
+export { 
+  MedalIcon,
+  GoldMedal,
+  SilverMedal,
+  BronzeMedal,
+  CopperMedal,
+  IronMedal,
+} from "./MedalIcons"
+export type { MedalTier } from "./MedalIcons"
 
 // Export all icons from IconSystem
 export * from "./IconSystem"
@@ -36,10 +67,3 @@ export {
   getTierConfig,
   getTierFromAge,
 } from "./CoachingLevelIcon"
-
-
-
-
-
-
-

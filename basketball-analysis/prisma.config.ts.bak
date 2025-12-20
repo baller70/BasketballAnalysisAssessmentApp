@@ -1,3 +1,0 @@
-// Prisma config - Next.js uses schema.prisma directly
-// This file loads environment variables for Prisma CLI
-import "dotenv/config";

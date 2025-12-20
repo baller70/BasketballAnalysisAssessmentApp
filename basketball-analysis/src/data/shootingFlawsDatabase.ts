@@ -1,15 +1,36 @@
 /**
- * SHOOTING FLAWS DATABASE
+ * @file shootingFlawsDatabase.ts
+ * @description Database of shooting flaws with detection rules and coaching feedback
  * 
- * This database contains cause-and-effect relationships for basketball shooting mechanics.
- * When one thing is out of whack, it causes other things to be out of whack.
+ * PURPOSE:
+ * - Defines all detectable shooting form flaws
+ * - Maps angle measurements to flaw detection
+ * - Provides cause-and-effect relationships for flaws
+ * - Generates coaching feedback for each flaw
+ * - Calculates shooter level based on form quality
  * 
- * Structure:
+ * FLAW STRUCTURE:
  * - Primary Flaw: The root cause detected
  * - Secondary Effects: What this flaw causes
  * - Tertiary Effects: What the secondary effects cause
  * - Symptoms: What you'll see in the shot result
  * - Fix Priority: What to fix first
+ * 
+ * MAIN FUNCTIONS:
+ * - detectFlawsFromAngles(angles) - Detect flaws from measured angles
+ * - generateCoachingFeedback(flaws) - Generate coaching text
+ * - getShooterLevel(score) - Get skill level from score
+ * - getCombinedFlawEffect(flaws) - Calculate combined flaw impact
+ * 
+ * EXPORTS:
+ * - SHOOTING_FLAWS - All flaw definitions
+ * - ShootingFlaw interface - Type definition
+ * - SHOOTER_LEVELS - Level definitions (Elite, Advanced, etc.)
+ * 
+ * USED BY:
+ * - src/app/page.tsx - Flaw detection during analysis
+ * - src/app/results/demo/page.tsx - Displaying detected flaws
+ * - src/services/coachingInsights.ts - Generating feedback
  */
 
 // ============================================

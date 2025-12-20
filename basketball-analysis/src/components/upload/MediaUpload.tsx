@@ -1,13 +1,30 @@
+/**
+ * @file MediaUpload.tsx
+ * @description Image upload component with 7-slot grid for basketball shooting photos
+ * 
+ * PURPOSE:
+ * - Provides UI for uploading 3-7 shooting form images
+ * - Validates image requirements (full body, good lighting, etc.)
+ * - Generates shot breakdown strip from uploaded images
+ * - Stores images in analysisStore for analysis
+ * 
+ * FEATURES:
+ * - 7 angle slots for different shooting angles
+ * - Image requirements guidance
+ * - Shot breakdown strip preview (teaser + full)
+ * - Automatic analysis of uploaded images
+ * 
+ * USED BY:
+ * - src/app/page.tsx - Main upload page (image mode)
+ * 
+ * RELATED FILES:
+ * - src/lib/shotBreakdown.ts - Shot frame analysis
+ * - src/components/analysis/ShotBreakdownStrip.tsx - Strip display
+ * - src/stores/analysisStore.ts - State storage
+ */
 "use client"
 
-// #region agent log
-const DEBUG_VERSION = "v2024-12-19-LATEST";
-const debugLog = (location: string, message: string, data: Record<string, unknown>, hypothesisId: string) => {
-  fetch('http://127.0.0.1:7243/ingest/4f306913-318f-4a0c-bd40-bb3fb22bd959',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location,message,data:{...data,DEBUG_VERSION},timestamp:Date.now(),sessionId:'debug-session',hypothesisId})}).catch(()=>{});
-};
-// #endregion
-
-import React, { useCallback, useEffect, useState } from "react"
+import React, { useCallback, useEffect, useState, useMemo } from "react"
 import { AlertTriangle, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAnalysisStore } from "@/stores/analysisStore"
@@ -21,6 +38,8 @@ export function MediaUpload() {
     setTeaserFrames: setStoreTeaserFrames,
     setFullFrames: setStoreFullFrames,
     setAllUploadedUrls,
+    setVideoAnalysisData,
+    setMediaType: setStoreMediaType,
   } = useAnalysisStore()
 
   // Shot breakdown (stills) state
@@ -29,7 +48,8 @@ export function MediaUpload() {
   const [fullFrames, setFullFrames] = useState<ShotFrame[]>([])
   const [shotError, setShotError] = useState<string | null>(null)
   const [isBuildingStrip, setIsBuildingStrip] = useState(false)
-  const [angleSlots, setAngleSlots] = useState<{ label: string; file: File | null; url: string | null }[]>([
+  // Initial angle slots configuration
+  const initialAngleSlots = useMemo(() => [
     { label: "Angle 1", file: null, url: null },
     { label: "Angle 2", file: null, url: null },
     { label: "Angle 3", file: null, url: null },
@@ -37,7 +57,9 @@ export function MediaUpload() {
     { label: "Angle 5", file: null, url: null },
     { label: "Angle 6", file: null, url: null },
     { label: "Angle 7", file: null, url: null },
-  ])
+  ] as { label: string; file: File | null; url: string | null }[], [])
+
+  const [angleSlots, setAngleSlots] = useState<{ label: string; file: File | null; url: string | null }[]>(initialAngleSlots)
 
   // Ensure no preloaded media shows up on INITIAL mount only
   // Using empty dependency array to run only once
@@ -48,15 +70,10 @@ export function MediaUpload() {
     setTeaserFrames([])
     setFullFrames([])
     setShotError(null)
-    setAngleSlots([
-      { label: "Angle 1", file: null, url: null },
-      { label: "Angle 2", file: null, url: null },
-      { label: "Angle 3", file: null, url: null },
-      { label: "Angle 4", file: null, url: null },
-      { label: "Angle 5", file: null, url: null },
-      { label: "Angle 6", file: null, url: null },
-      { label: "Angle 7", file: null, url: null },
-    ])
+    setAngleSlots(initialAngleSlots)
+    // Clear video-related state when image upload component mounts
+    setVideoAnalysisData(null)
+    setStoreMediaType("IMAGE")
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])  // Empty array = run only on initial mount
 
@@ -218,14 +235,8 @@ export function MediaUpload() {
                     accept="image/*"
                     className="sr-only"
                     onChange={async (e) => {
-                      // #region agent log
-                      debugLog('MediaUpload.tsx:onChange', 'File input changed', { slotIdx: idx, hasFiles: !!e.target.files?.length }, 'B');
-                      // #endregion
                       const file = e.target.files?.[0]
                       if (!file) return
-                      // #region agent log
-                      debugLog('MediaUpload.tsx:onChange', 'File selected', { fileName: file.name, fileSize: file.size, slotIdx: idx }, 'B');
-                      // #endregion
                       const next = [...angleSlots]
                       if (next[idx].url) URL.revokeObjectURL(next[idx].url as string)
                       next[idx] = { ...next[idx], file, url: URL.createObjectURL(file) }
