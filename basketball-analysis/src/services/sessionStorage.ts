@@ -1,36 +1,6 @@
-/**
- * @file sessionStorage.ts
- * @description Session storage service for persisting analysis data in localStorage
- * 
- * PURPOSE:
- * - Save and load analysis sessions to/from localStorage
- * - Manage session history and analytics
- * - Track milestones and progress over time
- * - Filter sessions by media type (image/video)
- * 
- * MAIN FUNCTIONS:
- * - saveSession(session) - Save a new analysis session
- * - getAllSessions() - Get all saved sessions
- * - getLatestSessionByMediaType(type) - Get most recent session by type
- * - getSessionsByMediaType(type) - Get all sessions of a type
- * - deleteSession(id) - Delete a session
- * - createSessionFromAnalysis(...) - Create session from analysis results
- * - generateAnalytics(sessions) - Generate analytics data
- * 
- * STORAGE KEY:
- * - 'basketball_analysis_sessions' in localStorage
- * 
- * USED BY:
- * - src/app/page.tsx - Saving sessions after analysis
- * - src/app/results/demo/page.tsx - Loading sessions for display
- * 
- * INTERFACES EXPORTED:
- * - AnalysisSession - Main session data structure
- * - SessionScreenshot - Screenshot within a session
- * - SessionAnalysisData - Analysis metrics within a session
- * - AnalyticsData - Aggregated analytics
- * - Milestone - Achievement tracking
- */
+// Session Storage Service for Basketball Analysis Tool
+// Handles localStorage operations for saving and loading analysis sessions
+// Phase 9: Enhanced with historical data management, analytics, and progress tracking
 
 export interface SessionScreenshot {
   id: string
@@ -206,17 +176,6 @@ export function getLatestSessionByMediaType(mediaType: 'image' | 'video'): Analy
   // Find the first session that matches the media type
   // Note: Old sessions without mediaType are treated as 'image'
   return sessions.find(s => (s.mediaType || 'image') === mediaType) || null
-}
-
-/**
- * Get all sessions filtered by media type
- * Returns only sessions matching the specified media type
- */
-export function getSessionsByMediaType(mediaType: 'image' | 'video'): AnalysisSession[] {
-  const sessions = getAllSessions()
-  // Filter sessions by media type
-  // Note: Old sessions without mediaType are treated as 'image'
-  return sessions.filter(s => (s.mediaType || 'image') === mediaType)
 }
 
 /**
