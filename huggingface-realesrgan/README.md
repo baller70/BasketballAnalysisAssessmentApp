@@ -66,4 +66,3 @@ result = client.predict(
 
 
 
-
