@@ -48,6 +48,7 @@ import {
   type Milestone,
   type DateRangePreset
 } from "@/services/sessionStorage"
+import { ClickableStatsGrid } from "@/components/dashboard/StatPopup"
 import { Phase6ComparisonPanel } from "@/components/comparison/Phase6ComparisonPanel"
 // Removed: AnnotationWalkthroughVideo - using original video player instead
 import { 
@@ -75,14 +76,25 @@ import {
   GamificationSummaryCard,
   ShareProgressButton
 } from "@/components/gamification/GamificationComponents"
+import { UserLevelCard } from "@/components/UserLevelCard"
 import {
   getUserProgress,
   updateStreak,
   checkBadgeUnlock,
   addPoints
 } from "@/services/gamificationService"
+import { DashboardViewSelector, useDashboardView, type DashboardView } from "@/components/DashboardViewSelector"
+import { 
+  StandardBiomechanicalAnalysis, 
+  StandardPlayerAssessment, 
+  StandardTrainingPlan,
+  BasicBiomechanicalAnalysis,
+  BasicPlayerAssessment,
+  BasicTrainingPlan
+} from "@/components/dashboard/SimplifiedTabs"
+// Simplified player cards removed - now using same Professional layout for all views
 
-type ResultsMode = "video" | "image" | "elite" | "guide"
+type ResultsMode = "video" | "image"
 
 // ============================================
 // COLLAPSIBLE DROPDOWN COMPONENT
@@ -1717,42 +1729,50 @@ export default function DemoResultsPage() {
   return (
     <main className="min-h-[calc(100vh-200px)] py-8 px-4">
       <div className="container mx-auto max-w-7xl">
-        <div className="bg-[#2C2C2C] rounded-lg overflow-hidden shadow-lg">
-          {/* Tab Navigation with New Session Button */}
-          <div className="p-4 border-b border-[#3a3a3a]">
-            <div className="flex items-center justify-between">
-              {/* Left: New Session Button */}
-              <Link 
-                href={`/?mode=${resultsMode === "video" ? "video" : "image"}`}
-                className="flex items-center gap-2 bg-[#FFD700] hover:bg-[#E5C100] text-[#1a1a1a] font-semibold px-4 py-2 rounded-lg transition-colors text-sm"
-              >
-                <Plus className="w-4 h-4" />
-                New {resultsMode === "video" ? "Video" : "Image"}
-              </Link>
-              
-              {/* Center: Tab Navigation */}
-              <div className="inline-flex rounded-md bg-[#1a1a1a] p-1 text-sm">
-                {(["video", "image", "elite", "guide"] as ResultsMode[]).map((mode) => (
-                  <button key={mode} onClick={() => setResultsMode(mode)} className={`px-6 py-2 rounded-md flex items-center gap-2 transition-colors uppercase font-semibold tracking-wider ${resultsMode === mode ? "bg-[#FFD700] text-[#111827]" : "text-[#9CA3AF] hover:text-[#F9FAFB] hover:bg-[#374151]"}`}>
-                    {mode === "video" && <Video className="w-4 h-4" />}
-                    {mode === "image" && <ImageIcon className="w-4 h-4" />}
-                    {mode === "elite" && <Users className="w-4 h-4" />}
-                    {mode === "guide" && <BookOpen className="w-4 h-4" />}
-                    {mode}
-                  </button>
-                ))}
-              </div>
-              
-              {/* Right: Spacer for balance */}
-              <div className="w-[120px]"></div>
+        <div className="flex gap-6">
+          {/* Left: User Level Card - Fixed position */}
+          <div className="hidden lg:block flex-shrink-0">
+            <div className="sticky top-24">
+              <UserLevelCard />
             </div>
           </div>
-          {/* 🎒 VIDEO TAB: Uses red backpack (effectiveVideoData, videoMainUrl, videoVisionAnalysis) */}
-          {resultsMode === "video" && <VideoModeContent videoData={effectiveVideoData} activeTab={activeTab} setActiveTab={setActiveTab} analysisData={analysisData} playerName={playerName} poseConfidence={poseConfidence} teaserFrames={teaserFrames} fullFrames={fullFrames} allUploadedUrls={allUploadedUrls} mainImageUrl={videoMainUrl} visionAnalysis={videoVisionAnalysis} roboflowBallDetection={roboflowBallDetection} />}
-          {/* 🎒 IMAGE TAB: Uses blue backpack (imageMainUrl, imageVisionAnalysis) */}
-          {resultsMode === "image" && <ImageModeContent activeTab={activeTab} setActiveTab={setActiveTab} analysisData={analysisData} playerName={playerName} poseConfidence={poseConfidence} teaserFrames={teaserFrames} fullFrames={fullFrames} allUploadedUrls={allUploadedUrls} mainImageUrl={imageMainUrl} visionAnalysis={imageVisionAnalysis} roboflowBallDetection={roboflowBallDetection} />}
-          {resultsMode === "elite" && <EliteModeContent analysisData={analysisData} />}
-          {resultsMode === "guide" && <GuideModeContent />}
+          
+          {/* Right: Main Content */}
+          <div className="flex-1 min-w-0">
+            <div className="bg-[#2C2C2C] rounded-lg overflow-hidden shadow-lg">
+              {/* Tab Navigation with New Session Button */}
+              <div className="p-4 border-b border-[#3a3a3a]">
+                <div className="flex items-center justify-between">
+                  {/* Left: New Session Button */}
+                  <Link 
+                    href={`/?mode=${resultsMode === "video" ? "video" : "image"}`}
+                    className="flex items-center gap-2 bg-[#FFD700] hover:bg-[#E5C100] text-[#1a1a1a] font-semibold px-4 py-2 rounded-lg transition-colors text-sm"
+                  >
+                    <Plus className="w-4 h-4" />
+                    New {resultsMode === "video" ? "Video" : "Image"}
+                  </Link>
+                  
+                  {/* Center: Tab Navigation */}
+                  <div className="inline-flex rounded-md bg-[#1a1a1a] p-1 text-sm">
+                    {(["video", "image"] as ResultsMode[]).map((mode) => (
+                      <button key={mode} onClick={() => setResultsMode(mode)} className={`px-6 py-2 rounded-md flex items-center gap-2 transition-colors uppercase font-semibold tracking-wider ${resultsMode === mode ? "bg-[#FFD700] text-[#111827]" : "text-[#9CA3AF] hover:text-[#F9FAFB] hover:bg-[#374151]"}`}>
+                        {mode === "video" && <Video className="w-4 h-4" />}
+                        {mode === "image" && <ImageIcon className="w-4 h-4" />}
+                        {mode}
+                      </button>
+                    ))}
+                  </div>
+                  
+                  {/* Right: Spacer for balance */}
+                  <div className="w-[120px]"></div>
+                </div>
+              </div>
+              {/* 🎒 VIDEO TAB: Uses red backpack (effectiveVideoData, videoMainUrl, videoVisionAnalysis) */}
+              {resultsMode === "video" && <VideoModeContent videoData={effectiveVideoData} activeTab={activeTab} setActiveTab={setActiveTab} analysisData={analysisData} playerName={playerName} poseConfidence={poseConfidence} teaserFrames={teaserFrames} fullFrames={fullFrames} allUploadedUrls={allUploadedUrls} mainImageUrl={videoMainUrl} visionAnalysis={videoVisionAnalysis} roboflowBallDetection={roboflowBallDetection} />}
+              {/* 🎒 IMAGE TAB: Uses blue backpack (imageMainUrl, imageVisionAnalysis) */}
+              {resultsMode === "image" && <ImageModeContent activeTab={activeTab} setActiveTab={setActiveTab} analysisData={analysisData} playerName={playerName} poseConfidence={poseConfidence} teaserFrames={teaserFrames} fullFrames={fullFrames} allUploadedUrls={allUploadedUrls} mainImageUrl={imageMainUrl} visionAnalysis={imageVisionAnalysis} roboflowBallDetection={roboflowBallDetection} />}
+            </div>
+          </div>
         </div>
       </div>
     </main>
@@ -2556,6 +2576,9 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
   const sequenceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const videoContainerRef = useRef<HTMLDivElement>(null)
   
+  // Note: Dashboard view state is managed by ImageModeContent which is rendered below
+  // The view preference is stored in localStorage and shared across both modes
+  
   // Video sequence state
   type SequencePhase = 'initial' | 'firstPlaythrough' | 'labelZoom' | 'bodyPartZoom' | 'slowMo' | 'complete'
   const [sequencePhase, setSequencePhase] = useState<SequencePhase>('initial')
@@ -3016,6 +3039,12 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
   //   setIsHydrated(true)
   // }, [])
   
+  // Get player profile from store for clickable stats
+  const { playerProfile } = useAnalysisStore()
+  
+  // Dashboard view state (Professional, Standard, Basic)
+  const { view: dashboardView, changeView: setDashboardView } = useDashboardView()
+  
   // Overlay toggle state for image
   const [overlayToggles, setOverlayToggles] = useState<OverlayToggles>({
     skeleton: true,
@@ -3029,6 +3058,15 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
   const [showShareModal, setShowShareModal] = useState(false)
   const [isGeneratingImage, setIsGeneratingImage] = useState(false)
   const shareCardRef = useRef<HTMLDivElement>(null)
+  
+  // Banner customization state
+  const [showBannerMenu, setShowBannerMenu] = useState(false)
+  const [bannerColor, setBannerColor] = useState('#FFD700') // Gold default
+  const [jerseyNumber, setJerseyNumber] = useState('23')
+  const [bannerFirstName, setBannerFirstName] = useState(playerName.split(' ')[0] || 'KEVIN')
+  const [bannerLastName, setBannerLastName] = useState(playerName.split(' ')[1] || 'HOUSTON')
+  const [bannerBgImage, setBannerBgImage] = useState<string | null>(null)
+  const bannerBgInputRef = useRef<HTMLInputElement>(null)
 
   // Generate and download shareable image
   const handleDownloadImage = useCallback(async () => {
@@ -3397,39 +3435,244 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
         <div className="space-y-6">
           {/* Madden-Style Player Card */}
           <div className="bg-[#2a2a2a] rounded-lg overflow-hidden lg:col-span-1">
-            {/* Header Section - Dark with player info */}
-            <div className="relative bg-gradient-to-b from-[#1a1a1a] to-[#252525] p-4">
-              {/* Background Logo/Graphic - Basketball Hoop SVG */}
-              <div className="absolute inset-0 flex items-center justify-center opacity-15">
-                <svg className="w-32 h-32" viewBox="0 0 100 100" fill="none">
-                  <circle cx="50" cy="50" r="25" stroke="#FFD700" strokeWidth="3" />
-                  <rect x="35" y="75" width="30" height="4" fill="#FFD700" />
-                  <path d="M35 50 L35 75 M65 50 L65 75" stroke="#FFD700" strokeWidth="2" />
-                  <circle cx="50" cy="50" r="15" stroke="#FFD700" strokeWidth="2" strokeDasharray="5 3" />
-                </svg>
+            {/* Sports Banner Header - Website colors with customization */}
+            <div className="relative overflow-hidden min-h-[110px]">
+              {/* RIGHT Section - Darker Background (website dark gray) */}
+              <div 
+                className="absolute inset-0"
+                style={{
+                  background: 'linear-gradient(to right, #2a2a2a, #1a1a1a, #151515)',
+                }}
+              />
+              
+              {/* LEFT Section - Customizable color accent with diagonal cut */}
+              <div 
+                className="absolute left-0 top-0 bottom-0"
+                style={{
+                  width: '32%',
+                  background: `linear-gradient(to right, ${bannerColor}, ${bannerColor}dd)`,
+                  clipPath: 'polygon(0 0, 100% 0, 70% 100%, 0 100%)',
+                }}
+              />
+              
+              {/* Diagonal stripe pattern overlay on right section */}
+              <div 
+                className="absolute right-0 top-0 bottom-0 w-[70%] opacity-5"
+                style={{
+                  backgroundImage: 'repeating-linear-gradient(-60deg, transparent, transparent 8px, rgba(255,255,255,0.1) 8px, rgba(255,255,255,0.1) 16px)',
+                }}
+              />
+              
+              {/* Faded Player Background Image - positioned near the number on right side */}
+              {bannerBgImage && (
+                <div 
+                  className="absolute right-8 top-0 bottom-0 w-[35%] opacity-25"
+                  style={{
+                    backgroundImage: `url(${bannerBgImage})`,
+                    backgroundSize: 'contain',
+                    backgroundPosition: 'center right',
+                    backgroundRepeat: 'no-repeat',
+                    maskImage: 'linear-gradient(to left, black 50%, transparent 100%)',
+                    WebkitMaskImage: 'linear-gradient(to left, black 50%, transparent 100%)',
+                  }}
+                />
+              )}
+              
+              {/* Three-dot Menu for Customization - positioned outside banner overflow */}
+              <div className="absolute top-2 right-2 z-30">
+                <button 
+                  className="p-1.5 rounded-full hover:bg-white/10 transition-colors group"
+                  onClick={() => setShowBannerMenu(!showBannerMenu)}
+                >
+                  <svg className="w-5 h-5 text-white/60 group-hover:text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                  </svg>
+                </button>
               </div>
-              <div className="relative flex items-start justify-between">
-                <div>
-                  <p className="text-[#888] text-xs tracking-wider">#23 SG</p>
-                  <h2 className="text-2xl font-black text-white uppercase tracking-wide leading-tight">
-                    KEVIN<br />HOUSTON
+              
+              {/* Customization Dropdown Menu - rendered outside the banner to avoid overflow clipping */}
+              {showBannerMenu && (
+                <div className="fixed inset-0 z-[100]" onClick={() => setShowBannerMenu(false)}>
+                  <div 
+                    className="absolute bg-[#2a2a2a] rounded-lg shadow-2xl border border-[#3a3a3a] w-80"
+                    style={{ top: '280px', right: '100px' }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {/* Header */}
+                    <div className="bg-[#1a1a1a] px-4 py-3 border-b border-[#3a3a3a] flex items-center justify-between rounded-t-lg">
+                      <span className="text-white font-bold">Customize Banner</span>
+                      <button onClick={() => setShowBannerMenu(false)} className="text-[#888] hover:text-white">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                    
+                    <div className="p-4 space-y-5">
+                      {/* Banner Color */}
+                      <div>
+                        <label className="text-white text-sm font-semibold block mb-3">Banner Color</label>
+                        <div className="flex gap-3 flex-wrap">
+                          {['#FFD700', '#ef4444', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#14b8a6'].map((color) => (
+                            <button
+                              key={color}
+                              onClick={() => setBannerColor(color)}
+                              className={`w-10 h-10 rounded-full border-3 transition-all shadow-lg ${bannerColor === color ? 'border-white scale-110 ring-2 ring-white/50' : 'border-transparent hover:scale-105'}`}
+                              style={{ backgroundColor: color }}
+                            />
+                          ))}
+                        </div>
+                        {/* Custom Color Input */}
+                        <div className="mt-3 flex items-center gap-2">
+                          <input
+                            type="color"
+                            value={bannerColor}
+                            onChange={(e) => setBannerColor(e.target.value)}
+                            className="w-10 h-10 rounded cursor-pointer border-0"
+                          />
+                          <span className="text-[#888] text-sm">Custom Color</span>
+                        </div>
+                      </div>
+                      
+                      {/* Jersey Number */}
+                      <div>
+                        <label className="text-white text-sm font-semibold block mb-2">Jersey Number</label>
+                        <input
+                          type="text"
+                          value={jerseyNumber}
+                          onChange={(e) => setJerseyNumber(e.target.value.slice(0, 2))}
+                          maxLength={2}
+                          className="w-24 bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-2 text-white text-center text-2xl font-bold focus:outline-none focus:border-[#FFD700]"
+                          placeholder="23"
+                        />
+                      </div>
+                      
+                      {/* Background Image */}
+                      <div>
+                        <label className="text-white text-sm font-semibold block mb-2">Background Image</label>
+                        <p className="text-[#888] text-xs mb-3">Add a faded player photo behind the number</p>
+                        <input
+                          ref={bannerBgInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            if (file) {
+                              const reader = new FileReader()
+                              reader.onload = (event) => {
+                                setBannerBgImage(event.target?.result as string)
+                              }
+                              reader.readAsDataURL(file)
+                            }
+                          }}
+                          className="hidden"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => bannerBgInputRef.current?.click()}
+                            className="flex-1 bg-[#FFD700] text-[#1a1a1a] font-semibold rounded-lg px-4 py-2 hover:bg-[#e6c200] transition-colors"
+                          >
+                            {bannerBgImage ? 'Change Image' : 'Upload Image'}
+                          </button>
+                          {bannerBgImage && (
+                            <button
+                              onClick={() => setBannerBgImage(null)}
+                              className="bg-red-500/20 border border-red-500/50 rounded-lg px-4 py-2 text-red-400 hover:bg-red-500/30 transition-colors"
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </div>
+                        {bannerBgImage && (
+                          <div className="mt-3 h-16 rounded-lg overflow-hidden border border-[#3a3a3a]">
+                            <img src={bannerBgImage} alt="Preview" className="w-full h-full object-cover opacity-40" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Content */}
+              <div className="relative flex items-center p-4 min-h-[110px]">
+                {/* LEFT: Progress Ring - centered in the gold section with dark background for visibility */}
+                <div className="flex-shrink-0 w-[20%] flex justify-center items-center ml-4">
+                  <div className="relative">
+                    {/* Dark circle background so ring is visible against gold */}
+                    <div className="absolute inset-[-8px] rounded-full bg-[#1a1a1a]" />
+                    <ScoreRing score={analysisData.overallScore} size={80} strokeWidth={6} />
+                  </div>
+                </div>
+                
+                {/* CENTER-LEFT: Player Name & Location - in the darker section */}
+                <div className="flex-1 pl-16">
+                  {/* First Name - Italic, lighter */}
+                  <p 
+                    className="text-2xl font-bold uppercase tracking-wider leading-none"
+                    style={{
+                      color: 'white',
+                      fontStyle: 'italic',
+                    }}
+                  >
+                    {bannerFirstName}
+                  </p>
+                  {/* Last Name - Bold, larger, with stroke */}
+                  <h2 
+                    className="text-4xl font-black uppercase tracking-wide leading-none mt-0.5"
+                    style={{
+                      color: 'white',
+                      fontStyle: 'italic',
+                      textShadow: '2px 2px 0 #1a1a1a',
+                    }}
+                  >
+                    {bannerLastName}
                   </h2>
+                  {/* Decorative slashes - matches banner color */}
+                  <div className="flex gap-0.5 mt-2">
+                    {[...Array(14)].map((_, i) => (
+                      <div key={i} className="w-1 h-4 transform -skew-x-12" style={{ backgroundColor: bannerColor }} />
+                    ))}
+                  </div>
+                  {/* Location */}
+                  <p 
+                    className="text-sm font-medium tracking-widest uppercase mt-1"
+                    style={{
+                      color: '#888',
+                      fontStyle: 'italic',
+                    }}
+                  >
+                    {playerProfile?.height || "6'2\""}, {playerProfile?.weight || '185'} LBS
+                  </p>
                 </div>
-                <div className="flex flex-col items-end">
-                  {/* Overall Score Ring */}
-                  <ScoreRing score={analysisData.overallScore} size={90} strokeWidth={7} />
-                  <p className="text-[#888] text-[10px] leading-tight mt-2 text-right">{playerName} has {Math.round(poseConfidence * 100)} confidence<br/>which is not currently impacting his overall</p>
+                
+                {/* RIGHT: Jersey Number - Large outline style with customizable color */}
+                <div className="flex-shrink-0 ml-4 mr-8">
+                  <span 
+                    className="text-7xl font-black"
+                    style={{
+                      color: '#1a1a1a',
+                      WebkitTextStroke: `3px ${bannerColor}`,
+                      textShadow: '4px 4px 8px rgba(0,0,0,0.6)',
+                      fontStyle: 'italic',
+                    }}
+                  >
+                    {jerseyNumber}
+                  </span>
                 </div>
               </div>
             </div>
 
-            {/* Progression History Bar */}
-            <div className="bg-[#1a1a1a] px-4 py-2 border-y border-[#3a3a3a]">
+            {/* Progression History Bar with Dashboard View Selector */}
+            <div className="bg-[#1a1a1a] px-4 py-2 border-y border-[#3a3a3a] flex items-center justify-between">
               <span className="text-[#888] text-xs font-bold uppercase tracking-wider">Progression History</span>
+              <DashboardViewSelector currentView={dashboardView} onViewChange={setDashboardView} />
             </div>
 
+            {/* Dashboard Content - Same layout for all views */}
+            <>
             {/* Bio Stats Row */}
-            <div className="bg-[#2a2a2a] px-1 py-2 border-b border-[#3a3a3a]">
+            <div className="bg-[#2a2a2a] px-1 py-2 border-b border-[#3a3a3a] prof-bio-stats">
               <div className="grid grid-cols-5 divide-x divide-[#3a3a3a]">
                 <div className="px-2 text-center">
                   <p className="text-[#888] text-[10px] uppercase">WT</p>
@@ -3471,160 +3714,36 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                     <p className="text-[#888] text-[9px]">{archetype.description}</p>
                   </div>
                 </div>
-                <div className="grid grid-cols-4 gap-x-2 gap-y-3">
-                  {/* Row 1 */}
-                  <div>
-                    <p className="text-[#888] text-[9px] uppercase">RELEASE</p>
-                    <p className="text-white font-black text-2xl">{analysisData.shootingStats.release}</p>
-                    <div className="h-1.5 bg-[#3a3a3a] rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full ${analysisData.shootingStats.release >= 80 ? 'bg-green-500' : 'bg-yellow-500'}`} style={{ width: `${analysisData.shootingStats.release}%` }} />
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-[#888] text-[9px] uppercase">FORM</p>
-                    <p className="text-white font-black text-2xl">{analysisData.shootingStats.form}</p>
-                    <div className="h-1.5 bg-[#3a3a3a] rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full ${analysisData.shootingStats.form >= 80 ? 'bg-green-500' : 'bg-yellow-500'}`} style={{ width: `${analysisData.shootingStats.form}%` }} />
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-[#888] text-[9px] uppercase">BALANCE</p>
-                    <p className="text-white font-black text-2xl">{analysisData.shootingStats.balance}</p>
-                    <div className="h-1.5 bg-[#3a3a3a] rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full ${analysisData.shootingStats.balance >= 80 ? 'bg-green-500' : 'bg-yellow-500'}`} style={{ width: `${analysisData.shootingStats.balance}%` }} />
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-[#888] text-[9px] uppercase">ARC</p>
-                    <p className="text-white font-black text-2xl">{analysisData.shootingStats.arc}</p>
-                    <div className="h-1.5 bg-[#3a3a3a] rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full ${analysisData.shootingStats.arc >= 80 ? 'bg-green-500' : 'bg-yellow-500'}`} style={{ width: `${analysisData.shootingStats.arc}%` }} />
-                    </div>
-                  </div>
-                  {/* Row 2 */}
-                  <div>
-                    <p className="text-[#888] text-[9px] uppercase">ELBOW</p>
-                    <p className="text-white font-black text-2xl">{analysisData.shootingStats.elbow}</p>
-                    <div className="h-1.5 bg-[#3a3a3a] rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full ${analysisData.shootingStats.elbow >= 80 ? 'bg-green-500' : 'bg-yellow-500'}`} style={{ width: `${analysisData.shootingStats.elbow}%` }} />
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-[#888] text-[9px] uppercase">FOLLOW</p>
-                    <p className="text-white font-black text-2xl">{analysisData.shootingStats.follow}</p>
-                    <div className="h-1.5 bg-[#3a3a3a] rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full ${analysisData.shootingStats.follow >= 80 ? 'bg-green-500' : 'bg-yellow-500'}`} style={{ width: `${analysisData.shootingStats.follow}%` }} />
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-[#888] text-[9px] uppercase">CONSIST</p>
-                    <p className="text-white font-black text-2xl">{analysisData.shootingStats.consist}</p>
-                    <div className="h-1.5 bg-[#3a3a3a] rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full ${analysisData.shootingStats.consist >= 80 ? 'bg-green-500' : 'bg-yellow-500'}`} style={{ width: `${analysisData.shootingStats.consist}%` }} />
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-[#888] text-[9px] uppercase">POWER</p>
-                    <p className="text-white font-black text-2xl">{analysisData.shootingStats.power}</p>
-                    <div className="h-1.5 bg-[#3a3a3a] rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full ${analysisData.shootingStats.power >= 80 ? 'bg-green-500' : 'bg-yellow-500'}`} style={{ width: `${analysisData.shootingStats.power}%` }} />
-                    </div>
-                  </div>
-                </div>
+                <ClickableStatsGrid stats={analysisData.shootingStats} playerAge={playerProfile?.age} playerState="CA" />
               </div>
 
               {/* Right: Development Badge - Medal in Rounded Box */}
               <div className="p-4 bg-gradient-to-b from-[#252525] to-[#1a1a1a]">
-                <h3 className="text-[#FFD700] font-bold text-xs uppercase tracking-[0.2em] mb-4 text-center">RANK</h3>
+                <h3 className="text-[#FFD700] font-bold text-xs uppercase tracking-[0.2em] mb-3 text-center">RANK</h3>
                 <div className="flex flex-col items-center">
-                  {/* Rounded Box Container */}
-                  <div className={`relative w-24 h-28 mb-2 rounded-xl border-2 ${
-                    analysisData.formCategory === 'EXCELLENT' 
-                      ? 'border-[#FFD700] bg-gradient-to-b from-[#2a2a2a] to-[#1a1a1a] shadow-[0_0_20px_rgba(255,215,0,0.3)]' 
-                      : analysisData.formCategory === 'GOOD'
-                      ? 'border-[#C0C0C0] bg-gradient-to-b from-[#2a2a2a] to-[#1a1a1a] shadow-[0_0_15px_rgba(192,192,192,0.2)]'
-                      : 'border-[#CD7F32] bg-gradient-to-b from-[#2a2a2a] to-[#1a1a1a] shadow-[0_0_10px_rgba(205,127,50,0.2)]'
-                  } flex items-center justify-center p-2`}>
-                    {/* Medal SVG - exact copy of the reference image */}
-                    <svg viewBox="0 0 100 130" className="w-full h-full">
-                      <defs>
-                        <linearGradient id="medalGold" x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" stopColor="#FFE55C"/>
-                          <stop offset="50%" stopColor="#FFD700"/>
-                          <stop offset="100%" stopColor="#B8860B"/>
-                        </linearGradient>
-                      </defs>
-                      
-                      {/* Three ribbon tabs at top */}
-                      {/* Left ribbon */}
-                      <path d="M25,5 L25,35 L20,40 L20,10 Q20,5 25,5" 
-                            fill="none" 
-                            stroke={analysisData.formCategory === 'EXCELLENT' ? '#FFD700' : 
-                                   analysisData.formCategory === 'GOOD' ? '#C0C0C0' : '#CD7F32'}
-                            strokeWidth="2"/>
-                      <path d="M30,5 L30,38 L25,43 L25,10 Q25,5 30,5" 
-                            fill="none" 
-                            stroke={analysisData.formCategory === 'EXCELLENT' ? '#FFD700' : 
-                                   analysisData.formCategory === 'GOOD' ? '#C0C0C0' : '#CD7F32'}
-                            strokeWidth="2"/>
-                      
-                      {/* Center ribbon */}
-                      <rect x="42" y="5" width="16" height="35" rx="2"
-                            fill="none" 
-                            stroke={analysisData.formCategory === 'EXCELLENT' ? '#FFD700' : 
-                                   analysisData.formCategory === 'GOOD' ? '#C0C0C0' : '#CD7F32'}
-                            strokeWidth="2"/>
-                      
-                      {/* Right ribbon */}
-                      <path d="M75,5 L75,35 L80,40 L80,10 Q80,5 75,5" 
-                            fill="none" 
-                            stroke={analysisData.formCategory === 'EXCELLENT' ? '#FFD700' : 
-                                   analysisData.formCategory === 'GOOD' ? '#C0C0C0' : '#CD7F32'}
-                            strokeWidth="2"/>
-                      <path d="M70,5 L70,38 L75,43 L75,10 Q75,5 70,5" 
-                            fill="none" 
-                            stroke={analysisData.formCategory === 'EXCELLENT' ? '#FFD700' : 
-                                   analysisData.formCategory === 'GOOD' ? '#C0C0C0' : '#CD7F32'}
-                            strokeWidth="2"/>
-                      
-                      {/* Connector piece */}
-                      <rect x="40" y="42" width="20" height="10" rx="2"
-                            fill="none" 
-                            stroke={analysisData.formCategory === 'EXCELLENT' ? '#FFD700' : 
-                                   analysisData.formCategory === 'GOOD' ? '#C0C0C0' : '#CD7F32'}
-                            strokeWidth="2"/>
-                      
-                      {/* Medal circle - outer */}
-                      <circle cx="50" cy="85" r="30" 
-                              fill="none" 
-                              stroke={analysisData.formCategory === 'EXCELLENT' ? '#FFD700' : 
-                                     analysisData.formCategory === 'GOOD' ? '#C0C0C0' : '#CD7F32'}
-                              strokeWidth="2.5"/>
-                      
-                      {/* Medal circle - inner with basketball */}
-                      <circle cx="50" cy="85" r="22" 
-                              fill={analysisData.formCategory === 'EXCELLENT' ? '#FFD700' : 
-                                   analysisData.formCategory === 'GOOD' ? '#C0C0C0' : '#CD7F32'}/>
-                      
-                      {/* Basketball lines on medal */}
-                      <circle cx="50" cy="85" r="18" 
-                              fill="none" stroke="#1a1a1a" strokeWidth="2"/>
-                      <path d="M32,85 Q50,72 68,85" fill="none" stroke="#1a1a1a" strokeWidth="2"/>
-                      <path d="M32,85 Q50,98 68,85" fill="none" stroke="#1a1a1a" strokeWidth="2"/>
-                      <line x1="50" y1="67" x2="50" y2="103" stroke="#1a1a1a" strokeWidth="2"/>
-                      <line x1="32" y1="85" x2="68" y2="85" stroke="#1a1a1a" strokeWidth="2"/>
-                    </svg>
+                  {/* Level Badge Image Container with White Outline */}
+                  <div className="relative w-36 h-40 mb-2 flex items-center justify-center">
+                    {/* White outline effect using drop-shadow */}
+                    <div 
+                      className="relative w-[130px] h-[150px]"
+                      style={{
+                        filter: 'drop-shadow(0 0 1px white) drop-shadow(0 0 2px white) drop-shadow(0 0 3px rgba(255,255,255,0.8)) drop-shadow(0 0 4px rgba(255,255,255,0.5))',
+                      }}
+                    >
+                      <Image
+                        src="/images/ranks/pure-shooter.png"
+                        alt="Pure Shooter Rank Badge"
+                        fill
+                        sizes="130px"
+                        className="object-contain"
+                        priority
+                      />
+                    </div>
                   </div>
                   
-                  {/* Rank name */}
-                  <p className={`font-black text-sm uppercase tracking-wider ${
-                    analysisData.formCategory === 'EXCELLENT' ? 'text-[#FFD700]' :
-                    analysisData.formCategory === 'GOOD' ? 'text-[#C0C0C0]' :
-                    'text-[#CD7F32]'
-                  }`}>
-                    {analysisData.formCategory === 'EXCELLENT' ? 'ELITE' : 
-                     analysisData.formCategory === 'GOOD' ? 'VETERAN' : 
-                     analysisData.formCategory === 'NEEDS_IMPROVEMENT' ? 'RECRUIT' : 'ROOKIE'}
+                  {/* Rank name - now shows "PURE SHOOTER" */}
+                  <p className="font-black text-sm uppercase tracking-wider text-[#FFD700]">
+                    PURE SHOOTER
                   </p>
                   <p className="text-[#666] text-[10px] text-center uppercase tracking-wide mt-1">
                     {analysisData.overallScore}% RATING
@@ -3632,8 +3751,9 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                 </div>
               </div>
             </div>
+            </>
           </div>
-          {/* TOP 5 MATCHED ELITE SHOOTERS */}
+          {/* TOP 5 MATCHED ELITE SHOOTERS - Show for all views (kids love this!) */}
           <div className="space-y-3">
             {/* #1 - Primary Match (Large Card) */}
             <div className="bg-gradient-to-br from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a] rounded-lg overflow-hidden border border-[#FFD700]/20 shadow-lg shadow-[#FFD700]/5">
@@ -3934,19 +4054,37 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
         </div>
       </div>
       <div className="p-6 border-t border-[#3a3a3a]">
+        {/* Tab Navigation - Same tabs for all views, different labels based on view */}
         <div className="flex gap-2 mb-6 flex-wrap">
-          {["analysis", "flaws", "assessment", "comparison", "training", "history"].map((tab) => (
-            <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2 rounded-md font-semibold uppercase tracking-wider transition-colors ${activeTab === tab ? "bg-[#FFD700] text-[#1a1a1a]" : "bg-[#3a3a3a] text-[#E5E5E5] hover:bg-[#4a4a4a]"}`}>
-              {tab === "analysis" ? "BIOMECHANICAL ANALYSIS" : tab === "flaws" ? "IDENTIFIED FLAWS" : tab === "assessment" ? "PLAYER ASSESSMENT" : tab === "comparison" ? "COMPARISON" : tab === "training" ? "TRAINING PLAN" : "HISTORICAL DATA"}
-            </button>
-          ))}
+          {["analysis", "flaws", "assessment", "comparison", "training", "history"].map((tab) => {
+            // Get tab label based on dashboard view
+            const getTabLabel = (tabId: string) => {
+              if (dashboardView === 'professional') {
+                return tabId === "analysis" ? "BIOMECHANICAL ANALYSIS" : tabId === "flaws" ? "IDENTIFIED FLAWS" : tabId === "assessment" ? "PLAYER ASSESSMENT" : tabId === "comparison" ? "COMPARISON" : tabId === "training" ? "TRAINING PLAN" : "HISTORICAL DATA"
+              } else if (dashboardView === 'standard') {
+                return tabId === "analysis" ? "FORM ANALYSIS" : tabId === "flaws" ? "WHAT TO FIX" : tabId === "assessment" ? "PLAYER ASSESSMENT" : tabId === "comparison" ? "COMPARE" : tabId === "training" ? "PRACTICE PLAN" : "HISTORY"
+              } else {
+                // Basic view - kid-friendly names
+                return tabId === "analysis" ? "HOW YOU SHOOT" : tabId === "flaws" ? "WHAT TO FIX" : tabId === "assessment" ? "PLAYER ASSESSMENT" : tabId === "comparison" ? "COMPARE" : tabId === "training" ? "PRACTICE" : "HISTORY"
+              }
+            }
+            return (
+              <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2 rounded-md font-semibold uppercase tracking-wider transition-colors ${activeTab === tab ? "bg-[#FFD700] text-[#1a1a1a]" : "bg-[#3a3a3a] text-[#E5E5E5] hover:bg-[#4a4a4a]"}`}>
+                {getTabLabel(tab)}
+              </button>
+            )
+          })}
         </div>
-        {activeTab === "analysis" && <BiomechanicalAnalysisWithSessions />}
-        {activeTab === "flaws" && <FlawsSection />}
-        {activeTab === "assessment" && <AssessmentSection />}
-        {activeTab === "comparison" && <ComparisonWithSessions />}
-        {activeTab === "training" && <TrainingWithSessions />}
-        {activeTab === "history" && <HistoricalDataSection />}
+        
+        {/* Tab Content - Same components for all views, pass dashboardView for language adjustments */}
+        <>
+          {activeTab === "analysis" && <BiomechanicalAnalysisWithSessions dashboardView={dashboardView} />}
+          {activeTab === "flaws" && <FlawsSection dashboardView={dashboardView} />}
+          {activeTab === "assessment" && <AssessmentSection dashboardView={dashboardView} />}
+          {activeTab === "comparison" && <ComparisonWithSessions dashboardView={dashboardView} />}
+          {activeTab === "training" && <TrainingWithSessions dashboardView={dashboardView} />}
+          {activeTab === "history" && <HistoricalDataSection dashboardView={dashboardView} />}
+        </>
       </div>
     </>
   )
@@ -4116,7 +4254,7 @@ function CoachingTipCard({ flawTitle, correction, drills }: CoachingTipCardProps
   )
 }
 
-function FlawsSection() {
+function FlawsSection({ dashboardView = 'professional' }: { dashboardView?: DashboardView }) {
   // State for tracking expanded session accordions
   const [expandedSessions, setExpandedSessions] = useState<string[]>(['current']);
   // State for tracking expanded flaw cards within each session
@@ -5141,7 +5279,7 @@ function SPARCategory({ category }: { category: typeof SPAR_CATEGORIES[0] }) {
   )
 }
 
-function AssessmentSection() {
+function AssessmentSection({ dashboardView = 'professional' }: { dashboardView?: DashboardView }) {
   // Get analysis data from store
   const { visionAnalysisResult, playerProfile, uploadedImageBase64, mediaType } = useAnalysisStore()
   
@@ -6328,7 +6466,7 @@ function CompareModal({ shooters, userMeasurements, analysisData, onClose }: { s
 // ============================================
 
 // Biomechanical Analysis with Session Filter Dropdown
-function BiomechanicalAnalysisWithSessions() {
+function BiomechanicalAnalysisWithSessions({ dashboardView = 'professional' }: { dashboardView?: DashboardView }) {
   const { visionAnalysisResult, uploadedImageBase64 } = useAnalysisStore()
   const [sessions, setSessions] = useState<AnalysisSession[]>([])
   const [selectedSessionId, setSelectedSessionId] = useState<string>('current')
@@ -6440,7 +6578,7 @@ function BiomechanicalAnalysisWithSessions() {
 }
 
 // Comparison with Session Filter Dropdown - Phase 6 Enhanced
-function ComparisonWithSessions() {
+function ComparisonWithSessions({ dashboardView = 'professional' }: { dashboardView?: DashboardView }) {
   const { visionAnalysisResult, uploadedImageBase64, playerProfile } = useAnalysisStore()
   const [sessions, setSessions] = useState<AnalysisSession[]>([])
   const [selectedSessionId, setSelectedSessionId] = useState<string>('current')
@@ -6677,7 +6815,7 @@ function ComparisonWithSessions() {
 }
 
 // Training Plan with Session Filter Dropdown
-function TrainingWithSessions() {
+function TrainingWithSessions({ dashboardView = 'professional' }: { dashboardView?: DashboardView }) {
   const { visionAnalysisResult, uploadedImageBase64 } = useAnalysisStore()
   const [sessions, setSessions] = useState<AnalysisSession[]>([])
   const [selectedSessionId, setSelectedSessionId] = useState<string>('current')
@@ -7529,7 +7667,7 @@ function WeeklyPerformanceSummaryCard({ sessions }: WeeklyPerformanceSummaryCard
 // PHASE 7: HISTORICAL DATA SECTION
 // ============================================
 
-function HistoricalDataSection() {
+function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardView?: DashboardView }) {
   const { visionAnalysisResult } = useAnalysisStore()
   const [sessions, setSessions] = useState<AnalysisSession[]>([])
   const [selectedMetric, setSelectedMetric] = useState<'score' | 'elbow' | 'knee' | 'release'>('score')

@@ -347,3 +347,7 @@ Potential improvements for future versions:
 - [ ] Progress bar shows correct label progress
 - [ ] Manual scrubbing works after sequence completes
 
+
+
+
+
