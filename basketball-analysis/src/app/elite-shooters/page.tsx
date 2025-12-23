@@ -252,6 +252,8 @@ const FilterDropdown = ({
   );
 };
 
+const ITEMS_PER_PAGE = 24; // Show 24 players per page (8 rows of 3)
+
 export default function EliteShootersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTiers, setSelectedTiers] = useState<ShooterTier[]>([]);
@@ -267,6 +269,7 @@ export default function EliteShootersPage() {
   const [shootingFormPlayer, setShootingFormPlayer] = useState<(EliteShooter & { wsi: number; similarity: number; eraCategory: string }) | null>(null);
   const [approvedImages, setApprovedImages] = useState<Record<number, string[]>>({});
   const [excludedImages, setExcludedImages] = useState<Record<number, string[]>>({});
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Load approved and excluded images from localStorage on mount
   useEffect(() => {
@@ -365,13 +368,24 @@ export default function EliteShootersPage() {
     selectedPositions.length > 0 || selectedEras.length > 0 || 
     threePctRange[0] > 0 || threePctRange[1] < 50 || ftPctRange[0] > 0 || ftPctRange[1] < 100 || wsiRange[0] > 0 || wsiRange[1] < 60;
 
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredShooters.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedShooters = filteredShooters.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedTiers, selectedLeagues, selectedPositions, selectedEras, threePctRange, ftPctRange, wsiRange, sortBy]);
+
   const toggleTier = (tier: ShooterTier) => setSelectedTiers(prev => prev.includes(tier) ? prev.filter(t => t !== tier) : [...prev, tier]);
   const toggleLeague = (league: EliteShooter['league']) => setSelectedLeagues(prev => prev.includes(league) ? prev.filter(l => l !== league) : [...prev, league]);
   const togglePosition = (position: Position) => setSelectedPositions(prev => prev.includes(position) ? prev.filter(p => p !== position) : [...prev, position]);
   const toggleEra = (era: string) => setSelectedEras(prev => prev.includes(era) ? prev.filter(e => e !== era) : [...prev, era]);
 
   return (
-    <main className="min-h-[calc(100vh-200px)] py-8 px-4">
+    <main className="min-h-[calc(100vh-200px)] py-8 px-4 bg-[#050505]">
       <div className="container mx-auto max-w-7xl">
         <div className="bg-[#2C2C2C] rounded-lg overflow-hidden shadow-lg">
           {/* Header */}
@@ -521,8 +535,9 @@ export default function EliteShootersPage() {
                 </button>
               </div>
             ) : (
+              <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredShooters.map((shooter) => {
+                {paginatedShooters.map((shooter) => {
                   const photoUrl = shooter.photoUrl || null;
                   const tierColor = TIER_COLORS[shooter.tier];
                   const threePct = shooter.careerPct ?? null;
@@ -793,6 +808,76 @@ export default function EliteShootersPage() {
                   );
                 })}
               </div>
+              
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="text-[#888] text-sm">
+                    Showing {startIndex + 1}-{Math.min(endIndex, filteredShooters.length)} of {filteredShooters.length} players
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setCurrentPage(1)}
+                      disabled={currentPage === 1}
+                      className="px-3 py-2 rounded-lg bg-[#2a2a2a] border border-[#3a3a3a] text-white disabled:opacity-40 disabled:cursor-not-allowed hover:border-[#FFD700]/50 transition-colors"
+                    >
+                      First
+                    </button>
+                    <button
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="px-3 py-2 rounded-lg bg-[#2a2a2a] border border-[#3a3a3a] text-white disabled:opacity-40 disabled:cursor-not-allowed hover:border-[#FFD700]/50 transition-colors"
+                    >
+                      Previous
+                    </button>
+                    
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1)
+                        .filter(page => {
+                          // Show first, last, current, and pages near current
+                          if (page === 1 || page === totalPages) return true;
+                          if (Math.abs(page - currentPage) <= 2) return true;
+                          return false;
+                        })
+                        .map((page, idx, arr) => {
+                          // Add ellipsis if there's a gap
+                          const showEllipsisBefore = idx > 0 && page - arr[idx - 1] > 1;
+                          return (
+                            <React.Fragment key={page}>
+                              {showEllipsisBefore && <span className="px-2 text-[#666]">...</span>}
+                              <button
+                                onClick={() => setCurrentPage(page)}
+                                className={`w-10 h-10 rounded-lg font-semibold transition-colors ${
+                                  currentPage === page
+                                    ? 'bg-[#FFD700] text-black'
+                                    : 'bg-[#2a2a2a] border border-[#3a3a3a] text-white hover:border-[#FFD700]/50'
+                                }`}
+                              >
+                                {page}
+                              </button>
+                            </React.Fragment>
+                          );
+                        })}
+                    </div>
+                    
+                    <button
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-2 rounded-lg bg-[#2a2a2a] border border-[#3a3a3a] text-white disabled:opacity-40 disabled:cursor-not-allowed hover:border-[#FFD700]/50 transition-colors"
+                    >
+                      Next
+                    </button>
+                    <button
+                      onClick={() => setCurrentPage(totalPages)}
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-2 rounded-lg bg-[#2a2a2a] border border-[#3a3a3a] text-white disabled:opacity-40 disabled:cursor-not-allowed hover:border-[#FFD700]/50 transition-colors"
+                    >
+                      Last
+                    </button>
+                  </div>
+                </div>
+              )}
+              </>
             )}
           </div>
         </div>

@@ -40,6 +40,7 @@ model UserProfile {
   
   // Relations
   analyses              UserAnalysis[]
+  drillVideos           DrillVideoSubmission[]
   
   // Indexes
   @@index([experienceLevel], name: "idx_user_experience")
@@ -413,4 +414,57 @@ model HabitualMechanics {
 
   @@index([shooterId], name: "idx_habits_shooter_id")
   @@map("habitual_mechanics")
+}
+
+// ============================================
+// TABLE 8: drill_video_submissions (User drill videos for analysis)
+// ============================================
+model DrillVideoSubmission {
+  id                    String    @id @default(cuid())
+  
+  // Drill Information
+  drillId               String    @map("drill_id") @db.VarChar(100)
+  drillName             String    @map("drill_name") @db.VarChar(255)
+  focusArea             String?   @map("focus_area") @db.VarChar(100)  // elbow/knee/balance/release/follow-through/power/general
+  
+  // Video Storage
+  videoUrl              String?   @map("video_url") @db.Text           // URL to stored video (S3, Cloudinary, etc.)
+  videoBase64           String?   @map("video_base64") @db.Text        // Base64 encoded video (for smaller videos)
+  videoDuration         Decimal?  @map("video_duration") @db.Decimal(10, 2) // Duration in seconds
+  
+  // Trim Information
+  trimStart             Decimal?  @map("trim_start") @db.Decimal(10, 2)  // Start time in seconds
+  trimEnd               Decimal?  @map("trim_end") @db.Decimal(10, 2)    // End time in seconds
+  
+  // Analysis Status
+  analyzed              Boolean   @default(false)
+  analyzedAt            DateTime? @map("analyzed_at")
+  
+  // Analysis Results (from Hybrid System / AI Vision)
+  formScore             Int?      @map("form_score")                    // 0-100 score
+  feedback              Json?                                           // Array of feedback strings
+  improvements          Json?                                           // Array of improvement suggestions
+  positives             Json?                                           // What the user did well
+  coachingTips          Json?     @map("coaching_tips")                 // Actionable tips for improvement
+  detailedFeedback      String?   @map("detailed_feedback") @db.Text    // Full analysis text
+  drillSpecific         Boolean   @default(false) @map("drill_specific") // Whether analysis was drill-aware
+  
+  // User Association (optional - for when user profiles are implemented)
+  userProfileId         String?   @map("user_profile_id")
+  
+  // Metadata
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+  
+  // Relations
+  userProfile           UserProfile? @relation(fields: [userProfileId], references: [id], onDelete: SetNull)
+  
+  // Indexes
+  @@index([drillId], name: "idx_drill_video_drill_id")
+  @@index([analyzed], name: "idx_drill_video_analyzed")
+  @@index([userProfileId], name: "idx_drill_video_user")
+  @@index([createdAt], name: "idx_drill_video_created")
+  @@index([focusArea], name: "idx_drill_video_focus")
+  
+  @@map("drill_video_submissions")
 }

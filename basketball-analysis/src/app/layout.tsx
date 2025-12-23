@@ -44,10 +44,10 @@ export default function RootLayout({
         {/* DISABLED: Cache clearing script was causing infinite reload loops */}
         {/* <Script src="/clear-cache.js" strategy="beforeInteractive" /> */}
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} ${russoOne.variable} antialiased min-h-screen flex flex-col`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} ${russoOne.variable} antialiased min-h-screen flex flex-col bg-[#050505]`}>
         <Providers>
           <Header />
-          <main className="flex-1">{children}</main>
+          <main className="flex-1 bg-[#050505]">{children}</main>
           <Footer />
         </Providers>
       </body>

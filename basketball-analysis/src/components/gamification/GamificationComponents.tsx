@@ -413,24 +413,26 @@ export function WeeklyChallenges() {
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">{challenge.icon}</span>
+                    <div className="w-10 h-10 rounded-lg bg-[#2a2a2a] flex items-center justify-center border border-[#3a3a3a]">
+                      <Target className="w-5 h-5 text-[#FFD700]" />
+                    </div>
                     <div>
-                      <p className="font-bold text-[#E5E5E5]">{challenge.name}</p>
+                      <p className="font-bold text-[#E5E5E5] uppercase">{challenge.name.toUpperCase()}</p>
                       <div className="flex items-center gap-2 mt-1">
                         <span 
-                          className="text-xs px-2 py-0.5 rounded capitalize"
+                          className="text-xs px-2 py-0.5 rounded uppercase"
                           style={{ backgroundColor: `${difficultyColor}20`, color: difficultyColor }}
                         >
-                          {challenge.difficulty}
+                          {challenge.difficulty.toUpperCase()}
                         </span>
-                        <span className="text-xs text-[#FFD700]">+{challenge.pointsReward} pts</span>
+                        <span className="text-xs text-[#FFD700]">+{challenge.pointsReward} PTS</span>
                       </div>
                     </div>
                   </div>
                   
                   <div className="flex items-center gap-3">
                     {challenge.isCompleted ? (
-                      <span className="text-green-400 text-sm font-bold">✓ Complete</span>
+                      <span className="text-green-400 text-sm font-bold flex items-center gap-1"><Check className="w-4 h-4" /> COMPLETE</span>
                     ) : (
                       <span className="text-[#888] text-xs">{getTimeRemaining(challenge.endDate)}</span>
                     )}

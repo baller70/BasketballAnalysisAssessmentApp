@@ -60,12 +60,31 @@
     border-color: hsl(var(--border));
   }
 
+  html {
+    /* Use min-height instead of height to allow scrolling past viewport */
+    min-height: 100%;
+    overflow-x: hidden;
+    /* Prevent overscroll bounce showing white/black gaps */
+    overscroll-behavior: none;
+    background: #050505;
+  }
+
   body {
-    background-color: hsl(var(--background));
+    background: #050505;
     color: hsl(var(--foreground));
     font-family: 'Saira', system-ui, sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
-  min-height: 100vh;
+    min-height: 100vh;
+    position: relative;
+    /* Prevent overscroll bounce */
+    overscroll-behavior: none;
+  }
+
+  /* Ensure no black gaps when scrolling */
+  #__next,
+  main {
+    background: #050505;
+    min-height: 100%;
   }
 }
 
