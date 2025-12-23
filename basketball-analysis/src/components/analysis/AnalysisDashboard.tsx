@@ -895,9 +895,9 @@ function CollapsibleMetricItem({
 }
 
 export function AnalysisDashboard({ measurements }: AnalysisDashboardProps) {
-  // Section-level state - all collapsed by default
-  const [jointAnglesOpen, setJointAnglesOpen] = React.useState(false)
-  const [releaseMetricsOpen, setReleaseMetricsOpen] = React.useState(false)
+  // Section-level state - Joint Angles and Release Metrics open by default, individual metrics collapsed
+  const [jointAnglesOpen, setJointAnglesOpen] = React.useState(true)
+  const [releaseMetricsOpen, setReleaseMetricsOpen] = React.useState(true)
   const [educationalGuideOpen, setEducationalGuideOpen] = React.useState(false)
 
   // Individual metric state - all collapsed by default

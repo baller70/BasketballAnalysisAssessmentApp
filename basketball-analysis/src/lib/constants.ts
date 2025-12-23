@@ -13,7 +13,9 @@ export const API_ENDPOINTS = {
 } as const
 
 // External API URLs
-export const HYBRID_API_URL = process.env.NEXT_PUBLIC_HYBRID_API_URL || "http://localhost:5001"
+// Local development: http://localhost:5001
+// Production (Hugging Face): https://baller70-basketball-analysis-api.hf.space
+export const HYBRID_API_URL = process.env.NEXT_PUBLIC_HYBRID_API_URL || "https://baller70-basketball-analysis-api.hf.space"
 
 // File size limits
 export const FILE_LIMITS = {

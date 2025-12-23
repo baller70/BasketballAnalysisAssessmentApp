@@ -13,6 +13,49 @@ export type ShooterSkillLevel =
 
 export type BodyBuild = "GUARD" | "WING" | "FORWARD" | "CENTER"
 
+// NBA CDN helper for player headshots
+const nbaPhoto = (id: number) => `https://cdn.nba.com/headshots/nba/latest/1040x760/${id}.png`
+
+// NBA Player IDs mapping
+const NBA_PLAYER_IDS: Record<string, number> = {
+  // Elite
+  "curry-stephen": 201939,
+  "korver-kyle": 2594,
+  "allen-ray": 951,
+  "thompson-klay": 202691,
+  "miller-reggie": 397,
+  // Pro
+  "booker-devin": 1626164,
+  "lillard-damian": 203081,
+  "mitchell-donovan": 1628378,
+  "durant-kevin": 201142,
+  "tatum-jayson": 1628369,
+  // Advanced
+  "harris-joe": 203925,
+  "green-danny": 201980,
+  "robinson-duncan": 1629130,
+  "love-kevin": 201567,
+  "ingles-joe": 204060,
+  // Intermediate
+  "smart-marcus": 203935,
+  "holiday-jrue": 201950,
+  "green-draymond": 203110,
+  "tucker-pj": 200782,
+  "crowder-jae": 203109,
+  // Developing
+  "simmons-ben": 1627732,
+  "westbrook-russell": 201566,
+  "williamson-zion": 1629627,
+  "giannis-antetokounmpo": 203507,
+  "ball-lonzo": 1628366,
+  // Needs Work
+  "gobert-rudy": 203497,
+  "howard-dwight": 2730,
+  "capela-clint": 203991,
+  "drummond-andre": 203083,
+  "adams-steven": 203500
+}
+
 export interface ShooterProfile {
   id: string
   name: string
@@ -77,6 +120,7 @@ const ELITE_SHOOTERS: ShooterProfile[] = [
       followThroughAngle: 175
     },
     careerStats: { fgPct: 47.3, threePct: 42.8, ftPct: 91.0 },
+    imageUrl: nbaPhoto(NBA_PLAYER_IDS["curry-stephen"]),
     traits: ["Quick release", "Deep range", "Off-balance shooting", "One-motion shot"]
   },
   {
@@ -99,6 +143,7 @@ const ELITE_SHOOTERS: ShooterProfile[] = [
       followThroughAngle: 178
     },
     careerStats: { fgPct: 43.0, threePct: 42.9, ftPct: 87.9 },
+    imageUrl: nbaPhoto(NBA_PLAYER_IDS["korver-kyle"]),
     traits: ["Textbook form", "High release", "Catch-and-shoot specialist", "Perfect arc"]
   },
   {
@@ -121,6 +166,7 @@ const ELITE_SHOOTERS: ShooterProfile[] = [
       followThroughAngle: 176
     },
     careerStats: { fgPct: 45.2, threePct: 40.0, ftPct: 89.4 },
+    imageUrl: nbaPhoto(NBA_PLAYER_IDS["allen-ray"]),
     traits: ["Silky smooth release", "Perfect footwork", "Consistent mechanics", "Clutch shooter"]
   },
   {
@@ -143,6 +189,7 @@ const ELITE_SHOOTERS: ShooterProfile[] = [
       followThroughAngle: 174
     },
     careerStats: { fgPct: 45.3, threePct: 41.3, ftPct: 85.3 },
+    imageUrl: nbaPhoto(NBA_PLAYER_IDS["thompson-klay"]),
     traits: ["Quick release", "Catch-and-shoot", "Off screens", "Two-motion shot"]
   },
   {
@@ -165,6 +212,7 @@ const ELITE_SHOOTERS: ShooterProfile[] = [
       followThroughAngle: 177
     },
     careerStats: { fgPct: 47.1, threePct: 39.5, ftPct: 88.8 },
+    imageUrl: nbaPhoto(NBA_PLAYER_IDS["miller-reggie"]),
     traits: ["High arc", "Clutch performer", "Movement shooter", "Trash talker"]
   }
 ]
@@ -193,6 +241,7 @@ const PRO_SHOOTERS: ShooterProfile[] = [
       followThroughAngle: 172
     },
     careerStats: { fgPct: 46.0, threePct: 36.0, ftPct: 87.0 },
+    imageUrl: nbaPhoto(NBA_PLAYER_IDS["booker-devin"]),
     traits: ["Mid-range master", "Smooth stroke", "Pull-up jumper", "Scoring versatility"]
   },
   {
@@ -215,6 +264,7 @@ const PRO_SHOOTERS: ShooterProfile[] = [
       followThroughAngle: 170
     },
     careerStats: { fgPct: 44.0, threePct: 37.0, ftPct: 89.0 },
+    imageUrl: nbaPhoto(NBA_PLAYER_IDS["lillard-damian"]),
     traits: ["Deep range", "Clutch gene", "Off-dribble shooting", "Logo range"]
   },
   {
@@ -237,6 +287,7 @@ const PRO_SHOOTERS: ShooterProfile[] = [
       followThroughAngle: 168
     },
     careerStats: { fgPct: 44.5, threePct: 36.5, ftPct: 85.0 },
+    imageUrl: nbaPhoto(NBA_PLAYER_IDS["mitchell-donovan"]),
     traits: ["Athletic shooter", "Explosive", "Pull-up three", "Scorer mentality"]
   },
   {
@@ -259,6 +310,7 @@ const PRO_SHOOTERS: ShooterProfile[] = [
       followThroughAngle: 175
     },
     careerStats: { fgPct: 50.0, threePct: 38.5, ftPct: 88.5 },
+    imageUrl: nbaPhoto(NBA_PLAYER_IDS["durant-kevin"]),
     traits: ["Unblockable release", "Length advantage", "Mid-range killer", "Effortless stroke"]
   },
   {
@@ -281,6 +333,7 @@ const PRO_SHOOTERS: ShooterProfile[] = [
       followThroughAngle: 173
     },
     careerStats: { fgPct: 45.5, threePct: 37.0, ftPct: 85.5 },
+    imageUrl: nbaPhoto(NBA_PLAYER_IDS["tatum-jayson"]),
     traits: ["Step-back three", "Fadeaway", "High release", "Two-way player"]
   }
 ]
@@ -309,6 +362,7 @@ const ADVANCED_SHOOTERS: ShooterProfile[] = [
       followThroughAngle: 171
     },
     careerStats: { fgPct: 47.0, threePct: 43.5, ftPct: 82.0 },
+    imageUrl: nbaPhoto(NBA_PLAYER_IDS["harris-joe"]),
     traits: ["Spot-up specialist", "Corner three", "Consistent mechanics", "Movement shooter"]
   },
   {
@@ -331,6 +385,7 @@ const ADVANCED_SHOOTERS: ShooterProfile[] = [
       followThroughAngle: 169
     },
     careerStats: { fgPct: 42.0, threePct: 40.0, ftPct: 75.0 },
+    imageUrl: nbaPhoto(NBA_PLAYER_IDS["green-danny"]),
     traits: ["3-and-D player", "Catch-and-shoot", "Championship experience", "Defensive minded"]
   },
   {
@@ -353,6 +408,7 @@ const ADVANCED_SHOOTERS: ShooterProfile[] = [
       followThroughAngle: 174
     },
     careerStats: { fgPct: 44.0, threePct: 40.5, ftPct: 80.0 },
+    imageUrl: nbaPhoto(NBA_PLAYER_IDS["robinson-duncan"]),
     traits: ["Volume shooter", "Off screens", "Quick release", "Spot-up specialist"]
   },
   {
@@ -375,6 +431,7 @@ const ADVANCED_SHOOTERS: ShooterProfile[] = [
       followThroughAngle: 172
     },
     careerStats: { fgPct: 43.0, threePct: 37.0, ftPct: 82.0 },
+    imageUrl: nbaPhoto(NBA_PLAYER_IDS["love-kevin"]),
     traits: ["Stretch four", "Outlet passing", "Post-up game", "Rebounding"]
   },
   {
@@ -397,6 +454,7 @@ const ADVANCED_SHOOTERS: ShooterProfile[] = [
       followThroughAngle: 168
     },
     careerStats: { fgPct: 45.0, threePct: 40.0, ftPct: 82.0 },
+    imageUrl: nbaPhoto(NBA_PLAYER_IDS["ingles-joe"]),
     traits: ["Crafty veteran", "High IQ", "Set shot", "Playmaking"]
   }
 ]
@@ -425,6 +483,7 @@ const INTERMEDIATE_SHOOTERS: ShooterProfile[] = [
       followThroughAngle: 165
     },
     careerStats: { fgPct: 37.5, threePct: 32.5, ftPct: 80.0 },
+    imageUrl: nbaPhoto(NBA_PLAYER_IDS["smart-marcus"]),
     traits: ["Defensive specialist", "Streaky shooter", "Tough shot maker", "Leadership"]
   },
   {
@@ -447,6 +506,7 @@ const INTERMEDIATE_SHOOTERS: ShooterProfile[] = [
       followThroughAngle: 167
     },
     careerStats: { fgPct: 44.0, threePct: 35.0, ftPct: 78.0 },
+    imageUrl: nbaPhoto(NBA_PLAYER_IDS["holiday-jrue"]),
     traits: ["Two-way guard", "Clutch defense", "Solid fundamentals", "Veteran presence"]
   },
   {
@@ -469,6 +529,7 @@ const INTERMEDIATE_SHOOTERS: ShooterProfile[] = [
       followThroughAngle: 162
     },
     careerStats: { fgPct: 44.0, threePct: 32.0, ftPct: 71.0 },
+    imageUrl: nbaPhoto(NBA_PLAYER_IDS["green-draymond"]),
     traits: ["Playmaking big", "Defensive anchor", "High IQ", "Championship DNA"]
   },
   {
@@ -491,6 +552,7 @@ const INTERMEDIATE_SHOOTERS: ShooterProfile[] = [
       followThroughAngle: 166
     },
     careerStats: { fgPct: 42.0, threePct: 36.0, ftPct: 70.0 },
+    imageUrl: nbaPhoto(NBA_PLAYER_IDS["tucker-pj"]),
     traits: ["Corner specialist", "Hustle player", "Physical defender", "Veteran"]
   },
   {
@@ -513,6 +575,7 @@ const INTERMEDIATE_SHOOTERS: ShooterProfile[] = [
       followThroughAngle: 164
     },
     careerStats: { fgPct: 40.0, threePct: 34.5, ftPct: 72.0 },
+    imageUrl: nbaPhoto(NBA_PLAYER_IDS["crowder-jae"]),
     traits: ["3-and-D forward", "Physical", "Versatile defender", "Team player"]
   }
 ]
@@ -541,6 +604,7 @@ const DEVELOPING_SHOOTERS: ShooterProfile[] = [
       followThroughAngle: 155
     },
     careerStats: { fgPct: 56.0, threePct: 5.0, ftPct: 59.0 },
+    imageUrl: nbaPhoto(NBA_PLAYER_IDS["simmons-ben"]),
     traits: ["Elite passer", "Transition player", "Defensive versatility", "Shot averse"]
   },
   {
@@ -563,6 +627,7 @@ const DEVELOPING_SHOOTERS: ShooterProfile[] = [
       followThroughAngle: 158
     },
     careerStats: { fgPct: 43.5, threePct: 30.5, ftPct: 80.0 },
+    imageUrl: nbaPhoto(NBA_PLAYER_IDS["westbrook-russell"]),
     traits: ["Athletic freak", "Triple-double machine", "Aggressive driver", "Inconsistent jumper"]
   },
   {
@@ -585,6 +650,7 @@ const DEVELOPING_SHOOTERS: ShooterProfile[] = [
       followThroughAngle: 160
     },
     careerStats: { fgPct: 58.0, threePct: 33.0, ftPct: 70.0 },
+    imageUrl: nbaPhoto(NBA_PLAYER_IDS["williamson-zion"]),
     traits: ["Explosive athlete", "Paint dominator", "Developing range", "Powerful finisher"]
   },
   {
@@ -607,6 +673,7 @@ const DEVELOPING_SHOOTERS: ShooterProfile[] = [
       followThroughAngle: 157
     },
     careerStats: { fgPct: 55.0, threePct: 28.5, ftPct: 70.0 },
+    imageUrl: nbaPhoto(NBA_PLAYER_IDS["giannis-antetokounmpo"]),
     traits: ["Freak athlete", "Euro step", "Transition beast", "Improving jumper"]
   },
   {
@@ -629,6 +696,7 @@ const DEVELOPING_SHOOTERS: ShooterProfile[] = [
       followThroughAngle: 160
     },
     careerStats: { fgPct: 41.0, threePct: 37.0, ftPct: 72.0 },
+    imageUrl: nbaPhoto(NBA_PLAYER_IDS["ball-lonzo"]),
     traits: ["Court vision", "Transition passer", "Reworked shot", "Defensive length"]
   }
 ]
@@ -657,6 +725,7 @@ const NEEDS_WORK_SHOOTERS: ShooterProfile[] = [
       followThroughAngle: 150
     },
     careerStats: { fgPct: 65.0, threePct: 0.0, ftPct: 63.0 },
+    imageUrl: nbaPhoto(NBA_PLAYER_IDS["gobert-rudy"]),
     traits: ["Rim protector", "Lob threat", "Limited range", "Elite defender"]
   },
   {
@@ -679,6 +748,7 @@ const NEEDS_WORK_SHOOTERS: ShooterProfile[] = [
       followThroughAngle: 148
     },
     careerStats: { fgPct: 58.5, threePct: 10.0, ftPct: 56.5 },
+    imageUrl: nbaPhoto(NBA_PLAYER_IDS["howard-dwight"]),
     traits: ["Athletic big", "Rebounding machine", "Poor FT shooter", "Rim runner"]
   },
   {
@@ -701,6 +771,7 @@ const NEEDS_WORK_SHOOTERS: ShooterProfile[] = [
       followThroughAngle: 152
     },
     careerStats: { fgPct: 62.0, threePct: 0.0, ftPct: 53.0 },
+    imageUrl: nbaPhoto(NBA_PLAYER_IDS["capela-clint"]),
     traits: ["Lob finisher", "Shot blocker", "Pick-and-roll", "No perimeter game"]
   },
   {
@@ -723,6 +794,7 @@ const NEEDS_WORK_SHOOTERS: ShooterProfile[] = [
       followThroughAngle: 145
     },
     careerStats: { fgPct: 52.0, threePct: 12.0, ftPct: 46.5 },
+    imageUrl: nbaPhoto(NBA_PLAYER_IDS["drummond-andre"]),
     traits: ["Rebounding monster", "Poor FT shooter", "Limited offense", "Physical presence"]
   },
   {
@@ -745,6 +817,7 @@ const NEEDS_WORK_SHOOTERS: ShooterProfile[] = [
       followThroughAngle: 155
     },
     careerStats: { fgPct: 59.0, threePct: 0.0, ftPct: 56.0 },
+    imageUrl: nbaPhoto(NBA_PLAYER_IDS["adams-steven"]),
     traits: ["Screen setter", "Physical", "Hustle player", "No jump shot"]
   }
 ]

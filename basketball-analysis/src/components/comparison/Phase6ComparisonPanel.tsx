@@ -208,37 +208,10 @@ export function Phase6ComparisonPanel({
             <Info className={`w-6 h-6 ${ageGroupColors.text}`} />
           </div>
           <div className="flex-1">
-            <h3 className={`font-bold text-lg ${ageGroupColors.text} mb-2`}>Your Assessment</h3>
+            <h3 className={`font-bold text-lg ${ageGroupColors.text} mb-2`}>YOUR ASSESSMENT</h3>
             <p className="text-[#E5E5E5] leading-relaxed">{coachingFeedback.overallAssessment}</p>
           </div>
         </div>
-      </div>
-      
-      {/* Top 5 Matched Shooters */}
-      <div className="bg-[#2C2C2C] rounded-xl border border-[#3a3a3a] overflow-hidden">
-        <button
-          onClick={() => toggleSection("matches")}
-          className="w-full p-5 flex items-center justify-between hover:bg-[#3a3a3a]/30 transition-colors"
-        >
-          <div className="flex items-center gap-3">
-            <Trophy className="w-6 h-6 text-[#FFD700]" />
-            <h3 className="text-xl font-bold text-[#FFD700]">Top 5 Similar Shooters</h3>
-            <span className="text-[#888] text-sm">(Based on your body type)</span>
-          </div>
-          {expandedSections.includes("matches") ? (
-            <ChevronUp className="w-5 h-5 text-[#888]" />
-          ) : (
-            <ChevronDown className="w-5 h-5 text-[#888]" />
-          )}
-        </button>
-        
-        {expandedSections.includes("matches") && (
-          <div className="p-5 pt-0 space-y-4">
-            {topMatches.map((match, index) => (
-              <MatchedShooterCard key={match.shooter.id} match={match} rank={index + 1} />
-            ))}
-          </div>
-        )}
       </div>
       
       {/* Optimal Mechanics for Your Body Type */}
@@ -249,7 +222,7 @@ export function Phase6ComparisonPanel({
         >
           <div className="flex items-center gap-3">
             <Target className="w-6 h-6 text-green-400" />
-            <h3 className="text-xl font-bold text-green-400">Optimal Mechanics for Your Body Type</h3>
+            <h3 className="text-xl font-bold text-green-400">OPTIMAL MECHANICS FOR YOUR BODY TYPE</h3>
           </div>
           {expandedSections.includes("optimal") ? (
             <ChevronUp className="w-5 h-5 text-[#888]" />
@@ -305,125 +278,33 @@ export function Phase6ComparisonPanel({
         )}
       </div>
       
-      {/* Your Mechanics vs Optimal */}
+      {/* Top 5 Matched Shooters */}
       <div className="bg-[#2C2C2C] rounded-xl border border-[#3a3a3a] overflow-hidden">
         <button
-          onClick={() => toggleSection("comparison")}
+          onClick={() => toggleSection("matches")}
           className="w-full p-5 flex items-center justify-between hover:bg-[#3a3a3a]/30 transition-colors"
         >
           <div className="flex items-center gap-3">
-            <BarChart3 className="w-6 h-6 text-blue-400" />
-            <h3 className="text-xl font-bold text-blue-400">Your Mechanics vs Optimal</h3>
+            <Trophy className="w-6 h-6 text-[#FFD700]" />
+            <h3 className="text-xl font-bold text-[#FFD700]">TOP 5 SIMILAR SHOOTERS</h3>
+            <span className="text-[#888] text-sm">(Based on your body type)</span>
           </div>
-          {expandedSections.includes("comparison") ? (
+          {expandedSections.includes("matches") ? (
             <ChevronUp className="w-5 h-5 text-[#888]" />
           ) : (
             <ChevronDown className="w-5 h-5 text-[#888]" />
           )}
         </button>
         
-        {expandedSections.includes("comparison") && (
-          <div className="p-5 pt-0 space-y-3">
-            {mechanicComparisons.map((comp, index) => (
-              <MechanicComparisonRow key={index} comparison={comp} />
+        {expandedSections.includes("matches") && (
+          <div className="p-5 pt-0 space-y-4">
+            {topMatches.map((match, index) => (
+              <MatchedShooterCard key={match.shooter.id} match={match} rank={index + 1} />
             ))}
           </div>
         )}
       </div>
       
-      {/* Coaching Feedback */}
-      <div className="bg-[#2C2C2C] rounded-xl border border-[#3a3a3a] overflow-hidden">
-        <button
-          onClick={() => toggleSection("feedback")}
-          className="w-full p-5 flex items-center justify-between hover:bg-[#3a3a3a]/30 transition-colors"
-        >
-          <div className="flex items-center gap-3">
-            <Award className="w-6 h-6 text-[#FFD700]" />
-            <h3 className="text-xl font-bold text-[#FFD700]">
-              {coachingFeedback.tier === "ELEMENTARY" ? "Your Coaching Tips" : "Coaching Feedback"}
-            </h3>
-            <span className={`px-2 py-0.5 rounded text-xs font-bold ${ageGroupColors.bg} ${ageGroupColors.text}`}>
-              {coachingFeedback.tone}
-            </span>
-          </div>
-          {expandedSections.includes("feedback") ? (
-            <ChevronUp className="w-5 h-5 text-[#888]" />
-          ) : (
-            <ChevronDown className="w-5 h-5 text-[#888]" />
-          )}
-        </button>
-        
-        {expandedSections.includes("feedback") && (
-          <div className="p-5 pt-0 space-y-6">
-            {/* Strengths */}
-            {coachingFeedback.strengths.length > 0 && (
-              <div>
-                <h4 className="text-green-400 font-bold mb-3 flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5" />
-                  {coachingFeedback.tier === "ELEMENTARY" ? "Great Job!" : "Strengths"}
-                </h4>
-                <div className="space-y-2">
-                  {coachingFeedback.strengths.map((item, index) => (
-                    <FeedbackCard key={index} item={item} type="strength" />
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {/* Areas for Improvement */}
-            {coachingFeedback.improvements.length > 0 && (
-              <div>
-                <h4 className="text-yellow-400 font-bold mb-3 flex items-center gap-2">
-                  <Target className="w-5 h-5" />
-                  {coachingFeedback.tier === "ELEMENTARY" ? "Let's Work On" : "Areas for Improvement"}
-                </h4>
-                <div className="space-y-2">
-                  {coachingFeedback.improvements.map((item, index) => (
-                    <FeedbackCard key={index} item={item} type="improvement" />
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {/* Peer Comparison (for older tiers) */}
-            {coachingFeedback.peerComparison && (
-              <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
-                <h4 className="text-purple-400 font-bold mb-2 flex items-center gap-2">
-                  <Users className="w-5 h-5" />
-                  Peer Comparison
-                </h4>
-                <p className="text-[#E5E5E5] text-sm whitespace-pre-line">{coachingFeedback.peerComparison}</p>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-      
-      {/* Recommended Drills */}
-      <div className="bg-[#2C2C2C] rounded-xl border border-[#3a3a3a] overflow-hidden">
-        <button
-          onClick={() => toggleSection("drills")}
-          className="w-full p-5 flex items-center justify-between hover:bg-[#3a3a3a]/30 transition-colors"
-        >
-          <div className="flex items-center gap-3">
-            <Dumbbell className="w-6 h-6 text-orange-400" />
-            <h3 className="text-xl font-bold text-orange-400">Recommended Drills</h3>
-          </div>
-          {expandedSections.includes("drills") ? (
-            <ChevronUp className="w-5 h-5 text-[#888]" />
-          ) : (
-            <ChevronDown className="w-5 h-5 text-[#888]" />
-          )}
-        </button>
-        
-        {expandedSections.includes("drills") && (
-          <div className="p-5 pt-0 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {coachingFeedback.drills.map((drill, index) => (
-              <DrillCard key={index} drill={drill} index={index + 1} />
-            ))}
-          </div>
-        )}
-      </div>
       
       {/* Personalized Recommendations Summary */}
       {personalizedRecommendations.length > 0 && (
@@ -457,26 +338,48 @@ function MatchedShooterCard({ match, rank }: { match: MatchedShooter; rank: numb
   const wingspanFt = Math.floor(shooter.wingspanInches / 12)
   const wingspanIn = shooter.wingspanInches % 12
   
-  const rankColors = [
-    "from-[#FFD700] to-[#FFA500]", // 1st - Gold
-    "from-[#C0C0C0] to-[#A0A0A0]", // 2nd - Silver
-    "from-[#CD7F32] to-[#B87333]", // 3rd - Bronze
-    "from-[#4a4a4a] to-[#3a3a3a]", // 4th
-    "from-[#4a4a4a] to-[#3a3a3a]", // 5th
-  ]
+  // Rank colors for faded numbers - matching the elite shooters section
+  const getRankColor = (r: number) => {
+    switch (r) {
+      case 1: return 'text-[#FFD700]' // Gold
+      case 2: return 'text-[#C0C0C0]' // Silver
+      case 3: return 'text-[#CD7F32]' // Bronze
+      case 4: return 'text-[#2E6DB4]' // Blue
+      case 5: return 'text-[#6B7280]' // Gray
+      default: return 'text-[#6B7280]'
+    }
+  }
   
   return (
-    <div className="bg-[#1a1a1a] rounded-xl p-4 border border-[#3a3a3a] hover:border-[#FFD700]/50 transition-colors">
-      <div className="flex items-start gap-4">
-        {/* Rank Badge */}
-        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${rankColors[rank - 1]} flex items-center justify-center flex-shrink-0`}>
-          <span className="text-white font-black text-lg">#{rank}</span>
+    <div className="bg-[#1a1a1a] rounded-xl p-4 border border-[#3a3a3a] hover:border-[#FFD700]/50 transition-colors relative overflow-hidden">
+      {/* Player Image Background - Right Side, Faded */}
+      {shooter.imageUrl && (
+        <div 
+          className="absolute right-0 top-0 bottom-0 w-40 md:w-52 pointer-events-none"
+          style={{
+            backgroundImage: `url(${shooter.imageUrl})`,
+            backgroundSize: 'contain',
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'right center',
+            opacity: 0.15,
+            maskImage: 'linear-gradient(to right, transparent 0%, black 30%)',
+            WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 30%)',
+          }}
+        />
+      )}
+      
+      <div className="flex items-start gap-4 relative z-10">
+        {/* Rank Number - Large Russo One Font, Faded */}
+        <div className="w-12 h-14 flex items-center justify-center flex-shrink-0">
+          <span className={`font-russo-one text-4xl font-bold opacity-50 ${getRankColor(rank)}`}>
+            {rank}
+          </span>
         </div>
         
         {/* Shooter Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h4 className="text-lg font-bold text-[#E5E5E5] truncate">{shooter.name}</h4>
+            <h4 className="text-lg font-bold text-[#E5E5E5] truncate uppercase">{shooter.name}</h4>
             <span className="px-2 py-0.5 rounded text-xs font-bold bg-[#FFD700]/20 text-[#FFD700]">
               {similarityScore.overall}% Match
             </span>

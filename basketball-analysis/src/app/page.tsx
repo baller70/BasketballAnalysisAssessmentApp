@@ -448,7 +448,7 @@ function HomeContent() {
         onRetry={handleRetry}
       />
       
-      <main className="min-h-[calc(100vh-200px)] py-8 px-4">
+      <main className="min-h-[calc(100vh-200px)] py-8 px-4 bg-[#050505]">
         <div className="container mx-auto max-w-4xl">
           {/* Main Card Container */}
           <div className="bg-[#2C2C2C] rounded-lg overflow-hidden shadow-lg">

@@ -4,16 +4,16 @@ import React, { useState, useEffect } from "react"
 import Link from "next/link"
 import { Trophy, Flame, Crown, Star, Zap, Target, Medal, TrendingUp, X, Calendar, Award, Users } from "lucide-react"
 
-// User level definitions
+// User level definitions - All names uppercase, gold/dark color scheme for header
 const USER_LEVELS = [
-  { level: 1, name: "Rookie Shooter", minXP: 0, maxXP: 500, icon: Target, color: "from-gray-500 to-gray-600" },
-  { level: 2, name: "Developing Player", minXP: 500, maxXP: 1000, icon: TrendingUp, color: "from-green-500 to-emerald-600" },
-  { level: 3, name: "Skilled Shooter", minXP: 1000, maxXP: 2000, icon: Star, color: "from-blue-500 to-cyan-600" },
-  { level: 4, name: "Sharp Shooter", minXP: 2000, maxXP: 3500, icon: Zap, color: "from-purple-500 to-violet-600" },
-  { level: 5, name: "Veteran", minXP: 3500, maxXP: 5000, icon: Medal, color: "from-yellow-500 to-amber-600" },
-  { level: 6, name: "Elite Shooter", minXP: 5000, maxXP: 7500, icon: Trophy, color: "from-orange-500 to-red-600" },
-  { level: 7, name: "All-Star", minXP: 7500, maxXP: 10000, icon: Crown, color: "from-pink-500 to-rose-600" },
-  { level: 8, name: "Legend", minXP: 10000, maxXP: Infinity, icon: Crown, color: "from-amber-400 to-yellow-500" },
+  { level: 1, name: "ROOKIE SHOOTER", minXP: 0, maxXP: 500, icon: Target, color: "from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a]" },
+  { level: 2, name: "DEVELOPING PLAYER", minXP: 500, maxXP: 1000, icon: TrendingUp, color: "from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a]" },
+  { level: 3, name: "SKILLED SHOOTER", minXP: 1000, maxXP: 2000, icon: Award, color: "from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a]" },
+  { level: 4, name: "SHARP SHOOTER", minXP: 2000, maxXP: 3500, icon: Zap, color: "from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a]" },
+  { level: 5, name: "VETERAN", minXP: 3500, maxXP: 5000, icon: Medal, color: "from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a]" },
+  { level: 6, name: "ELITE SHOOTER", minXP: 5000, maxXP: 7500, icon: Trophy, color: "from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a]" },
+  { level: 7, name: "ALL-STAR", minXP: 7500, maxXP: 10000, icon: Crown, color: "from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a]" },
+  { level: 8, name: "LEGEND", minXP: 10000, maxXP: Infinity, icon: Crown, color: "from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a]" },
 ]
 
 // Get user level based on XP
@@ -322,10 +322,10 @@ export function UserLevelCard() {
       { rank: 10, name: "PureButter", xp: 5900, level: "Veteran" },
     ],
     latestBadge: {
-      name: "Rising Star",
+      name: "RISING STAR",
       icon: TrendingUp,
-      color: "from-teal-500 to-green-600",
-      earnedDate: "Dec 20, 2024"
+      color: "from-[#FFD700] to-[#FFA500]",
+      earnedDate: "DEC 20, 2024"
     }
   })
 
@@ -362,28 +362,28 @@ export function UserLevelCard() {
   return (
     <>
       <div className="bg-[#2C2C2C] rounded-lg border border-[#3a3a3a] overflow-hidden shadow-lg w-64">
-        {/* Level Header */}
-        <div className={`bg-gradient-to-r ${currentLevel.color} p-4`}>
+        {/* Level Header - Gold/Dark theme */}
+        <div className={`bg-gradient-to-r ${currentLevel.color} p-4 border-b border-[#FFD700]/30`}>
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-              <LevelIcon className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 bg-[#FFD700]/20 rounded-lg flex items-center justify-center border border-[#FFD700]/40">
+              <LevelIcon className="w-6 h-6 text-[#FFD700]" />
             </div>
             <div>
-              <div className="text-white/80 text-xs uppercase tracking-wider">Level {currentLevel.level}</div>
-              <div className="text-white font-bold text-lg">{currentLevel.name}</div>
+              <div className="text-[#FFD700] text-xs uppercase tracking-wider font-semibold">LEVEL {currentLevel.level}</div>
+              <div className="text-[#FFD700] font-bold text-lg">{currentLevel.name}</div>
             </div>
           </div>
           
           {/* XP Progress Bar */}
           {nextLevel && (
             <div className="mt-3">
-              <div className="flex justify-between text-xs text-white/70 mb-1">
+              <div className="flex justify-between text-xs text-[#888] mb-1">
                 <span>{userStats.xp} XP</span>
                 <span>{nextLevel.minXP} XP</span>
               </div>
-              <div className="h-2 bg-black/30 rounded-full overflow-hidden">
+              <div className="h-2 bg-[#3a3a3a] rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-white/80 rounded-full transition-all duration-500"
+                  className="h-full bg-gradient-to-r from-[#FFD700] to-[#FFA500] rounded-full transition-all duration-500"
                   style={{ width: `${progressToNext}%` }}
                 />
               </div>
@@ -391,29 +391,29 @@ export function UserLevelCard() {
           )}
         </div>
 
-        {/* Level Perks Section */}
+        {/* Level Perks Section - All text uppercase */}
         <div className="p-4">
-          <div className="text-[#888] text-xs uppercase tracking-wider mb-3 font-semibold">Level Perks</div>
+          <div className="text-[#888] text-xs uppercase tracking-wider mb-3 font-semibold">LEVEL PERKS</div>
           
           {/* Latest Badge - Links to badges page */}
           <div className="mb-3">
             <div className="flex items-center gap-2 mb-1">
               <Star className="w-3 h-3 text-[#FFD700]" />
-              <span className="text-[#888] text-xs">Latest Badge</span>
+              <span className="text-[#888] text-xs uppercase tracking-wide">LATEST BADGE</span>
             </div>
             {userStats.latestBadge ? (
               <Link href="/badges" className="flex items-center gap-2 p-2 bg-[#1a1a1a] rounded-lg hover:bg-[#252525] transition-colors">
                 <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${userStats.latestBadge.color} flex items-center justify-center`}>
-                  <BadgeIcon className="w-4 h-4 text-white" />
+                  <BadgeIcon className="w-4 h-4 text-[#1a1a1a]" />
                 </div>
                 <div>
-                  <div className="text-[#E5E5E5] text-sm font-medium">{userStats.latestBadge.name}</div>
-                  <div className="text-[#666] text-xs">{userStats.latestBadge.earnedDate}</div>
+                  <div className="text-[#E5E5E5] text-sm font-medium uppercase">{userStats.latestBadge.name}</div>
+                  <div className="text-[#666] text-xs uppercase">{userStats.latestBadge.earnedDate}</div>
                 </div>
               </Link>
             ) : (
-              <div className="p-2 bg-[#1a1a1a] rounded-lg text-[#666] text-sm">
-                No badges earned yet
+              <div className="p-2 bg-[#1a1a1a] rounded-lg text-[#666] text-sm uppercase">
+                NO BADGES EARNED YET
               </div>
             )}
           </div>
@@ -422,7 +422,7 @@ export function UserLevelCard() {
           <div className="mb-3">
             <div className="flex items-center gap-2 mb-1">
               <Flame className="w-3 h-3 text-orange-500" />
-              <span className="text-[#888] text-xs">Daily Streak</span>
+              <span className="text-[#888] text-xs uppercase tracking-wide">DAILY STREAK</span>
             </div>
             <button 
               onClick={() => setShowStreakPopup(true)}
@@ -432,8 +432,8 @@ export function UserLevelCard() {
                 <Flame className="w-4 h-4 text-white" />
               </div>
               <div>
-                <div className="text-[#E5E5E5] text-sm font-bold">{userStats.dailyStreak} Days</div>
-                <div className="text-[#666] text-xs">Keep it going!</div>
+                <div className="text-[#E5E5E5] text-sm font-bold uppercase">{userStats.dailyStreak} DAYS</div>
+                <div className="text-[#666] text-xs uppercase">KEEP IT GOING!</div>
               </div>
             </button>
           </div>
@@ -441,19 +441,19 @@ export function UserLevelCard() {
           {/* Leaderboard - Opens popup */}
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <Crown className="w-3 h-3 text-purple-500" />
-              <span className="text-[#888] text-xs">Leaderboard</span>
+              <Crown className="w-3 h-3 text-[#FFD700]" />
+              <span className="text-[#888] text-xs uppercase tracking-wide">LEADERBOARD</span>
             </div>
             <button 
               onClick={() => setShowLeaderboardPopup(true)}
               className="w-full flex items-center gap-2 p-2 bg-[#1a1a1a] rounded-lg hover:bg-[#252525] transition-colors text-left"
             >
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center">
-                <Crown className="w-4 h-4 text-white" />
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FFD700] to-[#FFA500] flex items-center justify-center">
+                <Crown className="w-4 h-4 text-[#1a1a1a]" />
               </div>
               <div>
                 <div className="text-[#E5E5E5] text-sm font-bold">#{userStats.leaderboardRank}</div>
-                <div className="text-[#666] text-xs">of {userStats.totalUsers.toLocaleString()} users</div>
+                <div className="text-[#666] text-xs uppercase">OF {userStats.totalUsers.toLocaleString()} USERS</div>
               </div>
             </button>
           </div>

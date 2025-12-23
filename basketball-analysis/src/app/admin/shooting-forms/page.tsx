@@ -10,7 +10,6 @@ import {
   Crop, 
   Search, 
   ChevronLeft, 
-  ChevronRight,
   Trash2,
   Save,
   ImageIcon,
@@ -19,7 +18,6 @@ import {
   Clock,
   Filter,
   ZoomIn,
-  ZoomOut,
   RotateCcw,
   Download
 } from "lucide-react";
@@ -57,6 +55,7 @@ export default function ShootingFormsAdminPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showCropModal, setShowCropModal] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [bulkUploadMode, setBulkUploadMode] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<EliteShooter | null>(null);
   const [playerSearch, setPlayerSearch] = useState('');
