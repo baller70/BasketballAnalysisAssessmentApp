@@ -11,8 +11,8 @@
 
 import React, { useMemo, useState } from "react"
 import { 
-  Target, Award, AlertTriangle, CheckCircle, 
-  Lightbulb, ChevronDown, ChevronUp, Dumbbell, BarChart3,
+  Target, AlertTriangle, CheckCircle, 
+  Lightbulb, ChevronDown, ChevronUp,
   Users, Star, ArrowRight, Info, Trophy
 } from "lucide-react"
 import {
@@ -148,7 +148,7 @@ export function Phase6ComparisonPanel({
     )
   }
   
-  const { topMatches, optimalMechanics, mechanicComparisons, coachingFeedback, personalizedRecommendations } = comparisonResult
+  const { topMatches, optimalMechanics, coachingFeedback, personalizedRecommendations } = comparisonResult
   const ageGroupColors = AGE_GROUP_COLORS[coachingFeedback.tier]
   
   return (
@@ -457,6 +457,7 @@ function OptimalMetricCard({
   )
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function MechanicComparisonRow({ comparison }: { comparison: MechanicComparison }) {
   const statusColors = {
     GOOD: { bg: "bg-green-500/20", text: "text-green-400", border: "border-green-500/40" },
@@ -501,6 +502,7 @@ function MechanicComparisonRow({ comparison }: { comparison: MechanicComparison 
   )
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function FeedbackCard({ item, type }: { item: FeedbackItem; type: "strength" | "improvement" }) {
   const bgColor = type === "strength" ? "bg-green-500/10" : "bg-yellow-500/10"
   const borderColor = type === "strength" ? "border-green-500/30" : "border-yellow-500/30"
@@ -520,6 +522,7 @@ function FeedbackCard({ item, type }: { item: FeedbackItem; type: "strength" | "
   )
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function DrillCard({ drill, index }: { drill: DrillRecommendation; index: number }) {
   const difficultyColors = {
     EASY: "bg-green-500/20 text-green-400 border-green-500/30",

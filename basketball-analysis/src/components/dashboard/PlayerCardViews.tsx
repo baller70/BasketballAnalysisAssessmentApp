@@ -3,13 +3,7 @@
 import React from "react"
 import { 
   Trophy, 
-  Star, 
-  TrendingUp, 
-  Award, 
-  CheckCircle2,
-  Target,
-  Zap,
-  Medal
+  Star
 } from "lucide-react"
 import Image from "next/image"
 import type { DashboardView } from "../DashboardViewSelector"
@@ -96,7 +90,8 @@ const getKidRating = (score: number) => {
 // For Middle School / High School Players
 // Same structure as Professional, but 4 key stats with grades
 // ============================================
-export function StandardPlayerCard({ analysisData, archetype, playerName, poseConfidence }: Omit<PlayerCardProps, 'dashboardView'>) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function StandardPlayerCard({ analysisData, archetype, playerName: _playerName, poseConfidence: _poseConfidence }: Omit<PlayerCardProps, 'dashboardView'>) {
   // 4 key stats for Standard view
   const keyStats = [
     { label: 'FORM', value: analysisData.shootingStats.form },
@@ -246,7 +241,8 @@ export function StandardPlayerCard({ analysisData, archetype, playerName, poseCo
 // For Young Kids (7-10 years old)
 // Same structure, but stars and simple labels
 // ============================================
-export function BasicPlayerCard({ analysisData, archetype, playerName }: Omit<PlayerCardProps, 'dashboardView' | 'poseConfidence'>) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function BasicPlayerCard({ analysisData, archetype, playerName: _playerName }: Omit<PlayerCardProps, 'dashboardView' | 'poseConfidence'>) {
   // 3 simple stats for Basic view with kid-friendly names
   const simpleStats = [
     { label: 'ARMS', value: Math.round((analysisData.shootingStats.form + analysisData.shootingStats.elbow) / 2) },

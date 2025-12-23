@@ -12,7 +12,8 @@ import {
   Zap,
   Crown,
   Share2,
-  Lock
+  Lock,
+  Check
 } from "lucide-react"
 import {
   getUserProgress,

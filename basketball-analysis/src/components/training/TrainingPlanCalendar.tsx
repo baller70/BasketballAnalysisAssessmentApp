@@ -3624,7 +3624,7 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                       {/* Coach Says - The main message */}
                       <div className="bg-[#1a1a1a] rounded-xl p-4 border-l-4 border-[#FFD700]">
                         <p className="text-[#E5E5E5] text-sm italic">
-                          "{selectedVideoForAnalysis.coachAnalysis.coachSays}"
+                          &quot;{selectedVideoForAnalysis.coachAnalysis.coachSays}&quot;
                         </p>
                       </div>
                       
@@ -3649,7 +3649,7 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                         <div className="mt-3 flex items-center gap-2">
                           <span className="text-[#FFD700] text-xs font-bold">CUE:</span>
                           <span className="bg-[#FFD700]/20 text-[#FFD700] px-2 py-1 rounded text-xs font-bold">
-                            "{selectedVideoForAnalysis.coachAnalysis.priorityFocus.cue}"
+                            &quot;{selectedVideoForAnalysis.coachAnalysis.priorityFocus.cue}&quot;
                           </span>
                         </div>
                       </div>
@@ -3697,7 +3697,7 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                                     )}
                                     {evaluation.cue && (
                                       <span className="inline-block mt-1 bg-[#FFD700]/10 text-[#FFD700] px-2 py-0.5 rounded text-[10px] font-bold">
-                                        CUE: "{evaluation.cue}"
+                                        CUE: &quot;{evaluation.cue}&quot;
                                       </span>
                                     )}
                                   </div>

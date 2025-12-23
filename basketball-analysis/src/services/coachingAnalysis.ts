@@ -33,7 +33,7 @@ export interface CoachAnalysis {
     issue: string
     why: string
     howToFix: string
-    drillToHelp: string
+    drillToHelp?: string
     cue: string
   }
   
@@ -314,14 +314,31 @@ BE A COACH. Sound like a real basketball coach, not a robot.`
 // PROCESS VISION AI RESPONSE
 // ============================================
 
+interface RawVisionResponse {
+  overallGrade?: 'A' | 'B' | 'C' | 'D' | 'F'
+  coachingPointEvaluations?: CoachingPointEvaluation[]
+  priorityFocus?: {
+    issue: string
+    why: string
+    howToFix: string
+    cue: string
+  }
+  reinforcement?: Array<{
+    point: string
+    whyItMatters: string
+  }>
+  coachSays?: string
+}
+
 export function processCoachingResponse(
-  rawResponse: any,
+  rawResponse: RawVisionResponse,
   drillId: string,
   drillName: string,
   coachingPoints: string[],
   focusArea: string
 ): CoachAnalysis {
-  const gradeInfo = GRADE_DESCRIPTIONS[rawResponse.overallGrade] || GRADE_DESCRIPTIONS['C']
+  const grade = rawResponse.overallGrade || 'C'
+  const gradeInfo = GRADE_DESCRIPTIONS[grade] || GRADE_DESCRIPTIONS['C']
   const progression = DRILL_PROGRESSIONS[drillId]
   
   // Determine next steps based on grade
