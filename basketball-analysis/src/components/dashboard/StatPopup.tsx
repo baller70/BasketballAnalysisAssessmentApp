@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useRef } from 'react'
-import { X, TrendingUp, MapPin, Users, Trophy, ChevronRight, Info } from 'lucide-react'
+import { X, TrendingUp, MapPin, Users, ChevronRight, Info } from 'lucide-react'
 
 // ============================================
 // STAT DEFINITIONS & EXPLANATIONS
@@ -282,7 +282,8 @@ export function StatPopup({
   playerState = "CA",
   isOpen, 
   onClose,
-  anchorPosition 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  anchorPosition: _anchorPosition 
 }: StatPopupProps) {
   const popupRef = useRef<HTMLDivElement>(null)
   const stat = statDefinitions[statKey]

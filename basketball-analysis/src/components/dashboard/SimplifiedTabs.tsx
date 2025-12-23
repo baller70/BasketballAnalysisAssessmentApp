@@ -5,7 +5,6 @@ import {
   Target, 
   CheckCircle2, 
   TrendingUp,
-  Dumbbell,
   Clock,
   Trophy,
   Star,
@@ -14,11 +13,7 @@ import {
   Award,
   Zap,
   ChevronRight,
-  BarChart3,
-  Activity,
-  ArrowUpRight,
-  ArrowDownRight,
-  Minus
+  Activity
 } from 'lucide-react'
 import type { DashboardView } from '@/components/DashboardViewSelector'
 
@@ -447,7 +442,7 @@ export function StandardTrainingPlan({ analysisData }: { analysisData: Simplifie
           <Zap className="w-6 h-6 text-green-400" />
           <div>
             <p className="text-white font-semibold">Consistency is key!</p>
-            <p className="text-[#888] text-sm">Practice 3 days a week and you'll see improvement in 2-3 weeks.</p>
+            <p className="text-[#888] text-sm">Practice 3 days a week and you&apos;ll see improvement in 2-3 weeks.</p>
           </div>
         </div>
       </div>
@@ -555,7 +550,7 @@ export function BasicPlayerAssessment({ analysisData, playerName }: { analysisDa
       <div className="bg-[#2a2a2a] rounded-lg p-4 border border-green-500/30">
         <div className="flex items-center gap-2 mb-4">
           <CheckCircle2 className="w-5 h-5 text-green-400" />
-          <h3 className="text-green-400 font-bold">What You're Good At!</h3>
+          <h3 className="text-green-400 font-bold">What You&apos;re Good At!</h3>
         </div>
         <div className="flex flex-wrap gap-2">
           {analysisData.shootingStats.form >= 70 && (
@@ -581,7 +576,7 @@ export function BasicPlayerAssessment({ analysisData, playerName }: { analysisDa
             <p className="text-white font-bold">Fun Fact!</p>
             <p className="text-[#888] text-sm">
               {score >= 80 
-                ? "You're shooting like an NBA player! Keep it up!" 
+                ? "You&apos;re shooting like an NBA player! Keep it up!" 
                 : score >= 65 
                   ? "You're getting better every day! Amazing progress!" 
                   : "Every great player started just like you! Keep practicing!"}
@@ -597,7 +592,8 @@ export function BasicPlayerAssessment({ analysisData, playerName }: { analysisDa
 // BASIC VIEW - TRAINING PLAN
 // ============================================
 
-export function BasicTrainingPlan({ analysisData, playerName }: { analysisData: SimplifiedTabsProps['analysisData'], playerName: string }) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function BasicTrainingPlan({ analysisData: _analysisData, playerName }: { analysisData: SimplifiedTabsProps['analysisData'], playerName: string }) {
   const drills = [
     { num: 1, name: 'Close Shots', desc: 'Stand close to the basket', count: '10 shots', color: '#3b82f6' },
     { num: 2, name: 'Free Throws', desc: 'From the free throw line', count: '10 shots', color: '#eab308' },
@@ -661,7 +657,7 @@ export function BasicTrainingPlan({ analysisData, playerName }: { analysisData: 
       {/* Encouragement */}
       <div className="bg-gradient-to-r from-[#FFD700]/10 to-[#FFD700]/5 rounded-lg p-5 border border-[#FFD700]/20 text-center">
         <Star className="w-10 h-10 text-[#FFD700] mx-auto mb-2" />
-        <p className="text-[#FFD700] font-bold text-lg">You've got this, {playerName.split(' ')[0]}!</p>
+        <p className="text-[#FFD700] font-bold text-lg">You&apos;ve got this, {playerName.split(' ')[0]}!</p>
         <p className="text-[#888] text-sm">Practice makes perfect!</p>
       </div>
     </div>

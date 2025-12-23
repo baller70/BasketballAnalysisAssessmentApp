@@ -38,7 +38,6 @@ export {
   getAllSessions,
   getSessionById,
   getLatestSessionByMediaType,
-  getSessionsByMediaType,
   deleteSession,
   createSessionFromAnalysis,
   generateAnalytics,
