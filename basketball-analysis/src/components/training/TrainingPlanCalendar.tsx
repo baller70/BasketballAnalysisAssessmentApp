@@ -5,14 +5,14 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { 
   Calendar, ChevronLeft, ChevronRight, Play, Pause, Square, 
-  Check, Clock, Flame, Target, Dumbbell, Trophy, CircleDot, 
+  Check, CheckCircle, Clock, Flame, Target, Dumbbell, Trophy, CircleDot, 
   ChevronDown, ChevronUp, Info, Video, Upload, Camera, 
   Volume2, VolumeX, Settings, X, AlertTriangle, Zap, 
   RotateCcw, SkipForward, Timer, Award, TrendingUp, Star,
   Lightbulb, BookOpen, GraduationCap, School, Users, Medal,
   Bell, BellRing, GripVertical, Trash2, Plus, Sparkles,
   Edit3, CalendarDays, Layers, ArrowUp, Circle, Footprints, Eye,
-  Send, Brain, Save, Scissors
+  Send, Brain, Save, Scissors, RefreshCw
 } from "lucide-react"
 import { HYBRID_API_URL } from "@/lib/constants"
 import { useProfileStore, type CoachingTier } from "@/stores/profileStore"
@@ -31,9 +31,24 @@ interface Exercise {
   duration: number // in seconds
   reps?: string
   tips: string[]
+  steps?: string[] // Step-by-step instructions
+  keyPoints?: string[] // Key points for doing the drill correctly
   videoUrl?: string
   focusArea: 'elbow' | 'knee' | 'balance' | 'release' | 'follow-through' | 'power' | 'general'
   ageLevel: AgeLevel[] // Which age levels this exercise is appropriate for
+}
+
+// Per-drill media capture
+interface DrillMedia {
+  drillId: string
+  drillName: string
+  mediaType: 'video' | 'image' | 'none'
+  mediaBlob?: Blob
+  mediaUrl?: string
+  thumbnailUrl?: string
+  coachFeedback?: CoachAnalysisResult
+  analyzed: boolean
+  analyzedAt?: Date
 }
 
 interface Workout {
@@ -1377,9 +1392,19 @@ function generateWorkout(
     !priorityExercises.includes(e)
   )
   
+  // Fisher-Yates shuffle for truly random ordering
+  const fisherYatesShuffle = <T,>(array: T[]): T[] => {
+    const shuffled = [...array]
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+    }
+    return shuffled
+  }
+  
   // Shuffle and combine, prioritizing focus area exercises
-  const shuffledPriority = priorityExercises.sort(() => Math.random() - 0.5)
-  const shuffledGeneral = generalExercises.sort(() => Math.random() - 0.5)
+  const shuffledPriority = fisherYatesShuffle(priorityExercises)
+  const shuffledGeneral = fisherYatesShuffle(generalExercises)
   const allShuffled = [...shuffledPriority, ...shuffledGeneral]
   
   // Select exactly drillCount exercises (the main drills)
@@ -2215,6 +2240,120 @@ function DrillExplanationPopup({ drill, onClose }: DrillExplanationPopupProps) {
   
   const colors = focusAreaColors[drill.focusArea] || focusAreaColors.general
   
+  // Generate step-by-step instructions if not provided
+  const getSteps = (): string[] => {
+    if (drill.steps && drill.steps.length > 0) return drill.steps
+    
+    // Default step generation based on drill type
+    const defaultSteps: Record<string, string[]> = {
+      'fingertip-control': [
+        'Pick up the basketball with just your fingertips - NO palm contact',
+        'Spread your fingers wide across the ball surface',
+        'Check that you can see daylight between your palm and the ball',
+        'Hold this position for 10 seconds while keeping the ball stable',
+        'Put the ball down and immediately pick it up the same way',
+        'Repeat this hold-and-release pattern for 5 minutes total'
+      ],
+      'form-shooting': [
+        'Stand 3-5 feet from the basket in your shooting stance',
+        'Hold the ball in your shooting hand with fingertips only',
+        'Place your guide hand on the side of the ball (not pushing)',
+        'Bend your knees slightly and keep your elbow under the ball',
+        'Push up through your legs as you extend your shooting arm',
+        'Flick your wrist and hold your follow-through until the ball hits the rim',
+        'Repeat, focusing on the same motion every single time'
+      ],
+      'one-hand-form': [
+        'Stand close to the basket (3-5 feet away)',
+        'Hold the ball in your shooting hand only - no guide hand',
+        'Position the ball on your fingertips with your elbow under it',
+        'Bend your knees and align your shooting foot with the basket',
+        'Push up and release, focusing on a high arc',
+        'Hold your follow-through with fingers pointing at the rim',
+        'Repeat until you make 10 shots in a row with good form'
+      ],
+      'elbow-alignment': [
+        'Stand in front of a mirror or have a partner watch you',
+        'Get into your shooting stance with the ball',
+        'Check that your elbow points directly at the basket',
+        'Your elbow should be under the ball, not flared out',
+        'Practice raising the ball to your set point while keeping elbow aligned',
+        'Release the ball and check if your elbow stayed straight',
+        'Repeat 20 times, making adjustments each rep'
+      ],
+      'balance-shot': [
+        'Stand on one foot (your non-dominant foot)',
+        'Hold the ball in shooting position',
+        'Take a shot while maintaining your single-leg balance',
+        'Hold your finish position for 2 seconds without putting your foot down',
+        'Switch to the other foot and repeat',
+        'Do 10 shots on each foot',
+        'Progress to shooting off a hop while landing on one foot'
+      ]
+    }
+    
+    // Return default steps if available, otherwise generate generic steps
+    if (defaultSteps[drill.id]) return defaultSteps[drill.id]
+    
+    // Generic steps based on description
+    return [
+      'Get into your proper shooting stance with feet shoulder-width apart',
+      'Hold the ball correctly with your shooting hand under and guide hand on the side',
+      drill.description.split('.')[0] + '.',
+      'Focus on your form throughout the entire movement',
+      'Complete the full motion and hold your follow-through',
+      `Repeat for ${drill.reps || 'the allotted time'}`
+    ]
+  }
+  
+  // Get key points for doing the drill correctly
+  const getKeyPoints = (): string[] => {
+    if (drill.keyPoints && drill.keyPoints.length > 0) return drill.keyPoints
+    
+    const focusKeyPoints: Record<string, string[]> = {
+      elbow: [
+        'Elbow stays directly under the ball',
+        'Elbow points at the basket throughout the shot',
+        'No chicken wing - keep elbow tucked in'
+      ],
+      release: [
+        'Ball releases off fingertips, not palm',
+        'Wrist snaps forward at release',
+        'Ball should have backspin'
+      ],
+      'follow-through': [
+        'Arm fully extends toward the basket',
+        'Fingers point down into the rim (gooseneck)',
+        'Hold follow-through until ball hits rim'
+      ],
+      balance: [
+        'Weight evenly distributed on both feet',
+        'Knees bent and ready to push up',
+        'Body stays centered throughout shot'
+      ],
+      power: [
+        'Power comes from legs, not arms',
+        'Knees bend before every shot',
+        'Smooth upward motion from legs to release'
+      ],
+      knee: [
+        'Knees bend at 30-45 degrees',
+        'Push up through legs as you shoot',
+        'Land softly in the same spot'
+      ],
+      general: [
+        'Consistent form on every rep',
+        'Focus on quality over speed',
+        'Stay relaxed and breathe'
+      ]
+    }
+    
+    return focusKeyPoints[drill.focusArea] || focusKeyPoints.general
+  }
+  
+  const steps = getSteps()
+  const keyPoints = getKeyPoints()
+  
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
       <div className="bg-[#1a1a1a] rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-[#3a3a3a] shadow-2xl">
@@ -2244,63 +2383,103 @@ function DrillExplanationPopup({ drill, onClose }: DrillExplanationPopupProps) {
           </div>
         </div>
         
-        {/* What You Will Do Section */}
-        <div className="p-6 border-b border-[#3a3a3a]">
-          <h3 className="text-[#FFD700] font-bold mb-3 flex items-center gap-2 uppercase">
-            <Lightbulb className="w-5 h-5" />
-            WHAT YOU WILL DO
-          </h3>
-          <p className="text-[#E5E5E5] text-base leading-relaxed">
-            {drill.description}
-          </p>
+        {/* Focus Area Section */}
+        <div className="p-5 border-b border-[#3a3a3a] bg-[#2a2a2a]/50">
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-lg ${colors.bg} border ${colors.border} flex items-center justify-center`}>
+              <Target className={`w-5 h-5 ${colors.text}`} />
+            </div>
+            <div>
+              <p className="text-[#888] text-xs uppercase tracking-wider">FOCUS</p>
+              <p className={`${colors.text} font-bold uppercase`}>{drill.focusArea.replace('-', ' ')}</p>
+            </div>
+          </div>
         </div>
         
-        {/* How Many Section */}
+        {/* How Many / Reps Section */}
         {drill.reps && (
-          <div className="p-6 border-b border-[#3a3a3a]">
-            <h3 className="text-[#FFD700] font-bold mb-3 flex items-center gap-2 uppercase">
-              <RotateCcw className="w-5 h-5" />
-              HOW MANY
-            </h3>
-            <div className="bg-[#2a2a2a] rounded-xl p-4 border border-[#3a3a3a]">
-              <p className="text-[#E5E5E5] text-lg font-bold">{drill.reps}</p>
+          <div className="p-5 border-b border-[#3a3a3a]">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-[#FFD700]/20 border border-[#FFD700]/30 flex items-center justify-center">
+                <RotateCcw className="w-5 h-5 text-[#FFD700]" />
+              </div>
+              <div>
+                <p className="text-[#888] text-xs uppercase tracking-wider">REPS / DURATION</p>
+                <p className="text-[#E5E5E5] font-bold">{drill.reps}</p>
+              </div>
             </div>
           </div>
         )}
         
-        {/* Tips Section */}
+        {/* Step-by-Step Instructions */}
+        <div className="p-6 border-b border-[#3a3a3a]">
+          <h3 className="text-[#FFD700] font-bold mb-4 flex items-center gap-3 uppercase text-lg">
+            <img 
+              src="/icons/coach-feedback.png" 
+              alt="Coach" 
+              className="w-14 h-14"
+              style={{ filter: 'invert(1) brightness(2)' }}
+            />
+            COACH&apos;S INSTRUCTIONS
+          </h3>
+          <div className="space-y-4">
+            {steps.map((step, i) => (
+              <div key={i} className="flex items-start gap-4">
+                {/* Number badge styled like matched shooters - large Russo One font */}
+                <div className="relative flex-shrink-0 w-12 h-12 flex items-center justify-center">
+                  <span 
+                    className="font-russo-one text-3xl font-bold text-[#FFD700]"
+                    style={{ 
+                      fontFamily: 'var(--font-russo-one), Russo One, sans-serif',
+                      textShadow: '0 0 20px rgba(255, 215, 0, 0.3)'
+                    }}
+                  >
+                    {i + 1}
+                  </span>
+                  {i < steps.length - 1 && (
+                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0.5 h-3 bg-gradient-to-b from-[#FFD700]/30 to-transparent" />
+                  )}
+                </div>
+                <div className="flex-1 pt-2 border-l-2 border-[#FFD700]/20 pl-4">
+                  <p className="text-[#E5E5E5] leading-relaxed">{step}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        {/* Key Points - What Makes It Right */}
+        <div className="p-6 border-b border-[#3a3a3a]">
+          <h3 className="text-[#FFD700] font-bold mb-4 flex items-center gap-2 uppercase">
+            <CheckCircle className="w-5 h-5" />
+            KEY POINTS - DO IT RIGHT
+          </h3>
+          <div className="space-y-3">
+            {keyPoints.map((point, i) => (
+              <div key={i} className="flex items-center gap-3 bg-[#2a2a2a] rounded-lg p-3 border border-[#3a3a3a]">
+                <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                  <Check className="w-4 h-4 text-green-400" />
+                </div>
+                <span className="text-[#E5E5E5] text-sm">{point}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        {/* Original Tips Section - renamed to Pro Tips */}
         <div className="p-6 border-b border-[#3a3a3a]">
           <h3 className="text-[#FFD700] font-bold mb-4 flex items-center gap-2 uppercase">
             <Star className="w-5 h-5" />
-            TIPS TO DO IT RIGHT
+            PRO TIPS
           </h3>
           <ul className="space-y-3">
             {drill.tips.map((tip, i) => (
               <li key={i} className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-[#FFD700]/20 text-[#FFD700] flex items-center justify-center text-sm font-bold flex-shrink-0 mt-0.5">
-                  {i + 1}
-                </div>
-                <span className="text-[#E5E5E5]">{tip}</span>
+                <div className="w-2 h-2 rounded-full bg-[#FFD700] flex-shrink-0 mt-2" />
+                <span className="text-[#888] text-sm">{tip}</span>
               </li>
             ))}
           </ul>
-        </div>
-        
-        {/* Why This Matters Section */}
-        <div className="p-6 border-b border-[#3a3a3a]">
-          <h3 className="text-[#FFD700] font-bold mb-3 flex items-center gap-2 uppercase">
-            <Info className="w-5 h-5" />
-            WHY THIS MATTERS
-          </h3>
-          <p className="text-[#888] text-sm leading-relaxed">
-            {drill.focusArea === 'elbow' && "Your elbow is like the steering wheel of your shot. If it points the wrong way, your shot will go the wrong way too. This drill helps you keep your elbow pointing straight at the basket."}
-            {drill.focusArea === 'release' && "How you hold and release the ball decides if it goes in or not. This drill teaches your hands to do the right thing every single time without thinking about it."}
-            {drill.focusArea === 'follow-through' && "Your follow-through is like the finish line of your shot. A good follow-through means the ball got the right spin and direction. This drill makes your finish perfect."}
-            {drill.focusArea === 'balance' && "If you're off balance, your shot will be off too. This drill helps you stay strong and steady so every shot has the same power and aim."}
-            {drill.focusArea === 'power' && "Power comes from your legs, not your arms. This drill teaches you to use your whole body to make shooting feel easy and smooth."}
-            {drill.focusArea === 'knee' && "Your knees give you the power and rhythm for your shot. Bending them the right way makes shooting feel natural and gives you more range."}
-            {drill.focusArea === 'general' && "This drill builds the basic skills that make everything else work better. Master this and all your other skills will improve too."}
-          </p>
         </div>
         
         {/* Close Button */}
@@ -2309,7 +2488,7 @@ function DrillExplanationPopup({ drill, onClose }: DrillExplanationPopupProps) {
             onClick={onClose}
             className="w-full py-4 rounded-xl bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-[#1a1a1a] font-bold text-lg hover:brightness-110 transition-all uppercase"
           >
-            GOT IT!
+            GOT IT - LET&apos;S GO!
           </button>
         </div>
       </div>
@@ -2403,7 +2582,27 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
   const [recordedChunks, setRecordedChunks] = useState<Blob[]>([])
   const [showExerciseDetail, setShowExerciseDetail] = useState<string | null>(null)
   
-  // Video upload state
+  // Per-drill media capture state
+  const [drillMediaMap, setDrillMediaMap] = useState<Record<string, {
+    type: 'video' | 'image' | 'none' | null
+    blob?: Blob
+    url?: string
+    hasCoachFeedback?: boolean
+    coachFeedback?: CoachAnalysisResult
+    analysisType?: 'quick' | 'deep'
+  }>>({})
+  const [drillMediaExpanded, setDrillMediaExpanded] = useState<string | null>(null) // Which drill's dropdown is open
+  const [selectedDrillForExplanation, setSelectedDrillForExplanation] = useState<Exercise | null>(null) // Drill to show explanation popup for
+  const [showWorkoutSummary, setShowWorkoutSummary] = useState(false) // Show workout completion summary with analysis
+  const [expandedSummaryDrill, setExpandedSummaryDrill] = useState<string | null>(null) // Which drill is expanded in summary
+  const [showDrillMediaCapture, setShowDrillMediaCapture] = useState(false)
+  const [currentDrillForMedia, setCurrentDrillForMedia] = useState<Exercise | null>(null)
+  const [capturedMediaBlob, setCapturedMediaBlob] = useState<Blob | null>(null)
+  const [capturedMediaType, setCapturedMediaType] = useState<'video' | 'image' | null>(null)
+  const [isCapturingMedia, setIsCapturingMedia] = useState(false)
+  const [showDrillFeedback, setShowDrillFeedback] = useState<string | null>(null) // drill ID to show feedback for
+  
+  // Video upload state (legacy - keeping for compatibility)
   const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string | null>(null)
   const [uploadedVideoBlob, setUploadedVideoBlob] = useState<Blob | null>(null)
   const [drillSubmissions, setDrillSubmissions] = useState<DrillVideoSubmission[]>([])
@@ -2459,14 +2658,10 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
               return 0
             }
             
-            // Move to next exercise
-            if (preferences.workoutMode === 'step-by-step') {
-              setShowNextExercisePopup(true)
-              setIsRunning(false)
-            } else {
-              setCurrentExerciseIndex(i => i + 1)
-              return workout.exercises[currentExerciseIndex + 1]?.duration || 0
-            }
+            // Move to next exercise - show media capture popup
+            setCurrentDrillForMedia(currentExercise)
+            setShowDrillMediaCapture(true)
+            setIsRunning(false)
             
             return 0
           }
@@ -3039,11 +3234,31 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
     clearUploadedVideo()
   }
   
-  // Skip current exercise
+  // Skip current exercise (without marking as complete)
   const skipExercise = () => {
     if (currentExerciseIndex < workout.exercises.length - 1) {
       setCurrentExerciseIndex(i => i + 1)
       setExerciseTimeLeft(workout.exercises[currentExerciseIndex + 1]?.duration || 0)
+    }
+  }
+  
+  // Manually complete current exercise
+  const completeExercise = () => {
+    const currentExercise = workout.exercises[currentExerciseIndex]
+    if (currentExercise && !completedExercises.includes(currentExercise.id)) {
+      setCompletedExercises(prev => [...prev, currentExercise.id])
+      playCompletionSound()
+    }
+    
+    // Move to next exercise if not the last one
+    if (currentExerciseIndex < workout.exercises.length - 1) {
+      setCurrentExerciseIndex(i => i + 1)
+      setExerciseTimeLeft(workout.exercises[currentExerciseIndex + 1]?.duration || 0)
+      setIsRunning(false)
+      setIsPaused(false)
+    } else {
+      // All exercises done
+      setIsRunning(false)
     }
   }
   
@@ -3054,9 +3269,206 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
   
-  // Handle workout completion
-  const handleComplete = () => {
+  // Analysis progress state
+  const [analysisProgress, setAnalysisProgress] = useState<{
+    current: number
+    total: number
+    drillName: string
+    status: 'extracting' | 'analyzing' | 'complete' | 'error'
+  } | null>(null)
+  
+  // Handle workout completion - AUTO-ANALYZE all drills with Vision AI ONE BY ONE
+  const handleComplete = async () => {
     stopRecording()
+    setShowWorkoutSummary(true) // Show summary immediately
+    setIsAnalyzing(true)
+    
+    // Get all drills that have media but NO feedback yet
+    const drillsToAnalyze: { drillKey: string; exercise: Exercise; mediaState: any; index: number }[] = []
+    
+    workout.exercises.forEach((exercise, index) => {
+      const drillKey = `workout-${exercise.id}-${index}`
+      const mediaState = drillMediaMap[drillKey]
+      
+      // Has media but no feedback yet
+      if (mediaState && mediaState.type && mediaState.type !== 'none' && !mediaState.hasCoachFeedback) {
+        drillsToAnalyze.push({ drillKey, exercise, mediaState, index })
+      }
+    })
+    
+    // Process ONE BY ONE with progress updates
+    for (let i = 0; i < drillsToAnalyze.length; i++) {
+      const { drillKey, exercise, mediaState } = drillsToAnalyze[i]
+      
+      // Update progress - extracting frame
+      setAnalysisProgress({
+        current: i + 1,
+        total: drillsToAnalyze.length,
+        drillName: exercise.name,
+        status: 'extracting'
+      })
+      
+      try {
+        let frameBase64: string
+        
+        if (mediaState.type === 'video' && mediaState.blob) {
+          // Extract frame from video
+          const video = document.createElement('video')
+          video.src = mediaState.url || URL.createObjectURL(mediaState.blob)
+          video.muted = true
+          video.playsInline = true
+          
+          await new Promise<void>((resolve, reject) => {
+            const timeout = setTimeout(() => reject(new Error('Video load timeout')), 5000)
+            video.onloadeddata = () => { clearTimeout(timeout); resolve() }
+            video.onerror = () => { clearTimeout(timeout); reject(new Error('Video load error')) }
+            video.load()
+          })
+          
+          video.currentTime = Math.min(0.5, video.duration / 2)
+          await new Promise(resolve => setTimeout(resolve, 300))
+          
+          const canvas = document.createElement('canvas')
+          canvas.width = video.videoWidth || 640
+          canvas.height = video.videoHeight || 480
+          const ctx = canvas.getContext('2d')
+          ctx?.drawImage(video, 0, 0, canvas.width, canvas.height)
+          frameBase64 = canvas.toDataURL('image/jpeg', 0.8)
+        } else if (mediaState.blob) {
+          // Convert image to base64
+          frameBase64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader()
+            reader.onload = () => resolve(reader.result as string)
+            reader.onerror = () => reject(new Error('File read error'))
+            reader.readAsDataURL(mediaState.blob)
+          })
+        } else {
+          continue // Skip if no blob
+        }
+        
+        // Update progress - analyzing with Vision AI
+        setAnalysisProgress({
+          current: i + 1,
+          total: drillsToAnalyze.length,
+          drillName: exercise.name,
+          status: 'analyzing'
+        })
+        
+        // Call Vision AI with timeout
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
+        
+        const response = await fetch('/api/vision-analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            image: frameBase64,
+            drillId: exercise.id,
+            drillName: exercise.name,
+            drillDescription: exercise.description,
+            coachingPoints: exercise.tips,
+            focusArea: exercise.focusArea
+          }),
+          signal: controller.signal
+        })
+        
+        clearTimeout(timeoutId)
+        
+        if (response.ok) {
+          const result = await response.json()
+          
+          // API returns { success, analysis } - extract the analysis
+          const analysis = result.analysis || result
+          
+          // Update this drill's feedback immediately
+          setDrillMediaMap(prev => ({
+            ...prev,
+            [drillKey]: {
+              ...prev[drillKey],
+              hasCoachFeedback: true,
+              coachFeedback: analysis,
+              analysisType: 'quick'
+            }
+          }))
+          
+          // Update progress - complete
+          setAnalysisProgress({
+            current: i + 1,
+            total: drillsToAnalyze.length,
+            drillName: exercise.name,
+            status: 'complete'
+          })
+        } else {
+          console.error(`Vision AI error for ${exercise.name}:`, response.status, await response.text())
+          setAnalysisProgress({
+            current: i + 1,
+            total: drillsToAnalyze.length,
+            drillName: exercise.name,
+            status: 'error'
+          })
+        }
+      } catch (err) {
+        console.error(`Analysis failed for ${exercise.name}:`, err)
+        setAnalysisProgress({
+          current: i + 1,
+          total: drillsToAnalyze.length,
+          drillName: exercise.name,
+          status: 'error'
+        })
+      }
+      
+      // Small delay between drills for UX
+      if (i < drillsToAnalyze.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 500))
+      }
+    }
+    
+    setIsAnalyzing(false)
+    setAnalysisProgress(null)
+  }
+  
+  // Actually finish and close the workout - SAVE ALL FEEDBACK TO DATABASE
+  const finishWorkout = async () => {
+    // Save all drill feedback to database
+    const savePromises: Promise<any>[] = []
+    
+    workout.exercises.forEach((exercise, index) => {
+      const drillKey = `workout-${exercise.id}-${index}`
+      const mediaState = drillMediaMap[drillKey]
+      
+      // Only save if we have feedback
+      if (mediaState?.hasCoachFeedback && mediaState?.coachFeedback) {
+        const savePromise = fetch('/api/drill-feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            drillId: exercise.id,
+            drillName: exercise.name,
+            focusArea: exercise.focusArea,
+            mediaType: mediaState.type,
+            mediaUrl: mediaState.url || null,
+            thumbnailUrl: null, // Could extract frame later
+            workoutId: workout.id || `workout-${Date.now()}`,
+            workoutName: workout.name,
+            workoutDate: new Date().toISOString(),
+            analysisType: mediaState.analysisType || 'quick',
+            coachAnalysis: mediaState.coachFeedback
+          })
+        }).catch(err => {
+          console.error(`Failed to save feedback for ${exercise.name}:`, err)
+        })
+        
+        savePromises.push(savePromise)
+      }
+    })
+    
+    // Wait for all saves to complete (don't block UI though)
+    if (savePromises.length > 0) {
+      Promise.all(savePromises).then(() => {
+        console.log(`Saved ${savePromises.length} drill feedback entries to database`)
+      })
+    }
+    
     const videoBlob = recordedChunks.length > 0 
       ? new Blob(recordedChunks, { type: 'video/webm' })
       : undefined
@@ -3157,12 +3569,28 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                   </button>
                 )}
                 <button
+                  onClick={completeExercise}
+                  className="w-12 h-12 rounded-full bg-[#FFD700] text-[#1a1a1a] flex items-center justify-center hover:brightness-110 transition-colors"
+                  title="Complete drill"
+                >
+                  <Check className="w-6 h-6" />
+                </button>
+                <button
                   onClick={skipExercise}
                   className="w-12 h-12 rounded-full bg-[#2a2a2a] text-[#888] flex items-center justify-center hover:bg-[#3a3a3a] transition-colors"
                   title="Skip exercise"
                 >
                   <SkipForward className="w-6 h-6" />
                 </button>
+              </div>
+              
+              {/* Button Labels */}
+              <div className="flex items-center justify-center gap-4 mt-2">
+                <span className="text-[#888] text-xs w-16 text-center">
+                  {!isRunning ? 'START' : (isPaused ? 'RESUME' : 'PAUSE')}
+                </span>
+                <span className="text-[#FFD700] text-xs w-12 text-center font-bold">DONE</span>
+                <span className="text-[#888] text-xs w-12 text-center">SKIP</span>
               </div>
               
               {/* Exercise Tips */}
@@ -3191,694 +3619,457 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
             </div>
           </div>
           
-          {/* Video Recording / Exercise List */}
+          {/* Exercise List with Per-Drill Media Options */}
           <div className="space-y-4">
-            {/* Video Recording / Upload Section */}
+            {/* Exercise List - Each drill has its own media options */}
             <div className="bg-[#1a1a1a] rounded-2xl p-4 border border-[#3a3a3a]">
               <h4 className="text-[#FFD700] font-bold mb-3 flex items-center gap-2">
-                <Camera className="w-4 h-4" />
-                Capture Your Form
+                <Dumbbell className="w-4 h-4" />
+                WORKOUT DRILLS
               </h4>
               
-              {/* Success Message */}
-              {showSubmitSuccess && (
-                <div className="mb-3 p-3 rounded-xl bg-green-500/20 border border-green-500/50 flex items-center gap-2">
-                  <Check className="w-5 h-5 text-green-400" />
-                  <span className="text-green-400 font-medium">Video saved! Select it below to analyze.</span>
-                </div>
-              )}
-              
-              {/* Error Message */}
-              {analysisError && (
-                <div className="mb-3 p-3 rounded-xl bg-red-500/20 border border-red-500/50 flex items-center gap-2">
-                  <X className="w-5 h-5 text-red-400" />
-                  <span className="text-red-400 text-sm">{analysisError}</span>
-                  <button onClick={() => setAnalysisError(null)} className="ml-auto text-red-400 hover:text-red-300">
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
-              
-              {isRecording ? (
-                // Live Recording View
-                <div className="relative">
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    muted
-                    playsInline
-                    className="w-full aspect-video rounded-xl bg-black"
-                  />
-                  <div className="absolute top-2 right-2 flex items-center gap-2 bg-red-500 text-white px-3 py-1 rounded-full text-sm">
-                    <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                    Recording
-                  </div>
-                  <button
-                    onClick={stopRecording}
-                    className="absolute bottom-2 right-2 bg-red-500 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-red-600"
-                  >
-                    Stop Recording
-                  </button>
-                </div>
-              ) : uploadedVideoUrl ? (
-                // Video Preview with SAVE button (not submit)
-                <div className="space-y-3">
-                  <div className="relative">
-                    <video
-                      ref={previewVideoRef}
-                      src={uploadedVideoUrl}
-                      controls
-                      className="w-full aspect-video rounded-xl bg-black"
-                    />
-                    <button
-                      onClick={clearUploadedVideo}
-                      className="absolute top-2 right-2 p-2 rounded-full bg-black/70 text-white hover:bg-red-500 transition-colors"
-                      title="Remove video"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                  
-                  {/* Action Buttons - Two Analysis Options */}
-                  <div className="space-y-3">
-                    {/* COACH ANALYSIS - Vision AI with coaching point evaluation */}
-                    <button
-                      onClick={async () => {
-                        if (!uploadedVideoBlob || !currentExercise) return
-                        
-                        setIsAnalyzing(true)
-                        setAnalysisError(null)
-                        
-                        try {
-                          // Extract a frame from the video for Vision AI analysis
-                          const videoUrl = uploadedVideoUrl || URL.createObjectURL(uploadedVideoBlob)
-                          const video = document.createElement('video')
-                          video.src = videoUrl
-                          video.crossOrigin = 'anonymous'
-                          video.muted = true
-                          
-                          // Wait for video to load with timeout
-                          await Promise.race([
-                            new Promise<void>((resolve, reject) => {
-                              video.onloadeddata = () => resolve()
-                              video.onerror = () => reject(new Error('Failed to load video'))
-                            }),
-                            new Promise<void>((_, reject) => 
-                              setTimeout(() => reject(new Error('Video load timeout')), 5000)
-                            )
-                          ])
-                          
-                          // Seek to middle of video
-                          video.currentTime = video.duration / 2
-                          
-                          await Promise.race([
-                            new Promise<void>((resolve) => {
-                              video.onseeked = () => resolve()
-                            }),
-                            new Promise<void>((resolve) => 
-                              setTimeout(() => resolve(), 2000)
-                            )
-                          ])
-                          
-                          // Capture frame to canvas
-                          const canvas = document.createElement('canvas')
-                          canvas.width = video.videoWidth || 640
-                          canvas.height = video.videoHeight || 480
-                          const ctx = canvas.getContext('2d')
-                          ctx?.drawImage(video, 0, 0, canvas.width, canvas.height)
-                          
-                          // Convert to base64
-                          const frameBase64 = canvas.toDataURL('image/jpeg', 0.85)
-                          
-                          // Call Coach-Centric Vision AI API with coaching points (tips)
-                          const response = await fetch('/api/vision-analyze', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                              image: frameBase64,
-                              drillId: currentExercise.id,
-                              drillName: currentExercise.name,
-                              drillDescription: currentExercise.description,
-                              coachingPoints: currentExercise.tips, // THE KEY - coaching points from the drill
-                              focusArea: currentExercise.focusArea,
-                            }),
-                          })
-                          
-                          if (!response.ok) {
-                            throw new Error('Vision API failed')
-                          }
-                          
-                          const result = await response.json()
-                          const coachAnalysis = result.analysis as CoachAnalysisResult
-                          
-                          // Create submission with Coach Analysis results
-                          const submission: DrillVideoSubmission = {
-                            drillId: currentExercise.id,
-                            drillName: currentExercise.name,
-                            focusArea: currentExercise.focusArea,
-                            videoBlob: uploadedVideoBlob,
-                            videoUrl: uploadedVideoUrl || undefined,
-                            videoDuration: videoDuration || undefined,
-                            timestamp: new Date(),
-                            analyzed: true,
-                            savedToDatabase: false,
-                            coachAnalysis: coachAnalysis,
-                            // Also populate legacy format for backward compatibility
-                            analysisResult: {
-                              formScore: coachAnalysis.overallGrade === 'A' ? 95 : 
-                                        coachAnalysis.overallGrade === 'B' ? 85 :
-                                        coachAnalysis.overallGrade === 'C' ? 75 :
-                                        coachAnalysis.overallGrade === 'D' ? 65 : 50,
-                              feedback: [coachAnalysis.coachSays],
-                              improvements: [coachAnalysis.priorityFocus.howToFix],
-                              positives: coachAnalysis.reinforcement.map(r => r.point),
-                              coachingTips: [coachAnalysis.priorityFocus.cue],
-                              detailedFeedback: coachAnalysis.gradeDescription,
-                              drillSpecific: false,
-                              analysisType: 'quick'
-                            }
-                          }
-                          
-                          setDrillSubmissions(prev => [...prev, submission])
-                          setSelectedVideoForAnalysis(submission)
-                          clearUploadedVideo()
-                          setShowSubmitSuccess(true)
-                          setTimeout(() => setShowSubmitSuccess(false), 3000)
-                          
-                        } catch (error) {
-                          console.error('Vision analysis error:', error)
-                          setAnalysisError('Analysis failed. Please try again.')
-                        } finally {
-                          setIsAnalyzing(false)
-                        }
-                      }}
-                      disabled={isSavingToDatabase || isAnalyzing}
-                      className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 transition-all ${
-                        isSavingToDatabase || isAnalyzing
-                          ? 'bg-[#3a3a3a] text-[#888] cursor-not-allowed'
-                          : 'bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-[#1a1a1a] hover:brightness-110'
-                      }`}
-                    >
-                      {isAnalyzing ? (
-                        <>
-                          <div className="w-5 h-5 border-2 border-[#1a1a1a] border-t-transparent rounded-full animate-spin" />
-                          COACH IS REVIEWING...
-                        </>
-                      ) : (
-                        <>
-                          <Eye className="w-5 h-5" />
-                          GET COACH FEEDBACK
-                        </>
-                      )}
-                    </button>
-                    
-                    {/* DEEP ANALYSIS - Hybrid System */}
-                    <button
-                      onClick={async () => {
-                        if (!uploadedVideoBlob || !currentExercise) return
-                        
-                        setIsAnalyzing(true)
-                        setAnalysisError(null)
-                        
-                        try {
-                          // Get the hybrid API URL
-                          const hybridApiUrl = process.env.NEXT_PUBLIC_HYBRID_API_URL || 'http://localhost:5001'
-                          
-                          // Get drill-specific analysis criteria
-                          const drillCriteria = getDrillCriteria(currentExercise.id)
-                          const analysisPrompt = generateDrillAnalysisPrompt(currentExercise.id, currentExercise.name)
-                          
-                          // Create form data for upload
-                          const formData = new FormData()
-                          formData.append('video', uploadedVideoBlob, 'drill_video.webm')
-                          formData.append('drill_id', currentExercise.id)
-                          formData.append('drill_name', currentExercise.name)
-                          formData.append('focus_area', currentExercise.focusArea || 'general')
-                          
-                          // Include drill-specific context for AI analysis
-                          if (drillCriteria) {
-                            formData.append('drill_context', JSON.stringify({
-                              correctFormCriteria: drillCriteria.correctFormCriteria,
-                              commonMistakes: drillCriteria.commonMistakes,
-                              keyBodyParts: drillCriteria.keyBodyParts,
-                              scoringWeights: drillCriteria.scoringWeights,
-                              analysisPrompt: analysisPrompt
-                            }))
-                          }
-                          
-                          // Include drill description and tips
-                          formData.append('drill_description', currentExercise.description)
-                          formData.append('drill_tips', JSON.stringify(currentExercise.tips))
-                          
-                          // Send to hybrid system for deep analysis
-                          const response = await fetch(`${hybridApiUrl}/analyze-drill-video`, {
-                            method: 'POST',
-                            body: formData,
-                          })
-                          
-                          if (!response.ok) {
-                            const errorData = await response.json().catch(() => ({}))
-                            throw new Error(errorData.detail || errorData.message || `Deep analysis failed (${response.status})`)
-                          }
-                          
-                          const analysisResult = await response.json()
-                          
-                          // Format the analysis result
-                          const formattedResult = formatAnalysisResult(
-                            currentExercise.id,
-                            currentExercise.name,
-                            analysisResult
-                          )
-                          
-                          // Save to database
-                          let dbId: string | undefined
-                          try {
-                            const reader = new FileReader()
-                            const videoBase64 = await new Promise<string>((resolve, reject) => {
-                              reader.onload = () => resolve((reader.result as string).split(',')[1])
-                              reader.onerror = reject
-                              reader.readAsDataURL(uploadedVideoBlob)
-                            })
-                            
-                            const saveResponse = await fetch('/api/drill-videos', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({
-                                drillId: currentExercise.id,
-                                drillName: currentExercise.name,
-                                focusArea: currentExercise.focusArea,
-                                videoBase64,
-                                videoDuration: videoDuration || undefined,
-                              }),
-                            })
-                            
-                            if (saveResponse.ok) {
-                              const saveData = await saveResponse.json()
-                              dbId = saveData.drillVideo?.id
-                              
-                              // Update with analysis results
-                              if (dbId) {
-                                await fetch(`/api/drill-videos/${dbId}`, {
-                                  method: 'PATCH',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({
-                                    analyzed: true,
-                                    formScore: formattedResult.formScore,
-                                    feedback: formattedResult.positives,
-                                    improvements: formattedResult.improvements,
-                                    positives: formattedResult.positives,
-                                    coachingTips: formattedResult.coachingTips,
-                                    detailedFeedback: formattedResult.detailedFeedback,
-                                    drillSpecific: !!drillCriteria,
-                                  }),
-                                })
-                              }
-                            }
-                          } catch (dbError) {
-                            console.error('Database save error:', dbError)
-                          }
-                          
-                          // Create submission with results
-                          const submission: DrillVideoSubmission = {
-                            id: dbId,
-                            drillId: currentExercise.id,
-                            drillName: currentExercise.name,
-                            focusArea: currentExercise.focusArea,
-                            videoBlob: uploadedVideoBlob,
-                            videoUrl: uploadedVideoUrl || undefined,
-                            videoDuration: videoDuration || undefined,
-                            timestamp: new Date(),
-                            analyzed: true,
-                            savedToDatabase: !!dbId,
-                            analysisResult: {
-                              formScore: formattedResult.formScore,
-                              feedback: formattedResult.positives,
-                              improvements: formattedResult.improvements,
-                              positives: formattedResult.positives,
-                              coachingTips: formattedResult.coachingTips,
-                              detailedFeedback: formattedResult.detailedFeedback,
-                              drillSpecific: !!drillCriteria,
-                            }
-                          }
-                          
-                          setDrillSubmissions(prev => [...prev, submission])
-                          setSelectedVideoForAnalysis(submission)
-                          clearUploadedVideo()
-                          setShowSubmitSuccess(true)
-                          setTimeout(() => setShowSubmitSuccess(false), 3000)
-                          
-                        } catch (error) {
-                          console.error('Error in deep analysis:', error)
-                          setAnalysisError(
-                            error instanceof Error 
-                              ? error.message 
-                              : 'Deep analysis failed. Make sure the hybrid system is running.'
-                          )
-                        } finally {
-                          setIsAnalyzing(false)
-                        }
-                      }}
-                      disabled={isSavingToDatabase || isAnalyzing}
-                      className={`w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all bg-[#2a2a2a] border border-blue-500/50 text-blue-400 hover:bg-blue-500/10 hover:border-blue-400`}
-                    >
-                      <Brain className="w-4 h-4" />
-                      DEEP ANALYSIS
-                      <span className="text-[10px] bg-blue-500/20 px-1.5 py-0.5 rounded">HYBRID</span>
-                    </button>
-                    
-                    {/* SAVE FOR LATER - Tertiary Action */}
-                    <button
-                      onClick={saveVideoLocally}
-                      disabled={isSavingToDatabase}
-                      className="w-full py-2 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all text-[#666] hover:text-[#888]"
-                    >
-                      <Save className="w-3 h-3" />
-                      SAVE FOR LATER
-                    </button>
-                  </div>
-                  
-                  <p className="text-[#666] text-xs text-center">
-                    <span className="text-[#FFD700]">Analysis</span> = Quick vision review • <span className="text-blue-400">Deep Analysis</span> = Full biomechanical breakdown
-                  </p>
-                </div>
-              ) : (
-                // Record/Upload Options
-                <div className="space-y-3">
-                  {/* Record Option */}
-                  <button
-                    onClick={startRecording}
-                    className="w-full py-4 rounded-xl bg-[#2a2a2a] border border-[#3a3a3a] text-[#E5E5E5] hover:text-white hover:border-[#FFD700] transition-all flex items-center justify-center gap-3"
-                  >
-                    <Video className="w-5 h-5 text-red-400" />
-                    <span className="font-bold">RECORD WITH CAMERA</span>
-                  </button>
-                  
-                  {/* Upload Option */}
-                  <label className="w-full py-4 rounded-xl bg-[#2a2a2a] border border-[#3a3a3a] text-[#E5E5E5] hover:text-white hover:border-[#FFD700] transition-all flex items-center justify-center gap-3 cursor-pointer">
-                    <Upload className="w-5 h-5 text-blue-400" />
-                    <span className="font-bold">UPLOAD VIDEO FILE</span>
-                    <input 
-                      ref={fileInputRef}
-                      type="file" 
-                      accept="video/*" 
-                      className="hidden"
-                      onChange={handleVideoUpload}
-                    />
-                  </label>
-                  
-                  <p className="text-[#666] text-xs text-center">
-                    Record or upload your form for AI analysis and feedback
-                  </p>
-                </div>
-              )}
-              
-              {/* Show Coach Analysis results */}
-              {selectedVideoForAnalysis && selectedVideoForAnalysis.analyzed && (selectedVideoForAnalysis.coachAnalysis || selectedVideoForAnalysis.analysisResult) && (
-                <div className="mt-4 bg-[#2a2a2a] rounded-xl p-4 space-y-4">
-                  {/* New Coach-Centric Analysis Display */}
-                  {selectedVideoForAnalysis.coachAnalysis ? (
-                    <>
-                      {/* Coach Header with Grade */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-full bg-[#1a1a1a] border-2 border-[#FFD700] flex items-center justify-center">
-                            <Brain className="w-6 h-6 text-[#FFD700]" />
-                          </div>
-                          <div>
-                            <h6 className="text-[#FFD700] font-bold text-sm uppercase">COACH FEEDBACK</h6>
-                            <p className="text-[#888] text-xs">{selectedVideoForAnalysis.drillName}</p>
-                          </div>
-                        </div>
-                        {/* Grade Badge */}
-                        <div className={`text-3xl font-black px-4 py-2 rounded-xl ${
-                          selectedVideoForAnalysis.coachAnalysis.overallGrade === 'A' ? 'bg-green-500/20 text-green-400' :
-                          selectedVideoForAnalysis.coachAnalysis.overallGrade === 'B' ? 'bg-blue-500/20 text-blue-400' :
-                          selectedVideoForAnalysis.coachAnalysis.overallGrade === 'C' ? 'bg-yellow-500/20 text-yellow-400' :
-                          selectedVideoForAnalysis.coachAnalysis.overallGrade === 'D' ? 'bg-orange-500/20 text-orange-400' :
-                          'bg-red-500/20 text-red-400'
-                        }`}>
-                          {selectedVideoForAnalysis.coachAnalysis.overallGrade}
-                        </div>
-                      </div>
-                      
-                      {/* Coach Says - The main message */}
-                      <div className="bg-[#1a1a1a] rounded-xl p-4 border-l-4 border-[#FFD700]">
-                        <p className="text-[#E5E5E5] text-sm italic">
-                          &quot;{selectedVideoForAnalysis.coachAnalysis.coachSays}&quot;
-                        </p>
-                      </div>
-                      
-                      {/* Priority Focus - THE ONE THING */}
-                      <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
-                        <h6 className="text-red-400 font-bold text-xs uppercase mb-2 flex items-center gap-2">
-                          <AlertTriangle className="w-4 h-4" />
-                          FIX THIS FIRST
-                        </h6>
-                        <p className="text-white font-bold text-sm mb-2">
-                          {selectedVideoForAnalysis.coachAnalysis.priorityFocus.issue}
-                        </p>
-                        <p className="text-[#888] text-xs mb-3">
-                          <span className="text-red-400">Why it matters:</span> {selectedVideoForAnalysis.coachAnalysis.priorityFocus.why}
-                        </p>
-                        <div className="bg-[#1a1a1a] rounded-lg p-3">
-                          <p className="text-[#E5E5E5] text-xs">
-                            <span className="text-[#FFD700] font-bold">How to fix:</span> {selectedVideoForAnalysis.coachAnalysis.priorityFocus.howToFix}
-                          </p>
-                        </div>
-                        {/* Quick Cue */}
-                        <div className="mt-3 flex items-center gap-2">
-                          <span className="text-[#FFD700] text-xs font-bold">CUE:</span>
-                          <span className="bg-[#FFD700]/20 text-[#FFD700] px-2 py-1 rounded text-xs font-bold">
-                            &quot;{selectedVideoForAnalysis.coachAnalysis.priorityFocus.cue}&quot;
-                          </span>
-                        </div>
-                      </div>
-                      
-                      {/* Coaching Points Evaluation */}
-                      {selectedVideoForAnalysis.coachAnalysis.coachingPointEvaluations && 
-                       selectedVideoForAnalysis.coachAnalysis.coachingPointEvaluations.length > 0 && (
-                        <div>
-                          <h6 className="text-[#888] font-bold text-xs uppercase mb-3 flex items-center gap-2">
-                            <Target className="w-4 h-4" />
-                            COACHING POINT BREAKDOWN
-                          </h6>
-                          <div className="space-y-2">
-                            {selectedVideoForAnalysis.coachAnalysis.coachingPointEvaluations.map((evaluation, i) => (
-                              <div 
-                                key={i} 
-                                className={`p-3 rounded-lg border ${
-                                  evaluation.status === 'executing' 
-                                    ? 'bg-green-500/10 border-green-500/30' 
-                                    : evaluation.status === 'needs_work'
-                                      ? 'bg-yellow-500/10 border-yellow-500/30'
-                                      : 'bg-[#1a1a1a] border-[#3a3a3a]'
-                                }`}
-                              >
-                                <div className="flex items-start gap-2">
-                                  <span className={`mt-0.5 ${
-                                    evaluation.status === 'executing' ? 'text-green-400' :
-                                    evaluation.status === 'needs_work' ? 'text-yellow-400' :
-                                    'text-[#666]'
-                                  }`}>
-                                    {evaluation.status === 'executing' ? '✓' : 
-                                     evaluation.status === 'needs_work' ? '→' : '○'}
-                                  </span>
-                                  <div className="flex-1">
-                                    <p className="text-[#E5E5E5] text-xs font-medium">
-                                      {evaluation.coachingPoint}
-                                    </p>
-                                    <p className="text-[#888] text-xs mt-1">
-                                      {evaluation.coachObservation}
-                                    </p>
-                                    {evaluation.correction && (
-                                      <p className="text-yellow-400 text-xs mt-1">
-                                        → {evaluation.correction}
-                                      </p>
-                                    )}
-                                    {evaluation.cue && (
-                                      <span className="inline-block mt-1 bg-[#FFD700]/10 text-[#FFD700] px-2 py-0.5 rounded text-[10px] font-bold">
-                                        CUE: &quot;{evaluation.cue}&quot;
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {/* What's Working - Reinforcement */}
-                      {selectedVideoForAnalysis.coachAnalysis.reinforcement && 
-                       selectedVideoForAnalysis.coachAnalysis.reinforcement.length > 0 && (
-                        <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4">
-                          <h6 className="text-green-400 font-bold text-xs uppercase mb-2 flex items-center gap-2">
-                            <Check className="w-4 h-4" />
-                            KEEP DOING THIS
-                          </h6>
-                          <div className="space-y-2">
-                            {selectedVideoForAnalysis.coachAnalysis.reinforcement.map((r, i) => (
-                              <div key={i}>
-                                <p className="text-white text-sm font-medium">{r.point}</p>
-                                <p className="text-[#888] text-xs">{r.whyItMatters}</p>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {/* Next Steps */}
-                      <div className="bg-[#1a1a1a] rounded-xl p-4">
-                        <h6 className="text-[#FFD700] font-bold text-xs uppercase mb-3 flex items-center gap-2">
-                          <TrendingUp className="w-4 h-4" />
-                          NEXT STEPS
-                        </h6>
-                        <div className="space-y-3">
-                          <div>
-                            <span className="text-[#888] text-xs uppercase">Right Now:</span>
-                            <p className="text-[#E5E5E5] text-sm">{selectedVideoForAnalysis.coachAnalysis.nextSteps.immediate}</p>
-                          </div>
-                          <div>
-                            <span className="text-[#888] text-xs uppercase">This Week:</span>
-                            <p className="text-[#E5E5E5] text-sm">{selectedVideoForAnalysis.coachAnalysis.nextSteps.thisWeek}</p>
-                          </div>
-                          <div>
-                            <span className="text-[#888] text-xs uppercase">Progression:</span>
-                            <p className="text-[#E5E5E5] text-sm">{selectedVideoForAnalysis.coachAnalysis.nextSteps.progression}</p>
-                          </div>
-                        </div>
-                      </div>
-                    </>
-                  ) : selectedVideoForAnalysis.analysisResult && (
-                    /* Legacy Analysis Display (for backward compatibility) */
-                    <>
-                      {/* AI Coach Header */}
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-[#1a1a1a] border-2 border-[#FFD700] flex items-center justify-center">
-                          <Brain className="w-6 h-6 text-[#FFD700]" />
-                        </div>
-                        <div>
-                          <h6 className="text-[#FFD700] font-bold text-sm uppercase">COACH ANALYSIS</h6>
-                          <p className="text-[#888] text-xs">{selectedVideoForAnalysis.drillName}</p>
-                        </div>
-                      </div>
-                      
-                      {/* Form Score */}
-                      <div className="flex items-center gap-4 p-3 bg-[#1a1a1a] rounded-xl">
-                        <div className={`text-3xl font-black ${
-                          selectedVideoForAnalysis.analysisResult.formScore >= 80 
-                            ? 'text-green-400' 
-                            : selectedVideoForAnalysis.analysisResult.formScore >= 60
-                              ? 'text-yellow-400'
-                              : 'text-red-400'
-                        }`}>
-                          {selectedVideoForAnalysis.analysisResult.formScore}%
-                        </div>
-                        <div>
-                          <span className="text-white font-bold block">Form Score</span>
-                          <span className="text-[#888] text-xs">
-                            {selectedVideoForAnalysis.analysisResult.formScore >= 80 
-                              ? 'Excellent technique!' 
-                              : selectedVideoForAnalysis.analysisResult.formScore >= 60
-                                ? 'Good progress, keep practicing'
-                                : 'Focus on the fundamentals'}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      {/* What You Did Well */}
-                      {selectedVideoForAnalysis.analysisResult.positives && selectedVideoForAnalysis.analysisResult.positives.length > 0 && (
-                        <div>
-                          <h6 className="text-green-400 font-bold text-xs uppercase mb-2 flex items-center gap-2">
-                            <Check className="w-3 h-3" />
-                            WHAT YOU DID WELL
-                          </h6>
-                          <div className="space-y-1">
-                            {selectedVideoForAnalysis.analysisResult.positives.map((pos, i) => (
-                              <p key={i} className="text-[#E5E5E5] text-xs flex items-start gap-2">
-                                <span className="text-green-400 mt-0.5">✓</span>
-                                {pos}
-                              </p>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {/* Areas for Improvement */}
-                      {selectedVideoForAnalysis.analysisResult.improvements && selectedVideoForAnalysis.analysisResult.improvements.length > 0 && (
-                        <div>
-                          <h6 className="text-yellow-400 font-bold text-xs uppercase mb-2 flex items-center gap-2">
-                            <Target className="w-3 h-3" />
-                            AREAS FOR IMPROVEMENT
-                          </h6>
-                          <div className="space-y-1">
-                            {selectedVideoForAnalysis.analysisResult.improvements.map((imp, i) => (
-                              <p key={i} className="text-[#E5E5E5] text-xs flex items-start gap-2">
-                                <span className="text-yellow-400 mt-0.5">→</span>
-                                {imp}
-                              </p>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {/* Coaching Tips */}
-                      {selectedVideoForAnalysis.analysisResult.coachingTips && selectedVideoForAnalysis.analysisResult.coachingTips.length > 0 && (
-                        <div>
-                          <h6 className="text-blue-400 font-bold text-xs uppercase mb-2 flex items-center gap-2">
-                            <Lightbulb className="w-3 h-3" />
-                            COACHING TIPS
-                          </h6>
-                          <div className="space-y-1">
-                            {selectedVideoForAnalysis.analysisResult.coachingTips.map((tip, i) => (
-                              <p key={i} className="text-[#E5E5E5] text-xs flex items-start gap-2">
-                                <span className="text-blue-400 mt-0.5">💡</span>
-                                {tip}
-                              </p>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-            
-            {/* Exercise List */}
-            <div className="bg-[#1a1a1a] rounded-2xl p-4 border border-[#3a3a3a]">
-              <h4 className="text-[#888] font-bold mb-3 text-sm uppercase tracking-wider">Workout Queue</h4>
-              <div className="space-y-2 max-h-64 overflow-y-auto">
+              {/* Per-Drill Exercise List with Media Options */}
+              <div className="space-y-3 max-h-[60vh] overflow-y-auto">
                 {workout.exercises.map((exercise, i) => {
                   const isCompleted = completedExercises.includes(exercise.id)
                   const isCurrent = i === currentExerciseIndex
+                  const drillKey = `workout-${exercise.id}-${i}`
+                  const isExpanded = drillMediaExpanded === drillKey
+                  const mediaState = drillMediaMap[drillKey]
+                  const hasMedia = mediaState?.type && mediaState.type !== 'none'
+                  const hasFeedback = mediaState?.hasCoachFeedback
                   
                   return (
-                    <div
-                      key={`${exercise.id}-${i}`}
-                      className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
-                        isCurrent 
-                          ? 'bg-[#FFD700]/20 border border-[#FFD700]/50' 
-                          : isCompleted 
-                            ? 'bg-green-500/10 border border-green-500/30'
-                            : 'bg-[#2a2a2a] border border-transparent'
-                      }`}
-                    >
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        isCompleted 
-                          ? 'bg-green-500 text-white' 
-                          : isCurrent 
-                            ? 'bg-[#FFD700] text-[#1a1a1a]' 
-                            : 'bg-[#3a3a3a] text-[#888]'
-                      }`}>
-                        {isCompleted ? <Check className="w-4 h-4" /> : i + 1}
+                    <div key={drillKey} className="bg-[#2a2a2a] rounded-xl border border-[#3a3a3a] overflow-hidden">
+                      {/* Drill Header Row */}
+                      <div 
+                        className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-[#3a3a3a]/50 transition-colors ${
+                          isCurrent ? 'bg-[#FFD700]/10 border-l-4 border-l-[#FFD700]' : ''
+                        }`}
+                        onClick={() => setSelectedDrillForExplanation(exercise)}
+                      >
+                        {/* Number/Check Badge */}
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          isCompleted ? 'bg-green-500 text-white' : 
+                          isCurrent ? 'bg-[#FFD700] text-[#1a1a1a]' : 
+                          'bg-[#3a3a3a] text-[#888]'
+                        }`}>
+                          {isCompleted ? <Check className="w-4 h-4" /> : i + 1}
+                        </div>
+                        
+                        {/* Drill Name & Info */}
+                        <div className="flex-1 min-w-0">
+                          <p className={`font-bold text-sm truncate uppercase ${isCurrent ? 'text-[#FFD700]' : 'text-[#E5E5E5]'}`}>
+                            {exercise.name}
+                          </p>
+                          <div className="flex items-center gap-2 text-xs text-[#888]">
+                            <span>{formatTime(exercise.duration)}</span>
+                            {exercise.reps && <span>• {exercise.reps}</span>}
+                          </div>
+                        </div>
+                        
+                        {/* Media Status Indicator */}
+                        {hasMedia && (
+                          <span className="px-2 py-1 rounded text-xs bg-blue-500/20 text-blue-400">
+                            {mediaState?.type === 'video' ? '📹' : '📷'}
+                          </span>
+                        )}
+                        {mediaState?.type === 'none' && (
+                          <span className="px-2 py-1 rounded text-xs bg-[#3a3a3a] text-[#666]">SKIPPED</span>
+                        )}
+                        
+                        {/* Coach Feedback Badge */}
+                        {hasFeedback && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setShowDrillFeedback(drillKey)
+                            }}
+                            className="flex items-center gap-1 px-2 py-1 rounded bg-[#FFD700]/20"
+                          >
+                            <img 
+                              src="/icons/coach-feedback.png" 
+                              alt="Coach" 
+                              className="w-4 h-4"
+                              style={{ filter: 'invert(1) brightness(2)' }}
+                            />
+                            <span className="text-[#FFD700] text-xs font-bold">
+                              {mediaState?.coachFeedback?.overallGrade}
+                            </span>
+                          </button>
+                        )}
+                        
+                        {/* Media Options Dropdown Toggle */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setDrillMediaExpanded(isExpanded ? null : drillKey)
+                          }}
+                          className={`p-2 rounded-lg transition-colors ${
+                            isExpanded ? 'bg-[#FFD700] text-[#1a1a1a]' : 'bg-[#3a3a3a] text-[#888] hover:text-white'
+                          }`}
+                        >
+                          {isExpanded ? <ChevronUp className="w-4 h-4" /> : <Camera className="w-4 h-4" />}
+                        </button>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`font-medium truncate uppercase ${isCurrent ? 'text-[#FFD700]' : 'text-[#E5E5E5]'}`}>
-                          {exercise.name.toUpperCase()}
-                        </p>
-                        <p className="text-[#888] text-xs">{formatTime(exercise.duration)}</p>
-                      </div>
+                      
+                      {/* Expanded Media Options */}
+                      {isExpanded && (
+                        <div className="p-3 pt-0 border-t border-[#3a3a3a] bg-[#1a1a1a]">
+                          <p className="text-[#888] text-xs mb-3 uppercase">CAPTURE YOUR FORM FOR THIS DRILL:</p>
+                          <div className="grid grid-cols-3 gap-2">
+                            {/* Record with Camera */}
+                            <button
+                              onClick={() => {
+                                alert('Camera recording coming soon! For now, please upload a video file.')
+                                // TODO: Implement camera recording for specific drill
+                              }}
+                              className="flex flex-col items-center gap-2 p-3 rounded-lg bg-[#2a2a2a] border border-[#3a3a3a] hover:border-red-500/50 hover:bg-red-500/10 transition-colors"
+                            >
+                              <Video className="w-5 h-5 text-red-400" />
+                              <span className="text-[10px] text-[#888] uppercase">Record</span>
+                            </button>
+                            
+                            {/* Upload Video/Image - AUTO-ANALYZES with Vision AI */}
+                            <label className="flex flex-col items-center gap-2 p-3 rounded-lg bg-[#2a2a2a] border border-[#3a3a3a] hover:border-blue-500/50 hover:bg-blue-500/10 transition-colors cursor-pointer">
+                              <Upload className="w-5 h-5 text-blue-400" />
+                              <span className="text-[10px] text-[#888] uppercase">Upload</span>
+                              <input 
+                                type="file" 
+                                accept="video/*,image/*" 
+                                className="hidden"
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0]
+                                  if (file) {
+                                    const isVideo = file.type.startsWith('video/')
+                                    const url = URL.createObjectURL(file)
+                                    
+                                    // Save media first
+                                    setDrillMediaMap(prev => ({
+                                      ...prev,
+                                      [drillKey]: {
+                                        type: isVideo ? 'video' : 'image',
+                                        blob: file,
+                                        url: url,
+                                        hasCoachFeedback: false
+                                      }
+                                    }))
+                                    setDrillMediaExpanded(null)
+                                    
+                                    // AUTO-ANALYZE with Vision AI
+                                    setIsAnalyzing(true)
+                                    try {
+                                      let frameBase64: string
+                                      
+                                      if (isVideo) {
+                                        // Extract frame from video
+                                        const video = document.createElement('video')
+                                        video.src = url
+                                        await new Promise(resolve => { video.onloadeddata = resolve; video.load() })
+                                        video.currentTime = 0.5
+                                        await new Promise(resolve => setTimeout(resolve, 500))
+                                        
+                                        const canvas = document.createElement('canvas')
+                                        canvas.width = video.videoWidth || 640
+                                        canvas.height = video.videoHeight || 480
+                                        canvas.getContext('2d')?.drawImage(video, 0, 0)
+                                        frameBase64 = canvas.toDataURL('image/jpeg', 0.8)
+                                      } else {
+                                        // Convert image to base64
+                                        frameBase64 = await new Promise<string>((resolve) => {
+                                          const reader = new FileReader()
+                                          reader.onload = () => resolve(reader.result as string)
+                                          reader.readAsDataURL(file)
+                                        })
+                                      }
+                                      
+                                      // Call Vision AI
+                                      const response = await fetch('/api/vision-analyze', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                          image: frameBase64,
+                                          drillId: exercise.id,
+                                          drillName: exercise.name,
+                                          drillDescription: exercise.description,
+                                          coachingPoints: exercise.tips,
+                                          focusArea: exercise.focusArea
+                                        })
+                                      })
+                                      
+                                      if (response.ok) {
+                                        const result = await response.json()
+                                        const analysis = result.analysis || result
+                                        setDrillMediaMap(prev => ({
+                                          ...prev,
+                                          [drillKey]: {
+                                            ...prev[drillKey],
+                                            hasCoachFeedback: true,
+                                            coachFeedback: analysis,
+                                            analysisType: 'quick'
+                                          }
+                                        }))
+                                      }
+                                    } catch (err) {
+                                      console.error('Auto-analysis failed:', err)
+                                    } finally {
+                                      setIsAnalyzing(false)
+                                    }
+                                  }
+                                }}
+                              />
+                            </label>
+                            
+                            {/* No Input / Skip */}
+                            <button
+                              onClick={() => {
+                                setDrillMediaMap(prev => ({
+                                  ...prev,
+                                  [drillKey]: {
+                                    type: 'none',
+                                    hasCoachFeedback: false
+                                  }
+                                }))
+                                setDrillMediaExpanded(null)
+                              }}
+                              className="flex flex-col items-center gap-2 p-3 rounded-lg bg-[#2a2a2a] border border-[#3a3a3a] hover:border-[#888]/50 hover:bg-[#3a3a3a] transition-colors"
+                            >
+                              <X className="w-5 h-5 text-[#666]" />
+                              <span className="text-[10px] text-[#888] uppercase">Skip</span>
+                            </button>
+                          </div>
+                          
+                          {/* Show uploaded media preview */}
+                          {hasMedia && mediaState?.url && (
+                            <div className="mt-3 relative">
+                              {mediaState.type === 'video' ? (
+                                <video src={mediaState.url} controls className="w-full rounded-lg max-h-32 object-contain bg-black" />
+                              ) : (
+                                <img src={mediaState.url} alt="Uploaded" className="w-full rounded-lg max-h-32 object-contain bg-black" />
+                              )}
+                              <button
+                                onClick={() => {
+                                  setDrillMediaMap(prev => {
+                                    const newMap = { ...prev }
+                                    delete newMap[drillKey]
+                                    return newMap
+                                  })
+                                }}
+                                className="absolute top-1 right-1 p-1 rounded-full bg-red-500/80 text-white hover:bg-red-500"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                              
+                              {/* Analysis Buttons - Quick (Vision AI) and Deep (Hybrid System) */}
+                              {!hasFeedback && (
+                                <div className="mt-3 space-y-2">
+                                  {/* Quick Analysis - Vision AI */}
+                                  <button
+                                    onClick={async () => {
+                                      if (!mediaState.blob) return
+                                      setIsAnalyzing(true)
+                                      
+                                      try {
+                                        let frameBase64: string
+                                        
+                                        if (mediaState.type === 'video') {
+                                          // Extract frame from video
+                                          const video = document.createElement('video')
+                                          video.src = mediaState.url!
+                                          video.crossOrigin = 'anonymous'
+                                          video.muted = true
+                                          
+                                          await new Promise<void>((resolve, reject) => {
+                                            video.onloadeddata = () => resolve()
+                                            video.onerror = () => reject(new Error('Failed to load video'))
+                                            setTimeout(() => reject(new Error('Video load timeout')), 5000)
+                                          })
+                                          
+                                          video.currentTime = video.duration / 2
+                                          await new Promise<void>((resolve) => {
+                                            video.onseeked = () => resolve()
+                                            setTimeout(() => resolve(), 2000)
+                                          })
+                                          
+                                          const canvas = document.createElement('canvas')
+                                          canvas.width = video.videoWidth || 640
+                                          canvas.height = video.videoHeight || 480
+                                          const ctx = canvas.getContext('2d')
+                                          ctx?.drawImage(video, 0, 0, canvas.width, canvas.height)
+                                          frameBase64 = canvas.toDataURL('image/jpeg', 0.85)
+                                        } else {
+                                          // Convert image to base64
+                                          const reader = new FileReader()
+                                          frameBase64 = await new Promise((resolve, reject) => {
+                                            reader.onload = () => resolve(reader.result as string)
+                                            reader.onerror = reject
+                                            reader.readAsDataURL(mediaState.blob as Blob)
+                                          })
+                                        }
+                                        
+                                        // Call Vision AI
+                                        const response = await fetch('/api/vision-analyze', {
+                                          method: 'POST',
+                                          headers: { 'Content-Type': 'application/json' },
+                                          body: JSON.stringify({
+                                            image: frameBase64,
+                                            drillId: exercise.id,
+                                            drillName: exercise.name,
+                                            drillDescription: exercise.description,
+                                            coachingPoints: exercise.tips,
+                                            focusArea: exercise.focusArea,
+                                          }),
+                                        })
+                                        
+                                        if (!response.ok) throw new Error('Vision API failed')
+                                        
+                                        const result = await response.json()
+                                        
+                                        setDrillMediaMap(prev => ({
+                                          ...prev,
+                                          [drillKey]: {
+                                            ...prev[drillKey],
+                                            hasCoachFeedback: true,
+                                            coachFeedback: result.analysis,
+                                            analysisType: 'quick'
+                                          }
+                                        }))
+                                      } catch (error) {
+                                        console.error('Analysis error:', error)
+                                        setAnalysisError('Failed to analyze. Please try again.')
+                                      } finally {
+                                        setIsAnalyzing(false)
+                                      }
+                                    }}
+                                    disabled={isAnalyzing}
+                                    className="w-full py-2.5 rounded-lg bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-[#1a1a1a] font-bold text-sm flex items-center justify-center gap-2 hover:brightness-110 disabled:opacity-50"
+                                  >
+                                    {isAnalyzing ? (
+                                      <>
+                                        <RefreshCw className="w-4 h-4 animate-spin" />
+                                        COACH IS REVIEWING...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <img 
+                                          src="/icons/coach-feedback.png" 
+                                          alt="Coach" 
+                                          className="w-5 h-5"
+                                          style={{ filter: 'invert(1) brightness(2)' }}
+                                        />
+                                        GET COACH FEEDBACK
+                                        <span className="text-[10px] bg-black/20 px-1.5 py-0.5 rounded">VISION AI</span>
+                                      </>
+                                    )}
+                                  </button>
+                                  
+                                  {/* Deep Analysis - Hybrid System */}
+                                  <button
+                                    onClick={async () => {
+                                      if (!mediaState.blob || mediaState.type !== 'video') {
+                                        setAnalysisError('Deep analysis requires a video file.')
+                                        return
+                                      }
+                                      setIsAnalyzing(true)
+                                      
+                                      try {
+                                        const hybridApiUrl = process.env.NEXT_PUBLIC_HYBRID_API_URL || 'http://localhost:5001'
+                                        
+                                        // Create form data with video
+                                        const formData = new FormData()
+                                        formData.append('video', mediaState.blob, 'drill-video.webm')
+                                        formData.append('drill_id', exercise.id)
+                                        formData.append('drill_name', exercise.name)
+                                        formData.append('drill_context', exercise.description)
+                                        formData.append('drill_tips', JSON.stringify(exercise.tips))
+                                        formData.append('focus_area', exercise.focusArea)
+                                        
+                                        const response = await fetch(`${hybridApiUrl}/analyze-video`, {
+                                          method: 'POST',
+                                          body: formData,
+                                        })
+                                        
+                                        if (!response.ok) {
+                                          throw new Error('Hybrid system analysis failed')
+                                        }
+                                        
+                                        const result = await response.json()
+                                        
+                                        // Format deep analysis result to match CoachAnalysisResult
+                                        const deepAnalysis: CoachAnalysisResult = {
+                                          overallGrade: result.grade || (result.form_score >= 90 ? 'A' : result.form_score >= 80 ? 'B' : result.form_score >= 70 ? 'C' : result.form_score >= 60 ? 'D' : 'F'),
+                                          gradeDescription: result.summary || 'Deep biomechanical analysis complete.',
+                                          coachSays: result.coach_feedback || `Based on the deep analysis, your ${exercise.focusArea} mechanics show ${result.form_score >= 80 ? 'good' : 'room for improvement in'} form.`,
+                                          priorityFocus: {
+                                            issue: result.primary_issue || result.improvements?.[0] || 'Focus on consistency',
+                                            why: result.issue_explanation || 'This is the most impactful area for improvement.',
+                                            howToFix: result.fix_instruction || 'Practice with intention and focus on form.',
+                                            drillToHelp: result.recommended_drill || exercise.name,
+                                            cue: result.quick_cue || 'Stay focused on the fundamentals.'
+                                          },
+                                          coachingPointResults: exercise.tips.map((tip, idx) => ({
+                                            point: tip,
+                                            status: result.tip_scores?.[idx] >= 70 ? 'good' : result.tip_scores?.[idx] >= 50 ? 'needs-work' : 'poor',
+                                            observation: result.tip_observations?.[idx] || 'Analyzed via deep system.',
+                                            quickFix: result.tip_fixes?.[idx] || 'Continue practicing.'
+                                          })),
+                                          reinforcement: result.positives?.map((p: string) => ({ point: p, why: 'Identified by deep analysis.' })) || [],
+                                          nextSteps: {
+                                            immediate: result.immediate_action || 'Review the analysis and focus on the priority area.',
+                                            thisWeek: result.weekly_goal || 'Practice this drill 3-4 times.',
+                                            progression: result.progression || 'Gradually increase difficulty as form improves.'
+                                          }
+                                        }
+                                        
+                                        setDrillMediaMap(prev => ({
+                                          ...prev,
+                                          [drillKey]: {
+                                            ...prev[drillKey],
+                                            hasCoachFeedback: true,
+                                            coachFeedback: deepAnalysis,
+                                            analysisType: 'deep'
+                                          }
+                                        }))
+                                      } catch (error) {
+                                        console.error('Deep analysis error:', error)
+                                        setAnalysisError('Deep analysis failed. Make sure the hybrid system is running on localhost:5001.')
+                                      } finally {
+                                        setIsAnalyzing(false)
+                                      }
+                                    }}
+                                    disabled={isAnalyzing || mediaState.type !== 'video'}
+                                    className={`w-full py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2 transition-all ${
+                                      mediaState.type === 'video' 
+                                        ? 'bg-[#2a2a2a] border border-blue-500/50 text-blue-400 hover:bg-blue-500/10 hover:border-blue-400' 
+                                        : 'bg-[#2a2a2a] border border-[#3a3a3a] text-[#666] cursor-not-allowed'
+                                    } disabled:opacity-50`}
+                                  >
+                                    {isAnalyzing ? (
+                                      <>
+                                        <RefreshCw className="w-4 h-4 animate-spin" />
+                                        DEEP ANALYZING...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Brain className="w-4 h-4" />
+                                        DEEP ANALYSIS
+                                        <span className="text-[10px] bg-blue-500/20 px-1.5 py-0.5 rounded">HYBRID</span>
+                                      </>
+                                    )}
+                                  </button>
+                                  {mediaState.type !== 'video' && (
+                                    <p className="text-[#666] text-[10px] text-center">Deep analysis requires video (not image)</p>
+                                  )}
+                                  
+                                  <p className="text-[#666] text-[10px] text-center mt-1">
+                                    <span className="text-[#FFD700]">Coach Feedback</span> = Vision AI review • <span className="text-blue-400">Deep Analysis</span> = Full biomechanical breakdown
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )
                 })}
@@ -3898,15 +4089,14 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
             CANCEL WORKOUT
           </button>
           
-          {isWorkoutComplete && (
-            <button
-              onClick={handleComplete}
-              className="px-8 py-3 rounded-xl bg-gradient-to-r from-green-500 to-green-600 text-white font-bold hover:brightness-110 transition-all flex items-center gap-2"
-            >
-              <Trophy className="w-5 h-5" />
-              Complete Workout
-            </button>
-          )}
+          {/* ALWAYS show Complete Workout button */}
+          <button
+            onClick={handleComplete}
+            className="px-8 py-3 rounded-xl bg-gradient-to-r from-green-500 to-green-600 text-white font-bold hover:brightness-110 transition-all flex items-center gap-2"
+          >
+            <Trophy className="w-5 h-5" />
+            COMPLETE WORKOUT
+          </button>
           
           <button
             onClick={() => preferences.soundEnabled}
@@ -3917,33 +4107,1035 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
         </div>
       </div>
       
-      {/* Next Exercise Popup (Step-by-Step Mode) */}
-      {showNextExercisePopup && workout.exercises[currentExerciseIndex + 1] && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#1a1a1a] rounded-2xl p-6 max-w-md w-full border border-[#3a3a3a]">
-            <div className="text-center">
-              <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
-                <Check className="w-8 h-8 text-green-400" />
-              </div>
-              <h3 className="text-xl font-bold text-[#E5E5E5] mb-2">Exercise Complete!</h3>
-              <p className="text-[#888] mb-6">Great work! Ready for the next exercise?</p>
-              
-              <div className="bg-[#2a2a2a] rounded-xl p-4 mb-6">
-                <p className="text-[#888] text-sm uppercase tracking-wider mb-1">Up Next:</p>
-                <p className="text-[#FFD700] font-bold text-lg">
-                  {workout.exercises[currentExerciseIndex + 1].name}
+      {/* Drill Complete - Media Capture Popup */}
+      {showDrillMediaCapture && currentDrillForMedia && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
+          <div className="bg-[#1a1a1a] rounded-2xl p-6 max-w-lg w-full border border-[#3a3a3a] max-h-[90vh] overflow-y-auto">
+            {!isCapturingMedia && !capturedMediaBlob ? (
+              // Initial state - choose media capture option
+              <div className="text-center">
+                <div className="w-20 h-20 flex items-center justify-center mx-auto mb-4">
+                  <img 
+                    src="/icons/coach-feedback.png" 
+                    alt="Coach" 
+                    className="w-20 h-20 object-contain"
+                    style={{ filter: 'invert(1) brightness(2)' }}
+                  />
+                </div>
+                <h3 className="text-xl font-bold text-[#FFD700] mb-2">
+                  {currentDrillForMedia.name} Complete!
+                </h3>
+                <p className="text-[#888] mb-6">
+                  Want to get coach feedback on this drill? Record or upload a video/image.
                 </p>
-                <p className="text-[#888] text-sm">
-                  {formatTime(workout.exercises[currentExerciseIndex + 1].duration)}
-                </p>
+                
+                {/* Media Capture Options */}
+                <div className="space-y-3 mb-6">
+                  {/* Record from Camera */}
+                  <button
+                    onClick={async () => {
+                      setIsCapturingMedia(true)
+                      setCapturedMediaType('video')
+                      try {
+                        const stream = await navigator.mediaDevices.getUserMedia({ 
+                          video: { facingMode: 'user' }, 
+                          audio: false 
+                        })
+                        streamRef.current = stream
+                        if (videoRef.current) {
+                          videoRef.current.srcObject = stream
+                          videoRef.current.play()
+                        }
+                      } catch (err) {
+                        console.error('Camera access denied:', err)
+                        setIsCapturingMedia(false)
+                        setAnalysisError('Camera access denied. Please allow camera access.')
+                      }
+                    }}
+                    className="w-full py-4 rounded-xl bg-gradient-to-r from-red-500 to-red-600 text-white font-bold flex items-center justify-center gap-3 hover:brightness-110 transition-all"
+                  >
+                    <Camera className="w-6 h-6" />
+                    RECORD FROM CAMERA
+                  </button>
+                  
+                  {/* Upload Video/Image */}
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full py-4 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold flex items-center justify-center gap-3 hover:brightness-110 transition-all"
+                  >
+                    <Upload className="w-6 h-6" />
+                    UPLOAD VIDEO OR IMAGE
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="video/*,image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) {
+                        const isVideo = file.type.startsWith('video/')
+                        setCapturedMediaType(isVideo ? 'video' : 'image')
+                        setCapturedMediaBlob(file)
+                      }
+                    }}
+                  />
+                  
+                  {/* No Input - Skip */}
+                  <button
+                    onClick={() => {
+                      // Save as no input and move to next
+                      setDrillMediaMap(prev => ({
+                        ...prev,
+                        [currentDrillForMedia.id]: {
+                          drillId: currentDrillForMedia.id,
+                          drillName: currentDrillForMedia.name,
+                          mediaType: 'none',
+                          analyzed: false
+                        }
+                      }))
+                      setShowDrillMediaCapture(false)
+                      setCurrentDrillForMedia(null)
+                      continueToNextExercise()
+                    }}
+                    className="w-full py-4 rounded-xl bg-[#2a2a2a] border border-[#3a3a3a] text-[#888] font-bold flex items-center justify-center gap-3 hover:bg-[#3a3a3a] hover:text-white transition-all"
+                  >
+                    <SkipForward className="w-6 h-6" />
+                    NO INPUT - SKIP TO NEXT DRILL
+                  </button>
+                </div>
+                
+                {/* Next Drill Preview */}
+                {workout.exercises[currentExerciseIndex + 1] && (
+                  <div className="bg-[#2a2a2a] rounded-xl p-4 border border-[#3a3a3a]">
+                    <p className="text-[#888] text-xs uppercase tracking-wider mb-1">Up Next:</p>
+                    <p className="text-[#FFD700] font-bold">
+                      {workout.exercises[currentExerciseIndex + 1].name}
+                    </p>
+                  </div>
+                )}
               </div>
-              
+            ) : isCapturingMedia && capturedMediaType === 'video' && !capturedMediaBlob ? (
+              // Recording state
+              <div className="text-center">
+                <h3 className="text-lg font-bold text-[#FFD700] mb-4">Recording: {currentDrillForMedia.name}</h3>
+                
+                {/* Video Preview */}
+                <div className="relative rounded-xl overflow-hidden mb-4 bg-black aspect-video">
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    muted
+                    playsInline
+                    className="w-full h-full object-cover"
+                  />
+                  {isRecording && (
+                    <div className="absolute top-4 left-4 flex items-center gap-2 bg-red-500 px-3 py-1 rounded-full">
+                      <div className="w-3 h-3 rounded-full bg-white animate-pulse" />
+                      <span className="text-white text-sm font-bold">REC</span>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Recording Controls */}
+                <div className="flex gap-3 justify-center">
+                  {!isRecording ? (
+                    <button
+                      onClick={() => {
+                        if (streamRef.current) {
+                          const mediaRecorder = new MediaRecorder(streamRef.current)
+                          mediaRecorderRef.current = mediaRecorder
+                          const chunks: Blob[] = []
+                          
+                          mediaRecorder.ondataavailable = (e) => {
+                            if (e.data.size > 0) chunks.push(e.data)
+                          }
+                          
+                          mediaRecorder.onstop = () => {
+                            const blob = new Blob(chunks, { type: 'video/webm' })
+                            setCapturedMediaBlob(blob)
+                            setIsRecording(false)
+                            // Stop camera
+                            streamRef.current?.getTracks().forEach(track => track.stop())
+                          }
+                          
+                          mediaRecorder.start()
+                          setIsRecording(true)
+                        }
+                      }}
+                      className="px-8 py-3 rounded-xl bg-red-500 text-white font-bold flex items-center gap-2 hover:bg-red-600"
+                    >
+                      <Circle className="w-5 h-5 fill-current" />
+                      START RECORDING
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        mediaRecorderRef.current?.stop()
+                      }}
+                      className="px-8 py-3 rounded-xl bg-red-500 text-white font-bold flex items-center gap-2 hover:bg-red-600 animate-pulse"
+                    >
+                      <Square className="w-5 h-5 fill-current" />
+                      STOP RECORDING
+                    </button>
+                  )}
+                  
+                  <button
+                    onClick={() => {
+                      streamRef.current?.getTracks().forEach(track => track.stop())
+                      setIsCapturingMedia(false)
+                      setCapturedMediaType(null)
+                      setIsRecording(false)
+                    }}
+                    className="px-6 py-3 rounded-xl bg-[#2a2a2a] text-[#888] font-bold hover:text-white"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : capturedMediaBlob ? (
+              // Media captured - preview and confirm
+              <div className="text-center">
+                <h3 className="text-lg font-bold text-[#FFD700] mb-4">
+                  {capturedMediaType === 'video' ? 'Video' : 'Image'} Captured
+                </h3>
+                
+                {/* Preview */}
+                <div className="relative rounded-xl overflow-hidden mb-4 bg-black">
+                  {capturedMediaType === 'video' ? (
+                    <video
+                      src={URL.createObjectURL(capturedMediaBlob)}
+                      controls
+                      className="w-full max-h-[300px] object-contain"
+                    />
+                  ) : (
+                    <img
+                      src={URL.createObjectURL(capturedMediaBlob)}
+                      alt="Captured"
+                      className="w-full max-h-[300px] object-contain"
+                    />
+                  )}
+                </div>
+                
+                {/* Actions - Three Options */}
+                <div className="space-y-3">
+                  {/* Option 1: GET COACH FEEDBACK (Vision AI) */}
+                  <button
+                    onClick={async () => {
+                      // Save media and get coach feedback via Vision AI
+                      setIsAnalyzing(true)
+                      
+                      const mediaUrl = URL.createObjectURL(capturedMediaBlob)
+                      const drillMedia: DrillMedia = {
+                        drillId: currentDrillForMedia.id,
+                        drillName: currentDrillForMedia.name,
+                        mediaType: capturedMediaType!,
+                        mediaBlob: capturedMediaBlob,
+                        mediaUrl: mediaUrl,
+                        analyzed: false
+                      }
+                      
+                      try {
+                        let frameBase64: string
+                        
+                        if (capturedMediaType === 'video') {
+                          const video = document.createElement('video')
+                          video.src = mediaUrl
+                          await new Promise(resolve => { video.onloadeddata = resolve; video.load() })
+                          video.currentTime = 0.5
+                          await new Promise(resolve => setTimeout(resolve, 500))
+                          
+                          const canvas = document.createElement('canvas')
+                          canvas.width = video.videoWidth
+                          canvas.height = video.videoHeight
+                          canvas.getContext('2d')?.drawImage(video, 0, 0)
+                          frameBase64 = canvas.toDataURL('image/jpeg', 0.8)
+                        } else {
+                          frameBase64 = await new Promise<string>((resolve) => {
+                            const reader = new FileReader()
+                            reader.onload = () => resolve(reader.result as string)
+                            reader.readAsDataURL(capturedMediaBlob)
+                          })
+                        }
+                        
+                        const response = await fetch('/api/vision-analyze', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            image: frameBase64,
+                            drillId: currentDrillForMedia.id,
+                            drillName: currentDrillForMedia.name,
+                            drillDescription: currentDrillForMedia.description,
+                            coachingPoints: currentDrillForMedia.tips,
+                            focusArea: currentDrillForMedia.focusArea
+                          })
+                        })
+                        
+                        if (response.ok) {
+                          const result = await response.json()
+                          const analysis = result.analysis || result
+                          drillMedia.coachFeedback = analysis
+                          drillMedia.analyzed = true
+                          drillMedia.analyzedAt = new Date()
+                          drillMedia.analysisType = 'quick'
+                        }
+                      } catch (err) {
+                        console.error('Failed to get coach feedback:', err)
+                      }
+                      
+                      setDrillMediaMap(prev => ({
+                        ...prev,
+                        [currentDrillForMedia.id]: drillMedia
+                      }))
+                      
+                      setIsAnalyzing(false)
+                      setCapturedMediaBlob(null)
+                      setCapturedMediaType(null)
+                      setIsCapturingMedia(false)
+                      setShowDrillMediaCapture(false)
+                      setCurrentDrillForMedia(null)
+                      continueToNextExercise()
+                    }}
+                    disabled={isAnalyzing}
+                    className="w-full py-4 rounded-xl bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-[#1a1a1a] font-bold flex items-center justify-center gap-2 hover:brightness-110 transition-all disabled:opacity-50"
+                  >
+                    {isAnalyzing ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-[#1a1a1a] border-t-transparent rounded-full animate-spin" />
+                        COACH IS REVIEWING...
+                      </>
+                    ) : (
+                      <>
+                        <img 
+                          src="/icons/coach-feedback.png" 
+                          alt="Coach" 
+                          className="w-6 h-6"
+                          style={{ filter: 'invert(1) brightness(2)' }}
+                        />
+                        GET COACH FEEDBACK
+                        <span className="text-[10px] bg-black/20 px-1.5 py-0.5 rounded">VISION AI</span>
+                      </>
+                    )}
+                  </button>
+                  
+                  {/* Option 2: DEEP ANALYSIS (Hybrid System) - Only for video */}
+                  <button
+                    onClick={async () => {
+                      if (capturedMediaType !== 'video') {
+                        setAnalysisError('Deep analysis requires a video file.')
+                        return
+                      }
+                      
+                      setIsAnalyzing(true)
+                      
+                      const mediaUrl = URL.createObjectURL(capturedMediaBlob)
+                      const drillMedia: DrillMedia = {
+                        drillId: currentDrillForMedia.id,
+                        drillName: currentDrillForMedia.name,
+                        mediaType: capturedMediaType!,
+                        mediaBlob: capturedMediaBlob,
+                        mediaUrl: mediaUrl,
+                        analyzed: false
+                      }
+                      
+                      try {
+                        const hybridApiUrl = process.env.NEXT_PUBLIC_HYBRID_API_URL || 'http://localhost:5001'
+                        
+                        const formData = new FormData()
+                        formData.append('video', capturedMediaBlob, 'drill-video.webm')
+                        formData.append('drill_id', currentDrillForMedia.id)
+                        formData.append('drill_name', currentDrillForMedia.name)
+                        formData.append('drill_context', currentDrillForMedia.description)
+                        formData.append('drill_tips', JSON.stringify(currentDrillForMedia.tips))
+                        formData.append('focus_area', currentDrillForMedia.focusArea)
+                        
+                        const response = await fetch(`${hybridApiUrl}/analyze-video`, {
+                          method: 'POST',
+                          body: formData,
+                        })
+                        
+                        if (!response.ok) {
+                          throw new Error('Hybrid system analysis failed')
+                        }
+                        
+                        const result = await response.json()
+                        
+                        // Format deep analysis result
+                        const deepAnalysis: CoachAnalysisResult = {
+                          overallGrade: result.grade || (result.form_score >= 90 ? 'A' : result.form_score >= 80 ? 'B' : result.form_score >= 70 ? 'C' : result.form_score >= 60 ? 'D' : 'F'),
+                          gradeDescription: result.summary || 'Deep biomechanical analysis complete.',
+                          coachSays: result.coach_feedback || `Based on the deep analysis, your ${currentDrillForMedia.focusArea} mechanics show ${result.form_score >= 80 ? 'good' : 'room for improvement in'} form.`,
+                          priorityFocus: {
+                            issue: result.primary_issue || result.improvements?.[0] || 'Focus on consistency',
+                            why: result.issue_explanation || 'This is the most impactful area for improvement.',
+                            howToFix: result.fix_instruction || 'Practice with intention and focus on form.',
+                            drillToHelp: result.recommended_drill || currentDrillForMedia.name,
+                            cue: result.quick_cue || 'Stay focused on the fundamentals.'
+                          },
+                          coachingPointResults: currentDrillForMedia.tips.map((tip: string, idx: number) => ({
+                            point: tip,
+                            status: result.tip_scores?.[idx] >= 70 ? 'good' : result.tip_scores?.[idx] >= 50 ? 'needs-work' : 'poor',
+                            observation: result.tip_observations?.[idx] || 'Analyzed via deep system.',
+                            quickFix: result.tip_fixes?.[idx] || 'Continue practicing.'
+                          })),
+                          reinforcement: result.positives?.map((p: string) => ({ point: p, why: 'Identified by deep analysis.' })) || [],
+                          nextSteps: {
+                            immediate: result.immediate_action || 'Review the analysis and focus on the priority area.',
+                            thisWeek: result.weekly_goal || 'Practice this drill 3-4 times.',
+                            progression: result.progression || 'Gradually increase difficulty as form improves.'
+                          }
+                        }
+                        
+                        drillMedia.coachFeedback = deepAnalysis
+                        drillMedia.analyzed = true
+                        drillMedia.analyzedAt = new Date()
+                        drillMedia.analysisType = 'deep'
+                      } catch (err) {
+                        console.error('Deep analysis failed:', err)
+                        setAnalysisError('Deep analysis failed. Make sure the hybrid system is running on localhost:5001.')
+                      }
+                      
+                      setDrillMediaMap(prev => ({
+                        ...prev,
+                        [currentDrillForMedia.id]: drillMedia
+                      }))
+                      
+                      setIsAnalyzing(false)
+                      setCapturedMediaBlob(null)
+                      setCapturedMediaType(null)
+                      setIsCapturingMedia(false)
+                      setShowDrillMediaCapture(false)
+                      setCurrentDrillForMedia(null)
+                      continueToNextExercise()
+                    }}
+                    disabled={isAnalyzing || capturedMediaType !== 'video'}
+                    className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${
+                      capturedMediaType === 'video'
+                        ? 'bg-[#2a2a2a] border border-blue-500/50 text-blue-400 hover:bg-blue-500/10 hover:border-blue-400'
+                        : 'bg-[#2a2a2a] border border-[#3a3a3a] text-[#666] cursor-not-allowed'
+                    } disabled:opacity-50`}
+                  >
+                    {isAnalyzing ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                        DEEP ANALYZING...
+                      </>
+                    ) : (
+                      <>
+                        <Brain className="w-5 h-5" />
+                        DEEP ANALYSIS
+                        <span className="text-[10px] bg-blue-500/20 px-1.5 py-0.5 rounded">HYBRID</span>
+                      </>
+                    )}
+                  </button>
+                  {capturedMediaType !== 'video' && (
+                    <p className="text-[#666] text-[10px] text-center -mt-1">Deep analysis requires video (not image)</p>
+                  )}
+                  
+                  {/* Option 3: SKIP - No Analysis, Just Save Media */}
+                  <button
+                    onClick={() => {
+                      const mediaUrl = URL.createObjectURL(capturedMediaBlob)
+                      setDrillMediaMap(prev => ({
+                        ...prev,
+                        [currentDrillForMedia.id]: {
+                          drillId: currentDrillForMedia.id,
+                          drillName: currentDrillForMedia.name,
+                          mediaType: capturedMediaType!,
+                          mediaBlob: capturedMediaBlob,
+                          mediaUrl: mediaUrl,
+                          analyzed: false
+                        }
+                      }))
+                      setCapturedMediaBlob(null)
+                      setCapturedMediaType(null)
+                      setIsCapturingMedia(false)
+                      setShowDrillMediaCapture(false)
+                      setCurrentDrillForMedia(null)
+                      continueToNextExercise()
+                    }}
+                    className="w-full py-2.5 rounded-xl bg-[#2a2a2a] border border-[#3a3a3a] text-[#888] font-bold flex items-center justify-center gap-2 hover:bg-[#3a3a3a] hover:text-white transition-all"
+                  >
+                    <SkipForward className="w-4 h-4" />
+                    SKIP ANALYSIS - CONTINUE
+                  </button>
+                  
+                  {/* Retake Option */}
+                  <button
+                    onClick={() => {
+                      setCapturedMediaBlob(null)
+                      setCapturedMediaType(null)
+                      setIsCapturingMedia(false)
+                    }}
+                    className="w-full py-2 rounded-xl text-[#666] font-bold hover:text-[#888] transition-all text-sm"
+                  >
+                    ← Retake
+                  </button>
+                  
+                  <p className="text-[#666] text-[10px] text-center pt-2 border-t border-[#3a3a3a]">
+                    <span className="text-[#FFD700]">Coach Feedback</span> = Vision AI review • <span className="text-blue-400">Deep Analysis</span> = Full biomechanical breakdown
+                  </p>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      )}
+      
+      {/* Drill Feedback Popup */}
+      {showDrillFeedback && drillMediaMap[showDrillFeedback]?.coachFeedback && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
+          <div className="bg-[#1a1a1a] rounded-2xl p-6 max-w-lg w-full border border-[#3a3a3a] max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-16 h-16 flex items-center justify-center">
+                  <img 
+                    src="/icons/coach-feedback.png" 
+                    alt="Coach" 
+                    className="w-16 h-16 object-contain"
+                    style={{ filter: 'invert(1) brightness(2)' }}
+                  />
+                </div>
+                <div>
+                  <h3 className="text-[#FFD700] font-bold text-lg">COACH FEEDBACK</h3>
+                  <p className="text-[#888] text-sm">{drillMediaMap[showDrillFeedback].drillName}</p>
+                </div>
+              </div>
               <button
-                onClick={continueToNextExercise}
-                className="w-full py-4 rounded-xl bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-[#1a1a1a] font-bold hover:brightness-110 transition-all"
+                onClick={() => setShowDrillFeedback(null)}
+                className="p-2 rounded-lg bg-[#2a2a2a] text-[#888] hover:text-white"
               >
-                Continue to Next Exercise
+                <X className="w-5 h-5" />
               </button>
+            </div>
+            
+            {/* Grade */}
+            {drillMediaMap[showDrillFeedback].coachFeedback?.overallGrade && (
+              <div className={`text-center py-4 rounded-xl mb-4 ${
+                drillMediaMap[showDrillFeedback].coachFeedback?.overallGrade === 'A' ? 'bg-green-500/20' :
+                drillMediaMap[showDrillFeedback].coachFeedback?.overallGrade === 'B' ? 'bg-blue-500/20' :
+                drillMediaMap[showDrillFeedback].coachFeedback?.overallGrade === 'C' ? 'bg-yellow-500/20' :
+                drillMediaMap[showDrillFeedback].coachFeedback?.overallGrade === 'D' ? 'bg-orange-500/20' :
+                'bg-red-500/20'
+              }`}>
+                <div className={`text-5xl font-black ${
+                  drillMediaMap[showDrillFeedback].coachFeedback?.overallGrade === 'A' ? 'text-green-400' :
+                  drillMediaMap[showDrillFeedback].coachFeedback?.overallGrade === 'B' ? 'text-blue-400' :
+                  drillMediaMap[showDrillFeedback].coachFeedback?.overallGrade === 'C' ? 'text-yellow-400' :
+                  drillMediaMap[showDrillFeedback].coachFeedback?.overallGrade === 'D' ? 'text-orange-400' :
+                  'text-red-400'
+                }`}>
+                  {drillMediaMap[showDrillFeedback].coachFeedback?.overallGrade}
+                </div>
+                <p className="text-[#888] text-sm mt-1">
+                  {drillMediaMap[showDrillFeedback].coachFeedback?.gradeDescription}
+                </p>
+              </div>
+            )}
+            
+            {/* Coach Says */}
+            {drillMediaMap[showDrillFeedback].coachFeedback?.coachSays && (
+              <div className="bg-[#2a2a2a] rounded-xl p-4 border-l-4 border-[#FFD700] mb-4">
+                <p className="text-[#E5E5E5] text-sm italic">
+                  &quot;{drillMediaMap[showDrillFeedback].coachFeedback?.coachSays}&quot;
+                </p>
+              </div>
+            )}
+            
+            {/* Priority Focus */}
+            {drillMediaMap[showDrillFeedback].coachFeedback?.priorityFocus && (
+              <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 mb-4">
+                <h4 className="text-red-400 font-bold text-sm uppercase mb-2 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4" />
+                  FIX THIS FIRST
+                </h4>
+                <p className="text-white font-bold text-sm mb-2">
+                  {drillMediaMap[showDrillFeedback].coachFeedback?.priorityFocus.issue}
+                </p>
+                <p className="text-[#888] text-xs mb-2">
+                  <span className="text-red-400">Why:</span> {drillMediaMap[showDrillFeedback].coachFeedback?.priorityFocus.why}
+                </p>
+                <p className="text-[#E5E5E5] text-xs">
+                  <span className="text-[#FFD700]">How to fix:</span> {drillMediaMap[showDrillFeedback].coachFeedback?.priorityFocus.howToFix}
+                </p>
+              </div>
+            )}
+            
+            {/* Reinforcement */}
+            {drillMediaMap[showDrillFeedback].coachFeedback?.reinforcement && drillMediaMap[showDrillFeedback].coachFeedback.reinforcement.length > 0 && (
+              <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4">
+                <h4 className="text-green-400 font-bold text-sm uppercase mb-2 flex items-center gap-2">
+                  <Check className="w-4 h-4" />
+                  KEEP DOING THIS
+                </h4>
+                <ul className="space-y-2">
+                  {drillMediaMap[showDrillFeedback].coachFeedback?.reinforcement.map((item, i) => (
+                    <li key={i} className="text-[#E5E5E5] text-sm">
+                      <span className="text-green-400">✓</span> {item.point}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      
+      {/* Exercise Detail Popup - Shows drill info, description, and tips */}
+      {showExerciseDetail && (() => {
+        const exercise = workout.exercises.find(e => e.id === showExerciseDetail)
+        if (!exercise) return null
+        
+        const focusAreaColors: Record<string, { bg: string, text: string, border: string }> = {
+          'elbow': { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500/30' },
+          'knee': { bg: 'bg-purple-500/20', text: 'text-purple-400', border: 'border-purple-500/30' },
+          'balance': { bg: 'bg-green-500/20', text: 'text-green-400', border: 'border-green-500/30' },
+          'release': { bg: 'bg-orange-500/20', text: 'text-orange-400', border: 'border-orange-500/30' },
+          'follow-through': { bg: 'bg-cyan-500/20', text: 'text-cyan-400', border: 'border-cyan-500/30' },
+          'power': { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/30' },
+          'general': { bg: 'bg-gray-500/20', text: 'text-gray-400', border: 'border-gray-500/30' }
+        }
+        const colors = focusAreaColors[exercise.focusArea] || focusAreaColors['general']
+        const hasFeedback = drillMediaMap[exercise.id]?.coachFeedback
+        
+        return (
+          <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
+            <div className="bg-[#1a1a1a] rounded-2xl max-w-lg w-full border border-[#3a3a3a] max-h-[90vh] overflow-y-auto">
+              {/* Header */}
+              <div className="sticky top-0 bg-[#1a1a1a] p-6 pb-4 border-b border-[#3a3a3a]">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${colors.bg} ${colors.text} border ${colors.border}`}>
+                        {exercise.focusArea.replace('-', ' ')}
+                      </span>
+                      <span className="text-[#888] text-xs">
+                        {formatTime(exercise.duration)}
+                      </span>
+                    </div>
+                    <h3 className="text-[#FFD700] font-bold text-xl uppercase">
+                      {exercise.name}
+                    </h3>
+                    {exercise.reps && (
+                      <p className="text-[#888] text-sm mt-1">{exercise.reps}</p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => setShowExerciseDetail(null)}
+                    className="p-2 rounded-lg bg-[#2a2a2a] text-[#888] hover:text-white"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+              
+              {/* Content */}
+              <div className="p-6 space-y-6">
+                {/* Description */}
+                <div>
+                  <h4 className="text-[#E5E5E5] font-bold text-sm uppercase mb-2 flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-[#FFD700]" />
+                    What is this drill?
+                  </h4>
+                  <p className="text-[#888] text-sm leading-relaxed">
+                    {exercise.description}
+                  </p>
+                </div>
+                
+                {/* Coaching Tips */}
+                <div>
+                  <h4 className="text-[#E5E5E5] font-bold text-sm uppercase mb-3 flex items-center gap-2">
+                    <Lightbulb className="w-4 h-4 text-[#FFD700]" />
+                    Coaching Tips
+                  </h4>
+                  <div className="space-y-2">
+                    {exercise.tips.map((tip, i) => (
+                      <div 
+                        key={i} 
+                        className="flex items-start gap-3 p-3 bg-[#2a2a2a] rounded-lg border border-[#3a3a3a]"
+                      >
+                        <div className="w-6 h-6 rounded-full bg-[#FFD700]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span className="text-[#FFD700] text-xs font-bold">{i + 1}</span>
+                        </div>
+                        <p className="text-[#E5E5E5] text-sm">{tip}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Focus Area Explanation */}
+                <div className={`p-4 rounded-xl ${colors.bg} border ${colors.border}`}>
+                  <h4 className={`font-bold text-sm uppercase mb-2 ${colors.text}`}>
+                    Focus: {exercise.focusArea.replace('-', ' ')}
+                  </h4>
+                  <p className="text-[#888] text-xs">
+                    {exercise.focusArea === 'elbow' && 'This drill focuses on proper elbow alignment and positioning for a consistent, accurate shot.'}
+                    {exercise.focusArea === 'knee' && 'This drill emphasizes proper knee bend and leg power generation for your shot.'}
+                    {exercise.focusArea === 'balance' && 'This drill helps you maintain stability and body control throughout your shooting motion.'}
+                    {exercise.focusArea === 'release' && 'This drill works on your release point, timing, and ball rotation for optimal arc.'}
+                    {exercise.focusArea === 'follow-through' && 'This drill perfects your follow-through mechanics for better accuracy and consistency.'}
+                    {exercise.focusArea === 'power' && 'This drill builds explosive power from your legs to generate effortless range.'}
+                    {exercise.focusArea === 'general' && 'This is a general shooting drill that works on multiple aspects of your form.'}
+                  </p>
+                </div>
+                
+                {/* Coach Feedback Button (if available) */}
+                {hasFeedback && (
+                  <button
+                    onClick={() => {
+                      setShowExerciseDetail(null)
+                      setShowDrillFeedback(exercise.id)
+                    }}
+                    className="w-full py-3 rounded-xl bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-[#1a1a1a] font-bold flex items-center justify-center gap-2 hover:brightness-110 transition-all"
+                  >
+                    <img 
+                      src="/icons/coach-feedback.png" 
+                      alt="Coach" 
+                      className="w-5 h-5 object-contain"
+                    />
+                    VIEW COACH FEEDBACK
+                    <span className={`ml-1 text-sm font-black ${
+                      drillMediaMap[exercise.id]?.coachFeedback?.overallGrade === 'A' ? 'text-green-600' :
+                      drillMediaMap[exercise.id]?.coachFeedback?.overallGrade === 'B' ? 'text-blue-600' :
+                      drillMediaMap[exercise.id]?.coachFeedback?.overallGrade === 'C' ? 'text-yellow-600' :
+                      drillMediaMap[exercise.id]?.coachFeedback?.overallGrade === 'D' ? 'text-orange-600' :
+                      'text-red-600'
+                    }`}>
+                      ({drillMediaMap[exercise.id]?.coachFeedback?.overallGrade})
+                    </span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+      
+      {/* Drill Explanation Popup - Uniform across all views */}
+      {selectedDrillForExplanation && (
+        <DrillExplanationPopup 
+          drill={selectedDrillForExplanation} 
+          onClose={() => setSelectedDrillForExplanation(null)} 
+        />
+      )}
+      
+      {/* =============================================
+          WORKOUT SUMMARY POPUP - Shows after completing workout
+          All drills auto-analyzed with Vision AI
+          Feedback shown INLINE in dropdown format
+          ============================================= */}
+      {showWorkoutSummary && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/95 backdrop-blur-sm">
+          <div className="bg-[#1a1a1a] rounded-2xl max-w-2xl w-full border border-[#3a3a3a] max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="p-6 border-b border-[#3a3a3a] bg-gradient-to-r from-[#FFD700]/10 to-transparent">
+              <div className="flex items-center gap-4">
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center ${isAnalyzing ? 'bg-blue-500/20' : 'bg-green-500/20'}`}>
+                  {isAnalyzing ? (
+                    <RefreshCw className="w-8 h-8 text-blue-400 animate-spin" />
+                  ) : (
+                    <Trophy className="w-8 h-8 text-green-400" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-2xl font-black text-[#FFD700] uppercase">
+                    {isAnalyzing ? 'ANALYZING YOUR WORKOUT...' : 'WORKOUT COMPLETE!'}
+                  </h2>
+                  <p className="text-[#888]">{workout.name} • {workout.exercises.length} drills</p>
+                  
+                  {/* Progress indicator */}
+                  {analysisProgress && (
+                    <div className="mt-3 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${
+                          analysisProgress.status === 'extracting' ? 'bg-yellow-400 animate-pulse' :
+                          analysisProgress.status === 'analyzing' ? 'bg-blue-400 animate-pulse' :
+                          analysisProgress.status === 'complete' ? 'bg-green-400' :
+                          'bg-red-400'
+                        }`} />
+                        <span className="text-white text-sm font-bold">
+                          Drill {analysisProgress.current} of {analysisProgress.total}:
+                        </span>
+                        <span className="text-[#FFD700] text-sm uppercase">{analysisProgress.drillName}</span>
+                      </div>
+                      <p className="text-xs text-[#888]">
+                        {analysisProgress.status === 'extracting' && '📹 Extracting video frame...'}
+                        {analysisProgress.status === 'analyzing' && '🧠 Vision AI analyzing your form...'}
+                        {analysisProgress.status === 'complete' && '✅ Analysis complete!'}
+                        {analysisProgress.status === 'error' && '⚠️ Analysis failed, moving to next...'}
+                      </p>
+                      {/* Progress bar */}
+                      <div className="w-full h-2 bg-[#2a2a2a] rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-[#FFD700] to-[#FFA500] transition-all duration-500"
+                          style={{ width: `${(analysisProgress.current / analysisProgress.total) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            {/* Drill Summary List with INLINE Feedback */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-3">
+              {workout.exercises.map((exercise, index) => {
+                const drillKey = `workout-${exercise.id}-${index}`
+                const mediaState = drillMediaMap[drillKey]
+                const hasMedia = mediaState && mediaState.type && mediaState.type !== 'none'
+                const hasFeedback = mediaState?.hasCoachFeedback && mediaState?.coachFeedback
+                const feedback = mediaState?.coachFeedback
+                const isExpanded = expandedSummaryDrill === drillKey
+                
+                return (
+                  <div key={drillKey} className="bg-[#2a2a2a] rounded-xl border border-[#3a3a3a] overflow-hidden">
+                    {/* Drill Header - Click to expand */}
+                    <button
+                      onClick={() => setExpandedSummaryDrill(isExpanded ? null : drillKey)}
+                      className="w-full p-4 flex items-center justify-between hover:bg-[#3a3a3a]/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        {/* Number Badge */}
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-lg ${
+                          hasFeedback 
+                            ? feedback?.overallGrade === 'A' ? 'bg-green-500/20 text-green-400' :
+                              feedback?.overallGrade === 'B' ? 'bg-blue-500/20 text-blue-400' :
+                              feedback?.overallGrade === 'C' ? 'bg-yellow-500/20 text-yellow-400' :
+                              feedback?.overallGrade === 'D' ? 'bg-orange-500/20 text-orange-400' :
+                              'bg-red-500/20 text-red-400'
+                            : hasMedia ? 'bg-[#FFD700]/20 text-[#FFD700]' : 'bg-[#3a3a3a] text-[#666]'
+                        }`}>
+                          {hasFeedback ? feedback?.overallGrade : index + 1}
+                        </div>
+                        
+                        {/* Drill Name */}
+                        <div className="text-left">
+                          <h4 className="text-white font-bold uppercase">{exercise.name}</h4>
+                          <p className="text-[#888] text-xs">
+                            {hasMedia ? (
+                              <span className="text-green-400">
+                                {mediaState.type === 'video' ? '📹 Video' : '📷 Image'} • {hasFeedback ? 'Feedback Ready' : 'Analyzing...'}
+                              </span>
+                            ) : (
+                              <span className="text-[#666]">No media</span>
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {/* Expand Arrow */}
+                      {hasFeedback && (
+                        <ChevronDown className={`w-5 h-5 text-[#888] transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                      )}
+                    </button>
+                    
+                    {/* Expanded Feedback - THE FORMAT YOU HAD */}
+                    {isExpanded && hasFeedback && feedback && (
+                      <div className="p-4 pt-0 border-t border-[#3a3a3a] space-y-4">
+                        {/* WRONG DRILL ALERT */}
+                        {feedback.isCorrectDrill === false && (
+                          <div className="bg-red-600/20 border-2 border-red-500 rounded-xl p-4 animate-pulse">
+                            <div className="flex items-center gap-3 mb-2">
+                              <AlertTriangle className="w-8 h-8 text-red-500" />
+                              <span className="text-red-500 font-black text-lg uppercase">WRONG DRILL!</span>
+                            </div>
+                            <p className="text-white font-bold mb-2">
+                              {feedback.wrongDrillMessage || `This is not the ${exercise.name} drill.`}
+                            </p>
+                            {feedback.whatISee && (
+                              <p className="text-[#888] text-sm mb-2">
+                                <span className="text-red-400">What I see:</span> {feedback.whatISee}
+                              </p>
+                            )}
+                            <p className="text-yellow-400 text-sm font-bold">
+                              Please record yourself doing the correct drill: {exercise.name}
+                            </p>
+                          </div>
+                        )}
+                        
+                        {/* Coach Says */}
+                        <div className="bg-[#1a1a1a] rounded-xl p-4 border-l-4 border-[#FFD700]">
+                          <div className="flex items-center gap-3 mb-3">
+                            <img 
+                              src="/icons/coach-feedback.png" 
+                              alt="Coach" 
+                              className="w-12 h-12 object-contain"
+                              style={{ filter: 'invert(1) brightness(2)' }}
+                            />
+                            <span className="text-[#FFD700] font-bold text-lg uppercase">Coach Says</span>
+                          </div>
+                          <p className="text-[#E5E5E5] text-sm italic">&quot;{feedback.coachSays}&quot;</p>
+                        </div>
+                        
+                        {/* Priority Focus - FIX THIS FIRST */}
+                        {feedback.priorityFocus && (
+                          <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
+                            <h4 className="text-red-400 font-bold text-sm uppercase mb-2 flex items-center gap-2">
+                              <AlertTriangle className="w-4 h-4" />
+                              FIX THIS FIRST
+                            </h4>
+                            <p className="text-white font-bold text-sm mb-1">{feedback.priorityFocus.issue}</p>
+                            <p className="text-[#888] text-xs mb-2">
+                              <span className="text-red-400">Why:</span> {feedback.priorityFocus.why}
+                            </p>
+                            <p className="text-green-400 text-xs">
+                              <span className="text-white">Fix:</span> {feedback.priorityFocus.howToFix}
+                            </p>
+                            {feedback.priorityFocus.cue && (
+                              <div className="mt-2 bg-[#FFD700]/10 rounded-lg px-3 py-2">
+                                <span className="text-[#FFD700] text-xs font-bold">💡 Quick Cue: </span>
+                                <span className="text-white text-xs">{feedback.priorityFocus.cue}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        
+                        {/* Coaching Points Breakdown */}
+                        {feedback.coachingPointResults && feedback.coachingPointResults.length > 0 && (
+                          <div className="space-y-2">
+                            <h4 className="text-[#888] font-bold text-xs uppercase">Coaching Points</h4>
+                            {feedback.coachingPointResults.map((point: any, i: number) => (
+                              <div key={i} className={`p-3 rounded-lg border ${
+                                point.status === 'good' ? 'bg-green-500/10 border-green-500/30' :
+                                point.status === 'needs-work' ? 'bg-yellow-500/10 border-yellow-500/30' :
+                                'bg-red-500/10 border-red-500/30'
+                              }`}>
+                                <div className="flex items-center gap-2 mb-1">
+                                  {point.status === 'good' ? <Check className="w-4 h-4 text-green-400" /> :
+                                   point.status === 'needs-work' ? <AlertTriangle className="w-4 h-4 text-yellow-400" /> :
+                                   <X className="w-4 h-4 text-red-400" />}
+                                  <span className="text-white text-sm font-bold">{point.point}</span>
+                                </div>
+                                <p className="text-[#888] text-xs ml-6">{point.observation}</p>
+                                {point.quickFix && point.status !== 'good' && (
+                                  <p className="text-green-400 text-xs ml-6 mt-1">→ {point.quickFix}</p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {/* Keep Doing This */}
+                        {feedback.reinforcement && feedback.reinforcement.length > 0 && (
+                          <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4">
+                            <h4 className="text-green-400 font-bold text-sm uppercase mb-2 flex items-center gap-2">
+                              <Check className="w-4 h-4" />
+                              KEEP DOING THIS
+                            </h4>
+                            {feedback.reinforcement.map((r: any, i: number) => (
+                              <p key={i} className="text-white text-sm">✓ {r.point}</p>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {/* Deep Analysis Button */}
+                        {mediaState.type === 'video' && mediaState.analysisType !== 'deep' && (
+                          <button
+                            onClick={async () => {
+                              if (!mediaState.blob) return
+                              setIsAnalyzing(true)
+                              
+                              try {
+                                const hybridApiUrl = process.env.NEXT_PUBLIC_HYBRID_API_URL || 'http://localhost:5001'
+                                
+                                const formData = new FormData()
+                                formData.append('video', mediaState.blob, 'drill-video.webm')
+                                formData.append('drill_id', exercise.id)
+                                formData.append('drill_name', exercise.name)
+                                formData.append('drill_context', exercise.description)
+                                formData.append('drill_tips', JSON.stringify(exercise.tips))
+                                formData.append('focus_area', exercise.focusArea)
+                                
+                                const response = await fetch(`${hybridApiUrl}/analyze-video`, {
+                                  method: 'POST',
+                                  body: formData,
+                                })
+                                
+                                if (response.ok) {
+                                  const result = await response.json()
+                                  
+                                  const deepAnalysis: CoachAnalysisResult = {
+                                    overallGrade: result.grade || (result.form_score >= 90 ? 'A' : result.form_score >= 80 ? 'B' : result.form_score >= 70 ? 'C' : result.form_score >= 60 ? 'D' : 'F'),
+                                    gradeDescription: result.summary || 'Deep biomechanical analysis complete.',
+                                    coachSays: result.coach_feedback || `Deep analysis: Your ${exercise.focusArea} mechanics ${result.form_score >= 80 ? 'look solid' : 'need work'}.`,
+                                    priorityFocus: {
+                                      issue: result.primary_issue || 'Focus on consistency',
+                                      why: result.issue_explanation || 'Most impactful area.',
+                                      howToFix: result.fix_instruction || 'Practice with intention.',
+                                      drillToHelp: result.recommended_drill || exercise.name,
+                                      cue: result.quick_cue || 'Stay focused.'
+                                    },
+                                    coachingPointResults: exercise.tips.map((tip, idx) => ({
+                                      point: tip,
+                                      status: result.tip_scores?.[idx] >= 70 ? 'good' : result.tip_scores?.[idx] >= 50 ? 'needs-work' : 'poor',
+                                      observation: result.tip_observations?.[idx] || 'Analyzed via deep system.',
+                                      quickFix: result.tip_fixes?.[idx] || 'Continue practicing.'
+                                    })),
+                                    reinforcement: result.positives?.map((p: string) => ({ point: p, why: 'Deep analysis.' })) || [],
+                                    nextSteps: {
+                                      immediate: result.immediate_action || 'Review and focus.',
+                                      thisWeek: result.weekly_goal || 'Practice 3-4 times.',
+                                      progression: result.progression || 'Increase difficulty.'
+                                    }
+                                  }
+                                  
+                                  setDrillMediaMap(prev => ({
+                                    ...prev,
+                                    [drillKey]: {
+                                      ...prev[drillKey],
+                                      hasCoachFeedback: true,
+                                      coachFeedback: deepAnalysis,
+                                      analysisType: 'deep'
+                                    }
+                                  }))
+                                }
+                              } catch (err) {
+                                console.error('Deep analysis failed:', err)
+                                setAnalysisError('Deep analysis failed. Make sure hybrid system is running.')
+                              } finally {
+                                setIsAnalyzing(false)
+                              }
+                            }}
+                            disabled={isAnalyzing}
+                            className="w-full py-3 rounded-xl bg-[#2a2a2a] border border-blue-500/50 text-blue-400 font-bold flex items-center justify-center gap-2 hover:bg-blue-500/10 disabled:opacity-50"
+                          >
+                            <Brain className="w-5 h-5" />
+                            UPGRADE TO DEEP ANALYSIS
+                            <span className="text-[10px] bg-blue-500/20 px-2 py-0.5 rounded">HYBRID</span>
+                          </button>
+                        )}
+                        
+                        {mediaState.analysisType === 'deep' && (
+                          <div className="text-center text-blue-400 text-xs flex items-center justify-center gap-2">
+                            <Brain className="w-4 h-4" />
+                            Deep Analysis Complete
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+            
+            {/* Footer */}
+            <div className="p-6 border-t border-[#3a3a3a] bg-[#1a1a1a]">
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowWorkoutSummary(false)}
+                  className="flex-1 py-3 rounded-xl bg-[#2a2a2a] text-[#888] font-bold hover:text-white transition-colors"
+                >
+                  BACK TO WORKOUT
+                </button>
+                <button
+                  onClick={finishWorkout}
+                  className="flex-1 py-3 rounded-xl bg-gradient-to-r from-green-500 to-green-600 text-white font-bold hover:brightness-110 transition-all flex items-center justify-center gap-2"
+                >
+                  <Check className="w-5 h-5" />
+                  FINISH & SAVE
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -4088,6 +5280,19 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
   // Drill explanation popup state
   const [selectedDrillForExplanation, setSelectedDrillForExplanation] = useState<Exercise | null>(null)
   
+  // Per-drill media state - key is "workoutId-drillIndex"
+  const [drillMediaExpanded, setDrillMediaExpanded] = useState<string | null>(null) // Which drill's dropdown is open
+  const [drillMediaMap, setDrillMediaMap] = useState<Record<string, {
+    type: 'video' | 'image' | 'none' | null
+    blob?: Blob
+    url?: string
+    hasCoachFeedback?: boolean
+  }>>({})
+  
+  // File input refs for per-drill uploads
+  const drillFileInputRef = useRef<HTMLInputElement>(null)
+  const [currentDrillForUpload, setCurrentDrillForUpload] = useState<string | null>(null)
+  
   // Add workout picker modal state
   const [showAddWorkoutPicker, setShowAddWorkoutPicker] = useState(false)
   const [addWorkoutTargetDate, setAddWorkoutTargetDate] = useState<Date | null>(null)
@@ -4125,6 +5330,30 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
       console.error('Error saving workouts to localStorage:', error)
     }
   }, [savedWorkouts])
+  
+  // Load scheduled workouts from localStorage on mount
+  useEffect(() => {
+    try {
+      const storedScheduled = localStorage.getItem('basketball-scheduled-workouts')
+      if (storedScheduled) {
+        const parsed = JSON.parse(storedScheduled)
+        if (Array.isArray(parsed)) {
+          setScheduledWorkouts(parsed)
+        }
+      }
+    } catch (error) {
+      console.error('Error loading scheduled workouts from localStorage:', error)
+    }
+  }, [])
+  
+  // Save scheduled workouts to localStorage when they change
+  useEffect(() => {
+    try {
+      localStorage.setItem('basketball-scheduled-workouts', JSON.stringify(scheduledWorkouts))
+    } catch (error) {
+      console.error('Error saving scheduled workouts to localStorage:', error)
+    }
+  }, [scheduledWorkouts])
   
   // Show notification when there's a workout scheduled for today
   useEffect(() => {
@@ -4371,12 +5600,14 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
     const newWorkout = generateWorkout(preferences.preferredDuration, focusAreas, preferences.ageLevel, preferences.drillCount)
     addWorkoutToDate(addWorkoutTargetDate, newWorkout)
     setShowAddWorkoutPicker(false)
+    setShowDateDetailModal(false) // Close the date detail modal too
     setAddWorkoutTargetDate(null)
   }
   
   // Open workout builder for custom workout creation
   const openWorkoutBuilderForDate = () => {
     setShowAddWorkoutPicker(false)
+    setShowDateDetailModal(false) // Close the date detail modal too
     setShowWorkoutBuilder(true)
     // The workout builder will use addWorkoutTargetDate when scheduling
   }
@@ -4680,8 +5911,52 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
     )
   }
   
+  // Handle per-drill file upload
+  const handleDrillFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !currentDrillForUpload) return
+    
+    const isVideo = file.type.startsWith('video/')
+    const isImage = file.type.startsWith('image/')
+    
+    if (!isVideo && !isImage) {
+      alert('Please upload a video or image file')
+      return
+    }
+    
+    const url = URL.createObjectURL(file)
+    const blob = file
+    
+    setDrillMediaMap(prev => ({
+      ...prev,
+      [currentDrillForUpload]: {
+        type: isVideo ? 'video' : 'image',
+        blob,
+        url,
+        hasCoachFeedback: false
+      }
+    }))
+    
+    setDrillMediaExpanded(null)
+    setCurrentDrillForUpload(null)
+    
+    // Reset the input
+    if (drillFileInputRef.current) {
+      drillFileInputRef.current.value = ''
+    }
+  }
+  
   return (
     <div className="space-y-6">
+      {/* Hidden file input for per-drill uploads */}
+      <input
+        ref={drillFileInputRef}
+        type="file"
+        accept="video/*,image/*"
+        className="hidden"
+        onChange={handleDrillFileUpload}
+      />
+      
       {/* Inspirational Notification Banner - Only shows when there's a workout scheduled for today */}
       {showNotificationBanner && currentNotification && (
         <div className="bg-gradient-to-r from-[#FFD700]/20 via-[#FFA500]/20 to-[#FFD700]/20 rounded-xl p-4 border border-[#FFD700]/30 animate-pulse">
@@ -5107,7 +6382,11 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
           {getDaysInView.map((date, i) => {
             const isToday = date.toDateString() === new Date().toDateString()
             const isCurrentMonth = date.getMonth() === currentDate.getMonth()
-            const workout = getWorkoutForDate(date)
+            const workouts = getWorkoutsForDate(date) // Get ALL workouts for this date
+            const workoutCount = workouts.length
+            const completedCount = workouts.filter(w => w.completed).length
+            const allCompleted = workoutCount > 0 && completedCount === workoutCount
+            const someCompleted = completedCount > 0 && completedCount < workoutCount
             const isPast = date < new Date(new Date().setHours(0, 0, 0, 0))
             
             return (
@@ -5122,10 +6401,10 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                 } ${
                   isToday
                     ? 'bg-[#FFD700]/20 border-2 border-[#FFD700]'
-                    : workout && !workout.completed
-                      ? 'bg-blue-500/10 border border-blue-500/30 hover:border-blue-500'
-                      : workout?.completed
-                        ? 'bg-green-500/10 border border-green-500/30'
+                    : allCompleted
+                      ? 'bg-green-500/10 border border-green-500/30'
+                      : workoutCount > 0
+                        ? 'bg-green-500/10 border border-green-500/30 hover:border-green-500'
                         : 'bg-[#2a2a2a] border border-[#3a3a3a] hover:border-[#4a4a4a]'
                 } ${!isCurrentMonth && viewMode === 'month' ? 'opacity-40' : ''}`}
               >
@@ -5136,33 +6415,43 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                     {date.getDate()}
                   </span>
                   <div className="flex items-center gap-1">
-                    {workout?.completed && (
+                    {allCompleted && (
                       <Check className="w-4 h-4 text-green-400" />
                     )}
-                    {workout && (
+                    {workoutCount > 0 && (
                       <Edit3 className="w-3 h-3 text-[#666] hover:text-[#FFD700]" />
                     )}
                   </div>
                 </div>
                 
-                {/* Show workout info only if there's an actual workout scheduled */}
-                {workout && !isPast && !workout.completed && (
-                  <div className="w-full mt-1 py-1.5 rounded-lg bg-blue-500/20 text-blue-400 text-xs font-bold flex items-center justify-center gap-1">
-                    <Dumbbell className="w-3 h-3" />
-                    WORKOUT
+                {/* Show workout count badge - GREEN with basketball icon */}
+                {workoutCount > 0 && !isPast && !allCompleted && (
+                  <div className="w-full mt-1 py-1.5 rounded-lg bg-green-500/20 text-green-400 text-xs font-bold flex items-center justify-center gap-1">
+                    <CircleDot className="w-3 h-3" />
+                    {workoutCount} WORKOUT{workoutCount > 1 ? 'S' : ''}
                   </div>
                 )}
                 
-                {workout?.completed && (
+                {/* Show completion status with count */}
+                {allCompleted && (
                   <div className="text-green-400 text-xs text-center mt-1 flex items-center justify-center gap-1">
                     <Check className="w-3 h-3" />
-                    DONE
+                    {workoutCount > 1 ? `${workoutCount} DONE` : 'DONE'}
                   </div>
                 )}
                 
-                {isPast && workout && !workout.completed && (
+                {/* Partial completion */}
+                {someCompleted && !isPast && (
+                  <div className="text-yellow-400 text-xs text-center mt-1 flex items-center justify-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {completedCount}/{workoutCount} DONE
+                  </div>
+                )}
+                
+                {/* Missed workouts */}
+                {isPast && workoutCount > 0 && !allCompleted && (
                   <div className="text-[#666] text-xs text-center mt-1 uppercase">
-                    Missed
+                    {completedCount > 0 ? `${completedCount}/${workoutCount} Done` : `${workoutCount} Missed`}
                   </div>
                 )}
               </div>
@@ -5868,13 +7157,9 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                 
                 return (
                   <>
-                    {/* Status Summary - Only show if there are actual workouts */}
+                    {/* Status Summary - Only show if there are actual workouts - ALL GREEN */}
                     {workouts.length > 0 && (
-                      <div className={`p-3 rounded-xl ${
-                        completedCount > 0 && completedCount === workouts.length
-                          ? 'bg-green-500/10 border border-green-500/30' 
-                          : 'bg-blue-500/10 border border-blue-500/30'
-                      }`}>
+                      <div className="p-3 rounded-xl bg-green-500/10 border border-green-500/30">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             {completedCount > 0 && completedCount === workouts.length ? (
@@ -5884,8 +7169,8 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                               </>
                             ) : (
                               <>
-                                <Dumbbell className="w-5 h-5 text-blue-400" />
-                                <span className="text-blue-400 font-bold uppercase">{workouts.length} WORKOUT{workouts.length > 1 ? 'S' : ''} SCHEDULED</span>
+                                <CircleDot className="w-5 h-5 text-green-400" />
+                                <span className="text-green-400 font-bold uppercase">{workouts.length} WORKOUT{workouts.length > 1 ? 'S' : ''} SCHEDULED</span>
                               </>
                             )}
                           </div>
@@ -5905,21 +7190,31 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                         {workouts.map((scheduledWorkout, workoutIndex) => (
                           <div 
                             key={scheduledWorkout.id}
-                            className={`rounded-xl border overflow-hidden ${
+                            className={`rounded-xl overflow-hidden ${
                               scheduledWorkout.completed 
-                                ? 'bg-green-500/5 border-green-500/30' 
-                                : 'bg-[#2a2a2a] border-[#3a3a3a]'
+                                ? 'border-2 border-green-500/50 bg-green-500/5' 
+                                : 'border-2 border-[#FFD700] bg-[#1a1a1a]'
                             }`}
                           >
-                            {/* Workout Header */}
-                            <div className="p-3 flex items-center justify-between border-b border-[#3a3a3a]">
+                            {/* Workout Header - Yellow/Gold header bar to distinguish */}
+                            <div className={`p-3 flex items-center justify-between ${
+                              scheduledWorkout.completed 
+                                ? 'bg-green-500/20 border-b border-green-500/30' 
+                                : 'bg-[#FFD700]/20 border-b border-[#FFD700]/30'
+                            }`}>
                               <div className="flex items-center gap-3">
-                                <span className="w-6 h-6 rounded-full bg-[#FFD700] text-[#1a1a1a] flex items-center justify-center text-xs font-bold">
+                                <span className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-black shadow-lg ${
+                                  scheduledWorkout.completed 
+                                    ? 'bg-green-500 text-white' 
+                                    : 'bg-[#FFD700] text-[#1a1a1a]'
+                                }`}>
                                   {workoutIndex + 1}
                                 </span>
                                 <div>
-                                  <h5 className="font-bold text-[#E5E5E5] uppercase text-sm">
-                                    {scheduledWorkout.workout.name.toUpperCase()}
+                                  <h5 className={`font-black uppercase text-base ${
+                                    scheduledWorkout.completed ? 'text-green-400' : 'text-[#FFD700]'
+                                  }`}>
+                                    WORKOUT {workoutIndex + 1}: {scheduledWorkout.workout.name.toUpperCase()}
                                   </h5>
                                   <div className="flex items-center gap-2 text-xs text-[#888]">
                                     <span className="flex items-center gap-1">
@@ -5931,8 +7226,8 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                                     {scheduledWorkout.completed && (
                                       <>
                                         <span>•</span>
-                                        <span className="text-green-400 flex items-center gap-1">
-                                          <Check className="w-3 h-3" /> DONE
+                                        <span className="text-green-400 flex items-center gap-1 font-bold">
+                                          <Check className="w-3 h-3" /> COMPLETED
                                         </span>
                                       </>
                                     )}
@@ -5964,46 +7259,179 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                             
                             {/* Exercise List */}
                             <div className="p-3 space-y-2">
-                              <p className="text-xs text-[#888] uppercase tracking-wider mb-2">DRILLS IN THIS WORKOUT:</p>
-                              {scheduledWorkout.workout.exercises.map((exercise, exerciseIndex) => (
-                                <div 
-                                  key={`${scheduledWorkout.id}-${exerciseIndex}`}
-                                  className="flex items-center justify-between p-2 bg-[#1a1a1a] rounded-lg group"
-                                >
-                                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                                    <span className="w-5 h-5 rounded-full bg-[#3a3a3a] text-[#888] flex items-center justify-center text-[10px] font-bold flex-shrink-0">
-                                      {exerciseIndex + 1}
-                                    </span>
-                                    <div className="min-w-0">
-                                      <p className="text-[#E5E5E5] text-sm font-medium truncate uppercase">{exercise.name.toUpperCase()}</p>
-                                      <p className="text-[#666] text-xs flex items-center gap-2">
-                                        <span className="flex items-center gap-1">
-                                          <Clock className="w-3 h-3" />
-                                          {Math.ceil(exercise.duration / 60)} MIN
+                              <p className="text-xs text-[#888] uppercase tracking-wider mb-2">DRILLS IN THIS WORKOUT: <span className="text-[#FFD700]">(Click drill name for instructions)</span></p>
+                              {scheduledWorkout.workout.exercises.map((exercise, exerciseIndex) => {
+                                const drillKey = `${scheduledWorkout.id}-${exerciseIndex}`
+                                const drillMedia = drillMediaMap[drillKey]
+                                const isExpanded = drillMediaExpanded === drillKey
+                                
+                                return (
+                                  <div 
+                                    key={drillKey}
+                                    className="bg-[#1a1a1a] rounded-lg border border-[#3a3a3a] overflow-hidden"
+                                  >
+                                    {/* Drill Header Row */}
+                                    <div className="flex items-center justify-between p-2 group">
+                                      <div 
+                                        className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer hover:opacity-80"
+                                        onClick={() => setSelectedDrillForExplanation(exercise)}
+                                      >
+                                        <span className="w-5 h-5 rounded-full bg-[#3a3a3a] text-[#888] flex items-center justify-center text-[10px] font-bold flex-shrink-0">
+                                          {exerciseIndex + 1}
                                         </span>
-                                        <span className={`px-1.5 py-0.5 rounded text-[10px] uppercase ${
-                                          exercise.focusArea === 'elbow' ? 'bg-blue-500/20 text-blue-400' :
-                                          exercise.focusArea === 'release' ? 'bg-green-500/20 text-green-400' :
-                                          exercise.focusArea === 'follow-through' ? 'bg-purple-500/20 text-purple-400' :
-                                          exercise.focusArea === 'balance' ? 'bg-orange-500/20 text-orange-400' :
-                                          'bg-[#3a3a3a] text-[#888]'
-                                        }`}>
-                                          {exercise.focusArea.toUpperCase()}
-                                        </span>
-                                      </p>
+                                        <div className="min-w-0">
+                                          <div className="flex items-center gap-2">
+                                            <p className="text-[#E5E5E5] text-sm font-medium truncate uppercase hover:text-[#FFD700] transition-colors">{exercise.name.toUpperCase()}</p>
+                                            {/* Media indicator */}
+                                            {drillMedia?.type === 'video' && <Video className="w-3 h-3 text-green-400" />}
+                                            {drillMedia?.type === 'image' && <Camera className="w-3 h-3 text-blue-400" />}
+                                            {drillMedia?.type === 'none' && <span className="text-[10px] text-[#666]">NO INPUT</span>}
+                                            {drillMedia?.hasCoachFeedback && (
+                                              <img src="/icons/coach-feedback.png" alt="Coach" className="w-4 h-4" style={{ filter: 'invert(1) brightness(2)' }} />
+                                            )}
+                                          </div>
+                                          <p className="text-[#666] text-xs flex items-center gap-2">
+                                            <span className="flex items-center gap-1">
+                                              <Clock className="w-3 h-3" />
+                                              {Math.ceil(exercise.duration / 60)} MIN
+                                            </span>
+                                            <span className={`px-1.5 py-0.5 rounded text-[10px] uppercase ${
+                                              exercise.focusArea === 'elbow' ? 'bg-blue-500/20 text-blue-400' :
+                                              exercise.focusArea === 'release' ? 'bg-green-500/20 text-green-400' :
+                                              exercise.focusArea === 'follow-through' ? 'bg-purple-500/20 text-purple-400' :
+                                              exercise.focusArea === 'balance' ? 'bg-orange-500/20 text-orange-400' :
+                                              'bg-[#3a3a3a] text-[#888]'
+                                            }`}>
+                                              {exercise.focusArea.toUpperCase()}
+                                            </span>
+                                          </p>
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center gap-1">
+                                        {/* Expand/Collapse Media Options Button */}
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation()
+                                            setDrillMediaExpanded(isExpanded ? null : drillKey)
+                                          }}
+                                          className={`p-1.5 rounded transition-colors ${
+                                            isExpanded 
+                                              ? 'bg-[#FFD700] text-[#1a1a1a]' 
+                                              : 'bg-[#2a2a2a] text-[#888] hover:text-[#FFD700] hover:bg-[#3a3a3a]'
+                                          }`}
+                                          title="Media Options"
+                                        >
+                                          {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                        </button>
+                                        {!scheduledWorkout.completed && (
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation()
+                                              deleteExerciseFromWorkout(scheduledWorkout.id, exerciseIndex)
+                                            }}
+                                            className="p-1.5 rounded text-[#666] hover:text-red-400 hover:bg-red-500/10 transition-colors flex-shrink-0"
+                                            title="Remove Drill"
+                                          >
+                                            <X className="w-3 h-3" />
+                                          </button>
+                                        )}
+                                      </div>
                                     </div>
+                                    
+                                    {/* Per-Drill Media Options Dropdown */}
+                                    {isExpanded && (
+                                      <div className="border-t border-[#3a3a3a] p-3 bg-[#2a2a2a]/50 space-y-2">
+                                        <p className="text-xs text-[#888] uppercase tracking-wider mb-2">ADD MEDIA FOR THIS DRILL:</p>
+                                        
+                                        {/* Option 1: Record from Camera */}
+                                        <button
+                                          onClick={() => {
+                                            // TODO: Implement camera recording for this drill
+                                            alert('Camera recording coming soon! For now, please upload a video.')
+                                          }}
+                                          className="w-full flex items-center gap-3 p-3 rounded-lg bg-[#1a1a1a] border border-[#3a3a3a] hover:border-[#FFD700]/50 hover:bg-[#2a2a2a] transition-all text-left"
+                                        >
+                                          <div className="w-10 h-10 rounded-lg bg-red-500/20 flex items-center justify-center">
+                                            <Camera className="w-5 h-5 text-red-400" />
+                                          </div>
+                                          <div>
+                                            <p className="text-[#E5E5E5] font-medium text-sm">RECORD FROM CAMERA</p>
+                                            <p className="text-[#666] text-xs">Record yourself doing this drill</p>
+                                          </div>
+                                        </button>
+                                        
+                                        {/* Option 2: Upload Video/Image */}
+                                        <button
+                                          onClick={() => {
+                                            setCurrentDrillForUpload(drillKey)
+                                            drillFileInputRef.current?.click()
+                                          }}
+                                          className="w-full flex items-center gap-3 p-3 rounded-lg bg-[#1a1a1a] border border-[#3a3a3a] hover:border-[#FFD700]/50 hover:bg-[#2a2a2a] transition-all text-left"
+                                        >
+                                          <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                                            <Upload className="w-5 h-5 text-blue-400" />
+                                          </div>
+                                          <div>
+                                            <p className="text-[#E5E5E5] font-medium text-sm">UPLOAD VIDEO OR IMAGE</p>
+                                            <p className="text-[#666] text-xs">Upload a file from your device</p>
+                                          </div>
+                                        </button>
+                                        
+                                        {/* Option 3: No Input */}
+                                        <button
+                                          onClick={() => {
+                                            setDrillMediaMap(prev => ({
+                                              ...prev,
+                                              [drillKey]: { type: 'none' }
+                                            }))
+                                            setDrillMediaExpanded(null)
+                                          }}
+                                          className="w-full flex items-center gap-3 p-3 rounded-lg bg-[#1a1a1a] border border-[#3a3a3a] hover:border-[#666] hover:bg-[#2a2a2a] transition-all text-left"
+                                        >
+                                          <div className="w-10 h-10 rounded-lg bg-[#3a3a3a] flex items-center justify-center">
+                                            <X className="w-5 h-5 text-[#666]" />
+                                          </div>
+                                          <div>
+                                            <p className="text-[#888] font-medium text-sm">NO INPUT - SKIP</p>
+                                            <p className="text-[#666] text-xs">No coach feedback for this drill</p>
+                                          </div>
+                                        </button>
+                                        
+                                        {/* Show current media if exists */}
+                                        {drillMedia?.type && drillMedia.type !== 'none' && drillMedia.url && (
+                                          <div className="mt-3 p-3 rounded-lg bg-green-500/10 border border-green-500/30">
+                                            <div className="flex items-center justify-between">
+                                              <div className="flex items-center gap-2">
+                                                {drillMedia.type === 'video' ? (
+                                                  <Video className="w-4 h-4 text-green-400" />
+                                                ) : (
+                                                  <Camera className="w-4 h-4 text-green-400" />
+                                                )}
+                                                <span className="text-green-400 text-sm font-medium">
+                                                  {drillMedia.type === 'video' ? 'Video' : 'Image'} uploaded
+                                                </span>
+                                              </div>
+                                              <button
+                                                onClick={() => {
+                                                  // Clear the media
+                                                  setDrillMediaMap(prev => {
+                                                    const newMap = { ...prev }
+                                                    delete newMap[drillKey]
+                                                    return newMap
+                                                  })
+                                                }}
+                                                className="text-red-400 text-xs hover:underline"
+                                              >
+                                                Remove
+                                              </button>
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
                                   </div>
-                                  {!scheduledWorkout.completed && (
-                                    <button
-                                      onClick={() => deleteExerciseFromWorkout(scheduledWorkout.id, exerciseIndex)}
-                                      className="p-1.5 rounded text-[#666] hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-                                      title="Remove Drill"
-                                    >
-                                      <X className="w-3 h-3" />
-                                    </button>
-                                  )}
-                                </div>
-                              ))}
+                                )
+                              })}
                               
                               {/* Add Drill Button */}
                               {!scheduledWorkout.completed && (
@@ -6238,8 +7666,8 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                   <button
                     onClick={() => {
                       setShowAddWorkoutPicker(false)
-                      // Switch to "Pick My Drills" mode
-                      setWorkoutMode('custom')
+                      setShowDateDetailModal(false) // Close the date detail modal
+                      setShowWorkoutBuilder(true) // Open the workout builder with drill pool
                     }}
                     className="w-full bg-[#2a2a2a] rounded-xl p-4 border border-[#3a3a3a] hover:border-[#FFD700]/50 transition-all text-left group"
                   >

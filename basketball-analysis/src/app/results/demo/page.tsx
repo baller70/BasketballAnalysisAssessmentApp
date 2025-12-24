@@ -5406,7 +5406,9 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
   const [sessions, setSessions] = useState<AnalysisSession[]>([])
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
   const [isLoadingSessions, setIsLoadingSessions] = useState(true)
-  const [mediaTypeFilter, setMediaTypeFilter] = useState<'all' | 'image' | 'video'>('all')
+  const [mediaTypeFilter, setMediaTypeFilter] = useState<'all' | 'image' | 'video' | 'drills'>('all')
+  const [drillFeedback, setDrillFeedback] = useState<any[]>([])
+  const [isLoadingDrills, setIsLoadingDrills] = useState(false)
   
   // Load sessions from localStorage on mount
   useEffect(() => {
@@ -5419,9 +5421,26 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
     setIsLoadingSessions(false)
   }, [])
   
+  // Load drill feedback from database when Drills tab is selected
+  useEffect(() => {
+    if (mediaTypeFilter === 'drills' && drillFeedback.length === 0) {
+      setIsLoadingDrills(true)
+      fetch('/api/drill-feedback')
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.submissions) {
+            setDrillFeedback(data.submissions)
+          }
+        })
+        .catch(err => console.error('Failed to load drill feedback:', err))
+        .finally(() => setIsLoadingDrills(false))
+    }
+  }, [mediaTypeFilter, drillFeedback.length])
+  
   // Filter sessions by media type
   const filteredSessions = useMemo(() => {
     if (mediaTypeFilter === 'all') return sessions
+    if (mediaTypeFilter === 'drills') return [] // Drills are handled separately
     return sessions.filter(s => (s.mediaType || 'image') === mediaTypeFilter)
   }, [sessions, mediaTypeFilter])
   
@@ -5635,6 +5654,17 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
                 <Video className="w-3 h-3" />
                 Video ({videoSessions.length})
               </button>
+              <button
+                onClick={() => setMediaTypeFilter('drills')}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold uppercase transition-colors flex items-center gap-1 ${
+                  mediaTypeFilter === 'drills' 
+                    ? 'bg-[#22c55e] text-white' 
+                    : 'text-[#888] hover:text-white'
+                }`}
+              >
+                <Dumbbell className="w-3 h-3" />
+                Drills ({drillFeedback.length})
+              </button>
             </div>
             
             {/* Date Dropdown - Quick Jump */}
@@ -5652,8 +5682,142 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
           </div>
         </div>
 
+        {/* DRILLS TAB CONTENT */}
+        {mediaTypeFilter === 'drills' && (
+          <div className="space-y-4">
+            {isLoadingDrills ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin w-8 h-8 border-2 border-[#FFD700] border-t-transparent rounded-full" />
+                <span className="ml-3 text-[#888]">Loading drill feedback...</span>
+              </div>
+            ) : drillFeedback.length === 0 ? (
+              <div className="text-center py-12 bg-[#2a2a2a] rounded-xl border border-[#3a3a3a]">
+                <Dumbbell className="w-12 h-12 text-[#4a4a4a] mx-auto mb-4" />
+                <h3 className="text-[#888] font-bold mb-2">No Drill Feedback Yet</h3>
+                <p className="text-[#666] text-sm">Complete workouts with video/image uploads to see coach feedback here.</p>
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {drillFeedback.map((drill: any) => (
+                  <div 
+                    key={drill.id} 
+                    className="bg-[#2a2a2a] rounded-xl border border-[#3a3a3a] overflow-hidden"
+                  >
+                    <div className="p-4 flex items-start gap-4">
+                      {/* Grade Badge */}
+                      <div className={`w-14 h-14 rounded-xl flex items-center justify-center text-2xl font-black flex-shrink-0 ${
+                        drill.overallGrade === 'A' ? 'bg-green-500/20 text-green-400' :
+                        drill.overallGrade === 'B' ? 'bg-blue-500/20 text-blue-400' :
+                        drill.overallGrade === 'C' ? 'bg-yellow-500/20 text-yellow-400' :
+                        drill.overallGrade === 'D' ? 'bg-orange-500/20 text-orange-400' :
+                        'bg-red-500/20 text-red-400'
+                      }`}>
+                        {drill.overallGrade || '?'}
+                      </div>
+                      
+                      {/* Drill Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="text-white font-bold uppercase truncate">{drill.drillName}</h4>
+                          <span className={`text-[10px] px-2 py-0.5 rounded ${
+                            drill.mediaType === 'video' ? 'bg-red-500/20 text-red-400' : 'bg-blue-500/20 text-blue-400'
+                          }`}>
+                            {drill.mediaType === 'video' ? '📹 Video' : '📷 Image'}
+                          </span>
+                          {drill.analysisType && (
+                            <span className={`text-[10px] px-2 py-0.5 rounded ${
+                              drill.analysisType === 'deep' ? 'bg-purple-500/20 text-purple-400' : 'bg-[#FFD700]/20 text-[#FFD700]'
+                            }`}>
+                              {drill.analysisType === 'deep' ? 'DEEP' : 'QUICK'}
+                            </span>
+                          )}
+                        </div>
+                        
+                        <p className="text-[#888] text-xs mb-2">
+                          {drill.workoutName && `${drill.workoutName} • `}
+                          {new Date(drill.createdAt).toLocaleDateString()}
+                        </p>
+                        
+                        {/* Coach Says */}
+                        {drill.coachSays && (
+                          <div className="bg-[#1a1a1a] rounded-lg p-3 border-l-2 border-[#FFD700]">
+                            <p className="text-[#E5E5E5] text-sm italic">&quot;{drill.coachSays}&quot;</p>
+                          </div>
+                        )}
+                        
+                        {/* Wrong Drill Warning */}
+                        {drill.isCorrectDrill === false && (
+                          <div className="mt-2 bg-red-500/10 border border-red-500/30 rounded-lg p-2">
+                            <p className="text-red-400 text-xs font-bold flex items-center gap-1">
+                              <AlertTriangle className="w-3 h-3" />
+                              Wrong drill detected
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Focus Area Badge */}
+                      {drill.focusArea && (
+                        <span className="text-[10px] px-2 py-1 rounded bg-[#3a3a3a] text-[#888] uppercase">
+                          {drill.focusArea}
+                        </span>
+                      )}
+                    </div>
+                    
+                    {/* Expandable Full Analysis */}
+                    {drill.coachAnalysis && (
+                      <details className="border-t border-[#3a3a3a]">
+                        <summary className="px-4 py-2 text-[#FFD700] text-xs font-bold uppercase cursor-pointer hover:bg-[#3a3a3a]/50">
+                          View Full Analysis
+                        </summary>
+                        <div className="p-4 space-y-3 bg-[#1a1a1a]">
+                          {/* Priority Focus */}
+                          {drill.coachAnalysis.priorityFocus && (
+                            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
+                              <p className="text-red-400 text-xs font-bold uppercase mb-1">Fix This First</p>
+                              <p className="text-white text-sm">{drill.coachAnalysis.priorityFocus.issue}</p>
+                              <p className="text-[#888] text-xs mt-1">{drill.coachAnalysis.priorityFocus.howToFix}</p>
+                            </div>
+                          )}
+                          
+                          {/* Coaching Points */}
+                          {drill.coachAnalysis.coachingPointEvaluations?.length > 0 && (
+                            <div className="space-y-2">
+                              <p className="text-[#888] text-xs font-bold uppercase">Coaching Points</p>
+                              {drill.coachAnalysis.coachingPointEvaluations.map((point: any, i: number) => (
+                                <div key={i} className={`p-2 rounded border ${
+                                  point.status === 'executing' ? 'bg-green-500/10 border-green-500/30' :
+                                  point.status === 'needs_work' ? 'bg-yellow-500/10 border-yellow-500/30' :
+                                  'bg-[#2a2a2a] border-[#3a3a3a]'
+                                }`}>
+                                  <p className="text-white text-xs font-bold">{point.coachingPoint}</p>
+                                  <p className="text-[#888] text-xs">{point.coachObservation}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          
+                          {/* Reinforcement */}
+                          {drill.coachAnalysis.reinforcement?.length > 0 && (
+                            <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
+                              <p className="text-green-400 text-xs font-bold uppercase mb-1">Keep Doing This</p>
+                              {drill.coachAnalysis.reinforcement.map((r: any, i: number) => (
+                                <p key={i} className="text-white text-sm">✓ {r.point}</p>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </details>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* CAROUSEL - Main Image with Prev/Next peeks */}
-        {allSessions.length > 0 && (
+        {mediaTypeFilter !== 'drills' && allSessions.length > 0 && (
           <div className="relative">
             {/* Carousel Container */}
             <div className="flex items-center gap-4">
