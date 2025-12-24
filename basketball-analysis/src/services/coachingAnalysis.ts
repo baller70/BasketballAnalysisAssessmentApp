@@ -21,6 +21,11 @@ export interface CoachingPointEvaluation {
 }
 
 export interface CoachAnalysis {
+  // Drill verification
+  isCorrectDrill: boolean
+  wrongDrillMessage?: string
+  whatISee?: string
+  
   // Overall assessment
   overallGrade: 'A' | 'B' | 'C' | 'D' | 'F'
   gradeDescription: string
@@ -257,14 +262,22 @@ export function generateCoachingPrompt(
 ): string {
   return `You are an experienced basketball shooting coach analyzing a player's drill execution.
 
-DRILL: ${drillName}
+DRILL THEY SHOULD BE DOING: ${drillName}
 DRILL PURPOSE: ${drillDescription}
 FOCUS AREA: ${focusArea}
 
 THE COACHING POINTS FOR THIS DRILL ARE:
 ${coachingPoints.map((point, i) => `${i + 1}. ${point}`).join('\n')}
 
-YOUR TASK: Look at this image and evaluate EACH coaching point.
+FIRST: Look at the image and determine if the player is ACTUALLY DOING THIS DRILL.
+- If they are doing a completely different activity (dribbling, running, stretching, etc.) when they should be shooting, CALL IT OUT
+- If the image doesn't show basketball activity at all, CALL IT OUT
+- Set "isCorrectDrill" to false if they're not doing the assigned drill
+
+YOUR TASK: 
+1. VERIFY they are doing the correct drill
+2. If yes, evaluate EACH coaching point
+3. If no, tell them to do the correct drill
 
 For each coaching point, determine:
 - Is the player EXECUTING it correctly?
@@ -273,12 +286,15 @@ For each coaching point, determine:
 
 Then provide:
 1. OVERALL GRADE (A/B/C/D/F) based on how well they're executing the coaching points
+   - If they're not doing the correct drill, grade is F
 2. For each coaching point that needs work, explain WHAT you see and HOW to fix it
 3. Identify the #1 PRIORITY - the single most important thing to fix first
 4. Identify what they're doing WELL - reinforce the positive
 
 RESPOND IN THIS EXACT JSON FORMAT:
 {
+  "isCorrectDrill": true | false,
+  "wrongDrillMessage": "Only if isCorrectDrill is false - explain what you see them doing instead and remind them what drill they should be doing",
   "overallGrade": "A" | "B" | "C" | "D" | "F",
   "whatISee": "Brief description of what the player is doing in the image",
   "coachingPointEvaluations": [
@@ -302,12 +318,13 @@ RESPOND IN THIS EXACT JSON FORMAT:
       "whyItMatters": "Why this is important"
     }
   ],
-  "coachSays": "A 2-3 sentence message that sounds like a real coach talking to the player"
+  "coachSays": "A 2-3 sentence message that sounds like a real coach talking to the player. If wrong drill, tell them to do the correct drill."
 }
 
 BE SPECIFIC. Don't say "good form" - say "your elbow is directly under the ball, that's exactly right."
 BE HONEST. If something needs work, say it clearly but constructively.
-BE A COACH. Sound like a real basketball coach, not a robot.`
+BE A COACH. Sound like a real basketball coach, not a robot.
+VERIFY THE DRILL. If they're not doing ${drillName}, call it out immediately.`
 }
 
 // ============================================
@@ -315,7 +332,10 @@ BE A COACH. Sound like a real basketball coach, not a robot.`
 // ============================================
 
 interface RawVisionResponse {
+  isCorrectDrill?: boolean
+  wrongDrillMessage?: string
   overallGrade?: 'A' | 'B' | 'C' | 'D' | 'F'
+  whatISee?: string
   coachingPointEvaluations?: CoachingPointEvaluation[]
   priorityFocus?: {
     issue: string
@@ -337,6 +357,42 @@ export function processCoachingResponse(
   coachingPoints: string[],
   focusArea: string
 ): CoachAnalysis {
+  // Check if they're doing the wrong drill
+  const isCorrectDrill = rawResponse.isCorrectDrill !== false
+  
+  // If wrong drill, return a special response
+  if (!isCorrectDrill) {
+    return {
+      isCorrectDrill: false,
+      wrongDrillMessage: rawResponse.wrongDrillMessage || `This doesn't look like the ${drillName} drill. Please record yourself doing the correct drill.`,
+      whatISee: rawResponse.whatISee,
+      overallGrade: 'F',
+      gradeDescription: 'Wrong drill detected. Please do the assigned drill.',
+      coachingPointEvaluations: coachingPoints.map(point => ({
+        coachingPoint: point,
+        status: 'not_visible' as const,
+        coachObservation: 'Cannot evaluate - wrong drill being performed'
+      })),
+      priorityFocus: {
+        issue: `Do the ${drillName} drill`,
+        why: 'You need to practice the assigned drill to improve',
+        howToFix: `Stop what you\'re doing and perform the ${drillName} drill as instructed`,
+        drillToHelp: drillName,
+        cue: 'Right drill, right reps'
+      },
+      reinforcement: [{
+        point: 'You showed up to practice',
+        whyItMatters: 'Being here is the first step'
+      }],
+      nextSteps: {
+        immediate: `Record yourself doing ${drillName}`,
+        thisWeek: 'Focus on the assigned drills',
+        progression: 'Complete this drill before moving on'
+      },
+      coachSays: rawResponse.coachSays || `Hold up - that's not the drill. I need you to do ${drillName}. ${rawResponse.wrongDrillMessage || 'Let\'s try again with the right drill.'}`
+    }
+  }
+  
   const grade = rawResponse.overallGrade || 'C'
   const gradeInfo = GRADE_DESCRIPTIONS[grade] || GRADE_DESCRIPTIONS['C']
   const progression = DRILL_PROGRESSIONS[drillId]
@@ -369,6 +425,8 @@ export function processCoachingResponse(
   }
   
   return {
+    isCorrectDrill: true,
+    whatISee: rawResponse.whatISee,
     overallGrade: rawResponse.overallGrade || 'C',
     gradeDescription: gradeInfo.description,
     coachingPointEvaluations: rawResponse.coachingPointEvaluations || coachingPoints.map(point => ({
@@ -405,6 +463,7 @@ export function generateFallbackAnalysis(
   const progression = DRILL_PROGRESSIONS[drillId]
   
   return {
+    isCorrectDrill: true, // Assume correct drill if we can't analyze
     overallGrade: 'C',
     gradeDescription: 'Unable to analyze video frame. Review the coaching points below.',
     coachingPointEvaluations: coachingPoints.map(point => ({

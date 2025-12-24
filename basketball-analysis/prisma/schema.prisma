@@ -427,29 +427,49 @@ model DrillVideoSubmission {
   drillName             String    @map("drill_name") @db.VarChar(255)
   focusArea             String?   @map("focus_area") @db.VarChar(100)  // elbow/knee/balance/release/follow-through/power/general
   
-  // Video Storage
-  videoUrl              String?   @map("video_url") @db.Text           // URL to stored video (S3, Cloudinary, etc.)
-  videoBase64           String?   @map("video_base64") @db.Text        // Base64 encoded video (for smaller videos)
-  videoDuration         Decimal?  @map("video_duration") @db.Decimal(10, 2) // Duration in seconds
+  // Media Storage
+  mediaType             String?   @map("media_type") @db.VarChar(20)   // 'video' or 'image'
+  mediaUrl              String?   @map("media_url") @db.Text           // URL to stored media
+  thumbnailUrl          String?   @map("thumbnail_url") @db.Text       // Thumbnail/frame image
+  videoDuration         Decimal?  @map("video_duration") @db.Decimal(10, 2) // Duration in seconds (for video)
   
-  // Trim Information
-  trimStart             Decimal?  @map("trim_start") @db.Decimal(10, 2)  // Start time in seconds
-  trimEnd               Decimal?  @map("trim_end") @db.Decimal(10, 2)    // End time in seconds
+  // Workout Context
+  workoutId             String?   @map("workout_id") @db.VarChar(100)  // Which workout this was part of
+  workoutName           String?   @map("workout_name") @db.VarChar(255)
+  workoutDate           DateTime? @map("workout_date")
   
   // Analysis Status
   analyzed              Boolean   @default(false)
   analyzedAt            DateTime? @map("analyzed_at")
+  analysisType          String?   @map("analysis_type") @db.VarChar(20) // 'quick' (Vision AI) or 'deep' (Hybrid)
   
-  // Analysis Results (from Hybrid System / AI Vision)
-  formScore             Int?      @map("form_score")                    // 0-100 score
-  feedback              Json?                                           // Array of feedback strings
-  improvements          Json?                                           // Array of improvement suggestions
-  positives             Json?                                           // What the user did well
-  coachingTips          Json?     @map("coaching_tips")                 // Actionable tips for improvement
-  detailedFeedback      String?   @map("detailed_feedback") @db.Text    // Full analysis text
-  drillSpecific         Boolean   @default(false) @map("drill_specific") // Whether analysis was drill-aware
+  // Coach Analysis Results (Full structured feedback)
+  overallGrade          String?   @map("overall_grade") @db.VarChar(1)  // A/B/C/D/F
+  gradeDescription      String?   @map("grade_description") @db.Text
+  isCorrectDrill        Boolean?  @map("is_correct_drill")
+  wrongDrillMessage     String?   @map("wrong_drill_message") @db.Text
+  whatISee              String?   @map("what_i_see") @db.Text
+  coachSays             String?   @map("coach_says") @db.Text
   
-  // User Association (optional - for when user profiles are implemented)
+  // Priority Focus
+  priorityIssue         String?   @map("priority_issue") @db.Text
+  priorityWhy           String?   @map("priority_why") @db.Text
+  priorityHowToFix      String?   @map("priority_how_to_fix") @db.Text
+  priorityCue           String?   @map("priority_cue") @db.VarChar(255)
+  
+  // Full Analysis JSON (stores complete CoachAnalysis object)
+  coachAnalysis         Json?     @map("coach_analysis")               // Full CoachAnalysis object
+  
+  // Legacy fields (keeping for compatibility)
+  formScore             Int?      @map("form_score")
+  feedback              Json?
+  improvements          Json?
+  positives             Json?
+  coachingTips          Json?     @map("coaching_tips")
+  detailedFeedback      String?   @map("detailed_feedback") @db.Text
+  drillSpecific         Boolean   @default(false) @map("drill_specific")
+  
+  // User Association
   userProfileId         String?   @map("user_profile_id")
   
   // Metadata
@@ -465,6 +485,9 @@ model DrillVideoSubmission {
   @@index([userProfileId], name: "idx_drill_video_user")
   @@index([createdAt], name: "idx_drill_video_created")
   @@index([focusArea], name: "idx_drill_video_focus")
+  @@index([workoutId], name: "idx_drill_video_workout")
+  @@index([overallGrade], name: "idx_drill_video_grade")
+  @@index([mediaType], name: "idx_drill_video_media_type")
   
   @@map("drill_video_submissions")
 }
