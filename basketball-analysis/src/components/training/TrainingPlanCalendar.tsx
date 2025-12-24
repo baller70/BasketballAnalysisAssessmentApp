@@ -49,6 +49,7 @@ interface DrillMedia {
   coachFeedback?: CoachAnalysisResult
   analyzed: boolean
   analyzedAt?: Date
+  analysisType?: 'quick' | 'deep'
 }
 
 interface Workout {
@@ -2538,6 +2539,9 @@ interface CoachAnalysisResult {
     progression: string
   }
   coachSays: string
+  isCorrectDrill?: boolean
+  wrongDrillMessage?: string
+  whatISee?: string
 }
 
 // Interface for drill video submissions
@@ -4007,13 +4011,14 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                                             drillToHelp: result.recommended_drill || exercise.name,
                                             cue: result.quick_cue || 'Stay focused on the fundamentals.'
                                           },
-                                          coachingPointResults: exercise.tips.map((tip, idx) => ({
-                                            point: tip,
-                                            status: result.tip_scores?.[idx] >= 70 ? 'good' : result.tip_scores?.[idx] >= 50 ? 'needs-work' : 'poor',
-                                            observation: result.tip_observations?.[idx] || 'Analyzed via deep system.',
-                                            quickFix: result.tip_fixes?.[idx] || 'Continue practicing.'
+                                          coachingPointEvaluations: exercise.tips.map((tip, idx) => ({
+                                            coachingPoint: tip,
+                                            status: (result.tip_scores?.[idx] >= 70 ? 'executing' : result.tip_scores?.[idx] >= 50 ? 'needs_work' : 'not_visible') as 'executing' | 'needs_work' | 'not_visible',
+                                            coachObservation: result.tip_observations?.[idx] || 'Analyzed via deep system.',
+                                            correction: result.tip_fixes?.[idx] || 'Continue practicing.',
+                                            cue: result.tip_cues?.[idx] || 'Focus on form.'
                                           })),
-                                          reinforcement: result.positives?.map((p: string) => ({ point: p, why: 'Identified by deep analysis.' })) || [],
+                                          reinforcement: result.positives?.map((p: string) => ({ point: p, whyItMatters: 'Identified by deep analysis.' })) || [],
                                           nextSteps: {
                                             immediate: result.immediate_action || 'Review the analysis and focus on the priority area.',
                                             thisWeek: result.weekly_goal || 'Practice this drill 3-4 times.',
@@ -4188,10 +4193,7 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                       setDrillMediaMap(prev => ({
                         ...prev,
                         [currentDrillForMedia.id]: {
-                          drillId: currentDrillForMedia.id,
-                          drillName: currentDrillForMedia.name,
-                          mediaType: 'none',
-                          analyzed: false
+                          type: 'none' as const
                         }
                       }))
                       setShowDrillMediaCapture(false)
@@ -4326,14 +4328,7 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                       setIsAnalyzing(true)
                       
                       const mediaUrl = URL.createObjectURL(capturedMediaBlob)
-                      const drillMedia: DrillMedia = {
-                        drillId: currentDrillForMedia.id,
-                        drillName: currentDrillForMedia.name,
-                        mediaType: capturedMediaType!,
-                        mediaBlob: capturedMediaBlob,
-                        mediaUrl: mediaUrl,
-                        analyzed: false
-                      }
+                      let coachFeedbackResult: CoachAnalysisResult | undefined
                       
                       try {
                         let frameBase64: string
@@ -4373,11 +4368,7 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                         
                         if (response.ok) {
                           const result = await response.json()
-                          const analysis = result.analysis || result
-                          drillMedia.coachFeedback = analysis
-                          drillMedia.analyzed = true
-                          drillMedia.analyzedAt = new Date()
-                          drillMedia.analysisType = 'quick'
+                          coachFeedbackResult = result.analysis || result
                         }
                       } catch (err) {
                         console.error('Failed to get coach feedback:', err)
@@ -4385,7 +4376,14 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                       
                       setDrillMediaMap(prev => ({
                         ...prev,
-                        [currentDrillForMedia.id]: drillMedia
+                        [currentDrillForMedia.id]: {
+                          type: capturedMediaType,
+                          blob: capturedMediaBlob,
+                          url: mediaUrl,
+                          hasCoachFeedback: !!coachFeedbackResult,
+                          coachFeedback: coachFeedbackResult,
+                          analysisType: 'quick' as const
+                        }
                       }))
                       
                       setIsAnalyzing(false)
@@ -4429,14 +4427,7 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                       setIsAnalyzing(true)
                       
                       const mediaUrl = URL.createObjectURL(capturedMediaBlob)
-                      const drillMedia: DrillMedia = {
-                        drillId: currentDrillForMedia.id,
-                        drillName: currentDrillForMedia.name,
-                        mediaType: capturedMediaType!,
-                        mediaBlob: capturedMediaBlob,
-                        mediaUrl: mediaUrl,
-                        analyzed: false
-                      }
+                      let deepAnalysisResult: CoachAnalysisResult | undefined
                       
                       try {
                         const hybridApiUrl = process.env.NEXT_PUBLIC_HYBRID_API_URL || 'http://localhost:5001'
@@ -4461,7 +4452,7 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                         const result = await response.json()
                         
                         // Format deep analysis result
-                        const deepAnalysis: CoachAnalysisResult = {
+                        deepAnalysisResult = {
                           overallGrade: result.grade || (result.form_score >= 90 ? 'A' : result.form_score >= 80 ? 'B' : result.form_score >= 70 ? 'C' : result.form_score >= 60 ? 'D' : 'F'),
                           gradeDescription: result.summary || 'Deep biomechanical analysis complete.',
                           coachSays: result.coach_feedback || `Based on the deep analysis, your ${currentDrillForMedia.focusArea} mechanics show ${result.form_score >= 80 ? 'good' : 'room for improvement in'} form.`,
@@ -4472,24 +4463,20 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                             drillToHelp: result.recommended_drill || currentDrillForMedia.name,
                             cue: result.quick_cue || 'Stay focused on the fundamentals.'
                           },
-                          coachingPointResults: currentDrillForMedia.tips.map((tip: string, idx: number) => ({
-                            point: tip,
-                            status: result.tip_scores?.[idx] >= 70 ? 'good' : result.tip_scores?.[idx] >= 50 ? 'needs-work' : 'poor',
-                            observation: result.tip_observations?.[idx] || 'Analyzed via deep system.',
-                            quickFix: result.tip_fixes?.[idx] || 'Continue practicing.'
+                          coachingPointEvaluations: currentDrillForMedia.tips.map((tip: string, idx: number) => ({
+                            coachingPoint: tip,
+                            status: (result.tip_scores?.[idx] >= 70 ? 'executing' : result.tip_scores?.[idx] >= 50 ? 'needs_work' : 'not_visible') as 'executing' | 'needs_work' | 'not_visible',
+                            coachObservation: result.tip_observations?.[idx] || 'Analyzed via deep system.',
+                            correction: result.tip_fixes?.[idx] || 'Continue practicing.',
+                            cue: result.tip_cues?.[idx] || 'Focus on form.'
                           })),
-                          reinforcement: result.positives?.map((p: string) => ({ point: p, why: 'Identified by deep analysis.' })) || [],
+                          reinforcement: result.positives?.map((p: string) => ({ point: p, whyItMatters: 'Identified by deep analysis.' })) || [],
                           nextSteps: {
                             immediate: result.immediate_action || 'Review the analysis and focus on the priority area.',
                             thisWeek: result.weekly_goal || 'Practice this drill 3-4 times.',
                             progression: result.progression || 'Gradually increase difficulty as form improves.'
                           }
                         }
-                        
-                        drillMedia.coachFeedback = deepAnalysis
-                        drillMedia.analyzed = true
-                        drillMedia.analyzedAt = new Date()
-                        drillMedia.analysisType = 'deep'
                       } catch (err) {
                         console.error('Deep analysis failed:', err)
                         setAnalysisError('Deep analysis failed. Make sure the hybrid system is running on localhost:5001.')
@@ -4497,7 +4484,14 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                       
                       setDrillMediaMap(prev => ({
                         ...prev,
-                        [currentDrillForMedia.id]: drillMedia
+                        [currentDrillForMedia.id]: {
+                          type: capturedMediaType,
+                          blob: capturedMediaBlob,
+                          url: mediaUrl,
+                          hasCoachFeedback: !!deepAnalysisResult,
+                          coachFeedback: deepAnalysisResult,
+                          analysisType: 'deep' as const
+                        }
                       }))
                       
                       setIsAnalyzing(false)
@@ -4539,12 +4533,10 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                       setDrillMediaMap(prev => ({
                         ...prev,
                         [currentDrillForMedia.id]: {
-                          drillId: currentDrillForMedia.id,
-                          drillName: currentDrillForMedia.name,
-                          mediaType: capturedMediaType!,
-                          mediaBlob: capturedMediaBlob,
-                          mediaUrl: mediaUrl,
-                          analyzed: false
+                          type: capturedMediaType,
+                          blob: capturedMediaBlob,
+                          url: mediaUrl,
+                          hasCoachFeedback: false
                         }
                       }))
                       setCapturedMediaBlob(null)
@@ -4599,7 +4591,7 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                 </div>
                 <div>
                   <h3 className="text-[#FFD700] font-bold text-lg">COACH FEEDBACK</h3>
-                  <p className="text-[#888] text-sm">{drillMediaMap[showDrillFeedback].drillName}</p>
+                  <p className="text-[#888] text-sm">Your form analysis</p>
                 </div>
               </div>
               <button
@@ -4992,24 +4984,24 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                         )}
                         
                         {/* Coaching Points Breakdown */}
-                        {feedback.coachingPointResults && feedback.coachingPointResults.length > 0 && (
+                        {feedback.coachingPointEvaluations && feedback.coachingPointEvaluations.length > 0 && (
                           <div className="space-y-2">
                             <h4 className="text-[#888] font-bold text-xs uppercase">Coaching Points</h4>
-                            {feedback.coachingPointResults.map((point: any, i: number) => (
+                            {feedback.coachingPointEvaluations.map((point: CoachingPointEvaluation, i: number) => (
                               <div key={i} className={`p-3 rounded-lg border ${
-                                point.status === 'good' ? 'bg-green-500/10 border-green-500/30' :
-                                point.status === 'needs-work' ? 'bg-yellow-500/10 border-yellow-500/30' :
+                                point.status === 'executing' ? 'bg-green-500/10 border-green-500/30' :
+                                point.status === 'needs_work' ? 'bg-yellow-500/10 border-yellow-500/30' :
                                 'bg-red-500/10 border-red-500/30'
                               }`}>
                                 <div className="flex items-center gap-2 mb-1">
-                                  {point.status === 'good' ? <Check className="w-4 h-4 text-green-400" /> :
-                                   point.status === 'needs-work' ? <AlertTriangle className="w-4 h-4 text-yellow-400" /> :
+                                  {point.status === 'executing' ? <Check className="w-4 h-4 text-green-400" /> :
+                                   point.status === 'needs_work' ? <AlertTriangle className="w-4 h-4 text-yellow-400" /> :
                                    <X className="w-4 h-4 text-red-400" />}
-                                  <span className="text-white text-sm font-bold">{point.point}</span>
+                                  <span className="text-white text-sm font-bold">{point.coachingPoint}</span>
                                 </div>
-                                <p className="text-[#888] text-xs ml-6">{point.observation}</p>
-                                {point.quickFix && point.status !== 'good' && (
-                                  <p className="text-green-400 text-xs ml-6 mt-1">→ {point.quickFix}</p>
+                                <p className="text-[#888] text-xs ml-6">{point.coachObservation}</p>
+                                {point.correction && point.status !== 'executing' && (
+                                  <p className="text-green-400 text-xs ml-6 mt-1">→ {point.correction}</p>
                                 )}
                               </div>
                             ))}
@@ -5066,13 +5058,14 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                                       drillToHelp: result.recommended_drill || exercise.name,
                                       cue: result.quick_cue || 'Stay focused.'
                                     },
-                                    coachingPointResults: exercise.tips.map((tip, idx) => ({
-                                      point: tip,
-                                      status: result.tip_scores?.[idx] >= 70 ? 'good' : result.tip_scores?.[idx] >= 50 ? 'needs-work' : 'poor',
-                                      observation: result.tip_observations?.[idx] || 'Analyzed via deep system.',
-                                      quickFix: result.tip_fixes?.[idx] || 'Continue practicing.'
+                                    coachingPointEvaluations: exercise.tips.map((tip, idx) => ({
+                                      coachingPoint: tip,
+                                      status: (result.tip_scores?.[idx] >= 70 ? 'executing' : result.tip_scores?.[idx] >= 50 ? 'needs_work' : 'not_visible') as 'executing' | 'needs_work' | 'not_visible',
+                                      coachObservation: result.tip_observations?.[idx] || 'Analyzed via deep system.',
+                                      correction: result.tip_fixes?.[idx] || 'Continue practicing.',
+                                      cue: result.tip_cues?.[idx] || 'Focus on form.'
                                     })),
-                                    reinforcement: result.positives?.map((p: string) => ({ point: p, why: 'Deep analysis.' })) || [],
+                                    reinforcement: result.positives?.map((p: string) => ({ point: p, whyItMatters: 'Deep analysis.' })) || [],
                                     nextSteps: {
                                       immediate: result.immediate_action || 'Review and focus.',
                                       thisWeek: result.weekly_goal || 'Practice 3-4 times.',
