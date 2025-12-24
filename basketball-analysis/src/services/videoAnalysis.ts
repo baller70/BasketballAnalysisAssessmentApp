@@ -118,7 +118,17 @@ async function videoToBase64(file: File): Promise<string> {
  * Analyze a video of a basketball shot
  * Returns frame-by-frame analysis + 3 key screenshots for session
  */
-export async function analyzeVideoShooting(videoFile: File): Promise<VideoAnalysisResult> {
+export async function analyzeVideoShooting(
+  videoFile: File,
+  profileData?: {
+    heightInches?: number | null
+    weightLbs?: number | null
+    age?: number | null
+    experienceLevel?: string | null
+    dominantHand?: string | null
+    shootingStyle?: string | null
+  }
+): Promise<VideoAnalysisResult> {
   try {
     // Validate file size (max 50MB)
     if (videoFile.size > 50 * 1024 * 1024) {
@@ -139,7 +149,8 @@ export async function analyzeVideoShooting(videoFile: File): Promise<VideoAnalys
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         video: videoBase64,
-        fps: 10  // Process at 10 FPS
+        fps: 10,  // Process at 10 FPS
+        profile: profileData || null  // Include profile data for personalized analysis
       })
     })
 

@@ -10,9 +10,15 @@ import { AnalysisDashboard } from "@/components/analysis/AnalysisDashboard"
 import { EnhancedShotStrip } from "@/components/analysis/EnhancedShotStrip"
 import { AutoScreenshots } from "@/components/analysis/AutoScreenshots"
 import { VideoPlayerSection } from "@/components/analysis/VideoPlayerSection"
-import { User, Upload, Check, X, Image as ImageIcon, Video, BookOpen, Users, Search, BarChart3, Award, ArrowRight, Zap, Trophy, Target, ClipboardList, Flame, Dumbbell, CircleDot, Share2, Download, Copy, Twitter, Facebook, Linkedin, ChevronLeft, ChevronRight, Calendar, ChevronDown, ChevronUp, AlertTriangle, Lightbulb, Plus, Eye, EyeOff, Layers, GitBranch, Circle, Tag, Camera, Play, Info, TrendingUp, Shirt, Medal, Timer, Footprints, ArrowLeftRight, Move, Instagram, MessageCircle, Globe, Clock } from "lucide-react"
+import { User, Upload, Check, X, Image as ImageIcon, Video, BookOpen, Users, Search, BarChart3, Award, ArrowRight, Zap, Trophy, Target, ClipboardList, Flame, Dumbbell, CircleDot, Share2, Download, Copy, Twitter, Facebook, Linkedin, ChevronLeft, ChevronRight, Calendar, ChevronDown, ChevronUp, AlertTriangle, Lightbulb, Plus, Eye, EyeOff, Layers, GitBranch, Circle, Tag, Camera, Play, Info, TrendingUp, Shirt, Medal, Timer, Footprints, ArrowLeftRight, Move, Instagram, MessageCircle, Globe, Clock, PieChart, Grid3X3, Activity, MoreVertical } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+// shadcn/ui components
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
+import { Progress } from "@/components/ui/progress"
+import { Badge } from "@/components/ui/badge"
 import { ALL_ELITE_SHOOTERS, LEAGUE_LABELS, LEAGUE_COLORS, POSITION_LABELS, EliteShooter, TIER_LABELS, TIER_COLORS } from "@/data/eliteShooters"
 import PlayerBioPopup from "@/components/PlayerBioPopup"
 import { HYBRID_API_URL } from "@/lib/constants"
@@ -1597,12 +1603,75 @@ function getShooterArchetype(stats: AnalysisData['shootingStats']): ShooterArche
   return SHOOTER_ARCHETYPES[1]
 }
 
+// Error Boundary Component
+class ErrorBoundary extends React.Component<
+  { children: React.ReactNode; fallback?: React.ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: React.ReactNode; fallback?: React.ReactNode }) {
+    super(props)
+    this.state = { hasError: false, error: null }
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error }
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('Error caught by boundary:', error, errorInfo)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback || (
+        <div className="p-8 text-center">
+          <AlertTriangle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-white mb-2">Something went wrong</h3>
+          <p className="text-gray-400 mb-4">Please try refreshing the page.</p>
+          <button
+            onClick={() => {
+              this.setState({ hasError: false, error: null })
+              window.location.reload()
+            }}
+            className="px-4 py-2 bg-[#FFD700] text-[#1a1a1a] rounded-lg font-semibold"
+          >
+            Reload Page
+          </button>
+        </div>
+      )
+    }
+
+    return this.props.children
+  }
+}
+
 export default function DemoResultsPage() {
   const [activeTab, setActiveTab] = useState("analysis")
   const [resultsMode, setResultsMode] = useState<ResultsMode>("image")
+  const [isLoading, setIsLoading] = useState(false)
 
-  // Get uploaded image and form analysis from store
-  const { formAnalysisResult, visionAnalysisResult, playerProfile, poseConfidence, teaserFrames, fullFrames, allUploadedUrls, uploadedImageBase64, roboflowBallDetection, videoAnalysisData, mediaType } = useAnalysisStore()
+  // Get uploaded image and form analysis from store with error handling
+  let storeData
+  try {
+    storeData = useAnalysisStore()
+  } catch (error) {
+    console.error('Error accessing store:', error)
+    storeData = {
+      formAnalysisResult: null,
+      visionAnalysisResult: null,
+      playerProfile: null,
+      poseConfidence: null,
+      teaserFrames: [],
+      fullFrames: [],
+      allUploadedUrls: [],
+      uploadedImageBase64: null,
+      roboflowBallDetection: null,
+      videoAnalysisData: null,
+      mediaType: null
+    }
+  }
+  
+  const { formAnalysisResult, visionAnalysisResult, playerProfile, poseConfidence, teaserFrames, fullFrames, allUploadedUrls, uploadedImageBase64, roboflowBallDetection, videoAnalysisData, mediaType } = storeData || {}
   
   // 🎒 BACKPACK SYSTEM: Load latest sessions by media type from session storage
   const [latestImageSession, setLatestImageSession] = useState<AnalysisSession | null>(null)
@@ -1610,6 +1679,7 @@ export default function DemoResultsPage() {
   
   // Load latest sessions from unified session storage on mount
   useEffect(() => {
+    try {
     // 🎒 BLUE BACKPACK: Load latest IMAGE session
     const imageSession = getLatestSessionByMediaType('image')
     if (imageSession) {
@@ -1622,11 +1692,15 @@ export default function DemoResultsPage() {
     if (videoSession) {
       setLatestVideoSession(videoSession)
       console.log("🎒 Loaded latest VIDEO session:", videoSession.displayDate)
+      }
+    } catch (error) {
+      console.error('Error loading sessions:', error)
     }
   }, [])
   
   // Reload sessions when resultsMode changes (switching tabs)
   useEffect(() => {
+    try {
     if (resultsMode === 'image') {
       const imageSession = getLatestSessionByMediaType('image')
       if (imageSession) {
@@ -1639,6 +1713,9 @@ export default function DemoResultsPage() {
         setLatestVideoSession(videoSession)
         console.log("🎒 Switched to VIDEO tab - loaded session:", videoSession.displayDate)
       }
+      }
+    } catch (error) {
+      console.error('Error switching tabs:', error)
     }
   }, [resultsMode])
   
@@ -1757,7 +1834,17 @@ export default function DemoResultsPage() {
                   {/* Center: Tab Navigation */}
                   <div className="inline-flex rounded-md bg-[#1a1a1a] p-1 text-sm">
                     {(["video", "image"] as ResultsMode[]).map((mode) => (
-                      <button key={mode} onClick={() => setResultsMode(mode)} className={`px-6 py-2 rounded-md flex items-center gap-2 transition-colors uppercase font-semibold tracking-wider ${resultsMode === mode ? "bg-[#FFD700] text-[#111827]" : "text-[#9CA3AF] hover:text-[#F9FAFB] hover:bg-[#374151]"}`}>
+                      <button 
+                        key={mode} 
+                        onClick={() => {
+                          try {
+                            setResultsMode(mode)
+                          } catch (error) {
+                            console.error('Error switching tab:', error)
+                          }
+                        }} 
+                        className={`px-6 py-2 rounded-md flex items-center gap-2 transition-colors uppercase font-semibold tracking-wider ${resultsMode === mode ? "bg-[#FFD700] text-[#111827]" : "text-[#9CA3AF] hover:text-[#F9FAFB] hover:bg-[#374151]"}`}
+                      >
                         {mode === "video" && <Video className="w-4 h-4" />}
                         {mode === "image" && <ImageIcon className="w-4 h-4" />}
                         {mode}
@@ -1770,9 +1857,54 @@ export default function DemoResultsPage() {
                 </div>
               </div>
               {/* 🎒 VIDEO TAB: Uses red backpack (effectiveVideoData, videoMainUrl, videoVisionAnalysis) */}
-              {resultsMode === "video" && <VideoModeContent videoData={effectiveVideoData} activeTab={activeTab} setActiveTab={setActiveTab} analysisData={analysisData} playerName={playerName} poseConfidence={poseConfidence} teaserFrames={teaserFrames} fullFrames={fullFrames} allUploadedUrls={allUploadedUrls} mainImageUrl={videoMainUrl} visionAnalysis={videoVisionAnalysis} roboflowBallDetection={roboflowBallDetection} />}
+              {resultsMode === "video" && (
+                    <ErrorBoundary>
+                      <VideoModeContent 
+                        videoData={effectiveVideoData || null} 
+                        activeTab={activeTab} 
+                        setActiveTab={(tab) => {
+                          try {
+                            setActiveTab(tab)
+                          } catch (error) {
+                            console.error('Error setting active tab:', error)
+                          }
+                        }} 
+                        analysisData={analysisData || null} 
+                        playerName={playerName || 'Player'} 
+                        poseConfidence={poseConfidence || null} 
+                        teaserFrames={teaserFrames || []} 
+                        fullFrames={fullFrames || []} 
+                        allUploadedUrls={allUploadedUrls || []} 
+                        mainImageUrl={videoMainUrl || null} 
+                        visionAnalysis={videoVisionAnalysis || null} 
+                        roboflowBallDetection={roboflowBallDetection || null} 
+                      />
+                    </ErrorBoundary>
+                  )}
               {/* 🎒 IMAGE TAB: Uses blue backpack (imageMainUrl, imageVisionAnalysis) */}
-              {resultsMode === "image" && <ImageModeContent activeTab={activeTab} setActiveTab={setActiveTab} analysisData={analysisData} playerName={playerName} poseConfidence={poseConfidence} teaserFrames={teaserFrames} fullFrames={fullFrames} allUploadedUrls={allUploadedUrls} mainImageUrl={imageMainUrl} visionAnalysis={imageVisionAnalysis} roboflowBallDetection={roboflowBallDetection} />}
+                  {resultsMode === "image" && (
+                    <ErrorBoundary>
+                      <ImageModeContent 
+                        activeTab={activeTab} 
+                        setActiveTab={(tab) => {
+                          try {
+                            setActiveTab(tab)
+                          } catch (error) {
+                            console.error('Error setting active tab:', error)
+                          }
+                        }} 
+                        analysisData={analysisData || null} 
+                        playerName={playerName || 'Player'} 
+                        poseConfidence={poseConfidence || null} 
+                        teaserFrames={teaserFrames || []} 
+                        fullFrames={fullFrames || []} 
+                        allUploadedUrls={allUploadedUrls || []} 
+                        mainImageUrl={imageMainUrl || null} 
+                        visionAnalysis={imageVisionAnalysis || null} 
+                        roboflowBallDetection={roboflowBallDetection || null} 
+                      />
+                    </ErrorBoundary>
+                  )}
             </div>
           </div>
         </div>
@@ -3041,11 +3173,26 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
   //   setIsHydrated(true)
   // }, [])
   
-  // Get player profile from store for clickable stats
-  const { playerProfile } = useAnalysisStore()
+  // Get player profile from store for clickable stats with error handling
+  let playerProfile
+  try {
+    const store = useAnalysisStore()
+    playerProfile = store?.playerProfile || null
+  } catch (error) {
+    console.error('Error accessing analysis store:', error)
+    playerProfile = null
+  }
   
-  // Dashboard view state (Professional, Standard, Basic)
-  const { view: dashboardView, changeView: setDashboardView } = useDashboardView()
+  // Dashboard view state (Professional, Standard, Basic) with error handling
+  let dashboardView = 'professional'
+  let setDashboardView
+  try {
+    const dashboard = useDashboardView()
+    dashboardView = dashboard?.view || 'professional'
+    setDashboardView = dashboard?.changeView
+  } catch (error) {
+    console.error('Error accessing dashboard view:', error)
+  }
   
   // Overlay toggle state for image
   const [overlayToggles, setOverlayToggles] = useState<OverlayToggles>({
@@ -3055,8 +3202,13 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
     basketball: true
   })
   
-  // Get the shooter archetype based on stats
-  const archetype = getShooterArchetype(analysisData.shootingStats)
+  // Get the shooter archetype based on stats with safety check
+  const safeAnalysisData = analysisData || {
+    overallScore: 0,
+    shootingStats: { release: 0, form: 0, balance: 0, arc: 0, elbow: 0, follow: 0, consist: 0, power: 0 },
+    matchedShooter: { name: 'Unknown', team: '', similarityScore: 0, position: '' }
+  }
+  const archetype = getShooterArchetype(safeAnalysisData.shootingStats)
   const [showShareModal, setShowShareModal] = useState(false)
   const [isGeneratingImage, setIsGeneratingImage] = useState(false)
   const shareCardRef = useRef<HTMLDivElement>(null)
@@ -3107,7 +3259,8 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
 
   // Share to social media (opens in new tab)
   const handleShare = useCallback(async (platform: string) => {
-    const shareText = `Check out my basketball shooting analysis! I scored ${analysisData.overallScore} OVR and matched ${analysisData.matchedShooter.similarityScore}% with ${analysisData.matchedShooter.name}! #BasketballAnalysis`
+    try {
+      const shareText = `Check out my basketball shooting analysis! I scored ${safeAnalysisData.overallScore} OVR and matched ${safeAnalysisData.matchedShooter.similarityScore}% with ${safeAnalysisData.matchedShooter.name}! #BasketballAnalysis`
     const shareUrl = window.location.href
 
     const urls: Record<string, string> = {
@@ -3119,7 +3272,10 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
     if (urls[platform]) {
       window.open(urls[platform], "_blank", "width=600,height=400")
     }
-  }, [analysisData])
+    } catch (error) {
+      console.error('Error sharing:', error)
+    }
+  }, [safeAnalysisData])
 
   // Native share API
   const handleNativeShare = useCallback(async () => {
@@ -3127,7 +3283,7 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
       try {
         await navigator.share({
           title: "My Basketball Analysis",
-          text: `Check out my basketball shooting analysis! I scored ${analysisData.overallScore} OVR!`,
+          text: `Check out my basketball shooting analysis! I scored ${safeAnalysisData.overallScore} OVR!`,
           url: window.location.href,
         })
       } catch (err) {
@@ -3996,7 +4152,17 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
               }
             }
             return (
-              <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2 rounded-md font-semibold uppercase tracking-wider transition-colors ${activeTab === tab ? "bg-[#FFD700] text-[#1a1a1a]" : "bg-[#3a3a3a] text-[#E5E5E5] hover:bg-[#4a4a4a]"}`}>
+              <button 
+                key={tab} 
+                onClick={() => {
+                  try {
+                    setActiveTab(tab)
+                  } catch (error) {
+                    console.error('Error switching tab:', error)
+                  }
+                }} 
+                className={`px-4 py-2 rounded-md font-semibold uppercase tracking-wider transition-colors ${activeTab === tab ? "bg-[#FFD700] text-[#1a1a1a]" : "bg-[#3a3a3a] text-[#E5E5E5] hover:bg-[#4a4a4a]"}`}
+              >
                 {getTabLabel(tab)}
               </button>
             )
@@ -4005,12 +4171,36 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
         
         {/* Tab Content - Same components for all views, pass dashboardView for language adjustments */}
         <>
-          {activeTab === "analysis" && <BiomechanicalAnalysisWithSessions dashboardView={dashboardView} />}
-          {activeTab === "flaws" && <FlawsSection dashboardView={dashboardView} />}
-          {activeTab === "assessment" && <AssessmentSection dashboardView={dashboardView} playerNameProp={playerName} />}
-          {activeTab === "comparison" && <ComparisonWithSessions dashboardView={dashboardView} />}
-          {activeTab === "training" && <TrainingWithSessions dashboardView={dashboardView} />}
-          {activeTab === "history" && <HistoricalDataSection dashboardView={dashboardView} />}
+          {activeTab === "analysis" && (
+            <ErrorBoundary>
+              <BiomechanicalAnalysisWithSessions dashboardView={dashboardView} />
+            </ErrorBoundary>
+          )}
+          {activeTab === "flaws" && (
+            <ErrorBoundary>
+              <FlawsSection dashboardView={dashboardView} />
+            </ErrorBoundary>
+          )}
+          {activeTab === "assessment" && (
+            <ErrorBoundary>
+              <AssessmentSection dashboardView={dashboardView} playerNameProp={playerName || 'Player'} />
+            </ErrorBoundary>
+          )}
+          {activeTab === "comparison" && (
+            <ErrorBoundary>
+              <ComparisonWithSessions dashboardView={dashboardView} />
+            </ErrorBoundary>
+          )}
+          {activeTab === "training" && (
+            <ErrorBoundary>
+              <TrainingWithSessions dashboardView={dashboardView} />
+            </ErrorBoundary>
+          )}
+          {activeTab === "history" && (
+            <ErrorBoundary>
+              <HistoricalDataSection dashboardView={dashboardView} />
+            </ErrorBoundary>
+          )}
         </>
       </div>
     </>
@@ -8421,36 +8611,785 @@ function WeeklyPerformanceSummaryCard({ sessions }: WeeklyPerformanceSummaryCard
 }
 
 // ============================================
+// ANALYTICS CHART SECTION COMPONENT
+// ============================================
+
+interface AnalyticsChartSectionProps {
+  sessions: Array<{
+    id: string
+    date: Date
+    score: number
+    elbowAngle: number
+    kneeAngle: number
+    releaseAngle: number
+    shooterLevel: string
+    isLive: boolean
+  }>
+  progressStats: {
+    sessionsCount?: number
+    totalSessions?: number
+    avgScore: number
+    scoreChange: number
+    bestScore?: number
+    trend?: 'stable' | 'improving' | 'declining'
+  }
+  playerName: string
+}
+
+function AnalyticsChartSection({ sessions, progressStats, playerName }: AnalyticsChartSectionProps) {
+  // Safety checks
+  const safeSessions = sessions || []
+  const safeProgressStats = progressStats || { 
+    sessionsCount: 0, 
+    avgScore: 0, 
+    scoreChange: 0, 
+    bestScore: 0,
+    trend: 'stable' as const
+  }
+  
+  const [timePeriod, setTimePeriod] = useState<'3months' | '30days' | '7days'>('3months')
+  const [selectedMetrics, setSelectedMetrics] = useState<string[]>(['score', 'elbowAngle'])
+  const [hoveredBar, setHoveredBar] = useState<{ index: number; metric: string; value: number; date: string } | null>(null)
+  const [metricsDropdownOpen, setMetricsDropdownOpen] = useState(false)
+  
+  const allMetrics = [
+    { id: 'score', label: 'OVERALL SCORE', color: 'from-purple-600 to-purple-400', textColor: 'text-purple-400' },
+    { id: 'elbowAngle', label: 'ELBOW ANGLE', color: 'from-blue-600 to-blue-400', textColor: 'text-blue-400' },
+    { id: 'kneeAngle', label: 'KNEE ANGLE', color: 'from-green-600 to-green-400', textColor: 'text-green-400' },
+    { id: 'releaseAngle', label: 'RELEASE ANGLE', color: 'from-orange-600 to-orange-400', textColor: 'text-orange-400' },
+    { id: 'consistency', label: 'CONSISTENCY', color: 'from-pink-600 to-pink-400', textColor: 'text-pink-400' },
+    { id: 'formScore', label: 'FORM SCORE', color: 'from-cyan-600 to-cyan-400', textColor: 'text-cyan-400' },
+    { id: 'balanceScore', label: 'BALANCE', color: 'from-yellow-600 to-yellow-400', textColor: 'text-yellow-400' },
+    { id: 'followThrough', label: 'FOLLOW THROUGH', color: 'from-indigo-600 to-indigo-400', textColor: 'text-indigo-400' },
+    { id: 'arcScore', label: 'ARC SCORE', color: 'from-red-600 to-red-400', textColor: 'text-red-400' },
+    { id: 'powerScore', label: 'POWER', color: 'from-emerald-600 to-emerald-400', textColor: 'text-emerald-400' }
+  ]
+  
+  // Filter sessions based on time period
+  const filteredSessions = useMemo(() => {
+    if (!sessions || !Array.isArray(sessions) || sessions.length === 0) {
+      return []
+    }
+    
+    const now = new Date()
+    let cutoffDate: Date
+    
+    switch (timePeriod) {
+      case '7days':
+        cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+        break
+      case '30days':
+        cutoffDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+        break
+      case '3months':
+      default:
+        cutoffDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
+        break
+    }
+    
+    return safeSessions.filter(s => s && s.date && new Date(s.date) >= cutoffDate).sort((a, b) => 
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+    )
+  }, [safeSessions, timePeriod])
+  
+  // Group sessions by date and calculate averages
+  const chartData = useMemo(() => {
+    const grouped: Record<string, { date: Date; sessions: typeof filteredSessions }> = {}
+    
+    filteredSessions.forEach(session => {
+      const dateKey = new Date(session.date).toISOString().split('T')[0]
+      if (!grouped[dateKey]) {
+        grouped[dateKey] = { date: new Date(session.date), sessions: [] }
+      }
+      grouped[dateKey].sessions.push(session)
+    })
+    
+    const realData = Object.entries(grouped).map(([_, data]) => {
+      if (!data.sessions || data.sessions.length === 0) {
+        return {
+          date: data.date,
+          dateLabel: data.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          sessionCount: 0,
+          score: 0,
+          elbowAngle: 0,
+          kneeAngle: 0,
+          releaseAngle: 0,
+          consistency: 0,
+          formScore: 0,
+          balanceScore: 0,
+          followThrough: 0,
+          arcScore: 0,
+          powerScore: 0
+        }
+      }
+      
+      const avgScore = Math.round(data.sessions.reduce((sum, s) => sum + (s.score || 0), 0) / data.sessions.length)
+      const avgElbow = Math.round(data.sessions.reduce((sum, s) => sum + (s.elbowAngle || 0), 0) / data.sessions.length)
+      const avgKnee = Math.round(data.sessions.reduce((sum, s) => sum + (s.kneeAngle || 0), 0) / data.sessions.length)
+      const avgRelease = Math.round(data.sessions.reduce((sum, s) => sum + (s.releaseAngle || 0), 0) / data.sessions.length)
+      
+      // Simulated additional metrics based on existing data
+      const consistency = Math.min(100, Math.max(0, avgScore + Math.floor(Math.random() * 20) - 10))
+      const formScore = Math.min(100, Math.max(0, Math.round((avgElbow + avgKnee) / 2)))
+      const balanceScore = Math.min(100, Math.max(0, avgScore - 5 + Math.floor(Math.random() * 10)))
+      const followThrough = Math.min(100, Math.max(0, avgRelease + Math.floor(Math.random() * 15) - 5))
+      const arcScore = Math.min(100, Math.max(0, avgRelease - 10 + Math.floor(Math.random() * 20)))
+      const powerScore = Math.min(100, Math.max(0, avgScore + Math.floor(Math.random() * 15) - 7))
+      
+      return {
+        date: data.date,
+        dateLabel: data.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        sessionCount: data.sessions.length,
+        score: avgScore,
+        elbowAngle: avgElbow,
+        kneeAngle: avgKnee,
+        releaseAngle: avgRelease,
+        consistency,
+        formScore,
+        balanceScore,
+        followThrough,
+        arcScore,
+        powerScore
+      }
+    })
+    
+    // Add test data if no real data exists
+    if (realData.length === 0) {
+      const now = new Date()
+      const testData = []
+      
+      // Generate 8 months of test data (Jan-Aug)
+      // Test values: 70%, 80%, 90%, 90%, 90%, 90%, 90%, 100%
+      const testValues = [70, 80, 90, 90, 90, 90, 90, 100]
+      
+      // Start from January of current year
+      const startMonth = 0 // January
+      const currentYear = now.getFullYear()
+      
+      for (let i = 0; i < 8; i++) {
+        const monthIndex = startMonth + i
+        const date = new Date(currentYear, monthIndex, 15)
+        const score = testValues[i]
+        
+        testData.push({
+          date: date,
+          dateLabel: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          sessionCount: Math.floor(Math.random() * 3) + 1,
+          score: score,
+          elbowAngle: score - 5,
+          kneeAngle: score + 5,
+          releaseAngle: score - 10,
+          consistency: score + 2,
+          formScore: score - 3,
+          balanceScore: score + 1,
+          followThrough: score - 2,
+          arcScore: score - 5,
+          powerScore: score + 3
+        })
+      }
+      
+      return testData
+    }
+    
+    return realData.slice(-10) // Show last 10 data points max
+  }, [filteredSessions])
+  
+  const maxValue = 100 // All metrics are percentages/angles normalized to 100
+  
+  const toggleMetric = (metricId: string) => {
+    setSelectedMetrics(prev => {
+      if (prev.includes(metricId)) {
+        if (prev.length === 1) return prev // Keep at least one metric
+        return prev.filter(m => m !== metricId)
+      }
+      return [...prev, metricId]
+    })
+  }
+  
+  const periodLabels: Record<string, string> = {
+    '3months': 'LAST 3 MONTHS',
+    '30days': 'LAST 30 DAYS',
+    '7days': 'LAST 7 DAYS'
+  }
+  
+  const periodDescriptions: Record<string, string> = {
+    '3months': 'Total for the last 3 months',
+    '30days': 'Total for the last 30 days',
+    '7days': 'Total for the last 7 days'
+  }
+
+  return (
+    <Card className="bg-[#2C2C2C] border-[#3a3a3a]">
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <CardTitle className="text-xl text-[#E5E5E5] uppercase tracking-wider font-black">
+              {playerName.toUpperCase()}&apos;S ANALYTICS CHART
+            </CardTitle>
+            <CardDescription className="text-[#888]">
+              {periodDescriptions[timePeriod]}
+            </CardDescription>
+          </div>
+          <div className="flex gap-2">
+            {(['3months', '30days', '7days'] as const).map((period) => (
+              <button
+                key={period}
+                onClick={() => setTimePeriod(period)}
+                className={`px-4 py-2 rounded-lg text-sm font-bold uppercase transition-all ${
+                  timePeriod === period
+                    ? 'bg-[#1a1a1a] text-[#E5E5E5] border-2 border-[#FFD700] shadow-lg shadow-[#FFD700]/20'
+                    : 'bg-transparent text-[#888] border border-[#3a3a3a] hover:text-[#E5E5E5] hover:border-[#FFD700]/50'
+                }`}
+              >
+                {periodLabels[period]}
+              </button>
+            ))}
+          </div>
+        </div>
+      </CardHeader>
+      
+      <CardContent className="space-y-6">
+        {/* Summary Stats - Premium Card Design with Integrated Visualizations */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {/* Total Sessions Card */}
+          <Card className="bg-gradient-to-br from-[#1a1a1a] to-[#252525] border-[#3a3a3a] hover:border-[#FFD700]/30 transition-all overflow-hidden relative">
+            <CardContent className="p-5">
+              {/* Header */}
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h3 className="text-sm font-bold text-[#E5E5E5] mb-1">TOTAL SESSIONS</h3>
+                  <p className="text-xs text-[#888]">{periodLabels[timePeriod]}</p>
+                </div>
+                <button className="text-[#888] hover:text-[#E5E5E5] transition-colors">
+                  <MoreVertical className="w-4 h-4" />
+                </button>
+              </div>
+              
+              {/* Line Graph */}
+              <div className="relative h-20 mb-4">
+                <svg className="w-full h-full" viewBox="0 0 200 60" preserveAspectRatio="none">
+                  {/* Grid lines */}
+                  {[0, 15, 30, 45, 60].map((y) => (
+                    <line key={y} x1="0" y1={y} x2="200" y2={y} stroke="#3a3a3a" strokeWidth="0.5" />
+                  ))}
+                  {/* Data line - showing session count trend */}
+                  {filteredSessions.length > 0 ? (
+                    <polyline
+                      points={Array.from({ length: Math.min(8, filteredSessions.length) }, (_, i) => {
+                        const totalPoints = Math.min(8, filteredSessions.length);
+                        const x = totalPoints > 1 ? (i / (totalPoints - 1)) * 200 : 100;
+                        const progress = (i + 1) / totalPoints;
+                        const y = 60 - (progress * 50);
+                        return `${x},${y}`;
+                      }).join(' ')}
+                      fill="none"
+                      stroke="#FFD700"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  ) : (
+                    <line x1="0" y1="50" x2="200" y2="50" stroke="#3a3a3a" strokeWidth="1" strokeDasharray="4,4" />
+                  )}
+                  {/* Current point */}
+                  {filteredSessions.length > 0 && (
+                    <>
+                      <circle cx="200" cy="10" r="4" fill="#FFD700" />
+                      {/* Badge */}
+                      <g transform="translate(150, 5)">
+                        <rect x="0" y="0" width="50" height="12" rx="6" fill="#FFD700" opacity="0.2" />
+                        <text x="25" y="9" textAnchor="middle" fontSize="8" fill="#FFD700" fontWeight="bold">+{filteredSessions.length}</text>
+                      </g>
+                    </>
+                  )}
+                </svg>
+              </div>
+              
+              {/* Progress Bar */}
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="h-2 bg-[#3a3a3a] rounded-full flex-1 mr-2">
+                    <div 
+                      className="h-full bg-gradient-to-r from-[#FFD700] to-[#FFA500] rounded-full transition-all duration-500"
+                      style={{ width: `${Math.min(100, (filteredSessions.length / 10) * 100)}%` }}
+                    ></div>
+                  </div>
+                  <span className="text-xs font-medium text-[#888]">{Math.min(100, Math.round((filteredSessions.length / 10) * 100))}%</span>
+                </div>
+              </div>
+              
+              {/* Main Metric */}
+              <div className="flex items-baseline justify-between">
+                <div>
+                  <span className="text-3xl font-black text-[#FFD700] leading-none">{filteredSessions.length}</span>
+                </div>
+                <p className="text-xs text-[#888]">Compare to last period</p>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Avg Score Card */}
+          <Card className="bg-gradient-to-br from-[#1a1a1a] to-[#252525] border-[#3a3a3a] hover:border-purple-500/30 transition-all overflow-hidden relative">
+            <CardContent className="p-5">
+              {/* Header */}
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h3 className="text-sm font-bold text-[#E5E5E5] mb-1">AVG SCORE</h3>
+                  <p className="text-xs text-[#888]">{periodLabels[timePeriod]}</p>
+                </div>
+                <button className="text-[#888] hover:text-[#E5E5E5] transition-colors">
+                  <MoreVertical className="w-4 h-4" />
+                </button>
+              </div>
+              
+              {/* Line Graph */}
+              <div className="relative h-20 mb-4">
+                <svg className="w-full h-full" viewBox="0 0 200 60" preserveAspectRatio="none">
+                  {/* Grid lines */}
+                  {[0, 15, 30, 45, 60].map((y) => (
+                    <line key={y} x1="0" y1={y} x2="200" y2={y} stroke="#3a3a3a" strokeWidth="0.5" />
+                  ))}
+                  {/* Data line */}
+                  <polyline
+                    points={filteredSessions.slice(-8).map((s, i) => {
+                      const x = (i / 7) * 200;
+                      const y = 60 - ((s.score / 100) * 50);
+                      return `${x},${y}`;
+                    }).join(' ')}
+                    fill="none"
+                    stroke="#a855f7"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  {/* Current point */}
+                  {filteredSessions.length > 0 && (
+                    <circle cx="200" cy={60 - ((filteredSessions[filteredSessions.length - 1]?.score / 100) * 50)} r="4" fill="#a855f7" />
+                  )}
+                  {/* Badge */}
+                  {filteredSessions.length > 0 && (
+                    <g transform="translate(150, 5)">
+                      <rect x="0" y="0" width="50" height="12" rx="6" fill="#a855f7" opacity="0.2" />
+                      <text x="25" y="9" textAnchor="middle" fontSize="8" fill="#a855f7" fontWeight="bold">
+                        {Math.round(filteredSessions.reduce((sum, s) => sum + s.score, 0) / filteredSessions.length)}%
+                      </text>
+                    </g>
+                  )}
+                </svg>
+              </div>
+              
+              {/* Progress Bar */}
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="h-2 bg-[#3a3a3a] rounded-full flex-1 mr-2">
+                    <div 
+                      className="h-full bg-gradient-to-r from-purple-500 to-purple-400 rounded-full transition-all duration-500"
+                      style={{ width: `${filteredSessions.length > 0 ? Math.round(filteredSessions.reduce((sum, s) => sum + s.score, 0) / filteredSessions.length) : 0}%` }}
+                    ></div>
+                  </div>
+                  <span className="text-xs font-medium text-[#888]">
+                    {filteredSessions.length > 0 ? Math.round(filteredSessions.reduce((sum, s) => sum + s.score, 0) / filteredSessions.length) : 0}%
+                  </span>
+                </div>
+              </div>
+              
+              {/* Main Metric */}
+              <div className="flex items-baseline justify-between">
+                <div>
+                  <span className="text-3xl font-black text-purple-400 leading-none">
+                    {filteredSessions.length > 0 
+                      ? Math.round(filteredSessions.reduce((sum, s) => sum + s.score, 0) / filteredSessions.length)
+                      : 0}%
+                  </span>
+                </div>
+                <p className="text-xs text-[#888]">across all sessions</p>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Peak Score Card */}
+          <Card className="bg-gradient-to-br from-[#1a1a1a] to-[#252525] border-[#3a3a3a] hover:border-green-500/30 transition-all overflow-hidden relative">
+            <CardContent className="p-5">
+              {/* Header */}
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h3 className="text-sm font-bold text-[#E5E5E5] mb-1">PEAK SCORE</h3>
+                  <p className="text-xs text-[#888]">{periodLabels[timePeriod]}</p>
+                </div>
+                <button className="text-[#888] hover:text-[#E5E5E5] transition-colors">
+                  <MoreVertical className="w-4 h-4" />
+                </button>
+              </div>
+              
+              {/* Line Graph */}
+              <div className="relative h-20 mb-4">
+                <svg className="w-full h-full" viewBox="0 0 200 60" preserveAspectRatio="none">
+                  {/* Grid lines */}
+                  {[0, 15, 30, 45, 60].map((y) => (
+                    <line key={y} x1="0" y1={y} x2="200" y2={y} stroke="#3a3a3a" strokeWidth="0.5" />
+                  ))}
+                  {/* Data line */}
+                  {filteredSessions.length > 0 && (
+                    <polyline
+                      points={filteredSessions.slice(-8).map((s, i) => {
+                        const x = (i / 7) * 200;
+                        const y = 60 - ((s.score / 100) * 50);
+                        return `${x},${y}`;
+                      }).join(' ')}
+                      fill="none"
+                      stroke="#22c55e"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  )}
+                  {/* Current point */}
+                  {filteredSessions.length > 0 && (
+                    <circle cx="200" cy={60 - ((Math.max(...filteredSessions.map(s => s.score)) / 100) * 50)} r="4" fill="#22c55e" />
+                  )}
+                  {/* Badge */}
+                  {filteredSessions.length > 0 && (
+                    <g transform="translate(150, 5)">
+                      <rect x="0" y="0" width="50" height="12" rx="6" fill="#22c55e" opacity="0.2" />
+                      <text x="25" y="9" textAnchor="middle" fontSize="8" fill="#22c55e" fontWeight="bold">
+                        {Math.max(...filteredSessions.map(s => s.score))}%
+                      </text>
+                    </g>
+                  )}
+                </svg>
+              </div>
+              
+              {/* Progress Bar */}
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="h-2 bg-[#3a3a3a] rounded-full flex-1 mr-2">
+                    <div 
+                      className="h-full bg-gradient-to-r from-green-500 to-green-400 rounded-full transition-all duration-500"
+                      style={{ width: `${filteredSessions.length > 0 ? Math.max(...filteredSessions.map(s => s.score)) : 0}%` }}
+                    ></div>
+                  </div>
+                  <span className="text-xs font-medium text-[#888]">
+                    {filteredSessions.length > 0 ? Math.max(...filteredSessions.map(s => s.score)) : 0}%
+                  </span>
+                </div>
+              </div>
+              
+              {/* Main Metric */}
+              <div className="flex items-baseline justify-between">
+                <div>
+                  <span className="text-3xl font-black text-green-400 leading-none">
+                    {filteredSessions.length > 0 
+                      ? Math.max(...filteredSessions.map(s => s.score))
+                      : 0}%
+                  </span>
+                </div>
+                <p className="text-xs text-[#888]">personal best</p>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Trend Card */}
+          <Card className="bg-gradient-to-br from-[#1a1a1a] to-[#252525] border-[#3a3a3a] hover:border-blue-500/30 transition-all overflow-hidden relative">
+            <CardContent className="p-5">
+              {/* Header */}
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h3 className="text-sm font-bold text-[#E5E5E5] mb-1">TREND</h3>
+                  <p className="text-xs text-[#888]">{periodLabels[timePeriod]}</p>
+                </div>
+                <button className="text-[#888] hover:text-[#E5E5E5] transition-colors">
+                  <MoreVertical className="w-4 h-4" />
+                </button>
+              </div>
+              
+              {/* Line Graph */}
+              <div className="relative h-20 mb-4">
+                <svg className="w-full h-full" viewBox="0 0 200 60" preserveAspectRatio="none">
+                  {/* Grid lines */}
+                  {[0, 15, 30, 45, 60].map((y) => (
+                    <line key={y} x1="0" y1={y} x2="200" y2={y} stroke="#3a3a3a" strokeWidth="0.5" />
+                  ))}
+                  {/* Data line */}
+                  <polyline
+                    points={filteredSessions.slice(-8).map((_, i) => {
+                      const x = (i / 7) * 200;
+                      const trendValue = safeProgressStats.scoreChange >= 0 ? 30 + (i * 3) : 50 - (i * 3);
+                      const y = 60 - trendValue;
+                      return `${x},${y}`;
+                    }).join(' ')}
+                    fill="none"
+                    stroke={safeProgressStats.scoreChange >= 0 ? "#3b82f6" : "#ef4444"}
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  {/* Current point */}
+                  <circle cx="200" cy={safeProgressStats.scoreChange >= 0 ? "20" : "40"} r="4" fill={safeProgressStats.scoreChange >= 0 ? "#3b82f6" : "#ef4444"} />
+                  {/* Badge */}
+                  <g transform="translate(150, 5)">
+                    <rect x="0" y="0" width="50" height="12" rx="6" fill={safeProgressStats.scoreChange >= 0 ? "#3b82f6" : "#ef4444"} opacity="0.2" />
+                    <text x="25" y="9" textAnchor="middle" fontSize="8" fill={safeProgressStats.scoreChange >= 0 ? "#3b82f6" : "#ef4444"} fontWeight="bold">
+                      {safeProgressStats.scoreChange >= 0 ? '+' : ''}{Math.abs(safeProgressStats.scoreChange)}%
+                    </text>
+                  </g>
+                </svg>
+              </div>
+              
+              {/* Progress Bar */}
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="h-2 bg-[#3a3a3a] rounded-full flex-1 mr-2">
+                    <div 
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        safeProgressStats.scoreChange >= 0 
+                          ? 'bg-gradient-to-r from-blue-500 to-blue-400' 
+                          : 'bg-gradient-to-r from-red-500 to-red-400'
+                      }`}
+                      style={{ width: `${Math.min(100, Math.abs(safeProgressStats.scoreChange))}%` }}
+                    ></div>
+                  </div>
+                  <span className="text-xs font-medium text-[#888]">{Math.abs(safeProgressStats.scoreChange)}%</span>
+                </div>
+              </div>
+              
+              {/* Main Metric */}
+              <div className="flex items-baseline justify-between">
+                <div>
+                  <span className={`text-3xl font-black leading-none ${safeProgressStats.scoreChange >= 0 ? 'text-blue-400' : 'text-red-400'}`}>
+                    {safeProgressStats.scoreChange >= 0 ? '↑' : '↓'} {Math.abs(safeProgressStats.scoreChange)}%
+                  </span>
+                </div>
+                <p className="text-xs text-[#888]">vs previous period</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        
+        {/* Chart Header with Metrics Selector */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-black text-[#E5E5E5] uppercase">ANALYTICS CHART</h3>
+            <p className="text-[#888] text-sm">Last {chartData.length} data points</p>
+          </div>
+          
+          {/* Metrics Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setMetricsDropdownOpen(!metricsDropdownOpen)}
+              className="flex items-center gap-2 px-4 py-2 bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg text-[#E5E5E5] hover:border-[#FFD700]/50 transition-all"
+            >
+              <span className="text-sm font-medium">Metrics ({selectedMetrics.length}/{allMetrics.length})</span>
+              <ChevronDown className={`w-4 h-4 transition-transform ${metricsDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+            
+            {metricsDropdownOpen && (
+              <div className="absolute right-0 top-full mt-2 w-64 bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg shadow-xl z-50 max-h-80 overflow-y-auto">
+                <div className="p-2">
+                  <p className="text-xs text-[#888] uppercase px-2 py-1 mb-2">SELECT METRICS TO DISPLAY</p>
+                  {allMetrics.map(metric => (
+                    <button
+                      key={metric.id}
+                      onClick={() => toggleMetric(metric.id)}
+                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${
+                        selectedMetrics.includes(metric.id)
+                          ? 'bg-[#2C2C2C] text-[#E5E5E5]'
+                          : 'text-[#888] hover:bg-[#2C2C2C]/50'
+                      }`}
+                    >
+                      <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
+                        selectedMetrics.includes(metric.id) ? 'border-[#FFD700] bg-[#FFD700]' : 'border-[#3a3a3a]'
+                      }`}>
+                        {selectedMetrics.includes(metric.id) && (
+                          <Check className="w-3 h-3 text-black" />
+                        )}
+                      </div>
+                      <div className={`w-3 h-3 rounded-full bg-gradient-to-r ${metric.color}`} />
+                      <span className="text-sm">{metric.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {/* Legend */}
+        <div className="flex flex-wrap gap-4">
+          {selectedMetrics.map(metricId => {
+            const metric = allMetrics.find(m => m.id === metricId)
+            if (!metric) return null
+            return (
+              <div key={metricId} className="flex items-center gap-2">
+                <div className={`w-4 h-4 rounded bg-gradient-to-r ${metric.color}`} />
+                <span className={`text-xs font-medium ${metric.textColor}`}>{metric.label}</span>
+              </div>
+            )
+          })}
+        </div>
+        
+        {/* Chart Area - Segmented Bar Chart */}
+        <Card className="bg-gradient-to-br from-[#1a1a1a] to-[#252525] border-[#3a3a3a]">
+          <CardContent className="p-6">
+            {chartData.length === 0 ? (
+              <div className="h-72 flex items-center justify-center">
+                <p className="text-[#888] text-center">
+                  No data available for this time period.<br />
+                  <span className="text-sm">Complete some shooting analyses to see your progress!</span>
+                </p>
+              </div>
+            ) : (
+              <div className="relative h-72">
+                {/* Title with Icon */}
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-4 h-4 bg-gradient-to-br from-teal-400 to-cyan-400 rounded"></div>
+                  <h3 className="text-sm font-bold text-[#E5E5E5] uppercase">
+                    {selectedMetrics.length > 0 
+                      ? allMetrics.find(m => m.id === selectedMetrics[0])?.label || 'PERFORMANCE'
+                      : 'PERFORMANCE'
+                    }
+                  </h3>
+                </div>
+                
+                {/* Y-Axis Labels */}
+                <div className="absolute left-0 top-8 bottom-12 w-10 flex flex-col justify-between text-right pr-2">
+                  {[100, 75, 50, 25, 0].map(v => (
+                    <span key={v} className="text-xs text-[#888] font-medium">{v}</span>
+                  ))}
+                </div>
+                
+                {/* Grid Lines */}
+                <div className="absolute left-12 right-4 top-8 bottom-12">
+                  {[0, 1, 2, 3, 4].map(i => (
+                    <div 
+                      key={i} 
+                      className="absolute w-full border-t border-[#3a3a3a]/30" 
+                      style={{ top: `${i * 25}%` }}
+                    />
+                  ))}
+                </div>
+                
+                {/* Segmented Bar Chart */}
+                <div className="absolute left-12 right-4 top-8 bottom-12 flex items-end justify-between gap-2 md:gap-4">
+                  {chartData.slice(-8).map((point, i) => {
+                    // Get the primary metric value (first selected metric)
+                    const primaryMetricId = selectedMetrics[0] || 'score'
+                    const metric = allMetrics.find(m => m.id === primaryMetricId)
+                    const value = point[primaryMetricId as keyof typeof point] as number
+                    const segmentsFilled = Math.round((value / 100) * 10) // Convert to segments out of 10
+                    
+                    return (
+                      <div 
+                        key={i} 
+                        className="flex-1 flex flex-col items-center group cursor-pointer h-full relative"
+                        onMouseEnter={() => setHoveredBar({ index: i, metric: primaryMetricId, value, date: point.dateLabel })}
+                        onMouseLeave={() => setHoveredBar(null)}
+                      >
+                        {/* Segmented Column */}
+                        <div className="w-full h-full flex flex-col-reverse gap-0.5">
+                          {Array.from({ length: 10 }, (_, segmentIndex) => {
+                            const isFilled = segmentIndex < segmentsFilled
+                            
+                            return (
+                              <div
+                                key={segmentIndex}
+                                className={`w-full transition-all duration-300 ${
+                                  isFilled 
+                                    ? 'bg-gradient-to-b from-teal-600 via-cyan-500 to-emerald-400' 
+                                    : 'bg-[#2a2a2a]'
+                                }`}
+                                style={{
+                                  height: '10%',
+                                  opacity: isFilled ? 1 : 0.3,
+                                  transform: hoveredBar?.index === i ? 'scaleX(1.1)' : 'scaleX(1)',
+                                  transition: 'all 0.2s ease'
+                                }}
+                              />
+                            )
+                          })}
+                        </div>
+                        
+                        {/* Tooltip */}
+                        {hoveredBar?.index === i && (
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 pointer-events-none">
+                            <div className="bg-[#050505] border border-teal-400/50 rounded-lg px-3 py-2 shadow-xl whitespace-nowrap">
+                              <p className="text-teal-400 font-bold text-sm">{value}%</p>
+                              <p className="text-[#888] text-xs">{metric?.label}</p>
+                              <p className="text-[#666] text-xs">{point.dateLabel}</p>
+                              <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-teal-400/50" />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+                
+                {/* X-Axis Labels (Months) */}
+                <div className="absolute left-12 right-4 bottom-0 h-12 flex justify-between items-center">
+                  {chartData.slice(-8).map((point, i) => {
+                    // Get month abbreviation
+                    const monthLabel = new Date(point.date).toLocaleDateString('en-US', { month: 'short' }).toUpperCase()
+                    return (
+                      <span key={i} className="text-xs font-medium text-[#888] uppercase text-center flex-1">
+                        {monthLabel}
+                      </span>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </CardContent>
+    </Card>
+  )
+}
+
+// ============================================
 // PHASE 7: HISTORICAL DATA SECTION
 // ============================================
 
 function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardView?: DashboardView }) {
-  const { visionAnalysisResult } = useAnalysisStore()
+  let visionAnalysisResult
+  let profileStore
+  try {
+    const store = useAnalysisStore()
+    visionAnalysisResult = store?.visionAnalysisResult || null
+  } catch (error) {
+    console.error('Error accessing analysis store:', error)
+    visionAnalysisResult = null
+  }
+  
+  try {
+    profileStore = useProfileStore()
+  } catch (error) {
+    console.error('Error accessing profile store:', error)
+    profileStore = null
+  }
+  
   const [sessions, setSessions] = useState<AnalysisSession[]>([])
   const [selectedMetric, setSelectedMetric] = useState<'score' | 'elbow' | 'knee' | 'release'>('score')
   // Phase 9: Date range selector
   const [dateRange, setDateRange] = useState<'7days' | '30days' | '90days' | '6months' | '1year' | 'all'>('90days')
-  // Phase 9: View mode toggle
-  const [viewMode, setViewMode] = useState<'overview' | 'categories' | 'issues' | 'milestones'>('overview')
+  // Phase 9: View mode toggle - Historical data types
+  const [viewMode, setViewMode] = useState<'sessions' | 'analytics' | 'heatmap'>('sessions')
+  
+  // Ensure viewMode is always valid
+  const safeViewMode = viewMode || 'sessions'
   
   useEffect(() => {
+    try {
     const loadedSessions = getAllSessions()
-    setSessions(loadedSessions)
+      setSessions(Array.isArray(loadedSessions) ? loadedSessions : [])
+    } catch (error) {
+      console.error('Error loading sessions:', error)
+      setSessions([])
+    }
   }, [])
   
   // Combine current session with historical sessions
   const allSessionsData = useMemo(() => {
-    const data: Array<{
-      id: string
-      date: Date
-      displayDate: string
-      score: number
-      elbowAngle: number
-      kneeAngle: number
-      releaseAngle: number
-      shooterLevel: string
-      isLive: boolean
-    }> = []
+    const data: any[] = []
     
     // Add current session if available
     if (visionAnalysisResult?.success) {
@@ -8492,304 +9431,969 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
   
   // Calculate progress stats
   const progressStats = useMemo(() => {
+    if (!allSessionsData || allSessionsData.length === 0) {
+      return { scoreChange: 0, sessionsCount: 0, avgScore: 0, trend: 'stable' as const }
+    }
     if (allSessionsData.length < 2) {
       return { scoreChange: 0, sessionsCount: allSessionsData.length, avgScore: allSessionsData[0]?.score || 0, trend: 'stable' as const }
     }
     
     const first = allSessionsData[0]
     const last = allSessionsData[allSessionsData.length - 1]
+    if (!first || !last) {
+      return { scoreChange: 0, sessionsCount: allSessionsData.length, avgScore: 0, trend: 'stable' as const }
+    }
     const scoreChange = last.score - first.score
-    const avgScore = allSessionsData.reduce((sum, s) => sum + s.score, 0) / allSessionsData.length
+    const avgScore = allSessionsData.reduce((sum, s) => sum + (s?.score || 0), 0) / allSessionsData.length
     const trend = scoreChange > 5 ? 'improving' as const : scoreChange < -5 ? 'declining' as const : 'stable' as const
     
     return { scoreChange, sessionsCount: allSessionsData.length, avgScore: Math.round(avgScore), trend }
   }, [allSessionsData])
   
-  // Get metric value based on selection
-  const getMetricValue = (session: typeof allSessionsData[0]) => {
-    switch (selectedMetric) {
-      case 'score': return session.score
-      case 'elbow': return session.elbowAngle
-      case 'knee': return session.kneeAngle
-      case 'release': return session.releaseAngle
-      default: return session.score
-    }
-  }
-  
-  const getMetricLabel = () => {
-    switch (selectedMetric) {
-      case 'score': return 'Overall Score'
-      case 'elbow': return 'Elbow Angle'
-      case 'knee': return 'Knee Angle'
-      case 'release': return 'Release Angle'
-      default: return 'Overall Score'
-    }
-  }
-  
-  const getMetricUnit = () => {
-    return selectedMetric === 'score' ? '%' : '°'
-  }
-  
   // Calculate max value for chart scaling
-  const maxValue = useMemo(() => {
-    if (selectedMetric === 'score') return 100
-    const values = allSessionsData.map(s => getMetricValue(s))
-    return Math.max(...values, 100) + 10
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allSessionsData, selectedMetric])
+  const maxValue = 100
   
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a] rounded-xl p-6 border border-[#3a3a3a]">
-        <div className="flex items-center justify-between flex-wrap gap-4">
+    <div className="space-y-8">
+      {/* ============================================ */}
+      {/* SECTION 1: PROFESSIONAL HEADER & STATS */}
+      {/* ============================================ */}
+      <Card className="bg-gradient-to-br from-[#1a1a1a] via-[#222222] to-[#1a1a1a] border-[#2a2a2a] shadow-2xl overflow-hidden">
+        <CardContent className="p-0">
+          {/* Header Bar */}
+          <div className="bg-gradient-to-r from-[#FFD700]/10 via-transparent to-[#FFD700]/10 border-b border-[#2a2a2a] px-6 py-4">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center">
-              <BarChart3 className="w-7 h-7 text-white" />
+                <div className="relative">
+                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#FFD700] to-[#B8860B] flex items-center justify-center shadow-lg">
+                    <BarChart3 className="w-7 h-7 text-[#1a1a1a]" />
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#1a1a1a] border-2 border-[#FFD700] flex items-center justify-center">
+                    <TrendingUp className="w-3 h-3 text-[#FFD700]" />
+                  </div>
             </div>
             <div>
-              <h2 className="text-2xl font-black text-purple-400 uppercase tracking-wider">Historical Data</h2>
-              <p className="text-[#888] text-sm">Track your shooting progress over time</p>
+                  <h2 className="text-xl font-bold text-[#E5E5E5] tracking-tight">
+                    Performance Analytics
+                  </h2>
+                  <p className="text-[#666] text-sm font-medium">
+                    {profileStore?.displayName || profileStore?.firstName || 'Player'} • Historical Data Dashboard
+                  </p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-[#888] text-sm">View:</span>
-            <select
-              value={selectedMetric}
-              onChange={(e) => setSelectedMetric(e.target.value as typeof selectedMetric)}
-              className="bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-2 text-[#E5E5E5] focus:border-purple-500 focus:outline-none"
-            >
-              <option value="score">Overall Score</option>
-              <option value="elbow">Elbow Angle</option>
-              <option value="knee">Knee Angle</option>
-              <option value="release">Release Angle</option>
-            </select>
+              
+              {/* Date Range Indicator */}
+              <div className="flex items-center gap-2 text-sm">
+                <Calendar className="w-4 h-4 text-[#666]" />
+                <span className="text-[#666]">Last 90 Days</span>
           </div>
         </div>
       </div>
       
-      {/* Progress Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-[#2C2C2C] rounded-xl p-4 border border-[#3a3a3a]">
-          <p className="text-[#888] text-xs uppercase tracking-wider mb-1">Total Sessions</p>
-          <p className="text-3xl font-black text-[#FFD700]">{progressStats.sessionsCount}</p>
+          {/* Premium Unified Stats Layout - Inspired by Top-Tier Apps */}
+          <div className="relative p-6 lg:p-8 overflow-hidden">
+            {/* Background gradient mesh */}
+            <div className="absolute inset-0 opacity-30">
+              <div className="absolute top-0 left-0 w-96 h-96 bg-[#FFD700]/10 rounded-full blur-3xl"></div>
+              <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
         </div>
-        <div className="bg-[#2C2C2C] rounded-xl p-4 border border-[#3a3a3a]">
-          <p className="text-[#888] text-xs uppercase tracking-wider mb-1">Average Score</p>
-          <p className="text-3xl font-black text-blue-400">{progressStats.avgScore}%</p>
+            
+            {/* Unified Stats Container - Flowing Layout */}
+            <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+              {/* Sessions - Hero Number with Integrated Visualization */}
+              <div className="lg:col-span-4 relative group">
+                <div className="relative bg-gradient-to-br from-[#1a1a1a]/80 via-[#252525]/80 to-[#1a1a1a]/80 backdrop-blur-xl rounded-3xl p-8 lg:p-10 border border-[#3a3a3a]/30 hover:border-[#FFD700]/40 transition-all duration-500 overflow-hidden">
+                  {/* Glassmorphic effect */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent"></div>
+                  
+                  {/* Large hero number */}
+                  <div className="relative mb-6">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-8xl lg:text-9xl font-black text-[#FFD700] tabular-nums leading-none tracking-tight" style={{
+                        textShadow: '0 0 40px rgba(255, 215, 0, 0.3), 0 0 80px rgba(255, 215, 0, 0.1)'
+                      }}>
+                        {progressStats?.sessionsCount ?? progressStats?.totalSessions ?? 0}
+                      </span>
+                      <Clock className="w-8 h-8 lg:w-10 lg:h-10 text-[#FFD700]/60 mb-4" />
         </div>
-        <div className="bg-[#2C2C2C] rounded-xl p-4 border border-[#3a3a3a]">
-          <p className="text-[#888] text-xs uppercase tracking-wider mb-1">Progress</p>
-          <p className={`text-3xl font-black ${progressStats.scoreChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-            {progressStats.scoreChange >= 0 ? '+' : ''}{progressStats.scoreChange}%
-          </p>
-        </div>
-        <div className="bg-[#2C2C2C] rounded-xl p-4 border border-[#3a3a3a]">
-          <p className="text-[#888] text-xs uppercase tracking-wider mb-1">Trend</p>
-          <p className={`text-xl font-black uppercase ${
-            progressStats.trend === 'improving' ? 'text-green-400' : 
-            progressStats.trend === 'declining' ? 'text-red-400' : 'text-yellow-400'
-          }`}>
-            {progressStats.trend === 'improving' ? '📈 Improving' : 
-             progressStats.trend === 'declining' ? '📉 Declining' : '➡️ Stable'}
-          </p>
-        </div>
-      </div>
-      
-      {/* PHASE 8: Weekly Performance Summary */}
-      <WeeklyPerformanceSummaryCard sessions={allSessionsData} />
-      
-      {/* PHASE 9: View Mode Tabs */}
-      <div className="flex flex-wrap gap-2">
-        {[
-          { id: 'overview', label: 'Overview', icon: BarChart3 },
-          { id: 'categories', label: 'Category Breakdown', icon: Target },
-          { id: 'issues', label: 'Issue Analysis', icon: AlertTriangle },
-          { id: 'milestones', label: 'Achievements', icon: Trophy }
-        ].map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setViewMode(tab.id as typeof viewMode)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              viewMode === tab.id
-                ? 'bg-purple-500 text-white'
-                : 'bg-[#2C2C2C] text-[#888] hover:text-[#E5E5E5] border border-[#3a3a3a]'
-            }`}
-          >
-            <tab.icon className="w-4 h-4" />
-            {tab.label}
-          </button>
-        ))}
-      </div>
-      
-      {/* PHASE 9: Category Comparison View */}
-      {viewMode === 'categories' && (
-        <Phase9CategoryComparison />
-      )}
-      
-      {/* PHASE 9: Issue Heat Map View */}
-      {viewMode === 'issues' && (
-        <Phase9IssueHeatmap />
-      )}
-      
-      {/* PHASE 9: Milestones View */}
-      {viewMode === 'milestones' && (
-        <Phase9MilestoneBadges />
-      )}
-      
-      {/* Timeline Chart - Only show in overview mode */}
-      {viewMode === 'overview' && (
-        <>
-      {/* Timeline Chart */}
-      <div className="bg-[#2C2C2C] rounded-xl p-6 border border-[#3a3a3a]">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-bold text-[#E5E5E5]">{getMetricLabel()} Timeline</h3>
-          <div className="flex items-center gap-4 text-sm">
-            <span className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-purple-500"></div>
-              <span className="text-[#888]">{getMetricLabel()}</span>
-            </span>
-          </div>
-        </div>
-        
-        {allSessionsData.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-[#888]">No session data available. Upload images to start tracking your progress!</p>
-          </div>
-        ) : (
-          <>
-            {/* Chart Area */}
-            <div className="relative h-64 mb-4">
-              {/* Y-axis labels */}
-              <div className="absolute left-0 top-0 bottom-8 w-12 flex flex-col justify-between text-right pr-2">
-                <span className="text-xs text-[#888]">{maxValue}{getMetricUnit()}</span>
-                <span className="text-xs text-[#888]">{Math.round(maxValue * 0.75)}{getMetricUnit()}</span>
-                <span className="text-xs text-[#888]">{Math.round(maxValue * 0.5)}{getMetricUnit()}</span>
-                <span className="text-xs text-[#888]">{Math.round(maxValue * 0.25)}{getMetricUnit()}</span>
-                <span className="text-xs text-[#888]">0{getMetricUnit()}</span>
+                  </div>
+                  
+                  {/* Label with subtle underline */}
+                  <div className="relative">
+                    <p className="text-sm font-bold text-[#888] uppercase tracking-[0.15em] mb-1">SESSIONS</p>
+                    <div className="h-0.5 w-16 bg-gradient-to-r from-[#FFD700]/40 to-transparent"></div>
+                  </div>
+                  
+                  {/* Integrated mini chart visualization */}
+                  <div className="mt-6 pt-6 border-t border-[#3a3a3a]/30">
+                    <div className="flex items-end gap-1 h-12">
+                      {[...Array(8)].map((_, i) => (
+                        <div 
+                          key={i}
+                          className="flex-1 bg-gradient-to-t from-[#FFD700]/20 to-[#FFD700]/5 rounded-t transition-all duration-300 hover:from-[#FFD700]/40 hover:to-[#FFD700]/20"
+                          style={{ height: `${Math.random() * 60 + 40}%` }}
+                        ></div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
               
-              {/* Chart grid and bars */}
-              <div className="absolute left-14 right-0 top-0 bottom-8">
-                {/* Grid lines */}
-                <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
-                  {[0, 1, 2, 3, 4].map(i => (
-                    <div key={i} className="border-t border-[#3a3a3a]"></div>
-                  ))}
+              {/* Avg Score - Circular Progress Integrated */}
+              <div className="lg:col-span-3 relative group">
+                <div className="relative bg-gradient-to-br from-[#1a1a1a]/80 via-[#252525]/80 to-[#1a1a1a]/80 backdrop-blur-xl rounded-3xl p-8 lg:p-10 border border-[#3a3a3a]/30 hover:border-blue-500/40 transition-all duration-500 overflow-hidden h-full flex flex-col justify-between">
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent"></div>
+                  
+                  {/* Circular progress visualization */}
+                  <div className="relative w-32 h-32 mx-auto mb-6">
+                    <svg className="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
+                      <circle cx="60" cy="60" r="50" fill="none" stroke="#3a3a3a" strokeWidth="8" />
+                      <circle 
+                        cx="60" cy="60" r="50" 
+                        fill="none" 
+                        stroke="url(#scoreGradient)" 
+                        strokeWidth="8" 
+                        strokeLinecap="round"
+                        strokeDasharray={`${((progressStats?.avgScore || 0) / 100) * 314} 314`}
+                        className="transition-all duration-1000"
+                      />
+                      <defs>
+                        <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#3b82f6" />
+                          <stop offset="100%" stopColor="#60a5fa" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="text-center">
+                        <span className="text-4xl font-black text-blue-400 tabular-nums leading-none block">{progressStats?.avgScore || 0}</span>
+                        <span className="text-lg font-bold text-blue-400/70">%</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <p className="text-sm font-bold text-[#888] uppercase tracking-[0.15em] mb-1">AVG SCORE</p>
+                    <div className="h-0.5 w-16 bg-gradient-to-r from-blue-500/40 to-transparent"></div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Progress - Minimalist with Large Typography */}
+              <div className="lg:col-span-3 relative group">
+                <div className="relative bg-gradient-to-br from-[#1a1a1a]/80 via-[#252525]/80 to-[#1a1a1a]/80 backdrop-blur-xl rounded-3xl p-8 lg:p-10 border border-[#3a3a3a]/30 hover:border-green-500/40 transition-all duration-500 overflow-hidden h-full flex flex-col justify-between">
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent"></div>
+                  
+                  {/* Large percentage */}
+                  <div className="mb-6">
+                    <span className={`text-7xl lg:text-8xl font-black tabular-nums leading-none tracking-tight ${
+                      (progressStats?.scoreChange || 0) >= 0 ? 'text-green-400' : 'text-red-400'
+                    }`} style={{
+                      textShadow: (progressStats?.scoreChange || 0) >= 0 
+                        ? '0 0 40px rgba(34, 197, 94, 0.3), 0 0 80px rgba(34, 197, 94, 0.1)'
+                        : '0 0 40px rgba(239, 68, 68, 0.3), 0 0 80px rgba(239, 68, 68, 0.1)'
+                    }}>
+            {(progressStats?.scoreChange || 0) >= 0 ? '+' : ''}{progressStats?.scoreChange || 0}%
+                    </span>
+        </div>
+                  
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <TrendingUp className={`w-5 h-5 ${
+                        (progressStats?.scoreChange || 0) >= 0 ? 'text-green-400' : 'text-red-400 rotate-180'
+                      }`} />
+                      <p className="text-sm font-bold text-[#888] uppercase tracking-[0.15em]">PROGRESS</p>
+                    </div>
+                    <div className={`h-0.5 w-16 bg-gradient-to-r ${
+                      (progressStats?.scoreChange || 0) >= 0 ? 'from-green-500/40' : 'from-red-500/40'
+                    } to-transparent`}></div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Trend - Status Badge Style */}
+              <div className="lg:col-span-2 relative group">
+                <div className={`relative bg-gradient-to-br from-[#1a1a1a]/80 via-[#252525]/80 to-[#1a1a1a]/80 backdrop-blur-xl rounded-3xl p-8 lg:p-10 border transition-all duration-500 overflow-hidden h-full flex flex-col justify-center items-center ${
+                  progressStats?.trend === 'improving' 
+                    ? 'border-green-500/30 hover:border-green-500/50' 
+                    : progressStats?.trend === 'declining'
+                    ? 'border-red-500/30 hover:border-red-500/50'
+                    : 'border-yellow-500/30 hover:border-yellow-500/50'
+                }`}>
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent"></div>
+                  
+                  {/* Status indicator */}
+                  <div className={`relative mb-6 px-6 py-4 rounded-2xl backdrop-blur-md border-2 ${
+                    progressStats?.trend === 'improving' 
+                      ? 'bg-green-500/10 border-green-500/40 shadow-lg shadow-green-500/20' 
+                      : progressStats?.trend === 'declining'
+                      ? 'bg-red-500/10 border-red-500/40 shadow-lg shadow-red-500/20'
+                      : 'bg-yellow-500/10 border-yellow-500/40 shadow-lg shadow-yellow-500/20'
+                  }`}>
+                    <div className="flex flex-col items-center gap-2">
+                      <Activity className={`w-8 h-8 ${
+                        progressStats?.trend === 'improving' ? 'text-green-400' : 
+                        progressStats?.trend === 'declining' ? 'text-red-400' : 'text-yellow-400'
+                      }`} />
+                      <span className={`text-2xl font-black uppercase tracking-tight ${
+            progressStats?.trend === 'improving' ? 'text-green-400' : 
+            progressStats?.trend === 'declining' ? 'text-red-400' : 'text-yellow-400'
+          }`}>
+                        {progressStats?.trend || 'stable'}
+                      </span>
+        </div>
+      </div>
+      
+                  <p className="text-sm font-bold text-[#888] uppercase tracking-[0.15em]">TREND</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
+      {/* ============================================ */}
+      {/* TABS SECTION */}
+      {/* ============================================ */}
+      <Tabs value={safeViewMode} onValueChange={(value) => {
+        try {
+          if (value === 'sessions' || value === 'analytics' || value === 'heatmap') {
+            setViewMode(value)
+          }
+        } catch (error) {
+          console.error('Error changing view mode:', error)
+        }
+      }} className="w-full">
+        <TabsList className="grid w-full grid-cols-3 mb-6 bg-[#1a1a1a] border border-[#2a2a2a]">
+          <TabsTrigger value="sessions" className="data-[state=active]:bg-[#FFD700] data-[state=active]:text-[#1a1a1a]">Timeline</TabsTrigger>
+          <TabsTrigger value="analytics" className="data-[state=active]:bg-[#FFD700] data-[state=active]:text-[#1a1a1a]">Analytics</TabsTrigger>
+          <TabsTrigger value="heatmap" className="data-[state=active]:bg-[#FFD700] data-[state=active]:text-[#1a1a1a]">Heatmap</TabsTrigger>
+        </TabsList>
+        
+        {/* ============================================ */}
+        {/* TAB 1: SESSION TIMELINE */}
+        {/* ============================================ */}
+        <TabsContent value="sessions" className="mt-0">
+          <Card className="bg-[#1a1a1a] border-[#2a2a2a] shadow-xl overflow-hidden">
+            <CardHeader className="border-b border-[#2a2a2a]/50 bg-gradient-to-r from-[#1d1d1d] via-[#222] to-[#1d1d1d] pb-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#FFD700] via-[#FFA500] to-[#FF8C00] flex items-center justify-center shadow-lg shadow-[#FFD700]/20">
+                      <Clock className="w-6 h-6 text-[#1a1a1a]" />
+                    </div>
+                    <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-green-500 border-2 border-[#1d1d1d] animate-pulse"></div>
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg font-bold text-[#E5E5E5] tracking-tight">SESSION TIMELINE</CardTitle>
+                    <CardDescription className="text-[#888] text-sm">Your training journey at a glance</CardDescription>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#252525]/80 border border-[#3a3a3a]/50 backdrop-blur-sm">
+                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                  <span className="text-xs font-medium text-[#888] uppercase tracking-wider">{(allSessionsData?.length || 0)} Sessions</span>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              {(!allSessionsData || allSessionsData.length === 0) ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center px-6">
+                  <div className="w-20 h-20 rounded-full bg-[#252525] flex items-center justify-center mb-4">
+                    <Clock className="w-10 h-10 text-[#555]" />
+                  </div>
+                  <p className="text-[#888] text-base font-medium mb-2">No Sessions Yet</p>
+                  <p className="text-[#555] text-sm">Complete your first analysis to start tracking progress</p>
+          </div>
+        ) : (
+                <div className="relative">
+                  {/* Vertical Timeline Design - Matching Image Structure */}
+                  <div className="relative max-w-6xl mx-auto py-8 px-4 md:px-6">
+                    {/* Vertical Timeline Line */}
+                    <div className="absolute left-10 md:left-10 top-0 bottom-0 w-0.5 bg-gradient-to-b from-[#FFD700] via-[#3a3a3a] to-transparent"></div>
+                    
+                    {/* Timeline Items */}
+                    <div className="space-y-12">
+                      {((allSessionsData && Array.isArray(allSessionsData)) ? [...allSessionsData] : []).filter(s => s).reverse().slice(0, 8).map((session, index) => {
+                        const isFirst = index === 0
+                        const sessionNumber = String(index + 1).padStart(2, '0')
+                        const score = session.score || 0
+                        const scoreColor = score >= 85 ? 'green' : score >= 70 ? 'yellow' : score >= 55 ? 'orange' : 'red'
+                        
+                        // Color themes - variations of website's gold/yellow palette
+                        const colorThemes = [
+                          { main: '#FFD700', border: '#FFD700', bg: '#FFD700/10' }, // Bright gold
+                          { main: '#FFA500', border: '#FFA500', bg: '#FFA500/10' }, // Orange-gold
+                          { main: '#FFC700', border: '#FFC700', bg: '#FFC700/10' }, // Light gold
+                          { main: '#D4AF37', border: '#D4AF37', bg: '#D4AF37/10' }, // Antique gold
+                          { main: '#FFD700', border: '#FFD700', bg: '#FFD700/10' }, // Bright gold (repeat)
+                          { main: '#FF8C00', border: '#FF8C00', bg: '#FF8C00/10' }, // Dark orange-gold
+                          { main: '#FFD700', border: '#FFD700', bg: '#FFD700/10' }, // Bright gold (repeat)
+                          { main: '#F4C430', border: '#F4C430', bg: '#F4C430/10' }  // Saffron gold
+                        ]
+                        const theme = colorThemes[index % colorThemes.length]
+                        
+                        // Parse date for display
+                        const dateObj = session.date instanceof Date ? session.date : (session.date ? new Date(session.date) : new Date())
+                        const year = dateObj.getFullYear().toString()
+                        
+                        // Format date for circle: "DEC 20" in uppercase
+                        const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
+                        const month = monthNames[dateObj.getMonth()]
+                        const day = dateObj.getDate()
+                        const circleDate = `${month} ${day}`
+                        
+                        // Format monthDay for card display
+                        const monthDay = `${month} ${day}`
+                        
+                        return (
+                          <div key={session.id || `session-${index}`} className="relative flex items-start gap-6 group">
+                            {/* Date Circle on Timeline */}
+                            <div className="relative z-10 flex-shrink-0">
+                              {/* Vertical line segments */}
+                              {index > 0 && (
+                                <div className={`absolute -top-12 left-1/2 transform -translate-x-1/2 w-0.5 h-12`} style={{ backgroundColor: theme.main }}></div>
+                              )}
+                              
+                              {/* Date Circle */}
+                              <div 
+                                className={`relative w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center font-bold transition-all duration-300 group-hover:scale-110 ${
+                                  isFirst ? 'shadow-lg shadow-[#FFD700]/40' : ''
+                                }`}
+                                style={{
+                                  backgroundColor: isFirst ? '#FFD700' : '#1a1a1a',
+                                  border: `3px solid ${theme.main}`,
+                                  color: isFirst ? '#1a1a1a' : theme.main
+                                }}
+                              >
+                                <div className="text-center leading-tight uppercase px-1 flex flex-col items-center justify-center">
+                                  <div className="text-sm md:text-base font-black">{month}</div>
+                                  <div className="text-lg md:text-xl font-black">{day}</div>
+                                </div>
+                                {isFirst && (
+                                  <div className="absolute inset-0 rounded-full bg-[#FFD700] animate-ping opacity-20"></div>
+                                )}
+              </div>
+              
+                              {/* Bottom line segment */}
+                              {index < Math.min((allSessionsData?.length || 0), 8) - 1 && (
+                                <div className={`absolute -bottom-12 left-1/2 transform -translate-x-1/2 w-0.5 h-12`} style={{ backgroundColor: theme.main }}></div>
+                              )}
                 </div>
                 
-                {/* Bars */}
-                <div className="relative h-full flex items-end justify-around gap-2 px-2">
-                  {allSessionsData.map((session) => {
-                    const value = getMetricValue(session)
-                    const heightPercent = (value / maxValue) * 100
-                    return (
-                      <div key={session.id} className="flex-1 flex flex-col items-center max-w-16 group">
-                        {/* Value label on hover */}
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity mb-1 text-xs font-bold text-purple-400">
-                          {value}{getMetricUnit()}
+                            {/* Year Display */}
+                            <div className="absolute left-[80px] md:left-[96px] top-8 z-0 flex items-center">
+                              <div 
+                                className="text-2xl md:text-3xl font-black"
+                                style={{ color: theme.main }}
+                              >
+                                {year}
                         </div>
-                        {/* Bar */}
-                        <div 
-                          className={`w-full rounded-t-lg transition-all duration-300 group-hover:scale-105 ${
-                            session.isLive 
-                              ? 'bg-gradient-to-t from-[#FFD700] to-[#FFA500]' 
-                              : 'bg-gradient-to-t from-purple-600 to-purple-400'
-                          }`}
-                          style={{ height: `${heightPercent}%`, minHeight: '4px' }}
-                        />
+                            </div>
+                            
+                            {/* Content Card */}
+                            <div className="flex-1 ml-8 md:ml-24">
+                              <div 
+                                className={`relative bg-[#252525] rounded-xl p-4 md:p-6 shadow-xl transition-all duration-300 group-hover:shadow-2xl ${
+                                  isFirst ? 'ring-2' : ''
+                                }`}
+                                style={{
+                                  border: `2px solid ${theme.border}`,
+                                  ringColor: isFirst ? '#FFD700' : 'transparent'
+                                }}
+                              >
+                                {/* Percentage in top right */}
+                                <div className="absolute top-3 right-3 md:top-4 md:right-4">
+                                  <div 
+                                    className={`text-3xl md:text-4xl font-black tabular-nums ${
+                                      scoreColor === 'green' ? 'text-green-400' :
+                                      scoreColor === 'yellow' ? 'text-yellow-400' :
+                                      scoreColor === 'orange' ? 'text-orange-400' :
+                                      'text-red-400'
+                                    }`}
+                                  >
+                                    {score}%
+                                  </div>
+                                </div>
+                                
+                                {/* Card Content - Single Line Layout */}
+                                <div className="flex items-center gap-3 md:gap-4 pr-20 md:pr-24 flex-wrap">
+                                  {/* SESSIONS 01: */}
+                                  <h3 
+                                    className="text-base md:text-lg font-bold uppercase"
+                                    style={{ color: theme.main }}
+                                  >
+                                    SESSIONS {sessionNumber}:
+                                  </h3>
+                                  
+                                  {/* Metrics on same line */}
+                                  {[
+                                    { label: 'ELBOW', value: session.elbowAngle || 0, color: 'blue' },
+                                    { label: 'KNEE', value: session.kneeAngle || 0, color: 'green' },
+                                    { label: 'RELEASE', value: session.releaseAngle || 0, color: 'orange' }
+                                  ].map((metric) => (
+                                    <div key={metric.label} className="flex items-baseline gap-2">
+                                      <span className={`text-xs font-semibold uppercase tracking-wider ${
+                                        metric.color === 'blue' ? 'text-blue-400/70' :
+                                        metric.color === 'green' ? 'text-green-400/70' : 'text-orange-400/70'
+                                      }`}>
+                                        {metric.label}
+                                      </span>
+                                      <span className={`text-lg md:text-xl font-bold tabular-nums ${
+                                        metric.color === 'blue' ? 'text-blue-400' :
+                                        metric.color === 'green' ? 'text-green-400' : 'text-orange-400'
+                                      }`}>
+                                        {metric.value}°
+            </span>
+          </div>
+                                  ))}
+        </div>
+                              </div>
+                            </div>
                       </div>
                     )
                   })}
                 </div>
               </div>
             </div>
-            
-            {/* X-axis labels (dates) */}
-            <div className="flex justify-around pl-14 pr-2">
-              {allSessionsData.map((session) => (
-                <div key={session.id} className="flex-1 max-w-16 text-center">
-                  <p className={`text-xs ${session.isLive ? 'text-[#FFD700] font-bold' : 'text-[#888]'}`}>
-                    {session.displayDate}
-                  </p>
-                  {session.isLive && (
-                    <span className="text-[10px] text-green-400">LIVE</span>
-                  )}
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        {/* ============================================ */}
+        {/* TAB 2: ANALYTICS */}
+        {/* ============================================ */}
+        <TabsContent value="analytics" className="mt-0">
+          <AnalyticsChartSection 
+            sessions={allSessionsData || []} 
+            progressStats={progressStats || { scoreChange: 0, sessionsCount: 0, avgScore: 0, trend: 'stable' }}
+            playerName={profileStore?.displayName || profileStore?.firstName || 'Player'}
+          />
+        </TabsContent>
+        
+        {/* ============================================ */}
+        {/* TAB 3: PROFESSIONAL ACTIVITY HEATMAP */}
+        {/* ============================================ */}
+        <TabsContent value="heatmap" className="mt-0">
+          <Card className="bg-[#1a1a1a] border-[#2a2a2a] shadow-xl overflow-hidden">
+            <CardHeader className="border-b border-[#2a2a2a] bg-[#1d1d1d]">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-8 rounded-full bg-gradient-to-b from-green-500 to-green-700"></div>
+                  <div>
+                    <CardTitle className="text-base font-semibold text-[#E5E5E5]">Practice Activity</CardTitle>
+                    <CardDescription className="text-[#666]">18-week training consistency</CardDescription>
                 </div>
-              ))}
+                </div>
+                {/* Professional Legend */}
+                <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[#252525] border border-[#3a3a3a]">
+                  <span className="text-[10px] font-medium text-[#666] uppercase tracking-wider">Activity Level</span>
+                  <div className="flex items-center gap-0.5">
+                    <div className="w-3 h-3 rounded-[3px] bg-[#1a1a1a] border border-[#2a2a2a]" title="No activity"></div>
+                    <div className="w-3 h-3 rounded-[3px] bg-green-900/50" title="1 session"></div>
+                    <div className="w-3 h-3 rounded-[3px] bg-green-700/70" title="2 sessions"></div>
+                    <div className="w-3 h-3 rounded-[3px] bg-green-500" title="3+ sessions"></div>
+                  </div>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-6">
+              {/* Stats Cards - Premium Design with Integrated Visualizations */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                {/* Active Days Card */}
+                <Card className="bg-gradient-to-br from-[#1a1a1a] to-[#252525] border-[#3a3a3a] hover:border-green-500/30 transition-all overflow-hidden relative">
+                  <CardContent className="p-5">
+                    {/* Header */}
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <h3 className="text-sm font-bold text-[#E5E5E5] mb-1">ACTIVE DAYS</h3>
+                        <p className="text-xs text-[#888]">Last 18 weeks</p>
+                      </div>
+                      <button className="text-[#888] hover:text-[#E5E5E5] transition-colors">
+                        <MoreVertical className="w-4 h-4" />
+                      </button>
+              </div>
+              
+                    {/* Line Graph */}
+                    <div className="relative h-20 mb-4">
+                      <svg className="w-full h-full" viewBox="0 0 200 60" preserveAspectRatio="none">
+                {/* Grid lines */}
+                        {[0, 15, 30, 45, 60].map((y) => (
+                          <line key={y} x1="0" y1={y} x2="200" y2={y} stroke="#3a3a3a" strokeWidth="0.5" />
+                        ))}
+                        {/* Data line */}
+                        <polyline
+                          points={Array.from({ length: 8 }, (_, i) => {
+                            const x = (i / 7) * 200;
+                            const activeDays = new Set(allSessionsData.map(s => new Date(s.date).toISOString().split('T')[0])).size;
+                            const trendValue = Math.min(60, (activeDays / 10) * 50 + (i * 2));
+                            const y = 60 - trendValue;
+                            return `${x},${y}`;
+                          }).join(' ')}
+                          fill="none"
+                          stroke="#22c55e"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        {/* Current point */}
+                        <circle cx="200" cy="10" r="4" fill="#22c55e" />
+                        {/* Badge */}
+                        <g transform="translate(150, 5)">
+                          <rect x="0" y="0" width="50" height="12" rx="6" fill="#22c55e" opacity="0.2" />
+                          <text x="25" y="9" textAnchor="middle" fontSize="8" fill="#22c55e" fontWeight="bold">
+                            +{new Set(allSessionsData.map(s => new Date(s.date).toISOString().split('T')[0])).size}
+                          </text>
+                        </g>
+                      </svg>
             </div>
-          </>
-        )}
+                
+                    {/* Progress Bar */}
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="h-2 bg-[#3a3a3a] rounded-full flex-1 mr-2">
+                          <div 
+                            className="h-full bg-gradient-to-r from-green-500 to-green-400 rounded-full transition-all duration-500"
+                            style={{ width: `${Math.min(100, (new Set(allSessionsData.map(s => new Date(s.date).toISOString().split('T')[0])).size / 10) * 100)}%` }}
+                          ></div>
+                        </div>
+                        <span className="text-xs font-medium text-[#888]">
+                          {Math.min(100, Math.round((new Set(allSessionsData.map(s => new Date(s.date).toISOString().split('T')[0])).size / 10) * 100))}%
+                        </span>
+                      </div>
       </div>
       
-      {/* Session Timeline */}
-      <div className="bg-[#2C2C2C] rounded-xl p-6 border border-[#3a3a3a]">
-        <h3 className="text-lg font-bold text-[#E5E5E5] mb-6 flex items-center gap-2">
-          <Calendar className="w-5 h-5 text-purple-400" />
-          Session Timeline
-        </h3>
-        
-        {allSessionsData.length === 0 ? (
-          <p className="text-[#888] text-center py-8">No sessions recorded yet.</p>
-        ) : (
-          <div className="relative">
-            {/* Timeline line */}
-            <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gradient-to-b from-purple-500 via-purple-400 to-purple-600"></div>
-            
-            {/* Timeline items */}
-            <div className="space-y-6">
-              {[...allSessionsData].reverse().map((session) => (
-                <div key={session.id} className="relative flex items-start gap-4 pl-14">
-                  {/* Timeline dot */}
-                  <div className={`absolute left-4 w-5 h-5 rounded-full border-4 ${
-                    session.isLive 
-                      ? 'bg-[#FFD700] border-[#FFD700]/30' 
-                      : 'bg-purple-500 border-purple-500/30'
-                  }`}>
-                    {session.isLive && (
-                      <div className="absolute inset-0 rounded-full bg-[#FFD700] animate-ping opacity-50"></div>
-                    )}
-                  </div>
-                  
-                  {/* Session card */}
-                  <div className={`flex-1 bg-[#1a1a1a] rounded-xl p-4 border ${
-                    session.isLive ? 'border-[#FFD700]/50' : 'border-[#3a3a3a]'
-                  }`}>
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <span className={`text-sm font-bold ${session.isLive ? 'text-[#FFD700]' : 'text-[#E5E5E5]'}`}>
-                          {session.displayDate}
+                    {/* Main Metric */}
+                    <div className="flex items-baseline justify-between">
+                      <div>
+                        <span className="text-3xl font-black text-green-400 leading-none">
+                          {new Set(allSessionsData.map(s => new Date(s.date).toISOString().split('T')[0])).size}
                         </span>
-                        {session.isLive && (
-                          <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-green-500/20 text-green-400 border border-green-500/30">
-                            LIVE
-                          </span>
-                        )}
                       </div>
-                      <span className={`px-3 py-1 rounded-lg text-sm font-bold ${
-                        session.score >= 85 ? 'bg-green-500/20 text-green-400' :
-                        session.score >= 70 ? 'bg-yellow-500/20 text-yellow-400' :
-                        session.score >= 55 ? 'bg-orange-500/20 text-orange-400' :
-                        'bg-red-500/20 text-red-400'
-                      }`}>
-                        {session.score}%
-                      </span>
+                      <p className="text-xs text-[#888]">Compare to last week</p>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                {/* Current Streak Card */}
+                <Card className="bg-gradient-to-br from-[#1a1a1a] to-[#252525] border-[#3a3a3a] hover:border-orange-500/30 transition-all overflow-hidden relative">
+                  <CardContent className="p-5">
+                    {/* Header */}
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <h3 className="text-sm font-bold text-[#E5E5E5] mb-1">CURRENT STREAK</h3>
+                        <p className="text-xs text-[#888]">Last 18 weeks</p>
+                      </div>
+                      <button className="text-[#888] hover:text-[#E5E5E5] transition-colors">
+                        <MoreVertical className="w-4 h-4" />
+                      </button>
                     </div>
                     
-                    <div className="flex items-center gap-4 text-sm">
-                      <span className="text-[#888]">Level: <span className="text-purple-400 font-medium">{session.shooterLevel}</span></span>
-                      <span className="text-[#888]">Elbow: <span className="text-[#E5E5E5]">{session.elbowAngle}°</span></span>
-                      <span className="text-[#888]">Knee: <span className="text-[#E5E5E5]">{session.kneeAngle}°</span></span>
-                    </div>
+                    {/* Line Graph */}
+                    <div className="relative h-20 mb-4">
+                      <svg className="w-full h-full" viewBox="0 0 200 60" preserveAspectRatio="none">
+                        {/* Grid lines */}
+                        {[0, 15, 30, 45, 60].map((y) => (
+                          <line key={y} x1="0" y1={y} x2="200" y2={y} stroke="#3a3a3a" strokeWidth="0.5" />
+                        ))}
+                        {/* Data line */}
+                        <polyline
+                          points={Array.from({ length: 8 }, (_, i) => {
+                            const x = (i / 7) * 200;
+                            const streak = (() => {
+                              let currentStreak = 0
+                              const today = new Date()
+                              for (let j = 0; j < 30; j++) {
+                                const checkDate = new Date(today)
+                                checkDate.setDate(today.getDate() - j)
+                                const dayStr = checkDate.toISOString().split('T')[0]
+                                const hasSession = allSessionsData.some(s => 
+                                  new Date(s.date).toISOString().split('T')[0] === dayStr
+                                )
+                                if (hasSession) currentStreak++
+                                else if (j > 0) break
+                              }
+                              return currentStreak
+                            })();
+                            const trendValue = Math.min(60, (streak / 10) * 50 + (i * 1.5));
+                            const y = 60 - trendValue;
+                            return `${x},${y}`;
+                          }).join(' ')}
+                          fill="none"
+                          stroke="#f97316"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        {/* Current point */}
+                        <circle cx="200" cy="15" r="4" fill="#f97316" />
+                      </svg>
                   </div>
+                  
+                    {/* Progress Bar */}
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="h-2 bg-[#3a3a3a] rounded-full flex-1 mr-2">
+                          <div 
+                            className="h-full bg-gradient-to-r from-orange-500 to-orange-400 rounded-full transition-all duration-500"
+                            style={{ width: `${Math.min(100, ((() => {
+                              let streak = 0
+                              const today = new Date()
+                              for (let i = 0; i < 30; i++) {
+                                const checkDate = new Date(today)
+                                checkDate.setDate(today.getDate() - i)
+                                const dayStr = checkDate.toISOString().split('T')[0]
+                                const hasSession = allSessionsData.some(s => 
+                                  new Date(s.date).toISOString().split('T')[0] === dayStr
+                                )
+                                if (hasSession) streak++
+                                else if (i > 0) break
+                              }
+                              return streak
+                            })() / 10) * 100)}%` }}
+                          ></div>
                 </div>
+                        <span className="text-xs font-medium text-[#888]">
+                          {Math.min(100, Math.round(((() => {
+                            let streak = 0
+                            const today = new Date()
+                            for (let i = 0; i < 30; i++) {
+                              const checkDate = new Date(today)
+                              checkDate.setDate(today.getDate() - i)
+                              const dayStr = checkDate.toISOString().split('T')[0]
+                              const hasSession = allSessionsData.some(s => 
+                                new Date(s.date).toISOString().split('T')[0] === dayStr
+                              )
+                              if (hasSession) streak++
+                              else if (i > 0) break
+                            }
+                            return streak
+                          })() / 10) * 100))}%
+                        </span>
+              </div>
+            </div>
+            
+                    {/* Main Metric */}
+                    <div className="flex items-baseline justify-between">
+                      <div>
+                        <span className="text-3xl font-black text-orange-400 leading-none">
+                          {(() => {
+                            let streak = 0
+                            const today = new Date()
+                            for (let i = 0; i < 30; i++) {
+                              const checkDate = new Date(today)
+                              checkDate.setDate(today.getDate() - i)
+                              const dayStr = checkDate.toISOString().split('T')[0]
+                              const hasSession = allSessionsData.some(s => 
+                                new Date(s.date).toISOString().split('T')[0] === dayStr
+                              )
+                              if (hasSession) streak++
+                              else if (i > 0) break
+                            }
+                            return streak
+                          })()}
+                          </span>
+                      </div>
+                      <p className="text-xs text-[#888]">Compare to last week</p>
+            </div>
+                  </CardContent>
+                </Card>
+                
+                {/* Best Streak Card */}
+                <Card className="bg-gradient-to-br from-[#1a1a1a] to-[#252525] border-[#3a3a3a] hover:border-purple-500/30 transition-all overflow-hidden relative">
+                  <CardContent className="p-5">
+                    {/* Header */}
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <h3 className="text-sm font-bold text-[#E5E5E5] mb-1">BEST STREAK</h3>
+                        <p className="text-xs text-[#888]">Last 18 weeks</p>
+                      </div>
+                      <button className="text-[#888] hover:text-[#E5E5E5] transition-colors">
+                        <MoreVertical className="w-4 h-4" />
+                      </button>
+      </div>
+      
+                    {/* Line Graph */}
+                    <div className="relative h-20 mb-4">
+                      <svg className="w-full h-full" viewBox="0 0 200 60" preserveAspectRatio="none">
+                        {/* Grid lines */}
+                        {[0, 15, 30, 45, 60].map((y) => (
+                          <line key={y} x1="0" y1={y} x2="200" y2={y} stroke="#3a3a3a" strokeWidth="0.5" />
+                        ))}
+                        {/* Data line */}
+                        <polyline
+                          points={Array.from({ length: 8 }, (_, i) => {
+                            const x = (i / 7) * 200;
+                            const maxStreak = (() => {
+                              let maxStreak = 0
+                              let currentStreak = 0
+                              const sortedDates = [...new Set(allSessionsData.map(s => 
+                                new Date(s.date).toISOString().split('T')[0]
+                              ))].sort()
+                              
+                              for (let j = 0; j < sortedDates.length; j++) {
+                                if (j === 0) {
+                                  currentStreak = 1
+                                } else {
+                                  const prevDate = new Date(sortedDates[j - 1])
+                                  const currDate = new Date(sortedDates[j])
+                                  const diffDays = Math.round((currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24))
+                                  if (diffDays === 1) currentStreak++
+                                  else currentStreak = 1
+                                }
+                                maxStreak = Math.max(maxStreak, currentStreak)
+                              }
+                              return maxStreak
+                            })();
+                            const trendValue = Math.min(60, (maxStreak / 10) * 50 + (i * 2));
+                            const y = 60 - trendValue;
+                            return `${x},${y}`;
+                          }).join(' ')}
+                          fill="none"
+                          stroke="#a855f7"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        {/* Current point */}
+                        <circle cx="200" cy="10" r="4" fill="#a855f7" />
+                      </svg>
+                    </div>
+                    
+                    {/* Progress Bar */}
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="h-2 bg-[#3a3a3a] rounded-full flex-1 mr-2">
+                          <div 
+                            className="h-full bg-gradient-to-r from-purple-500 to-purple-400 rounded-full transition-all duration-500"
+                            style={{ width: `${Math.min(100, ((() => {
+                              let maxStreak = 0
+                              let currentStreak = 0
+                              const sortedDates = [...new Set(allSessionsData.map(s => 
+                                new Date(s.date).toISOString().split('T')[0]
+                              ))].sort()
+                              
+                              for (let i = 0; i < sortedDates.length; i++) {
+                                if (i === 0) {
+                                  currentStreak = 1
+                                } else {
+                                  const prevDate = new Date(sortedDates[i - 1])
+                                  const currDate = new Date(sortedDates[i])
+                                  const diffDays = Math.round((currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24))
+                                  if (diffDays === 1) currentStreak++
+                                  else currentStreak = 1
+                                }
+                                maxStreak = Math.max(maxStreak, currentStreak)
+                              }
+                              return maxStreak
+                            })() / 10) * 100)}%` }}
+                          ></div>
+                  </div>
+                        <span className="text-xs font-medium text-[#888]">
+                          {Math.min(100, Math.round(((() => {
+                            let maxStreak = 0
+                            let currentStreak = 0
+                            const sortedDates = [...new Set(allSessionsData.map(s => 
+                              new Date(s.date).toISOString().split('T')[0]
+                            ))].sort()
+                            
+                            for (let i = 0; i < sortedDates.length; i++) {
+                              if (i === 0) {
+                                currentStreak = 1
+                              } else {
+                                const prevDate = new Date(sortedDates[i - 1])
+                                const currDate = new Date(sortedDates[i])
+                                const diffDays = Math.round((currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24))
+                                if (diffDays === 1) currentStreak++
+                                else currentStreak = 1
+                              }
+                              maxStreak = Math.max(maxStreak, currentStreak)
+                            }
+                            return maxStreak
+                          })() / 10) * 100))}%
+                      </span>
+                      </div>
+                    </div>
+                    
+                    {/* Main Metric */}
+                    <div className="flex items-baseline justify-between">
+                      <div>
+                        <span className="text-3xl font-black text-purple-400 leading-none">
+                          {(() => {
+                            let maxStreak = 0
+                            let currentStreak = 0
+                            const sortedDates = [...new Set(allSessionsData.map(s => 
+                              new Date(s.date).toISOString().split('T')[0]
+                            ))].sort()
+                            
+                            for (let i = 0; i < sortedDates.length; i++) {
+                              if (i === 0) {
+                                currentStreak = 1
+                              } else {
+                                const prevDate = new Date(sortedDates[i - 1])
+                                const currDate = new Date(sortedDates[i])
+                                const diffDays = Math.round((currDate.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24))
+                                if (diffDays === 1) currentStreak++
+                                else currentStreak = 1
+                              }
+                              maxStreak = Math.max(maxStreak, currentStreak)
+                            }
+                            return maxStreak
+                          })()}
+                          </span>
+                    </div>
+                      <p className="text-xs text-[#888]">Compare to last week</p>
+                  </div>
+                  </CardContent>
+                </Card>
+                
+                {/* Avg/Week Card */}
+                <Card className="bg-gradient-to-br from-[#1a1a1a] to-[#252525] border-[#3a3a3a] hover:border-[#FFD700]/30 transition-all overflow-hidden relative">
+                  <CardContent className="p-5">
+                    {/* Header */}
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <h3 className="text-sm font-bold text-[#E5E5E5] mb-1">AVG/WEEK</h3>
+                        <p className="text-xs text-[#888]">Last 18 weeks</p>
+                </div>
+                      <button className="text-[#888] hover:text-[#E5E5E5] transition-colors">
+                        <MoreVertical className="w-4 h-4" />
+                      </button>
+                    </div>
+                    
+                    {/* Line Graph */}
+                    <div className="relative h-20 mb-4">
+                      <svg className="w-full h-full" viewBox="0 0 200 60" preserveAspectRatio="none">
+                        {/* Grid lines */}
+                        {[0, 15, 30, 45, 60].map((y) => (
+                          <line key={y} x1="0" y1={y} x2="200" y2={y} stroke="#3a3a3a" strokeWidth="0.5" />
+                        ))}
+                        {/* Data line */}
+                        <polyline
+                          points={Array.from({ length: 8 }, (_, i) => {
+                            const x = (i / 7) * 200;
+                            const avgWeek = allSessionsData.length > 0 ? (allSessionsData.length / 18) : 0;
+                            const trendValue = Math.min(60, (avgWeek / 5) * 50 + (i * 1.5));
+                            const y = 60 - trendValue;
+                            return `${x},${y}`;
+                          }).join(' ')}
+                          fill="none"
+                          stroke="#FFD700"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        {/* Current point */}
+                        <circle cx="200" cy="20" r="4" fill="#FFD700" />
+                        {/* Badge */}
+                        <g transform="translate(150, 5)">
+                          <rect x="0" y="0" width="50" height="12" rx="6" fill="#FFD700" opacity="0.2" />
+                          <text x="25" y="9" textAnchor="middle" fontSize="8" fill="#FFD700" fontWeight="bold">
+                            +{allSessionsData.length > 0 ? (Math.round(allSessionsData.length / 18 * 10) / 10).toFixed(1) : '0.0'}
+                          </text>
+                        </g>
+                      </svg>
+            </div>
+                    
+                    {/* Progress Bar */}
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="h-2 bg-[#3a3a3a] rounded-full flex-1 mr-2">
+                          <div 
+                            className="h-full bg-gradient-to-r from-[#FFD700] to-[#FFA500] rounded-full transition-all duration-500"
+                            style={{ width: `${Math.min(100, ((allSessionsData.length > 0 ? (allSessionsData.length / 18) : 0) / 5) * 100)}%` }}
+                          ></div>
+          </div>
+                        <span className="text-xs font-medium text-[#888]">
+                          {Math.min(100, Math.round(((allSessionsData.length > 0 ? (allSessionsData.length / 18) : 0) / 5) * 100))}%
+                      </span>
+      </div>
+    </div>
+                    
+                    {/* Main Metric */}
+                    <div className="flex items-baseline justify-between">
+                      <div>
+                        <span className="text-3xl font-black text-[#FFD700] leading-none">
+                          {allSessionsData.length > 0 ? (Math.round(allSessionsData.length / 18 * 10) / 10).toFixed(1) : '0.0'}
+                        </span>
+                    </div>
+                      <p className="text-xs text-[#888]">Compare to last week</p>
+                  </div>
+                  </CardContent>
+                </Card>
+                </div>
+              
+              {/* Professional Heatmap - Below Stats */}
+              <div className="p-5 rounded-xl bg-[#151515] border border-[#252525]">
+                {/* Month Labels */}
+                <div className="flex mb-3 pl-8">
+                  {(() => {
+                    const months: string[] = []
+                    const today = new Date()
+                    for (let i = 4; i >= 0; i--) {
+                      const d = new Date(today)
+                      d.setMonth(d.getMonth() - i)
+                      months.push(d.toLocaleDateString('en-US', { month: 'short' }))
+                    }
+                    return months.map((month, i) => (
+                      <div key={i} className="flex-1 text-[10px] text-[#555] font-medium">{month}</div>
+                    ))
+                  })()}
+                </div>
+                
+                {/* Heatmap Grid with Day Labels */}
+                <div className="flex gap-1.5">
+                  {/* Day Labels */}
+                  <div className="flex flex-col gap-1.5 pr-2">
+                    {['', 'Mon', '', 'Wed', '', 'Fri', ''].map((day, i) => (
+                      <div key={i} className="h-[14px] text-[9px] text-[#555] font-medium flex items-center justify-end">{day}</div>
               ))}
             </div>
+                  
+                  {/* Weeks */}
+                  <div className="flex-1 flex gap-1">
+                    {Array.from({ length: 18 }, (_, weekIndex) => (
+                      <div key={weekIndex} className="flex flex-col gap-1">
+                        {Array.from({ length: 7 }, (_, dayIndex) => {
+                          const today = new Date()
+                          const dayOffset = (17 - weekIndex) * 7 + (6 - dayIndex)
+                          const dayDate = new Date(today)
+                          dayDate.setDate(today.getDate() - dayOffset)
+                          const dayStr = dayDate.toISOString().split('T')[0]
+                          const sessionsOnDay = allSessionsData.filter(s => 
+                            new Date(s.date).toISOString().split('T')[0] === dayStr
+                          )
+                          const activityLevel = sessionsOnDay.length
+                          
+                          // Professional gradient colors
+                          let bgClass = 'bg-[#1a1a1a] border-[#252525]'
+                          let shadowClass = ''
+                          if (activityLevel === 1) {
+                            bgClass = 'bg-green-900/40 border-green-800/30'
+                          } else if (activityLevel === 2) {
+                            bgClass = 'bg-green-700/60 border-green-600/30'
+                          } else if (activityLevel >= 3) {
+                            bgClass = 'bg-green-500 border-green-400/30'
+                            shadowClass = 'shadow-[0_0_8px_rgba(34,197,94,0.3)]'
+                          }
+                          
+                          return (
+                            <div
+                              key={dayIndex}
+                              className={`w-[14px] h-[14px] rounded-[3px] border transition-all hover:scale-125 hover:z-10 cursor-pointer ${bgClass} ${shadowClass}`}
+                              title={`${dayDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}: ${activityLevel} session${activityLevel !== 1 ? 's' : ''}`}
+                            />
+                          )
+                        })}
           </div>
-        )}
+                    ))}
       </div>
-      </>
-      )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

@@ -20,6 +20,7 @@ export function Header() {
   }, [])
 
   const profileMenuItems = [
+    { label: "My Profile", href: "/profile", icon: User },
     { label: "Upload", href: "/", icon: Upload },
     { label: "Results", href: "/results/demo", icon: BarChart3 },
     { label: "Elite Shooter", href: "/elite-shooters", icon: Users },

@@ -3,32 +3,80 @@ import { prisma } from "@/lib/prisma"
 
 // Types for request body
 interface ProfileData {
+  userId?: string
   heightInches: number | null
   weightLbs: number | null
   wingspanInches: number | null
   age: number | null
   experienceLevel: string | null
   bodyType: string | null
+  athleticAbility: number | null
+  dominantHand: string | null
+  shootingStyle: string | null
+  bio: string | null
+  enhancedBio: string | null
   coachingTier: string | null
   wingspanToHeightRatio: number | null
   bmi: number | null
   profileComplete: boolean
 }
 
-// POST - Create new profile
+// POST - Create or update profile
 export async function POST(request: NextRequest) {
   try {
     const data: ProfileData = await request.json()
     
+    // If userId is provided, check if profile exists
+    if (data.userId) {
+      const existingProfile = await prisma.userProfile.findUnique({
+        where: { userId: data.userId },
+      })
+      
+      if (existingProfile) {
+        // Update existing profile
+        const profile = await prisma.userProfile.update({
+          where: { userId: data.userId },
+          data: {
+            heightInches: data.heightInches,
+            weightLbs: data.weightLbs,
+            wingspanInches: data.wingspanInches,
+            age: data.age,
+            experienceLevel: data.experienceLevel,
+            bodyType: data.bodyType,
+            athleticAbility: data.athleticAbility,
+            dominantHand: data.dominantHand,
+            shootingStyle: data.shootingStyle,
+            bio: data.bio,
+            enhancedBio: data.enhancedBio,
+            coachingTier: data.coachingTier,
+            wingspanToHeightRatio: data.wingspanToHeightRatio,
+            bmi: data.bmi,
+            profileComplete: data.profileComplete ?? false,
+          },
+        })
+        
+        return NextResponse.json({
+          success: true,
+          profile,
+        })
+      }
+    }
+    
     // Create new user profile
     const profile = await prisma.userProfile.create({
       data: {
+        userId: data.userId || null,
         heightInches: data.heightInches,
         weightLbs: data.weightLbs,
         wingspanInches: data.wingspanInches,
         age: data.age,
         experienceLevel: data.experienceLevel,
         bodyType: data.bodyType,
+        athleticAbility: data.athleticAbility,
+        dominantHand: data.dominantHand,
+        shootingStyle: data.shootingStyle,
+        bio: data.bio,
+        enhancedBio: data.enhancedBio,
         coachingTier: data.coachingTier,
         wingspanToHeightRatio: data.wingspanToHeightRatio,
         bmi: data.bmi,
@@ -41,9 +89,9 @@ export async function POST(request: NextRequest) {
       profile,
     })
   } catch (error) {
-    console.error("Error creating profile:", error)
+    console.error("Error creating/updating profile:", error)
     return NextResponse.json(
-      { success: false, error: "Failed to create profile" },
+      { success: false, error: "Failed to create/update profile" },
       { status: 500 }
     )
   }
