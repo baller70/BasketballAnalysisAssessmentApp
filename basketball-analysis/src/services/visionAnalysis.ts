@@ -151,7 +151,15 @@ function convertKeypointsToBodyPositions(
  */
 export async function analyzeShootingForm(
   imageFile: File,
-  ballPosition?: { x: number; y: number; confidence: number } | null
+  ballPosition?: { x: number; y: number; confidence: number } | null,
+  profileData?: {
+    heightInches?: number | null
+    weightLbs?: number | null
+    age?: number | null
+    experienceLevel?: string | null
+    dominantHand?: string | null
+    shootingStyle?: string | null
+  }
 ): Promise<VisionAnalysisResult> {
   try {
     const base64Image = await fileToBase64(imageFile)
@@ -196,7 +204,8 @@ export async function analyzeShootingForm(
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           keypoints: poseResult.keypoints,
-          angles: poseResult.angles
+          angles: poseResult.angles,
+          profile: profileData || null  // Include profile data for personalized analysis
         })
       })
       

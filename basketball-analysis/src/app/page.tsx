@@ -40,6 +40,8 @@ import { MediaUpload } from "@/components/upload/MediaUpload"
 import { VideoUploadInline } from "@/components/upload/VideoUploadInline"
 import { PlayerProfileForm } from "@/components/upload/PlayerProfileForm"
 import { useAnalysisStore } from "@/stores/analysisStore"
+import { useAuthStore } from "@/stores/authStore"
+import { useProfileStore } from "@/stores/profileStore"
 import { analyzeShootingForm } from "@/services/visionAnalysis"
 import { analyzeVideoShooting, convertVideoToSessionFormat } from "@/services/videoAnalysis"
 import { AnalysisProgressScreen, type InputType } from "@/components/analysis/AnalysisProgressScreen"
@@ -89,8 +91,31 @@ function HomeContent() {
     setTeaserFrames,
     setFullFrames,
     setAllUploadedUrls,
-    setFormAnalysisResult
+    setFormAnalysisResult,
+    setPlayerProfile
   } = useAnalysisStore()
+  
+  // Get auth and profile stores for auto-population
+  const { user, isAuthenticated } = useAuthStore()
+  const profileStore = useProfileStore()
+  
+  // Auto-populate player profile from profileStore when authenticated
+  useEffect(() => {
+    if (isAuthenticated && user && profileStore.profileComplete) {
+      // Convert profileStore data to playerProfile format
+      const playerProfile = {
+        name: user.displayName || `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email.split('@')[0],
+        email: user.email,
+        age: profileStore.age || undefined,
+        height: profileStore.heightInches ? `${Math.floor(profileStore.heightInches / 12)}'${profileStore.heightInches % 12}"` : undefined,
+        weight: profileStore.weightLbs ? `${profileStore.weightLbs} lbs` : undefined,
+        wingspan: profileStore.wingspanInches ? `${Math.floor(profileStore.wingspanInches / 12)}'${profileStore.wingspanInches % 12}"` : undefined,
+        skillLevel: profileStore.experienceLevel?.toUpperCase() as any,
+        bodyType: profileStore.bodyType?.toUpperCase() as any,
+      }
+      setPlayerProfile(playerProfile)
+    }
+  }, [isAuthenticated, user, profileStore.profileComplete, profileStore.age, profileStore.heightInches, profileStore.weightLbs, profileStore.wingspanInches, profileStore.experienceLevel, profileStore.bodyType, setPlayerProfile])
   
   // Check if coming from results page for a new session (skip profile)
   const isNewSession = searchParams.get('mode') === 'video' || searchParams.get('mode') === 'image'
@@ -236,7 +261,17 @@ function HomeContent() {
       console.log("🎯 Using Roboflow ball position as anchor:", ballPositionForVision)
     }
     
-    const result = await analyzeShootingForm(uploadedFile, ballPositionForVision)
+    // Get profile data for personalized analysis
+    const profileData = isAuthenticated && profileStore.profileComplete ? {
+      heightInches: profileStore.heightInches,
+      weightLbs: profileStore.weightLbs,
+      age: profileStore.age,
+      experienceLevel: profileStore.experienceLevel,
+      dominantHand: profileStore.dominantHand,
+      shootingStyle: profileStore.shootingStyle,
+    } : undefined
+    
+    const result = await analyzeShootingForm(uploadedFile, ballPositionForVision, profileData)
     
     setAnalysisProgress(80)
 
@@ -275,7 +310,7 @@ function HomeContent() {
           detectedFlaws,
           measurements: {}
         },
-        useAnalysisStore.getState().playerProfile.name || 'Player',
+        (isAuthenticated && user?.displayName) || useAnalysisStore.getState().playerProfile.name || 'Player',
         undefined, // coachingLevelUsed
         undefined, // profileSnapshot
         undefined, // imagesAnalyzed
@@ -299,8 +334,18 @@ function HomeContent() {
     setAnalysisProgress(10)
     console.log("📹 Starting video analysis...")
 
+    // Get profile data for personalized analysis
+    const profileData = isAuthenticated && profileStore.profileComplete ? {
+      heightInches: profileStore.heightInches,
+      weightLbs: profileStore.weightLbs,
+      age: profileStore.age,
+      experienceLevel: profileStore.experienceLevel,
+      dominantHand: profileStore.dominantHand,
+      shootingStyle: profileStore.shootingStyle,
+    } : undefined
+    
     // Call the video analysis service
-    const analysisResult = await analyzeVideoShooting(videoFile)
+    const analysisResult = await analyzeVideoShooting(videoFile, profileData)
 
     setAnalysisProgress(60)
 
