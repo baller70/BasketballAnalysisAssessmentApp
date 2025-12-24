@@ -110,8 +110,8 @@ function HomeContent() {
         height: profileStore.heightInches ? `${Math.floor(profileStore.heightInches / 12)}'${profileStore.heightInches % 12}"` : undefined,
         weight: profileStore.weightLbs ? `${profileStore.weightLbs} lbs` : undefined,
         wingspan: profileStore.wingspanInches ? `${Math.floor(profileStore.wingspanInches / 12)}'${profileStore.wingspanInches % 12}"` : undefined,
-        skillLevel: profileStore.experienceLevel?.toUpperCase() as any,
-        bodyType: profileStore.bodyType?.toUpperCase() as any,
+        skillLevel: profileStore.experienceLevel?.toUpperCase() as "BEGINNER" | "INTERMEDIATE" | "ADVANCED" | "PROFESSIONAL" | undefined,
+        bodyType: profileStore.bodyType?.toUpperCase() as "ECTOMORPH" | "MESOMORPH" | "ENDOMORPH" | undefined,
       }
       setPlayerProfile(playerProfile)
     }

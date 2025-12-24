@@ -23,8 +23,8 @@ export interface AuthState {
   isLoading: boolean
   
   // Actions
-  signUp: (email: string, password: string, firstName?: string, lastName?: string) => Promise<{ success: boolean; error?: string }>
-  signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
+  signUp: (email: string, password: string, firstName?: string, lastName?: string) => Promise<{ success: boolean; error?: string; warning?: string }>
+  signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string; warning?: string }>
   signOut: () => void
   updateUser: (updates: Partial<User>) => void
   setProfileComplete: (complete: boolean) => void

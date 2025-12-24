@@ -61,7 +61,7 @@ export default function SignUpPage() {
       } else {
         setError(result.error || "Sign up failed")
       }
-    } catch (err) {
+    } catch {
       setError("An unexpected error occurred")
     } finally {
       setIsSubmitting(false)
