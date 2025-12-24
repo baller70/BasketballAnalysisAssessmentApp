@@ -1650,26 +1650,8 @@ export default function DemoResultsPage() {
   const [resultsMode, setResultsMode] = useState<ResultsMode>("image")
   const [isLoading, setIsLoading] = useState(false)
 
-  // Get uploaded image and form analysis from store with error handling
-  let storeData
-  try {
-    storeData = useAnalysisStore()
-  } catch (error) {
-    console.error('Error accessing store:', error)
-    storeData = {
-      formAnalysisResult: null,
-      visionAnalysisResult: null,
-      playerProfile: null,
-      poseConfidence: null,
-      teaserFrames: [],
-      fullFrames: [],
-      allUploadedUrls: [],
-      uploadedImageBase64: null,
-      roboflowBallDetection: null,
-      videoAnalysisData: null,
-      mediaType: null
-    }
-  }
+  // Get uploaded image and form analysis from store - hooks must be called unconditionally
+  const storeData = useAnalysisStore()
   
   const { formAnalysisResult, visionAnalysisResult, playerProfile, poseConfidence, teaserFrames, fullFrames, allUploadedUrls, uploadedImageBase64, roboflowBallDetection, videoAnalysisData, mediaType } = storeData || {}
   
@@ -9350,22 +9332,11 @@ function AnalyticsChartSection({ sessions, progressStats, playerName }: Analytic
 // ============================================
 
 function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardView?: DashboardView }) {
-  let visionAnalysisResult
-  let profileStore
-  try {
-    const store = useAnalysisStore()
-    visionAnalysisResult = store?.visionAnalysisResult || null
-  } catch (error) {
-    console.error('Error accessing analysis store:', error)
-    visionAnalysisResult = null
-  }
+  // Hooks must be called unconditionally at the top level
+  const store = useAnalysisStore()
+  const profileStore = useProfileStore()
   
-  try {
-    profileStore = useProfileStore()
-  } catch (error) {
-    console.error('Error accessing profile store:', error)
-    profileStore = null
-  }
+  const visionAnalysisResult = store?.visionAnalysisResult || null
   
   const [sessions, setSessions] = useState<AnalysisSession[]>([])
   const [selectedMetric, setSelectedMetric] = useState<'score' | 'elbow' | 'knee' | 'release'>('score')
