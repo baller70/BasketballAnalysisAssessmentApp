@@ -85,17 +85,21 @@ export function ImageZoom({
 export function Image({ 
   className, 
   as: Component = NextImage,
-  alt,
-  ...props 
+  alt = '',
+  src,
+  width,
+  height,
+  ...otherProps 
 }: ZoomImageProps) {
   const context = React.useContext(ImageZoomContext)
   
   if (!context) {
     // If used outside ImageZoom, render normally
     if (Component === 'img') {
-      return <img className={className} alt={alt} {...(props as React.ImgHTMLAttributes<HTMLImageElement>)} />
+      // eslint-disable-next-line @next/next/no-img-element
+      return <img className={className} alt={alt} src={src as string} {...otherProps} />
     }
-    return <NextImage className={className} alt={alt || ''} {...(props as NextImageProps)} />
+    return <NextImage className={className} alt={alt} src={src} width={width} height={height} {...otherProps} />
   }
 
   const { isZoomed, zoomPosition, zoomScale } = context
@@ -110,11 +114,13 @@ export function Image({
 
   if (Component === 'img') {
     return (
+      // eslint-disable-next-line @next/next/no-img-element
       <img 
         className={cn("w-full h-full object-cover", className)} 
         alt={alt}
+        src={src as string}
         style={style}
-        {...(props as React.ImgHTMLAttributes<HTMLImageElement>)} 
+        {...otherProps} 
       />
     )
   }
@@ -122,9 +128,12 @@ export function Image({
   return (
     <NextImage 
       className={cn("w-full h-full object-cover", className)} 
-      alt={alt || ''}
+      alt={alt}
+      src={src}
+      width={width}
+      height={height}
       style={style}
-      {...(props as NextImageProps)} 
+      {...otherProps} 
     />
   )
 }
