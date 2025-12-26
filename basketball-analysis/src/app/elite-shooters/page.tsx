@@ -114,10 +114,10 @@ const WSIInfoPopup = ({ onClose }: { onClose: () => void }) => (
                 <p className="text-[#888] text-sm">The primary indicator of modern shooting skill. Heavily weighted because it&apos;s the most valuable shot in today&apos;s game.</p>
               </div>
             </div>
-            <div className="flex items-start gap-3 bg-yellow-500/10 rounded-lg p-3 border border-yellow-500/20">
-              <span className="bg-yellow-500 text-black font-bold text-xs px-2 py-1 rounded">35%</span>
+            <div className="flex items-start gap-3 bg-orange-500/10 rounded-lg p-3 border border-orange-500/20">
+              <span className="bg-orange-500 text-black font-bold text-xs px-2 py-1 rounded">35%</span>
               <div>
-                <p className="text-yellow-400 font-semibold">Mid-Range Percentage</p>
+                <p className="text-orange-400 font-semibold">Mid-Range Percentage</p>
                 <p className="text-[#888] text-sm">Captures &quot;touch&quot; and ability to hit pull-ups. Shows versatility and shot-making ability from different distances.</p>
               </div>
             </div>
@@ -142,8 +142,8 @@ const WSIInfoPopup = ({ onClose }: { onClose: () => void }) => (
         <div className="space-y-4">
           <h3 className="text-white font-semibold text-lg">WSI Tier Thresholds</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            <div className="text-center p-3 rounded-lg" style={{ backgroundColor: '#FFD70020', border: '1px solid #FFD70060' }}>
-              <p className="text-[#FFD700] font-bold">LEGENDARY</p>
+            <div className="text-center p-3 rounded-lg" style={{ backgroundColor: '#FF6B3520', border: '1px solid #FF6B3560' }}>
+              <p className="text-[#FF6B35] font-bold">LEGENDARY</p>
               <p className="text-white text-lg font-mono">50+</p>
             </div>
             <div className="text-center p-3 rounded-lg" style={{ backgroundColor: '#C0C0C020', border: '1px solid #C0C0C060' }}>
@@ -199,13 +199,13 @@ const FilterDropdown = ({
         onClick={() => setIsOpen(!isOpen)}
         className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-all ${
           selected.length > 0 
-            ? 'bg-[#FFD700]/20 border-[#FFD700]/50 text-[#FFD700]' 
-            : 'bg-[#1a1a1a] border-[#3a3a3a] text-white hover:border-[#FFD700]/30'
+            ? 'bg-[#FF6B35]/20 border-[#FF6B35]/50 text-[#FF6B35]' 
+            : 'bg-[#1a1a1a] border-[#3a3a3a] text-white hover:border-[#FF6B35]/30'
         }`}
       >
         <span className="font-medium">{label}</span>
         {selected.length > 0 && (
-          <span className="bg-[#FFD700] text-black text-xs font-bold px-1.5 py-0.5 rounded-full">{selected.length}</span>
+          <span className="bg-[#FF6B35] text-black text-xs font-bold px-1.5 py-0.5 rounded-full">{selected.length}</span>
         )}
         <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
@@ -224,16 +224,16 @@ const FilterDropdown = ({
                   key={option}
                   onClick={() => { onSelect(option); }}
                   className={`w-full px-4 py-2 text-left flex items-center gap-2 hover:bg-[#3a3a3a] transition-colors ${
-                    isSelected ? 'bg-[#FFD700]/10' : ''
+                    isSelected ? 'bg-[#FF6B35]/10' : ''
                   }`}
                 >
                   <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
-                    isSelected ? 'border-[#FFD700] bg-[#FFD700]' : 'border-[#666]'
+                    isSelected ? 'border-[#FF6B35] bg-[#FF6B35]' : 'border-[#666]'
                   }`}>
                     {isSelected && <span className="text-black text-xs">✓</span>}
                   </div>
                   {color && <span className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />}
-                  <span className={isSelected ? 'text-[#FFD700]' : 'text-white'}>{displayLabel}</span>
+                  <span className={isSelected ? 'text-[#FF6B35]' : 'text-white'}>{displayLabel}</span>
                 </button>
               );
             })}
@@ -393,13 +393,13 @@ export default function EliteShootersPage() {
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-3 mb-2">
-                  <Users className="w-7 h-7 text-[#FFD700]" />
-                  <h1 className="text-2xl font-bold text-[#FFD700] uppercase tracking-wider">ELITE SHOOTERS DATABASE</h1>
+                  <Users className="w-7 h-7 text-[#FF6B35]" />
+                  <h1 className="text-2xl font-bold text-[#FF6B35] uppercase tracking-wider">ELITE SHOOTERS DATABASE</h1>
                 </div>
                 <p className="text-[#E5E5E5]">Reference database of basketball players across all skill levels.</p>
                 <p className="text-[#888] text-sm mt-1">
-                  Showing <span className="text-[#FFD700] font-bold">{filteredShooters.length}</span> of {processedShooters.length} players
-                  {hasActiveFilters && <span className="text-[#FFD700]"> (filtered)</span>}
+                  Showing <span className="text-[#FF6B35] font-bold">{filteredShooters.length}</span> of {processedShooters.length} players
+                  {hasActiveFilters && <span className="text-[#FF6B35]"> (filtered)</span>}
                 </p>
               </div>
               <Link 
@@ -423,7 +423,7 @@ export default function EliteShootersPage() {
                   placeholder="Search by name or team..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-10 py-2.5 bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg text-white placeholder-[#666] focus:outline-none focus:border-[#FFD700] transition-colors"
+                  className="w-full pl-10 pr-10 py-2.5 bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg text-white placeholder-[#666] focus:outline-none focus:border-[#FF6B35] transition-colors"
                 />
                 {searchQuery && (
                   <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#888] hover:text-white">
@@ -436,7 +436,7 @@ export default function EliteShootersPage() {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as SortOption)}
-                  className="w-full pl-9 pr-8 py-2.5 bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg text-white appearance-none cursor-pointer focus:outline-none focus:border-[#FFD700]"
+                  className="w-full pl-9 pr-8 py-2.5 bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg text-white appearance-none cursor-pointer focus:outline-none focus:border-[#FF6B35]"
                 >
                   {SORT_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
                 </select>
@@ -530,7 +530,7 @@ export default function EliteShootersPage() {
             {filteredShooters.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-[#888] text-lg">No players match your filters.</p>
-                <button onClick={resetFilters} className="mt-4 px-6 py-2 bg-[#FFD700] text-black rounded-lg font-semibold hover:bg-[#e5c200] transition-colors">
+                <button onClick={resetFilters} className="mt-4 px-6 py-2 bg-[#FF6B35] text-black rounded-lg font-semibold hover:bg-[#e5c200] transition-colors">
                   Reset Filters
                 </button>
               </div>
@@ -549,7 +549,7 @@ export default function EliteShootersPage() {
                   return (
                     <div 
                       key={shooter.id} 
-                      className="bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a] rounded-xl overflow-hidden border border-[#3a3a3a] hover:border-[#FFD700]/60 transition-all shadow-lg hover:shadow-[0_0_20px_rgba(255,215,0,0.15)] group cursor-pointer"
+                      className="bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a] rounded-xl overflow-hidden border border-[#3a3a3a] hover:border-[#FF6B35]/60 transition-all shadow-lg hover:shadow-[0_0_20px_rgba(255,215,0,0.15)] group cursor-pointer"
                       onClick={() => setSelectedPlayer(shooter)}
                     >
                       {/* Player Header */}
@@ -561,12 +561,12 @@ export default function EliteShootersPage() {
                         
                         <div className="flex items-center gap-4">
                           {/* Photo with hover effect */}
-                          <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-[#FFD700]/50 bg-[#3a3a3a] flex-shrink-0 group-hover:border-[#FFD700] transition-colors">
+                          <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-[#FF6B35]/50 bg-[#3a3a3a] flex-shrink-0 group-hover:border-[#FF6B35] transition-colors">
                             {photoUrl ? (
                               <Image src={photoUrl} alt={shooter.name} fill className="object-cover object-top" unoptimized />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center">
-                                <span className="text-2xl font-bold text-[#FFD700]">{shooter.name.split(' ').map(n => n[0]).join('')}</span>
+                                <span className="text-2xl font-bold text-[#FF6B35]">{shooter.name.split(' ').map(n => n[0]).join('')}</span>
                               </div>
                             )}
                             {/* Hover overlay for bio hint */}
@@ -608,11 +608,11 @@ export default function EliteShootersPage() {
                         {/* Key Traits */}
                         <div>
                           <p className="text-[#888] text-xs mb-2 uppercase tracking-wider flex items-center gap-1">
-                            <Zap className="w-3 h-3 text-[#FFD700]" /> Key Traits
+                            <Zap className="w-3 h-3 text-[#FF6B35]" /> Key Traits
                           </p>
                           <div className="flex flex-wrap gap-1.5">
                             {shooter.keyTraits.map((trait, idx) => (
-                              <span key={idx} className="px-2 py-1 rounded-full text-[10px] font-semibold bg-[#FFD700]/10 text-[#FFD700] border border-[#FFD700]/30">
+                              <span key={idx} className="px-2 py-1 rounded-full text-[10px] font-semibold bg-[#FF6B35]/10 text-[#FF6B35] border border-[#FF6B35]/30">
                                 {trait}
                               </span>
                             ))}
@@ -620,7 +620,7 @@ export default function EliteShootersPage() {
                         </div>
 
                         {/* Shooting Stats - 3PT% and FT% (SPAR-style horizontal bars) */}
-                        <div className="bg-[#1a1a1a] rounded-lg p-3 border border-[#FFD700]/20 space-y-3">
+                        <div className="bg-[#1a1a1a] rounded-lg p-3 border border-[#FF6B35]/20 space-y-3">
                           {/* 3PT% */}
                           <div>
                             <div className="flex items-center gap-2 mb-1">
@@ -735,15 +735,15 @@ export default function EliteShootersPage() {
                           </p>
                           <div className="grid grid-cols-3 gap-2 text-center">
                             <div className="bg-[#2a2a2a] rounded-lg p-2">
-                              <p className="text-[#FFD700] font-bold text-sm">{formatHeight(shooter.height)}</p>
+                              <p className="text-[#FF6B35] font-bold text-sm">{formatHeight(shooter.height)}</p>
                               <p className="text-[#888] text-[10px] uppercase">Height</p>
                             </div>
                             <div className="bg-[#2a2a2a] rounded-lg p-2">
-                              <p className="text-[#FFD700] font-bold text-sm">{formatHeight(shooter.wingspan)}</p>
+                              <p className="text-[#FF6B35] font-bold text-sm">{formatHeight(shooter.wingspan)}</p>
                               <p className="text-[#888] text-[10px] uppercase">Wingspan</p>
                             </div>
                             <div className="bg-[#2a2a2a] rounded-lg p-2">
-                              <p className="text-[#FFD700] font-bold text-sm">{shooter.weight} lbs</p>
+                              <p className="text-[#FF6B35] font-bold text-sm">{shooter.weight} lbs</p>
                               <p className="text-[#888] text-[10px] uppercase">Weight</p>
                             </div>
                           </div>
@@ -755,19 +755,19 @@ export default function EliteShootersPage() {
                           <div className="grid grid-cols-2 gap-2 text-xs">
                             <div className="flex justify-between bg-[#2a2a2a] rounded px-2 py-1">
                               <span className="text-[#888]">Elbow:</span>
-                              <span className="text-[#FFD700] font-semibold">{shooter.measurements.elbowAngle}°</span>
+                              <span className="text-[#FF6B35] font-semibold">{shooter.measurements.elbowAngle}°</span>
                             </div>
                             <div className="flex justify-between bg-[#2a2a2a] rounded px-2 py-1">
                               <span className="text-[#888]">Release:</span>
-                              <span className="text-[#FFD700] font-semibold">{shooter.measurements.releaseAngle}°</span>
+                              <span className="text-[#FF6B35] font-semibold">{shooter.measurements.releaseAngle}°</span>
                             </div>
                             <div className="flex justify-between bg-[#2a2a2a] rounded px-2 py-1">
                               <span className="text-[#888]">Knee:</span>
-                              <span className="text-[#FFD700] font-semibold">{shooter.measurements.kneeAngle}°</span>
+                              <span className="text-[#FF6B35] font-semibold">{shooter.measurements.kneeAngle}°</span>
                             </div>
                             <div className="flex justify-between bg-[#2a2a2a] rounded px-2 py-1">
                               <span className="text-[#888]">Entry:</span>
-                              <span className="text-[#FFD700] font-semibold">{shooter.measurements.entryAngle}°</span>
+                              <span className="text-[#FF6B35] font-semibold">{shooter.measurements.entryAngle}°</span>
                             </div>
                           </div>
                         </div>
@@ -784,7 +784,7 @@ export default function EliteShootersPage() {
                                 }}
                                 className={`w-full py-2.5 rounded-lg font-semibold text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
                                   imageCount > 0
-                                    ? 'bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-black hover:from-[#FFE44D] hover:to-[#FFB733] shadow-lg shadow-[#FFD700]/20'
+                                    ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-black hover:from-[#FFE44D] hover:to-[#FFB733] shadow-lg shadow-[#FF6B35]/20'
                                     : 'bg-[#2a2a2a] text-[#888] border border-[#3a3a3a] hover:border-[#555] hover:text-white'
                                 }`}
                               >
@@ -819,14 +819,14 @@ export default function EliteShootersPage() {
                     <button
                       onClick={() => setCurrentPage(1)}
                       disabled={currentPage === 1}
-                      className="px-3 py-2 rounded-lg bg-[#2a2a2a] border border-[#3a3a3a] text-white disabled:opacity-40 disabled:cursor-not-allowed hover:border-[#FFD700]/50 transition-colors"
+                      className="px-3 py-2 rounded-lg bg-[#2a2a2a] border border-[#3a3a3a] text-white disabled:opacity-40 disabled:cursor-not-allowed hover:border-[#FF6B35]/50 transition-colors"
                     >
                       First
                     </button>
                     <button
                       onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                       disabled={currentPage === 1}
-                      className="px-3 py-2 rounded-lg bg-[#2a2a2a] border border-[#3a3a3a] text-white disabled:opacity-40 disabled:cursor-not-allowed hover:border-[#FFD700]/50 transition-colors"
+                      className="px-3 py-2 rounded-lg bg-[#2a2a2a] border border-[#3a3a3a] text-white disabled:opacity-40 disabled:cursor-not-allowed hover:border-[#FF6B35]/50 transition-colors"
                     >
                       Previous
                     </button>
@@ -849,8 +849,8 @@ export default function EliteShootersPage() {
                                 onClick={() => setCurrentPage(page)}
                                 className={`w-10 h-10 rounded-lg font-semibold transition-colors ${
                                   currentPage === page
-                                    ? 'bg-[#FFD700] text-black'
-                                    : 'bg-[#2a2a2a] border border-[#3a3a3a] text-white hover:border-[#FFD700]/50'
+                                    ? 'bg-[#FF6B35] text-black'
+                                    : 'bg-[#2a2a2a] border border-[#3a3a3a] text-white hover:border-[#FF6B35]/50'
                                 }`}
                               >
                                 {page}
@@ -863,14 +863,14 @@ export default function EliteShootersPage() {
                     <button
                       onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                       disabled={currentPage === totalPages}
-                      className="px-3 py-2 rounded-lg bg-[#2a2a2a] border border-[#3a3a3a] text-white disabled:opacity-40 disabled:cursor-not-allowed hover:border-[#FFD700]/50 transition-colors"
+                      className="px-3 py-2 rounded-lg bg-[#2a2a2a] border border-[#3a3a3a] text-white disabled:opacity-40 disabled:cursor-not-allowed hover:border-[#FF6B35]/50 transition-colors"
                     >
                       Next
                     </button>
                     <button
                       onClick={() => setCurrentPage(totalPages)}
                       disabled={currentPage === totalPages}
-                      className="px-3 py-2 rounded-lg bg-[#2a2a2a] border border-[#3a3a3a] text-white disabled:opacity-40 disabled:cursor-not-allowed hover:border-[#FFD700]/50 transition-colors"
+                      className="px-3 py-2 rounded-lg bg-[#2a2a2a] border border-[#3a3a3a] text-white disabled:opacity-40 disabled:cursor-not-allowed hover:border-[#FF6B35]/50 transition-colors"
                     >
                       Last
                     </button>

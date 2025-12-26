@@ -48,7 +48,7 @@ const StatusIcon = ({ status }: { status?: string }) => {
 
 const statusColor = (status?: string) => {
   if (status === "good") return "border-green-500/50 bg-green-500/10"
-  if (status === "warning") return "border-yellow-500/50 bg-yellow-500/10"
+  if (status === "warning") return "border-orange-500/50 bg-orange-500/10"
   if (status === "critical") return "border-red-500/50 bg-red-500/10"
   return "border-[#4a4a4a] bg-[#2a2a2a]"
 }
@@ -67,7 +67,7 @@ const AnnotationCard = ({ title, data }: { title: string; data?: Annotation }) =
     <div className={`rounded-lg border p-3 ${statusColor(data.status)}`}>
       <div className="flex items-center gap-2 mb-1">
         <StatusIcon status={data.status} />
-        <span className="font-semibold text-[#FFD700] text-sm uppercase tracking-wide">{title}</span>
+        <span className="font-semibold text-[#FF6B35] text-sm uppercase tracking-wide">{title}</span>
       </div>
       {mainText && <p className="text-[#E5E5E5] text-sm">{mainText}</p>}
       {details.length > 0 && (
@@ -86,8 +86,8 @@ export function AnnotatedImageDisplay({ imageUrl, annotations, centerLineAnalysi
     <div className="space-y-6">
       {/* Phase Detection Banner */}
       {phaseDetection?.currentPhase && (
-        <div className="bg-[#FFD700]/20 border border-[#FFD700]/50 rounded-lg p-3 text-center">
-          <span className="text-[#FFD700] font-bold uppercase tracking-wider">
+        <div className="bg-[#FF6B35]/20 border border-[#FF6B35]/50 rounded-lg p-3 text-center">
+          <span className="text-[#FF6B35] font-bold uppercase tracking-wider">
             {phaseDetection.currentPhase.replace("_", " ")} Phase
           </span>
           {phaseDetection.phaseQuality && (
@@ -120,7 +120,7 @@ export function AnnotatedImageDisplay({ imageUrl, annotations, centerLineAnalysi
       {/* Center Line Analysis */}
       {centerLineAnalysis && (
         <div className="bg-[#2a2a2a] rounded-lg border border-[#4a4a4a] p-4">
-          <h4 className="text-[#FFD700] font-semibold text-sm uppercase tracking-wider mb-3">
+          <h4 className="text-[#FF6B35] font-semibold text-sm uppercase tracking-wider mb-3">
             Body Alignment Analysis
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
@@ -149,7 +149,7 @@ export function AnnotatedImageDisplay({ imageUrl, annotations, centerLineAnalysi
       {/* Annotations Grid */}
       {annotations && (
         <div className="space-y-4">
-          <h4 className="text-[#FFD700] font-semibold text-sm uppercase tracking-wider">
+          <h4 className="text-[#FF6B35] font-semibold text-sm uppercase tracking-wider">
             Body Part Analysis
           </h4>
           

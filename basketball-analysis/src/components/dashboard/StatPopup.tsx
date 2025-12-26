@@ -254,10 +254,10 @@ function getPercentile(value: number, average: number): number {
 
 function getComparisonLabel(value: number, average: number): { label: string; color: string } {
   const diff = value - average
-  if (diff >= 15) return { label: "Elite", color: "text-[#FFD700]" }
+  if (diff >= 15) return { label: "Elite", color: "text-[#FF6B35]" }
   if (diff >= 8) return { label: "Above Average", color: "text-green-400" }
   if (diff >= -5) return { label: "Average", color: "text-blue-400" }
-  if (diff >= -12) return { label: "Below Average", color: "text-yellow-400" }
+  if (diff >= -12) return { label: "Below Average", color: "text-orange-400" }
   return { label: "Needs Work", color: "text-red-400" }
 }
 
@@ -336,13 +336,13 @@ export function StatPopup({
         className="bg-gradient-to-b from-[#1a1a1a] to-[#0d0d0d] rounded-xl border border-[#3a3a3a] shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto"
       >
         {/* Header */}
-        <div className="sticky top-0 bg-gradient-to-r from-[#FFD700]/20 to-transparent p-4 border-b border-[#3a3a3a] flex items-center justify-between">
+        <div className="sticky top-0 bg-gradient-to-r from-[#FF6B35]/20 to-transparent p-4 border-b border-[#3a3a3a] flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[#FFD700]/10 flex items-center justify-center border border-[#FFD700]/30">
-              <Info className="w-5 h-5 text-[#FFD700]" />
+            <div className="w-10 h-10 rounded-lg bg-[#FF6B35]/10 flex items-center justify-center border border-[#FF6B35]/30">
+              <Info className="w-5 h-5 text-[#FF6B35]" />
             </div>
             <div>
-              <h2 className="text-[#FFD700] font-bold text-lg uppercase tracking-wider">{stat.name}</h2>
+              <h2 className="text-[#FF6B35] font-bold text-lg uppercase tracking-wider">{stat.name}</h2>
               <p className="text-[#888] text-xs">{stat.fullName}</p>
             </div>
           </div>
@@ -367,7 +367,7 @@ export function StatPopup({
             <div 
               className={`h-full rounded-full transition-all duration-500 ${
                 value >= 80 ? 'bg-gradient-to-r from-green-500 to-green-400' : 
-                value >= 65 ? 'bg-gradient-to-r from-yellow-500 to-yellow-400' : 
+                value >= 65 ? 'bg-gradient-to-r from-orange-500 to-orange-400' : 
                 'bg-gradient-to-r from-red-500 to-red-400'
               }`} 
               style={{ width: `${value}%` }} 
@@ -383,7 +383,7 @@ export function StatPopup({
         {/* What It Means */}
         <div className="p-4 border-b border-[#3a3a3a]">
           <h3 className="text-white font-semibold text-sm mb-2 flex items-center gap-2">
-            <ChevronRight className="w-4 h-4 text-[#FFD700]" />
+            <ChevronRight className="w-4 h-4 text-[#FF6B35]" />
             What This Means
           </h3>
           <p className="text-[#E5E5E5] text-sm leading-relaxed">{stat.description}</p>
@@ -393,7 +393,7 @@ export function StatPopup({
         {/* National Average Comparison */}
         <div className="p-4 border-b border-[#3a3a3a]">
           <h3 className="text-white font-semibold text-sm mb-3 flex items-center gap-2">
-            <Users className="w-4 h-4 text-[#FFD700]" />
+            <Users className="w-4 h-4 text-[#FF6B35]" />
             National Average ({ageGroup.label})
           </h3>
           <div className="bg-[#2a2a2a] rounded-lg p-3">
@@ -403,7 +403,7 @@ export function StatPopup({
             </div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-[#888] text-sm">Your Percentile</span>
-              <span className="text-[#FFD700] font-bold">{nationalPercentile}th</span>
+              <span className="text-[#FF6B35] font-bold">{nationalPercentile}th</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-[#888] text-sm">Rating</span>
@@ -420,7 +420,7 @@ export function StatPopup({
                 />
                 {/* Your position */}
                 <div 
-                  className="absolute top-0 w-3 h-3 rounded-full bg-[#FFD700] border-2 border-white -translate-y-0.5 -translate-x-1.5"
+                  className="absolute top-0 w-3 h-3 rounded-full bg-[#FF6B35] border-2 border-white -translate-y-0.5 -translate-x-1.5"
                   style={{ left: `${value}%` }}
                 />
               </div>
@@ -436,13 +436,13 @@ export function StatPopup({
         {/* State Comparison */}
         <div className="p-4 border-b border-[#3a3a3a]">
           <h3 className="text-white font-semibold text-sm mb-3 flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-[#FFD700]" />
+            <MapPin className="w-4 h-4 text-[#FF6B35]" />
             {stateBenchmark.state} State Average
           </h3>
           <div className="bg-[#2a2a2a] rounded-lg p-3">
             <div className="grid grid-cols-3 gap-2 mb-3 text-center">
               <div className="bg-[#1a1a1a] rounded p-2">
-                <p className="text-[#FFD700] font-bold text-lg">{stateBenchmark.d1Players}</p>
+                <p className="text-[#FF6B35] font-bold text-lg">{stateBenchmark.d1Players}</p>
                 <p className="text-[#888] text-[10px]">D1 Players</p>
               </div>
               <div className="bg-[#1a1a1a] rounded p-2">
@@ -461,12 +461,12 @@ export function StatPopup({
             </div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-[#888] text-sm">Your State Percentile</span>
-              <span className="text-[#FFD700] font-bold">{statePercentile}th</span>
+              <span className="text-[#FF6B35] font-bold">{statePercentile}th</span>
             </div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-[#888] text-sm">State Competitiveness</span>
               <span className={`font-bold ${
-                stateBenchmark.competitiveness === 'Elite' ? 'text-[#FFD700]' :
+                stateBenchmark.competitiveness === 'Elite' ? 'text-[#FF6B35]' :
                 stateBenchmark.competitiveness === 'High' ? 'text-green-400' :
                 stateBenchmark.competitiveness === 'Medium' ? 'text-blue-400' :
                 'text-[#888]'
@@ -482,13 +482,13 @@ export function StatPopup({
         {/* How to Improve */}
         <div className="p-4">
           <h3 className="text-white font-semibold text-sm mb-3 flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-[#FFD700]" />
+            <TrendingUp className="w-4 h-4 text-[#FF6B35]" />
             How to Improve
           </h3>
           <ul className="space-y-2">
             {stat.howToImprove.map((tip, index) => (
               <li key={index} className="flex items-start gap-2 text-sm">
-                <span className="text-[#FFD700] mt-0.5">•</span>
+                <span className="text-[#FF6B35] mt-0.5">•</span>
                 <span className="text-[#E5E5E5]">{tip}</span>
               </li>
             ))}
@@ -499,7 +499,7 @@ export function StatPopup({
         <div className="p-4 bg-[#1a1a1a] border-t border-[#3a3a3a]">
           <button 
             onClick={onClose}
-            className="w-full py-3 bg-[#FFD700] hover:bg-[#FFC000] text-[#1a1a1a] font-bold rounded-lg transition-colors uppercase tracking-wider text-sm"
+            className="w-full py-3 bg-[#FF6B35] hover:bg-[#FFC000] text-[#1a1a1a] font-bold rounded-lg transition-colors uppercase tracking-wider text-sm"
           >
             Got It
           </button>
@@ -530,14 +530,14 @@ export function ClickableStat({ statKey, label, value, playerAge = 16, playerSta
         onClick={() => setIsPopupOpen(true)}
         className="cursor-pointer hover:bg-[#2a2a2a] rounded-lg p-1 -m-1 transition-colors group"
       >
-        <p className="text-[#888] text-[9px] uppercase group-hover:text-[#FFD700] transition-colors flex items-center gap-1">
+        <p className="text-[#888] text-[9px] uppercase group-hover:text-[#FF6B35] transition-colors flex items-center gap-1">
           {label}
           <Info className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
         </p>
-        <p className="text-white font-black text-2xl group-hover:text-[#FFD700] transition-colors">{value}</p>
+        <p className="text-white font-black text-2xl group-hover:text-[#FF6B35] transition-colors">{value}</p>
         <div className="h-1.5 bg-[#3a3a3a] rounded-full overflow-hidden">
           <div 
-            className={`h-full rounded-full ${value >= 80 ? 'bg-green-500' : 'bg-yellow-500'}`} 
+            className={`h-full rounded-full ${value >= 80 ? 'bg-green-500' : 'bg-orange-500'}`} 
             style={{ width: `${value}%` }} 
           />
         </div>
@@ -590,7 +590,7 @@ export function ClickableStatsGrid({ stats, playerAge = 16, playerState = "CA" }
       <p className="text-white font-black text-2xl">{value}</p>
       <div className="h-1.5 bg-[#3a3a3a] rounded-full overflow-hidden">
         <div 
-          className={`h-full rounded-full ${value >= 80 ? 'bg-green-500' : 'bg-yellow-500'}`} 
+          className={`h-full rounded-full ${value >= 80 ? 'bg-green-500' : 'bg-orange-500'}`} 
           style={{ width: `${value}%` }} 
         />
       </div>

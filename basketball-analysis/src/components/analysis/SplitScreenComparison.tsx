@@ -411,7 +411,7 @@ function AngleComparisonTable({
                 <td className={`py-2 px-3 text-center font-mono ${
                   diff === null ? "text-gray-500" :
                   Math.abs(diff) <= 5 ? "text-green-400" :
-                  Math.abs(diff) <= 10 ? "text-yellow-400" : "text-red-400"
+                  Math.abs(diff) <= 10 ? "text-orange-400" : "text-red-400"
                 }`}>
                   {diff !== null ? `${diff > 0 ? "+" : ""}${diff.toFixed(1)}°` : "-"}
                 </td>

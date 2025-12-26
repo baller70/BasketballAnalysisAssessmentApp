@@ -277,7 +277,7 @@ export function PoseAnalysis({ imageFile, imageBase64 }: PoseAnalysisProps) {
   // Get grade from score
   const getGrade = (score: number) => {
     if (score >= 85) return { grade: 'A', color: 'text-green-400', bg: 'bg-green-500/20' }
-    if (score >= 70) return { grade: 'B', color: 'text-yellow-400', bg: 'bg-yellow-500/20' }
+    if (score >= 70) return { grade: 'B', color: 'text-orange-400', bg: 'bg-orange-500/20' }
     if (score >= 55) return { grade: 'C', color: 'text-orange-400', bg: 'bg-orange-500/20' }
     return { grade: 'D', color: 'text-red-400', bg: 'bg-red-500/20' }
   }
@@ -287,7 +287,7 @@ export function PoseAnalysis({ imageFile, imageBase64 }: PoseAnalysisProps) {
       {/* Server Status */}
       <div className="flex items-center gap-2 px-4 py-2 bg-gray-800/50 rounded-lg text-sm">
         <div className={`w-2.5 h-2.5 rounded-full ${
-          serverOnline === null ? 'bg-yellow-400 animate-pulse' :
+          serverOnline === null ? 'bg-orange-400 animate-pulse' :
           serverOnline ? 'bg-green-400' : 'bg-red-400'
         }`} />
         <span className="text-gray-300">
@@ -321,7 +321,7 @@ export function PoseAnalysis({ imageFile, imageBase64 }: PoseAnalysisProps) {
         className={`w-full py-4 rounded-xl font-semibold text-lg transition-all flex items-center justify-center gap-2 ${
           loading || !imageUrl
             ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-            : 'bg-gradient-to-r from-yellow-500 to-orange-500 text-black hover:from-yellow-400 hover:to-orange-400'
+            : 'bg-gradient-to-r from-orange-500 to-orange-500 text-black hover:from-orange-400 hover:to-orange-400'
         }`}
       >
         {loading ? (
@@ -349,7 +349,7 @@ export function PoseAnalysis({ imageFile, imageBase64 }: PoseAnalysisProps) {
               type="checkbox"
               checked={showSkeleton}
               onChange={(e) => setShowSkeleton(e.target.checked)}
-              className="w-4 h-4 accent-yellow-500"
+              className="w-4 h-4 accent-orange-500"
             />
             <span className="text-gray-300 text-sm">Skeleton</span>
           </label>
@@ -358,7 +358,7 @@ export function PoseAnalysis({ imageFile, imageBase64 }: PoseAnalysisProps) {
               type="checkbox"
               checked={showKeypoints}
               onChange={(e) => setShowKeypoints(e.target.checked)}
-              className="w-4 h-4 accent-yellow-500"
+              className="w-4 h-4 accent-orange-500"
             />
             <span className="text-gray-300 text-sm">Keypoints</span>
           </label>
@@ -367,7 +367,7 @@ export function PoseAnalysis({ imageFile, imageBase64 }: PoseAnalysisProps) {
               type="checkbox"
               checked={showBall}
               onChange={(e) => setShowBall(e.target.checked)}
-              className="w-4 h-4 accent-yellow-500"
+              className="w-4 h-4 accent-orange-500"
             />
             <span className="text-gray-300 text-sm">Basketball</span>
           </label>
@@ -397,9 +397,9 @@ export function PoseAnalysis({ imageFile, imageBase64 }: PoseAnalysisProps) {
 
           {/* Score Card */}
           {result.overall_score !== undefined && (
-            <div className="p-6 bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border border-yellow-500/20 rounded-xl text-center">
+            <div className="p-6 bg-gradient-to-br from-orange-500/10 to-orange-500/10 border border-orange-500/20 rounded-xl text-center">
               <p className="text-gray-400 text-sm uppercase tracking-wider">Overall Form Score</p>
-              <p className="text-6xl font-bold text-yellow-400 my-2">{result.overall_score}</p>
+              <p className="text-6xl font-bold text-orange-400 my-2">{result.overall_score}</p>
               <span className={`inline-block px-4 py-1 rounded-full text-sm font-semibold ${getGrade(result.overall_score).bg} ${getGrade(result.overall_score).color}`}>
                 Grade {getGrade(result.overall_score).grade}
               </span>
@@ -444,7 +444,7 @@ export function PoseAnalysis({ imageFile, imageBase64 }: PoseAnalysisProps) {
                     className={`p-4 rounded-xl flex gap-3 ${
                       fb.type === 'success'
                         ? 'bg-green-500/10 border-l-4 border-green-500'
-                        : 'bg-yellow-500/10 border-l-4 border-yellow-500'
+                        : 'bg-orange-500/10 border-l-4 border-orange-500'
                     }`}
                   >
                     <span className="text-xl">{fb.type === 'success' ? '✅' : '⚠️'}</span>

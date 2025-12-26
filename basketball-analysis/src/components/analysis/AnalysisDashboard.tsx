@@ -72,7 +72,7 @@ const SKILL_BENCHMARKS: Record<SkillLevel, { label: string; shortLabel: string; 
   professional: {
     label: "Professional",
     shortLabel: "PRO",
-    color: "#FFD700", // Gold
+    color: "#FF6B35", // Gold
     data: {
       shoulderAngle: 175,   // Optimal shoulder rotation
       elbowAngle: 90,       // Perfect 90° elbow alignment
@@ -240,14 +240,14 @@ function GameStyleProgressBar({
 
         {/* Optimal range indicator */}
         <div
-          className="absolute top-0 bottom-0 w-0.5 bg-[#FFD700]/60"
+          className="absolute top-0 bottom-0 w-0.5 bg-[#FF6B35]/60"
           style={{ left: `${Math.min(100, Math.max(0, ((optimalMin - optimalMin + 20) / (optimalMax - optimalMin + 40)) * 100))}%` }}
         />
       </div>
 
       {/* Optimal range text */}
       <p className="text-[#888] text-xs flex items-center gap-1">
-        <span className="w-2 h-0.5 bg-[#FFD700]/60 inline-block" />
+        <span className="w-2 h-0.5 bg-[#FF6B35]/60 inline-block" />
         Optimal: {optimalMin}{unit} - {optimalMax}{unit}
       </p>
     </div>
@@ -287,7 +287,7 @@ function BenchmarkComparison({
   return (
     <div className="mt-3 pt-3 border-t border-[#2a2a2a]">
       {/* Simple title that kids can understand */}
-      <div className="text-[#FFD700] text-xs font-bold mb-2 flex items-center gap-1">
+      <div className="text-[#FF6B35] text-xs font-bold mb-2 flex items-center gap-1">
         <BarChart2 className="w-4 h-4 mr-1" />
         <span>How Do You Compare to Other Players?</span>
       </div>
@@ -369,10 +369,10 @@ function BenchmarkComparison({
         >
           {/* Arrow pointing down with "YOU" label */}
           <div className="flex flex-col items-center">
-            <span className="text-[9px] font-bold text-white bg-[#FFD700] px-1.5 py-0.5 rounded-sm whitespace-nowrap">
+            <span className="text-[9px] font-bold text-white bg-[#FF6B35] px-1.5 py-0.5 rounded-sm whitespace-nowrap">
               YOU
             </span>
-            <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-[#FFD700]" />
+            <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-[#FF6B35]" />
           </div>
         </div>
 
@@ -382,7 +382,7 @@ function BenchmarkComparison({
           style={{ left: `${currentPos}%`, transform: 'translateX(-50%) translateY(-50%)' }}
         >
           <div
-            className="w-4 h-4 rotate-45 border-2 border-[#FFD700] bg-[#050505]"
+            className="w-4 h-4 rotate-45 border-2 border-[#FF6B35] bg-[#050505]"
             style={{ boxShadow: '0 0 12px rgba(255,215,0,0.6)' }}
           />
         </div>
@@ -415,7 +415,7 @@ function BenchmarkComparison({
       {/* Simple legend explaining the markers */}
       <div className="mt-3 pt-2 border-t border-[#2a2a2a]/50 flex flex-wrap gap-x-4 gap-y-1">
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rotate-45 border border-[#FFD700] bg-[#050505]" />
+          <div className="w-3 h-3 rotate-45 border border-[#FF6B35] bg-[#050505]" />
           <span className="text-[9px] text-[#888]">= Your measurement</span>
         </div>
         <div className="flex items-center gap-1.5">
@@ -526,9 +526,9 @@ const SKILL_LEVEL_GUIDE = [
   {
     level: "Professional",
     icon: "trophy",
-    color: "#FFD700",
-    bgColor: "from-yellow-500/20 to-yellow-600/10",
-    borderColor: "border-yellow-400/40",
+    color: "#FF6B35",
+    bgColor: "from-orange-500/20 to-orange-600/10",
+    borderColor: "border-orange-400/40",
     stage: "Elite Stage",
     description: "This is the highest level! Your shooting mechanics are nearly perfect. At this stage, it's all about maintaining excellence and making tiny tweaks for specific situations.",
     whatToExpect: [
@@ -574,17 +574,17 @@ function EducationalGuide({ isOpen, onToggle }: { isOpen: boolean; onToggle: () 
         className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-[#2a2a2a] to-[#1a1a1a] hover:from-[#333] hover:to-[#222] transition-all duration-300 group"
       >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-[#FFD700]/10 flex items-center justify-center border border-[#FFD700]/30 group-hover:border-[#FFD700]/50 transition-all">
-            <BookOpen className="w-5 h-5 text-[#FFD700]" />
+          <div className="w-10 h-10 rounded-lg bg-[#FF6B35]/10 flex items-center justify-center border border-[#FF6B35]/30 group-hover:border-[#FF6B35]/50 transition-all">
+            <BookOpen className="w-5 h-5 text-[#FF6B35]" />
           </div>
           <div className="text-left">
-            <h3 className="font-russo text-lg text-[#FFD700] uppercase tracking-wider" style={{ textShadow: '0 0 15px rgba(255, 215, 0, 0.25)' }}>
+            <h3 className="font-russo text-lg text-[#FF6B35] uppercase tracking-wider" style={{ textShadow: '0 0 15px rgba(255, 215, 0, 0.25)' }}>
               Understanding Your Metrics
             </h3>
             <p className="text-[#888] text-xs">Learn what each measurement means in simple terms</p>
           </div>
         </div>
-        <ChevronDown className={`w-5 h-5 text-[#FFD700] transition-transform duration-300 ${isOpen ? 'rotate-0' : '-rotate-90'}`} />
+        <ChevronDown className={`w-5 h-5 text-[#FF6B35] transition-transform duration-300 ${isOpen ? 'rotate-0' : '-rotate-90'}`} />
       </button>
 
       {/* Expandable Content */}
@@ -594,8 +594,8 @@ function EducationalGuide({ isOpen, onToggle }: { isOpen: boolean; onToggle: () 
           {/* Joint Angles Section */}
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <Bone className="w-4 h-4 text-[#FFD700]" />
-              <h4 className="font-russo text-sm text-[#FFD700] uppercase tracking-wider">Joint Angles Explained</h4>
+              <Bone className="w-4 h-4 text-[#FF6B35]" />
+              <h4 className="font-russo text-sm text-[#FF6B35] uppercase tracking-wider">Joint Angles Explained</h4>
             </div>
             <p className="text-[#aaa] text-sm mb-4 leading-relaxed">
               Your body is like a machine with many moving parts. Each joint angle affects how your shot travels to the basket.
@@ -612,7 +612,7 @@ function EducationalGuide({ isOpen, onToggle }: { isOpen: boolean; onToggle: () 
                     className="w-full flex items-center justify-between p-3 hover:bg-[#2a2a2a]/50 transition-all"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-[#FFD700]/10 flex items-center justify-center border border-[#FFD700]/20">
+                      <div className="w-8 h-8 rounded-lg bg-[#FF6B35]/10 flex items-center justify-center border border-[#FF6B35]/20">
                         {getMetricIcon(guide.icon)}
                       </div>
                       <span className="text-[#E5E5E5] font-bold uppercase text-sm">{guide.name}</span>
@@ -626,8 +626,8 @@ function EducationalGuide({ isOpen, onToggle }: { isOpen: boolean; onToggle: () 
                       {/* Why It Matters */}
                       <div>
                         <div className="flex items-center gap-2 mb-2">
-                          <Lightbulb className="w-4 h-4 text-yellow-400" />
-                          <span className="text-yellow-400 text-xs font-bold uppercase tracking-wider">Why It Matters</span>
+                          <Lightbulb className="w-4 h-4 text-orange-400" />
+                          <span className="text-orange-400 text-xs font-bold uppercase tracking-wider">Why It Matters</span>
                         </div>
                         <p className="text-[#ccc] text-sm leading-relaxed">{guide.whyItMatters}</p>
                       </div>
@@ -644,12 +644,12 @@ function EducationalGuide({ isOpen, onToggle }: { isOpen: boolean; onToggle: () 
                         </div>
 
                         {/* Acceptable */}
-                        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3">
+                        <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3">
                           <div className="flex items-center gap-2 mb-1">
-                            <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                            <span className="text-yellow-400 text-xs font-bold uppercase">Acceptable: {guide.acceptable.min}° - {guide.acceptable.max}°</span>
+                            <div className="w-3 h-3 rounded-full bg-orange-500" />
+                            <span className="text-orange-400 text-xs font-bold uppercase">Acceptable: {guide.acceptable.min}° - {guide.acceptable.max}°</span>
                           </div>
-                          <p className="text-yellow-400/80 text-xs leading-relaxed">{guide.acceptable.description}</p>
+                          <p className="text-orange-400/80 text-xs leading-relaxed">{guide.acceptable.description}</p>
                         </div>
 
                         {/* Poor */}
@@ -663,12 +663,12 @@ function EducationalGuide({ isOpen, onToggle }: { isOpen: boolean; onToggle: () 
                       </div>
 
                       {/* Pro Tip */}
-                      <div className="bg-[#FFD700]/10 border border-[#FFD700]/30 rounded-lg p-3">
+                      <div className="bg-[#FF6B35]/10 border border-[#FF6B35]/30 rounded-lg p-3">
                         <div className="flex items-center gap-2 mb-1">
-                          <Star className="w-4 h-4 text-[#FFD700]" />
-                          <span className="text-[#FFD700] text-xs font-bold uppercase">Pro Tip</span>
+                          <Star className="w-4 h-4 text-[#FF6B35]" />
+                          <span className="text-[#FF6B35] text-xs font-bold uppercase">Pro Tip</span>
                         </div>
-                        <p className="text-[#FFD700]/80 text-xs leading-relaxed">{guide.tip}</p>
+                        <p className="text-[#FF6B35]/80 text-xs leading-relaxed">{guide.tip}</p>
                       </div>
                     </div>
                   </div>
@@ -683,8 +683,8 @@ function EducationalGuide({ isOpen, onToggle }: { isOpen: boolean; onToggle: () 
           {/* Skill Levels Section */}
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <GraduationCap className="w-4 h-4 text-[#FFD700]" />
-              <h4 className="font-russo text-sm text-[#FFD700] uppercase tracking-wider">Skill Level Guide</h4>
+              <GraduationCap className="w-4 h-4 text-[#FF6B35]" />
+              <h4 className="font-russo text-sm text-[#FF6B35] uppercase tracking-wider">Skill Level Guide</h4>
             </div>
             <p className="text-[#aaa] text-sm mb-4 leading-relaxed">
               We compare your shooting form to players at different skill levels. Here&apos;s what each level means and what you can expect at each stage of your basketball journey!
@@ -744,26 +744,26 @@ function EducationalGuide({ isOpen, onToggle }: { isOpen: boolean; onToggle: () 
           </div>
 
           {/* Quick Tips Section */}
-          <div className="bg-[#FFD700]/5 border border-[#FFD700]/20 rounded-lg p-4">
+          <div className="bg-[#FF6B35]/5 border border-[#FF6B35]/20 rounded-lg p-4">
             <div className="flex items-center gap-2 mb-3">
-              <Info className="w-4 h-4 text-[#FFD700]" />
-              <span className="font-russo text-sm text-[#FFD700] uppercase tracking-wider">Remember!</span>
+              <Info className="w-4 h-4 text-[#FF6B35]" />
+              <span className="font-russo text-sm text-[#FF6B35] uppercase tracking-wider">Remember!</span>
             </div>
             <ul className="space-y-2">
               <li className="flex items-start gap-2 text-[#ccc] text-sm">
-                <span className="text-[#FFD700] mt-0.5">•</span>
+                <span className="text-[#FF6B35] mt-0.5">•</span>
                 <span>Everyone&apos;s body is different! These ranges are guidelines, not rules set in stone.</span>
               </li>
               <li className="flex items-start gap-2 text-[#ccc] text-sm">
-                <span className="text-[#FFD700] mt-0.5">•</span>
+                <span className="text-[#FF6B35] mt-0.5">•</span>
                 <span>The best shooters focus on one thing at a time. Don&apos;t try to fix everything at once!</span>
               </li>
               <li className="flex items-start gap-2 text-[#ccc] text-sm">
-                <span className="text-[#FFD700] mt-0.5">•</span>
+                <span className="text-[#FF6B35] mt-0.5">•</span>
                 <span>Consistent practice beats perfect practice. 50 okay shots beat 5 perfect shots.</span>
               </li>
               <li className="flex items-start gap-2 text-[#ccc] text-sm">
-                <span className="text-[#FFD700] mt-0.5">•</span>
+                <span className="text-[#FF6B35] mt-0.5">•</span>
                 <span>Your shot will feel weird when you change it - that&apos;s normal! Give it time.</span>
               </li>
             </ul>
@@ -791,22 +791,22 @@ function CollapsibleSectionHeader({
   return (
     <button
       onClick={onToggle}
-      className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-[#2a2a2a] to-[#1a1a1a] rounded-t-lg border-b border-[#FFD700]/30 hover:from-[#333] hover:to-[#222] transition-all duration-300 group"
+      className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-[#2a2a2a] to-[#1a1a1a] rounded-t-lg border-b border-[#FF6B35]/30 hover:from-[#333] hover:to-[#222] transition-all duration-300 group"
     >
       <div className="flex items-center gap-4">
         {/* Icon with glow */}
-        <div className="w-12 h-12 rounded-lg bg-[#FFD700]/10 flex items-center justify-center border border-[#FFD700]/30 group-hover:border-[#FFD700]/50 transition-all">
+        <div className="w-12 h-12 rounded-lg bg-[#FF6B35]/10 flex items-center justify-center border border-[#FF6B35]/30 group-hover:border-[#FF6B35]/50 transition-all">
           {icon}
         </div>
         <div className="text-left">
-          <h3 className="font-russo text-2xl text-[#FFD700] uppercase tracking-wider" style={{ textShadow: '0 0 20px rgba(255, 215, 0, 0.3)' }}>
+          <h3 className="font-russo text-2xl text-[#FF6B35] uppercase tracking-wider" style={{ textShadow: '0 0 20px rgba(255, 215, 0, 0.3)' }}>
             {title}
           </h3>
           {subtitle && <p className="text-[#888] text-xs uppercase tracking-wider">{subtitle}</p>}
         </div>
       </div>
       {/* Animated Arrow */}
-      <ChevronDown className={`w-6 h-6 text-[#FFD700] transition-transform duration-300 ${isOpen ? 'rotate-0' : '-rotate-90'}`} />
+      <ChevronDown className={`w-6 h-6 text-[#FF6B35] transition-transform duration-300 ${isOpen ? 'rotate-0' : '-rotate-90'}`} />
     </button>
   )
 }
@@ -835,7 +835,7 @@ function CollapsibleMetricItem({
   const metricName = range.label.split(' (')[0]
 
   return (
-    <div className="border border-[#FFD700]/30 rounded-lg overflow-hidden bg-[#1a1a1a]/50 hover:border-[#FFD700]/50 transition-all">
+    <div className="border border-[#FF6B35]/30 rounded-lg overflow-hidden bg-[#1a1a1a]/50 hover:border-[#FF6B35]/50 transition-all">
       {/* Metric Header - Clickable */}
       <button
         onClick={onToggle}
@@ -843,10 +843,10 @@ function CollapsibleMetricItem({
       >
         <div className="flex items-center gap-3">
           {/* Animated Arrow */}
-          <ChevronDown className={`w-5 h-5 text-[#FFD700] transition-transform duration-300 ${isOpen ? 'rotate-0' : '-rotate-90'}`} />
+          <ChevronDown className={`w-5 h-5 text-[#FF6B35] transition-transform duration-300 ${isOpen ? 'rotate-0' : '-rotate-90'}`} />
           {/* Metric Title - Russo One Video Game Style */}
           <h4
-            className="font-russo text-lg text-[#FFD700] uppercase tracking-wider"
+            className="font-russo text-lg text-[#FF6B35] uppercase tracking-wider"
             style={{ textShadow: '0 0 15px rgba(255, 215, 0, 0.25)' }}
           >
             {metricName}
@@ -948,7 +948,7 @@ export function AnalysisDashboard({ measurements }: AnalysisDashboardProps) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-6">
             <div className="text-center">
-              <p className="text-4xl font-black text-[#FFD700]" style={{ textShadow: '0 0 20px rgba(255, 215, 0, 0.4)' }}>
+              <p className="text-4xl font-black text-[#FF6B35]" style={{ textShadow: '0 0 20px rgba(255, 215, 0, 0.4)' }}>
                 {goodCount + needsWorkCount}
               </p>
               <p className="text-[#888] text-xs uppercase tracking-wider">Total Metrics</p>
@@ -984,7 +984,7 @@ export function AnalysisDashboard({ measurements }: AnalysisDashboardProps) {
             subtitle={`Average Score: ${jointAngleAvg}%`}
             isOpen={jointAnglesOpen}
             onToggle={() => setJointAnglesOpen(!jointAnglesOpen)}
-            icon={<Bone className="w-6 h-6 text-[#FFD700]" />}
+            icon={<Bone className="w-6 h-6 text-[#FF6B35]" />}
           />
           <div
             className={`overflow-hidden transition-all duration-500 ease-in-out ${jointAnglesOpen ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'}`}
@@ -1024,7 +1024,7 @@ export function AnalysisDashboard({ measurements }: AnalysisDashboardProps) {
             subtitle={`Average Score: ${releaseMetricAvg}%`}
             isOpen={releaseMetricsOpen}
             onToggle={() => setReleaseMetricsOpen(!releaseMetricsOpen)}
-            icon={<Target className="w-6 h-6 text-[#FFD700]" />}
+            icon={<Target className="w-6 h-6 text-[#FF6B35]" />}
           />
           <div
             className={`overflow-hidden transition-all duration-500 ease-in-out ${releaseMetricsOpen ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'}`}
@@ -1057,8 +1057,8 @@ export function AnalysisDashboard({ measurements }: AnalysisDashboardProps) {
               {/* Summary Stats Panel */}
               <div className="mt-4 pt-4 border-t border-[#4a4a4a]">
                 <div className="flex items-center gap-2 mb-4">
-                  <BarChart2 className="w-5 h-5 text-[#FFD700]" />
-                  <h4 className="font-russo text-[#FFD700] text-sm uppercase tracking-wider">Quick Summary</h4>
+                  <BarChart2 className="w-5 h-5 text-[#FF6B35]" />
+                  <h4 className="font-russo text-[#FF6B35] text-sm uppercase tracking-wider">Quick Summary</h4>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-gradient-to-br from-green-500/20 to-green-600/10 rounded-lg p-4 border border-green-500/30 hover:border-green-400/50 transition-all">

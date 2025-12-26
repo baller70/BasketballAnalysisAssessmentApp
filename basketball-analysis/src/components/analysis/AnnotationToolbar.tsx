@@ -74,7 +74,7 @@ interface AnnotationToolbarProps {
 }
 
 const colors = [
-  '#FFD700', // Gold
+  '#FF6B35', // Gold
   '#4ade80', // Green
   '#60a5fa', // Blue
   '#f97316', // Orange
@@ -124,7 +124,7 @@ export function AnnotationToolbar({
         setEffects({
           ...effects,
           playerGlow: true,
-          glowColor: '#FFD700',
+          glowColor: '#FF6B35',
           glowIntensity: 7,
           motionTrails: true,
           trailLength: 5,
@@ -187,7 +187,7 @@ export function AnnotationToolbar({
               title={label}
               className={`p-2 rounded-lg transition-all ${
                 activeTool === id
-                  ? 'bg-[#FFD700]/20 text-[#FFD700] border border-[#FFD700]/50'
+                  ? 'bg-[#FF6B35]/20 text-[#FF6B35] border border-[#FF6B35]/50'
                   : 'text-[#888] hover:text-white hover:bg-[#2a2a2a]'
               }`}
             >
@@ -280,7 +280,7 @@ export function AnnotationToolbar({
             title="Video Game Effects"
             className={`p-2 rounded-lg flex items-center gap-2 transition-all ${
               showEffectsPanel
-                ? 'bg-[#FFD700]/20 text-[#FFD700] border border-[#FFD700]/50'
+                ? 'bg-[#FF6B35]/20 text-[#FF6B35] border border-[#FF6B35]/50'
                 : 'text-[#888] hover:text-white hover:bg-[#2a2a2a]'
             }`}
           >
@@ -297,7 +297,7 @@ export function AnnotationToolbar({
               onClick={() => applyPreset(mode)}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                 presetMode === mode
-                  ? 'bg-[#FFD700]/20 text-[#FFD700] border border-[#FFD700]/50'
+                  ? 'bg-[#FF6B35]/20 text-[#FF6B35] border border-[#FF6B35]/50'
                   : 'text-[#888] hover:text-white hover:bg-[#2a2a2a]'
               }`}
             >
@@ -331,7 +331,7 @@ export function AnnotationToolbar({
                 <span className="text-sm text-white">Player Glow</span>
                 <button
                   onClick={() => setEffects({ ...effects, playerGlow: !effects.playerGlow })}
-                  className={`p-1 rounded ${effects.playerGlow ? 'text-[#FFD700]' : 'text-[#666]'}`}
+                  className={`p-1 rounded ${effects.playerGlow ? 'text-[#FF6B35]' : 'text-[#666]'}`}
                 >
                   {effects.playerGlow ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                 </button>
@@ -339,7 +339,7 @@ export function AnnotationToolbar({
               {effects.playerGlow && (
                 <div className="space-y-2">
                   <div className="flex gap-1">
-                    {['#FFD700', '#4ade80', '#60a5fa', '#ef4444'].map(color => (
+                    {['#FF6B35', '#4ade80', '#60a5fa', '#ef4444'].map(color => (
                       <button
                         key={color}
                         onClick={() => setEffects({ ...effects, glowColor: color })}
@@ -366,7 +366,7 @@ export function AnnotationToolbar({
                 <span className="text-sm text-white">Motion Trails</span>
                 <button
                   onClick={() => setEffects({ ...effects, motionTrails: !effects.motionTrails })}
-                  className={`p-1 rounded ${effects.motionTrails ? 'text-[#FFD700]' : 'text-[#666]'}`}
+                  className={`p-1 rounded ${effects.motionTrails ? 'text-[#FF6B35]' : 'text-[#666]'}`}
                 >
                   {effects.motionTrails ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                 </button>
@@ -392,7 +392,7 @@ export function AnnotationToolbar({
                 <span className="text-sm text-white">Stat Pop-ups</span>
                 <button
                   onClick={() => setEffects({ ...effects, statPopups: !effects.statPopups })}
-                  className={`p-1 rounded ${effects.statPopups ? 'text-[#FFD700]' : 'text-[#666]'}`}
+                  className={`p-1 rounded ${effects.statPopups ? 'text-[#FF6B35]' : 'text-[#666]'}`}
                 >
                   {effects.statPopups ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                 </button>
@@ -405,7 +405,7 @@ export function AnnotationToolbar({
                       onClick={() => setEffects({ ...effects, popupStyle: style })}
                       className={`px-2 py-1 rounded text-xs ${
                         effects.popupStyle === style 
-                          ? 'bg-[#FFD700]/20 text-[#FFD700]' 
+                          ? 'bg-[#FF6B35]/20 text-[#FF6B35]' 
                           : 'text-[#888] hover:text-white'
                       }`}
                     >
@@ -422,7 +422,7 @@ export function AnnotationToolbar({
                 <span className="text-sm text-white">X-Ray Mode</span>
                 <button
                   onClick={() => setEffects({ ...effects, xrayMode: !effects.xrayMode })}
-                  className={`p-1 rounded ${effects.xrayMode ? 'text-[#FFD700]' : 'text-[#666]'}`}
+                  className={`p-1 rounded ${effects.xrayMode ? 'text-[#FF6B35]' : 'text-[#666]'}`}
                 >
                   {effects.xrayMode ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                 </button>
@@ -435,7 +435,7 @@ export function AnnotationToolbar({
                 <span className="text-sm text-white">Telestrator</span>
                 <button
                   onClick={() => setEffects({ ...effects, telestrator: !effects.telestrator })}
-                  className={`p-1 rounded ${effects.telestrator ? 'text-[#FFD700]' : 'text-[#666]'}`}
+                  className={`p-1 rounded ${effects.telestrator ? 'text-[#FF6B35]' : 'text-[#666]'}`}
                 >
                   {effects.telestrator ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                 </button>
@@ -448,7 +448,7 @@ export function AnnotationToolbar({
                 <span className="text-sm text-white">Focus Zoom</span>
                 <button
                   onClick={() => setEffects({ ...effects, focusZoom: !effects.focusZoom })}
-                  className={`p-1 rounded ${effects.focusZoom ? 'text-[#FFD700]' : 'text-[#666]'}`}
+                  className={`p-1 rounded ${effects.focusZoom ? 'text-[#FF6B35]' : 'text-[#666]'}`}
                 >
                   {effects.focusZoom ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                 </button>
@@ -475,7 +475,7 @@ export function AnnotationToolbar({
                 <span className="text-sm text-white">Slow-Mo</span>
                 <button
                   onClick={() => setEffects({ ...effects, slowMo: !effects.slowMo })}
-                  className={`p-1 rounded ${effects.slowMo ? 'text-[#FFD700]' : 'text-[#666]'}`}
+                  className={`p-1 rounded ${effects.slowMo ? 'text-[#FF6B35]' : 'text-[#666]'}`}
                 >
                   {effects.slowMo ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                 </button>
@@ -488,7 +488,7 @@ export function AnnotationToolbar({
                       onClick={() => setEffects({ ...effects, slowMoSpeed: speed })}
                       className={`px-2 py-1 rounded text-xs ${
                         effects.slowMoSpeed === speed 
-                          ? 'bg-[#FFD700]/20 text-[#FFD700]' 
+                          ? 'bg-[#FF6B35]/20 text-[#FF6B35]' 
                           : 'text-[#888] hover:text-white'
                       }`}
                     >
@@ -508,7 +508,7 @@ export function AnnotationToolbar({
 // Default effects
 export const defaultVideoGameEffects: VideoGameEffects = {
   playerGlow: true,
-  glowColor: '#FFD700',
+  glowColor: '#FF6B35',
   glowIntensity: 5,
   motionTrails: false,
   trailLength: 5,

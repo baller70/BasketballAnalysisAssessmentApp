@@ -8,14 +8,14 @@ export function Footer() {
       <div className="container mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
           <div>
-            <h3 className="text-[#FFD700] font-semibold mb-4 text-lg">About</h3>
+            <h3 className="text-[#FF6B35] font-semibold mb-4 text-lg">About</h3>
             <p className="text-[#E5E5E5] text-sm leading-relaxed">
               Professional-grade basketball shooting analysis using advanced pose detection and biomechanical measurements suitable for coaching and player development.
             </p>
           </div>
 
           <div>
-            <h3 className="text-[#FFD700] font-semibold mb-4 text-lg">Features</h3>
+            <h3 className="text-[#FF6B35] font-semibold mb-4 text-lg">Features</h3>
             <ul className="text-[#E5E5E5] text-sm space-y-2">
               <li>• Real-time pose detection with MediaPipe</li>
               <li>• 12+ biomechanical measurements</li>
@@ -26,7 +26,7 @@ export function Footer() {
           </div>
 
           <div>
-            <h3 className="text-[#FFD700] font-semibold mb-4 text-lg">Measurements</h3>
+            <h3 className="text-[#FF6B35] font-semibold mb-4 text-lg">Measurements</h3>
             <ul className="text-[#E5E5E5] text-sm space-y-2">
               <li>• SA, EA, HA, KA, AA (Joint Angles)</li>
               <li>• EH, RH, HH (Heights)</li>

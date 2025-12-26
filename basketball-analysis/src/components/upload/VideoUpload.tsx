@@ -206,7 +206,7 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
   const getPhaseColor = (phase: string) => {
     switch (phase) {
       case 'SETUP': return 'bg-blue-500'
-      case 'RISE': return 'bg-yellow-500'
+      case 'RISE': return 'bg-orange-500'
       case 'RELEASE': return 'bg-green-500'
       case 'FOLLOW_THROUGH': return 'bg-purple-500'
       default: return 'bg-gray-500'
@@ -220,18 +220,18 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
     <div className="space-y-6">
       {/* Upload Section */}
       <div className="bg-[#2a2a2a] border border-[#4a4a4a] rounded-lg p-4 space-y-4">
-        <h4 className="text-[#FFD700] font-semibold text-sm mb-2 flex items-center gap-2">
+        <h4 className="text-[#FF6B35] font-semibold text-sm mb-2 flex items-center gap-2">
           <Video className="w-4 h-4" />
           Video Analysis
         </h4>
         
         <div className="bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg p-4">
-          <h5 className="text-[#FFD700] font-semibold text-xs mb-2 flex items-center gap-2">
+          <h5 className="text-[#FF6B35] font-semibold text-xs mb-2 flex items-center gap-2">
             <AlertTriangle className="w-3 h-3" />
             Video Requirements
           </h5>
           <ul className="text-[#888] text-xs space-y-1">
-            <li>• <strong className="text-[#FFD700]">Maximum 10 seconds</strong>, under 50MB</li>
+            <li>• <strong className="text-[#FF6B35]">Maximum 90 seconds</strong>, under 50MB</li>
             <li>• Full body visible throughout</li>
             <li>• Single shooter, clear view</li>
             <li>• Good lighting, minimal camera shake</li>
@@ -242,10 +242,10 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
 
         {/* Upload Area */}
         {!videoFile ? (
-          <label className="border-2 border-dashed border-[#4a4a4a] rounded-lg p-8 flex flex-col items-center justify-center cursor-pointer hover:border-[#FFD700]/60 transition-colors">
+          <label className="border-2 border-dashed border-[#4a4a4a] rounded-lg p-8 flex flex-col items-center justify-center cursor-pointer hover:border-[#FF6B35]/60 transition-colors">
             <Upload className="w-12 h-12 text-[#666] mb-3" />
             <span className="text-[#888] text-sm">Click to upload video</span>
-            <span className="text-[#666] text-xs mt-1">MP4, MOV, WebM (max 10 sec, 50MB)</span>
+            <span className="text-[#666] text-xs mt-1">MP4, MOV, WebM (max 90 sec, 50MB)</span>
             <input
               ref={fileInputRef}
               type="file"
@@ -287,7 +287,7 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
                 "w-full py-3 px-4 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-all",
                 isAnalyzing
                   ? "bg-[#3a3a3a] text-[#888] cursor-not-allowed"
-                  : "bg-[#FFD700] text-black hover:bg-[#FFC000]"
+                  : "bg-[#FF6B35] text-black hover:bg-[#FFC000]"
               )}
             >
               {isAnalyzing ? (
@@ -316,7 +316,7 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
       {/* Results Preview (before navigation) */}
       {result && !isAnalyzing && (
         <div className="bg-[#2a2a2a] border border-[#4a4a4a] rounded-lg p-4 space-y-4">
-          <h4 className="text-[#FFD700] font-semibold text-lg">Analysis Preview</h4>
+          <h4 className="text-[#FF6B35] font-semibold text-lg">Analysis Preview</h4>
 
           {/* Key Screenshots */}
           {result.key_screenshots && result.key_screenshots.length > 0 && (
@@ -384,7 +384,7 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
                 
                 <button
                   onClick={() => setIsPlaying(!isPlaying)}
-                  className="p-3 bg-[#FFD700] rounded-full hover:bg-[#FFC000]"
+                  className="p-3 bg-[#FF6B35] rounded-full hover:bg-[#FFC000]"
                 >
                   {isPlaying ? (
                     <Pause className="w-6 h-6 text-black" />

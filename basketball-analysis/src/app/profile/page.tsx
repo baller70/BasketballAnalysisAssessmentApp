@@ -77,7 +77,7 @@ export default function ProfilePage() {
           <Button
             variant="ghost"
             onClick={() => router.push("/")}
-            className="mb-4 text-[#888] hover:text-[#FFD700]"
+            className="mb-4 text-[#888] hover:text-[#FF6B35]"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Home
@@ -86,7 +86,7 @@ export default function ProfilePage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-4xl font-bold text-[#E5E5E5] mb-2 flex items-center gap-3">
-                <BasketballIcon className="w-10 h-10 text-[#FFD700]" />
+                <BasketballIcon className="w-10 h-10 text-[#FF6B35]" />
                 Player Profile
               </h1>
               <p className="text-[#888]">
@@ -102,7 +102,7 @@ export default function ProfilePage() {
             ) : (
               <Button
                 onClick={() => router.push("/onboarding")}
-                className="bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-[#1a1a1a] hover:from-[#FFA500] hover:to-[#FF8C00]"
+                className="bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-[#1a1a1a] hover:from-[#FF4500] hover:to-[#FF8C00]"
               >
                 <Edit className="w-4 h-4 mr-2" />
                 Complete Profile
@@ -117,7 +117,7 @@ export default function ProfilePage() {
           <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
             <CardHeader className="border-b border-[#2a2a2a]">
               <CardTitle className="text-[#E5E5E5] flex items-center gap-2">
-                <Ruler className="w-5 h-5 text-[#FFD700]" />
+                <Ruler className="w-5 h-5 text-[#FF6B35]" />
                 Physical Measurements
               </CardTitle>
               <CardDescription className="text-[#888]">
@@ -175,7 +175,7 @@ export default function ProfilePage() {
           <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
             <CardHeader className="border-b border-[#2a2a2a]">
               <CardTitle className="text-[#E5E5E5] flex items-center gap-2">
-                <User className="w-5 h-5 text-[#FFD700]" />
+                <User className="w-5 h-5 text-[#FF6B35]" />
                 Demographics & Experience
               </CardTitle>
               <CardDescription className="text-[#888]">
@@ -228,7 +228,7 @@ export default function ProfilePage() {
           <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
             <CardHeader className="border-b border-[#2a2a2a]">
               <CardTitle className="text-[#E5E5E5] flex items-center gap-2">
-                <Target className="w-5 h-5 text-[#FFD700]" />
+                <Target className="w-5 h-5 text-[#FF6B35]" />
                 Athletic Profile
               </CardTitle>
               <CardDescription className="text-[#888]">
@@ -246,7 +246,7 @@ export default function ProfilePage() {
                     <span className="text-[#E5E5E5] font-semibold">{profile.athleticAbility}/10</span>
                     <div className="w-24 h-2 bg-[#2a2a2a] rounded-full overflow-hidden">
                       <div 
-                        className="h-full bg-gradient-to-r from-[#FFD700] to-[#FFA500]"
+                        className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF4500]"
                         style={{ width: `${(profile.athleticAbility / 10) * 100}%` }}
                       />
                     </div>
@@ -280,7 +280,7 @@ export default function ProfilePage() {
           <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
             <CardHeader className="border-b border-[#2a2a2a]">
               <CardTitle className="text-[#E5E5E5] flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-[#FFD700]" />
+                <CheckCircle2 className="w-5 h-5 text-[#FF6B35]" />
                 Profile Status
               </CardTitle>
               <CardDescription className="text-[#888]">
@@ -290,7 +290,7 @@ export default function ProfilePage() {
             <CardContent className="pt-6 space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-[#888]">Completion Status</span>
-                <span className={`font-semibold ${profile.profileComplete ? 'text-green-400' : 'text-yellow-400'}`}>
+                <span className={`font-semibold ${profile.profileComplete ? 'text-green-400' : 'text-orange-400'}`}>
                   {profile.profileComplete ? "Complete" : "Incomplete"}
                 </span>
               </div>
@@ -316,7 +316,7 @@ export default function ProfilePage() {
               {!profile.profileComplete && (
                 <Button
                   onClick={() => router.push("/onboarding")}
-                  className="w-full mt-4 bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-[#1a1a1a] hover:from-[#FFA500] hover:to-[#FF8C00]"
+                  className="w-full mt-4 bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-[#1a1a1a] hover:from-[#FF4500] hover:to-[#FF8C00]"
                 >
                   <Edit className="w-4 h-4 mr-2" />
                   Complete Your Profile
@@ -331,7 +331,7 @@ export default function ProfilePage() {
           <Card className="bg-[#1a1a1a] border-[#2a2a2a] mb-6">
             <CardHeader className="border-b border-[#2a2a2a]">
               <CardTitle className="text-[#E5E5E5] flex items-center gap-2">
-                <User className="w-5 h-5 text-[#FFD700]" />
+                <User className="w-5 h-5 text-[#FF6B35]" />
                 Bio
               </CardTitle>
             </CardHeader>
@@ -350,13 +350,11 @@ export default function ProfilePage() {
               )}
             </CardContent>
           </Card>
-        )}
-
-        {/* Info Banner */}
-        <Card className="bg-gradient-to-r from-[#FFD700]/10 via-transparent to-[#FFD700]/10 border-[#FFD700]/20">
+        )}        {/* Info Banner */}
+        <Card className="bg-gradient-to-r from-[#FF6B35]/10 via-transparent to-[#FF6B35]/10 border-[#FF6B35]/20">
           <CardContent className="pt-6">
             <div className="flex items-start gap-4">
-              <BasketballIcon className="w-8 h-8 text-[#FFD700] flex-shrink-0 mt-1" />
+              <BasketballIcon className="w-8 h-8 text-[#FF6B35] flex-shrink-0 mt-1" />
               <div>
                 <h3 className="text-[#E5E5E5] font-semibold mb-2">How Your Profile Helps</h3>
                 <p className="text-[#888] text-sm">

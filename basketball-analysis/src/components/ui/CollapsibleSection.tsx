@@ -29,7 +29,7 @@ export function CollapsibleSection({
       >
         <div className="flex items-center gap-3">
           {icon && <span className="text-2xl">{icon}</span>}
-          <h3 className="text-[#FFD700] font-bold text-sm uppercase tracking-wider">{title}</h3>
+          <h3 className="text-[#FF6B35] font-bold text-sm uppercase tracking-wider">{title}</h3>
         </div>
         <div className={`text-[#888] transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
           <ChevronDown className="w-5 h-5" />

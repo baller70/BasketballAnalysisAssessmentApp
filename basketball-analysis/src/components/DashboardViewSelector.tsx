@@ -94,7 +94,7 @@ export function DashboardViewSelector({ currentView, onViewChange }: DashboardVi
                   <div className="flex items-center gap-2">
                     <span className="text-[#E5E5E5] font-semibold">{option.label}</span>
                     {currentView === option.value && (
-                      <span className="text-[10px] bg-[#FFD700] text-[#1a1a1a] px-1.5 py-0.5 rounded font-bold">
+                      <span className="text-[10px] bg-[#FF6B35] text-[#1a1a1a] px-1.5 py-0.5 rounded font-bold">
                         ACTIVE
                       </span>
                     )}

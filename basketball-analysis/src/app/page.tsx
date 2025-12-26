@@ -10,7 +10,7 @@
  * 
  * KEY FEATURES:
  * - Image upload: 3-7 photos via MediaUpload component
- * - Video upload: Up to 10-second video via VideoUploadInline
+ * - Video upload: Up to 90-second video via VideoUploadInline
  * - Player profile form (optional)
  * - Analysis progress tracking
  * - Session saving to localStorage
@@ -35,10 +35,9 @@
 
 import React, { useState, useRef, useEffect, Suspense, useCallback, useMemo } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Upload, User, Sparkles, Video, Image as ImageIcon, ChevronDown } from "lucide-react"
+import { Upload, Sparkles, Video, Image as ImageIcon, ChevronDown } from "lucide-react"
 import { MediaUpload } from "@/components/upload/MediaUpload"
 import { VideoUploadInline } from "@/components/upload/VideoUploadInline"
-import { PlayerProfileForm } from "@/components/upload/PlayerProfileForm"
 import { useAnalysisStore } from "@/stores/analysisStore"
 import { useAuthStore } from "@/stores/authStore"
 import { useProfileStore } from "@/stores/profileStore"
@@ -59,7 +58,7 @@ type MediaType = "image" | "video"
 // Wrapper component to handle Suspense for useSearchParams
 export default function Home() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center"><div className="text-[#FFD700] text-xl">Loading...</div></div>}>
+    <Suspense fallback={<div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center"><div className="text-[#FF6B35] text-xl">Loading...</div></div>}>
       <HomeContent />
     </Suspense>
   )
@@ -116,9 +115,6 @@ function HomeContent() {
       setPlayerProfile(playerProfile)
     }
   }, [isAuthenticated, user, profileStore.profileComplete, profileStore.age, profileStore.heightInches, profileStore.weightLbs, profileStore.wingspanInches, profileStore.experienceLevel, profileStore.bodyType, setPlayerProfile])
-  
-  // Check if coming from results page for a new session (skip profile)
-  const isNewSession = searchParams.get('mode') === 'video' || searchParams.get('mode') === 'image'
   
   // Set media type from URL query parameter on mount
   useEffect(() => {
@@ -474,7 +470,7 @@ function HomeContent() {
   // Memoize media options to prevent re-creation on every render
   const mediaOptions = useMemo(() => [
     { value: "image" as MediaType, label: "Images", icon: ImageIcon, description: "Upload 3-7 photos of your shot" },
-    { value: "video" as MediaType, label: "Video", icon: Video, description: "Upload a 10-second video" }
+    { value: "video" as MediaType, label: "Video", icon: Video, description: "Upload a 90-second video" }
   ], [])
 
   const selectedOption = useMemo(() => 
@@ -500,8 +496,8 @@ function HomeContent() {
             {/* Upload Section */}
             <div className="p-6 border-b border-[#3a3a3a]">
               <div className="flex items-center gap-3 mb-2">
-                <Upload className="w-5 h-5 text-[#FFD700]" />
-                <h2 className="text-[#FFD700] font-semibold text-lg">Upload Your Shooting Media</h2>
+                <Upload className="w-5 h-5 text-[#FF6B35]" />
+                <h2 className="text-[#FF6B35] font-semibold text-lg">Upload Your Shooting Media</h2>
               </div>
               <p className="text-[#E5E5E5] text-sm mb-6">
                 Choose to upload images or a video of your shooting form for comprehensive biomechanical analysis.
@@ -519,7 +515,7 @@ function HomeContent() {
                     className={cn(
                       "w-full bg-gradient-to-r from-[#1a1a1a] to-[#252525] border-2 rounded-xl p-4 flex items-center justify-between transition-all duration-200",
                       isDropdownOpen 
-                        ? "border-[#FFD700] shadow-lg shadow-[#FFD700]/10" 
+                        ? "border-[#FF6B35] shadow-lg shadow-[#FF6B35]/10" 
                         : "border-[#3a3a3a] hover:border-[#4a4a4a]"
                     )}
                   >
@@ -572,7 +568,7 @@ function HomeContent() {
                           className={cn(
                             "w-full p-4 flex items-center gap-4 transition-all duration-150",
                             mediaType === option.value 
-                              ? "bg-[#FFD700]/10 border-l-4 border-[#FFD700]"
+                              ? "bg-[#FF6B35]/10 border-l-4 border-[#FF6B35]"
                               : "hover:bg-[#252525] border-l-4 border-transparent"
                           )}
                         >
@@ -590,14 +586,14 @@ function HomeContent() {
                           <div className="text-left flex-1">
                             <div className={cn(
                               "font-medium",
-                              mediaType === option.value ? "text-[#FFD700]" : "text-[#E5E5E5]"
+                              mediaType === option.value ? "text-[#FF6B35]" : "text-[#E5E5E5]"
                             )}>
                               {option.label}
                             </div>
                             <div className="text-[#888] text-sm">{option.description}</div>
                           </div>
                           {mediaType === option.value && (
-                            <div className="w-2 h-2 rounded-full bg-[#FFD700]" />
+                            <div className="w-2 h-2 rounded-full bg-[#FF6B35]" />
                           )}
                         </button>
                       ))}
@@ -617,26 +613,12 @@ function HomeContent() {
               )}
             </div>
 
-            {/* Player Profile Section - Only show for first-time users (not when coming from results page) */}
-            {!isNewSession && (
-              <div className="p-6 border-b border-[#3a3a3a]">
-                <div className="flex items-center gap-3 mb-2">
-                  <User className="w-5 h-5 text-[#FFD700]" />
-                  <h2 className="text-[#FFD700] font-semibold text-lg">Player Profile</h2>
-                </div>
-                <p className="text-[#E5E5E5] text-sm mb-6">
-                  Fill out your information for personalized analysis and elite shooter matching.
-                </p>
-                <PlayerProfileForm />
-              </div>
-            )}
-
             {/* Submit Button Section */}
             <div className="p-6">
               <button
                 onClick={handleAnalyze}
                 disabled={!isFormValid || isSubmitting}
-                className="w-full bg-[#FFD700] hover:bg-[#e6c200] disabled:bg-[#4a4a4a] disabled:text-[#888] text-[#1a1a1a] font-medium py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 text-lg shadow-lg hover:shadow-[#FFD700]/20"
+                className="w-full bg-[#FF6B35] hover:bg-[#e6c200] disabled:bg-[#4a4a4a] disabled:text-[#888] text-[#1a1a1a] font-medium py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 text-lg shadow-lg hover:shadow-[#FF6B35]/20"
               >
                 {isSubmitting ? (
                   <>
@@ -653,7 +635,7 @@ function HomeContent() {
               <p className="text-[#888] text-sm text-center mt-3">
                 {mediaType === "image" 
                   ? "Requires at least 3 uploaded images; profile is optional."
-                  : "Requires a video (max 10 seconds); profile is optional."
+                  : "Requires a video (max 90 seconds); profile is optional."
                 }
               </p>
               {analysisError && (

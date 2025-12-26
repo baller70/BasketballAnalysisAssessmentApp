@@ -38,10 +38,10 @@ interface MedalIconProps {
 // Outline color gradients for each tier (used for strokes only)
 const OUTLINE_COLORS = {
   gold: {
-    primary: "#FFD700",    // Bright gold
+    primary: "#FF6B35",    // Bright gold
     secondary: "#FDB931",  // Mid gold
     tertiary: "#D4AF37",   // Dark gold
-    glow: "#FFD700"        // Glow color
+    glow: "#FF6B35"        // Glow color
   },
   silver: {
     primary: "#E0E0E0",    // Bright silver

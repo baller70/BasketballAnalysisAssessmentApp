@@ -52,15 +52,15 @@ const getGrade = (score: number) => {
 
 const getBarColor = (score: number) => {
   if (score >= 80) return 'bg-green-500'
-  if (score >= 70) return 'bg-[#FFD700]'
-  if (score >= 60) return 'bg-yellow-500'
+  if (score >= 70) return 'bg-[#FF6B35]'
+  if (score >= 60) return 'bg-orange-500'
   return 'bg-orange-500'
 }
 
 const getTextColor = (score: number) => {
   if (score >= 80) return 'text-green-400'
-  if (score >= 70) return 'text-[#FFD700]'
-  if (score >= 60) return 'text-yellow-400'
+  if (score >= 70) return 'text-[#FF6B35]'
+  if (score >= 60) return 'text-orange-400'
   return 'text-orange-400'
 }
 
@@ -80,7 +80,7 @@ function StarRating({ count, max = 5, size = 'sm' }: { count: number, max?: numb
       {[...Array(max)].map((_, i) => (
         <Star 
           key={i} 
-          className={`${sizeClasses[size]} ${i < count ? 'text-[#FFD700] fill-[#FFD700]' : 'text-[#3a3a3a]'}`}
+          className={`${sizeClasses[size]} ${i < count ? 'text-[#FF6B35] fill-[#FF6B35]' : 'text-[#3a3a3a]'}`}
         />
       ))}
     </div>
@@ -183,7 +183,7 @@ export function StandardBiomechanicalAnalysis({ analysisData }: { analysisData: 
       <div className="grid grid-cols-3 gap-4">
         {/* Upper Body Details */}
         <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
-          <h4 className="text-[#FFD700] text-xs font-bold uppercase tracking-wider mb-4">Upper Body</h4>
+          <h4 className="text-[#FF6B35] text-xs font-bold uppercase tracking-wider mb-4">Upper Body</h4>
           <div className="space-y-4">
             {upperBody.map((stat) => (
               <HorizontalBar key={stat.label} label={stat.label} value={stat.value} showGrade />
@@ -193,7 +193,7 @@ export function StandardBiomechanicalAnalysis({ analysisData }: { analysisData: 
         
         {/* Lower Body Details */}
         <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
-          <h4 className="text-[#FFD700] text-xs font-bold uppercase tracking-wider mb-4">Lower Body</h4>
+          <h4 className="text-[#FF6B35] text-xs font-bold uppercase tracking-wider mb-4">Lower Body</h4>
           <div className="space-y-4">
             {lowerBody.map((stat) => (
               <HorizontalBar key={stat.label} label={stat.label} value={stat.value} showGrade />
@@ -203,7 +203,7 @@ export function StandardBiomechanicalAnalysis({ analysisData }: { analysisData: 
         
         {/* Release Details */}
         <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
-          <h4 className="text-[#FFD700] text-xs font-bold uppercase tracking-wider mb-4">Release</h4>
+          <h4 className="text-[#FF6B35] text-xs font-bold uppercase tracking-wider mb-4">Release</h4>
           <div className="space-y-4">
             {release.map((stat) => (
               <HorizontalBar key={stat.label} label={stat.label} value={stat.value} showGrade />
@@ -213,11 +213,11 @@ export function StandardBiomechanicalAnalysis({ analysisData }: { analysisData: 
       </div>
 
       {/* Quick Tip */}
-      <div className="bg-gradient-to-r from-[#FFD700]/10 to-[#FFD700]/5 rounded-lg p-4 border border-[#FFD700]/20">
+      <div className="bg-gradient-to-r from-[#FF6B35]/10 to-[#FF6B35]/5 rounded-lg p-4 border border-[#FF6B35]/20">
         <div className="flex items-start gap-3">
-          <Lightbulb className="w-5 h-5 text-[#FFD700] flex-shrink-0 mt-0.5" />
+          <Lightbulb className="w-5 h-5 text-[#FF6B35] flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-[#FFD700] font-bold text-sm mb-1">Quick Tip</p>
+            <p className="text-[#FF6B35] font-bold text-sm mb-1">Quick Tip</p>
             <p className="text-[#E5E5E5] text-sm">
               {upperAvg < lowerAvg && upperAvg < releaseAvg
                 ? "Focus on your upper body mechanics - keep your elbow tucked and aligned with the basket."
@@ -241,7 +241,7 @@ export function StandardPlayerAssessment({ analysisData, playerName }: { analysi
   const stats = analysisData.shootingStats
   
   // Determine level
-  const level = score >= 85 ? { name: 'Elite', color: '#FFD700', icon: Trophy }
+  const level = score >= 85 ? { name: 'Elite', color: '#FF6B35', icon: Trophy }
     : score >= 75 ? { name: 'Advanced', color: '#22c55e', icon: Award }
     : score >= 65 ? { name: 'Skilled', color: '#3b82f6', icon: Star }
     : score >= 55 ? { name: 'Developing', color: '#eab308', icon: TrendingUp }
@@ -311,18 +311,18 @@ export function StandardPlayerAssessment({ analysisData, playerName }: { analysi
         </div>
         
         {/* Areas to Improve */}
-        <div className="bg-[#1a1a1a] rounded-lg p-4 border border-yellow-500/30">
+        <div className="bg-[#1a1a1a] rounded-lg p-4 border border-orange-500/30">
           <div className="flex items-center gap-2 mb-4">
-            <TrendingUp className="w-5 h-5 text-yellow-400" />
-            <h4 className="text-yellow-400 font-bold text-sm uppercase">Focus Areas</h4>
+            <TrendingUp className="w-5 h-5 text-orange-400" />
+            <h4 className="text-orange-400 font-bold text-sm uppercase">Focus Areas</h4>
           </div>
           <div className="space-y-3">
             {weaknesses.map((stat) => (
               <div key={stat.name} className="flex items-center justify-between bg-[#2a2a2a] rounded-lg p-3">
                 <span className="text-white font-medium">{stat.name}</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-yellow-400 font-bold">{stat.value}</span>
-                  <span className={`text-xs px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-400`}>
+                  <span className="text-orange-400 font-bold">{stat.value}</span>
+                  <span className={`text-xs px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400`}>
                     {getGrade(stat.value)}
                   </span>
                 </div>
@@ -336,8 +336,8 @@ export function StandardPlayerAssessment({ analysisData, playerName }: { analysi
       <div className="bg-[#2a2a2a] rounded-lg p-4 border border-[#3a3a3a]">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Activity className="w-5 h-5 text-[#FFD700]" />
-            <span className="text-[#FFD700] font-bold text-sm uppercase">Next Level Progress</span>
+            <Activity className="w-5 h-5 text-[#FF6B35]" />
+            <span className="text-[#FF6B35] font-bold text-sm uppercase">Next Level Progress</span>
           </div>
           <span className="text-[#888] text-sm">
             {score >= 85 ? 'Max Level!' : `${(score >= 75 ? 85 : score >= 65 ? 75 : score >= 55 ? 65 : 55) - score} pts to go`}
@@ -345,7 +345,7 @@ export function StandardPlayerAssessment({ analysisData, playerName }: { analysi
         </div>
         <div className="h-3 bg-[#1a1a1a] rounded-full overflow-hidden">
           <div 
-            className="h-full rounded-full bg-gradient-to-r from-[#FFD700] to-[#FFA500]" 
+            className="h-full rounded-full bg-gradient-to-r from-[#FF6B35] to-[#FF4500]" 
             style={{ width: `${Math.min(100, ((score % 10) / 10) * 100 + 50)}%` }} 
           />
         </div>
@@ -412,8 +412,8 @@ export function StandardTrainingPlan({ analysisData }: { analysisData: Simplifie
       {allStats.length > 0 && (
         <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
           <div className="flex items-center gap-2 mb-4">
-            <Target className="w-5 h-5 text-[#FFD700]" />
-            <h4 className="text-[#FFD700] font-bold text-sm uppercase">Extra Focus Drills</h4>
+            <Target className="w-5 h-5 text-[#FF6B35]" />
+            <h4 className="text-[#FF6B35] font-bold text-sm uppercase">Extra Focus Drills</h4>
           </div>
           <div className="grid grid-cols-3 gap-3">
             {allStats.map((stat) => (
@@ -425,7 +425,7 @@ export function StandardTrainingPlan({ analysisData }: { analysisData: Simplifie
                 <ul className="space-y-1">
                   {stat.drills.map((drill, i) => (
                     <li key={i} className="text-[#888] text-xs flex items-center gap-1">
-                      <ChevronRight className="w-3 h-3 text-[#FFD700]" />
+                      <ChevronRight className="w-3 h-3 text-[#FF6B35]" />
                       {drill}
                     </li>
                   ))}
@@ -463,7 +463,7 @@ export function BasicBiomechanicalAnalysis({ analysisData, playerName }: { analy
   const categories = [
     { name: 'Arms', value: Math.round(((stats.form || 75) + (stats.elbow || 75)) / 2), color: '#3b82f6' },
     { name: 'Legs', value: Math.round(((stats.balance || 75) + (stats.release || 75)) / 2), color: '#22c55e' },
-    { name: 'Shot', value: Math.round(((stats.followThrough || 75) + (stats.arc || 75)) / 2), color: '#FFD700' },
+    { name: 'Shot', value: Math.round(((stats.followThrough || 75) + (stats.arc || 75)) / 2), color: '#FF6B35' },
   ]
 
   return (
@@ -471,13 +471,13 @@ export function BasicBiomechanicalAnalysis({ analysisData, playerName }: { analy
       {/* Big Score Display */}
       <div className="bg-[#2a2a2a] rounded-lg p-6 border border-[#3a3a3a] text-center">
         <p className="text-[#888] text-sm mb-2">Your Score</p>
-        <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-[#FFD700]/20 to-[#FFD700]/5 border-4 border-[#FFD700]/50 mb-3">
-          <span className="text-4xl font-black text-[#FFD700]">{score}</span>
+        <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-[#FF6B35]/20 to-[#FF6B35]/5 border-4 border-[#FF6B35]/50 mb-3">
+          <span className="text-4xl font-black text-[#FF6B35]">{score}</span>
         </div>
         <div className="flex justify-center mb-2">
           <StarRating count={getKidStars(score)} size="lg" />
         </div>
-        <p className="text-[#FFD700] font-bold">
+        <p className="text-[#FF6B35] font-bold">
           {score >= 85 ? 'SUPER!' : score >= 75 ? 'GREAT!' : score >= 65 ? 'GOOD!' : 'NICE TRY!'}
         </p>
       </div>
@@ -500,13 +500,13 @@ export function BasicBiomechanicalAnalysis({ analysisData, playerName }: { analy
       </div>
 
       {/* Simple Feedback */}
-      <div className="bg-gradient-to-r from-[#FFD700]/10 to-[#FFD700]/5 rounded-lg p-4 border border-[#FFD700]/20">
+      <div className="bg-gradient-to-r from-[#FF6B35]/10 to-[#FF6B35]/5 rounded-lg p-4 border border-[#FF6B35]/20">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-[#FFD700]/20 flex items-center justify-center">
-            <Trophy className="w-6 h-6 text-[#FFD700]" />
+          <div className="w-12 h-12 rounded-full bg-[#FF6B35]/20 flex items-center justify-center">
+            <Trophy className="w-6 h-6 text-[#FF6B35]" />
           </div>
           <div>
-            <p className="text-[#FFD700] font-bold">Great job, {playerName.split(' ')[0]}!</p>
+            <p className="text-[#FF6B35] font-bold">Great job, {playerName.split(' ')[0]}!</p>
             <p className="text-[#E5E5E5] text-sm">
               {categories.sort((a, b) => b.value - a.value)[0].name} is your best skill!
             </p>
@@ -534,12 +534,12 @@ export function BasicPlayerAssessment({ analysisData, playerName }: { analysisDa
   return (
     <div className="space-y-6">
       {/* Level Card */}
-      <div className="bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a] rounded-lg p-6 border border-[#FFD700]/30 text-center">
-        <div className="w-20 h-20 mx-auto rounded-full bg-[#FFD700]/20 flex items-center justify-center mb-4">
-          <Trophy className="w-10 h-10 text-[#FFD700]" />
+      <div className="bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a] rounded-lg p-6 border border-[#FF6B35]/30 text-center">
+        <div className="w-20 h-20 mx-auto rounded-full bg-[#FF6B35]/20 flex items-center justify-center mb-4">
+          <Trophy className="w-10 h-10 text-[#FF6B35]" />
         </div>
         <h2 className="text-3xl font-black text-white mb-2">{playerName.split(' ')[0]}</h2>
-        <p className="text-[#FFD700] text-2xl font-black mb-4">{level}</p>
+        <p className="text-[#FF6B35] text-2xl font-black mb-4">{level}</p>
         <div className="flex justify-center mb-2">
           <StarRating count={stars} size="lg" />
         </div>
@@ -571,7 +571,7 @@ export function BasicPlayerAssessment({ analysisData, playerName }: { analysisDa
       {/* Fun Fact */}
       <div className="bg-[#2a2a2a] rounded-lg p-4 border border-[#3a3a3a]">
         <div className="flex items-center gap-3">
-          <Lightbulb className="w-8 h-8 text-[#FFD700]" />
+          <Lightbulb className="w-8 h-8 text-[#FF6B35]" />
           <div>
             <p className="text-white font-bold">Fun Fact!</p>
             <p className="text-[#888] text-sm">
@@ -604,8 +604,8 @@ export function BasicTrainingPlan({ analysisData: _analysisData, playerName }: {
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-[#2a2a2a] rounded-lg p-5 border border-[#3a3a3a] text-center">
-        <Calendar className="w-10 h-10 text-[#FFD700] mx-auto mb-2" />
-        <h2 className="text-xl font-black text-[#FFD700]">Practice Time!</h2>
+        <Calendar className="w-10 h-10 text-[#FF6B35] mx-auto mb-2" />
+        <h2 className="text-xl font-black text-[#FF6B35]">Practice Time!</h2>
         <p className="text-[#888]">Fun drills to get better</p>
       </div>
 
@@ -635,29 +635,29 @@ export function BasicTrainingPlan({ analysisData: _analysisData, playerName }: {
       {/* Tips */}
       <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
         <div className="flex items-center gap-2 mb-3">
-          <Lightbulb className="w-5 h-5 text-[#FFD700]" />
-          <h4 className="text-[#FFD700] font-bold">Remember!</h4>
+          <Lightbulb className="w-5 h-5 text-[#FF6B35]" />
+          <h4 className="text-[#FF6B35] font-bold">Remember!</h4>
         </div>
         <div className="grid grid-cols-3 gap-2">
           <div className="bg-[#2a2a2a] p-3 rounded-lg text-center">
-            <Target className="w-6 h-6 text-[#FFD700] mx-auto mb-1" />
+            <Target className="w-6 h-6 text-[#FF6B35] mx-auto mb-1" />
             <p className="text-[#E5E5E5] text-xs">Look at basket</p>
           </div>
           <div className="bg-[#2a2a2a] p-3 rounded-lg text-center">
-            <Activity className="w-6 h-6 text-[#FFD700] mx-auto mb-1" />
+            <Activity className="w-6 h-6 text-[#FF6B35] mx-auto mb-1" />
             <p className="text-[#E5E5E5] text-xs">Bend knees</p>
           </div>
           <div className="bg-[#2a2a2a] p-3 rounded-lg text-center">
-            <Zap className="w-6 h-6 text-[#FFD700] mx-auto mb-1" />
+            <Zap className="w-6 h-6 text-[#FF6B35] mx-auto mb-1" />
             <p className="text-[#E5E5E5] text-xs">Follow through</p>
           </div>
         </div>
       </div>
 
       {/* Encouragement */}
-      <div className="bg-gradient-to-r from-[#FFD700]/10 to-[#FFD700]/5 rounded-lg p-5 border border-[#FFD700]/20 text-center">
-        <Star className="w-10 h-10 text-[#FFD700] mx-auto mb-2" />
-        <p className="text-[#FFD700] font-bold text-lg">You&apos;ve got this, {playerName.split(' ')[0]}!</p>
+      <div className="bg-gradient-to-r from-[#FF6B35]/10 to-[#FF6B35]/5 rounded-lg p-5 border border-[#FF6B35]/20 text-center">
+        <Star className="w-10 h-10 text-[#FF6B35] mx-auto mb-2" />
+        <p className="text-[#FF6B35] font-bold text-lg">You&apos;ve got this, {playerName.split(' ')[0]}!</p>
         <p className="text-[#888] text-sm">Practice makes perfect!</p>
       </div>
     </div>

@@ -14,7 +14,7 @@ export function ShotBreakdownStrip({ title, frames, watermark, dense = false }: 
 
   return (
     <div className="space-y-3">
-      {title && <h3 className="text-sm font-semibold text-[#FFD700]">{title}</h3>}
+      {title && <h3 className="text-sm font-semibold text-[#FF6B35]">{title}</h3>}
       <div
         className={cn(
           "flex w-full overflow-x-auto gap-2 rounded-lg border border-[#3a3a3a] bg-[#1f1f1f] p-2",

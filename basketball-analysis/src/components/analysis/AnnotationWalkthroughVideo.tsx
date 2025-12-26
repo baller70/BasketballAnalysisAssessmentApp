@@ -230,13 +230,13 @@ export function AnnotationWalkthroughVideo({
     ctx.roundRect(timerX, timerY, timerWidth, timerHeight, 10)
     ctx.fill()
 
-    ctx.strokeStyle = '#FFD700'
+    ctx.strokeStyle = '#FF6B35'
     ctx.lineWidth = 2
     ctx.beginPath()
     ctx.roundRect(timerX, timerY, timerWidth, timerHeight, 10)
     ctx.stroke()
 
-    ctx.fillStyle = '#FFD700'
+    ctx.fillStyle = '#FF6B35'
     ctx.font = 'bold 28px monospace' // BIGGER font
     ctx.textAlign = 'center'
     ctx.fillText(`${(elapsedTime / 1000).toFixed(1)}s`, timerX + timerWidth / 2, timerY + 35)
@@ -278,7 +278,7 @@ export function AnnotationWalkthroughVideo({
     ctx.fillStyle = 'rgba(255, 255, 255, 0.3)'
     ctx.fillRect(20, progressBarY, canvas.width - 40, progressBarHeight)
 
-    ctx.fillStyle = '#FFD700'
+    ctx.fillStyle = '#FF6B35'
     ctx.fillRect(20, progressBarY, (canvas.width - 40) * progress, progressBarHeight)
 
   }, [annotations, imageWidth, imageHeight, elapsedTime, totalDuration])
@@ -429,7 +429,7 @@ export function AnnotationWalkthroughVideo({
             <button
               onClick={togglePlay}
               disabled={!imagesLoaded}
-              className="p-2 rounded-full bg-[#FFD700] hover:bg-[#E5C100] text-black transition-colors disabled:opacity-50"
+              className="p-2 rounded-full bg-[#FF6B35] hover:bg-[#E55300] text-black transition-colors disabled:opacity-50"
             >
               {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
             </button>
@@ -450,7 +450,7 @@ export function AnnotationWalkthroughVideo({
         {/* Progress bar */}
         <div className="mt-2 h-1 bg-white/30 rounded-full overflow-hidden">
           <div 
-            className="h-full bg-[#FFD700] transition-all duration-100"
+            className="h-full bg-[#FF6B35] transition-all duration-100"
             style={{ width: `${(elapsedTime / totalDuration) * 100}%` }}
           />
         </div>

@@ -98,10 +98,10 @@ const AGE_GROUP_COLORS: Record<AgeGroup, { bg: string; text: string; border: str
 
 const FEEDBACK_ICONS: Record<FeedbackItem["icon"], React.ReactNode> = {
   CHECK: <CheckCircle className="w-5 h-5 text-green-400" />,
-  TARGET: <Target className="w-5 h-5 text-yellow-400" />,
+  TARGET: <Target className="w-5 h-5 text-orange-400" />,
   LIGHTBULB: <Lightbulb className="w-5 h-5 text-blue-400" />,
   WARNING: <AlertTriangle className="w-5 h-5 text-red-400" />,
-  STAR: <Star className="w-5 h-5 text-[#FFD700]" />
+  STAR: <Star className="w-5 h-5 text-[#FF6B35]" />
 }
 
 // ============================================
@@ -156,11 +156,11 @@ export function Phase6ComparisonPanel({
       {/* Header - Personalized Analysis Banner */}
       <div className="bg-gradient-to-r from-[#2a2a2a] via-[#1a1a1a] to-[#2a2a2a] rounded-xl p-6 border border-[#3a3a3a]">
         <div className="flex items-center gap-4 mb-4">
-          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#FFD700] to-[#FFA500] flex items-center justify-center">
+          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#FF4500] flex items-center justify-center">
             <Users className="w-7 h-7 text-[#1a1a1a]" />
           </div>
           <div className="flex-1">
-            <h2 className="text-2xl font-black text-[#FFD700] uppercase tracking-wider">
+            <h2 className="text-2xl font-black text-[#FF6B35] uppercase tracking-wider">
               Personalized Shooter Comparison
             </h2>
             <p className="text-[#888] text-sm">
@@ -196,7 +196,7 @@ export function Phase6ComparisonPanel({
           </div>
           <div className="bg-[#1a1a1a] rounded-lg p-3 text-center border border-[#3a3a3a]">
             <p className="text-xs text-[#888] uppercase">Skill Level</p>
-            <p className="text-lg font-bold text-[#FFD700]">{physicalProfile.skillLevel}</p>
+            <p className="text-lg font-bold text-[#FF6B35]">{physicalProfile.skillLevel}</p>
           </div>
         </div>
       </div>
@@ -285,8 +285,8 @@ export function Phase6ComparisonPanel({
           className="w-full p-5 flex items-center justify-between hover:bg-[#3a3a3a]/30 transition-colors"
         >
           <div className="flex items-center gap-3">
-            <Trophy className="w-6 h-6 text-[#FFD700]" />
-            <h3 className="text-xl font-bold text-[#FFD700]">TOP 5 SIMILAR SHOOTERS</h3>
+            <Trophy className="w-6 h-6 text-[#FF6B35]" />
+            <h3 className="text-xl font-bold text-[#FF6B35]">TOP 5 SIMILAR SHOOTERS</h3>
             <span className="text-[#888] text-sm">(Based on your body type)</span>
           </div>
           {expandedSections.includes("matches") ? (
@@ -308,15 +308,15 @@ export function Phase6ComparisonPanel({
       
       {/* Personalized Recommendations Summary */}
       {personalizedRecommendations.length > 0 && (
-        <div className="bg-gradient-to-br from-[#FFD700]/10 to-transparent rounded-xl p-6 border border-[#FFD700]/30">
-          <h3 className="text-xl font-bold text-[#FFD700] mb-4 flex items-center gap-2">
+        <div className="bg-gradient-to-br from-[#FF6B35]/10 to-transparent rounded-xl p-6 border border-[#FF6B35]/30">
+          <h3 className="text-xl font-bold text-[#FF6B35] mb-4 flex items-center gap-2">
             <Lightbulb className="w-6 h-6" />
             Based on players with your body type:
           </h3>
           <ul className="space-y-2">
             {personalizedRecommendations.map((rec, index) => (
               <li key={index} className="flex items-start gap-3 text-[#E5E5E5]">
-                <ArrowRight className="w-5 h-5 text-[#FFD700] flex-shrink-0 mt-0.5" />
+                <ArrowRight className="w-5 h-5 text-[#FF6B35] flex-shrink-0 mt-0.5" />
                 <span>{rec}</span>
               </li>
             ))}
@@ -341,7 +341,7 @@ function MatchedShooterCard({ match, rank }: { match: MatchedShooter; rank: numb
   // Rank colors for faded numbers - matching the elite shooters section
   const getRankColor = (r: number) => {
     switch (r) {
-      case 1: return 'text-[#FFD700]' // Gold
+      case 1: return 'text-[#FF6B35]' // Gold
       case 2: return 'text-[#C0C0C0]' // Silver
       case 3: return 'text-[#CD7F32]' // Bronze
       case 4: return 'text-[#2E6DB4]' // Blue
@@ -351,7 +351,7 @@ function MatchedShooterCard({ match, rank }: { match: MatchedShooter; rank: numb
   }
   
   return (
-    <div className="bg-[#1a1a1a] rounded-xl p-4 border border-[#3a3a3a] hover:border-[#FFD700]/50 transition-colors relative overflow-hidden">
+    <div className="bg-[#1a1a1a] rounded-xl p-4 border border-[#3a3a3a] hover:border-[#FF6B35]/50 transition-colors relative overflow-hidden">
       {/* Player Image Background - Right Side, Faded */}
       {shooter.imageUrl && (
         <div 
@@ -380,7 +380,7 @@ function MatchedShooterCard({ match, rank }: { match: MatchedShooter; rank: numb
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <h4 className="text-lg font-bold text-[#E5E5E5] truncate uppercase">{shooter.name}</h4>
-            <span className="px-2 py-0.5 rounded text-xs font-bold bg-[#FFD700]/20 text-[#FFD700]">
+            <span className="px-2 py-0.5 rounded text-xs font-bold bg-[#FF6B35]/20 text-[#FF6B35]">
               {similarityScore.overall}% Match
             </span>
           </div>
@@ -461,7 +461,7 @@ function OptimalMetricCard({
 function MechanicComparisonRow({ comparison }: { comparison: MechanicComparison }) {
   const statusColors = {
     GOOD: { bg: "bg-green-500/20", text: "text-green-400", border: "border-green-500/40" },
-    NEEDS_WORK: { bg: "bg-yellow-500/20", text: "text-yellow-400", border: "border-yellow-500/40" },
+    NEEDS_WORK: { bg: "bg-orange-500/20", text: "text-orange-400", border: "border-orange-500/40" },
     CRITICAL: { bg: "bg-red-500/20", text: "text-red-400", border: "border-red-500/40" }
   }
   
@@ -504,8 +504,8 @@ function MechanicComparisonRow({ comparison }: { comparison: MechanicComparison 
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function FeedbackCard({ item, type }: { item: FeedbackItem; type: "strength" | "improvement" }) {
-  const bgColor = type === "strength" ? "bg-green-500/10" : "bg-yellow-500/10"
-  const borderColor = type === "strength" ? "border-green-500/30" : "border-yellow-500/30"
+  const bgColor = type === "strength" ? "bg-green-500/10" : "bg-orange-500/10"
+  const borderColor = type === "strength" ? "border-green-500/30" : "border-orange-500/30"
   
   return (
     <div className={`rounded-lg p-4 border ${bgColor} ${borderColor}`}>
@@ -526,7 +526,7 @@ function FeedbackCard({ item, type }: { item: FeedbackItem; type: "strength" | "
 function DrillCard({ drill, index }: { drill: DrillRecommendation; index: number }) {
   const difficultyColors = {
     EASY: "bg-green-500/20 text-green-400 border-green-500/30",
-    MEDIUM: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+    MEDIUM: "bg-orange-500/20 text-orange-400 border-orange-500/30",
     HARD: "bg-red-500/20 text-red-400 border-red-500/30"
   }
   

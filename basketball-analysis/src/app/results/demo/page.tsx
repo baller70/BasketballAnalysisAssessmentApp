@@ -25,6 +25,7 @@ import { HYBRID_API_URL } from "@/lib/constants"
 // Shooter database available for future body-type matching enhancements
 // import { findMatchingShooters, parseHeightToInches, determineBodyBuild } from "@/data/shooterDatabase"
 import { toPng } from "html-to-image"
+import { addWatermarkToImage } from "@/lib/watermark"
 import { useAnalysisStore } from "@/stores/analysisStore"
 import { 
   detectFlawsFromAngles, 
@@ -91,7 +92,7 @@ import {
   checkBadgeUnlock,
   addPoints
 } from "@/services/gamificationService"
-import { DashboardViewSelector, useDashboardView, type DashboardView } from "@/components/DashboardViewSelector"
+import { useDashboardViewStore, type DashboardView } from "@/stores/dashboardViewStore"
 import { 
   StandardBiomechanicalAnalysis, 
   StandardPlayerAssessment, 
@@ -126,8 +127,8 @@ function CollapsibleDropdown({ title, icon, defaultOpen = false, children }: Col
         className="w-full flex items-center justify-between p-4 hover:bg-[#3a3a3a]/50 transition-colors"
       >
         <div className="flex items-center gap-3">
-          {icon && <span className="text-[#FFD700]">{icon}</span>}
-          <h3 className="text-[#FFD700] font-bold text-sm uppercase tracking-wider">{title}</h3>
+          {icon && <span className="text-[#FF6B35]">{icon}</span>}
+          <h3 className="text-[#FF6B35] font-bold text-sm uppercase tracking-wider">{title}</h3>
         </div>
         <div className={`text-[#888] transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
           <ChevronDown className="w-5 h-5" />
@@ -166,9 +167,25 @@ interface HybridSkeletonDisplayProps {
 function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, angles, confidence, showStats = true, overlayToggles }: HybridSkeletonDisplayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const logoImageRef = useRef<HTMLImageElement | null>(null)
+  const [logoLoaded, setLogoLoaded] = useState(false)
   
   // Default toggles if not provided
   const toggles = overlayToggles || { skeleton: true, joints: true, annotations: true, basketball: true }
+
+  // Load the SHOTIQ logo image FIRST
+  useEffect(() => {
+    const logoImg = new window.Image()
+    logoImg.onload = () => {
+      console.log('✅ SHOTIQ logo loaded successfully')
+      logoImageRef.current = logoImg
+      setLogoLoaded(true)
+    }
+    logoImg.onerror = () => {
+      console.error('❌ Failed to load SHOTIQ logo')
+    }
+    logoImg.src = '/images/shotiq-logo.png'
+  }, [])
 
   useEffect(() => {
     if (!imageUrl) {
@@ -611,10 +628,34 @@ function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, ang
           }
         })
       }
+      
+      // SHOTIQ LOGO - TOP RIGHT OF THE IMAGE (not canvas)
+      // Logo image is 1536x1024, but visible content is at (272,367) to (1241,645) = 969x278 (3.5:1)
+      if (logoImageRef.current) {
+        // Source rectangle (the visible content in the logo image)
+        const srcX = 272, srcY = 367, srcW = 969, srcH = 278
+        
+        // The image area is from LABEL_PADDING to (LABEL_PADDING + imageW)
+        // Size logo based on IMAGE width, not canvas width
+        const wmWidth = Math.max(imageW * 0.3, 120) // 30% of image width
+        const wmHeight = wmWidth / 3.5
+        
+        // Position in top-right of the IMAGE area (not canvas)
+        const imageRightEdge = LABEL_PADDING + imageW
+        const wmX = imageRightEdge - wmWidth - 10
+        const wmY = 10
+        
+        // Semi-transparent dark background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.6)'
+        ctx.fillRect(wmX - 6, wmY - 6, wmWidth + 12, wmHeight + 12)
+        
+        // Draw ONLY the visible content of the logo (cropped)
+        ctx.drawImage(logoImageRef.current, srcX, srcY, srcW, srcH, wmX, wmY, wmWidth, wmHeight)
+      }
     }
 
     img.src = imageUrl
-  }, [imageUrl, keypoints, basketball, imageSize, angles, toggles])
+  }, [imageUrl, keypoints, basketball, imageSize, angles, toggles, logoLoaded])
 
   // Format angle name for display
   const formatAngleName = (name: string) => {
@@ -639,7 +680,7 @@ function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, ang
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-[#1a1a1a] rounded-lg p-4 text-center">
               <p className="text-[#888] text-sm uppercase">Confidence</p>
-              <p className="text-2xl font-bold text-[#FFD700]">{confidence ? (confidence * 100).toFixed(0) : 0}%</p>
+              <p className="text-2xl font-bold text-[#FF6B35]">{confidence ? (confidence * 100).toFixed(0) : 0}%</p>
             </div>
             <div className="bg-[#1a1a1a] rounded-lg p-4 text-center">
               <p className="text-[#888] text-sm uppercase">Keypoints</p>
@@ -650,12 +691,12 @@ function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, ang
           {/* Angles */}
           {angles && Object.keys(angles).length > 0 && (
             <div className="bg-[#1a1a1a] rounded-lg p-4">
-              <h4 className="text-[#FFD700] font-semibold text-sm uppercase tracking-wider mb-3">Joint Angles</h4>
+              <h4 className="text-[#FF6B35] font-semibold text-sm uppercase tracking-wider mb-3">Joint Angles</h4>
               <div className="grid grid-cols-2 gap-2">
                 {Object.entries(angles).map(([name, value]) => (
                   <div key={name} className="flex justify-between items-center bg-[#2a2a2a] rounded px-3 py-2">
                     <span className="text-[#E5E5E5] text-sm">{formatAngleName(name)}</span>
-                    <span className="text-[#FFD700] font-bold">{(value as number).toFixed(1)}°</span>
+                    <span className="text-[#FF6B35] font-bold">{(value as number).toFixed(1)}°</span>
                   </div>
                 ))}
               </div>
@@ -1138,7 +1179,7 @@ function AnimatedImageWalkthrough({ imageUrl, keypoints, angles, imageSize }: An
   return (
     <div className="space-y-4">
       <div className="text-center">
-        <h3 className="text-[#FFD700] font-bold text-sm uppercase tracking-wider mb-2">
+        <h3 className="text-[#FF6B35] font-bold text-sm uppercase tracking-wider mb-2">
           Animated Form Walkthrough
         </h3>
         <p className="text-[#888] text-xs">Watch as we highlight each key point of your form</p>
@@ -1158,7 +1199,7 @@ function AnimatedImageWalkthrough({ imageUrl, keypoints, angles, imageSize }: An
           <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-lg">
             <button
               onClick={startAnimation}
-              className="p-4 rounded-full bg-[#FFD700] hover:bg-[#E5C100] text-black transition-all transform hover:scale-110 shadow-2xl"
+              className="p-4 rounded-full bg-[#FF6B35] hover:bg-[#E55300] text-black transition-all transform hover:scale-110 shadow-2xl"
             >
               <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M8 5v14l11-7z"/>
@@ -1170,7 +1211,7 @@ function AnimatedImageWalkthrough({ imageUrl, keypoints, angles, imageSize }: An
         {/* Phase indicator */}
         {isPlaying && (
           <div className="absolute top-4 left-4 bg-black/80 px-3 py-2 rounded-lg">
-            <span className="text-[#FFD700] text-sm font-bold">{currentPhase}</span>
+            <span className="text-[#FF6B35] text-sm font-bold">{currentPhase}</span>
           </div>
         )}
         
@@ -1179,7 +1220,7 @@ function AnimatedImageWalkthrough({ imageUrl, keypoints, angles, imageSize }: An
           <div className="absolute bottom-4 right-4">
             <button
               onClick={startAnimation}
-              className="px-4 py-2 rounded-lg bg-[#FFD700] hover:bg-[#E5C100] text-black font-bold text-sm transition-colors"
+              className="px-4 py-2 rounded-lg bg-[#FF6B35] hover:bg-[#E55300] text-black font-bold text-sm transition-colors"
             >
               Replay
             </button>
@@ -1191,7 +1232,7 @@ function AnimatedImageWalkthrough({ imageUrl, keypoints, angles, imageSize }: An
       {isPlaying && (
         <div className="w-full bg-[#3a3a3a] rounded-full h-2">
           <div
-            className="bg-[#FFD700] h-2 rounded-full transition-all duration-100"
+            className="bg-[#FF6B35] h-2 rounded-full transition-all duration-100"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -1556,7 +1597,7 @@ interface ShooterArchetype {
 }
 
 const SHOOTER_ARCHETYPES: ShooterArchetype[] = [
-  { id: "elite", title: "ELITE SHOOTER", description: "Exceptional across all metrics", icon: <Trophy className="w-5 h-5" />, color: "#FFD700", gradient: "from-[#FFD700] to-[#FFA500]" },
+  { id: "elite", title: "ELITE SHOOTER", description: "Exceptional across all metrics", icon: <Trophy className="w-5 h-5" />, color: "#FF6B35", gradient: "from-[#FF6B35] to-[#FF4500]" },
   { id: "balanced", title: "BALANCED SHOOTER", description: "Well-rounded fundamentals", icon: <Target className="w-5 h-5" />, color: "#22c55e", gradient: "from-[#22c55e] to-[#16a34a]" },
   { id: "developing", title: "DEVELOPING SHOOTER", description: "Building strong foundations", icon: <Zap className="w-5 h-5" />, color: "#3b82f6", gradient: "from-[#3b82f6] to-[#2563eb]" },
   { id: "power", title: "POWER SHOOTER", description: "Explosive and athletic", icon: <Flame className="w-5 h-5" />, color: "#ef4444", gradient: "from-[#ef4444] to-[#dc2626]" },
@@ -1625,7 +1666,7 @@ class ErrorBoundary extends React.Component<
     if (this.state.hasError) {
       return this.props.fallback || (
         <div className="p-8 text-center">
-          <AlertTriangle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
+          <AlertTriangle className="w-12 h-12 text-orange-500 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-white mb-2">Something went wrong</h3>
           <p className="text-gray-400 mb-4">Please try refreshing the page.</p>
           <button
@@ -1633,7 +1674,7 @@ class ErrorBoundary extends React.Component<
               this.setState({ hasError: false, error: null })
               window.location.reload()
             }}
-            className="px-4 py-2 bg-[#FFD700] text-[#1a1a1a] rounded-lg font-semibold"
+            className="px-4 py-2 bg-[#FF6B35] text-[#1a1a1a] rounded-lg font-semibold"
           >
             Reload Page
           </button>
@@ -1807,7 +1848,7 @@ export default function DemoResultsPage() {
                   {/* Left: New Session Button */}
                   <Link 
                     href={`/?mode=${resultsMode === "video" ? "video" : "image"}`}
-                    className="flex items-center gap-2 bg-[#FFD700] hover:bg-[#E5C100] text-[#1a1a1a] font-semibold px-4 py-2 rounded-lg transition-colors text-sm"
+                    className="flex items-center gap-2 bg-[#FF6B35] hover:bg-[#E55300] text-[#1a1a1a] font-semibold px-4 py-2 rounded-lg transition-colors text-sm"
                   >
                     <Plus className="w-4 h-4" />
                     New {resultsMode === "video" ? "Video" : "Image"}
@@ -1825,7 +1866,7 @@ export default function DemoResultsPage() {
                             console.error('Error switching tab:', error)
                           }
                         }} 
-                        className={`px-6 py-2 rounded-md flex items-center gap-2 transition-colors uppercase font-semibold tracking-wider ${resultsMode === mode ? "bg-[#FFD700] text-[#111827]" : "text-[#9CA3AF] hover:text-[#F9FAFB] hover:bg-[#374151]"}`}
+                        className={`px-6 py-2 rounded-md flex items-center gap-2 transition-colors uppercase font-semibold tracking-wider ${resultsMode === mode ? "bg-[#FF6B35] text-[#111827]" : "text-[#9CA3AF] hover:text-[#F9FAFB] hover:bg-[#374151]"}`}
                       >
                         {mode === "video" && <Video className="w-4 h-4" />}
                         {mode === "image" && <ImageIcon className="w-4 h-4" />}
@@ -1929,7 +1970,7 @@ function OverlayControls({ toggles, setToggles }: OverlayControlsProps) {
           onClick={() => setToggles(prev => ({ ...prev, [key]: !prev[key] }))}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
             toggles[key]
-              ? 'bg-[#FFD700]/20 text-[#FFD700] border border-[#FFD700]/50'
+              ? 'bg-[#FF6B35]/20 text-[#FF6B35] border border-[#FF6B35]/50'
               : 'bg-[#2a2a2a] text-[#666] border border-[#3a3a3a] hover:border-[#4a4a4a]'
           }`}
         >
@@ -1976,7 +2017,7 @@ function VideoFrameCanvas({
   timestamp, 
   angles,
   playerGlow = true,
-  glowColor = '#FFD700',
+  glowColor = '#FF6B35',
   glowIntensity = 5,
   motionTrails = false,
   previousKeypoints = [],
@@ -2193,9 +2234,9 @@ function VideoFrameCanvas({
         ctx.fill()
         
         // Glowing border
-        ctx.shadowColor = '#FFD700'
+        ctx.shadowColor = '#FF6B35'
         ctx.shadowBlur = 15
-        ctx.strokeStyle = '#FFD700'
+        ctx.strokeStyle = '#FF6B35'
         ctx.lineWidth = 5
         ctx.beginPath()
         ctx.roundRect(timerX, timerY, timerWidth, timerHeight, 20)
@@ -2203,10 +2244,10 @@ function VideoFrameCanvas({
         ctx.shadowBlur = 0
         
         // Time text - MASSIVE 80px font
-        ctx.fillStyle = '#FFD700'
+        ctx.fillStyle = '#FF6B35'
         ctx.font = 'bold 80px monospace'
         ctx.textAlign = 'center'
-        ctx.shadowColor = '#FFD700'
+        ctx.shadowColor = '#FF6B35'
         ctx.shadowBlur = 10
         ctx.fillText(`${timestamp.toFixed(2)}s`, timerX + timerWidth / 2, timerY + 90)
         ctx.shadowBlur = 0
@@ -2383,9 +2424,9 @@ function VideoFrameCanvas({
         // Draw glowing ring around spotlight
         ctx.beginPath()
         ctx.arc(spotlightTarget.x, spotlightTarget.y, spotlightRadius, 0, Math.PI * 2)
-        ctx.strokeStyle = '#FFD700'
+        ctx.strokeStyle = '#FF6B35'
         ctx.lineWidth = 6
-        ctx.shadowColor = '#FFD700'
+        ctx.shadowColor = '#FF6B35'
         ctx.shadowBlur = 30
         ctx.stroke()
         ctx.shadowBlur = 0
@@ -2470,7 +2511,7 @@ function AnnotationDropdownList({ fixes }: AnnotationDropdownListProps) {
 
   const statusColors = {
     good: { bg: 'bg-green-500/10', border: 'border-green-500/50', text: 'text-green-400', dot: 'bg-green-500' },
-    warning: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/50', text: 'text-yellow-400', dot: 'bg-yellow-500' },
+    warning: { bg: 'bg-orange-500/10', border: 'border-orange-500/50', text: 'text-orange-400', dot: 'bg-orange-500' },
     bad: { bg: 'bg-red-500/10', border: 'border-red-500/50', text: 'text-red-400', dot: 'bg-red-500' },
   }
 
@@ -2536,7 +2577,7 @@ function AnnotationDropdownList({ fixes }: AnnotationDropdownListProps) {
                 <div className="text-right hidden sm:block">
                   <span className="text-white font-mono">{fix.yourValue}°</span>
                   <span className="text-[#666] mx-2">vs</span>
-                  <span className="text-[#FFD700] font-mono">{fix.eliteValue}°</span>
+                  <span className="text-[#FF6B35] font-mono">{fix.eliteValue}°</span>
                 </div>
                 
                 {/* Expand icon */}
@@ -2556,7 +2597,7 @@ function AnnotationDropdownList({ fixes }: AnnotationDropdownListProps) {
                     </div>
                     <div className="bg-[#1a1a1a] rounded-lg p-3">
                       <p className="text-[#888] text-xs uppercase mb-1">Elite Target</p>
-                      <p className="text-2xl font-bold text-[#FFD700]">{fix.eliteValue}°</p>
+                      <p className="text-2xl font-bold text-[#FF6B35]">{fix.eliteValue}°</p>
                     </div>
                   </div>
 
@@ -2573,7 +2614,7 @@ function AnnotationDropdownList({ fixes }: AnnotationDropdownListProps) {
 
                   {/* Elite example */}
                   <div className="flex items-start gap-2 text-sm">
-                    <Trophy className="w-4 h-4 text-[#FFD700] mt-0.5 flex-shrink-0" />
+                    <Trophy className="w-4 h-4 text-[#FF6B35] mt-0.5 flex-shrink-0" />
                     <p className="text-[#888]">{fix.eliteExample}</p>
                   </div>
                 </div>
@@ -3062,10 +3103,10 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
 function EliteModeContent({ analysisData }: { analysisData: AnalysisData }) {
   return (
     <div className="p-8 text-center">
-      <h2 className="text-3xl font-bold text-[#FFD700] mb-4">Elite Shooters Database</h2>
+      <h2 className="text-3xl font-bold text-[#FF6B35] mb-4">Elite Shooters Database</h2>
       <p className="text-[#E5E5E5] mb-8 max-w-2xl mx-auto">Compare your shooting form with NBA elite shooters and learn from the best in the game.</p>
-      <p className="text-[#888] mb-4">Your current score: <span className="text-[#FFD700] font-bold">{analysisData.overallScore}</span>/100</p>
-      <Link href="/elite-shooters" className="inline-block bg-[#FFD700] hover:bg-[#E5C100] text-[#111827] font-semibold px-8 py-3 rounded-lg transition-colors">View Elite Shooters Database</Link>
+      <p className="text-[#888] mb-4">Your current score: <span className="text-[#FF6B35] font-bold">{analysisData.overallScore}</span>/100</p>
+      <Link href="/elite-shooters" className="inline-block bg-[#FF6B35] hover:bg-[#E55300] text-[#111827] font-semibold px-8 py-3 rounded-lg transition-colors">View Elite Shooters Database</Link>
     </div>
   )
 }
@@ -3093,7 +3134,7 @@ function GuideModeContent() {
   return (
     <div className="p-8">
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-[#FFD700] mb-2">Shooting Form Reference</h2>
+        <h2 className="text-3xl font-bold text-[#FF6B35] mb-2">Shooting Form Reference</h2>
         <p className="text-[#E5E5E5]">Learn the difference between proper and improper shooting mechanics</p>
       </div>
       <div className="grid grid-cols-2 gap-6 mb-6">
@@ -3165,16 +3206,8 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
     playerProfile = null
   }
   
-  // Dashboard view state (Professional, Standard, Basic) with error handling
-  let dashboardView = 'professional'
-  let setDashboardView
-  try {
-    const dashboard = useDashboardView()
-    dashboardView = dashboard?.view || 'professional'
-    setDashboardView = dashboard?.changeView
-  } catch (error) {
-    console.error('Error accessing dashboard view:', error)
-  }
+  // Dashboard view state (Professional, Standard, Basic) from global store
+  const { view: dashboardView } = useDashboardViewStore()
   
   // Overlay toggle state for image
   const [overlayToggles, setOverlayToggles] = useState<OverlayToggles>({
@@ -3197,22 +3230,24 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
   
   // Banner customization state
   const [showBannerMenu, setShowBannerMenu] = useState(false)
-  const [bannerColor, setBannerColor] = useState('#FFD700') // Gold default
+  const [bannerColor, setBannerColor] = useState('#FF6B35') // Gold default
   const [jerseyNumber, setJerseyNumber] = useState('23')
   const [bannerFirstName, setBannerFirstName] = useState(playerName.split(' ')[0] || 'KEVIN')
   const [bannerLastName, setBannerLastName] = useState(playerName.split(' ')[1] || 'HOUSTON')
   const [bannerBgImage, setBannerBgImage] = useState<string | null>(null)
   const bannerBgInputRef = useRef<HTMLInputElement>(null)
 
-  // Generate and download shareable image
+  // Generate and download shareable image with SHOTIQ watermark
   const handleDownloadImage = useCallback(async () => {
     if (!shareCardRef.current) return
     setIsGeneratingImage(true)
     try {
       const dataUrl = await toPng(shareCardRef.current, { quality: 0.95, pixelRatio: 2 })
+      // Add SHOTIQ watermark to the image
+      const watermarkedUrl = await addWatermarkToImage(dataUrl)
       const link = document.createElement("a")
-      link.download = `basketball-analysis-${Date.now()}.png`
-      link.href = dataUrl
+      link.download = `shotiq-analysis-${Date.now()}.png`
+      link.href = watermarkedUrl
       link.click()
     } catch (err) {
       console.error("Failed to generate image:", err)
@@ -3221,13 +3256,15 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
     }
   }, [])
 
-  // Copy image to clipboard
+  // Copy image to clipboard with SHOTIQ watermark
   const handleCopyImage = useCallback(async () => {
     if (!shareCardRef.current) return
     setIsGeneratingImage(true)
     try {
       const dataUrl = await toPng(shareCardRef.current, { quality: 0.95, pixelRatio: 2 })
-      const response = await fetch(dataUrl)
+      // Add SHOTIQ watermark to the image
+      const watermarkedUrl = await addWatermarkToImage(dataUrl)
+      const response = await fetch(watermarkedUrl)
       const blob = await response.blob()
       await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })])
       alert("Image copied to clipboard!")
@@ -3295,7 +3332,7 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
           <div className="bg-[#1a1a1a] rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-[#3a3a3a]" onClick={e => e.stopPropagation()}>
             {/* Modal Header */}
             <div className="p-4 border-b border-[#3a3a3a] flex items-center justify-between">
-              <h3 className="text-[#FFD700] font-bold text-lg uppercase tracking-wider">Share Your Results</h3>
+              <h3 className="text-[#FF6B35] font-bold text-lg uppercase tracking-wider">Share Your Results</h3>
               <button onClick={() => setShowShareModal(false)} className="text-[#888] hover:text-white transition-colors">
                 <X className="w-6 h-6" />
               </button>
@@ -3303,13 +3340,13 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
 
             {/* Shareable Card Preview */}
             <div className="p-4">
-              <div ref={shareCardRef} className="bg-gradient-to-br from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a] p-6 rounded-xl border border-[#FFD700]/30">
+              <div ref={shareCardRef} className="bg-gradient-to-br from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a] p-6 rounded-xl border border-[#FF6B35]/30">
                 {/* Logo/Brand */}
                 <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 rounded-full bg-[#FFD700]/20 flex items-center justify-center">
-                    <Trophy className="w-4 h-4 text-[#FFD700]" />
+                  <div className="w-8 h-8 rounded-full bg-[#FF6B35]/20 flex items-center justify-center">
+                    <Trophy className="w-4 h-4 text-[#FF6B35]" />
                   </div>
-                  <span className="text-[#FFD700] font-bold text-sm uppercase tracking-wider">Basketball Analysis</span>
+                  <span className="text-[#FF6B35] font-bold text-sm uppercase tracking-wider">Basketball Analysis</span>
                 </div>
 
                 {/* Player Info */}
@@ -3346,7 +3383,7 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
 
                 {/* Elite Match */}
                 <div className="bg-[#0a0a0a] rounded-lg p-3 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#FFD700]/50 relative">
+                  <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#FF6B35]/50 relative">
                     <Image
                       src="https://cdn.nba.com/headshots/nba/latest/1040x760/201142.png"
                       alt="Elite Match"
@@ -3361,7 +3398,7 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                     <p className="text-white font-bold text-sm">{analysisData.matchedShooter.name}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-[#FFD700] font-black text-lg">{analysisData.matchedShooter.similarityScore}%</p>
+                    <p className="text-[#FF6B35] font-black text-lg">{analysisData.matchedShooter.similarityScore}%</p>
                     <p className="text-[#888] text-[10px]">Similarity</p>
                   </div>
                 </div>
@@ -3387,7 +3424,7 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
               </div>
 
               <div className="flex gap-3">
-                <button onClick={handleDownloadImage} disabled={isGeneratingImage} className="flex-1 bg-[#FFD700] hover:bg-[#E5C100] disabled:bg-[#FFD700]/50 text-[#1a1a1a] font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-colors">
+                <button onClick={handleDownloadImage} disabled={isGeneratingImage} className="flex-1 bg-[#FF6B35] hover:bg-[#E55300] disabled:bg-[#FF6B35]/50 text-[#1a1a1a] font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-colors">
                   <Download className="w-5 h-5" />
                   {isGeneratingImage ? "Generating..." : "Download Image"}
                 </button>
@@ -3407,7 +3444,7 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
           {/* Main Analysis Image removed for video mode - using GSAP player instead */}
           {!hideMainImage && mainImageUrl ? (
             <div className="bg-[#2a2a2a] rounded-lg border border-[#4a4a4a] p-6">
-              <h3 className="text-[#FFD700] font-bold text-sm uppercase tracking-wider mb-4 flex items-center gap-2">
+              <h3 className="text-[#FF6B35] font-bold text-sm uppercase tracking-wider mb-4 flex items-center gap-2">
                 <Camera className="w-4 h-4" />
                 Main Analysis Image
               </h3>
@@ -3427,12 +3464,20 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
               </div>
             </div>
           ) : !hideMainImage ? (
-            <div className="bg-[#2a2a2a] rounded-lg border border-[#4a4a4a] p-6">
-              <div className="text-center py-12">
-                <div className="text-6xl mb-4">📷</div>
-                <h3 className="text-[#FFD700] font-bold text-xl mb-2">No Image Uploaded</h3>
-                <p className="text-[#888] mb-4">Upload an image on the home page to see your shooting form analysis.</p>
-                <Link href="/" className="inline-block bg-[#FFD700] hover:bg-[#E5C100] text-[#1a1a1a] font-bold px-6 py-3 rounded-lg transition-colors">
+            <div className="bg-gradient-to-br from-[#1a1a1a] via-[#252525] to-[#1a1a1a] rounded-lg border border-[#3a3a3a] p-12">
+              <div className="text-center py-8">
+                <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FF4500]/20 border border-[#FF6B35]/30 flex items-center justify-center">
+                  <ImageIcon className="w-10 h-10 text-[#FF6B35]" />
+                </div>
+                <h3 className="text-[#FF6B35] font-bold text-2xl mb-3 tracking-tight">No Image Uploaded</h3>
+                <p className="text-[#E5E5E5] text-sm mb-8 max-w-md mx-auto leading-relaxed">
+                  Upload an image on the home page to see your shooting form analysis with detailed biomechanical measurements.
+                </p>
+                <Link 
+                  href="/" 
+                  className="inline-flex items-center gap-2 bg-gradient-to-r from-[#FF6B35] to-[#FF4500] hover:from-[#E55300] hover:to-[#E5A000] text-[#1a1a1a] font-semibold px-8 py-3.5 rounded-xl transition-all duration-200 shadow-lg shadow-[#FF6B35]/20 hover:shadow-[#FF6B35]/40 hover:scale-105"
+                >
+                  <Upload className="w-5 h-5" />
                   Upload Image
                 </Link>
               </div>
@@ -3443,8 +3488,8 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
           {/* 2. FORM ANALYSIS BREAKDOWN (always visible) */}
           {/* ============================================ */}
           {mainImageUrl && (
-            <div className="bg-gradient-to-br from-[#1a1a1a] via-[#252525] to-[#1a1a1a] rounded-lg p-6 border border-[#FFD700]/30">
-              <h3 className="text-[#FFD700] font-bold text-sm uppercase tracking-wider mb-4 flex items-center gap-2">
+            <div className="bg-gradient-to-br from-[#1a1a1a] via-[#252525] to-[#1a1a1a] rounded-lg p-6 border border-[#FF6B35]/30">
+              <h3 className="text-[#FF6B35] font-bold text-sm uppercase tracking-wider mb-4 flex items-center gap-2">
                 <BarChart3 className="w-4 h-4" />
                 Form Analysis Breakdown
               </h3>
@@ -3460,9 +3505,9 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                     : "Focus on the fundamentals below to improve your shot."}
                 </p>
                 <div className="flex flex-wrap gap-2 mb-4">
-                  <span className="text-xs px-2 py-1 rounded bg-[#FFD700]/20 text-[#FFD700]">Top Fix: Elbow alignment</span>
-                  <span className="text-xs px-2 py-1 rounded bg-[#FFD700]/20 text-[#FFD700]">Top Fix: Follow-through</span>
-                  <span className="text-xs px-2 py-1 rounded bg-[#FFD700]/20 text-[#FFD700]">Top Fix: Balance</span>
+                  <span className="text-xs px-2 py-1 rounded bg-[#FF6B35]/20 text-[#FF6B35]">Top Fix: Elbow alignment</span>
+                  <span className="text-xs px-2 py-1 rounded bg-[#FF6B35]/20 text-[#FF6B35]">Top Fix: Follow-through</span>
+                  <span className="text-xs px-2 py-1 rounded bg-[#FF6B35]/20 text-[#FF6B35]">Top Fix: Balance</span>
                 </div>
               </div>
               {/* Annotation Dropdown List - detailed fixes */}
@@ -3558,10 +3603,10 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
           {/* Media Thumbnails */}
           {allUploadedUrls.length > 0 && (
             <div className="bg-[#2a2a2a] rounded-lg p-4 border border-[#4a4a4a]">
-              <h3 className="text-[#FFD700] font-bold text-sm uppercase tracking-wider mb-3">Uploaded Media</h3>
+              <h3 className="text-[#FF6B35] font-bold text-sm uppercase tracking-wider mb-3">Uploaded Media</h3>
               <div className="grid grid-cols-4 gap-2">
                 {allUploadedUrls.map((url, idx) => (
-                  <div key={idx} className="rounded-lg overflow-hidden bg-[#1a1a1a] border border-[#3a3a3a] cursor-pointer hover:border-[#FFD700]/50 transition-colors">
+                  <div key={idx} className="rounded-lg overflow-hidden bg-[#1a1a1a] border border-[#3a3a3a] cursor-pointer hover:border-[#FF6B35]/50 transition-colors">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={url} alt={`Upload ${idx + 1}`} className="w-full h-16 object-cover" />
                   </div>
@@ -3653,7 +3698,7 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                       <div>
                         <label className="text-white text-sm font-semibold block mb-3">Banner Color</label>
                         <div className="flex gap-3 flex-wrap">
-                          {['#FFD700', '#ef4444', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#14b8a6'].map((color) => (
+                          {['#FF6B35', '#ef4444', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#14b8a6'].map((color) => (
                             <button
                               key={color}
                               onClick={() => setBannerColor(color)}
@@ -3682,7 +3727,7 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                           value={jerseyNumber}
                           onChange={(e) => setJerseyNumber(e.target.value.slice(0, 2))}
                           maxLength={2}
-                          className="w-24 bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-2 text-white text-center text-2xl font-bold focus:outline-none focus:border-[#FFD700]"
+                          className="w-24 bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-2 text-white text-center text-2xl font-bold focus:outline-none focus:border-[#FF6B35]"
                           placeholder="23"
                         />
                       </div>
@@ -3710,7 +3755,7 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                         <div className="flex gap-2">
                           <button
                             onClick={() => bannerBgInputRef.current?.click()}
-                            className="flex-1 bg-[#FFD700] text-[#1a1a1a] font-semibold rounded-lg px-4 py-2 hover:bg-[#e6c200] transition-colors"
+                            className="flex-1 bg-[#FF6B35] text-[#1a1a1a] font-semibold rounded-lg px-4 py-2 hover:bg-[#e6c200] transition-colors"
                           >
                             {bannerBgImage ? 'Change Image' : 'Upload Image'}
                           </button>
@@ -3803,10 +3848,9 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
               </div>
             </div>
 
-            {/* Progression History Bar with Dashboard View Selector */}
-            <div className="bg-[#1a1a1a] px-4 py-2 border-y border-[#3a3a3a] flex items-center justify-between">
+            {/* Progression History Bar */}
+            <div className="bg-[#1a1a1a] px-4 py-2 border-y border-[#3a3a3a]">
               <span className="text-[#888] text-xs font-bold uppercase tracking-wider">Progression History</span>
-              <DashboardViewSelector currentView={dashboardView} onViewChange={setDashboardView} />
             </div>
 
             {/* Dashboard Content - Same layout for all views */}
@@ -3859,7 +3903,7 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
 
               {/* Right: Development Badge - Medal in Rounded Box */}
               <div className="p-4 bg-gradient-to-b from-[#252525] to-[#1a1a1a]">
-                <h3 className="text-[#FFD700] font-bold text-xs uppercase tracking-[0.2em] mb-3 text-center">RANK</h3>
+                <h3 className="text-[#FF6B35] font-bold text-xs uppercase tracking-[0.2em] mb-3 text-center">RANK</h3>
                 <div className="flex flex-col items-center">
                   {/* Level Badge Image Container with White Outline */}
                   <div className="relative w-36 h-40 mb-2 flex items-center justify-center">
@@ -3882,7 +3926,7 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                   </div>
                   
                   {/* Rank name - now shows "PURE SHOOTER" */}
-                  <p className="font-black text-sm uppercase tracking-wider text-[#FFD700]">
+                  <p className="font-black text-sm uppercase tracking-wider text-[#FF6B35]">
                     PURE SHOOTER
                   </p>
                   <p className="text-[#666] text-[10px] text-center uppercase tracking-wide mt-1">
@@ -3896,15 +3940,15 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
           {/* TOP 5 MATCHED ELITE SHOOTERS - Show for all views (kids love this!) */}
           <div className="space-y-3">
             {/* #1 - Primary Match (Large Card) */}
-            <div className="bg-gradient-to-br from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a] rounded-lg overflow-hidden border border-[#FFD700]/20 shadow-lg shadow-[#FFD700]/5">
+            <div className="bg-gradient-to-br from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a] rounded-lg overflow-hidden border border-[#FF6B35]/20 shadow-lg shadow-[#FF6B35]/5">
               {/* Header */}
-              <div className="bg-gradient-to-r from-[#FFD700]/10 to-transparent p-4 border-b border-[#FFD700]/20">
+              <div className="bg-gradient-to-r from-[#FF6B35]/10 to-transparent p-4 border-b border-[#FF6B35]/20">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-[#FFD700]/10 flex items-center justify-center border border-[#FFD700]/30">
-                    <Trophy className="w-5 h-5 text-[#FFD700]" />
+                  <div className="w-10 h-10 rounded-lg bg-[#FF6B35]/10 flex items-center justify-center border border-[#FF6B35]/30">
+                    <Trophy className="w-5 h-5 text-[#FF6B35]" />
                   </div>
                   <div>
-                    <h2 className="text-[#FFD700] font-bold uppercase tracking-wider text-lg">Matched Elite Shooter</h2>
+                    <h2 className="text-[#FF6B35] font-bold uppercase tracking-wider text-lg">Matched Elite Shooter</h2>
                     <p className="text-[#888] text-xs">Your form matches this NBA star</p>
                   </div>
                 </div>
@@ -3915,9 +3959,9 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                 <div className="flex items-center gap-5">
                   {/* Player Photo */}
                   <div className="relative">
-                    <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-[#FFD700]/50 shadow-lg shadow-[#FFD700]/20 relative">
+                    <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-[#FF6B35]/50 shadow-lg shadow-[#FF6B35]/20 relative">
                       <Image
-                        src="https://cdn.nba.com/headshots/nba/latest/1040x760/201142.png"
+                        src="https://cdn.nba.com/headshots/nba/latest/1040x760/201939.png"
                         alt={analysisData.matchedShooter.name}
                         fill
                         sizes="96px"
@@ -3926,7 +3970,7 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                       />
                     </div>
                     {/* Similarity Badge */}
-                    <div className="absolute -bottom-2 -right-2 bg-[#FFD700] text-[#1a1a1a] font-black text-sm px-2 py-1 rounded-full shadow-lg">
+                    <div className="absolute -bottom-2 -right-2 bg-[#FF6B35] text-[#1a1a1a] font-black text-sm px-2 py-1 rounded-full shadow-lg">
                       {analysisData.matchedShooter.similarityScore}%
                     </div>
                   </div>
@@ -3934,18 +3978,18 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                   {/* Player Info */}
                   <div className="flex-1">
                     <p className="text-2xl font-black text-white uppercase tracking-wide">{analysisData.matchedShooter.name}</p>
-                    <p className="text-[#FFD700] font-semibold">{analysisData.matchedShooter.team}</p>
+                    <p className="text-[#FF6B35] font-semibold">{analysisData.matchedShooter.team}</p>
                     <p className="text-[#888] text-sm mt-1">Small Forward • 4x Scoring Champion</p>
 
                     {/* Similarity Bar */}
                     <div className="mt-3">
                       <div className="flex items-center justify-between text-xs mb-1">
                         <span className="text-[#888] uppercase tracking-wider">Form Similarity</span>
-                        <span className="text-[#FFD700] font-bold">{analysisData.matchedShooter.similarityScore}%</span>
+                        <span className="text-[#FF6B35] font-bold">{analysisData.matchedShooter.similarityScore}%</span>
                       </div>
                       <div className="h-2 bg-[#3a3a3a] rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-gradient-to-r from-[#FFD700] to-[#FFA500] rounded-full transition-all duration-1000"
+                          className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF4500] rounded-full transition-all duration-1000"
                           style={{ width: `${analysisData.matchedShooter.similarityScore}%` }}
                         />
                       </div>
@@ -3957,9 +4001,9 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                 <div className="mt-4 pt-4 border-t border-[#3a3a3a]">
                   <p className="text-xs text-[#888] uppercase tracking-wider mb-2">Why You Match</p>
                   <div className="flex flex-wrap gap-2">
-                    <span className="bg-[#FFD700]/10 text-[#FFD700] text-xs px-3 py-1 rounded-full border border-[#FFD700]/30">Similar Release Height</span>
-                    <span className="bg-[#FFD700]/10 text-[#FFD700] text-xs px-3 py-1 rounded-full border border-[#FFD700]/30">High Arc Shot</span>
-                    <span className="bg-[#FFD700]/10 text-[#FFD700] text-xs px-3 py-1 rounded-full border border-[#FFD700]/30">Smooth Follow Through</span>
+                    <span className="bg-[#FF6B35]/10 text-[#FF6B35] text-xs px-3 py-1 rounded-full border border-[#FF6B35]/30">Similar Release Height</span>
+                    <span className="bg-[#FF6B35]/10 text-[#FF6B35] text-xs px-3 py-1 rounded-full border border-[#FF6B35]/30">High Arc Shot</span>
+                    <span className="bg-[#FF6B35]/10 text-[#FF6B35] text-xs px-3 py-1 rounded-full border border-[#FF6B35]/30">Smooth Follow Through</span>
                   </div>
                 </div>
               </div>
@@ -3977,13 +4021,13 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                   ? 'bg-gradient-to-r from-[#2a2a2a] via-[#2a2a2a] to-[#C0C0C0]/10 border-[#C0C0C0]/40 hover:border-[#C0C0C0]/60 hover:shadow-[#C0C0C0]/20' 
                   : shooter.rank === 3 
                   ? 'bg-gradient-to-r from-[#2a2a2a] via-[#2a2a2a] to-[#CD7F32]/10 border-[#CD7F32]/40 hover:border-[#CD7F32]/60 hover:shadow-[#CD7F32]/20'
-                  : 'bg-gradient-to-r from-[#2a2a2a] via-[#2a2a2a] to-[#FFD700]/5 border-[#3a3a3a] hover:border-[#FFD700]/30'
+                  : 'bg-gradient-to-r from-[#2a2a2a] via-[#2a2a2a] to-[#FF6B35]/5 border-[#3a3a3a] hover:border-[#FF6B35]/30'
               }`}>
                 {/* Subtle accent line on left */}
                 <div className={`absolute left-0 top-0 bottom-0 w-1 ${
                   shooter.rank === 2 ? 'bg-gradient-to-b from-[#C0C0C0] to-[#C0C0C0]/30' :
                   shooter.rank === 3 ? 'bg-gradient-to-b from-[#CD7F32] to-[#CD7F32]/30' :
-                  'bg-gradient-to-b from-[#FFD700]/50 to-[#FFD700]/10'
+                  'bg-gradient-to-b from-[#FF6B35]/50 to-[#FF6B35]/10'
                 }`} />
                 
                 <div className="flex items-center gap-3">
@@ -4006,7 +4050,7 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                   <div className={`w-12 h-12 rounded-full overflow-hidden relative flex-shrink-0 ${
                     shooter.rank === 2 ? 'ring-2 ring-[#C0C0C0]/50 ring-offset-2 ring-offset-[#2a2a2a]' :
                     shooter.rank === 3 ? 'ring-2 ring-[#CD7F32]/50 ring-offset-2 ring-offset-[#2a2a2a]' :
-                    'border-2 border-[#FFD700]/20'
+                    'border-2 border-[#FF6B35]/20'
                   }`}>
                     <Image
                       src={`https://cdn.nba.com/headshots/nba/latest/1040x760/${shooter.photoId}.png`}
@@ -4032,7 +4076,7 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                     <p className={`font-black text-xl ${
                       shooter.rank === 2 ? 'text-[#C0C0C0]' :
                       shooter.rank === 3 ? 'text-[#CD7F32]' :
-                      'text-[#FFD700]'
+                      'text-[#FF6B35]'
                     }`}>{shooter.similarity}%</p>
                     <p className="text-[#888] text-[10px] uppercase tracking-wide">{shooter.trait}</p>
                   </div>
@@ -4044,13 +4088,13 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
           {/* SHARE YOUR RESULTS - Mini Section */}
           <div className="bg-gradient-to-br from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a] rounded-lg overflow-hidden border border-[#3a3a3a] shadow-lg">
             {/* Header */}
-            <div className="bg-gradient-to-r from-[#FFD700]/10 to-transparent p-4 border-b border-[#3a3a3a]">
+            <div className="bg-gradient-to-r from-[#FF6B35]/10 to-transparent p-4 border-b border-[#3a3a3a]">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-[#FFD700]/10 flex items-center justify-center border border-[#FFD700]/30">
-                  <Share2 className="w-5 h-5 text-[#FFD700]" />
+                <div className="w-10 h-10 rounded-lg bg-[#FF6B35]/10 flex items-center justify-center border border-[#FF6B35]/30">
+                  <Share2 className="w-5 h-5 text-[#FF6B35]" />
                 </div>
                 <div>
-                  <h2 className="text-[#FFD700] font-bold uppercase tracking-wider text-lg">Share Your Results</h2>
+                  <h2 className="text-[#FF6B35] font-bold uppercase tracking-wider text-lg">Share Your Results</h2>
                   <p className="text-[#888] text-xs">Show off your shooting analysis</p>
                 </div>
               </div>
@@ -4091,7 +4135,7 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                   className="flex-1 bg-[#2a2a2a] hover:bg-[#3a3a3a] border border-[#4a4a4a] rounded-lg px-3 py-2.5 flex items-center justify-center gap-2 transition-colors"
                 >
                   {isGeneratingImage ? (
-                    <div className="w-4 h-4 border-2 border-[#FFD700] border-t-transparent rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-[#FF6B35] border-t-transparent rounded-full animate-spin" />
                   ) : (
                     <Download className="w-4 h-4 text-[#888]" />
                   )}
@@ -4109,7 +4153,7 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
               {/* Main Share Button */}
               <button 
                 onClick={handleNativeShare}
-                className="w-full mt-3 bg-gradient-to-r from-[#FFD700] to-[#FFA500] hover:from-[#E5C100] hover:to-[#E59400] text-[#1a1a1a] font-bold px-4 py-3 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg shadow-[#FFD700]/20"
+                className="w-full mt-3 bg-gradient-to-r from-[#FF6B35] to-[#FF4500] hover:from-[#E55300] hover:to-[#E59400] text-[#1a1a1a] font-bold px-4 py-3 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg shadow-[#FF6B35]/20"
               >
                 <Share2 className="w-5 h-5" />
                 <span className="uppercase tracking-wider text-sm">Share Results</span>
@@ -4143,7 +4187,7 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                     console.error('Error switching tab:', error)
                   }
                 }} 
-                className={`px-4 py-2 rounded-md font-semibold uppercase tracking-wider transition-colors ${activeTab === tab ? "bg-[#FFD700] text-[#1a1a1a]" : "bg-[#3a3a3a] text-[#E5E5E5] hover:bg-[#4a4a4a]"}`}
+                className={`px-4 py-2 rounded-md font-semibold uppercase tracking-wider transition-colors ${activeTab === tab ? "bg-[#FF6B35] text-[#1a1a1a]" : "bg-[#3a3a3a] text-[#E5E5E5] hover:bg-[#4a4a4a]"}`}
               >
                 {getTabLabel(tab)}
               </button>
@@ -4343,8 +4387,8 @@ function CoachingTipCard({ flawTitle, correction, drills }: CoachingTipCardProps
           </div>
           
           {/* Expected Result */}
-          <div className="bg-gradient-to-r from-[#FFD700]/20 to-transparent rounded-lg p-3 border border-[#FFD700]/30">
-            <p className="text-xs font-bold text-[#FFD700] uppercase tracking-wider mb-1">Expected Result</p>
+          <div className="bg-gradient-to-r from-[#FF6B35]/20 to-transparent rounded-lg p-3 border border-[#FF6B35]/30">
+            <p className="text-xs font-bold text-[#FF6B35] uppercase tracking-wider mb-1">Expected Result</p>
             <p className="text-[#E5E5E5] text-sm">{coachingMessage.expectedResult}</p>
           </div>
         </div>
@@ -4474,7 +4518,7 @@ function FlawsSection({ dashboardView = 'professional' }: { dashboardView?: Dash
 
   const getDifficultyColor = (difficulty: string) => {
     if (difficulty === "Hard") return "bg-red-500/20 text-red-400 border-red-500/30"
-    if (difficulty === "Medium") return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
+    if (difficulty === "Medium") return "bg-orange-500/20 text-orange-400 border-orange-500/30"
     return "bg-green-500/20 text-green-400 border-green-500/30"
   }
 
@@ -4541,7 +4585,7 @@ function FlawsSection({ dashboardView = 'professional' }: { dashboardView?: Dash
                 <div className="flex items-center gap-3">
                   <div className={`px-3 py-1.5 rounded-lg text-xs font-bold ${
                     session.flaws.length === 0 ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
-                    session.flaws.length <= 2 ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
+                    session.flaws.length <= 2 ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' :
                     'bg-red-500/20 text-red-400 border border-red-500/30'
                   }`}>
                     {session.flaws.length === 0 ? 'EXCELLENT' : session.flaws.length <= 2 ? 'GOOD' : 'NEEDS WORK'}
@@ -4622,7 +4666,7 @@ function FlawsSection({ dashboardView = 'professional' }: { dashboardView?: Dash
                                       <div key={i} className="flex items-start gap-2 text-sm">
                                         <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase ${
                                           effect.severity === 'major' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
-                                          effect.severity === 'moderate' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
+                                          effect.severity === 'moderate' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' :
                                           'bg-blue-500/20 text-blue-400 border border-blue-500/30'
                                         }`}>
                                           {effect.severity}
@@ -4638,10 +4682,10 @@ function FlawsSection({ dashboardView = 'professional' }: { dashboardView?: Dash
                               )}
 
                               {/* Correction */}
-                              <div className="bg-gradient-to-r from-[#FFD700]/10 to-transparent rounded-lg p-3 border border-[#FFD700]/30">
+                              <div className="bg-gradient-to-r from-[#FF6B35]/10 to-transparent rounded-lg p-3 border border-[#FF6B35]/30">
                                 <div className="flex items-center gap-2 mb-2">
-                                  <Check className="w-4 h-4 text-[#FFD700]" />
-                                  <span className="text-[#FFD700] text-xs uppercase tracking-wider font-bold">Correction</span>
+                                  <Check className="w-4 h-4 text-[#FF6B35]" />
+                                  <span className="text-[#FF6B35] text-xs uppercase tracking-wider font-bold">Correction</span>
                                 </div>
                                 <p className="text-[#E5E5E5] text-sm leading-relaxed">{flaw.correction}</p>
                               </div>
@@ -4814,7 +4858,7 @@ function TrainingSection() {
         dayShort: "WED",
         focus: wednesdayFocus,
         iconType: "dumbbell" as const,
-        color: { bg: "from-yellow-500/20 to-yellow-600/10", border: "border-yellow-500/40", text: "text-yellow-400", accent: "#eab308" },
+        color: { bg: "from-orange-500/20 to-orange-600/10", border: "border-orange-500/40", text: "text-orange-400", accent: "#eab308" },
         duration: "50 min",
         intensity: "Medium",
         exercises: wednesdayExercises
@@ -4843,7 +4887,7 @@ function TrainingSection() {
 
   const getIntensityColor = (intensity: string) => {
     if (intensity === "High") return "bg-red-500/20 text-red-400 border-red-500/30"
-    if (intensity === "Medium") return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
+    if (intensity === "Medium") return "bg-orange-500/20 text-orange-400 border-orange-500/30"
     return "bg-green-500/20 text-green-400 border-green-500/30"
   }
 
@@ -4853,11 +4897,11 @@ function TrainingSection() {
       <div className="bg-gradient-to-r from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a] rounded-xl p-6 border border-[#3a3a3a]">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-[#FFD700]/10 flex items-center justify-center border border-[#FFD700]/30">
+            <div className="w-14 h-14 rounded-xl bg-[#FF6B35]/10 flex items-center justify-center border border-[#FF6B35]/30">
               <span className="text-3xl">📅</span>
             </div>
             <div>
-              <h2 className="text-2xl font-black text-[#FFD700] uppercase tracking-wider" style={{ textShadow: '0 0 20px rgba(255, 215, 0, 0.3)' }}>
+              <h2 className="text-2xl font-black text-[#FF6B35] uppercase tracking-wider" style={{ textShadow: '0 0 20px rgba(255, 215, 0, 0.3)' }}>
                 Weekly Training Plan
               </h2>
               <p className="text-[#888] text-sm">Personalized shooting development program</p>
@@ -4865,11 +4909,11 @@ function TrainingSection() {
           </div>
           <div className="flex items-center gap-3">
             <div className="text-center px-4 py-2 bg-[#2a2a2a] rounded-lg border border-[#3a3a3a]">
-              <p className="text-[#FFD700] text-xl font-black">3</p>
+              <p className="text-[#FF6B35] text-xl font-black">3</p>
               <p className="text-[#888] text-xs uppercase">Training Days</p>
             </div>
             <div className="text-center px-4 py-2 bg-[#2a2a2a] rounded-lg border border-[#3a3a3a]">
-              <p className="text-[#FFD700] text-xl font-black">2.5h</p>
+              <p className="text-[#FF6B35] text-xl font-black">2.5h</p>
               <p className="text-[#888] text-xs uppercase">Total Time</p>
             </div>
           </div>
@@ -4992,12 +5036,12 @@ function TrainingSection() {
       {/* Weekly Progress Summary */}
       <div className="bg-[#2a2a2a] rounded-xl p-6 border border-[#3a3a3a]">
         <div className="flex items-center gap-2 mb-4">
-          <BarChart3 className="w-5 h-5 text-[#FFD700]" />
-          <h3 className="text-[#FFD700] text-sm font-bold uppercase tracking-wider">Weekly Goals</h3>
+          <BarChart3 className="w-5 h-5 text-[#FF6B35]" />
+          <h3 className="text-[#FF6B35] text-sm font-bold uppercase tracking-wider">Weekly Goals</h3>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a] text-center">
-            <p className="text-2xl font-black text-[#FFD700]">295</p>
+            <p className="text-2xl font-black text-[#FF6B35]">295</p>
             <p className="text-[#888] text-xs uppercase tracking-wider">Total Shots</p>
           </div>
           <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a] text-center">
@@ -5005,7 +5049,7 @@ function TrainingSection() {
             <p className="text-[#888] text-xs uppercase tracking-wider">Form Shots</p>
           </div>
           <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a] text-center">
-            <p className="text-2xl font-black text-yellow-400">100</p>
+            <p className="text-2xl font-black text-orange-400">100</p>
             <p className="text-[#888] text-xs uppercase tracking-wider">Game Shots</p>
           </div>
           <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a] text-center">
@@ -5134,10 +5178,10 @@ function ActivityRings({ overallScore, consistencyScore, formScore }: { overallS
 
   // Get rating label based on score
   const getRating = (score: number) => {
-    if (score >= 90) return { label: "Elite", color: "text-[#FFD700]" }
+    if (score >= 90) return { label: "Elite", color: "text-[#FF6B35]" }
     if (score >= 80) return { label: "Excellent", color: "text-green-400" }
     if (score >= 70) return { label: "Good", color: "text-blue-400" }
-    if (score >= 60) return { label: "Average", color: "text-yellow-400" }
+    if (score >= 60) return { label: "Average", color: "text-orange-400" }
     return { label: "Needs Work", color: "text-red-400" }
   }
 
@@ -5226,13 +5270,13 @@ function ActivityRings({ overallScore, consistencyScore, formScore }: { overallS
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="sticky top-0 bg-gradient-to-r from-[#FFD700]/20 to-transparent p-4 border-b border-[#3a3a3a] flex items-center justify-between">
+            <div className="sticky top-0 bg-gradient-to-r from-[#FF6B35]/20 to-transparent p-4 border-b border-[#3a3a3a] flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-[#FFD700]/10 flex items-center justify-center border border-[#FFD700]/30">
-                  <Info className="w-5 h-5 text-[#FFD700]" />
+                <div className="w-10 h-10 rounded-lg bg-[#FF6B35]/10 flex items-center justify-center border border-[#FF6B35]/30">
+                  <Info className="w-5 h-5 text-[#FF6B35]" />
                 </div>
                 <div>
-                  <h2 className="text-[#FFD700] font-bold text-lg uppercase tracking-wider">Key Skills</h2>
+                  <h2 className="text-[#FF6B35] font-bold text-lg uppercase tracking-wider">Key Skills</h2>
                   <p className="text-[#888] text-xs">Performance Overview</p>
                 </div>
               </div>
@@ -5272,7 +5316,7 @@ function ActivityRings({ overallScore, consistencyScore, formScore }: { overallS
             {/* What This Means */}
             <div className="p-4 border-b border-[#3a3a3a]">
               <h3 className="text-white font-semibold text-sm mb-2 flex items-center gap-2">
-                <ChevronRight className="w-4 h-4 text-[#FFD700]" />
+                <ChevronRight className="w-4 h-4 text-[#FF6B35]" />
                 What This Means
               </h3>
               <p className="text-[#E5E5E5] text-sm leading-relaxed">
@@ -5286,7 +5330,7 @@ function ActivityRings({ overallScore, consistencyScore, formScore }: { overallS
             {/* Individual Ring Breakdown */}
             <div className="p-4 border-b border-[#3a3a3a]">
               <h3 className="text-white font-semibold text-sm mb-4 flex items-center gap-2">
-                <Users className="w-4 h-4 text-[#FFD700]" />
+                <Users className="w-4 h-4 text-[#FF6B35]" />
                 Ring Breakdown
               </h3>
               
@@ -5342,12 +5386,12 @@ function ActivityRings({ overallScore, consistencyScore, formScore }: { overallS
             {/* Benchmarks */}
             <div className="p-4 border-b border-[#3a3a3a]">
               <h3 className="text-white font-semibold text-sm mb-3 flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-[#FFD700]" />
+                <TrendingUp className="w-4 h-4 text-[#FF6B35]" />
                 Performance Benchmarks
               </h3>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div className="bg-[#1a1a1a] rounded p-2 text-center">
-                  <p className="text-[#FFD700] font-bold">90-100</p>
+                  <p className="text-[#FF6B35] font-bold">90-100</p>
                   <p className="text-[#888]">Elite</p>
                 </div>
                 <div className="bg-[#1a1a1a] rounded p-2 text-center">
@@ -5359,7 +5403,7 @@ function ActivityRings({ overallScore, consistencyScore, formScore }: { overallS
                   <p className="text-[#888]">Good</p>
                 </div>
                 <div className="bg-[#1a1a1a] rounded p-2 text-center">
-                  <p className="text-yellow-400 font-bold">60-69</p>
+                  <p className="text-orange-400 font-bold">60-69</p>
                   <p className="text-[#888]">Average</p>
                 </div>
               </div>
@@ -5369,7 +5413,7 @@ function ActivityRings({ overallScore, consistencyScore, formScore }: { overallS
             <div className="p-4 bg-[#1a1a1a] border-t border-[#3a3a3a]">
               <button 
                 onClick={() => setShowPopup(false)}
-                className="w-full py-3 bg-[#FFD700] hover:bg-[#FFC000] text-[#1a1a1a] font-bold rounded-lg transition-colors uppercase tracking-wider text-sm"
+                className="w-full py-3 bg-[#FF6B35] hover:bg-[#FFC000] text-[#1a1a1a] font-bold rounded-lg transition-colors uppercase tracking-wider text-sm"
               >
                 Got It
               </button>
@@ -5770,6 +5814,38 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
   const prevSession = currentIndex > 0 ? allSessions[currentIndex - 1] : null
   const nextSession = currentIndex < allSessions.length - 1 ? allSessions[currentIndex + 1] : null
 
+  // Build analysis data for simplified views
+  const simplifiedAnalysisData = {
+    overallScore: overallScore,
+    shootingStats: {
+      form: assessmentSkills[1]?.score || 75,
+      balance: assessmentSkills[2]?.score || 75,
+      release: assessmentSkills[0]?.score || 75,
+      followThrough: assessmentSkills[5]?.score || 75,
+      elbow: assessmentSkills[4]?.score || 75,
+      arc: assessmentSkills[3]?.score || 75,
+    }
+  }
+
+  // BASIC VIEW - Simple, kid-friendly
+  if (dashboardView === 'basic') {
+    return (
+      <div className="space-y-6">
+        <BasicPlayerAssessment analysisData={simplifiedAnalysisData} playerName={playerName} />
+      </div>
+    )
+  }
+
+  // STANDARD VIEW - Mix of basic and professional
+  if (dashboardView === 'standard') {
+    return (
+      <div className="space-y-6">
+        <StandardPlayerAssessment analysisData={simplifiedAnalysisData} playerName={playerName} />
+      </div>
+    )
+  }
+
+  // PROFESSIONAL VIEW - Full detailed analysis (default)
   return (
     <div className="space-y-6">
       {/* ==================== SESSION GALLERY CAROUSEL (TOP) ==================== */}
@@ -5777,11 +5853,11 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
         {/* Header with Media Type Filter and Date Dropdown */}
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-[#FFD700]/10 flex items-center justify-center border border-[#FFD700]/30">
-              <ImageIcon className="w-6 h-6 text-[#FFD700]" />
+            <div className="w-12 h-12 rounded-xl bg-[#FF6B35]/10 flex items-center justify-center border border-[#FF6B35]/30">
+              <ImageIcon className="w-6 h-6 text-[#FF6B35]" />
             </div>
             <div>
-              <h2 className="text-xl font-black text-[#FFD700] uppercase tracking-wider">Session History</h2>
+              <h2 className="text-xl font-black text-[#FF6B35] uppercase tracking-wider">Session History</h2>
               <p className="text-[#888] text-sm">
                 {allSessions.length} session{allSessions.length !== 1 ? 's' : ''} 
                 {mediaTypeFilter !== 'all' && ` (${mediaTypeFilter})`}
@@ -5798,7 +5874,7 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
                 onClick={() => setMediaTypeFilter('all')}
                 className={`px-3 py-1.5 rounded-md text-xs font-semibold uppercase transition-colors ${
                   mediaTypeFilter === 'all' 
-                    ? 'bg-[#FFD700] text-[#1a1a1a]' 
+                    ? 'bg-[#FF6B35] text-[#1a1a1a]' 
                     : 'text-[#888] hover:text-white'
                 }`}
               >
@@ -5843,7 +5919,7 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
             <select
               value={selectedSessionId || allSessions[0]?.id || ''}
               onChange={(e) => setSelectedSessionId(e.target.value)}
-              className="bg-[#2a2a2a] border border-[#4a4a4a] rounded-lg px-3 py-2 text-[#E5E5E5] text-sm focus:outline-none focus:border-[#FFD700] cursor-pointer"
+              className="bg-[#2a2a2a] border border-[#4a4a4a] rounded-lg px-3 py-2 text-[#E5E5E5] text-sm focus:outline-none focus:border-[#FF6B35] cursor-pointer"
             >
               {allSessions.map((session) => (
                 <option key={session.id} value={session.id}>
@@ -5859,7 +5935,7 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
           <div className="space-y-4">
             {isLoadingDrills ? (
               <div className="flex items-center justify-center py-12">
-                <div className="animate-spin w-8 h-8 border-2 border-[#FFD700] border-t-transparent rounded-full" />
+                <div className="animate-spin w-8 h-8 border-2 border-[#FF6B35] border-t-transparent rounded-full" />
                 <span className="ml-3 text-[#888]">Loading drill feedback...</span>
               </div>
             ) : drillFeedback.length === 0 ? (
@@ -5880,7 +5956,7 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
                       <div className={`w-14 h-14 rounded-xl flex items-center justify-center text-2xl font-black flex-shrink-0 ${
                         drill.overallGrade === 'A' ? 'bg-green-500/20 text-green-400' :
                         drill.overallGrade === 'B' ? 'bg-blue-500/20 text-blue-400' :
-                        drill.overallGrade === 'C' ? 'bg-yellow-500/20 text-yellow-400' :
+                        drill.overallGrade === 'C' ? 'bg-orange-500/20 text-orange-400' :
                         drill.overallGrade === 'D' ? 'bg-orange-500/20 text-orange-400' :
                         'bg-red-500/20 text-red-400'
                       }`}>
@@ -5898,7 +5974,7 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
                           </span>
                           {drill.analysisType && (
                             <span className={`text-[10px] px-2 py-0.5 rounded ${
-                              drill.analysisType === 'deep' ? 'bg-purple-500/20 text-purple-400' : 'bg-[#FFD700]/20 text-[#FFD700]'
+                              drill.analysisType === 'deep' ? 'bg-purple-500/20 text-purple-400' : 'bg-[#FF6B35]/20 text-[#FF6B35]'
                             }`}>
                               {drill.analysisType === 'deep' ? 'DEEP' : 'QUICK'}
                             </span>
@@ -5912,7 +5988,7 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
                         
                         {/* Coach Says */}
                         {drill.coachSays && (
-                          <div className="bg-[#1a1a1a] rounded-lg p-3 border-l-2 border-[#FFD700]">
+                          <div className="bg-[#1a1a1a] rounded-lg p-3 border-l-2 border-[#FF6B35]">
                             <p className="text-[#E5E5E5] text-sm italic">&quot;{drill.coachSays}&quot;</p>
                           </div>
                         )}
@@ -5939,7 +6015,7 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
                     {/* Expandable Full Analysis */}
                     {drill.coachAnalysis && (
                       <details className="border-t border-[#3a3a3a]">
-                        <summary className="px-4 py-2 text-[#FFD700] text-xs font-bold uppercase cursor-pointer hover:bg-[#3a3a3a]/50">
+                        <summary className="px-4 py-2 text-[#FF6B35] text-xs font-bold uppercase cursor-pointer hover:bg-[#3a3a3a]/50">
                           View Full Analysis
                         </summary>
                         <div className="p-4 space-y-3 bg-[#1a1a1a]">
@@ -5959,7 +6035,7 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
                               {drill.coachAnalysis.coachingPointEvaluations.map((point: any, i: number) => (
                                 <div key={i} className={`p-2 rounded border ${
                                   point.status === 'executing' ? 'bg-green-500/10 border-green-500/30' :
-                                  point.status === 'needs_work' ? 'bg-yellow-500/10 border-yellow-500/30' :
+                                  point.status === 'needs_work' ? 'bg-orange-500/10 border-orange-500/30' :
                                   'bg-[#2a2a2a] border-[#3a3a3a]'
                                 }`}>
                                   <p className="text-white text-xs font-bold">{point.coachingPoint}</p>
@@ -6000,7 +6076,7 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
                 className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all z-10 ${
                   currentIndex === 0
                     ? 'bg-[#2a2a2a] text-[#4a4a4a] cursor-not-allowed'
-                    : 'bg-[#FFD700] text-[#1a1a1a] hover:bg-[#E5C100] shadow-lg'
+                    : 'bg-[#FF6B35] text-[#1a1a1a] hover:bg-[#E55300] shadow-lg'
                 }`}
               >
                 <ChevronLeft className="w-6 h-6" />
@@ -6039,7 +6115,7 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
                 {/* MAIN/CURRENT SESSION (Full - Center) */}
                 <div className="flex-shrink-0 w-1/2 z-10">
                   {currentSession && (
-                    <div className="rounded-xl overflow-hidden border-2 border-[#FFD700] shadow-[0_0_30px_rgba(255,215,0,0.3)] bg-[#1a1a1a]">
+                    <div className="rounded-xl overflow-hidden border-2 border-[#FF6B35] shadow-[0_0_30px_rgba(255,215,0,0.3)] bg-[#1a1a1a]">
                       {currentSession.mainImageBase64 ? (
                         <HybridSkeletonDisplay
                           imageUrl={currentSession.mainImageBase64}
@@ -6056,12 +6132,12 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
                         </div>
                       )}
                       {/* Session Info Bar */}
-                      <div className="bg-gradient-to-r from-[#FFD700]/20 to-[#2a2a2a] p-3 flex items-center justify-between">
+                      <div className="bg-gradient-to-r from-[#FF6B35]/20 to-[#2a2a2a] p-3 flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           {currentSession.id === 'current' && (
                             <span className="px-2 py-0.5 bg-green-500 rounded text-[10px] font-bold text-white">LIVE</span>
                           )}
-                          <span className="text-[#FFD700] font-bold text-sm">{currentSession.displayDate}</span>
+                          <span className="text-[#FF6B35] font-bold text-sm">{currentSession.displayDate}</span>
                         </div>
                         <div className="flex items-center gap-3">
                           <span className="text-[#E5E5E5] text-sm font-bold">{currentSession.analysisData.overallScore}%</span>
@@ -6108,7 +6184,7 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
                 className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all z-10 ${
                   currentIndex >= allSessions.length - 1
                     ? 'bg-[#2a2a2a] text-[#4a4a4a] cursor-not-allowed'
-                    : 'bg-[#FFD700] text-[#1a1a1a] hover:bg-[#E5C100] shadow-lg'
+                    : 'bg-[#FF6B35] text-[#1a1a1a] hover:bg-[#E55300] shadow-lg'
                 }`}
               >
                 <ChevronRight className="w-6 h-6" />
@@ -6124,7 +6200,7 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
                     onClick={() => setSelectedSessionId(session.id)}
                     className={`w-2.5 h-2.5 rounded-full transition-all ${
                       idx === currentIndex
-                        ? 'bg-[#FFD700] w-6'
+                        ? 'bg-[#FF6B35] w-6'
                         : 'bg-[#4a4a4a] hover:bg-[#666]'
                     }`}
                   />
@@ -6170,7 +6246,7 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
           {/* SPAR Indicators - Moved to Sidebar */}
           <div className="bg-[#3a3a3a] rounded-lg p-6">
             <div className="flex flex-col gap-2 mb-6">
-              <h3 className="text-lg font-bold text-[#FFD700] uppercase tracking-wider">SPAR Indicators</h3>
+              <h3 className="text-lg font-bold text-[#FF6B35] uppercase tracking-wider">SPAR Indicators</h3>
               <span className="text-[10px] text-[#888] bg-[#2a2a2a] px-2 py-1 rounded w-fit">Shooting Performance Analysis Rating • Click for details</span>
             </div>
 
@@ -6196,17 +6272,17 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
           <div className="bg-[#3a3a3a] rounded-lg p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-[#FFD700] mb-1">{playerName}</h2>
+                <h2 className="text-2xl font-bold text-[#FF6B35] mb-1">{playerName}</h2>
                 <p className="text-[#888] uppercase tracking-wider text-sm">Shooting Mechanics Assessment Report</p>
               </div>
               <div className={`text-right px-4 py-2 rounded-lg border ${
                 shooterLevel.level <= 2 ? 'bg-green-500/10 border-green-500/40' :
-                shooterLevel.level <= 4 ? 'bg-[#FFD700]/10 border-[#FFD700]/40' :
+                shooterLevel.level <= 4 ? 'bg-[#FF6B35]/10 border-[#FF6B35]/40' :
                 shooterLevel.level <= 6 ? 'bg-orange-500/10 border-orange-500/40' : 'bg-red-500/10 border-red-500/40'
               }`}>
                 <div className={`text-2xl font-black ${
                   shooterLevel.level <= 2 ? 'text-green-400' :
-                  shooterLevel.level <= 4 ? 'text-[#FFD700]' :
+                  shooterLevel.level <= 4 ? 'text-[#FF6B35]' :
                   shooterLevel.level <= 6 ? 'text-orange-400' : 'text-red-400'
                 }`}>
                   {shooterLevel.name}
@@ -6227,14 +6303,14 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
         <div className="bg-[#3a3a3a] rounded-lg p-6">
           <h3 className="text-xl font-bold text-[#E5E5E5] uppercase tracking-wider mb-4">Assessment Results</h3>
           <div className="mb-4">
-            <h4 className="text-[#FFD700] font-semibold uppercase text-sm mb-2">Overall Performance Rating</h4>
+            <h4 className="text-[#FF6B35] font-semibold uppercase text-sm mb-2">Overall Performance Rating</h4>
             <p className="text-[#888] text-sm mb-1">Basketball Shooting Mechanics Program</p>
             <p className="text-[#888] text-sm mb-3">Assessment Date: {assessmentDate}</p>
             <ul className="space-y-2 text-sm text-[#E5E5E5]">
-              <li className="flex items-start gap-2"><span className="text-[#FFD700]">•</span>Achieved <span className="text-[#FFD700] font-semibold">{overallScore}%</span> overall shooting form rating</li>
-              <li className="flex items-start gap-2"><span className="text-[#FFD700]">•</span>Demonstrated <span className="text-[#FFD700] font-semibold">{assessmentSkills.filter(s => s.score >= 80).length}</span> skills at advanced level</li>
-              <li className="flex items-start gap-2"><span className="text-[#FFD700]">•</span>Shooter Classification: <span className="text-[#FFD700] font-semibold">{shooterLevel.name}</span> ({shooterLevel.scoreRange[0]}-{shooterLevel.scoreRange[1]} range)</li>
-              <li className="flex items-start gap-2"><span className="text-[#FFD700]">•</span>{detectedFlaws.length === 0 ? 'No significant mechanical flaws detected' : `${detectedFlaws.length} mechanical issue${detectedFlaws.length > 1 ? 's' : ''} identified for improvement`}</li>
+              <li className="flex items-start gap-2"><span className="text-[#FF6B35]">•</span>Achieved <span className="text-[#FF6B35] font-semibold">{overallScore}%</span> overall shooting form rating</li>
+              <li className="flex items-start gap-2"><span className="text-[#FF6B35]">•</span>Demonstrated <span className="text-[#FF6B35] font-semibold">{assessmentSkills.filter(s => s.score >= 80).length}</span> skills at advanced level</li>
+              <li className="flex items-start gap-2"><span className="text-[#FF6B35]">•</span>Shooter Classification: <span className="text-[#FF6B35] font-semibold">{shooterLevel.name}</span> ({shooterLevel.scoreRange[0]}-{shooterLevel.scoreRange[1]} range)</li>
+              <li className="flex items-start gap-2"><span className="text-[#FF6B35]">•</span>{detectedFlaws.length === 0 ? 'No significant mechanical flaws detected' : `${detectedFlaws.length} mechanical issue${detectedFlaws.length > 1 ? 's' : ''} identified for improvement`}</li>
             </ul>
           </div>
           
@@ -6281,10 +6357,10 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
           {detectedFlaws.length > 0 ? (
             <>
               <div className="mb-6">
-                <h4 className="text-[#FFD700] font-semibold uppercase text-sm mb-3">Primary Focus Areas</h4>
+                <h4 className="text-[#FF6B35] font-semibold uppercase text-sm mb-3">Primary Focus Areas</h4>
                 <div className="space-y-4">
                   {detectedFlaws.slice(0, 2).map((flaw, idx) => (
-                    <div key={idx} className="bg-[#2a2a2a] rounded-lg p-4 border-l-4 border-[#FFD700]">
+                    <div key={idx} className="bg-[#2a2a2a] rounded-lg p-4 border-l-4 border-[#FF6B35]">
                       <p className="text-[#E5E5E5] font-semibold mb-2">{flaw.name}</p>
                       <p className="text-[#888] text-sm mb-2">{flaw.description}</p>
                       <p className="text-green-400 text-sm"><span className="text-[#888]">Fix:</span> {flaw.fixes[0]}</p>
@@ -6294,13 +6370,13 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
               </div>
 
               <div className="mb-6">
-                <h4 className="text-[#FFD700] font-semibold uppercase text-sm mb-3">Cause & Effect Analysis</h4>
+                <h4 className="text-[#FF6B35] font-semibold uppercase text-sm mb-3">Cause & Effect Analysis</h4>
                 <div className="space-y-3 text-sm text-[#E5E5E5]">
                   {detectedFlaws[0]?.causeChain.slice(0, 2).map((effect, idx) => (
                     <p key={idx}>
                       <span className={`inline-block px-2 py-0.5 rounded text-xs mr-2 ${
                         effect.severity === 'major' ? 'bg-red-500/20 text-red-400' :
-                        effect.severity === 'moderate' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-blue-500/20 text-blue-400'
+                        effect.severity === 'moderate' ? 'bg-orange-500/20 text-orange-400' : 'bg-blue-500/20 text-blue-400'
                       }`}>{effect.severity}</span>
                       <span className="text-[#888]">{effect.effect}:</span> {effect.explanation}
                     </p>
@@ -6309,11 +6385,11 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
               </div>
 
               <div>
-                <h4 className="text-[#FFD700] font-semibold uppercase text-sm mb-3">Recommended Drills</h4>
+                <h4 className="text-[#FF6B35] font-semibold uppercase text-sm mb-3">Recommended Drills</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {detectedFlaws.flatMap(f => f.drills).slice(0, 4).map((drill, idx) => (
                     <div key={idx} className="bg-[#2a2a2a] rounded-lg p-3 flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-[#FFD700]/20 flex items-center justify-center text-[#FFD700] font-bold text-sm">
+                      <div className="w-8 h-8 rounded-full bg-[#FF6B35]/20 flex items-center justify-center text-[#FF6B35] font-bold text-sm">
                         {idx + 1}
                       </div>
                       <span className="text-[#E5E5E5] text-sm">{drill}</span>
@@ -6482,19 +6558,19 @@ function MotivationalMessageCard({ overallScore, sessionsCount, shooterLevel }: 
   }
   
   const bgColorClass = message.color === 'gold' 
-    ? 'from-[#FFD700]/20 to-[#FFD700]/5 border-[#FFD700]/40' 
+    ? 'from-[#FF6B35]/20 to-[#FF6B35]/5 border-[#FF6B35]/40' 
     : message.color === 'green'
     ? 'from-green-500/20 to-green-500/5 border-green-500/40'
     : 'from-blue-500/20 to-blue-500/5 border-blue-500/40'
   
   const textColorClass = message.color === 'gold' 
-    ? 'text-[#FFD700]' 
+    ? 'text-[#FF6B35]' 
     : message.color === 'green'
     ? 'text-green-400'
     : 'text-blue-400'
   
   const iconBgClass = message.color === 'gold'
-    ? 'bg-[#FFD700]/20 border-[#FFD700]/40'
+    ? 'bg-[#FF6B35]/20 border-[#FF6B35]/40'
     : message.color === 'green'
     ? 'bg-green-500/20 border-green-500/40'
     : 'bg-blue-500/20 border-blue-500/40'
@@ -6665,14 +6741,14 @@ function LeaguePlayersPopup({ league, players, onClose }: { league: string; play
           <div className="grid grid-cols-1 gap-2">
             {filteredPlayers.map((player, idx) => (
               <div key={player.id} className="flex items-center gap-3 p-3 bg-[#1a1a1a] rounded-lg hover:bg-[#2a2a2a] transition-colors">
-                <div className="w-8 h-8 rounded-full bg-[#3a3a3a] flex items-center justify-center text-[#FFD700] font-bold text-sm">
+                <div className="w-8 h-8 rounded-full bg-[#3a3a3a] flex items-center justify-center text-[#FF6B35] font-bold text-sm">
                   {idx + 1}
                 </div>
                 <div className="w-10 h-10 rounded-full overflow-hidden bg-[#3a3a3a] flex-shrink-0">
                   {player.photoUrl ? (
                     <Image src={player.photoUrl} alt={player.name} width={40} height={40} className="object-cover object-top" unoptimized />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-[#FFD700] font-bold text-xs">
+                    <div className="w-full h-full flex items-center justify-center text-[#FF6B35] font-bold text-xs">
                       {player.name.split(' ').map(n => n[0]).join('')}
                     </div>
                   )}
@@ -6682,7 +6758,7 @@ function LeaguePlayersPopup({ league, players, onClose }: { league: string; play
                   <p className="text-xs text-[#888] truncate">{player.team}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[#FFD700] font-bold">{player.similarity}%</p>
+                  <p className="text-[#FF6B35] font-bold">{player.similarity}%</p>
                   <p className="text-xs text-[#888]">Match</p>
                 </div>
               </div>
@@ -6701,15 +6777,15 @@ function MeasurementPopup({ measurementKey, value, onClose }: { measurementKey: 
   
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a] rounded-2xl max-w-md w-full border border-[#FFD700]/30 shadow-2xl" onClick={e => e.stopPropagation()}>
-        <div className="p-6 bg-gradient-to-r from-[#FFD700]/20 to-transparent border-b border-[#3a3a3a]">
+      <div className="bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a] rounded-2xl max-w-md w-full border border-[#FF6B35]/30 shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="p-6 bg-gradient-to-r from-[#FF6B35]/20 to-transparent border-b border-[#3a3a3a]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-lg bg-[#FFD700]/20 flex items-center justify-center">
-                <Target className="w-6 h-6 text-[#FFD700]" />
+              <div className="w-12 h-12 rounded-lg bg-[#FF6B35]/20 flex items-center justify-center">
+                <Target className="w-6 h-6 text-[#FF6B35]" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-[#FFD700] uppercase">{info.title}</h2>
+                <h2 className="text-xl font-bold text-[#FF6B35] uppercase">{info.title}</h2>
                 <p className="text-3xl font-black text-white">{value}{measurementKey.includes('Height') ? 'in' : '°'}</p>
               </div>
             </div>
@@ -6733,7 +6809,7 @@ function MeasurementPopup({ measurementKey, value, onClose }: { measurementKey: 
           </div>
         </div>
         <div className="p-6 border-t border-[#3a3a3a]">
-          <button onClick={onClose} className="w-full py-3 bg-[#FFD700] hover:bg-[#e5c200] text-black font-bold rounded-lg transition-colors uppercase">
+          <button onClick={onClose} className="w-full py-3 bg-[#FF6B35] hover:bg-[#e5c200] text-black font-bold rounded-lg transition-colors uppercase">
             Close
           </button>
         </div>
@@ -6803,11 +6879,11 @@ function ComparisonSection({ analysisData }: { analysisData: AnalysisData }) {
       {/* Header */}
       <div className="bg-gradient-to-r from-[#2a2a2a] to-[#1a1a1a] rounded-xl p-6 border border-[#3a3a3a]" style={{ boxShadow: '0 0 30px rgba(255, 215, 0, 0.1)' }}>
         <div className="flex items-center gap-4 mb-4">
-          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#FFD700] to-[#FFA500] flex items-center justify-center">
+          <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#FF4500] flex items-center justify-center">
             <BarChart3 className="w-7 h-7 text-[#1a1a1a]" />
           </div>
           <div>
-            <h2 className="text-2xl font-black text-[#FFD700] uppercase tracking-wider" style={{ textShadow: '0 0 20px rgba(255, 215, 0, 0.3)' }}>Elite Shooter Comparison</h2>
+            <h2 className="text-2xl font-black text-[#FF6B35] uppercase tracking-wider" style={{ textShadow: '0 0 20px rgba(255, 215, 0, 0.3)' }}>Elite Shooter Comparison</h2>
             <p className="text-[#888] text-sm">Compare your shooting form with 250 elite players across 5 categories</p>
           </div>
         </div>
@@ -6828,14 +6904,14 @@ function ComparisonSection({ analysisData }: { analysisData: AnalysisData }) {
       </div>
 
       {/* User Stats Card */}
-      <div className="bg-gradient-to-br from-[#FFD700]/10 to-transparent rounded-xl p-6 border-2 border-[#FFD700]/50" style={{ boxShadow: '0 0 30px rgba(255, 215, 0, 0.15)' }}>
+      <div className="bg-gradient-to-br from-[#FF6B35]/10 to-transparent rounded-xl p-6 border-2 border-[#FF6B35]/50" style={{ boxShadow: '0 0 30px rgba(255, 215, 0, 0.15)' }}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-[#FFD700] flex items-center justify-center"><User className="w-6 h-6 text-[#1a1a1a]" /></div>
-            <div><h3 className="text-xl font-bold text-[#FFD700]">KEVIN HOUSTON</h3><p className="text-sm text-[#888]">Your Current Form</p></div>
+            <div className="w-12 h-12 rounded-full bg-[#FF6B35] flex items-center justify-center"><User className="w-6 h-6 text-[#1a1a1a]" /></div>
+            <div><h3 className="text-xl font-bold text-[#FF6B35]">KEVIN HOUSTON</h3><p className="text-sm text-[#888]">Your Current Form</p></div>
           </div>
           <div className="text-right">
-            <p className="text-3xl font-black text-[#FFD700]">{analysisData.overallScore}<span className="text-lg text-[#888]">/100</span></p>
+            <p className="text-3xl font-black text-[#FF6B35]">{analysisData.overallScore}<span className="text-lg text-[#888]">/100</span></p>
             <span className="bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full text-xs">{analysisData.formCategory}</span>
           </div>
         </div>
@@ -6844,7 +6920,7 @@ function ComparisonSection({ analysisData }: { analysisData: AnalysisData }) {
             <button 
               key={key} 
               onClick={() => setShowMeasurementPopup({ key, value })}
-              className="bg-[#1a1a1a] rounded-lg p-2 text-center hover:bg-[#2a2a2a] hover:border-[#FFD700]/50 border border-transparent transition-colors cursor-pointer"
+              className="bg-[#1a1a1a] rounded-lg p-2 text-center hover:bg-[#2a2a2a] hover:border-[#FF6B35]/50 border border-transparent transition-colors cursor-pointer"
             >
               <p className="text-xs text-[#888] uppercase">{key.replace(/([A-Z])/g, ' $1').trim().substring(0, 6)}</p>
               <p className="text-lg font-bold text-[#E5E5E5]">{value}{key.includes('Height') ? 'in' : '°'}</p>
@@ -6853,8 +6929,8 @@ function ComparisonSection({ analysisData }: { analysisData: AnalysisData }) {
         </div>
         {topMatch && (
           <div className="mt-4 pt-4 border-t border-[#3a3a3a] flex items-center gap-3">
-            <Award className="w-5 h-5 text-[#FFD700]" />
-            <p className="text-sm text-[#E5E5E5]">Your form is most similar to <span className="text-[#FFD700] font-bold">{topMatch.name}</span> ({topMatch.similarity}% match)</p>
+            <Award className="w-5 h-5 text-[#FF6B35]" />
+            <p className="text-sm text-[#E5E5E5]">Your form is most similar to <span className="text-[#FF6B35] font-bold">{topMatch.name}</span> ({topMatch.similarity}% match)</p>
           </div>
         )}
       </div>
@@ -6864,11 +6940,11 @@ function ComparisonSection({ analysisData }: { analysisData: AnalysisData }) {
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#888]" />
           <input type="text" placeholder="Search players..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg text-[#E5E5E5] text-sm focus:outline-none focus:border-[#FFD700]" />
+            className="w-full pl-10 pr-4 py-2 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg text-[#E5E5E5] text-sm focus:outline-none focus:border-[#FF6B35]" />
         </div>
         <div className="flex gap-2">
           <select value={selectedLeague} onChange={(e) => setSelectedLeague(e.target.value as typeof selectedLeague)}
-            className="px-4 py-2 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg text-[#E5E5E5] text-sm focus:outline-none focus:border-[#FFD700]">
+            className="px-4 py-2 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg text-[#E5E5E5] text-sm focus:outline-none focus:border-[#FF6B35]">
             <option value="ALL">All Categories</option>
             <option value="NBA">NBA</option>
             <option value="WNBA">WNBA</option>
@@ -6877,14 +6953,14 @@ function ComparisonSection({ analysisData }: { analysisData: AnalysisData }) {
             <option value="TOP_COLLEGE">Top College</option>
           </select>
           <select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-            className="px-4 py-2 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg text-[#E5E5E5] text-sm focus:outline-none focus:border-[#FFD700]">
+            className="px-4 py-2 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg text-[#E5E5E5] text-sm focus:outline-none focus:border-[#FF6B35]">
             <option value="similarity">Most Similar</option>
             <option value="score">Highest Score</option>
             <option value="name">Name A-Z</option>
           </select>
         </div>
         {selectedShooters.length > 0 && (
-          <button onClick={() => setShowCompareModal(true)} className="px-4 py-2 bg-[#FFD700] text-[#1a1a1a] rounded-lg font-bold text-sm hover:bg-[#FFC000] transition-colors flex items-center gap-2">
+          <button onClick={() => setShowCompareModal(true)} className="px-4 py-2 bg-[#FF6B35] text-[#1a1a1a] rounded-lg font-bold text-sm hover:bg-[#FFC000] transition-colors flex items-center gap-2">
             Compare ({selectedShooters.length}) <ArrowRight className="w-4 h-4" />
           </button>
         )}
@@ -7045,18 +7121,18 @@ function EliteShooterPhotoCompare({ shooter, userImage, onClose }: {
   return (
     <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div 
-        className="bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a] rounded-2xl max-w-6xl w-full max-h-[95vh] overflow-y-auto border border-[#FFD700]/30 shadow-2xl" 
+        className="bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a] rounded-2xl max-w-6xl w-full max-h-[95vh] overflow-y-auto border border-[#FF6B35]/30 shadow-2xl" 
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="p-6 border-b border-[#FFD700]/30 flex items-center justify-between bg-gradient-to-r from-[#FFD700]/10 to-transparent">
+        <div className="p-6 border-b border-[#FF6B35]/30 flex items-center justify-between bg-gradient-to-r from-[#FF6B35]/10 to-transparent">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#FFD700] to-[#FFA500] flex items-center justify-center">
+            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#FF4500] flex items-center justify-center">
               <Camera className="w-7 h-7 text-[#1a1a1a]" />
             </div>
             <div>
-              <h2 className="text-2xl font-black text-[#FFD700] uppercase tracking-wider">Photo Comparison</h2>
-              <p className="text-[#888]">Compare your form with <span className="text-[#FFD700] font-bold">{shooter.name}</span></p>
+              <h2 className="text-2xl font-black text-[#FF6B35] uppercase tracking-wider">Photo Comparison</h2>
+              <p className="text-[#888]">Compare your form with <span className="text-[#FF6B35] font-bold">{shooter.name}</span></p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
@@ -7071,7 +7147,7 @@ function EliteShooterPhotoCompare({ shooter, userImage, onClose }: {
               onClick={() => setViewMode('sideBySide')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 viewMode === 'sideBySide'
-                  ? 'bg-[#FFD700] text-[#1a1a1a]'
+                  ? 'bg-[#FF6B35] text-[#1a1a1a]'
                   : 'bg-[#2a2a2a] text-[#888] hover:text-[#E5E5E5]'
               }`}
             >
@@ -7082,7 +7158,7 @@ function EliteShooterPhotoCompare({ shooter, userImage, onClose }: {
               onClick={() => setViewMode('slider')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 viewMode === 'slider'
-                  ? 'bg-[#FFD700] text-[#1a1a1a]'
+                  ? 'bg-[#FF6B35] text-[#1a1a1a]'
                   : 'bg-[#2a2a2a] text-[#888] hover:text-[#E5E5E5]'
               }`}
             >
@@ -7121,7 +7197,7 @@ function EliteShooterPhotoCompare({ shooter, userImage, onClose }: {
                   onClick={() => setSelectedImageIndex(idx)}
                   className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
                     selectedImageIndex === idx 
-                      ? 'border-[#FFD700] shadow-[0_0_10px_rgba(255,215,0,0.3)]' 
+                      ? 'border-[#FF6B35] shadow-[0_0_10px_rgba(255,215,0,0.3)]' 
                       : 'border-[#3a3a3a] hover:border-[#4a4a4a]'
                   }`}
                 >
@@ -7198,7 +7274,7 @@ function EliteShooterPhotoCompare({ shooter, userImage, onClose }: {
         <div className="p-6">
           {viewMode === 'sideBySide' ? (
             /* Side by Side View */
-            <div className="relative h-[500px] rounded-xl overflow-hidden border-2 border-[#FFD700]/30">
+            <div className="relative h-[500px] rounded-xl overflow-hidden border-2 border-[#FF6B35]/30">
               <div className="grid grid-cols-2 gap-0 h-full">
                 {/* User Image - Draggable */}
                 <div 
@@ -7282,14 +7358,14 @@ function EliteShooterPhotoCompare({ shooter, userImage, onClose }: {
                 </div>
                 
                 {/* Center Divider */}
-                <div className="absolute left-1/2 top-0 bottom-0 w-1 bg-[#FFD700] -translate-x-1/2 z-10 pointer-events-none" />
+                <div className="absolute left-1/2 top-0 bottom-0 w-1 bg-[#FF6B35] -translate-x-1/2 z-10 pointer-events-none" />
               </div>
             </div>
           ) : (
             /* Overlay Slider View */
             <div 
               ref={containerRef}
-              className="relative h-[500px] rounded-xl overflow-hidden border-2 border-[#FFD700]/30 cursor-ew-resize"
+              className="relative h-[500px] rounded-xl overflow-hidden border-2 border-[#FF6B35]/30 cursor-ew-resize"
               onMouseMove={(e) => e.buttons === 1 && handleSliderDrag(e)}
               onTouchMove={handleSliderDrag}
             >
@@ -7340,10 +7416,10 @@ function EliteShooterPhotoCompare({ shooter, userImage, onClose }: {
               
               {/* Slider Handle */}
               <div 
-                className="absolute top-0 bottom-0 w-1 bg-[#FFD700] cursor-ew-resize z-10"
+                className="absolute top-0 bottom-0 w-1 bg-[#FF6B35] cursor-ew-resize z-10"
                 style={{ left: `${sliderPosition}%`, transform: 'translateX(-50%)' }}
               >
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-[#FFD700] flex items-center justify-center shadow-lg">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-[#FF6B35] flex items-center justify-center shadow-lg">
                   <ArrowLeftRight className="w-5 h-5 text-[#1a1a1a]" />
                 </div>
               </div>
@@ -7354,18 +7430,18 @@ function EliteShooterPhotoCompare({ shooter, userImage, onClose }: {
           <div className="mt-6 bg-[#1a1a1a] rounded-xl p-4 border border-[#3a3a3a]">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full overflow-hidden bg-[#3a3a3a]" style={{ border: '2px solid #FFD700' }}>
+                <div className="w-12 h-12 rounded-full overflow-hidden bg-[#3a3a3a]" style={{ border: '2px solid #FF6B35' }}>
                   {shooter.photoUrl && (
                     <Image src={shooter.photoUrl} alt={shooter.name} width={48} height={48} className="object-cover object-top" />
                   )}
                 </div>
                 <div>
-                  <h4 className="text-[#FFD700] font-bold">{shooter.name}</h4>
+                  <h4 className="text-[#FF6B35] font-bold">{shooter.name}</h4>
                   <p className="text-[#888] text-sm">{shooter.team} • {POSITION_LABELS[shooter.position]}</p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-3xl font-black text-[#FFD700]">{shooter.similarity}%</p>
+                <p className="text-3xl font-black text-[#FF6B35]">{shooter.similarity}%</p>
                 <p className="text-xs text-[#888] uppercase">Form Similarity</p>
               </div>
             </div>
@@ -7375,7 +7451,7 @@ function EliteShooterPhotoCompare({ shooter, userImage, onClose }: {
               <p className="text-xs text-[#888] uppercase mb-2">Key Traits to Study</p>
               <div className="flex flex-wrap gap-2">
                 {shooter.keyTraits?.map((trait, idx) => (
-                  <span key={idx} className="px-3 py-1.5 rounded-full text-xs font-medium border border-[#FFD700]/50 text-[#FFD700] bg-[#FFD700]/10">
+                  <span key={idx} className="px-3 py-1.5 rounded-full text-xs font-medium border border-[#FF6B35]/50 text-[#FF6B35] bg-[#FF6B35]/10">
                     {trait}
                   </span>
                 ))}
@@ -7384,11 +7460,11 @@ function EliteShooterPhotoCompare({ shooter, userImage, onClose }: {
           </div>
           
           {/* Instructions */}
-          <div className="mt-4 flex items-start gap-3 bg-[#FFD700]/5 rounded-lg p-4 border border-[#FFD700]/20">
-            <Info className="w-5 h-5 text-[#FFD700] flex-shrink-0 mt-0.5" />
+          <div className="mt-4 flex items-start gap-3 bg-[#FF6B35]/5 rounded-lg p-4 border border-[#FF6B35]/20">
+            <Info className="w-5 h-5 text-[#FF6B35] flex-shrink-0 mt-0.5" />
             <div className="text-sm text-[#888]">
               <p className="font-medium text-[#E5E5E5] mb-1">How to Compare</p>
-              <p><strong className="text-[#FFD700]">Drag</strong> each image to pan and reposition. <strong className="text-[#FFD700]">Scroll</strong> to zoom in/out. You can also use the <strong className="text-[#FFD700]">V</strong>/<strong className="text-[#FFD700]">H</strong> buttons for precise adjustments. Study {shooter.name}&apos;s form and compare it to yours!</p>
+              <p><strong className="text-[#FF6B35]">Drag</strong> each image to pan and reposition. <strong className="text-[#FF6B35]">Scroll</strong> to zoom in/out. You can also use the <strong className="text-[#FF6B35]">V</strong>/<strong className="text-[#FF6B35]">H</strong> buttons for precise adjustments. Study {shooter.name}&apos;s form and compare it to yours!</p>
             </div>
           </div>
         </div>
@@ -7403,20 +7479,20 @@ function ShooterCard({ shooter, isSelected, onToggle, userMeasurements, onBioCli
   const hasShootingFormImages = shooter.shootingFormImages && shooter.shootingFormImages.length > 0;
 
   return (
-    <div className={`bg-[#2C2C2C] rounded-xl overflow-hidden transition-all duration-300 hover:shadow-[0_0_25px_rgba(255,215,0,0.2)] border-2 ${isSelected ? 'border-[#FFD700] shadow-[0_0_20px_rgba(255,215,0,0.3)]' : 'border-[#3a3a3a] hover:border-[#4a4a4a]'}`}>
+    <div className={`bg-[#2C2C2C] rounded-xl overflow-hidden transition-all duration-300 hover:shadow-[0_0_25px_rgba(255,215,0,0.2)] border-2 ${isSelected ? 'border-[#FF6B35] shadow-[0_0_20px_rgba(255,215,0,0.3)]' : 'border-[#3a3a3a] hover:border-[#4a4a4a]'}`}>
       {/* Gold Header - "MATCHED ELITE SHOOTER" */}
-      <div className="bg-gradient-to-r from-[#FFD700]/20 to-[#FFD700]/5 px-4 py-3 flex items-center justify-between">
+      <div className="bg-gradient-to-r from-[#FF6B35]/20 to-[#FF6B35]/5 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-[#FFD700]/20 flex items-center justify-center">
-            <Trophy className="w-5 h-5 text-[#FFD700]" />
+          <div className="w-10 h-10 rounded-lg bg-[#FF6B35]/20 flex items-center justify-center">
+            <Trophy className="w-5 h-5 text-[#FF6B35]" />
           </div>
           <div>
-            <h3 className="text-[#FFD700] font-bold uppercase tracking-wider text-sm">MATCHED ELITE SHOOTER</h3>
+            <h3 className="text-[#FF6B35] font-bold uppercase tracking-wider text-sm">MATCHED ELITE SHOOTER</h3>
             <p className="text-[#888] text-xs">Your form matches this {LEAGUE_LABELS[shooter.league]} star</p>
           </div>
         </div>
         {/* Selection checkbox */}
-        <button onClick={onToggle} className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors flex-shrink-0 ${isSelected ? 'bg-[#FFD700] border-[#FFD700]' : 'border-[#4a4a4a] hover:border-[#FFD700]'}`}>
+        <button onClick={onToggle} className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors flex-shrink-0 ${isSelected ? 'bg-[#FF6B35] border-[#FF6B35]' : 'border-[#4a4a4a] hover:border-[#FF6B35]'}`}>
           {isSelected && <Check className="w-4 h-4 text-[#1a1a1a]" />}
         </button>
       </div>
@@ -7427,7 +7503,7 @@ function ShooterCard({ shooter, isSelected, onToggle, userMeasurements, onBioCli
         <div className="flex items-start gap-4 mb-4">
           {/* Player Photo with Similarity Badge - Clickable for Bio */}
           <button onClick={onBioClick} className="relative flex-shrink-0 group cursor-pointer">
-            <div className="w-20 h-20 rounded-full overflow-hidden bg-[#3a3a3a] relative transition-transform group-hover:scale-105" style={{ border: '3px solid #FFD700' }}>
+            <div className="w-20 h-20 rounded-full overflow-hidden bg-[#3a3a3a] relative transition-transform group-hover:scale-105" style={{ border: '3px solid #FF6B35' }}>
               {photoUrl ? (
                 <Image
                   src={photoUrl}
@@ -7438,7 +7514,7 @@ function ShooterCard({ shooter, isSelected, onToggle, userMeasurements, onBioCli
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <span className="text-2xl font-bold text-[#FFD700]">
+                  <span className="text-2xl font-bold text-[#FF6B35]">
                     {shooter.name.split(' ').map(n => n[0]).join('')}
                   </span>
                 </div>
@@ -7449,7 +7525,7 @@ function ShooterCard({ shooter, isSelected, onToggle, userMeasurements, onBioCli
               </div>
             </div>
             {/* Similarity Badge */}
-            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-[#FFD700] text-black font-bold text-sm px-3 py-0.5 rounded-full whitespace-nowrap">
+            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-[#FF6B35] text-black font-bold text-sm px-3 py-0.5 rounded-full whitespace-nowrap">
               {shooter.similarity}%
             </div>
           </button>
@@ -7457,7 +7533,7 @@ function ShooterCard({ shooter, isSelected, onToggle, userMeasurements, onBioCli
           {/* Player Details */}
           <div className="flex-1 min-w-0">
             <h4 className="text-white font-bold text-lg uppercase tracking-wide truncate">{shooter.name}</h4>
-            <p className="text-[#FFD700] text-sm font-medium">{shooter.team}</p>
+            <p className="text-[#FF6B35] text-sm font-medium">{shooter.team}</p>
             <p className="text-[#888] text-xs mt-0.5">
               {POSITION_LABELS[shooter.position]} • {shooter.achievements ? shooter.achievements.split(',')[0] : shooter.era}
             </p>
@@ -7468,11 +7544,11 @@ function ShooterCard({ shooter, isSelected, onToggle, userMeasurements, onBioCli
         <div className="mb-4">
           <div className="flex justify-between items-center mb-1.5">
             <span className="text-[#888] text-xs uppercase tracking-wider">Form Similarity</span>
-            <span className="text-[#FFD700] text-sm font-bold">{shooter.similarity}%</span>
+            <span className="text-[#FF6B35] text-sm font-bold">{shooter.similarity}%</span>
           </div>
           <div className="h-2.5 bg-[#3a3a3a] rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-[#FFD700] to-[#FFA500] rounded-full transition-all"
+              className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF4500] rounded-full transition-all"
               style={{ width: `${shooter.similarity}%` }}
             />
           </div>
@@ -7485,7 +7561,7 @@ function ShooterCard({ shooter, isSelected, onToggle, userMeasurements, onBioCli
             {matchingTraits.map((trait, idx) => (
               <span
                 key={idx}
-                className="px-3 py-1.5 rounded-full text-xs font-medium border border-[#FFD700]/50 text-[#FFD700] bg-[#FFD700]/10"
+                className="px-3 py-1.5 rounded-full text-xs font-medium border border-[#FF6B35]/50 text-[#FF6B35] bg-[#FF6B35]/10"
               >
                 {trait}
               </span>
@@ -7497,7 +7573,7 @@ function ShooterCard({ shooter, isSelected, onToggle, userMeasurements, onBioCli
         <div className="flex gap-2 mt-4">
           <button 
             onClick={onBioClick}
-            className="flex-1 py-2.5 bg-[#3a3a3a] hover:bg-[#4a4a4a] text-[#E5E5E5] rounded-lg font-medium text-sm transition-colors flex items-center justify-center gap-2 border border-[#4a4a4a] hover:border-[#FFD700]/50"
+            className="flex-1 py-2.5 bg-[#3a3a3a] hover:bg-[#4a4a4a] text-[#E5E5E5] rounded-lg font-medium text-sm transition-colors flex items-center justify-center gap-2 border border-[#4a4a4a] hover:border-[#FF6B35]/50"
           >
             <Info className="w-4 h-4" />
             BIO
@@ -7507,7 +7583,7 @@ function ShooterCard({ shooter, isSelected, onToggle, userMeasurements, onBioCli
               onClick={onPhotoCompare}
               className={`flex-1 py-2.5 rounded-lg font-medium text-sm transition-colors flex items-center justify-center gap-2 border ${
                 hasUserImage 
-                  ? 'bg-[#FFD700]/20 hover:bg-[#FFD700]/30 text-[#FFD700] border-[#FFD700]/50 hover:border-[#FFD700]'
+                  ? 'bg-[#FF6B35]/20 hover:bg-[#FF6B35]/30 text-[#FF6B35] border-[#FF6B35]/50 hover:border-[#FF6B35]'
                   : 'bg-[#3a3a3a] hover:bg-[#4a4a4a] text-[#888] border-[#4a4a4a]'
               }`}
               title={hasUserImage ? 'Compare your form with this shooter' : 'Upload an image first to compare'}
@@ -7531,16 +7607,16 @@ function CompareModal({ shooters, userMeasurements, analysisData, onClose }: { s
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div className="bg-[#1a1a1a] rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-auto border border-[#3a3a3a]" onClick={e => e.stopPropagation()} style={{ boxShadow: '0 0 50px rgba(255, 215, 0, 0.2)' }}>
         <div className="sticky top-0 bg-[#1a1a1a] p-6 border-b border-[#3a3a3a] flex items-center justify-between">
-          <h3 className="text-xl font-black text-[#FFD700] uppercase tracking-wider">Detailed Comparison</h3>
+          <h3 className="text-xl font-black text-[#FF6B35] uppercase tracking-wider">Detailed Comparison</h3>
           <button onClick={onClose} className="w-8 h-8 rounded-lg bg-[#2a2a2a] flex items-center justify-center hover:bg-[#3a3a3a]"><X className="w-5 h-5 text-[#888]" /></button>
         </div>
         <div className="p-6">
           {/* Player Headers */}
           <div className="grid gap-4 mb-6" style={{ gridTemplateColumns: `200px repeat(${shooters.length + 1}, 1fr)` }}>
             <div />
-            <div className="bg-gradient-to-br from-[#FFD700]/20 to-transparent rounded-xl p-4 border border-[#FFD700]/50 text-center">
-              <div className="w-10 h-10 rounded-full bg-[#FFD700] mx-auto mb-2 flex items-center justify-center"><User className="w-5 h-5 text-[#1a1a1a]" /></div>
-              <p className="font-bold text-[#FFD700]">You</p>
+            <div className="bg-gradient-to-br from-[#FF6B35]/20 to-transparent rounded-xl p-4 border border-[#FF6B35]/50 text-center">
+              <div className="w-10 h-10 rounded-full bg-[#FF6B35] mx-auto mb-2 flex items-center justify-center"><User className="w-5 h-5 text-[#1a1a1a]" /></div>
+              <p className="font-bold text-[#FF6B35]">You</p>
               <p className="text-xs text-[#888]">{analysisData.overallScore}/100</p>
             </div>
             {shooters.map(s => (
@@ -7561,13 +7637,13 @@ function CompareModal({ shooters, userMeasurements, analysisData, onClose }: { s
                 <div className="grid gap-4 items-center" style={{ gridTemplateColumns: `200px repeat(${shooters.length + 1}, 1fr)` }}>
                   <div className="text-sm font-medium text-[#E5E5E5]">{metricLabels[metric]} <span className="text-[#888]">({metric.includes('Height') ? 'in' : '°'})</span></div>
                   <div className="relative h-8 bg-[#2a2a2a] rounded-lg">
-                    <div className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-[#FFD700] border-2 border-white z-10" style={{ left: `calc(${getPos(userVal)}% - 6px)` }} />
-                    <span className="absolute -bottom-5 text-xs text-[#FFD700] font-bold" style={{ left: `calc(${getPos(userVal)}% - 10px)` }}>{userVal}</span>
+                    <div className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-[#FF6B35] border-2 border-white z-10" style={{ left: `calc(${getPos(userVal)}% - 6px)` }} />
+                    <span className="absolute -bottom-5 text-xs text-[#FF6B35] font-bold" style={{ left: `calc(${getPos(userVal)}% - 10px)` }}>{userVal}</span>
                   </div>
                   {shooters.map(s => {
                     const sVal = s.measurements[metric];
                     const diff = sVal - userVal;
-                    const color = Math.abs(diff) <= 3 ? 'bg-green-500' : Math.abs(diff) <= 8 ? 'bg-yellow-500' : 'bg-red-500';
+                    const color = Math.abs(diff) <= 3 ? 'bg-green-500' : Math.abs(diff) <= 8 ? 'bg-orange-500' : 'bg-red-500';
                     return (
                       <div key={s.id} className="relative h-8 bg-[#2a2a2a] rounded-lg">
                         <div className={`absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full ${color} border-2 border-white z-10`} style={{ left: `calc(${getPos(sVal)}% - 6px)` }} />
@@ -7581,7 +7657,7 @@ function CompareModal({ shooters, userMeasurements, analysisData, onClose }: { s
           })}
           {/* Insights */}
           <div className="mt-8 pt-6 border-t border-[#3a3a3a]">
-            <h4 className="text-lg font-bold text-[#FFD700] mb-4">💡 Key Insights</h4>
+            <h4 className="text-lg font-bold text-[#FF6B35] mb-4">💡 Key Insights</h4>
             <div className="grid md:grid-cols-2 gap-4">
               {shooters.map(s => (
                 <div key={s.id} className="bg-[#2a2a2a] rounded-xl p-4 border border-[#3a3a3a]">
@@ -7670,7 +7746,7 @@ function BiomechanicalAnalysisWithSessions({ dashboardView = 'professional' }: {
       options.push({
         id: 'current',
         label: 'Current Session (Live)',
-        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
       })
     }
     
@@ -7678,26 +7754,108 @@ function BiomechanicalAnalysisWithSessions({ dashboardView = 'professional' }: {
       options.push({
         id: session.id,
         label: session.displayDate,
-        date: new Date(session.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        date: new Date(session.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
       })
     })
     
     return options
   }, [visionAnalysisResult, uploadedImageBase64, sessions])
   
+  // Get profile data for player name
+  const profileStore = useProfileStore()
+  const playerName = profileStore.firstName || profileStore.displayName || 'Player'
+  
+  // Build analysis data for simplified views
+  const analysisData = {
+    overallScore: visionAnalysisResult?.overall_score || 75,
+    shootingStats: {
+      form: Math.round((currentMeasurements.shoulderAngle / 180) * 100) || 75,
+      balance: Math.round((currentMeasurements.kneeAngle / 150) * 100) || 75,
+      release: Math.round((currentMeasurements.releaseAngle / 55) * 100) || 75,
+      followThrough: Math.round((currentMeasurements.releaseHeight / 120) * 100) || 75,
+      elbow: Math.round((currentMeasurements.elbowAngle / 95) * 100) || 75,
+      arc: Math.round((currentMeasurements.entryAngle / 50) * 100) || 75,
+    }
+  }
+
+  // BASIC VIEW - Simple, kid-friendly
+  if (dashboardView === 'basic') {
+    return (
+      <div className="space-y-6">
+        {/* Simple Session Selector */}
+        {sessionOptions.length > 1 && (
+          <div className="bg-[#2a2a2a] rounded-lg p-4 border border-[#3a3a3a]">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <span className="text-[#FF6B35] font-bold">Pick a Session:</span>
+              <select
+                value={selectedSessionId}
+                onChange={(e) => setSelectedSessionId(e.target.value)}
+                className="bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-2 text-[#E5E5E5] focus:border-[#FF6B35] focus:outline-none"
+              >
+                {sessionOptions.map(option => (
+                  <option key={option.id} value={option.id}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
+        
+        {/* Basic Analysis View */}
+        <BasicBiomechanicalAnalysis analysisData={analysisData} playerName={playerName} />
+      </div>
+    )
+  }
+
+  // STANDARD VIEW - Mix of basic and professional
+  if (dashboardView === 'standard') {
+    return (
+      <div className="space-y-6">
+        {/* Session Filter Dropdown */}
+        <div className="bg-[#2a2a2a] rounded-lg p-4 border border-[#3a3a3a]">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-3">
+              <Calendar className="w-5 h-5 text-[#FF6B35]" />
+              <span className="text-[#E5E5E5] font-semibold">Session:</span>
+            </div>
+            <select
+              value={selectedSessionId}
+              onChange={(e) => setSelectedSessionId(e.target.value)}
+              className="bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-2 text-[#E5E5E5] focus:border-[#FF6B35] focus:outline-none min-w-[200px]"
+            >
+              {sessionOptions.map(option => (
+                <option key={option.id} value={option.id}>
+                  {option.label} - {option.date}
+                </option>
+              ))}
+            </select>
+          </div>
+          {sessionOptions.length === 0 && (
+            <p className="text-[#888] text-sm mt-2">No sessions yet. Upload an image to start!</p>
+          )}
+        </div>
+        
+        {/* Standard Analysis View */}
+        <StandardBiomechanicalAnalysis analysisData={analysisData} />
+      </div>
+    )
+  }
+
+  // PROFESSIONAL VIEW - Full detailed analysis (default)
   return (
     <div className="space-y-6">
       {/* Session Filter Dropdown */}
       <div className="bg-gradient-to-r from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a] rounded-xl p-4 border border-[#3a3a3a]">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-3">
-            <Calendar className="w-5 h-5 text-[#FFD700]" />
+            <Calendar className="w-5 h-5 text-[#FF6B35]" />
             <span className="text-[#E5E5E5] font-semibold">SELECT SESSION:</span>
           </div>
           <select
             value={selectedSessionId}
             onChange={(e) => setSelectedSessionId(e.target.value)}
-            className="bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-2 text-[#E5E5E5] focus:border-[#FFD700] focus:outline-none min-w-[250px]"
+            className="bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-2 text-[#E5E5E5] focus:border-[#FF6B35] focus:outline-none min-w-[250px]"
           >
             {sessionOptions.map(option => (
               <option key={option.id} value={option.id}>
@@ -7866,14 +8024,14 @@ function ComparisonWithSessions({ dashboardView = 'professional' }: { dashboardV
       <div className="bg-gradient-to-r from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a] rounded-xl p-4 border border-[#3a3a3a]">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-3">
-            <Calendar className="w-5 h-5 text-[#FFD700]" />
+            <Calendar className="w-5 h-5 text-[#FF6B35]" />
             <span className="text-[#E5E5E5] font-semibold">SELECT SESSION:</span>
           </div>
           <div className="flex items-center gap-3">
             <select
               value={selectedSessionId}
               onChange={(e) => setSelectedSessionId(e.target.value)}
-              className="bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-2 text-[#E5E5E5] focus:border-[#FFD700] focus:outline-none min-w-[200px]"
+              className="bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-2 text-[#E5E5E5] focus:border-[#FF6B35] focus:outline-none min-w-[200px]"
             >
               {sessionOptions.map(option => (
                 <option key={option.id} value={option.id}>
@@ -7891,7 +8049,7 @@ function ComparisonWithSessions({ dashboardView = 'professional' }: { dashboardV
             onClick={() => setViewMode('personalized')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors uppercase ${
               viewMode === 'personalized' 
-                ? 'bg-[#FFD700] text-[#1a1a1a]' 
+                ? 'bg-[#FF6B35] text-[#1a1a1a]' 
                 : 'bg-[#2a2a2a] text-[#888] hover:text-[#E5E5E5]'
             }`}
           >
@@ -7902,7 +8060,7 @@ function ComparisonWithSessions({ dashboardView = 'professional' }: { dashboardV
             onClick={() => setViewMode('elite')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors uppercase ${
               viewMode === 'elite' 
-                ? 'bg-[#FFD700] text-[#1a1a1a]' 
+                ? 'bg-[#FF6B35] text-[#1a1a1a]' 
                 : 'bg-[#2a2a2a] text-[#888] hover:text-[#E5E5E5]'
             }`}
           >
@@ -7913,7 +8071,7 @@ function ComparisonWithSessions({ dashboardView = 'professional' }: { dashboardV
             onClick={() => setViewMode('photo')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors uppercase ${
               viewMode === 'photo' 
-                ? 'bg-[#FFD700] text-[#1a1a1a]' 
+                ? 'bg-[#FF6B35] text-[#1a1a1a]' 
                 : 'bg-[#2a2a2a] text-[#888] hover:text-[#E5E5E5]'
             }`}
           >
@@ -8027,19 +8185,55 @@ function TrainingWithSessions({ dashboardView = 'professional' }: { dashboardVie
     })
   }, [])
   
+  // Get profile data for player name
+  const profileStore = useProfileStore()
+  const playerName = profileStore.firstName || profileStore.displayName || 'Player'
+  
+  // Build analysis data for simplified views
+  const simplifiedAnalysisData = {
+    overallScore: visionAnalysisResult?.overall_score || 75,
+    shootingStats: {
+      form: 75,
+      balance: 75,
+      release: 75,
+      followThrough: 75,
+      elbow: 75,
+      arc: 75,
+    }
+  }
+
+  // BASIC VIEW - Simple, kid-friendly
+  if (dashboardView === 'basic') {
+    return (
+      <div className="space-y-6">
+        <BasicTrainingPlan analysisData={simplifiedAnalysisData} playerName={playerName} />
+      </div>
+    )
+  }
+
+  // STANDARD VIEW - Mix of basic and professional
+  if (dashboardView === 'standard') {
+    return (
+      <div className="space-y-6">
+        <StandardTrainingPlan analysisData={simplifiedAnalysisData} />
+      </div>
+    )
+  }
+
+  // PROFESSIONAL VIEW - Full detailed analysis (default)
   return (
     <div className="space-y-6">
       {/* Session Filter Dropdown */}
       <div className="bg-gradient-to-r from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a] rounded-xl p-4 border border-[#3a3a3a]">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-3">
-            <Calendar className="w-5 h-5 text-[#FFD700]" />
+            <Calendar className="w-5 h-5 text-[#FF6B35]" />
             <span className="text-[#E5E5E5] font-semibold uppercase">TRAINING PLAN FOR SESSION:</span>
           </div>
           <select
             value={selectedSessionId}
             onChange={(e) => setSelectedSessionId(e.target.value)}
-            className="bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-2 text-[#E5E5E5] focus:border-[#FFD700] focus:outline-none min-w-[250px]"
+            className="bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-2 text-[#E5E5E5] focus:border-[#FF6B35] focus:outline-none min-w-[250px]"
           >
             {sessionOptions.map(option => (
               <option key={option.id} value={option.id}>
@@ -8055,7 +8249,7 @@ function TrainingWithSessions({ dashboardView = 'professional' }: { dashboardVie
           <div className="mt-3 flex flex-wrap gap-2">
             <span className="text-[#888] text-sm">Focus areas:</span>
             {focusAreas.map(area => (
-              <span key={area} className="px-2 py-1 rounded-full bg-[#FFD700]/20 text-[#FFD700] text-xs font-bold uppercase">
+              <span key={area} className="px-2 py-1 rounded-full bg-[#FF6B35]/20 text-[#FF6B35] text-xs font-bold uppercase">
                 {area}
               </span>
             ))}
@@ -8068,7 +8262,7 @@ function TrainingWithSessions({ dashboardView = 'professional' }: { dashboardVie
         <TrainingPlanCalendar focusAreas={focusAreas} detectedFlaws={currentFlaws} />
       ) : (
         <div className="bg-[#1a1a1a] rounded-xl p-8 border border-[#3a3a3a] text-center">
-          <div className="animate-spin w-8 h-8 border-2 border-[#FFD700] border-t-transparent rounded-full mx-auto mb-4" />
+          <div className="animate-spin w-8 h-8 border-2 border-[#FF6B35] border-t-transparent rounded-full mx-auto mb-4" />
           <p className="text-[#888]">Loading training calendar...</p>
         </div>
       )}
@@ -8139,7 +8333,7 @@ function PersonalizedDrillRecommendations({ flaws }: PersonalizedDrillRecommenda
         {Array.from({ length: 5 }, (_, i) => (
           <div 
             key={i} 
-            className={`w-3 h-3 rounded-full ${i < difficulty ? 'bg-[#FFD700]' : 'bg-[#3a3a3a]'}`}
+            className={`w-3 h-3 rounded-full ${i < difficulty ? 'bg-[#FF6B35]' : 'bg-[#3a3a3a]'}`}
           />
         ))}
       </div>
@@ -8152,7 +8346,7 @@ function PersonalizedDrillRecommendations({ flaws }: PersonalizedDrillRecommenda
       case 'MIDDLE_SCHOOL': return 'bg-blue-500/20 text-blue-400 border-blue-500/30'
       case 'HIGH_SCHOOL': return 'bg-purple-500/20 text-purple-400 border-purple-500/30'
       case 'COLLEGE': return 'bg-orange-500/20 text-orange-400 border-orange-500/30'
-      case 'PROFESSIONAL': return 'bg-[#FFD700]/20 text-[#FFD700] border-[#FFD700]/30'
+      case 'PROFESSIONAL': return 'bg-[#FF6B35]/20 text-[#FF6B35] border-[#FF6B35]/30'
       default: return 'bg-[#888]/20 text-[#888] border-[#888]/30'
     }
   }
@@ -8173,11 +8367,11 @@ function PersonalizedDrillRecommendations({ flaws }: PersonalizedDrillRecommenda
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#FFD700] to-[#FFA500] flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#FF4500] flex items-center justify-center">
             <Target className="w-6 h-6 text-[#1a1a1a]" />
           </div>
           <div>
-            <h3 className="text-xl font-black text-[#FFD700] uppercase tracking-wider">Personalized Drills</h3>
+            <h3 className="text-xl font-black text-[#FF6B35] uppercase tracking-wider">Personalized Drills</h3>
             <p className="text-[#888] text-sm">Level: <span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${getLevelBadgeColor(userLevel)}`}>{getLevelLabel(userLevel)}</span></p>
           </div>
         </div>
@@ -8211,7 +8405,7 @@ function PersonalizedDrillRecommendations({ flaws }: PersonalizedDrillRecommenda
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-[#2a2a2a] flex items-center justify-center border border-[#3a3a3a]">
-                      <Target className="w-5 h-5 text-[#FFD700]" />
+                      <Target className="w-5 h-5 text-[#FF6B35]" />
                     </div>
                     <div>
                       <h4 className={`font-bold uppercase ${isCompleted ? 'text-green-400' : 'text-[#E5E5E5]'}`}>
@@ -8244,7 +8438,7 @@ function PersonalizedDrillRecommendations({ flaws }: PersonalizedDrillRecommenda
                     
                     {/* Why It Matters */}
                     <div className="bg-[#2a2a2a] rounded-lg p-3 border border-[#3a3a3a]">
-                      <p className="text-xs font-bold text-[#FFD700] uppercase tracking-wider mb-1">Why It Matters</p>
+                      <p className="text-xs font-bold text-[#FF6B35] uppercase tracking-wider mb-1">Why It Matters</p>
                       <p className="text-[#E5E5E5] text-sm">{drill.whyItMatters}</p>
                     </div>
                     
@@ -8254,7 +8448,7 @@ function PersonalizedDrillRecommendations({ flaws }: PersonalizedDrillRecommenda
                       <ol className="space-y-2">
                         {drill.steps.map((step, index) => (
                           <li key={index} className="flex items-start gap-3 text-sm text-[#E5E5E5]">
-                            <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#FFD700]/20 text-[#FFD700] flex items-center justify-center text-xs font-bold">
+                            <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#FF6B35]/20 text-[#FF6B35] flex items-center justify-center text-xs font-bold">
                               {index + 1}
                             </span>
                             {step}
@@ -8301,8 +8495,8 @@ function PersonalizedDrillRecommendations({ flaws }: PersonalizedDrillRecommenda
                         disabled={isAddedToPlan}
                         className={`flex-1 py-2 rounded-lg font-semibold text-sm transition-colors flex items-center justify-center gap-2 ${
                           isAddedToPlan
-                            ? 'bg-[#FFD700]/20 text-[#FFD700] border border-[#FFD700]/30'
-                            : 'bg-[#FFD700] text-[#1a1a1a] hover:bg-[#e6c200]'
+                            ? 'bg-[#FF6B35]/20 text-[#FF6B35] border border-[#FF6B35]/30'
+                            : 'bg-[#FF6B35] text-[#1a1a1a] hover:bg-[#e6c200]'
                         }`}
                       >
                         {isAddedToPlan ? <Check className="w-4 h-4" /> : <ClipboardList className="w-4 h-4" />}
@@ -8319,7 +8513,7 @@ function PersonalizedDrillRecommendations({ flaws }: PersonalizedDrillRecommenda
       
       {/* View All Drills Link */}
       <div className="mt-6 text-center">
-        <button className="text-[#FFD700] hover:text-[#e6c200] text-sm font-medium">
+        <button className="text-[#FF6B35] hover:text-[#e6c200] text-sm font-medium">
           View All {ALL_DRILLS.filter(d => d.level === userLevel).length} Drills for {getLevelLabel(userLevel)} Level →
         </button>
       </div>
@@ -8512,7 +8706,7 @@ function WeeklyPerformanceSummaryCard({ sessions }: WeeklyPerformanceSummaryCard
       {/* Stats Row */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="bg-[#1a1a1a] rounded-lg p-4 text-center">
-          <p className="text-3xl font-black text-[#FFD700]">{weeklyStats.totalAnalyses}</p>
+          <p className="text-3xl font-black text-[#FF6B35]">{weeklyStats.totalAnalyses}</p>
           <p className="text-[#888] text-xs uppercase tracking-wider">Total Analyses</p>
         </div>
         <div className="bg-[#1a1a1a] rounded-lg p-4 text-center">
@@ -8570,7 +8764,7 @@ function WeeklyPerformanceSummaryCard({ sessions }: WeeklyPerformanceSummaryCard
       <div className="space-y-4">
         {/* What's Working Message */}
         <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
-          <h4 className="text-[#FFD700] font-bold text-sm uppercase tracking-wider mb-2">What&apos;s Working</h4>
+          <h4 className="text-[#FF6B35] font-bold text-sm uppercase tracking-wider mb-2">What&apos;s Working</h4>
           <p className="text-[#E5E5E5] text-sm">{messages.whatsWorking}</p>
         </div>
         
@@ -8581,8 +8775,8 @@ function WeeklyPerformanceSummaryCard({ sessions }: WeeklyPerformanceSummaryCard
         </div>
         
         {/* Next Week Goal */}
-        <div className="bg-gradient-to-r from-[#FFD700]/20 to-[#FFD700]/5 rounded-lg p-4 border border-[#FFD700]/30">
-          <h4 className="text-[#FFD700] font-bold text-sm uppercase tracking-wider mb-2 flex items-center gap-2">
+        <div className="bg-gradient-to-r from-[#FF6B35]/20 to-[#FF6B35]/5 rounded-lg p-4 border border-[#FF6B35]/30">
+          <h4 className="text-[#FF6B35] font-bold text-sm uppercase tracking-wider mb-2 flex items-center gap-2">
             <Target className="w-4 h-4" /> Next Week&apos;s Goal
           </h4>
           <p className="text-[#E5E5E5] text-sm">{messages.nextWeekGoal}</p>
@@ -8641,7 +8835,7 @@ function AnalyticsChartSection({ sessions, progressStats, playerName }: Analytic
     { id: 'releaseAngle', label: 'RELEASE ANGLE', color: 'from-orange-600 to-orange-400', textColor: 'text-orange-400' },
     { id: 'consistency', label: 'CONSISTENCY', color: 'from-pink-600 to-pink-400', textColor: 'text-pink-400' },
     { id: 'formScore', label: 'FORM SCORE', color: 'from-cyan-600 to-cyan-400', textColor: 'text-cyan-400' },
-    { id: 'balanceScore', label: 'BALANCE', color: 'from-yellow-600 to-yellow-400', textColor: 'text-yellow-400' },
+    { id: 'balanceScore', label: 'BALANCE', color: 'from-orange-600 to-orange-400', textColor: 'text-orange-400' },
     { id: 'followThrough', label: 'FOLLOW THROUGH', color: 'from-indigo-600 to-indigo-400', textColor: 'text-indigo-400' },
     { id: 'arcScore', label: 'ARC SCORE', color: 'from-red-600 to-red-400', textColor: 'text-red-400' },
     { id: 'powerScore', label: 'POWER', color: 'from-emerald-600 to-emerald-400', textColor: 'text-emerald-400' }
@@ -8819,8 +9013,8 @@ function AnalyticsChartSection({ sessions, progressStats, playerName }: Analytic
                 onClick={() => setTimePeriod(period)}
                 className={`px-4 py-2 rounded-lg text-sm font-bold uppercase transition-all ${
                   timePeriod === period
-                    ? 'bg-[#1a1a1a] text-[#E5E5E5] border-2 border-[#FFD700] shadow-lg shadow-[#FFD700]/20'
-                    : 'bg-transparent text-[#888] border border-[#3a3a3a] hover:text-[#E5E5E5] hover:border-[#FFD700]/50'
+                    ? 'bg-[#1a1a1a] text-[#E5E5E5] border-2 border-[#FF6B35] shadow-lg shadow-[#FF6B35]/20'
+                    : 'bg-transparent text-[#888] border border-[#3a3a3a] hover:text-[#E5E5E5] hover:border-[#FF6B35]/50'
                 }`}
               >
                 {periodLabels[period]}
@@ -8834,7 +9028,7 @@ function AnalyticsChartSection({ sessions, progressStats, playerName }: Analytic
         {/* Summary Stats - Premium Card Design with Integrated Visualizations */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {/* Total Sessions Card */}
-          <Card className="bg-gradient-to-br from-[#1a1a1a] to-[#252525] border-[#3a3a3a] hover:border-[#FFD700]/30 transition-all overflow-hidden relative">
+          <Card className="bg-gradient-to-br from-[#1a1a1a] to-[#252525] border-[#3a3a3a] hover:border-[#FF6B35]/30 transition-all overflow-hidden relative">
             <CardContent className="p-5">
               {/* Header */}
               <div className="flex items-start justify-between mb-4">
@@ -8865,7 +9059,7 @@ function AnalyticsChartSection({ sessions, progressStats, playerName }: Analytic
                         return `${x},${y}`;
                       }).join(' ')}
                       fill="none"
-                      stroke="#FFD700"
+                      stroke="#FF6B35"
                       strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -8876,11 +9070,11 @@ function AnalyticsChartSection({ sessions, progressStats, playerName }: Analytic
                   {/* Current point */}
                   {filteredSessions.length > 0 && (
                     <>
-                      <circle cx="200" cy="10" r="4" fill="#FFD700" />
+                      <circle cx="200" cy="10" r="4" fill="#FF6B35" />
                       {/* Badge */}
                       <g transform="translate(150, 5)">
-                        <rect x="0" y="0" width="50" height="12" rx="6" fill="#FFD700" opacity="0.2" />
-                        <text x="25" y="9" textAnchor="middle" fontSize="8" fill="#FFD700" fontWeight="bold">+{filteredSessions.length}</text>
+                        <rect x="0" y="0" width="50" height="12" rx="6" fill="#FF6B35" opacity="0.2" />
+                        <text x="25" y="9" textAnchor="middle" fontSize="8" fill="#FF6B35" fontWeight="bold">+{filteredSessions.length}</text>
                       </g>
                     </>
                   )}
@@ -8892,7 +9086,7 @@ function AnalyticsChartSection({ sessions, progressStats, playerName }: Analytic
                 <div className="flex items-center justify-between mb-1">
                   <div className="h-2 bg-[#3a3a3a] rounded-full flex-1 mr-2">
                     <div 
-                      className="h-full bg-gradient-to-r from-[#FFD700] to-[#FFA500] rounded-full transition-all duration-500"
+                      className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF4500] rounded-full transition-all duration-500"
                       style={{ width: `${Math.min(100, (filteredSessions.length / 10) * 100)}%` }}
                     ></div>
                   </div>
@@ -8903,7 +9097,7 @@ function AnalyticsChartSection({ sessions, progressStats, playerName }: Analytic
               {/* Main Metric */}
               <div className="flex items-baseline justify-between">
                 <div>
-                  <span className="text-3xl font-black text-[#FFD700] leading-none">{filteredSessions.length}</span>
+                  <span className="text-3xl font-black text-[#FF6B35] leading-none">{filteredSessions.length}</span>
                 </div>
                 <p className="text-xs text-[#888]">Compare to last period</p>
               </div>
@@ -9158,7 +9352,7 @@ function AnalyticsChartSection({ sessions, progressStats, playerName }: Analytic
           <div className="relative">
             <button
               onClick={() => setMetricsDropdownOpen(!metricsDropdownOpen)}
-              className="flex items-center gap-2 px-4 py-2 bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg text-[#E5E5E5] hover:border-[#FFD700]/50 transition-all"
+              className="flex items-center gap-2 px-4 py-2 bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg text-[#E5E5E5] hover:border-[#FF6B35]/50 transition-all"
             >
               <span className="text-sm font-medium">Metrics ({selectedMetrics.length}/{allMetrics.length})</span>
               <ChevronDown className={`w-4 h-4 transition-transform ${metricsDropdownOpen ? 'rotate-180' : ''}`} />
@@ -9179,7 +9373,7 @@ function AnalyticsChartSection({ sessions, progressStats, playerName }: Analytic
                       }`}
                     >
                       <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
-                        selectedMetrics.includes(metric.id) ? 'border-[#FFD700] bg-[#FFD700]' : 'border-[#3a3a3a]'
+                        selectedMetrics.includes(metric.id) ? 'border-[#FF6B35] bg-[#FF6B35]' : 'border-[#3a3a3a]'
                       }`}>
                         {selectedMetrics.includes(metric.id) && (
                           <Check className="w-3 h-3 text-black" />
@@ -9432,15 +9626,15 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
       <Card className="bg-gradient-to-br from-[#1a1a1a] via-[#222222] to-[#1a1a1a] border-[#2a2a2a] shadow-2xl overflow-hidden">
         <CardContent className="p-0">
           {/* Header Bar */}
-          <div className="bg-gradient-to-r from-[#FFD700]/10 via-transparent to-[#FFD700]/10 border-b border-[#2a2a2a] px-6 py-4">
+          <div className="bg-gradient-to-r from-[#FF6B35]/10 via-transparent to-[#FF6B35]/10 border-b border-[#2a2a2a] px-6 py-4">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex items-center gap-4">
                 <div className="relative">
-                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#FFD700] to-[#B8860B] flex items-center justify-center shadow-lg">
+                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#B8860B] flex items-center justify-center shadow-lg">
                     <BarChart3 className="w-7 h-7 text-[#1a1a1a]" />
                   </div>
-                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#1a1a1a] border-2 border-[#FFD700] flex items-center justify-center">
-                    <TrendingUp className="w-3 h-3 text-[#FFD700]" />
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#1a1a1a] border-2 border-[#FF6B35] flex items-center justify-center">
+                    <TrendingUp className="w-3 h-3 text-[#FF6B35]" />
                   </div>
             </div>
             <div>
@@ -9465,7 +9659,7 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
           <div className="relative p-6 lg:p-8 overflow-hidden">
             {/* Background gradient mesh */}
             <div className="absolute inset-0 opacity-30">
-              <div className="absolute top-0 left-0 w-96 h-96 bg-[#FFD700]/10 rounded-full blur-3xl"></div>
+              <div className="absolute top-0 left-0 w-96 h-96 bg-[#FF6B35]/10 rounded-full blur-3xl"></div>
               <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
         </div>
             
@@ -9473,26 +9667,26 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
             <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
               {/* Sessions - Hero Number with Integrated Visualization */}
               <div className="lg:col-span-4 relative group">
-                <div className="relative bg-gradient-to-br from-[#1a1a1a]/80 via-[#252525]/80 to-[#1a1a1a]/80 backdrop-blur-xl rounded-3xl p-8 lg:p-10 border border-[#3a3a3a]/30 hover:border-[#FFD700]/40 transition-all duration-500 overflow-hidden">
+                <div className="relative bg-gradient-to-br from-[#1a1a1a]/80 via-[#252525]/80 to-[#1a1a1a]/80 backdrop-blur-xl rounded-3xl p-8 lg:p-10 border border-[#3a3a3a]/30 hover:border-[#FF6B35]/40 transition-all duration-500 overflow-hidden">
                   {/* Glassmorphic effect */}
                   <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent"></div>
                   
                   {/* Large hero number */}
                   <div className="relative mb-6">
                     <div className="flex items-baseline gap-2">
-                      <span className="text-8xl lg:text-9xl font-black text-[#FFD700] tabular-nums leading-none tracking-tight" style={{
+                      <span className="text-8xl lg:text-9xl font-black text-[#FF6B35] tabular-nums leading-none tracking-tight" style={{
                         textShadow: '0 0 40px rgba(255, 215, 0, 0.3), 0 0 80px rgba(255, 215, 0, 0.1)'
                       }}>
                         {progressStats?.sessionsCount ?? progressStats?.totalSessions ?? 0}
                       </span>
-                      <Clock className="w-8 h-8 lg:w-10 lg:h-10 text-[#FFD700]/60 mb-4" />
+                      <Clock className="w-8 h-8 lg:w-10 lg:h-10 text-[#FF6B35]/60 mb-4" />
         </div>
                   </div>
                   
                   {/* Label with subtle underline */}
                   <div className="relative">
                     <p className="text-sm font-bold text-[#888] uppercase tracking-[0.15em] mb-1">SESSIONS</p>
-                    <div className="h-0.5 w-16 bg-gradient-to-r from-[#FFD700]/40 to-transparent"></div>
+                    <div className="h-0.5 w-16 bg-gradient-to-r from-[#FF6B35]/40 to-transparent"></div>
                   </div>
                   
                   {/* Integrated mini chart visualization */}
@@ -9501,7 +9695,7 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
                       {[...Array(8)].map((_, i) => (
                         <div 
                           key={i}
-                          className="flex-1 bg-gradient-to-t from-[#FFD700]/20 to-[#FFD700]/5 rounded-t transition-all duration-300 hover:from-[#FFD700]/40 hover:to-[#FFD700]/20"
+                          className="flex-1 bg-gradient-to-t from-[#FF6B35]/20 to-[#FF6B35]/5 rounded-t transition-all duration-300 hover:from-[#FF6B35]/40 hover:to-[#FF6B35]/20"
                           style={{ height: `${Math.random() * 60 + 40}%` }}
                         ></div>
                       ))}
@@ -9589,7 +9783,7 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
                     ? 'border-green-500/30 hover:border-green-500/50' 
                     : progressStats?.trend === 'declining'
                     ? 'border-red-500/30 hover:border-red-500/50'
-                    : 'border-yellow-500/30 hover:border-yellow-500/50'
+                    : 'border-orange-500/30 hover:border-orange-500/50'
                 }`}>
                   <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent"></div>
                   
@@ -9599,16 +9793,16 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
                       ? 'bg-green-500/10 border-green-500/40 shadow-lg shadow-green-500/20' 
                       : progressStats?.trend === 'declining'
                       ? 'bg-red-500/10 border-red-500/40 shadow-lg shadow-red-500/20'
-                      : 'bg-yellow-500/10 border-yellow-500/40 shadow-lg shadow-yellow-500/20'
+                      : 'bg-orange-500/10 border-orange-500/40 shadow-lg shadow-orange-500/20'
                   }`}>
                     <div className="flex flex-col items-center gap-2">
                       <Activity className={`w-8 h-8 ${
                         progressStats?.trend === 'improving' ? 'text-green-400' : 
-                        progressStats?.trend === 'declining' ? 'text-red-400' : 'text-yellow-400'
+                        progressStats?.trend === 'declining' ? 'text-red-400' : 'text-orange-400'
                       }`} />
                       <span className={`text-2xl font-black uppercase tracking-tight ${
             progressStats?.trend === 'improving' ? 'text-green-400' : 
-            progressStats?.trend === 'declining' ? 'text-red-400' : 'text-yellow-400'
+            progressStats?.trend === 'declining' ? 'text-red-400' : 'text-orange-400'
           }`}>
                         {progressStats?.trend || 'stable'}
                       </span>
@@ -9636,9 +9830,9 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
         }
       }} className="w-full">
         <TabsList className="grid w-full grid-cols-3 mb-6 bg-[#1a1a1a] border border-[#2a2a2a]">
-          <TabsTrigger value="sessions" className="data-[state=active]:bg-[#FFD700] data-[state=active]:text-[#1a1a1a]">Timeline</TabsTrigger>
-          <TabsTrigger value="analytics" className="data-[state=active]:bg-[#FFD700] data-[state=active]:text-[#1a1a1a]">Analytics</TabsTrigger>
-          <TabsTrigger value="heatmap" className="data-[state=active]:bg-[#FFD700] data-[state=active]:text-[#1a1a1a]">Heatmap</TabsTrigger>
+          <TabsTrigger value="sessions" className="data-[state=active]:bg-[#FF6B35] data-[state=active]:text-[#1a1a1a]">Timeline</TabsTrigger>
+          <TabsTrigger value="analytics" className="data-[state=active]:bg-[#FF6B35] data-[state=active]:text-[#1a1a1a]">Analytics</TabsTrigger>
+          <TabsTrigger value="heatmap" className="data-[state=active]:bg-[#FF6B35] data-[state=active]:text-[#1a1a1a]">Heatmap</TabsTrigger>
         </TabsList>
         
         {/* ============================================ */}
@@ -9650,7 +9844,7 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="relative">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#FFD700] via-[#FFA500] to-[#FF8C00] flex items-center justify-center shadow-lg shadow-[#FFD700]/20">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#FF6B35] via-[#FF4500] to-[#FF8C00] flex items-center justify-center shadow-lg shadow-[#FF6B35]/20">
                       <Clock className="w-6 h-6 text-[#1a1a1a]" />
                     </div>
                     <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-green-500 border-2 border-[#1d1d1d] animate-pulse"></div>
@@ -9680,7 +9874,7 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
                   {/* Vertical Timeline Design - Matching Image Structure */}
                   <div className="relative max-w-6xl mx-auto py-8 px-4 md:px-6">
                     {/* Vertical Timeline Line */}
-                    <div className="absolute left-10 md:left-10 top-0 bottom-0 w-0.5 bg-gradient-to-b from-[#FFD700] via-[#3a3a3a] to-transparent"></div>
+                    <div className="absolute left-10 md:left-10 top-0 bottom-0 w-0.5 bg-gradient-to-b from-[#FF6B35] via-[#3a3a3a] to-transparent"></div>
                     
                     {/* Timeline Items */}
                     <div className="space-y-12">
@@ -9692,13 +9886,13 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
                         
                         // Color themes - variations of website's gold/yellow palette
                         const colorThemes = [
-                          { main: '#FFD700', border: '#FFD700', bg: '#FFD700/10' }, // Bright gold
-                          { main: '#FFA500', border: '#FFA500', bg: '#FFA500/10' }, // Orange-gold
+                          { main: '#FF6B35', border: '#FF6B35', bg: '#FF6B35/10' }, // Bright gold
+                          { main: '#FF4500', border: '#FF4500', bg: '#FF4500/10' }, // Orange-gold
                           { main: '#FFC700', border: '#FFC700', bg: '#FFC700/10' }, // Light gold
                           { main: '#D4AF37', border: '#D4AF37', bg: '#D4AF37/10' }, // Antique gold
-                          { main: '#FFD700', border: '#FFD700', bg: '#FFD700/10' }, // Bright gold (repeat)
+                          { main: '#FF6B35', border: '#FF6B35', bg: '#FF6B35/10' }, // Bright gold (repeat)
                           { main: '#FF8C00', border: '#FF8C00', bg: '#FF8C00/10' }, // Dark orange-gold
-                          { main: '#FFD700', border: '#FFD700', bg: '#FFD700/10' }, // Bright gold (repeat)
+                          { main: '#FF6B35', border: '#FF6B35', bg: '#FF6B35/10' }, // Bright gold (repeat)
                           { main: '#F4C430', border: '#F4C430', bg: '#F4C430/10' }  // Saffron gold
                         ]
                         const theme = colorThemes[index % colorThemes.length]
@@ -9728,10 +9922,10 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
                               {/* Date Circle */}
                               <div 
                                 className={`relative w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center font-bold transition-all duration-300 group-hover:scale-110 ${
-                                  isFirst ? 'shadow-lg shadow-[#FFD700]/40' : ''
+                                  isFirst ? 'shadow-lg shadow-[#FF6B35]/40' : ''
                                 }`}
                                 style={{
-                                  backgroundColor: isFirst ? '#FFD700' : '#1a1a1a',
+                                  backgroundColor: isFirst ? '#FF6B35' : '#1a1a1a',
                                   border: `3px solid ${theme.main}`,
                                   color: isFirst ? '#1a1a1a' : theme.main
                                 }}
@@ -9741,7 +9935,7 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
                                   <div className="text-lg md:text-xl font-black">{day}</div>
                                 </div>
                                 {isFirst && (
-                                  <div className="absolute inset-0 rounded-full bg-[#FFD700] animate-ping opacity-20"></div>
+                                  <div className="absolute inset-0 rounded-full bg-[#FF6B35] animate-ping opacity-20"></div>
                                 )}
               </div>
               
@@ -9769,7 +9963,7 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
                                 }`}
                                 style={{
                                   border: `2px solid ${theme.border}`,
-                                  ringColor: isFirst ? '#FFD700' : 'transparent'
+                                  ringColor: isFirst ? '#FF6B35' : 'transparent'
                                 }}
                               >
                                 {/* Percentage in top right */}
@@ -9777,7 +9971,7 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
                                   <div 
                                     className={`text-3xl md:text-4xl font-black tabular-nums ${
                                       scoreColor === 'green' ? 'text-green-400' :
-                                      scoreColor === 'yellow' ? 'text-yellow-400' :
+                                      scoreColor === 'yellow' ? 'text-orange-400' :
                                       scoreColor === 'orange' ? 'text-orange-400' :
                                       'text-red-400'
                                     }`}
@@ -10219,7 +10413,7 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
                 </Card>
                 
                 {/* Avg/Week Card */}
-                <Card className="bg-gradient-to-br from-[#1a1a1a] to-[#252525] border-[#3a3a3a] hover:border-[#FFD700]/30 transition-all overflow-hidden relative">
+                <Card className="bg-gradient-to-br from-[#1a1a1a] to-[#252525] border-[#3a3a3a] hover:border-[#FF6B35]/30 transition-all overflow-hidden relative">
                   <CardContent className="p-5">
                     {/* Header */}
                     <div className="flex items-start justify-between mb-4">
@@ -10249,17 +10443,17 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
                             return `${x},${y}`;
                           }).join(' ')}
                           fill="none"
-                          stroke="#FFD700"
+                          stroke="#FF6B35"
                           strokeWidth="2"
                           strokeLinecap="round"
                           strokeLinejoin="round"
                         />
                         {/* Current point */}
-                        <circle cx="200" cy="20" r="4" fill="#FFD700" />
+                        <circle cx="200" cy="20" r="4" fill="#FF6B35" />
                         {/* Badge */}
                         <g transform="translate(150, 5)">
-                          <rect x="0" y="0" width="50" height="12" rx="6" fill="#FFD700" opacity="0.2" />
-                          <text x="25" y="9" textAnchor="middle" fontSize="8" fill="#FFD700" fontWeight="bold">
+                          <rect x="0" y="0" width="50" height="12" rx="6" fill="#FF6B35" opacity="0.2" />
+                          <text x="25" y="9" textAnchor="middle" fontSize="8" fill="#FF6B35" fontWeight="bold">
                             +{allSessionsData.length > 0 ? (Math.round(allSessionsData.length / 18 * 10) / 10).toFixed(1) : '0.0'}
                           </text>
                         </g>
@@ -10271,7 +10465,7 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
                       <div className="flex items-center justify-between mb-1">
                         <div className="h-2 bg-[#3a3a3a] rounded-full flex-1 mr-2">
                           <div 
-                            className="h-full bg-gradient-to-r from-[#FFD700] to-[#FFA500] rounded-full transition-all duration-500"
+                            className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF4500] rounded-full transition-all duration-500"
                             style={{ width: `${Math.min(100, ((allSessionsData.length > 0 ? (allSessionsData.length / 18) : 0) / 5) * 100)}%` }}
                           ></div>
           </div>
@@ -10284,7 +10478,7 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
                     {/* Main Metric */}
                     <div className="flex items-baseline justify-between">
                       <div>
-                        <span className="text-3xl font-black text-[#FFD700] leading-none">
+                        <span className="text-3xl font-black text-[#FF6B35] leading-none">
                           {allSessionsData.length > 0 ? (Math.round(allSessionsData.length / 18 * 10) / 10).toFixed(1) : '0.0'}
                         </span>
                     </div>
@@ -10409,11 +10603,11 @@ function Phase9CategoryComparison() {
               <div className="flex items-center gap-3">
                 <span className={`text-sm font-bold ${
                   cat.color === 'green' ? 'text-green-400' :
-                  cat.color === 'red' ? 'text-red-400' : 'text-yellow-400'
+                  cat.color === 'red' ? 'text-red-400' : 'text-orange-400'
                 }`}>
                   {cat.change >= 0 ? '+' : ''}{cat.change}%
                 </span>
-                <span className="text-xl font-black text-[#FFD700]">{cat.current}%</span>
+                <span className="text-xl font-black text-[#FF6B35]">{cat.current}%</span>
               </div>
             </div>
             
@@ -10429,7 +10623,7 @@ function Phase9CategoryComparison() {
                 className={`absolute top-0 left-0 h-full rounded-full transition-all duration-500 ${
                   cat.color === 'green' ? 'bg-gradient-to-r from-green-600 to-green-400' :
                   cat.color === 'red' ? 'bg-gradient-to-r from-red-600 to-red-400' :
-                  'bg-gradient-to-r from-yellow-600 to-yellow-400'
+                  'bg-gradient-to-r from-orange-600 to-orange-400'
                 }`}
                 style={{ width: `${cat.current}%` }}
               />
@@ -10450,7 +10644,7 @@ function Phase9CategoryComparison() {
           <span className="text-[#888]">Improved</span>
         </span>
         <span className="flex items-center gap-2 text-sm">
-          <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+          <div className="w-3 h-3 rounded-full bg-orange-500"></div>
           <span className="text-[#888]">Stable</span>
         </span>
         <span className="flex items-center gap-2 text-sm">
@@ -10503,14 +10697,14 @@ function Phase9IssueHeatmap() {
                 ? 'bg-red-500/10 border-red-500/30' 
                 : issue.severity === 'medium'
                 ? 'bg-orange-500/10 border-orange-500/30'
-                : 'bg-yellow-500/10 border-yellow-500/30'
+                : 'bg-orange-500/10 border-orange-500/30'
             }`}
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-3">
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
                   issue.severity === 'high' ? 'bg-red-500' :
-                  issue.severity === 'medium' ? 'bg-orange-500' : 'bg-yellow-500'
+                  issue.severity === 'medium' ? 'bg-orange-500' : 'bg-orange-500'
                 }`}>
                   <span className="text-white font-bold text-sm">{index + 1}</span>
                 </div>
@@ -10520,7 +10714,7 @@ function Phase9IssueHeatmap() {
                 <span className="text-[#888] text-sm">{issue.count} occurrences</span>
                 <span className={`text-xl font-black ${
                   issue.severity === 'high' ? 'text-red-400' :
-                  issue.severity === 'medium' ? 'text-orange-400' : 'text-yellow-400'
+                  issue.severity === 'medium' ? 'text-orange-400' : 'text-orange-400'
                 }`}>
                   {issue.frequency}%
                 </span>
@@ -10533,7 +10727,7 @@ function Phase9IssueHeatmap() {
                 className={`h-full rounded-full transition-all duration-500 ${
                   issue.severity === 'high' ? 'bg-gradient-to-r from-red-600 to-red-400' :
                   issue.severity === 'medium' ? 'bg-gradient-to-r from-orange-600 to-orange-400' :
-                  'bg-gradient-to-r from-yellow-600 to-yellow-400'
+                  'bg-gradient-to-r from-orange-600 to-orange-400'
                 }`}
                 style={{ width: `${issue.frequency}%` }}
               />
@@ -10553,7 +10747,7 @@ function Phase9IssueHeatmap() {
           <span className="text-[#888]">Medium (30-60%)</span>
         </span>
         <span className="flex items-center gap-2 text-sm">
-          <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+          <div className="w-3 h-3 rounded-full bg-orange-500"></div>
           <span className="text-[#888]">Low (&lt;30%)</span>
         </span>
       </div>
@@ -10587,7 +10781,7 @@ function Phase9MilestoneBadges() {
       {/* Achieved Milestones */}
       <div className="bg-[#2C2C2C] rounded-xl p-6 border border-[#3a3a3a]">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-500 to-orange-600 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center">
             <Trophy className="w-5 h-5 text-white" />
           </div>
           <div>
@@ -10606,14 +10800,14 @@ function Phase9MilestoneBadges() {
             {achievedMilestones.map((milestone, index) => (
               <div 
                 key={milestone.id}
-                className="relative bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl p-4 border border-[#FFD700]/30 overflow-hidden group hover:scale-105 transition-transform"
+                className="relative bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl p-4 border border-[#FF6B35]/30 overflow-hidden group hover:scale-105 transition-transform"
               >
                 {/* Glow effect */}
-                <div className="absolute inset-0 bg-gradient-to-br from-[#FFD700]/10 to-transparent opacity-50"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-[#FF6B35]/10 to-transparent opacity-50"></div>
                 
                 <div className="relative text-center">
                   <div className="text-4xl mb-2">{milestone.icon}</div>
-                  <h4 className="text-sm font-bold text-[#FFD700] mb-1">{milestone.name}</h4>
+                  <h4 className="text-sm font-bold text-[#FF6B35] mb-1">{milestone.name}</h4>
                   <p className="text-xs text-[#888] mb-2">{milestone.description}</p>
                   {milestone.achievedDate && (
                     <p className="text-xs text-green-400">
@@ -11035,7 +11229,7 @@ function PhotoComparisonSlider({
               onClick={() => setViewMode('sideBySide')}
               className={`px-2 py-1 rounded text-[10px] font-bold transition-colors ${
                 viewMode === 'sideBySide'
-                  ? 'bg-[#FFD700] text-[#1a1a1a]'
+                  ? 'bg-[#FF6B35] text-[#1a1a1a]'
                   : 'bg-[#2a2a2a] text-[#666] hover:text-[#E5E5E5]'
               }`}
             >
@@ -11045,7 +11239,7 @@ function PhotoComparisonSlider({
               onClick={() => setViewMode('slider')}
               className={`px-2 py-1 rounded text-[10px] font-bold transition-colors ${
                 viewMode === 'slider'
-                  ? 'bg-[#FFD700] text-[#1a1a1a]'
+                  ? 'bg-[#FF6B35] text-[#1a1a1a]'
                   : 'bg-[#2a2a2a] text-[#666] hover:text-[#E5E5E5]'
               }`}
             >
@@ -11118,7 +11312,7 @@ function PhotoComparisonSlider({
         
         
         {/* Side by Side Comparison */}
-        <div className="relative h-[700px] rounded-xl overflow-hidden border-2 border-[#FFD700]/30">
+        <div className="relative h-[700px] rounded-xl overflow-hidden border-2 border-[#FF6B35]/30">
           <div className="grid grid-cols-2 gap-0 h-full">
             {/* Before Image - Draggable with INDEPENDENT zoom */}
             <div 
@@ -11218,12 +11412,12 @@ function PhotoComparisonSlider({
           </div>
           
           {/* Center Divider - positioned within the image container */}
-          <div className="absolute left-1/2 top-0 bottom-0 w-1 bg-[#FFD700] z-10 transform -translate-x-1/2 shadow-[0_0_10px_rgba(255,215,0,0.5)]" />
+          <div className="absolute left-1/2 top-0 bottom-0 w-1 bg-[#FF6B35] z-10 transform -translate-x-1/2 shadow-[0_0_10px_rgba(255,215,0,0.5)]" />
           
           {/* SHOOTING COMPARISON Title at the very top of the image */}
           <div className="absolute left-1/2 top-0 transform -translate-x-1/2 z-20">
-            <div className="bg-gradient-to-r from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a] px-6 py-3 rounded-b-xl border-2 border-t-0 border-[#FFD700] shadow-[0_0_20px_rgba(255,215,0,0.3)]">
-              <h3 className="text-[#FFD700] font-black text-lg uppercase tracking-widest whitespace-nowrap">
+            <div className="bg-gradient-to-r from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a] px-6 py-3 rounded-b-xl border-2 border-t-0 border-[#FF6B35] shadow-[0_0_20px_rgba(255,215,0,0.3)]">
+              <h3 className="text-[#FF6B35] font-black text-lg uppercase tracking-widest whitespace-nowrap">
                 ⚡ SHOOTING COMPARISON ⚡
               </h3>
             </div>
@@ -11233,15 +11427,15 @@ function PhotoComparisonSlider({
         {/* Instructions */}
         <div className="bg-[#1a1a1a] rounded-xl p-4 border border-[#3a3a3a]">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[#FFD700]/10 flex items-center justify-center flex-shrink-0">
-              <Info className="w-5 h-5 text-[#FFD700]" />
+            <div className="w-10 h-10 rounded-lg bg-[#FF6B35]/10 flex items-center justify-center flex-shrink-0">
+              <Info className="w-5 h-5 text-[#FF6B35]" />
             </div>
             <div>
               <h4 className="font-bold text-[#E5E5E5] mb-1">How to Compare</h4>
               <p className="text-sm text-[#888]">
                 Players are <strong className="text-green-400">automatically detected and centered</strong> for easy comparison. 
-                Use the <strong className="text-[#FFD700]">Zoom</strong> control to zoom in on the shooting form, 
-                and <strong className="text-[#FFD700]">V</strong> (vertical) / <strong className="text-[#FFD700]">H</strong> (horizontal) 
+                Use the <strong className="text-[#FF6B35]">Zoom</strong> control to zoom in on the shooting form, 
+                and <strong className="text-[#FF6B35]">V</strong> (vertical) / <strong className="text-[#FF6B35]">H</strong> (horizontal) 
                 controls to fine-tune the focus position.
               </p>
             </div>
@@ -11266,15 +11460,15 @@ function PhotoComparisonSlider({
           <div className="p-6">
             {/* Primary Actions */}
             <div className="grid grid-cols-2 gap-3 mb-4">
-              <button className="group relative flex items-center justify-center gap-3 px-5 py-4 rounded-xl bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] border border-[#2a2a2a] hover:border-[#FFD700]/50 transition-all duration-300">
-                <Download className="w-5 h-5 text-[#FFD700]" />
+              <button className="group relative flex items-center justify-center gap-3 px-5 py-4 rounded-xl bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] border border-[#2a2a2a] hover:border-[#FF6B35]/50 transition-all duration-300">
+                <Download className="w-5 h-5 text-[#FF6B35]" />
                 <span className="text-white font-semibold">Download Image</span>
-                <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[#FFD700]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[#FF6B35]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               </button>
-              <button className="group relative flex items-center justify-center gap-3 px-5 py-4 rounded-xl bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] border border-[#2a2a2a] hover:border-[#FFD700]/50 transition-all duration-300">
-                <Copy className="w-5 h-5 text-[#FFD700]" />
+              <button className="group relative flex items-center justify-center gap-3 px-5 py-4 rounded-xl bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] border border-[#2a2a2a] hover:border-[#FF6B35]/50 transition-all duration-300">
+                <Copy className="w-5 h-5 text-[#FF6B35]" />
                 <span className="text-white font-semibold">Copy Link</span>
-                <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[#FFD700]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[#FF6B35]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               </button>
             </div>
             
@@ -11328,7 +11522,7 @@ function PhotoComparisonSlider({
             onClick={() => setViewMode('sideBySide')}
             className={`px-2 py-1 rounded text-[10px] font-bold transition-colors ${
               viewMode === 'sideBySide'
-                ? 'bg-[#FFD700] text-[#1a1a1a]'
+                ? 'bg-[#FF6B35] text-[#1a1a1a]'
                 : 'bg-[#2a2a2a] text-[#666] hover:text-[#E5E5E5]'
             }`}
           >
@@ -11338,7 +11532,7 @@ function PhotoComparisonSlider({
             onClick={() => setViewMode('slider')}
             className={`px-2 py-1 rounded text-[10px] font-bold transition-colors ${
               viewMode === 'slider'
-                ? 'bg-[#FFD700] text-[#1a1a1a]'
+                ? 'bg-[#FF6B35] text-[#1a1a1a]'
                 : 'bg-[#2a2a2a] text-[#666] hover:text-[#E5E5E5]'
             }`}
           >
@@ -11412,7 +11606,7 @@ function PhotoComparisonSlider({
       {/* Slider Comparison */}
       <div 
         ref={containerRef}
-        className="relative w-full h-[700px] rounded-xl overflow-hidden cursor-ew-resize select-none border-2 border-[#FFD700]/30"
+        className="relative w-full h-[700px] rounded-xl overflow-hidden cursor-ew-resize select-none border-2 border-[#FF6B35]/30"
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
@@ -11474,13 +11668,13 @@ function PhotoComparisonSlider({
         
         {/* Slider Handle */}
         <div 
-          className="absolute top-0 bottom-0 w-1 bg-[#FFD700] cursor-ew-resize z-10 shadow-[0_0_15px_rgba(255,215,0,0.5)]"
+          className="absolute top-0 bottom-0 w-1 bg-[#FF6B35] cursor-ew-resize z-10 shadow-[0_0_15px_rgba(255,215,0,0.5)]"
           style={{ left: `${sliderPosition}%`, transform: 'translateX(-50%)' }}
           onMouseDown={handleMouseDown}
           onTouchStart={handleMouseDown}
         >
           {/* Handle Circle */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-[#FFD700] shadow-lg flex items-center justify-center border-4 border-white">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-[#FF6B35] shadow-lg flex items-center justify-center border-4 border-white">
             <div className="flex items-center gap-0.5">
               <ChevronLeft className="w-5 h-5 text-[#1a1a1a]" />
               <ChevronRight className="w-5 h-5 text-[#1a1a1a]" />
@@ -11489,7 +11683,7 @@ function PhotoComparisonSlider({
         </div>
         
         {/* Instructions */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full bg-black/90 text-white text-sm font-bold border-2 border-[#FFD700]/50 shadow-lg">
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full bg-black/90 text-white text-sm font-bold border-2 border-[#FF6B35]/50 shadow-lg">
           ← Drag slider to compare →
         </div>
       </div>
@@ -11497,13 +11691,13 @@ function PhotoComparisonSlider({
       {/* Instructions */}
       <div className="bg-[#1a1a1a] rounded-xl p-4 border border-[#3a3a3a]">
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-lg bg-[#FFD700]/10 flex items-center justify-center flex-shrink-0">
-            <Info className="w-5 h-5 text-[#FFD700]" />
+          <div className="w-10 h-10 rounded-lg bg-[#FF6B35]/10 flex items-center justify-center flex-shrink-0">
+            <Info className="w-5 h-5 text-[#FF6B35]" />
           </div>
           <div>
             <h4 className="font-bold text-[#E5E5E5] mb-1">Overlay Comparison Mode</h4>
             <p className="text-sm text-[#888]">
-              Drag the <strong className="text-[#FFD700]">golden slider</strong> left or right to reveal each image. 
+              Drag the <strong className="text-[#FF6B35]">golden slider</strong> left or right to reveal each image. 
               This mode is best for comparing specific body positions at the same angle.
             </p>
           </div>
@@ -11795,8 +11989,8 @@ function PhotoComparisonSection() {
         {/* ELITE SHOOTERS DATABASE - Right under session selectors */}
         <div className="mt-4 pt-4 border-t border-[#3a3a3a]">
           <div className="flex items-center gap-2 mb-4">
-            <Trophy className="w-5 h-5 text-[#FFD700]" />
-            <label className="text-sm font-bold text-[#FFD700] uppercase tracking-wider">
+            <Trophy className="w-5 h-5 text-[#FF6B35]" />
+            <label className="text-sm font-bold text-[#FF6B35] uppercase tracking-wider">
               Or Compare to Elite Shooters
             </label>
           </div>
@@ -11809,7 +12003,7 @@ function PhotoComparisonSection() {
               placeholder="Search by name, team, or position..."
               value={eliteSearchQuery}
               onChange={(e) => setEliteSearchQuery(e.target.value)}
-              className="w-full bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg pl-10 pr-4 py-3 text-[#E5E5E5] placeholder-[#666] focus:border-[#FFD700] focus:outline-none"
+              className="w-full bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg pl-10 pr-4 py-3 text-[#E5E5E5] placeholder-[#666] focus:border-[#FF6B35] focus:outline-none"
             />
           </div>
           
@@ -11821,8 +12015,8 @@ function PhotoComparisonSection() {
                 onClick={() => setSelectedEliteShooter(shooter)}
                 className={`p-2 rounded-lg border transition-all text-left ${
                   selectedEliteShooter?.id === shooter.id
-                    ? 'bg-[#FFD700]/20 border-[#FFD700] ring-2 ring-[#FFD700]/50'
-                    : 'bg-[#1a1a1a] border-[#3a3a3a] hover:border-[#FFD700]/50'
+                    ? 'bg-[#FF6B35]/20 border-[#FF6B35] ring-2 ring-[#FF6B35]/50'
+                    : 'bg-[#1a1a1a] border-[#3a3a3a] hover:border-[#FF6B35]/50'
                 }`}
               >
                 <div className="flex flex-col items-center">
@@ -11842,7 +12036,7 @@ function PhotoComparisonSection() {
                   )}
                   <p className="text-[10px] font-bold text-[#E5E5E5] text-center truncate w-full">{shooter.name}</p>
                   <span className={`text-[8px] font-bold px-1 py-0.5 rounded mt-0.5 ${
-                    shooter.tier === 'legendary' ? 'bg-[#FFD700]/20 text-[#FFD700]' :
+                    shooter.tier === 'legendary' ? 'bg-[#FF6B35]/20 text-[#FF6B35]' :
                     shooter.tier === 'elite' ? 'bg-purple-500/20 text-purple-400' :
                     'bg-blue-500/20 text-blue-400'
                   }`}>
@@ -11865,22 +12059,22 @@ function PhotoComparisonSection() {
       
       {/* Selected Elite Shooter Info */}
       {selectedEliteShooter && (
-        <div className="bg-gradient-to-r from-[#FFD700]/10 to-[#FFA500]/10 rounded-xl p-4 border border-[#FFD700]/30">
+        <div className="bg-gradient-to-r from-[#FF6B35]/10 to-[#FF4500]/10 rounded-xl p-4 border border-[#FF6B35]/30">
           <div className="flex items-center gap-4">
             {selectedEliteShooter.photoUrl && (
               <img 
                 src={selectedEliteShooter.photoUrl} 
                 alt={selectedEliteShooter.name}
-                className="w-14 h-14 rounded-full object-cover border-2 border-[#FFD700]"
+                className="w-14 h-14 rounded-full object-cover border-2 border-[#FF6B35]"
               />
             )}
             <div className="flex-1">
-              <h3 className="text-lg font-black text-[#FFD700]">{selectedEliteShooter.name}</h3>
+              <h3 className="text-lg font-black text-[#FF6B35]">{selectedEliteShooter.name}</h3>
               <p className="text-sm text-[#888]">{selectedEliteShooter.team} • {selectedEliteShooter.position?.replace('_', ' ')}</p>
               {selectedEliteShooter.keyTraits && (
                 <div className="flex flex-wrap gap-1 mt-1">
                   {selectedEliteShooter.keyTraits.slice(0, 3).map((trait, i) => (
-                    <span key={i} className="text-[10px] bg-[#FFD700]/20 text-[#FFD700] px-1.5 py-0.5 rounded">
+                    <span key={i} className="text-[10px] bg-[#FF6B35]/20 text-[#FF6B35] px-1.5 py-0.5 rounded">
                       {trait}
                     </span>
                   ))}
@@ -11888,7 +12082,7 @@ function PhotoComparisonSection() {
               )}
             </div>
             <div className="text-right">
-              <p className="text-2xl font-black text-[#FFD700]">{selectedEliteShooter.careerPct}%</p>
+              <p className="text-2xl font-black text-[#FF6B35]">{selectedEliteShooter.careerPct}%</p>
               <p className="text-[10px] text-[#888]">Career 3PT%</p>
             </div>
           </div>
@@ -11931,7 +12125,7 @@ function PhotoComparisonSection() {
       
       {/* Comparison Tips */}
       <div className="bg-[#2C2C2C] rounded-xl p-6 border border-[#3a3a3a]">
-        <h3 className="text-lg font-bold text-[#FFD700] mb-4 flex items-center gap-2">
+        <h3 className="text-lg font-bold text-[#FF6B35] mb-4 flex items-center gap-2">
           <Lightbulb className="w-5 h-5" />
           What to Look For
         </h3>

@@ -90,7 +90,7 @@ export function BadgeDisplay({ badge, size = 'md', showDetails = false }: BadgeD
               >
                 {badge.rarity}
               </span>
-              <span className="text-xs text-[#FFD700]">+{badge.pointsAwarded} pts</span>
+              <span className="text-xs text-[#FF6B35]">+{badge.pointsAwarded} pts</span>
             </div>
             {badge.unlockedDate && (
               <p className="text-xs text-green-400 mt-2">
@@ -126,7 +126,7 @@ export function BadgesShowcase({ maxDisplay = 8, showAll = false }: BadgesShowca
     <div className="bg-[#2C2C2C] rounded-xl p-6 border border-[#3a3a3a]">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FFD700] to-[#FFA500] flex items-center justify-center">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FF6B35] to-[#FF4500] flex items-center justify-center">
             <Trophy className="w-5 h-5 text-[#1a1a1a]" />
           </div>
           <div>
@@ -138,7 +138,7 @@ export function BadgesShowcase({ maxDisplay = 8, showAll = false }: BadgesShowca
         {!showAll && ALL_BADGES.length > maxDisplay && (
           <button
             onClick={() => setExpanded(!expanded)}
-            className="text-[#FFD700] text-sm flex items-center gap-1 hover:underline"
+            className="text-[#FF6B35] text-sm flex items-center gap-1 hover:underline"
           >
             {expanded ? 'Show Less' : 'View All'}
             {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -150,7 +150,7 @@ export function BadgesShowcase({ maxDisplay = 8, showAll = false }: BadgesShowca
       <div className="mb-4">
         <div className="h-2 bg-[#1a1a1a] rounded-full overflow-hidden">
           <div 
-            className="h-full bg-gradient-to-r from-[#FFD700] to-[#FFA500] rounded-full transition-all duration-500"
+            className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF4500] rounded-full transition-all duration-500"
             style={{ width: `${(earnedBadges.length / ALL_BADGES.length) * 100}%` }}
           />
         </div>
@@ -415,7 +415,7 @@ export function WeeklyChallenges() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-[#2a2a2a] flex items-center justify-center border border-[#3a3a3a]">
-                      <Target className="w-5 h-5 text-[#FFD700]" />
+                      <Target className="w-5 h-5 text-[#FF6B35]" />
                     </div>
                     <div>
                       <p className="font-bold text-[#E5E5E5] uppercase">{challenge.name.toUpperCase()}</p>
@@ -426,7 +426,7 @@ export function WeeklyChallenges() {
                         >
                           {challenge.difficulty.toUpperCase()}
                         </span>
-                        <span className="text-xs text-[#FFD700]">+{challenge.pointsReward} PTS</span>
+                        <span className="text-xs text-[#FF6B35]">+{challenge.pointsReward} PTS</span>
                       </div>
                     </div>
                   </div>
@@ -462,7 +462,7 @@ export function WeeklyChallenges() {
                 <div className="px-4 pb-4 border-t border-[#2a2a2a]">
                   <p className="text-sm text-[#888] mt-3">{challenge.description}</p>
                   {challenge.badgeReward && (
-                    <p className="text-xs text-[#FFD700] mt-2">
+                    <p className="text-xs text-[#FF6B35] mt-2">
                       🏆 Earn badge on completion
                     </p>
                   )}
@@ -512,7 +512,7 @@ export function Leaderboard({ ageGroup = '15-18', skillLevel = 'Intermediate' }:
     <div className="bg-[#2C2C2C] rounded-xl p-6 border border-[#3a3a3a]">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FFD700] to-[#FFA500] flex items-center justify-center">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FF6B35] to-[#FF4500] flex items-center justify-center">
             <Crown className="w-5 h-5 text-[#1a1a1a]" />
           </div>
           <div>
@@ -530,7 +530,7 @@ export function Leaderboard({ ageGroup = '15-18', skillLevel = 'Intermediate' }:
             onClick={() => setActiveType(type)}
             className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
               activeType === type
-                ? 'bg-[#FFD700] text-[#1a1a1a]'
+                ? 'bg-[#FF6B35] text-[#1a1a1a]'
                 : 'bg-[#1a1a1a] text-[#888] hover:text-[#E5E5E5]'
             }`}
           >
@@ -547,13 +547,13 @@ export function Leaderboard({ ageGroup = '15-18', skillLevel = 'Intermediate' }:
               key={idx}
               className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
                 entry.isCurrentUser 
-                  ? 'bg-[#FFD700]/10 border border-[#FFD700]/30' 
+                  ? 'bg-[#FF6B35]/10 border border-[#FF6B35]/30' 
                   : 'bg-[#1a1a1a] hover:bg-[#2a2a2a]'
               }`}
             >
               {/* Rank */}
               <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold ${
-                entry.rank === 1 ? 'bg-[#FFD700] text-[#1a1a1a]' :
+                entry.rank === 1 ? 'bg-[#FF6B35] text-[#1a1a1a]' :
                 entry.rank === 2 ? 'bg-gray-400 text-[#1a1a1a]' :
                 entry.rank === 3 ? 'bg-orange-600 text-white' :
                 'bg-[#2a2a2a] text-[#888]'
@@ -563,7 +563,7 @@ export function Leaderboard({ ageGroup = '15-18', skillLevel = 'Intermediate' }:
               
               {/* Name */}
               <div className="flex-1">
-                <p className={`font-medium ${entry.isCurrentUser ? 'text-[#FFD700]' : 'text-[#E5E5E5]'}`}>
+                <p className={`font-medium ${entry.isCurrentUser ? 'text-[#FF6B35]' : 'text-[#E5E5E5]'}`}>
                   {entry.identifier}
                 </p>
                 <p className="text-xs text-[#888]">Level {entry.level}</p>
@@ -590,12 +590,12 @@ export function Leaderboard({ ageGroup = '15-18', skillLevel = 'Intermediate' }:
           {leaderboard.userRank > 10 && (
             <>
               <div className="text-center py-2 text-[#666]">• • •</div>
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-[#FFD700]/10 border border-[#FFD700]/30">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-[#FF6B35]/10 border border-[#FF6B35]/30">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center font-bold bg-[#2a2a2a] text-[#888]">
                   {leaderboard.userRank}
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium text-[#FFD700]">You</p>
+                  <p className="font-medium text-[#FF6B35]">You</p>
                 </div>
               </div>
             </>
@@ -640,7 +640,7 @@ export function GamificationSummaryCard() {
       
       <div className="grid grid-cols-3 gap-3 text-center">
         <div className="bg-[#1a1a1a] rounded-lg p-2">
-          <p className="text-lg font-bold text-[#FFD700]">{earnedBadges.length}</p>
+          <p className="text-lg font-bold text-[#FF6B35]">{earnedBadges.length}</p>
           <p className="text-[10px] text-[#888]">Badges</p>
         </div>
         <div className="bg-[#1a1a1a] rounded-lg p-2">

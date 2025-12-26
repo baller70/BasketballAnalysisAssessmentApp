@@ -81,7 +81,7 @@ export default function ShootingFormGallery({ shooter, onClose }: ShootingFormGa
       onClick={onClose}
     >
       <div 
-        className="bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] rounded-2xl max-w-5xl w-full max-h-[95vh] overflow-hidden border border-[#FFD700]/30 shadow-2xl"
+        className="bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] rounded-2xl max-w-5xl w-full max-h-[95vh] overflow-hidden border border-[#FF6B35]/30 shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -115,8 +115,8 @@ export default function ShootingFormGallery({ shooter, onClose }: ShootingFormGa
             </div>
 
             <div className="flex items-center gap-2">
-              <Camera className="w-5 h-5 text-[#FFD700]" />
-              <span className="text-[#FFD700] font-bold">{images.length} Photos</span>
+              <Camera className="w-5 h-5 text-[#FF6B35]" />
+              <span className="text-[#FF6B35] font-bold">{images.length} Photos</span>
             </div>
           </div>
           
@@ -144,7 +144,7 @@ export default function ShootingFormGallery({ shooter, onClose }: ShootingFormGa
                       className={`absolute left-4 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full transition-all ${
                         currentIndex === 0 
                           ? 'bg-black/20 text-[#444] cursor-not-allowed' 
-                          : 'bg-black/60 text-white hover:bg-[#FFD700] hover:text-black'
+                          : 'bg-black/60 text-white hover:bg-[#FF6B35] hover:text-black'
                       }`}
                     >
                       <ChevronLeft className="w-6 h-6" />
@@ -155,7 +155,7 @@ export default function ShootingFormGallery({ shooter, onClose }: ShootingFormGa
                       className={`absolute right-4 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full transition-all ${
                         currentIndex === images.length - 1 
                           ? 'bg-black/20 text-[#444] cursor-not-allowed' 
-                          : 'bg-black/60 text-white hover:bg-[#FFD700] hover:text-black'
+                          : 'bg-black/60 text-white hover:bg-[#FF6B35] hover:text-black'
                       }`}
                     >
                       <ChevronRight className="w-6 h-6" />
@@ -200,7 +200,7 @@ export default function ShootingFormGallery({ shooter, onClose }: ShootingFormGa
                       onClick={() => setCurrentIndex(idx)}
                       className={`relative w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
                         idx === currentIndex 
-                          ? 'border-[#FFD700] scale-105 shadow-lg shadow-[#FFD700]/20' 
+                          ? 'border-[#FF6B35] scale-105 shadow-lg shadow-[#FF6B35]/20' 
                           : 'border-[#333] hover:border-[#666] opacity-60 hover:opacity-100'
                       }`}
                     >
@@ -218,7 +218,7 @@ export default function ShootingFormGallery({ shooter, onClose }: ShootingFormGa
 
               {/* Form Analysis Tips */}
               <div className="mt-6 p-4 bg-[#1a1a1a] rounded-xl border border-[#333]">
-                <h3 className="text-[#FFD700] font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
+                <h3 className="text-[#FF6B35] font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
                   <Camera className="w-4 h-4" />
                   Study Points
                 </h3>

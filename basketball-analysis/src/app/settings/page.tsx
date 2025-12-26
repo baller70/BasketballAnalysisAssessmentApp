@@ -175,11 +175,11 @@ export default function SettingsPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#FFD700] to-[#FFA500] flex items-center justify-center">
+            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#FF4500] flex items-center justify-center">
               <Settings className="w-7 h-7 text-[#1a1a1a]" />
             </div>
             <div>
-              <h1 className="text-3xl font-black text-[#FFD700] uppercase tracking-wider">Settings</h1>
+              <h1 className="text-3xl font-black text-[#FF6B35] uppercase tracking-wider">Settings</h1>
               <p className="text-[#888] text-sm">Manage notifications, automation & preferences</p>
             </div>
           </div>
@@ -190,7 +190,7 @@ export default function SettingsPage() {
             disabled={!hasChanges || saveStatus === 'saving'}
             className={`flex items-center gap-2 px-6 py-3 rounded-lg font-bold transition-all ${
               hasChanges 
-                ? 'bg-[#FFD700] text-[#1a1a1a] hover:bg-[#e6c200]' 
+                ? 'bg-[#FF6B35] text-[#1a1a1a] hover:bg-[#e6c200]' 
                 : 'bg-[#3a3a3a] text-[#888] cursor-not-allowed'
             }`}
           >
@@ -227,7 +227,7 @@ export default function SettingsPage() {
                   onClick={() => setActiveSection('notifications')}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                     activeSection === 'notifications'
-                      ? 'bg-[#FFD700] text-[#1a1a1a]'
+                      ? 'bg-[#FF6B35] text-[#1a1a1a]'
                       : 'text-[#E5E5E5] hover:bg-[#3a3a3a]'
                   }`}
                 >
@@ -240,7 +240,7 @@ export default function SettingsPage() {
                   onClick={() => setActiveSection('automation')}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                     activeSection === 'automation'
-                      ? 'bg-[#FFD700] text-[#1a1a1a]'
+                      ? 'bg-[#FF6B35] text-[#1a1a1a]'
                       : 'text-[#E5E5E5] hover:bg-[#3a3a3a]'
                   }`}
                 >
@@ -253,7 +253,7 @@ export default function SettingsPage() {
                   onClick={() => setActiveSection('account')}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                     activeSection === 'account'
-                      ? 'bg-[#FFD700] text-[#1a1a1a]'
+                      ? 'bg-[#FF6B35] text-[#1a1a1a]'
                       : 'text-[#E5E5E5] hover:bg-[#3a3a3a]'
                   }`}
                 >
@@ -398,7 +398,7 @@ export default function SettingsPage() {
                       <select
                         value={notificationSettings.coachingTipsFrequency}
                         onChange={(e) => updateNotification('coachingTipsFrequency', e.target.value as NotificationSettings['coachingTipsFrequency'])}
-                        className="w-full bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-3 text-[#E5E5E5] focus:border-[#FFD700] focus:outline-none"
+                        className="w-full bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-3 text-[#E5E5E5] focus:border-[#FF6B35] focus:outline-none"
                       >
                         <option value="daily">Daily</option>
                         <option value="3x_week">3 times per week</option>
@@ -412,7 +412,7 @@ export default function SettingsPage() {
                       <select
                         value={notificationSettings.motivationalFrequency}
                         onChange={(e) => updateNotification('motivationalFrequency', e.target.value as NotificationSettings['motivationalFrequency'])}
-                        className="w-full bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-3 text-[#E5E5E5] focus:border-[#FFD700] focus:outline-none"
+                        className="w-full bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-3 text-[#E5E5E5] focus:border-[#FF6B35] focus:outline-none"
                       >
                         <option value="daily">Daily</option>
                         <option value="2x_week">2 times per week</option>
@@ -426,7 +426,7 @@ export default function SettingsPage() {
                         type="time"
                         value={notificationSettings.reminderTime}
                         onChange={(e) => updateNotification('reminderTime', e.target.value)}
-                        className="w-full bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-3 text-[#E5E5E5] focus:border-[#FFD700] focus:outline-none"
+                        className="w-full bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-3 text-[#E5E5E5] focus:border-[#FF6B35] focus:outline-none"
                       />
                     </div>
                     
@@ -435,7 +435,7 @@ export default function SettingsPage() {
                       <select
                         value={notificationSettings.reportFormat}
                         onChange={(e) => updateNotification('reportFormat', e.target.value as NotificationSettings['reportFormat'])}
-                        className="w-full bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-3 text-[#E5E5E5] focus:border-[#FFD700] focus:outline-none"
+                        className="w-full bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-3 text-[#E5E5E5] focus:border-[#FF6B35] focus:outline-none"
                       >
                         <option value="detailed">Detailed Report</option>
                         <option value="summary">Quick Summary</option>
@@ -449,7 +449,7 @@ export default function SettingsPage() {
                         type="checkbox"
                         checked={notificationSettings.includeCharts}
                         onChange={(e) => updateNotification('includeCharts', e.target.checked)}
-                        className="w-5 h-5 rounded border-[#3a3a3a] bg-[#1a1a1a] text-[#FFD700] focus:ring-[#FFD700]"
+                        className="w-5 h-5 rounded border-[#3a3a3a] bg-[#1a1a1a] text-[#FF6B35] focus:ring-[#FF6B35]"
                       />
                       <span className="text-[#E5E5E5]">Include progress charts in reports</span>
                     </label>
@@ -459,7 +459,7 @@ export default function SettingsPage() {
                         type="checkbox"
                         checked={notificationSettings.includeComparison}
                         onChange={(e) => updateNotification('includeComparison', e.target.checked)}
-                        className="w-5 h-5 rounded border-[#3a3a3a] bg-[#1a1a1a] text-[#FFD700] focus:ring-[#FFD700]"
+                        className="w-5 h-5 rounded border-[#3a3a3a] bg-[#1a1a1a] text-[#FF6B35] focus:ring-[#FF6B35]"
                       />
                       <span className="text-[#E5E5E5]">Include peer comparison in reports</span>
                     </label>
@@ -505,7 +505,7 @@ export default function SettingsPage() {
                             type="time"
                             value={automationSettings.analyticsRefreshTime}
                             onChange={(e) => updateAutomation('analyticsRefreshTime', e.target.value)}
-                            className="bg-[#2C2C2C] border border-[#3a3a3a] rounded-lg px-3 py-1 text-[#E5E5E5] text-sm focus:border-[#FFD700] focus:outline-none"
+                            className="bg-[#2C2C2C] border border-[#3a3a3a] rounded-lg px-3 py-1 text-[#E5E5E5] text-sm focus:border-[#FF6B35] focus:outline-none"
                           />
                           <span className="text-xs text-[#666]">UTC</span>
                         </div>
@@ -533,7 +533,7 @@ export default function SettingsPage() {
                             type="time"
                             value={automationSettings.dataBackupTime}
                             onChange={(e) => updateAutomation('dataBackupTime', e.target.value)}
-                            className="bg-[#2C2C2C] border border-[#3a3a3a] rounded-lg px-3 py-1 text-[#E5E5E5] text-sm focus:border-[#FFD700] focus:outline-none"
+                            className="bg-[#2C2C2C] border border-[#3a3a3a] rounded-lg px-3 py-1 text-[#E5E5E5] text-sm focus:border-[#FF6B35] focus:outline-none"
                           />
                           <span className="text-xs text-[#666]">UTC</span>
                         </div>
@@ -598,7 +598,7 @@ export default function SettingsPage() {
                           <select
                             value={automationSettings.weeklyReportDay}
                             onChange={(e) => updateAutomation('weeklyReportDay', e.target.value as AutomationSettings['weeklyReportDay'])}
-                            className="bg-[#2C2C2C] border border-[#3a3a3a] rounded-lg px-3 py-1 text-[#E5E5E5] text-sm focus:border-[#FFD700] focus:outline-none"
+                            className="bg-[#2C2C2C] border border-[#3a3a3a] rounded-lg px-3 py-1 text-[#E5E5E5] text-sm focus:border-[#FF6B35] focus:outline-none"
                           >
                             <option value="monday">Monday</option>
                             <option value="tuesday">Tuesday</option>
@@ -613,7 +613,7 @@ export default function SettingsPage() {
                             type="time"
                             value={automationSettings.weeklyReportTime}
                             onChange={(e) => updateAutomation('weeklyReportTime', e.target.value)}
-                            className="bg-[#2C2C2C] border border-[#3a3a3a] rounded-lg px-3 py-1 text-[#E5E5E5] text-sm focus:border-[#FFD700] focus:outline-none"
+                            className="bg-[#2C2C2C] border border-[#3a3a3a] rounded-lg px-3 py-1 text-[#E5E5E5] text-sm focus:border-[#FF6B35] focus:outline-none"
                           />
                         </div>
                       )}
@@ -799,7 +799,7 @@ export default function SettingsPage() {
                 {/* Storage Info */}
                 <div className="bg-[#2C2C2C] rounded-xl p-6 border border-[#3a3a3a]">
                   <div className="flex items-center gap-3 mb-4">
-                    <Database className="w-5 h-5 text-[#FFD700]" />
+                    <Database className="w-5 h-5 text-[#FF6B35]" />
                     <h3 className="font-bold text-[#E5E5E5]">Storage Usage</h3>
                   </div>
                   
@@ -810,7 +810,7 @@ export default function SettingsPage() {
                         <span className="text-[#E5E5E5]">2.4 MB / 5 MB</span>
                       </div>
                       <div className="h-2 bg-[#1a1a1a] rounded-full overflow-hidden">
-                        <div className="h-full bg-gradient-to-r from-[#FFD700] to-[#FFA500] rounded-full" style={{ width: '48%' }}></div>
+                        <div className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF4500] rounded-full" style={{ width: '48%' }}></div>
                       </div>
                     </div>
                     
@@ -865,7 +865,7 @@ function ToggleSwitch({ enabled, onChange }: ToggleSwitchProps) {
     <button
       onClick={() => onChange(!enabled)}
       className={`relative w-12 h-6 rounded-full transition-colors ${
-        enabled ? 'bg-[#FFD700]' : 'bg-[#3a3a3a]'
+        enabled ? 'bg-[#FF6B35]' : 'bg-[#3a3a3a]'
       }`}
     >
       <div

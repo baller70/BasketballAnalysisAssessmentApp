@@ -64,14 +64,14 @@ const STATUS_CONFIG: Record<StatusType, {
 // CSS class mapping for label colors
 const LABEL_COLOR_MAP: Record<StatusColor, string> = {
   success: "text-green-600",
-  warning: "text-yellow-600",
+  warning: "text-orange-600",
   critical: "text-red-600",
 }
 
 // CSS class mapping for badge backgrounds
 const BG_COLOR_MAP: Record<StatusColor, string> = {
   success: "bg-green-100 text-green-700",
-  warning: "bg-yellow-100 text-yellow-700",
+  warning: "bg-yellow-100 text-orange-700",
   critical: "bg-red-100 text-red-700",
 }
 

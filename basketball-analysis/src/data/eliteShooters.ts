@@ -113,7 +113,7 @@ export const TIER_LABELS: Record<ShooterTier, string> = {
 };
 
 export const TIER_COLORS: Record<ShooterTier, string> = {
-  legendary: '#FFD700', elite: '#C0C0C0', great: '#CD7F32', good: '#4A90D9', mid_level: '#808080', bad: '#8B0000'
+  legendary: '#FF6B35', elite: '#C0C0C0', great: '#CD7F32', good: '#4A90D9', mid_level: '#808080', bad: '#8B0000'
 };
 
 // Generate measurements using genBio

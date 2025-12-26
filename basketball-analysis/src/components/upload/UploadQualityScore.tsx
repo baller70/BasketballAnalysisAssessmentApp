@@ -41,7 +41,7 @@ export function UploadQualityScore({
         className={`
           px-6 py-5 text-white
           ${status === "approved" && "bg-gradient-to-r from-green-500 to-green-600"}
-          ${status === "acceptable" && "bg-gradient-to-r from-yellow-500 to-yellow-600"}
+          ${status === "acceptable" && "bg-gradient-to-r from-orange-500 to-orange-600"}
           ${status === "rejected" && "bg-gradient-to-r from-red-500 to-red-600"}
         `}
       >
@@ -133,7 +133,7 @@ export function UploadQualityScore({
               ${canProceed
                 ? status === "approved"
                   ? "bg-green-600 text-white hover:bg-green-700"
-                  : "bg-yellow-500 text-white hover:bg-yellow-600"
+                  : "bg-orange-500 text-white hover:bg-orange-600"
                 : "bg-gray-200 text-gray-400 cursor-not-allowed"
               }
             `}
@@ -161,7 +161,7 @@ export function UploadQualityScore({
       {/* Disclaimer for acceptable uploads */}
       {status === "acceptable" && canProceed && (
         <div className="px-6 py-3 bg-yellow-50 border-t border-yellow-100">
-          <p className="text-xs text-yellow-700 text-center">
+          <p className="text-xs text-orange-700 text-center">
             Analysis may be less accurate due to upload quality. For best results, please retake following the guidelines.
           </p>
         </div>
@@ -214,7 +214,7 @@ function ScoreBar({ label, score, maxScore }: ScoreBarProps) {
   
   let barColor = "bg-green-500"
   if (percentage < 60) barColor = "bg-red-500"
-  else if (percentage < 80) barColor = "bg-yellow-500"
+  else if (percentage < 80) barColor = "bg-orange-500"
   
   return (
     <div>
@@ -247,7 +247,7 @@ interface CompactQualityScoreProps {
 export function CompactQualityScore({ score, status, onClick }: CompactQualityScoreProps) {
   const bgColor = {
     approved: "bg-green-100 text-green-700 border-green-200",
-    acceptable: "bg-yellow-100 text-yellow-700 border-yellow-200",
+    acceptable: "bg-yellow-100 text-orange-700 border-yellow-200",
     rejected: "bg-red-100 text-red-700 border-red-200",
   }[status]
   

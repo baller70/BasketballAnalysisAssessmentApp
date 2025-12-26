@@ -12,8 +12,8 @@
     --card-foreground: 220 9% 7%;
     --popover: 0 0% 100%;
     --popover-foreground: 220 9% 7%;
-    --primary: 51 100% 50%;
-    --primary-foreground: 0 0% 10%;
+    --primary: 24 100% 50%;
+    --primary-foreground: 0 0% 100%;
     --secondary: 0 0% 96%;
     --secondary-foreground: 220 9% 7%;
     --muted: 0 0% 96%;
@@ -24,11 +24,13 @@
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 90%;
     --input: 0 0% 90%;
-    --ring: 51 100% 50%;
+    --ring: 24 100% 50%;
     --radius: 0.5rem;
 
-    /* Custom colors */
-    --gold: 51 100% 50%;
+    /* Custom colors - Orange gradient theme */
+    --orange-primary: 24 100% 50%;
+    --orange-light: 30 100% 55%;
+    --orange-dark: 15 100% 45%;
     --dark-gray: 0 0% 17%;
     --medium-gray: 0 0% 22%;
     --light-gray: 0 0% 90%;
@@ -41,8 +43,8 @@
     --card-foreground: 0 0% 90%;
     --popover: 0 0% 17%;
     --popover-foreground: 0 0% 90%;
-    --primary: 51 100% 50%;
-    --primary-foreground: 0 0% 10%;
+    --primary: 24 100% 50%;
+    --primary-foreground: 0 0% 100%;
     --secondary: 0 0% 22%;
     --secondary-foreground: 0 0% 90%;
     --muted: 0 0% 25%;
@@ -53,7 +55,7 @@
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 25%;
     --input: 0 0% 22%;
-    --ring: 51 100% 50%;
+    --ring: 24 100% 50%;
   }
 
   * {
@@ -120,11 +122,11 @@
 /* Measurement labels */
 .measurement-label {
   background: rgba(0, 0, 0, 0.8);
-  border: 1px solid #eab308;
+  border: 1px solid #FF6B35;
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 12px;
-  color: #eab308;
+  color: #FF6B35;
   white-space: nowrap;
 }
 

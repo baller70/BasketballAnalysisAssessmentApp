@@ -25,7 +25,7 @@ import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
 app = Flask(__name__)
-CORS(app, origins=['*'])
+CORS(app, origins=['*'], supports_credentials=True, allow_headers=['Content-Type', 'Authorization'], methods=['GET', 'POST', 'OPTIONS'])
 
 # Lazy load models
 _yolo_pose = None

@@ -39,7 +39,7 @@ function getScoreColor(score: number): string {
 function getStatusIcon(status: 'good' | 'warning' | 'critical') {
   switch (status) {
     case 'good': return <CheckCircle className="w-4 h-4 text-green-500" />
-    case 'warning': return <AlertTriangle className="w-4 h-4 text-yellow-500" />
+    case 'warning': return <AlertTriangle className="w-4 h-4 text-orange-500" />
     case 'critical': return <XCircle className="w-4 h-4 text-red-500" />
   }
 }
@@ -48,7 +48,7 @@ function getSeverityBadge(severity: 'critical' | 'moderate' | 'minor') {
   const colors = {
     critical: 'bg-red-500/20 text-red-400 border-red-500/30',
     moderate: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-    minor: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+    minor: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
   }
   return (
     <span className={`px-2 py-0.5 text-xs font-medium rounded border ${colors[severity]}`}>
@@ -73,7 +73,7 @@ export function FormScoreCard({
       {/* Header */}
       <div className="bg-gradient-to-r from-[#2a2a2a] to-[#1a1a1a] px-4 py-3 border-b border-[#3a3a3a]">
         <div className="flex items-center justify-between">
-          <h3 className="text-[#FFD700] font-bold flex items-center gap-2">
+          <h3 className="text-[#FF6B35] font-bold flex items-center gap-2">
             <Target className="w-5 h-5" />
             Form Analysis Score
           </h3>
@@ -123,7 +123,7 @@ export function FormScoreCard({
         {/* Key Metrics */}
         <div className="mb-6">
           <h4 className="text-sm font-semibold text-[#E5E5E5] mb-3 flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-[#FFD700]" />
+            <TrendingUp className="w-4 h-4 text-[#FF6B35]" />
             Key Measurements
           </h4>
           <div className="space-y-3">
@@ -174,7 +174,7 @@ export function FormScoreCard({
         {priorityIssues.length > 0 && (
           <div>
             <h4 className="text-sm font-semibold text-[#E5E5E5] mb-3 flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-[#FFD700]" />
+              <AlertTriangle className="w-4 h-4 text-[#FF6B35]" />
               Priority Fix List
             </h4>
             <div className="space-y-2">
@@ -198,7 +198,7 @@ export function FormScoreCard({
                       </div>
                       <p className="text-xs text-[#888] mb-2">{issue.description}</p>
                       <div className="bg-[#1a1a1a] rounded px-2 py-1.5">
-                        <span className="text-xs text-[#FFD700]">💡 </span>
+                        <span className="text-xs text-[#FF6B35]">💡 </span>
                         <span className="text-xs text-[#aaa]">{issue.recommendation}</span>
                       </div>
                     </div>

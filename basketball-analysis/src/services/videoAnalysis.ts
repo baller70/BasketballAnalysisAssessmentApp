@@ -144,9 +144,11 @@ export async function analyzeVideoShooting(
 
     // Call the hybrid backend
     console.log('🎯 Sending video to hybrid backend for analysis...')
+    console.log('📡 Video API URL:', VIDEO_API_URL)
     const response = await fetch(`${VIDEO_API_URL}/api/analyze-video`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      mode: 'cors',
       body: JSON.stringify({
         video: videoBase64,
         fps: 10,  // Process at 10 FPS
