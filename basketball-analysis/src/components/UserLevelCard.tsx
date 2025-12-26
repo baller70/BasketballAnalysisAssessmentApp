@@ -104,7 +104,7 @@ function DailyStreakPopup({
         <div className="p-6">
           {/* Current Streak */}
           <div className="text-center mb-6">
-            <div className="text-6xl font-bold text-[#FFD700] mb-2">{streak}</div>
+            <div className="text-6xl font-bold text-[#FF6B35] mb-2">{streak}</div>
             <div className="text-[#E5E5E5] text-lg">Day Streak</div>
           </div>
 
@@ -153,7 +153,7 @@ function DailyStreakPopup({
           {/* Streak Rewards Info */}
           <div className="bg-[#1a1a1a] rounded-lg p-4">
             <div className="flex items-center gap-2 mb-3">
-              <Award className="w-4 h-4 text-[#FFD700]" />
+              <Award className="w-4 h-4 text-[#FF6B35]" />
               <span className="text-[#E5E5E5] font-medium">Streak Rewards</span>
             </div>
             <div className="space-y-2 text-sm">
@@ -194,7 +194,7 @@ function LeaderboardPopup({
   if (!isOpen) return null
 
   const getRankColor = (rank: number) => {
-    if (rank === 1) return 'from-yellow-400 to-amber-500'
+    if (rank === 1) return 'from-orange-400 to-amber-500'
     if (rank === 2) return 'from-gray-300 to-gray-400'
     if (rank === 3) return 'from-orange-400 to-orange-600'
     return 'from-[#3a3a3a] to-[#4a4a4a]'
@@ -237,7 +237,7 @@ function LeaderboardPopup({
         <div className="bg-[#1a1a1a] p-4 border-b border-[#3a3a3a]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FFD700] to-amber-600 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF6B35] to-amber-600 flex items-center justify-center">
                 <Users className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -246,7 +246,7 @@ function LeaderboardPopup({
               </div>
             </div>
             <div className="text-right">
-              <div className="text-2xl font-bold text-[#FFD700]">#{userRank}</div>
+              <div className="text-2xl font-bold text-[#FF6B35]">#{userRank}</div>
               <div className="text-[#888] text-xs">of {totalUsers.toLocaleString()}</div>
             </div>
           </div>
@@ -274,7 +274,7 @@ function LeaderboardPopup({
                   <div className="text-[#888] text-xs">{user.level}</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-[#FFD700] font-bold">{user.xp.toLocaleString()}</div>
+                  <div className="text-[#FF6B35] font-bold">{user.xp.toLocaleString()}</div>
                   <div className="text-[#888] text-xs">XP</div>
                 </div>
               </div>
@@ -324,7 +324,7 @@ export function UserLevelCard() {
     latestBadge: {
       name: "RISING STAR",
       icon: TrendingUp,
-      color: "from-[#FFD700] to-[#FFA500]",
+      color: "from-[#FF6B35] to-[#FF4500]",
       earnedDate: "DEC 20, 2024"
     }
   })
@@ -363,14 +363,14 @@ export function UserLevelCard() {
     <>
       <div className="bg-[#2C2C2C] rounded-lg border border-[#3a3a3a] overflow-hidden shadow-lg w-64">
         {/* Level Header - Gold/Dark theme */}
-        <div className={`bg-gradient-to-r ${currentLevel.color} p-4 border-b border-[#FFD700]/30`}>
+        <div className={`bg-gradient-to-r ${currentLevel.color} p-4 border-b border-[#FF6B35]/30`}>
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-[#FFD700]/20 rounded-lg flex items-center justify-center border border-[#FFD700]/40">
-              <LevelIcon className="w-6 h-6 text-[#FFD700]" />
+            <div className="w-12 h-12 bg-[#FF6B35]/20 rounded-lg flex items-center justify-center border border-[#FF6B35]/40">
+              <LevelIcon className="w-6 h-6 text-[#FF6B35]" />
             </div>
             <div>
-              <div className="text-[#FFD700] text-xs uppercase tracking-wider font-semibold">LEVEL {currentLevel.level}</div>
-              <div className="text-[#FFD700] font-bold text-lg">{currentLevel.name}</div>
+              <div className="text-[#FF6B35] text-xs uppercase tracking-wider font-semibold">LEVEL {currentLevel.level}</div>
+              <div className="text-[#FF6B35] font-bold text-lg">{currentLevel.name}</div>
             </div>
           </div>
           
@@ -383,7 +383,7 @@ export function UserLevelCard() {
               </div>
               <div className="h-2 bg-[#3a3a3a] rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-gradient-to-r from-[#FFD700] to-[#FFA500] rounded-full transition-all duration-500"
+                  className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF4500] rounded-full transition-all duration-500"
                   style={{ width: `${progressToNext}%` }}
                 />
               </div>
@@ -398,7 +398,7 @@ export function UserLevelCard() {
           {/* Latest Badge - Links to badges page */}
           <div className="mb-3">
             <div className="flex items-center gap-2 mb-1">
-              <Star className="w-3 h-3 text-[#FFD700]" />
+              <Star className="w-3 h-3 text-[#FF6B35]" />
               <span className="text-[#888] text-xs uppercase tracking-wide">LATEST BADGE</span>
             </div>
             {userStats.latestBadge ? (
@@ -441,14 +441,14 @@ export function UserLevelCard() {
           {/* Leaderboard - Opens popup */}
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <Crown className="w-3 h-3 text-[#FFD700]" />
+              <Crown className="w-3 h-3 text-[#FF6B35]" />
               <span className="text-[#888] text-xs uppercase tracking-wide">LEADERBOARD</span>
             </div>
             <button 
               onClick={() => setShowLeaderboardPopup(true)}
               className="w-full flex items-center gap-2 p-2 bg-[#1a1a1a] rounded-lg hover:bg-[#252525] transition-colors text-left"
             >
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FFD700] to-[#FFA500] flex items-center justify-center">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#FF4500] flex items-center justify-center">
                 <Crown className="w-4 h-4 text-[#1a1a1a]" />
               </div>
               <div>

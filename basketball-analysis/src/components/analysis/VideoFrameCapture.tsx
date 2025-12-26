@@ -5,6 +5,7 @@ import {
   Play, Pause, SkipBack, SkipForward, Camera, Download, 
   Trash2, ChevronLeft, ChevronRight, ZoomIn 
 } from "lucide-react"
+import { addWatermarkToCanvas } from "@/lib/watermark"
 
 interface CapturedFrame {
   id: string
@@ -134,6 +135,9 @@ export function VideoFrameCapture({
     // Draw current frame
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
     
+    // Add SHOTIQ watermark before export
+    addWatermarkToCanvas(canvas)
+    
     // Export as data URL
     const dataUrl = canvas.toDataURL("image/png")
     
@@ -210,7 +214,7 @@ export function VideoFrameCapture({
           {/* Capture overlay button */}
           <button
             onClick={captureFrame}
-            className="absolute top-4 right-4 bg-[#FFD700] hover:bg-[#E5C100] text-[#1a1a1a] p-3 rounded-full shadow-lg transition-colors"
+            className="absolute top-4 right-4 bg-[#FF6B35] hover:bg-[#E55300] text-[#1a1a1a] p-3 rounded-full shadow-lg transition-colors"
             title="Capture Frame"
           >
             <Camera className="w-6 h-6" />
@@ -227,7 +231,7 @@ export function VideoFrameCapture({
           >
             {/* Progress */}
             <div 
-              className="absolute left-0 top-0 h-full bg-[#FFD700] rounded-full"
+              className="absolute left-0 top-0 h-full bg-[#FF6B35] rounded-full"
               style={{ width: `${(currentTime / duration) * 100}%` }}
             />
             
@@ -279,7 +283,7 @@ export function VideoFrameCapture({
             
             <button
               onClick={togglePlayPause}
-              className="p-3 bg-[#FFD700] hover:bg-[#E5C100] text-[#1a1a1a] rounded-full transition-colors"
+              className="p-3 bg-[#FF6B35] hover:bg-[#E55300] text-[#1a1a1a] rounded-full transition-colors"
             >
               {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-0.5" />}
             </button>
@@ -304,7 +308,7 @@ export function VideoFrameCapture({
           {/* Capture button */}
           <button
             onClick={captureFrame}
-            className="w-full bg-[#FFD700] hover:bg-[#E5C100] text-[#1a1a1a] font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-colors"
+            className="w-full bg-[#FF6B35] hover:bg-[#E55300] text-[#1a1a1a] font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-colors"
           >
             <Camera className="w-5 h-5" />
             Capture This Frame
@@ -315,7 +319,7 @@ export function VideoFrameCapture({
       {/* Captured Frames Strip */}
       {capturedFrames.length > 0 && (
         <div className="bg-[#2a2a2a] rounded-lg border border-[#4a4a4a] p-4">
-          <h4 className="text-[#FFD700] font-semibold text-sm uppercase tracking-wider mb-3 flex items-center gap-2">
+          <h4 className="text-[#FF6B35] font-semibold text-sm uppercase tracking-wider mb-3 flex items-center gap-2">
             <Camera className="w-4 h-4" />
             Captured Frames ({capturedFrames.length})
           </h4>
@@ -326,7 +330,7 @@ export function VideoFrameCapture({
                 key={frame.id}
                 className={`relative flex-shrink-0 rounded-lg overflow-hidden border-2 cursor-pointer transition-all ${
                   selectedFrame === frame.id 
-                    ? "border-[#FFD700] ring-2 ring-[#FFD700]/50" 
+                    ? "border-[#FF6B35] ring-2 ring-[#FF6B35]/50" 
                     : "border-[#4a4a4a] hover:border-[#6a6a6a]"
                 }`}
                 onClick={() => {

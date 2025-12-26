@@ -34,6 +34,7 @@ CORS(app)
 # Lazy load models
 _yolo_detect = None
 _yolo_pose = None
+_yolo_ball = None  # Separate model for ball detection
 _mediapipe_pose = None
 
 
@@ -44,6 +45,17 @@ def get_yolo_detector():
         from ultralytics import YOLO
         _yolo_detect = YOLO('yolov8n.pt')
     return _yolo_detect
+
+
+def get_yolo_ball_detector():
+    """YOLOv8 for sports ball detection using COCO pretrained model."""
+    global _yolo_ball
+    if _yolo_ball is None:
+        from ultralytics import YOLO
+        # Use YOLOv8x for best accuracy on ball detection
+        # COCO class 32 = sports ball
+        _yolo_ball = YOLO('yolov8x.pt')
+    return _yolo_ball
 
 
 def get_yolo_pose():
@@ -215,67 +227,136 @@ def detect_pose_mediapipe(image_np, bbox=None):
     return keypoints
 
 
-def find_basketball(image_np, wrist_positions=None, player_height=None):
+def find_basketball_yolo(image_np, wrist_positions=None):
     """
-    Find the basketball - MUST be near the wrists (hands holding it).
-    Look for BROWN-ORANGE color (not yellow) with BLACK STRIPES.
+    Find basketball using YOLOv8 object detection (COCO class 32 = sports ball).
+    This is more reliable than color-based detection.
     
     Returns (x, y, radius) or None.
     """
     h, w = image_np.shape[:2]
-    print(f"🏀 Finding basketball in image {w}x{h}")
-    print(f"🖐️ Wrist positions: {wrist_positions}")
+    print(f"🏀 YOLOv8 basketball detection in image {w}x{h}")
     
-    # If no wrists detected, can't find ball reliably
+    try:
+        model = get_yolo_ball_detector()
+        # COCO class 32 = sports ball
+        results = model(image_np, classes=[32], conf=0.25, verbose=False)
+        
+        if not results or len(results[0].boxes) == 0:
+            print("  No sports ball detected by YOLOv8")
+            return None
+        
+        # Get all detected balls
+        boxes = results[0].boxes
+        print(f"  Found {len(boxes)} potential balls")
+        
+        best_ball = None
+        best_score = -1
+        
+        for box in boxes:
+            x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
+            conf = float(box.conf[0])
+            
+            # Calculate center and radius
+            cx = int((x1 + x2) / 2)
+            cy = int((y1 + y2) / 2)
+            radius = int(max(x2 - x1, y2 - y1) / 2)
+            
+            # Score based on confidence and proximity to wrists
+            score = conf
+            
+            if wrist_positions and len(wrist_positions) > 0:
+                # Prefer balls near the wrists (hands)
+                wrist_center_x = sum(wp[0] for wp in wrist_positions) / len(wrist_positions)
+                wrist_center_y = sum(wp[1] for wp in wrist_positions) / len(wrist_positions)
+                
+                dist_to_wrists = math.sqrt((cx - wrist_center_x)**2 + (cy - wrist_center_y)**2)
+                max_dist = h * 0.3  # 30% of image height
+                proximity_bonus = max(0, 1 - dist_to_wrists / max_dist) * 0.5
+                score += proximity_bonus
+                
+                print(f"  Ball at ({cx}, {cy}) r={radius}, conf={conf:.2f}, dist_to_wrists={dist_to_wrists:.0f}, score={score:.2f}")
+            else:
+                print(f"  Ball at ({cx}, {cy}) r={radius}, conf={conf:.2f}, score={score:.2f}")
+            
+            if score > best_score:
+                best_score = score
+                best_ball = (cx, cy, radius)
+        
+        if best_ball:
+            cx, cy, radius = best_ball
+            # Clamp radius to reasonable basketball size
+            min_radius = int(h * 0.025)
+            max_radius = int(h * 0.08)
+            radius = max(min_radius, min(radius, max_radius))
+            print(f"✅ YOLOv8 basketball at ({cx}, {cy}) radius {radius}")
+            return (cx, cy, radius)
+        
+    except Exception as e:
+        print(f"  YOLOv8 ball detection error: {e}")
+    
+    return None
+
+
+def find_basketball_color(image_np, wrist_positions=None):
+    """
+    Find basketball using color-based detection (fallback method).
+    Look for BROWN-ORANGE color with BLACK STRIPES near wrists.
+    
+    Returns (x, y, radius) or None.
+    """
+    h, w = image_np.shape[:2]
+    print(f"🎨 Color-based basketball detection in image {w}x{h}")
+    
+    # If no wrists detected, search the upper portion of the image
     if not wrist_positions or len(wrist_positions) == 0:
-        print("No wrist positions - cannot locate ball")
-        return None
+        # Default search area: upper half, center of image
+        search_x1 = int(w * 0.2)
+        search_y1 = int(h * 0.1)
+        search_x2 = int(w * 0.8)
+        search_y2 = int(h * 0.6)
+        print(f"  No wrists - searching upper center area")
+    else:
+        # Calculate the search area - around the wrists
+        wrist_xs = [wp[0] for wp in wrist_positions]
+        wrist_ys = [wp[1] for wp in wrist_positions]
+        wrist_center_x = sum(wrist_xs) / len(wrist_xs)
+        wrist_center_y = sum(wrist_ys) / len(wrist_ys)
+        
+        search_radius = int(h * 0.15)  # 15% of image height
+        search_x1 = max(0, int(wrist_center_x - search_radius))
+        search_y1 = max(0, int(wrist_center_y - search_radius))
+        search_x2 = min(w, int(wrist_center_x + search_radius))
+        search_y2 = min(h, int(wrist_center_y + search_radius))
     
-    # Calculate the search area - TIGHT around the wrists
-    wrist_xs = [wp[0] for wp in wrist_positions]
-    wrist_ys = [wp[1] for wp in wrist_positions]
-    wrist_center_x = sum(wrist_xs) / len(wrist_xs)
-    wrist_center_y = sum(wrist_ys) / len(wrist_ys)
-    
-    print(f"🎯 Wrist center: ({wrist_center_x:.0f}, {wrist_center_y:.0f})")
-    
-    # TIGHT search area - just around the hands
-    search_radius = int(h * 0.10)  # 10% of image height (smaller)
-    search_x1 = max(0, int(wrist_center_x - search_radius))
-    search_y1 = max(0, int(wrist_center_y - search_radius))
-    search_x2 = min(w, int(wrist_center_x + search_radius))
-    search_y2 = min(h, int(wrist_center_y + search_radius))
-    
-    print(f"🔍 Search area: ({search_x1},{search_y1}) to ({search_x2},{search_y2})")
+    print(f"  Search area: ({search_x1},{search_y1}) to ({search_x2},{search_y2})")
     
     # Extract the search region
     search_region = image_np[search_y1:search_y2, search_x1:search_x2]
     
     if search_region.size == 0:
-        print("Empty search region")
+        print("  Empty search region")
         return None
     
     # Convert to HSV
     hsv = cv2.cvtColor(search_region, cv2.COLOR_BGR2HSV)
     
     # BASKETBALL COLOR: Brown-orange leather
-    # Hue: 8-18 (TRUE orange/brown, NOT yellow which is 20+)
-    # Saturation: 80-200 (not too saturated like yellow jerseys)
-    # Value: 100-200 (medium brightness, not super bright)
-    lower_ball = np.array([8, 80, 100])
-    upper_ball = np.array([18, 200, 200])
+    # Extended range to catch more basketballs
+    lower_ball = np.array([5, 60, 80])
+    upper_ball = np.array([25, 255, 255])
     ball_mask = cv2.inRange(hsv, lower_ball, upper_ball)
     
     ball_count = cv2.countNonZero(ball_mask)
-    print(f"🟤 Basketball-brown pixels: {ball_count}")
+    print(f"  Basketball-orange pixels: {ball_count}")
     
-    # Also look for black stripes (to distinguish from skin/other orange)
+    # Also look for black stripes
     lower_black = np.array([0, 0, 0])
     upper_black = np.array([180, 255, 60])
     black_mask = cv2.inRange(hsv, lower_black, upper_black)
     
     # Clean up ball mask
-    kernel = np.ones((3, 3), np.uint8)
+    kernel = np.ones((5, 5), np.uint8)
     ball_mask = cv2.morphologyEx(ball_mask, cv2.MORPH_CLOSE, kernel)
     ball_mask = cv2.morphologyEx(ball_mask, cv2.MORPH_OPEN, kernel)
     
@@ -283,10 +364,10 @@ def find_basketball(image_np, wrist_positions=None, player_height=None):
     contours, _ = cv2.findContours(ball_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     
     if not contours:
-        print("No basketball-colored contours found")
+        print("  No basketball-colored contours found")
         return None
     
-    print(f"📦 Found {len(contours)} potential ball contours")
+    print(f"  Found {len(contours)} potential ball contours")
     
     # Score each contour
     best_contour = None
@@ -294,7 +375,7 @@ def find_basketball(image_np, wrist_positions=None, player_height=None):
     
     for c in contours:
         area = cv2.contourArea(c)
-        if area < 300:  # Too small
+        if area < 200:  # Too small
             continue
         
         # Get bounding box
@@ -304,53 +385,73 @@ def find_basketball(image_np, wrist_positions=None, player_height=None):
         roi_black = black_mask[y:y+bh, x:x+bw]
         if roi_black.size > 0:
             black_ratio = cv2.countNonZero(roi_black) / roi_black.size
-            has_stripes = 0.03 < black_ratio < 0.25
+            has_stripes = 0.02 < black_ratio < 0.30
         else:
             has_stripes = False
         
-        # Check circularity (ball should be roundish)
+        # Check circularity
         perimeter = cv2.arcLength(c, True)
         circularity = 4 * np.pi * area / (perimeter ** 2) if perimeter > 0 else 0
         
         # Score
         score = 0.0
-        score += min(area / 3000, 1.0) * 0.3  # Size (capped)
-        score += circularity * 0.3            # Roundness
+        score += min(area / 2000, 1.0) * 0.3  # Size
+        score += circularity * 0.4            # Roundness (more important)
         if has_stripes:
-            score += 0.4                       # Has black stripes = strong signal
-        
-        print(f"  Contour: area={area}, circ={circularity:.2f}, stripes={has_stripes}, score={score:.2f}")
+            score += 0.3                       # Has black stripes
         
         if score > best_score:
             best_score = score
             best_contour = c
     
     if best_contour is None:
-        print("No valid basketball contour found")
+        print("  No valid basketball contour found")
         return None
     
     # Get ball position from best contour
     (rel_cx, rel_cy), radius = cv2.minEnclosingCircle(best_contour)
     
-    # Also calculate radius from actual contour area (more accurate)
+    # Calculate radius from area
     actual_area = cv2.contourArea(best_contour)
     radius_from_area = int(np.sqrt(actual_area / np.pi))
-    
-    # Use the smaller of the two (minEnclosingCircle can be too big)
     radius = min(int(radius), radius_from_area + 10)
     
     # Convert to full image coordinates
     cx = int(search_x1 + rel_cx)
     cy = int(search_y1 + rel_cy)
     
-    # Basketball is roughly 9.4 inches = ~6-8% of a person's height
-    # For typical image, radius should be 3-6% of image height
-    min_radius = int(h * 0.03)
-    max_radius = int(h * 0.07)
+    # Clamp radius
+    min_radius = int(h * 0.025)
+    max_radius = int(h * 0.08)
     radius = max(min_radius, min(radius, max_radius))
     
-    print(f"✅ Basketball at ({cx}, {cy}) radius {radius} (area-based: {radius_from_area})")
+    print(f"✅ Color-based basketball at ({cx}, {cy}) radius {radius}")
     return (cx, cy, radius)
+
+
+def find_basketball(image_np, wrist_positions=None, player_height=None):
+    """
+    Find the basketball using a hybrid approach:
+    1. First try YOLOv8 object detection (more reliable)
+    2. Fall back to color-based detection if YOLO fails
+    
+    Returns (x, y, radius) or None.
+    """
+    print(f"🏀 HYBRID basketball detection")
+    
+    # Try YOLOv8 first (more reliable)
+    ball = find_basketball_yolo(image_np, wrist_positions)
+    if ball:
+        return ball
+    
+    # Fall back to color-based detection
+    print("  Falling back to color-based detection...")
+    ball = find_basketball_color(image_np, wrist_positions)
+    if ball:
+        return ball
+    
+    print("❌ No basketball detected by any method")
+    return None
 
 
 def fuse_keypoints(yolo_kp, mp_kp, ball_pos=None, image_np=None):

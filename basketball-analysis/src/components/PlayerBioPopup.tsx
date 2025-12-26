@@ -183,9 +183,9 @@ export default function PlayerBioPopup({ shooter, onClose }: PlayerBioPopupProps
       className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       onClick={handleBackdropClick}
     >
-      <div className="bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a] rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-[#FFD700]/30 shadow-2xl">
+      <div className="bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a] rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-[#FF6B35]/30 shadow-2xl">
         {/* Header with photo */}
-        <div className="relative bg-gradient-to-r from-[#FFD700]/20 to-transparent p-6">
+        <div className="relative bg-gradient-to-r from-[#FF6B35]/20 to-transparent p-6">
           {/* Close button */}
           <button
             onClick={onClose}
@@ -196,7 +196,7 @@ export default function PlayerBioPopup({ shooter, onClose }: PlayerBioPopupProps
           
           <div className="flex items-start gap-6">
             {/* Player Photo */}
-            <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-[#FFD700]/50 bg-[#3a3a3a] flex-shrink-0">
+            <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-[#FF6B35]/50 bg-[#3a3a3a] flex-shrink-0">
               {shooter.photoUrl ? (
                 <Image
                   src={shooter.photoUrl}
@@ -207,7 +207,7 @@ export default function PlayerBioPopup({ shooter, onClose }: PlayerBioPopupProps
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <span className="text-4xl font-bold text-[#FFD700]">
+                  <span className="text-4xl font-bold text-[#FF6B35]">
                     {shooter.name.split(" ").map(n => n[0]).join("")}
                   </span>
                 </div>
@@ -262,8 +262,8 @@ export default function PlayerBioPopup({ shooter, onClose }: PlayerBioPopupProps
         {/* Bio Section */}
         <div className="p-6 border-t border-[#3a3a3a]">
           <div className="flex items-center gap-2 mb-3">
-            <Info className="w-5 h-5 text-[#FFD700]" />
-            <h3 className="text-lg font-bold text-[#FFD700] uppercase tracking-wider">About {shooter.name.split(" ")[0]}</h3>
+            <Info className="w-5 h-5 text-[#FF6B35]" />
+            <h3 className="text-lg font-bold text-[#FF6B35] uppercase tracking-wider">About {shooter.name.split(" ")[0]}</h3>
           </div>
           <p className="text-[#E5E5E5] leading-relaxed text-base">{bio}</p>
         </div>
@@ -295,9 +295,9 @@ export default function PlayerBioPopup({ shooter, onClose }: PlayerBioPopupProps
             )}
             
             {/* Height */}
-            <div className="bg-[#1a1a1a] rounded-lg p-4 text-center border border-[#FFD700]/30">
-              <Ruler className="w-5 h-5 text-[#FFD700] mx-auto mb-2" />
-              <p className="text-2xl font-bold text-[#FFD700]">{formatHeight(shooter.height)}</p>
+            <div className="bg-[#1a1a1a] rounded-lg p-4 text-center border border-[#FF6B35]/30">
+              <Ruler className="w-5 h-5 text-[#FF6B35] mx-auto mb-2" />
+              <p className="text-2xl font-bold text-[#FF6B35]">{formatHeight(shooter.height)}</p>
               <p className="text-xs text-[#888] uppercase">Height</p>
             </div>
           </div>
@@ -307,8 +307,8 @@ export default function PlayerBioPopup({ shooter, onClose }: PlayerBioPopupProps
         {shooter.achievements && (
           <div className="p-6 border-t border-[#3a3a3a]">
             <div className="flex items-center gap-2 mb-3">
-              <Trophy className="w-5 h-5 text-[#FFD700]" />
-              <h3 className="text-lg font-bold text-[#FFD700] uppercase tracking-wider">Achievements</h3>
+              <Trophy className="w-5 h-5 text-[#FF6B35]" />
+              <h3 className="text-lg font-bold text-[#FF6B35] uppercase tracking-wider">Achievements</h3>
             </div>
             <p className="text-[#E5E5E5]">{shooter.achievements}</p>
           </div>
@@ -316,12 +316,12 @@ export default function PlayerBioPopup({ shooter, onClose }: PlayerBioPopupProps
         
         {/* Key Traits */}
         <div className="p-6 border-t border-[#3a3a3a]">
-          <h3 className="text-lg font-bold text-[#FFD700] uppercase tracking-wider mb-3">Key Traits</h3>
+          <h3 className="text-lg font-bold text-[#FF6B35] uppercase tracking-wider mb-3">Key Traits</h3>
           <div className="flex flex-wrap gap-2">
             {shooter.keyTraits.map((trait, idx) => (
               <span 
                 key={idx} 
-                className="px-4 py-2 rounded-full text-sm font-semibold bg-[#FFD700]/10 text-[#FFD700] border border-[#FFD700]/30"
+                className="px-4 py-2 rounded-full text-sm font-semibold bg-[#FF6B35]/10 text-[#FF6B35] border border-[#FF6B35]/30"
               >
                 {trait}
               </span>
@@ -331,24 +331,24 @@ export default function PlayerBioPopup({ shooter, onClose }: PlayerBioPopupProps
         
         {/* Shooting Style */}
         <div className="p-6 border-t border-[#3a3a3a]">
-          <h3 className="text-lg font-bold text-[#FFD700] uppercase tracking-wider mb-3">Shooting Style</h3>
+          <h3 className="text-lg font-bold text-[#FF6B35] uppercase tracking-wider mb-3">Shooting Style</h3>
           <p className="text-[#E5E5E5] italic">&ldquo;{shooter.shootingStyle}&rdquo;</p>
         </div>
         
         {/* Physical Stats */}
         <div className="p-6 border-t border-[#3a3a3a]">
-          <h3 className="text-lg font-bold text-[#FFD700] uppercase tracking-wider mb-3">Physical Profile</h3>
+          <h3 className="text-lg font-bold text-[#FF6B35] uppercase tracking-wider mb-3">Physical Profile</h3>
           <div className="grid grid-cols-3 gap-4 text-center">
             <div className="bg-[#2a2a2a] rounded-lg p-3">
-              <p className="text-xl font-bold text-[#FFD700]">{formatHeight(shooter.height)}</p>
+              <p className="text-xl font-bold text-[#FF6B35]">{formatHeight(shooter.height)}</p>
               <p className="text-xs text-[#888] uppercase">Height</p>
             </div>
             <div className="bg-[#2a2a2a] rounded-lg p-3">
-              <p className="text-xl font-bold text-[#FFD700]">{formatHeight(shooter.wingspan)}</p>
+              <p className="text-xl font-bold text-[#FF6B35]">{formatHeight(shooter.wingspan)}</p>
               <p className="text-xs text-[#888] uppercase">Wingspan</p>
             </div>
             <div className="bg-[#2a2a2a] rounded-lg p-3">
-              <p className="text-xl font-bold text-[#FFD700]">{shooter.weight} lbs</p>
+              <p className="text-xl font-bold text-[#FF6B35]">{shooter.weight} lbs</p>
               <p className="text-xs text-[#888] uppercase">Weight</p>
             </div>
           </div>
@@ -358,7 +358,7 @@ export default function PlayerBioPopup({ shooter, onClose }: PlayerBioPopupProps
         <div className="p-6 border-t border-[#3a3a3a]">
           <button
             onClick={onClose}
-            className="w-full py-3 bg-[#FFD700] hover:bg-[#e5c200] text-black font-bold rounded-lg transition-colors uppercase tracking-wider"
+            className="w-full py-3 bg-[#FF6B35] hover:bg-[#e5c200] text-black font-bold rounded-lg transition-colors uppercase tracking-wider"
           >
             Close
           </button>

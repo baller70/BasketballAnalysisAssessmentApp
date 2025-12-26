@@ -47,7 +47,7 @@ function getAngleStatus(value: number, min: number, max: number): "optimal" | "c
 function getStatusColor(status: "optimal" | "close" | "needs_work"): string {
   switch (status) {
     case "optimal": return "text-green-500"
-    case "close": return "text-yellow-500"
+    case "close": return "text-orange-500"
     case "needs_work": return "text-red-500"
   }
 }
@@ -55,7 +55,7 @@ function getStatusColor(status: "optimal" | "close" | "needs_work"): string {
 function getStatusBgColor(status: "optimal" | "close" | "needs_work"): string {
   switch (status) {
     case "optimal": return "bg-green-500/20 border-green-500/50"
-    case "close": return "bg-yellow-500/20 border-yellow-500/50"
+    case "close": return "bg-orange-500/20 border-orange-500/50"
     case "needs_work": return "bg-red-500/20 border-red-500/50"
   }
 }
@@ -165,7 +165,7 @@ function AngleCard({ angle, status, showOptimalRange }: AngleCardProps) {
         {/* Current value marker */}
         <div
           className={`absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-white ${
-            status === "optimal" ? "bg-green-500" : status === "close" ? "bg-yellow-500" : "bg-red-500"
+            status === "optimal" ? "bg-green-500" : status === "close" ? "bg-orange-500" : "bg-red-500"
           }`}
           style={{ left: `calc(${valuePosition}% - 6px)` }}
         />

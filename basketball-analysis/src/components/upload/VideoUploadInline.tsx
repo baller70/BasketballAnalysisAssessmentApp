@@ -108,12 +108,12 @@ export function VideoUploadInline({ videoFile, onVideoFileChange }: VideoUploadI
     <div className="space-y-4">
       {/* Video Requirements */}
       <div className="bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg p-4">
-        <h5 className="text-[#FFD700] font-semibold text-xs mb-2 flex items-center gap-2">
+        <h5 className="text-[#FF6B35] font-semibold text-xs mb-2 flex items-center gap-2">
           <AlertTriangle className="w-3 h-3" />
           Video Requirements
         </h5>
         <ul className="text-[#888] text-xs space-y-1">
-          <li>• <strong className="text-[#FFD700]">Maximum 10 seconds</strong>, under 50MB</li>
+          <li>• <strong className="text-[#FF6B35]">Maximum 90 seconds</strong>, under 50MB</li>
           <li>• Full body visible throughout the shot</li>
           <li>• Single shooter, clear view</li>
           <li>• Good lighting, minimal camera shake</li>
@@ -131,12 +131,12 @@ export function VideoUploadInline({ videoFile, onVideoFileChange }: VideoUploadI
 
       {/* Upload Area */}
       {!videoFile ? (
-        <label className="border-2 border-dashed border-[#4a4a4a] rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-[#FFD700]/60 hover:bg-[#FFD700]/5 transition-all duration-200">
+        <label className="border-2 border-dashed border-[#4a4a4a] rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-[#FF6B35]/60 hover:bg-[#FF6B35]/5 transition-all duration-200">
           <div className="w-16 h-16 rounded-full bg-gradient-to-br from-orange-500/20 to-red-500/20 border border-orange-500/30 flex items-center justify-center mb-4">
             <Video className="w-8 h-8 text-orange-400" />
           </div>
           <span className="text-[#E5E5E5] font-medium">Click to upload video</span>
-          <span className="text-[#666] text-sm mt-1">MP4, MOV, WebM (max 10 sec, 50MB)</span>
+          <span className="text-[#666] text-sm mt-1">MP4, MOV, WebM (max 90 sec, 50MB)</span>
           <input
             ref={fileInputRef}
             type="file"
@@ -190,7 +190,7 @@ export function VideoUploadInline({ videoFile, onVideoFileChange }: VideoUploadI
 
           {/* Change Video Button */}
           <label className="block">
-            <div className="text-center text-[#888] text-sm hover:text-[#FFD700] cursor-pointer transition-colors">
+            <div className="text-center text-[#888] text-sm hover:text-[#FF6B35] cursor-pointer transition-colors">
               Click to change video
             </div>
             <input
@@ -206,7 +206,7 @@ export function VideoUploadInline({ videoFile, onVideoFileChange }: VideoUploadI
       {/* Tips */}
       <div className="bg-[#252525] rounded-lg p-3">
         <div className="flex items-start gap-2">
-          <div className="text-[#FFD700] text-lg">💡</div>
+          <div className="text-[#FF6B35] text-lg">💡</div>
           <div>
             <div className="text-[#E5E5E5] text-xs font-medium mb-1">Pro Tip</div>
             <div className="text-[#888] text-xs">

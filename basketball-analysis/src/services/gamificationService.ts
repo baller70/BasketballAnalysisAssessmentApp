@@ -350,7 +350,7 @@ export const USER_LEVELS: UserLevel[] = [
     name: 'Legend',
     minPoints: 1001,
     maxPoints: Infinity,
-    color: '#FFD700',
+    color: '#FF6B35',
     perks: ['Exclusive features', 'Legend badge', 'Beta access']
   }
 ]
@@ -875,7 +875,7 @@ export function getRarityColor(rarity: Badge['rarity']): string {
     case 'uncommon': return '#4CAF50'
     case 'rare': return '#2196F3'
     case 'epic': return '#9C27B0'
-    case 'legendary': return '#FFD700'
+    case 'legendary': return '#FF6B35'
     default: return '#888888'
   }
 }

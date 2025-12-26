@@ -79,7 +79,7 @@ export const STORAGE_KEYS = {
 
 // Color tokens (matching Tailwind config)
 export const COLORS = {
-  PRIMARY: "#FFD700", // Gold
+  PRIMARY: "#FF6B35", // Gold
   BACKGROUND: "#1a1a1a",
   CARD: "#2C2C2C",
   BORDER: "#3a3a3a",

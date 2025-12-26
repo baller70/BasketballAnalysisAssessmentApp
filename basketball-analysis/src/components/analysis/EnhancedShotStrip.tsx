@@ -96,7 +96,7 @@ export function EnhancedShotStrip({
         {/* Header */}
         <div className="px-4 py-3 border-b border-[#3a3a3a] flex items-center justify-between">
           <div>
-            <h3 className="text-[#FFD700] font-bold text-sm uppercase tracking-wider">{title}</h3>
+            <h3 className="text-[#FF6B35] font-bold text-sm uppercase tracking-wider">{title}</h3>
             <p className="text-[#888] text-xs mt-0.5">{frames.length} key phases extracted</p>
           </div>
           <div className="flex items-center gap-2">
@@ -133,7 +133,7 @@ export function EnhancedShotStrip({
             return (
               <div
                 key={frame.id || idx}
-                className={`flex-shrink-0 rounded-lg overflow-hidden bg-[#1a1a1a] border-2 transition-all cursor-pointer hover:border-[#FFD700]/60 ${
+                className={`flex-shrink-0 rounded-lg overflow-hidden bg-[#1a1a1a] border-2 transition-all cursor-pointer hover:border-[#FF6B35]/60 ${
                   layout === "horizontal" ? "w-44" : ""
                 }`}
                 style={{
@@ -244,7 +244,7 @@ export function EnhancedShotStrip({
         {/* Observations Footer */}
         {frames[currentIndex]?.observations && frames[currentIndex].observations!.length > 0 && (
           <div className="px-4 py-3 border-t border-[#3a3a3a] bg-[#1a1a1a]">
-            <p className="text-[#FFD700] text-xs font-bold mb-1">
+            <p className="text-[#FF6B35] text-xs font-bold mb-1">
               {PHASE_LABELS[frames[currentIndex].phase]} Observations:
             </p>
             <ul className="text-[#888] text-xs space-y-0.5">
@@ -303,7 +303,7 @@ export function EnhancedShotStrip({
                 <div className="grid grid-cols-3 gap-3 mb-4">
                   {selectedFrame.metrics.elbowAngle && (
                     <div className="bg-[#2a2a2a] rounded p-3 text-center">
-                      <p className="text-[#FFD700] text-xl font-bold">
+                      <p className="text-[#FF6B35] text-xl font-bold">
                         {selectedFrame.metrics.elbowAngle}°
                       </p>
                       <p className="text-[#888] text-xs">Elbow Angle</p>
@@ -311,7 +311,7 @@ export function EnhancedShotStrip({
                   )}
                   {selectedFrame.metrics.kneeAngle && (
                     <div className="bg-[#2a2a2a] rounded p-3 text-center">
-                      <p className="text-[#FFD700] text-xl font-bold">
+                      <p className="text-[#FF6B35] text-xl font-bold">
                         {selectedFrame.metrics.kneeAngle}°
                       </p>
                       <p className="text-[#888] text-xs">Knee Angle</p>
@@ -319,7 +319,7 @@ export function EnhancedShotStrip({
                   )}
                   {selectedFrame.metrics.wristAngle && (
                     <div className="bg-[#2a2a2a] rounded p-3 text-center">
-                      <p className="text-[#FFD700] text-xl font-bold">
+                      <p className="text-[#FF6B35] text-xl font-bold">
                         {selectedFrame.metrics.wristAngle}°
                       </p>
                       <p className="text-[#888] text-xs">Wrist Angle</p>
@@ -334,7 +334,7 @@ export function EnhancedShotStrip({
                   <ul className="text-white text-sm space-y-1">
                     {selectedFrame.observations.map((obs, i) => (
                       <li key={i} className="flex items-start gap-2">
-                        <span className="text-[#FFD700]">•</span>
+                        <span className="text-[#FF6B35]">•</span>
                         {obs}
                       </li>
                     ))}

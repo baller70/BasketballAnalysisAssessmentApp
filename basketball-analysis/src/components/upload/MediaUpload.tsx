@@ -176,13 +176,13 @@ export function MediaUpload() {
       {/* Image Requirements + Angle Slots (images) */}
       {
         <div className="bg-[#2a2a2a] border border-[#4a4a4a] rounded-lg p-4 space-y-4">
-          <h4 className="text-[#FFD700] font-semibold text-sm mb-2 flex items-center gap-2">
+          <h4 className="text-[#FF6B35] font-semibold text-sm mb-2 flex items-center gap-2">
             <AlertTriangle className="w-4 h-4" />
             Image Requirements for Analysis
           </h4>
           <ul className="text-[#888] text-xs space-y-1">
             <li>• Full body visible (head to feet)</li>
-            <li>• <strong className="text-[#FFD700]">Center your object</strong> / player in the frame</li>
+            <li>• <strong className="text-[#FF6B35]">Center your object</strong> / player in the frame</li>
             <li>• Player in shooting position (arms raised)</li>
             <li>• Clear, well-lit image</li>
             <li>• Single person in frame</li>
@@ -208,11 +208,11 @@ export function MediaUpload() {
           {/* 7 Angle Slots */}
           <div className="space-y-3 mt-4">
             <div className="flex items-center justify-between">
-              <label className="block text-sm font-semibold text-[#FFD700]">Upload Photos (Angles 1–7)</label>
+              <label className="block text-sm font-semibold text-[#FF6B35]">Upload Photos (Angles 1–7)</label>
               <button
                 type="button"
                 onClick={clearShotBreakdown}
-                className="text-xs text-[#E5E5E5] underline underline-offset-2 hover:text-[#FFD700]"
+                className="text-xs text-[#E5E5E5] underline underline-offset-2 hover:text-[#FF6B35]"
               >
                 Clear all
               </button>
@@ -225,10 +225,10 @@ export function MediaUpload() {
                   htmlFor={`angle-slot-${idx}`}
                   className={cn(
                     "border rounded-md p-3 text-xs bg-[#1f1f1f] flex flex-col items-center gap-2 cursor-pointer transition-colors",
-                    slot.file ? "border-green-500/60 bg-green-500/10" : "border-[#3a3a3a] hover:border-[#FFD700]/60"
+                    slot.file ? "border-green-500/60 bg-green-500/10" : "border-[#3a3a3a] hover:border-[#FF6B35]/60"
                   )}
                 >
-                  <span className="font-semibold text-[#FFD700]">{slot.label}</span>
+                  <span className="font-semibold text-[#FF6B35]">{slot.label}</span>
                   <input
                     id={`angle-slot-${idx}`}
                     type="file"

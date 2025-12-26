@@ -232,7 +232,7 @@ export interface ChecklistItem {
 export const VIDEO_CHECKLIST: ChecklistItem[] = [
   {
     id: "duration",
-    label: "10 seconds maximum duration",
+    label: "90 seconds maximum duration",
     description: "Keeps file size manageable and focuses on one shot",
     required: true,
   },

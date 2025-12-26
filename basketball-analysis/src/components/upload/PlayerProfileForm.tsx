@@ -62,8 +62,8 @@ export function PlayerProfileForm() {
     setPlayerProfile({ [field]: value })
   }
 
-  const inputClass = "w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-black placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
-  const selectClass = "w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-black focus:outline-none focus:ring-2 focus:ring-[#FFD700]"
+  const inputClass = "w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-black placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FF6B35]"
+  const selectClass = "w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-black focus:outline-none focus:ring-2 focus:ring-[#FF6B35]"
   const labelClass = "text-[#E5E5E5] text-sm font-medium"
 
   return (

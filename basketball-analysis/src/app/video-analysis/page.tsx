@@ -14,7 +14,7 @@ export default function VideoAnalysisPage() {
         <div className="max-w-4xl mx-auto flex items-center gap-4">
           <Link 
             href="/"
-            className="text-[#888] hover:text-[#FFD700] transition-colors flex items-center gap-2"
+            className="text-[#888] hover:text-[#FF6B35] transition-colors flex items-center gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Image Analysis
@@ -25,11 +25,11 @@ export default function VideoAnalysisPage() {
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 py-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-[#FFD700] mb-2">
+          <h1 className="text-3xl font-bold text-[#FF6B35] mb-2">
             Video Shot Analysis
           </h1>
           <p className="text-[#888] max-w-xl mx-auto">
-            Upload a video of your basketball shot (max 10 seconds) to get frame-by-frame analysis,
+            Upload a video of your basketball shot (max 90 seconds) to get frame-by-frame analysis,
             phase detection, and the same comprehensive feedback as image analysis.
           </p>
         </div>
@@ -39,11 +39,11 @@ export default function VideoAnalysisPage() {
           {/* Video Upload Section */}
           <div className="p-6 border-b border-[#3a3a3a]">
             <div className="flex items-center gap-3 mb-2">
-              <Video className="w-5 h-5 text-[#FFD700]" />
-              <h2 className="text-[#FFD700] font-semibold text-lg">Upload Your Shooting Video</h2>
+              <Video className="w-5 h-5 text-[#FF6B35]" />
+              <h2 className="text-[#FF6B35] font-semibold text-lg">Upload Your Shooting Video</h2>
             </div>
             <p className="text-[#E5E5E5] text-sm mb-6">
-              Upload a short video (max 10 seconds) of your shooting form. The system will automatically
+              Upload a short video (max 90 seconds) of your shooting form. The system will automatically
               detect the shooting motion and extract 3 key frames for analysis.
             </p>
             <VideoUpload />
@@ -52,8 +52,8 @@ export default function VideoAnalysisPage() {
           {/* Player Profile Section */}
           <div className="p-6 border-b border-[#3a3a3a]">
             <div className="flex items-center gap-3 mb-2">
-              <User className="w-5 h-5 text-[#FFD700]" />
-              <h2 className="text-[#FFD700] font-semibold text-lg">Player Profile (Optional)</h2>
+              <User className="w-5 h-5 text-[#FF6B35]" />
+              <h2 className="text-[#FF6B35] font-semibold text-lg">Player Profile (Optional)</h2>
             </div>
             <p className="text-[#E5E5E5] text-sm mb-6">
               Fill out your information for personalized analysis and elite shooter matching.
@@ -64,7 +64,7 @@ export default function VideoAnalysisPage() {
 
         {/* Info Section */}
         <div className="mt-8 bg-[#2a2a2a] border border-[#4a4a4a] rounded-lg p-6">
-          <h3 className="text-[#FFD700] font-semibold mb-4">How Video Analysis Works</h3>
+          <h3 className="text-[#FF6B35] font-semibold mb-4">How Video Analysis Works</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-[#888]">
             <div className="space-y-2">
               <h4 className="text-[#E5E5E5] font-medium">1. Smart Shot Detection</h4>
@@ -87,7 +87,7 @@ export default function VideoAnalysisPage() {
 
         {/* Tips */}
         <div className="mt-4 bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg p-4">
-          <h4 className="text-[#FFD700] font-semibold text-sm mb-2">Tips for Best Results</h4>
+          <h4 className="text-[#FF6B35] font-semibold text-sm mb-2">Tips for Best Results</h4>
           <ul className="text-[#888] text-xs space-y-1">
             <li>• Film from the side or 45° angle for best pose detection</li>
             <li>• Ensure your full body is visible throughout the shot</li>

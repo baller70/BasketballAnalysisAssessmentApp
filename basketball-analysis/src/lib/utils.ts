@@ -93,7 +93,7 @@ export function getFormCategoryColor(category: string): string {
   const colors: Record<string, string> = {
     OPTIMAL: "text-green-500",
     GOOD: "text-green-400",
-    NEEDS_IMPROVEMENT: "text-yellow-500",
+    NEEDS_IMPROVEMENT: "text-orange-500",
     CRITICAL: "text-red-500",
   }
   return colors[category] || "text-gray-500"
@@ -105,7 +105,7 @@ export function getFormCategoryColor(category: string): string {
 export function getSeverityColor(severity: string): string {
   const colors: Record<string, string> = {
     MINOR: "bg-blue-500/20 text-blue-400 border-blue-500/50",
-    MODERATE: "bg-yellow-500/20 text-yellow-400 border-yellow-500/50",
+    MODERATE: "bg-orange-500/20 text-orange-400 border-orange-500/50",
     MAJOR: "bg-orange-500/20 text-orange-400 border-orange-500/50",
     CRITICAL: "bg-red-500/20 text-red-400 border-red-500/50",
   }
@@ -187,9 +187,7 @@ export function throttle<T extends (...args: Parameters<T>) => ReturnType<T>>(
       setTimeout(() => (inThrottle = false), limit)
     }
   }
-}
-
-/**
+}/**
  * Clamps a number between min and max values
  */
 export function clamp(value: number, min: number, max: number): number {
@@ -227,9 +225,7 @@ export function safeJsonParse<T>(json: string, fallback: T): T {
   } catch {
     return fallback
   }
-}
-
-/**
+}/**
  * Checks if value is a valid number
  */
 export function isValidNumber(value: unknown): value is number {

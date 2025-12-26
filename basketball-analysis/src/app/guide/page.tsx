@@ -45,10 +45,10 @@ export default function GuidePage() {
     <div className="container mx-auto px-6 py-8">
       {/* Hero Section */}
       <div className="text-center mb-12">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-[#FFD700]/20 rounded-full mb-4">
-          <BookOpen className="w-8 h-8 text-[#FFD700]" />
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-[#FF6B35]/20 rounded-full mb-4">
+          <BookOpen className="w-8 h-8 text-[#FF6B35]" />
         </div>
-        <h1 className="text-4xl font-bold text-[#FFD700] mb-3">Shooting Form Guide</h1>
+        <h1 className="text-4xl font-bold text-[#FF6B35] mb-3">Shooting Form Guide</h1>
         <p className="text-[#E5E5E5] text-lg max-w-2xl mx-auto">
           Master the fundamentals of basketball shooting mechanics. Learn the difference between proper and improper techniques to improve your game.
         </p>
@@ -58,21 +58,21 @@ export default function GuidePage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
         <div className="bg-[#2C2C2C] rounded-lg p-6 border border-[#3a3a3a]">
           <div className="flex items-center gap-3 mb-3">
-            <Target className="w-6 h-6 text-[#FFD700]" />
+            <Target className="w-6 h-6 text-[#FF6B35]" />
             <h3 className="font-semibold text-[#E5E5E5]">Focus on Form</h3>
           </div>
           <p className="text-[#888] text-sm">Consistent form leads to consistent results. Practice each element until it becomes muscle memory.</p>
         </div>
         <div className="bg-[#2C2C2C] rounded-lg p-6 border border-[#3a3a3a]">
           <div className="flex items-center gap-3 mb-3">
-            <Crosshair className="w-6 h-6 text-[#FFD700]" />
+            <Crosshair className="w-6 h-6 text-[#FF6B35]" />
             <h3 className="font-semibold text-[#E5E5E5]">Aim Small, Miss Small</h3>
           </div>
           <p className="text-[#888] text-sm">Pick a specific target on the rim or backboard. The more precise your aim, the more accurate your shot.</p>
         </div>
         <div className="bg-[#2C2C2C] rounded-lg p-6 border border-[#3a3a3a]">
           <div className="flex items-center gap-3 mb-3">
-            <Hand className="w-6 h-6 text-[#FFD700]" />
+            <Hand className="w-6 h-6 text-[#FF6B35]" />
             <h3 className="font-semibold text-[#E5E5E5]">Soft Touch</h3>
           </div>
           <p className="text-[#888] text-sm">A shooter&apos;s touch comes from fingertip control. Keep the ball off your palm for maximum control and spin.</p>
@@ -82,7 +82,7 @@ export default function GuidePage() {
       {/* Main Guide Content */}
       <div className="bg-[#2C2C2C] rounded-lg overflow-hidden shadow-lg">
         <div className="p-6 border-b border-[#3a3a3a]">
-          <h2 className="text-2xl font-bold text-[#FFD700] mb-2">Shooting Form Reference</h2>
+          <h2 className="text-2xl font-bold text-[#FF6B35] mb-2">Shooting Form Reference</h2>
           <p className="text-[#E5E5E5]">Compare correct and incorrect shooting mechanics side by side</p>
         </div>
         
@@ -113,14 +113,14 @@ export default function GuidePage() {
 
       {/* Call to Action */}
       <div className="mt-12 text-center">
-        <div className="bg-gradient-to-r from-[#FFD700]/20 to-[#FFA500]/20 rounded-lg p-8 border border-[#FFD700]/30">
-          <h3 className="text-2xl font-bold text-[#FFD700] mb-3">Ready to Analyze Your Shot?</h3>
+        <div className="bg-gradient-to-r from-[#FF6B35]/20 to-[#FF4500]/20 rounded-lg p-8 border border-[#FF6B35]/30">
+          <h3 className="text-2xl font-bold text-[#FF6B35] mb-3">Ready to Analyze Your Shot?</h3>
           <p className="text-[#E5E5E5] mb-6 max-w-xl mx-auto">
             Upload a photo or video of your shooting form and get instant AI-powered analysis with personalized feedback.
           </p>
           <a 
             href="/" 
-            className="inline-flex items-center gap-2 bg-[#FFD700] hover:bg-[#E5C100] text-[#1a1a1a] font-semibold px-8 py-3 rounded-lg transition-colors"
+            className="inline-flex items-center gap-2 bg-[#FF6B35] hover:bg-[#E55300] text-[#1a1a1a] font-semibold px-8 py-3 rounded-lg transition-colors"
           >
             Start Analysis
             <ArrowRight className="w-5 h-5" />

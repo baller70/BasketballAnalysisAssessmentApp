@@ -560,7 +560,7 @@ export default function ShootingFormsAdminPage() {
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
       {/* Header */}
-      <header className="bg-gradient-to-r from-[#1a1a2e] to-[#16213e] border-b border-yellow-500/20">
+      <header className="bg-gradient-to-r from-[#1a1a2e] to-[#16213e] border-b border-orange-500/20">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -568,7 +568,7 @@ export default function ShootingFormsAdminPage() {
                 <ChevronLeft size={24} />
               </Link>
               <div>
-                <h1 className="text-2xl font-bold text-yellow-400">Shooting Form Image Manager</h1>
+                <h1 className="text-2xl font-bold text-orange-400">Shooting Form Image Manager</h1>
                 <p className="text-gray-400 text-sm">Review, approve, and manage shooting form images</p>
               </div>
             </div>
@@ -601,8 +601,8 @@ export default function ShootingFormsAdminPage() {
           </div>
           <div className="bg-[#1a1a2e] rounded-xl p-4 border border-gray-700">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-yellow-500/20 rounded-lg">
-                <Clock className="text-yellow-400" size={24} />
+              <div className="p-2 bg-orange-500/20 rounded-lg">
+                <Clock className="text-orange-400" size={24} />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.pending}</p>
@@ -663,7 +663,7 @@ export default function ShootingFormsAdminPage() {
         {/* Upload Section */}
         <div className="bg-[#1a1a2e] rounded-xl p-6 border border-gray-700 mb-6">
           <h2 className="text-xl font-bold mb-4 flex items-center space-x-2">
-            <Upload className="text-yellow-400" />
+            <Upload className="text-orange-400" />
             <span>Upload Images</span>
           </h2>
           
@@ -677,7 +677,7 @@ export default function ShootingFormsAdminPage() {
                   placeholder="Search player..."
                   value={playerSearch}
                   onChange={(e) => setPlayerSearch(e.target.value)}
-                  className="w-full bg-[#0a0a0a] border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-yellow-500"
+                  className="w-full bg-[#0a0a0a] border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-orange-500"
                 />
                 {playerSearch && (
                   <div className="absolute z-10 w-full mt-1 bg-[#1a1a2e] border border-gray-600 rounded-lg max-h-60 overflow-y-auto">
@@ -722,7 +722,7 @@ export default function ShootingFormsAdminPage() {
                 />
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-black font-bold rounded-lg hover:from-yellow-600 hover:to-orange-600 transition-all"
+                  className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-500 text-black font-bold rounded-lg hover:from-orange-600 hover:to-orange-600 transition-all"
                 >
                   <Upload size={20} />
                   <span>Select Files (Bulk Upload)</span>
@@ -738,7 +738,7 @@ export default function ShootingFormsAdminPage() {
                     placeholder="Paste image URL..."
                     value={urlInput}
                     onChange={(e) => setUrlInput(e.target.value)}
-                    className="flex-1 bg-[#0a0a0a] border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-yellow-500"
+                    className="flex-1 bg-[#0a0a0a] border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-orange-500"
                   />
                   <button
                     onClick={handleUrlUpload}
@@ -763,7 +763,7 @@ export default function ShootingFormsAdminPage() {
                   onClick={() => setFilterStatus(status)}
                   className={`px-4 py-2 rounded-lg transition-colors capitalize ${
                     filterStatus === status 
-                      ? 'bg-yellow-500 text-black font-bold' 
+                      ? 'bg-orange-500 text-black font-bold' 
                       : 'text-gray-400 hover:text-white'
                   }`}
                 >
@@ -780,7 +780,7 @@ export default function ShootingFormsAdminPage() {
               placeholder="Search by player name..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 bg-[#1a1a2e] border border-gray-600 rounded-lg text-white focus:outline-none focus:border-yellow-500 w-64"
+              className="pl-10 pr-4 py-2 bg-[#1a1a2e] border border-gray-600 rounded-lg text-white focus:outline-none focus:border-orange-500 w-64"
             />
           </div>
         </div>
@@ -800,7 +800,7 @@ export default function ShootingFormsAdminPage() {
                 className={`bg-[#1a1a2e] rounded-xl overflow-hidden border-2 transition-all ${
                   image.status === 'approved' ? 'border-green-500' :
                   image.status === 'rejected' ? 'border-red-500' :
-                  'border-gray-700 hover:border-yellow-500'
+                  'border-gray-700 hover:border-orange-500'
                 }`}
               >
                 {/* Image Preview */}
@@ -819,7 +819,7 @@ export default function ShootingFormsAdminPage() {
                   <div className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-bold uppercase ${
                     image.status === 'approved' ? 'bg-green-500 text-white' :
                     image.status === 'rejected' ? 'bg-red-500 text-white' :
-                    'bg-yellow-500 text-black'
+                    'bg-orange-500 text-black'
                   }`}>
                     {image.status}
                   </div>
@@ -892,7 +892,7 @@ export default function ShootingFormsAdminPage() {
                     {image.status !== 'pending' && (
                       <button
                         onClick={() => resetImage(image.id)}
-                        className="p-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg transition-colors"
+                        className="p-2 bg-orange-600 hover:bg-orange-700 rounded-lg transition-colors"
                         title="Reset to Pending"
                       >
                         <RotateCcw size={16} />
@@ -957,7 +957,7 @@ export default function ShootingFormsAdminPage() {
                 {/* Crop overlay */}
                 {cropStart && cropEnd && (
                   <div
-                    className="absolute border-2 border-yellow-400 bg-yellow-400/20"
+                    className="absolute border-2 border-orange-400 bg-orange-400/20"
                     style={{
                       left: `${Math.min(cropStart.x, cropEnd.x)}%`,
                       top: `${Math.min(cropStart.y, cropEnd.y)}%`,
@@ -1022,7 +1022,7 @@ export default function ShootingFormsAdminPage() {
                 placeholder="Search player..."
                 value={playerSearch}
                 onChange={(e) => setPlayerSearch(e.target.value)}
-                className="w-full bg-[#0a0a0a] border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-yellow-500 mb-4"
+                className="w-full bg-[#0a0a0a] border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-orange-500 mb-4"
                 autoFocus
               />
               <div className="max-h-60 overflow-y-auto space-y-1">
@@ -1037,7 +1037,7 @@ export default function ShootingFormsAdminPage() {
                       <p className="text-gray-500 text-sm">{player.team} • {player.league}</p>
                     </div>
                     <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${
-                      player.tier === 'legendary' ? 'bg-yellow-500 text-black' :
+                      player.tier === 'legendary' ? 'bg-orange-500 text-black' :
                       player.tier === 'elite' ? 'bg-purple-500 text-white' :
                       player.tier === 'great' ? 'bg-blue-500 text-white' :
                       'bg-gray-500 text-white'
@@ -1061,7 +1061,7 @@ export default function ShootingFormsAdminPage() {
           <div className="relative max-w-5xl max-h-[90vh]" onClick={e => e.stopPropagation()}>
             <button 
               onClick={() => setSelectedImage(null)}
-              className="absolute -top-12 right-0 text-white hover:text-yellow-400 transition-colors"
+              className="absolute -top-12 right-0 text-white hover:text-orange-400 transition-colors"
             >
               <X size={32} />
             </button>
@@ -1077,7 +1077,7 @@ export default function ShootingFormsAdminPage() {
                   <p className="text-gray-400">Status: <span className={`font-bold ${
                   selectedImage.status === 'approved' ? 'text-green-400' :
                   selectedImage.status === 'rejected' ? 'text-red-400' :
-                  'text-yellow-400'
+                  'text-orange-400'
                 }`}>{selectedImage.status.toUpperCase()}</span></p>
               </div>
               <div className="flex space-x-2">

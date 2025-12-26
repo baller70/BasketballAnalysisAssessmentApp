@@ -167,7 +167,7 @@ export default function AnalyzePage() {
             {/* Tips */}
             <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
               <h3 className="font-semibold text-white mb-3 flex items-center gap-2">
-                <span className="text-yellow-400">💡</span>
+                <span className="text-orange-400">💡</span>
                 Tips for Best Results
               </h3>
               <ul className="space-y-2 text-sm text-gray-300">

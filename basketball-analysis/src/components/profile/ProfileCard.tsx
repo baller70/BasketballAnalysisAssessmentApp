@@ -53,7 +53,7 @@ export function ProfileCard({
   const iconColorClass = {
     primary: "text-blue-700",
     success: "text-green-600",
-    warning: "text-yellow-500",
+    warning: "text-orange-500",
     critical: "text-red-600",
     neutral: "text-gray-500",
   }[iconColor]

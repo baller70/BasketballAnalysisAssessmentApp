@@ -131,7 +131,7 @@ export const FormMetricCard: React.FC<FormMetricCardProps> = ({
     warning: {
       bg: "bg-yellow-50",
       border: "border-yellow-200",
-      text: "text-yellow-700",
+      text: "text-orange-700",
     },
     critical: {
       bg: "bg-red-50",

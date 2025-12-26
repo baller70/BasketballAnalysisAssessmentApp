@@ -5,6 +5,7 @@ import { Download, X, Eye, EyeOff, Sparkles, Zap, Loader2 } from "lucide-react"
 import { MedalIcon, type MedalTier } from "@/components/icons/MedalIcons"
 import { getMedalTierFromStatus, getMedalTierFromAngles } from "@/lib/medalRanking"
 import { enhanceImage, type EnhancementTier } from "@/services/imageEnhancement"
+import { addWatermarkToImage } from "@/lib/watermark"
 
 const HYBRID_API_URL = process.env.NEXT_PUBLIC_HYBRID_API_URL || 'http://localhost:5001'
 
@@ -42,7 +43,7 @@ interface AutoScreenshotsProps {
 
 // Medal tier styles matching the medal colors
 const MEDAL_TIER_STYLES: Record<MedalTier, { border: string; bg: string; text: string }> = {
-  gold: { border: "border-[#FFD700]", bg: "bg-[#FFD700]/10", text: "text-[#FFD700]" },
+  gold: { border: "border-[#FF6B35]", bg: "bg-[#FF6B35]/10", text: "text-[#FF6B35]" },
   silver: { border: "border-[#C0C0C0]", bg: "bg-[#C0C0C0]/10", text: "text-[#C0C0C0]" },
   bronze: { border: "border-[#CD7F32]", bg: "bg-[#CD7F32]/10", text: "text-[#CD7F32]" },
   copper: { border: "border-[#B87333]", bg: "bg-[#B87333]/10", text: "text-[#B87333]" },
@@ -176,6 +177,7 @@ async function getKeypointsFromHybrid(imageBase64: string): Promise<HybridData |
 
 export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketball: passedBasketball, imageSize, angles: passedAngles }: AutoScreenshotsProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const logoImageRef = useRef<HTMLImageElement | null>(null)
   const [screenshots, setScreenshots] = useState<Screenshot[]>([])
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [isProcessing, setIsProcessing] = useState(true)
@@ -194,6 +196,15 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
   const [enhancementTier, setEnhancementTier] = useState<EnhancementTier>('basic')
   const [enhancedImageUrl, setEnhancedImageUrl] = useState<string | null>(null)
   const [enhancementError, setEnhancementError] = useState<string | null>(null)
+  
+  // Load the SHOTIQ logo image
+  useEffect(() => {
+    const logoImg = new window.Image()
+    logoImg.onload = () => {
+      logoImageRef.current = logoImg
+    }
+    logoImg.src = '/images/shotiq-logo.png'
+  }, [])
 
   // Process screenshot through hybrid when expanded
   const processScreenshotHybrid = useCallback(async (screenshotId: string, dataUrl: string) => {
@@ -910,7 +921,7 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
           )
           
           // Border
-          ctx.strokeStyle = '#FFD700'
+          ctx.strokeStyle = '#FF6B35'
           ctx.lineWidth = 2
           ctx.strokeRect(
             bgX,
@@ -920,7 +931,7 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
           )
           
           // Line from keypoint to label
-          ctx.strokeStyle = '#FFD700'
+          ctx.strokeStyle = '#FF6B35'
           ctx.lineWidth = 2
           ctx.beginPath()
           ctx.moveTo(kp.x, kp.y)
@@ -932,9 +943,29 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
           ctx.stroke()
           
           // Text
-          ctx.fillStyle = '#FFD700'
+          ctx.fillStyle = '#FF6B35'
           ctx.fillText(text, labelX, labelY)
         }
+      }
+      
+      // ============================================
+      // SHOTIQ WATERMARK - Uses the ACTUAL logo image provided by user - BIG TOP RIGHT
+      // ============================================
+      if (logoImageRef.current) {
+        const wmOpacity = 0.85
+        const wmPadding = 15
+        const wmWidth = 280
+        const wmHeight = 140
+        const wmX = totalW * dpr - wmWidth - wmPadding
+        const wmY = wmPadding
+        
+        ctx.save()
+        ctx.globalAlpha = wmOpacity
+        
+        // Draw ONLY the actual logo image - the EXACT logo provided by user
+        ctx.drawImage(logoImageRef.current, wmX, wmY, wmWidth, wmHeight)
+        
+        ctx.restore()
       }
       
       // Convert to high-quality data URL
@@ -956,7 +987,7 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
       {isProcessing && (
         <div className="flex items-center justify-center py-8">
           <div className="flex items-center gap-3 text-[#888]">
-            <div className="w-5 h-5 border-2 border-[#FFD700] border-t-transparent rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-[#FF6B35] border-t-transparent rounded-full animate-spin" />
             <span>Generating screenshots...</span>
           </div>
         </div>
@@ -1064,7 +1095,7 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
             onClick={e => e.stopPropagation()}
           >
             <div className="p-4 border-b border-[#3a3a3a] flex items-center justify-between">
-              <h3 className="text-[#FFD700] font-bold text-lg">{expandedScreenshot.name}</h3>
+              <h3 className="text-[#FF6B35] font-bold text-lg">{expandedScreenshot.name}</h3>
               <button
                 onClick={() => setExpandedId(null)}
                 className="text-[#888] hover:text-white p-1"
@@ -1078,7 +1109,7 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
               {/* Overlay toggles - only show when hybrid data available */}
               {isLoadingHybrid ? (
                 <div className="flex items-center gap-2 text-[#888]">
-                  <div className="w-4 h-4 border-2 border-[#FFD700] border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-[#FF6B35] border-t-transparent rounded-full animate-spin" />
                   <span className="text-sm">Analyzing pose...</span>
                 </div>
               ) : hasHybridData ? (
@@ -1087,7 +1118,7 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
                     onClick={() => setShowSkeleton(!showSkeleton)}
                     className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                       showSkeleton 
-                        ? 'bg-[#FFD700] text-[#1a1a1a]' 
+                        ? 'bg-[#FF6B35] text-[#1a1a1a]' 
                         : 'bg-[#3a3a3a] text-[#888] hover:text-white'
                     }`}
                   >
@@ -1099,7 +1130,7 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
                     onClick={() => setShowLabels(!showLabels)}
                     className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                       showLabels 
-                        ? 'bg-[#FFD700] text-[#1a1a1a]' 
+                        ? 'bg-[#FF6B35] text-[#1a1a1a]' 
                         : 'bg-[#3a3a3a] text-[#888] hover:text-white'
                     }`}
                   >
@@ -1111,7 +1142,7 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
                     onClick={() => setShowKeypoints(!showKeypoints)}
                     className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                       showKeypoints 
-                        ? 'bg-[#FFD700] text-[#1a1a1a]' 
+                        ? 'bg-[#FF6B35] text-[#1a1a1a]' 
                         : 'bg-[#3a3a3a] text-[#888] hover:text-white'
                     }`}
                   >
@@ -1143,7 +1174,7 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
                     onClick={() => setEnhancementTier('hd')}
                     className={`flex items-center gap-1 px-2 py-1.5 rounded text-xs font-medium transition-colors ${
                       enhancementTier === 'hd'
-                        ? 'bg-[#FFD700] text-[#1a1a1a]'
+                        ? 'bg-[#FF6B35] text-[#1a1a1a]'
                         : 'text-[#888] hover:text-white'
                     }`}
                     title="HD enhancement (30-60s, AI-powered)"
@@ -1155,7 +1186,7 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
                     onClick={() => setEnhancementTier('premium')}
                     className={`flex items-center gap-1 px-2 py-1.5 rounded text-xs font-medium transition-colors ${
                       enhancementTier === 'premium'
-                        ? 'bg-gradient-to-r from-[#FFD700] to-[#f97316] text-[#1a1a1a]'
+                        ? 'bg-gradient-to-r from-[#FF6B35] to-[#f97316] text-[#1a1a1a]'
                         : 'text-[#888] hover:text-white'
                     }`}
                     title="Premium enhancement (faster, best quality)"
@@ -1175,13 +1206,22 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
                     const sourceImageForDisplay = compositeImageUrl || expandedScreenshot.dataUrl
                     
                     if (enhancementTier === 'basic') {
-                      // Basic: just download the current displayed image (may include overlays)
-                      const link = document.createElement('a')
-                      link.download = `${expandedScreenshot.name.replace(/\s+/g, '_')}_basic.png`
-                      link.href = sourceImageForDisplay
-                      link.click()
+                      // Basic: download with SHOTIQ watermark
+                      try {
+                        const watermarkedUrl = await addWatermarkToImage(sourceImageForDisplay)
+                        const link = document.createElement('a')
+                        link.download = `shotiq_${expandedScreenshot.name.replace(/\s+/g, '_')}_basic.png`
+                        link.href = watermarkedUrl
+                        link.click()
+                      } catch (err) {
+                        console.error('Watermark failed, downloading without:', err)
+                        const link = document.createElement('a')
+                        link.download = `shotiq_${expandedScreenshot.name.replace(/\s+/g, '_')}_basic.png`
+                        link.href = sourceImageForDisplay
+                        link.click()
+                      }
                     } else {
-                      // HD or Premium: enhance the CLEAN base image (no overlays), then download
+                      // HD or Premium: enhance the CLEAN base image (no overlays), then add watermark and download
                       setIsEnhancing(true)
                       setEnhancementError(null)
                       
@@ -1191,12 +1231,14 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
                         const result = await enhanceImage(sourceImageForEnhancement, enhancementTier)
                         
                         if (result.success) {
-                          setEnhancedImageUrl(result.imageUrl)
+                          // Add SHOTIQ watermark to enhanced image
+                          const watermarkedUrl = await addWatermarkToImage(result.imageUrl)
+                          setEnhancedImageUrl(watermarkedUrl)
                           
-                          // Auto-download
+                          // Auto-download with watermark
                           const link = document.createElement('a')
-                          link.download = `${expandedScreenshot.name.replace(/\s+/g, '_')}_${result.tier}.png`
-                          link.href = result.imageUrl
+                          link.download = `shotiq_${expandedScreenshot.name.replace(/\s+/g, '_')}_${result.tier}.png`
+                          link.href = watermarkedUrl
                           link.click()
                         } else {
                           setEnhancementError(result.error || 'Enhancement failed')
@@ -1215,8 +1257,8 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
                       : enhancementTier === 'basic'
                       ? 'bg-[#22c55e] hover:bg-[#16a34a] text-white'
                       : enhancementTier === 'hd'
-                      ? 'bg-[#FFD700] hover:bg-[#E5C100] text-[#1a1a1a]'
-                      : 'bg-gradient-to-r from-[#FFD700] to-[#f97316] hover:from-[#E5C100] hover:to-[#ea580c] text-[#1a1a1a]'
+                      ? 'bg-[#FF6B35] hover:bg-[#E55300] text-[#1a1a1a]'
+                      : 'bg-gradient-to-r from-[#FF6B35] to-[#f97316] hover:from-[#E55300] hover:to-[#ea580c] text-[#1a1a1a]'
                   }`}
                 >
                   {isEnhancing ? (
@@ -1238,8 +1280,8 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
             
             {/* Enhancement Status Messages */}
             {isEnhancing && (
-              <div className="px-4 py-2 bg-[#FFD700]/10 border-b border-[#FFD700]/30">
-                <div className="flex items-center gap-2 text-[#FFD700]">
+              <div className="px-4 py-2 bg-[#FF6B35]/10 border-b border-[#FF6B35]/30">
+                <div className="flex items-center gap-2 text-[#FF6B35]">
                   <Loader2 className="w-4 h-4 animate-spin" />
                   <span className="text-sm">
                     {enhancementTier === 'hd' 
@@ -1316,7 +1358,7 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
               {/* Show angles from hybrid data if available */}
               {expandedHybridData && expandedHybridData.angles && Object.keys(expandedHybridData.angles).length > 0 && (
                 <div className="bg-[#1a1a1a] rounded-lg p-3">
-                  <h4 className="text-[#FFD700] font-semibold text-sm mb-2">Detected Angles</h4>
+                  <h4 className="text-[#FF6B35] font-semibold text-sm mb-2">Detected Angles</h4>
                   <div className="grid grid-cols-2 gap-2">
                     {Object.entries(expandedHybridData.angles).map(([name, value]) => (
                       <div key={name} className="flex justify-between text-sm">
@@ -1330,7 +1372,7 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
               
               <button
                 onClick={() => downloadScreenshot(expandedScreenshot)}
-                className="w-full bg-[#FFD700] hover:bg-[#E5C100] text-[#1a1a1a] font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-colors"
+                className="w-full bg-[#FF6B35] hover:bg-[#E55300] text-[#1a1a1a] font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-colors"
               >
                 <Download className="w-5 h-5" />
                 Download Screenshot

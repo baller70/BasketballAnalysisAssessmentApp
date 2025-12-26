@@ -19,7 +19,7 @@ const BADGES = [
     name: "Perfect Form",
     description: "Achieve a 95+ overall score on any analysis",
     icon: Star,
-    color: "from-yellow-500 to-amber-600",
+    color: "from-orange-500 to-amber-600",
     unlocked: false,
   },
   {
@@ -72,7 +72,7 @@ const BADGES = [
     name: "Legendary Status",
     description: "Match or exceed a legendary shooter's form metrics",
     icon: Medal,
-    color: "from-amber-500 to-yellow-600",
+    color: "from-amber-500 to-orange-600",
     unlocked: false,
   },
 ]
@@ -129,7 +129,7 @@ function BadgeCard({ badge }: { badge: typeof BADGES[0] }) {
       </div>
       
       {/* Badge Info */}
-      <h3 className={`text-lg font-bold text-center mb-2 ${badge.unlocked ? 'text-[#FFD700]' : 'text-[#666]'}`}>
+      <h3 className={`text-lg font-bold text-center mb-2 ${badge.unlocked ? 'text-[#FF6B35]' : 'text-[#666]'}`}>
         {badge.name}
       </h3>
       <p className={`text-sm text-center mb-3 ${badge.unlocked ? 'text-[#E5E5E5]' : 'text-[#555]'}`}>
@@ -170,10 +170,10 @@ export default function BadgesPage() {
     <div className="container mx-auto px-6 py-8">
       {/* Hero Section */}
       <div className="text-center mb-12">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-[#FFD700]/20 rounded-full mb-4">
-          <Trophy className="w-8 h-8 text-[#FFD700]" />
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-[#FF6B35]/20 rounded-full mb-4">
+          <Trophy className="w-8 h-8 text-[#FF6B35]" />
         </div>
-        <h1 className="text-4xl font-bold text-[#FFD700] mb-3">Badges & Achievements</h1>
+        <h1 className="text-4xl font-bold text-[#FF6B35] mb-3">Badges & Achievements</h1>
         <p className="text-[#E5E5E5] text-lg max-w-2xl mx-auto">
           Track your progress and unlock rewards as you improve your shooting form.
         </p>
@@ -182,7 +182,7 @@ export default function BadgesPage() {
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
         <div className="bg-[#2C2C2C] rounded-lg p-6 border border-[#3a3a3a] text-center">
-          <div className="text-3xl font-bold text-[#FFD700] mb-1">{unlockedCount}/{totalBadges}</div>
+          <div className="text-3xl font-bold text-[#FF6B35] mb-1">{unlockedCount}/{totalBadges}</div>
           <div className="text-[#888] text-sm uppercase tracking-wider">Badges Unlocked</div>
         </div>
         <div className="bg-[#2C2C2C] rounded-lg p-6 border border-[#3a3a3a] text-center">
@@ -201,7 +201,7 @@ export default function BadgesPage() {
 
       {/* Badges Section */}
       <div className="mb-12">
-        <h2 className="text-2xl font-bold text-[#FFD700] mb-6 flex items-center gap-3">
+        <h2 className="text-2xl font-bold text-[#FF6B35] mb-6 flex items-center gap-3">
           <Medal className="w-6 h-6" />
           Your Badges
         </h2>
@@ -214,7 +214,7 @@ export default function BadgesPage() {
 
       {/* Achievements Section */}
       <div>
-        <h2 className="text-2xl font-bold text-[#FFD700] mb-6 flex items-center gap-3">
+        <h2 className="text-2xl font-bold text-[#FF6B35] mb-6 flex items-center gap-3">
           <Award className="w-6 h-6" />
           Achievements
         </h2>
@@ -245,19 +245,19 @@ export default function BadgesPage() {
       </div>
 
       {/* Progress to Next Level */}
-      <div className="mt-12 bg-gradient-to-r from-[#FFD700]/20 to-[#FFA500]/20 rounded-lg p-8 border border-[#FFD700]/30">
+      <div className="mt-12 bg-gradient-to-r from-[#FF6B35]/20 to-[#FF4500]/20 rounded-lg p-8 border border-[#FF6B35]/30">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-xl font-bold text-[#FFD700]">Progress to Level 6</h3>
+            <h3 className="text-xl font-bold text-[#FF6B35]">Progress to Level 6</h3>
             <p className="text-[#E5E5E5]">750 XP remaining</p>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold text-[#FFD700]">1,250 / 2,000 XP</div>
+            <div className="text-2xl font-bold text-[#FF6B35]">1,250 / 2,000 XP</div>
           </div>
         </div>
         <div className="h-4 bg-[#3a3a3a] rounded-full overflow-hidden">
           <div 
-            className="h-full bg-gradient-to-r from-[#FFD700] to-[#FFA500] rounded-full transition-all duration-500"
+            className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF4500] rounded-full transition-all duration-500"
             style={{ width: '62.5%' }}
           />
         </div>
