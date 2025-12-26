@@ -282,8 +282,7 @@ export function GSAPVideoPlayer({ videoData, className = "", externalOverlayTogg
   // Logo content is 969x278 (3.5:1 ratio) - Good size TOP RIGHT - CROPPED to visible content
   const drawWatermark = (
     ctx: CanvasRenderingContext2D,
-    canvasWidth: number,
-    canvasHeight: number
+    canvasWidth: number
   ) => {
     if (!logoImage) return
     
@@ -360,7 +359,7 @@ export function GSAPVideoPlayer({ videoData, className = "", externalOverlayTogg
       }
       
       // Always draw SHOTIQ watermark on preview
-      drawWatermark(ctx, canvas.width, canvas.height)
+      drawWatermark(ctx, canvas.width)
     }
     img.src = `data:image/jpeg;base64,${frameBase64}`
   }, [videoData, overlayToggles, sequencePhase, currentAnnotationIndex, annotationLabels])
@@ -410,7 +409,7 @@ export function GSAPVideoPlayer({ videoData, className = "", externalOverlayTogg
       }
       
       // Always draw SHOTIQ watermark on preview
-      drawWatermark(ctx, canvas.width, canvas.height)
+      drawWatermark(ctx, canvas.width)
     }
     img.src = `data:image/jpeg;base64,${frameBase64}`
   }, [videoData, overlayToggles, annotationLabels])
@@ -1132,6 +1131,7 @@ export function GSAPVideoPlayer({ videoData, className = "", externalOverlayTogg
   }, [releaseFrameIndex, drawFrame, drawFrameWithAllLabels])
   
   // Play only a specific stage
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const playStage = useCallback((stage: 1 | 2 | 3) => {
     jumpToStage(stage)
     
@@ -1233,7 +1233,7 @@ export function GSAPVideoPlayer({ videoData, className = "", externalOverlayTogg
       
       // Helper to render a frame
       const renderFrame = async (frameIdx: number, withLabels: boolean, isSlowMo: boolean = false) => {
-        const frameBase64 = videoData.annotatedFramesBase64[frameIdx]
+        const frameBase64 = videoData.annotatedFramesBase64?.[frameIdx]
         if (!frameBase64) return
         
         await new Promise<void>((resolve) => {
@@ -1262,7 +1262,7 @@ export function GSAPVideoPlayer({ videoData, className = "", externalOverlayTogg
             }
             
             // Always draw watermark last (on top of everything)
-            drawWatermarkOnContext(offscreenCtx, offscreenCanvas.width, offscreenCanvas.height)
+            drawWatermarkOnContext(offscreenCtx, offscreenCanvas.width)
             
             resolve()
           }
@@ -1325,7 +1325,7 @@ export function GSAPVideoPlayer({ videoData, className = "", externalOverlayTogg
                   }
                   
                   // Always draw watermark last (on top of everything)
-                  drawWatermarkOnContext(offscreenCtx, offscreenCanvas.width, offscreenCanvas.height)
+                  drawWatermarkOnContext(offscreenCtx, offscreenCanvas.width)
                   
                   resolve()
                 }
@@ -1427,6 +1427,7 @@ export function GSAPVideoPlayer({ videoData, className = "", externalOverlayTogg
   // DOWNLOAD FULL VIDEO (MP4)
   // ============================================
   
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const downloadFullVideo = useCallback(async () => {
     if (!videoData?.annotatedFramesBase64?.length || !canvasRef.current) return
     
@@ -1518,7 +1519,7 @@ export function GSAPVideoPlayer({ videoData, className = "", externalOverlayTogg
             }
             
             // Always draw watermark last (on top of everything)
-            drawWatermarkOnContext(offscreenCtx, offscreenCanvas.width, offscreenCanvas.height)
+            drawWatermarkOnContext(offscreenCtx, offscreenCanvas.width)
             
             resolve()
           }
@@ -1802,8 +1803,7 @@ export function GSAPVideoPlayer({ videoData, className = "", externalOverlayTogg
   // Logo content is 969x278 (3.5:1 ratio) - Good size TOP RIGHT - CROPPED to visible content
   const drawWatermarkOnContext = (
     ctx: CanvasRenderingContext2D,
-    canvasWidth: number,
-    canvasHeight: number
+    canvasWidth: number
   ) => {
     if (!logoImage) return
     
