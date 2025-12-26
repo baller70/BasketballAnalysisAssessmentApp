@@ -20,7 +20,7 @@ export const WATERMARK_CONFIG = {
 
 // Cache for the loaded logo image
 let cachedLogoImage: HTMLImageElement | null = null
-let logoLoadPromise: Promise<HTMLImageElement> | null = null
+let logoLoadPromise: Promise<HTMLImageElement | null> | null = null
 
 /**
  * Load the SHOTIQ logo image (cached)
