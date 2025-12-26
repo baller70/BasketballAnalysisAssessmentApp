@@ -2,7 +2,8 @@
 
 import React, { useState, useRef, useEffect } from "react"
 import Link from "next/link"
-import { Activity, User, ChevronDown, Upload, BarChart3, Users, BookOpen, Settings, Trophy, Star, Sparkles, GraduationCap } from "lucide-react"
+import Image from "next/image"
+import { User, ChevronDown, Upload, BarChart3, Users, BookOpen, Settings, Trophy, Star, Sparkles, GraduationCap } from "lucide-react"
 import { useDashboardViewStore, type DashboardView } from "@/stores/dashboardViewStore"
 
 const VIEW_OPTIONS: { value: DashboardView; label: string; description: string; icon: React.ReactNode; color: string }[] = [
@@ -66,18 +67,15 @@ export function Header() {
     <header className="bg-[#2C2C2C] sticky top-0 z-50">
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-[#FF6B35] rounded-full flex items-center justify-center">
-              <Activity className="w-7 h-7 text-[#1a1a1a]" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-[#FF6B35] uppercase tracking-wider">
-                BASKETBALL SHOOTING MECHANICS ANALYSIS
-              </h1>
-              <p className="text-sm text-[#E5E5E5] uppercase tracking-wide">
-                Advanced Biomechanical Analysis with Visual Tracking
-              </p>
-            </div>
+          <Link href="/" className="flex items-center">
+            <Image
+              src="/images/shotiq-logo-full.png"
+              alt="SHOTIQ AI Analysis"
+              width={280}
+              height={80}
+              className="h-14 w-auto object-contain"
+              priority
+            />
           </Link>
 
           <nav className="flex items-center gap-4">

@@ -1,11 +1,12 @@
 "use client"
 
 import React, { useRef, useEffect, useState, useCallback } from "react"
-import { Download, X, Eye, EyeOff, Sparkles, Zap, Loader2 } from "lucide-react"
+import { Download, X, Eye, EyeOff, Sparkles, Zap, Loader2, ZoomIn } from "lucide-react"
 import { MedalIcon, type MedalTier } from "@/components/icons/MedalIcons"
 import { getMedalTierFromStatus, getMedalTierFromAngles } from "@/lib/medalRanking"
 import { enhanceImage, type EnhancementTier } from "@/services/imageEnhancement"
 import { addWatermarkToImage } from "@/lib/watermark"
+import { ZoomableImage } from "@/components/ui/effects/image-zoom"
 
 const HYBRID_API_URL = process.env.NEXT_PUBLIC_HYBRID_API_URL || 'http://localhost:5001'
 
@@ -1317,13 +1318,21 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
             
             <div className="p-4">
               <div className="flex justify-center">
-                {/* Show composite image with overlays, or plain image - FULL SIZE */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={compositeImageUrl || expandedScreenshot.dataUrl}
-                  alt={expandedScreenshot.name}
-                  className="w-full h-auto rounded-lg"
-                />
+                {/* Show composite image with overlays, or plain image - FULL SIZE with ZOOM */}
+                <div className="relative w-full group">
+                  <ZoomableImage
+                    src={compositeImageUrl || expandedScreenshot.dataUrl}
+                    alt={expandedScreenshot.name}
+                    className="w-full h-auto rounded-lg"
+                    containerClassName="w-full rounded-lg"
+                    zoomScale={2.5}
+                  />
+                  {/* Zoom indicator */}
+                  <div className="absolute bottom-3 right-3 bg-black/60 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    <ZoomIn className="w-3 h-3" />
+                    Hover to zoom
+                  </div>
+                </div>
               </div>
             </div>
             

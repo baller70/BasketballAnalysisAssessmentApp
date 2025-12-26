@@ -26,6 +26,7 @@ import { HYBRID_API_URL } from "@/lib/constants"
 // import { findMatchingShooters, parseHeightToInches, determineBodyBuild } from "@/data/shooterDatabase"
 import { toPng } from "html-to-image"
 import { addWatermarkToImage } from "@/lib/watermark"
+import { ZoomableImage } from "@/components/ui/effects/image-zoom"
 import { useAnalysisStore } from "@/stores/analysisStore"
 import { 
   detectFlawsFromAngles, 
@@ -169,6 +170,10 @@ function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, ang
   const containerRef = useRef<HTMLDivElement>(null)
   const logoImageRef = useRef<HTMLImageElement | null>(null)
   const [logoLoaded, setLogoLoaded] = useState(false)
+  
+  // Zoom state for hover zoom effect
+  const [isZoomed, setIsZoomed] = useState(false)
+  const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 50 })
   
   // Default toggles if not provided
   const toggles = overlayToggles || { skeleton: true, joints: true, annotations: true, basketball: true }
@@ -662,15 +667,37 @@ function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, ang
     return name.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())
   }
 
+  // Handle mouse move for zoom position
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!containerRef.current) return
+    const rect = containerRef.current.getBoundingClientRect()
+    const x = ((e.clientX - rect.left) / rect.width) * 100
+    const y = ((e.clientY - rect.top) / rect.height) * 100
+    setZoomPosition({ x, y })
+  }, [])
+
   return (
     <div className="space-y-4">
-      {/* Canvas with skeleton */}
-      <div ref={containerRef} className="flex justify-center">
+      {/* Canvas with skeleton - Now with zoom on hover */}
+      <div 
+        ref={containerRef} 
+        className="flex justify-center overflow-hidden rounded-lg cursor-zoom-in"
+        onMouseMove={handleMouseMove}
+        onMouseEnter={() => setIsZoomed(true)}
+        onMouseLeave={() => {
+          setIsZoomed(false)
+          setZoomPosition({ x: 50, y: 50 })
+        }}
+      >
         <canvas
           ref={canvasRef}
           width={500}
           height={400}
-          className="rounded-lg border-2 border-[#3a3a3a]"
+          className="rounded-lg border-2 border-[#3a3a3a] transition-transform duration-300 ease-out"
+          style={{
+            transform: isZoomed ? 'scale(2.5)' : 'scale(1)',
+            transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
+          }}
         />
       </div>
 
@@ -6095,10 +6122,12 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
                   {prevSession && (
                     <div className="rounded-xl overflow-hidden border-2 border-[#4a4a4a] bg-[#1a1a1a]">
                       {prevSession.mainImageBase64 ? (
-                        <img 
-                          src={prevSession.mainImageBase64} 
+                        <ZoomableImage
+                          src={prevSession.mainImageBase64}
                           alt={`Previous: ${prevSession.displayDate}`}
                           className="w-full h-[300px] object-cover"
+                          containerClassName="w-full h-[300px]"
+                          zoomScale={2}
                         />
                       ) : (
                         <div className="w-full h-[300px] flex items-center justify-center bg-[#2a2a2a]">
@@ -6159,10 +6188,12 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
                   {nextSession && (
                     <div className="rounded-xl overflow-hidden border-2 border-[#4a4a4a] bg-[#1a1a1a]">
                       {nextSession.mainImageBase64 ? (
-                        <img 
-                          src={nextSession.mainImageBase64} 
+                        <ZoomableImage
+                          src={nextSession.mainImageBase64}
                           alt={`Next: ${nextSession.displayDate}`}
                           className="w-full h-[300px] object-cover"
+                          containerClassName="w-full h-[300px]"
+                          zoomScale={2}
                         />
                       ) : (
                         <div className="w-full h-[300px] flex items-center justify-center bg-[#2a2a2a]">
