@@ -3,8 +3,10 @@
 import React, { useState, useRef, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { User, ChevronDown, Upload, BarChart3, Users, BookOpen, Settings, Trophy, Star, Sparkles, GraduationCap } from "lucide-react"
+import { useRouter, usePathname } from "next/navigation"
+import { User, ChevronDown, Upload, BarChart3, Users, BookOpen, Settings, Trophy, Star, Sparkles, GraduationCap, LogOut } from "lucide-react"
 import { useDashboardViewStore, type DashboardView } from "@/stores/dashboardViewStore"
+import { useAuthStore } from "@/stores/authStore"
 
 const VIEW_OPTIONS: { value: DashboardView; label: string; description: string; icon: React.ReactNode; color: string }[] = [
   {
@@ -31,13 +33,25 @@ const VIEW_OPTIONS: { value: DashboardView; label: string; description: string; 
 ]
 
 export function Header() {
+  const router = useRouter()
+  const pathname = usePathname()
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [isViewOpen, setIsViewOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const viewDropdownRef = useRef<HTMLDivElement>(null)
   const { view: dashboardView, setView: setDashboardView } = useDashboardViewStore()
+  const { signOut, isAuthenticated } = useAuthStore()
   
   const currentOption = VIEW_OPTIONS.find(opt => opt.value === dashboardView) || VIEW_OPTIONS[0]
+  
+  // Check if we're on an auth page (signin/signup)
+  const isAuthPage = pathname === '/signin' || pathname === '/signup'
+  
+  const handleSignOut = () => {
+    signOut()
+    setIsProfileOpen(false)
+    router.push('/signin')
+  }
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -67,7 +81,7 @@ export function Header() {
     <header className="bg-[#2C2C2C] sticky top-0 z-50">
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
-          <Link href="/" className="flex items-center">
+          <Link href={isAuthPage ? "/signin" : "/"} className="flex items-center">
             <Image
               src="/images/shotiq-header-logo.png"
               alt="SHOTIQ AI Analysis"
@@ -79,6 +93,8 @@ export function Header() {
             />
           </Link>
 
+          {/* Only show navigation when NOT on auth pages */}
+          {!isAuthPage && isAuthenticated && (
           <nav className="flex items-center gap-4">
             {/* Dashboard View Selector */}
             <div className="relative" ref={viewDropdownRef}>
@@ -169,11 +185,23 @@ export function Header() {
                         <span className="font-medium">{item.label}</span>
                       </Link>
                     ))}
+                    
+                    {/* Sign Out Button */}
+                    <div className="border-t border-[#3a3a3a] mt-2 pt-2">
+                      <button
+                        onClick={handleSignOut}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-[#E5E5E5] hover:bg-[#3a3a3a] hover:text-[#FF6B35] transition-colors"
+                      >
+                        <LogOut className="w-5 h-5" />
+                        <span className="font-medium">Sign Out</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
             </div>
           </nav>
+          )}
         </div>
       </div>
     </header>

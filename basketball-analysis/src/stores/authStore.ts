@@ -4,6 +4,21 @@ import { create } from "zustand"
 import { persist } from "zustand/middleware"
 
 // ==========================================
+// HELPER FUNCTIONS
+// ==========================================
+
+// Set authentication cookie for middleware
+function setAuthCookie(authenticated: boolean) {
+  if (typeof document !== 'undefined') {
+    if (authenticated) {
+      document.cookie = `user-session=authenticated; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax` // 7 days
+    } else {
+      document.cookie = 'user-session=; path=/; max-age=0; SameSite=Lax' // Delete cookie
+    }
+  }
+}
+
+// ==========================================
 // TYPES
 // ==========================================
 
@@ -94,6 +109,8 @@ export const useAuthStore = create<AuthState>()(
               isLoading: false,
             })
             
+            setAuthCookie(true)
+            
             return { success: true, warning: 'Using local storage (database unavailable)' }
           }
           
@@ -117,6 +134,8 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: true,
             isLoading: false,
           })
+          
+          setAuthCookie(true)
           
           return { success: true }
         } catch (error) {
@@ -163,6 +182,8 @@ export const useAuthStore = create<AuthState>()(
                 isLoading: false,
               })
               
+              setAuthCookie(true)
+              
               return { success: true, warning: 'Using local storage (database unavailable)' }
             }
             
@@ -190,6 +211,8 @@ export const useAuthStore = create<AuthState>()(
             isLoading: false,
           })
           
+          setAuthCookie(true)
+          
           return { success: true }
         } catch (error) {
           console.error('Sign in error:', error)
@@ -199,6 +222,7 @@ export const useAuthStore = create<AuthState>()(
       },
       
       signOut: () => {
+        setAuthCookie(false)
         set({
           user: null,
           isAuthenticated: false,

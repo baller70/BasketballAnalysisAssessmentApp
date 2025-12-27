@@ -37,15 +37,13 @@ export default function SignInPage() {
         if (result.warning) {
           console.warn(result.warning)
         }
-        // Wait a moment for store to update, then redirect based on profile completion
+        // Wait a moment for store to update and cookie to be set
         setTimeout(() => {
           const { user } = useAuthStore.getState()
-          if (user?.profileComplete) {
-            router.push("/")
-          } else {
-            router.push("/onboarding")
-          }
-        }, 100)
+          const targetUrl = user?.profileComplete ? "/upload" : "/onboarding"
+          // Use window.location for hard redirect to ensure middleware picks up the cookie
+          window.location.href = targetUrl
+        }, 200)
       } else {
         setError(result.error || "Sign in failed")
         setIsSubmitting(false)
