@@ -56,14 +56,17 @@ export default function SignUpPage() {
         if (result.warning) {
           console.warn(result.warning)
         }
-        // Redirect to onboarding quiz
-        router.push("/onboarding")
+        // Wait a moment for cookie to be set, then redirect to onboarding quiz
+        setTimeout(() => {
+          // Use window.location for hard redirect to ensure middleware picks up the cookie
+          window.location.href = "/onboarding"
+        }, 200)
       } else {
         setError(result.error || "Sign up failed")
+        setIsSubmitting(false)
       }
     } catch {
       setError("An unexpected error occurred")
-    } finally {
       setIsSubmitting(false)
     }
   }
