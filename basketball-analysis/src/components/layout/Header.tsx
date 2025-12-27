@@ -69,12 +69,13 @@ export function Header() {
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center">
             <Image
-              src="/images/shotiq-logo-full.png"
+              src="/images/shotiq-header-logo.png"
               alt="SHOTIQ AI Analysis"
-              width={280}
-              height={80}
-              className="h-14 w-auto object-contain"
+              width={862}
+              height={260}
+              className="h-12 w-auto object-contain"
               priority
+              unoptimized
             />
           </Link>
 
