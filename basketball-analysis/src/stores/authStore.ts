@@ -7,6 +7,16 @@ import { persist } from "zustand/middleware"
 // HELPER FUNCTIONS
 // ==========================================
 
+// Get API base URL - uses local API for development, production API for built app
+function getApiBaseUrl(): string {
+  // Always use local API during development (avoids CORS issues)
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    return ''  // Relative URLs - same origin, no CORS issues
+  }
+  // For production builds, use production API
+  return 'https://app.shotiqai.com'
+}
+
 // Set authentication cookie for middleware
 function setAuthCookie(authenticated: boolean) {
   if (typeof document !== 'undefined') {
@@ -70,8 +80,11 @@ export const useAuthStore = create<AuthState>()(
         try {
           set({ isLoading: true })
           
+          // Get API base URL (production API for desktop app)
+          const apiBase = getApiBaseUrl()
+          
           // Call API to create user
-          const response = await fetch('/api/auth/signup', {
+          const response = await fetch(`${apiBase}/api/auth/signup`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password, firstName, lastName }),
@@ -98,10 +111,12 @@ export const useAuthStore = create<AuthState>()(
             }
             
             // Store in localStorage for persistence
-            localStorage.setItem('dev_users', JSON.stringify({
-              ...JSON.parse(localStorage.getItem('dev_users') || '{}'),
-              [email]: { ...user, password: btoa(password) } // Simple encoding, not secure but for dev only
-            }))
+            if (typeof localStorage !== 'undefined') {
+              localStorage.setItem('dev_users', JSON.stringify({
+                ...JSON.parse(localStorage.getItem('dev_users') || '{}'),
+                [email]: { ...user, password: btoa(password) } // Simple encoding, not secure but for dev only
+              }))
+            }
             
             set({
               user,
@@ -115,6 +130,7 @@ export const useAuthStore = create<AuthState>()(
           }
           
           if (!response.ok) {
+            set({ isLoading: false })
             return { success: false, error: data.error || 'Sign up failed' }
           }
           
@@ -149,8 +165,11 @@ export const useAuthStore = create<AuthState>()(
         try {
           set({ isLoading: true })
           
+          // Get API base URL (local for development, production for built app)
+          const apiBase = getApiBaseUrl()
+          
           // Call API to authenticate
-          const response = await fetch('/api/auth/signin', {
+          const response = await fetch(`${apiBase}/api/auth/signin`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password }),
@@ -162,35 +181,39 @@ export const useAuthStore = create<AuthState>()(
           if (!response.ok && (data.error?.includes('Database connection') || data.error?.includes('503'))) {
             console.warn('Database unavailable, checking local storage fallback')
             
-            const devUsers = JSON.parse(localStorage.getItem('dev_users') || '{}')
-            const devUser = devUsers[email]
-            
-            if (devUser && atob(devUser.password) === password) {
-              const user: User = {
-                id: devUser.id,
-                email: devUser.email,
-                firstName: devUser.firstName,
-                lastName: devUser.lastName,
-                displayName: devUser.displayName,
-                createdAt: devUser.createdAt,
-                profileComplete: devUser.profileComplete || false,
+            if (typeof localStorage !== 'undefined') {
+              const devUsers = JSON.parse(localStorage.getItem('dev_users') || '{}')
+              const devUser = devUsers[email]
+              
+              if (devUser && atob(devUser.password) === password) {
+                const user: User = {
+                  id: devUser.id,
+                  email: devUser.email,
+                  firstName: devUser.firstName,
+                  lastName: devUser.lastName,
+                  displayName: devUser.displayName,
+                  createdAt: devUser.createdAt,
+                  profileComplete: devUser.profileComplete || false,
+                }
+                
+                set({
+                  user,
+                  isAuthenticated: true,
+                  isLoading: false,
+                })
+                
+                setAuthCookie(true)
+                
+                return { success: true, warning: 'Using local storage (database unavailable)' }
               }
-              
-              set({
-                user,
-                isAuthenticated: true,
-                isLoading: false,
-              })
-              
-              setAuthCookie(true)
-              
-              return { success: true, warning: 'Using local storage (database unavailable)' }
             }
             
+            set({ isLoading: false })
             return { success: false, error: 'Invalid email or password' }
           }
           
           if (!response.ok) {
+            set({ isLoading: false })
             return { success: false, error: data.error || 'Sign in failed' }
           }
           

@@ -33,16 +33,12 @@ export default function SignInPage() {
       const result = await signIn(formData.email, formData.password)
 
       if (result.success) {
-        // Show warning if using local storage
-        if (result.warning) {
-          console.warn(result.warning)
-        }
         // Wait a moment for store to update and cookie to be set
         setTimeout(() => {
           const { user } = useAuthStore.getState()
           const targetUrl = user?.profileComplete ? "/upload" : "/onboarding"
-          // Use window.location for hard redirect to ensure middleware picks up the cookie
-          window.location.href = targetUrl
+          // Use Next.js router for navigation
+          router.push(targetUrl)
         }, 200)
       } else {
         setError(result.error || "Sign in failed")

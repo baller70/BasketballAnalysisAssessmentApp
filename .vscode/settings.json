@@ -1,3 +1,12 @@
 {
-    "git.ignoreLimitWarning": true
+  "files.exclude": {
+    "nextjs_space": false
+  },
+  "search.exclude": {
+    "nextjs_space": true
+  },
+  "files.associations": {
+    "✅_THIS_IS_THE_MAIN_APP.md": "markdown",
+    "⚠️_DO_NOT_USE_THIS_DIRECTORY.md": "markdown"
+  }
 }

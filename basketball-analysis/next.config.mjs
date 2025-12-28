@@ -1,6 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Enable static export for Tauri builds
+  output: process.env.TAURI_BUILD === 'true' ? 'export' : undefined,
+  
   images: {
+    // Use unoptimized images for Tauri static export
+    unoptimized: process.env.TAURI_BUILD === 'true',
     remotePatterns: [
       {
         protocol: "https",

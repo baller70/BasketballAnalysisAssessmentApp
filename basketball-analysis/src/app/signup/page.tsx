@@ -52,14 +52,10 @@ export default function SignUpPage() {
       )
 
       if (result.success) {
-        // Show warning if using local storage
-        if (result.warning) {
-          console.warn(result.warning)
-        }
         // Wait a moment for cookie to be set, then redirect to onboarding quiz
         setTimeout(() => {
-          // Use window.location for hard redirect to ensure middleware picks up the cookie
-          window.location.href = "/onboarding"
+          // Use Next.js router for navigation
+          router.push("/onboarding")
         }, 200)
       } else {
         setError(result.error || "Sign up failed")

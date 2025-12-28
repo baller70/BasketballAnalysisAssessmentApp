@@ -1,0 +1,19 @@
+SHOTIQ Basketball Analysis - App Icons
+
+These icons need to be generated for production builds.
+
+Required icon sizes:
+- 32x32.png
+- 128x128.png
+- 128x128@2x.png (256x256)
+- icon.icns (macOS)
+- icon.ico (Windows)
+
+For now, Tauri will use default icons during development.
+
+To generate production icons:
+1. Create a high-resolution square icon (1024x1024 recommended)
+2. Use Tauri's icon generation tool:
+   npm run tauri icon path/to/your/icon.png
+
+This will automatically generate all required icon formats.
