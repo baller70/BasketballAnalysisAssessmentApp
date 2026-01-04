@@ -1,6 +1,6 @@
 /**
  * Mobile Platform Storage Implementation
- * Uses Capacitor Storage for iOS and Android
+ * Uses Capacitor Preferences (formerly Storage) for iOS and Android
  */
 
 import type { PlatformStorage, StorageInfo } from './types'
@@ -13,23 +13,23 @@ class MobileStorage implements PlatformStorage {
     if (this.storage) return this.storage
     
     try {
-      // Dynamically import Capacitor Storage
+      // Dynamically import Capacitor Preferences (v5+)
       if (typeof window !== 'undefined' && 'Capacitor' in window) {
         try {
           // @ts-ignore - Capacitor may not be installed for desktop builds
-          const { Storage } = await import('@capacitor/storage')
-          this.storage = Storage
+          const { Preferences } = await import('@capacitor/preferences')
+          this.storage = Preferences
           return this.storage
         } catch (error) {
           // Capacitor not installed - this is fine for desktop/web builds
-          throw new Error('Capacitor Storage not available')
+          throw new Error('Capacitor Preferences not available')
         }
       }
       
       throw new Error('Capacitor is not available')
     } catch (error) {
       throw new StorageError(
-        'Failed to initialize Capacitor Storage',
+        'Failed to initialize Capacitor Preferences',
         StorageErrorCode.PERMISSION_DENIED,
         error as Error
       )
@@ -166,7 +166,7 @@ class MobileStorage implements PlatformStorage {
         bytesUsed,
         bytesAvailable: null, // Unlimited on mobile (within device limits)
         itemCount: keys.length,
-        type: 'asyncStorage',
+        type: 'secureStorage',
       }
     } catch (error) {
       throw new StorageError(

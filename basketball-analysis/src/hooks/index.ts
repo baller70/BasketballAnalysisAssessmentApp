@@ -5,6 +5,7 @@
 
 export { useLocalStorage } from "./useLocalStorage"
 export { useDebounce } from "./useDebounce"
+export { usePoseDetection } from "./usePoseDetection"
 
 
 

@@ -1,0 +1,464 @@
+/**
+ * Pose Detection Service
+ * 
+ * Real-time pose detection using TensorFlow.js MoveNet model.
+ * Optimized for basketball shooting form analysis.
+ * 
+ * Features:
+ * - Real-time pose detection (25-30 FPS on modern devices)
+ * - 17 keypoint detection (shoulders, elbows, wrists, hips, knees, ankles)
+ * - Angle calculations for shooting form analysis
+ * - Shooting motion detection
+ */
+
+import * as poseDetection from '@tensorflow-models/pose-detection';
+import * as tf from '@tensorflow/tfjs';
+
+// ============================================
+// TYPES
+// ============================================
+
+export interface Keypoint {
+  x: number;
+  y: number;
+  score?: number;
+  name?: string;
+}
+
+export interface Pose {
+  keypoints: Keypoint[];
+  score?: number;
+}
+
+export interface ShootingAngles {
+  elbowAngle: number | null;
+  kneeAngle: number | null;
+  shoulderAngle: number | null;
+  hipAngle: number | null;
+  releaseAngle: number | null;
+  wristAngle: number | null;
+}
+
+export interface ShootingFormFeedback {
+  elbowStatus: 'good' | 'warning' | 'critical' | 'unknown';
+  elbowMessage: string;
+  kneeStatus: 'good' | 'warning' | 'critical' | 'unknown';
+  kneeMessage: string;
+  shoulderStatus: 'good' | 'warning' | 'critical' | 'unknown';
+  shoulderMessage: string;
+  hipStatus: 'good' | 'warning' | 'critical' | 'unknown';
+  hipMessage: string;
+  overallScore: number;
+  tips: string[];
+}
+
+export type ModelType = 'lightning' | 'thunder';
+
+// ============================================
+// KEYPOINT INDICES (MoveNet)
+// ============================================
+
+export const KEYPOINT_INDICES = {
+  nose: 0,
+  left_eye: 1,
+  right_eye: 2,
+  left_ear: 3,
+  right_ear: 4,
+  left_shoulder: 5,
+  right_shoulder: 6,
+  left_elbow: 7,
+  right_elbow: 8,
+  left_wrist: 9,
+  right_wrist: 10,
+  left_hip: 11,
+  right_hip: 12,
+  left_knee: 13,
+  right_knee: 14,
+  left_ankle: 15,
+  right_ankle: 16,
+} as const;
+
+// Skeleton connections for drawing
+export const SKELETON_CONNECTIONS: [number, number][] = [
+  // Face
+  [KEYPOINT_INDICES.left_ear, KEYPOINT_INDICES.left_eye],
+  [KEYPOINT_INDICES.left_eye, KEYPOINT_INDICES.nose],
+  [KEYPOINT_INDICES.nose, KEYPOINT_INDICES.right_eye],
+  [KEYPOINT_INDICES.right_eye, KEYPOINT_INDICES.right_ear],
+  // Upper body
+  [KEYPOINT_INDICES.left_shoulder, KEYPOINT_INDICES.right_shoulder],
+  [KEYPOINT_INDICES.left_shoulder, KEYPOINT_INDICES.left_elbow],
+  [KEYPOINT_INDICES.left_elbow, KEYPOINT_INDICES.left_wrist],
+  [KEYPOINT_INDICES.right_shoulder, KEYPOINT_INDICES.right_elbow],
+  [KEYPOINT_INDICES.right_elbow, KEYPOINT_INDICES.right_wrist],
+  // Torso
+  [KEYPOINT_INDICES.left_shoulder, KEYPOINT_INDICES.left_hip],
+  [KEYPOINT_INDICES.right_shoulder, KEYPOINT_INDICES.right_hip],
+  [KEYPOINT_INDICES.left_hip, KEYPOINT_INDICES.right_hip],
+  // Lower body
+  [KEYPOINT_INDICES.left_hip, KEYPOINT_INDICES.left_knee],
+  [KEYPOINT_INDICES.left_knee, KEYPOINT_INDICES.left_ankle],
+  [KEYPOINT_INDICES.right_hip, KEYPOINT_INDICES.right_knee],
+  [KEYPOINT_INDICES.right_knee, KEYPOINT_INDICES.right_ankle],
+];
+
+// ============================================
+// POSE DETECTION CLASS
+// ============================================
+
+class PoseDetectionService {
+  private detector: poseDetection.PoseDetector | null = null;
+  private isInitializing = false;
+  private modelType: ModelType = 'lightning';
+  
+  /**
+   * Initialize the MoveNet pose detector
+   */
+  async initialize(modelType: ModelType = 'lightning'): Promise<void> {
+    if (this.detector) {
+      console.log('[PoseDetection] Already initialized');
+      return;
+    }
+    
+    if (this.isInitializing) {
+      console.log('[PoseDetection] Already initializing, waiting...');
+      while (this.isInitializing) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      return;
+    }
+    
+    this.isInitializing = true;
+    this.modelType = modelType;
+    
+    try {
+      console.log(`[PoseDetection] Initializing MoveNet ${modelType}...`);
+      
+      // Ensure TensorFlow.js is ready
+      await tf.ready();
+      console.log('[PoseDetection] TensorFlow.js ready, backend:', tf.getBackend());
+      
+      // Create detector with MoveNet
+      const model = modelType === 'lightning' 
+        ? poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING
+        : poseDetection.movenet.modelType.SINGLEPOSE_THUNDER;
+      
+      this.detector = await poseDetection.createDetector(
+        poseDetection.SupportedModels.MoveNet,
+        {
+          modelType: model,
+          enableSmoothing: true,
+          minPoseScore: 0.25,
+        }
+      );
+      
+      console.log('[PoseDetection] MoveNet initialized successfully');
+    } catch (error) {
+      console.error('[PoseDetection] Failed to initialize:', error);
+      throw error;
+    } finally {
+      this.isInitializing = false;
+    }
+  }
+  
+  /**
+   * Detect pose from video element or image
+   */
+  async detectPose(
+    input: HTMLVideoElement | HTMLImageElement | HTMLCanvasElement
+  ): Promise<Pose | null> {
+    if (!this.detector) {
+      console.warn('[PoseDetection] Detector not initialized');
+      return null;
+    }
+    
+    try {
+      const poses = await this.detector.estimatePoses(input);
+      
+      if (poses.length === 0) {
+        return null;
+      }
+      
+      // Return the first (and likely only) pose
+      return {
+        keypoints: poses[0].keypoints.map(kp => ({
+          x: kp.x,
+          y: kp.y,
+          score: kp.score,
+          name: kp.name,
+        })),
+        score: poses[0].score,
+      };
+    } catch (error) {
+      console.error('[PoseDetection] Detection error:', error);
+      return null;
+    }
+  }
+  
+  /**
+   * Calculate angle between three points (in degrees)
+   */
+  calculateAngle(
+    point1: Keypoint,
+    point2: Keypoint, // vertex
+    point3: Keypoint
+  ): number {
+    const radians = Math.atan2(point3.y - point2.y, point3.x - point2.x) -
+                    Math.atan2(point1.y - point2.y, point1.x - point2.x);
+    let angle = Math.abs(radians * 180 / Math.PI);
+    
+    if (angle > 180) {
+      angle = 360 - angle;
+    }
+    
+    return Math.round(angle);
+  }
+  
+  /**
+   * Get keypoint by name with confidence check
+   */
+  getKeypoint(pose: Pose, name: keyof typeof KEYPOINT_INDICES, minScore = 0.3): Keypoint | null {
+    const index = KEYPOINT_INDICES[name];
+    const keypoint = pose.keypoints[index];
+    
+    if (!keypoint || (keypoint.score !== undefined && keypoint.score < minScore)) {
+      return null;
+    }
+    
+    return keypoint;
+  }
+  
+  /**
+   * Calculate all shooting-relevant angles from a pose
+   */
+  calculateShootingAngles(pose: Pose): ShootingAngles {
+    const angles: ShootingAngles = {
+      elbowAngle: null,
+      kneeAngle: null,
+      shoulderAngle: null,
+      hipAngle: null,
+      releaseAngle: null,
+      wristAngle: null,
+    };
+    
+    // Determine shooting side (right hand dominant by default)
+    // Could be enhanced to detect dominant hand
+    const side = 'right';
+    
+    // Get keypoints for the shooting side
+    const shoulder = this.getKeypoint(pose, `${side}_shoulder` as keyof typeof KEYPOINT_INDICES);
+    const elbow = this.getKeypoint(pose, `${side}_elbow` as keyof typeof KEYPOINT_INDICES);
+    const wrist = this.getKeypoint(pose, `${side}_wrist` as keyof typeof KEYPOINT_INDICES);
+    const hip = this.getKeypoint(pose, `${side}_hip` as keyof typeof KEYPOINT_INDICES);
+    const knee = this.getKeypoint(pose, `${side}_knee` as keyof typeof KEYPOINT_INDICES);
+    const ankle = this.getKeypoint(pose, `${side}_ankle` as keyof typeof KEYPOINT_INDICES);
+    
+    // Calculate elbow angle (shoulder-elbow-wrist)
+    if (shoulder && elbow && wrist) {
+      angles.elbowAngle = this.calculateAngle(shoulder, elbow, wrist);
+    }
+    
+    // Calculate knee angle (hip-knee-ankle)
+    if (hip && knee && ankle) {
+      angles.kneeAngle = this.calculateAngle(hip, knee, ankle);
+    }
+    
+    // Calculate shoulder angle (elbow-shoulder-hip)
+    if (elbow && shoulder && hip) {
+      angles.shoulderAngle = this.calculateAngle(elbow, shoulder, hip);
+    }
+    
+    // Calculate hip angle (shoulder-hip-knee)
+    if (shoulder && hip && knee) {
+      angles.hipAngle = this.calculateAngle(shoulder, hip, knee);
+    }
+    
+    // Calculate release angle (vertical line from wrist)
+    if (wrist && elbow) {
+      // Angle from vertical (0 = straight up)
+      const dx = wrist.x - elbow.x;
+      const dy = elbow.y - wrist.y; // Inverted because y increases downward
+      angles.releaseAngle = Math.round(Math.atan2(dx, dy) * 180 / Math.PI);
+    }
+    
+    return angles;
+  }
+  
+  /**
+   * Analyze shooting form and provide feedback
+   */
+  analyzeShootingForm(angles: ShootingAngles): ShootingFormFeedback {
+    const feedback: ShootingFormFeedback = {
+      elbowStatus: 'unknown',
+      elbowMessage: 'Cannot detect elbow',
+      kneeStatus: 'unknown',
+      kneeMessage: 'Cannot detect knee',
+      shoulderStatus: 'unknown',
+      shoulderMessage: 'Cannot detect shoulder',
+      hipStatus: 'unknown',
+      hipMessage: 'Cannot detect hip',
+      overallScore: 0,
+      tips: [],
+    };
+    
+    let validMetrics = 0;
+    let totalScore = 0;
+    
+    // Analyze elbow angle (ideal: 85-95° at set point, extends to ~170° at release)
+    if (angles.elbowAngle !== null) {
+      validMetrics++;
+      if (angles.elbowAngle >= 80 && angles.elbowAngle <= 100) {
+        feedback.elbowStatus = 'good';
+        feedback.elbowMessage = `Elbow at ${angles.elbowAngle}° - Perfect set position`;
+        totalScore += 100;
+      } else if (angles.elbowAngle >= 70 && angles.elbowAngle <= 110) {
+        feedback.elbowStatus = 'warning';
+        feedback.elbowMessage = `Elbow at ${angles.elbowAngle}° - Slightly off`;
+        totalScore += 70;
+        feedback.tips.push(angles.elbowAngle < 80 
+          ? 'Open your elbow slightly more' 
+          : 'Tuck your elbow in a bit');
+      } else if (angles.elbowAngle > 150) {
+        // Extended arm - likely in release phase
+        feedback.elbowStatus = 'good';
+        feedback.elbowMessage = `Elbow at ${angles.elbowAngle}° - Good extension`;
+        totalScore += 90;
+      } else {
+        feedback.elbowStatus = 'critical';
+        feedback.elbowMessage = `Elbow at ${angles.elbowAngle}° - Needs adjustment`;
+        totalScore += 40;
+        feedback.tips.push('Focus on forming an L-shape with your shooting arm');
+      }
+    }
+    
+    // Analyze knee angle (ideal: 130-150° for athletic stance)
+    if (angles.kneeAngle !== null) {
+      validMetrics++;
+      if (angles.kneeAngle >= 130 && angles.kneeAngle <= 155) {
+        feedback.kneeStatus = 'good';
+        feedback.kneeMessage = `Knee at ${angles.kneeAngle}° - Good bend`;
+        totalScore += 100;
+      } else if (angles.kneeAngle >= 120 && angles.kneeAngle <= 165) {
+        feedback.kneeStatus = 'warning';
+        feedback.kneeMessage = `Knee at ${angles.kneeAngle}° - Adjust slightly`;
+        totalScore += 70;
+        feedback.tips.push(angles.kneeAngle < 130 
+          ? 'Straighten your knees slightly' 
+          : 'Bend your knees more for power');
+      } else if (angles.kneeAngle > 165) {
+        feedback.kneeStatus = 'critical';
+        feedback.kneeMessage = `Knee at ${angles.kneeAngle}° - Too straight`;
+        totalScore += 40;
+        feedback.tips.push('Bend your knees more to generate power');
+      } else {
+        feedback.kneeStatus = 'warning';
+        feedback.kneeMessage = `Knee at ${angles.kneeAngle}° - Too bent`;
+        totalScore += 50;
+        feedback.tips.push('Don\'t over-bend your knees');
+      }
+    }
+    
+    // Analyze shoulder angle (ideal: 45-90° depending on shot phase)
+    if (angles.shoulderAngle !== null) {
+      validMetrics++;
+      if (angles.shoulderAngle >= 40 && angles.shoulderAngle <= 100) {
+        feedback.shoulderStatus = 'good';
+        feedback.shoulderMessage = `Shoulder at ${angles.shoulderAngle}° - Good position`;
+        totalScore += 100;
+      } else if (angles.shoulderAngle >= 30 && angles.shoulderAngle <= 120) {
+        feedback.shoulderStatus = 'warning';
+        feedback.shoulderMessage = `Shoulder at ${angles.shoulderAngle}° - Adjust position`;
+        totalScore += 70;
+      } else {
+        feedback.shoulderStatus = 'critical';
+        feedback.shoulderMessage = `Shoulder at ${angles.shoulderAngle}° - Check form`;
+        totalScore += 40;
+        feedback.tips.push('Keep your shooting elbow aligned with your shoulder');
+      }
+    }
+    
+    // Analyze hip angle (ideal: 160-180° for aligned posture)
+    if (angles.hipAngle !== null) {
+      validMetrics++;
+      if (angles.hipAngle >= 155 && angles.hipAngle <= 180) {
+        feedback.hipStatus = 'good';
+        feedback.hipMessage = `Hip at ${angles.hipAngle}° - Good alignment`;
+        totalScore += 100;
+      } else if (angles.hipAngle >= 140 && angles.hipAngle <= 180) {
+        feedback.hipStatus = 'warning';
+        feedback.hipMessage = `Hip at ${angles.hipAngle}° - Slight lean`;
+        totalScore += 70;
+        feedback.tips.push('Keep your torso more upright');
+      } else {
+        feedback.hipStatus = 'critical';
+        feedback.hipMessage = `Hip at ${angles.hipAngle}° - Leaning too much`;
+        totalScore += 40;
+        feedback.tips.push('Maintain a more vertical posture');
+      }
+    }
+    
+    // Calculate overall score
+    feedback.overallScore = validMetrics > 0 
+      ? Math.round(totalScore / validMetrics) 
+      : 0;
+    
+    return feedback;
+  }
+  
+  /**
+   * Detect if the pose indicates a shooting motion
+   */
+  detectShootingMotion(pose: Pose, previousPose?: Pose): boolean {
+    const wrist = this.getKeypoint(pose, 'right_wrist');
+    const shoulder = this.getKeypoint(pose, 'right_shoulder');
+    const elbow = this.getKeypoint(pose, 'right_elbow');
+    
+    if (!wrist || !shoulder || !elbow) {
+      return false;
+    }
+    
+    // Check if wrist is above shoulder (shooting position)
+    const wristAboveShoulder = wrist.y < shoulder.y;
+    
+    // Check if arm is extended (elbow angle > 140°)
+    const elbowAngle = this.calculateAngle(shoulder, elbow, wrist);
+    const armExtended = elbowAngle > 140;
+    
+    // If we have a previous pose, check for upward motion
+    if (previousPose) {
+      const prevWrist = this.getKeypoint(previousPose, 'right_wrist');
+      if (prevWrist) {
+        const upwardMotion = wrist.y < prevWrist.y - 10; // Moving up by at least 10px
+        return wristAboveShoulder && (armExtended || upwardMotion);
+      }
+    }
+    
+    return wristAboveShoulder && armExtended;
+  }
+  
+  /**
+   * Dispose of the detector to free memory
+   */
+  dispose(): void {
+    if (this.detector) {
+      this.detector.dispose();
+      this.detector = null;
+      console.log('[PoseDetection] Detector disposed');
+    }
+  }
+  
+  /**
+   * Check if detector is ready
+   */
+  isReady(): boolean {
+    return this.detector !== null;
+  }
+}
+
+// Export singleton instance
+export const poseDetectionService = new PoseDetectionService();
+
+// Export class for testing
+export { PoseDetectionService };
+
+

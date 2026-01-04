@@ -1,15 +1,20 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Enable static export for Tauri builds
-  output: process.env.TAURI_BUILD === 'true' ? 'export' : undefined,
+  // Enable static export for Tauri and Capacitor builds
+  // Set TAURI_BUILD=true or CAPACITOR_BUILD=true to enable static export
+  output: (process.env.TAURI_BUILD === 'true' || process.env.CAPACITOR_BUILD === 'true') ? 'export' : undefined,
   
   images: {
-    // Use unoptimized images for Tauri static export
-    unoptimized: process.env.TAURI_BUILD === 'true',
+    // Use unoptimized images for static exports (Tauri/Capacitor)
+    unoptimized: (process.env.TAURI_BUILD === 'true' || process.env.CAPACITOR_BUILD === 'true'),
     remotePatterns: [
       {
         protocol: "https",
         hostname: "cdn.nba.com",
+      },
+      {
+        protocol: "https",
+        hostname: "*.shotiqai.com",
       },
     ],
   },
