@@ -31,6 +31,14 @@ yarn-error.log*
 # vercel
 .vercel
 
+# Tauri build artifacts (3GB+)
+src-tauri/target/
+
+# iOS build artifacts
+ios/App/Pods/
+ios/App/build/
+ios/.build/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

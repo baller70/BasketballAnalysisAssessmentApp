@@ -1,0 +1,19 @@
+# Tauri desktop app (not needed for web deployment)
+src-tauri/
+
+# iOS app (not needed for web deployment)
+ios/
+
+# Large documentation files
+*.md
+!README.md
+
+# Build artifacts
+*.log
+*.png
+*.jpg
+
+# Development files
+.cursor/
+.vscode/
+
