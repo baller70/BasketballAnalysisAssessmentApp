@@ -5,7 +5,7 @@
 // @ts-nocheck
 "use client"
 
-import React, { useState, useMemo, useRef, useCallback, useEffect } from "react"
+import React, { useState, useMemo, useRef, useCallback, useEffect, Suspense } from "react"
 import { AnalysisDashboard } from "@/components/analysis/AnalysisDashboard"
 import { EnhancedShotStrip } from "@/components/analysis/EnhancedShotStrip"
 import { AutoScreenshots } from "@/components/analysis/AutoScreenshots"
@@ -1717,7 +1717,7 @@ class ErrorBoundary extends React.Component<
   }
 }
 
-export default function DemoResultsPage() {
+function DemoResultsPageContent() {
   const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState("analysis")
   const [resultsMode, setResultsMode] = useState<ResultsMode>("image")
@@ -12767,5 +12767,21 @@ function PhotoComparisonSection() {
         </div>
       </div>
     </div>
+  )
+}
+
+// Wrapper component with Suspense boundary for useSearchParams
+export default function DemoResultsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-[#FF6B35] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-[#888]">Loading...</p>
+        </div>
+      </div>
+    }>
+      <DemoResultsPageContent />
+    </Suspense>
   )
 }
