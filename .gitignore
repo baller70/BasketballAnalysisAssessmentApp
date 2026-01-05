@@ -19,6 +19,47 @@ out
 .logs
 *.tsbuildinfo
 
+# =============================================
+# EXCLUDE FROM VERCEL - Not needed for web app
+# =============================================
+training_data/
+template_mockups/
+template_samples/
+tier_comparison_outputs/
+test_screenshots/
+nextjs_space/
+python-scraper/
+python-backend/
+huggingface-backend/
+huggingface-realesrgan/
+Shooting Form/
+LEVEL ICONS/
+Yellow Icons/
+youtube_collection/
+youtube_dataset/
+image_collection/
+dual_tier_analysis/
+phase4_outputs/
+test-hybrid-final/
+test-results/
+integrations/
+docs/
+tests/
+scripts/
+config/
+
+# Large files
+*.mp4
+*.mov
+*.avi
+*.png
+*.jpg
+*.jpeg
+!basketball-analysis/public/**/*.png
+!basketball-analysis/public/**/*.jpg
+!basketball-analysis/src/**/*.png
+!basketball-analysis/src/**/*.jpg
+
 # Large dataset directories (use Git LFS or S3 for these)
 training_data/raw_downloads/
 training_data/raw_images/
