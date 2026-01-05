@@ -24,8 +24,8 @@ export interface CameraPhoto {
 }
 
 export interface CameraPermissionStatus {
-  camera: 'granted' | 'denied' | 'prompt';
-  photos: 'granted' | 'denied' | 'prompt';
+  camera: 'granted' | 'denied' | 'prompt' | 'prompt-with-rationale' | 'limited';
+  photos: 'granted' | 'denied' | 'prompt' | 'prompt-with-rationale' | 'limited';
 }
 
 export type CameraSource = 'camera' | 'photos' | 'prompt';
