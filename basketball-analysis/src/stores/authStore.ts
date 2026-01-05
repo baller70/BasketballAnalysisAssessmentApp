@@ -7,14 +7,10 @@ import { persist } from "zustand/middleware"
 // HELPER FUNCTIONS
 // ==========================================
 
-// Get API base URL - uses local API for development, production API for built app
+// Get API base URL - always use relative URLs for same-origin requests
 function getApiBaseUrl(): string {
-  // Always use local API during development (avoids CORS issues)
-  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-    return ''  // Relative URLs - same origin, no CORS issues
-  }
-  // For production builds, use production API
-  return 'https://app.shotiqai.com'
+  // Use relative URLs for all environments (web app serves its own API)
+  return ''
 }
 
 // Set authentication cookie for middleware
