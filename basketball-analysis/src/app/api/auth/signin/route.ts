@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     } catch (dbError) {
       console.error("Database connection error:", dbError)
       return NextResponse.json(
-        { error: "Database connection failed. Please check your database connection." },
+        { error: "Database connection failed. 503" },
         { status: 503 }
       )
     }
@@ -64,10 +64,10 @@ export async function POST(request: NextRequest) {
     console.error("Sign in error:", error)
     const errorMessage = error instanceof Error ? error.message : String(error)
     
-    // Check if it's a Prisma error
-    if (errorMessage.includes("P1001") || errorMessage.includes("Can't reach database")) {
+    // Check if it's a Prisma/database error
+    if (errorMessage.includes("P1001") || errorMessage.includes("P1002") || errorMessage.includes("Can't reach database") || errorMessage.includes("ECONNREFUSED") || errorMessage.includes("Connection refused") || errorMessage.includes("timed out")) {
       return NextResponse.json(
-        { error: "Database connection failed. Please ensure your database is running and accessible." },
+        { error: "Database connection failed. 503" },
         { status: 503 }
       )
     }
