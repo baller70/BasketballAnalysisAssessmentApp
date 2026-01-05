@@ -51,11 +51,11 @@ export function ProfileCard({
 }: ProfileCardProps) {
   // Map icon color to CSS class
   const iconColorClass = {
-    primary: "text-blue-700",
-    success: "text-green-600",
+    primary: "text-[#FF6B35]",
+    success: "text-green-500",
     warning: "text-orange-500",
-    critical: "text-red-600",
-    neutral: "text-gray-500",
+    critical: "text-red-500",
+    neutral: "text-gray-400",
   }[iconColor]
 
   return (
@@ -66,11 +66,11 @@ export function ProfileCard({
       transition={{ duration: 0.3, ease: "easeInOut" }}
       className="w-full max-w-md mx-auto"
     >
-      <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+      <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl shadow-xl overflow-hidden">
         {/* Progress Bar */}
-        <div className="h-2 bg-gray-100">
+        <div className="h-2 bg-[#2a2a2a]">
           <motion.div
-            className="h-full bg-gradient-to-r from-blue-600 to-blue-700"
+            className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF8C5A]"
             initial={{ width: 0 }}
             animate={{ width: `${(currentStep / totalSteps) * 100}%` }}
             transition={{ duration: 0.5 }}
@@ -80,13 +80,13 @@ export function ProfileCard({
         {/* Card Header */}
         <div className="px-6 pt-6 pb-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-blue-700">
+            <span className="text-sm font-medium text-[#FF6B35]">
               {currentStep} of {totalSteps}
             </span>
             {helpText && onToggleHelp && (
               <button
                 onClick={onToggleHelp}
-                className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                className="p-2 text-gray-500 hover:text-[#FF6B35] transition-colors"
                 aria-label="Show help"
               >
                 <HelpIcon size="sm" color="neutral" />
@@ -101,13 +101,13 @@ export function ProfileCard({
                 {icon}
               </div>
             )}
-            <h2 className="text-2xl font-bold text-gray-900">
+            <h2 className="text-2xl font-bold text-white">
               {title}
             </h2>
           </div>
           
           {subtitle && (
-            <p className="text-gray-500 text-sm">
+            <p className="text-gray-400 text-sm">
               {subtitle}
             </p>
           )}
@@ -115,7 +115,7 @@ export function ProfileCard({
         
         {/* Educational Text */}
         <div className="px-6 pb-4">
-          <p className="text-gray-600 text-sm leading-relaxed bg-blue-50 rounded-lg p-3 border-l-4 border-blue-600">
+          <p className="text-gray-300 text-sm leading-relaxed bg-[#FF6B35]/10 rounded-lg p-3 border-l-4 border-[#FF6B35]">
             {educationalText}
           </p>
         </div>
@@ -129,7 +129,7 @@ export function ProfileCard({
               exit={{ height: 0, opacity: 0 }}
               className="px-6 pb-4 overflow-hidden"
             >
-              <div className="bg-blue-50 rounded-lg p-3 text-sm text-blue-700">
+              <div className="bg-[#FF6B35]/10 rounded-lg p-3 text-sm text-[#FF8C5A]">
                 {helpText}
               </div>
             </motion.div>
@@ -149,8 +149,8 @@ export function ProfileCard({
             className={`
               flex items-center gap-2 px-4 py-3 rounded-xl font-medium transition-all
               ${currentStep === 1
-                ? "text-gray-300 cursor-not-allowed"
-                : "text-gray-600 hover:bg-gray-100"
+                ? "text-gray-600 cursor-not-allowed"
+                : "text-gray-300 hover:bg-[#2a2a2a]"
               }
             `}
             aria-label="Go back"
@@ -165,8 +165,8 @@ export function ProfileCard({
             className={`
               flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all
               ${canProceed
-                ? "bg-blue-700 text-white hover:bg-blue-800 shadow-lg shadow-blue-700/30"
-                : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                ? "bg-[#FF6B35] text-white hover:bg-[#FF8C5A] shadow-lg shadow-[#FF6B35]/30"
+                : "bg-[#2a2a2a] text-gray-500 cursor-not-allowed"
               }
             `}
             aria-label={currentStep === totalSteps ? "Complete profile" : "Go to next step"}
@@ -178,7 +178,7 @@ export function ProfileCard({
       </div>
       
       {/* Swipe Hint (mobile) */}
-      <p className="text-center text-gray-400 text-xs mt-4 md:hidden">
+      <p className="text-center text-gray-500 text-xs mt-4 md:hidden">
         Swipe left or right to navigate
       </p>
     </motion.div>

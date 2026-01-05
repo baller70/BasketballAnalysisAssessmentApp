@@ -110,8 +110,8 @@ export function DominantHandCard({
               className={`
                 w-full p-4 rounded-xl border-2 transition-all flex items-center gap-4
                 ${isSelected
-                  ? "border-orange-500 bg-orange-50"
-                  : "border-gray-200 bg-white hover:border-gray-300"
+                  ? "border-[#FF6B35] bg-[#FF6B35]/10"
+                  : "border-[#3a3a3a] bg-[#2a2a2a] hover:border-[#4a4a4a]"
                 }
               `}
             >
@@ -125,7 +125,7 @@ export function DominantHandCard({
                 <div className="flex items-center gap-2">
                   <h3
                     className={`font-semibold ${
-                      isSelected ? "text-orange-600" : "text-gray-900"
+                      isSelected ? "text-[#FF6B35]" : "text-white"
                     }`}
                   >
                     {option.label}
@@ -134,13 +134,13 @@ export function DominantHandCard({
                     <motion.span
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      className="text-orange-500"
+                      className="text-[#FF6B35]"
                     >
                       ✓
                     </motion.span>
                   )}
                 </div>
-                <p className="text-sm text-gray-500 mt-0.5">
+                <p className="text-sm text-gray-400 mt-0.5">
                   {option.description}
                 </p>
               </div>
@@ -150,8 +150,8 @@ export function DominantHandCard({
                 className={`
                   w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0
                   ${isSelected
-                    ? "border-orange-500 bg-orange-500"
-                    : "border-gray-300"
+                    ? "border-[#FF6B35] bg-[#FF6B35]"
+                    : "border-gray-500"
                   }
                 `}
               >
@@ -169,17 +169,17 @@ export function DominantHandCard({
       </div>
       
       {/* Fun Fact */}
-      <div className="mt-6 p-3 bg-blue-50 rounded-lg">
-        <p className="text-xs text-blue-700">
+      <div className="mt-6 p-3 bg-[#FF6B35]/10 rounded-lg">
+        <p className="text-xs text-[#FF8C5A]">
           <span className="font-semibold">Fun fact:</span> Only about 10% of basketball players are left-handed, but they often have an advantage because defenders are less accustomed to guarding them!
         </p>
       </div>
       
       {/* Selected Summary */}
       {value && (
-        <div className="mt-4 text-center text-sm text-gray-500">
+        <div className="mt-4 text-center text-sm text-gray-400">
           Analysis will be oriented for{" "}
-          <span className="font-semibold text-orange-600">
+          <span className="font-semibold text-[#FF6B35]">
             {value === "ambidextrous" ? "both hands" : `${value}-hand`}
           </span>{" "}
           shooting

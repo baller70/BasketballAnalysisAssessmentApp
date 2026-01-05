@@ -76,9 +76,9 @@ export function AgeCard({
         <select
           value={value || ""}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full px-4 py-4 text-lg border-2 border-gray-200 rounded-xl focus:border-orange-500 focus:ring-0 transition-colors bg-white appearance-none cursor-pointer"
+          className="w-full px-4 py-4 text-lg border-2 border-[#3a3a3a] rounded-xl focus:border-[#FF6B35] focus:ring-0 transition-colors bg-[#0a0a0a] text-white appearance-none cursor-pointer"
           style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23999'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23FF6B35'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
             backgroundRepeat: "no-repeat",
             backgroundPosition: "right 1rem center",
             backgroundSize: "1.5rem",
@@ -97,19 +97,19 @@ export function AgeCard({
       
       {/* Coaching Tier Display */}
       {coachingTier && (
-        <div className="p-4 bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl border border-orange-200">
+        <div className="p-4 bg-[#FF6B35]/10 rounded-xl border border-[#FF6B35]/30">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center">
+            <div className="w-12 h-12 bg-[#FF6B35] rounded-full flex items-center justify-center">
               <span className="text-white text-xl">🏀</span>
             </div>
             <div>
-              <p className="text-sm text-orange-600 font-medium">
+              <p className="text-sm text-[#FF6B35] font-medium">
                 Your Coaching Tier
               </p>
-              <p className="text-lg font-bold text-gray-900">
+              <p className="text-lg font-bold text-white">
                 {coachingTier.label}
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-400">
                 {coachingTier.description}
               </p>
             </div>
@@ -126,8 +126,8 @@ export function AgeCard({
               key={key}
               className={`p-2 rounded-lg text-center transition-all ${
                 isActive
-                  ? "bg-orange-500 text-white"
-                  : "bg-gray-100 text-gray-400"
+                  ? "bg-[#FF6B35] text-white"
+                  : "bg-[#2a2a2a] text-gray-500"
               }`}
             >
               <p className="text-[10px] font-medium leading-tight">

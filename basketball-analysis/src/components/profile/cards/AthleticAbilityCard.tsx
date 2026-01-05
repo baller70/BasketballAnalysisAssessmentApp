@@ -20,10 +20,10 @@ const ABILITY_DESCRIPTORS: Record<number, { label: string; description: string }
 
 // Get color based on athletic score
 const getScoreColor = (score: number): string => {
-  if (score <= 2) return "bg-gray-400"
-  if (score <= 4) return "bg-blue-400"
-  if (score <= 6) return "bg-green-400"
-  if (score <= 8) return "bg-orange-400"
+  if (score <= 2) return "bg-gray-500"
+  if (score <= 4) return "bg-gray-400"
+  if (score <= 6) return "bg-green-500"
+  if (score <= 8) return "bg-[#FF6B35]"
   return "bg-red-500"
 }
 
@@ -69,7 +69,7 @@ export function AthleticAbilityCard({
         <div className="flex flex-col items-center">
           <svg
             viewBox="0 0 48 48"
-            className="w-10 h-10 text-gray-400"
+            className="w-10 h-10 text-gray-500"
             fill="currentColor"
           >
             {/* Walking person */}
@@ -81,14 +81,14 @@ export function AthleticAbilityCard({
               fill="none"
             />
           </svg>
-          <span className="text-xs text-gray-400 mt-1">Low</span>
+          <span className="text-xs text-gray-500 mt-1">Low</span>
         </div>
         
         {/* High athleticism icon */}
         <div className="flex flex-col items-center">
           <svg
             viewBox="0 0 48 48"
-            className="w-10 h-10 text-orange-500"
+            className="w-10 h-10 text-[#FF6B35]"
             fill="currentColor"
           >
             {/* Running/jumping person with motion lines */}
@@ -106,14 +106,14 @@ export function AthleticAbilityCard({
               strokeLinecap="round"
             />
           </svg>
-          <span className="text-xs text-orange-500 mt-1">Elite</span>
+          <span className="text-xs text-[#FF6B35] mt-1">Elite</span>
         </div>
       </div>
       
       {/* Slider Container */}
       <div className="relative mb-6">
         {/* Background Track */}
-        <div className="h-3 bg-gray-200 rounded-full">
+        <div className="h-3 bg-[#2a2a2a] rounded-full">
           {/* Filled Track */}
           <motion.div
             className={`h-full rounded-full ${getScoreColor(currentValue)}`}
@@ -136,7 +136,7 @@ export function AthleticAbilityCard({
         
         {/* Thumb Indicator */}
         <motion.div
-          className={`absolute top-1/2 -translate-y-1/2 w-6 h-6 rounded-full ${getScoreColor(currentValue)} border-4 border-white shadow-lg cursor-pointer`}
+          className={`absolute top-1/2 -translate-y-1/2 w-6 h-6 rounded-full ${getScoreColor(currentValue)} border-4 border-[#1a1a1a] shadow-lg cursor-pointer`}
           style={{ left: `calc(${((currentValue - 1) / 9) * 100}% - 12px)` }}
           animate={{ scale: [1, 1.1, 1] }}
           transition={{ duration: 0.2 }}
@@ -153,7 +153,7 @@ export function AthleticAbilityCard({
               w-6 h-6 rounded-full text-xs font-medium transition-all
               ${currentValue === num
                 ? `${getScoreColor(num)} text-white`
-                : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                : "bg-[#2a2a2a] text-gray-400 hover:bg-[#3a3a3a]"
               }
             `}
           >
@@ -167,27 +167,27 @@ export function AthleticAbilityCard({
         key={currentValue}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-center p-4 bg-gray-50 rounded-xl"
+        className="text-center p-4 bg-[#2a2a2a] rounded-xl"
       >
         <div className="flex items-center justify-center gap-2 mb-1">
           <span className={`text-2xl font-bold ${
-            currentValue <= 4 ? "text-blue-600" :
-            currentValue <= 6 ? "text-green-600" :
-            currentValue <= 8 ? "text-orange-600" :
-            "text-red-600"
+            currentValue <= 4 ? "text-gray-400" :
+            currentValue <= 6 ? "text-green-500" :
+            currentValue <= 8 ? "text-[#FF6B35]" :
+            "text-red-500"
           }`}>
             {currentValue}/10
           </span>
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-            currentValue <= 4 ? "bg-blue-100 text-blue-700" :
-            currentValue <= 6 ? "bg-green-100 text-green-700" :
-            currentValue <= 8 ? "bg-orange-100 text-orange-700" :
-            "bg-red-100 text-red-700"
+            currentValue <= 4 ? "bg-gray-700 text-gray-300" :
+            currentValue <= 6 ? "bg-green-900/30 text-green-400" :
+            currentValue <= 8 ? "bg-[#FF6B35]/20 text-[#FF6B35]" :
+            "bg-red-900/30 text-red-400"
           }`}>
             {descriptor.label}
           </span>
         </div>
-        <p className="text-sm text-gray-600">{descriptor.description}</p>
+        <p className="text-sm text-gray-400">{descriptor.description}</p>
       </motion.div>
       
       {/* What This Affects */}

@@ -72,15 +72,15 @@ export function UploadEducation({
   ).length
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl overflow-hidden max-w-2xl mx-auto">
+    <div className="bg-[#1a1a1a] rounded-2xl shadow-xl overflow-hidden max-w-2xl mx-auto border border-[#3a3a3a]">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 text-white">
+      <div className="bg-gradient-to-r from-[#FF6B35] to-[#FF8C5A] px-6 py-4 text-white">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <CameraIcon size="lg" color="current" />
             <div>
               <h2 className="text-xl font-bold">Upload Guidelines</h2>
-              <p className="text-blue-100 text-sm">
+              <p className="text-orange-100 text-sm">
                 Follow these tips for the best analysis results
               </p>
             </div>
@@ -100,7 +100,7 @@ export function UploadEducation({
       </div>
 
       {/* Tab Navigation */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-[#3a3a3a]">
         <nav className="flex">
           {tabs.map((tab) => (
             <button
@@ -110,8 +110,8 @@ export function UploadEducation({
                 flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium
                 border-b-2 transition-colors
                 ${activeTab === tab.id
-                  ? "border-blue-600 text-blue-600 bg-blue-50"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                  ? "border-[#FF6B35] text-[#FF6B35] bg-[#FF6B35]/10"
+                  : "border-transparent text-gray-400 hover:text-gray-300 hover:bg-[#2a2a2a]"
                 }
               `}
             >
@@ -123,7 +123,7 @@ export function UploadEducation({
       </div>
 
       {/* Tab Content */}
-      <div className="p-6 max-h-[60vh] overflow-y-auto">
+      <div className="p-6 max-h-[60vh] overflow-y-auto bg-[#1a1a1a]">
         <AnimatePresence mode="wait">
           {activeTab === "dos" && (
             <motion.div
@@ -181,16 +181,16 @@ export function UploadEducation({
       </div>
 
       {/* Footer */}
-      <div className="border-t border-gray-200 px-6 py-4 bg-gray-50">
+      <div className="border-t border-[#3a3a3a] px-6 py-4 bg-[#2a2a2a]">
         <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-400">
             <InfoIcon size="sm" color="neutral" className="inline mr-1" />
             Quality uploads = Better analysis
           </p>
           {onStartUpload && (
             <button
               onClick={onStartUpload}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
+              className="px-6 py-2 bg-[#FF6B35] text-white rounded-lg font-medium hover:bg-[#FF8C5A] transition-colors flex items-center gap-2"
             >
               <CameraIcon size="sm" color="current" />
               Start Upload
@@ -211,22 +211,22 @@ function DosList() {
     <div className="space-y-3">
       <div className="flex items-center gap-2 mb-4">
         <ExcellentFormIcon size="md" color="success" />
-        <h3 className="text-lg font-semibold text-gray-900">Perfect Uploads</h3>
+        <h3 className="text-lg font-semibold text-white">Perfect Uploads</h3>
       </div>
       
       <div className="grid gap-3">
         {UPLOAD_DOS.map((item) => (
           <div
             key={item.id}
-            className="flex items-start gap-3 p-3 bg-green-50 border border-green-100 rounded-lg"
+            className="flex items-start gap-3 p-3 bg-green-900/20 border border-green-800/30 rounded-lg"
           >
             <div className="flex-shrink-0 mt-0.5">
               <GoodFormIcon size="sm" color="success" />
             </div>
             <div>
-              <h4 className="font-medium text-gray-900">{item.title}</h4>
-              <p className="text-sm text-gray-600">{item.description}</p>
-              <p className="text-xs text-green-700 mt-1">
+              <h4 className="font-medium text-white">{item.title}</h4>
+              <p className="text-sm text-gray-400">{item.description}</p>
+              <p className="text-xs text-green-400 mt-1">
                 <strong>Why:</strong> {item.whyItMatters}
               </p>
             </div>
@@ -242,22 +242,22 @@ function DontsList() {
     <div className="space-y-3">
       <div className="flex items-center gap-2 mb-4">
         <CriticalIssueIcon size="md" color="critical" />
-        <h3 className="text-lg font-semibold text-gray-900">Avoid These Mistakes</h3>
+        <h3 className="text-lg font-semibold text-white">Avoid These Mistakes</h3>
       </div>
       
       <div className="grid gap-3">
         {UPLOAD_DONTS.map((item) => (
           <div
             key={item.id}
-            className="flex items-start gap-3 p-3 bg-red-50 border border-red-100 rounded-lg"
+            className="flex items-start gap-3 p-3 bg-red-900/20 border border-red-800/30 rounded-lg"
           >
             <div className="flex-shrink-0 mt-0.5">
               <CriticalIssueIcon size="sm" color="critical" />
             </div>
             <div>
-              <h4 className="font-medium text-gray-900">{item.title}</h4>
-              <p className="text-sm text-gray-600">{item.description}</p>
-              <p className="text-xs text-red-700 mt-1">
+              <h4 className="font-medium text-white">{item.title}</h4>
+              <p className="text-sm text-gray-400">{item.description}</p>
+              <p className="text-xs text-red-400 mt-1">
                 <strong>Problem:</strong> {item.whyItMatters}
               </p>
             </div>
@@ -283,17 +283,17 @@ function VideoChecklist({ checkedItems, onToggle, requiredCount, checkedCount }:
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <PlayIcon size="md" color="primary" />
-          <h3 className="text-lg font-semibold text-gray-900">Video Checklist</h3>
+          <h3 className="text-lg font-semibold text-white">Video Checklist</h3>
         </div>
-        <div className="text-sm text-gray-500">
+        <div className="text-sm text-gray-400">
           {checkedCount}/{requiredCount} required
         </div>
       </div>
       
       {/* Progress Bar */}
-      <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
+      <div className="w-full bg-[#3a3a3a] rounded-full h-2 mb-4">
         <motion.div
-          className="h-2 rounded-full bg-blue-600"
+          className="h-2 rounded-full bg-[#FF6B35]"
           initial={{ width: 0 }}
           animate={{ width: `${progress}%` }}
           transition={{ duration: 0.3 }}
@@ -311,8 +311,8 @@ function VideoChecklist({ checkedItems, onToggle, requiredCount, checkedCount }:
               className={`
                 w-full flex items-start gap-3 p-3 rounded-lg border-2 transition-all text-left
                 ${isChecked
-                  ? "bg-blue-50 border-blue-200"
-                  : "bg-white border-gray-200 hover:border-gray-300"
+                  ? "bg-[#FF6B35]/10 border-[#FF6B35]/30"
+                  : "bg-[#2a2a2a] border-[#3a3a3a] hover:border-[#4a4a4a]"
                 }
               `}
             >
@@ -320,8 +320,8 @@ function VideoChecklist({ checkedItems, onToggle, requiredCount, checkedCount }:
                 className={`
                   flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center mt-0.5
                   ${isChecked
-                    ? "bg-blue-600 border-blue-600"
-                    : "border-gray-300"
+                    ? "bg-[#FF6B35] border-[#FF6B35]"
+                    : "border-gray-500"
                   }
                 `}
               >
@@ -337,16 +337,16 @@ function VideoChecklist({ checkedItems, onToggle, requiredCount, checkedCount }:
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <span className={`font-medium ${isChecked ? "text-blue-700" : "text-gray-900"}`}>
+                  <span className={`font-medium ${isChecked ? "text-[#FF6B35]" : "text-white"}`}>
                     {item.label}
                   </span>
                   {item.required && (
-                    <span className="text-xs px-1.5 py-0.5 bg-red-100 text-red-600 rounded">
+                    <span className="text-xs px-1.5 py-0.5 bg-red-900/30 text-red-400 rounded">
                       Required
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-gray-500 mt-0.5">{item.description}</p>
+                <p className="text-sm text-gray-400 mt-0.5">{item.description}</p>
               </div>
             </button>
           )
@@ -364,20 +364,20 @@ function ImageSequenceGuide() {
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
         <CameraIcon size="md" color="primary" />
-        <h3 className="text-lg font-semibold text-gray-900">Image Sequence Guide</h3>
+        <h3 className="text-lg font-semibold text-white">Image Sequence Guide</h3>
       </div>
       
-      <p className="text-sm text-gray-600 mb-4">
+      <p className="text-sm text-gray-400 mb-4">
         For best results, upload 3-7 images showing different phases of your shot.
         Click through to see what each image should capture.
       </p>
       
       {/* Phase Navigation */}
-      <div className="flex items-center justify-between bg-gray-100 rounded-lg p-2">
+      <div className="flex items-center justify-between bg-[#2a2a2a] rounded-lg p-2">
         <button
           onClick={() => setActivePhase(Math.max(0, activePhase - 1))}
           disabled={activePhase === 0}
-          className="p-2 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="p-2 rounded-lg hover:bg-[#3a3a3a] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           <ChevronLeftIcon size="sm" color={activePhase === 0 ? "neutral" : "primary"} />
         </button>
@@ -390,8 +390,8 @@ function ImageSequenceGuide() {
               className={`
                 w-8 h-8 rounded-full text-sm font-medium transition-colors
                 ${idx === activePhase
-                  ? "bg-blue-600 text-white"
-                  : "bg-white text-gray-600 hover:bg-gray-50"
+                  ? "bg-[#FF6B35] text-white"
+                  : "bg-[#3a3a3a] text-gray-400 hover:bg-[#4a4a4a]"
                 }
               `}
             >
@@ -403,7 +403,7 @@ function ImageSequenceGuide() {
         <button
           onClick={() => setActivePhase(Math.min(IMAGE_SEQUENCE_GUIDE.length - 1, activePhase + 1))}
           disabled={activePhase === IMAGE_SEQUENCE_GUIDE.length - 1}
-          className="p-2 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="p-2 rounded-lg hover:bg-[#3a3a3a] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           <ChevronRightIcon size="sm" color={activePhase === IMAGE_SEQUENCE_GUIDE.length - 1 ? "neutral" : "primary"} />
         </button>
@@ -420,27 +420,27 @@ function ImageSequenceGuide() {
           className={`
             p-4 rounded-lg border-2
             ${phase.required
-              ? "bg-blue-50 border-blue-200"
-              : "bg-gray-50 border-gray-200"
+              ? "bg-[#FF6B35]/10 border-[#FF6B35]/30"
+              : "bg-[#2a2a2a] border-[#3a3a3a]"
             }
           `}
         >
           <div className="flex items-center justify-between mb-2">
-            <h4 className="font-semibold text-gray-900">
+            <h4 className="font-semibold text-white">
               Image {phase.phase}: {phase.title}
             </h4>
             {phase.required ? (
-              <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full">
+              <span className="text-xs px-2 py-1 bg-[#FF6B35]/20 text-[#FF6B35] rounded-full">
                 Required
               </span>
             ) : (
-              <span className="text-xs px-2 py-1 bg-gray-200 text-gray-600 rounded-full">
+              <span className="text-xs px-2 py-1 bg-[#3a3a3a] text-gray-400 rounded-full">
                 Optional
               </span>
             )}
           </div>
           
-          <p className="text-sm text-gray-600 mb-3">{phase.description}</p>
+          <p className="text-sm text-gray-400 mb-3">{phase.description}</p>
           
           <div className="space-y-1">
             <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
@@ -448,7 +448,7 @@ function ImageSequenceGuide() {
             </p>
             <ul className="grid grid-cols-2 gap-1">
               {phase.whatToShow.map((item, idx) => (
-                <li key={idx} className="flex items-center gap-1.5 text-sm text-gray-700">
+                <li key={idx} className="flex items-center gap-1.5 text-sm text-gray-300">
                   <GoodFormIcon size="sm" color="success" />
                   {item}
                 </li>

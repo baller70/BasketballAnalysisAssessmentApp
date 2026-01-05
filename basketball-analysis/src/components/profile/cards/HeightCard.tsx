@@ -67,13 +67,13 @@ export function HeightCard({
     >
       {/* Unit Toggle */}
       <div className="flex justify-center mb-6">
-        <div className="inline-flex bg-gray-100 rounded-lg p-1">
+        <div className="inline-flex bg-[#2a2a2a] rounded-lg p-1">
           <button
             onClick={() => setUseMetric(false)}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
               !useMetric
-                ? "bg-white text-blue-700 shadow-sm"
-                : "text-gray-500 hover:text-gray-700"
+                ? "bg-[#FF6B35] text-white shadow-sm"
+                : "text-gray-400 hover:text-gray-300"
             }`}
           >
             ft/in
@@ -82,8 +82,8 @@ export function HeightCard({
             onClick={() => setUseMetric(true)}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
               useMetric
-                ? "bg-white text-blue-700 shadow-sm"
-                : "text-gray-500 hover:text-gray-700"
+                ? "bg-[#FF6B35] text-white shadow-sm"
+                : "text-gray-400 hover:text-gray-300"
             }`}
           >
             cm
@@ -96,9 +96,9 @@ export function HeightCard({
         <select
           value={value || ""}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full px-4 py-4 text-lg border-2 border-gray-200 rounded-xl focus:border-blue-600 focus:ring-0 transition-colors bg-white appearance-none cursor-pointer"
+          className="w-full px-4 py-4 text-lg border-2 border-[#3a3a3a] rounded-xl focus:border-[#FF6B35] focus:ring-0 transition-colors bg-[#0a0a0a] text-white appearance-none cursor-pointer"
           style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23999'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23FF6B35'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
             backgroundRepeat: "no-repeat",
             backgroundPosition: "right 1rem center",
             backgroundSize: "1.5rem",
@@ -122,15 +122,15 @@ export function HeightCard({
         {PLAYER_EXAMPLES.map((player) => (
           <div
             key={player.height}
-            className="text-center p-2 rounded-lg bg-blue-50"
+            className="text-center p-2 rounded-lg bg-[#FF6B35]/10"
           >
             <div className="flex justify-center mb-1">
               <BasketballIcon size="md" color="primary" />
             </div>
-            <div className="text-xs font-medium text-gray-700">
+            <div className="text-xs font-medium text-white">
               {player.height}
             </div>
-            <div className="text-xs text-gray-500">{player.label}</div>
+            <div className="text-xs text-gray-400">{player.label}</div>
           </div>
         ))}
       </div>
@@ -138,8 +138,8 @@ export function HeightCard({
       {/* Selected Value Display */}
       {value && (
         <div className="mt-4 text-center">
-          <span className="text-sm text-gray-500">Selected: </span>
-          <span className="text-lg font-semibold text-blue-700">
+          <span className="text-sm text-gray-400">Selected: </span>
+          <span className="text-lg font-semibold text-[#FF6B35]">
             {useMetric
               ? `${inchesToCm(value)} cm`
               : HEIGHT_OPTIONS_IMPERIAL.find((o) => o.value === value)?.label}

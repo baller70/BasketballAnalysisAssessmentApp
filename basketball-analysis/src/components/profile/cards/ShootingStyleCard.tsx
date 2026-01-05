@@ -266,8 +266,8 @@ export function ShootingStyleCard({
               className={`
                 p-3 rounded-xl border-2 transition-all flex flex-col items-center
                 ${isSelected
-                  ? "border-orange-500 bg-orange-50"
-                  : "border-gray-200 bg-white hover:border-gray-300"
+                  ? "border-[#FF6B35] bg-[#FF6B35]/10"
+                  : "border-[#3a3a3a] bg-[#2a2a2a] hover:border-[#4a4a4a]"
                 }
               `}
             >
@@ -279,7 +279,7 @@ export function ShootingStyleCard({
               {/* Label */}
               <h3
                 className={`font-semibold text-xs text-center ${
-                  isSelected ? "text-orange-600" : "text-gray-900"
+                  isSelected ? "text-[#FF6B35]" : "text-white"
                 }`}
               >
                 {style.label}
@@ -290,7 +290,7 @@ export function ShootingStyleCard({
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="mt-1 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center"
+                  className="mt-1 w-4 h-4 bg-[#FF6B35] rounded-full flex items-center justify-center"
                 >
                   <span className="text-white text-[10px]">✓</span>
                 </motion.div>
@@ -312,8 +312,8 @@ export function ShootingStyleCard({
             className={`
               w-full p-3 rounded-xl border-2 transition-all flex items-center gap-3 mb-4
               ${isSelected
-                ? "border-orange-500 bg-orange-50"
-                : "border-gray-200 bg-white hover:border-gray-300"
+                ? "border-[#FF6B35] bg-[#FF6B35]/10"
+                : "border-[#3a3a3a] bg-[#2a2a2a] hover:border-[#4a4a4a]"
               }
             `}
           >
@@ -321,16 +321,16 @@ export function ShootingStyleCard({
               {notSureStyle.diagram(isSelected)}
             </div>
             <div className="flex-1 text-left">
-              <h3 className={`font-semibold text-sm ${isSelected ? "text-orange-600" : "text-gray-900"}`}>
+              <h3 className={`font-semibold text-sm ${isSelected ? "text-[#FF6B35]" : "text-white"}`}>
                 {notSureStyle.label}
               </h3>
-              <p className="text-xs text-gray-500">{notSureStyle.shortDescription}</p>
+              <p className="text-xs text-gray-400">{notSureStyle.shortDescription}</p>
             </div>
             {isSelected && (
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
-                className="w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center"
+                className="w-5 h-5 bg-[#FF6B35] rounded-full flex items-center justify-center"
               >
                 <span className="text-white text-xs">✓</span>
               </motion.div>
@@ -345,7 +345,7 @@ export function ShootingStyleCard({
           <div key={style.id}>
             <button
               onClick={() => setExpandedStyle(expandedStyle === style.id ? null : style.id)}
-              className="w-full flex items-center justify-between p-2 text-xs text-gray-500 hover:bg-gray-50 rounded-lg transition-colors"
+              className="w-full flex items-center justify-between p-2 text-xs text-gray-400 hover:bg-[#2a2a2a] rounded-lg transition-colors"
             >
               <span>Learn about {style.label}</span>
               <ChevronDown
@@ -363,12 +363,12 @@ export function ShootingStyleCard({
                   exit={{ height: 0, opacity: 0 }}
                   className="overflow-hidden"
                 >
-                  <div className="p-3 bg-gray-50 rounded-lg mt-1 text-xs">
-                    <p className="text-gray-700 mb-2">{style.fullDescription}</p>
-                    <ul className="text-gray-600 space-y-1">
+                  <div className="p-3 bg-[#2a2a2a] rounded-lg mt-1 text-xs">
+                    <p className="text-gray-300 mb-2">{style.fullDescription}</p>
+                    <ul className="text-gray-400 space-y-1">
                       {style.characteristics.map((char, i) => (
                         <li key={i} className="flex items-start gap-1">
-                          <span className="text-orange-500">•</span>
+                          <span className="text-[#FF6B35]">•</span>
                           {char}
                         </li>
                       ))}
@@ -383,11 +383,11 @@ export function ShootingStyleCard({
       
       {/* Selected Summary */}
       {selectedStyle && (
-        <div className="mt-4 p-3 bg-orange-50 rounded-lg border border-orange-200">
-          <p className="text-sm text-orange-800">
+        <div className="mt-4 p-3 bg-[#FF6B35]/10 rounded-lg border border-[#FF6B35]/30">
+          <p className="text-sm text-[#FF8C5A]">
             <span className="font-semibold">Selected:</span> {selectedStyle.label}
           </p>
-          <p className="text-xs text-orange-600 mt-1">
+          <p className="text-xs text-[#FF6B35] mt-1">
             {selectedStyle.shortDescription}
           </p>
         </div>

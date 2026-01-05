@@ -118,9 +118,9 @@ export function ProfileWizard({ onComplete }: ProfileWizardProps) {
   // Don't render until client-side hydration is complete
   if (!isClient) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-orange-100">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#050505] via-[#0a0a0a] to-[#050505]">
         <div className="animate-pulse">
-          <div className="w-80 h-96 bg-white rounded-2xl shadow-xl" />
+          <div className="w-80 h-96 bg-[#1a1a1a] rounded-2xl shadow-xl" />
         </div>
       </div>
     )
@@ -218,7 +218,7 @@ export function ProfileWizard({ onComplete }: ProfileWizardProps) {
   return (
     <div
       {...swipeHandlers}
-      className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100 p-4"
+      className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#050505] via-[#0a0a0a] to-[#050505] p-4"
     >
       {/* Header */}
       <div className="mb-8 text-center">
@@ -228,7 +228,7 @@ export function ProfileWizard({ onComplete }: ProfileWizardProps) {
           className="flex items-center justify-center gap-3 mb-2"
         >
           <BasketballIcon size="xl" color="primary" />
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-white">
             Create Your Profile
           </h1>
         </motion.div>
@@ -236,7 +236,7 @@ export function ProfileWizard({ onComplete }: ProfileWizardProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="text-gray-600"
+          className="text-gray-400"
         >
           Help us personalize your shooting analysis
         </motion.p>
@@ -276,10 +276,10 @@ export function ProfileWizard({ onComplete }: ProfileWizardProps) {
               className={`
                 w-3 h-3 rounded-full transition-all
                 ${isCurrent
-                  ? "w-8 bg-blue-600"
+                  ? "w-8 bg-[#FF6B35]"
                   : isComplete
-                    ? "bg-blue-400 hover:bg-blue-500 cursor-pointer"
-                    : "bg-gray-300 cursor-not-allowed"
+                    ? "bg-[#FF6B35]/60 hover:bg-[#FF6B35]/80 cursor-pointer"
+                    : "bg-gray-600 cursor-not-allowed"
                 }
               `}
               disabled={stepNum > currentStep && !isComplete}

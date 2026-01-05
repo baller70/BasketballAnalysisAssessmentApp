@@ -107,8 +107,8 @@ export function ExperienceCard({
               className={`
                 w-full p-4 rounded-xl border-2 transition-all text-left
                 ${isSelected
-                  ? "border-orange-500 bg-orange-50"
-                  : "border-gray-200 bg-white hover:border-gray-300"
+                  ? "border-[#FF6B35] bg-[#FF6B35]/10"
+                  : "border-[#3a3a3a] bg-[#2a2a2a] hover:border-[#4a4a4a]"
                 }
               `}
             >
@@ -118,8 +118,8 @@ export function ExperienceCard({
                   className={`
                     flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center
                     ${isSelected
-                      ? "bg-orange-500 text-white"
-                      : "bg-gray-100 text-gray-400"
+                      ? "bg-[#FF6B35] text-white"
+                      : "bg-[#3a3a3a] text-gray-400"
                     }
                   `}
                 >
@@ -131,7 +131,7 @@ export function ExperienceCard({
                   <div className="flex items-center gap-2">
                     <h3
                       className={`font-semibold ${
-                        isSelected ? "text-orange-600" : "text-gray-900"
+                        isSelected ? "text-[#FF6B35]" : "text-white"
                       }`}
                     >
                       {level.label}
@@ -140,13 +140,13 @@ export function ExperienceCard({
                       <motion.span
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        className="text-orange-500"
+                        className="text-[#FF6B35]"
                       >
                         ✓
                       </motion.span>
                     )}
                   </div>
-                  <p className="text-sm text-gray-600 mt-0.5">
+                  <p className="text-sm text-gray-400 mt-0.5">
                     {level.description}
                   </p>
                   {isSelected && (
@@ -165,8 +165,8 @@ export function ExperienceCard({
                   className={`
                     w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0
                     ${isSelected
-                      ? "border-orange-500 bg-orange-500"
-                      : "border-gray-300"
+                      ? "border-[#FF6B35] bg-[#FF6B35]"
+                      : "border-gray-500"
                     }
                   `}
                 >

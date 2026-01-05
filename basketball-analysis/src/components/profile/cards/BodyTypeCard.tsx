@@ -138,8 +138,8 @@ export function BodyTypeCard({
               className={`
                 p-3 rounded-xl border-2 transition-all flex flex-col items-center
                 ${isSelected
-                  ? "border-orange-500 bg-orange-50"
-                  : "border-gray-200 bg-white hover:border-gray-300"
+                  ? "border-[#FF6B35] bg-[#FF6B35]/10"
+                  : "border-[#3a3a3a] bg-[#2a2a2a] hover:border-[#4a4a4a]"
                 }
               `}
             >
@@ -147,7 +147,7 @@ export function BodyTypeCard({
               <div
                 className={`
                   w-16 h-24 mb-2
-                  ${isSelected ? "text-orange-500" : "text-gray-300"}
+                  ${isSelected ? "text-[#FF6B35]" : "text-gray-500"}
                 `}
               >
                 {type.silhouette}
@@ -156,14 +156,14 @@ export function BodyTypeCard({
               {/* Label */}
               <h3
                 className={`font-semibold text-sm ${
-                  isSelected ? "text-orange-600" : "text-gray-900"
+                  isSelected ? "text-[#FF6B35]" : "text-white"
                 }`}
               >
                 {type.label}
               </h3>
               
               {/* Short Description */}
-              <p className="text-xs text-gray-500 text-center mt-1">
+              <p className="text-xs text-gray-400 text-center mt-1">
                 {type.shortDescription}
               </p>
               
@@ -172,7 +172,7 @@ export function BodyTypeCard({
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="mt-2 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center"
+                  className="mt-2 w-5 h-5 bg-[#FF6B35] rounded-full flex items-center justify-center"
                 >
                   <span className="text-white text-xs">✓</span>
                 </motion.div>
@@ -187,7 +187,7 @@ export function BodyTypeCard({
         <div key={type.id} className="mb-2">
           <button
             onClick={() => setExpandedType(expandedType === type.id ? null : type.id)}
-            className="w-full flex items-center justify-between p-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+            className="w-full flex items-center justify-between p-2 text-sm text-gray-400 hover:bg-[#2a2a2a] rounded-lg transition-colors"
           >
             <span>Learn more about {type.label}</span>
             <ChevronDownIcon
@@ -207,12 +207,12 @@ export function BodyTypeCard({
                 exit={{ height: 0, opacity: 0 }}
                 className="overflow-hidden"
               >
-                <div className="p-3 bg-gray-50 rounded-lg mt-1 text-sm">
-                  <p className="text-gray-700 mb-2">{type.fullDescription}</p>
+                <div className="p-3 bg-[#2a2a2a] rounded-lg mt-1 text-sm">
+                  <p className="text-gray-300 mb-2">{type.fullDescription}</p>
                   
                   <div className="mb-2">
-                    <p className="font-medium text-gray-900 text-xs mb-1">Characteristics:</p>
-                    <ul className="text-xs text-gray-600 list-disc list-inside">
+                    <p className="font-medium text-white text-xs mb-1">Characteristics:</p>
+                    <ul className="text-xs text-gray-400 list-disc list-inside">
                       {type.characteristics.map((char, i) => (
                         <li key={i}>{char}</li>
                       ))}
@@ -220,13 +220,13 @@ export function BodyTypeCard({
                   </div>
                   
                   <div className="mb-2">
-                    <p className="font-medium text-gray-900 text-xs mb-1">Shooting Implications:</p>
-                    <p className="text-xs text-gray-600">{type.shootingImplications}</p>
+                    <p className="font-medium text-white text-xs mb-1">Shooting Implications:</p>
+                    <p className="text-xs text-gray-400">{type.shootingImplications}</p>
                   </div>
                   
                   <div>
-                    <p className="font-medium text-gray-900 text-xs mb-1">NBA Examples:</p>
-                    <p className="text-xs text-orange-600">{type.examples.join(", ")}</p>
+                    <p className="font-medium text-white text-xs mb-1">NBA Examples:</p>
+                    <p className="text-xs text-[#FF6B35]">{type.examples.join(", ")}</p>
                   </div>
                 </div>
               </motion.div>
@@ -237,11 +237,11 @@ export function BodyTypeCard({
       
       {/* Selected Summary */}
       {selectedType && (
-        <div className="mt-4 p-3 bg-orange-50 rounded-lg border border-orange-200">
-          <p className="text-sm text-orange-800">
+        <div className="mt-4 p-3 bg-[#FF6B35]/10 rounded-lg border border-[#FF6B35]/30">
+          <p className="text-sm text-[#FF8C5A]">
             <span className="font-semibold">Selected:</span> {selectedType.label}
           </p>
-          <p className="text-xs text-orange-600 mt-1">
+          <p className="text-xs text-[#FF6B35] mt-1">
             We&apos;ll match you with shooters like {selectedType.examples[0]}
           </p>
         </div>

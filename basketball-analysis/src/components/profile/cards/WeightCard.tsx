@@ -88,13 +88,13 @@ export function WeightCard({
     >
       {/* Unit Toggle */}
       <div className="flex justify-center mb-6">
-        <div className="inline-flex bg-gray-100 rounded-lg p-1">
+        <div className="inline-flex bg-[#2a2a2a] rounded-lg p-1">
           <button
             onClick={() => setUseMetric(false)}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
               !useMetric
-                ? "bg-white text-blue-700 shadow-sm"
-                : "text-gray-500 hover:text-gray-700"
+                ? "bg-[#FF6B35] text-white shadow-sm"
+                : "text-gray-400 hover:text-gray-300"
             }`}
           >
             lbs
@@ -103,8 +103,8 @@ export function WeightCard({
             onClick={() => setUseMetric(true)}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
               useMetric
-                ? "bg-white text-blue-700 shadow-sm"
-                : "text-gray-500 hover:text-gray-700"
+                ? "bg-[#FF6B35] text-white shadow-sm"
+                : "text-gray-400 hover:text-gray-300"
             }`}
           >
             kg
@@ -117,9 +117,9 @@ export function WeightCard({
         <select
           value={value || ""}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full px-4 py-4 text-lg border-2 border-gray-200 rounded-xl focus:border-blue-600 focus:ring-0 transition-colors bg-white appearance-none cursor-pointer"
+          className="w-full px-4 py-4 text-lg border-2 border-[#3a3a3a] rounded-xl focus:border-[#FF6B35] focus:ring-0 transition-colors bg-[#0a0a0a] text-white appearance-none cursor-pointer"
           style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23999'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23FF6B35'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
             backgroundRepeat: "no-repeat",
             backgroundPosition: "right 1rem center",
             backgroundSize: "1.5rem",
@@ -140,17 +140,17 @@ export function WeightCard({
       
       {/* Validation Warning */}
       {!weightValidation.isValid && (
-        <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg mb-4">
+        <div className="flex items-start gap-2 p-3 bg-amber-900/20 border border-amber-700/30 rounded-lg mb-4">
           <NeedsImprovementIcon size="sm" color="warning" className="flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-amber-700">{weightValidation.message}</p>
+          <p className="text-sm text-amber-400">{weightValidation.message}</p>
         </div>
       )}
       
       {/* Selected Value Display */}
       {value && (
         <div className="mt-4 text-center">
-          <span className="text-sm text-gray-500">Selected: </span>
-          <span className="text-lg font-semibold text-blue-700">
+          <span className="text-sm text-gray-400">Selected: </span>
+          <span className="text-lg font-semibold text-[#FF6B35]">
             {useMetric ? `${lbsToKg(value)} kg` : `${value} lbs`}
           </span>
         </div>
@@ -158,7 +158,7 @@ export function WeightCard({
       
       {/* BMI Reference (optional info) */}
       {value && heightInches && (
-        <div className="mt-4 text-center text-xs text-gray-400">
+        <div className="mt-4 text-center text-xs text-gray-500">
           {(() => {
             const heightM = heightInches * 0.0254
             const weightKg = value * 0.453592

@@ -10,7 +10,9 @@ import { AnalysisDashboard } from "@/components/analysis/AnalysisDashboard"
 import { EnhancedShotStrip } from "@/components/analysis/EnhancedShotStrip"
 import { AutoScreenshots } from "@/components/analysis/AutoScreenshots"
 import { VideoPlayerSection } from "@/components/analysis/VideoPlayerSection"
-import { User, Upload, Check, X, Image as ImageIcon, Video, BookOpen, Users, Search, BarChart3, Award, ArrowRight, Zap, Trophy, Target, ClipboardList, Flame, Dumbbell, CircleDot, Share2, Download, Copy, Twitter, Facebook, Linkedin, ChevronLeft, ChevronRight, Calendar, ChevronDown, ChevronUp, AlertTriangle, Lightbulb, Plus, Eye, EyeOff, Layers, GitBranch, Circle, Tag, Camera, Play, Info, TrendingUp, Shirt, Medal, Timer, Footprints, ArrowLeftRight, Move, Instagram, MessageCircle, Globe, Clock, PieChart, Grid3X3, Activity, MoreVertical } from "lucide-react"
+import { LiveAnalysis } from "@/components/live"
+import { DevicePreview } from "@/components/DevicePreview"
+import { User, Upload, Check, X, Image as ImageIcon, Video, BookOpen, Users, Search, BarChart3, Award, ArrowRight, Zap, Trophy, Target, ClipboardList, Flame, Dumbbell, CircleDot, Share2, Download, Copy, Twitter, Facebook, Linkedin, ChevronLeft, ChevronRight, Calendar, ChevronDown, ChevronUp, AlertTriangle, Lightbulb, Plus, Eye, EyeOff, Layers, GitBranch, Circle, Tag, Camera, Play, Info, TrendingUp, Shirt, Medal, Timer, Footprints, ArrowLeftRight, Move, Instagram, MessageCircle, Globe, Clock, PieChart, Grid3X3, Activity, MoreVertical, Radio } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 // shadcn/ui components
@@ -104,7 +106,7 @@ import {
 } from "@/components/dashboard/SimplifiedTabs"
 // Simplified player cards removed - now using same Professional layout for all views
 
-type ResultsMode = "video" | "image"
+type ResultsMode = "video" | "image" | "live"
 
 // ============================================
 // COLLAPSIBLE DROPDOWN COMPONENT
@@ -1856,6 +1858,7 @@ export default function DemoResultsPage() {
   const playerName = "KEVIN HOUSTON" // From profile or default
 
   return (
+    <DevicePreview>
     <main className="min-h-[calc(100vh-200px)] py-8 px-4 bg-[#050505]">
       <div className="container mx-auto max-w-7xl">
         <div className="flex gap-6">
@@ -1870,20 +1873,24 @@ export default function DemoResultsPage() {
           <div className="flex-1 min-w-0">
             <div className="bg-[#2C2C2C] rounded-lg overflow-hidden shadow-lg">
               {/* Tab Navigation with New Session Button */}
-              <div className="p-4 border-b border-[#3a3a3a]">
-                <div className="flex items-center justify-between">
-                  {/* Left: New Session Button */}
-                  <Link 
-                    href={`/?mode=${resultsMode === "video" ? "video" : "image"}`}
-                    className="flex items-center gap-2 bg-[#FF6B35] hover:bg-[#E55300] text-[#1a1a1a] font-semibold px-4 py-2 rounded-lg transition-colors text-sm"
-                  >
-                    <Plus className="w-4 h-4" />
-                    New {resultsMode === "video" ? "Video" : "Image"}
-                  </Link>
+              <div className="p-3 sm:p-4 border-b border-[#3a3a3a]">
+                <div className="flex items-center justify-center md:justify-between">
+                  {/* Left: New Session Button - Hidden on mobile */}
+                  {resultsMode !== "live" ? (
+                    <Link 
+                      href={`/?mode=${resultsMode === "video" ? "video" : "image"}`}
+                      className="hidden md:flex items-center gap-2 bg-[#FF6B35] hover:bg-[#E55300] text-[#1a1a1a] font-semibold px-4 py-2 rounded-lg transition-colors text-sm"
+                    >
+                      <Plus className="w-4 h-4" />
+                      New {resultsMode === "video" ? "Video" : "Image"}
+                    </Link>
+                  ) : (
+                    <div className="hidden md:block w-[120px]"></div>
+                  )}
                   
-                  {/* Center: Tab Navigation */}
-                  <div className="inline-flex rounded-md bg-[#1a1a1a] p-1 text-sm">
-                    {(["video", "image"] as ResultsMode[]).map((mode) => (
+                  {/* Center: Tab Navigation - Responsive sizing */}
+                  <div className="inline-flex rounded-lg bg-[#1a1a1a] p-1 text-sm">
+                    {(["video", "image", "live"] as ResultsMode[]).map((mode) => (
                       <button 
                         key={mode} 
                         onClick={() => {
@@ -1893,19 +1900,36 @@ export default function DemoResultsPage() {
                             console.error('Error switching tab:', error)
                           }
                         }} 
-                        className={`px-6 py-2 rounded-md flex items-center gap-2 transition-colors uppercase font-semibold tracking-wider ${resultsMode === mode ? "bg-[#FF6B35] text-[#111827]" : "text-[#9CA3AF] hover:text-[#F9FAFB] hover:bg-[#374151]"}`}
+                        className={`relative px-3 sm:px-5 py-2 rounded-md flex items-center gap-1.5 sm:gap-2 transition-colors uppercase font-semibold text-xs sm:text-sm tracking-wider ${resultsMode === mode ? "bg-[#FF6B35] text-[#111827]" : "text-[#9CA3AF] hover:text-[#F9FAFB] hover:bg-[#374151]"}`}
                       >
-                        {mode === "video" && <Video className="w-4 h-4" />}
-                        {mode === "image" && <ImageIcon className="w-4 h-4" />}
-                        {mode}
+                        {mode === "video" && <Video className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+                        {mode === "image" && <ImageIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+                        {mode === "live" && <Radio className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+                        <span className="hidden xs:inline sm:inline">{mode}</span>
+                        {mode === "live" && (
+                          <span className={`absolute -top-1 -right-1 px-1 py-0.5 text-[8px] sm:text-[10px] font-bold rounded-full ${resultsMode === "live" ? "bg-white text-[#FF6B35]" : "bg-[#FF6B35] text-white"}`}>
+                            NEW
+                          </span>
+                        )}
                       </button>
                     ))}
                   </div>
                   
-                  {/* Right: Spacer for balance */}
-                  <div className="w-[120px]"></div>
+                  {/* Right: Spacer for balance - Hidden on mobile */}
+                  <div className="hidden md:block w-[120px]"></div>
                 </div>
               </div>
+              
+              {/* Mobile FAB (Floating Action Button) for New Session */}
+              {resultsMode !== "live" && (
+                <Link 
+                  href={`/?mode=${resultsMode === "video" ? "video" : "image"}`}
+                  className="md:hidden fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 bg-[#FF6B35] hover:bg-[#E55300] text-white rounded-full shadow-lg shadow-[#FF6B35]/30 transition-all hover:scale-105 active:scale-95"
+                  aria-label={`New ${resultsMode === "video" ? "Video" : "Image"}`}
+                >
+                  <Plus className="w-6 h-6" />
+                </Link>
+              )}
               {/* 🎒 VIDEO TAB: Uses red backpack (effectiveVideoData, videoMainUrl, videoVisionAnalysis) */}
               {resultsMode === "video" && (
                     <ErrorBoundary>
@@ -1955,11 +1979,20 @@ export default function DemoResultsPage() {
                       />
                     </ErrorBoundary>
                   )}
+              {/* 📹 LIVE TAB: Real-time camera analysis */}
+                  {resultsMode === "live" && (
+                    <ErrorBoundary>
+                      <div className="p-6">
+                        <LiveAnalysis />
+                      </div>
+                    </ErrorBoundary>
+                  )}
             </div>
           </div>
         </div>
       </div>
     </main>
+    </DevicePreview>
   )
 }
 
@@ -3807,7 +3840,7 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
               )}
               
               {/* Content */}
-              <div className="relative flex items-center p-4 min-h-[110px]">
+              <div className="relative flex items-center p-4 pr-12 min-h-[110px]">
                 {/* LEFT: Progress Ring - centered in the gold section with dark background for visibility */}
                 <div className="flex-shrink-0 w-[20%] flex justify-center items-center ml-4">
                   <div className="relative">
@@ -3859,7 +3892,7 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                 </div>
                 
                 {/* RIGHT: Jersey Number - Large outline style with customizable color */}
-                <div className="flex-shrink-0 ml-4 mr-8">
+                <div className="flex-shrink-0 ml-4">
                   <span 
                     className="text-7xl font-black"
                     style={{
