@@ -10,8 +10,10 @@ ios/
 
 # Build artifacts
 *.log
-*.png
-*.jpg
+
+# Exclude test images but keep public assets
+/test_images/
+/screenshots/
 
 # Development files
 .cursor/
