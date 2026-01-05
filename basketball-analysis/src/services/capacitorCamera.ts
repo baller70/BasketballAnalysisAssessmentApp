@@ -372,35 +372,11 @@ export async function pickVideo(source: CameraSource = 'prompt'): Promise<{
   duration?: number;
 } | null> {
   if (isMobile()) {
-    try {
-      // @ts-ignore - Capacitor may not be installed
-      const { Camera, CameraSource: CS } = await import('@capacitor/camera');
-      
-      const sourceMap = {
-        'camera': CS.Camera,
-        'photos': CS.Photos,
-        'prompt': CS.Prompt,
-      };
-      
-      const result = await Camera.pickVideo({
-        source: sourceMap[source],
-      });
-      
-      return {
-        path: result.path,
-        webPath: result.webPath,
-        duration: result.duration,
-      };
-      
-    } catch (error: any) {
-      if (error.message?.includes('User cancelled')) {
-        return null;
-      }
-      throw error;
-    }
+    // Note: Capacitor Camera plugin doesn't support video picking natively
+    // Fall through to web API approach
   }
   
-  // Web: use file input for video
+  // Use file input for video selection (works on both web and mobile)
   return new Promise((resolve) => {
     const input = document.createElement('input');
     input.type = 'file';
