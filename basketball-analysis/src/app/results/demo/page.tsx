@@ -11,10 +11,11 @@ import { EnhancedShotStrip } from "@/components/analysis/EnhancedShotStrip"
 import { AutoScreenshots } from "@/components/analysis/AutoScreenshots"
 import { VideoPlayerSection } from "@/components/analysis/VideoPlayerSection"
 import { LiveAnalysis } from "@/components/live"
-import { DevicePreview } from "@/components/DevicePreview"
-import { User, Upload, Check, X, Image as ImageIcon, Video, BookOpen, Users, Search, BarChart3, Award, ArrowRight, Zap, Trophy, Target, ClipboardList, Flame, Dumbbell, CircleDot, Share2, Download, Copy, Twitter, Facebook, Linkedin, ChevronLeft, ChevronRight, Calendar, ChevronDown, ChevronUp, AlertTriangle, Lightbulb, Plus, Eye, EyeOff, Layers, GitBranch, Circle, Tag, Camera, Play, Info, TrendingUp, Shirt, Medal, Timer, Footprints, ArrowLeftRight, Move, Instagram, MessageCircle, Globe, Clock, PieChart, Grid3X3, Activity, MoreVertical, Radio } from "lucide-react"
+import { GoalTransitMap } from "@/components/goals"
+import { User, Upload, Check, X, Image as ImageIcon, Video, BookOpen, Users, Search, BarChart3, Award, ArrowRight, Zap, Trophy, Target, ClipboardList, Flame, Dumbbell, CircleDot, Share2, Download, Copy, Twitter, Facebook, Linkedin, ChevronLeft, ChevronRight, Calendar, ChevronDown, ChevronUp, AlertTriangle, Lightbulb, Plus, Eye, EyeOff, Layers, GitBranch, Circle, Tag, Camera, Play, Info, TrendingUp, Shirt, Medal, Timer, Footprints, ArrowLeftRight, Move, Instagram, MessageCircle, Globe, Clock, PieChart, Grid3X3, Activity, MoreVertical, Radio, Star, Crown, MapPin } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { useSearchParams } from "next/navigation"
 // shadcn/ui components
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
@@ -62,6 +63,7 @@ import {
 } from "@/services/sessionStorage"
 import { ClickableStatsGrid, StatPopup } from "@/components/dashboard/StatPopup"
 import { Phase6ComparisonPanel } from "@/components/comparison/Phase6ComparisonPanel"
+import { ScoreOrPassGame } from "@/components/comparison/ScoreOrPass"
 // Removed: AnnotationWalkthroughVideo - using original video player instead
 import { 
   ALL_DRILLS, 
@@ -1716,10 +1718,19 @@ class ErrorBoundary extends React.Component<
 }
 
 export default function DemoResultsPage() {
+  const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState("analysis")
   const [resultsMode, setResultsMode] = useState<ResultsMode>("image")
   const [isLoading, setIsLoading] = useState(false)
   const [showFabMenu, setShowFabMenu] = useState(false)
+  
+  // Handle ?tab= query parameter to auto-switch tabs
+  useEffect(() => {
+    const tabParam = searchParams.get('tab')
+    if (tabParam && ['analysis', 'flaws', 'assessment', 'comparison', 'training', 'goals', 'history'].includes(tabParam)) {
+      setActiveTab(tabParam)
+    }
+  }, [searchParams])
 
   // Get uploaded image and form analysis from store - hooks must be called unconditionally
   const storeData = useAnalysisStore()
@@ -1859,37 +1870,18 @@ export default function DemoResultsPage() {
   const playerName = "KEVIN HOUSTON" // From profile or default
 
   return (
-    <DevicePreview>
     <main className="min-h-[calc(100vh-200px)] py-8 px-4 bg-[#050505]">
-      <div className="container mx-auto max-w-7xl">
-        <div className="flex gap-6">
-          {/* Left: User Level Card - Fixed position */}
-          <div className="hidden lg:block flex-shrink-0">
-            <div className="sticky top-24">
-              <UserLevelCard />
-            </div>
-          </div>
+        <div className="container mx-auto max-w-5xl">
+          {/* Collapsible Stats Card - Shows on all devices */}
+          <CollapsibleStatsCard />
           
-          {/* Right: Main Content */}
-          <div className="flex-1 min-w-0">
+          {/* Main Content - Full Width */}
+          <div className="mt-4">
             <div className="bg-[#2C2C2C] rounded-lg overflow-hidden shadow-lg">
               {/* Tab Navigation - Hidden on mobile (FAB handles it) */}
               <div className="hidden md:block p-4 border-b border-[#3a3a3a]">
-                <div className="flex items-center justify-between">
-                  {/* Left: New Session Button */}
-                  {resultsMode !== "live" ? (
-                    <Link 
-                      href={`/?mode=${resultsMode === "video" ? "video" : "image"}`}
-                      className="flex items-center gap-2 bg-[#FF6B35] hover:bg-[#E55300] text-[#1a1a1a] font-semibold px-4 py-2 rounded-lg transition-colors text-sm"
-                    >
-                      <Plus className="w-4 h-4" />
-                      New {resultsMode === "video" ? "Video" : "Image"}
-                    </Link>
-                  ) : (
-                    <div className="w-[120px]"></div>
-                  )}
-                  
-                  {/* Center: Tab Navigation */}
+                <div className="flex items-center justify-center">
+                  {/* Tab Navigation */}
                   <div className="inline-flex rounded-lg bg-[#1a1a1a] p-1">
                     {(["video", "image", "live"] as ResultsMode[]).map((mode) => (
                       <button 
@@ -1922,7 +1914,7 @@ export default function DemoResultsPage() {
               </div>
               
               {/* Mobile FAB (Floating Action Button) with Menu */}
-              <div className="md:hidden fixed bottom-6 right-6 z-50">
+              <div className="md:hidden fixed bottom-24 right-4 z-50">
                 {/* FAB Menu Options */}
                 {showFabMenu && (
                   <>
@@ -2044,9 +2036,171 @@ export default function DemoResultsPage() {
             </div>
           </div>
         </div>
-      </div>
-    </main>
-    </DevicePreview>
+      </main>
+  )
+}
+
+// ============================================================
+// COLLAPSIBLE STATS CARD COMPONENT
+// Shows level, XP, streak, and rank in a compact collapsible format
+// ============================================================
+
+function CollapsibleStatsCard() {
+  const [isExpanded, setIsExpanded] = useState(false)
+  const [showStreakPopup, setShowStreakPopup] = useState(false)
+  const [showLeaderboardPopup, setShowLeaderboardPopup] = useState(false)
+  
+  // Mock data - in real app, this would come from user store
+  const userStats = {
+    level: 3,
+    levelName: "SKILLED SHOOTER",
+    xp: 1250,
+    maxXp: 2000,
+    dailyStreak: 5,
+    leaderboardRank: 127,
+    totalUsers: 2453,
+    latestBadge: {
+      name: "RISING STAR",
+      earnedDate: "DEC 20, 2024"
+    }
+  }
+  
+  const progressPercent = (userStats.xp / userStats.maxXp) * 100
+
+  return (
+    <div className="bg-[#2C2C2C] rounded-lg border border-[#3a3a3a] overflow-hidden">
+      {/* Collapsed View - Always Visible */}
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full p-3 md:p-4 flex items-center gap-3 md:gap-4 hover:bg-[#333] transition-colors"
+      >
+        {/* Level Badge */}
+        <div className="flex items-center gap-2 md:gap-3">
+          <div className="w-10 h-10 md:w-12 md:h-12 bg-[#FF6B35]/20 rounded-lg flex items-center justify-center border border-[#FF6B35]/40 flex-shrink-0">
+            <Award className="w-5 h-5 md:w-6 md:h-6 text-[#FF6B35]" />
+          </div>
+          <div className="text-left">
+            <div className="text-[#FF6B35] text-[10px] md:text-xs uppercase tracking-wider font-semibold">Lv.{userStats.level}</div>
+            <div className="text-[#FF6B35] font-bold text-sm md:text-base whitespace-nowrap">{userStats.levelName}</div>
+          </div>
+        </div>
+        
+        {/* XP Progress - Hidden on very small screens */}
+        <div className="hidden sm:flex flex-1 items-center gap-2 max-w-[200px]">
+          <div className="flex-1">
+            <div className="h-2 bg-[#3a3a3a] rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF4500] rounded-full transition-all duration-500"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+            <div className="flex justify-between text-[10px] text-[#888] mt-0.5">
+              <span>{userStats.xp} XP</span>
+              <span>{userStats.maxXp} XP</span>
+            </div>
+          </div>
+        </div>
+        
+        {/* Quick Stats */}
+        <div className="flex items-center gap-2 md:gap-4 ml-auto">
+          {/* Streak */}
+          <div className="flex items-center gap-1.5 px-2 py-1 bg-[#1a1a1a] rounded-lg">
+            <Flame className="w-4 h-4 text-orange-500" />
+            <span className="text-white font-bold text-sm">{userStats.dailyStreak}</span>
+          </div>
+          
+          {/* Rank */}
+          <div className="hidden xs:flex items-center gap-1.5 px-2 py-1 bg-[#1a1a1a] rounded-lg">
+            <Crown className="w-4 h-4 text-[#FF6B35]" />
+            <span className="text-white font-bold text-sm">#{userStats.leaderboardRank}</span>
+          </div>
+          
+          {/* Expand Arrow */}
+          <ChevronDown className={`w-5 h-5 text-[#888] transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+        </div>
+      </button>
+      
+      {/* Expanded Content */}
+      {isExpanded && (
+        <div className="px-3 md:px-4 pb-3 md:pb-4 border-t border-[#3a3a3a] bg-[#252525]">
+          <div className="pt-3 md:pt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {/* XP Progress (Mobile) */}
+            <div className="sm:hidden">
+              <div className="text-[#888] text-xs uppercase mb-1">Progress</div>
+              <div className="bg-[#1a1a1a] rounded-lg p-3">
+                <div className="flex justify-between text-xs text-[#888] mb-1">
+                  <span>{userStats.xp} XP</span>
+                  <span>{userStats.maxXp} XP</span>
+                </div>
+                <div className="h-2 bg-[#3a3a3a] rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF4500] rounded-full"
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+            
+            {/* Latest Badge */}
+            <Link href="/badges" className="bg-[#1a1a1a] rounded-lg p-3 hover:bg-[#222] transition-colors">
+              <div className="flex items-center gap-2 mb-1">
+                <Star className="w-3 h-3 text-[#FF6B35]" />
+                <span className="text-[#888] text-xs uppercase">Latest Badge</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#FF4500] flex items-center justify-center">
+                  <TrendingUp className="w-4 h-4 text-[#1a1a1a]" />
+                </div>
+                <div>
+                  <div className="text-[#E5E5E5] text-sm font-medium">{userStats.latestBadge.name}</div>
+                  <div className="text-[#666] text-xs">{userStats.latestBadge.earnedDate}</div>
+                </div>
+              </div>
+            </Link>
+            
+            {/* Daily Streak */}
+            <button 
+              onClick={(e) => { e.stopPropagation(); setShowStreakPopup(true); }}
+              className="bg-[#1a1a1a] rounded-lg p-3 hover:bg-[#222] transition-colors text-left"
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <Flame className="w-3 h-3 text-orange-500" />
+                <span className="text-[#888] text-xs uppercase">Daily Streak</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
+                  <Flame className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <div className="text-[#E5E5E5] text-sm font-bold">{userStats.dailyStreak} DAYS</div>
+                  <div className="text-[#666] text-xs">Keep it going!</div>
+                </div>
+              </div>
+            </button>
+            
+            {/* Leaderboard */}
+            <button 
+              onClick={(e) => { e.stopPropagation(); setShowLeaderboardPopup(true); }}
+              className="bg-[#1a1a1a] rounded-lg p-3 hover:bg-[#222] transition-colors text-left"
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <Crown className="w-3 h-3 text-[#FF6B35]" />
+                <span className="text-[#888] text-xs uppercase">Leaderboard</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#FF4500] flex items-center justify-center">
+                  <Crown className="w-4 h-4 text-[#1a1a1a]" />
+                </div>
+                <div>
+                  <div className="text-[#E5E5E5] text-sm font-bold">#{userStats.leaderboardRank}</div>
+                  <div className="text-[#666] text-xs">of {userStats.totalUsers.toLocaleString()} users</div>
+                </div>
+              </div>
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -4204,114 +4358,51 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
             ))}
           </div>
 
-          {/* SHARE YOUR RESULTS - Mini Section */}
-          <div className="bg-gradient-to-br from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a] rounded-lg overflow-hidden border border-[#3a3a3a] shadow-lg">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-[#FF6B35]/10 to-transparent p-4 border-b border-[#3a3a3a]">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-[#FF6B35]/10 flex items-center justify-center border border-[#FF6B35]/30">
-                  <Share2 className="w-5 h-5 text-[#FF6B35]" />
-                </div>
-                <div>
-                  <h2 className="text-[#FF6B35] font-bold uppercase tracking-wider text-lg">Share Your Results</h2>
-                  <p className="text-[#888] text-xs">Show off your shooting analysis</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Share Options */}
-            <div className="p-4">
-              {/* Social Media Buttons */}
-              <div className="grid grid-cols-3 gap-3 mb-4">
-                <button 
-                  onClick={() => handleShare("twitter")}
-                  className="bg-[#1DA1F2]/10 hover:bg-[#1DA1F2]/20 border border-[#1DA1F2]/30 rounded-lg p-3 flex flex-col items-center gap-2 transition-all hover:scale-105"
-                >
-                  <Twitter className="w-5 h-5 text-[#1DA1F2]" />
-                  <span className="text-[#1DA1F2] text-[10px] font-semibold uppercase">Twitter</span>
-                </button>
-                <button 
-                  onClick={() => handleShare("facebook")}
-                  className="bg-[#4267B2]/10 hover:bg-[#4267B2]/20 border border-[#4267B2]/30 rounded-lg p-3 flex flex-col items-center gap-2 transition-all hover:scale-105"
-                >
-                  <Facebook className="w-5 h-5 text-[#4267B2]" />
-                  <span className="text-[#4267B2] text-[10px] font-semibold uppercase">Facebook</span>
-                </button>
-                <button 
-                  onClick={() => handleShare("linkedin")}
-                  className="bg-[#0077B5]/10 hover:bg-[#0077B5]/20 border border-[#0077B5]/30 rounded-lg p-3 flex flex-col items-center gap-2 transition-all hover:scale-105"
-                >
-                  <Linkedin className="w-5 h-5 text-[#0077B5]" />
-                  <span className="text-[#0077B5] text-[10px] font-semibold uppercase">LinkedIn</span>
-                </button>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-2">
-                <button 
-                  onClick={handleDownloadImage}
-                  disabled={isGeneratingImage}
-                  className="flex-1 bg-[#2a2a2a] hover:bg-[#3a3a3a] border border-[#4a4a4a] rounded-lg px-3 py-2.5 flex items-center justify-center gap-2 transition-colors"
-                >
-                  {isGeneratingImage ? (
-                    <div className="w-4 h-4 border-2 border-[#FF6B35] border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <Download className="w-4 h-4 text-[#888]" />
-                  )}
-                  <span className="text-[#E5E5E5] text-xs font-medium">Download</span>
-                </button>
-                <button 
-                  onClick={handleCopyLink}
-                  className="flex-1 bg-[#2a2a2a] hover:bg-[#3a3a3a] border border-[#4a4a4a] rounded-lg px-3 py-2.5 flex items-center justify-center gap-2 transition-colors"
-                >
-                  <Copy className="w-4 h-4 text-[#888]" />
-                  <span className="text-[#E5E5E5] text-xs font-medium">Copy Link</span>
-                </button>
-              </div>
-
-              {/* Main Share Button */}
-              <button 
-                onClick={handleNativeShare}
-                className="w-full mt-3 bg-gradient-to-r from-[#FF6B35] to-[#FF4500] hover:from-[#E55300] hover:to-[#E59400] text-[#1a1a1a] font-bold px-4 py-3 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg shadow-[#FF6B35]/20"
-              >
-                <Share2 className="w-5 h-5" />
-                <span className="uppercase tracking-wider text-sm">Share Results</span>
-              </button>
-            </div>
-          </div>
         </div>
       </div>
-      <div className="p-6 border-t border-[#3a3a3a]">
-        {/* Tab Navigation - Same tabs for all views, different labels based on view */}
-        <div className="flex gap-2 mb-6 flex-wrap">
-          {["analysis", "flaws", "assessment", "comparison", "training", "history"].map((tab) => {
-            // Get tab label based on dashboard view
-            const getTabLabel = (tabId: string) => {
-              if (dashboardView === 'professional') {
-                return tabId === "analysis" ? "BIOMECHANICAL ANALYSIS" : tabId === "flaws" ? "IDENTIFIED FLAWS" : tabId === "assessment" ? "PLAYER ASSESSMENT" : tabId === "comparison" ? "COMPARISON" : tabId === "training" ? "TRAINING PLAN" : "HISTORICAL DATA"
-              } else if (dashboardView === 'standard') {
-                return tabId === "analysis" ? "FORM ANALYSIS" : tabId === "flaws" ? "WHAT TO FIX" : tabId === "assessment" ? "PLAYER ASSESSMENT" : tabId === "comparison" ? "COMPARE" : tabId === "training" ? "PRACTICE PLAN" : "HISTORY"
-              } else {
-                // Basic view - kid-friendly names
-                return tabId === "analysis" ? "HOW YOU SHOOT" : tabId === "flaws" ? "WHAT TO FIX" : tabId === "assessment" ? "PLAYER ASSESSMENT" : tabId === "comparison" ? "COMPARE" : tabId === "training" ? "PRACTICE" : "HISTORY"
-              }
-            }
-            return (
-              <button 
-                key={tab} 
-                onClick={() => {
-                  try {
-                    setActiveTab(tab)
-                  } catch (error) {
-                    console.error('Error switching tab:', error)
-                  }
-                }} 
-                className={`px-4 py-2 rounded-md font-semibold uppercase tracking-wider transition-colors ${activeTab === tab ? "bg-[#FF6B35] text-[#1a1a1a]" : "bg-[#3a3a3a] text-[#E5E5E5] hover:bg-[#4a4a4a]"}`}
-              >
-                {getTabLabel(tab)}
-              </button>
-            )
-          })}
+      <div className="p-6 border-t border-[#3a3a3a] pb-24">
+        {/* Bottom Tab Navigation - Fixed bottom bar with icons (all devices) */}
+        <div className="fixed bottom-0 left-0 right-0 bg-[#1a1a1a]/95 backdrop-blur-sm border-t border-[#3a3a3a] z-50 safe-area-bottom">
+          <div className="max-w-4xl mx-auto">
+            <div className="grid grid-cols-6 h-16 md:h-[72px]">
+              {[
+                { id: "analysis", icon: Activity, label: "Analysis" },
+                { id: "flaws", icon: AlertTriangle, label: "Flaws" },
+                { id: "assessment", icon: User, label: "Player" },
+                { id: "comparison", icon: Users, label: "Compare" },
+                { id: "training", icon: ClipboardList, label: "Training" },
+                { id: "goals", icon: Target, label: "Goals" },
+              ].map((tab) => {
+                const isActive = activeTab === tab.id
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => {
+                      try {
+                        setActiveTab(tab.id)
+                      } catch (error) {
+                        console.error('Error switching tab:', error)
+                      }
+                    }}
+                    className={`relative flex flex-col items-center justify-center gap-1 transition-all ${
+                      isActive 
+                        ? "text-[#FF6B35]" 
+                        : "text-[#888] hover:text-[#ccc]"
+                    }`}
+                  >
+                    {/* Active indicator bar at top */}
+                    {isActive && (
+                      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-[#FF6B35]" />
+                    )}
+                    <tab.icon className={`w-5 h-5 md:w-6 md:h-6 ${isActive ? "scale-110" : ""} transition-transform`} />
+                    <span className={`text-[10px] md:text-xs font-medium ${isActive ? "font-bold" : ""}`}>
+                      {tab.label}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
         </div>
         
         {/* Tab Content - Same components for all views, pass dashboardView for language adjustments */}
@@ -4339,6 +4430,11 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
           {activeTab === "training" && (
             <ErrorBoundary>
               <TrainingWithSessions dashboardView={dashboardView} />
+            </ErrorBoundary>
+          )}
+          {activeTab === "goals" && (
+            <ErrorBoundary>
+              <GoalsSection dashboardView={dashboardView} />
             </ErrorBoundary>
           )}
           {activeTab === "history" && (
@@ -8003,7 +8099,7 @@ function ComparisonWithSessions({ dashboardView = 'professional' }: { dashboardV
   const { visionAnalysisResult, uploadedImageBase64, playerProfile } = useAnalysisStore()
   const [sessions, setSessions] = useState<AnalysisSession[]>([])
   const [selectedSessionId, setSelectedSessionId] = useState<string>('current')
-  const [viewMode, setViewMode] = useState<'personalized' | 'elite' | 'photo'>('personalized') // Phase 6 & 7 toggle
+  const [viewMode, setViewMode] = useState<'personalized' | 'elite' | 'photo' | 'game'>('personalized') // Phase 6 & 7 toggle + Score or Pass game
   
   useEffect(() => {
     const loadedSessions = getAllSessions()
@@ -8165,9 +8261,10 @@ function ComparisonWithSessions({ dashboardView = 'professional' }: { dashboardV
           </div>
         </div>
         
-        {/* View Mode Toggle - Phase 6 & 7 Features */}
+        {/* View Mode Toggle - Phase 6 & 7 Features - Responsive */}
         <div className="flex items-center gap-2 mt-4 pt-4 border-t border-[#3a3a3a] flex-wrap">
           <span className="text-[#888] text-sm mr-2 uppercase">COMPARISON MODE:</span>
+          {/* Desktop: Full labels */}
           <button
             onClick={() => setViewMode('personalized')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors uppercase ${
@@ -8176,8 +8273,9 @@ function ComparisonWithSessions({ dashboardView = 'professional' }: { dashboardV
                 : 'bg-[#2a2a2a] text-[#888] hover:text-[#E5E5E5]'
             }`}
           >
-            <Users className="w-4 h-4 inline-block mr-2" />
-            BODY-TYPE MATCH
+            <Users className="w-4 h-4 inline-block mr-1 md:mr-2" />
+            <span className="hidden md:inline">PERSONALIZED COMPARISON</span>
+            <span className="md:hidden">MATCH</span>
           </button>
           <button
             onClick={() => setViewMode('elite')}
@@ -8187,8 +8285,9 @@ function ComparisonWithSessions({ dashboardView = 'professional' }: { dashboardV
                 : 'bg-[#2a2a2a] text-[#888] hover:text-[#E5E5E5]'
             }`}
           >
-            <Trophy className="w-4 h-4 inline-block mr-2" />
-            ELITE SHOOTERS
+            <Trophy className="w-4 h-4 inline-block mr-1 md:mr-2" />
+            <span className="hidden md:inline">ELITE SHOOTERS</span>
+            <span className="md:hidden">ELITE</span>
           </button>
           <button
             onClick={() => setViewMode('photo')}
@@ -8198,8 +8297,21 @@ function ComparisonWithSessions({ dashboardView = 'professional' }: { dashboardV
                 : 'bg-[#2a2a2a] text-[#888] hover:text-[#E5E5E5]'
             }`}
           >
-            <ImageIcon className="w-4 h-4 inline-block mr-2" />
-            PHOTO COMPARE
+            <ImageIcon className="w-4 h-4 inline-block mr-1 md:mr-2" />
+            <span className="hidden md:inline">PHOTO COMPARE</span>
+            <span className="md:hidden">PHOTO</span>
+          </button>
+          <button
+            onClick={() => setViewMode('game')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors uppercase ${
+              viewMode === 'game' 
+                ? 'bg-gradient-to-r from-[#FF6B35] to-[#FFD700] text-[#1a1a1a]' 
+                : 'bg-[#2a2a2a] text-[#888] hover:text-[#E5E5E5]'
+            }`}
+          >
+            <Flame className="w-4 h-4 inline-block mr-1 md:mr-2" />
+            <span className="hidden md:inline">SCORE OR PASS</span>
+            <span className="md:hidden">GAME</span>
           </button>
         </div>
         
@@ -8225,6 +8337,30 @@ function ComparisonWithSessions({ dashboardView = 'professional' }: { dashboardV
       {/* Phase 7: Photo Comparison Slider */}
       {viewMode === 'photo' && (
         <PhotoComparisonSection />
+      )}
+      
+      {/* Score or Pass: Basketball Elite Shooter Edition */}
+      {viewMode === 'game' && (
+        <div className="bg-[#2C2C2C] rounded-xl border border-[#3a3a3a] p-4 md:p-6">
+          <ScoreOrPassGame 
+            userProfile={{
+              height: userProfileForPhase6.height ? parseInt(userProfileForPhase6.height) : undefined,
+              weight: userProfileForPhase6.weight,
+              bodyType: undefined // Would map from user profile if available
+            }}
+            userAnalysis={{
+              imageUrl: uploadedImageBase64 || undefined,
+              angles: currentAnalysisData.measurements ? {
+                elbowAngle: currentAnalysisData.measurements.elbowAngle,
+                kneeAngle: currentAnalysisData.measurements.kneeAngle,
+                shoulderAngle: currentAnalysisData.measurements.shoulderAngle,
+                hipAngle: currentAnalysisData.measurements.hipAngle,
+                releaseAngle: currentAnalysisData.measurements.releaseAngle,
+              } : undefined,
+              overallScore: currentAnalysisData.overallScore
+            }}
+          />
+        </div>
       )}
     </div>
   )
@@ -9639,6 +9775,369 @@ function AnalyticsChartSection({ sessions, progressStats, playerName }: Analytic
             )}
           </CardContent>
         </Card>
+      </CardContent>
+    </Card>
+  )
+}
+
+// ============================================
+// GOALS SECTION - Performance Analytics Only
+// ============================================
+
+function GoalsSection({ dashboardView = 'professional' }: { dashboardView?: DashboardView }) {
+  const store = useAnalysisStore()
+  const profileStore = useProfileStore()
+  
+  const visionAnalysisResult = store?.visionAnalysisResult || null
+  const [sessions, setSessions] = useState<AnalysisSession[]>([])
+  
+  useEffect(() => {
+    try {
+      const loadedSessions = getAllSessions()
+      setSessions(Array.isArray(loadedSessions) ? loadedSessions : [])
+    } catch (error) {
+      console.error('Error loading sessions:', error)
+      setSessions([])
+    }
+  }, [])
+  
+  // Combine current session with historical sessions for stats
+  const allSessionsData = useMemo(() => {
+    const data: any[] = []
+    
+    if (visionAnalysisResult?.success) {
+      const angles = visionAnalysisResult.angles || {}
+      const score = visionAnalysisResult.overall_score || 70
+      data.push({
+        id: 'current',
+        date: new Date(),
+        score,
+        isLive: true
+      })
+    }
+    
+    sessions.forEach(session => {
+      const score = session.analysisData?.overallScore || 70
+      data.push({
+        id: session.id,
+        date: new Date(session.date),
+        score,
+        isLive: false
+      })
+    })
+    
+    return data.sort((a, b) => a.date.getTime() - b.date.getTime())
+  }, [visionAnalysisResult, sessions])
+  
+  // Calculate progress stats
+  const progressStats = useMemo(() => {
+    if (!allSessionsData || allSessionsData.length === 0) {
+      return { scoreChange: 0, sessionsCount: 0, avgScore: 0, trend: 'stable' as const }
+    }
+    if (allSessionsData.length < 2) {
+      return { scoreChange: 0, sessionsCount: allSessionsData.length, avgScore: allSessionsData[0]?.score || 0, trend: 'stable' as const }
+    }
+    
+    const first = allSessionsData[0]
+    const last = allSessionsData[allSessionsData.length - 1]
+    if (!first || !last) {
+      return { scoreChange: 0, sessionsCount: allSessionsData.length, avgScore: 0, trend: 'stable' as const }
+    }
+    const scoreChange = last.score - first.score
+    const avgScore = allSessionsData.reduce((sum, s) => sum + (s?.score || 0), 0) / allSessionsData.length
+    const trend = scoreChange > 5 ? 'improving' as const : scoreChange < -5 ? 'declining' as const : 'stable' as const
+    
+    return { scoreChange, sessionsCount: allSessionsData.length, avgScore: Math.round(avgScore), trend }
+  }, [allSessionsData])
+
+  return (
+    <div className="space-y-8">
+      {/* Performance Analytics Header & Stats */}
+      <Card className="bg-gradient-to-br from-[#1a1a1a] via-[#222222] to-[#1a1a1a] border-[#2a2a2a] shadow-2xl overflow-hidden">
+        <CardContent className="p-0">
+          {/* Header Bar */}
+          <div className="bg-gradient-to-r from-[#FF6B35]/10 via-transparent to-[#FF6B35]/10 border-b border-[#2a2a2a] px-6 py-4">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#B8860B] flex items-center justify-center shadow-lg">
+                    <Target className="w-7 h-7 text-[#1a1a1a]" />
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#1a1a1a] border-2 border-[#FF6B35] flex items-center justify-center">
+                    <TrendingUp className="w-3 h-3 text-[#FF6B35]" />
+                  </div>
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-[#E5E5E5] tracking-tight">
+                    Performance Analytics
+                  </h2>
+                  <p className="text-[#666] text-sm font-medium">
+                    {profileStore?.displayName || profileStore?.firstName || 'Player'} • Goals Dashboard
+                  </p>
+                </div>
+              </div>
+              
+              {/* Date Range Indicator */}
+              <div className="flex items-center gap-2 text-sm">
+                <Calendar className="w-4 h-4 text-[#666]" />
+                <span className="text-[#666]">Last 90 Days</span>
+              </div>
+            </div>
+          </div>
+          
+          {/* Stats Cards */}
+          <div className="relative p-6 lg:p-8 overflow-hidden">
+            {/* Background gradient mesh */}
+            <div className="absolute inset-0 opacity-30">
+              <div className="absolute top-0 left-0 w-96 h-96 bg-[#FF6B35]/10 rounded-full blur-3xl"></div>
+              <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
+            </div>
+            
+            {/* Stats Grid */}
+            <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+              {/* Sessions */}
+              <div className="lg:col-span-4 relative group">
+                <div className="relative bg-gradient-to-br from-[#1a1a1a]/80 via-[#252525]/80 to-[#1a1a1a]/80 backdrop-blur-xl rounded-3xl p-8 lg:p-10 border border-[#3a3a3a]/30 hover:border-[#FF6B35]/40 transition-all duration-500 overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent"></div>
+                  
+                  <div className="relative mb-6">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-8xl lg:text-9xl font-black text-[#FF6B35] tabular-nums leading-none tracking-tight" style={{
+                        textShadow: '0 0 40px rgba(255, 215, 0, 0.3), 0 0 80px rgba(255, 215, 0, 0.1)'
+                      }}>
+                        {progressStats?.sessionsCount ?? 0}
+                      </span>
+                      <Clock className="w-8 h-8 lg:w-10 lg:h-10 text-[#FF6B35]/60 mb-4" />
+                    </div>
+                  </div>
+                  
+                  <div className="relative">
+                    <p className="text-sm font-bold text-[#888] uppercase tracking-[0.15em] mb-1">SESSIONS</p>
+                    <div className="h-0.5 w-16 bg-gradient-to-r from-[#FF6B35]/40 to-transparent"></div>
+                  </div>
+                  
+                  <div className="mt-6 pt-6 border-t border-[#3a3a3a]/30">
+                    <div className="flex items-end gap-1 h-12">
+                      {[...Array(8)].map((_, i) => (
+                        <div 
+                          key={i}
+                          className="flex-1 bg-gradient-to-t from-[#FF6B35]/20 to-[#FF6B35]/5 rounded-t transition-all duration-300 hover:from-[#FF6B35]/40 hover:to-[#FF6B35]/20"
+                          style={{ height: `${Math.random() * 60 + 40}%` }}
+                        ></div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Avg Score */}
+              <div className="lg:col-span-3 relative group">
+                <div className="relative bg-gradient-to-br from-[#1a1a1a]/80 via-[#252525]/80 to-[#1a1a1a]/80 backdrop-blur-xl rounded-3xl p-8 lg:p-10 border border-[#3a3a3a]/30 hover:border-blue-500/40 transition-all duration-500 overflow-hidden h-full flex flex-col justify-between">
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent"></div>
+                  
+                  <div className="relative w-32 h-32 mx-auto mb-6">
+                    <svg className="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
+                      <circle cx="60" cy="60" r="50" fill="none" stroke="#3a3a3a" strokeWidth="8" />
+                      <circle 
+                        cx="60" cy="60" r="50" 
+                        fill="none" 
+                        stroke="url(#goalsScoreGradient)" 
+                        strokeWidth="8" 
+                        strokeLinecap="round"
+                        strokeDasharray={`${((progressStats?.avgScore || 0) / 100) * 314} 314`}
+                        className="transition-all duration-1000"
+                      />
+                      <defs>
+                        <linearGradient id="goalsScoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#3b82f6" />
+                          <stop offset="100%" stopColor="#60a5fa" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="text-center">
+                        <span className="text-4xl font-black text-blue-400 tabular-nums leading-none block">{progressStats?.avgScore || 0}</span>
+                        <span className="text-lg font-bold text-blue-400/70">%</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <p className="text-sm font-bold text-[#888] uppercase tracking-[0.15em] mb-1">AVG SCORE</p>
+                    <div className="h-0.5 w-16 bg-gradient-to-r from-blue-500/40 to-transparent"></div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Progress */}
+              <div className="lg:col-span-3 relative group">
+                <div className="relative bg-gradient-to-br from-[#1a1a1a]/80 via-[#252525]/80 to-[#1a1a1a]/80 backdrop-blur-xl rounded-3xl p-8 lg:p-10 border border-[#3a3a3a]/30 hover:border-green-500/40 transition-all duration-500 overflow-hidden h-full flex flex-col justify-between">
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent"></div>
+                  
+                  <div className="mb-6">
+                    <span className={`text-7xl lg:text-8xl font-black tabular-nums leading-none tracking-tight ${
+                      (progressStats?.scoreChange || 0) >= 0 ? 'text-green-400' : 'text-red-400'
+                    }`} style={{
+                      textShadow: (progressStats?.scoreChange || 0) >= 0 
+                        ? '0 0 40px rgba(34, 197, 94, 0.3), 0 0 80px rgba(34, 197, 94, 0.1)'
+                        : '0 0 40px rgba(239, 68, 68, 0.3), 0 0 80px rgba(239, 68, 68, 0.1)'
+                    }}>
+                      {(progressStats?.scoreChange || 0) >= 0 ? '+' : ''}{progressStats?.scoreChange || 0}%
+                    </span>
+                  </div>
+                  
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <TrendingUp className={`w-5 h-5 ${
+                        (progressStats?.scoreChange || 0) >= 0 ? 'text-green-400' : 'text-red-400 rotate-180'
+                      }`} />
+                      <p className="text-sm font-bold text-[#888] uppercase tracking-[0.15em]">PROGRESS</p>
+                    </div>
+                    <div className={`h-0.5 w-16 bg-gradient-to-r ${
+                      (progressStats?.scoreChange || 0) >= 0 ? 'from-green-500/40' : 'from-red-500/40'
+                    } to-transparent`}></div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Trend */}
+              <div className="lg:col-span-2 relative group">
+                <div className={`relative bg-gradient-to-br from-[#1a1a1a]/80 via-[#252525]/80 to-[#1a1a1a]/80 backdrop-blur-xl rounded-3xl p-8 lg:p-10 border transition-all duration-500 overflow-hidden h-full flex flex-col justify-center items-center ${
+                  progressStats?.trend === 'improving' 
+                    ? 'border-green-500/30 hover:border-green-500/50' 
+                    : progressStats?.trend === 'declining'
+                    ? 'border-red-500/30 hover:border-red-500/50'
+                    : 'border-orange-500/30 hover:border-orange-500/50'
+                }`}>
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent"></div>
+                  
+                  <div className={`relative mb-6 px-6 py-4 rounded-2xl backdrop-blur-md border-2 ${
+                    progressStats?.trend === 'improving' 
+                      ? 'bg-green-500/10 border-green-500/40 shadow-lg shadow-green-500/20' 
+                      : progressStats?.trend === 'declining'
+                      ? 'bg-red-500/10 border-red-500/40 shadow-lg shadow-red-500/20'
+                      : 'bg-orange-500/10 border-orange-500/40 shadow-lg shadow-orange-500/20'
+                  }`}>
+                    <div className="flex flex-col items-center gap-2">
+                      <Activity className={`w-8 h-8 ${
+                        progressStats?.trend === 'improving' ? 'text-green-400' : 
+                        progressStats?.trend === 'declining' ? 'text-red-400' : 'text-orange-400'
+                      }`} />
+                      <span className={`text-2xl font-black uppercase tracking-tight ${
+                        progressStats?.trend === 'improving' ? 'text-green-400' : 
+                        progressStats?.trend === 'declining' ? 'text-red-400' : 'text-orange-400'
+                      }`}>
+                        {progressStats?.trend || 'stable'}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <p className="text-sm font-bold text-[#888] uppercase tracking-[0.15em]">TREND</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
+      {/* Goal Transit Map - NJ Transit Style */}
+      <GoalTransitMap playerCity={profileStore?.city} playerState={profileStore?.state} />
+      
+      {/* Completed Milestones Timeline */}
+      <CompletedMilestonesTimeline />
+    </div>
+  )
+}
+
+// ============================================
+// COMPLETED MILESTONES TIMELINE
+// ============================================
+
+function CompletedMilestonesTimeline() {
+  const completedMilestones = [
+    { id: '1', name: 'Perfect Form Baseline', date: 'Jan 5, 2026', from: 'Downtown Center', to: 'Community Park', xp: 50, badge: 'First Steps' },
+    { id: '2', name: '50 Practice Shots', date: 'Jan 8, 2026', from: 'Community Park', to: 'Sports Complex', xp: 100, badge: 'Practice Makes Perfect' },
+  ]
+  
+  const inProgress = { name: '90° Elbow Angle', from: 'Sports Complex', to: 'Athletic Center', xp: 150, unlocks: 'Form Master Badge' }
+  
+  return (
+    <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
+      <CardHeader className="border-b border-[#2a2a2a] pb-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-[#FF6B35]/20 flex items-center justify-center">
+              <Clock className="w-5 h-5 text-[#FF6B35]" />
+            </div>
+            <div>
+              <CardTitle className="text-white text-lg">Completed Milestones</CardTitle>
+              <CardDescription className="text-[#888]">Your journey so far</CardDescription>
+            </div>
+          </div>
+          <button className="text-[#FF6B35] text-sm hover:underline">View All →</button>
+        </div>
+      </CardHeader>
+      <CardContent className="p-4">
+        <div className="relative">
+          {/* Vertical Timeline Line */}
+          <div className="absolute left-[11px] top-2 bottom-2 w-0.5 bg-gradient-to-b from-[#FF6B35] via-[#FF6B35] to-[#FF6B35]/20" />
+          
+          <div className="space-y-6">
+            {/* Completed Items */}
+            {completedMilestones.map((milestone, index) => (
+              <div key={milestone.id} className="relative pl-8">
+                {/* Timeline Dot */}
+                <div className="absolute left-0 top-1 w-6 h-6 rounded-full bg-[#FF6B35] border-4 border-[#1a1a1a] flex items-center justify-center">
+                  <Check className="w-3 h-3 text-white" />
+                </div>
+                
+                {/* Content */}
+                <div className="bg-[#2a2a2a] rounded-lg p-4 border border-[#3a3a3a]">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <div className="text-white font-medium">✓ {milestone.name}</div>
+                      <div className="text-[#888] text-sm flex items-center gap-1 mt-1">
+                        <MapPin className="w-3 h-3" />
+                        {milestone.from} → {milestone.to}
+                      </div>
+                    </div>
+                    <div className="text-[#888] text-xs">{milestone.date}</div>
+                  </div>
+                  <div className="flex items-center gap-3 mt-2">
+                    <span className="text-green-400 text-sm font-medium">+{milestone.xp} XP</span>
+                    <span className="text-[#FF6B35] text-sm">🥇 {milestone.badge}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+            
+            {/* In Progress Item */}
+            <div className="relative pl-8">
+              {/* Timeline Dot - Animated */}
+              <div className="absolute left-0 top-1 w-6 h-6 rounded-full bg-[#2a2a2a] border-4 border-[#FF6B35] flex items-center justify-center animate-pulse">
+                <div className="w-2 h-2 bg-[#FF6B35] rounded-full" />
+              </div>
+              
+              {/* Content */}
+              <div className="bg-[#2a2a2a]/50 rounded-lg p-4 border border-[#FF6B35]/30 border-dashed">
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <div className="text-white/70 font-medium">○ {inProgress.name}</div>
+                    <div className="text-[#888] text-sm flex items-center gap-1 mt-1">
+                      <MapPin className="w-3 h-3" />
+                      {inProgress.from} → {inProgress.to}
+                    </div>
+                  </div>
+                  <div className="text-[#FF6B35] text-xs font-medium px-2 py-1 bg-[#FF6B35]/20 rounded">In Progress</div>
+                </div>
+                <div className="flex items-center gap-3 mt-2">
+                  <span className="text-[#888] text-sm">+{inProgress.xp} XP</span>
+                  <span className="text-[#888] text-sm">Unlocks: {inProgress.unlocks}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </CardContent>
     </Card>
   )

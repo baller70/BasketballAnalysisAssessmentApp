@@ -161,7 +161,7 @@ export function Phase6ComparisonPanel({
           </div>
           <div className="flex-1">
             <h2 className="text-2xl font-black text-[#FF6B35] uppercase tracking-wider">
-              Personalized Shooter Comparison
+              Match
             </h2>
             <p className="text-[#888] text-sm">
               Matched to shooters with YOUR body type • {AGE_GROUP_LABELS[coachingFeedback.tier]}

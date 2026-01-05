@@ -2697,6 +2697,13 @@
     "@types/mapbox__point-geometry" "*"
     "@types/pbf" "*"
 
+"@types/mapbox-gl@^3.4.1":
+  version "3.4.1"
+  resolved "https://registry.npmjs.org/@types/mapbox-gl/-/mapbox-gl-3.4.1.tgz"
+  integrity sha512-NsGKKtgW93B+UaLPti6B7NwlxYlES5DpV5Gzj9F75rK5ALKsqSk15CiEHbOnTr09RGbr6ZYiCdI+59NNNcAImg==
+  dependencies:
+    "@types/geojson" "*"
+
 "@types/node-fetch@^2.1.2":
   version "2.6.13"
   resolved "https://registry.npmjs.org/@types/node-fetch/-/node-fetch-2.6.13.tgz"
@@ -6108,7 +6115,7 @@ map-limit@0.0.1:
   dependencies:
     once "~1.3.0"
 
-"mapbox-gl@>=0.32.1 <2.0.0":
+mapbox-gl@^1.13.3, "mapbox-gl@>=0.32.1 <2.0.0":
   version "1.13.3"
   resolved "https://registry.npmjs.org/mapbox-gl/-/mapbox-gl-1.13.3.tgz"
   integrity sha512-p8lJFEiqmEQlyv+DQxFAOG/XPWN0Wp7j/Psq93Zywz7qt9CcUKFYDBOoOEKzqe6gudHVJY8/Bhqw6VDpX2lSBg==
