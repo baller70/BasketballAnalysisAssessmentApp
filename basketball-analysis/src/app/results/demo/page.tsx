@@ -1719,6 +1719,7 @@ export default function DemoResultsPage() {
   const [activeTab, setActiveTab] = useState("analysis")
   const [resultsMode, setResultsMode] = useState<ResultsMode>("image")
   const [isLoading, setIsLoading] = useState(false)
+  const [showFabMenu, setShowFabMenu] = useState(false)
 
   // Get uploaded image and form analysis from store - hooks must be called unconditionally
   const storeData = useAnalysisStore()
@@ -1872,24 +1873,24 @@ export default function DemoResultsPage() {
           {/* Right: Main Content */}
           <div className="flex-1 min-w-0">
             <div className="bg-[#2C2C2C] rounded-lg overflow-hidden shadow-lg">
-              {/* Tab Navigation with New Session Button */}
-              <div className="p-3 sm:p-4 border-b border-[#3a3a3a]">
-                <div className="flex items-center justify-center md:justify-between">
-                  {/* Left: New Session Button - Hidden on mobile */}
+              {/* Tab Navigation - Hidden on mobile (FAB handles it) */}
+              <div className="hidden md:block p-4 border-b border-[#3a3a3a]">
+                <div className="flex items-center justify-between">
+                  {/* Left: New Session Button */}
                   {resultsMode !== "live" ? (
                     <Link 
                       href={`/?mode=${resultsMode === "video" ? "video" : "image"}`}
-                      className="hidden md:flex items-center gap-2 bg-[#FF6B35] hover:bg-[#E55300] text-[#1a1a1a] font-semibold px-4 py-2 rounded-lg transition-colors text-sm"
+                      className="flex items-center gap-2 bg-[#FF6B35] hover:bg-[#E55300] text-[#1a1a1a] font-semibold px-4 py-2 rounded-lg transition-colors text-sm"
                     >
                       <Plus className="w-4 h-4" />
                       New {resultsMode === "video" ? "Video" : "Image"}
                     </Link>
                   ) : (
-                    <div className="hidden md:block w-[120px]"></div>
+                    <div className="w-[120px]"></div>
                   )}
                   
-                  {/* Center: Tab Navigation - Responsive sizing */}
-                  <div className="inline-flex rounded-lg bg-[#1a1a1a] p-1 text-sm">
+                  {/* Center: Tab Navigation */}
+                  <div className="inline-flex rounded-lg bg-[#1a1a1a] p-1">
                     {(["video", "image", "live"] as ResultsMode[]).map((mode) => (
                       <button 
                         key={mode} 
@@ -1900,14 +1901,14 @@ export default function DemoResultsPage() {
                             console.error('Error switching tab:', error)
                           }
                         }} 
-                        className={`relative px-3 sm:px-5 py-2 rounded-md flex items-center gap-1.5 sm:gap-2 transition-colors uppercase font-semibold text-xs sm:text-sm tracking-wider ${resultsMode === mode ? "bg-[#FF6B35] text-[#111827]" : "text-[#9CA3AF] hover:text-[#F9FAFB] hover:bg-[#374151]"}`}
+                        className={`relative px-6 py-2 rounded-md flex items-center justify-center gap-2 transition-colors uppercase font-bold text-sm tracking-wider ${resultsMode === mode ? "bg-[#FF6B35] text-[#111827]" : "text-[#9CA3AF] hover:text-[#F9FAFB] hover:bg-[#374151]"}`}
                       >
-                        {mode === "video" && <Video className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
-                        {mode === "image" && <ImageIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
-                        {mode === "live" && <Radio className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
-                        <span className="hidden xs:inline sm:inline">{mode}</span>
+                        {mode === "video" && <Video className="w-4 h-4" />}
+                        {mode === "image" && <ImageIcon className="w-4 h-4" />}
+                        {mode === "live" && <Radio className="w-4 h-4" />}
+                        <span>{mode}</span>
                         {mode === "live" && (
-                          <span className={`absolute -top-1 -right-1 px-1 py-0.5 text-[8px] sm:text-[10px] font-bold rounded-full ${resultsMode === "live" ? "bg-white text-[#FF6B35]" : "bg-[#FF6B35] text-white"}`}>
+                          <span className={`absolute -top-1 -right-1 px-1.5 py-0.5 text-[10px] font-bold rounded-full ${resultsMode === "live" ? "bg-white text-[#FF6B35]" : "bg-[#FF6B35] text-white"}`}>
                             NEW
                           </span>
                         )}
@@ -1915,21 +1916,74 @@ export default function DemoResultsPage() {
                     ))}
                   </div>
                   
-                  {/* Right: Spacer for balance - Hidden on mobile */}
-                  <div className="hidden md:block w-[120px]"></div>
+                  {/* Right: Spacer for balance */}
+                  <div className="w-[120px]"></div>
                 </div>
               </div>
               
-              {/* Mobile FAB (Floating Action Button) for New Session */}
-              {resultsMode !== "live" && (
-                <Link 
-                  href={`/?mode=${resultsMode === "video" ? "video" : "image"}`}
-                  className="md:hidden fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 bg-[#FF6B35] hover:bg-[#E55300] text-white rounded-full shadow-lg shadow-[#FF6B35]/30 transition-all hover:scale-105 active:scale-95"
-                  aria-label={`New ${resultsMode === "video" ? "Video" : "Image"}`}
+              {/* Mobile FAB (Floating Action Button) with Menu */}
+              <div className="md:hidden fixed bottom-6 right-6 z-50">
+                {/* FAB Menu Options */}
+                {showFabMenu && (
+                  <>
+                    {/* Backdrop */}
+                    <div 
+                      className="fixed inset-0 bg-black/50 -z-10"
+                      onClick={() => setShowFabMenu(false)}
+                    />
+                    
+                    {/* Menu Items */}
+                    <div className="absolute bottom-16 right-0 flex flex-col gap-3 items-end mb-2">
+                      {/* Go Live */}
+                      <button
+                        onClick={() => {
+                          setResultsMode("live")
+                          setShowFabMenu(false)
+                        }}
+                        className="flex items-center gap-3 bg-[#2a2a2a] border border-[#3a3a3a] rounded-full pl-4 pr-3 py-2 shadow-lg animate-in slide-in-from-bottom-2 duration-200"
+                      >
+                        <span className="text-white text-sm font-medium whitespace-nowrap">Go Live</span>
+                        <div className="w-10 h-10 bg-[#22c55e] rounded-full flex items-center justify-center">
+                          <Radio className="w-5 h-5 text-white" />
+                        </div>
+                      </button>
+                      
+                      {/* Upload Video */}
+                      <Link
+                        href="/?mode=video"
+                        onClick={() => setShowFabMenu(false)}
+                        className="flex items-center gap-3 bg-[#2a2a2a] border border-[#3a3a3a] rounded-full pl-4 pr-3 py-2 shadow-lg animate-in slide-in-from-bottom-2 duration-200 delay-75"
+                      >
+                        <span className="text-white text-sm font-medium whitespace-nowrap">Upload Video</span>
+                        <div className="w-10 h-10 bg-[#ef4444] rounded-full flex items-center justify-center">
+                          <Video className="w-5 h-5 text-white" />
+                        </div>
+                      </Link>
+                      
+                      {/* Upload Image */}
+                      <Link
+                        href="/?mode=image"
+                        onClick={() => setShowFabMenu(false)}
+                        className="flex items-center gap-3 bg-[#2a2a2a] border border-[#3a3a3a] rounded-full pl-4 pr-3 py-2 shadow-lg animate-in slide-in-from-bottom-2 duration-200 delay-150"
+                      >
+                        <span className="text-white text-sm font-medium whitespace-nowrap">Upload Image</span>
+                        <div className="w-10 h-10 bg-[#3b82f6] rounded-full flex items-center justify-center">
+                          <ImageIcon className="w-5 h-5 text-white" />
+                        </div>
+                      </Link>
+                    </div>
+                  </>
+                )}
+                
+                {/* Main FAB Button */}
+                <button
+                  onClick={() => setShowFabMenu(!showFabMenu)}
+                  className={`flex items-center justify-center w-14 h-14 bg-[#FF6B35] text-white rounded-full shadow-lg shadow-[#FF6B35]/30 transition-all duration-200 ${showFabMenu ? 'rotate-45 bg-[#E55300]' : 'hover:bg-[#E55300] hover:scale-105 active:scale-95'}`}
+                  aria-label="New upload options"
                 >
                   <Plus className="w-6 h-6" />
-                </Link>
-              )}
+                </button>
+              </div>
               {/* 🎒 VIDEO TAB: Uses red backpack (effectiveVideoData, videoMainUrl, videoVisionAnalysis) */}
               {resultsMode === "video" && (
                     <ErrorBoundary>
@@ -3530,16 +3584,21 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                   <ImageIcon className="w-10 h-10 text-[#FF6B35]" />
                 </div>
                 <h3 className="text-[#FF6B35] font-bold text-2xl mb-3 tracking-tight">No Image Uploaded</h3>
-                <p className="text-[#E5E5E5] text-sm mb-8 max-w-md mx-auto leading-relaxed">
+                {/* Desktop: Show description and upload button */}
+                <p className="hidden md:block text-[#E5E5E5] text-sm mb-8 max-w-md mx-auto leading-relaxed">
                   Upload an image on the home page to see your shooting form analysis with detailed biomechanical measurements.
                 </p>
                 <Link 
                   href="/" 
-                  className="inline-flex items-center gap-2 bg-gradient-to-r from-[#FF6B35] to-[#FF4500] hover:from-[#E55300] hover:to-[#E5A000] text-[#1a1a1a] font-semibold px-8 py-3.5 rounded-xl transition-all duration-200 shadow-lg shadow-[#FF6B35]/20 hover:shadow-[#FF6B35]/40 hover:scale-105"
+                  className="hidden md:inline-flex items-center gap-2 bg-gradient-to-r from-[#FF6B35] to-[#FF4500] hover:from-[#E55300] hover:to-[#E5A000] text-[#1a1a1a] font-semibold px-8 py-3.5 rounded-xl transition-all duration-200 shadow-lg shadow-[#FF6B35]/20 hover:shadow-[#FF6B35]/40 hover:scale-105"
                 >
                   <Upload className="w-5 h-5" />
-                  Upload Image
+                  Upload
                 </Link>
+                {/* Mobile: Just hint to use FAB */}
+                <p className="md:hidden text-[#666] text-sm mt-4">
+                  Tap the <span className="text-[#FF6B35] font-semibold">+</span> button to get started
+                </p>
               </div>
             </div>
           ) : null}
