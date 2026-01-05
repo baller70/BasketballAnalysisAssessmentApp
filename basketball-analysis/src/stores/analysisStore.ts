@@ -101,19 +101,27 @@ export interface ShotBreakdownFrame {
 
 // Video analysis data for frame-by-frame playback
 export interface VideoAnalysisData {
-  annotatedFramesBase64: string[]
+  // Live capture data
+  videoUrl?: string
+  frames?: Array<{
+    url: string
+    timestamp: number
+    angles?: Record<string, number>
+  }>
+  // Processed analysis data
+  annotatedFramesBase64?: string[]
   rawFramesBase64?: string[]
-  frameCount: number
-  duration: number
-  fps: number
-  phases: Array<{ phase: string; frame: number; timestamp: number }>
-  metrics: {
+  frameCount?: number
+  duration?: number
+  fps?: number
+  phases?: Array<{ phase: string; frame: number; timestamp: number }>
+  metrics?: {
     elbow_angle_range: { min: number | null; max: number | null; at_release: number | null }
     knee_angle_range: { min: number | null; max: number | null }
     release_frame: number
     release_timestamp: number
   }
-  frameData: Array<{
+  frameData?: Array<{
     frame: number
     timestamp: number
     phase: string
