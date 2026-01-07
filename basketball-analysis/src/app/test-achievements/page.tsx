@@ -35,7 +35,7 @@ interface Achievement {
   showcaseable?: boolean // Can be displayed on profile
 }
 
-interface AchievementCategory {
+interface AchievementCategoryGroup {
   id: string
   name: string
   icon: React.ElementType
