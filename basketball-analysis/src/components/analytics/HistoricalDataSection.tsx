@@ -1109,7 +1109,7 @@ export default function HistoricalDataSection() {
           <AnalyticsChartSection 
             sessions={allSessionsData || []} 
             progressStats={progressStats || { scoreChange: 0, sessionsCount: 0, avgScore: 0, trend: 'stable' }}
-            playerName={profileStore?.displayName || profileStore?.firstName || 'Player'}
+            playerName={'Player'}
           />
         </TabsContent>
         

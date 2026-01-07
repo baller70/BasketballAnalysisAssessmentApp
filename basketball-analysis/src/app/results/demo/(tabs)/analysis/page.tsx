@@ -21,3 +21,4 @@ export default function AnalysisPage() {
   return <AnalysisCardGame measurements={measurements} />
 }
 
+

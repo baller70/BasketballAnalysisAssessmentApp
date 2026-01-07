@@ -63,3 +63,4 @@ After downloading the real sneaker images:
 
 Visit `/test-sneakers` to see the badge system with your images.
 
+

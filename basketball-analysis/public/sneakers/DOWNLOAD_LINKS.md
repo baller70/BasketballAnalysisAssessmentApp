@@ -202,3 +202,4 @@ Once you have all 25 images in this folder:
 1. Let me know and I'll help you run them through Replicate/Nano Banana Pro to cartoonize them
 2. The test page at `/test-sneakers` will automatically display them
 
+
