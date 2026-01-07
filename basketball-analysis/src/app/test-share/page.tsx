@@ -38,7 +38,41 @@ interface ShareableContent {
 // MOCK DATA - Replace with real user data
 // ============================================
 
-const MOCK_USER_DATA = {
+// Define the user data type explicitly
+type BadgeTier = "standard" | "elite" | "rare"
+
+interface UserData {
+  name: string
+  score: number
+  level: number
+  totalXP: number
+  streak: number
+  totalAnalyses: number
+  improvement: number
+  percentile: number
+  eliteMatch: {
+    name: string
+    similarity: number
+    image: string
+  }
+  metrics: {
+    elbowAngle: number
+    releasePoint: number
+    followThrough: number
+    kneeAlignment: number
+    arcTrajectory: number
+  }
+  recentBadge: {
+    name: string
+    description: string
+    tier: BadgeTier
+    icon: React.ElementType
+    rarity: number
+  }
+  analysisDate: string
+}
+
+const MOCK_USER_DATA: UserData = {
   name: "Kevin",
   score: 87,
   level: 5,
@@ -62,7 +96,7 @@ const MOCK_USER_DATA = {
   recentBadge: {
     name: "Sharp Shooter",
     description: "Achieved 90+ score",
-    tier: "rare" as const,
+    tier: "rare",
     icon: Zap,
     rarity: 23
   },
@@ -230,7 +264,7 @@ function MetricBar({ label, value, color = '#FF6B35' }: { label: string; value: 
 // ============================================
 
 // Template 1: Full Analysis Card
-function AnalysisCard({ data }: { data: typeof MOCK_USER_DATA }) {
+function AnalysisCard({ data }: { data: UserData }) {
   return (
     <div className="relative w-[360px] h-[640px] bg-gradient-to-br from-[#0a0a0a] via-[#111] to-[#0a0a0a] rounded-3xl overflow-hidden p-6 flex flex-col">
       <NoiseOverlay />
@@ -298,7 +332,7 @@ function AnalysisCard({ data }: { data: typeof MOCK_USER_DATA }) {
 }
 
 // Template 2: Achievement Card
-function AchievementCard({ data }: { data: typeof MOCK_USER_DATA }) {
+function AchievementCard({ data }: { data: UserData }) {
   const Icon = data.recentBadge.icon
   
   return (
@@ -365,7 +399,7 @@ function AchievementCard({ data }: { data: typeof MOCK_USER_DATA }) {
 }
 
 // Template 3: Streak Card
-function StreakCard({ data }: { data: typeof MOCK_USER_DATA }) {
+function StreakCard({ data }: { data: UserData }) {
   return (
     <div className="relative w-[360px] h-[640px] bg-gradient-to-br from-[#0a0a0a] via-[#1a0a00] to-[#0a0a0a] rounded-3xl overflow-hidden flex flex-col items-center justify-center p-8">
       <NoiseOverlay />
@@ -429,7 +463,7 @@ function StreakCard({ data }: { data: typeof MOCK_USER_DATA }) {
 }
 
 // Template 4: Comparison Card
-function ComparisonCard({ data }: { data: typeof MOCK_USER_DATA }) {
+function ComparisonCard({ data }: { data: UserData }) {
   return (
     <div className="relative w-[360px] h-[640px] bg-gradient-to-br from-[#0a0a0a] via-[#111] to-[#0a0a0a] rounded-3xl overflow-hidden p-6 flex flex-col">
       <NoiseOverlay />
@@ -494,7 +528,7 @@ function ComparisonCard({ data }: { data: typeof MOCK_USER_DATA }) {
 }
 
 // Template 5: Flex Card (Big Score)
-function FlexCard({ data }: { data: typeof MOCK_USER_DATA }) {
+function FlexCard({ data }: { data: UserData }) {
   const isElite = data.score >= 90
   
   return (
@@ -564,7 +598,7 @@ function FlexCard({ data }: { data: typeof MOCK_USER_DATA }) {
 }
 
 // Template 6: Minimal Card
-function MinimalCard({ data }: { data: typeof MOCK_USER_DATA }) {
+function MinimalCard({ data }: { data: UserData }) {
   return (
     <div className="relative w-[360px] h-[360px] bg-[#0a0a0a] rounded-3xl overflow-hidden p-8 flex flex-col items-center justify-center">
       <NoiseOverlay />
@@ -692,7 +726,7 @@ export default function TestSharePage() {
         recentBadge: {
           name: sessions.length >= 10 ? "Dedicated" : sessions.length >= 5 ? "Rising Star" : "First Shot",
           description: sessions.length >= 10 ? "Completed 10+ analyses" : sessions.length >= 5 ? "Completed 5+ analyses" : "First analysis complete",
-          tier: sessions.length >= 10 ? "elite" as const : sessions.length >= 5 ? "rare" as const : "standard" as const,
+          tier: (sessions.length >= 10 ? "elite" : sessions.length >= 5 ? "rare" : "standard") as BadgeTier,
           icon: sessions.length >= 10 ? Crown : sessions.length >= 5 ? TrendingUp : Target,
           rarity: sessions.length >= 10 ? 12 : sessions.length >= 5 ? 25 : 95
         },
