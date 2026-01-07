@@ -1043,11 +1043,10 @@ export default function HistoricalDataSection() {
                             <div className="flex-1 ml-8 md:ml-24">
                               <div 
                                 className={`relative bg-[#252525] rounded-xl p-4 md:p-6 shadow-xl transition-all duration-300 group-hover:shadow-2xl ${
-                                  isFirst ? 'ring-2' : ''
+                                  isFirst ? 'ring-2 ring-[#FF6B35]' : ''
                                 }`}
                                 style={{
-                                  border: `2px solid ${theme.border}`,
-                                  ringColor: isFirst ? '#FF6B35' : 'transparent'
+                                  border: `2px solid ${theme.border}`
                                 }}
                               >
                                 <div className="absolute top-3 right-3 md:top-4 md:right-4">
