@@ -321,7 +321,7 @@ export function PoseAnalysis({ imageFile, imageBase64 }: PoseAnalysisProps) {
         className={`w-full py-4 rounded-xl font-semibold text-lg transition-all flex items-center justify-center gap-2 ${
           loading || !imageUrl
             ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-            : 'bg-gradient-to-r from-orange-500 to-orange-500 text-black hover:from-orange-400 hover:to-orange-400'
+            : 'bg-gradient-to-r from-orange-500 to-orange-500 text-white hover:from-orange-400 hover:to-orange-400'
         }`}
       >
         {loading ? (

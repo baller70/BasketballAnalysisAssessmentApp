@@ -722,7 +722,7 @@ export default function ShootingFormsAdminPage() {
                 />
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-500 text-black font-bold rounded-lg hover:from-orange-600 hover:to-orange-600 transition-all"
+                  className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-500 text-white font-bold rounded-lg hover:from-orange-600 hover:to-orange-600 transition-all"
                 >
                   <Upload size={20} />
                   <span>Select Files (Bulk Upload)</span>
@@ -763,7 +763,7 @@ export default function ShootingFormsAdminPage() {
                   onClick={() => setFilterStatus(status)}
                   className={`px-4 py-2 rounded-lg transition-colors capitalize ${
                     filterStatus === status 
-                      ? 'bg-orange-500 text-black font-bold' 
+                      ? 'bg-orange-500 text-white font-bold' 
                       : 'text-gray-400 hover:text-white'
                   }`}
                 >
@@ -819,7 +819,7 @@ export default function ShootingFormsAdminPage() {
                   <div className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-bold uppercase ${
                     image.status === 'approved' ? 'bg-green-500 text-white' :
                     image.status === 'rejected' ? 'bg-red-500 text-white' :
-                    'bg-orange-500 text-black'
+                    'bg-orange-500 text-white'
                   }`}>
                     {image.status}
                   </div>
@@ -1037,7 +1037,7 @@ export default function ShootingFormsAdminPage() {
                       <p className="text-gray-500 text-sm">{player.team} • {player.league}</p>
                     </div>
                     <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${
-                      player.tier === 'legendary' ? 'bg-orange-500 text-black' :
+                      player.tier === 'legendary' ? 'bg-orange-500 text-white' :
                       player.tier === 'elite' ? 'bg-purple-500 text-white' :
                       player.tier === 'great' ? 'bg-blue-500 text-white' :
                       'bg-gray-500 text-white'

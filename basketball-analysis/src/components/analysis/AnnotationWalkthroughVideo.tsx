@@ -429,7 +429,7 @@ export function AnnotationWalkthroughVideo({
             <button
               onClick={togglePlay}
               disabled={!imagesLoaded}
-              className="p-2 rounded-full bg-[#FF6B35] hover:bg-[#E55300] text-black transition-colors disabled:opacity-50"
+              className="p-2 rounded-full bg-[#FF6B35] hover:bg-[#E55300] text-white transition-colors disabled:opacity-50"
             >
               {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
             </button>

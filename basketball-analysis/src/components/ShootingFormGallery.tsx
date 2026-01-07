@@ -144,7 +144,7 @@ export default function ShootingFormGallery({ shooter, onClose }: ShootingFormGa
                       className={`absolute left-4 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full transition-all ${
                         currentIndex === 0 
                           ? 'bg-black/20 text-[#444] cursor-not-allowed' 
-                          : 'bg-black/60 text-white hover:bg-[#FF6B35] hover:text-black'
+                          : 'bg-black/60 text-white hover:bg-[#FF6B35] hover:text-white'
                       }`}
                     >
                       <ChevronLeft className="w-6 h-6" />
@@ -155,7 +155,7 @@ export default function ShootingFormGallery({ shooter, onClose }: ShootingFormGa
                       className={`absolute right-4 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full transition-all ${
                         currentIndex === images.length - 1 
                           ? 'bg-black/20 text-[#444] cursor-not-allowed' 
-                          : 'bg-black/60 text-white hover:bg-[#FF6B35] hover:text-black'
+                          : 'bg-black/60 text-white hover:bg-[#FF6B35] hover:text-white'
                       }`}
                     >
                       <ChevronRight className="w-6 h-6" />

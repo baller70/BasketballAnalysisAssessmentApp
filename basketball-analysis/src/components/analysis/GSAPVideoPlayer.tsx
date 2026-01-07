@@ -2007,7 +2007,7 @@ export function GSAPVideoPlayer({ videoData, className = "", externalOverlayTogg
             onClick={() => jumpToStage(1)}
             className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
               sequencePhase === "stage1" 
-                ? "bg-[#FF6B35] text-black" 
+                ? "bg-[#FF6B35] text-white" 
                 : "bg-[#3a3a3a] text-white hover:bg-[#4a4a4a]"
             }`}
           >
@@ -2017,7 +2017,7 @@ export function GSAPVideoPlayer({ videoData, className = "", externalOverlayTogg
             onClick={() => jumpToStage(2)}
             className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
               sequencePhase === "stage2" 
-                ? "bg-[#4ade80] text-black" 
+                ? "bg-[#4ade80] text-white" 
                 : "bg-[#3a3a3a] text-white hover:bg-[#4a4a4a]"
             }`}
           >
@@ -2027,7 +2027,7 @@ export function GSAPVideoPlayer({ videoData, className = "", externalOverlayTogg
             onClick={() => jumpToStage(3)}
             className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
               sequencePhase === "stage3" 
-                ? "bg-[#f97316] text-black" 
+                ? "bg-[#f97316] text-white" 
                 : "bg-[#3a3a3a] text-white hover:bg-[#4a4a4a]"
             }`}
           >
@@ -2058,7 +2058,7 @@ export function GSAPVideoPlayer({ videoData, className = "", externalOverlayTogg
           <div className="absolute inset-0 flex items-center justify-center bg-black/40">
             <button
               onClick={startSequence}
-              className="p-6 rounded-full bg-[#FF6B35] hover:bg-[#E55300] text-black transition-all transform hover:scale-110 shadow-2xl"
+              className="p-6 rounded-full bg-[#FF6B35] hover:bg-[#E55300] text-white transition-all transform hover:scale-110 shadow-2xl"
             >
               <Play className="w-16 h-16" fill="currentColor" />
             </button>
@@ -2177,7 +2177,7 @@ export function GSAPVideoPlayer({ videoData, className = "", externalOverlayTogg
             {/* Play/Pause */}
             <button
               onClick={togglePlayPause}
-              className="p-3 rounded-full bg-[#FF6B35] hover:bg-[#E55300] text-black transition-colors"
+              className="p-3 rounded-full bg-[#FF6B35] hover:bg-[#E55300] text-white transition-colors"
             >
               {isPlaying ? (
                 <Pause className="w-6 h-6" />
@@ -2223,8 +2223,8 @@ export function GSAPVideoPlayer({ videoData, className = "", externalOverlayTogg
                 disabled={isGeneratingVideo}
                 className={`p-2 rounded-lg transition-colors flex items-center gap-2 ${
                   isGeneratingVideo 
-                    ? "bg-[#FF6B35] text-black cursor-wait" 
-                    : "bg-[#FF6B35] hover:bg-[#E55300] text-black"
+                    ? "bg-[#FF6B35] text-white cursor-wait" 
+                    : "bg-[#FF6B35] hover:bg-[#E55300] text-white"
                 }`}
                 title="Download video options"
               >

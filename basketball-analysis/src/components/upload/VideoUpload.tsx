@@ -287,7 +287,7 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
                 "w-full py-3 px-4 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-all",
                 isAnalyzing
                   ? "bg-[#3a3a3a] text-[#888] cursor-not-allowed"
-                  : "bg-[#FF6B35] text-black hover:bg-[#FFC000]"
+                  : "bg-[#FF6B35] text-white hover:bg-[#FFC000]"
               )}
             >
               {isAnalyzing ? (
@@ -387,9 +387,9 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
                   className="p-3 bg-[#FF6B35] rounded-full hover:bg-[#FFC000]"
                 >
                   {isPlaying ? (
-                    <Pause className="w-6 h-6 text-black" />
+                    <Pause className="w-6 h-6 text-white" />
                   ) : (
-                    <Play className="w-6 h-6 text-black" />
+                    <Play className="w-6 h-6 text-white" />
                   )}
                 </button>
                 

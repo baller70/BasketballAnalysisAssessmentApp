@@ -1,7 +1,9 @@
 "use client"
 
 import React from "react"
-import { Check, X, BookOpen, Target, Crosshair, Hand, ArrowRight } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { Check, X, BookOpen, Target, Crosshair, Hand } from "lucide-react"
+import { UploadEducation } from "@/components/upload/UploadEducation"
 
 const GUIDE_DATA = [
   {
@@ -41,8 +43,19 @@ function GuideCard({ type, title, subtitle, points }: { type: "correct" | "incor
 }
 
 export default function GuidePage() {
+  const router = useRouter()
+
+  const handleStartUpload = () => {
+    router.push("/upload")
+  }
+
   return (
     <div className="container mx-auto px-6 py-8">
+      {/* Upload Education Section - Do's and Don'ts Cards */}
+      <div className="mb-12">
+        <UploadEducation onStartUpload={handleStartUpload} />
+      </div>
+
       {/* Hero Section */}
       <div className="text-center mb-12">
         <div className="inline-flex items-center justify-center w-16 h-16 bg-[#FF6B35]/20 rounded-full mb-4">
@@ -111,22 +124,6 @@ export default function GuidePage() {
         </div>
       </div>
 
-      {/* Call to Action */}
-      <div className="mt-12 text-center">
-        <div className="bg-gradient-to-r from-[#FF6B35]/20 to-[#FF4500]/20 rounded-lg p-8 border border-[#FF6B35]/30">
-          <h3 className="text-2xl font-bold text-[#FF6B35] mb-3">Ready to Analyze Your Shot?</h3>
-          <p className="text-[#E5E5E5] mb-6 max-w-xl mx-auto">
-            Upload a photo or video of your shooting form and get instant AI-powered analysis with personalized feedback.
-          </p>
-          <a 
-            href="/" 
-            className="inline-flex items-center gap-2 bg-[#FF6B35] hover:bg-[#E55300] text-[#1a1a1a] font-semibold px-8 py-3 rounded-lg transition-colors"
-          >
-            Start Analysis
-            <ArrowRight className="w-5 h-5" />
-          </a>
-        </div>
-      </div>
     </div>
   )
 }

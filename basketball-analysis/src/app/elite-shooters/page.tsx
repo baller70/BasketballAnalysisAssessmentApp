@@ -89,17 +89,17 @@ const TIER_ORDER: Record<ShooterTier, number> = { legendary: 1, elite: 2, great:
 // WSI Info Popup Component
 const WSIInfoPopup = ({ onClose }: { onClose: () => void }) => (
   <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
-    <div className="bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a] rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-purple-500/30 shadow-2xl" onClick={e => e.stopPropagation()}>
-      <div className="p-6 border-b border-purple-500/30 flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-purple-400">Weighted Shooting Index (WSI)</h2>
+    <div className="bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a] rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-[#B8860B]/30 shadow-2xl" onClick={e => e.stopPropagation()}>
+      <div className="p-6 border-b border-[#B8860B]/30 flex items-center justify-between">
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-[#FFD700] to-[#B8860B] bg-clip-text text-transparent">Weighted Shooting Index (WSI)</h2>
         <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
           <X className="w-5 h-5 text-white" />
         </button>
       </div>
       <div className="p-6 space-y-6">
         {/* Formula */}
-        <div className="bg-[#1a1a1a] rounded-xl p-4 border border-purple-500/20">
-          <h3 className="text-purple-300 font-semibold mb-2">The Formula</h3>
+        <div className="bg-[#1a1a1a] rounded-xl p-4 border border-[#B8860B]/20">
+          <h3 className="bg-gradient-to-r from-[#FFD700] to-[#B8860B] bg-clip-text text-transparent font-semibold mb-2">The Formula</h3>
           <p className="text-white font-mono text-lg">WSI = (0.45 × 3P%) + (0.35 × Mid-Range%) + (0.15 × FT%) + (0.05 × Rim%)</p>
         </div>
         
@@ -108,21 +108,21 @@ const WSIInfoPopup = ({ onClose }: { onClose: () => void }) => (
           <h3 className="text-white font-semibold text-lg">What Each Component Means</h3>
           <div className="grid gap-3">
             <div className="flex items-start gap-3 bg-green-500/10 rounded-lg p-3 border border-green-500/20">
-              <span className="bg-green-500 text-black font-bold text-xs px-2 py-1 rounded">45%</span>
+              <span className="bg-green-500 text-white font-bold text-xs px-2 py-1 rounded">45%</span>
               <div>
                 <p className="text-green-400 font-semibold">3-Point Percentage</p>
                 <p className="text-[#888] text-sm">The primary indicator of modern shooting skill. Heavily weighted because it&apos;s the most valuable shot in today&apos;s game.</p>
               </div>
             </div>
             <div className="flex items-start gap-3 bg-orange-500/10 rounded-lg p-3 border border-orange-500/20">
-              <span className="bg-orange-500 text-black font-bold text-xs px-2 py-1 rounded">35%</span>
+              <span className="bg-orange-500 text-white font-bold text-xs px-2 py-1 rounded">35%</span>
               <div>
                 <p className="text-orange-400 font-semibold">Mid-Range Percentage</p>
                 <p className="text-[#888] text-sm">Captures &quot;touch&quot; and ability to hit pull-ups. Shows versatility and shot-making ability from different distances.</p>
               </div>
             </div>
             <div className="flex items-start gap-3 bg-blue-500/10 rounded-lg p-3 border border-blue-500/20">
-              <span className="bg-blue-500 text-black font-bold text-xs px-2 py-1 rounded">15%</span>
+              <span className="bg-blue-500 text-white font-bold text-xs px-2 py-1 rounded">15%</span>
               <div>
                 <p className="text-blue-400 font-semibold">Free Throw Percentage</p>
                 <p className="text-[#888] text-sm">The purest measure of shooting mechanics. No defense, same distance every time - shows true form consistency.</p>
@@ -205,7 +205,7 @@ const FilterDropdown = ({
       >
         <span className="font-medium">{label}</span>
         {selected.length > 0 && (
-          <span className="bg-[#FF6B35] text-black text-xs font-bold px-1.5 py-0.5 rounded-full">{selected.length}</span>
+          <span className="bg-[#FF6B35] text-white text-xs font-bold px-1.5 py-0.5 rounded-full">{selected.length}</span>
         )}
         <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
@@ -230,7 +230,7 @@ const FilterDropdown = ({
                   <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
                     isSelected ? 'border-[#FF6B35] bg-[#FF6B35]' : 'border-[#666]'
                   }`}>
-                    {isSelected && <span className="text-black text-xs">✓</span>}
+                    {isSelected && <span className="text-white text-xs">✓</span>}
                   </div>
                   {color && <span className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />}
                   <span className={isSelected ? 'text-[#FF6B35]' : 'text-white'}>{displayLabel}</span>
@@ -404,7 +404,7 @@ export default function EliteShootersPage() {
               </div>
               <Link 
                 href="/admin/shooting-forms"
-                className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors text-white"
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#FFD700] to-[#B8860B] hover:from-[#FFE44D] hover:to-[#D4AF37] rounded-lg transition-colors text-black font-semibold"
               >
                 <Settings size={18} />
                 <span>Manage Images</span>
@@ -483,7 +483,7 @@ export default function EliteShootersPage() {
               {/* WSI Info Button */}
               <button
                 onClick={() => setShowWSIInfo(true)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-purple-600/20 border border-purple-500/30 text-purple-400 hover:bg-purple-600/30 transition-colors"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#B8860B]/20 border border-[#B8860B]/30 text-[#FFD700] hover:bg-[#B8860B]/30 transition-colors"
               >
                 <HelpCircle className="w-4 h-4" />
                 <span className="font-medium">What is WSI?</span>
@@ -514,12 +514,12 @@ export default function EliteShootersPage() {
               </div>
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-purple-400 text-sm font-semibold">WSI Score</span>
+                  <span className="bg-gradient-to-r from-[#FFD700] to-[#B8860B] bg-clip-text text-transparent text-sm font-semibold">WSI Score</span>
                   <span className="text-white text-sm font-mono">{wsiRange[0]} - {wsiRange[1]}</span>
                 </div>
                 <div className="flex gap-2">
-                  <input type="range" min="0" max="60" value={wsiRange[0]} onChange={(e) => setWsiRange([parseInt(e.target.value), wsiRange[1]])} className="flex-1 h-2 bg-[#3a3a3a] rounded-lg appearance-none cursor-pointer accent-purple-500" />
-                  <input type="range" min="0" max="60" value={wsiRange[1]} onChange={(e) => setWsiRange([wsiRange[0], parseInt(e.target.value)])} className="flex-1 h-2 bg-[#3a3a3a] rounded-lg appearance-none cursor-pointer accent-purple-500" />
+                  <input type="range" min="0" max="60" value={wsiRange[0]} onChange={(e) => setWsiRange([parseInt(e.target.value), wsiRange[1]])} className="flex-1 h-2 bg-[#3a3a3a] rounded-lg appearance-none cursor-pointer accent-[#FFD700]" />
+                  <input type="range" min="0" max="60" value={wsiRange[1]} onChange={(e) => setWsiRange([wsiRange[0], parseInt(e.target.value)])} className="flex-1 h-2 bg-[#3a3a3a] rounded-lg appearance-none cursor-pointer accent-[#FFD700]" />
                 </div>
               </div>
             </div>
@@ -530,7 +530,7 @@ export default function EliteShootersPage() {
             {filteredShooters.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-[#888] text-lg">No players match your filters.</p>
-                <button onClick={resetFilters} className="mt-4 px-6 py-2 bg-[#FF6B35] text-black rounded-lg font-semibold hover:bg-[#e5c200] transition-colors">
+                <button onClick={resetFilters} className="mt-4 px-6 py-2 bg-[#FF6B35] text-white rounded-lg font-semibold hover:bg-[#e5c200] transition-colors">
                   Reset Filters
                 </button>
               </div>
@@ -555,7 +555,7 @@ export default function EliteShootersPage() {
                       {/* Player Header */}
                       <div className="relative p-4 pt-8">
                         {/* WSI Badge - positioned at top */}
-                        <div className="absolute top-2 right-3 bg-purple-600 text-white font-bold text-[11px] px-2 py-0.5 rounded">
+                        <div className="absolute top-2 right-3 bg-gradient-to-r from-[#FFD700] to-[#B8860B] text-black font-bold text-[11px] px-2 py-0.5 rounded">
                           WSI {shooter.wsi}
                         </div>
                         
@@ -784,7 +784,7 @@ export default function EliteShootersPage() {
                                 }}
                                 className={`w-full py-2.5 rounded-lg font-semibold text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
                                   imageCount > 0
-                                    ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-black hover:from-[#FFE44D] hover:to-[#FFB733] shadow-lg shadow-[#FF6B35]/20'
+                                    ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-white hover:from-[#FFE44D] hover:to-[#FFB733] shadow-lg shadow-[#FF6B35]/20'
                                     : 'bg-[#2a2a2a] text-[#888] border border-[#3a3a3a] hover:border-[#555] hover:text-white'
                                 }`}
                               >
@@ -849,7 +849,7 @@ export default function EliteShootersPage() {
                                 onClick={() => setCurrentPage(page)}
                                 className={`w-10 h-10 rounded-lg font-semibold transition-colors ${
                                   currentPage === page
-                                    ? 'bg-[#FF6B35] text-black'
+                                    ? 'bg-[#FF6B35] text-white'
                                     : 'bg-[#2a2a2a] border border-[#3a3a3a] text-white hover:border-[#FF6B35]/50'
                                 }`}
                               >

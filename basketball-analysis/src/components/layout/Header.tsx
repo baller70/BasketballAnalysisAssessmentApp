@@ -112,14 +112,13 @@ export function Header() {
   }, [])
 
   const profileMenuItems = [
-    { label: "My Profile", href: "/profile", icon: User },
-    { label: "Upload", href: "/", icon: Upload },
-    { label: "Results", href: "/results/demo", icon: BarChart3 },
-    { label: "History", href: "/results/demo?tab=history", icon: Clock },
-    { label: "Elite Shooter", href: "/elite-shooters", icon: Users },
-    { label: "Guide", href: "/guide", icon: BookOpen },
+    { label: "Dashboard", href: "/results/demo", icon: BarChart3 },
+    { label: "Basic Dashboard", href: "/results/demo/basic", icon: Sparkles },
     { label: "Settings", href: "/settings", icon: Settings },
+    { label: "Analytics", href: "/results/demo/history", icon: BarChart3 },
+    { label: "Elite Shooter", href: "/elite-shooters", icon: Users },
     { label: "Badges & Achievements", href: "/badges", icon: Trophy },
+    { label: "Guide", href: "/guide", icon: BookOpen },
   ]
 
   return (
@@ -156,7 +155,7 @@ export function Header() {
 
               {/* Dropdown Menu */}
               {isProfileOpen && (
-                <div className="absolute right-0 mt-3 w-64 bg-[#2C2C2C] border border-[#3a3a3a] rounded-xl shadow-xl overflow-hidden z-50">
+                <div className="absolute right-0 mt-3 w-64 bg-[#2C2C2C] border border-[#3a3a3a] rounded-xl shadow-xl overflow-hidden z-50 max-h-[80vh] overflow-y-auto">
                   {/* User Info Header */}
                   <div className="px-4 py-4 bg-gradient-to-r from-[#FF6B35]/10 to-transparent border-b border-[#3a3a3a]">
                     <div className="flex items-center gap-3">
@@ -181,7 +180,16 @@ export function Header() {
                       {VIEW_OPTIONS.map((option) => (
                         <button
                           key={option.value}
-                          onClick={() => setDashboardView(option.value)}
+                          onClick={() => {
+                            setDashboardView(option.value)
+                            setIsProfileOpen(false)
+                            // Navigate to the appropriate dashboard
+                            if (option.value === 'basic') {
+                              router.push('/results/demo/basic')
+                            } else {
+                              router.push('/results/demo')
+                            }
+                          }}
                           className={`flex-1 flex flex-col items-center gap-1 py-2.5 rounded-lg text-xs font-medium transition-all ${
                             dashboardView === option.value
                               ? `bg-gradient-to-br ${option.color} text-white shadow-lg`

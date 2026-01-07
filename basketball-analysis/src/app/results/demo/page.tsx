@@ -7,12 +7,13 @@
 
 import React, { useState, useMemo, useRef, useCallback, useEffect, Suspense } from "react"
 import { AnalysisDashboard } from "@/components/analysis/AnalysisDashboard"
+import { AnalysisCardGame } from "@/components/analysis/AnalysisCardGame"
 import { EnhancedShotStrip } from "@/components/analysis/EnhancedShotStrip"
 import { AutoScreenshots } from "@/components/analysis/AutoScreenshots"
 import { VideoPlayerSection } from "@/components/analysis/VideoPlayerSection"
 import { LiveAnalysis } from "@/components/live"
 import { GoalTransitMap } from "@/components/goals"
-import { User, Upload, Check, X, Image as ImageIcon, Video, BookOpen, Users, Search, BarChart3, Award, ArrowRight, Zap, Trophy, Target, ClipboardList, Flame, Dumbbell, CircleDot, Share2, Download, Copy, Twitter, Facebook, Linkedin, ChevronLeft, ChevronRight, Calendar, ChevronDown, ChevronUp, AlertTriangle, Lightbulb, Plus, Eye, EyeOff, Layers, GitBranch, Circle, Tag, Camera, Play, Info, TrendingUp, Shirt, Medal, Timer, Footprints, ArrowLeftRight, Move, Instagram, MessageCircle, Globe, Clock, PieChart, Grid3X3, Activity, MoreVertical, Radio, Star, Crown, MapPin } from "lucide-react"
+import { User, Upload, Check, X, Image as ImageIcon, Video, BookOpen, Users, Search, BarChart3, Award, ArrowRight, Zap, Trophy, Target, ClipboardList, Flame, Dumbbell, CircleDot, Share2, Download, Copy, Twitter, Facebook, Linkedin, ChevronLeft, ChevronRight, Calendar, ChevronDown, ChevronUp, AlertTriangle, Lightbulb, Plus, Eye, EyeOff, Layers, GitBranch, Circle, Tag, Camera, Play, Info, TrendingUp, Shirt, Medal, Timer, Footprints, ArrowLeftRight, Move, Instagram, MessageCircle, Globe, Clock, PieChart, Grid3X3, Activity, MoreVertical, Radio, Star, Crown, MapPin, SlidersHorizontal, Filter } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { useSearchParams } from "next/navigation"
@@ -64,6 +65,8 @@ import {
 import { ClickableStatsGrid, StatPopup } from "@/components/dashboard/StatPopup"
 import { Phase6ComparisonPanel } from "@/components/comparison/Phase6ComparisonPanel"
 import { ScoreOrPassGame } from "@/components/comparison/ScoreOrPass"
+import { WorkoutOrPassGame, WorkoutCalendar } from "@/components/training/WorkoutOrPass"
+import { PlayerLockInGame } from "@/components/analysis/LockInOrSave"
 // Removed: AnnotationWalkthroughVideo - using original video player instead
 import { 
   ALL_DRILLS, 
@@ -1230,7 +1233,7 @@ function AnimatedImageWalkthrough({ imageUrl, keypoints, angles, imageSize }: An
           <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-lg">
             <button
               onClick={startAnimation}
-              className="p-4 rounded-full bg-[#FF6B35] hover:bg-[#E55300] text-black transition-all transform hover:scale-110 shadow-2xl"
+              className="p-4 rounded-full bg-[#FF6B35] hover:bg-[#E55300] text-white transition-all transform hover:scale-110 shadow-2xl"
             >
               <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M8 5v14l11-7z"/>
@@ -1251,7 +1254,7 @@ function AnimatedImageWalkthrough({ imageUrl, keypoints, angles, imageSize }: An
           <div className="absolute bottom-4 right-4">
             <button
               onClick={startAnimation}
-              className="px-4 py-2 rounded-lg bg-[#FF6B35] hover:bg-[#E55300] text-black font-bold text-sm transition-colors"
+              className="px-4 py-2 rounded-lg bg-[#FF6B35] hover:bg-[#E55300] text-white font-bold text-sm transition-colors"
             >
               Replay
             </button>
@@ -4366,83 +4369,30 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
           <div className="max-w-4xl mx-auto">
             <div className="grid grid-cols-6 h-16 md:h-[72px]">
               {[
-                { id: "analysis", icon: Activity, label: "Analysis" },
-                { id: "flaws", icon: AlertTriangle, label: "Flaws" },
-                { id: "assessment", icon: User, label: "Player" },
-                { id: "comparison", icon: Users, label: "Compare" },
-                { id: "training", icon: ClipboardList, label: "Training" },
-                { id: "goals", icon: Target, label: "Goals" },
+                { id: "analysis", icon: Activity, label: "Analysis", href: "/results/demo/analysis" },
+                { id: "flaws", icon: AlertTriangle, label: "Flaws", href: "/results/demo/flaws" },
+                { id: "player", icon: User, label: "Player", href: "/results/demo/player" },
+                { id: "compare", icon: Users, label: "Compare", href: "/results/demo/compare" },
+                { id: "training", icon: ClipboardList, label: "Training", href: "/results/demo/training" },
+                { id: "goals", icon: Target, label: "Goals", href: "/results/demo/goals" },
               ].map((tab) => {
-                const isActive = activeTab === tab.id
                 return (
-                  <button
+                  <Link
                     key={tab.id}
-                    onClick={() => {
-                      try {
-                        setActiveTab(tab.id)
-                      } catch (error) {
-                        console.error('Error switching tab:', error)
-                      }
-                    }}
-                    className={`relative flex flex-col items-center justify-center gap-1 transition-all ${
-                      isActive 
-                        ? "text-[#FF6B35]" 
-                        : "text-[#888] hover:text-[#ccc]"
-                    }`}
+                    href={tab.href}
+                    className="relative flex flex-col items-center justify-center gap-1 transition-all text-[#888] hover:text-[#FF6B35]"
                   >
-                    {/* Active indicator bar at top */}
-                    {isActive && (
-                      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-[#FF6B35]" />
-                    )}
-                    <tab.icon className={`w-5 h-5 md:w-6 md:h-6 ${isActive ? "scale-110" : ""} transition-transform`} />
-                    <span className={`text-[10px] md:text-xs font-medium ${isActive ? "font-bold" : ""}`}>
+                    <tab.icon className="w-5 h-5 md:w-6 md:h-6 transition-transform" />
+                    <span className="text-[10px] md:text-xs font-medium">
                       {tab.label}
                     </span>
-                  </button>
+                  </Link>
                 )
               })}
             </div>
           </div>
         </div>
         
-        {/* Tab Content - Same components for all views, pass dashboardView for language adjustments */}
-        <>
-          {activeTab === "analysis" && (
-            <ErrorBoundary>
-              <BiomechanicalAnalysisWithSessions dashboardView={dashboardView} />
-            </ErrorBoundary>
-          )}
-          {activeTab === "flaws" && (
-            <ErrorBoundary>
-              <FlawsSection dashboardView={dashboardView} />
-            </ErrorBoundary>
-          )}
-          {activeTab === "assessment" && (
-            <ErrorBoundary>
-              <AssessmentSection dashboardView={dashboardView} playerNameProp={playerName || 'Player'} />
-            </ErrorBoundary>
-          )}
-          {activeTab === "comparison" && (
-            <ErrorBoundary>
-              <ComparisonWithSessions dashboardView={dashboardView} />
-            </ErrorBoundary>
-          )}
-          {activeTab === "training" && (
-            <ErrorBoundary>
-              <TrainingWithSessions dashboardView={dashboardView} />
-            </ErrorBoundary>
-          )}
-          {activeTab === "goals" && (
-            <ErrorBoundary>
-              <GoalsSection dashboardView={dashboardView} />
-            </ErrorBoundary>
-          )}
-          {activeTab === "history" && (
-            <ErrorBoundary>
-              <HistoricalDataSection dashboardView={dashboardView} />
-            </ErrorBoundary>
-          )}
-        </>
       </div>
     </>
   )
@@ -4690,6 +4640,105 @@ function FlawsSection({ dashboardView = 'professional' }: { dashboardView?: Dash
     }))
   }
 
+  // Default demo flaws when no data is available
+  const defaultDemoFlaws = [
+    {
+      id: 1,
+      title: "Elbow Flare",
+      severity: "CRITICAL",
+      severityScore: 35,
+      category: "Form",
+      description: "Your shooting elbow is drifting outward during release, causing inconsistent ball flight and reducing accuracy on mid-range shots. This creates side spin on the ball.",
+      correction: "Practice form shooting with your elbow tucked against a wall. Use the 'cookie jar' drill - imagine reaching into a high shelf.",
+      causeChain: [
+        { effect: "Ball drifts left/right", explanation: "Side spin from elbow position", severity: "high" },
+        { effect: "Inconsistent accuracy", explanation: "Variable release angle", severity: "medium" }
+      ],
+      drills: [
+        { name: "Wall Elbow Drill", reps: "3 sets × 20 reps", difficulty: "Easy" },
+        { name: "One-Hand Form Shots", reps: "50 shots", difficulty: "Medium" },
+        { name: "Mirror Practice", reps: "5 minutes", difficulty: "Easy" }
+      ],
+      impact: "Critical impact on accuracy"
+    },
+    {
+      id: 2,
+      title: "Low Release Point",
+      severity: "MODERATE",
+      severityScore: 55,
+      category: "Mechanics",
+      description: "Your release height is below optimal range, making your shot easier to block and reducing the entry angle into the basket.",
+      correction: "Extend fully through your shot before releasing. Practice releasing at the peak of your jump.",
+      causeChain: [
+        { effect: "Shot gets blocked", explanation: "Release too low for defenders", severity: "high" },
+        { effect: "Flat arc trajectory", explanation: "Lower release = flatter shot", severity: "medium" }
+      ],
+      drills: [
+        { name: "High Release Drill", reps: "3 sets × 15 reps", difficulty: "Medium" },
+        { name: "Jump Shot Peak Practice", reps: "40 shots", difficulty: "Medium" },
+        { name: "Chair Shooting Drill", reps: "5 minutes", difficulty: "Easy" }
+      ],
+      impact: "High impact on shot accuracy"
+    },
+    {
+      id: 3,
+      title: "Inconsistent Follow Through",
+      severity: "MODERATE",
+      severityScore: 60,
+      category: "Form",
+      description: "Your follow through varies from shot to shot, leading to inconsistent backspin and ball rotation.",
+      correction: "Hold your follow through until the ball hits the rim. Focus on snapping your wrist with fingers pointing at the basket.",
+      causeChain: [
+        { effect: "Variable backspin", explanation: "Inconsistent wrist action", severity: "medium" },
+        { effect: "Unpredictable bounces", explanation: "Ball rotation varies", severity: "low" }
+      ],
+      drills: [
+        { name: "Freeze Follow Through", reps: "3 sets × 25 reps", difficulty: "Easy" },
+        { name: "Wrist Snap Drill", reps: "50 shots", difficulty: "Easy" },
+        { name: "One-Hand Form Shooting", reps: "5 minutes", difficulty: "Medium" }
+      ],
+      impact: "Medium impact on shot power"
+    },
+    {
+      id: 4,
+      title: "Poor Base Alignment",
+      severity: "MINOR",
+      severityScore: 72,
+      category: "Balance",
+      description: "Your feet are not consistently aligned with the basket, causing your body to rotate during the shot.",
+      correction: "Practice catching and squaring in one motion. Use floor markers to check foot alignment.",
+      causeChain: [
+        { effect: "Body rotation", explanation: "Feet not square to basket", severity: "medium" },
+        { effect: "Off-balance shots", explanation: "Weight distribution uneven", severity: "low" }
+      ],
+      drills: [
+        { name: "Footwork Square-Up", reps: "3 sets × 20 reps", difficulty: "Easy" },
+        { name: "Catch & Shoot Alignment", reps: "30 shots", difficulty: "Medium" },
+        { name: "Tape Line Drill", reps: "5 minutes", difficulty: "Easy" }
+      ],
+      impact: "Medium impact on shot power"
+    },
+    {
+      id: 5,
+      title: "Rushed Shot Motion",
+      severity: "MINOR",
+      severityScore: 68,
+      category: "Power",
+      description: "Your shooting motion is too quick, not allowing proper energy transfer from legs to arms.",
+      correction: "Slow down your shot in practice, focus on rhythm. Use the 'dip' to create better timing.",
+      causeChain: [
+        { effect: "Weak shots", explanation: "No leg power transfer", severity: "medium" },
+        { effect: "Inconsistent rhythm", explanation: "Timing varies shot to shot", severity: "low" }
+      ],
+      drills: [
+        { name: "Slow Motion Shooting", reps: "3 sets × 15 reps", difficulty: "Easy" },
+        { name: "Rhythm Dribble-Shot", reps: "40 shots", difficulty: "Medium" },
+        { name: "Fatigue Shooting", reps: "5 minutes", difficulty: "Hard" }
+      ],
+      impact: "Medium impact on shot power"
+    }
+  ]
+
   // Build all sessions with flaws (current + history)
   const allSessionsWithFlaws = useMemo(() => {
     const result: { id: string; date: string; displayDate: string; flaws: any[]; score: number; isLive: boolean }[] = []
@@ -4717,6 +4766,18 @@ function FlawsSection({ dashboardView = 'professional' }: { dashboardView?: Dash
         isLive: false
       })
     })
+    
+    // If no sessions exist, add demo session with default flaws
+    if (result.length === 0) {
+      result.push({
+        id: 'demo',
+        date: new Date().toISOString(),
+        displayDate: 'Demo Session',
+        flaws: defaultDemoFlaws,
+        score: 74,
+        isLive: true
+      })
+    }
     
     return result
   }, [visionAnalysisResult, uploadedImageBase64, sessions])
@@ -6064,85 +6125,80 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
   return (
     <div className="space-y-6">
       {/* ==================== SESSION GALLERY CAROUSEL (TOP) ==================== */}
-      <div className="bg-gradient-to-r from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a] rounded-xl p-6 border border-[#3a3a3a]">
-        {/* Header with Media Type Filter and Date Dropdown */}
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-[#FF6B35]/10 flex items-center justify-center border border-[#FF6B35]/30">
-              <ImageIcon className="w-6 h-6 text-[#FF6B35]" />
-            </div>
-            <div>
-              <h2 className="text-xl font-black text-[#FF6B35] uppercase tracking-wider">Session History</h2>
-              <p className="text-[#888] text-sm">
-                {allSessions.length} session{allSessions.length !== 1 ? 's' : ''} 
-                {mediaTypeFilter !== 'all' && ` (${mediaTypeFilter})`}
-                {' • '}{imageSessions.length} image, {videoSessions.length} video
-              </p>
-            </div>
+      <div className="bg-gradient-to-r from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a] rounded-xl p-4 border border-[#3a3a3a]">
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-lg bg-[#FF6B35]/10 flex items-center justify-center border border-[#FF6B35]/30 flex-shrink-0">
+            <ImageIcon className="w-5 h-5 text-[#FF6B35]" />
+          </div>
+          <div className="min-w-0">
+            <h2 className="text-base font-black text-[#FF6B35] uppercase tracking-wider">Sessions</h2>
+            <p className="text-[#888] text-xs truncate">
+              {allSessions.length} total • {imageSessions.length} img, {videoSessions.length} vid
+            </p>
+          </div>
+        </div>
+        
+        {/* Media Type Filter Buttons - Compact */}
+        <div className="flex items-center gap-2 mb-4 overflow-x-auto">
+          <div className="flex rounded-lg bg-[#1a1a1a] p-0.5 flex-shrink-0">
+            <button
+              onClick={() => setMediaTypeFilter('all')}
+              className={`px-2 py-1 rounded text-[10px] font-bold uppercase transition-colors ${
+                mediaTypeFilter === 'all' 
+                  ? 'bg-[#FF6B35] text-[#1a1a1a]' 
+                  : 'text-[#888] hover:text-white'
+              }`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setMediaTypeFilter('image')}
+              className={`px-2 py-1 rounded text-[10px] font-bold uppercase transition-colors flex items-center gap-0.5 ${
+                mediaTypeFilter === 'image' 
+                  ? 'bg-[#60a5fa] text-white' 
+                  : 'text-[#888] hover:text-white'
+              }`}
+            >
+              <ImageIcon className="w-2.5 h-2.5" />
+              Img
+            </button>
+            <button
+              onClick={() => setMediaTypeFilter('video')}
+              className={`px-2 py-1 rounded text-[10px] font-bold uppercase transition-colors flex items-center gap-0.5 ${
+                mediaTypeFilter === 'video' 
+                  ? 'bg-[#ef4444] text-white' 
+                  : 'text-[#888] hover:text-white'
+              }`}
+            >
+              <Video className="w-2.5 h-2.5" />
+              Vid
+            </button>
+            <button
+              onClick={() => setMediaTypeFilter('drills')}
+              className={`px-2 py-1 rounded text-[10px] font-bold uppercase transition-colors flex items-center gap-0.5 ${
+                mediaTypeFilter === 'drills' 
+                  ? 'bg-[#22c55e] text-white' 
+                  : 'text-[#888] hover:text-white'
+              }`}
+            >
+              <Dumbbell className="w-2.5 h-2.5" />
+              Drill
+            </button>
           </div>
           
-          {/* Media Type Filter + Date Dropdown */}
-          <div className="flex items-center gap-3">
-            {/* Media Type Filter Buttons */}
-            <div className="flex rounded-lg bg-[#1a1a1a] p-1">
-              <button
-                onClick={() => setMediaTypeFilter('all')}
-                className={`px-3 py-1.5 rounded-md text-xs font-semibold uppercase transition-colors ${
-                  mediaTypeFilter === 'all' 
-                    ? 'bg-[#FF6B35] text-[#1a1a1a]' 
-                    : 'text-[#888] hover:text-white'
-                }`}
-              >
-                All ({sessions.length})
-              </button>
-              <button
-                onClick={() => setMediaTypeFilter('image')}
-                className={`px-3 py-1.5 rounded-md text-xs font-semibold uppercase transition-colors flex items-center gap-1 ${
-                  mediaTypeFilter === 'image' 
-                    ? 'bg-[#60a5fa] text-white' 
-                    : 'text-[#888] hover:text-white'
-                }`}
-              >
-                <ImageIcon className="w-3 h-3" />
-                Image ({imageSessions.length})
-              </button>
-              <button
-                onClick={() => setMediaTypeFilter('video')}
-                className={`px-3 py-1.5 rounded-md text-xs font-semibold uppercase transition-colors flex items-center gap-1 ${
-                  mediaTypeFilter === 'video' 
-                    ? 'bg-[#ef4444] text-white' 
-                    : 'text-[#888] hover:text-white'
-                }`}
-              >
-                <Video className="w-3 h-3" />
-                Video ({videoSessions.length})
-              </button>
-              <button
-                onClick={() => setMediaTypeFilter('drills')}
-                className={`px-3 py-1.5 rounded-md text-xs font-semibold uppercase transition-colors flex items-center gap-1 ${
-                  mediaTypeFilter === 'drills' 
-                    ? 'bg-[#22c55e] text-white' 
-                    : 'text-[#888] hover:text-white'
-                }`}
-              >
-                <Dumbbell className="w-3 h-3" />
-                Drills ({drillFeedback.length})
-              </button>
-            </div>
-            
-            {/* Date Dropdown - Quick Jump */}
-            <select
-              value={selectedSessionId || allSessions[0]?.id || ''}
-              onChange={(e) => setSelectedSessionId(e.target.value)}
-              className="bg-[#2a2a2a] border border-[#4a4a4a] rounded-lg px-3 py-2 text-[#E5E5E5] text-sm focus:outline-none focus:border-[#FF6B35] cursor-pointer"
-            >
-              {allSessions.map((session) => (
-                <option key={session.id} value={session.id}>
-                  {session.mediaType === 'video' ? '🎬' : '📷'} {session.id === 'current' ? 'Now (Live)' : session.displayDate} - {session.analysisData.overallScore}%
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Date Dropdown - Quick Jump */}
+          <select
+            value={selectedSessionId || allSessions[0]?.id || ''}
+            onChange={(e) => setSelectedSessionId(e.target.value)}
+            className="bg-[#2a2a2a] border border-[#4a4a4a] rounded-lg px-2 py-1 text-[#E5E5E5] text-[10px] focus:outline-none focus:border-[#FF6B35] cursor-pointer flex-shrink-0"
+          >
+            {allSessions.map((session) => (
+              <option key={session.id} value={session.id}>
+                {session.id === 'current' ? 'Now' : session.displayDate} - {session.analysisData.overallScore}%
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* DRILLS TAB CONTENT */}
@@ -6452,184 +6508,12 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
         )}
       </div>
 
-      {/* ==================== REST OF ASSESSMENT (3-column layout) ==================== */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Sidebar - Activity Rings + Details + SPAR Indicators */}
-        <div className="space-y-6">
-          {/* Overall Score - Apple Watch Activity Rings */}
-          <div className="bg-[#3a3a3a] rounded-lg p-6">
-            <h3 className="text-[#888] text-sm uppercase tracking-wider mb-6">Key Skills</h3>
-            <ActivityRings overallScore={overallScore} consistencyScore={consistencyScore} formScore={formScore} />
-          </div>
-
-          {/* SPAR Indicators - Moved to Sidebar */}
-          <div className="bg-[#3a3a3a] rounded-lg p-6">
-            <div className="flex flex-col gap-2 mb-6">
-              <h3 className="text-lg font-bold text-[#FF6B35] uppercase tracking-wider">SPAR Indicators</h3>
-              <span className="text-[10px] text-[#888] bg-[#2a2a2a] px-2 py-1 rounded w-fit">Shooting Performance Analysis Rating • Click for details</span>
-            </div>
-
-            <div className="space-y-6">
-              {sparCategories.map((category, idx) => (
-                <div key={idx}>
-                  {/* Category header */}
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-2.5 h-2.5 rounded" style={{ backgroundColor: category.color.border }} />
-                    <h4 className={`text-xs font-bold uppercase tracking-wider ${category.color.text}`}>{category.name}</h4>
-                    <div className="flex-1 h-px bg-gradient-to-r from-[#4a4a4a] to-transparent ml-2" />
-                  </div>
-                  <SPARCategory category={category} playerName={playerName} playerAge={playerProfile?.age || 34} playerState="CA" />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Right Content - Assessment Results + Development Recommendations */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Header with Shooter Level */}
-          <div className="bg-[#3a3a3a] rounded-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold text-[#FF6B35] mb-1">{playerName}</h2>
-                <p className="text-[#888] uppercase tracking-wider text-sm">Shooting Mechanics Assessment Report</p>
-              </div>
-              <div className={`text-right px-4 py-2 rounded-lg border ${
-                shooterLevel.level <= 2 ? 'bg-green-500/10 border-green-500/40' :
-                shooterLevel.level <= 4 ? 'bg-[#FF6B35]/10 border-[#FF6B35]/40' :
-                shooterLevel.level <= 6 ? 'bg-orange-500/10 border-orange-500/40' : 'bg-red-500/10 border-red-500/40'
-              }`}>
-                <div className={`text-2xl font-black ${
-                  shooterLevel.level <= 2 ? 'text-green-400' :
-                  shooterLevel.level <= 4 ? 'text-[#FF6B35]' :
-                  shooterLevel.level <= 6 ? 'text-orange-400' : 'text-red-400'
-                }`}>
-                  {shooterLevel.name}
-                </div>
-                <p className="text-[#888] text-xs">Level {shooterLevel.level} of 8</p>
-              </div>
-            </div>
-          </div>
-
-        {/* PHASE 8: Motivational Message - Moved to be right under header */}
-        <MotivationalMessageCard 
-          overallScore={overallScore}
-          sessionsCount={allSessions.length}
-          shooterLevel={shooterLevel}
-        />
-
-        {/* Assessment Results */}
-        <div className="bg-[#3a3a3a] rounded-lg p-6">
-          <h3 className="text-xl font-bold text-[#E5E5E5] uppercase tracking-wider mb-4">Assessment Results</h3>
-          <div className="mb-4">
-            <h4 className="text-[#FF6B35] font-semibold uppercase text-sm mb-2">Overall Performance Rating</h4>
-            <p className="text-[#888] text-sm mb-1">Basketball Shooting Mechanics Program</p>
-            <p className="text-[#888] text-sm mb-3">Assessment Date: {assessmentDate}</p>
-            <ul className="space-y-2 text-sm text-[#E5E5E5]">
-              <li className="flex items-start gap-2"><span className="text-[#FF6B35]">•</span>Achieved <span className="text-[#FF6B35] font-semibold">{overallScore}%</span> overall shooting form rating</li>
-              <li className="flex items-start gap-2"><span className="text-[#FF6B35]">•</span>Demonstrated <span className="text-[#FF6B35] font-semibold">{assessmentSkills.filter(s => s.score >= 80).length}</span> skills at advanced level</li>
-              <li className="flex items-start gap-2"><span className="text-[#FF6B35]">•</span>Shooter Classification: <span className="text-[#FF6B35] font-semibold">{shooterLevel.name}</span> ({shooterLevel.scoreRange[0]}-{shooterLevel.scoreRange[1]} range)</li>
-              <li className="flex items-start gap-2"><span className="text-[#FF6B35]">•</span>{detectedFlaws.length === 0 ? 'No significant mechanical flaws detected' : `${detectedFlaws.length} mechanical issue${detectedFlaws.length > 1 ? 's' : ''} identified for improvement`}</li>
-            </ul>
-          </div>
-          
-          {/* Strengths & Areas for Improvement */}
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Strengths */}
-            <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4">
-              <h4 className="text-green-400 font-semibold uppercase text-sm mb-3">✓ Strengths</h4>
-              <ul className="space-y-2 text-sm text-[#E5E5E5]">
-                {assessmentSkills.filter(s => s.score >= 70).slice(0, 3).map((skill, idx) => (
-                  <li key={idx} className="flex items-start gap-2">
-                    <span className="text-green-400">•</span>
-                    <span>{skill.name} ({skill.score}%) - {skill.status}</span>
-                  </li>
-                ))}
-                {assessmentSkills.filter(s => s.score >= 70).length === 0 && (
-                  <li className="text-[#888]">Focus on building foundational mechanics</li>
-                )}
-              </ul>
-            </div>
-            
-            {/* Areas for Improvement */}
-            <div className="bg-orange-900/20 border border-orange-500/30 rounded-lg p-4">
-              <h4 className="text-orange-400 font-semibold uppercase text-sm mb-3">⚠ Areas for Improvement</h4>
-              <ul className="space-y-2 text-sm text-[#E5E5E5]">
-                {assessmentSkills.filter(s => s.score < 70).slice(0, 3).map((skill, idx) => (
-                  <li key={idx} className="flex items-start gap-2">
-                    <span className="text-orange-400">•</span>
-                    <span>{skill.name} ({skill.score}%) - {skill.status}</span>
-                  </li>
-                ))}
-                {assessmentSkills.filter(s => s.score < 70).length === 0 && (
-                  <li className="text-[#888]">All skills at satisfactory level or above</li>
-                )}
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        {/* Development Recommendations - Dynamic based on detected flaws */}
-        <div className="bg-[#3a3a3a] rounded-lg p-6">
-          <h3 className="text-xl font-bold text-[#E5E5E5] uppercase tracking-wider mb-4">Development Recommendations</h3>
-
-          {detectedFlaws.length > 0 ? (
-            <>
-              <div className="mb-6">
-                <h4 className="text-[#FF6B35] font-semibold uppercase text-sm mb-3">Primary Focus Areas</h4>
-                <div className="space-y-4">
-                  {detectedFlaws.slice(0, 2).map((flaw, idx) => (
-                    <div key={idx} className="bg-[#2a2a2a] rounded-lg p-4 border-l-4 border-[#FF6B35]">
-                      <p className="text-[#E5E5E5] font-semibold mb-2">{flaw.name}</p>
-                      <p className="text-[#888] text-sm mb-2">{flaw.description}</p>
-                      <p className="text-green-400 text-sm"><span className="text-[#888]">Fix:</span> {flaw.fixes[0]}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mb-6">
-                <h4 className="text-[#FF6B35] font-semibold uppercase text-sm mb-3">Cause & Effect Analysis</h4>
-                <div className="space-y-3 text-sm text-[#E5E5E5]">
-                  {detectedFlaws[0]?.causeChain.slice(0, 2).map((effect, idx) => (
-                    <p key={idx}>
-                      <span className={`inline-block px-2 py-0.5 rounded text-xs mr-2 ${
-                        effect.severity === 'major' ? 'bg-red-500/20 text-red-400' :
-                        effect.severity === 'moderate' ? 'bg-orange-500/20 text-orange-400' : 'bg-blue-500/20 text-blue-400'
-                      }`}>{effect.severity}</span>
-                      <span className="text-[#888]">{effect.effect}:</span> {effect.explanation}
-                    </p>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <h4 className="text-[#FF6B35] font-semibold uppercase text-sm mb-3">Recommended Drills</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {detectedFlaws.flatMap(f => f.drills).slice(0, 4).map((drill, idx) => (
-                    <div key={idx} className="bg-[#2a2a2a] rounded-lg p-3 flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-[#FF6B35]/20 flex items-center justify-center text-[#FF6B35] font-bold text-sm">
-                        {idx + 1}
-                      </div>
-                      <span className="text-[#E5E5E5] text-sm">{drill}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4">
-              <p className="text-green-400 font-semibold mb-2">Excellent Form Detected!</p>
-              <p className="text-[#E5E5E5] text-sm">
-                Your shooting mechanics show strong fundamentals with no significant flaws detected.
-                Continue practicing to maintain consistency and build muscle memory.
-              </p>
-            </div>
-          )}
-        </div>
-
-      </div>
-    </div>
+      {/* ==================== LOCK IN OR SAVE GAME ==================== */}
+      <PlayerLockInGame 
+        shootingStats={simplifiedAnalysisData.shootingStats}
+        playerName={playerName}
+        dashboardView={dashboardView}
+      />
   </div>
   )
 }
@@ -7028,7 +6912,7 @@ function MeasurementPopup({ measurementKey, value, onClose }: { measurementKey: 
           </div>
         </div>
         <div className="p-6 border-t border-[#3a3a3a]">
-          <button onClick={onClose} className="w-full py-3 bg-[#FF6B35] hover:bg-[#e5c200] text-black font-bold rounded-lg transition-colors uppercase">
+          <button onClick={onClose} className="w-full py-3 bg-[#FF6B35] hover:bg-[#e5c200] text-white font-bold rounded-lg transition-colors uppercase">
             Close
           </button>
         </div>
@@ -7744,7 +7628,7 @@ function ShooterCard({ shooter, isSelected, onToggle, userMeasurements, onBioCli
               </div>
             </div>
             {/* Similarity Badge */}
-            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-[#FF6B35] text-black font-bold text-sm px-3 py-0.5 rounded-full whitespace-nowrap">
+            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-[#FF6B35] text-white font-bold text-sm px-3 py-0.5 rounded-full whitespace-nowrap">
               {shooter.similarity}%
             </div>
           </button>
@@ -8061,36 +7945,9 @@ function BiomechanicalAnalysisWithSessions({ dashboardView = 'professional' }: {
     )
   }
 
-  // PROFESSIONAL VIEW - Full detailed analysis (default)
+  // PROFESSIONAL VIEW - Card-based Analysis with swipeable cards
   return (
-    <div className="space-y-6">
-      {/* Session Filter Dropdown */}
-      <div className="bg-gradient-to-r from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a] rounded-xl p-4 border border-[#3a3a3a]">
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-center gap-3">
-            <Calendar className="w-5 h-5 text-[#FF6B35]" />
-            <span className="text-[#E5E5E5] font-semibold">SELECT SESSION:</span>
-          </div>
-          <select
-            value={selectedSessionId}
-            onChange={(e) => setSelectedSessionId(e.target.value)}
-            className="bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-2 text-[#E5E5E5] focus:border-[#FF6B35] focus:outline-none min-w-[250px]"
-          >
-            {sessionOptions.map(option => (
-              <option key={option.id} value={option.id}>
-                {option.label} - {option.date}
-              </option>
-            ))}
-          </select>
-        </div>
-        {sessionOptions.length === 0 && (
-          <p className="text-[#888] text-sm mt-2">No sessions available. Upload an image to create your first session.</p>
-        )}
-      </div>
-      
-      {/* Analysis Dashboard */}
-      <AnalysisDashboard measurements={currentMeasurements} />
-    </div>
+    <AnalysisCardGame measurements={currentMeasurements} />
   )
 }
 
@@ -8099,7 +7956,8 @@ function ComparisonWithSessions({ dashboardView = 'professional' }: { dashboardV
   const { visionAnalysisResult, uploadedImageBase64, playerProfile } = useAnalysisStore()
   const [sessions, setSessions] = useState<AnalysisSession[]>([])
   const [selectedSessionId, setSelectedSessionId] = useState<string>('current')
-  const [viewMode, setViewMode] = useState<'personalized' | 'elite' | 'photo' | 'game'>('personalized') // Phase 6 & 7 toggle + Score or Pass game
+  const [viewMode, setViewMode] = useState<'photo' | 'game'>('photo') // Photo Compare + Score or Pass game
+  const [showEliteComparison, setShowEliteComparison] = useState(false) // Elite comparison modal/expanded view
   
   useEffect(() => {
     const loadedSessions = getAllSessions()
@@ -8261,34 +8119,9 @@ function ComparisonWithSessions({ dashboardView = 'professional' }: { dashboardV
           </div>
         </div>
         
-        {/* View Mode Toggle - Phase 6 & 7 Features - Responsive */}
+        {/* View Mode Toggle - Photo Compare + Score or Pass */}
         <div className="flex items-center gap-2 mt-4 pt-4 border-t border-[#3a3a3a] flex-wrap">
-          <span className="text-[#888] text-sm mr-2 uppercase">COMPARISON MODE:</span>
-          {/* Desktop: Full labels */}
-          <button
-            onClick={() => setViewMode('personalized')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors uppercase ${
-              viewMode === 'personalized' 
-                ? 'bg-[#FF6B35] text-[#1a1a1a]' 
-                : 'bg-[#2a2a2a] text-[#888] hover:text-[#E5E5E5]'
-            }`}
-          >
-            <Users className="w-4 h-4 inline-block mr-1 md:mr-2" />
-            <span className="hidden md:inline">PERSONALIZED COMPARISON</span>
-            <span className="md:hidden">MATCH</span>
-          </button>
-          <button
-            onClick={() => setViewMode('elite')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors uppercase ${
-              viewMode === 'elite' 
-                ? 'bg-[#FF6B35] text-[#1a1a1a]' 
-                : 'bg-[#2a2a2a] text-[#888] hover:text-[#E5E5E5]'
-            }`}
-          >
-            <Trophy className="w-4 h-4 inline-block mr-1 md:mr-2" />
-            <span className="hidden md:inline">ELITE SHOOTERS</span>
-            <span className="md:hidden">ELITE</span>
-          </button>
+          <span className="text-[#888] text-sm mr-2 uppercase">MODE:</span>
           <button
             onClick={() => setViewMode('photo')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors uppercase ${
@@ -8320,23 +8153,42 @@ function ComparisonWithSessions({ dashboardView = 'professional' }: { dashboardV
         )}
       </div>
       
-      {/* Phase 6: Personalized Body-Type Comparison */}
-      {viewMode === 'personalized' && (
-        <Phase6ComparisonPanel
-          userProfile={userProfileForPhase6}
-          userMetrics={userMetricsForPhase6}
-          overallScore={currentAnalysisData.overallScore}
-        />
-      )}
-      
-      {/* Original Elite Shooter Comparison */}
-      {viewMode === 'elite' && (
-        <ComparisonSection analysisData={currentAnalysisData} />
-      )}
-      
-      {/* Phase 7: Photo Comparison Slider */}
+      {/* Photo Comparison with Elite Button */}
       {viewMode === 'photo' && (
-        <PhotoComparisonSection />
+        <>
+          {/* Elite Comparison Toggle Button */}
+          <div className="mb-4">
+            <button
+              onClick={() => setShowEliteComparison(!showEliteComparison)}
+              className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all duration-300 ${
+                showEliteComparison 
+                  ? 'bg-gradient-to-r from-[#FF6B35]/20 to-[#FFD700]/10 border-[#FF6B35] shadow-lg shadow-[#FF6B35]/20' 
+                  : 'bg-[#1a1a1a] border-[#3a3a3a] hover:border-[#FF6B35]/50'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg ${showEliteComparison ? 'bg-[#FF6B35]' : 'bg-[#2a2a2a]'}`}>
+                  <Trophy className={`w-5 h-5 ${showEliteComparison ? 'text-white' : 'text-[#FF6B35]'}`} />
+                </div>
+                <div className="text-left">
+                  <h4 className="text-white font-bold">Elite Shooter Comparison</h4>
+                  <p className="text-[#888] text-sm">Compare your form with NBA professionals</p>
+                </div>
+              </div>
+              <ChevronDown className={`w-5 h-5 text-[#FF6B35] transition-transform duration-300 ${showEliteComparison ? 'rotate-180' : ''}`} />
+            </button>
+          </div>
+          
+          {/* Elite Comparison Expanded Section */}
+          {showEliteComparison && (
+            <div className="mb-6 animate-fadeIn">
+              <ComparisonSection analysisData={currentAnalysisData} />
+            </div>
+          )}
+          
+          {/* Photo Comparison Slider */}
+          <PhotoComparisonSection />
+        </>
       )}
       
       {/* Score or Pass: Basketball Elite Shooter Edition */}
@@ -8366,86 +8218,135 @@ function ComparisonWithSessions({ dashboardView = 'professional' }: { dashboardV
   )
 }
 
-// Training Plan with Session Filter Dropdown - Enhanced with Calendar
+// Training Plan with Workout or Pass & Calendar - NEW DESIGN
 function TrainingWithSessions({ dashboardView = 'professional' }: { dashboardView?: DashboardView }) {
-  const { visionAnalysisResult, uploadedImageBase64 } = useAnalysisStore()
-  const [sessions, setSessions] = useState<AnalysisSession[]>([])
-  const [selectedSessionId, setSelectedSessionId] = useState<string>('current')
+  const { visionAnalysisResult } = useAnalysisStore()
+  const profileStore = useProfileStore()
+  const [activeTrainingTab, setActiveTrainingTab] = useState<'discover' | 'calendar'>('discover')
+  const [activeDrill, setActiveDrill] = useState<Drill | null>(null)
   
-  useEffect(() => {
-    const loadedSessions = getAllSessions()
-    setSessions(loadedSessions)
-  }, [])
+  // Filter State
+  const [showFilterPanel, setShowFilterPanel] = useState(false)
+  const [drillFilters, setDrillFilters] = useState<{
+    skillLevel: SkillLevel | 'all'
+    focusArea: DrillFocusArea | 'all'
+    difficulty: number | 'all'
+    duration: string
+  }>({
+    skillLevel: 'all',
+    focusArea: 'all',
+    difficulty: 'all',
+    duration: 'all'
+  })
   
-  // Get flaws for selected session to generate training plan
-  const getFlawsForSession = useCallback((sessionId: string) => {
-    if (sessionId === 'current' && visionAnalysisResult?.success && visionAnalysisResult.angles) {
+  // Filter options
+  const SKILL_LEVEL_OPTIONS = [
+    { value: 'all', label: 'All Levels' },
+    { value: 'ELEMENTARY', label: 'Elementary' },
+    { value: 'MIDDLE_SCHOOL', label: 'Middle School' },
+    { value: 'HIGH_SCHOOL', label: 'High School' },
+    { value: 'COLLEGE', label: 'College' },
+    { value: 'PROFESSIONAL', label: 'Professional' },
+  ]
+  
+  const FOCUS_AREA_OPTIONS = [
+    { value: 'all', label: 'All Types' },
+    { value: 'FORM', label: 'Form' },
+    { value: 'BALANCE', label: 'Balance' },
+    { value: 'RELEASE', label: 'Release' },
+    { value: 'POWER', label: 'Power' },
+    { value: 'ACCURACY', label: 'Accuracy' },
+    { value: 'SPEED', label: 'Speed' },
+    { value: 'CONSISTENCY', label: 'Consistency' },
+  ]
+  
+  const DIFFICULTY_OPTIONS = [
+    { value: 'all', label: 'Any Difficulty' },
+    { value: 1, label: '★ Beginner' },
+    { value: 2, label: '★★ Easy' },
+    { value: 3, label: '★★★ Medium' },
+    { value: 4, label: '★★★★ Hard' },
+    { value: 5, label: '★★★★★ Expert' },
+  ]
+  
+  const DURATION_OPTIONS = [
+    { value: 'all', label: 'Any Duration' },
+    { value: 'quick', label: '5 min or less' },
+    { value: 'short', label: '5-10 min' },
+    { value: 'medium', label: '10-20 min' },
+    { value: 'long', label: '20-30 min' },
+    { value: 'extended', label: '30+ min' },
+  ]
+  
+  // Active filter count
+  const activeFilterCount = [
+    drillFilters.skillLevel !== 'all',
+    drillFilters.focusArea !== 'all',
+    drillFilters.difficulty !== 'all',
+    drillFilters.duration !== 'all'
+  ].filter(Boolean).length
+  
+  // Get filter summary
+  const getFilterSummary = () => {
+    const parts: string[] = []
+    if (drillFilters.skillLevel !== 'all') {
+      parts.push(SKILL_LEVEL_OPTIONS.find(o => o.value === drillFilters.skillLevel)?.label || '')
+    }
+    if (drillFilters.focusArea !== 'all') {
+      parts.push(FOCUS_AREA_OPTIONS.find(o => o.value === drillFilters.focusArea)?.label || '')
+    }
+    if (drillFilters.difficulty !== 'all') {
+      parts.push(DIFFICULTY_OPTIONS.find(o => o.value === drillFilters.difficulty)?.label || '')
+    }
+    if (drillFilters.duration !== 'all') {
+      parts.push(DURATION_OPTIONS.find(o => o.value === drillFilters.duration)?.label || '')
+    }
+    return parts.length > 0 ? parts.join(' • ') : 'All Drills'
+  }
+  
+  // Reset filters
+  const resetDrillFilters = () => {
+    setDrillFilters({
+      skillLevel: 'all',
+      focusArea: 'all',
+      difficulty: 'all',
+      duration: 'all'
+    })
+  }
+  
+  // Get detected flaws from analysis
+  const detectedFlaws = useMemo(() => {
+    if (visionAnalysisResult?.success && visionAnalysisResult.angles) {
       return detectFlawsFromAngles(visionAnalysisResult.angles)
     }
-    
-    const session = sessions.find(s => s.id === sessionId)
-    if (session?.analysisData?.angles) {
-      return detectFlawsFromAngles(session.analysisData.angles)
-    }
-    
     return []
-  }, [visionAnalysisResult, sessions])
+  }, [visionAnalysisResult])
   
-  const currentFlaws = getFlawsForSession(selectedSessionId)
-  
-  // Map flaws to focus areas for the calendar
-  const focusAreas = useMemo(() => {
-    const areas: string[] = []
-    currentFlaws.forEach(flaw => {
-      if (flaw.id.includes('ELBOW')) areas.push('elbow')
-      if (flaw.id.includes('KNEE')) areas.push('power')
-      if (flaw.id.includes('SHOULDER') || flaw.id.includes('HIP')) areas.push('balance')
-      if (flaw.id.includes('RELEASE')) areas.push('release')
-    })
-    return [...new Set(areas)]
-  }, [currentFlaws])
-  
-  // Build session options
-  const sessionOptions = useMemo(() => {
-    const options: { id: string; label: string; date: string; flawCount: number }[] = []
-    
-    if (visionAnalysisResult?.success && uploadedImageBase64) {
-      const flaws = visionAnalysisResult.angles ? detectFlawsFromAngles(visionAnalysisResult.angles) : []
-      options.push({
-        id: 'current',
-        label: 'Current Session (Live)',
-        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-        flawCount: flaws.length
-      })
+  // Map flaws to user flaws object for WorkoutOrPassGame
+  const userFlaws = useMemo(() => {
+    const flaws: Record<string, boolean> = {
+      elbowAlignment: false,
+      kneeBend: false,
+      releasePoint: false,
+      followThrough: false,
+      balance: false,
+      arcTrajectory: false,
+      footwork: false
     }
     
-    sessions.forEach(session => {
-      const flaws = session.analysisData?.angles ? detectFlawsFromAngles(session.analysisData.angles) : []
-      options.push({
-        id: session.id,
-        label: session.displayDate,
-        date: new Date(session.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-        flawCount: flaws.length
-      })
+    detectedFlaws.forEach(flaw => {
+      if (flaw.id.includes('ELBOW')) flaws.elbowAlignment = true
+      if (flaw.id.includes('KNEE')) flaws.kneeBend = true
+      if (flaw.id.includes('RELEASE')) flaws.releasePoint = true
+      if (flaw.id.includes('FOLLOW')) flaws.followThrough = true
+      if (flaw.id.includes('BALANCE') || flaw.id.includes('HIP') || flaw.id.includes('SHOULDER')) flaws.balance = true
+      if (flaw.id.includes('ARC')) flaws.arcTrajectory = true
+      if (flaw.id.includes('FOOT')) flaws.footwork = true
     })
     
-    return options
-  }, [visionAnalysisResult, uploadedImageBase64, sessions])
+    return flaws
+  }, [detectedFlaws])
   
-  // Dynamically import the TrainingPlanCalendar component
-  const [TrainingPlanCalendar, setTrainingPlanCalendar] = useState<React.ComponentType<{ 
-    focusAreas?: string[]
-    detectedFlaws?: { id: string; name: string; description: string; priority: number; fixes: string[]; drills: string[]; causeChain?: Array<{ effect: string; severity: string; explanation: string }> | string[] }[]
-  }> | null>(null)
-  
-  useEffect(() => {
-    import('@/components/training/TrainingPlanCalendar').then(mod => {
-      setTrainingPlanCalendar(() => mod.default)
-    })
-  }, [])
-  
-  // Get profile data for player name
-  const profileStore = useProfileStore()
   const playerName = profileStore.firstName || profileStore.displayName || 'Player'
   
   // Build analysis data for simplified views
@@ -8479,53 +8380,233 @@ function TrainingWithSessions({ dashboardView = 'professional' }: { dashboardVie
     )
   }
 
-  // PROFESSIONAL VIEW - Full detailed analysis (default)
+  // PROFESSIONAL VIEW - New Workout or Pass Design
   return (
-    <div className="space-y-6">
-      {/* Session Filter Dropdown */}
-      <div className="bg-gradient-to-r from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a] rounded-xl p-4 border border-[#3a3a3a]">
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-center gap-3">
-            <Calendar className="w-5 h-5 text-[#FF6B35]" />
-            <span className="text-[#E5E5E5] font-semibold uppercase">TRAINING PLAN FOR SESSION:</span>
-          </div>
-          <select
-            value={selectedSessionId}
-            onChange={(e) => setSelectedSessionId(e.target.value)}
-            className="bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-2 text-[#E5E5E5] focus:border-[#FF6B35] focus:outline-none min-w-[250px]"
-          >
-            {sessionOptions.map(option => (
-              <option key={option.id} value={option.id}>
-                {option.label} - {option.flawCount} flaw{option.flawCount !== 1 ? 's' : ''}
-              </option>
-            ))}
-          </select>
-        </div>
-        {sessionOptions.length === 0 && (
-          <p className="text-[#888] text-sm mt-2">No sessions available. Upload an image to create your first session.</p>
-        )}
-        {currentFlaws.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-2">
-            <span className="text-[#888] text-sm">Focus areas:</span>
-            {focusAreas.map(area => (
-              <span key={area} className="px-2 py-1 rounded-full bg-[#FF6B35]/20 text-[#FF6B35] text-xs font-bold uppercase">
-                {area}
-              </span>
-            ))}
-          </div>
-        )}
+    <div className="space-y-4">
+      {/* Tab Navigation */}
+      <div className="flex items-center gap-2 p-1 bg-[#1a1a1a] rounded-xl border border-[#333]">
+        <button
+          type="button"
+          onClick={() => setActiveTrainingTab('discover')}
+          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-sm transition-all ${
+            activeTrainingTab === 'discover'
+              ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-white'
+              : 'text-[#888] hover:text-white'
+          }`}
+        >
+          <Zap className="w-4 h-4" />
+          DISCOVER
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTrainingTab('calendar')}
+          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-sm transition-all ${
+            activeTrainingTab === 'calendar'
+              ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-white'
+              : 'text-[#888] hover:text-white'
+          }`}
+        >
+          <Calendar className="w-4 h-4" />
+          CALENDAR
+        </button>
       </div>
       
-      {/* NEW: Training Plan Calendar with Timer, Video, Frequency Selection */}
-      {TrainingPlanCalendar ? (
-        <TrainingPlanCalendar focusAreas={focusAreas} detectedFlaws={currentFlaws} />
-      ) : (
-        <div className="bg-[#1a1a1a] rounded-xl p-8 border border-[#3a3a3a] text-center">
-          <div className="animate-spin w-8 h-8 border-2 border-[#FF6B35] border-t-transparent rounded-full mx-auto mb-4" />
-          <p className="text-[#888]">Loading training calendar...</p>
-        </div>
+      {/* Discover Tab - Workout or Pass Game */}
+      {activeTrainingTab === 'discover' && (
+        <>
+          {/* Filter Button Card */}
+          <button
+            type="button"
+            onClick={() => setShowFilterPanel(true)}
+            className="w-full flex items-center justify-between gap-2 px-4 py-3 mb-4 bg-[#1a1a1a] border border-[#333] rounded-xl text-white hover:border-[#FF6B35]/50 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-[#FF6B35]/20 flex items-center justify-center relative">
+                <SlidersHorizontal className="w-4 h-4 text-[#FF6B35]" />
+                {activeFilterCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#FF6B35] text-white text-[10px] font-bold flex items-center justify-center">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </div>
+              <div className="text-left flex-1 min-w-0">
+                <p className="text-xs text-[#888]">Filters</p>
+                <p className="text-sm font-semibold text-white truncate">{getFilterSummary()}</p>
+              </div>
+            </div>
+            <ChevronDown className="w-5 h-5 text-[#888] flex-shrink-0" />
+          </button>
+          
+          <WorkoutOrPassGame 
+            userProfile={{
+              skillLevel: drillFilters.skillLevel === 'all' ? (profileStore.skillLevel || undefined) : drillFilters.skillLevel,
+              flaws: userFlaws
+            }}
+            filters={drillFilters}
+            onStartDrill={(drill) => {
+              setActiveDrill(drill)
+              console.log("Starting drill:", drill.title)
+            }}
+          />
+        </>
       )}
       
+      {/* Calendar Tab */}
+      {activeTrainingTab === 'calendar' && (
+        <WorkoutCalendar
+          userFlaws={Object.entries(userFlaws)
+            .filter(([_, hasIssue]) => hasIssue)
+            .map(([flaw]) => flaw)}
+          onStartWorkout={(drills) => {
+            if (drills.length > 0) {
+              setActiveDrill(drills[0])
+            }
+          }}
+        />
+      )}
+      
+      {/* Filter Panel Overlay */}
+      {showFilterPanel && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center">
+          <div className="bg-[#1a1a1a] w-full max-w-md rounded-t-2xl sm:rounded-2xl max-h-[85vh] overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-[#333]">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <Filter className="w-5 h-5 text-[#FF6B35]" />
+                Filter Drills
+              </h2>
+              <div className="flex items-center gap-2">
+                {activeFilterCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={resetDrillFilters}
+                    className="text-sm text-[#FF6B35] hover:text-[#FF8B55] transition-colors"
+                  >
+                    Reset
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setShowFilterPanel(false)}
+                  className="w-8 h-8 rounded-lg bg-[#252525] flex items-center justify-center text-[#888] hover:text-white transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            
+            {/* Filters */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-6">
+              {/* Skill Level */}
+              <div>
+                <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                  <Target className="w-4 h-4 text-[#FF6B35]" />
+                  Skill Level
+                </h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {SKILL_LEVEL_OPTIONS.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setDrillFilters(f => ({ ...f, skillLevel: option.value as SkillLevel | 'all' }))}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                        drillFilters.skillLevel === option.value
+                          ? 'bg-[#FF6B35] text-white'
+                          : 'bg-[#252525] text-[#888] hover:bg-[#333] hover:text-white'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Focus Area */}
+              <div>
+                <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                  <Target className="w-4 h-4 text-[#FF6B35]" />
+                  Drill Type
+                </h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {FOCUS_AREA_OPTIONS.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setDrillFilters(f => ({ ...f, focusArea: option.value as DrillFocusArea | 'all' }))}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                        drillFilters.focusArea === option.value
+                          ? 'bg-[#FF6B35] text-white'
+                          : 'bg-[#252525] text-[#888] hover:bg-[#333] hover:text-white'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Difficulty */}
+              <div>
+                <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                  <Star className="w-4 h-4 text-[#FF6B35]" />
+                  Difficulty
+                </h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {DIFFICULTY_OPTIONS.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setDrillFilters(f => ({ ...f, difficulty: option.value }))}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                        drillFilters.difficulty === option.value
+                          ? 'bg-[#FF6B35] text-white'
+                          : 'bg-[#252525] text-[#888] hover:bg-[#333] hover:text-white'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Duration */}
+              <div>
+                <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-[#FF6B35]" />
+                  Duration
+                </h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {DURATION_OPTIONS.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setDrillFilters(f => ({ ...f, duration: option.value }))}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                        drillFilters.duration === option.value
+                          ? 'bg-[#FF6B35] text-white'
+                          : 'bg-[#252525] text-[#888] hover:bg-[#333] hover:text-white'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            {/* Footer */}
+            <div className="p-4 border-t border-[#333] bg-[#151515]">
+              <button
+                type="button"
+                onClick={() => setShowFilterPanel(false)}
+                className="w-full py-3 bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-white font-bold rounded-xl hover:opacity-90 transition-opacity"
+              >
+                Apply Filters
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -9284,8 +9365,8 @@ function AnalyticsChartSection({ sessions, progressStats, playerName }: Analytic
       </CardHeader>
       
       <CardContent className="space-y-6">
-        {/* Summary Stats - Premium Card Design with Integrated Visualizations */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* Summary Stats - Session Card Only */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Total Sessions Card */}
           <Card className="bg-gradient-to-br from-[#1a1a1a] to-[#252525] border-[#3a3a3a] hover:border-[#FF6B35]/30 transition-all overflow-hidden relative">
             <CardContent className="p-5">
@@ -9363,241 +9444,6 @@ function AnalyticsChartSection({ sessions, progressStats, playerName }: Analytic
             </CardContent>
           </Card>
           
-          {/* Avg Score Card */}
-          <Card className="bg-gradient-to-br from-[#1a1a1a] to-[#252525] border-[#3a3a3a] hover:border-purple-500/30 transition-all overflow-hidden relative">
-            <CardContent className="p-5">
-              {/* Header */}
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="text-sm font-bold text-[#E5E5E5] mb-1">AVG SCORE</h3>
-                  <p className="text-xs text-[#888]">{periodLabels[timePeriod]}</p>
-                </div>
-                <button className="text-[#888] hover:text-[#E5E5E5] transition-colors">
-                  <MoreVertical className="w-4 h-4" />
-                </button>
-              </div>
-              
-              {/* Line Graph */}
-              <div className="relative h-20 mb-4">
-                <svg className="w-full h-full" viewBox="0 0 200 60" preserveAspectRatio="none">
-                  {/* Grid lines */}
-                  {[0, 15, 30, 45, 60].map((y) => (
-                    <line key={y} x1="0" y1={y} x2="200" y2={y} stroke="#3a3a3a" strokeWidth="0.5" />
-                  ))}
-                  {/* Data line */}
-                  <polyline
-                    points={filteredSessions.slice(-8).map((s, i) => {
-                      const x = (i / 7) * 200;
-                      const y = 60 - ((s.score / 100) * 50);
-                      return `${x},${y}`;
-                    }).join(' ')}
-                    fill="none"
-                    stroke="#a855f7"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  {/* Current point */}
-                  {filteredSessions.length > 0 && (
-                    <circle cx="200" cy={60 - ((filteredSessions[filteredSessions.length - 1]?.score / 100) * 50)} r="4" fill="#a855f7" />
-                  )}
-                  {/* Badge */}
-                  {filteredSessions.length > 0 && (
-                    <g transform="translate(150, 5)">
-                      <rect x="0" y="0" width="50" height="12" rx="6" fill="#a855f7" opacity="0.2" />
-                      <text x="25" y="9" textAnchor="middle" fontSize="8" fill="#a855f7" fontWeight="bold">
-                        {Math.round(filteredSessions.reduce((sum, s) => sum + s.score, 0) / filteredSessions.length)}%
-                      </text>
-                    </g>
-                  )}
-                </svg>
-              </div>
-              
-              {/* Progress Bar */}
-              <div className="mb-4">
-                <div className="flex items-center justify-between mb-1">
-                  <div className="h-2 bg-[#3a3a3a] rounded-full flex-1 mr-2">
-                    <div 
-                      className="h-full bg-gradient-to-r from-purple-500 to-purple-400 rounded-full transition-all duration-500"
-                      style={{ width: `${filteredSessions.length > 0 ? Math.round(filteredSessions.reduce((sum, s) => sum + s.score, 0) / filteredSessions.length) : 0}%` }}
-                    ></div>
-                  </div>
-                  <span className="text-xs font-medium text-[#888]">
-                    {filteredSessions.length > 0 ? Math.round(filteredSessions.reduce((sum, s) => sum + s.score, 0) / filteredSessions.length) : 0}%
-                  </span>
-                </div>
-              </div>
-              
-              {/* Main Metric */}
-              <div className="flex items-baseline justify-between">
-                <div>
-                  <span className="text-3xl font-black text-purple-400 leading-none">
-                    {filteredSessions.length > 0 
-                      ? Math.round(filteredSessions.reduce((sum, s) => sum + s.score, 0) / filteredSessions.length)
-                      : 0}%
-                  </span>
-                </div>
-                <p className="text-xs text-[#888]">across all sessions</p>
-              </div>
-            </CardContent>
-          </Card>
-          
-          {/* Peak Score Card */}
-          <Card className="bg-gradient-to-br from-[#1a1a1a] to-[#252525] border-[#3a3a3a] hover:border-green-500/30 transition-all overflow-hidden relative">
-            <CardContent className="p-5">
-              {/* Header */}
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="text-sm font-bold text-[#E5E5E5] mb-1">PEAK SCORE</h3>
-                  <p className="text-xs text-[#888]">{periodLabels[timePeriod]}</p>
-                </div>
-                <button className="text-[#888] hover:text-[#E5E5E5] transition-colors">
-                  <MoreVertical className="w-4 h-4" />
-                </button>
-              </div>
-              
-              {/* Line Graph */}
-              <div className="relative h-20 mb-4">
-                <svg className="w-full h-full" viewBox="0 0 200 60" preserveAspectRatio="none">
-                  {/* Grid lines */}
-                  {[0, 15, 30, 45, 60].map((y) => (
-                    <line key={y} x1="0" y1={y} x2="200" y2={y} stroke="#3a3a3a" strokeWidth="0.5" />
-                  ))}
-                  {/* Data line */}
-                  {filteredSessions.length > 0 && (
-                    <polyline
-                      points={filteredSessions.slice(-8).map((s, i) => {
-                        const x = (i / 7) * 200;
-                        const y = 60 - ((s.score / 100) * 50);
-                        return `${x},${y}`;
-                      }).join(' ')}
-                      fill="none"
-                      stroke="#22c55e"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  )}
-                  {/* Current point */}
-                  {filteredSessions.length > 0 && (
-                    <circle cx="200" cy={60 - ((Math.max(...filteredSessions.map(s => s.score)) / 100) * 50)} r="4" fill="#22c55e" />
-                  )}
-                  {/* Badge */}
-                  {filteredSessions.length > 0 && (
-                    <g transform="translate(150, 5)">
-                      <rect x="0" y="0" width="50" height="12" rx="6" fill="#22c55e" opacity="0.2" />
-                      <text x="25" y="9" textAnchor="middle" fontSize="8" fill="#22c55e" fontWeight="bold">
-                        {Math.max(...filteredSessions.map(s => s.score))}%
-                      </text>
-                    </g>
-                  )}
-                </svg>
-              </div>
-              
-              {/* Progress Bar */}
-              <div className="mb-4">
-                <div className="flex items-center justify-between mb-1">
-                  <div className="h-2 bg-[#3a3a3a] rounded-full flex-1 mr-2">
-                    <div 
-                      className="h-full bg-gradient-to-r from-green-500 to-green-400 rounded-full transition-all duration-500"
-                      style={{ width: `${filteredSessions.length > 0 ? Math.max(...filteredSessions.map(s => s.score)) : 0}%` }}
-                    ></div>
-                  </div>
-                  <span className="text-xs font-medium text-[#888]">
-                    {filteredSessions.length > 0 ? Math.max(...filteredSessions.map(s => s.score)) : 0}%
-                  </span>
-                </div>
-              </div>
-              
-              {/* Main Metric */}
-              <div className="flex items-baseline justify-between">
-                <div>
-                  <span className="text-3xl font-black text-green-400 leading-none">
-                    {filteredSessions.length > 0 
-                      ? Math.max(...filteredSessions.map(s => s.score))
-                      : 0}%
-                  </span>
-                </div>
-                <p className="text-xs text-[#888]">personal best</p>
-              </div>
-            </CardContent>
-          </Card>
-          
-          {/* Trend Card */}
-          <Card className="bg-gradient-to-br from-[#1a1a1a] to-[#252525] border-[#3a3a3a] hover:border-blue-500/30 transition-all overflow-hidden relative">
-            <CardContent className="p-5">
-              {/* Header */}
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="text-sm font-bold text-[#E5E5E5] mb-1">TREND</h3>
-                  <p className="text-xs text-[#888]">{periodLabels[timePeriod]}</p>
-                </div>
-                <button className="text-[#888] hover:text-[#E5E5E5] transition-colors">
-                  <MoreVertical className="w-4 h-4" />
-                </button>
-              </div>
-              
-              {/* Line Graph */}
-              <div className="relative h-20 mb-4">
-                <svg className="w-full h-full" viewBox="0 0 200 60" preserveAspectRatio="none">
-                  {/* Grid lines */}
-                  {[0, 15, 30, 45, 60].map((y) => (
-                    <line key={y} x1="0" y1={y} x2="200" y2={y} stroke="#3a3a3a" strokeWidth="0.5" />
-                  ))}
-                  {/* Data line */}
-                  <polyline
-                    points={filteredSessions.slice(-8).map((_, i) => {
-                      const x = (i / 7) * 200;
-                      const trendValue = safeProgressStats.scoreChange >= 0 ? 30 + (i * 3) : 50 - (i * 3);
-                      const y = 60 - trendValue;
-                      return `${x},${y}`;
-                    }).join(' ')}
-                    fill="none"
-                    stroke={safeProgressStats.scoreChange >= 0 ? "#3b82f6" : "#ef4444"}
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  {/* Current point */}
-                  <circle cx="200" cy={safeProgressStats.scoreChange >= 0 ? "20" : "40"} r="4" fill={safeProgressStats.scoreChange >= 0 ? "#3b82f6" : "#ef4444"} />
-                  {/* Badge */}
-                  <g transform="translate(150, 5)">
-                    <rect x="0" y="0" width="50" height="12" rx="6" fill={safeProgressStats.scoreChange >= 0 ? "#3b82f6" : "#ef4444"} opacity="0.2" />
-                    <text x="25" y="9" textAnchor="middle" fontSize="8" fill={safeProgressStats.scoreChange >= 0 ? "#3b82f6" : "#ef4444"} fontWeight="bold">
-                      {safeProgressStats.scoreChange >= 0 ? '+' : ''}{Math.abs(safeProgressStats.scoreChange)}%
-                    </text>
-                  </g>
-                </svg>
-              </div>
-              
-              {/* Progress Bar */}
-              <div className="mb-4">
-                <div className="flex items-center justify-between mb-1">
-                  <div className="h-2 bg-[#3a3a3a] rounded-full flex-1 mr-2">
-                    <div 
-                      className={`h-full rounded-full transition-all duration-500 ${
-                        safeProgressStats.scoreChange >= 0 
-                          ? 'bg-gradient-to-r from-blue-500 to-blue-400' 
-                          : 'bg-gradient-to-r from-red-500 to-red-400'
-                      }`}
-                      style={{ width: `${Math.min(100, Math.abs(safeProgressStats.scoreChange))}%` }}
-                    ></div>
-                  </div>
-                  <span className="text-xs font-medium text-[#888]">{Math.abs(safeProgressStats.scoreChange)}%</span>
-                </div>
-              </div>
-              
-              {/* Main Metric */}
-              <div className="flex items-baseline justify-between">
-                <div>
-                  <span className={`text-3xl font-black leading-none ${safeProgressStats.scoreChange >= 0 ? 'text-blue-400' : 'text-red-400'}`}>
-                    {safeProgressStats.scoreChange >= 0 ? '↑' : '↓'} {Math.abs(safeProgressStats.scoreChange)}%
-                  </span>
-                </div>
-                <p className="text-xs text-[#888]">vs previous period</p>
-              </div>
-            </CardContent>
-          </Card>
         </div>
         
         {/* Chart Header with Metrics Selector */}
@@ -9635,7 +9481,7 @@ function AnalyticsChartSection({ sessions, progressStats, playerName }: Analytic
                         selectedMetrics.includes(metric.id) ? 'border-[#FF6B35] bg-[#FF6B35]' : 'border-[#3a3a3a]'
                       }`}>
                         {selectedMetrics.includes(metric.id) && (
-                          <Check className="w-3 h-3 text-black" />
+                          <Check className="w-3 h-3 text-white" />
                         )}
                       </div>
                       <div className={`w-3 h-3 rounded-full bg-gradient-to-r ${metric.color}`} />
@@ -9850,189 +9696,67 @@ function GoalsSection({ dashboardView = 'professional' }: { dashboardView?: Dash
     return { scoreChange, sessionsCount: allSessionsData.length, avgScore: Math.round(avgScore), trend }
   }, [allSessionsData])
 
+  // Get goals count from the GoalTransitMap data (would be from localStorage in production)
+  const goalsCount = 10 // Default goals in the journey - this would be dynamic based on user's goals
+  const completedGoals = 3 // Goals completed
+  
   return (
     <div className="space-y-8">
-      {/* Performance Analytics Header & Stats */}
+      {/* Goals Card - Gold Theme */}
       <Card className="bg-gradient-to-br from-[#1a1a1a] via-[#222222] to-[#1a1a1a] border-[#2a2a2a] shadow-2xl overflow-hidden">
         <CardContent className="p-0">
-          {/* Header Bar */}
-          <div className="bg-gradient-to-r from-[#FF6B35]/10 via-transparent to-[#FF6B35]/10 border-b border-[#2a2a2a] px-6 py-4">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#B8860B] flex items-center justify-center shadow-lg">
-                    <Target className="w-7 h-7 text-[#1a1a1a]" />
-                  </div>
-                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#1a1a1a] border-2 border-[#FF6B35] flex items-center justify-center">
-                    <TrendingUp className="w-3 h-3 text-[#FF6B35]" />
-                  </div>
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-[#E5E5E5] tracking-tight">
-                    Performance Analytics
-                  </h2>
-                  <p className="text-[#666] text-sm font-medium">
-                    {profileStore?.displayName || profileStore?.firstName || 'Player'} • Goals Dashboard
-                  </p>
-                </div>
-              </div>
-              
-              {/* Date Range Indicator */}
-              <div className="flex items-center gap-2 text-sm">
-                <Calendar className="w-4 h-4 text-[#666]" />
-                <span className="text-[#666]">Last 90 Days</span>
-              </div>
-            </div>
-          </div>
-          
-          {/* Stats Cards */}
+          {/* Goals Card Content */}
           <div className="relative p-6 lg:p-8 overflow-hidden">
             {/* Background gradient mesh */}
             <div className="absolute inset-0 opacity-30">
               <div className="absolute top-0 left-0 w-96 h-96 bg-[#FF6B35]/10 rounded-full blur-3xl"></div>
-              <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
+              <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#B8860B]/10 rounded-full blur-3xl"></div>
             </div>
             
-            {/* Stats Grid */}
-            <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
-              {/* Sessions */}
-              <div className="lg:col-span-4 relative group">
+            {/* Goals Count Card */}
+            <div className="relative grid grid-cols-1 gap-6 lg:gap-8">
+              <div className="relative group max-w-md mx-auto w-full">
                 <div className="relative bg-gradient-to-br from-[#1a1a1a]/80 via-[#252525]/80 to-[#1a1a1a]/80 backdrop-blur-xl rounded-3xl p-8 lg:p-10 border border-[#3a3a3a]/30 hover:border-[#FF6B35]/40 transition-all duration-500 overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent"></div>
+                  
+                  {/* Create Goal Button - Top Right */}
+                  <button
+                    type="button"
+                    className="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1.5 bg-[#FF6B35] hover:bg-[#FF4500] text-white text-xs font-bold rounded-lg transition-all shadow-lg shadow-[#FF6B35]/20"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Create Goal
+                  </button>
                   
                   <div className="relative mb-6">
                     <div className="flex items-baseline gap-2">
                       <span className="text-8xl lg:text-9xl font-black text-[#FF6B35] tabular-nums leading-none tracking-tight" style={{
                         textShadow: '0 0 40px rgba(255, 215, 0, 0.3), 0 0 80px rgba(255, 215, 0, 0.1)'
                       }}>
-                        {progressStats?.sessionsCount ?? 0}
+                        {goalsCount}
                       </span>
-                      <Clock className="w-8 h-8 lg:w-10 lg:h-10 text-[#FF6B35]/60 mb-4" />
+                      <Target className="w-8 h-8 lg:w-10 lg:h-10 text-[#FF6B35]/60 mb-4" />
                     </div>
                   </div>
                   
                   <div className="relative">
-                    <p className="text-sm font-bold text-[#888] uppercase tracking-[0.15em] mb-1">SESSIONS</p>
+                    <p className="text-sm font-bold text-[#888] uppercase tracking-[0.15em] mb-1">GOALS</p>
                     <div className="h-0.5 w-16 bg-gradient-to-r from-[#FF6B35]/40 to-transparent"></div>
                   </div>
                   
+                  {/* Progress indicator */}
                   <div className="mt-6 pt-6 border-t border-[#3a3a3a]/30">
-                    <div className="flex items-end gap-1 h-12">
-                      {[...Array(8)].map((_, i) => (
-                        <div 
-                          key={i}
-                          className="flex-1 bg-gradient-to-t from-[#FF6B35]/20 to-[#FF6B35]/5 rounded-t transition-all duration-300 hover:from-[#FF6B35]/40 hover:to-[#FF6B35]/20"
-                          style={{ height: `${Math.random() * 60 + 40}%` }}
-                        ></div>
-                      ))}
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs text-[#888] uppercase tracking-wider">Progress</span>
+                      <span className="text-xs text-[#FF6B35] font-bold">{completedGoals}/{goalsCount} completed</span>
                     </div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Avg Score */}
-              <div className="lg:col-span-3 relative group">
-                <div className="relative bg-gradient-to-br from-[#1a1a1a]/80 via-[#252525]/80 to-[#1a1a1a]/80 backdrop-blur-xl rounded-3xl p-8 lg:p-10 border border-[#3a3a3a]/30 hover:border-blue-500/40 transition-all duration-500 overflow-hidden h-full flex flex-col justify-between">
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent"></div>
-                  
-                  <div className="relative w-32 h-32 mx-auto mb-6">
-                    <svg className="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
-                      <circle cx="60" cy="60" r="50" fill="none" stroke="#3a3a3a" strokeWidth="8" />
-                      <circle 
-                        cx="60" cy="60" r="50" 
-                        fill="none" 
-                        stroke="url(#goalsScoreGradient)" 
-                        strokeWidth="8" 
-                        strokeLinecap="round"
-                        strokeDasharray={`${((progressStats?.avgScore || 0) / 100) * 314} 314`}
-                        className="transition-all duration-1000"
+                    <div className="h-2 bg-[#3a3a3a] rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF4500] rounded-full transition-all duration-500"
+                        style={{ width: `${(completedGoals / goalsCount) * 100}%` }}
                       />
-                      <defs>
-                        <linearGradient id="goalsScoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                          <stop offset="0%" stopColor="#3b82f6" />
-                          <stop offset="100%" stopColor="#60a5fa" />
-                        </linearGradient>
-                      </defs>
-                    </svg>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-center">
-                        <span className="text-4xl font-black text-blue-400 tabular-nums leading-none block">{progressStats?.avgScore || 0}</span>
-                        <span className="text-lg font-bold text-blue-400/70">%</span>
-                      </div>
                     </div>
                   </div>
-                  
-                  <div>
-                    <p className="text-sm font-bold text-[#888] uppercase tracking-[0.15em] mb-1">AVG SCORE</p>
-                    <div className="h-0.5 w-16 bg-gradient-to-r from-blue-500/40 to-transparent"></div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Progress */}
-              <div className="lg:col-span-3 relative group">
-                <div className="relative bg-gradient-to-br from-[#1a1a1a]/80 via-[#252525]/80 to-[#1a1a1a]/80 backdrop-blur-xl rounded-3xl p-8 lg:p-10 border border-[#3a3a3a]/30 hover:border-green-500/40 transition-all duration-500 overflow-hidden h-full flex flex-col justify-between">
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent"></div>
-                  
-                  <div className="mb-6">
-                    <span className={`text-7xl lg:text-8xl font-black tabular-nums leading-none tracking-tight ${
-                      (progressStats?.scoreChange || 0) >= 0 ? 'text-green-400' : 'text-red-400'
-                    }`} style={{
-                      textShadow: (progressStats?.scoreChange || 0) >= 0 
-                        ? '0 0 40px rgba(34, 197, 94, 0.3), 0 0 80px rgba(34, 197, 94, 0.1)'
-                        : '0 0 40px rgba(239, 68, 68, 0.3), 0 0 80px rgba(239, 68, 68, 0.1)'
-                    }}>
-                      {(progressStats?.scoreChange || 0) >= 0 ? '+' : ''}{progressStats?.scoreChange || 0}%
-                    </span>
-                  </div>
-                  
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <TrendingUp className={`w-5 h-5 ${
-                        (progressStats?.scoreChange || 0) >= 0 ? 'text-green-400' : 'text-red-400 rotate-180'
-                      }`} />
-                      <p className="text-sm font-bold text-[#888] uppercase tracking-[0.15em]">PROGRESS</p>
-                    </div>
-                    <div className={`h-0.5 w-16 bg-gradient-to-r ${
-                      (progressStats?.scoreChange || 0) >= 0 ? 'from-green-500/40' : 'from-red-500/40'
-                    } to-transparent`}></div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Trend */}
-              <div className="lg:col-span-2 relative group">
-                <div className={`relative bg-gradient-to-br from-[#1a1a1a]/80 via-[#252525]/80 to-[#1a1a1a]/80 backdrop-blur-xl rounded-3xl p-8 lg:p-10 border transition-all duration-500 overflow-hidden h-full flex flex-col justify-center items-center ${
-                  progressStats?.trend === 'improving' 
-                    ? 'border-green-500/30 hover:border-green-500/50' 
-                    : progressStats?.trend === 'declining'
-                    ? 'border-red-500/30 hover:border-red-500/50'
-                    : 'border-orange-500/30 hover:border-orange-500/50'
-                }`}>
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent"></div>
-                  
-                  <div className={`relative mb-6 px-6 py-4 rounded-2xl backdrop-blur-md border-2 ${
-                    progressStats?.trend === 'improving' 
-                      ? 'bg-green-500/10 border-green-500/40 shadow-lg shadow-green-500/20' 
-                      : progressStats?.trend === 'declining'
-                      ? 'bg-red-500/10 border-red-500/40 shadow-lg shadow-red-500/20'
-                      : 'bg-orange-500/10 border-orange-500/40 shadow-lg shadow-orange-500/20'
-                  }`}>
-                    <div className="flex flex-col items-center gap-2">
-                      <Activity className={`w-8 h-8 ${
-                        progressStats?.trend === 'improving' ? 'text-green-400' : 
-                        progressStats?.trend === 'declining' ? 'text-red-400' : 'text-orange-400'
-                      }`} />
-                      <span className={`text-2xl font-black uppercase tracking-tight ${
-                        progressStats?.trend === 'improving' ? 'text-green-400' : 
-                        progressStats?.trend === 'declining' ? 'text-red-400' : 'text-orange-400'
-                      }`}>
-                        {progressStats?.trend || 'stable'}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <p className="text-sm font-bold text-[#888] uppercase tracking-[0.15em]">TREND</p>
                 </div>
               </div>
             </div>
@@ -10040,106 +9764,9 @@ function GoalsSection({ dashboardView = 'professional' }: { dashboardView?: Dash
         </CardContent>
       </Card>
       
-      {/* Goal Transit Map - NJ Transit Style */}
+      {/* Goal Transit Map - Journey */}
       <GoalTransitMap playerCity={profileStore?.city} playerState={profileStore?.state} />
-      
-      {/* Completed Milestones Timeline */}
-      <CompletedMilestonesTimeline />
     </div>
-  )
-}
-
-// ============================================
-// COMPLETED MILESTONES TIMELINE
-// ============================================
-
-function CompletedMilestonesTimeline() {
-  const completedMilestones = [
-    { id: '1', name: 'Perfect Form Baseline', date: 'Jan 5, 2026', from: 'Downtown Center', to: 'Community Park', xp: 50, badge: 'First Steps' },
-    { id: '2', name: '50 Practice Shots', date: 'Jan 8, 2026', from: 'Community Park', to: 'Sports Complex', xp: 100, badge: 'Practice Makes Perfect' },
-  ]
-  
-  const inProgress = { name: '90° Elbow Angle', from: 'Sports Complex', to: 'Athletic Center', xp: 150, unlocks: 'Form Master Badge' }
-  
-  return (
-    <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
-      <CardHeader className="border-b border-[#2a2a2a] pb-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[#FF6B35]/20 flex items-center justify-center">
-              <Clock className="w-5 h-5 text-[#FF6B35]" />
-            </div>
-            <div>
-              <CardTitle className="text-white text-lg">Completed Milestones</CardTitle>
-              <CardDescription className="text-[#888]">Your journey so far</CardDescription>
-            </div>
-          </div>
-          <button className="text-[#FF6B35] text-sm hover:underline">View All →</button>
-        </div>
-      </CardHeader>
-      <CardContent className="p-4">
-        <div className="relative">
-          {/* Vertical Timeline Line */}
-          <div className="absolute left-[11px] top-2 bottom-2 w-0.5 bg-gradient-to-b from-[#FF6B35] via-[#FF6B35] to-[#FF6B35]/20" />
-          
-          <div className="space-y-6">
-            {/* Completed Items */}
-            {completedMilestones.map((milestone, index) => (
-              <div key={milestone.id} className="relative pl-8">
-                {/* Timeline Dot */}
-                <div className="absolute left-0 top-1 w-6 h-6 rounded-full bg-[#FF6B35] border-4 border-[#1a1a1a] flex items-center justify-center">
-                  <Check className="w-3 h-3 text-white" />
-                </div>
-                
-                {/* Content */}
-                <div className="bg-[#2a2a2a] rounded-lg p-4 border border-[#3a3a3a]">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <div className="text-white font-medium">✓ {milestone.name}</div>
-                      <div className="text-[#888] text-sm flex items-center gap-1 mt-1">
-                        <MapPin className="w-3 h-3" />
-                        {milestone.from} → {milestone.to}
-                      </div>
-                    </div>
-                    <div className="text-[#888] text-xs">{milestone.date}</div>
-                  </div>
-                  <div className="flex items-center gap-3 mt-2">
-                    <span className="text-green-400 text-sm font-medium">+{milestone.xp} XP</span>
-                    <span className="text-[#FF6B35] text-sm">🥇 {milestone.badge}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-            
-            {/* In Progress Item */}
-            <div className="relative pl-8">
-              {/* Timeline Dot - Animated */}
-              <div className="absolute left-0 top-1 w-6 h-6 rounded-full bg-[#2a2a2a] border-4 border-[#FF6B35] flex items-center justify-center animate-pulse">
-                <div className="w-2 h-2 bg-[#FF6B35] rounded-full" />
-              </div>
-              
-              {/* Content */}
-              <div className="bg-[#2a2a2a]/50 rounded-lg p-4 border border-[#FF6B35]/30 border-dashed">
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <div className="text-white/70 font-medium">○ {inProgress.name}</div>
-                    <div className="text-[#888] text-sm flex items-center gap-1 mt-1">
-                      <MapPin className="w-3 h-3" />
-                      {inProgress.from} → {inProgress.to}
-                    </div>
-                  </div>
-                  <div className="text-[#FF6B35] text-xs font-medium px-2 py-1 bg-[#FF6B35]/20 rounded">In Progress</div>
-                </div>
-                <div className="flex items-center gap-3 mt-2">
-                  <span className="text-[#888] text-sm">+{inProgress.xp} XP</span>
-                  <span className="text-[#888] text-sm">Unlocks: {inProgress.unlocks}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
   )
 }
 
@@ -12036,14 +11663,6 @@ function PhotoComparisonSlider({
           {/* Center Divider - positioned within the image container */}
           <div className="absolute left-1/2 top-0 bottom-0 w-1 bg-[#FF6B35] z-10 transform -translate-x-1/2 shadow-[0_0_10px_rgba(255,215,0,0.5)]" />
           
-          {/* SHOOTING COMPARISON Title at the very top of the image */}
-          <div className="absolute left-1/2 top-0 transform -translate-x-1/2 z-20">
-            <div className="bg-gradient-to-r from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a] px-6 py-3 rounded-b-xl border-2 border-t-0 border-[#FF6B35] shadow-[0_0_20px_rgba(255,215,0,0.3)]">
-              <h3 className="text-[#FF6B35] font-black text-lg uppercase tracking-widest whitespace-nowrap">
-                ⚡ SHOOTING COMPARISON ⚡
-              </h3>
-            </div>
-          </div>
         </div>
         
         {/* Instructions */}
@@ -12373,24 +11992,78 @@ function PhotoComparisonSection() {
   // Elite shooter selection for comparison
   const [selectedEliteShooter, setSelectedEliteShooter] = useState<EliteShooter | null>(null)
   const [eliteSearchQuery, setEliteSearchQuery] = useState('')
+  const [selectedLeague, setSelectedLeague] = useState<string>('ALL')
+  const [selectedTier, setSelectedTier] = useState<string>('ALL')
+  const [visibleCount, setVisibleCount] = useState(20) // Start with 20, load more on scroll
   
-  // Get elite shooters with shooting form images
-  const eliteShootersWithImages = useMemo(() => {
-    return ALL_ELITE_SHOOTERS.filter(shooter => 
-      shooter.shootingFormImages && shooter.shootingFormImages.length > 0
-    ).sort((a, b) => (b.overallScore || 0) - (a.overallScore || 0))
+  // League options with counts
+  const leagueOptions = useMemo(() => {
+    const leagues = ['ALL', 'NBA', 'WNBA', 'NCAA_MEN', 'NCAA_WOMEN', 'TOP_COLLEGE'] as const
+    return leagues.map(league => ({
+      value: league,
+      label: league === 'ALL' ? 'All Leagues' : 
+             league === 'NCAA_MEN' ? 'NCAA Men' :
+             league === 'NCAA_WOMEN' ? 'NCAA Women' :
+             league === 'TOP_COLLEGE' ? 'College Stars' : league,
+      count: league === 'ALL' 
+        ? ALL_ELITE_SHOOTERS.length 
+        : ALL_ELITE_SHOOTERS.filter(s => s.league === league).length
+    }))
   }, [])
   
-  // Filter elite shooters by search
+  // Tier options
+  const tierOptions = useMemo(() => {
+    const tiers = ['ALL', 'legendary', 'elite', 'great', 'good', 'mid_level', 'bad'] as const
+    return tiers.map(tier => ({
+      value: tier,
+      label: tier === 'ALL' ? 'All Tiers' : tier.toUpperCase().replace('_', ' '),
+      count: tier === 'ALL' 
+        ? ALL_ELITE_SHOOTERS.length 
+        : ALL_ELITE_SHOOTERS.filter(s => s.tier === tier).length
+    }))
+  }, [])
+  
+  // Get all elite shooters (no filter for images - show full database)
+  const allShootersSorted = useMemo(() => {
+    return [...ALL_ELITE_SHOOTERS].sort((a, b) => (b.overallScore || 0) - (a.overallScore || 0))
+  }, [])
+  
+  // Filter elite shooters by search, league, and tier
   const filteredEliteShooters = useMemo(() => {
-    if (!eliteSearchQuery.trim()) return eliteShootersWithImages
-    const query = eliteSearchQuery.toLowerCase()
-    return eliteShootersWithImages.filter(shooter => 
-      shooter.name.toLowerCase().includes(query) ||
-      shooter.team.toLowerCase().includes(query) ||
-      shooter.position?.toLowerCase().includes(query)
-    )
-  }, [eliteShootersWithImages, eliteSearchQuery])
+    let filtered = allShootersSorted
+    
+    // Filter by league
+    if (selectedLeague !== 'ALL') {
+      filtered = filtered.filter(shooter => shooter.league === selectedLeague)
+    }
+    
+    // Filter by tier
+    if (selectedTier !== 'ALL') {
+      filtered = filtered.filter(shooter => shooter.tier === selectedTier)
+    }
+    
+    // Filter by search query
+    if (eliteSearchQuery.trim()) {
+      const query = eliteSearchQuery.toLowerCase()
+      filtered = filtered.filter(shooter => 
+        shooter.name.toLowerCase().includes(query) ||
+        shooter.team.toLowerCase().includes(query) ||
+        shooter.position?.toLowerCase().includes(query)
+      )
+    }
+    
+    return filtered
+  }, [allShootersSorted, selectedLeague, selectedTier, eliteSearchQuery])
+  
+  // Visible shooters (paginated)
+  const visibleShooters = useMemo(() => {
+    return filteredEliteShooters.slice(0, visibleCount)
+  }, [filteredEliteShooters, visibleCount])
+  
+  // Reset visible count when filters change
+  useEffect(() => {
+    setVisibleCount(20)
+  }, [selectedLeague, selectedTier, eliteSearchQuery])
   
   useEffect(() => {
     const loadedSessions = getAllSessions()
@@ -12610,72 +12283,180 @@ function PhotoComparisonSection() {
         
         {/* ELITE SHOOTERS DATABASE - Right under session selectors */}
         <div className="mt-4 pt-4 border-t border-[#3a3a3a]">
-          <div className="flex items-center gap-2 mb-4">
-            <Trophy className="w-5 h-5 text-[#FF6B35]" />
-            <label className="text-sm font-bold text-[#FF6B35] uppercase tracking-wider">
-              Or Compare to Elite Shooters
-            </label>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Trophy className="w-5 h-5 text-[#FF6B35]" />
+              <label className="text-sm font-bold text-[#FF6B35] uppercase tracking-wider">
+                Elite Shooters Database
+              </label>
+            </div>
+            <span className="text-xs text-[#888] bg-[#1a1a1a] px-2 py-1 rounded-full">
+              {ALL_ELITE_SHOOTERS.length} players
+            </span>
           </div>
           
-          {/* Search */}
-          <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#666]" />
-            <input
-              type="text"
-              placeholder="Search by name, team, or position..."
-              value={eliteSearchQuery}
-              onChange={(e) => setEliteSearchQuery(e.target.value)}
-              className="w-full bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg pl-10 pr-4 py-3 text-[#E5E5E5] placeholder-[#666] focus:border-[#FF6B35] focus:outline-none"
-            />
-          </div>
-          
-          {/* Shooter Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 max-h-[250px] overflow-y-auto pr-2">
-            {filteredEliteShooters.map(shooter => (
-              <button
-                key={shooter.id}
-                onClick={() => setSelectedEliteShooter(shooter)}
-                className={`p-2 rounded-lg border transition-all text-left ${
-                  selectedEliteShooter?.id === shooter.id
-                    ? 'bg-[#FF6B35]/20 border-[#FF6B35] ring-2 ring-[#FF6B35]/50'
-                    : 'bg-[#1a1a1a] border-[#3a3a3a] hover:border-[#FF6B35]/50'
-                }`}
+          {/* Search & Filters Row */}
+          <div className="flex flex-col gap-3 mb-4">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#666]" />
+              <input
+                type="text"
+                placeholder="Search by name, team, or position..."
+                value={eliteSearchQuery}
+                onChange={(e) => setEliteSearchQuery(e.target.value)}
+                className="w-full bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg pl-9 pr-4 py-2.5 text-sm text-[#E5E5E5] placeholder-[#666] focus:border-[#FF6B35] focus:outline-none"
+              />
+            </div>
+            
+            {/* Filter Dropdowns */}
+            <div className="flex gap-2">
+              {/* League Filter */}
+              <select
+                value={selectedLeague}
+                onChange={(e) => setSelectedLeague(e.target.value)}
+                className="flex-1 bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-3 py-2 text-sm text-[#E5E5E5] focus:border-[#FF6B35] focus:outline-none cursor-pointer"
               >
-                <div className="flex flex-col items-center">
-                  {shooter.photoUrl ? (
-                    <img 
-                      src={shooter.photoUrl} 
-                      alt={shooter.name}
-                      className="w-12 h-12 rounded-full object-cover mb-1 border-2 border-[#3a3a3a]"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/images/default-player.png'
-                      }}
-                    />
-                  ) : (
-                    <div className="w-12 h-12 rounded-full bg-[#3a3a3a] flex items-center justify-center mb-1">
-                      <User className="w-6 h-6 text-[#666]" />
-                    </div>
-                  )}
-                  <p className="text-[10px] font-bold text-[#E5E5E5] text-center truncate w-full">{shooter.name}</p>
-                  <span className={`text-[8px] font-bold px-1 py-0.5 rounded mt-0.5 ${
-                    shooter.tier === 'legendary' ? 'bg-[#FF6B35]/20 text-[#FF6B35]' :
-                    shooter.tier === 'elite' ? 'bg-purple-500/20 text-purple-400' :
-                    'bg-blue-500/20 text-blue-400'
-                  }`}>
-                    {shooter.tier?.toUpperCase()}
-                  </span>
-                </div>
-              </button>
-            ))}
+                {leagueOptions.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label} ({option.count})
+                  </option>
+                ))}
+              </select>
+              
+              {/* Tier Filter */}
+              <select
+                value={selectedTier}
+                onChange={(e) => setSelectedTier(e.target.value)}
+                className="flex-1 bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-3 py-2 text-sm text-[#E5E5E5] focus:border-[#FF6B35] focus:outline-none cursor-pointer"
+              >
+                {tierOptions.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label} ({option.count})
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
           
-          {filteredEliteShooters.length === 0 && (
-            <p className="text-center text-[#888] py-4 text-sm">No elite shooters found matching your search.</p>
+          {/* Results Count */}
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs text-[#888]">
+              Showing {visibleShooters.length} of {filteredEliteShooters.length} players
+            </p>
+            {(selectedLeague !== 'ALL' || selectedTier !== 'ALL' || eliteSearchQuery) && (
+              <button
+                onClick={() => {
+                  setSelectedLeague('ALL')
+                  setSelectedTier('ALL')
+                  setEliteSearchQuery('')
+                }}
+                className="text-xs text-[#FF6B35] hover:text-[#FF8555] transition-colors"
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
+          
+          {/* Shooter Grid - Improved Design */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-[320px] overflow-y-auto pr-1 scrollbar-thin">
+            {visibleShooters.map(shooter => {
+              const hasFormImages = shooter.shootingFormImages && shooter.shootingFormImages.length > 0
+              return (
+                <button
+                  key={shooter.id}
+                  onClick={() => setSelectedEliteShooter(shooter)}
+                  className={`group relative p-3 rounded-xl border transition-all text-left overflow-hidden ${
+                    selectedEliteShooter?.id === shooter.id
+                      ? 'bg-gradient-to-br from-[#FF6B35]/20 to-[#FF4500]/10 border-[#FF6B35] ring-2 ring-[#FF6B35]/50 scale-[1.02]'
+                      : 'bg-[#1a1a1a] border-[#2a2a2a] hover:border-[#FF6B35]/50 hover:bg-[#222]'
+                  }`}
+                >
+                  {/* Form Images Badge */}
+                  {hasFormImages && (
+                    <div className="absolute top-1.5 right-1.5 w-2 h-2 bg-green-500 rounded-full" title="Has shooting form images" />
+                  )}
+                  
+                  <div className="flex flex-col items-center">
+                    {/* Photo with Ring */}
+                    <div className={`relative mb-2 ${
+                      shooter.tier === 'legendary' ? 'ring-2 ring-[#FF6B35]/60 ring-offset-1 ring-offset-[#1a1a1a]' :
+                      shooter.tier === 'elite' ? 'ring-2 ring-purple-500/60 ring-offset-1 ring-offset-[#1a1a1a]' : ''
+                    } rounded-full`}>
+                      {shooter.photoUrl ? (
+                        <img 
+                          src={shooter.photoUrl} 
+                          alt={shooter.name}
+                          className="w-14 h-14 rounded-full object-cover border-2 border-[#333]"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = '/images/default-player.png'
+                          }}
+                        />
+                      ) : (
+                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#333] to-[#222] flex items-center justify-center border-2 border-[#333]">
+                          <User className="w-6 h-6 text-[#555]" />
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Name */}
+                    <p className="text-[11px] font-bold text-[#E5E5E5] text-center truncate w-full group-hover:text-white transition-colors">
+                      {shooter.name}
+                    </p>
+                    
+                    {/* Tier Badge - Improved Design */}
+                    <span className={`text-[9px] font-black px-2 py-0.5 rounded-full mt-1.5 uppercase tracking-wider ${
+                      shooter.tier === 'legendary' 
+                        ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-white shadow-lg shadow-[#FF6B35]/30' 
+                        : shooter.tier === 'elite' 
+                        ? 'bg-gradient-to-r from-purple-600 to-purple-500 text-white shadow-lg shadow-purple-500/30' 
+                        : shooter.tier === 'great'
+                        ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-white'
+                        : shooter.tier === 'good'
+                        ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white'
+                        : shooter.tier === 'mid_level'
+                        ? 'bg-[#3a3a3a] text-[#999]'
+                        : 'bg-[#2a2a2a] text-[#666]'
+                    }`}>
+                      {shooter.tier?.replace('_', ' ')}
+                    </span>
+                    
+                    {/* Score - subtle */}
+                    <span className="text-[8px] text-[#666] mt-1">
+                      {shooter.overallScore} pts
+                    </span>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+          
+          {/* Load More Button */}
+          {visibleShooters.length < filteredEliteShooters.length && (
+            <button
+              onClick={() => setVisibleCount(prev => prev + 20)}
+              className="w-full mt-3 py-2.5 bg-[#1a1a1a] hover:bg-[#252525] border border-[#3a3a3a] rounded-lg text-sm text-[#888] hover:text-[#FF6B35] transition-all"
+            >
+              Load more ({filteredEliteShooters.length - visibleShooters.length} remaining)
+            </button>
           )}
           
-          <p className="text-xs text-[#666] mt-2 text-center">
-            {eliteShootersWithImages.length} elite shooters with shooting form images
-          </p>
+          {filteredEliteShooters.length === 0 && (
+            <div className="text-center py-8">
+              <User className="w-10 h-10 text-[#444] mx-auto mb-2" />
+              <p className="text-[#888] text-sm">No players found matching your filters</p>
+              <button
+                onClick={() => {
+                  setSelectedLeague('ALL')
+                  setSelectedTier('ALL')
+                  setEliteSearchQuery('')
+                }}
+                className="mt-2 text-xs text-[#FF6B35] hover:text-[#FF8555]"
+              >
+                Reset filters
+              </button>
+            </div>
+          )}
         </div>
       </div>
       

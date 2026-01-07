@@ -358,7 +358,7 @@ export default function PlayerBioPopup({ shooter, onClose }: PlayerBioPopupProps
         <div className="p-6 border-t border-[#3a3a3a]">
           <button
             onClick={onClose}
-            className="w-full py-3 bg-[#FF6B35] hover:bg-[#e5c200] text-black font-bold rounded-lg transition-colors uppercase tracking-wider"
+            className="w-full py-3 bg-[#FF6B35] hover:bg-[#e5c200] text-white font-bold rounded-lg transition-colors uppercase tracking-wider"
           >
             Close
           </button>

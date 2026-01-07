@@ -2,7 +2,21 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 // Public routes that don't require authentication
-const PUBLIC_ROUTES = ['/signin', '/signup']
+const PUBLIC_ROUTES = [
+  '/signin', 
+  '/signup', 
+  '/results/demo',
+  '/test-player',
+  '/test-analysis',
+  '/test-score-or-pass',
+  '/test-workout',
+  '/settings',
+  '/badges',
+  '/test-share',
+  '/test-achievements',
+  '/test-basic-dashboard',
+  '/test-sneakers'
+]
 
 // Routes that require authentication
 const PROTECTED_ROUTES = [
@@ -39,6 +53,16 @@ export function middleware(request: NextRequest) {
   // Since middleware runs on server, we'll check cookies or use a different approach
   // For now, we'll redirect all protected routes to signin if no session cookie exists
   const isAuthenticated = request.cookies.get('user-session')?.value
+  
+  // Check if this is a public route (including nested routes)
+  const isPublicRoute = PUBLIC_ROUTES.some(route => 
+    pathname === route || pathname.startsWith(route + '/')
+  )
+  
+  // If it's a public route, allow access
+  if (isPublicRoute) {
+    return NextResponse.next()
+  }
   
   // If trying to access a protected route without authentication
   const isProtectedRoute = PROTECTED_ROUTES.some(route => 

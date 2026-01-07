@@ -461,29 +461,10 @@ export function GoalTransitMap({ playerCity, playerState, playerLat, playerLng }
           </div>
         )}
         
-        {/* Top Left - Route Identity Overlay */}
+        {/* Top Left - Journey Progress Overlay */}
         <div className="absolute top-4 left-4 z-10">
-          {/* Leaderboard Rank Badge - Orange theme */}
-          <div className="flex items-center gap-2 mb-2">
-            <div className="bg-[#FF6B35] rounded-full px-4 py-1.5 flex items-center gap-2 shadow-lg shadow-[#FF6B35]/30">
-              <span className="text-white/80 text-xs font-medium">#</span>
-              <span className="text-white text-base font-black">20</span>
-              <span className="text-white/80 text-xs font-medium">RANK</span>
-            </div>
-          </div>
-          {/* User League - Light orange outline style */}
-          <div 
-            className="text-5xl font-black tracking-tight"
-            style={{ 
-              color: 'transparent',
-              WebkitTextStroke: '0.5px rgba(255, 107, 53, 0.7)',
-              letterSpacing: '3px'
-            }}
-          >
-            MY GOALS
-          </div>
           {/* Journey Progress - Orange gradient bars */}
-          <div className="flex items-center gap-2 mt-1">
+          <div className="flex items-center gap-2 bg-black/40 backdrop-blur-sm rounded-lg px-3 py-2">
             <span className="text-white text-sm font-bold tracking-wider drop-shadow-lg">JOURNEY</span>
             <div className="flex gap-0.5">
               {/* Show progress: filled = completed, empty = remaining */}

@@ -1,828 +1,930 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { useAuthStore } from "@/stores/authStore"
+import { useProfileStore, ExperienceLevel, BodyType, DominantHand, ShootingStyle } from "@/stores/profileStore"
 import { 
-  Settings, 
   Bell, 
   Mail, 
   Clock, 
   Database, 
-  RefreshCw, 
   Shield, 
   Calendar,
   Trophy,
-  Lightbulb,
-  TrendingUp,
   Users,
   Smartphone,
-  Save,
   Check,
-  X,
   ChevronRight,
-  Info
+  ChevronLeft,
+  User,
+  Ruler,
+  Weight,
+  Award,
+  Activity,
+  Hand,
+  Target,
+  MapPin,
+  Home,
+  Sun,
+  Moon,
+  Eye,
+  EyeOff,
+  Palette,
+  MessageSquare,
+  CircleDot,
+  Star,
+  Scale,
+  Crosshair,
+  Building2,
+  TreePine,
+  Rocket,
+  Grip,
+  Rainbow,
+  Trash2,
+  Download,
+  RotateCcw,
+  AlertTriangle,
+  Smartphone as DeviceIcon
 } from "lucide-react"
 
 // ============================================
-// PHASE 10: SETTINGS & NOTIFICATION PREFERENCES
+// TYPES & INTERFACES
 // ============================================
 
+type SettingsView = 'main' | 'profile' | 'coaching' | 'court' | 'equipment' | 'goals' | 'notifications' | 'display' | 'privacy' | 'data'
+
 interface NotificationSettings {
-  // Email notifications
   weeklyReportEmail: boolean
   monthlyReportEmail: boolean
-  coachAlertEmail: boolean
   milestoneEmail: boolean
-  improvementAlertEmail: boolean
-  
-  // Push notifications
-  milestonePush: boolean
   coachingTipsPush: boolean
-  improvementAlertPush: boolean
   motivationalMessagesPush: boolean
   reminderPush: boolean
-  
-  // Frequency settings
   coachingTipsFrequency: 'daily' | '2x_week' | '3x_week' | 'weekly'
-  motivationalFrequency: '1x_week' | '2x_week' | 'daily'
-  reminderTime: string // HH:MM format
-  
-  // Report preferences
-  reportFormat: 'detailed' | 'summary'
-  includeCharts: boolean
-  includeComparison: boolean
+  reminderTime: string
 }
 
-interface AutomationSettings {
-  // Daily tasks
-  analyticsRefreshEnabled: boolean
-  analyticsRefreshTime: string
-  dataBackupEnabled: boolean
-  dataBackupTime: string
-  modelUpdateEnabled: boolean
-  
-  // Weekly tasks
-  weeklyReportEnabled: boolean
-  weeklyReportDay: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday'
-  weeklyReportTime: string
-  coachAlertsEnabled: boolean
-  
-  // Monthly tasks
-  monthlyAnalysisEnabled: boolean
-  milestoneNotificationsEnabled: boolean
+interface CoachingSettings {
+  feedbackTone: 'encouraging' | 'balanced' | 'performance'
+  complexityLevel: 'simple' | 'technical' | 'data_heavy'
+  showPeerComparisons: boolean
+  showDetailedMetrics: boolean
 }
+
+interface CourtSettings {
+  courtName: string
+  courtType: 'indoor' | 'outdoor' | 'home'
+  rimHeight: '8ft' | '9ft' | '10ft'
+  location: string
+}
+
+interface EquipmentSettings {
+  ballSize: 'youth' | 'intermediate' | 'full'
+  preferredPosition: 'point_guard' | 'shooting_guard' | 'small_forward' | 'power_forward' | 'center'
+}
+
+interface GoalSettings {
+  targetScore: number
+  focusPriority: 'auto' | 'elbow' | 'release' | 'follow_through' | 'balance' | 'arc'
+}
+
+interface DisplaySettings {
+  theme: 'dark' | 'light' | 'system'
+  units: 'imperial' | 'metric'
+  textSize: 'normal' | 'large' | 'extra_large'
+  reducedMotion: boolean
+  soundEnabled: boolean
+}
+
+interface PrivacySettings {
+  profileVisibility: 'private' | 'friends' | 'public'
+  showOnLeaderboards: boolean
+  includeInComparisons: boolean
+  shareWithCoach: boolean
+}
+
+// ============================================
+// DEFAULTS
+// ============================================
 
 const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
   weeklyReportEmail: true,
   monthlyReportEmail: true,
-  coachAlertEmail: true,
   milestoneEmail: true,
-  improvementAlertEmail: true,
-  milestonePush: true,
   coachingTipsPush: true,
-  improvementAlertPush: true,
   motivationalMessagesPush: true,
   reminderPush: false,
   coachingTipsFrequency: '2x_week',
-  motivationalFrequency: '2x_week',
-  reminderTime: '18:00',
-  reportFormat: 'detailed',
-  includeCharts: true,
-  includeComparison: true
+  reminderTime: '18:00'
 }
 
-const DEFAULT_AUTOMATION_SETTINGS: AutomationSettings = {
-  analyticsRefreshEnabled: true,
-  analyticsRefreshTime: '02:00',
-  dataBackupEnabled: true,
-  dataBackupTime: '03:00',
-  modelUpdateEnabled: true,
-  weeklyReportEnabled: true,
-  weeklyReportDay: 'monday',
-  weeklyReportTime: '08:00',
-  coachAlertsEnabled: true,
-  monthlyAnalysisEnabled: true,
-  milestoneNotificationsEnabled: true
+const DEFAULT_COACHING_SETTINGS: CoachingSettings = {
+  feedbackTone: 'balanced',
+  complexityLevel: 'technical',
+  showPeerComparisons: true,
+  showDetailedMetrics: true
 }
 
-const STORAGE_KEY_NOTIFICATIONS = 'basketball_notification_settings'
-const STORAGE_KEY_AUTOMATION = 'basketball_automation_settings'
+const DEFAULT_COURT_SETTINGS: CourtSettings = {
+  courtName: '',
+  courtType: 'indoor',
+  rimHeight: '10ft',
+  location: ''
+}
+
+const DEFAULT_EQUIPMENT_SETTINGS: EquipmentSettings = {
+  ballSize: 'full',
+  preferredPosition: 'shooting_guard'
+}
+
+const DEFAULT_GOAL_SETTINGS: GoalSettings = {
+  targetScore: 85,
+  focusPriority: 'auto'
+}
+
+const DEFAULT_DISPLAY_SETTINGS: DisplaySettings = {
+  theme: 'dark',
+  units: 'imperial',
+  textSize: 'normal',
+  reducedMotion: false,
+  soundEnabled: true
+}
+
+const DEFAULT_PRIVACY_SETTINGS: PrivacySettings = {
+  profileVisibility: 'public',
+  showOnLeaderboards: true,
+  includeInComparisons: true,
+  shareWithCoach: true
+}
+
+const STORAGE_KEYS = {
+  NOTIFICATIONS: 'shotiq_notification_settings',
+  COACHING: 'shotiq_coaching_settings',
+  COURT: 'shotiq_court_settings',
+  EQUIPMENT: 'shotiq_equipment_settings',
+  GOALS: 'shotiq_goal_settings',
+  DISPLAY: 'shotiq_display_settings',
+  PRIVACY: 'shotiq_privacy_settings'
+}
+
+// ============================================
+// MAIN COMPONENT
+// ============================================
 
 export default function SettingsPage() {
-  const [activeSection, setActiveSection] = useState<'notifications' | 'automation' | 'account'>('notifications')
+  const router = useRouter()
+  const profile = useProfileStore()
+  
+  const [currentView, setCurrentView] = useState<SettingsView>('main')
+  const [isHydrated, setIsHydrated] = useState(false)
+  
+  // Settings state
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(DEFAULT_NOTIFICATION_SETTINGS)
-  const [automationSettings, setAutomationSettings] = useState<AutomationSettings>(DEFAULT_AUTOMATION_SETTINGS)
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
-  const [hasChanges, setHasChanges] = useState(false)
+  const [coachingSettings, setCoachingSettings] = useState<CoachingSettings>(DEFAULT_COACHING_SETTINGS)
+  const [courtSettings, setCourtSettings] = useState<CourtSettings>(DEFAULT_COURT_SETTINGS)
+  const [equipmentSettings, setEquipmentSettings] = useState<EquipmentSettings>(DEFAULT_EQUIPMENT_SETTINGS)
+  const [goalSettings, setGoalSettings] = useState<GoalSettings>(DEFAULT_GOAL_SETTINGS)
+  const [displaySettings, setDisplaySettings] = useState<DisplaySettings>(DEFAULT_DISPLAY_SETTINGS)
+  const [privacySettings, setPrivacySettings] = useState<PrivacySettings>(DEFAULT_PRIVACY_SETTINGS)
+  
+  // Profile editing state
+  const [editedProfile, setEditedProfile] = useState({
+    heightFeet: 0,
+    heightInches: 0,
+    weight: 0,
+    wingspan: 0,
+    age: 0,
+    experienceLevel: '' as ExperienceLevel | '',
+    bodyType: '' as BodyType | '',
+    athleticAbility: 5,
+    dominantHand: '' as DominantHand | '',
+    shootingStyle: '' as ShootingStyle | ''
+  })
 
-  // Load settings from localStorage
+  // Load settings
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const storedNotifications = localStorage.getItem(STORAGE_KEY_NOTIFICATIONS)
-      const storedAutomation = localStorage.getItem(STORAGE_KEY_AUTOMATION)
+      setIsHydrated(true)
       
-      if (storedNotifications) {
+      const loadSetting = <T,>(key: string, defaultValue: T): T => {
         try {
-          setNotificationSettings(JSON.parse(storedNotifications))
-        } catch (e) {
-          console.error('Error loading notification settings:', e)
+          const stored = localStorage.getItem(key)
+          return stored ? JSON.parse(stored) : defaultValue
+        } catch {
+          return defaultValue
         }
       }
       
-      if (storedAutomation) {
-        try {
-          setAutomationSettings(JSON.parse(storedAutomation))
-        } catch (e) {
-          console.error('Error loading automation settings:', e)
-        }
+      setNotificationSettings(loadSetting(STORAGE_KEYS.NOTIFICATIONS, DEFAULT_NOTIFICATION_SETTINGS))
+      setCoachingSettings(loadSetting(STORAGE_KEYS.COACHING, DEFAULT_COACHING_SETTINGS))
+      setCourtSettings(loadSetting(STORAGE_KEYS.COURT, DEFAULT_COURT_SETTINGS))
+      setEquipmentSettings(loadSetting(STORAGE_KEYS.EQUIPMENT, DEFAULT_EQUIPMENT_SETTINGS))
+      setGoalSettings(loadSetting(STORAGE_KEYS.GOALS, DEFAULT_GOAL_SETTINGS))
+      setDisplaySettings(loadSetting(STORAGE_KEYS.DISPLAY, DEFAULT_DISPLAY_SETTINGS))
+      setPrivacySettings(loadSetting(STORAGE_KEYS.PRIVACY, DEFAULT_PRIVACY_SETTINGS))
+      
+      if (profile.heightInches) {
+        setEditedProfile({
+          heightFeet: Math.floor(profile.heightInches / 12),
+          heightInches: profile.heightInches % 12,
+          weight: profile.weightLbs || 0,
+          wingspan: profile.wingspanInches || 0,
+          age: profile.age || 0,
+          experienceLevel: profile.experienceLevel || '',
+          bodyType: profile.bodyType || '',
+          athleticAbility: profile.athleticAbility || 5,
+          dominantHand: profile.dominantHand || '',
+          shootingStyle: profile.shootingStyle || ''
+        })
       }
     }
-  }, [])
+  }, [profile])
 
-  // Save settings to localStorage
+  // Auto-save settings
   const saveSettings = () => {
-    setSaveStatus('saving')
-    
-    try {
-      localStorage.setItem(STORAGE_KEY_NOTIFICATIONS, JSON.stringify(notificationSettings))
-      localStorage.setItem(STORAGE_KEY_AUTOMATION, JSON.stringify(automationSettings))
-      
-      setSaveStatus('saved')
-      setHasChanges(false)
-      
-      setTimeout(() => setSaveStatus('idle'), 2000)
-    } catch (e) {
-      console.error('Error saving settings:', e)
-      setSaveStatus('error')
-      setTimeout(() => setSaveStatus('idle'), 3000)
+    localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify(notificationSettings))
+    localStorage.setItem(STORAGE_KEYS.COACHING, JSON.stringify(coachingSettings))
+    localStorage.setItem(STORAGE_KEYS.COURT, JSON.stringify(courtSettings))
+    localStorage.setItem(STORAGE_KEYS.EQUIPMENT, JSON.stringify(equipmentSettings))
+    localStorage.setItem(STORAGE_KEYS.GOALS, JSON.stringify(goalSettings))
+    localStorage.setItem(STORAGE_KEYS.DISPLAY, JSON.stringify(displaySettings))
+    localStorage.setItem(STORAGE_KEYS.PRIVACY, JSON.stringify(privacySettings))
+  }
+
+  // Save profile
+  const saveProfile = () => {
+    const totalInches = (editedProfile.heightFeet * 12) + editedProfile.heightInches
+    if (totalInches > 0) profile.setHeight(totalInches)
+    if (editedProfile.weight > 0) profile.setWeight(editedProfile.weight)
+    if (editedProfile.wingspan > 0) profile.setWingspan(editedProfile.wingspan)
+    if (editedProfile.age > 0) profile.setAge(editedProfile.age)
+    if (editedProfile.experienceLevel) profile.setExperienceLevel(editedProfile.experienceLevel as ExperienceLevel)
+    if (editedProfile.bodyType) profile.setBodyType(editedProfile.bodyType as BodyType)
+    if (editedProfile.athleticAbility) profile.setAthleticAbility(editedProfile.athleticAbility)
+    if (editedProfile.dominantHand) profile.setDominantHand(editedProfile.dominantHand as DominantHand)
+    if (editedProfile.shootingStyle) profile.setShootingStyle(editedProfile.shootingStyle as ShootingStyle)
+  }
+
+  // Helpers
+  const formatHeight = (inches: number | null) => {
+    if (!inches) return "Not set"
+    return `${Math.floor(inches / 12)}'${inches % 12}"`
+  }
+
+  const formatLabel = (value: string | null) => {
+    if (!value) return "Not set"
+    return value.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+  }
+
+  const goBack = () => {
+    if (currentView === 'main') {
+      router.back()
+    } else {
+      saveSettings()
+      saveProfile()
+      setCurrentView('main')
     }
   }
 
-  // Update notification setting
-  const updateNotification = <K extends keyof NotificationSettings>(key: K, value: NotificationSettings[K]) => {
-    setNotificationSettings(prev => ({ ...prev, [key]: value }))
-    setHasChanges(true)
+  if (!isHydrated) {
+    return (
+      <main className="min-h-screen bg-black flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-[#FF6B35] border-t-transparent rounded-full animate-spin" />
+      </main>
+    )
   }
 
-  // Update automation setting
-  const updateAutomation = <K extends keyof AutomationSettings>(key: K, value: AutomationSettings[K]) => {
-    setAutomationSettings(prev => ({ ...prev, [key]: value }))
-    setHasChanges(true)
+  const getViewTitle = () => {
+    switch (currentView) {
+      case 'profile': return 'Profile'
+      case 'coaching': return 'Coaching'
+      case 'court': return 'My Court'
+      case 'equipment': return 'Equipment'
+      case 'goals': return 'Goals'
+      case 'notifications': return 'Notifications'
+      case 'display': return 'Display'
+      case 'privacy': return 'Privacy'
+      case 'data': return 'Data & Storage'
+      default: return 'Settings'
+    }
   }
 
   return (
-    <main className="min-h-screen bg-[#1a1a1a] py-8 px-4">
-      <div className="container mx-auto max-w-6xl">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#FF4500] flex items-center justify-center">
-              <Settings className="w-7 h-7 text-[#1a1a1a]" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-black text-[#FF6B35] uppercase tracking-wider">Settings</h1>
-              <p className="text-[#888] text-sm">Manage notifications, automation & preferences</p>
-            </div>
-          </div>
-          
-          {/* Save Button */}
-          <button
-            onClick={saveSettings}
-            disabled={!hasChanges || saveStatus === 'saving'}
-            className={`flex items-center gap-2 px-6 py-3 rounded-lg font-bold transition-all ${
-              hasChanges 
-                ? 'bg-[#FF6B35] text-[#1a1a1a] hover:bg-[#e6c200]' 
-                : 'bg-[#3a3a3a] text-[#888] cursor-not-allowed'
-            }`}
+    <main className="min-h-screen bg-black">
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-black/95 backdrop-blur-xl border-b border-white/5">
+        <div className="flex items-center h-14 px-4">
+          <button 
+            onClick={goBack}
+            className="flex items-center gap-1 text-[#FF6B35] -ml-2 px-2 py-2 active:opacity-70"
           >
-            {saveStatus === 'saving' ? (
-              <>
-                <RefreshCw className="w-5 h-5 animate-spin" />
-                Saving...
-              </>
-            ) : saveStatus === 'saved' ? (
-              <>
-                <Check className="w-5 h-5" />
-                Saved!
-              </>
-            ) : saveStatus === 'error' ? (
-              <>
-                <X className="w-5 h-5" />
-                Error
-              </>
-            ) : (
-              <>
-                <Save className="w-5 h-5" />
-                Save Changes
-              </>
-            )}
+            <ChevronLeft className="w-5 h-5" />
+            {currentView !== 'main' && <span className="text-[15px] font-medium">Back</span>}
           </button>
+          <h1 className="flex-1 text-center text-[17px] font-bold text-white">
+            {getViewTitle()}
+          </h1>
+          <div className="w-16" />
         </div>
+      </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Sidebar Navigation */}
-          <div className="lg:col-span-1">
-            <div className="bg-[#2C2C2C] rounded-xl p-4 border border-[#3a3a3a] sticky top-24">
-              <nav className="space-y-2">
-                <button
-                  onClick={() => setActiveSection('notifications')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                    activeSection === 'notifications'
-                      ? 'bg-[#FF6B35] text-[#1a1a1a]'
-                      : 'text-[#E5E5E5] hover:bg-[#3a3a3a]'
-                  }`}
-                >
-                  <Bell className="w-5 h-5" />
-                  <span className="font-medium">Notifications</span>
-                  <ChevronRight className="w-4 h-4 ml-auto" />
-                </button>
-                
-                <button
-                  onClick={() => setActiveSection('automation')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                    activeSection === 'automation'
-                      ? 'bg-[#FF6B35] text-[#1a1a1a]'
-                      : 'text-[#E5E5E5] hover:bg-[#3a3a3a]'
-                  }`}
-                >
-                  <Clock className="w-5 h-5" />
-                  <span className="font-medium">Automation</span>
-                  <ChevronRight className="w-4 h-4 ml-auto" />
-                </button>
-                
-                <button
-                  onClick={() => setActiveSection('account')}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                    activeSection === 'account'
-                      ? 'bg-[#FF6B35] text-[#1a1a1a]'
-                      : 'text-[#E5E5E5] hover:bg-[#3a3a3a]'
-                  }`}
-                >
-                  <Shield className="w-5 h-5" />
-                  <span className="font-medium">Data & Privacy</span>
-                  <ChevronRight className="w-4 h-4 ml-auto" />
-                </button>
-              </nav>
+      {/* Content */}
+      <div className="pb-24">
+        {currentView === 'main' && (
+          <div className="animate-in fade-in duration-200">
+            {/* Account Section */}
+            <SectionHeader title="ACCOUNT" />
+            <SettingsGroup>
+              <SettingsRow
+                icon={User}
+                label="Profile"
+                value={profile.profileComplete ? 'Complete' : 'Incomplete'}
+                onClick={() => setCurrentView('profile')}
+              />
+            </SettingsGroup>
+
+            {/* Training Section */}
+            <SectionHeader title="TRAINING" />
+            <SettingsGroup>
+              <SettingsRow
+                icon={MessageSquare}
+                label="Coaching"
+                value={formatLabel(coachingSettings.feedbackTone)}
+                onClick={() => setCurrentView('coaching')}
+              />
+              <SettingsRow
+                icon={Home}
+                label="My Court"
+                value={courtSettings.courtName || 'Not set'}
+                onClick={() => setCurrentView('court')}
+                showDivider
+              />
+              <SettingsRow
+                icon={CircleDot}
+                label="Equipment"
+                value={formatLabel(equipmentSettings.ballSize)}
+                onClick={() => setCurrentView('equipment')}
+                showDivider
+              />
+              <SettingsRow
+                icon={Target}
+                label="Goals"
+                value={`Score: ${goalSettings.targetScore}`}
+                onClick={() => setCurrentView('goals')}
+                showDivider
+              />
+            </SettingsGroup>
+
+            {/* Preferences Section */}
+            <SectionHeader title="PREFERENCES" />
+            <SettingsGroup>
+              <SettingsRow
+                icon={Bell}
+                label="Notifications"
+                onClick={() => setCurrentView('notifications')}
+              />
+              <SettingsRow
+                icon={Palette}
+                label="Display"
+                value={formatLabel(displaySettings.theme)}
+                onClick={() => setCurrentView('display')}
+                showDivider
+              />
+              <SettingsRow
+                icon={Shield}
+                label="Privacy"
+                value={formatLabel(privacySettings.profileVisibility)}
+                onClick={() => setCurrentView('privacy')}
+                showDivider
+              />
+            </SettingsGroup>
+
+            {/* Data Section */}
+            <SectionHeader title="DATA" />
+            <SettingsGroup>
+              <SettingsRow
+                icon={Database}
+                label="Data & Storage"
+                onClick={() => setCurrentView('data')}
+              />
+            </SettingsGroup>
+
+            {/* App Info */}
+            <div className="text-center py-10 text-[#444] text-xs">
+              <p className="font-medium">ShotIQ AI v1.0.0</p>
+              <p className="mt-1">Basketball Shooting Analysis</p>
             </div>
           </div>
+        )}
 
-          {/* Main Content */}
-          <div className="lg:col-span-3 space-y-6">
-            {/* Notifications Section */}
-            {activeSection === 'notifications' && (
-              <>
-                {/* Email Notifications */}
-                <div className="bg-[#2C2C2C] rounded-xl p-6 border border-[#3a3a3a]">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
-                      <Mail className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-bold text-[#E5E5E5]">Email Notifications</h2>
-                      <p className="text-sm text-[#888]">Choose which emails you want to receive</p>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <ToggleSetting
-                      label="Weekly Performance Reports"
-                      description="Receive a summary of your progress every Monday"
-                      icon={<Calendar className="w-5 h-5" />}
-                      enabled={notificationSettings.weeklyReportEmail}
-                      onChange={(v) => updateNotification('weeklyReportEmail', v)}
-                    />
-                    
-                    <ToggleSetting
-                      label="Monthly Comprehensive Analysis"
-                      description="Detailed monthly report with trends and predictions"
-                      icon={<TrendingUp className="w-5 h-5" />}
-                      enabled={notificationSettings.monthlyReportEmail}
-                      onChange={(v) => updateNotification('monthlyReportEmail', v)}
-                    />
-                    
-                    <ToggleSetting
-                      label="Coach Alerts"
-                      description="Notifications when your coach provides feedback"
-                      icon={<Users className="w-5 h-5" />}
-                      enabled={notificationSettings.coachAlertEmail}
-                      onChange={(v) => updateNotification('coachAlertEmail', v)}
-                    />
-                    
-                    <ToggleSetting
-                      label="Milestone Achievements"
-                      description="Celebrate when you reach new achievements"
-                      icon={<Trophy className="w-5 h-5" />}
-                      enabled={notificationSettings.milestoneEmail}
-                      onChange={(v) => updateNotification('milestoneEmail', v)}
-                    />
-                    
-                    <ToggleSetting
-                      label="Improvement Alerts"
-                      description="Get notified when you make significant progress"
-                      icon={<TrendingUp className="w-5 h-5" />}
-                      enabled={notificationSettings.improvementAlertEmail}
-                      onChange={(v) => updateNotification('improvementAlertEmail', v)}
-                    />
-                  </div>
-                </div>
+        {/* PROFILE VIEW */}
+        {currentView === 'profile' && (
+          <div className="animate-in slide-in-from-right duration-200">
+            <SectionHeader title="PHYSICAL" />
+            <SettingsGroup>
+              <SettingsInputRow
+                label="Height"
+                type="height"
+                valueFeet={editedProfile.heightFeet}
+                valueInches={editedProfile.heightInches}
+                onChangeFeet={(v) => setEditedProfile(p => ({ ...p, heightFeet: v }))}
+                onChangeInches={(v) => setEditedProfile(p => ({ ...p, heightInches: v }))}
+              />
+              <SettingsInputRow
+                label="Weight"
+                type="number"
+                value={editedProfile.weight}
+                onChange={(v) => setEditedProfile(p => ({ ...p, weight: v }))}
+                suffix="lbs"
+                showDivider
+              />
+              <SettingsInputRow
+                label="Wingspan"
+                type="number"
+                value={editedProfile.wingspan}
+                onChange={(v) => setEditedProfile(p => ({ ...p, wingspan: v }))}
+                suffix="in"
+                showDivider
+              />
+              <SettingsInputRow
+                label="Age"
+                type="number"
+                value={editedProfile.age}
+                onChange={(v) => setEditedProfile(p => ({ ...p, age: v }))}
+                suffix="yrs"
+                showDivider
+              />
+            </SettingsGroup>
 
-                {/* Push Notifications */}
-                <div className="bg-[#2C2C2C] rounded-xl p-6 border border-[#3a3a3a]">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center">
-                      <Smartphone className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-bold text-[#E5E5E5]">Push Notifications</h2>
-                      <p className="text-sm text-[#888]">Real-time alerts on your device</p>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <ToggleSetting
-                      label="Milestone Achievements"
-                      description="Instant notification when you earn a badge"
-                      icon={<Trophy className="w-5 h-5" />}
-                      enabled={notificationSettings.milestonePush}
-                      onChange={(v) => updateNotification('milestonePush', v)}
-                    />
-                    
-                    <ToggleSetting
-                      label="Coaching Tips"
-                      description="Personalized training advice based on your form"
-                      icon={<Lightbulb className="w-5 h-5" />}
-                      enabled={notificationSettings.coachingTipsPush}
-                      onChange={(v) => updateNotification('coachingTipsPush', v)}
-                    />
-                    
-                    <ToggleSetting
-                      label="Improvement Alerts"
-                      description="Celebrate your progress in real-time"
-                      icon={<TrendingUp className="w-5 h-5" />}
-                      enabled={notificationSettings.improvementAlertPush}
-                      onChange={(v) => updateNotification('improvementAlertPush', v)}
-                    />
-                    
-                    <ToggleSetting
-                      label="Motivational Messages"
-                      description="Encouraging messages to keep you motivated"
-                      icon={<Bell className="w-5 h-5" />}
-                      enabled={notificationSettings.motivationalMessagesPush}
-                      onChange={(v) => updateNotification('motivationalMessagesPush', v)}
-                    />
-                    
-                    <ToggleSetting
-                      label="Training Reminders"
-                      description="Remind you to analyze your shooting form"
-                      icon={<Clock className="w-5 h-5" />}
-                      enabled={notificationSettings.reminderPush}
-                      onChange={(v) => updateNotification('reminderPush', v)}
-                    />
-                  </div>
-                </div>
+            <SectionHeader title="EXPERIENCE" />
+            <SettingsGroup>
+              <SettingsSelectRow
+                label="Skill Level"
+                value={editedProfile.experienceLevel}
+                options={[
+                  { value: 'beginner', label: 'Beginner' },
+                  { value: 'intermediate', label: 'Intermediate' },
+                  { value: 'advanced', label: 'Advanced' },
+                  { value: 'professional', label: 'Professional' }
+                ]}
+                onChange={(v) => setEditedProfile(p => ({ ...p, experienceLevel: v as ExperienceLevel }))}
+              />
+              <SettingsSelectRow
+                label="Body Type"
+                value={editedProfile.bodyType}
+                options={[
+                  { value: 'ectomorph', label: 'Ectomorph (Lean)' },
+                  { value: 'mesomorph', label: 'Mesomorph (Athletic)' },
+                  { value: 'endomorph', label: 'Endomorph (Solid)' }
+                ]}
+                onChange={(v) => setEditedProfile(p => ({ ...p, bodyType: v as BodyType }))}
+                showDivider
+              />
+            </SettingsGroup>
 
-                {/* Notification Frequency */}
-                <div className="bg-[#2C2C2C] rounded-xl p-6 border border-[#3a3a3a]">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center">
-                      <Clock className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-bold text-[#E5E5E5]">Notification Frequency</h2>
-                      <p className="text-sm text-[#888]">How often you want to receive notifications</p>
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-[#E5E5E5] mb-2">Coaching Tips Frequency</label>
-                      <select
-                        value={notificationSettings.coachingTipsFrequency}
-                        onChange={(e) => updateNotification('coachingTipsFrequency', e.target.value as NotificationSettings['coachingTipsFrequency'])}
-                        className="w-full bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-3 text-[#E5E5E5] focus:border-[#FF6B35] focus:outline-none"
-                      >
-                        <option value="daily">Daily</option>
-                        <option value="3x_week">3 times per week</option>
-                        <option value="2x_week">2 times per week</option>
-                        <option value="weekly">Weekly</option>
-                      </select>
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-[#E5E5E5] mb-2">Motivational Messages Frequency</label>
-                      <select
-                        value={notificationSettings.motivationalFrequency}
-                        onChange={(e) => updateNotification('motivationalFrequency', e.target.value as NotificationSettings['motivationalFrequency'])}
-                        className="w-full bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-3 text-[#E5E5E5] focus:border-[#FF6B35] focus:outline-none"
-                      >
-                        <option value="daily">Daily</option>
-                        <option value="2x_week">2 times per week</option>
-                        <option value="1x_week">Once per week</option>
-                      </select>
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-[#E5E5E5] mb-2">Training Reminder Time</label>
-                      <input
-                        type="time"
-                        value={notificationSettings.reminderTime}
-                        onChange={(e) => updateNotification('reminderTime', e.target.value)}
-                        className="w-full bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-3 text-[#E5E5E5] focus:border-[#FF6B35] focus:outline-none"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-[#E5E5E5] mb-2">Report Format</label>
-                      <select
-                        value={notificationSettings.reportFormat}
-                        onChange={(e) => updateNotification('reportFormat', e.target.value as NotificationSettings['reportFormat'])}
-                        className="w-full bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-3 text-[#E5E5E5] focus:border-[#FF6B35] focus:outline-none"
-                      >
-                        <option value="detailed">Detailed Report</option>
-                        <option value="summary">Quick Summary</option>
-                      </select>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-6 space-y-3">
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={notificationSettings.includeCharts}
-                        onChange={(e) => updateNotification('includeCharts', e.target.checked)}
-                        className="w-5 h-5 rounded border-[#3a3a3a] bg-[#1a1a1a] text-[#FF6B35] focus:ring-[#FF6B35]"
-                      />
-                      <span className="text-[#E5E5E5]">Include progress charts in reports</span>
-                    </label>
-                    
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={notificationSettings.includeComparison}
-                        onChange={(e) => updateNotification('includeComparison', e.target.checked)}
-                        className="w-5 h-5 rounded border-[#3a3a3a] bg-[#1a1a1a] text-[#FF6B35] focus:ring-[#FF6B35]"
-                      />
-                      <span className="text-[#E5E5E5]">Include peer comparison in reports</span>
-                    </label>
-                  </div>
-                </div>
-              </>
-            )}
+            <SectionHeader title="SHOOTING" />
+            <SettingsGroup>
+              <SettingsSelectRow
+                label="Dominant Hand"
+                value={editedProfile.dominantHand}
+                options={[
+                  { value: 'right', label: 'Right' },
+                  { value: 'left', label: 'Left' },
+                  { value: 'ambidextrous', label: 'Ambidextrous' }
+                ]}
+                onChange={(v) => setEditedProfile(p => ({ ...p, dominantHand: v as DominantHand }))}
+              />
+              <SettingsSelectRow
+                label="Shooting Style"
+                value={editedProfile.shootingStyle}
+                options={[
+                  { value: 'one_motion', label: 'One Motion' },
+                  { value: 'two_motion', label: 'Two Motion' },
+                  { value: 'set_shot', label: 'Set Shot' },
+                  { value: 'jump_shot', label: 'Jump Shot' },
+                  { value: 'not_sure', label: 'Not Sure' }
+                ]}
+                onChange={(v) => setEditedProfile(p => ({ ...p, shootingStyle: v as ShootingStyle }))}
+                showDivider
+              />
+            </SettingsGroup>
 
-            {/* Automation Section */}
-            {activeSection === 'automation' && (
-              <>
-                {/* Daily Tasks */}
-                <div className="bg-[#2C2C2C] rounded-xl p-6 border border-[#3a3a3a]">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
-                      <RefreshCw className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-bold text-[#E5E5E5]">Daily Automated Tasks</h2>
-                      <p className="text-sm text-[#888]">Background tasks that run automatically every day</p>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-6">
-                    <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <TrendingUp className="w-5 h-5 text-blue-400" />
-                          <div>
-                            <h3 className="font-medium text-[#E5E5E5]">Analytics Refresh</h3>
-                            <p className="text-xs text-[#888]">Updates all performance metrics and statistics</p>
-                          </div>
-                        </div>
-                        <ToggleSwitch
-                          enabled={automationSettings.analyticsRefreshEnabled}
-                          onChange={(v) => updateAutomation('analyticsRefreshEnabled', v)}
-                        />
-                      </div>
-                      {automationSettings.analyticsRefreshEnabled && (
-                        <div className="flex items-center gap-3 mt-3 pl-8">
-                          <span className="text-sm text-[#888]">Run at:</span>
-                          <input
-                            type="time"
-                            value={automationSettings.analyticsRefreshTime}
-                            onChange={(e) => updateAutomation('analyticsRefreshTime', e.target.value)}
-                            className="bg-[#2C2C2C] border border-[#3a3a3a] rounded-lg px-3 py-1 text-[#E5E5E5] text-sm focus:border-[#FF6B35] focus:outline-none"
-                          />
-                          <span className="text-xs text-[#666]">UTC</span>
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <Database className="w-5 h-5 text-green-400" />
-                          <div>
-                            <h3 className="font-medium text-[#E5E5E5]">Data Backup</h3>
-                            <p className="text-xs text-[#888]">Protects all your analysis data and results</p>
-                          </div>
-                        </div>
-                        <ToggleSwitch
-                          enabled={automationSettings.dataBackupEnabled}
-                          onChange={(v) => updateAutomation('dataBackupEnabled', v)}
-                        />
-                      </div>
-                      {automationSettings.dataBackupEnabled && (
-                        <div className="flex items-center gap-3 mt-3 pl-8">
-                          <span className="text-sm text-[#888]">Run at:</span>
-                          <input
-                            type="time"
-                            value={automationSettings.dataBackupTime}
-                            onChange={(e) => updateAutomation('dataBackupTime', e.target.value)}
-                            className="bg-[#2C2C2C] border border-[#3a3a3a] rounded-lg px-3 py-1 text-[#E5E5E5] text-sm focus:border-[#FF6B35] focus:outline-none"
-                          />
-                          <span className="text-xs text-[#666]">UTC</span>
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <RefreshCw className="w-5 h-5 text-purple-400" />
-                          <div>
-                            <h3 className="font-medium text-[#E5E5E5]">Model Updates</h3>
-                            <p className="text-xs text-[#888]">Keeps the shooting form detection model accurate</p>
-                          </div>
-                        </div>
-                        <ToggleSwitch
-                          enabled={automationSettings.modelUpdateEnabled}
-                          onChange={(v) => updateAutomation('modelUpdateEnabled', v)}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-4 p-3 bg-blue-500/10 rounded-lg border border-blue-500/30">
-                    <p className="text-sm text-blue-300 flex items-start gap-2">
-                      <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                      Daily tasks run during low-traffic hours (2-4 AM UTC) to ensure optimal performance.
-                    </p>
-                  </div>
+            <SectionHeader title="ATHLETIC ABILITY" />
+            <SettingsGroup>
+              <div className="px-4 py-3">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-white text-[15px]">Rating</span>
+                  <span className="text-[#FF6B35] font-semibold">{editedProfile.athleticAbility}/10</span>
                 </div>
-
-                {/* Weekly Tasks */}
-                <div className="bg-[#2C2C2C] rounded-xl p-6 border border-[#3a3a3a]">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
-                      <Calendar className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-bold text-[#E5E5E5]">Weekly Automated Tasks</h2>
-                      <p className="text-sm text-[#888]">Reports and alerts generated every week</p>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-6">
-                    <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <Mail className="w-5 h-5 text-blue-400" />
-                          <div>
-                            <h3 className="font-medium text-[#E5E5E5]">Weekly Performance Reports</h3>
-                            <p className="text-xs text-[#888]">Comprehensive summary of your weekly progress</p>
-                          </div>
-                        </div>
-                        <ToggleSwitch
-                          enabled={automationSettings.weeklyReportEnabled}
-                          onChange={(v) => updateAutomation('weeklyReportEnabled', v)}
-                        />
-                      </div>
-                      {automationSettings.weeklyReportEnabled && (
-                        <div className="flex flex-wrap items-center gap-3 mt-3 pl-8">
-                          <span className="text-sm text-[#888]">Send on:</span>
-                          <select
-                            value={automationSettings.weeklyReportDay}
-                            onChange={(e) => updateAutomation('weeklyReportDay', e.target.value as AutomationSettings['weeklyReportDay'])}
-                            className="bg-[#2C2C2C] border border-[#3a3a3a] rounded-lg px-3 py-1 text-[#E5E5E5] text-sm focus:border-[#FF6B35] focus:outline-none"
-                          >
-                            <option value="monday">Monday</option>
-                            <option value="tuesday">Tuesday</option>
-                            <option value="wednesday">Wednesday</option>
-                            <option value="thursday">Thursday</option>
-                            <option value="friday">Friday</option>
-                            <option value="saturday">Saturday</option>
-                            <option value="sunday">Sunday</option>
-                          </select>
-                          <span className="text-sm text-[#888]">at</span>
-                          <input
-                            type="time"
-                            value={automationSettings.weeklyReportTime}
-                            onChange={(e) => updateAutomation('weeklyReportTime', e.target.value)}
-                            className="bg-[#2C2C2C] border border-[#3a3a3a] rounded-lg px-3 py-1 text-[#E5E5E5] text-sm focus:border-[#FF6B35] focus:outline-none"
-                          />
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <Users className="w-5 h-5 text-green-400" />
-                          <div>
-                            <h3 className="font-medium text-[#E5E5E5]">Coach Alerts</h3>
-                            <p className="text-xs text-[#888]">Notify coaches about significant player changes</p>
-                          </div>
-                        </div>
-                        <ToggleSwitch
-                          enabled={automationSettings.coachAlertsEnabled}
-                          onChange={(v) => updateAutomation('coachAlertsEnabled', v)}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Monthly Tasks */}
-                <div className="bg-[#2C2C2C] rounded-xl p-6 border border-[#3a3a3a]">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
-                      <TrendingUp className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-bold text-[#E5E5E5]">Monthly Automated Tasks</h2>
-                      <p className="text-sm text-[#888]">Deep analysis and milestone tracking</p>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <ToggleSetting
-                      label="Monthly Comprehensive Analysis"
-                      description="Deep dive into long-term trends and predictions"
-                      icon={<TrendingUp className="w-5 h-5" />}
-                      enabled={automationSettings.monthlyAnalysisEnabled}
-                      onChange={(v) => updateAutomation('monthlyAnalysisEnabled', v)}
-                    />
-                    
-                    <ToggleSetting
-                      label="Milestone Celebrations"
-                      description="Automatic recognition when you achieve milestones"
-                      icon={<Trophy className="w-5 h-5" />}
-                      enabled={automationSettings.milestoneNotificationsEnabled}
-                      onChange={(v) => updateAutomation('milestoneNotificationsEnabled', v)}
-                    />
-                  </div>
-                </div>
-
-                {/* Automation Status */}
-                <div className="bg-gradient-to-r from-green-500/10 via-[#2C2C2C] to-green-500/10 rounded-xl p-6 border border-green-500/30">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
-                      <Check className="w-6 h-6 text-green-400" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-[#E5E5E5]">Automation Status: Active</h3>
-                      <p className="text-[#888] text-sm">All enabled tasks are running on schedule</p>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-4 grid grid-cols-3 gap-4">
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-green-400">3</p>
-                      <p className="text-xs text-[#888]">Daily Tasks</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-blue-400">2</p>
-                      <p className="text-xs text-[#888]">Weekly Tasks</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-purple-400">2</p>
-                      <p className="text-xs text-[#888]">Monthly Tasks</p>
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* Data & Privacy Section */}
-            {activeSection === 'account' && (
-              <>
-                <div className="bg-[#2C2C2C] rounded-xl p-6 border border-[#3a3a3a]">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center">
-                      <Database className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-bold text-[#E5E5E5]">Data Management</h2>
-                      <p className="text-sm text-[#888]">Manage your analysis data and history</p>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-medium text-[#E5E5E5]">Export All Data</h3>
-                          <p className="text-xs text-[#888]">Download all your analysis data as JSON</p>
-                        </div>
-                        <button className="px-4 py-2 bg-[#3a3a3a] hover:bg-[#4a4a4a] text-[#E5E5E5] rounded-lg text-sm font-medium transition-colors">
-                          Export
-                        </button>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-medium text-[#E5E5E5]">Clear Analysis History</h3>
-                          <p className="text-xs text-[#888]">Remove all past analysis sessions</p>
-                        </div>
-                        <button className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-sm font-medium transition-colors border border-red-500/30">
-                          Clear History
-                        </button>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-medium text-[#E5E5E5]">Reset All Settings</h3>
-                          <p className="text-xs text-[#888]">Restore default notification and automation settings</p>
-                        </div>
-                        <button 
-                          onClick={() => {
-                            setNotificationSettings(DEFAULT_NOTIFICATION_SETTINGS)
-                            setAutomationSettings(DEFAULT_AUTOMATION_SETTINGS)
-                            setHasChanges(true)
-                          }}
-                          className="px-4 py-2 bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 rounded-lg text-sm font-medium transition-colors border border-orange-500/30"
-                        >
-                          Reset
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-[#2C2C2C] rounded-xl p-6 border border-[#3a3a3a]">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
-                      <Shield className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-bold text-[#E5E5E5]">Privacy</h2>
-                      <p className="text-sm text-[#888]">Control how your data is used</p>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <ToggleSetting
-                      label="Allow Anonymous Analytics"
-                      description="Help improve the app by sharing anonymous usage data"
-                      icon={<TrendingUp className="w-5 h-5" />}
-                      enabled={true}
-                      onChange={() => {}}
-                    />
-                    
-                    <ToggleSetting
-                      label="Include in Peer Comparisons"
-                      description="Allow your scores to be used in anonymous comparisons"
-                      icon={<Users className="w-5 h-5" />}
-                      enabled={true}
-                      onChange={() => {}}
-                    />
-                    
-                    <ToggleSetting
-                      label="Share Progress with Coach"
-                      description="Allow assigned coaches to view your analysis data"
-                      icon={<Users className="w-5 h-5" />}
-                      enabled={true}
-                      onChange={() => {}}
-                    />
-                  </div>
-                </div>
-
-                {/* Storage Info */}
-                <div className="bg-[#2C2C2C] rounded-xl p-6 border border-[#3a3a3a]">
-                  <div className="flex items-center gap-3 mb-4">
-                    <Database className="w-5 h-5 text-[#FF6B35]" />
-                    <h3 className="font-bold text-[#E5E5E5]">Storage Usage</h3>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <div>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="text-[#888]">Local Storage</span>
-                        <span className="text-[#E5E5E5]">2.4 MB / 5 MB</span>
-                      </div>
-                      <div className="h-2 bg-[#1a1a1a] rounded-full overflow-hidden">
-                        <div className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF4500] rounded-full" style={{ width: '48%' }}></div>
-                      </div>
-                    </div>
-                    
-                    <p className="text-xs text-[#666]">
-                      Analysis sessions and settings are stored locally on your device.
-                    </p>
-                  </div>
-                </div>
-              </>
-            )}
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  value={editedProfile.athleticAbility}
+                  onChange={(e) => setEditedProfile(p => ({ ...p, athleticAbility: parseInt(e.target.value) }))}
+                  className="w-full h-1.5 bg-[#333] rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#FF6B35] [&::-webkit-slider-thumb]:shadow-lg"
+                />
+              </div>
+            </SettingsGroup>
           </div>
-        </div>
+        )}
+
+        {/* COACHING VIEW */}
+        {currentView === 'coaching' && (
+          <div className="animate-in slide-in-from-right duration-200">
+            <SectionHeader title="FEEDBACK STYLE" />
+            <SettingsGroup>
+              <SettingsSegmentRow
+                label="Tone"
+                value={coachingSettings.feedbackTone}
+                options={[
+                  { value: 'encouraging', label: 'Encouraging', Icon: Star },
+                  { value: 'balanced', label: 'Balanced', Icon: Scale },
+                  { value: 'performance', label: 'Performance', Icon: Target }
+                ]}
+                onChange={(v) => setCoachingSettings(s => ({ ...s, feedbackTone: v as CoachingSettings['feedbackTone'] }))}
+              />
+              <SettingsSegmentRow
+                label="Detail Level"
+                value={coachingSettings.complexityLevel}
+                options={[
+                  { value: 'simple', label: 'Simple' },
+                  { value: 'technical', label: 'Technical' },
+                  { value: 'data_heavy', label: 'Data-Heavy' }
+                ]}
+                onChange={(v) => setCoachingSettings(s => ({ ...s, complexityLevel: v as CoachingSettings['complexityLevel'] }))}
+                showDivider
+              />
+            </SettingsGroup>
+
+            <SectionHeader title="ANALYSIS OPTIONS" />
+            <SettingsGroup>
+              <SettingsToggleRow
+                label="Peer Comparisons"
+                description="Compare to others in your age group"
+                enabled={coachingSettings.showPeerComparisons}
+                onChange={(v) => setCoachingSettings(s => ({ ...s, showPeerComparisons: v }))}
+              />
+              <SettingsToggleRow
+                label="Detailed Metrics"
+                description="Show exact measurements"
+                enabled={coachingSettings.showDetailedMetrics}
+                onChange={(v) => setCoachingSettings(s => ({ ...s, showDetailedMetrics: v }))}
+                showDivider
+              />
+            </SettingsGroup>
+          </div>
+        )}
+
+        {/* COURT VIEW */}
+        {currentView === 'court' && (
+          <div className="animate-in slide-in-from-right duration-200">
+            <SectionHeader title="COURT INFO" />
+            <SettingsGroup>
+              <SettingsTextInputRow
+                label="Court Name"
+                value={courtSettings.courtName}
+                placeholder="e.g., My Driveway"
+                onChange={(v) => setCourtSettings(s => ({ ...s, courtName: v }))}
+              />
+              <SettingsTextInputRow
+                label="Location"
+                value={courtSettings.location}
+                placeholder="City, State"
+                onChange={(v) => setCourtSettings(s => ({ ...s, location: v }))}
+                showDivider
+              />
+            </SettingsGroup>
+
+            <SectionHeader title="COURT TYPE" />
+            <SettingsGroup>
+              <SettingsSegmentRow
+                label="Type"
+                value={courtSettings.courtType}
+                options={[
+                  { value: 'indoor', label: 'Indoor', Icon: Building2 },
+                  { value: 'outdoor', label: 'Outdoor', Icon: TreePine },
+                  { value: 'home', label: 'Home', Icon: Home }
+                ]}
+                onChange={(v) => setCourtSettings(s => ({ ...s, courtType: v as CourtSettings['courtType'] }))}
+              />
+            </SettingsGroup>
+
+            <SectionHeader title="RIM HEIGHT" />
+            <SettingsGroup>
+              <SettingsSegmentRow
+                label="Height"
+                value={courtSettings.rimHeight}
+                options={[
+                  { value: '8ft', label: '8 ft' },
+                  { value: '9ft', label: '9 ft' },
+                  { value: '10ft', label: '10 ft' }
+                ]}
+                onChange={(v) => setCourtSettings(s => ({ ...s, rimHeight: v as CourtSettings['rimHeight'] }))}
+              />
+            </SettingsGroup>
+          </div>
+        )}
+
+        {/* EQUIPMENT VIEW */}
+        {currentView === 'equipment' && (
+          <div className="animate-in slide-in-from-right duration-200">
+            <SectionHeader title="BALL SIZE" />
+            <SettingsGroup>
+              <SettingsSegmentRow
+                label="Size"
+                value={equipmentSettings.ballSize}
+                options={[
+                  { value: 'youth', label: 'Youth (27.5")' },
+                  { value: 'intermediate', label: 'Int (28.5")' },
+                  { value: 'full', label: 'Full (29.5")' }
+                ]}
+                onChange={(v) => setEquipmentSettings(s => ({ ...s, ballSize: v as EquipmentSettings['ballSize'] }))}
+              />
+            </SettingsGroup>
+
+            <SectionHeader title="POSITION" />
+            <SettingsGroup>
+              {(['point_guard', 'shooting_guard', 'small_forward', 'power_forward', 'center'] as const).map((pos, i) => (
+                <SettingsCheckRow
+                  key={pos}
+                  label={formatLabel(pos)}
+                  checked={equipmentSettings.preferredPosition === pos}
+                  onChange={() => setEquipmentSettings(s => ({ ...s, preferredPosition: pos }))}
+                  showDivider={i < 4}
+                />
+              ))}
+            </SettingsGroup>
+          </div>
+        )}
+
+        {/* GOALS VIEW */}
+        {currentView === 'goals' && (
+          <div className="animate-in slide-in-from-right duration-200">
+            <SectionHeader title="TARGET SCORE" />
+            <SettingsGroup>
+              <div className="px-4 py-4">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-white text-[15px]">Target Overall Score</span>
+                  <span className="text-3xl font-bold text-[#FF6B35]">{goalSettings.targetScore}</span>
+                </div>
+                <input
+                  type="range"
+                  min="50"
+                  max="100"
+                  value={goalSettings.targetScore}
+                  onChange={(e) => setGoalSettings(s => ({ ...s, targetScore: parseInt(e.target.value) }))}
+                  className="w-full h-1.5 bg-[#333] rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#FF6B35] [&::-webkit-slider-thumb]:shadow-lg"
+                />
+                <div className="flex justify-between text-xs text-[#666] mt-2">
+                  <span>50</span>
+                  <span>75</span>
+                  <span>100</span>
+                </div>
+              </div>
+            </SettingsGroup>
+
+            <SectionHeader title="FOCUS PRIORITY" />
+            <SettingsGroup>
+              {([
+                { value: 'auto', label: 'Auto-Detect', Icon: Crosshair },
+                { value: 'elbow', label: 'Elbow', Icon: Grip },
+                { value: 'release', label: 'Release', Icon: Rocket },
+                { value: 'follow_through', label: 'Follow Through', Icon: Hand },
+                { value: 'balance', label: 'Balance', Icon: Scale },
+                { value: 'arc', label: 'Arc', Icon: Rainbow }
+              ] as const).map((focus, i) => (
+                <SettingsCheckRow
+                  key={focus.value}
+                  label={focus.label}
+                  icon={focus.Icon}
+                  checked={goalSettings.focusPriority === focus.value}
+                  onChange={() => setGoalSettings(s => ({ ...s, focusPriority: focus.value }))}
+                  showDivider={i < 5}
+                />
+              ))}
+            </SettingsGroup>
+          </div>
+        )}
+
+        {/* NOTIFICATIONS VIEW */}
+        {currentView === 'notifications' && (
+          <div className="animate-in slide-in-from-right duration-200">
+            <SectionHeader title="EMAIL REPORTS" />
+            <SettingsGroup>
+              <SettingsToggleRow
+                label="Weekly Report"
+                description="Summary every Monday"
+                enabled={notificationSettings.weeklyReportEmail}
+                onChange={(v) => setNotificationSettings(s => ({ ...s, weeklyReportEmail: v }))}
+              />
+              <SettingsToggleRow
+                label="Monthly Analysis"
+                description="Deep dive with trends"
+                enabled={notificationSettings.monthlyReportEmail}
+                onChange={(v) => setNotificationSettings(s => ({ ...s, monthlyReportEmail: v }))}
+                showDivider
+              />
+              <SettingsToggleRow
+                label="Milestones"
+                description="When you earn badges"
+                enabled={notificationSettings.milestoneEmail}
+                onChange={(v) => setNotificationSettings(s => ({ ...s, milestoneEmail: v }))}
+                showDivider
+              />
+            </SettingsGroup>
+
+            <SectionHeader title="PUSH NOTIFICATIONS" />
+            <SettingsGroup>
+              <SettingsToggleRow
+                label="Coaching Tips"
+                description="Training advice"
+                enabled={notificationSettings.coachingTipsPush}
+                onChange={(v) => setNotificationSettings(s => ({ ...s, coachingTipsPush: v }))}
+              />
+              <SettingsToggleRow
+                label="Motivation"
+                description="Stay encouraged"
+                enabled={notificationSettings.motivationalMessagesPush}
+                onChange={(v) => setNotificationSettings(s => ({ ...s, motivationalMessagesPush: v }))}
+                showDivider
+              />
+              <SettingsToggleRow
+                label="Reminders"
+                description="Don't miss practice"
+                enabled={notificationSettings.reminderPush}
+                onChange={(v) => setNotificationSettings(s => ({ ...s, reminderPush: v }))}
+                showDivider
+              />
+            </SettingsGroup>
+
+            <SectionHeader title="FREQUENCY" />
+            <SettingsGroup>
+              <SettingsSelectRow
+                label="Coaching Tips"
+                value={notificationSettings.coachingTipsFrequency}
+                options={[
+                  { value: 'daily', label: 'Daily' },
+                  { value: '3x_week', label: '3x per week' },
+                  { value: '2x_week', label: '2x per week' },
+                  { value: 'weekly', label: 'Weekly' }
+                ]}
+                onChange={(v) => setNotificationSettings(s => ({ ...s, coachingTipsFrequency: v as NotificationSettings['coachingTipsFrequency'] }))}
+              />
+            </SettingsGroup>
+          </div>
+        )}
+
+        {/* DISPLAY VIEW */}
+        {currentView === 'display' && (
+          <div className="animate-in slide-in-from-right duration-200">
+            <SectionHeader title="APPEARANCE" />
+            <SettingsGroup>
+              {(['dark', 'light', 'system'] as const).map((theme, i) => (
+                <SettingsCheckRow
+                  key={theme}
+                  label={formatLabel(theme)}
+                  icon={theme === 'dark' ? Moon : theme === 'light' ? Sun : DeviceIcon}
+                  checked={displaySettings.theme === theme}
+                  onChange={() => setDisplaySettings(s => ({ ...s, theme }))}
+                  showDivider={i < 2}
+                />
+              ))}
+            </SettingsGroup>
+
+            <SectionHeader title="UNITS" />
+            <SettingsGroup>
+              <SettingsSegmentRow
+                label="Measurement"
+                value={displaySettings.units}
+                options={[
+                  { value: 'imperial', label: 'Imperial' },
+                  { value: 'metric', label: 'Metric' }
+                ]}
+                onChange={(v) => setDisplaySettings(s => ({ ...s, units: v as DisplaySettings['units'] }))}
+              />
+            </SettingsGroup>
+
+            <SectionHeader title="ACCESSIBILITY" />
+            <SettingsGroup>
+              <SettingsToggleRow
+                label="Reduced Motion"
+                description="Minimize animations"
+                enabled={displaySettings.reducedMotion}
+                onChange={(v) => setDisplaySettings(s => ({ ...s, reducedMotion: v }))}
+              />
+              <SettingsToggleRow
+                label="Sound Effects"
+                description="Audio feedback"
+                enabled={displaySettings.soundEnabled}
+                onChange={(v) => setDisplaySettings(s => ({ ...s, soundEnabled: v }))}
+                showDivider
+              />
+            </SettingsGroup>
+
+            <SectionHeader title="TEXT SIZE" />
+            <SettingsGroup>
+              {(['normal', 'large', 'extra_large'] as const).map((size, i) => (
+                <SettingsCheckRow
+                  key={size}
+                  label={size === 'normal' ? 'Normal' : size === 'large' ? 'Large' : 'Extra Large'}
+                  checked={displaySettings.textSize === size}
+                  onChange={() => setDisplaySettings(s => ({ ...s, textSize: size }))}
+                  showDivider={i < 2}
+                />
+              ))}
+            </SettingsGroup>
+          </div>
+        )}
+
+        {/* PRIVACY VIEW */}
+        {currentView === 'privacy' && (
+          <div className="animate-in slide-in-from-right duration-200">
+            <SectionHeader title="PROFILE VISIBILITY" />
+            <SettingsGroup>
+              {([
+                { value: 'private', label: 'Private', Icon: EyeOff },
+                { value: 'friends', label: 'Friends Only', Icon: Users },
+                { value: 'public', label: 'Public', Icon: Eye }
+              ] as const).map((vis, i) => (
+                <SettingsCheckRow
+                  key={vis.value}
+                  label={vis.label}
+                  icon={vis.Icon}
+                  checked={privacySettings.profileVisibility === vis.value}
+                  onChange={() => setPrivacySettings(s => ({ ...s, profileVisibility: vis.value }))}
+                  showDivider={i < 2}
+                />
+              ))}
+            </SettingsGroup>
+
+            <SectionHeader title="DATA SHARING" />
+            <SettingsGroup>
+              <SettingsToggleRow
+                label="Show on Leaderboards"
+                description="Appear in public rankings"
+                enabled={privacySettings.showOnLeaderboards}
+                onChange={(v) => setPrivacySettings(s => ({ ...s, showOnLeaderboards: v }))}
+              />
+              <SettingsToggleRow
+                label="Peer Comparisons"
+                description="Anonymous comparisons"
+                enabled={privacySettings.includeInComparisons}
+                onChange={(v) => setPrivacySettings(s => ({ ...s, includeInComparisons: v }))}
+                showDivider
+              />
+              <SettingsToggleRow
+                label="Share with Coach"
+                description="Allow coaches to view"
+                enabled={privacySettings.shareWithCoach}
+                onChange={(v) => setPrivacySettings(s => ({ ...s, shareWithCoach: v }))}
+                showDivider
+              />
+            </SettingsGroup>
+          </div>
+        )}
+
+        {/* DATA VIEW */}
+        {currentView === 'data' && (
+          <div className="animate-in slide-in-from-right duration-200">
+            <SectionHeader title="EXPORT" />
+            <SettingsGroup>
+              <SettingsActionRow
+                icon={Download}
+                label="Export All Data"
+                description="Download as JSON"
+              />
+            </SettingsGroup>
+
+            <SectionHeader title="MANAGE" />
+            <SettingsGroup>
+              <SettingsActionRow
+                icon={Trash2}
+                label="Clear Analysis History"
+                description="Remove all past sessions"
+                destructive
+              />
+              <SettingsActionRow
+                icon={RotateCcw}
+                label="Reset Profile"
+                description="Start onboarding again"
+                onClick={() => router.push('/onboarding')}
+                showDivider
+              />
+            </SettingsGroup>
+
+            <SectionHeader title="DANGER ZONE" />
+            <SettingsGroup>
+              <SettingsActionRow
+                icon={AlertTriangle}
+                label="Delete Account"
+                description="Permanently remove all data"
+                destructive
+              />
+            </SettingsGroup>
+          </div>
+        )}
       </div>
     </main>
   )
@@ -832,48 +934,267 @@ export default function SettingsPage() {
 // HELPER COMPONENTS
 // ============================================
 
-interface ToggleSettingProps {
-  label: string
-  description: string
-  icon: React.ReactNode
-  enabled: boolean
-  onChange: (enabled: boolean) => void
-}
-
-function ToggleSetting({ label, description, icon, enabled, onChange }: ToggleSettingProps) {
+function SectionHeader({ title }: { title: string }) {
   return (
-    <div className="flex items-center justify-between py-3 border-b border-[#3a3a3a] last:border-0">
-      <div className="flex items-center gap-3">
-        <div className="text-[#888]">{icon}</div>
-        <div>
-          <h3 className="font-medium text-[#E5E5E5]">{label}</h3>
-          <p className="text-xs text-[#888]">{description}</p>
-        </div>
-      </div>
-      <ToggleSwitch enabled={enabled} onChange={onChange} />
+    <div className="px-4 pt-6 pb-2">
+      <span className="text-[11px] text-[#666] font-medium tracking-wider uppercase">{title}</span>
     </div>
   )
 }
 
-interface ToggleSwitchProps {
-  enabled: boolean
-  onChange: (enabled: boolean) => void
+function SettingsGroup({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mx-4 bg-[#111] rounded-xl border border-white/5 overflow-hidden">
+      {children}
+    </div>
+  )
 }
 
-function ToggleSwitch({ enabled, onChange }: ToggleSwitchProps) {
+interface SettingsRowProps {
+  icon: React.ElementType
+  label: string
+  value?: string
+  onClick?: () => void
+  showDivider?: boolean
+}
+
+function SettingsRow({ icon: Icon, label, value, onClick, showDivider }: SettingsRowProps) {
   return (
     <button
-      onClick={() => onChange(!enabled)}
-      className={`relative w-12 h-6 rounded-full transition-colors ${
-        enabled ? 'bg-[#FF6B35]' : 'bg-[#3a3a3a]'
-      }`}
+      onClick={onClick}
+      className="w-full flex items-center px-4 py-3.5 active:bg-white/5 relative"
     >
-      <div
-        className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${
-          enabled ? 'translate-x-7' : 'translate-x-1'
-        }`}
-      />
+      <Icon className="w-5 h-5 text-[#888] mr-3" />
+      <span className="flex-1 text-left text-white text-[15px]">{label}</span>
+      {value && <span className="text-[#666] text-[15px] mr-2">{value}</span>}
+      <ChevronRight className="w-4 h-4 text-[#444]" />
+      {showDivider && <div className="absolute left-12 right-0 bottom-0 h-px bg-white/5" />}
     </button>
   )
 }
 
+interface SettingsToggleRowProps {
+  label: string
+  description?: string
+  enabled: boolean
+  onChange: (enabled: boolean) => void
+  showDivider?: boolean
+}
+
+function SettingsToggleRow({ label, description, enabled, onChange, showDivider }: SettingsToggleRowProps) {
+  return (
+    <div className={`relative flex items-center px-4 py-3.5`}>
+      <div className="flex-1 pr-4">
+        <p className="text-white text-[15px]">{label}</p>
+        {description && <p className="text-[#555] text-[12px] mt-0.5">{description}</p>}
+      </div>
+      <button
+        onClick={() => onChange(!enabled)}
+        className={`relative w-[50px] h-[30px] rounded-full transition-colors flex-shrink-0 ${
+          enabled ? 'bg-[#FF6B35]' : 'bg-[#333]'
+        }`}
+      >
+        <div
+          className={`absolute top-[3px] w-[24px] h-[24px] rounded-full bg-white shadow-md transition-transform ${
+            enabled ? 'translate-x-[23px]' : 'translate-x-[3px]'
+          }`}
+        />
+      </button>
+      {showDivider && <div className="absolute left-4 right-0 bottom-0 h-px bg-white/5" />}
+    </div>
+  )
+}
+
+interface SettingsCheckRowProps {
+  label: string
+  icon?: React.ElementType
+  checked: boolean
+  onChange: () => void
+  showDivider?: boolean
+}
+
+function SettingsCheckRow({ label, icon: Icon, checked, onChange, showDivider }: SettingsCheckRowProps) {
+  return (
+    <button
+      onClick={onChange}
+      className={`relative w-full flex items-center px-4 py-3.5 active:bg-white/5`}
+    >
+      {Icon && <Icon className="w-5 h-5 text-[#666] mr-3" />}
+      <span className="flex-1 text-left text-white text-[15px]">{label}</span>
+      {checked && <Check className="w-5 h-5 text-[#FF6B35]" />}
+      {showDivider && <div className="absolute left-4 right-0 bottom-0 h-px bg-white/5" />}
+    </button>
+  )
+}
+
+interface SettingsSelectRowProps {
+  label: string
+  value: string
+  options: { value: string; label: string }[]
+  onChange: (value: string) => void
+  showDivider?: boolean
+}
+
+function SettingsSelectRow({ label, value, options, onChange, showDivider }: SettingsSelectRowProps) {
+  return (
+    <div className={`relative flex items-center px-4 py-3.5`}>
+      <span className="flex-1 text-white text-[15px]">{label}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="bg-transparent text-[#888] text-[15px] text-right appearance-none cursor-pointer pr-1 focus:outline-none"
+      >
+        <option value="" className="bg-[#111]">Select...</option>
+        {options.map(opt => (
+          <option key={opt.value} value={opt.value} className="bg-[#111]">{opt.label}</option>
+        ))}
+      </select>
+      <ChevronRight className="w-4 h-4 text-[#444] ml-1" />
+      {showDivider && <div className="absolute left-4 right-0 bottom-0 h-px bg-white/5" />}
+    </div>
+  )
+}
+
+interface SettingsSegmentRowProps {
+  label: string
+  value: string
+  options: { value: string; label: string; Icon?: React.ElementType }[]
+  onChange: (value: string) => void
+  showDivider?: boolean
+}
+
+function SettingsSegmentRow({ label, value, options, onChange, showDivider }: SettingsSegmentRowProps) {
+  return (
+    <div className={`relative px-4 py-3`}>
+      <p className="text-[#888] text-[13px] mb-2">{label}</p>
+      <div className="flex bg-[#1a1a1a] rounded-lg p-1 gap-1">
+        {options.map(opt => (
+          <button
+            key={opt.value}
+            onClick={() => onChange(opt.value)}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-md text-[13px] font-medium transition-all ${
+              value === opt.value
+                ? 'bg-[#FF6B35] text-white'
+                : 'text-[#666] hover:text-white'
+            }`}
+          >
+            {opt.Icon && <opt.Icon className="w-3.5 h-3.5" />}
+            {opt.label}
+          </button>
+        ))}
+      </div>
+      {showDivider && <div className="absolute left-4 right-0 bottom-0 h-px bg-white/5" />}
+    </div>
+  )
+}
+
+interface SettingsInputRowProps {
+  label: string
+  type: 'number' | 'height'
+  value?: number
+  valueFeet?: number
+  valueInches?: number
+  suffix?: string
+  onChange?: (value: number) => void
+  onChangeFeet?: (value: number) => void
+  onChangeInches?: (value: number) => void
+  showDivider?: boolean
+}
+
+function SettingsInputRow({ label, type, value, valueFeet, valueInches, suffix, onChange, onChangeFeet, onChangeInches, showDivider }: SettingsInputRowProps) {
+  if (type === 'height') {
+    return (
+      <div className={`relative flex items-center px-4 py-3.5`}>
+        <span className="flex-1 text-white text-[15px]">{label}</span>
+        <div className="flex items-center gap-2">
+          <select
+            value={valueFeet || 0}
+            onChange={(e) => onChangeFeet?.(parseInt(e.target.value))}
+            className="bg-[#1a1a1a] text-white text-[15px] rounded-lg px-3 py-2 focus:outline-none border border-white/10"
+          >
+            {[4, 5, 6, 7].map(ft => (
+              <option key={ft} value={ft}>{ft} ft</option>
+            ))}
+          </select>
+          <select
+            value={valueInches || 0}
+            onChange={(e) => onChangeInches?.(parseInt(e.target.value))}
+            className="bg-[#1a1a1a] text-white text-[15px] rounded-lg px-3 py-2 focus:outline-none border border-white/10"
+          >
+            {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(inch => (
+              <option key={inch} value={inch}>{inch} in</option>
+            ))}
+          </select>
+        </div>
+        {showDivider && <div className="absolute left-4 right-0 bottom-0 h-px bg-white/5" />}
+      </div>
+    )
+  }
+
+  return (
+    <div className={`relative flex items-center px-4 py-3.5`}>
+      <span className="flex-1 text-white text-[15px]">{label}</span>
+      <div className="flex items-center gap-2">
+        <input
+          type="number"
+          value={value || ''}
+          onChange={(e) => onChange?.(parseInt(e.target.value) || 0)}
+          className="w-20 bg-[#1a1a1a] text-white text-[15px] text-right rounded-lg px-3 py-2 focus:outline-none border border-white/10"
+          placeholder="0"
+        />
+        {suffix && <span className="text-[#666] text-[15px]">{suffix}</span>}
+      </div>
+      {showDivider && <div className="absolute left-4 right-0 bottom-0 h-px bg-white/5" />}
+    </div>
+  )
+}
+
+interface SettingsTextInputRowProps {
+  label: string
+  value: string
+  placeholder?: string
+  onChange: (value: string) => void
+  showDivider?: boolean
+}
+
+function SettingsTextInputRow({ label, value, placeholder, onChange, showDivider }: SettingsTextInputRowProps) {
+  return (
+    <div className={`relative flex items-center px-4 py-3.5`}>
+      <span className="w-24 text-white text-[15px]">{label}</span>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="flex-1 bg-transparent text-white text-[15px] text-right focus:outline-none placeholder:text-[#555]"
+      />
+      {showDivider && <div className="absolute left-4 right-0 bottom-0 h-px bg-white/5" />}
+    </div>
+  )
+}
+
+interface SettingsActionRowProps {
+  icon: React.ElementType
+  label: string
+  description?: string
+  onClick?: () => void
+  destructive?: boolean
+  showDivider?: boolean
+}
+
+function SettingsActionRow({ icon: Icon, label, description, onClick, destructive, showDivider }: SettingsActionRowProps) {
+  return (
+    <button
+      onClick={onClick}
+      className={`relative w-full flex items-center px-4 py-3.5 active:bg-white/5`}
+    >
+      <Icon className={`w-5 h-5 mr-3 ${destructive ? 'text-red-500' : 'text-[#888]'}`} />
+      <div className="flex-1 text-left">
+        <p className={`text-[15px] ${destructive ? 'text-red-500' : 'text-white'}`}>{label}</p>
+        {description && <p className="text-[#555] text-[12px] mt-0.5">{description}</p>}
+      </div>
+      <ChevronRight className={`w-4 h-4 ${destructive ? 'text-red-500/50' : 'text-[#444]'}`} />
+      {showDivider && <div className="absolute left-4 right-0 bottom-0 h-px bg-white/5" />}
+    </button>
+  )
+}
