@@ -4,14 +4,16 @@
  * 
  * POST /api/analyze-drill-frame
  * 
- * Analyzes a single frame from a drill video using vision AI
+ * Analyzes a single frame from a drill video using Google Gemini Vision (FREE)
  * to provide quick coaching feedback.
+ * 
+ * Updated to use Gemini Vision instead of OpenAI GPT-4 Vision for cost savings.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 
-// OpenAI Vision API for image analysis (if available)
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY
+// Google AI API key for Gemini Vision
+const GOOGLE_AI_API_KEY = process.env.GOOGLE_AI_API_KEY
 
 interface DrillAnalysisRequest {
   image: string // Base64 encoded image
@@ -46,10 +48,10 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // If OpenAI API key is available, use GPT-4 Vision
-    if (OPENAI_API_KEY) {
+    // If Google AI API key is available, use Gemini Vision
+    if (GOOGLE_AI_API_KEY) {
       try {
-        const visionAnalysis = await analyzeWithVision(
+        const visionAnalysis = await analyzeWithGeminiVision(
           image,
           drillName,
           drillDescription,
@@ -61,10 +63,10 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
           success: true,
           ...visionAnalysis,
-          analysisType: 'vision'
+          analysisType: 'gemini-vision'
         })
       } catch (visionError) {
-        console.error('Vision API error, falling back to rule-based:', visionError)
+        console.error('Gemini Vision API error, falling back to rule-based:', visionError)
       }
     }
     
@@ -93,8 +95,8 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Analyze image using OpenAI GPT-4 Vision
-async function analyzeWithVision(
+// Analyze image using Google Gemini Vision (FREE)
+async function analyzeWithGeminiVision(
   imageBase64: string,
   drillName: string,
   drillDescription: string,
@@ -129,41 +131,55 @@ Respond in JSON format:
   "detailedFeedback": "A brief paragraph summarizing the analysis"
 }`
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${OPENAI_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o',
-      messages: [
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: prompt },
-            {
-              type: 'image_url',
-              image_url: {
-                url: imageBase64.startsWith('data:') ? imageBase64 : `data:image/jpeg;base64,${imageBase64}`,
+  // Prepare the image data - remove data URL prefix if present
+  let imageData = imageBase64;
+  let mimeType = 'image/jpeg';
+  
+  if (imageBase64.startsWith('data:')) {
+    const matches = imageBase64.match(/^data:([^;]+);base64,(.+)$/);
+    if (matches) {
+      mimeType = matches[1];
+      imageData = matches[2];
+    }
+  }
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GOOGLE_AI_API_KEY}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              { text: prompt },
+              {
+                inline_data: {
+                  mime_type: mimeType,
+                  data: imageData,
+                },
               },
-            },
-          ],
+            ],
+          },
+        ],
+        generationConfig: {
+          maxOutputTokens: 1000,
+          temperature: 0.7,
         },
-      ],
-      max_tokens: 1000,
-    }),
-  })
+      }),
+    }
+  );
   
   if (!response.ok) {
-    throw new Error(`OpenAI API error: ${response.status}`)
+    const error = await response.text();
+    throw new Error(`Gemini Vision API error: ${error}`)
   }
   
   const data = await response.json()
-  const content = data.choices?.[0]?.message?.content
+  const content = data.candidates?.[0]?.content?.parts?.[0]?.text
   
   if (!content) {
-    throw new Error('No response from Vision API')
+    throw new Error('No response from Gemini Vision API')
   }
   
   // Parse JSON from response
@@ -232,4 +248,3 @@ function generateRuleBasedAnalysis(
     detailedFeedback: `Analysis of your ${drillName} drill (Focus: ${focusArea}). ${drillDescription.slice(0, 150)}... Keep practicing and focus on the coaching tips provided.`
   }
 }
-

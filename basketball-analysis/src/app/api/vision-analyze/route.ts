@@ -3,23 +3,20 @@
  * 
  * POST /api/vision-analyze
  * 
- * This API uses OpenAI GPT-4 Vision to analyze drill execution
+ * This API uses Google Gemini Vision (FREE) to analyze drill execution
  * through the lens of a basketball coach. Every piece of feedback
  * is built around the drill's coaching points (tips).
+ * 
+ * Updated to use Gemini Vision instead of OpenAI GPT-4 Vision for cost savings.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import OpenAI from 'openai'
 import { 
   generateCoachingPrompt, 
   processCoachingResponse,
   generateFallbackAnalysis,
   type CoachAnalysis 
 } from '@/services/coachingAnalysis'
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
 
 interface VisionAnalysisRequest {
   image: string                  // Base64 encoded image
@@ -28,6 +25,68 @@ interface VisionAnalysisRequest {
   drillDescription: string
   coachingPoints: string[]       // The tips array - THE KEY TO COACH-CENTRIC ANALYSIS
   focusArea: string
+}
+
+/**
+ * Analyze image using Google Gemini Vision (FREE)
+ */
+async function analyzeWithGeminiVision(
+  imageBase64: string,
+  prompt: string
+): Promise<string> {
+  const apiKey = process.env.GOOGLE_AI_API_KEY;
+  if (!apiKey) throw new Error('GOOGLE_AI_API_KEY not configured');
+
+  // Prepare the image data - remove data URL prefix if present
+  let imageData = imageBase64;
+  let mimeType = 'image/jpeg';
+  
+  if (imageBase64.startsWith('data:')) {
+    const matches = imageBase64.match(/^data:([^;]+);base64,(.+)$/);
+    if (matches) {
+      mimeType = matches[1];
+      imageData = matches[2];
+    }
+  }
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              { text: prompt },
+              {
+                inline_data: {
+                  mime_type: mimeType,
+                  data: imageData,
+                },
+              },
+            ],
+          },
+        ],
+        generationConfig: {
+          maxOutputTokens: 2000,
+          temperature: 0.7,
+        },
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Gemini Vision error: ${error}`);
+  }
+
+  const data = await response.json();
+  const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+  if (!content) throw new Error('No content in Gemini Vision response');
+
+  return content;
 }
 
 export async function POST(request: NextRequest) {
@@ -57,7 +116,7 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    if (!process.env.OPENAI_API_KEY) {
+    if (!process.env.GOOGLE_AI_API_KEY) {
       // Return fallback analysis if no API key
       const fallback = generateFallbackAnalysis(drillId, drillName, coachingPoints, focusArea)
       return NextResponse.json({
@@ -76,32 +135,7 @@ export async function POST(request: NextRequest) {
     )
     
     try {
-      const response = await openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages: [
-          {
-            role: 'user',
-            content: [
-              { type: 'text', text: prompt },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: image.startsWith('data:') ? image : `data:image/jpeg;base64,${image}`,
-                  detail: 'high',
-                },
-              },
-            ],
-          },
-        ],
-        max_tokens: 2000,
-        temperature: 0.7,
-      })
-      
-      const content = response.choices?.[0]?.message?.content
-      
-      if (!content) {
-        throw new Error('No response from Vision AI')
-      }
+      const content = await analyzeWithGeminiVision(image, prompt);
       
       // Parse JSON from response
       let rawAnalysis
@@ -135,11 +169,12 @@ export async function POST(request: NextRequest) {
       
       return NextResponse.json({
         success: true,
-        analysis
+        analysis,
+        provider: 'gemini-vision' // Track which provider was used
       })
       
     } catch (apiError) {
-      console.error('OpenAI API error:', apiError)
+      console.error('Gemini Vision API error:', apiError)
       // Return fallback analysis on API error
       const fallback = generateFallbackAnalysis(drillId, drillName, coachingPoints, focusArea)
       return NextResponse.json({
