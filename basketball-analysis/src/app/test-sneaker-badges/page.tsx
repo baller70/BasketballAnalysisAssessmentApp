@@ -9,7 +9,91 @@ import { Trophy, Star, Zap, Crown, Sparkles } from 'lucide-react';
  * 
  * Displays Air Jordan 1 sneaker collection in vertical card layout
  * for badge/achievement system preview.
+ * 
+ * Each card has a subtle thematic background based on the sneaker's
+ * name and colorway to complement the circular logo.
  */
+
+// Thematic background configurations based on sneaker name/colorway
+const BACKGROUND_THEMES: Record<string, {
+  gradient: string;
+  pattern?: string;
+  overlay?: string;
+  accent?: string;
+}> = {
+  'Aqua Splash': {
+    // Water/ocean theme - subtle waves and aqua tones
+    gradient: 'bg-gradient-to-br from-cyan-900/20 via-teal-900/10 to-blue-900/20',
+    pattern: 'radial-gradient(ellipse at 30% 20%, rgba(34, 211, 238, 0.08) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(6, 182, 212, 0.06) 0%, transparent 50%)',
+    accent: 'rgba(34, 211, 238, 0.15)',
+  },
+  'Black Panther': {
+    // Wakanda vibes - dark with purple/silver accents
+    gradient: 'bg-gradient-to-br from-purple-900/25 via-slate-900/20 to-violet-900/20',
+    pattern: 'radial-gradient(ellipse at 50% 0%, rgba(139, 92, 246, 0.12) 0%, transparent 60%), linear-gradient(180deg, rgba(192, 192, 192, 0.03) 0%, transparent 30%)',
+    accent: 'rgba(139, 92, 246, 0.2)',
+  },
+  'Bluey': {
+    // Playful sky blue - clouds and light
+    gradient: 'bg-gradient-to-br from-sky-900/20 via-blue-900/15 to-cyan-900/15',
+    pattern: 'radial-gradient(circle at 20% 30%, rgba(56, 189, 248, 0.1) 0%, transparent 40%), radial-gradient(circle at 80% 70%, rgba(125, 211, 252, 0.08) 0%, transparent 40%)',
+    accent: 'rgba(56, 189, 248, 0.15)',
+  },
+  'Cool-Aid Orange': {
+    // Refreshing orange drink vibes - citrus burst
+    gradient: 'bg-gradient-to-br from-orange-900/25 via-amber-900/15 to-yellow-900/10',
+    pattern: 'radial-gradient(ellipse at 60% 20%, rgba(251, 146, 60, 0.12) 0%, transparent 50%), radial-gradient(circle at 30% 80%, rgba(253, 186, 116, 0.08) 0%, transparent 40%)',
+    accent: 'rgba(251, 146, 60, 0.2)',
+  },
+  'Crimson': {
+    // Deep red intensity - blood red elegance
+    gradient: 'bg-gradient-to-br from-red-900/25 via-rose-900/15 to-red-950/20',
+    pattern: 'radial-gradient(ellipse at 50% 30%, rgba(220, 38, 38, 0.1) 0%, transparent 50%), linear-gradient(180deg, rgba(127, 29, 29, 0.1) 0%, transparent 50%)',
+    accent: 'rgba(220, 38, 38, 0.15)',
+  },
+  'Incredible Hulk': {
+    // Gamma radiation - green and purple energy
+    gradient: 'bg-gradient-to-br from-green-900/25 via-emerald-900/15 to-purple-900/20',
+    pattern: 'radial-gradient(ellipse at 40% 20%, rgba(34, 197, 94, 0.12) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, rgba(147, 51, 234, 0.1) 0%, transparent 50%)',
+    accent: 'rgba(34, 197, 94, 0.2)',
+  },
+  'Kryptonite': {
+    // Superman's weakness - glowing green radioactive
+    gradient: 'bg-gradient-to-br from-lime-900/25 via-green-900/20 to-emerald-950/20',
+    pattern: 'radial-gradient(ellipse at 50% 50%, rgba(163, 230, 53, 0.15) 0%, transparent 60%), radial-gradient(circle at 30% 70%, rgba(132, 204, 22, 0.08) 0%, transparent 40%)',
+    accent: 'rgba(163, 230, 53, 0.2)',
+  },
+  'Loch Ness Monster': {
+    // Deep mysterious waters - dark teal and murky depths
+    gradient: 'bg-gradient-to-br from-teal-900/25 via-slate-900/20 to-cyan-950/25',
+    pattern: 'radial-gradient(ellipse at 50% 80%, rgba(20, 184, 166, 0.1) 0%, transparent 50%), linear-gradient(180deg, rgba(15, 23, 42, 0.3) 0%, transparent 50%)',
+    accent: 'rgba(20, 184, 166, 0.15)',
+  },
+  'Orange Crush': {
+    // Soda crush - fizzy orange bubbles
+    gradient: 'bg-gradient-to-br from-orange-900/30 via-red-900/15 to-amber-900/20',
+    pattern: 'radial-gradient(circle at 25% 25%, rgba(249, 115, 22, 0.12) 0%, transparent 35%), radial-gradient(circle at 75% 75%, rgba(234, 88, 12, 0.1) 0%, transparent 35%)',
+    accent: 'rgba(249, 115, 22, 0.2)',
+  },
+  'Pink Panther': {
+    // Smooth and sleek - pink elegance with style
+    gradient: 'bg-gradient-to-br from-pink-900/25 via-rose-900/15 to-fuchsia-900/20',
+    pattern: 'radial-gradient(ellipse at 60% 30%, rgba(236, 72, 153, 0.1) 0%, transparent 50%), radial-gradient(ellipse at 30% 70%, rgba(244, 114, 182, 0.08) 0%, transparent 40%)',
+    accent: 'rgba(236, 72, 153, 0.15)',
+  },
+  'Purple Rain': {
+    // Prince tribute - purple with golden rain drops
+    gradient: 'bg-gradient-to-br from-purple-900/30 via-violet-900/20 to-indigo-900/25',
+    pattern: 'radial-gradient(ellipse at 50% 20%, rgba(147, 51, 234, 0.15) 0%, transparent 50%), linear-gradient(180deg, rgba(234, 179, 8, 0.05) 0%, transparent 30%)',
+    accent: 'rgba(147, 51, 234, 0.2)',
+  },
+  'Hulkmania': {
+    // Wrestling energy - yellow and green power
+    gradient: 'bg-gradient-to-br from-yellow-900/25 via-lime-900/15 to-green-900/20',
+    pattern: 'radial-gradient(ellipse at 40% 30%, rgba(250, 204, 21, 0.12) 0%, transparent 50%), radial-gradient(ellipse at 70% 70%, rgba(132, 204, 22, 0.1) 0%, transparent 50%)',
+    accent: 'rgba(250, 204, 21, 0.2)',
+  },
+};
 
 // Level 9 sneaker data
 const LEVEL_9_SNEAKERS = [
@@ -141,6 +225,7 @@ function SneakerBadgeCard({ sneaker, index }: { sneaker: typeof LEVEL_9_SNEAKERS
   const [imageError, setImageError] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const rarity = RARITY_CONFIG[sneaker.rarity as keyof typeof RARITY_CONFIG];
+  const theme = BACKGROUND_THEMES[sneaker.name] || BACKGROUND_THEMES['Aqua Splash'];
 
   return (
     <div
@@ -163,11 +248,22 @@ function SneakerBadgeCard({ sneaker, index }: { sneaker: typeof LEVEL_9_SNEAKERS
       {/* Main Card */}
       <div className={`
         relative overflow-hidden rounded-2xl
-        bg-gradient-to-b from-[#1a1a1a] to-[#0d0d0d]
         border-2 ${rarity.border}
         shadow-2xl ${isHovered ? `shadow-xl ${rarity.glow}` : ''}
         transition-all duration-300
       `}>
+        {/* Thematic Background Layer */}
+        <div className={`absolute inset-0 ${theme.gradient}`} />
+        
+        {/* Pattern Overlay */}
+        <div 
+          className="absolute inset-0 opacity-100"
+          style={{ background: theme.pattern }}
+        />
+        
+        {/* Subtle Vignette */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40" />
+
         {/* Rarity Banner */}
         <div className={`
           absolute top-0 left-0 right-0 h-1
@@ -179,7 +275,7 @@ function SneakerBadgeCard({ sneaker, index }: { sneaker: typeof LEVEL_9_SNEAKERS
           <div className={`
             flex items-center gap-1.5 px-3 py-1.5 rounded-full
             ${rarity.badge} text-white text-xs font-bold
-            shadow-lg
+            shadow-lg backdrop-blur-sm
           `}>
             <Crown className="w-3.5 h-3.5" />
             <span>LEVEL 9</span>
@@ -205,11 +301,11 @@ function SneakerBadgeCard({ sneaker, index }: { sneaker: typeof LEVEL_9_SNEAKERS
             transition-transform duration-500
             ${isHovered ? 'scale-110 rotate-3' : ''}
           `}>
-            {/* Radial Glow Behind Sneaker */}
-            <div className={`
-              absolute inset-0 rounded-full opacity-30
-              bg-gradient-radial ${rarity.gradient} blur-2xl
-            `} />
+            {/* Accent Glow Behind Sneaker */}
+            <div 
+              className="absolute inset-0 rounded-full blur-3xl opacity-50"
+              style={{ background: `radial-gradient(circle, ${theme.accent} 0%, transparent 70%)` }}
+            />
             
             {!imageError ? (
               <Image
@@ -229,72 +325,74 @@ function SneakerBadgeCard({ sneaker, index }: { sneaker: typeof LEVEL_9_SNEAKERS
           </div>
         </div>
 
-        {/* Content Section */}
-        <div className="px-5 pb-5 space-y-3">
-          {/* Sneaker Name */}
-          <div className="text-center">
-            <p className="text-[#666] text-xs uppercase tracking-widest mb-1">
-              Air Jordan 1
+        {/* Content Section - with frosted glass effect */}
+        <div className="relative px-5 pb-5 space-y-3">
+          {/* Frosted background for text readability */}
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm -mx-5" />
+          
+          <div className="relative z-10 space-y-3 pt-2">
+            {/* Sneaker Name */}
+            <div className="text-center">
+              <p className="text-[#888] text-xs uppercase tracking-widest mb-1">
+                Air Jordan 1
+              </p>
+              <h3 className={`
+                text-xl font-black uppercase tracking-wide
+                bg-gradient-to-r ${rarity.gradient} bg-clip-text text-transparent
+              `}>
+                {sneaker.name}
+              </h3>
+            </div>
+
+            {/* Colorway */}
+            <p className="text-center text-[#aaa] text-sm">
+              {sneaker.colorway}
             </p>
-            <h3 className={`
-              text-xl font-black uppercase tracking-wide
-              bg-gradient-to-r ${rarity.gradient} bg-clip-text text-transparent
+
+            {/* Divider */}
+            <div className="h-px bg-gradient-to-r from-transparent via-gray-600 to-transparent" />
+
+            {/* Stats Row */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className={`
+                  w-8 h-8 rounded-lg flex items-center justify-center
+                  bg-gradient-to-br ${rarity.gradient}
+                `}>
+                  <Zap className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <p className="text-[#888] text-[10px] uppercase">XP Reward</p>
+                  <p className="text-white font-bold text-sm">+{sneaker.xp.toLocaleString()}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <div>
+                  <p className="text-[#888] text-[10px] uppercase text-right">Badge #</p>
+                  <p className="text-white font-bold text-sm text-right">#{sneaker.id.toString().padStart(3, '0')}</p>
+                </div>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/10 backdrop-blur-sm">
+                  <Trophy className="w-4 h-4 text-amber-400" />
+                </div>
+              </div>
+            </div>
+
+            {/* Unlock Button */}
+            <button className={`
+              w-full py-3 rounded-xl font-bold text-sm uppercase tracking-wider
+              bg-gradient-to-r ${rarity.gradient}
+              text-white shadow-lg
+              transform transition-all duration-300
+              hover:shadow-xl hover:scale-[1.02]
+              active:scale-[0.98]
             `}>
-              {sneaker.name}
-            </h3>
+              <span className="flex items-center justify-center gap-2">
+                <Star className="w-4 h-4" />
+                Unlock Badge
+              </span>
+            </button>
           </div>
-
-          {/* Colorway */}
-          <p className="text-center text-[#888] text-sm">
-            {sneaker.colorway}
-          </p>
-
-          {/* Divider */}
-          <div className={`h-px bg-gradient-to-r from-transparent via-gray-700 to-transparent`} />
-
-          {/* Stats Row */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className={`
-                w-8 h-8 rounded-lg flex items-center justify-center
-                bg-gradient-to-br ${rarity.gradient}
-              `}>
-                <Zap className="w-4 h-4 text-white" />
-              </div>
-              <div>
-                <p className="text-[#666] text-[10px] uppercase">XP Reward</p>
-                <p className="text-white font-bold text-sm">+{sneaker.xp.toLocaleString()}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <div>
-                <p className="text-[#666] text-[10px] uppercase text-right">Badge #</p>
-                <p className="text-white font-bold text-sm text-right">#{sneaker.id.toString().padStart(3, '0')}</p>
-              </div>
-              <div className={`
-                w-8 h-8 rounded-lg flex items-center justify-center
-                bg-gradient-to-br from-gray-700 to-gray-800
-              `}>
-                <Trophy className="w-4 h-4 text-amber-400" />
-              </div>
-            </div>
-          </div>
-
-          {/* Unlock Button */}
-          <button className={`
-            w-full py-3 rounded-xl font-bold text-sm uppercase tracking-wider
-            bg-gradient-to-r ${rarity.gradient}
-            text-white shadow-lg
-            transform transition-all duration-300
-            hover:shadow-xl hover:scale-[1.02]
-            active:scale-[0.98]
-          `}>
-            <span className="flex items-center justify-center gap-2">
-              <Star className="w-4 h-4" />
-              Unlock Badge
-            </span>
-          </button>
         </div>
       </div>
     </div>
