@@ -85,7 +85,7 @@ async function testHuggingFace(): Promise<ProviderTestResult> {
   const start = Date.now();
   try {
     const response = await fetch(
-      'https://api-inference.huggingface.co/models/microsoft/Phi-3-mini-4k-instruct',
+      'https://router.huggingface.co/novita/v3/openai/chat/completions',
       {
         method: 'POST',
         headers: {
@@ -93,8 +93,9 @@ async function testHuggingFace(): Promise<ProviderTestResult> {
           'Authorization': `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          inputs: 'Say "Hello" in one word.',
-          parameters: { max_new_tokens: 10, return_full_text: false },
+          model: 'meta-llama/llama-3.1-8b-instruct',
+          messages: [{ role: 'user', content: 'Say "Hello" in one word.' }],
+          max_tokens: 10,
         }),
       }
     );

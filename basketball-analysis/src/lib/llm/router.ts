@@ -127,18 +127,9 @@ async function callHuggingFace(request: LLMRequest): Promise<LLMResponse> {
   const apiKey = process.env.HUGGINGFACE_API_KEY;
   if (!apiKey) throw new Error('HUGGINGFACE_API_KEY not configured');
 
-  // Combine messages into a prompt format for text generation
-  const prompt = request.messages
-    .map(m => {
-      if (m.role === 'system') return `<s>[INST] <<SYS>>\n${m.content}\n<</SYS>>\n\n`;
-      if (m.role === 'user') return `${m.content} [/INST]`;
-      return `${m.content} </s><s>[INST] `;
-    })
-    .join('');
-
-  // Use the standard HuggingFace Inference API with a publicly available model
+  // Use the new router.huggingface.co endpoint with OpenAI-compatible format
   const response = await fetch(
-    'https://api-inference.huggingface.co/models/microsoft/Phi-3-mini-4k-instruct',
+    'https://router.huggingface.co/novita/v3/openai/chat/completions',
     {
       method: 'POST',
       headers: {
@@ -146,12 +137,10 @@ async function callHuggingFace(request: LLMRequest): Promise<LLMResponse> {
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        inputs: prompt,
-        parameters: {
-          max_new_tokens: request.maxTokens || 1024,
-          temperature: request.temperature || 0.7,
-          return_full_text: false,
-        },
+        model: 'meta-llama/llama-3.1-8b-instruct',
+        messages: request.messages,
+        max_tokens: request.maxTokens || 1024,
+        temperature: request.temperature || 0.7,
       }),
     }
   );
@@ -162,14 +151,19 @@ async function callHuggingFace(request: LLMRequest): Promise<LLMResponse> {
   }
 
   const data = await response.json();
-  const content = Array.isArray(data) ? data[0]?.generated_text : data.generated_text;
+  const content = data.choices?.[0]?.message?.content;
 
   if (!content) throw new Error('No content in HuggingFace response');
 
   return {
     content: content.trim(),
     provider: 'huggingface',
-    model: 'microsoft/Phi-3-mini-4k-instruct',
+    model: 'meta-llama/llama-3.1-8b-instruct',
+    usage: {
+      promptTokens: data.usage?.prompt_tokens || 0,
+      completionTokens: data.usage?.completion_tokens || 0,
+      totalTokens: data.usage?.total_tokens || 0,
+    },
   };
 }
 
