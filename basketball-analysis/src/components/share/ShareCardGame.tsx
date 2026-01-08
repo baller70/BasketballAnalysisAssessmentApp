@@ -1789,7 +1789,7 @@ export function ShareCardGame() {
         bestMatch = {
           name: shooter.name,
           similarity: Math.floor(75 + Math.random() * 20),
-          image: shooter.image || '/elite-shooters/placeholder.jpg'
+          image: '/elite-shooters/placeholder.jpg'
         }
       }
 
