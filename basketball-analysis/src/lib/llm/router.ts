@@ -127,9 +127,18 @@ async function callHuggingFace(request: LLMRequest): Promise<LLMResponse> {
   const apiKey = process.env.HUGGINGFACE_API_KEY;
   if (!apiKey) throw new Error('HUGGINGFACE_API_KEY not configured');
 
-  // Use Mistral 7B which is publicly available without approval
+  // Combine messages into a prompt format for text generation
+  const prompt = request.messages
+    .map(m => {
+      if (m.role === 'system') return `<s>[INST] <<SYS>>\n${m.content}\n<</SYS>>\n\n`;
+      if (m.role === 'user') return `${m.content} [/INST]`;
+      return `${m.content} </s><s>[INST] `;
+    })
+    .join('');
+
+  // Use the standard HuggingFace Inference API with a publicly available model
   const response = await fetch(
-    'https://router.huggingface.co/hf-inference/models/mistralai/Mistral-7B-Instruct-v0.3/v1/chat/completions',
+    'https://api-inference.huggingface.co/models/microsoft/Phi-3-mini-4k-instruct',
     {
       method: 'POST',
       headers: {
@@ -137,10 +146,12 @@ async function callHuggingFace(request: LLMRequest): Promise<LLMResponse> {
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'mistralai/Mistral-7B-Instruct-v0.3',
-        messages: request.messages,
-        max_tokens: request.maxTokens || 1024,
-        temperature: request.temperature || 0.7,
+        inputs: prompt,
+        parameters: {
+          max_new_tokens: request.maxTokens || 1024,
+          temperature: request.temperature || 0.7,
+          return_full_text: false,
+        },
       }),
     }
   );
@@ -151,19 +162,14 @@ async function callHuggingFace(request: LLMRequest): Promise<LLMResponse> {
   }
 
   const data = await response.json();
-  const content = data.choices?.[0]?.message?.content;
+  const content = Array.isArray(data) ? data[0]?.generated_text : data.generated_text;
 
   if (!content) throw new Error('No content in HuggingFace response');
 
   return {
-    content,
+    content: content.trim(),
     provider: 'huggingface',
-    model: 'mistralai/Mistral-7B-Instruct-v0.3',
-    usage: {
-      promptTokens: data.usage?.prompt_tokens || 0,
-      completionTokens: data.usage?.completion_tokens || 0,
-      totalTokens: data.usage?.total_tokens || 0,
-    },
+    model: 'microsoft/Phi-3-mini-4k-instruct',
   };
 }
 

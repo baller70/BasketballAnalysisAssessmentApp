@@ -85,7 +85,7 @@ async function testHuggingFace(): Promise<ProviderTestResult> {
   const start = Date.now();
   try {
     const response = await fetch(
-      'https://router.huggingface.co/hf-inference/models/mistralai/Mistral-7B-Instruct-v0.3/v1/chat/completions',
+      'https://api-inference.huggingface.co/models/microsoft/Phi-3-mini-4k-instruct',
       {
         method: 'POST',
         headers: {
@@ -93,9 +93,8 @@ async function testHuggingFace(): Promise<ProviderTestResult> {
           'Authorization': `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: 'mistralai/Mistral-7B-Instruct-v0.3',
-          messages: [{ role: 'user', content: 'Say "Hello" in one word.' }],
-          max_tokens: 10,
+          inputs: 'Say "Hello" in one word.',
+          parameters: { max_new_tokens: 10, return_full_text: false },
         }),
       }
     );
