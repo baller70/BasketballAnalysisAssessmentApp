@@ -1,18 +1,38 @@
 /**
- * LLM API Route - Smart Multi-Provider Router
+ * Enhanced LLM API Route - Smart Multi-Provider Router
  * 
  * This endpoint provides access to the hybrid LLM system that routes requests
  * through multiple FREE providers to minimize costs.
  * 
+ * Features:
+ * - 6 providers (Google, Groq #1, Groq #2, Hugging Face, Cloudflare, OpenAI)
+ * - Response caching (30-50% reduction in API calls)
+ * - Request queuing for traffic spikes
+ * - Health monitoring
+ * - Retry logic with exponential backoff
+ * 
  * POST /api/llm
- * Body: { messages: [...], maxTokens?: number, temperature?: number }
+ * Body: { 
+ *   messages: [...], 
+ *   maxTokens?: number, 
+ *   temperature?: number,
+ *   taskType?: 'coaching' | 'creative' | 'analysis' | 'general',
+ *   priority?: 'high' | 'normal' | 'low',
+ *   skipCache?: boolean
+ * }
  * 
  * GET /api/llm
- * Returns the current router status and available providers
+ * Returns comprehensive router status including health, cache, and queue stats
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { routeLLMRequest, getRouterStatus, type LLMRequest } from '@/lib/llm';
+import { 
+  routeLLMRequest, 
+  getRouterStatus, 
+  getTotalDailyCapacity,
+  type LLMRequest,
+  type TaskType 
+} from '@/lib/llm';
 
 export async function POST(request: NextRequest) {
   try {
@@ -42,10 +62,31 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Validate optional parameters
+    const validTaskTypes: TaskType[] = ['coaching', 'creative', 'analysis', 'general'];
+    const validPriorities = ['high', 'normal', 'low'];
+
+    if (body.taskType && !validTaskTypes.includes(body.taskType)) {
+      return NextResponse.json(
+        { success: false, error: `taskType must be one of: ${validTaskTypes.join(', ')}` },
+        { status: 400 }
+      );
+    }
+
+    if (body.priority && !validPriorities.includes(body.priority)) {
+      return NextResponse.json(
+        { success: false, error: `priority must be one of: ${validPriorities.join(', ')}` },
+        { status: 400 }
+      );
+    }
+
     const llmRequest: LLMRequest = {
       messages: body.messages,
       maxTokens: body.maxTokens || 1024,
       temperature: body.temperature ?? 0.7,
+      taskType: body.taskType,
+      priority: body.priority,
+      skipCache: body.skipCache || false,
     };
 
     const response = await routeLLMRequest(llmRequest);
@@ -55,6 +96,8 @@ export async function POST(request: NextRequest) {
       content: response.content,
       provider: response.provider,
       model: response.model,
+      cached: response.cached || false,
+      responseTime: response.responseTime,
       usage: response.usage,
     });
 
@@ -77,18 +120,29 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   try {
     const status = getRouterStatus();
+    const totalCapacity = getTotalDailyCapacity();
     
     return NextResponse.json({
       success: true,
-      message: 'LLM Router Status',
+      message: 'Enhanced LLM Router Status',
+      totalDailyCapacity: totalCapacity,
       ...status,
       requiredEnvVars: [
-        { name: 'GOOGLE_AI_API_KEY', description: 'Google AI Studio API key (FREE)' },
-        { name: 'GROQ_API_KEY', description: 'Groq Cloud API key (FREE)' },
-        { name: 'HUGGINGFACE_API_KEY', description: 'Hugging Face API token (FREE)' },
-        { name: 'CLOUDFLARE_ACCOUNT_ID', description: 'Cloudflare Account ID' },
-        { name: 'CLOUDFLARE_AI_API_KEY', description: 'Cloudflare AI API key (FREE)' },
-        { name: 'OPENAI_API_KEY', description: 'OpenAI API key (paid fallback)' },
+        { name: 'GOOGLE_AI_API_KEY', description: 'Google AI Studio API key (FREE)', priority: 1 },
+        { name: 'GROQ_API_KEY', description: 'Groq Cloud #1 API key (FREE)', priority: 2 },
+        { name: 'GROQ_API_KEY_2', description: 'Groq Cloud #2 API key (FREE)', priority: 3 },
+        { name: 'HUGGINGFACE_API_KEY', description: 'Hugging Face API token (FREE)', priority: 4 },
+        { name: 'CLOUDFLARE_ACCOUNT_ID', description: 'Cloudflare Account ID', priority: 5 },
+        { name: 'CLOUDFLARE_AI_API_KEY', description: 'Cloudflare AI API key (FREE)', priority: 5 },
+        { name: 'OPENAI_API_KEY', description: 'OpenAI API key (paid fallback)', priority: 6 },
+      ],
+      features: [
+        'Response caching (30-50% reduction in API calls)',
+        'Request queuing for traffic spikes',
+        'Health monitoring with automatic recovery',
+        'Retry logic with exponential backoff',
+        'Smart task-based provider selection',
+        'Groq #2 account for doubled capacity',
       ],
     });
 

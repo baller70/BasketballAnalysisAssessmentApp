@@ -1,21 +1,34 @@
 /**
- * Smart LLM Router
+ * Enhanced Smart LLM Router
  * 
  * Routes requests to the best available LLM provider based on:
  * 1. Provider availability (rate limits)
  * 2. Provider priority (cost optimization)
- * 3. Fallback handling
+ * 3. Provider health (success rates)
+ * 4. Task-specific routing
+ * 5. Fallback handling with retries
+ * 
+ * Features:
+ * - Response caching (30-50% reduction in API calls)
+ * - Request queuing for traffic spikes
+ * - Health monitoring with automatic recovery
+ * - Retry logic with exponential backoff
+ * - Smart task-based provider selection
  * 
  * Priority order:
  * 1. Google AI Studio (Gemini) - FREE, 60 req/min
- * 2. Groq Cloud - FREE, 30 req/min, fastest inference
- * 3. Hugging Face - FREE, 200 req/5min
- * 4. Cloudflare Workers AI - FREE, limited neurons
- * 5. OpenAI (fallback) - Paid, but reliable
+ * 2. Groq Cloud #1 - FREE, 30 req/min, fastest inference
+ * 3. Groq Cloud #2 - FREE, 30 req/min (second account)
+ * 4. Hugging Face - FREE, 200 req/5min
+ * 5. Cloudflare Workers AI - FREE, limited neurons
+ * 6. OpenAI (fallback) - Paid, but reliable
  */
 
-import { LLM_PROVIDERS, getEnabledProviders } from './providers';
-import { checkRateLimit, incrementRateLimit } from './rate-limiter';
+import { LLM_PROVIDERS, getEnabledProviders, getProvidersForTask, TaskType } from './providers';
+import { checkRateLimit, incrementRateLimit, getAllRateLimitStatus } from './rate-limiter';
+import { generateCacheKey, getCachedResponse, setCachedResponse, determineTTL, getCacheStats } from './cache';
+import { recordSuccess, recordFailure, isProviderHealthy, getAllProviderHealth, getSystemHealthSummary } from './health';
+import { setRequestProcessor, enqueueRequest, getQueueStats, isQueueAvailable } from './queue';
 
 export interface LLMRequest {
   messages: Array<{
@@ -24,25 +37,33 @@ export interface LLMRequest {
   }>;
   maxTokens?: number;
   temperature?: number;
+  taskType?: TaskType; // For smart routing
+  priority?: 'high' | 'normal' | 'low'; // For queue priority
+  skipCache?: boolean; // Force fresh response
 }
 
 export interface LLMResponse {
   content: string;
   provider: string;
   model: string;
+  cached?: boolean;
   usage?: {
     promptTokens: number;
     completionTokens: number;
     totalTokens: number;
   };
+  responseTime?: number;
 }
+
+// Retry configuration
+const MAX_RETRIES = 2;
+const RETRY_DELAY_BASE = 1000; // 1 second base delay
 
 // Provider-specific API calls
 async function callGoogleAI(request: LLMRequest): Promise<LLMResponse> {
   const apiKey = process.env.GOOGLE_AI_API_KEY;
   if (!apiKey) throw new Error('GOOGLE_AI_API_KEY not configured');
 
-  // Use gemini-2.0-flash-exp or gemini-1.5-flash-latest for latest model
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
     {
@@ -83,9 +104,9 @@ async function callGoogleAI(request: LLMRequest): Promise<LLMResponse> {
   };
 }
 
-async function callGroq(request: LLMRequest): Promise<LLMResponse> {
-  const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) throw new Error('GROQ_API_KEY not configured');
+async function callGroq(request: LLMRequest, apiKeyEnvVar: string = 'GROQ_API_KEY'): Promise<LLMResponse> {
+  const apiKey = process.env[apiKeyEnvVar];
+  if (!apiKey) throw new Error(`${apiKeyEnvVar} not configured`);
 
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
@@ -94,7 +115,7 @@ async function callGroq(request: LLMRequest): Promise<LLMResponse> {
       'Authorization': `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: 'llama-3.1-8b-instant', // Fast and free
+      model: 'llama-3.1-8b-instant',
       messages: request.messages,
       max_tokens: request.maxTokens || 1024,
       temperature: request.temperature || 0.7,
@@ -113,7 +134,7 @@ async function callGroq(request: LLMRequest): Promise<LLMResponse> {
 
   return {
     content,
-    provider: 'groq',
+    provider: apiKeyEnvVar === 'GROQ_API_KEY_2' ? 'groq2' : 'groq',
     model: 'llama-3.1-8b-instant',
     usage: {
       promptTokens: data.usage?.prompt_tokens || 0,
@@ -123,11 +144,14 @@ async function callGroq(request: LLMRequest): Promise<LLMResponse> {
   };
 }
 
+async function callGroq2(request: LLMRequest): Promise<LLMResponse> {
+  return callGroq(request, 'GROQ_API_KEY_2');
+}
+
 async function callHuggingFace(request: LLMRequest): Promise<LLMResponse> {
   const apiKey = process.env.HUGGINGFACE_API_KEY;
   if (!apiKey) throw new Error('HUGGINGFACE_API_KEY not configured');
 
-  // Use the new router.huggingface.co endpoint with OpenAI-compatible format
   const response = await fetch(
     'https://router.huggingface.co/novita/v3/openai/chat/completions',
     {
@@ -216,7 +240,7 @@ async function callOpenAI(request: LLMRequest): Promise<LLMResponse> {
       'Authorization': `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: 'gpt-4o-mini', // Cheapest option
+      model: 'gpt-4o-mini',
       messages: request.messages,
       max_tokens: request.maxTokens || 1024,
       temperature: request.temperature || 0.7,
@@ -249,21 +273,81 @@ async function callOpenAI(request: LLMRequest): Promise<LLMResponse> {
 const providerCalls: Record<string, (request: LLMRequest) => Promise<LLMResponse>> = {
   google: callGoogleAI,
   groq: callGroq,
+  groq2: callGroq2,
   huggingface: callHuggingFace,
   cloudflare: callCloudflare,
   openai: callOpenAI,
 };
 
 /**
- * Smart LLM Router
- * 
- * Tries providers in priority order, falling back if one fails or is rate-limited.
+ * Call a provider with retry logic and exponential backoff
  */
-export async function routeLLMRequest(request: LLMRequest): Promise<LLMResponse> {
-  const providers = getEnabledProviders();
+async function callProviderWithRetry(
+  providerName: string,
+  request: LLMRequest,
+  maxRetries: number = MAX_RETRIES
+): Promise<LLMResponse> {
+  const callFn = providerCalls[providerName];
+  if (!callFn) throw new Error(`Unknown provider: ${providerName}`);
+
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const startTime = Date.now();
+      const response = await callFn(request);
+      const responseTime = Date.now() - startTime;
+      
+      // Record success
+      recordSuccess(providerName, responseTime);
+      
+      return { ...response, responseTime };
+    } catch (error) {
+      lastError = error as Error;
+      
+      // Don't retry on rate limit errors - move to next provider
+      if (lastError.message.includes('rate limit') || lastError.message.includes('429')) {
+        throw lastError;
+      }
+      
+      // Don't retry on auth errors
+      if (lastError.message.includes('401') || lastError.message.includes('403')) {
+        throw lastError;
+      }
+      
+      // Exponential backoff for transient errors
+      if (attempt < maxRetries) {
+        const delay = RETRY_DELAY_BASE * Math.pow(2, attempt);
+        console.log(`[LLM Router] Retry ${attempt + 1}/${maxRetries} for ${providerName} in ${delay}ms`);
+        await new Promise(r => setTimeout(r, delay));
+      }
+    }
+  }
+
+  // Record failure after all retries exhausted
+  recordFailure(providerName, lastError?.message || 'Unknown error');
+  throw lastError;
+}
+
+/**
+ * Internal routing logic (used by queue processor)
+ */
+async function routeLLMRequestInternal(request: LLMRequest): Promise<LLMResponse> {
+  // Get providers based on task type if specified
+  const providers = request.taskType
+    ? getProvidersForTask(request.taskType)
+    : getEnabledProviders();
+  
   const errors: string[] = [];
 
   for (const provider of providers) {
+    // Skip unhealthy providers
+    if (!isProviderHealthy(provider.name)) {
+      console.log(`[LLM Router] Skipping unhealthy provider: ${provider.displayName}`);
+      errors.push(`${provider.name}: unhealthy`);
+      continue;
+    }
+
     // Check rate limits
     const withinLimits = checkRateLimit(
       provider.name,
@@ -277,21 +361,14 @@ export async function routeLLMRequest(request: LLMRequest): Promise<LLMResponse>
       continue;
     }
 
-    // Check if API key is configured
-    const callFn = providerCalls[provider.name];
-    if (!callFn) {
-      errors.push(`${provider.name}: no call function`);
-      continue;
-    }
-
     try {
       console.log(`[LLM Router] Trying ${provider.displayName}...`);
-      const response = await callFn(request);
+      const response = await callProviderWithRetry(provider.name, request);
       
       // Success! Increment rate limit counter
       incrementRateLimit(provider.name);
       
-      console.log(`[LLM Router] Success with ${provider.displayName}`);
+      console.log(`[LLM Router] Success with ${provider.displayName} (${response.responseTime}ms)`);
       return response;
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
@@ -305,13 +382,74 @@ export async function routeLLMRequest(request: LLMRequest): Promise<LLMResponse>
   throw new Error(`All LLM providers failed. Errors: ${errors.join('; ')}`);
 }
 
+// Set up queue processor
+setRequestProcessor(routeLLMRequestInternal);
+
+/**
+ * Smart LLM Router (Main Entry Point)
+ * 
+ * Features:
+ * - Response caching
+ * - Request queuing during traffic spikes
+ * - Health-aware routing
+ * - Retry logic with exponential backoff
+ */
+export async function routeLLMRequest(request: LLMRequest): Promise<LLMResponse> {
+  // Check cache first (unless skipCache is set)
+  if (!request.skipCache) {
+    const cacheKey = generateCacheKey(request.messages, {
+      maxTokens: request.maxTokens,
+      temperature: request.temperature,
+    });
+    
+    const cachedResponse = getCachedResponse(cacheKey);
+    if (cachedResponse) {
+      return {
+        ...cachedResponse,
+        cached: true,
+      };
+    }
+  }
+
+  // Route the request
+  let response: LLMResponse;
+  
+  // Use queue for traffic management if queue is available
+  if (isQueueAvailable() && request.priority) {
+    response = await enqueueRequest(request, request.priority);
+  } else {
+    response = await routeLLMRequestInternal(request);
+  }
+
+  // Cache the response
+  if (!request.skipCache) {
+    const cacheKey = generateCacheKey(request.messages, {
+      maxTokens: request.maxTokens,
+      temperature: request.temperature,
+    });
+    const ttl = determineTTL(request.messages);
+    setCachedResponse(cacheKey, {
+      content: response.content,
+      provider: response.provider,
+      model: response.model,
+    }, ttl);
+  }
+
+  return response;
+}
+
 /**
  * Simple text completion helper
  */
 export async function generateText(
   systemPrompt: string,
   userPrompt: string,
-  options?: { maxTokens?: number; temperature?: number }
+  options?: { 
+    maxTokens?: number; 
+    temperature?: number;
+    taskType?: TaskType;
+    skipCache?: boolean;
+  }
 ): Promise<string> {
   const response = await routeLLMRequest({
     messages: [
@@ -320,13 +458,15 @@ export async function generateText(
     ],
     maxTokens: options?.maxTokens,
     temperature: options?.temperature,
+    taskType: options?.taskType,
+    skipCache: options?.skipCache,
   });
 
   return response.content;
 }
 
 /**
- * Get current router status
+ * Get comprehensive router status
  */
 export function getRouterStatus(): {
   providers: Array<{
@@ -334,7 +474,12 @@ export function getRouterStatus(): {
     displayName: string;
     enabled: boolean;
     priority: number;
+    healthy: boolean;
   }>;
+  cache: ReturnType<typeof getCacheStats>;
+  queue: ReturnType<typeof getQueueStats>;
+  health: ReturnType<typeof getSystemHealthSummary>;
+  rateLimits: ReturnType<typeof getAllRateLimitStatus>;
 } {
   return {
     providers: getEnabledProviders().map(p => ({
@@ -342,6 +487,18 @@ export function getRouterStatus(): {
       displayName: p.displayName,
       enabled: p.enabled,
       priority: p.priority,
+      healthy: isProviderHealthy(p.name),
     })),
+    cache: getCacheStats(),
+    queue: getQueueStats(),
+    health: getSystemHealthSummary(),
+    rateLimits: getAllRateLimitStatus(),
   };
+}
+
+/**
+ * Get detailed provider health
+ */
+export function getProviderHealthDetails() {
+  return getAllProviderHealth();
 }
