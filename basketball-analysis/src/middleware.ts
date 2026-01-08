@@ -15,7 +15,8 @@ const PUBLIC_ROUTES = [
   '/test-share',
   '/test-achievements',
   '/test-basic-dashboard',
-  '/test-sneakers'
+  '/test-sneakers',
+  '/test-llm'
 ]
 
 // Routes that require authentication

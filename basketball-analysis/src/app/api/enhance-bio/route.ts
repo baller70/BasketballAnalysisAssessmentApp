@@ -1,9 +1,12 @@
-import { NextRequest, NextResponse } from "next/server"
-import OpenAI from "openai"
+/**
+ * Bio Enhancement API Route
+ * 
+ * Uses the hybrid LLM router to enhance user bios.
+ * Falls back through multiple FREE providers before using paid OpenAI.
+ */
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+import { NextRequest, NextResponse } from "next/server"
+import { generateText } from "@/lib/llm"
 
 const ENHANCEMENT_PROMPT = `You are a basketball shooting coach helping players create their profile. 
 The player has written a brief bio about their shooting goals and challenges.
@@ -34,23 +37,12 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: ENHANCEMENT_PROMPT,
-        },
-        {
-          role: "user",
-          content: `Player's bio:\n"${bio}"\n\nPlease expand this into a 200-300 word bio:`,
-        },
-      ],
-      max_tokens: 500,
-      temperature: 0.7,
-    })
-    
-    const enhancedBio = response.choices[0]?.message?.content?.trim()
+    // Use the hybrid LLM router instead of direct OpenAI call
+    const enhancedBio = await generateText(
+      ENHANCEMENT_PROMPT,
+      `Player's bio:\n"${bio}"\n\nPlease expand this into a 200-300 word bio:`,
+      { maxTokens: 500, temperature: 0.7 }
+    )
     
     if (!enhancedBio) {
       throw new Error("No response from AI")
@@ -58,7 +50,7 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json({
       success: true,
-      enhancedBio,
+      enhancedBio: enhancedBio.trim(),
       originalBio: bio,
     })
     
@@ -70,10 +62,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-
-
-
-
-
-
-

@@ -203,3 +203,4 @@ Once you have all 25 images in this folder:
 2. The test page at `/test-sneakers` will automatically display them
 
 
+
