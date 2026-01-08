@@ -1651,6 +1651,16 @@ function DownloadModal({
           </button>
         </div>
         
+        {/* Hidden card for capture - always rendered but off-screen when showing sizes */}
+        <div 
+          ref={previewCardRef}
+          data-download-card="true"
+          className={showPreview ? "hidden" : "fixed -left-[9999px] -top-[9999px] w-[320px]"}
+          style={{ backgroundColor: '#0d0d0d' }}
+        >
+          {previewContent}
+        </div>
+        
         {showPreview ? (
           /* Preview Section */
           <div className="flex-1 overflow-y-auto p-4">
@@ -1658,10 +1668,8 @@ function DownloadModal({
               {/* Preview Label */}
               <div className="text-[#888] text-xs uppercase tracking-wider mb-3">Card Preview</div>
               
-              {/* Card Preview - this is what gets captured for download */}
+              {/* Card Preview - visible preview */}
               <div 
-                ref={previewCardRef}
-                data-download-card="true"
                 className="w-full max-w-[320px]"
                 style={{ backgroundColor: '#0d0d0d' }}
               >
