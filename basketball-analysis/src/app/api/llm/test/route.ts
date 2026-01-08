@@ -85,7 +85,7 @@ async function testHuggingFace(): Promise<ProviderTestResult> {
   const start = Date.now();
   try {
     const response = await fetch(
-      'https://router.huggingface.co/hf-inference/models/meta-llama/Llama-3.1-8B-Instruct/v1/chat/completions',
+      'https://router.huggingface.co/hf-inference/models/mistralai/Mistral-7B-Instruct-v0.3/v1/chat/completions',
       {
         method: 'POST',
         headers: {
@@ -93,7 +93,7 @@ async function testHuggingFace(): Promise<ProviderTestResult> {
           'Authorization': `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: 'meta-llama/Llama-3.1-8B-Instruct',
+          model: 'mistralai/Mistral-7B-Instruct-v0.3',
           messages: [{ role: 'user', content: 'Say "Hello" in one word.' }],
           max_tokens: 10,
         }),

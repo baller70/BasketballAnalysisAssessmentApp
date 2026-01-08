@@ -127,18 +127,9 @@ async function callHuggingFace(request: LLMRequest): Promise<LLMResponse> {
   const apiKey = process.env.HUGGINGFACE_API_KEY;
   if (!apiKey) throw new Error('HUGGINGFACE_API_KEY not configured');
 
-  // Combine messages into a single prompt for HF
-  const prompt = request.messages
-    .map(m => {
-      if (m.role === 'system') return `System: ${m.content}`;
-      if (m.role === 'user') return `User: ${m.content}`;
-      return `Assistant: ${m.content}`;
-    })
-    .join('\n\n');
-
-  // Updated to use the new router.huggingface.co endpoint
+  // Use Mistral 7B which is publicly available without approval
   const response = await fetch(
-    'https://router.huggingface.co/hf-inference/models/meta-llama/Llama-3.1-8B-Instruct/v1/chat/completions',
+    'https://router.huggingface.co/hf-inference/models/mistralai/Mistral-7B-Instruct-v0.3/v1/chat/completions',
     {
       method: 'POST',
       headers: {
@@ -146,7 +137,7 @@ async function callHuggingFace(request: LLMRequest): Promise<LLMResponse> {
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'meta-llama/Llama-3.1-8B-Instruct',
+        model: 'mistralai/Mistral-7B-Instruct-v0.3',
         messages: request.messages,
         max_tokens: request.maxTokens || 1024,
         temperature: request.temperature || 0.7,
@@ -167,7 +158,7 @@ async function callHuggingFace(request: LLMRequest): Promise<LLMResponse> {
   return {
     content,
     provider: 'huggingface',
-    model: 'meta-llama/Llama-3.1-8B-Instruct',
+    model: 'mistralai/Mistral-7B-Instruct-v0.3',
     usage: {
       promptTokens: data.usage?.prompt_tokens || 0,
       completionTokens: data.usage?.completion_tokens || 0,
