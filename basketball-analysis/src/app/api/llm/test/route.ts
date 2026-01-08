@@ -22,7 +22,7 @@ async function testGoogle(): Promise<ProviderTestResult> {
   const start = Date.now();
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -85,7 +85,7 @@ async function testHuggingFace(): Promise<ProviderTestResult> {
   const start = Date.now();
   try {
     const response = await fetch(
-      'https://api-inference.huggingface.co/models/meta-llama/Llama-3.1-8B-Instruct',
+      'https://router.huggingface.co/hf-inference/models/meta-llama/Llama-3.1-8B-Instruct/v1/chat/completions',
       {
         method: 'POST',
         headers: {
@@ -93,8 +93,9 @@ async function testHuggingFace(): Promise<ProviderTestResult> {
           'Authorization': `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          inputs: 'Say "Hello" in one word.',
-          parameters: { max_new_tokens: 10, return_full_text: false },
+          model: 'meta-llama/Llama-3.1-8B-Instruct',
+          messages: [{ role: 'user', content: 'Say "Hello" in one word.' }],
+          max_tokens: 10,
         }),
       }
     );

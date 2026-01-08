@@ -42,8 +42,9 @@ async function callGoogleAI(request: LLMRequest): Promise<LLMResponse> {
   const apiKey = process.env.GOOGLE_AI_API_KEY;
   if (!apiKey) throw new Error('GOOGLE_AI_API_KEY not configured');
 
+  // Use gemini-2.0-flash-exp or gemini-1.5-flash-latest for latest model
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -73,7 +74,7 @@ async function callGoogleAI(request: LLMRequest): Promise<LLMResponse> {
   return {
     content,
     provider: 'google',
-    model: 'gemini-1.5-flash',
+    model: 'gemini-2.0-flash-exp',
     usage: {
       promptTokens: data.usageMetadata?.promptTokenCount || 0,
       completionTokens: data.usageMetadata?.candidatesTokenCount || 0,
@@ -135,8 +136,9 @@ async function callHuggingFace(request: LLMRequest): Promise<LLMResponse> {
     })
     .join('\n\n');
 
+  // Updated to use the new router.huggingface.co endpoint
   const response = await fetch(
-    'https://api-inference.huggingface.co/models/meta-llama/Llama-3.1-8B-Instruct',
+    'https://router.huggingface.co/hf-inference/models/meta-llama/Llama-3.1-8B-Instruct/v1/chat/completions',
     {
       method: 'POST',
       headers: {
@@ -144,12 +146,10 @@ async function callHuggingFace(request: LLMRequest): Promise<LLMResponse> {
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        inputs: prompt,
-        parameters: {
-          max_new_tokens: request.maxTokens || 1024,
-          temperature: request.temperature || 0.7,
-          return_full_text: false,
-        },
+        model: 'meta-llama/Llama-3.1-8B-Instruct',
+        messages: request.messages,
+        max_tokens: request.maxTokens || 1024,
+        temperature: request.temperature || 0.7,
       }),
     }
   );
@@ -160,7 +160,7 @@ async function callHuggingFace(request: LLMRequest): Promise<LLMResponse> {
   }
 
   const data = await response.json();
-  const content = Array.isArray(data) ? data[0]?.generated_text : data.generated_text;
+  const content = data.choices?.[0]?.message?.content;
 
   if (!content) throw new Error('No content in HuggingFace response');
 
@@ -168,6 +168,11 @@ async function callHuggingFace(request: LLMRequest): Promise<LLMResponse> {
     content,
     provider: 'huggingface',
     model: 'meta-llama/Llama-3.1-8B-Instruct',
+    usage: {
+      promptTokens: data.usage?.prompt_tokens || 0,
+      completionTokens: data.usage?.completion_tokens || 0,
+      totalTokens: data.usage?.total_tokens || 0,
+    },
   };
 }
 
