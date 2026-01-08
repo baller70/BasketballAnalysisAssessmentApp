@@ -8,6 +8,7 @@ export { AthleticAbilityCard } from "./AthleticAbilityCard"
 export { DominantHandCard } from "./DominantHandCard"
 export { ShootingStyleCard } from "./ShootingStyleCard"
 export { BioCard } from "./BioCard"
+export { AvatarCard } from "./AvatarCard"
 
 // Export types
 export type { ExperienceLevel } from "./ExperienceCard"

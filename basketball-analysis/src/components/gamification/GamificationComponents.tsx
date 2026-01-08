@@ -138,9 +138,9 @@ export function BadgesShowcase({ maxDisplay = 8, showAll = false }: BadgesShowca
         {!showAll && ALL_BADGES.length > maxDisplay && (
           <button
             onClick={() => setExpanded(!expanded)}
-            className="text-[#FF6B35] text-sm flex items-center gap-1 hover:underline"
+            className="text-[#FF6B35] text-sm flex items-center gap-1 hover:underline whitespace-nowrap"
           >
-            {expanded ? 'Show Less' : 'View All'}
+            {expanded ? 'Less' : 'All'}
             {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
         )}

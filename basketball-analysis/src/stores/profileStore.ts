@@ -142,7 +142,7 @@ const initialState: Omit<ProfileState,
   
   // Wizard State
   currentStep: 1,
-  totalSteps: 9, // Updated from 6 to 9 cards
+  totalSteps: 10, // Updated to 10 cards (includes Avatar)
 }
 
 // ==========================================

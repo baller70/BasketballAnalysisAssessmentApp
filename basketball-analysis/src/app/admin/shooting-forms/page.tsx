@@ -578,7 +578,7 @@ export default function ShootingFormsAdminPage() {
                 className="flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
               >
                 <Download size={18} />
-                <span>Export Approved</span>
+                <span>Export</span>
               </button>
             </div>
           </div>
@@ -654,7 +654,7 @@ export default function ShootingFormsAdminPage() {
                 className="flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
               >
                 <Download size={18} />
-                <span>Export Code</span>
+                <span>Export</span>
               </button>
             </div>
           </div>
@@ -974,7 +974,7 @@ export default function ShootingFormsAdminPage() {
                 className="flex items-center space-x-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg transition-colors"
               >
                 <RotateCcw size={18} />
-                <span>Reset Crop</span>
+                <span>Reset</span>
               </button>
               <div className="flex space-x-2">
                 <button
@@ -996,7 +996,7 @@ export default function ShootingFormsAdminPage() {
                   ) : (
                     <>
                       <Save size={18} />
-                      <span>Apply Crop</span>
+                      <span>Apply</span>
                     </>
                   )}
                 </button>

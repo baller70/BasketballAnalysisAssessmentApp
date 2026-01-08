@@ -3180,10 +3180,10 @@ function AutoGeneratePopup({ availableDrills, currentPreferences, onClose, onGen
                 onGenerate({ ...config, startNow: true })
               }}
               disabled={matchingDrillCount === 0}
-              className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-white font-bold hover:brightness-110 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-white font-bold hover:brightness-110 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
             >
               <Play className="w-5 h-5" />
-              START NOW
+              START
             </button>
           </div>
           

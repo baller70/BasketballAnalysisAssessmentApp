@@ -284,7 +284,7 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
               onClick={analyzeVideo}
               disabled={isAnalyzing}
               className={cn(
-                "w-full py-3 px-4 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-all",
+                "w-full py-3 px-4 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-all whitespace-nowrap",
                 isAnalyzing
                   ? "bg-[#3a3a3a] text-[#888] cursor-not-allowed"
                   : "bg-[#FF6B35] text-white hover:bg-[#FFC000]"
@@ -293,12 +293,12 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
               {isAnalyzing ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  {analysisProgress || "Analyzing..."}
+                  Analyzing...
                 </>
               ) : (
                 <>
                   <Play className="w-4 h-4" />
-                  Analyze Video
+                  Analyze
                 </>
               )}
             </button>

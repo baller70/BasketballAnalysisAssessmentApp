@@ -3695,9 +3695,9 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
               </div>
 
               <div className="flex gap-3">
-                <button onClick={handleDownloadImage} disabled={isGeneratingImage} className="flex-1 bg-[#FF6B35] hover:bg-[#E55300] disabled:bg-[#FF6B35]/50 text-[#1a1a1a] font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-colors">
+                <button onClick={handleDownloadImage} disabled={isGeneratingImage} className="flex-1 bg-[#FF6B35] hover:bg-[#E55300] disabled:bg-[#FF6B35]/50 text-[#1a1a1a] font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-colors whitespace-nowrap">
                   <Download className="w-5 h-5" />
-                  {isGeneratingImage ? "Generating..." : "Download Image"}
+                  {isGeneratingImage ? "..." : "Download"}
                 </button>
                 <button onClick={handleCopyImage} disabled={isGeneratingImage} className="bg-[#3a3a3a] hover:bg-[#4a4a4a] disabled:bg-[#3a3a3a]/50 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors">
                   <Copy className="w-5 h-5" />
@@ -8853,8 +8853,8 @@ function PersonalizedDrillRecommendations({ flaws }: PersonalizedDrillRecommenda
       
       {/* View All Drills Link */}
       <div className="mt-6 text-center">
-        <button className="text-[#FF6B35] hover:text-[#e6c200] text-sm font-medium">
-          View All {ALL_DRILLS.filter(d => d.level === userLevel).length} Drills for {getLevelLabel(userLevel)} Level →
+        <button className="text-[#FF6B35] hover:text-[#e6c200] text-sm font-medium whitespace-nowrap">
+          All Drills →
         </button>
       </div>
     </div>
@@ -11701,14 +11701,14 @@ function PhotoComparisonSlider({
           <div className="p-6">
             {/* Primary Actions */}
             <div className="grid grid-cols-2 gap-3 mb-4">
-              <button className="group relative flex items-center justify-center gap-3 px-5 py-4 rounded-xl bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] border border-[#2a2a2a] hover:border-[#FF6B35]/50 transition-all duration-300">
+              <button className="group relative flex items-center justify-center gap-3 px-5 py-4 rounded-xl bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] border border-[#2a2a2a] hover:border-[#FF6B35]/50 transition-all duration-300 whitespace-nowrap">
                 <Download className="w-5 h-5 text-[#FF6B35]" />
-                <span className="text-white font-semibold">Download Image</span>
+                <span className="text-white font-semibold">Download</span>
                 <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[#FF6B35]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               </button>
-              <button className="group relative flex items-center justify-center gap-3 px-5 py-4 rounded-xl bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] border border-[#2a2a2a] hover:border-[#FF6B35]/50 transition-all duration-300">
+              <button className="group relative flex items-center justify-center gap-3 px-5 py-4 rounded-xl bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] border border-[#2a2a2a] hover:border-[#FF6B35]/50 transition-all duration-300 whitespace-nowrap">
                 <Copy className="w-5 h-5 text-[#FF6B35]" />
-                <span className="text-white font-semibold">Copy Link</span>
+                <span className="text-white font-semibold">Copy</span>
                 <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[#FF6B35]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               </button>
             </div>
@@ -12435,9 +12435,9 @@ function PhotoComparisonSection() {
           {visibleShooters.length < filteredEliteShooters.length && (
             <button
               onClick={() => setVisibleCount(prev => prev + 20)}
-              className="w-full mt-3 py-2.5 bg-[#1a1a1a] hover:bg-[#252525] border border-[#3a3a3a] rounded-lg text-sm text-[#888] hover:text-[#FF6B35] transition-all"
+              className="w-full mt-3 py-2.5 bg-[#1a1a1a] hover:bg-[#252525] border border-[#3a3a3a] rounded-lg text-sm text-[#888] hover:text-[#FF6B35] transition-all whitespace-nowrap"
             >
-              Load more ({filteredEliteShooters.length - visibleShooters.length} remaining)
+              More +{filteredEliteShooters.length - visibleShooters.length}
             </button>
           )}
           

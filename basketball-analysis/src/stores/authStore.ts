@@ -34,6 +34,7 @@ export interface User {
   firstName?: string
   lastName?: string
   displayName?: string
+  avatarUrl?: string
   createdAt: string
   profileComplete: boolean
 }

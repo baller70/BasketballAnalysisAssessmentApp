@@ -85,11 +85,38 @@ export function AnalysisLockInGame({
   const [seenCards, setSeenCards] = useState<Set<string>>(new Set())
   const [dragX, setDragX] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
+  const [arrowTop, setArrowTop] = useState(50)
+  const cardWrapperRef = useRef<HTMLDivElement>(null)
   const [showVoteResult, setShowVoteResult] = useState(false)
   const [lastAction, setLastAction] = useState<'lockin' | 'save' | null>(null)
   const [activeTab, setActiveTab] = useState<'play' | 'locked' | 'saved'>('play')
   
   const dragStartX = useRef(0)
+  
+  // Track scroll to position arrows within card bounds
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!cardWrapperRef.current) return
+      const cardRect = cardWrapperRef.current.getBoundingClientRect()
+      const viewportHeight = window.innerHeight
+      const cardTop = cardRect.top
+      const cardHeight = cardRect.height
+      
+      if (cardTop >= 0 && cardRect.bottom <= viewportHeight) {
+        setArrowTop(50)
+      } else {
+        const viewportCenter = viewportHeight / 2
+        const relativeCenter = viewportCenter - cardTop
+        const percentage = (relativeCenter / cardHeight) * 100
+        const clamped = Math.max(15, Math.min(85, percentage))
+        setArrowTop(clamped)
+      }
+    }
+    
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    handleScroll()
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
   
   // Defaults - EXACT from SimplifiedTabs.tsx
   const stats = shootingStats || { form: 73, elbow: 90, balance: 80, power: 78, followThrough: 80, arc: 79, release: 67 }
@@ -291,7 +318,57 @@ export function AnalysisLockInGame({
       {activeTab === 'play' && (
         <>
           {currentCard ? (
-            <div className="relative">
+            <div className="relative" ref={cardWrapperRef}>
+              {/* Left Swipe Indicator */}
+              <div 
+                className="z-20 flex items-center gap-0 pointer-events-none transition-all duration-150"
+                style={{ 
+                  opacity: dragX < 0 ? Math.min(0.9, 0.2 + Math.abs(dragX) / 150) : 0.2,
+                  transform: `translateY(-50%) translateX(${dragX < 0 ? Math.max(-8, dragX / 15) : 0}px)`,
+                  position: 'absolute',
+                  left: 0,
+                  top: `${arrowTop}%`,
+                  height: 'fit-content'
+                }}
+              >
+                <svg width="70" height="70" viewBox="0 0 70 70">
+                  <path d="M32 5 L5 35 L32 65" stroke={dragX < -20 ? "#3b82f6" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="1" className="transition-all duration-150" />
+                  <path d="M50 5 L23 35 L50 65" stroke={dragX < -20 ? "#3b82f6" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="1" className="transition-all duration-150" />
+                  <path d="M18 5 L-9 35 L18 65" stroke={dragX < -20 ? "#3b82f6" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" className="transition-all duration-150" />
+                  <path d="M36 5 L9 35 L36 65" stroke={dragX < -20 ? "#3b82f6" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" className="transition-all duration-150" />
+                  <path d="M46 5 L19 35 L46 65" stroke={dragX < -20 ? "#3b82f6" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.25" className="transition-all duration-150" />
+                  <path d="M64 5 L37 35 L64 65" stroke={dragX < -20 ? "#3b82f6" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.25" className="transition-all duration-150" />
+                </svg>
+                <svg width="100" height="40" viewBox="0 0 100 40" className="-ml-2">
+                  <text x="50" y="30" textAnchor="middle" fontSize="24" fontWeight="900" fontFamily="Arial Black, sans-serif" fill="none" stroke={dragX < -20 ? "#3b82f6" : "white"} strokeWidth="1.5" letterSpacing="3" className="transition-all duration-150">SWIPE</text>
+                </svg>
+              </div>
+              
+              {/* Right Swipe Indicator */}
+              <div 
+                className="z-20 flex items-center gap-0 pointer-events-none transition-all duration-150"
+                style={{ 
+                  opacity: dragX > 0 ? Math.min(0.9, 0.2 + dragX / 150) : 0.2,
+                  transform: `translateY(-50%) translateX(${dragX > 0 ? Math.min(8, dragX / 15) : 0}px)`,
+                  position: 'absolute',
+                  right: 0,
+                  top: `${arrowTop}%`,
+                  height: 'fit-content'
+                }}
+              >
+                <svg width="100" height="40" viewBox="0 0 100 40" className="-mr-2">
+                  <text x="50" y="30" textAnchor="middle" fontSize="24" fontWeight="900" fontFamily="Arial Black, sans-serif" fill="none" stroke={dragX > 20 ? "#FF6B35" : "white"} strokeWidth="1.5" letterSpacing="3" className="transition-all duration-150">SWIPE</text>
+                </svg>
+                <svg width="70" height="70" viewBox="0 0 70 70">
+                  <path d="M38 5 L65 35 L38 65" stroke={dragX > 20 ? "#FF6B35" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="1" className="transition-all duration-150" />
+                  <path d="M20 5 L47 35 L20 65" stroke={dragX > 20 ? "#FF6B35" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="1" className="transition-all duration-150" />
+                  <path d="M52 5 L79 35 L52 65" stroke={dragX > 20 ? "#FF6B35" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" className="transition-all duration-150" />
+                  <path d="M34 5 L61 35 L34 65" stroke={dragX > 20 ? "#FF6B35" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" className="transition-all duration-150" />
+                  <path d="M24 5 L51 35 L24 65" stroke={dragX > 20 ? "#FF6B35" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.25" className="transition-all duration-150" />
+                  <path d="M6 5 L33 35 L6 65" stroke={dragX > 20 ? "#FF6B35" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.25" className="transition-all duration-150" />
+                </svg>
+              </div>
+            
               {/* Side indicators */}
               <div className="absolute left-0 top-0 bottom-0 w-16 pointer-events-none z-10 flex items-center pl-2" style={{ opacity: dragX < -30 ? Math.min(1, Math.abs(dragX) / 100) : 0 }}><Bookmark className="w-8 h-8 text-blue-400" /></div>
               <div className="absolute right-0 top-0 bottom-0 w-16 pointer-events-none z-10 flex items-center justify-end pr-2" style={{ opacity: dragX > 30 ? Math.min(1, dragX / 100) : 0 }}><Lock className="w-8 h-8 text-[#FF6B35]" /></div>
@@ -324,13 +401,13 @@ export function AnalysisLockInGame({
               {/* Hint + Buttons */}
               <div className="flex items-center justify-center gap-2 mt-3 text-[#555] text-[10px]"><ChevronLeft className="w-3 h-3" />Swipe or Tap<ChevronRight className="w-3 h-3" /></div>
               <div className="flex gap-2 mt-2">
-                <button type="button" onClick={() => handleVote('save')} className="flex-1 py-2 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold">Save</button>
-                <button type="button" onClick={() => handleVote('lockin')} className="flex-1 py-2 rounded-lg bg-[#FF6B35]/10 border border-[#FF6B35]/20 text-[#FF6B35] text-xs font-semibold">Lock In</button>
+                <button type="button" onClick={() => handleVote('save')} className="flex-1 py-2 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold whitespace-nowrap">Save</button>
+                <button type="button" onClick={() => handleVote('lockin')} className="flex-1 py-2 rounded-lg bg-[#FF6B35]/10 border border-[#FF6B35]/20 text-[#FF6B35] text-xs font-semibold whitespace-nowrap">Lock</button>
               </div>
               <p className="text-center text-[#666] text-xs mt-2">{currentIndex + 1} of {displayCards.length}</p>
             </div>
           ) : (
-            <div className="text-center py-12"><Check className="w-12 h-12 text-green-500 mx-auto mb-3" /><p className="text-white font-bold">All Done!</p><button type="button" onClick={resetGame} className="mt-3 px-4 py-2 bg-[#FF6B35] text-white text-sm rounded-lg">Start Over</button></div>
+            <div className="text-center py-12"><Check className="w-12 h-12 text-green-500 mx-auto mb-3" /><p className="text-white font-bold">All Done!</p><button type="button" onClick={resetGame} className="mt-3 px-4 py-2 bg-[#FF6B35] text-white text-sm rounded-lg whitespace-nowrap">Restart</button></div>
           )}
         </>
       )}

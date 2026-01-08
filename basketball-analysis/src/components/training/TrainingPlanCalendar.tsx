@@ -6538,10 +6538,10 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
             <div className="flex gap-2">
               <button
                 onClick={() => startWorkout(new Date())}
-                className="flex-1 py-3 rounded-xl bg-[#FF6B35] text-[#1a1a1a] font-bold hover:brightness-110 transition-all flex items-center justify-center gap-2"
+                className="flex-1 py-3 rounded-xl bg-[#FF6B35] text-[#1a1a1a] font-bold hover:brightness-110 transition-all flex items-center justify-center gap-2 whitespace-nowrap"
               >
                 <Play className="w-5 h-5" />
-                START NOW
+                START
               </button>
               <button
                 onClick={() => {
@@ -6579,19 +6579,19 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
             <div className="flex gap-2">
               <button
                 onClick={() => setShowDrillPool(true)}
-                className="flex-1 py-3 rounded-xl bg-[#2a2a2a] border border-[#3a3a3a] text-[#888] hover:text-white hover:border-[#FF6B35] transition-all flex items-center justify-center gap-2"
+                className="flex-1 py-3 rounded-xl bg-[#2a2a2a] border border-[#3a3a3a] text-[#888] hover:text-white hover:border-[#FF6B35] transition-all flex items-center justify-center gap-2 whitespace-nowrap"
               >
                 <BookOpen className="w-5 h-5" />
-                Browse Drill Pool
+                Drills
               </button>
               {selectedDrills.length > 0 && (
                 <>
                   <button
                     onClick={startCustomWorkout}
-                    className="flex-1 py-3 rounded-xl bg-[#FF6B35] text-[#1a1a1a] font-bold hover:brightness-110 transition-all flex items-center justify-center gap-2"
+                    className="flex-1 py-3 rounded-xl bg-[#FF6B35] text-[#1a1a1a] font-bold hover:brightness-110 transition-all flex items-center justify-center gap-2 whitespace-nowrap"
                   >
                     <Play className="w-5 h-5" />
-                    START NOW
+                    START
                   </button>
                   <button
                     onClick={() => {
@@ -7105,7 +7105,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                 <button
                   onClick={startBuiltWorkout}
                   disabled={customWorkoutDrills.length === 0}
-                  className={`px-8 py-3 rounded-xl font-bold transition-all flex items-center gap-2 ${
+                  className={`px-8 py-3 rounded-xl font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
                     customWorkoutDrills.length > 0
                       ? 'bg-[#FF6B35] text-[#1a1a1a] hover:brightness-110'
                       : 'bg-[#2a2a2a] text-[#666] cursor-not-allowed'
@@ -7113,8 +7113,8 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                 >
                   <Play className="w-5 h-5" />
                   {customWorkoutDrills.length > 0 
-                    ? 'START NOW'
-                    : 'ADD DRILLS TO START'
+                    ? 'START'
+                    : 'ADD DRILLS'
                   }
                 </button>
               </div>

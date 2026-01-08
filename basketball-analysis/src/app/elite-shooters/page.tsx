@@ -407,7 +407,7 @@ export default function EliteShootersPage() {
                 className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#FFD700] to-[#B8860B] hover:from-[#FFE44D] hover:to-[#D4AF37] rounded-lg transition-colors text-black font-semibold"
               >
                 <Settings size={18} />
-                <span>Manage Images</span>
+                <span>Manage</span>
               </Link>
             </div>
           </div>

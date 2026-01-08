@@ -1,6 +1,8 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
+import Image from "next/image"
+import Link from "next/link"
 import { 
   Trophy, Star, Target, Flame, Zap, Medal, Crown, Lock, 
   Users, TrendingUp, Timer, Check, ChevronRight, ChevronDown,
@@ -8,7 +10,7 @@ import {
   Eye, Hand, Scale, Activity, Crosshair, Rocket, 
   Mountain, TreePine, Sun, Moon, Sunrise, CloudLightning,
   Dribbble, CircleDot, Focus, Gauge, Repeat, Calendar,
-  Share2, Download, Volume2, VolumeX
+  Share2, Download, Volume2, VolumeX, ArrowLeft
 } from "lucide-react"
 
 // ============================================
@@ -327,6 +329,487 @@ const TIER_CONFIG: Record<BadgeTier, {
     icon: SneakerGOAT,
     xpMultiplier: 15
   }
+}
+
+// ============================================
+// LEVEL 9 SNEAKER BADGES - Air Jordan 1 Collection
+// ============================================
+
+// Word associations for each sneaker background
+const SNEAKER_WORD_ASSOCIATIONS: Record<string, string[]> = {
+  'Aqua Splash': ['AQUA', 'SPLASH', 'WATER', 'WAVE', 'OCEAN', 'DRIP', 'FLOW', 'SURF', 'TIDE', 'DEEP', 'WET', 'SEA', 'BLUE', 'COOL', 'FRESH', 'DIVE', 'POOL', 'RAIN', 'H2O', 'LIQUID'],
+  'Black Panther': ['WAKANDA', 'PANTHER', 'FOREVER', 'KING', 'POWER', 'TCHALLA', 'BLACK', 'WARRIOR', 'VIBRANIUM', 'CLAWS', 'AFRICA', 'ROYAL', 'HERO', 'CROWN', 'FIERCE', 'LEGEND', 'JUNGLE', 'STRENGTH'],
+  'Bluey': ['BLUEY', 'BINGO', 'PLAY', 'FUN', 'FAMILY', 'HEELER', 'GAMES', 'MAGIC', 'AUSSIE', 'PUPPY', 'DANCE', 'JOY', 'LOVE', 'HAPPY', 'DREAM', 'FRIENDS', 'ADVENTURE', 'BLUE'],
+  'Cool-Aid Orange': ['COOL', 'AID', 'ORANGE', 'FRESH', 'JUICE', 'CITRUS', 'SWEET', 'SUMMER', 'THIRST', 'FLAVOR', 'BURST', 'TANGY', 'ZESTY', 'FRUITY', 'COLD', 'ICE', 'DRINK', 'REFRESHING'],
+  'Crimson': ['CRIMSON', 'RED', 'FIRE', 'PASSION', 'BLOOD', 'FLAME', 'SCARLET', 'RUBY', 'BOLD', 'INTENSE', 'POWER', 'FIERCE', 'DARK', 'HOT', 'BURN', 'ELEGANT', 'ROSE', 'DEEP'],
+  'Incredible Hulk': ['HULK', 'SMASH', 'INCREDIBLE', 'GREEN', 'GAMMA', 'BANNER', 'STRONG', 'ANGRY', 'POWER', 'RAGE', 'BEAST', 'MONSTER', 'STRENGTH', 'FURY', 'GIANT', 'CRUSH', 'ROAR', 'MUSCLE'],
+  'Kryptonite': ['KRYPTONITE', 'SUPERMAN', 'SUPER', 'HERO', 'KRYPTON', 'POWER', 'CLARK', 'KENT', 'CRYSTAL', 'GREEN', 'WEAKNESS', 'ALIEN', 'FORTRESS', 'CAPE', 'FLY', 'STEEL', 'HOPE', 'JUSTICE'],
+  'Loch Ness Monster': ['NESSIE', 'LOCH', 'NESS', 'MONSTER', 'SCOTLAND', 'LEGEND', 'MYSTERY', 'LAKE', 'DEEP', 'CREATURE', 'MYTH', 'WATER', 'ANCIENT', 'HIDDEN', 'BEAST', 'SECRET', 'DARK', 'SHADOW'],
+  'Orange Crush': ['ORANGE', 'CRUSH', 'SODA', 'FIZZ', 'BUBBLES', 'SWEET', 'CITRUS', 'POP', 'REFRESHING', 'CARBONATED', 'BURST', 'FLAVOR', 'ZEST', 'SPARKLING', 'COLD', 'DRINK', 'JUICE', 'TANG'],
+  'Pink Panther': ['PINK', 'PANTHER', 'COOL', 'SMOOTH', 'DETECTIVE', 'MYSTERY', 'SUAVE', 'SLEEK', 'CLASSIC', 'JAZZY', 'STYLE', 'DIAMOND', 'CLOUSEAU', 'SPY', 'SLICK', 'CAT', 'GROOVY', 'CHIC'],
+  'Purple Rain': ['PURPLE', 'RAIN', 'PRINCE', 'MUSIC', 'LEGEND', 'GUITAR', 'FUNK', 'SOUL', 'ICON', 'MINNEAPOLIS', 'DOVE', 'SYMBOL', 'GENIUS', 'LOVE', 'SEXY', 'DREAM', 'NIGHT', 'STAR'],
+  'Hulkmania': ['HULKMANIA', 'HOGAN', 'WRESTLING', 'BROTHER', 'CHAMPION', 'HULK', 'MANIA', 'RING', 'BELT', 'LEGEND', 'POWER', 'YELLOW', 'RED', 'SLAM', 'VICTORY', 'FLEX', 'STRONG', 'ICON'],
+};
+
+// Different font families for variety
+const SNEAKER_FONTS = [
+  'Permanent Marker',
+  'Bangers',
+  'Satisfy',
+  'Pacifico',
+  'Bebas Neue',
+  'Oswald',
+  'Anton',
+  'Righteous',
+  'Russo One',
+  'Black Ops One',
+];
+
+// Generate interlocking typography background
+function generateSneakerTypography(words: string[]): React.ReactNode {
+  const elements: React.ReactNode[] = [];
+  
+  const placements = [
+    { word: words[0], x: 5, y: 28, size: 24, rotate: 0 },
+    { word: words[1], x: 85, y: 22, size: 18, rotate: -90 },
+    { word: words[2], x: 110, y: 30, size: 20, rotate: 0 },
+    { word: words[3], x: 200, y: 24, size: 16, rotate: -90 },
+    { word: words[4], x: 230, y: 28, size: 22, rotate: 0 },
+    { word: words[5], x: 340, y: 20, size: 14, rotate: -90 },
+    { word: words[6], x: 365, y: 32, size: 18, rotate: 0 },
+    { word: words[7], x: 5, y: 55, size: 20, rotate: 0 },
+    { word: words[8], x: 100, y: 52, size: 16, rotate: 0 },
+    { word: words[9], x: 175, y: 48, size: 22, rotate: -90 },
+    { word: words[10], x: 200, y: 58, size: 18, rotate: 0 },
+    { word: words[11], x: 295, y: 50, size: 14, rotate: -90 },
+    { word: words[12], x: 320, y: 55, size: 20, rotate: 0 },
+    { word: words[13], x: 5, y: 82, size: 28, rotate: 0 },
+    { word: words[14], x: 120, y: 78, size: 16, rotate: -90 },
+    { word: words[15], x: 145, y: 85, size: 22, rotate: 0 },
+    { word: words[16], x: 260, y: 80, size: 18, rotate: 0 },
+    { word: words[17], x: 355, y: 75, size: 20, rotate: -90 },
+    { word: words[0], x: 5, y: 112, size: 18, rotate: 0 },
+    { word: words[1], x: 80, y: 108, size: 24, rotate: 0 },
+    { word: words[2], x: 185, y: 105, size: 16, rotate: -90 },
+    { word: words[3], x: 210, y: 115, size: 20, rotate: 0 },
+    { word: words[4], x: 310, y: 110, size: 22, rotate: 0 },
+    { word: words[5], x: 5, y: 142, size: 22, rotate: 0 },
+    { word: words[6], x: 95, y: 138, size: 18, rotate: -90 },
+    { word: words[7], x: 120, y: 145, size: 26, rotate: 0 },
+    { word: words[8], x: 240, y: 140, size: 16, rotate: 0 },
+    { word: words[9], x: 320, y: 135, size: 20, rotate: -90 },
+    { word: words[10], x: 345, y: 145, size: 18, rotate: 0 },
+    { word: words[11], x: 5, y: 175, size: 30, rotate: 0 },
+    { word: words[12], x: 130, y: 170, size: 18, rotate: 0 },
+    { word: words[13], x: 215, y: 168, size: 22, rotate: -90 },
+    { word: words[14], x: 245, y: 178, size: 24, rotate: 0 },
+    { word: words[15], x: 370, y: 172, size: 16, rotate: -90 },
+    { word: words[16], x: 5, y: 208, size: 20, rotate: 0 },
+    { word: words[17], x: 90, y: 202, size: 16, rotate: -90 },
+    { word: words[0], x: 115, y: 210, size: 24, rotate: 0 },
+    { word: words[1], x: 225, y: 205, size: 20, rotate: 0 },
+    { word: words[2], x: 320, y: 200, size: 18, rotate: -90 },
+    { word: words[3], x: 345, y: 212, size: 22, rotate: 0 },
+    { word: words[4], x: 5, y: 240, size: 26, rotate: 0 },
+    { word: words[5], x: 110, y: 235, size: 18, rotate: 0 },
+    { word: words[6], x: 190, y: 232, size: 22, rotate: -90 },
+    { word: words[7], x: 220, y: 242, size: 20, rotate: 0 },
+    { word: words[8], x: 315, y: 238, size: 24, rotate: 0 },
+  ];
+
+  placements.forEach((p, idx) => {
+    const font = SNEAKER_FONTS[idx % SNEAKER_FONTS.length];
+    const opacity = 0.15 + (idx % 3) * 0.05;
+    
+    elements.push(
+      <text
+        key={idx}
+        x={p.x}
+        y={p.y}
+        transform={p.rotate !== 0 ? `rotate(${p.rotate}, ${p.x}, ${p.y})` : undefined}
+        fill="white"
+        fontSize={p.size}
+        fontFamily={font}
+        fontWeight="bold"
+        opacity={opacity}
+      >
+        {p.word}
+      </text>
+    );
+  });
+
+  return (
+    <svg 
+      className="absolute inset-0 w-full h-full overflow-hidden" 
+      viewBox="0 0 400 260" 
+      preserveAspectRatio="xMidYMid slice"
+      style={{ minHeight: '100%', minWidth: '100%' }}
+    >
+      <defs>
+        <style>
+          {`
+            @import url('https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Bangers&family=Satisfy&family=Pacifico&family=Bebas+Neue&family=Oswald:wght@700&family=Anton&family=Righteous&family=Russo+One&family=Black+Ops+One&display=swap');
+          `}
+        </style>
+      </defs>
+      {elements}
+    </svg>
+  );
+}
+
+// Theme configuration for sneaker cards
+const SNEAKER_THEMES: Record<string, {
+  primaryColor: string;
+  buttonGradient: string;
+  borderColor: string;
+  glowColor: string;
+  titleGradient: string;
+}> = {
+  'Aqua Splash': {
+    primaryColor: '#22d3ee',
+    buttonGradient: 'from-cyan-500 via-cyan-400 to-teal-400',
+    borderColor: 'border-cyan-500/60',
+    glowColor: 'shadow-cyan-500/40',
+    titleGradient: 'from-cyan-400 via-cyan-300 to-teal-400',
+  },
+  'Black Panther': {
+    primaryColor: '#9333ea',
+    buttonGradient: 'from-gray-900 via-gray-800 to-purple-900',
+    borderColor: 'border-purple-600/80',
+    glowColor: 'shadow-purple-600/50',
+    titleGradient: 'from-gray-200 via-purple-300 to-gray-100',
+  },
+  'Bluey': {
+    primaryColor: '#38bdf8',
+    buttonGradient: 'from-sky-500 via-sky-400 to-blue-400',
+    borderColor: 'border-sky-500/60',
+    glowColor: 'shadow-sky-500/40',
+    titleGradient: 'from-sky-400 via-sky-300 to-blue-400',
+  },
+  'Cool-Aid Orange': {
+    primaryColor: '#fb923c',
+    buttonGradient: 'from-orange-500 via-orange-400 to-amber-400',
+    borderColor: 'border-orange-500/60',
+    glowColor: 'shadow-orange-500/40',
+    titleGradient: 'from-orange-400 via-orange-300 to-amber-400',
+  },
+  'Crimson': {
+    primaryColor: '#ef4444',
+    buttonGradient: 'from-red-600 via-red-500 to-rose-500',
+    borderColor: 'border-red-500/60',
+    glowColor: 'shadow-red-500/40',
+    titleGradient: 'from-red-400 via-red-300 to-rose-400',
+  },
+  'Incredible Hulk': {
+    primaryColor: '#22c55e',
+    buttonGradient: 'from-green-600 via-green-500 to-emerald-500',
+    borderColor: 'border-green-500/60',
+    glowColor: 'shadow-green-500/40',
+    titleGradient: 'from-green-400 via-emerald-400 to-green-300',
+  },
+  'Kryptonite': {
+    primaryColor: '#a3e635',
+    buttonGradient: 'from-lime-500 via-lime-400 to-green-400',
+    borderColor: 'border-lime-500/60',
+    glowColor: 'shadow-lime-500/40',
+    titleGradient: 'from-lime-400 via-lime-300 to-green-400',
+  },
+  'Loch Ness Monster': {
+    primaryColor: '#14b8a6',
+    buttonGradient: 'from-teal-600 via-teal-500 to-cyan-500',
+    borderColor: 'border-teal-500/60',
+    glowColor: 'shadow-teal-500/40',
+    titleGradient: 'from-teal-400 via-teal-300 to-cyan-400',
+  },
+  'Orange Crush': {
+    primaryColor: '#f97316',
+    buttonGradient: 'from-orange-600 via-orange-500 to-red-500',
+    borderColor: 'border-orange-500/60',
+    glowColor: 'shadow-orange-500/40',
+    titleGradient: 'from-orange-400 via-orange-300 to-red-400',
+  },
+  'Pink Panther': {
+    primaryColor: '#ec4899',
+    buttonGradient: 'from-pink-600 via-pink-500 to-rose-500',
+    borderColor: 'border-pink-500/60',
+    glowColor: 'shadow-pink-500/40',
+    titleGradient: 'from-pink-400 via-pink-300 to-rose-400',
+  },
+  'Purple Rain': {
+    primaryColor: '#a855f7',
+    buttonGradient: 'from-purple-600 via-purple-500 to-violet-500',
+    borderColor: 'border-purple-500/60',
+    glowColor: 'shadow-purple-500/40',
+    titleGradient: 'from-purple-400 via-violet-400 to-purple-300',
+  },
+  'Hulkmania': {
+    primaryColor: '#facc15',
+    buttonGradient: 'from-yellow-500 via-yellow-400 to-lime-400',
+    borderColor: 'border-yellow-500/60',
+    glowColor: 'shadow-yellow-500/40',
+    titleGradient: 'from-yellow-400 via-yellow-300 to-lime-400',
+  },
+};
+
+// Level 9 sneaker data
+const LEVEL_9_SNEAKERS = [
+  { id: 1, name: 'Aqua Splash', fileName: 'Air Jordan 1 Aqua Splash.png', colorway: 'Aqua / White / Black', rarity: 'Legendary', xp: 5000 },
+  { id: 2, name: 'Black Panther', fileName: 'Air Jordan 1 Black Panther.png', colorway: 'Black / Purple / Silver', rarity: 'Mythic', xp: 7500 },
+  { id: 3, name: 'Bluey', fileName: 'Air Jordan 1 Bluey .png', colorway: 'Sky Blue / White', rarity: 'Legendary', xp: 5000 },
+  { id: 4, name: 'Cool-Aid Orange', fileName: 'Air Jordan 1 Cool-Aid Orange.png', colorway: 'Orange / White', rarity: 'Epic', xp: 3500 },
+  { id: 5, name: 'Crimson', fileName: 'Air Jordan 1 Crimson.png', colorway: 'Crimson Red / Black', rarity: 'Legendary', xp: 5000 },
+  { id: 6, name: 'Incredible Hulk', fileName: 'Air Jordan 1 Incredible Hulk .png', colorway: 'Green / Purple', rarity: 'Mythic', xp: 7500 },
+  { id: 7, name: 'Kryptonite', fileName: 'Air Jordan 1 Kyptionitepng.png', colorway: 'Neon Green / Black', rarity: 'Legendary', xp: 5000 },
+  { id: 8, name: 'Loch Ness Monster', fileName: 'Air Jordan 1 Loch Ness Monster.png', colorway: 'Deep Sea Blue / Green', rarity: 'Mythic', xp: 7500 },
+  { id: 9, name: 'Orange Crush', fileName: 'Air Jordan 1 Orange Crush.png', colorway: 'Orange / Black', rarity: 'Epic', xp: 3500 },
+  { id: 10, name: 'Pink Panther', fileName: 'Air Jordan 1 Pink Pather.png', colorway: 'Hot Pink / White', rarity: 'Legendary', xp: 5000 },
+  { id: 11, name: 'Purple Rain', fileName: 'air Jordan 1 purple rain v1.png', colorway: 'Purple / Gold', rarity: 'Mythic', xp: 7500 },
+  { id: 12, name: 'Hulkmania', fileName: 'Air Jordan 1 rHulkmania.png', colorway: 'Yellow / Green', rarity: 'Legendary', xp: 5000 },
+];
+
+// Level 9 Sneaker Badge Card Component
+function Level9SneakerCard({ sneaker, index, isUnlocked = false }: { sneaker: typeof LEVEL_9_SNEAKERS[0]; index: number; isUnlocked?: boolean }) {
+  const [imageError, setImageError] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+  const theme = SNEAKER_THEMES[sneaker.name];
+  const words = SNEAKER_WORD_ASSOCIATIONS[sneaker.name] || [];
+
+  useEffect(() => {
+    const link = document.createElement('link');
+    link.href = 'https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Bangers&family=Satisfy&family=Pacifico&family=Bebas+Neue&family=Oswald:wght@700&family=Anton&family=Righteous&family=Russo+One&family=Black+Ops+One&display=swap';
+    link.rel = 'stylesheet';
+    document.head.appendChild(link);
+    link.onload = () => setFontsLoaded(true);
+    return () => {
+      if (document.head.contains(link)) {
+        document.head.removeChild(link);
+      }
+    };
+  }, []);
+
+  if (!theme) return null;
+
+  // Show full color when unlocked OR when hovered
+  const showFullColor = isUnlocked || isHovered;
+
+  return (
+    <div
+      className={`
+        relative group cursor-pointer
+        transform transition-all duration-500 ease-out
+        ${isHovered ? 'scale-105 -translate-y-2' : ''}
+      `}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{ animationDelay: `${index * 100}ms` }}
+    >
+      {/* Glow Effect on Hover */}
+      <div 
+        className={`
+          absolute -inset-1 rounded-3xl opacity-0 group-hover:opacity-100
+          blur-xl transition-opacity duration-500
+        `}
+        style={{ background: theme.primaryColor }}
+      />
+
+      {/* Main Card */}
+      <div 
+        className={`
+          relative overflow-hidden rounded-2xl
+          border-2 ${showFullColor ? theme.borderColor : 'border-gray-700'}
+          bg-[#0d0d0d]
+          shadow-2xl ${isHovered ? `shadow-xl ${theme.glowColor}` : ''}
+          transition-all duration-500
+        `}
+        style={{
+          filter: showFullColor ? 'none' : 'grayscale(100%)',
+        }}
+      >
+        {/* Typography Background */}
+        <div className="absolute inset-0">
+          {fontsLoaded && generateSneakerTypography(words)}
+        </div>
+
+        {/* Top Color Bar */}
+        <div 
+          className="absolute top-0 left-0 right-0 h-1 z-10 transition-all duration-500"
+          style={{ 
+            background: showFullColor 
+              ? `linear-gradient(90deg, ${theme.primaryColor}, ${theme.primaryColor}88)` 
+              : 'linear-gradient(90deg, #555, #333)'
+          }}
+        />
+
+        {/* Lock Overlay - shows when locked and not hovered */}
+        {!isUnlocked && !isHovered && (
+          <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/50 transition-opacity duration-500">
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-16 h-16 rounded-full bg-gray-800/90 border-2 border-gray-600 flex items-center justify-center">
+                <Lock className="w-8 h-8 text-gray-400" />
+              </div>
+              <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">Locked</p>
+            </div>
+          </div>
+        )}
+
+        {/* Level Badge */}
+        <div className="absolute top-3 left-3 z-20">
+          <div 
+            className="flex items-center gap-2 px-3 py-2 rounded-full text-white text-xs font-bold shadow-lg transition-all duration-500"
+            style={{ background: showFullColor ? theme.primaryColor : '#555' }}
+          >
+            <Crown className="w-4 h-4" />
+            <span>HALL OF FAME</span>
+          </div>
+        </div>
+
+        {/* Rarity Badge */}
+        <div className="absolute top-14 left-3 z-20">
+          <div 
+            className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-black/60 backdrop-blur-sm border text-sm font-semibold transition-all duration-500"
+            style={{ 
+              borderColor: showFullColor ? `${theme.primaryColor}60` : '#55555560', 
+              color: showFullColor ? theme.primaryColor : '#888' 
+            }}
+          >
+            <Sparkles className="w-4 h-4" />
+            {sneaker.rarity.toUpperCase()}
+          </div>
+        </div>
+
+        {/* Badge Number */}
+        <div className="absolute top-3 right-3 z-20">
+          <div 
+            className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-black/60 backdrop-blur-sm border text-sm font-bold transition-all duration-500"
+            style={{ 
+              borderColor: showFullColor ? `${theme.primaryColor}60` : '#55555560', 
+              color: 'white' 
+            }}
+          >
+            <span style={{ color: showFullColor ? theme.primaryColor : '#888' }}>#</span>{sneaker.id}
+          </div>
+        </div>
+
+        {/* Sneaker Image Container */}
+        <div className="relative pt-14 pb-4 px-4 z-10">
+          <div className={`
+            relative w-full aspect-square flex items-center justify-center
+            transition-transform duration-500
+            ${isHovered ? 'scale-110 rotate-3' : ''}
+          `}>
+            {!imageError ? (
+              <Image
+                src={`/sneakers/Level 9/${encodeURIComponent(sneaker.fileName)}`}
+                alt={`Air Jordan 1 ${sneaker.name}`}
+                width={180}
+                height={180}
+                className="relative z-10 object-contain drop-shadow-2xl transition-all duration-500"
+                style={{
+                  filter: showFullColor ? 'none' : 'grayscale(100%) brightness(0.7)',
+                }}
+                onError={() => setImageError(true)}
+                priority={index < 4}
+              />
+            ) : (
+              <div className="w-36 h-36 rounded-2xl bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center">
+                <span className="text-4xl">👟</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Content Section */}
+        <div className="relative px-4 pb-4 space-y-2 z-10">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm -mx-4" />
+          
+          <div className="relative z-10 space-y-2 pt-2">
+            {/* Sneaker Name */}
+            <div className="text-center">
+              <p className="text-gray-500 text-[10px] uppercase tracking-widest mb-1">
+                Air Jordan 1
+              </p>
+              <h3 className={`
+                text-lg font-black uppercase tracking-wide transition-all duration-500
+                ${showFullColor 
+                  ? `bg-gradient-to-r ${theme.titleGradient} bg-clip-text text-transparent`
+                  : 'text-gray-500'
+                }
+              `}>
+                {sneaker.name}
+              </h3>
+            </div>
+
+            {/* Colorway */}
+            <p className="text-center text-gray-400 text-xs">
+              {sneaker.colorway}
+            </p>
+
+            {/* XP Reward */}
+            <div 
+              className="text-center py-3 rounded-xl relative overflow-hidden transition-all duration-500"
+              style={{ 
+                background: showFullColor 
+                  ? `linear-gradient(135deg, ${theme.primaryColor}20, ${theme.primaryColor}40)` 
+                  : 'linear-gradient(135deg, #33333320, #33333340)'
+              }}
+            >
+              <div 
+                className="absolute inset-0 opacity-20 transition-all duration-500"
+                style={{ 
+                  background: showFullColor 
+                    ? `radial-gradient(circle at 50% 50%, ${theme.primaryColor}, transparent 70%)`
+                    : 'radial-gradient(circle at 50% 50%, #555, transparent 70%)'
+                }}
+              />
+              <p className="text-gray-400 text-[10px] uppercase tracking-widest mb-1 relative z-10">XP REWARD</p>
+              <p 
+                className={`text-3xl font-black relative z-10 transition-all duration-500 ${showFullColor ? 'animate-pulse' : ''}`}
+                style={{ 
+                  color: showFullColor ? theme.primaryColor : '#666',
+                  textShadow: showFullColor 
+                    ? `0 0 20px ${theme.primaryColor}80, 0 0 40px ${theme.primaryColor}40`
+                    : 'none'
+                }}
+              >
+                +{sneaker.xp.toLocaleString()}
+              </p>
+              <p className="text-gray-500 text-[10px] uppercase mt-1 relative z-10">Points</p>
+            </div>
+
+            {/* Unlock Button */}
+            <button 
+              className={`
+                w-full py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider
+                text-white shadow-lg whitespace-nowrap
+                transform transition-all duration-500
+                ${showFullColor 
+                  ? `bg-gradient-to-r ${theme.buttonGradient} hover:shadow-xl hover:scale-[1.02]`
+                  : 'bg-gray-700 cursor-not-allowed'
+                }
+                active:scale-[0.98]
+              `}
+              disabled={!isUnlocked}
+            >
+              <span className="flex items-center justify-center gap-2">
+                {isUnlocked ? (
+                  <>
+                    <Star className="w-4 h-4" />
+                    Claim
+                  </>
+                ) : (
+                  <>
+                    <Lock className="w-4 h-4" />
+                    Locked
+                  </>
+                )}
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ============================================
@@ -1308,7 +1791,146 @@ function FilterSection({
 // TIER PROGRESS SECTION
 // ============================================
 
-function TierProgressSection() {
+// Tier Preview Modal - Shows what badges are available at each tier
+function TierPreviewModal({ 
+  tier, 
+  onClose,
+  onSelectBadge 
+}: { 
+  tier: BadgeTier | null; 
+  onClose: () => void;
+  onSelectBadge: (badge: Badge) => void;
+}) {
+  if (!tier) return null;
+  
+  const config = TIER_CONFIG[tier];
+  const tierBadges = BADGES.filter(b => b.tier === tier);
+  const unlockedCount = tierBadges.filter(b => b.unlocked).length;
+  
+  // Check if this is Hall of Fame (Level 9) to show sneaker badges
+  const isHallOfFame = tier === 'hall_of_fame';
+  
+  return (
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div 
+        className="relative w-full max-w-2xl max-h-[85vh] overflow-hidden rounded-3xl bg-[#1a1a1a] border-2"
+        style={{ borderColor: config.borderColor }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div 
+          className="relative p-6 border-b border-[#3a3a3a]"
+          style={{ background: config.bgPattern }}
+        >
+          <div 
+            className="absolute inset-0 opacity-30"
+            style={{ background: config.gradient }}
+          />
+          
+          <button 
+            onClick={onClose}
+            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 transition-colors z-10"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          
+          <div className="relative z-10 flex items-center gap-4">
+            <div 
+              className="w-16 h-16 rounded-2xl flex items-center justify-center"
+              style={{ 
+                background: config.gradient,
+                boxShadow: config.glow
+              }}
+            >
+              <config.icon className="w-8 h-8 text-[#1a1a1a]" />
+            </div>
+            
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span 
+                  className="text-2xl font-black uppercase"
+                  style={{ color: config.textColor }}
+                >
+                  {config.name}
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-black/30 text-xs font-bold text-white">
+                  Level {config.level}
+                </span>
+              </div>
+              <p className="text-gray-400 text-sm">{config.subtitle}</p>
+              <p className="text-gray-500 text-xs mt-1">
+                {unlockedCount}/{tierBadges.length} badges unlocked • {config.xpMultiplier}x XP multiplier
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        {/* Content */}
+        <div className="p-6 overflow-y-auto max-h-[60vh]">
+          {/* Sneaker Name */}
+          <div className="mb-4 p-3 rounded-xl bg-[#2a2a2a] border border-[#3a3a3a]">
+            <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Signature Sneaker</p>
+            <p className="text-white font-bold">{config.sneakerName}</p>
+          </div>
+          
+          {/* Hall of Fame - Show Full Sneaker Badge Cards */}
+          {isHallOfFame && (
+            <div className="mb-6">
+              <h4 className="text-white font-bold text-sm mb-4 flex items-center gap-2 uppercase tracking-wide">
+                <Crown className="w-4 h-4" style={{ color: config.textColor }} />
+                Air Jordan 1 Collection
+                <span className="ml-auto text-[10px] text-gray-500 font-normal normal-case">{LEVEL_9_SNEAKERS.length} exclusive</span>
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {LEVEL_9_SNEAKERS.map((sneaker, index) => (
+                  <Level9SneakerCard key={sneaker.id} sneaker={sneaker} index={index} isUnlocked={false} />
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Regular Badges - Full Size Cards */}
+          <h4 className="text-white font-bold text-sm mb-4 flex items-center gap-2 uppercase tracking-wide">
+            <Award className="w-4 h-4" style={{ color: config.textColor }} />
+            {isHallOfFame ? 'Achievement Badges' : 'Available Badges'}
+            <span className="ml-auto text-[10px] text-gray-500 font-normal normal-case">{tierBadges.length} badges</span>
+          </h4>
+          
+          {tierBadges.length > 0 ? (
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+              {tierBadges.map((badge) => (
+                <BadgeCard 
+                  key={badge.id} 
+                  badge={badge} 
+                  onClick={() => {
+                    onSelectBadge(badge);
+                    onClose();
+                  }}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-gray-600 text-sm">No badges at this tier yet</p>
+            </div>
+          )}
+        </div>
+        
+        {/* Footer */}
+        <div className="p-4 border-t border-[#3a3a3a] bg-[#222]">
+          <p className="text-center text-gray-500 text-xs">
+            Tap any badge to see details • Keep grinding to unlock more!
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TierProgressSection({ onTierClick }: { onTierClick: (tier: BadgeTier) => void }) {
   const tierCounts = Object.keys(TIER_CONFIG).reduce((acc, tier) => {
     const tierBadges = BADGES.filter(b => b.tier === tier as BadgeTier)
     const unlocked = tierBadges.filter(b => b.unlocked).length
@@ -1321,6 +1943,7 @@ function TierProgressSection() {
       <h3 className="text-white font-bold text-sm mb-4 flex items-center gap-2 uppercase tracking-wide">
         <Award className="w-4 h-4 text-[#FF6B35]" />
         Tier Progress
+        <span className="ml-auto text-[10px] text-gray-500 font-normal normal-case">Tap to preview</span>
       </h3>
       <div className="space-y-3">
         {(Object.keys(TIER_CONFIG) as BadgeTier[]).map((tier) => {
@@ -1328,10 +1951,18 @@ function TierProgressSection() {
           const { unlocked, total } = tierCounts[tier]
           const percent = total > 0 ? (unlocked / total) * 100 : 0
           
+          // Add sneaker count for Hall of Fame
+          const isHallOfFame = tier === 'hall_of_fame';
+          const sneakerCount = isHallOfFame ? LEVEL_9_SNEAKERS.length : 0;
+          
           return (
-            <div key={tier} className="flex items-center gap-3">
+            <button 
+              key={tier} 
+              onClick={() => onTierClick(tier)}
+              className="w-full flex items-center gap-3 p-2 -m-2 rounded-xl hover:bg-[#333] transition-colors group"
+            >
               <div 
-                className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110"
                 style={{ 
                   background: config.gradient,
                   boxShadow: unlocked > 0 ? config.glow : 'none',
@@ -1343,13 +1974,17 @@ function TierProgressSection() {
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-center mb-1">
                   <span 
-                    className="text-xs font-bold uppercase"
+                    className="text-xs font-bold uppercase group-hover:underline"
                     style={{ color: unlocked > 0 ? config.textColor : '#555' }}
                   >
                     {config.name}
+                    {isHallOfFame && (
+                      <span className="ml-1 text-[10px] text-pink-400 font-normal">+{sneakerCount} sneakers</span>
+                    )}
                   </span>
-                  <span className="text-[10px] text-[#666]">
+                  <span className="text-[10px] text-[#666] flex items-center gap-1">
                     {unlocked}/{total}
+                    <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </span>
                 </div>
                 <div className="h-1.5 bg-[#222] rounded-full overflow-hidden">
@@ -1360,10 +1995,10 @@ function TierProgressSection() {
                       background: config.gradient,
                       boxShadow: unlocked > 0 ? `0 0 8px ${config.color}` : 'none'
                     }}
-          />
-        </div>
+                  />
+                </div>
               </div>
-            </div>
+            </button>
           )
         })}
       </div>
@@ -1380,6 +2015,7 @@ export default function BadgesPage() {
   const [selectedTier, setSelectedTier] = useState<BadgeTier | 'all'>('all')
   const [selectedCategory, setSelectedCategory] = useState<BadgeCategory | 'all'>('all')
   const [showUnlockedOnly, setShowUnlockedOnly] = useState(false)
+  const [previewTier, setPreviewTier] = useState<BadgeTier | null>(null)
   
   // Filter badges
   const filteredBadges = BADGES.filter(badge => {
@@ -1416,9 +2052,17 @@ export default function BadgesPage() {
       <div className="sticky top-0 z-40 bg-[#1a1a1a]/95 backdrop-blur-lg border-b border-[#3a3a3a]">
         <div className="px-4 py-3">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-black text-white tracking-tight">ACHIEVEMENTS</h1>
-              <p className="text-[#888] text-xs">{unlockedCount}/{BADGES.length} Unlocked</p>
+            <div className="flex items-center gap-3">
+              <Link 
+                href="/dashboard"
+                className="w-10 h-10 rounded-xl bg-[#2a2a2a] border border-[#3a3a3a] flex items-center justify-center text-white hover:bg-[#3a3a3a] hover:border-[#4a4a4a] transition-all"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </Link>
+              <div>
+                <h1 className="text-xl font-black text-white tracking-tight">ACHIEVEMENTS</h1>
+                <p className="text-[#888] text-xs">{unlockedCount}/{BADGES.length} Unlocked</p>
+              </div>
             </div>
             <div className="bg-[#2a2a2a] rounded-xl px-3 py-2 border border-[#3a3a3a]">
               <p className="text-[10px] text-[#888] uppercase">Total XP</p>
@@ -1470,7 +2114,10 @@ export default function BadgesPage() {
         
         {/* ===== SECTION 2: TIER PROGRESS ===== */}
         <div className="mb-6">
-          <TierProgressSection />
+          <TierProgressSection onTierClick={(tier) => {
+            setPreviewTier(tier);
+            setSelectedTier(tier); // Also filter the badges below to this tier
+          }} />
         </div>
         
         {/* ===== SECTION 3: FILTERS - Mobile Optimized ===== */}
@@ -1484,7 +2131,29 @@ export default function BadgesPage() {
           badgeCount={sortedBadges.length}
         />
         
-        {/* ===== SECTION 4: BADGE GRID ===== */}
+        {/* ===== SECTION 4: HALL OF FAME (LEVEL 9) SNEAKER BADGES ===== */}
+        {/* Only show when 'all' or 'hall_of_fame' is selected */}
+        {(selectedTier === 'all' || selectedTier === 'hall_of_fame') && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-white font-bold text-sm flex items-center gap-2 uppercase tracking-wide">
+                <Crown className="w-5 h-5 text-[#FF1493]" />
+                Hall of Fame - Air Jordan 1 Collection
+              </h2>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-[#FF1493]/20 to-[#FF6B35]/20 border border-[#FF1493]/30">
+                <span className="text-[#FF1493] text-xs font-bold">Level 9 • {LEVEL_9_SNEAKERS.length} Exclusive</span>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {LEVEL_9_SNEAKERS.map((sneaker, index) => (
+                <Level9SneakerCard key={sneaker.id} sneaker={sneaker} index={index} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ===== SECTION 5: BADGE GRID ===== */}
         <div className="mb-6">
           <h2 className="text-white font-bold text-sm mb-3 flex items-center gap-2 uppercase tracking-wide">
             <Award className="w-4 h-4 text-[#FF6B35]" />
@@ -1527,6 +2196,13 @@ export default function BadgesPage() {
       <BadgeDetailModal 
         badge={selectedBadge} 
         onClose={() => setSelectedBadge(null)} 
+      />
+      
+      {/* Tier Preview Modal */}
+      <TierPreviewModal 
+        tier={previewTier}
+        onClose={() => setPreviewTier(null)}
+        onSelectBadge={(badge) => setSelectedBadge(badge)}
       />
     </div>
   )

@@ -1,6 +1,7 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
+import Image from "next/image"
 import { 
   Settings, 
   Bell, 
@@ -19,8 +20,13 @@ import {
   Check,
   X,
   ChevronRight,
-  Info
+  Info,
+  User,
+  Camera,
+  Upload,
+  Trash2
 } from "lucide-react"
+import { useAuthStore } from "@/stores/authStore"
 
 // ============================================
 // PHASE 10: SETTINGS & NOTIFICATION PREFERENCES
@@ -108,11 +114,80 @@ const STORAGE_KEY_NOTIFICATIONS = 'basketball_notification_settings'
 const STORAGE_KEY_AUTOMATION = 'basketball_automation_settings'
 
 export default function SettingsPage() {
-  const [activeSection, setActiveSection] = useState<'notifications' | 'automation' | 'account'>('notifications')
+  const [activeSection, setActiveSection] = useState<'profile' | 'notifications' | 'automation' | 'account'>('profile')
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(DEFAULT_NOTIFICATION_SETTINGS)
   const [automationSettings, setAutomationSettings] = useState<AutomationSettings>(DEFAULT_AUTOMATION_SETTINGS)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [hasChanges, setHasChanges] = useState(false)
+  
+  // Avatar state
+  const { user, updateUser } = useAuthStore()
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  
+  // Load avatar from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedAvatar = localStorage.getItem('user_avatar')
+      if (storedAvatar) {
+        setAvatarPreview(storedAvatar)
+      }
+    }
+  }, [])
+  
+  // Handle avatar file selection
+  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file')
+        return
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image must be less than 5MB')
+        return
+      }
+      
+      // Read and convert to base64
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const base64 = e.target?.result as string
+        setAvatarPreview(base64)
+        setHasChanges(true)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+  
+  // Remove avatar
+  const handleRemoveAvatar = () => {
+    setAvatarPreview(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+    setHasChanges(true)
+  }
+  
+  // Get user initials for fallback avatar
+  const getUserInitials = () => {
+    if (user?.firstName && user?.lastName) {
+      return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+    }
+    if (user?.displayName) {
+      const names = user.displayName.split(' ')
+      if (names.length >= 2) {
+        return `${names[0][0]}${names[1][0]}`.toUpperCase()
+      }
+      return user.displayName.substring(0, 2).toUpperCase()
+    }
+    if (user?.email) {
+      return user.email.substring(0, 2).toUpperCase()
+    }
+    return 'U'
+  }
 
   // Load settings from localStorage
   useEffect(() => {
@@ -146,6 +221,15 @@ export default function SettingsPage() {
       localStorage.setItem(STORAGE_KEY_NOTIFICATIONS, JSON.stringify(notificationSettings))
       localStorage.setItem(STORAGE_KEY_AUTOMATION, JSON.stringify(automationSettings))
       
+      // Save avatar
+      if (avatarPreview) {
+        localStorage.setItem('user_avatar', avatarPreview)
+        updateUser({ avatarUrl: avatarPreview })
+      } else {
+        localStorage.removeItem('user_avatar')
+        updateUser({ avatarUrl: undefined })
+      }
+      
       setSaveStatus('saved')
       setHasChanges(false)
       
@@ -169,7 +253,7 @@ export default function SettingsPage() {
     setHasChanges(true)
   }
 
-  return (
+    return (
     <main className="min-h-screen bg-[#1a1a1a] py-8 px-4">
       <div className="container mx-auto max-w-6xl">
         {/* Header */}
@@ -181,28 +265,28 @@ export default function SettingsPage() {
             <div>
               <h1 className="text-3xl font-black text-[#FF6B35] uppercase tracking-wider">Settings</h1>
               <p className="text-[#888] text-sm">Manage notifications, automation & preferences</p>
+              </div>
             </div>
-          </div>
-          
+            
           {/* Save Button */}
-          <button
-            onClick={saveSettings}
+              <button
+                onClick={saveSettings}
             disabled={!hasChanges || saveStatus === 'saving'}
-            className={`flex items-center gap-2 px-6 py-3 rounded-lg font-bold transition-all ${
+            className={`flex items-center gap-2 px-6 py-3 rounded-lg font-bold transition-all whitespace-nowrap ${
               hasChanges 
                 ? 'bg-[#FF6B35] text-[#1a1a1a] hover:bg-[#e6c200]' 
                 : 'bg-[#3a3a3a] text-[#888] cursor-not-allowed'
             }`}
-          >
-            {saveStatus === 'saving' ? (
+              >
+                {saveStatus === 'saving' ? (
               <>
                 <RefreshCw className="w-5 h-5 animate-spin" />
-                Saving...
+                Saving
               </>
-            ) : saveStatus === 'saved' ? (
+                ) : saveStatus === 'saved' ? (
               <>
                 <Check className="w-5 h-5" />
-                Saved!
+                Saved
               </>
             ) : saveStatus === 'error' ? (
               <>
@@ -212,17 +296,30 @@ export default function SettingsPage() {
             ) : (
               <>
                 <Save className="w-5 h-5" />
-                Save Changes
+                Save
               </>
             )}
-          </button>
-        </div>
-
+              </button>
+          </div>
+          
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Sidebar Navigation */}
           <div className="lg:col-span-1">
             <div className="bg-[#2C2C2C] rounded-xl p-4 border border-[#3a3a3a] sticky top-24">
               <nav className="space-y-2">
+                <button
+                  onClick={() => setActiveSection('profile')}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                    activeSection === 'profile'
+                      ? 'bg-[#FF6B35] text-[#1a1a1a]'
+                      : 'text-[#E5E5E5] hover:bg-[#3a3a3a]'
+                  }`}
+                >
+                  <User className="w-5 h-5" />
+                  <span className="font-medium">Profile & Avatar</span>
+                  <ChevronRight className="w-4 h-4 ml-auto" />
+                </button>
+                
                 <button
                   onClick={() => setActiveSection('notifications')}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
@@ -262,11 +359,139 @@ export default function SettingsPage() {
                   <ChevronRight className="w-4 h-4 ml-auto" />
                 </button>
               </nav>
-            </div>
-          </div>
+        </div>
+      </div>
 
           {/* Main Content */}
           <div className="lg:col-span-3 space-y-6">
+            {/* Profile & Avatar Section */}
+        {activeSection === 'profile' && (
+              <>
+                {/* Avatar Upload */}
+                <div className="bg-[#2C2C2C] rounded-xl p-6 border border-[#3a3a3a]">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FF6B35] to-[#FF4500] flex items-center justify-center">
+                      <Camera className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                      <h2 className="text-lg font-bold text-[#E5E5E5]">Profile Picture</h2>
+                      <p className="text-sm text-[#888]">Upload a photo to personalize your profile</p>
+                  </div>
+                </div>
+                  
+                  <div className="flex flex-col sm:flex-row items-center gap-6">
+                    {/* Avatar Preview */}
+                    <div className="relative">
+                      <div className="w-32 h-32 rounded-full overflow-hidden bg-gradient-to-br from-[#FF6B35] to-[#FF4500] flex items-center justify-center shadow-lg shadow-[#FF6B35]/20 ring-4 ring-[#3a3a3a]">
+                        {avatarPreview ? (
+                          <Image
+                            src={avatarPreview}
+                            alt="Profile"
+                            width={128}
+                            height={128}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span className="text-white font-bold text-4xl">{getUserInitials()}</span>
+                        )}
+                      </div>
+                      
+                      {/* Camera overlay button */}
+                <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="absolute bottom-0 right-0 w-10 h-10 rounded-full bg-[#FF6B35] hover:bg-[#e55a2b] flex items-center justify-center shadow-lg transition-colors"
+                      >
+                        <Camera className="w-5 h-5 text-white" />
+                </button>
+            </div>
+
+                    {/* Upload Controls */}
+                    <div className="flex-1 space-y-4">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAvatarChange}
+                        className="hidden"
+                      />
+                      
+                      <div className="space-y-2">
+                        <button
+                          onClick={() => fileInputRef.current?.click()}
+                          className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-[#FF6B35] hover:bg-[#e55a2b] text-white rounded-lg font-semibold transition-colors whitespace-nowrap"
+                        >
+                          <Upload className="w-5 h-5" />
+                          Upload
+                        </button>
+                        
+                        {avatarPreview && (
+                          <button
+                            onClick={handleRemoveAvatar}
+                            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg font-semibold transition-colors border border-red-500/30 whitespace-nowrap"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                            Remove
+                          </button>
+                        )}
+                        </div>
+                      
+                      <p className="text-xs text-[#666]">
+                        Recommended: Square image, at least 200x200 pixels. Max file size: 5MB.
+                        <br />
+                        Supported formats: JPG, PNG, GIF, WebP
+                      </p>
+                        </div>
+                      </div>
+                    </div>
+                
+                {/* Profile Info */}
+                <div className="bg-[#2C2C2C] rounded-xl p-6 border border-[#3a3a3a]">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
+                      <User className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-bold text-[#E5E5E5]">Profile Information</h2>
+                      <p className="text-sm text-[#888]">Your account details</p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
+                      <label className="block text-xs text-[#888] mb-1">Display Name</label>
+                      <p className="text-[#E5E5E5] font-medium">{user?.displayName || user?.firstName || 'Not set'}</p>
+                    </div>
+                    
+                    <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
+                      <label className="block text-xs text-[#888] mb-1">Email</label>
+                      <p className="text-[#E5E5E5] font-medium">{user?.email || 'Not set'}</p>
+                    </div>
+                    
+                    <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
+                      <label className="block text-xs text-[#888] mb-1">Member Since</label>
+                      <p className="text-[#E5E5E5] font-medium">
+                        {user?.createdAt 
+                          ? new Date(user.createdAt).toLocaleDateString('en-US', { 
+                              year: 'numeric', 
+                              month: 'long', 
+                              day: 'numeric' 
+                            })
+                          : 'Unknown'
+                        }
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 p-3 bg-blue-500/10 rounded-lg border border-blue-500/30">
+                    <p className="text-sm text-blue-300 flex items-start gap-2">
+                      <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                      Your profile picture will appear in the navigation menu and throughout the app.
+                    </p>
+                  </div>
+                    </div>
+                  </>
+            )}
+            
             {/* Notifications Section */}
             {activeSection === 'notifications' && (
               <>
@@ -321,9 +546,9 @@ export default function SettingsPage() {
                       icon={<TrendingUp className="w-5 h-5" />}
                       enabled={notificationSettings.improvementAlertEmail}
                       onChange={(v) => updateNotification('improvementAlertEmail', v)}
-                    />
-                  </div>
-                </div>
+                      />
+                    </div>
+                    </div>
 
                 {/* Push Notifications */}
                 <div className="bg-[#2C2C2C] rounded-xl p-6 border border-[#3a3a3a]">
@@ -334,10 +559,10 @@ export default function SettingsPage() {
                     <div>
                       <h2 className="text-lg font-bold text-[#E5E5E5]">Push Notifications</h2>
                       <p className="text-sm text-[#888]">Real-time alerts on your device</p>
-                    </div>
+              </div>
                   </div>
                   
-                  <div className="space-y-4">
+              <div className="space-y-4">
                     <ToggleSetting
                       label="Milestone Achievements"
                       description="Instant notification when you earn a badge"
@@ -389,13 +614,13 @@ export default function SettingsPage() {
                     <div>
                       <h2 className="text-lg font-bold text-[#E5E5E5]">Notification Frequency</h2>
                       <p className="text-sm text-[#888]">How often you want to receive notifications</p>
+                      </div>
                     </div>
-                  </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
+                      <div>
                       <label className="block text-sm font-medium text-[#E5E5E5] mb-2">Coaching Tips Frequency</label>
-                      <select
+                        <select
                         value={notificationSettings.coachingTipsFrequency}
                         onChange={(e) => updateNotification('coachingTipsFrequency', e.target.value as NotificationSettings['coachingTipsFrequency'])}
                         className="w-full bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-3 text-[#E5E5E5] focus:border-[#FF6B35] focus:outline-none"
@@ -404,12 +629,12 @@ export default function SettingsPage() {
                         <option value="3x_week">3 times per week</option>
                         <option value="2x_week">2 times per week</option>
                         <option value="weekly">Weekly</option>
-                      </select>
-                    </div>
+                        </select>
+                      </div>
                     
-                    <div>
+                      <div>
                       <label className="block text-sm font-medium text-[#E5E5E5] mb-2">Motivational Messages Frequency</label>
-                      <select
+                        <select
                         value={notificationSettings.motivationalFrequency}
                         onChange={(e) => updateNotification('motivationalFrequency', e.target.value as NotificationSettings['motivationalFrequency'])}
                         className="w-full bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-3 text-[#E5E5E5] focus:border-[#FF6B35] focus:outline-none"
@@ -417,8 +642,8 @@ export default function SettingsPage() {
                         <option value="daily">Daily</option>
                         <option value="2x_week">2 times per week</option>
                         <option value="1x_week">Once per week</option>
-                      </select>
-                    </div>
+                        </select>
+                      </div>
                     
                     <div>
                       <label className="block text-sm font-medium text-[#E5E5E5] mb-2">Training Reminder Time</label>
@@ -440,7 +665,7 @@ export default function SettingsPage() {
                         <option value="detailed">Detailed Report</option>
                         <option value="summary">Quick Summary</option>
                       </select>
-                    </div>
+                        </div>
                   </div>
                   
                   <div className="mt-6 space-y-3">
@@ -463,9 +688,9 @@ export default function SettingsPage() {
                       />
                       <span className="text-[#E5E5E5]">Include peer comparison in reports</span>
                     </label>
-                  </div>
-                </div>
-              </>
+                        </div>
+                    </div>
+                  </>
             )}
 
             {/* Automation Section */}
@@ -477,27 +702,27 @@ export default function SettingsPage() {
                     <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
                       <RefreshCw className="w-5 h-5 text-white" />
                     </div>
-                    <div>
+                <div>
                       <h2 className="text-lg font-bold text-[#E5E5E5]">Daily Automated Tasks</h2>
                       <p className="text-sm text-[#888]">Background tasks that run automatically every day</p>
-                    </div>
                   </div>
-                  
+                </div>
+                
                   <div className="space-y-6">
                     <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-3">
                           <TrendingUp className="w-5 h-5 text-blue-400" />
-                          <div>
+                <div>
                             <h3 className="font-medium text-[#E5E5E5]">Analytics Refresh</h3>
                             <p className="text-xs text-[#888]">Updates all performance metrics and statistics</p>
-                          </div>
-                        </div>
+                  </div>
+                </div>
                         <ToggleSwitch
                           enabled={automationSettings.analyticsRefreshEnabled}
                           onChange={(v) => updateAutomation('analyticsRefreshEnabled', v)}
                         />
-                      </div>
+              </div>
                       {automationSettings.analyticsRefreshEnabled && (
                         <div className="flex items-center gap-3 mt-3 pl-8">
                           <span className="text-sm text-[#888]">Run at:</span>
@@ -508,15 +733,15 @@ export default function SettingsPage() {
                             className="bg-[#2C2C2C] border border-[#3a3a3a] rounded-lg px-3 py-1 text-[#E5E5E5] text-sm focus:border-[#FF6B35] focus:outline-none"
                           />
                           <span className="text-xs text-[#666]">UTC</span>
-                        </div>
-                      )}
+          </div>
+        )}
                     </div>
                     
                     <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-3">
                           <Database className="w-5 h-5 text-green-400" />
-                          <div>
+                <div>
                             <h3 className="font-medium text-[#E5E5E5]">Data Backup</h3>
                             <p className="text-xs text-[#888]">Protects all your analysis data and results</p>
                           </div>
@@ -529,7 +754,7 @@ export default function SettingsPage() {
                       {automationSettings.dataBackupEnabled && (
                         <div className="flex items-center gap-3 mt-3 pl-8">
                           <span className="text-sm text-[#888]">Run at:</span>
-                          <input
+                  <input
                             type="time"
                             value={automationSettings.dataBackupTime}
                             onChange={(e) => updateAutomation('dataBackupTime', e.target.value)}
@@ -538,13 +763,13 @@ export default function SettingsPage() {
                           <span className="text-xs text-[#666]">UTC</span>
                         </div>
                       )}
-                    </div>
-                    
+                </div>
+                
                     <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <RefreshCw className="w-5 h-5 text-purple-400" />
-                          <div>
+                <div>
                             <h3 className="font-medium text-[#E5E5E5]">Model Updates</h3>
                             <p className="text-xs text-[#888]">Keeps the shooting form detection model accurate</p>
                           </div>
@@ -554,9 +779,9 @@ export default function SettingsPage() {
                           onChange={(v) => updateAutomation('modelUpdateEnabled', v)}
                         />
                       </div>
-                    </div>
                   </div>
-                  
+                </div>
+
                   <div className="mt-4 p-3 bg-blue-500/10 rounded-lg border border-blue-500/30">
                     <p className="text-sm text-blue-300 flex items-start gap-2">
                       <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
@@ -571,11 +796,11 @@ export default function SettingsPage() {
                     <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
                       <Calendar className="w-5 h-5 text-white" />
                     </div>
-                    <div>
+                <div>
                       <h2 className="text-lg font-bold text-[#E5E5E5]">Weekly Automated Tasks</h2>
                       <p className="text-sm text-[#888]">Reports and alerts generated every week</p>
-                    </div>
                   </div>
+                </div>
                   
                   <div className="space-y-6">
                     <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
@@ -585,13 +810,13 @@ export default function SettingsPage() {
                           <div>
                             <h3 className="font-medium text-[#E5E5E5]">Weekly Performance Reports</h3>
                             <p className="text-xs text-[#888]">Comprehensive summary of your weekly progress</p>
-                          </div>
-                        </div>
+              </div>
+          </div>
                         <ToggleSwitch
                           enabled={automationSettings.weeklyReportEnabled}
                           onChange={(v) => updateAutomation('weeklyReportEnabled', v)}
                         />
-                      </div>
+              </div>
                       {automationSettings.weeklyReportEnabled && (
                         <div className="flex flex-wrap items-center gap-3 mt-3 pl-8">
                           <span className="text-sm text-[#888]">Send on:</span>
@@ -615,8 +840,8 @@ export default function SettingsPage() {
                             onChange={(e) => updateAutomation('weeklyReportTime', e.target.value)}
                             className="bg-[#2C2C2C] border border-[#3a3a3a] rounded-lg px-3 py-1 text-[#E5E5E5] text-sm focus:border-[#FF6B35] focus:outline-none"
                           />
-                        </div>
-                      )}
+          </div>
+        )}
                     </div>
                     
                     <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
@@ -626,15 +851,15 @@ export default function SettingsPage() {
                           <div>
                             <h3 className="font-medium text-[#E5E5E5]">Coach Alerts</h3>
                             <p className="text-xs text-[#888]">Notify coaches about significant player changes</p>
-                          </div>
+                  </div>
                         </div>
                         <ToggleSwitch
                           enabled={automationSettings.coachAlertsEnabled}
                           onChange={(v) => updateAutomation('coachAlertsEnabled', v)}
                         />
-                      </div>
-                    </div>
                   </div>
+                </div>
+              </div>
                 </div>
 
                 {/* Monthly Tasks */}
@@ -642,11 +867,11 @@ export default function SettingsPage() {
                   <div className="flex items-center gap-3 mb-6">
                     <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
                       <TrendingUp className="w-5 h-5 text-white" />
-                    </div>
+              </div>
                     <div>
                       <h2 className="text-lg font-bold text-[#E5E5E5]">Monthly Automated Tasks</h2>
                       <p className="text-sm text-[#888]">Deep analysis and milestone tracking</p>
-                    </div>
+          </div>
                   </div>
                   
                   <div className="space-y-4">
@@ -664,8 +889,8 @@ export default function SettingsPage() {
                       icon={<Trophy className="w-5 h-5" />}
                       enabled={automationSettings.milestoneNotificationsEnabled}
                       onChange={(v) => updateAutomation('milestoneNotificationsEnabled', v)}
-                    />
-                  </div>
+                />
+              </div>
                 </div>
 
                 {/* Automation Status */}
@@ -673,18 +898,18 @@ export default function SettingsPage() {
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
                       <Check className="w-6 h-6 text-green-400" />
-                    </div>
-                    <div>
+                </div>
+                <div>
                       <h3 className="text-lg font-bold text-[#E5E5E5]">Automation Status: Active</h3>
                       <p className="text-[#888] text-sm">All enabled tasks are running on schedule</p>
-                    </div>
-                  </div>
+                </div>
+              </div>
                   
                   <div className="mt-4 grid grid-cols-3 gap-4">
                     <div className="text-center">
                       <p className="text-2xl font-bold text-green-400">3</p>
                       <p className="text-xs text-[#888]">Daily Tasks</p>
-                    </div>
+          </div>
                     <div className="text-center">
                       <p className="text-2xl font-bold text-blue-400">2</p>
                       <p className="text-xs text-[#888]">Weekly Tasks</p>
@@ -712,62 +937,62 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   
-                  <div className="space-y-4">
+              <div className="space-y-4">
                     <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
                       <div className="flex items-center justify-between">
-                        <div>
+                <div>
                           <h3 className="font-medium text-[#E5E5E5]">Export All Data</h3>
                           <p className="text-xs text-[#888]">Download all your analysis data as JSON</p>
                         </div>
                         <button className="px-4 py-2 bg-[#3a3a3a] hover:bg-[#4a4a4a] text-[#E5E5E5] rounded-lg text-sm font-medium transition-colors">
                           Export
                         </button>
-                      </div>
-                    </div>
-                    
+                  </div>
+                </div>
+                
                     <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
                       <div className="flex items-center justify-between">
-                        <div>
+                <div>
                           <h3 className="font-medium text-[#E5E5E5]">Clear Analysis History</h3>
                           <p className="text-xs text-[#888]">Remove all past analysis sessions</p>
                         </div>
-                        <button className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-sm font-medium transition-colors border border-red-500/30">
-                          Clear History
-                        </button>
-                      </div>
-                    </div>
+                        <button className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-sm font-medium transition-colors border border-red-500/30 whitespace-nowrap">
+                          Clear
+                    </button>
+                  </div>
+                </div>
                     
                     <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
                       <div className="flex items-center justify-between">
-                        <div>
+                <div>
                           <h3 className="font-medium text-[#E5E5E5]">Reset All Settings</h3>
                           <p className="text-xs text-[#888]">Restore default notification and automation settings</p>
                         </div>
-                        <button 
-                          onClick={() => {
+                      <button
+                        onClick={() => {
                             setNotificationSettings(DEFAULT_NOTIFICATION_SETTINGS)
                             setAutomationSettings(DEFAULT_AUTOMATION_SETTINGS)
-                            setHasChanges(true)
-                          }}
+                          setHasChanges(true)
+                        }}
                           className="px-4 py-2 bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 rounded-lg text-sm font-medium transition-colors border border-orange-500/30"
                         >
                           Reset
-                        </button>
+                      </button>
                       </div>
                     </div>
                   </div>
                 </div>
-
+                
                 <div className="bg-[#2C2C2C] rounded-xl p-6 border border-[#3a3a3a]">
                   <div className="flex items-center gap-3 mb-6">
                     <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
                       <Shield className="w-5 h-5 text-white" />
-                    </div>
+                </div>
                     <div>
                       <h2 className="text-lg font-bold text-[#E5E5E5]">Privacy</h2>
                       <p className="text-sm text-[#888]">Control how your data is used</p>
-                    </div>
-                  </div>
+              </div>
+          </div>
                   
                   <div className="space-y-4">
                     <ToggleSetting
@@ -792,37 +1017,37 @@ export default function SettingsPage() {
                       icon={<Users className="w-5 h-5" />}
                       enabled={true}
                       onChange={() => {}}
-                    />
-                  </div>
-                </div>
+                />
+              </div>
+          </div>
 
                 {/* Storage Info */}
                 <div className="bg-[#2C2C2C] rounded-xl p-6 border border-[#3a3a3a]">
                   <div className="flex items-center gap-3 mb-4">
                     <Database className="w-5 h-5 text-[#FF6B35]" />
                     <h3 className="font-bold text-[#E5E5E5]">Storage Usage</h3>
-                  </div>
+                    </div>
                   
                   <div className="space-y-3">
                     <div>
                       <div className="flex justify-between text-sm mb-1">
                         <span className="text-[#888]">Local Storage</span>
                         <span className="text-[#E5E5E5]">2.4 MB / 5 MB</span>
-                      </div>
+                    </div>
                       <div className="h-2 bg-[#1a1a1a] rounded-full overflow-hidden">
                         <div className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF4500] rounded-full" style={{ width: '48%' }}></div>
-                      </div>
                     </div>
+                  </div>
                     
                     <p className="text-xs text-[#666]">
                       Analysis sessions and settings are stored locally on your device.
                     </p>
-                  </div>
-                </div>
+                    </div>
+                    </div>
               </>
             )}
-          </div>
-        </div>
+                  </div>
+              </div>
       </div>
     </main>
   )
@@ -843,13 +1068,13 @@ interface ToggleSettingProps {
 function ToggleSetting({ label, description, icon, enabled, onChange }: ToggleSettingProps) {
   return (
     <div className="flex items-center justify-between py-3 border-b border-[#3a3a3a] last:border-0">
-      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3">
         <div className="text-[#888]">{icon}</div>
-        <div>
+          <div>
           <h3 className="font-medium text-[#E5E5E5]">{label}</h3>
           <p className="text-xs text-[#888]">{description}</p>
+          </div>
         </div>
-      </div>
       <ToggleSwitch enabled={enabled} onChange={onChange} />
     </div>
   )
@@ -862,18 +1087,18 @@ interface ToggleSwitchProps {
 
 function ToggleSwitch({ enabled, onChange }: ToggleSwitchProps) {
   return (
-    <button
-      onClick={() => onChange(!enabled)}
+      <button
+        onClick={() => onChange(!enabled)}
       className={`relative w-12 h-6 rounded-full transition-colors ${
         enabled ? 'bg-[#FF6B35]' : 'bg-[#3a3a3a]'
-      }`}
-    >
-      <div
+        }`}
+      >
+        <div
         className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${
           enabled ? 'translate-x-7' : 'translate-x-1'
-        }`}
-      />
-    </button>
+          }`}
+        />
+      </button>
   )
 }
 

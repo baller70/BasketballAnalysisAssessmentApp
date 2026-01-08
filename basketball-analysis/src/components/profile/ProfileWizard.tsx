@@ -15,6 +15,7 @@ import {
   AthleticAbilityCard,
   DominantHandCard,
   ShootingStyleCard,
+  AvatarCard,
 } from "./cards"
 import { BasketballIcon } from "@/components/icons"
 
@@ -208,6 +209,12 @@ export function ProfileWizard({ onComplete }: ProfileWizardProps) {
             {...commonProps}
             value={shootingStyle}
             onChange={setShootingStyle}
+          />
+        )
+      case 10:
+        return (
+          <AvatarCard
+            {...commonProps}
           />
         )
       default:

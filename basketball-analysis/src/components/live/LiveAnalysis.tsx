@@ -305,9 +305,9 @@ export function LiveAnalysis() {
         <p className="text-[#E5E5E5] mb-4">{cameraError}</p>
         <button
           onClick={initCamera}
-          className="px-4 py-2 bg-[#FF6B35] text-white rounded-lg hover:bg-[#FF6B35]/90 transition-colors"
+          className="px-4 py-2 bg-[#FF6B35] text-white rounded-lg hover:bg-[#FF6B35]/90 transition-colors whitespace-nowrap"
         >
-          Try Again
+          Retry
         </button>
       </div>
     );

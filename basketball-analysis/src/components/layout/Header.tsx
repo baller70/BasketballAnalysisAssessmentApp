@@ -38,9 +38,43 @@ export function Header() {
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [isShareOpen, setIsShareOpen] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const { view: dashboardView, setView: setDashboardView } = useDashboardViewStore()
   const { signOut, isAuthenticated, user } = useAuthStore()
+  
+  // Load avatar from localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedAvatar = localStorage.getItem('user_avatar')
+      if (storedAvatar) {
+        setAvatarUrl(storedAvatar)
+      }
+    }
+  }, [])
+  
+  // Listen for storage changes (when avatar is updated in settings)
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const storedAvatar = localStorage.getItem('user_avatar')
+      setAvatarUrl(storedAvatar)
+    }
+    
+    window.addEventListener('storage', handleStorageChange)
+    
+    // Also check periodically for same-tab updates
+    const interval = setInterval(() => {
+      const storedAvatar = localStorage.getItem('user_avatar')
+      if (storedAvatar !== avatarUrl) {
+        setAvatarUrl(storedAvatar)
+      }
+    }, 1000)
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      clearInterval(interval)
+    }
+  }, [avatarUrl])
   
   // Get user initials for avatar
   const getUserInitials = () => {
@@ -113,7 +147,6 @@ export function Header() {
 
   const profileMenuItems = [
     { label: "Dashboard", href: "/results/demo", icon: BarChart3 },
-    { label: "Basic Dashboard", href: "/results/demo/basic", icon: Sparkles },
     { label: "Settings", href: "/settings", icon: Settings },
     { label: "Analytics", href: "/results/demo/history", icon: BarChart3 },
     { label: "Elite Shooter", href: "/elite-shooters", icon: Users },
@@ -147,8 +180,18 @@ export function Header() {
                 className="flex items-center gap-2 group"
               >
                 {/* Avatar */}
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#FF4500] flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-[#FF6B35]/20 group-hover:shadow-[#FF6B35]/40 transition-all ring-2 ring-transparent group-hover:ring-[#FF6B35]/30">
-                  {getUserInitials()}
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#FF4500] flex items-center justify-center text-white font-bold text-base shadow-lg shadow-[#FF6B35]/20 group-hover:shadow-[#FF6B35]/40 transition-all ring-2 ring-transparent group-hover:ring-[#FF6B35]/30 overflow-hidden">
+                  {avatarUrl ? (
+                    <Image
+                      src={avatarUrl}
+                      alt="Profile"
+                      width={48}
+                      height={48}
+                      className="w-full h-full object-cover scale-110"
+                    />
+                  ) : (
+                    getUserInitials()
+                  )}
                 </div>
                 <ChevronDown className={`w-4 h-4 text-[#888] group-hover:text-[#FF6B35] transition-all ${isProfileOpen ? 'rotate-180' : ''}`} />
               </button>
@@ -159,8 +202,18 @@ export function Header() {
                   {/* User Info Header */}
                   <div className="px-4 py-4 bg-gradient-to-r from-[#FF6B35]/10 to-transparent border-b border-[#3a3a3a]">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#FF4500] flex items-center justify-center text-white font-bold text-lg shadow-lg">
-                        {getUserInitials()}
+                      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#FF4500] flex items-center justify-center text-white font-bold text-xl shadow-lg overflow-hidden flex-shrink-0">
+                        {avatarUrl ? (
+                          <Image
+                            src={avatarUrl}
+                            alt="Profile"
+                            width={56}
+                            height={56}
+                            className="w-full h-full object-cover scale-110"
+                          />
+                        ) : (
+                          getUserInitials()
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-white font-semibold truncate">
@@ -220,11 +273,11 @@ export function Header() {
                     <div className="border-t border-[#3a3a3a] mt-2 pt-2">
                       <button
                         onClick={() => setIsShareOpen(!isShareOpen)}
-                        className="w-full flex items-center justify-between px-4 py-3 text-[#E5E5E5] hover:bg-[#3a3a3a] hover:text-[#FF6B35] transition-colors"
+                        className="w-full flex items-center justify-between px-4 py-3 text-[#E5E5E5] hover:bg-[#3a3a3a] hover:text-[#FF6B35] transition-colors whitespace-nowrap"
                       >
                         <div className="flex items-center gap-3">
                           <Share2 className="w-5 h-5" />
-                          <span className="font-medium">Share Results</span>
+                          <span className="font-medium">Share</span>
                         </div>
                         <ChevronDown className={`w-4 h-4 transition-transform ${isShareOpen ? 'rotate-180' : ''}`} />
                       </button>
@@ -261,10 +314,10 @@ export function Header() {
                           <div className="border-t border-[#3a3a3a] p-2 space-y-1">
                             <button
                               onClick={handleDownload}
-                              className="w-full flex items-center gap-3 px-3 py-2 text-[#E5E5E5] hover:bg-[#2a2a2a] rounded-lg transition-colors text-sm"
+                              className="w-full flex items-center gap-3 px-3 py-2 text-[#E5E5E5] hover:bg-[#2a2a2a] rounded-lg transition-colors text-sm whitespace-nowrap"
                             >
                               <Download className="w-4 h-4 text-[#888]" />
-                              <span>Download Results</span>
+                              <span>Download</span>
                             </button>
                             <button
                               onClick={handleCopyLink}
@@ -278,7 +331,7 @@ export function Header() {
                               ) : (
                                 <>
                                   <Link2 className="w-4 h-4 text-[#888]" />
-                                  <span>Copy Link</span>
+                                  <span>Copy</span>
                                 </>
                               )}
                             </button>
@@ -291,10 +344,10 @@ export function Header() {
                     <div className="border-t border-[#3a3a3a] pt-2">
                       <button
                         onClick={handleSignOut}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-[#E5E5E5] hover:bg-[#3a3a3a] hover:text-[#FF6B35] transition-colors"
+                        className="w-full flex items-center gap-3 px-4 py-3 text-[#E5E5E5] hover:bg-[#3a3a3a] hover:text-[#FF6B35] transition-colors whitespace-nowrap"
                       >
                         <LogOut className="w-5 h-5" />
-                        <span className="font-medium">Sign Out</span>
+                        <span className="font-medium">Logout</span>
                       </button>
                     </div>
                   </div>

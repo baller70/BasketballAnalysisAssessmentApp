@@ -300,17 +300,17 @@ export function AnalysisProgressScreen({
               {onRetry && (
                 <button
                   onClick={onRetry}
-                  className="px-6 py-3 bg-[#FF6B35] text-[#1a1a1a] font-bold rounded-lg hover:bg-[#e6c200] transition-colors"
+                  className="px-6 py-3 bg-[#FF6B35] text-[#1a1a1a] font-bold rounded-lg hover:bg-[#e6c200] transition-colors whitespace-nowrap"
                 >
-                  Try Again
+                  Retry
                 </button>
               )}
               {onCancel && (
                 <button
                   onClick={onCancel}
-                  className="px-6 py-3 bg-[#2a2a2a] text-[#E5E5E5] font-bold rounded-lg hover:bg-[#3a3a3a] transition-colors border border-[#3a3a3a]"
+                  className="px-6 py-3 bg-[#2a2a2a] text-[#E5E5E5] font-bold rounded-lg hover:bg-[#3a3a3a] transition-colors border border-[#3a3a3a] whitespace-nowrap"
                 >
-                  Go Back
+                  Back
                 </button>
               )}
             </div>

@@ -131,12 +131,39 @@ export function PlayerLockInGame({
   const [seenCards, setSeenCards] = useState<Set<string>>(new Set())
   const [dragX, setDragX] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
+  const [arrowTop, setArrowTop] = useState(50)
+  const cardWrapperRef = useRef<HTMLDivElement>(null)
   const [showVoteResult, setShowVoteResult] = useState(false)
   const [lastAction, setLastAction] = useState<'lockin' | 'save' | null>(null)
   const [activeTab, setActiveTab] = useState<'play' | 'locked' | 'saved'>('play')
   const [showKeySkillsPopup, setShowKeySkillsPopup] = useState(false)
   
   const dragStartX = useRef(0)
+  
+  // Track scroll to position arrows within card bounds
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!cardWrapperRef.current) return
+      const cardRect = cardWrapperRef.current.getBoundingClientRect()
+      const viewportHeight = window.innerHeight
+      const cardTop = cardRect.top
+      const cardHeight = cardRect.height
+      
+      if (cardTop >= 0 && cardRect.bottom <= viewportHeight) {
+        setArrowTop(50)
+      } else {
+        const viewportCenter = viewportHeight / 2
+        const relativeCenter = viewportCenter - cardTop
+        const percentage = (relativeCenter / cardHeight) * 100
+        const clamped = Math.max(15, Math.min(85, percentage))
+        setArrowTop(clamped)
+      }
+    }
+    
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    handleScroll()
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
   const playerName = playerNameProp || 'Player'
   const playerAge = profileStore?.age || 34
   
@@ -751,7 +778,57 @@ export function PlayerLockInGame({
       {/* Swipeable Section */}
       {activeTab === 'play' && (<>
         {currentCard ? (
-          <div className="relative">
+          <div className="relative" ref={cardWrapperRef}>
+            {/* Left Swipe Indicator */}
+            <div 
+              className="z-20 flex items-center gap-0 pointer-events-none transition-all duration-150"
+              style={{ 
+                opacity: dragX < 0 ? Math.min(0.9, 0.2 + Math.abs(dragX) / 150) : 0.2,
+                transform: `translateY(-50%) translateX(${dragX < 0 ? Math.max(-8, dragX / 15) : 0}px)`,
+                position: 'absolute',
+                left: 0,
+                top: `${arrowTop}%`,
+                height: 'fit-content'
+              }}
+            >
+              <svg width="70" height="70" viewBox="0 0 70 70">
+                <path d="M32 5 L5 35 L32 65" stroke={dragX < -20 ? "#3b82f6" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="1" className="transition-all duration-150" />
+                <path d="M50 5 L23 35 L50 65" stroke={dragX < -20 ? "#3b82f6" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="1" className="transition-all duration-150" />
+                <path d="M18 5 L-9 35 L18 65" stroke={dragX < -20 ? "#3b82f6" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" className="transition-all duration-150" />
+                <path d="M36 5 L9 35 L36 65" stroke={dragX < -20 ? "#3b82f6" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" className="transition-all duration-150" />
+                <path d="M46 5 L19 35 L46 65" stroke={dragX < -20 ? "#3b82f6" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.25" className="transition-all duration-150" />
+                <path d="M64 5 L37 35 L64 65" stroke={dragX < -20 ? "#3b82f6" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.25" className="transition-all duration-150" />
+              </svg>
+              <svg width="100" height="40" viewBox="0 0 100 40" className="-ml-2">
+                <text x="50" y="30" textAnchor="middle" fontSize="24" fontWeight="900" fontFamily="Arial Black, sans-serif" fill="none" stroke={dragX < -20 ? "#3b82f6" : "white"} strokeWidth="1.5" letterSpacing="3" className="transition-all duration-150">SWIPE</text>
+              </svg>
+            </div>
+            
+            {/* Right Swipe Indicator */}
+            <div 
+              className="z-20 flex items-center gap-0 pointer-events-none transition-all duration-150"
+              style={{ 
+                opacity: dragX > 0 ? Math.min(0.9, 0.2 + dragX / 150) : 0.2,
+                transform: `translateY(-50%) translateX(${dragX > 0 ? Math.min(8, dragX / 15) : 0}px)`,
+                position: 'absolute',
+                right: 0,
+                top: `${arrowTop}%`,
+                height: 'fit-content'
+              }}
+            >
+              <svg width="100" height="40" viewBox="0 0 100 40" className="-mr-2">
+                <text x="50" y="30" textAnchor="middle" fontSize="24" fontWeight="900" fontFamily="Arial Black, sans-serif" fill="none" stroke={dragX > 20 ? "#FF6B35" : "white"} strokeWidth="1.5" letterSpacing="3" className="transition-all duration-150">SWIPE</text>
+              </svg>
+              <svg width="70" height="70" viewBox="0 0 70 70">
+                <path d="M38 5 L65 35 L38 65" stroke={dragX > 20 ? "#FF6B35" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="1" className="transition-all duration-150" />
+                <path d="M20 5 L47 35 L20 65" stroke={dragX > 20 ? "#FF6B35" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="1" className="transition-all duration-150" />
+                <path d="M52 5 L79 35 L52 65" stroke={dragX > 20 ? "#FF6B35" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" className="transition-all duration-150" />
+                <path d="M34 5 L61 35 L34 65" stroke={dragX > 20 ? "#FF6B35" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" className="transition-all duration-150" />
+                <path d="M24 5 L51 35 L24 65" stroke={dragX > 20 ? "#FF6B35" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.25" className="transition-all duration-150" />
+                <path d="M6 5 L33 35 L6 65" stroke={dragX > 20 ? "#FF6B35" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.25" className="transition-all duration-150" />
+              </svg>
+            </div>
+          
             {/* Left glow (Save - Blue) */}
             <div 
               className="absolute -left-4 top-0 bottom-0 w-32 pointer-events-none z-0 rounded-l-3xl transition-opacity duration-200"
@@ -802,7 +879,7 @@ export function PlayerLockInGame({
               </span>
               <span>Swipe or Tap</span>
               <span className="flex items-center gap-1">
-                <span className="text-[#FF6B35]">Lock In</span>
+                <span className="text-[#FF6B35]">Lock</span>
                 <ChevronRight className="w-4 h-4 text-[#FF6B35]" />
               </span>
             </div>
@@ -811,7 +888,7 @@ export function PlayerLockInGame({
               <button 
                 type="button" 
                 onClick={() => handleVote('save')} 
-                className="flex-1 bg-transparent border-2 border-blue-500/30 text-blue-400 py-4 rounded-xl font-bold uppercase tracking-wider hover:bg-blue-500/10 transition-all flex items-center justify-center gap-2"
+                className="flex-1 bg-transparent border-2 border-blue-500/30 text-blue-400 py-4 rounded-xl font-bold uppercase tracking-wider hover:bg-blue-500/10 transition-all flex items-center justify-center gap-2 whitespace-nowrap"
               >
                 <Bookmark className="w-5 h-5" />
                 Save
@@ -819,15 +896,15 @@ export function PlayerLockInGame({
               <button 
                 type="button" 
                 onClick={() => handleVote('lockin')} 
-                className="flex-1 bg-transparent border-2 border-[#FF6B35]/30 text-[#FF6B35] py-4 rounded-xl font-bold uppercase tracking-wider hover:bg-[#FF6B35]/10 transition-all flex items-center justify-center gap-2"
+                className="flex-1 bg-transparent border-2 border-[#FF6B35]/30 text-[#FF6B35] py-4 rounded-xl font-bold uppercase tracking-wider hover:bg-[#FF6B35]/10 transition-all flex items-center justify-center gap-2 whitespace-nowrap"
               >
                 <Lock className="w-5 h-5" />
-                Lock In
+                Lock
               </button>
             </div>
             <p className="text-center text-[#666] text-xs mt-2">{currentIndex + 1} of {displayCards.length}</p>
           </div>
-        ) : (<div className="text-center py-12"><Check className="w-12 h-12 text-green-500 mx-auto mb-3" /><p className="text-white font-bold">All Done!</p><button type="button" onClick={resetGame} className="mt-3 px-4 py-2 bg-[#FF6B35] text-white text-sm rounded-lg">Start Over</button></div>)}
+        ) : (<div className="text-center py-12"><Check className="w-12 h-12 text-green-500 mx-auto mb-3" /><p className="text-white font-bold">All Done!</p><button type="button" onClick={resetGame} className="mt-3 px-4 py-2 bg-[#FF6B35] text-white text-sm rounded-lg whitespace-nowrap">Restart</button></div>)}
       </>)}
       {/* Locked/Saved tabs */}
       {(activeTab === 'locked' || activeTab === 'saved') && (<div className="space-y-3">{displayCards.length === 0 ? (<div className="text-center py-12"><p className="text-[#888]">No sections {activeTab === 'locked' ? 'locked in' : 'saved'} yet.</p></div>) : displayCards.map(card => (<div key={card.id}>{card.content}</div>))}</div>)}

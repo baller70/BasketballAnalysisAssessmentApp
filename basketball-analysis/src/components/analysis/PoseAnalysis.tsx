@@ -318,7 +318,7 @@ export function PoseAnalysis({ imageFile, imageBase64 }: PoseAnalysisProps) {
       <button
         onClick={analyzeImage}
         disabled={loading || !imageUrl}
-        className={`w-full py-4 rounded-xl font-semibold text-lg transition-all flex items-center justify-center gap-2 ${
+        className={`w-full py-4 rounded-xl font-semibold text-lg transition-all flex items-center justify-center gap-2 whitespace-nowrap ${
           loading || !imageUrl
             ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
             : 'bg-gradient-to-r from-orange-500 to-orange-500 text-white hover:from-orange-400 hover:to-orange-400'
@@ -330,7 +330,7 @@ export function PoseAnalysis({ imageFile, imageBase64 }: PoseAnalysisProps) {
             Analyzing...
           </>
         ) : (
-          <>⚡ Analyze Shooting Form</>
+          <>⚡ Analyze</>
         )}
       </button>
 
