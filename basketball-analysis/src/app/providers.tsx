@@ -4,6 +4,7 @@ import React, { Component, ErrorInfo, ReactNode } from "react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { PointsProvider } from "@/lib/points/pointsContext"
 import { GoalsProvider } from "@/lib/goals"
+import { UsageProvider } from "@/lib/usage"
 import { TierProximityPopup, TierUnlockPopup } from "@/components/points"
 
 // Error Boundary Component for catching runtime errors
@@ -109,11 +110,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <PointsProvider>
-          <GoalsProvider>
-            {children}
-            <TierProximityPopup />
-            <TierUnlockPopup />
-          </GoalsProvider>
+          <UsageProvider>
+            <GoalsProvider>
+              {children}
+              <TierProximityPopup />
+              <TierUnlockPopup />
+            </GoalsProvider>
+          </UsageProvider>
         </PointsProvider>
       </QueryClientProvider>
     </ErrorBoundary>

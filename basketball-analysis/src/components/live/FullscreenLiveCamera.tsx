@@ -23,16 +23,19 @@ import {
   X,
   ChevronUp,
   ChevronDown,
-  Zap,
   Target,
-  Timer,
-  Activity,
+  User,
+  Eye,
+  AlertCircle,
 } from 'lucide-react'
 import { usePoseDetection } from '@/hooks/usePoseDetection'
 import { SkeletonOverlay } from './SkeletonOverlay'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import { useRouter } from 'next/navigation'
 import { isMobile } from '@/utils/platform'
+import { useUsage } from '@/lib/usage'
+import { usePoints } from '@/lib/points/pointsContext'
+import { saveSession, createSessionFromAnalysis } from '@/services/sessionStorage'
 
 // ============================================
 // TYPES
@@ -70,7 +73,9 @@ const getScoreColor = (score: number): string => {
 
 export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   const router = useRouter()
-  const { setUploadedImageBase64, setVideoAnalysisData } = useAnalysisStore()
+  const { setUploadedImageBase64, setVideoAnalysisData, addToHistory } = useAnalysisStore()
+  const { canAnalyze, remainingToday, dailyLimit, incrementUsage } = useUsage()
+  const { earnPoints } = usePoints()
 
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -79,6 +84,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   const recordedChunksRef = useRef<Blob[]>([])
   const streamRef = useRef<MediaStream | null>(null)
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const recordingBlobRef = useRef<Blob | null>(null)
 
   // State
   const [cameraError, setCameraError] = useState<string | null>(null)
@@ -95,7 +101,18 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   const [showShotFlash, setShowShotFlash] = useState(false)
   const [lastShotScore, setLastShotScore] = useState<number | null>(null)
 
-  // Pose detection hook
+  // State for saved video
+  const [savedVideoUrl, setSavedVideoUrl] = useState<string | null>(null)
+  const [showSaveSuccess, setShowSaveSuccess] = useState(false)
+  const [showSaveChoice, setShowSaveChoice] = useState(false)
+  const [showLimitWarning, setShowLimitWarning] = useState(false)
+  
+  // Throttled pose state to reduce glitching
+  const [throttledPose, setThrottledPose] = useState<any>(null)
+  const lastPoseUpdateRef = useRef<number>(0)
+  const POSE_UPDATE_INTERVAL = 100 // Update skeleton every 100ms (10fps) to reduce glitching
+
+  // Pose detection hook - reduced FPS to prevent glitching
   const {
     isLoading,
     isDetecting,
@@ -109,7 +126,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     stopDetection,
   } = usePoseDetection({
     modelType: 'lightning',
-    targetFps: 30,
+    targetFps: 15, // Reduced from 30 to prevent glitching - smoother performance
     onShootingDetected: (detectedPose) => {
       console.log('[FullscreenLive] Shooting motion detected!')
       // Show shot flash
@@ -120,6 +137,17 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       }
     },
   })
+
+  // Throttle pose updates to reduce visual glitching
+  useEffect(() => {
+    if (pose) {
+      const now = Date.now()
+      if (now - lastPoseUpdateRef.current >= POSE_UPDATE_INTERVAL) {
+        setThrottledPose(pose)
+        lastPoseUpdateRef.current = now
+      }
+    }
+  }, [pose])
 
   // Detect orientation
   useEffect(() => {
@@ -158,16 +186,51 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     }
   }, [isRecording, showControls])
 
+  // Cleanup function
+  const cleanupCamera = useCallback(() => {
+    console.log('[FullscreenLive] Cleaning up camera...')
+    
+    // Stop pose detection first
+    stopDetection()
+    
+    // Stop media recorder if active
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      try {
+        mediaRecorderRef.current.stop()
+      } catch (e) {
+        console.log('[FullscreenLive] MediaRecorder already stopped')
+      }
+      mediaRecorderRef.current = null
+    }
+    
+    // Stop all tracks in the stream
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => {
+        console.log('[FullscreenLive] Stopping track:', track.kind, track.label)
+        track.stop()
+      })
+      streamRef.current = null
+    }
+    
+    // Clear video source
+    if (videoRef.current) {
+      videoRef.current.srcObject = null
+    }
+    
+    setCameraReady(false)
+  }, [stopDetection])
+
   // Initialize camera
   const initCamera = useCallback(async () => {
     try {
       setCameraError(null)
       setCameraReady(false)
 
-      // Stop existing stream
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop())
-      }
+      // Clean up any existing stream first
+      cleanupCamera()
+      
+      // Small delay to ensure cleanup is complete
+      await new Promise(resolve => setTimeout(resolve, 100))
 
       // Request camera access - prefer higher resolution for fullscreen
       const constraints: MediaStreamConstraints = {
@@ -179,22 +242,50 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
         audio: false,
       }
 
+      console.log('[FullscreenLive] Requesting camera with constraints:', constraints)
       const stream = await navigator.mediaDevices.getUserMedia(constraints)
+      console.log('[FullscreenLive] Got stream:', stream.id)
+      
       streamRef.current = stream
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream
         
-        videoRef.current.onloadedmetadata = () => {
-          if (videoRef.current) {
-            videoRef.current.play()
-            setVideoDimensions({
-              width: videoRef.current.videoWidth,
-              height: videoRef.current.videoHeight,
-            })
-            setCameraReady(true)
+        // Use both event listener and promise for reliability
+        const playPromise = new Promise<void>((resolve, reject) => {
+          if (!videoRef.current) {
+            reject(new Error('Video element not found'))
+            return
           }
-        }
+          
+          const video = videoRef.current
+          
+          const handleLoadedMetadata = () => {
+            console.log('[FullscreenLive] Video metadata loaded:', video.videoWidth, 'x', video.videoHeight)
+            video.removeEventListener('loadedmetadata', handleLoadedMetadata)
+            
+            video.play()
+              .then(() => {
+                console.log('[FullscreenLive] Video playing')
+                setVideoDimensions({
+                  width: video.videoWidth,
+                  height: video.videoHeight,
+                })
+                setCameraReady(true)
+                resolve()
+              })
+              .catch(reject)
+          }
+          
+          video.addEventListener('loadedmetadata', handleLoadedMetadata)
+          
+          // If metadata is already loaded
+          if (video.readyState >= 1) {
+            handleLoadedMetadata()
+          }
+        })
+        
+        await playPromise
       }
     } catch (err: any) {
       console.error('[FullscreenLive] Camera error:', err)
@@ -202,11 +293,13 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
         setCameraError('Camera access denied. Please allow camera access.')
       } else if (err.name === 'NotFoundError') {
         setCameraError('No camera found.')
+      } else if (err.name === 'AbortError') {
+        setCameraError('Camera initialization was interrupted. Please try again.')
       } else {
         setCameraError(`Camera error: ${err.message}`)
       }
     }
-  }, [facingMode])
+  }, [facingMode, cleanupCamera])
 
   // Start detection when camera is ready
   useEffect(() => {
@@ -217,18 +310,22 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
 
   // Initialize camera on mount
   useEffect(() => {
-    initCamera()
-
-    return () => {
-      stopDetection()
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop())
-      }
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-        mediaRecorderRef.current.stop()
+    let isMounted = true
+    
+    const init = async () => {
+      if (isMounted) {
+        await initCamera()
       }
     }
-  }, [initCamera, stopDetection])
+    
+    init()
+
+    return () => {
+      isMounted = false
+      console.log('[FullscreenLive] Component unmounting, cleaning up...')
+      cleanupCamera()
+    }
+  }, []) // Only run on mount/unmount - initCamera and cleanupCamera are stable
 
   // Recording timer
   useEffect(() => {
@@ -246,17 +343,43 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   }, [isRecording, isPaused])
 
   // Flip camera
-  const handleFlipCamera = useCallback(() => {
-    setFacingMode(prev => prev === 'user' ? 'environment' : 'user')
-  }, [])
-
-  // Re-init camera when facing mode changes
-  useEffect(() => {
-    if (cameraReady) {
-      stopDetection()
-      initCamera()
+  const handleFlipCamera = useCallback(async () => {
+    const newMode = facingMode === 'user' ? 'environment' : 'user'
+    setFacingMode(newMode)
+    
+    // Re-initialize camera with new facing mode
+    cleanupCamera()
+    await new Promise(resolve => setTimeout(resolve, 200))
+    
+    try {
+      const constraints: MediaStreamConstraints = {
+        video: {
+          facingMode: newMode,
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        },
+        audio: false,
+      }
+      
+      const stream = await navigator.mediaDevices.getUserMedia(constraints)
+      streamRef.current = stream
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+        await videoRef.current.play()
+        setVideoDimensions({
+          width: videoRef.current.videoWidth,
+          height: videoRef.current.videoHeight,
+        })
+        setCameraReady(true)
+        
+        // Restart pose detection
+        startDetection(videoRef.current)
+      }
+    } catch (err) {
+      console.error('[FullscreenLive] Flip camera error:', err)
     }
-  }, [facingMode])
+  }, [facingMode, cleanupCamera, startDetection])
 
   // Handle screen tap during recording
   const handleScreenTap = useCallback(() => {
@@ -283,10 +406,17 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       }
     }
 
-    mediaRecorder.onstop = () => {
+    mediaRecorder.onstop = async () => {
       const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' })
       const url = URL.createObjectURL(blob)
       
+      // Store blob for later saving
+      recordingBlobRef.current = blob
+      
+      // Store URL for display
+      setSavedVideoUrl(url)
+      
+      // Store in analysis store for viewing
       setVideoAnalysisData({
         videoUrl: url,
         frames: capturedFrames.map(f => ({
@@ -296,13 +426,14 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
         })),
       })
 
-      router.push('/results/demo')
+      // Show save choice dialog
+      setShowSaveChoice(true)
     }
 
     mediaRecorderRef.current = mediaRecorder
     mediaRecorder.start(1000)
     setIsRecording(true)
-  }, [capturedFrames, router, setVideoAnalysisData])
+  }, [capturedFrames, setVideoAnalysisData])
 
   // Stop recording
   const handleStopRecording = useCallback(() => {
@@ -359,11 +490,155 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     setCapturedFrames([])
     setRecordingDuration(0)
     setIsPaused(false)
+    setSavedVideoUrl(null)
+    setShowSaveChoice(false)
+    recordingBlobRef.current = null
     
     if (!isDetecting && videoRef.current) {
       startDetection(videoRef.current)
     }
   }, [isDetecting, startDetection])
+
+  // Both options count against tier limit - this is called first
+  const handleUseAnalysis = useCallback((): boolean => {
+    // Check if user can analyze
+    if (!canAnalyze) {
+      setShowLimitWarning(true)
+      return false
+    }
+    
+    // Increment usage count (counts for BOTH save and just view)
+    const allowed = incrementUsage()
+    if (!allowed) {
+      setShowLimitWarning(true)
+      return false
+    }
+    
+    return true
+  }, [canAnalyze, incrementUsage])
+
+  // Save to profile (saves to Player tab + awards more points)
+  const handleSaveToProfile = useCallback(async () => {
+    // First, count against tier limit
+    if (!handleUseAnalysis()) return
+    
+    // Award points for live session (more points for saving)
+    earnPoints('live_session')
+    
+    // Capture a frame for the thumbnail if we don't have one
+    let thumbnailBase64 = capturedFrames[0]?.dataUrl || ''
+    if (!thumbnailBase64 && videoRef.current && canvasRef.current) {
+      const canvas = canvasRef.current
+      const ctx = canvas.getContext('2d')
+      if (ctx) {
+        canvas.width = videoRef.current.videoWidth
+        canvas.height = videoRef.current.videoHeight
+        ctx.drawImage(videoRef.current, 0, 0)
+        thumbnailBase64 = canvas.toDataURL('image/jpeg', 0.8)
+      }
+    }
+    
+    // Create and save session to Player tab storage
+    const session = createSessionFromAnalysis(
+      thumbnailBase64,
+      undefined, // skeleton overlay
+      capturedFrames.map((f, i) => ({
+        id: f.id,
+        label: `Frame ${i + 1}`,
+        imageBase64: f.dataUrl,
+      })),
+      {
+        overallScore: feedback?.overallScore ?? 0,
+        shooterLevel: (feedback?.overallScore ?? 0) >= 80 ? 'Elite' : (feedback?.overallScore ?? 0) >= 60 ? 'Intermediate' : 'Beginner',
+        angles: angles ? {
+          elbowAngle: angles.elbowAngle ?? 0,
+          shoulderAngle: angles.shoulderAngle ?? 0,
+          kneeAngle: angles.kneeAngle ?? 0,
+          hipAngle: angles.hipAngle ?? 0,
+          wristAngle: angles.wristAngle ?? 0,
+        } : {},
+        detectedFlaws: feedback?.tips?.slice(0, 3) || [],
+        measurements: {},
+      },
+      undefined, // playerName
+      undefined, // coachingLevel
+      undefined, // profileSnapshot
+      1, // imagesAnalyzed
+      'video', // mediaType - live counts as video
+      savedVideoUrl ? {
+        annotatedFramesBase64: capturedFrames.map(f => f.dataUrl),
+        frameCount: capturedFrames.length,
+        duration: recordingDuration,
+        fps: 30,
+        phases: [],
+        metrics: {
+          elbow_angle_range: { min: null, max: null, at_release: angles?.elbowAngle || null },
+          knee_angle_range: { min: null, max: null },
+          release_frame: 0,
+          release_timestamp: 0,
+        },
+        frameData: capturedFrames.map((f, i) => ({
+          frame: i,
+          timestamp: f.timestamp,
+          phase: 'release',
+          metrics: f.angles || {},
+        })),
+      } : undefined
+    )
+    
+    // Save to localStorage (Player tab will read from here)
+    const saved = saveSession(session)
+    console.log('[FullscreenLive] Session saved to Player tab:', saved)
+    
+    // Also save video file to device
+    if (recordingBlobRef.current && savedVideoUrl) {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+      const filename = `shotiq-recording-${timestamp}.webm`
+      
+      const downloadLink = document.createElement('a')
+      downloadLink.href = savedVideoUrl
+      downloadLink.download = filename
+      
+      if (navigator.share && /mobile|android|iphone/i.test(navigator.userAgent)) {
+        try {
+          const file = new File([recordingBlobRef.current], filename, { type: 'video/webm' })
+          await navigator.share({
+            files: [file],
+            title: 'ShotIQ Recording',
+            text: 'My basketball shooting analysis'
+          })
+        } catch (shareErr) {
+          console.log('[FullscreenLive] Share failed, falling back to download:', shareErr)
+          document.body.appendChild(downloadLink)
+          downloadLink.click()
+          document.body.removeChild(downloadLink)
+        }
+      } else {
+        document.body.appendChild(downloadLink)
+        downloadLink.click()
+        document.body.removeChild(downloadLink)
+      }
+    }
+    
+    setShowSaveChoice(false)
+    setShowSaveSuccess(true)
+    setTimeout(() => {
+      setShowSaveSuccess(false)
+      router.push('/results/demo')
+    }, 2000)
+  }, [handleUseAnalysis, earnPoints, capturedFrames, feedback, angles, savedVideoUrl, recordingDuration, router])
+
+  // Just view analysis (still counts against limit, but doesn't save to Player tab)
+  const handleJustView = useCallback(() => {
+    // Still counts against tier limit
+    if (!handleUseAnalysis()) return
+    
+    // Award fewer points for just viewing
+    earnPoints('view_results')
+    
+    setShowSaveChoice(false)
+    router.push('/results/demo')
+  }, [handleUseAnalysis, earnPoints, router])
 
   // Get key metrics for display
   const formScore = feedback?.overallScore ?? 0
@@ -695,20 +970,21 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
         className={`w-full h-full object-cover ${facingMode === 'user' ? 'scale-x-[-1]' : ''}`}
       />
 
-      {/* Skeleton Overlay */}
+      {/* Skeleton Overlay - uses throttled pose to reduce glitching */}
       <AnimatePresence>
-        {pose && (
+        {throttledPose && (
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            animate={{ opacity: 0.8 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.1 }}
             className="absolute inset-0 pointer-events-none"
             style={{ transform: facingMode === 'user' ? 'scaleX(-1)' : 'none' }}
           >
             <SkeletonOverlay
               width={videoDimensions.width}
               height={videoDimensions.height}
-              pose={pose}
+              pose={throttledPose}
               angles={angles}
               showAngles={false}
               showKeypoints={true}
@@ -781,6 +1057,168 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
           Tap to show controls
         </div>
       )}
+
+      {/* Save Choice Dialog */}
+      <AnimatePresence>
+        {showSaveChoice && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-[#1a1a1a] rounded-2xl p-6 max-w-sm w-full border border-white/10"
+            >
+              <h2 className="text-xl font-bold text-white text-center mb-2">Recording Complete!</h2>
+              <p className="text-white/60 text-center text-sm mb-6">
+                What would you like to do with this analysis?
+              </p>
+              
+              {/* Video preview */}
+              <div className="bg-black/50 rounded-xl p-3 mb-4 flex items-center gap-3">
+                <div className="w-16 h-16 bg-white/10 rounded-lg overflow-hidden flex-shrink-0">
+                  {savedVideoUrl && (
+                    <video 
+                      src={savedVideoUrl} 
+                      className="w-full h-full object-cover"
+                      muted
+                    />
+                  )}
+                </div>
+                <div>
+                  <p className="text-white font-medium">{formatDuration(recordingDuration)} recorded</p>
+                  <p className="text-white/50 text-sm">Form Score: {feedback?.overallScore || '--'}</p>
+                </div>
+              </div>
+              
+              {/* Save to Profile option */}
+              <button
+                onClick={handleSaveToProfile}
+                className="w-full mb-3 p-4 bg-[#FF6B35] rounded-xl flex items-center gap-3 hover:bg-[#E55A2A] transition-colors"
+              >
+                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                  <User className="w-5 h-5 text-white" />
+                </div>
+                <div className="text-left flex-1">
+                  <p className="text-white font-bold">Save to My Profile</p>
+                  <p className="text-white/70 text-xs">Saves to Player tab • +20 IQ points</p>
+                </div>
+              </button>
+              
+              {/* Just View option */}
+              <button
+                onClick={handleJustView}
+                className="w-full p-4 bg-white/10 rounded-xl flex items-center gap-3 hover:bg-white/15 transition-colors"
+              >
+                <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center">
+                  <Eye className="w-5 h-5 text-white/70" />
+                </div>
+                <div className="text-left flex-1">
+                  <p className="text-white font-medium">Just View Analysis</p>
+                  <p className="text-white/50 text-xs">For analyzing others • Won't save</p>
+                </div>
+              </button>
+              
+              {/* Note about usage */}
+              <p className="text-white/30 text-[10px] text-center mt-3">
+                Both options count as 1 analysis toward your daily limit
+              </p>
+              
+              {/* Usage info */}
+              <div className="mt-4 pt-4 border-t border-white/10 text-center">
+                <p className="text-white/40 text-xs">
+                  {remainingToday === Infinity 
+                    ? '∞ analyses remaining today (Elite)'
+                    : `${remainingToday} of ${dailyLimit} analyses remaining today`
+                  }
+                </p>
+              </div>
+              
+              {/* New Recording button */}
+              <button
+                onClick={handleReset}
+                className="w-full mt-3 py-2 text-white/50 text-sm hover:text-white/70 transition-colors"
+              >
+                Start New Recording
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Limit Warning Dialog */}
+      <AnimatePresence>
+        {showLimitWarning && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-[#1a1a1a] rounded-2xl p-6 max-w-sm w-full border border-red-500/30"
+            >
+              <div className="w-16 h-16 mx-auto mb-4 bg-red-500/20 rounded-full flex items-center justify-center">
+                <AlertCircle className="w-8 h-8 text-red-400" />
+              </div>
+              <h2 className="text-xl font-bold text-white text-center mb-2">Daily Limit Reached</h2>
+              <p className="text-white/60 text-center text-sm mb-4">
+                You've used all {dailyLimit} analyses for today. Upgrade your tier for more!
+              </p>
+              
+              <button
+                onClick={() => {
+                  setShowLimitWarning(false)
+                  handleJustView()
+                }}
+                className="w-full mb-2 py-3 bg-white/10 text-white font-bold rounded-xl"
+              >
+                View Analysis Only
+              </button>
+              
+              <button
+                onClick={() => setShowLimitWarning(false)}
+                className="w-full py-2 text-white/50 text-sm"
+              >
+                Cancel
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Save Success Notification */}
+      <AnimatePresence>
+        {showSaveSuccess && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="absolute bottom-32 left-4 right-4 z-50"
+          >
+            <div className="bg-green-500/90 backdrop-blur-sm rounded-2xl p-4 text-center">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                  ✓
+                </div>
+                <span className="text-white font-bold text-lg">Saved to Profile!</span>
+              </div>
+              <p className="text-white/80 text-sm">
+                Your analysis has been saved and your stats updated
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
