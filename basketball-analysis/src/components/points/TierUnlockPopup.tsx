@@ -179,7 +179,7 @@ export function TierUnlockPopup() {
               </motion.p>
               
               <p className="text-white/60 text-sm mb-6">
-                {tierConfig.description}
+                You&apos;ve unlocked {tierConfig.displayName} tier features!
               </p>
             </motion.div>
             
