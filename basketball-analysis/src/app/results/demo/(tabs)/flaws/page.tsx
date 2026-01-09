@@ -1,17 +1,23 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { AlertTriangle, Calendar, ChevronDown, ChevronRight, Zap, Play, Clock, Target } from "lucide-react"
 import { useAnalysisStore } from "@/stores/analysisStore"
 import { getAllSessions, AnalysisSession } from "@/services/sessionStorage"
 import { detectFlawsFromAngles } from "@/data/shootingFlawsDatabase"
+import { usePoints } from "@/lib/points/pointsContext"
+import { InlinePointsBurst } from "@/components/points/PointsBurst"
 
 export default function FlawsPage() {
   const [expandedSessions, setExpandedSessions] = useState<string[]>(['current', 'demo'])
   const [expandedCards, setExpandedCards] = useState<string[]>([])
   const [currentPage, setCurrentPage] = useState(1)
   const sessionsPerPage = 10
+  const [showPointsBurst, setShowPointsBurst] = useState(false)
+  const [pointsBurstPosition, setPointsBurstPosition] = useState({ x: 0, y: 0 })
+  const viewedFlaws = useRef<Set<string>>(new Set())
   
+  const { earnPoints } = usePoints()
   const { visionAnalysisResult, uploadedImageBase64 } = useAnalysisStore()
   const [sessions, setSessions] = useState<AnalysisSession[]>([])
   
@@ -27,9 +33,20 @@ export default function FlawsPage() {
   }
 
   const toggleCard = (cardId: string) => {
+    const isExpanding = !expandedCards.includes(cardId)
     setExpandedCards(prev =>
       prev.includes(cardId) ? prev.filter(id => id !== cardId) : [...prev, cardId]
     )
+    
+    // Award points when viewing a flaw for the first time
+    if (isExpanding && !viewedFlaws.current.has(cardId)) {
+      viewedFlaws.current.add(cardId)
+      const result = earnPoints('flaw_view')
+      if (result.earned) {
+        setShowPointsBurst(true)
+        setTimeout(() => setShowPointsBurst(false), 1500)
+      }
+    }
   }
 
   const getFlawsForAngles = (angles: Record<string, number> | undefined) => {
@@ -229,7 +246,10 @@ export default function FlawsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      {/* GOLD Video Game Style Points Animation */}
+      <InlinePointsBurst points={1} show={showPointsBurst} label="IQ" />
+      
       {/* Header Section */}
       <div className="bg-gradient-to-r from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a] rounded-xl p-6 border border-[#3a3a3a]">
         <div className="flex items-center justify-between">

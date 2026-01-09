@@ -1,7 +1,10 @@
 "use client"
 
 import React, { useState, useEffect, useRef } from 'react'
+import { motion } from 'framer-motion'
 import { X, TrendingUp, MapPin, Users, ChevronRight, Info } from 'lucide-react'
+import { usePoints } from '@/lib/points/pointsContext'
+import { InlinePointsBurst } from '@/components/points/PointsBurst'
 
 // ============================================
 // STAT DEFINITIONS & EXPLANATIONS
@@ -120,6 +123,32 @@ const statDefinitions: Record<string, StatDefinition> = {
       "Focus on 'dipping' into your shot",
       "Work on explosive jump training"
     ]
+  },
+  physical: {
+    name: "PHYSICAL",
+    fullName: "Physical Attributes & Athleticism",
+    description: "Combines your balance, power, and overall physical conditioning for shooting.",
+    whatItMeans: "A high physical score indicates you have the athletic foundation for consistent shooting. Your legs generate 60-70% of your shooting power.",
+    optimalRange: { min: 75, max: 95 },
+    howToImprove: [
+      "Build leg strength with squats and lunges",
+      "Improve core stability with planks",
+      "Work on balance drills",
+      "Develop explosive power with plyometrics"
+    ]
+  },
+  mechanics: {
+    name: "MECHANICS",
+    fullName: "Technical Mechanics & Execution",
+    description: "Evaluates the precision and repeatability of your shooting mechanics.",
+    whatItMeans: "Strong mechanics mean you have proper elbow alignment, follow-through, and shot consistency. This is the foundation of accuracy.",
+    optimalRange: { min: 75, max: 95 },
+    howToImprove: [
+      "Focus on elbow alignment (90° angle)",
+      "Practice your follow-through hold",
+      "Film and analyze your shot",
+      "Work with a shooting coach on form"
+    ]
   }
 }
 
@@ -137,27 +166,27 @@ const nationalAveragesByAge: AgeGroupBenchmark[] = [
   {
     ageRange: "8-10",
     label: "Youth (8-10)",
-    averages: { release: 45, form: 40, balance: 50, arc: 45, elbow: 42, follow: 48, consist: 38, power: 35 }
+    averages: { release: 45, form: 40, balance: 50, arc: 45, elbow: 42, follow: 48, consist: 38, power: 35, physical: 43, mechanics: 40 }
   },
   {
     ageRange: "11-13",
     label: "Middle School (11-13)",
-    averages: { release: 55, form: 52, balance: 58, arc: 54, elbow: 55, follow: 56, consist: 48, power: 45 }
+    averages: { release: 55, form: 52, balance: 58, arc: 54, elbow: 55, follow: 56, consist: 48, power: 45, physical: 52, mechanics: 50 }
   },
   {
     ageRange: "14-17",
     label: "High School (14-17)",
-    averages: { release: 65, form: 63, balance: 68, arc: 64, elbow: 66, follow: 67, consist: 60, power: 58 }
+    averages: { release: 65, form: 63, balance: 68, arc: 64, elbow: 66, follow: 67, consist: 60, power: 58, physical: 63, mechanics: 62 }
   },
   {
     ageRange: "18-22",
     label: "College (18-22)",
-    averages: { release: 75, form: 74, balance: 78, arc: 73, elbow: 77, follow: 76, consist: 72, power: 70 }
+    averages: { release: 75, form: 74, balance: 78, arc: 73, elbow: 77, follow: 76, consist: 72, power: 70, physical: 74, mechanics: 73 }
   },
   {
     ageRange: "23+",
     label: "Pro/Adult (23+)",
-    averages: { release: 82, form: 80, balance: 84, arc: 79, elbow: 85, follow: 83, consist: 78, power: 76 }
+    averages: { release: 82, form: 80, balance: 84, arc: 79, elbow: 85, follow: 83, consist: 78, power: 76, physical: 82, mechanics: 81 }
   }
 ]
 
@@ -179,53 +208,53 @@ interface StateBenchmark {
 
 const stateBenchmarks: StateBenchmark[] = [
   // Top Basketball States (Elite)
-  { state: "California", stateCode: "CA", d1Players: 892, d2Players: 456, d3Players: 234, totalCollegePlayers: 1582, competitiveness: 'Elite', averages: { release: 78, form: 76, balance: 80, arc: 75, elbow: 79, follow: 78, consist: 74, power: 72 } },
-  { state: "Texas", stateCode: "TX", d1Players: 756, d2Players: 412, d3Players: 198, totalCollegePlayers: 1366, competitiveness: 'Elite', averages: { release: 77, form: 75, balance: 79, arc: 74, elbow: 78, follow: 77, consist: 73, power: 73 } },
-  { state: "Florida", stateCode: "FL", d1Players: 634, d2Players: 345, d3Players: 167, totalCollegePlayers: 1146, competitiveness: 'Elite', averages: { release: 76, form: 74, balance: 78, arc: 73, elbow: 77, follow: 76, consist: 72, power: 71 } },
-  { state: "New York", stateCode: "NY", d1Players: 578, d2Players: 312, d3Players: 289, totalCollegePlayers: 1179, competitiveness: 'Elite', averages: { release: 75, form: 74, balance: 77, arc: 72, elbow: 76, follow: 75, consist: 71, power: 70 } },
-  { state: "Illinois", stateCode: "IL", d1Players: 489, d2Players: 267, d3Players: 234, totalCollegePlayers: 990, competitiveness: 'Elite', averages: { release: 76, form: 75, balance: 78, arc: 74, elbow: 77, follow: 76, consist: 72, power: 71 } },
+  { state: "California", stateCode: "CA", d1Players: 892, d2Players: 456, d3Players: 234, totalCollegePlayers: 1582, competitiveness: 'Elite', averages: { release: 78, form: 76, balance: 80, arc: 75, elbow: 79, follow: 78, consist: 74, power: 72, physical: 76, mechanics: 75 } },
+  { state: "Texas", stateCode: "TX", d1Players: 756, d2Players: 412, d3Players: 198, totalCollegePlayers: 1366, competitiveness: 'Elite', averages: { release: 77, form: 75, balance: 79, arc: 74, elbow: 78, follow: 77, consist: 73, power: 73, physical: 76, mechanics: 75 } },
+  { state: "Florida", stateCode: "FL", d1Players: 634, d2Players: 345, d3Players: 167, totalCollegePlayers: 1146, competitiveness: 'Elite', averages: { release: 76, form: 74, balance: 78, arc: 73, elbow: 77, follow: 76, consist: 72, power: 71, physical: 75, mechanics: 74 } },
+  { state: "New York", stateCode: "NY", d1Players: 578, d2Players: 312, d3Players: 289, totalCollegePlayers: 1179, competitiveness: 'Elite', averages: { release: 75, form: 74, balance: 77, arc: 72, elbow: 76, follow: 75, consist: 71, power: 70, physical: 74, mechanics: 73 } },
+  { state: "Illinois", stateCode: "IL", d1Players: 489, d2Players: 267, d3Players: 234, totalCollegePlayers: 990, competitiveness: 'Elite', averages: { release: 76, form: 75, balance: 78, arc: 74, elbow: 77, follow: 76, consist: 72, power: 71, physical: 75, mechanics: 74 } },
   
   // High Production States
-  { state: "Georgia", stateCode: "GA", d1Players: 445, d2Players: 234, d3Players: 123, totalCollegePlayers: 802, competitiveness: 'High', averages: { release: 74, form: 72, balance: 76, arc: 71, elbow: 75, follow: 74, consist: 70, power: 69 } },
-  { state: "Ohio", stateCode: "OH", d1Players: 412, d2Players: 289, d3Players: 312, totalCollegePlayers: 1013, competitiveness: 'High', averages: { release: 73, form: 72, balance: 75, arc: 70, elbow: 74, follow: 73, consist: 69, power: 68 } },
-  { state: "Pennsylvania", stateCode: "PA", d1Players: 389, d2Players: 256, d3Players: 298, totalCollegePlayers: 943, competitiveness: 'High', averages: { release: 72, form: 71, balance: 74, arc: 69, elbow: 73, follow: 72, consist: 68, power: 67 } },
-  { state: "North Carolina", stateCode: "NC", d1Players: 367, d2Players: 198, d3Players: 145, totalCollegePlayers: 710, competitiveness: 'High', averages: { release: 74, form: 73, balance: 76, arc: 72, elbow: 75, follow: 74, consist: 71, power: 70 } },
-  { state: "Indiana", stateCode: "IN", d1Players: 345, d2Players: 189, d3Players: 167, totalCollegePlayers: 701, competitiveness: 'High', averages: { release: 75, form: 74, balance: 77, arc: 73, elbow: 76, follow: 75, consist: 72, power: 71 } },
-  { state: "New Jersey", stateCode: "NJ", d1Players: 334, d2Players: 178, d3Players: 145, totalCollegePlayers: 657, competitiveness: 'High', averages: { release: 73, form: 72, balance: 75, arc: 70, elbow: 74, follow: 73, consist: 69, power: 68 } },
-  { state: "Michigan", stateCode: "MI", d1Players: 312, d2Players: 198, d3Players: 189, totalCollegePlayers: 699, competitiveness: 'High', averages: { release: 72, form: 71, balance: 74, arc: 69, elbow: 73, follow: 72, consist: 68, power: 67 } },
-  { state: "Virginia", stateCode: "VA", d1Players: 298, d2Players: 167, d3Players: 134, totalCollegePlayers: 599, competitiveness: 'High', averages: { release: 73, form: 72, balance: 75, arc: 70, elbow: 74, follow: 73, consist: 69, power: 68 } },
+  { state: "Georgia", stateCode: "GA", d1Players: 445, d2Players: 234, d3Players: 123, totalCollegePlayers: 802, competitiveness: 'High', averages: { release: 74, form: 72, balance: 76, arc: 71, elbow: 75, follow: 74, consist: 70, power: 69, physical: 73, mechanics: 72 } },
+  { state: "Ohio", stateCode: "OH", d1Players: 412, d2Players: 289, d3Players: 312, totalCollegePlayers: 1013, competitiveness: 'High', averages: { release: 73, form: 72, balance: 75, arc: 70, elbow: 74, follow: 73, consist: 69, power: 68, physical: 72, mechanics: 71 } },
+  { state: "Pennsylvania", stateCode: "PA", d1Players: 389, d2Players: 256, d3Players: 298, totalCollegePlayers: 943, competitiveness: 'High', averages: { release: 72, form: 71, balance: 74, arc: 69, elbow: 73, follow: 72, consist: 68, power: 67, physical: 71, mechanics: 70 } },
+  { state: "North Carolina", stateCode: "NC", d1Players: 367, d2Players: 198, d3Players: 145, totalCollegePlayers: 710, competitiveness: 'High', averages: { release: 74, form: 73, balance: 76, arc: 72, elbow: 75, follow: 74, consist: 71, power: 70, physical: 74, mechanics: 73 } },
+  { state: "Indiana", stateCode: "IN", d1Players: 345, d2Players: 189, d3Players: 167, totalCollegePlayers: 701, competitiveness: 'High', averages: { release: 75, form: 74, balance: 77, arc: 73, elbow: 76, follow: 75, consist: 72, power: 71, physical: 75, mechanics: 74 } },
+  { state: "New Jersey", stateCode: "NJ", d1Players: 334, d2Players: 178, d3Players: 145, totalCollegePlayers: 657, competitiveness: 'High', averages: { release: 73, form: 72, balance: 75, arc: 70, elbow: 74, follow: 73, consist: 69, power: 68, physical: 72, mechanics: 71 } },
+  { state: "Michigan", stateCode: "MI", d1Players: 312, d2Players: 198, d3Players: 189, totalCollegePlayers: 699, competitiveness: 'High', averages: { release: 72, form: 71, balance: 74, arc: 69, elbow: 73, follow: 72, consist: 68, power: 67, physical: 71, mechanics: 70 } },
+  { state: "Virginia", stateCode: "VA", d1Players: 298, d2Players: 167, d3Players: 134, totalCollegePlayers: 599, competitiveness: 'High', averages: { release: 73, form: 72, balance: 75, arc: 70, elbow: 74, follow: 73, consist: 69, power: 68, physical: 72, mechanics: 71 } },
   
   // Medium Production States
-  { state: "Maryland", stateCode: "MD", d1Players: 267, d2Players: 145, d3Players: 112, totalCollegePlayers: 524, competitiveness: 'Medium', averages: { release: 72, form: 70, balance: 73, arc: 68, elbow: 72, follow: 71, consist: 67, power: 66 } },
-  { state: "Louisiana", stateCode: "LA", d1Players: 256, d2Players: 134, d3Players: 89, totalCollegePlayers: 479, competitiveness: 'Medium', averages: { release: 73, form: 71, balance: 74, arc: 70, elbow: 73, follow: 72, consist: 68, power: 68 } },
-  { state: "Tennessee", stateCode: "TN", d1Players: 245, d2Players: 145, d3Players: 112, totalCollegePlayers: 502, competitiveness: 'Medium', averages: { release: 71, form: 70, balance: 73, arc: 68, elbow: 72, follow: 71, consist: 67, power: 66 } },
-  { state: "Arizona", stateCode: "AZ", d1Players: 234, d2Players: 123, d3Players: 89, totalCollegePlayers: 446, competitiveness: 'Medium', averages: { release: 72, form: 70, balance: 74, arc: 69, elbow: 73, follow: 72, consist: 68, power: 67 } },
-  { state: "Washington", stateCode: "WA", d1Players: 223, d2Players: 134, d3Players: 112, totalCollegePlayers: 469, competitiveness: 'Medium', averages: { release: 71, form: 70, balance: 73, arc: 68, elbow: 72, follow: 71, consist: 67, power: 66 } },
-  { state: "Kentucky", stateCode: "KY", d1Players: 212, d2Players: 123, d3Players: 98, totalCollegePlayers: 433, competitiveness: 'Medium', averages: { release: 72, form: 71, balance: 74, arc: 69, elbow: 73, follow: 72, consist: 68, power: 67 } },
-  { state: "South Carolina", stateCode: "SC", d1Players: 198, d2Players: 112, d3Players: 78, totalCollegePlayers: 388, competitiveness: 'Medium', averages: { release: 71, form: 69, balance: 72, arc: 67, elbow: 71, follow: 70, consist: 66, power: 65 } },
-  { state: "Alabama", stateCode: "AL", d1Players: 189, d2Players: 98, d3Players: 67, totalCollegePlayers: 354, competitiveness: 'Medium', averages: { release: 71, form: 69, balance: 73, arc: 68, elbow: 72, follow: 71, consist: 67, power: 66 } },
-  { state: "Missouri", stateCode: "MO", d1Players: 178, d2Players: 112, d3Players: 98, totalCollegePlayers: 388, competitiveness: 'Medium', averages: { release: 70, form: 69, balance: 72, arc: 67, elbow: 71, follow: 70, consist: 66, power: 65 } },
-  { state: "Minnesota", stateCode: "MN", d1Players: 167, d2Players: 123, d3Players: 145, totalCollegePlayers: 435, competitiveness: 'Medium', averages: { release: 70, form: 69, balance: 72, arc: 67, elbow: 71, follow: 70, consist: 66, power: 65 } },
-  { state: "Wisconsin", stateCode: "WI", d1Players: 156, d2Players: 112, d3Players: 134, totalCollegePlayers: 402, competitiveness: 'Medium', averages: { release: 69, form: 68, balance: 71, arc: 66, elbow: 70, follow: 69, consist: 65, power: 64 } },
-  { state: "Connecticut", stateCode: "CT", d1Players: 145, d2Players: 89, d3Players: 112, totalCollegePlayers: 346, competitiveness: 'Medium', averages: { release: 71, form: 70, balance: 73, arc: 68, elbow: 72, follow: 71, consist: 67, power: 66 } },
-  { state: "Oklahoma", stateCode: "OK", d1Players: 134, d2Players: 78, d3Players: 56, totalCollegePlayers: 268, competitiveness: 'Medium', averages: { release: 70, form: 68, balance: 72, arc: 67, elbow: 71, follow: 70, consist: 66, power: 65 } },
-  { state: "Colorado", stateCode: "CO", d1Players: 123, d2Players: 89, d3Players: 78, totalCollegePlayers: 290, competitiveness: 'Medium', averages: { release: 69, form: 68, balance: 71, arc: 66, elbow: 70, follow: 69, consist: 65, power: 64 } },
-  { state: "Nevada", stateCode: "NV", d1Players: 112, d2Players: 67, d3Players: 45, totalCollegePlayers: 224, competitiveness: 'Medium', averages: { release: 70, form: 68, balance: 72, arc: 67, elbow: 71, follow: 70, consist: 66, power: 65 } },
+  { state: "Maryland", stateCode: "MD", d1Players: 267, d2Players: 145, d3Players: 112, totalCollegePlayers: 524, competitiveness: 'Medium', averages: { release: 72, form: 70, balance: 73, arc: 68, elbow: 72, follow: 71, consist: 67, power: 66, physical: 70, mechanics: 69 } },
+  { state: "Louisiana", stateCode: "LA", d1Players: 256, d2Players: 134, d3Players: 89, totalCollegePlayers: 479, competitiveness: 'Medium', averages: { release: 73, form: 71, balance: 74, arc: 70, elbow: 73, follow: 72, consist: 68, power: 68, physical: 72, mechanics: 71 } },
+  { state: "Tennessee", stateCode: "TN", d1Players: 245, d2Players: 145, d3Players: 112, totalCollegePlayers: 502, competitiveness: 'Medium', averages: { release: 71, form: 70, balance: 73, arc: 68, elbow: 72, follow: 71, consist: 67, power: 66, physical: 70, mechanics: 69 } },
+  { state: "Arizona", stateCode: "AZ", d1Players: 234, d2Players: 123, d3Players: 89, totalCollegePlayers: 446, competitiveness: 'Medium', averages: { release: 72, form: 70, balance: 74, arc: 69, elbow: 73, follow: 72, consist: 68, power: 67, physical: 71, mechanics: 70 } },
+  { state: "Washington", stateCode: "WA", d1Players: 223, d2Players: 134, d3Players: 112, totalCollegePlayers: 469, competitiveness: 'Medium', averages: { release: 71, form: 70, balance: 73, arc: 68, elbow: 72, follow: 71, consist: 67, power: 66, physical: 70, mechanics: 69 } },
+  { state: "Kentucky", stateCode: "KY", d1Players: 212, d2Players: 123, d3Players: 98, totalCollegePlayers: 433, competitiveness: 'Medium', averages: { release: 72, form: 71, balance: 74, arc: 69, elbow: 73, follow: 72, consist: 68, power: 67, physical: 71, mechanics: 70 } },
+  { state: "South Carolina", stateCode: "SC", d1Players: 198, d2Players: 112, d3Players: 78, totalCollegePlayers: 388, competitiveness: 'Medium', averages: { release: 71, form: 69, balance: 72, arc: 67, elbow: 71, follow: 70, consist: 66, power: 65, physical: 69, mechanics: 68 } },
+  { state: "Alabama", stateCode: "AL", d1Players: 189, d2Players: 98, d3Players: 67, totalCollegePlayers: 354, competitiveness: 'Medium', averages: { release: 71, form: 69, balance: 73, arc: 68, elbow: 72, follow: 71, consist: 67, power: 66, physical: 70, mechanics: 69 } },
+  { state: "Missouri", stateCode: "MO", d1Players: 178, d2Players: 112, d3Players: 98, totalCollegePlayers: 388, competitiveness: 'Medium', averages: { release: 70, form: 69, balance: 72, arc: 67, elbow: 71, follow: 70, consist: 66, power: 65, physical: 69, mechanics: 68 } },
+  { state: "Minnesota", stateCode: "MN", d1Players: 167, d2Players: 123, d3Players: 145, totalCollegePlayers: 435, competitiveness: 'Medium', averages: { release: 70, form: 69, balance: 72, arc: 67, elbow: 71, follow: 70, consist: 66, power: 65, physical: 69, mechanics: 68 } },
+  { state: "Wisconsin", stateCode: "WI", d1Players: 156, d2Players: 112, d3Players: 134, totalCollegePlayers: 402, competitiveness: 'Medium', averages: { release: 69, form: 68, balance: 71, arc: 66, elbow: 70, follow: 69, consist: 65, power: 64, physical: 68, mechanics: 67 } },
+  { state: "Connecticut", stateCode: "CT", d1Players: 145, d2Players: 89, d3Players: 112, totalCollegePlayers: 346, competitiveness: 'Medium', averages: { release: 71, form: 70, balance: 73, arc: 68, elbow: 72, follow: 71, consist: 67, power: 66, physical: 70, mechanics: 69 } },
+  { state: "Oklahoma", stateCode: "OK", d1Players: 134, d2Players: 78, d3Players: 56, totalCollegePlayers: 268, competitiveness: 'Medium', averages: { release: 70, form: 68, balance: 72, arc: 67, elbow: 71, follow: 70, consist: 66, power: 65, physical: 69, mechanics: 68 } },
+  { state: "Colorado", stateCode: "CO", d1Players: 123, d2Players: 89, d3Players: 78, totalCollegePlayers: 290, competitiveness: 'Medium', averages: { release: 69, form: 68, balance: 71, arc: 66, elbow: 70, follow: 69, consist: 65, power: 64, physical: 68, mechanics: 67 } },
+  { state: "Nevada", stateCode: "NV", d1Players: 112, d2Players: 67, d3Players: 45, totalCollegePlayers: 224, competitiveness: 'Medium', averages: { release: 70, form: 68, balance: 72, arc: 67, elbow: 71, follow: 70, consist: 66, power: 65, physical: 69, mechanics: 68 } },
   
   // Developing States (smaller basketball programs)
-  { state: "Oregon", stateCode: "OR", d1Players: 98, d2Players: 67, d3Players: 56, totalCollegePlayers: 221, competitiveness: 'Developing', averages: { release: 68, form: 66, balance: 70, arc: 65, elbow: 69, follow: 68, consist: 64, power: 63 } },
-  { state: "Iowa", stateCode: "IA", d1Players: 89, d2Players: 78, d3Players: 89, totalCollegePlayers: 256, competitiveness: 'Developing', averages: { release: 68, form: 67, balance: 70, arc: 65, elbow: 69, follow: 68, consist: 64, power: 63 } },
-  { state: "Kansas", stateCode: "KS", d1Players: 87, d2Players: 56, d3Players: 45, totalCollegePlayers: 188, competitiveness: 'Developing', averages: { release: 69, form: 68, balance: 71, arc: 66, elbow: 70, follow: 69, consist: 65, power: 64 } },
-  { state: "Arkansas", stateCode: "AR", d1Players: 78, d2Players: 45, d3Players: 34, totalCollegePlayers: 157, competitiveness: 'Developing', averages: { release: 67, form: 65, balance: 69, arc: 64, elbow: 68, follow: 67, consist: 63, power: 62 } },
-  { state: "Mississippi", stateCode: "MS", d1Players: 76, d2Players: 45, d3Players: 34, totalCollegePlayers: 155, competitiveness: 'Developing', averages: { release: 68, form: 66, balance: 70, arc: 65, elbow: 69, follow: 68, consist: 64, power: 63 } },
-  { state: "Utah", stateCode: "UT", d1Players: 67, d2Players: 45, d3Players: 56, totalCollegePlayers: 168, competitiveness: 'Developing', averages: { release: 67, form: 66, balance: 69, arc: 64, elbow: 68, follow: 67, consist: 63, power: 62 } },
-  { state: "Nebraska", stateCode: "NE", d1Players: 56, d2Players: 45, d3Players: 34, totalCollegePlayers: 135, competitiveness: 'Developing', averages: { release: 66, form: 65, balance: 68, arc: 63, elbow: 67, follow: 66, consist: 62, power: 61 } },
-  { state: "New Mexico", stateCode: "NM", d1Players: 45, d2Players: 34, d3Players: 23, totalCollegePlayers: 102, competitiveness: 'Developing', averages: { release: 66, form: 64, balance: 68, arc: 63, elbow: 67, follow: 66, consist: 62, power: 61 } },
-  { state: "Hawaii", stateCode: "HI", d1Players: 34, d2Players: 23, d3Players: 12, totalCollegePlayers: 69, competitiveness: 'Developing', averages: { release: 65, form: 63, balance: 67, arc: 62, elbow: 66, follow: 65, consist: 61, power: 60 } },
+  { state: "Oregon", stateCode: "OR", d1Players: 98, d2Players: 67, d3Players: 56, totalCollegePlayers: 221, competitiveness: 'Developing', averages: { release: 68, form: 66, balance: 70, arc: 65, elbow: 69, follow: 68, consist: 64, power: 63, physical: 67, mechanics: 66 } },
+  { state: "Iowa", stateCode: "IA", d1Players: 89, d2Players: 78, d3Players: 89, totalCollegePlayers: 256, competitiveness: 'Developing', averages: { release: 68, form: 67, balance: 70, arc: 65, elbow: 69, follow: 68, consist: 64, power: 63, physical: 67, mechanics: 66 } },
+  { state: "Kansas", stateCode: "KS", d1Players: 87, d2Players: 56, d3Players: 45, totalCollegePlayers: 188, competitiveness: 'Developing', averages: { release: 69, form: 68, balance: 71, arc: 66, elbow: 70, follow: 69, consist: 65, power: 64, physical: 68, mechanics: 67 } },
+  { state: "Arkansas", stateCode: "AR", d1Players: 78, d2Players: 45, d3Players: 34, totalCollegePlayers: 157, competitiveness: 'Developing', averages: { release: 67, form: 65, balance: 69, arc: 64, elbow: 68, follow: 67, consist: 63, power: 62, physical: 66, mechanics: 65 } },
+  { state: "Mississippi", stateCode: "MS", d1Players: 76, d2Players: 45, d3Players: 34, totalCollegePlayers: 155, competitiveness: 'Developing', averages: { release: 68, form: 66, balance: 70, arc: 65, elbow: 69, follow: 68, consist: 64, power: 63, physical: 67, mechanics: 66 } },
+  { state: "Utah", stateCode: "UT", d1Players: 67, d2Players: 45, d3Players: 56, totalCollegePlayers: 168, competitiveness: 'Developing', averages: { release: 67, form: 66, balance: 69, arc: 64, elbow: 68, follow: 67, consist: 63, power: 62, physical: 66, mechanics: 65 } },
+  { state: "Nebraska", stateCode: "NE", d1Players: 56, d2Players: 45, d3Players: 34, totalCollegePlayers: 135, competitiveness: 'Developing', averages: { release: 66, form: 65, balance: 68, arc: 63, elbow: 67, follow: 66, consist: 62, power: 61, physical: 65, mechanics: 64 } },
+  { state: "New Mexico", stateCode: "NM", d1Players: 45, d2Players: 34, d3Players: 23, totalCollegePlayers: 102, competitiveness: 'Developing', averages: { release: 66, form: 64, balance: 68, arc: 63, elbow: 67, follow: 66, consist: 62, power: 61, physical: 65, mechanics: 64 } },
+  { state: "Hawaii", stateCode: "HI", d1Players: 34, d2Players: 23, d3Players: 12, totalCollegePlayers: 69, competitiveness: 'Developing', averages: { release: 65, form: 63, balance: 67, arc: 62, elbow: 66, follow: 65, consist: 61, power: 60, physical: 64, mechanics: 63 } },
   { state: "Alaska", stateCode: "AK", d1Players: 12, d2Players: 8, d3Players: 5, totalCollegePlayers: 25, competitiveness: 'Developing', averages: { release: 62, form: 60, balance: 64, arc: 59, elbow: 63, follow: 62, consist: 58, power: 57 } },
   
   // Default for unlisted states
-  { state: "Other", stateCode: "XX", d1Players: 50, d2Players: 35, d3Players: 25, totalCollegePlayers: 110, competitiveness: 'Developing', averages: { release: 68, form: 66, balance: 70, arc: 65, elbow: 69, follow: 68, consist: 64, power: 63 } },
+  { state: "Other", stateCode: "XX", d1Players: 50, d2Players: 35, d3Players: 25, totalCollegePlayers: 110, competitiveness: 'Developing', averages: { release: 68, form: 66, balance: 70, arc: 65, elbow: 69, follow: 68, consist: 64, power: 63, physical: 67, mechanics: 66 } },
 ]
 
 // ============================================
@@ -298,6 +327,26 @@ export function StatPopup({
   
   const nationalComparison = getComparisonLabel(value, nationalAvg)
   const stateComparison = getComparisonLabel(value, stateAvg)
+  
+  // Points system
+  const [showPointsBurst, setShowPointsBurst] = useState(false)
+  const { earnPoints } = usePoints()
+  const hasAwardedPoints = useRef(false)
+  
+  // Award points when popup opens
+  useEffect(() => {
+    if (isOpen && !hasAwardedPoints.current) {
+      const result = earnPoints('stat_popup_view')
+      if (result.earned) {
+        setShowPointsBurst(true)
+        setTimeout(() => setShowPointsBurst(false), 1500)
+      }
+      hasAwardedPoints.current = true
+    }
+    if (!isOpen) {
+      hasAwardedPoints.current = false
+    }
+  }, [isOpen, earnPoints])
 
   // Close on click outside
   useEffect(() => {
@@ -331,9 +380,72 @@ export function StatPopup({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      {/* Points animation - fixed position on top of everything */}
+      {showPointsBurst && (
+        <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-[60]">
+          <motion.div
+            className="font-black text-5xl"
+            style={{
+              textShadow: '0 0 30px rgba(255, 215, 0, 1), 0 0 60px rgba(255, 165, 0, 0.5)',
+            }}
+            initial={{ scale: 0, y: 0 }}
+            animate={{ 
+              scale: [0, 1.5, 1.2],
+              y: [0, -20, -40],
+            }}
+            exit={{ 
+              scale: 0.5, 
+              y: -80, 
+              opacity: 0 
+            }}
+            transition={{ 
+              duration: 0.6,
+              times: [0, 0.3, 1],
+              ease: 'easeOut',
+            }}
+          >
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-yellow-400 to-orange-500">
+              +1 IQ
+            </span>
+          </motion.div>
+          {/* Sparkles */}
+          {[...Array(6)].map((_, i) => {
+            const angle = (360 / 6) * i
+            const radians = (angle * Math.PI) / 180
+            const distance = 80
+            
+            return (
+              <motion.div
+                key={i}
+                className="absolute w-3 h-3 rounded-full bg-yellow-400"
+                style={{
+                  boxShadow: '0 0 10px rgba(255, 215, 0, 0.8)',
+                }}
+                initial={{ 
+                  x: 0, 
+                  y: 0, 
+                  scale: 0, 
+                  opacity: 1 
+                }}
+                animate={{ 
+                  x: Math.cos(radians) * distance, 
+                  y: Math.sin(radians) * distance, 
+                  scale: [0, 1, 0], 
+                  opacity: [1, 1, 0] 
+                }}
+                transition={{ 
+                  duration: 0.5, 
+                  delay: i * 0.02,
+                  ease: 'easeOut' 
+                }}
+              />
+            )
+          })}
+        </div>
+      )}
       <div 
         ref={popupRef}
-        className="bg-gradient-to-b from-[#1a1a1a] to-[#0d0d0d] rounded-xl border border-[#3a3a3a] shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto"
+        className="bg-gradient-to-b from-[#1a1a1a] to-[#0d0d0d] rounded-xl border border-[#3a3a3a] shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto relative"
       >
         {/* Header */}
         <div className="sticky top-0 bg-gradient-to-r from-[#FF6B35]/20 to-transparent p-4 border-b border-[#3a3a3a] flex items-center justify-between">
@@ -523,13 +635,28 @@ interface ClickableStatProps {
 
 export function ClickableStat({ statKey, label, value, playerAge = 16, playerState = "CA" }: ClickableStatProps) {
   const [isPopupOpen, setIsPopupOpen] = useState(false)
+  const [showPointsBurst, setShowPointsBurst] = useState(false)
+  const { earnPoints } = usePoints()
+
+  const handleOpenPopup = () => {
+    setIsPopupOpen(true)
+    // Award points for viewing the stat popup
+    const result = earnPoints('stat_popup_view')
+    if (result.earned) {
+      setShowPointsBurst(true)
+      setTimeout(() => setShowPointsBurst(false), 1500)
+    }
+  }
 
   return (
     <>
       <div 
-        onClick={() => setIsPopupOpen(true)}
-        className="cursor-pointer hover:bg-[#2a2a2a] rounded-lg p-1 -m-1 transition-colors group"
+        onClick={handleOpenPopup}
+        className="cursor-pointer hover:bg-[#2a2a2a] rounded-lg p-1 -m-1 transition-colors group relative"
       >
+        {/* GOLD Video Game Style Points Animation */}
+        <InlinePointsBurst points={1} show={showPointsBurst} label="IQ" />
+        
         <p className="text-[#888] text-[9px] uppercase group-hover:text-[#FF6B35] transition-colors flex items-center gap-1">
           {label}
           <Info className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -578,12 +705,24 @@ interface ClickableStatsGridProps {
 
 export function ClickableStatsGrid({ stats, playerAge = 16, playerState = "CA" }: ClickableStatsGridProps) {
   const [openPopup, setOpenPopup] = useState<string | null>(null)
+  const [showPointsBurst, setShowPointsBurst] = useState(false)
+  const { earnPoints } = usePoints()
+
+  const handleOpenPopup = (statKey: string) => {
+    setOpenPopup(statKey)
+    // Award points for viewing the stat popup
+    const result = earnPoints('stat_popup_view')
+    if (result.earned) {
+      setShowPointsBurst(true)
+      setTimeout(() => setShowPointsBurst(false), 1500)
+    }
+  }
 
   // Helper to render a single stat item - keeps EXACT same styling as original
   const renderStat = (statKey: string, label: string, value: number) => (
     <div 
       key={statKey}
-      onClick={() => setOpenPopup(statKey)}
+      onClick={() => handleOpenPopup(statKey)}
       className="cursor-pointer hover:bg-[#2a2a2a]/50 rounded p-1 -m-1 transition-colors"
     >
       <p className="text-[#888] text-[9px] uppercase">{label}</p>
@@ -599,6 +738,9 @@ export function ClickableStatsGrid({ stats, playerAge = 16, playerState = "CA" }
 
   return (
     <>
+      {/* GOLD Video Game Style Points Animation */}
+      <InlinePointsBurst points={1} show={showPointsBurst} label="IQ" />
+      
       <div className="grid grid-cols-4 gap-x-2 gap-y-3">
         {/* Row 1 */}
         {renderStat('release', 'RELEASE', stats.release)}

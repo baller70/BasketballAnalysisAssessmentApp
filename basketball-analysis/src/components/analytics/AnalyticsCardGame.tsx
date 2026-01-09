@@ -22,6 +22,8 @@ import {
   Bell,
   Sparkles
 } from "lucide-react"
+import { usePoints } from "@/lib/points/pointsContext"
+import { InlinePointsBurst } from "@/components/points/PointsBurst"
 
 // ============================================
 // TYPES & DATA
@@ -930,6 +932,10 @@ const DEFAULT_DATA: AnalyticsData = {
 }
 
 export function AnalyticsCardGame({ data = DEFAULT_DATA }: AnalyticsCardGameProps) {
+  // Points system
+  const { earnPoints } = usePoints()
+  const [showPointsBurst, setShowPointsBurst] = useState(false)
+  
   const [currentIndex, setCurrentIndex] = useState(0)
   const [gameStats, setGameStats] = useState({
     keepItUp: 0,
@@ -977,12 +983,17 @@ export function AnalyticsCardGame({ data = DEFAULT_DATA }: AnalyticsCardGameProp
       }))
     }
 
+    // Award +3 points for analytics card swipe
+    earnPoints('analytics_card_swipe')
+    setShowPointsBurst(true)
+    setTimeout(() => setShowPointsBurst(false), 1500)
+
     if (currentIndex < METRIC_KEYS.length - 1) {
       setCurrentIndex(prev => prev + 1)
     }
     
     setDragX(0)
-  }, [currentIndex])
+  }, [currentIndex, earnPoints])
 
   const handleStart = (clientX: number) => {
     setIsDragging(true)
@@ -1114,6 +1125,8 @@ export function AnalyticsCardGame({ data = DEFAULT_DATA }: AnalyticsCardGameProp
             transition: isDragging ? 'none' : 'transform 0.3s ease-out'
           }}
         >
+          {/* GOLD Video Game Style Points Animation */}
+          <InlinePointsBurst points={3} show={showPointsBurst} label="IQ" />
           <AnalyticsCard 
             metricKey={currentMetricKey}
             data={data}
@@ -1234,3 +1247,4 @@ export function AnalyticsCardGame({ data = DEFAULT_DATA }: AnalyticsCardGameProp
 }
 
 export default AnalyticsCardGame
+

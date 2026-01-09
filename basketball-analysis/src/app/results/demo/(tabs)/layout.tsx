@@ -32,40 +32,35 @@ export default function TabsLayout({
 
   return (
     <div className="min-h-screen bg-[#050505] pb-24">
-      {/* Sticky Header with Back Button - NOT shown for analytics page */}
-      {!isAnalyticsPage && (
-        <div className="sticky top-0 z-50 bg-[#0a0a0a]/95 backdrop-blur-sm border-b border-[#2a2a2a]">
-          <div className="max-w-4xl mx-auto px-4 py-3">
+      {/* Page Content */}
+      <main className="max-w-4xl mx-auto px-4 py-6">
+        {/* Page Header with Back Button - Part of page content, not sticky */}
+        {!isAnalyticsPage && (
+          <div className="mb-6">
             <div className="flex items-center gap-4">
               {/* Back to Dashboard */}
               <Link 
                 href="/results/demo" 
                 className="flex items-center gap-2 text-[#888] hover:text-white transition-colors group"
               >
-                <div className="w-8 h-8 rounded-lg bg-[#1a1a1a] border border-[#333] flex items-center justify-center group-hover:border-[#FF6B35]/50 group-hover:bg-[#FF6B35]/10 transition-all">
-                  <ArrowLeft className="w-4 h-4" />
+                <div className="w-10 h-10 rounded-xl bg-[#1a1a1a] border border-[#333] flex items-center justify-center group-hover:border-[#FF6B35]/50 group-hover:bg-[#FF6B35]/10 transition-all">
+                  <ArrowLeft className="w-5 h-5" />
                 </div>
               </Link>
               
-              {/* Divider */}
-              <div className="h-6 w-px bg-[#333]" />
-              
               {/* Current Tab Title */}
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-[#FF6B35]/10 border border-[#FF6B35]/30 flex items-center justify-center">
-                  <TabIcon className="w-4 h-4 text-[#FF6B35]" />
+                <div className="w-10 h-10 rounded-xl bg-[#FF6B35]/10 border border-[#FF6B35]/30 flex items-center justify-center">
+                  <TabIcon className="w-5 h-5 text-[#FF6B35]" />
                 </div>
-                <h1 className="text-white font-bold text-lg uppercase tracking-wider">
+                <h1 className="text-white font-bold text-xl uppercase tracking-wider">
                   {tabConfig?.label || "Dashboard"}
                 </h1>
               </div>
             </div>
           </div>
-        </div>
-      )}
-      
-      {/* Page Content */}
-      <main className="max-w-4xl mx-auto px-4 py-6">
+        )}
+        
         {children}
       </main>
       

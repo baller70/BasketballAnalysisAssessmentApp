@@ -190,3 +190,4 @@ export const getTotalDailyCapacity = (): number => {
     .filter(p => p.enabled && p.costPerRequest === 0)
     .reduce((total, p) => total + p.rateLimit.requestsPerDay, 0);
 };
+

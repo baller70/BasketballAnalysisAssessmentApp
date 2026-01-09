@@ -3,6 +3,7 @@
 import React, { useState, useRef, useCallback, useEffect, useMemo } from "react"
 import Image from "next/image"
 import html2canvas from "html2canvas"
+import JSZip from "jszip"
 import { 
   ArrowLeft,
   ArrowRight,
@@ -36,6 +37,8 @@ import {
 } from "lucide-react"
 import { getAllSessions, type AnalysisSession } from "@/services/sessionStorage"
 import { ALL_ELITE_SHOOTERS } from "@/data/eliteShooters"
+import { usePoints } from "@/lib/points/pointsContext"
+import { InlinePointsBurst } from "@/components/points/PointsBurst"
 
 // ============================================
 // TYPES
@@ -105,13 +108,27 @@ interface UserData {
 // HELPER COMPONENTS
 // ============================================
 
-// Noise texture overlay
+// Noise texture overlay - using CSS gradient pattern for html-to-image compatibility
 function NoiseOverlay() {
   return (
     <div 
       className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay"
       style={{
-        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`
+        // Use a simple repeating gradient pattern instead of SVG filter for better compatibility
+        backgroundImage: `repeating-linear-gradient(
+          45deg,
+          rgba(255,255,255,0.1) 0px,
+          rgba(255,255,255,0.1) 1px,
+          transparent 1px,
+          transparent 3px
+        ), repeating-linear-gradient(
+          -45deg,
+          rgba(0,0,0,0.1) 0px,
+          rgba(0,0,0,0.1) 1px,
+          transparent 1px,
+          transparent 3px
+        )`,
+        backgroundSize: '4px 4px'
       }}
     />
   )
@@ -152,7 +169,7 @@ function ShotIQLogoIcon({ className }: { className?: string }) {
         src="/images/ShotIQ Logo Gredient.png" 
         alt="ShotIQ" 
         fill
-        className="object-cover"
+        className="object-contain"
       />
     </div>
   )
@@ -231,6 +248,14 @@ function AnalysisCardContent({ data }: { data: UserData }) {
       <NoiseOverlay />
       <ShotIQWatermark />
       
+      {/* Glow effect - using radial gradient instead of blur for html2canvas compatibility */}
+      <div 
+        className="absolute top-1/4 left-1/2 -translate-x-1/2 w-56 h-56 rounded-full pointer-events-none"
+        style={{
+          background: 'radial-gradient(circle, rgba(255, 107, 53, 0.2) 0%, rgba(255, 107, 53, 0.1) 30%, rgba(255, 107, 53, 0.03) 50%, transparent 70%)'
+        }}
+      />
+      
       {/* Header */}
       <div className="flex items-center justify-end mb-4 relative z-10">
         {/* Icon/text above, date below */}
@@ -285,7 +310,7 @@ function AnalysisCardContent({ data }: { data: UserData }) {
           <img 
             src="/images/ShotIQ Logo Gredient.png" 
             alt="ShotIQ" 
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
           />
         </div>
       </div>
@@ -302,8 +327,13 @@ function AchievementCardContent({ data }: { data: UserData }) {
       <NoiseOverlay />
       <ShotIQWatermark />
       
-      {/* Glow effect */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-[#D4AF37]/20 rounded-full blur-3xl" />
+      {/* Glow effect - using radial gradient instead of blur for html2canvas compatibility */}
+      <div 
+        className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-56 h-56 rounded-full pointer-events-none"
+        style={{
+          background: 'radial-gradient(circle, rgba(212, 175, 55, 0.2) 0%, rgba(212, 175, 55, 0.1) 30%, rgba(212, 175, 55, 0.03) 50%, transparent 70%)'
+        }}
+      />
       
       {/* Header */}
       <div className="absolute top-4 right-4 flex flex-col items-end gap-1">
@@ -356,7 +386,7 @@ function AchievementCardContent({ data }: { data: UserData }) {
           <img 
             src="/images/ShotIQ Logo Gredient.png" 
             alt="ShotIQ" 
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
           />
         </div>
       </div>
@@ -381,8 +411,13 @@ function StreakCardContent({ data }: { data: UserData }) {
       <NoiseOverlay />
       <ShotIQWatermark />
       
-      {/* Fire glow effect */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-gradient-to-t from-[#FF6B35]/30 via-[#FF4500]/20 to-transparent rounded-full blur-3xl" />
+      {/* Fire glow effect - using radial gradient instead of blur for html2canvas compatibility */}
+      <div 
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full pointer-events-none"
+        style={{
+          background: 'radial-gradient(circle, rgba(255, 107, 53, 0.25) 0%, rgba(255, 69, 0, 0.15) 30%, rgba(255, 69, 0, 0.05) 50%, transparent 70%)'
+        }}
+      />
       
       {/* Header */}
       <div className="absolute top-4 right-4 flex flex-col items-end gap-1">
@@ -434,11 +469,11 @@ function StreakCardContent({ data }: { data: UserData }) {
       {/* Footer */}
       <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
         <div className="text-[#444] text-[9px]">Track your progress at shotiqai.com</div>
-        <div className="w-10 h-10 rounded-lg overflow-hidden">
+        <div className="w-10 h-10 rounded-lg bg-[#1a1a1a] flex items-center justify-center p-1">
           <img 
             src="/images/ShotIQ Logo Gredient.png" 
             alt="ShotIQ" 
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
           />
         </div>
       </div>
@@ -452,6 +487,14 @@ function ComparisonCardContent({ data }: { data: UserData }) {
     <div className="relative w-full bg-gradient-to-br from-[#0a0a0a] via-[#111] to-[#0a0a0a] rounded-2xl overflow-hidden p-5 flex flex-col min-h-[400px]">
       <NoiseOverlay />
       <ShotIQWatermark />
+      
+      {/* Glow effect - using radial gradient instead of blur for html2canvas compatibility */}
+      <div 
+        className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-56 h-56 rounded-full pointer-events-none"
+        style={{
+          background: 'radial-gradient(circle, rgba(212, 175, 55, 0.2) 0%, rgba(212, 175, 55, 0.1) 30%, rgba(212, 175, 55, 0.03) 50%, transparent 70%)'
+        }}
+      />
       
       {/* Header */}
       <div className="flex items-center justify-between mb-4 relative z-10">
@@ -509,7 +552,7 @@ function ComparisonCardContent({ data }: { data: UserData }) {
           <img 
             src="/images/ShotIQ Logo Gredient.png" 
             alt="ShotIQ" 
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
           />
         </div>
       </div>
@@ -524,8 +567,13 @@ function WorkoutCardContent({ data }: { data: UserData }) {
       <NoiseOverlay />
       <ShotIQWatermark />
       
-      {/* Glow effect */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-[#22C55E]/20 rounded-full blur-3xl" />
+      {/* Glow effect - using radial gradient instead of blur for html2canvas compatibility */}
+      <div 
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-56 h-56 rounded-full pointer-events-none"
+        style={{
+          background: 'radial-gradient(circle, rgba(34, 197, 94, 0.2) 0%, rgba(34, 197, 94, 0.1) 30%, rgba(34, 197, 94, 0.03) 50%, transparent 70%)'
+        }}
+      />
       
       {/* Header */}
       <div className="absolute top-4 right-4 flex flex-col items-end gap-1">
@@ -578,7 +626,7 @@ function WorkoutCardContent({ data }: { data: UserData }) {
           <img 
             src="/images/ShotIQ Logo Gredient.png" 
             alt="ShotIQ" 
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
           />
         </div>
       </div>
@@ -593,8 +641,13 @@ function WeeklySummaryCardContent({ data }: { data: UserData }) {
       <NoiseOverlay />
       <ShotIQWatermark />
       
-      {/* Glow effect */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-48 h-48 bg-[#8B5CF6]/20 rounded-full blur-3xl" />
+      {/* Glow effect - using radial gradient instead of blur for html2canvas compatibility */}
+      <div 
+        className="absolute top-1/4 left-1/2 -translate-x-1/2 w-56 h-56 rounded-full pointer-events-none"
+        style={{
+          background: 'radial-gradient(circle, rgba(139, 92, 246, 0.2) 0%, rgba(139, 92, 246, 0.1) 30%, rgba(139, 92, 246, 0.03) 50%, transparent 70%)'
+        }}
+      />
       
       {/* Header */}
       <div className="flex items-center justify-between mb-4 relative z-10">
@@ -650,7 +703,7 @@ function WeeklySummaryCardContent({ data }: { data: UserData }) {
           <img 
             src="/images/ShotIQ Logo Gredient.png" 
             alt="ShotIQ" 
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
           />
         </div>
       </div>
@@ -665,8 +718,13 @@ function MilestoneCardContent({ data }: { data: UserData }) {
       <NoiseOverlay />
       <ShotIQWatermark />
       
-      {/* Glow effect */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-[#F59E0B]/20 rounded-full blur-3xl" />
+      {/* Glow effect - using radial gradient instead of blur for html2canvas compatibility */}
+      <div 
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-56 h-56 rounded-full pointer-events-none"
+        style={{
+          background: 'radial-gradient(circle, rgba(245, 158, 11, 0.2) 0%, rgba(245, 158, 11, 0.1) 30%, rgba(245, 158, 11, 0.03) 50%, transparent 70%)'
+        }}
+      />
       
       {/* Header */}
       <div className="absolute top-4 right-4 flex flex-col items-end gap-1">
@@ -716,7 +774,7 @@ function MilestoneCardContent({ data }: { data: UserData }) {
           <img 
             src="/images/ShotIQ Logo Gredient.png" 
             alt="ShotIQ" 
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
           />
         </div>
       </div>
@@ -730,6 +788,14 @@ function ImageUploadCardContent({ data }: { data: UserData }) {
     <div className="relative w-full bg-gradient-to-br from-[#0a0a0a] via-[#111] to-[#0a0a0a] rounded-2xl overflow-hidden p-5 flex flex-col min-h-[400px]">
       <NoiseOverlay />
       <ShotIQWatermark />
+      
+      {/* Glow effect - using radial gradient instead of blur for html2canvas compatibility */}
+      <div 
+        className="absolute top-1/4 left-1/2 -translate-x-1/2 w-56 h-56 rounded-full pointer-events-none"
+        style={{
+          background: 'radial-gradient(circle, rgba(34, 197, 94, 0.2) 0%, rgba(34, 197, 94, 0.1) 30%, rgba(34, 197, 94, 0.03) 50%, transparent 70%)'
+        }}
+      />
       
       {/* Header */}
       <div className="flex items-center justify-between mb-4 relative z-10">
@@ -799,7 +865,7 @@ function ImageUploadCardContent({ data }: { data: UserData }) {
           <img 
             src="/images/ShotIQ Logo Gredient.png" 
             alt="ShotIQ" 
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
           />
         </div>
       </div>
@@ -815,6 +881,14 @@ function VideoUploadCardContent({ data }: { data: UserData }) {
     <div className="relative w-full bg-gradient-to-br from-[#0a0a0a] via-[#0a0a1a] to-[#0a0a0a] rounded-2xl overflow-hidden p-5 flex flex-col min-h-[400px]">
       <NoiseOverlay />
       <ShotIQWatermark />
+      
+      {/* Glow effect - using radial gradient instead of blur for html2canvas compatibility */}
+      <div 
+        className="absolute top-1/4 left-1/2 -translate-x-1/2 w-56 h-56 rounded-full pointer-events-none"
+        style={{
+          background: 'radial-gradient(circle, rgba(139, 92, 246, 0.2) 0%, rgba(139, 92, 246, 0.1) 30%, rgba(139, 92, 246, 0.03) 50%, transparent 70%)'
+        }}
+      />
       
       {/* Header */}
       <div className="flex items-center justify-between mb-4 relative z-10">
@@ -878,7 +952,7 @@ function VideoUploadCardContent({ data }: { data: UserData }) {
           <img 
             src="/images/ShotIQ Logo Gredient.png" 
             alt="ShotIQ" 
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
           />
         </div>
       </div>
@@ -894,6 +968,14 @@ function ProgressCardContent({ data }: { data: UserData }) {
     <div className="relative w-full bg-gradient-to-br from-[#0a0a0a] via-[#0a1a0a] to-[#0a0a0a] rounded-2xl overflow-hidden p-5 flex flex-col min-h-[400px]">
       <NoiseOverlay />
       <ShotIQWatermark />
+      
+      {/* Glow effect - using radial gradient instead of blur for html2canvas compatibility */}
+      <div 
+        className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-56 h-56 rounded-full pointer-events-none"
+        style={{
+          background: 'radial-gradient(circle, rgba(34, 197, 94, 0.2) 0%, rgba(34, 197, 94, 0.1) 30%, rgba(34, 197, 94, 0.03) 50%, transparent 70%)'
+        }}
+      />
       
       {/* Header */}
       <div className="flex items-center justify-between mb-4 relative z-10">
@@ -958,7 +1040,7 @@ function ProgressCardContent({ data }: { data: UserData }) {
           <img 
             src="/images/ShotIQ Logo Gredient.png" 
             alt="ShotIQ" 
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
           />
         </div>
       </div>
@@ -1132,16 +1214,27 @@ function ShareCard({ card, userData, dragX }: ShareCardProps) {
         
         {/* Premium Banner */}
         <div className="relative h-24 overflow-hidden" style={{ background: `linear-gradient(135deg, ${card.color}20, #1a1a1a, #1a1a1a)` }}>
-          {/* Glowing Orbs Background */}
-          <div className="absolute inset-0 opacity-40">
-            <div className="absolute -top-8 -left-8 w-28 h-28 rounded-full blur-2xl" style={{ backgroundColor: `${card.color}20` }} />
-            <div className="absolute -bottom-8 -right-8 w-28 h-28 rounded-full blur-2xl" style={{ backgroundColor: `${card.color}20` }} />
+          {/* Glowing Orbs Background - using radial gradients instead of blur for html2canvas compatibility */}
+          <div className="absolute inset-0 opacity-40 pointer-events-none">
+            <div 
+              className="absolute -top-8 -left-8 w-28 h-28 rounded-full"
+              style={{ background: `radial-gradient(circle, ${card.color}30 0%, ${card.color}15 40%, transparent 70%)` }}
+            />
+            <div 
+              className="absolute -bottom-8 -right-8 w-28 h-28 rounded-full"
+              style={{ background: `radial-gradient(circle, ${card.color}30 0%, ${card.color}15 40%, transparent 70%)` }}
+            />
           </div>
           
-          {/* Large Icon with Glow Effect */}
+          {/* Large Icon with Glow Effect - using box-shadow instead of blur for html2canvas compatibility */}
           <div className="absolute inset-0 flex items-center justify-end pr-5">
-            <div className="relative w-20 h-20">
-              <div className="absolute inset-0 blur-xl scale-125 opacity-15" style={{ backgroundColor: card.color }} />
+            <div 
+              className="relative w-20 h-20 flex items-center justify-center"
+              style={{
+                borderRadius: '50%',
+                boxShadow: `0 0 30px ${card.color}40, 0 0 60px ${card.color}20, 0 0 90px ${card.color}10`
+              }}
+            >
               <card.icon className="w-20 h-20 opacity-30" style={{ color: card.color }} />
             </div>
           </div>
@@ -1266,13 +1359,13 @@ const SOCIAL_PLATFORMS: SocialPlatform[] = [
     name: 'Instagram',
     icon: InstagramLogo,
     color: '#E4405F',
-    shareUrl: (text, url) => `https://www.instagram.com/` // Opens Instagram - user downloads image first
+    shareUrl: () => `https://www.instagram.com/` // Opens Instagram - user downloads image first
   },
   {
     name: 'TikTok',
     icon: TikTokLogo,
     color: '#000000',
-    shareUrl: (text, url) => `https://www.tiktok.com/` // Opens TikTok - user downloads image first
+    shareUrl: () => `https://www.tiktok.com/` // Opens TikTok - user downloads image first
   },
   {
     name: 'Facebook',
@@ -1302,7 +1395,7 @@ const SOCIAL_PLATFORMS: SocialPlatform[] = [
     name: 'YouTube',
     icon: YouTubeLogo,
     color: '#FF0000',
-    shareUrl: (text, url) => `https://studio.youtube.com/` // Opens YouTube Studio
+    shareUrl: () => `https://studio.youtube.com/` // Opens YouTube Studio
   },
   {
     name: 'WhatsApp',
@@ -1314,7 +1407,7 @@ const SOCIAL_PLATFORMS: SocialPlatform[] = [
     name: 'Snapchat',
     icon: SnapchatLogo,
     color: '#FFFC00',
-    shareUrl: (text, url) => `https://www.snapchat.com/` // Opens Snapchat
+    shareUrl: () => `https://www.snapchat.com/` // Opens Snapchat
   },
   {
     name: 'Messages',
@@ -1340,25 +1433,35 @@ const SOCIAL_PLATFORMS: SocialPlatform[] = [
 function ShareModal({ 
   isOpen, 
   onClose, 
-  shareText, 
+  getShareText, 
   shareUrl,
   onCopySuccess 
 }: { 
   isOpen: boolean
   onClose: () => void
-  shareText: string
+  getShareText: (platform?: string) => string
   shareUrl: string
   onCopySuccess: () => void
 }) {
+  const [copied, setCopied] = useState(false)
+  
   if (!isOpen) return null
   
+  // Get default text for preview
+  const defaultShareText = getShareText()
+  
   const handleShare = async (platform: SocialPlatform) => {
+    // Get platform-specific text
+    const platformKey = platform.name.toLowerCase()
+    const shareText = getShareText(platformKey)
+    
     if (platform.name === 'Copy') {
       // Copy to clipboard
       if (typeof navigator !== 'undefined' && navigator.clipboard) {
-        await navigator.clipboard.writeText(shareText + '\n\n' + shareUrl)
+        await navigator.clipboard.writeText(shareText)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
         onCopySuccess()
-        onClose()
       }
       return
     }
@@ -1366,7 +1469,7 @@ function ShareModal({
     if (platform.name === 'Instagram' || platform.name === 'TikTok' || platform.name === 'Snapchat' || platform.name === 'YouTube') {
       // These platforms don't support direct URL sharing - copy text first, then open platform
       if (typeof navigator !== 'undefined' && navigator.clipboard) {
-        await navigator.clipboard.writeText(shareText + '\n\n' + shareUrl)
+        await navigator.clipboard.writeText(shareText)
       }
       // Open the platform
       window.open(platform.shareUrl(shareText, shareUrl), '_blank')
@@ -1380,61 +1483,174 @@ function ShareModal({
     onClose()
   }
   
+  // Group platforms by category
+  const socialPlatforms = SOCIAL_PLATFORMS.filter(p => 
+    ['Instagram', 'TikTok', 'Facebook', 'X', 'Threads', 'Snapchat'].includes(p.name)
+  )
+  const professionalPlatforms = SOCIAL_PLATFORMS.filter(p => 
+    ['LinkedIn', 'YouTube'].includes(p.name)
+  )
+  const messagingPlatforms = SOCIAL_PLATFORMS.filter(p => 
+    ['WhatsApp', 'Messages', 'Email', 'Copy'].includes(p.name)
+  )
+  
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/80 backdrop-blur-md"
         onClick={onClose}
       />
       
       {/* Modal */}
-      <div className="relative bg-[#1a1a1a] rounded-t-3xl sm:rounded-3xl w-full max-w-md mx-4 mb-0 sm:mb-4 border border-[#333] shadow-2xl animate-in slide-in-from-bottom duration-300">
+      <div className="relative bg-gradient-to-b from-[#1a1a1a] to-[#0d0d0d] rounded-t-3xl sm:rounded-3xl w-full max-w-lg mx-4 mb-0 sm:mb-4 border border-[#2a2a2a] shadow-2xl overflow-hidden">
+        {/* Decorative top gradient line */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#FF6B35] to-transparent" />
+        
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-[#333]">
-          <h3 className="text-white font-bold text-lg">Share to</h3>
+        <div className="flex items-center justify-between p-5 border-b border-[#2a2a2a]">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#FF4500] flex items-center justify-center">
+              <Share2 className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="text-white font-bold text-lg">Share Your Results</h3>
+              <p className="text-[#666] text-xs">Choose a platform to share</p>
+            </div>
+          </div>
           <button 
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-[#333] flex items-center justify-center text-white hover:bg-[#444] transition-colors"
+            className="w-9 h-9 rounded-xl bg-[#2a2a2a] flex items-center justify-center text-[#888] hover:text-white hover:bg-[#333] transition-all"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
         
-        {/* Social Grid */}
-        <div className="p-4 grid grid-cols-4 gap-3">
-          {SOCIAL_PLATFORMS.map((platform) => {
-            const IconComponent = platform.icon
-            return (
-              <button
-                key={platform.name}
-                onClick={() => handleShare(platform)}
-                className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-white/5 transition-colors group"
-              >
-                <div 
-                  className="w-12 h-12 rounded-full flex items-center justify-center transition-transform group-hover:scale-110"
-                  style={{ backgroundColor: platform.color, color: platform.name === 'Snapchat' ? '#000' : '#fff' }}
+        {/* Social Platforms Section */}
+        <div className="p-5">
+          <p className="text-[#666] text-[10px] uppercase tracking-wider font-semibold mb-3">Social Media</p>
+          <div className="grid grid-cols-6 gap-2">
+            {socialPlatforms.map((platform) => {
+              const IconComponent = platform.icon
+              return (
+                <button
+                  key={platform.name}
+                  onClick={() => handleShare(platform)}
+                  className="flex flex-col items-center gap-1.5 p-2 rounded-xl hover:bg-white/5 transition-all group"
                 >
-                  <IconComponent />
-                </div>
-                <span className="text-white text-[10px] font-medium text-center leading-tight">
-                  {platform.name}
-                </span>
-              </button>
-            )
-          })}
+                  <div 
+                    className="w-11 h-11 rounded-xl flex items-center justify-center transition-all group-hover:scale-105 group-hover:shadow-lg"
+                    style={{ 
+                      backgroundColor: platform.color, 
+                      color: platform.name === 'Snapchat' ? '#000' : '#fff',
+                      boxShadow: `0 4px 12px ${platform.color}30`
+                    }}
+                  >
+                    <IconComponent />
+                  </div>
+                  <span className="text-[#888] text-[9px] font-medium text-center leading-tight group-hover:text-white transition-colors">
+                    {platform.name}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
         </div>
         
-        {/* Preview */}
-        <div className="p-4 border-t border-[#333]">
-          <p className="text-[#666] text-xs mb-2">Preview:</p>
-          <div className="bg-[#0d0d0d] rounded-xl p-3 max-h-24 overflow-y-auto">
-            <p className="text-[#888] text-xs whitespace-pre-wrap">{shareText.substring(0, 150)}...</p>
+        {/* Professional Platforms Section */}
+        <div className="px-5 pb-4">
+          <p className="text-[#666] text-[10px] uppercase tracking-wider font-semibold mb-3">Professional</p>
+          <div className="grid grid-cols-6 gap-2">
+            {professionalPlatforms.map((platform) => {
+              const IconComponent = platform.icon
+              return (
+                <button
+                  key={platform.name}
+                  onClick={() => handleShare(platform)}
+                  className="flex flex-col items-center gap-1.5 p-2 rounded-xl hover:bg-white/5 transition-all group"
+                >
+                  <div 
+                    className="w-11 h-11 rounded-xl flex items-center justify-center transition-all group-hover:scale-105 group-hover:shadow-lg"
+                    style={{ 
+                      backgroundColor: platform.color, 
+                      color: '#fff',
+                      boxShadow: `0 4px 12px ${platform.color}30`
+                    }}
+                  >
+                    <IconComponent />
+                  </div>
+                  <span className="text-[#888] text-[9px] font-medium text-center leading-tight group-hover:text-white transition-colors">
+                    {platform.name}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+        
+        {/* Messaging Section */}
+        <div className="px-5 pb-5 border-t border-[#2a2a2a] pt-4">
+          <p className="text-[#666] text-[10px] uppercase tracking-wider font-semibold mb-3">Direct Share</p>
+          <div className="grid grid-cols-4 gap-2">
+            {messagingPlatforms.map((platform) => {
+              const IconComponent = platform.icon
+              const isCopy = platform.name === 'Copy'
+              return (
+                <button
+                  key={platform.name}
+                  onClick={() => handleShare(platform)}
+                  className={`flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all group ${
+                    isCopy && copied ? 'bg-[#22C55E]/20' : 'hover:bg-white/5'
+                  }`}
+                >
+                  <div 
+                    className="w-11 h-11 rounded-xl flex items-center justify-center transition-all group-hover:scale-105"
+                    style={{ 
+                      backgroundColor: isCopy && copied ? '#22C55E' : platform.color, 
+                      color: '#fff',
+                      boxShadow: `0 4px 12px ${isCopy && copied ? '#22C55E' : platform.color}30`
+                    }}
+                  >
+                    {isCopy && copied ? <Check className="w-5 h-5" /> : <IconComponent />}
+                  </div>
+                  <span className={`text-[9px] font-medium text-center leading-tight transition-colors ${
+                    isCopy && copied ? 'text-[#22C55E]' : 'text-[#888] group-hover:text-white'
+                  }`}>
+                    {isCopy && copied ? 'Copied!' : platform.name}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+        
+        {/* Message Preview */}
+        <div className="px-5 pb-5">
+          <div className="bg-[#0a0a0a] rounded-xl border border-[#2a2a2a] overflow-hidden">
+            <div className="flex items-center justify-between px-3 py-2 border-b border-[#2a2a2a]">
+              <span className="text-[#666] text-[10px] uppercase tracking-wider font-semibold">Message Preview</span>
+              <button 
+                onClick={() => {
+                  if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                    navigator.clipboard.writeText(defaultShareText)
+                    setCopied(true)
+                    setTimeout(() => setCopied(false), 2000)
+                  }
+                }}
+                className="text-[#FF6B35] text-[10px] font-semibold hover:text-[#FF8F5F] transition-colors flex items-center gap-1"
+              >
+                {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                {copied ? 'Copied' : 'Copy Text'}
+              </button>
+            </div>
+            <div className="p-3 max-h-28 overflow-y-auto">
+              <p className="text-[#888] text-xs leading-relaxed whitespace-pre-wrap">{defaultShareText}</p>
+            </div>
           </div>
         </div>
         
         {/* Safe area for mobile */}
-        <div className="h-6 sm:hidden" />
+        <div className="h-4 sm:hidden" />
       </div>
     </div>
   )
@@ -1607,14 +1823,14 @@ function DownloadModal({
     setDownloading(size.name)
     
     try {
-      // Capture the visible preview card
+      // Use html2canvas with proper settings for image capture
       const canvas = await html2canvas(previewCardRef.current, {
         backgroundColor: '#0d0d0d',
-        scale: 3, // Higher quality for better results
+        scale: 3, // Higher quality
         useCORS: true,
         allowTaint: true,
         logging: false,
-        imageTimeout: 0,
+        imageTimeout: 15000, // Wait longer for images
         onclone: (clonedDoc) => {
           // Ensure all styles are applied in the clone
           const clonedElement = clonedDoc.querySelector('[data-download-card]')
@@ -1667,9 +1883,10 @@ function DownloadModal({
         ctx.fillText('shotiqai.com', targetWidth / 2, targetHeight - 18)
       }
       
-      // Download
+      // Download with unique timestamp
+      const timestamp = Date.now()
       const link = document.createElement('a')
-      link.download = `ShotIQ-${userName}-${size.platform}-${size.width}x${size.height}.png`
+      link.download = `ShotIQ-${userName}-${size.platform}-${size.width}x${size.height}-${timestamp}.png`
       link.href = targetCanvas.toDataURL('image/png', 1.0)
       link.click()
       
@@ -1836,6 +2053,10 @@ function DownloadModal({
 // ============================================
 
 export function ShareCardGame() {
+  // Points system
+  const { earnPoints } = usePoints()
+  const [showPointsBurst, setShowPointsBurst] = useState(false)
+  
   // State
   const [currentIndex, setCurrentIndex] = useState(0)
   const [dragX, setDragX] = useState(0)
@@ -1848,6 +2069,8 @@ export function ShareCardGame() {
   const [showShareModal, setShowShareModal] = useState(false)
   const [showDownloadModal, setShowDownloadModal] = useState(false)
   const [selectedCardForDownload, setSelectedCardForDownload] = useState<ShareCardType | null>(null)
+  const [isDownloadingAll, setIsDownloadingAll] = useState(false)
+  const [downloadProgress, setDownloadProgress] = useState(0)
   
   // Load sessions on mount
   useEffect(() => {
@@ -2113,24 +2336,181 @@ export function ShareCardGame() {
     setSkippedCards([])
   }, [])
   
-  // Generate share text for social media
-  const getShareText = useCallback(() => {
-    const selectedCardNames = sharedCards.map(type => {
-      const card = shareableCards.find(c => c.type === type)
-      return card?.title || type
-    }).join(', ')
+  // State to track current card being rendered for ZIP download
+  const [zipRenderCardType, setZipRenderCardType] = useState<ShareCardType | null>(null)
+  const zipRenderRef = useRef<HTMLDivElement>(null)
+  
+  // Download all selected cards as a ZIP file
+  const handleDownloadAll = useCallback(async () => {
+    if (sharedCards.length === 0) return
     
-    return `🏀 My ShotIQ Results!
-
-📊 Score: ${userData.score}/100
-🔥 Streak: ${userData.streak} days
-⭐ Level: ${userData.level}
-🏆 Top ${100 - userData.percentile}% of shooters
-
-✅ ${sharedCards.length} achievement${sharedCards.length !== 1 ? 's' : ''}: ${selectedCardNames}
-
-Analyze YOUR shot at`
+    setIsDownloadingAll(true)
+    setDownloadProgress(0)
+    
+    // Create a new ZIP file
+    const zip = new JSZip()
+    const imagesFolder = zip.folder("ShotIQ-Cards")
+    
+    // Default size for bulk download (Instagram Story - most common)
+    const defaultSize = { width: 1080, height: 1920, platform: 'Instagram' }
+    
+    for (let i = 0; i < sharedCards.length; i++) {
+      const cardType = sharedCards[i]
+      const card = shareableCards.find(c => c.type === cardType)
+      if (!card) continue
+      
+      setDownloadProgress(i + 1)
+      
+      // Set the card type to render
+      setZipRenderCardType(cardType)
+      
+      // Wait for React to render the card
+      await new Promise(resolve => setTimeout(resolve, 300))
+      
+      try {
+        // Capture the rendered card
+        if (!zipRenderRef.current) {
+          console.error(`Render ref not available for card ${cardType}`)
+          continue
+        }
+        
+        const canvas = await html2canvas(zipRenderRef.current, {
+          backgroundColor: '#0d0d0d',
+          scale: 3,
+          useCORS: true,
+          allowTaint: true,
+          logging: false,
+          imageTimeout: 15000
+        })
+        
+        // Create target canvas with proper dimensions
+        const targetCanvas = document.createElement('canvas')
+        targetCanvas.width = defaultSize.width
+        targetCanvas.height = defaultSize.height
+        const ctx = targetCanvas.getContext('2d')
+        
+        if (ctx) {
+          ctx.fillStyle = '#0d0d0d'
+          ctx.fillRect(0, 0, defaultSize.width, defaultSize.height)
+          
+          const scale = Math.min(
+            (defaultSize.width * 0.9) / canvas.width,
+            (defaultSize.height * 0.85) / canvas.height
+          )
+          
+          const scaledWidth = canvas.width * scale
+          const scaledHeight = canvas.height * scale
+          const x = (defaultSize.width - scaledWidth) / 2
+          const y = (defaultSize.height - scaledHeight) / 2
+          
+          ctx.drawImage(canvas, x, y, scaledWidth, scaledHeight)
+          
+          ctx.fillStyle = '#FF6B35'
+          ctx.font = 'bold 24px Arial'
+          ctx.textAlign = 'center'
+          ctx.fillText('SHOTIQ AI', defaultSize.width / 2, defaultSize.height - 40)
+          ctx.fillStyle = '#666666'
+          ctx.font = '16px Arial'
+          ctx.fillText('shotiqai.com', defaultSize.width / 2, defaultSize.height - 18)
+        }
+        
+        // Convert canvas to blob and add to ZIP
+        const dataUrl = targetCanvas.toDataURL('image/png', 1.0)
+        const base64Data = dataUrl.split(',')[1]
+        const fileName = `${String(i + 1).padStart(2, '0')}-${card.title.replace(/\s+/g, '-')}.png`
+        imagesFolder?.file(fileName, base64Data, { base64: true })
+        
+      } catch (error) {
+        console.error(`Failed to process card ${cardType}:`, error)
+      }
+    }
+    
+    // Clear the render card type
+    setZipRenderCardType(null)
+    
+    // Generate and download the ZIP file
+    try {
+      const timestamp = new Date().toISOString().slice(0, 10) // YYYY-MM-DD format
+      const zipBlob = await zip.generateAsync({ type: 'blob' })
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(zipBlob)
+      link.download = `ShotIQ-${userData.name}-Cards-${timestamp}.zip`
+      link.click()
+      
+      // Clean up the object URL
+      setTimeout(() => URL.revokeObjectURL(link.href), 1000)
+    } catch (error) {
+      console.error('Failed to generate ZIP file:', error)
+    }
+    
+    setIsDownloadingAll(false)
+    setDownloadProgress(0)
   }, [sharedCards, shareableCards, userData])
+  
+  // Generate share text for social media
+  const getShareText = useCallback((platform?: string) => {
+    // Create an engaging, shareable message that promotes both the user and the app
+    // Character limits: Twitter/X (280), Instagram (2200), TikTok (2200), LinkedIn (3000)
+    
+    const score = userData.score
+    const streak = userData.streak
+    const percentile = 100 - userData.percentile
+    const appUrl = 'shotiqai.com'
+    
+    // Performance emoji based on score
+    let performanceEmoji = ''
+    if (score >= 90) performanceEmoji = '🔥'
+    else if (score >= 80) performanceEmoji = '💪'
+    else if (score >= 70) performanceEmoji = '📈'
+    else performanceEmoji = '🏀'
+    
+    // Different message variations based on score performance
+    let performanceMessage = ''
+    if (score >= 90) {
+      performanceMessage = `${performanceEmoji} ELITE STATUS! Just scored ${score}/100 on my shooting form analysis!`
+    } else if (score >= 80) {
+      performanceMessage = `${performanceEmoji} ${score}/100 on my shot analysis! The grind is paying off.`
+    } else if (score >= 70) {
+      performanceMessage = `${performanceEmoji} Scored ${score}/100 today. Every rep counts!`
+    } else {
+      performanceMessage = `${performanceEmoji} ${score}/100 - Started my shooting journey. Watch me level up!`
+    }
+    
+    // Streak message if applicable
+    const streakMessage = streak > 1 ? `🔥 ${streak} day streak!` : ''
+    
+    // Ranking message
+    const rankMessage = `📊 Top ${percentile}% of shooters analyzed`
+    
+    // Call to action - promotes the app with URL
+    const cta = `🎯 Analyze YOUR shot FREE at ${appUrl}`
+    
+    // Hashtags - branded + relevant basketball hashtags
+    // Short version for Twitter, full version for other platforms
+    const shortHashtags = '#ShotIQAI #HoopsLife'
+    const fullHashtags = '#ShotIQAI #BasketballTraining #ShootingForm #HoopsLife #WorkOnYourGame #Basketball #BallIsLife'
+    
+    // Use shorter format for Twitter/X (280 char limit)
+    if (platform === 'twitter' || platform === 'x') {
+      const twitterMsg = `${performanceMessage}
+
+${streakMessage ? streakMessage + ' | ' : ''}${rankMessage}
+
+${cta}
+
+${shortHashtags}`
+      return twitterMsg.length > 280 ? twitterMsg.substring(0, 277) + '...' : twitterMsg
+    }
+    
+    // Full format for other platforms
+    return `${performanceMessage}
+
+${streakMessage ? streakMessage + '\n' : ''}${rankMessage}
+
+${cta}
+
+${fullHashtags}`
+  }, [userData])
   
   const goToPrevious = () => {
     if (currentIndex > 0) {
@@ -2146,6 +2526,10 @@ Analyze YOUR shot at`
   const goToNext = () => {
     if (currentIndex < shareableCards.length - 1) {
       setCurrentIndex(prev => prev + 1)
+      // Award +2 points for share card swipe
+      earnPoints('share_card_swipe')
+      setShowPointsBurst(true)
+      setTimeout(() => setShowPointsBurst(false), 1500)
     }
   }
   
@@ -2182,22 +2566,75 @@ Analyze YOUR shot at`
       }
     }
     
+    // Get the appropriate SVG icon based on card type
+    const getCardIcon = () => {
+      // Inline SVG icons that render properly in html2canvas
+      switch (card.type) {
+        case 'streak':
+          // Flame icon
+          return (
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke={card.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.3 }}>
+              <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+            </svg>
+          )
+        case 'latest_analysis':
+          // Target icon
+          return (
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke={card.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.3 }}>
+              <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
+            </svg>
+          )
+        case 'badge_unlock':
+          // Trophy icon
+          return (
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke={card.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.3 }}>
+              <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+            </svg>
+          )
+        case 'elite_comparison':
+          // Users icon
+          return (
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke={card.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.3 }}>
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          )
+        default:
+          // Star icon as default
+          return (
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke={card.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.3 }}>
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+          )
+      }
+    }
+    
     // Return the full card structure matching ShareCard component
     return (
       <div className="bg-[#0d0d0d] rounded-3xl border-2 border-[#FF6B35]/50 overflow-hidden shadow-2xl">
-        {/* Premium Banner */}
+        {/* Premium Banner - matches the app card exactly */}
         <div className="relative h-24 overflow-hidden" style={{ background: `linear-gradient(135deg, ${card.color}20, #1a1a1a, #1a1a1a)` }}>
-          {/* Glowing Orbs Background */}
-          <div className="absolute inset-0 opacity-40">
-            <div className="absolute -top-8 -left-8 w-28 h-28 rounded-full blur-2xl" style={{ backgroundColor: `${card.color}20` }} />
-            <div className="absolute -bottom-8 -right-8 w-28 h-28 rounded-full blur-2xl" style={{ backgroundColor: `${card.color}20` }} />
+          {/* Glowing Orbs Background - using radial gradients instead of blur for html2canvas compatibility */}
+          <div className="absolute inset-0 opacity-40 pointer-events-none">
+            <div 
+              className="absolute -top-8 -left-8 w-28 h-28 rounded-full"
+              style={{ background: `radial-gradient(circle, ${card.color}30 0%, ${card.color}15 40%, transparent 70%)` }}
+            />
+            <div 
+              className="absolute -bottom-8 -right-8 w-28 h-28 rounded-full"
+              style={{ background: `radial-gradient(circle, ${card.color}30 0%, ${card.color}15 40%, transparent 70%)` }}
+            />
           </div>
           
-          {/* Large Icon with Glow Effect */}
+          {/* Large Icon with Glow Effect - using box-shadow instead of blur for html2canvas compatibility */}
           <div className="absolute inset-0 flex items-center justify-end pr-5">
-            <div className="relative w-20 h-20">
-              <div className="absolute inset-0 blur-xl scale-125 opacity-15" style={{ backgroundColor: card.color }} />
-              <card.icon className="w-20 h-20 opacity-30" style={{ color: card.color }} />
+            <div 
+              className="relative w-20 h-20 flex items-center justify-center"
+              style={{
+                borderRadius: '50%',
+                boxShadow: `0 0 30px ${card.color}40, 0 0 60px ${card.color}20, 0 0 90px ${card.color}10`
+              }}
+            >
+              {getCardIcon()}
             </div>
           </div>
           
@@ -2217,11 +2654,13 @@ Analyze YOUR shot at`
         <div className="p-3 border-t border-[#2a2a2a] bg-[#0a0a0a]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <img 
-                src="/images/ShotIQ Logo Gredient.png" 
-                alt="ShotIQ" 
-                className="w-5 h-5 object-contain"
-              />
+              <div className="w-6 h-6 flex items-center justify-center">
+                <img 
+                  src="/images/ShotIQ Logo Gredient.png" 
+                  alt="ShotIQ" 
+                  className="max-w-full max-h-full object-contain"
+                />
+              </div>
               <span className="text-[#FF6B35] text-[10px] font-bold">SHOTIQ AI</span>
             </div>
             <div className="flex items-center gap-2">
@@ -2239,7 +2678,7 @@ Analyze YOUR shot at`
       <ShareModal
         isOpen={showShareModal}
         onClose={() => setShowShareModal(false)}
-        shareText={getShareText()}
+        getShareText={getShareText}
         shareUrl={typeof window !== 'undefined' ? window.location.origin : 'https://shotiqai.com'}
         onCopySuccess={() => {
           setCopySuccess(true)
@@ -2257,6 +2696,23 @@ Analyze YOUR shot at`
         userName={userData.name}
         previewContent={selectedCardForDownload ? renderDownloadCard(selectedCardForDownload) : null}
       />
+      
+      {/* Hidden container for ZIP download rendering */}
+      {zipRenderCardType && (
+        <div 
+          style={{ 
+            position: 'fixed', 
+            left: '-9999px', 
+            top: '-9999px', 
+            width: '320px',
+            backgroundColor: '#0d0d0d'
+          }}
+        >
+          <div ref={zipRenderRef}>
+            {renderDownloadCard(zipRenderCardType)}
+          </div>
+        </div>
+      )}
       
       <div className="space-y-6">
         {/* Header */}
@@ -2311,6 +2767,8 @@ Analyze YOUR shot at`
             transition: isDragging ? 'none' : 'transform 0.3s ease-out'
           }}
         >
+          {/* GOLD Video Game Style Points Animation */}
+          <InlinePointsBurst points={2} show={showPointsBurst} label="IQ" />
           <ShareCard
             card={currentCard}
             userData={userData}
@@ -2417,17 +2875,16 @@ Analyze YOUR shot at`
                   {copySuccess ? 'Copied!' : 'Copy'}
                 </button>
                 <button
-                  onClick={() => {
-                    // Open download modal with first selected card
-                    if (sharedCards.length > 0) {
-                      setSelectedCardForDownload(sharedCards[0])
-                      setTimeout(() => setShowDownloadModal(true), 100)
-                    }
-                  }}
-                  className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-semibold text-sm transition-all whitespace-nowrap bg-[#1a1a1a] border border-[#333] text-white hover:border-[#FF6B35]/50"
+                  onClick={handleDownloadAll}
+                  disabled={isDownloadingAll}
+                  className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-semibold text-sm transition-all whitespace-nowrap ${
+                    isDownloadingAll 
+                      ? 'bg-[#FF6B35]/20 border border-[#FF6B35]/50 text-[#FF6B35]'
+                      : 'bg-[#1a1a1a] border border-[#333] text-white hover:border-[#FF6B35]/50'
+                  }`}
                 >
                   <Download className="w-4 h-4" />
-                  Download
+                  {isDownloadingAll ? `${downloadProgress}/${sharedCards.length}` : 'Download ZIP'}
                 </button>
               </div>
             </div>
@@ -2511,3 +2968,4 @@ Analyze YOUR shot at`
 }
 
 export default ShareCardGame
+

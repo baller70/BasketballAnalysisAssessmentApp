@@ -7,6 +7,8 @@ import { Users, Ruler, Zap, Search, ChevronDown, ArrowUpDown, RotateCcw, HelpCir
 import Link from "next/link"
 import PlayerBioPopup from "@/components/PlayerBioPopup"
 import ShootingFormGallery from "@/components/ShootingFormGallery"
+import { usePoints } from "@/lib/points/pointsContext"
+import { InlinePointsBurst } from "@/components/points/PointsBurst"
 
 // Helper to format height from inches to feet/inches
 const formatHeight = (inches: number) => {
@@ -270,6 +272,19 @@ export default function EliteShootersPage() {
   const [approvedImages, setApprovedImages] = useState<Record<number, string[]>>({});
   const [excludedImages, setExcludedImages] = useState<Record<number, string[]>>({});
   const [currentPage, setCurrentPage] = useState(1);
+  const [showPointsBurst, setShowPointsBurst] = useState(false);
+  
+  const { earnPoints } = usePoints();
+  
+  // Handle selecting a player - awards points
+  const handleSelectPlayer = (shooter: EliteShooter & { wsi: number; similarity: number; eraCategory: string }) => {
+    setSelectedPlayer(shooter);
+    const result = earnPoints('elite_shooter_view');
+    if (result.earned) {
+      setShowPointsBurst(true);
+      setTimeout(() => setShowPointsBurst(false), 1500);
+    }
+  };
 
   // Load approved and excluded images from localStorage on mount
   useEffect(() => {
@@ -385,7 +400,10 @@ export default function EliteShootersPage() {
   const toggleEra = (era: string) => setSelectedEras(prev => prev.includes(era) ? prev.filter(e => e !== era) : [...prev, era]);
 
   return (
-    <main className="min-h-[calc(100vh-200px)] py-8 px-4 bg-[#050505]">
+    <main className="min-h-[calc(100vh-200px)] py-8 px-4 bg-[#050505] relative">
+      {/* GOLD Video Game Style Points Animation */}
+      <InlinePointsBurst points={1} show={showPointsBurst} label="IQ" />
+      
       <div className="container mx-auto max-w-7xl">
         <div className="bg-[#2C2C2C] rounded-lg overflow-hidden shadow-lg">
           {/* Header */}
@@ -550,7 +568,7 @@ export default function EliteShootersPage() {
                     <div 
                       key={shooter.id} 
                       className="bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a] rounded-xl overflow-hidden border border-[#3a3a3a] hover:border-[#FF6B35]/60 transition-all shadow-lg hover:shadow-[0_0_20px_rgba(255,215,0,0.15)] group cursor-pointer"
-                      onClick={() => setSelectedPlayer(shooter)}
+                      onClick={() => handleSelectPlayer(shooter)}
                     >
                       {/* Player Header */}
                       <div className="relative p-4 pt-8">

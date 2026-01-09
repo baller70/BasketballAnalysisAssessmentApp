@@ -4,16 +4,20 @@ import { useState, useEffect, useMemo } from "react"
 import { Target, Plus, TrendingUp, Calendar, Trophy } from "lucide-react"
 import { GoalTransitMap } from "@/components/goals"
 import { useAnalysisStore } from "@/stores/analysisStore"
-import { useProfileStore } from "@/stores/profileStore"
 import { getAllSessions, AnalysisSession } from "@/services/sessionStorage"
 import { Card, CardContent } from "@/components/ui/card"
+import { usePoints } from "@/lib/points/pointsContext"
+import { useGoals } from "@/lib/goals"
+import { InlinePointsBurst } from "@/components/points/PointsBurst"
 
 export default function GoalsPage() {
   const store = useAnalysisStore()
-  const profileStore = useProfileStore()
   
   const visionAnalysisResult = store?.visionAnalysisResult || null
   const [sessions, setSessions] = useState<AnalysisSession[]>([])
+  
+  // Get goals from context (dynamic, not hardcoded)
+  const { goals, totalGoals, completedCount } = useGoals()
   
   useEffect(() => {
     try {
@@ -27,7 +31,7 @@ export default function GoalsPage() {
   
   // Combine current session with historical sessions for stats
   const allSessionsData = useMemo(() => {
-    const data: any[] = []
+    const data: { id: string; date: Date; score: number; isLive: boolean }[] = []
     
     if (visionAnalysisResult?.success) {
       const score = visionAnalysisResult.overall_score || 70
@@ -73,11 +77,24 @@ export default function GoalsPage() {
     return { scoreChange, sessionsCount: allSessionsData.length, avgScore: Math.round(avgScore), trend }
   }, [allSessionsData])
 
-  const goalsCount = 10
-  const completedGoals = 3
+  const [showPointsBurst, setShowPointsBurst] = useState(false)
+  
+  const { earnPoints } = usePoints()
+  
+  const handleCreateGoal = () => {
+    const result = earnPoints('goal_create')
+    if (result.earned) {
+      setShowPointsBurst(true)
+      setTimeout(() => setShowPointsBurst(false), 1500)
+    }
+    // TODO: Open goal creation modal
+  }
   
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 relative">
+      {/* GOLD Video Game Style Points Animation */}
+      <InlinePointsBurst points={5} show={showPointsBurst} label="IQ" />
+      
       {/* Goals Card - Gold Theme */}
       <Card className="bg-gradient-to-br from-[#1a1a1a] via-[#222222] to-[#1a1a1a] border-[#2a2a2a] shadow-2xl overflow-hidden">
         <CardContent className="p-0">
@@ -97,6 +114,7 @@ export default function GoalsPage() {
                   {/* Create Goal Button */}
                   <button
                     type="button"
+                    onClick={handleCreateGoal}
                     className="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1.5 bg-[#FF6B35] hover:bg-[#FF4500] text-white text-xs font-bold rounded-lg transition-all shadow-lg shadow-[#FF6B35]/20"
                   >
                     <Plus className="w-3.5 h-3.5" />
@@ -108,7 +126,7 @@ export default function GoalsPage() {
                       <span className="text-8xl lg:text-9xl font-black text-[#FF6B35] tabular-nums leading-none tracking-tight" style={{
                         textShadow: '0 0 40px rgba(255, 215, 0, 0.3), 0 0 80px rgba(255, 215, 0, 0.1)'
                       }}>
-                        {goalsCount}
+                        {totalGoals}
                       </span>
                       <Target className="w-8 h-8 lg:w-10 lg:h-10 text-[#FF6B35]/60 mb-4" />
                     </div>
@@ -123,12 +141,12 @@ export default function GoalsPage() {
                   <div className="mt-6 pt-6 border-t border-[#3a3a3a]/30">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs text-[#888] uppercase tracking-wider">Progress</span>
-                      <span className="text-xs text-[#FF6B35] font-bold">{completedGoals}/{goalsCount} completed</span>
+                      <span className="text-xs text-[#FF6B35] font-bold">{completedCount}/{totalGoals} completed</span>
                     </div>
                     <div className="h-2 bg-[#3a3a3a] rounded-full overflow-hidden">
                       <div 
                         className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF4500] rounded-full transition-all duration-500"
-                        style={{ width: `${(completedGoals / goalsCount) * 100}%` }}
+                        style={{ width: `${totalGoals > 0 ? (completedCount / totalGoals) * 100 : 0}%` }}
                       />
                     </div>
                   </div>

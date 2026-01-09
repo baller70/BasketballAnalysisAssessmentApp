@@ -1,10 +1,11 @@
 "use client"
 
+import { useMemo } from "react"
 import { AnalysisCardGame } from "@/components/analysis/AnalysisCardGame"
 import { useAnalysisStore } from "@/stores/analysisStore"
 
 export default function AnalysisPage() {
-  const { visionAnalysisResult } = useAnalysisStore()
+  const { visionAnalysisResult, currentAnalysis, uploadedFile } = useAnalysisStore()
   
   // Get measurements from analysis or use defaults
   const measurements = {
@@ -17,9 +18,23 @@ export default function AnalysisPage() {
     releaseAngle: 48,
     entryAngle: 44,
   }
+  
+  // Generate a unique session ID based on analysis data
+  // This ensures points are only earned once per unique analysis
+  // The AnalysisCardGame component will generate a hash from measurements if no sessionId is provided
+  const sessionId = useMemo(() => {
+    if (currentAnalysis?.id) return currentAnalysis.id
+    // Use uploaded file name as a stable identifier
+    if (uploadedFile?.name) {
+      return `analysis-${uploadedFile.name}-${uploadedFile.size}`.replace(/[^a-zA-Z0-9-]/g, '_')
+    }
+    // Let the component generate its own ID from measurements
+    return undefined
+  }, [currentAnalysis?.id, uploadedFile?.name, uploadedFile?.size])
 
-  return <AnalysisCardGame measurements={measurements} />
+  return <AnalysisCardGame measurements={measurements} sessionId={sessionId} />
 }
+
 
 
 

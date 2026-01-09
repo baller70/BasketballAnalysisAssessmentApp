@@ -94,6 +94,7 @@ import {
   ShareProgressButton
 } from "@/components/gamification/GamificationComponents"
 import { UserLevelCard } from "@/components/UserLevelCard"
+import { TierMilestonesPopup } from "@/components/points"
 import {
   getUserProgress,
   updateStreak,
@@ -2052,6 +2053,7 @@ function CollapsibleStatsCard() {
   const [isExpanded, setIsExpanded] = useState(false)
   const [showStreakPopup, setShowStreakPopup] = useState(false)
   const [showLeaderboardPopup, setShowLeaderboardPopup] = useState(false)
+  const [showMilestonesPopup, setShowMilestonesPopup] = useState(false)
   
   // Mock data - in real app, this would come from user store
   const userStats = {
@@ -2073,12 +2075,14 @@ function CollapsibleStatsCard() {
   return (
     <div className="bg-[#2C2C2C] rounded-lg border border-[#3a3a3a] overflow-hidden">
       {/* Collapsed View - Always Visible */}
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full p-3 md:p-4 flex items-center gap-3 md:gap-4 hover:bg-[#333] transition-colors"
+      <div
+        className="w-full p-3 md:p-4 flex items-center gap-3 md:gap-4 hover:bg-[#333] transition-colors cursor-pointer"
       >
-        {/* Level Badge */}
-        <div className="flex items-center gap-2 md:gap-3">
+        {/* Level Badge - Opens Milestones Popup */}
+        <button
+          onClick={(e) => { e.stopPropagation(); setShowMilestonesPopup(true); }}
+          className="flex items-center gap-2 md:gap-3 hover:bg-[#FF6B35]/10 rounded-lg p-1 -m-1 transition-colors"
+        >
           <div className="w-10 h-10 md:w-12 md:h-12 bg-[#FF6B35]/20 rounded-lg flex items-center justify-center border border-[#FF6B35]/40 flex-shrink-0">
             <Award className="w-5 h-5 md:w-6 md:h-6 text-[#FF6B35]" />
           </div>
@@ -2086,7 +2090,7 @@ function CollapsibleStatsCard() {
             <div className="text-[#FF6B35] text-[10px] md:text-xs uppercase tracking-wider font-semibold">Lv.{userStats.level}</div>
             <div className="text-[#FF6B35] font-bold text-sm md:text-base whitespace-nowrap">{userStats.levelName}</div>
           </div>
-        </div>
+        </button>
         
         {/* XP Progress - Hidden on very small screens */}
         <div className="hidden sm:flex flex-1 items-center gap-2 max-w-[200px]">
@@ -2119,9 +2123,20 @@ function CollapsibleStatsCard() {
           </div>
           
           {/* Expand Arrow */}
-          <ChevronDown className={`w-5 h-5 text-[#888] transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="p-1 hover:bg-[#3a3a3a] rounded-lg transition-colors"
+          >
+            <ChevronDown className={`w-5 h-5 text-[#888] transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+          </button>
         </div>
-      </button>
+      </div>
+      
+      {/* Tier Milestones Popup */}
+      <TierMilestonesPopup 
+        isOpen={showMilestonesPopup} 
+        onClose={() => setShowMilestonesPopup(false)} 
+      />
       
       {/* Expanded Content */}
       {isExpanded && (

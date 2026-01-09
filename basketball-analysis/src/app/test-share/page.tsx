@@ -8,9 +8,9 @@ import Link from "next/link"
 export default function TestSharePage() {
   return (
     <div className="min-h-screen bg-[#050505] pb-32">
-      {/* Header */}
-      <div className="sticky top-0 z-40 bg-[#050505]/90 backdrop-blur-lg border-b border-white/5">
-        <div className="px-6 py-4 flex items-center justify-between">
+      <div className="px-6 py-6">
+        {/* Page Header - Part of content, not sticky */}
+        <div className="mb-6">
           <div className="flex items-center gap-4">
             {/* Back to Dashboard */}
             <Link 
@@ -22,9 +22,6 @@ export default function TestSharePage() {
               </div>
             </Link>
             
-            {/* Divider */}
-            <div className="h-8 w-px bg-[#333]" />
-            
             {/* Title */}
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-[#FF6B35]/10 border border-[#FF6B35]/30 flex items-center justify-center">
@@ -34,10 +31,8 @@ export default function TestSharePage() {
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Share Card Game */}
-      <div className="px-6 py-6">
+        {/* Share Card Game */}
         <ShareCardGame />
       </div>
     </div>

@@ -235,3 +235,4 @@ export function resetQueueStats(): void {
   totalWaitTime = 0;
   console.log('[Queue] Statistics reset');
 }
+

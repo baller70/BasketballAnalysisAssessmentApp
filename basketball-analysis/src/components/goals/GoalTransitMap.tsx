@@ -1,8 +1,8 @@
 "use client"
 
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
-import { X, Target, Navigation, Trophy, Award, Flame, Dumbbell, Calendar, ArrowRight, Plus, Clock, Check, CircleDot, MapPin } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { X, Target, Navigation, ArrowRight, Check, Calendar } from 'lucide-react'
+import { useGoals, Goal } from '@/lib/goals'
 
 // Mapbox access token
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || 'pk.eyJ1IjoiYmFsbGVyNzAiLCJhIjoiY2xzNXUybnJiMWpmeDJtbXU0c3R6bmYxbCJ9.E8wE8cllAFL9WeZ4WiITDA'
@@ -33,6 +33,68 @@ export function GoalTransitMap({ playerCity, playerState, playerLat, playerLng }
   const [showAddGoal, setShowAddGoal] = useState(false)
   const [isFullRouteView, setIsFullRouteView] = useState(false)
   
+  // Get goals from context (dynamic, not hardcoded)
+  const { goals, completedCount, getCurrentGoal } = useGoals()
+  
+  // Default to Union City, NJ area (like the screenshot) if no location provided
+  const centerLat = playerLat || 40.7795
+  const centerLng = playerLng || -74.0324
+  const cityName = playerCity || 'West New York'
+  
+  // Default coordinates for goals without coordinates
+  const defaultCoordinates: [number, number][] = [
+    [-74.0550, 40.7090], // Start
+    [-74.0328, 40.7162], 
+    [-74.0280, 40.7370], 
+    [-74.0630, 40.7580], 
+    [-74.0200, 40.7850], 
+    [-74.0450, 40.8150], 
+    [-74.0740, 40.8120], 
+    [-74.0744, 40.8135], 
+  ]
+  
+  // Convert goals from context to map stops format
+  const goalStops: GoalStop[] = useMemo(() => {
+    // Add a START marker
+    const stops: GoalStop[] = [
+      { 
+        id: 'start', 
+        name: 'START', 
+        landmark: 'Liberty State Park', 
+        coordinates: defaultCoordinates[0],
+        icon: 'start',
+        completed: true, 
+        current: false, 
+        goalDescription: 'Begin Your Journey', 
+        xpReward: 0 
+      },
+    ]
+    
+    // Convert each goal to a stop
+    goals.forEach((goal: Goal, index: number) => {
+      const isCompleted = !!goal.completedAt
+      const currentGoal = getCurrentGoal()
+      const isCurrent = currentGoal?.id === goal.id
+      
+      stops.push({
+        id: goal.id,
+        name: goal.name.toUpperCase(),
+        landmark: goal.landmark || `${cityName} ${goal.category === 'form' ? 'Recreation Center' : 'Training Facility'}`,
+        coordinates: goal.coordinates || defaultCoordinates[Math.min(index + 1, defaultCoordinates.length - 1)],
+        icon: isCompleted ? 'check' : isCurrent ? 'current' : 'future',
+        completed: isCompleted,
+        current: isCurrent,
+        goalDescription: goal.description,
+        xpReward: goal.xpReward,
+      })
+    })
+    
+    return stops
+  }, [goals, getCurrentGoal, cityName])
+  
+  const currentGoal = goalStops.find(s => s.current)
+  const totalGoals = goalStops.length - 1 // Exclude START
+  
   // Function to view full route
   const viewFullRoute = useCallback(async () => {
     if (!map.current) return
@@ -42,7 +104,7 @@ export function GoalTransitMap({ playerCity, playerState, playerLat, playerLng }
     goalStops.forEach(stop => bounds.extend(stop.coordinates))
     map.current.fitBounds(bounds, { padding: 80, duration: 1500 })
     setIsFullRouteView(true)
-  }, [])
+  }, [goalStops])
   
   // Function to zoom to current goal
   const zoomToCurrentGoal = useCallback(() => {
@@ -56,111 +118,7 @@ export function GoalTransitMap({ playerCity, playerState, playerLat, playerLng }
       })
       setIsFullRouteView(false)
     }
-  }, [])
-  
-  // Default to Union City, NJ area (like the screenshot) if no location provided
-  const centerLat = playerLat || 40.7795
-  const centerLng = playerLng || -74.0324
-  const cityName = playerCity || 'West New York'
-  const stateName = playerState || 'NJ'
-  
-  // Goal stops with coordinates spread across a WIDE area - zigzagging through the region
-  // Route spans ~10 miles, forcing user to scroll/explore the map
-  // Will be dynamically generated based on user's location + nearby landmarks via Places API
-  const goalStops: GoalStop[] = [
-    { 
-      id: '1', 
-      name: 'START', 
-      landmark: 'Liberty State Park', 
-      coordinates: [-74.0550, 40.7090], // Jersey City - South (START)
-      icon: 'start',
-      completed: true, 
-      current: false, 
-      goalDescription: 'Begin Your Journey', 
-      xpReward: 0 
-    },
-    { 
-      id: '2', 
-      name: 'FORM CHECK', 
-      landmark: 'Exchange Place', 
-      coordinates: [-74.0328, 40.7162], // Jersey City Downtown - East
-      icon: 'target',
-      completed: true, 
-      current: false, 
-      goalDescription: 'Perfect Form Baseline', 
-      xpReward: 50 
-    },
-    { 
-      id: '3', 
-      name: '50 SHOTS', 
-      landmark: 'Hoboken Waterfront', 
-      coordinates: [-74.0280, 40.7370], // Hoboken - Northeast
-      icon: 'dumbbell',
-      completed: true, 
-      current: false, 
-      goalDescription: '50 Practice Shots', 
-      xpReward: 100 
-    },
-    { 
-      id: '4', 
-      name: '90° ELBOW', 
-      landmark: cityName + ' Recreation Center', 
-      coordinates: [-74.0630, 40.7580], // Union City - West (CURRENT)
-      icon: 'current',
-      completed: false, 
-      current: true, 
-      goalDescription: 'Perfect Elbow Angle', 
-      xpReward: 150 
-    },
-    { 
-      id: '5', 
-      name: '100 MAKES', 
-      landmark: 'North Bergen High School', 
-      coordinates: [-74.0200, 40.7850], // North Bergen - East
-      icon: 'flame',
-      completed: false, 
-      current: false, 
-      goalDescription: '100 Makes Challenge', 
-      xpReward: 200 
-    },
-    { 
-      id: '6', 
-      name: 'STREAK MASTER', 
-      landmark: 'Overpeck County Park', 
-      coordinates: [-74.0450, 40.8150], // Ridgefield Park - Northwest
-      icon: 'star',
-      completed: false, 
-      current: false, 
-      goalDescription: '7-Day Practice Streak', 
-      xpReward: 300 
-    },
-    { 
-      id: '7', 
-      name: 'FORM PERFECT', 
-      landmark: 'Meadowlands Sports Complex', 
-      coordinates: [-74.0740, 40.8120], // East Rutherford - West
-      icon: 'award',
-      completed: false, 
-      current: false, 
-      goalDescription: '95%+ Form Score', 
-      xpReward: 400 
-    },
-    { 
-      id: '8', 
-      name: 'ELITE BADGE', 
-      landmark: 'MetLife Stadium', 
-      coordinates: [-74.0744, 40.8135], // Final Destination - Championship Venue
-      icon: 'trophy',
-      completed: false, 
-      current: false, 
-      goalDescription: 'Elite Shooter Badge', 
-      xpReward: 500 
-    },
-  ]
-  
-  const completedCount = goalStops.filter(s => s.completed).length
-  const currentGoal = goalStops.find(s => s.current)
-  const totalGoals = goalStops.length - 1
+  }, [goalStops])
 
   useEffect(() => {
     if (!mapContainer.current) return

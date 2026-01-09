@@ -151,3 +151,4 @@ You should see a response with the provider that handled the request.
 - Groq is the fastest provider - make sure it's configured
 - Hugging Face can be slow on cold starts
 - Consider the paid OpenAI fallback for consistent speed
+

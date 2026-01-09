@@ -13,6 +13,8 @@ import {
   Star,
   GraduationCap
 } from "lucide-react"
+import { usePoints } from "@/lib/points"
+import { InlinePointsBurst } from "@/components/points/PointsBurst"
 
 // ============================================
 // TYPES & DATA
@@ -513,10 +515,13 @@ function AnalysisCard({ metricKey, value, dragX }: AnalysisCardProps) {
 
 interface AnalysisCardGameProps {
   measurements: BiomechanicalMeasurements
+  sessionId?: string
 }
 
-export function AnalysisCardGame({ measurements }: AnalysisCardGameProps) {
+export function AnalysisCardGame({ measurements, sessionId }: AnalysisCardGameProps) {
   const metricKeys = Object.keys(measurements) as (keyof BiomechanicalMeasurements)[]
+  
+  const { earnPoints } = usePoints()
   
   const [currentIndex, setCurrentIndex] = useState(0)
   const [gameStats, setGameStats] = useState({
@@ -526,6 +531,7 @@ export function AnalysisCardGame({ measurements }: AnalysisCardGameProps) {
     xp: 0
   })
   const [seenCards, setSeenCards] = useState<string[]>([])
+  const [showPointsBurst, setShowPointsBurst] = useState(false)
   
   const [dragX, setDragX] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
@@ -553,12 +559,20 @@ export function AnalysisCardGame({ measurements }: AnalysisCardGameProps) {
       }))
     }
 
-    if (currentIndex < metricKeys.length - 1) {
-      setCurrentIndex(prev => prev + 1)
+    // Award IQ points every swipe (TESTING MODE)
+    const result = earnPoints('analysis_card_view')
+    if (result.earned) {
+      setShowPointsBurst(true)
+      setTimeout(() => setShowPointsBurst(false), 1500)
     }
-    
-    setDragX(0)
-  }, [currentIndex, currentMetricKey, metricKeys.length])
+
+    setTimeout(() => {
+      if (currentIndex < metricKeys.length - 1) {
+        setCurrentIndex(prev => prev + 1)
+      }
+      setDragX(0)
+    }, 300)
+  }, [currentIndex, currentMetricKey, metricKeys.length, earnPoints])
 
   const handleStart = (clientX: number) => {
     setIsDragging(true)
@@ -656,6 +670,9 @@ export function AnalysisCardGame({ measurements }: AnalysisCardGameProps) {
             transition: isDragging ? 'none' : 'transform 0.3s ease-out'
           }}
         >
+          {/* GOLD Video Game Style Points Animation */}
+          <InlinePointsBurst points={1} show={showPointsBurst} label="IQ" />
+          
           <AnalysisCard 
             metricKey={currentMetricKey}
             value={currentValue}

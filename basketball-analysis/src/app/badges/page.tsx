@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { 
@@ -12,6 +12,8 @@ import {
   Dribbble, CircleDot, Focus, Gauge, Repeat, Calendar,
   Share2, Download, Volume2, VolumeX, ArrowLeft
 } from "lucide-react"
+import { usePoints } from "@/lib/points/pointsContext"
+import { InlinePointsBurst } from "@/components/points/PointsBurst"
 
 // ============================================
 // CUSTOM SNEAKER ICONS - Basketball Themed
@@ -2016,6 +2018,24 @@ export default function BadgesPage() {
   const [selectedCategory, setSelectedCategory] = useState<BadgeCategory | 'all'>('all')
   const [showUnlockedOnly, setShowUnlockedOnly] = useState(false)
   const [previewTier, setPreviewTier] = useState<BadgeTier | null>(null)
+  const [showPointsBurst, setShowPointsBurst] = useState(false)
+  const viewedBadges = useRef<Set<string>>(new Set())
+  
+  const { earnPoints } = usePoints()
+  
+  const handleSelectBadge = (badge: Badge) => {
+    setSelectedBadge(badge)
+    
+    // Award points for viewing a badge for the first time
+    if (!viewedBadges.current.has(badge.id)) {
+      viewedBadges.current.add(badge.id)
+      const result = earnPoints('badge_view')
+      if (result.earned) {
+        setShowPointsBurst(true)
+        setTimeout(() => setShowPointsBurst(false), 1500)
+      }
+    }
+  }
   
   // Filter badges
   const filteredBadges = BADGES.filter(badge => {
@@ -2036,7 +2056,10 @@ export default function BadgesPage() {
   const unlockedCount = BADGES.filter(b => b.unlocked).length
   
   return (
-    <div className="min-h-screen bg-[#1a1a1a]">
+    <div className="min-h-screen bg-[#1a1a1a] relative">
+      {/* GOLD Video Game Style Points Animation */}
+      <InlinePointsBurst points={1} show={showPointsBurst} label="IQ" />
+      
       {/* Custom Styles */}
       <style jsx global>{`
         @keyframes shine {
@@ -2048,20 +2071,26 @@ export default function BadgesPage() {
         }
       `}</style>
       
-      {/* ===== HEADER - Sticky ===== */}
-      <div className="sticky top-0 z-40 bg-[#1a1a1a]/95 backdrop-blur-lg border-b border-[#3a3a3a]">
-        <div className="px-4 py-3">
+      {/* ===== MAIN CONTENT ===== */}
+      <div className="px-4 py-4 max-w-6xl mx-auto">
+        {/* ===== PAGE HEADER - Part of content, not sticky ===== */}
+        <div className="mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Link 
-                href="/dashboard"
-                className="w-10 h-10 rounded-xl bg-[#2a2a2a] border border-[#3a3a3a] flex items-center justify-center text-white hover:bg-[#3a3a3a] hover:border-[#4a4a4a] transition-all"
+                href="/results/demo"
+                className="w-10 h-10 rounded-xl bg-[#2a2a2a] border border-[#3a3a3a] flex items-center justify-center text-white hover:bg-[#3a3a3a] hover:border-[#FF6B35]/50 transition-all"
               >
                 <ArrowLeft className="w-5 h-5" />
               </Link>
-              <div>
-                <h1 className="text-xl font-black text-white tracking-tight">ACHIEVEMENTS</h1>
-                <p className="text-[#888] text-xs">{unlockedCount}/{BADGES.length} Unlocked</p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#FF6B35]/10 border border-[#FF6B35]/30 flex items-center justify-center">
+                  <Trophy className="w-5 h-5 text-[#FF6B35]" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-black text-white tracking-tight uppercase">Achievements</h1>
+                  <p className="text-[#888] text-xs">{unlockedCount}/{BADGES.length} Unlocked</p>
+                </div>
               </div>
             </div>
             <div className="bg-[#2a2a2a] rounded-xl px-3 py-2 border border-[#3a3a3a]">
@@ -2070,10 +2099,6 @@ export default function BadgesPage() {
             </div>
           </div>
         </div>
-      </div>
-      
-      {/* ===== MAIN CONTENT ===== */}
-      <div className="px-4 py-4 max-w-6xl mx-auto">
         
         {/* ===== SECTION 1: RECENT UNLOCKS (Top Highlight) ===== */}
         {BADGES.filter(b => b.unlocked).length > 0 && (
@@ -2089,7 +2114,7 @@ export default function BadgesPage() {
                 return (
                   <button
                     key={badge.id}
-                    onClick={() => setSelectedBadge(badge)}
+                    onClick={() => handleSelectBadge(badge)}
                     className="bg-[#2a2a2a] rounded-xl p-3 border border-[#3a3a3a] hover:border-[#4a4a4a] transition-all text-center"
                   >
                     <div 
@@ -2166,7 +2191,7 @@ export default function BadgesPage() {
                 <BadgeCard 
                   key={badge.id} 
                   badge={badge} 
-                  onClick={() => setSelectedBadge(badge)}
+                  onClick={() => handleSelectBadge(badge)}
                 />
               ))}
             </div>

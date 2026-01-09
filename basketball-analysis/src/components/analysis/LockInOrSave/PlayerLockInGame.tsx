@@ -8,9 +8,12 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react"
+import { motion } from "framer-motion"
 import { Play, ChevronRight, ChevronLeft, Check, Flame, Trophy, Lock, Bookmark, Info, Users, TrendingUp, X, Target } from "lucide-react"
 import { useProfileStore } from "@/stores/profileStore"
 import { StatPopup } from "@/components/dashboard/StatPopup"
+import { usePoints } from "@/lib/points/pointsContext"
+import { InlinePointsBurst } from "@/components/points/PointsBurst"
 
 // ============================================
 // STORAGE
@@ -48,7 +51,7 @@ const SHOOTER_LEVELS = [
 // ============================================
 // SPARStatBar - EXACT from page.tsx lines 5714-5821
 // ============================================
-function SPARStatBar({ name, current, max, playerName, playerAge = 34, playerState = "CA" }: { name: string; current: number; max: number; playerName?: string; playerAge?: number; playerState?: string }) {
+function SPARStatBar({ name, current, max, playerName, playerAge = 34, playerState = "CA", onStatClick }: { name: string; current: number; max: number; playerName?: string; playerAge?: number; playerState?: string; onStatClick?: () => void }) {
   const [showPopup, setShowPopup] = useState(false)
   const fillPercent = (current / 99) * 100
   const maxPercent = (max / 99) * 100
@@ -58,9 +61,14 @@ function SPARStatBar({ name, current, max, playerName, playerAge = 34, playerSta
     : { border: "#ef4444", bg: "from-red-500 to-red-600", text: "text-red-400" }
   const statKey = name.toLowerCase()
 
+  const handleClick = () => {
+    setShowPopup(true)
+    onStatClick?.()
+  }
+
   return (
     <>
-      <div className="relative cursor-pointer hover:bg-[#4a4a4a]/30 rounded-lg p-1 -m-1 transition-colors" onClick={() => setShowPopup(true)}>
+      <div className="relative cursor-pointer hover:bg-[#4a4a4a]/30 rounded-lg p-1 -m-1 transition-colors" onClick={handleClick}>
         {/* Stat name label */}
         <div className="flex items-center gap-2 mb-1">
           <span className={`text-xs font-semibold uppercase tracking-wide ${barColor.text}`}>{name}</span>
@@ -137,8 +145,36 @@ export function PlayerLockInGame({
   const [lastAction, setLastAction] = useState<'lockin' | 'save' | null>(null)
   const [activeTab, setActiveTab] = useState<'play' | 'locked' | 'saved'>('play')
   const [showKeySkillsPopup, setShowKeySkillsPopup] = useState(false)
+  const [showPointsBurst, setShowPointsBurst] = useState(false)
   
+  const { earnPoints } = usePoints()
   const dragStartX = useRef(0)
+  
+  // Handler for opening analytics popups - awards points
+  const handleOpenAnalyticsPopup = useCallback((openPopupFn: () => void) => {
+    openPopupFn()
+    const result = earnPoints('stat_popup_view')
+    if (result.earned) {
+      setShowPointsBurst(true)
+      setTimeout(() => setShowPointsBurst(false), 1500)
+    }
+  }, [earnPoints])
+  
+  // Handler for Key Skills popup
+  const handleOpenKeySkillsPopup = useCallback(() => {
+    setShowKeySkillsPopup(true)
+    const result = earnPoints('stat_popup_view')
+    if (result.earned) {
+      setShowPointsBurst(true)
+      setTimeout(() => setShowPointsBurst(false), 1500)
+    }
+  }, [earnPoints])
+  
+  // Handler for stat bar clicks - points are now awarded inside StatPopup
+  // This callback is kept for any additional logic if needed
+  const handleStatClick = useCallback(() => {
+    // Points are awarded inside the StatPopup component when it opens
+  }, [])
   
   // Track scroll to position arrows within card bounds
   useEffect(() => {
@@ -348,7 +384,7 @@ export function PlayerLockInGame({
             </div>
 
             {/* Fitness Rings */}
-            <div className="relative w-48 h-48 mx-auto mt-6 cursor-pointer hover:scale-105 transition-transform" onClick={() => setShowKeySkillsPopup(true)}>
+            <div className="relative w-48 h-48 mx-auto mt-6 cursor-pointer hover:scale-105 transition-transform" onClick={handleOpenKeySkillsPopup}>
               <div className="absolute inset-0 rounded-full blur-xl" style={{ background: `radial-gradient(circle, ${overallColors.glow} 0%, ${consistencyColors.glow} 50%, transparent 70%)` }} />
               <svg className="w-full h-full transform -rotate-90 drop-shadow-lg" viewBox="0 0 100 100">
                 <defs>
@@ -423,7 +459,7 @@ export function PlayerLockInGame({
             {/* Stat Bars - RELEASE, FORM, ARC */}
             <div className="space-y-4">
               {sparCategories[0].stats.map((stat, idx) => (
-                <SPARStatBar key={idx} name={stat.name} current={stat.current} max={stat.max} playerName={playerName} playerAge={playerAge} playerState="CA" />
+                <SPARStatBar key={idx} name={stat.name} current={stat.current} max={stat.max} playerName={playerName} playerAge={playerAge} playerState="CA" onStatClick={handleStatClick} />
               ))}
             </div>
 
@@ -486,10 +522,11 @@ export function PlayerLockInGame({
                 max={100} 
                 playerName={playerName} 
                 playerAge={playerAge} 
-                playerState="CA" 
+                playerState="CA"
+                onStatClick={handleStatClick}
               />
               {sparCategories[1].stats.map((stat, idx) => (
-                <SPARStatBar key={idx} name={stat.name} current={stat.current} max={stat.max} playerName={playerName} playerAge={playerAge} playerState="CA" />
+                <SPARStatBar key={idx} name={stat.name} current={stat.current} max={stat.max} playerName={playerName} playerAge={playerAge} playerState="CA" onStatClick={handleStatClick} />
               ))}
             </div>
 
@@ -552,10 +589,11 @@ export function PlayerLockInGame({
                 max={100} 
                 playerName={playerName} 
                 playerAge={playerAge} 
-                playerState="CA" 
+                playerState="CA"
+                onStatClick={handleStatClick}
               />
               {sparCategories[2].stats.map((stat, idx) => (
-                <SPARStatBar key={idx} name={stat.name} current={stat.current} max={stat.max} playerName={playerName} playerAge={playerAge} playerState="CA" />
+                <SPARStatBar key={idx} name={stat.name} current={stat.current} max={stat.max} playerName={playerName} playerAge={playerAge} playerState="CA" onStatClick={handleStatClick} />
               ))}
             </div>
 
@@ -724,9 +762,17 @@ export function PlayerLockInGame({
     const str = gameStats.currentStreak + 1
     const ng = { ...gameStats, totalReviewed: gameStats.totalReviewed + 1, lockedIn: action === 'lockin' ? gameStats.lockedIn + 1 : gameStats.lockedIn, saved: action === 'save' ? gameStats.saved + 1 : gameStats.saved, currentStreak: str, bestStreak: Math.max(gameStats.bestStreak, str), xp: gameStats.xp + xp, level: getLevelFromXP(gameStats.xp + xp) }
     setGameStats(ng); saveToStorage(STORAGE_KEYS.GAME_STATS, ng)
+    
+    // Award IQ points
+    const result = earnPoints('player_card_swipe')
+    if (result.earned) {
+      setShowPointsBurst(true)
+      setTimeout(() => setShowPointsBurst(false), 1500)
+    }
+    
     setLastAction(action); setShowVoteResult(true)
     setTimeout(() => { setShowVoteResult(false); setLastAction(null); setDragX(0); setCurrentIndex(p => p + 1) }, 1200)
-  }, [currentCard, lockedInSections, seenCards, gameStats])
+  }, [currentCard, lockedInSections, seenCards, gameStats, earnPoints])
   
   const handleDragStart = useCallback((x: number) => { setIsDragging(true); dragStartX.current = x }, [])
   const handleDragMove = useCallback((x: number) => { if (isDragging) setDragX(x - dragStartX.current) }, [isDragging])
@@ -868,6 +914,8 @@ export function PlayerLockInGame({
               onMouseUp={handleDragEnd} 
               onMouseLeave={() => { if (isDragging) handleDragEnd() }}
             >
+              {/* GOLD Video Game Style Points Animation */}
+              <InlinePointsBurst points={1} show={showPointsBurst} label="IQ" />
               {currentCard.content}
             </div>
             {showVoteResult && (<div className="absolute inset-0 bg-black/80 rounded-lg flex items-center justify-center z-20"><div className="text-center">{lastAction === 'lockin' ? <Lock className="w-12 h-12 text-[#FF6B35] mx-auto mb-2" /> : <Bookmark className="w-12 h-12 text-blue-400 mx-auto mb-2" />}<p className={`font-bold ${lastAction === 'lockin' ? 'text-[#FF6B35]' : 'text-blue-400'}`}>{lastAction === 'lockin' ? 'LOCKED IN!' : 'SAVED!'}</p></div></div>)}
@@ -911,7 +959,70 @@ export function PlayerLockInGame({
       {/* Key Skills Popup - EXACT from page.tsx */}
       {showKeySkillsPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowKeySkillsPopup(false)}>
-          <div className="bg-gradient-to-b from-[#1a1a1a] to-[#0d0d0d] rounded-xl border border-[#3a3a3a] shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          {/* Points animation - fixed position on top of everything */}
+          {showPointsBurst && (
+            <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-[60]">
+              <motion.div
+                className="font-black text-5xl"
+                style={{
+                  textShadow: '0 0 30px rgba(255, 215, 0, 1), 0 0 60px rgba(255, 165, 0, 0.5)',
+                }}
+                initial={{ scale: 0, y: 0 }}
+                animate={{ 
+                  scale: [0, 1.5, 1.2],
+                  y: [0, -20, -40],
+                }}
+                exit={{ 
+                  scale: 0.5, 
+                  y: -80, 
+                  opacity: 0 
+                }}
+                transition={{ 
+                  duration: 0.6,
+                  times: [0, 0.3, 1],
+                  ease: 'easeOut',
+                }}
+              >
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-yellow-400 to-orange-500">
+                  +1 IQ
+                </span>
+              </motion.div>
+              {/* Sparkles */}
+              {[...Array(6)].map((_, i) => {
+                const angle = (360 / 6) * i
+                const radians = (angle * Math.PI) / 180
+                const distance = 80
+                
+                return (
+                  <motion.div
+                    key={i}
+                    className="absolute w-3 h-3 rounded-full bg-yellow-400"
+                    style={{
+                      boxShadow: '0 0 10px rgba(255, 215, 0, 0.8)',
+                    }}
+                    initial={{ 
+                      x: 0, 
+                      y: 0, 
+                      scale: 0, 
+                      opacity: 1 
+                    }}
+                    animate={{ 
+                      x: Math.cos(radians) * distance, 
+                      y: Math.sin(radians) * distance, 
+                      scale: [0, 1, 0], 
+                      opacity: [1, 1, 0] 
+                    }}
+                    transition={{ 
+                      duration: 0.5, 
+                      delay: i * 0.02,
+                      ease: 'easeOut' 
+                    }}
+                  />
+                )
+              })}
+            </div>
+          )}
+          <div className="bg-gradient-to-b from-[#1a1a1a] to-[#0d0d0d] rounded-xl border border-[#3a3a3a] shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto relative" onClick={(e) => e.stopPropagation()}>
             <div className="sticky top-0 bg-gradient-to-r from-[#FF6B35]/20 to-transparent p-4 border-b border-[#3a3a3a] flex items-center justify-between"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-[#FF6B35]/10 flex items-center justify-center border border-[#FF6B35]/30"><Info className="w-5 h-5 text-[#FF6B35]" /></div><div><h2 className="text-[#FF6B35] font-bold text-lg uppercase tracking-wider">Key Skills</h2><p className="text-[#888] text-xs">Performance Overview</p></div></div><button onClick={() => setShowKeySkillsPopup(false)} className="w-8 h-8 rounded-full bg-[#3a3a3a] hover:bg-[#4a4a4a] flex items-center justify-center"><X className="w-4 h-4 text-[#888]" /></button></div>
             <div className="p-4 border-b border-[#3a3a3a]"><div className="flex items-center justify-between mb-3"><span className="text-[#888] text-sm uppercase tracking-wider">Overall Score</span><div className="flex items-center gap-2"><span className="text-white font-black text-3xl">{overallScore}</span><span className="text-[#888] text-sm">/ 100</span></div></div><div className="h-3 bg-[#3a3a3a] rounded-full overflow-hidden"><div className="h-full rounded-full" style={{ width: `${overallScore}%`, background: `linear-gradient(90deg, ${overallColors.primary}, ${overallColors.secondary})` }} /></div><div className="flex justify-between mt-2"><span className="text-[10px] text-[#666]">0</span><span className={`text-sm font-bold ${overallRating.color}`}>{overallRating.label}</span><span className="text-[10px] text-[#666]">100</span></div></div>
             <div className="p-4 border-b border-[#3a3a3a]"><h3 className="text-white font-semibold text-sm mb-2 flex items-center gap-2"><ChevronRight className="w-4 h-4 text-[#FF6B35]" />What This Means</h3><p className="text-[#E5E5E5] text-sm leading-relaxed">Your Key Skills score combines three critical aspects of shooting: Overall form quality, shot-to-shot Consistency, and technical Form mechanics.</p></div>

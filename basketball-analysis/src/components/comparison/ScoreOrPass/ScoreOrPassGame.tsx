@@ -31,6 +31,8 @@ import {
   POSITION_LABELS,
   BodyType
 } from "@/data/eliteShooters"
+import { usePoints } from "@/lib/points/pointsContext"
+import { InlinePointsBurst } from "@/components/points/PointsBurst"
 
 // ============================================
 // TYPES
@@ -1094,6 +1096,9 @@ export function ScoreOrPassGame({ userProfile = {}, userAnalysis, onSelectShoote
   const [lastVote, setLastVote] = useState<'score' | 'pass' | null>(null)
   const [voteResult, setVoteResult] = useState<{ score: number, pass: number } | null>(null)
   const [isHydrated, setIsHydrated] = useState(false)
+  const [showPointsBurst, setShowPointsBurst] = useState(false)
+  
+  const { earnPoints } = usePoints()
   
   // Filter State
   const [showFilterPanel, setShowFilterPanel] = useState(false)
@@ -1295,6 +1300,13 @@ export function ScoreOrPassGame({ userProfile = {}, userAnalysis, onSelectShoote
     // Mark as seen
     setSeenShooters(prev => [...prev, currentShooter.id])
     
+    // Award IQ points
+    const result = earnPoints('compare_card_swipe')
+    if (result.earned) {
+      setShowPointsBurst(true)
+      setTimeout(() => setShowPointsBurst(false), 1500)
+    }
+    
     // Show reveal
     setIsRevealing(true)
     
@@ -1310,7 +1322,7 @@ export function ScoreOrPassGame({ userProfile = {}, userAnalysis, onSelectShoote
         setCurrentIndex(nextIndex)
       }
     }, 2000)
-  }, [currentShooter, isRevealing, matchedShooters.length])
+  }, [currentShooter, isRevealing, matchedShooters.length, earnPoints])
   
   // Reset game - forces a fresh start
   const handleReset = useCallback(() => {
@@ -1563,6 +1575,9 @@ export function ScoreOrPassGame({ userProfile = {}, userAnalysis, onSelectShoote
                       <Check className="w-10 h-10 text-white drop-shadow-lg" />
                     </div>
                   </div>
+                  
+                  {/* GOLD Video Game Style Points Animation */}
+                  <InlinePointsBurst points={1} show={showPointsBurst} label="IQ" />
                   
                   <PlayerCard
                     key={currentShooter.id}

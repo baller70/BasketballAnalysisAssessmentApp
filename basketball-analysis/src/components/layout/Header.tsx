@@ -4,9 +4,10 @@ import React, { useState, useRef, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter, usePathname } from "next/navigation"
-import { User, ChevronDown, Upload, BarChart3, Users, BookOpen, Settings, Trophy, Star, Sparkles, GraduationCap, LogOut, Share2, Twitter, Facebook, Linkedin, Download, Link2, Check, Clock } from "lucide-react"
+import { ChevronDown, BarChart3, Users, BookOpen, Settings, Trophy, Star, Sparkles, GraduationCap, LogOut, Share2, Twitter, Facebook, Linkedin, Download, Link2, Check, Zap } from "lucide-react"
 import { useDashboardViewStore, type DashboardView } from "@/stores/dashboardViewStore"
 import { useAuthStore } from "@/stores/authStore"
+import { PointsDisplay } from "@/components/points/PointsDisplay"
 
 const VIEW_OPTIONS: { value: DashboardView; label: string; description: string; icon: React.ReactNode; color: string }[] = [
   {
@@ -152,6 +153,7 @@ export function Header() {
     { label: "Elite Shooter", href: "/elite-shooters", icon: Users },
     { label: "Badges & Achievements", href: "/badges", icon: Trophy },
     { label: "Guide", href: "/guide", icon: BookOpen },
+    { label: "Points System", href: "/points", icon: Zap },
   ]
 
   return (
@@ -173,6 +175,9 @@ export function Header() {
           {/* Only show navigation when NOT on auth pages */}
           {!isAuthPage && isAuthenticated && (
           <nav className="flex items-center gap-4">
+            {/* Points Display */}
+            <PointsDisplay variant="header" showProgress={true} />
+            
             {/* Profile Dropdown */}
             <div className="relative" ref={dropdownRef}>
               <button

@@ -71,6 +71,7 @@
     "html-to-image": "^1.11.13",
     "html2canvas": "^1.4.1",
     "jimp": "^1.6.0",
+    "jszip": "^3.10.1",
     "lucide-react": "^0.555.0",
     "mapbox-gl": "^1.13.3",
     "next": "14.2.28",

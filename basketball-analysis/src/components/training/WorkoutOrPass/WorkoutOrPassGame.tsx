@@ -28,6 +28,8 @@ import {
   getDrillsByFocusArea 
 } from "@/data/drillDatabase"
 import { DrillExecutionPage } from "./DrillExecutionPage"
+import { usePoints } from "@/lib/points/pointsContext"
+import { InlinePointsBurst } from "@/components/points/PointsBurst"
 
 // ============================================
 // HELPER FUNCTIONS
@@ -277,6 +279,9 @@ export function WorkoutOrPassGame({ userProfile, filters, onStartDrill }: Workou
   const [showVoteResult, setShowVoteResult] = useState(false)
   const [lastVote, setLastVote] = useState<'train' | 'pass' | null>(null)
   const [selectedDrill, setSelectedDrill] = useState<Drill | null>(null)
+  const [showPointsBurst, setShowPointsBurst] = useState(false)
+  
+  const { earnPoints } = usePoints()
   
   // Swipe state
   const [dragX, setDragX] = useState(0)
@@ -445,6 +450,13 @@ export function WorkoutOrPassGame({ userProfile, filters, onStartDrill }: Workou
     newSeen.add(drillId)
     saveSeenDrills(newSeen)
 
+    // Award IQ points
+    const result = earnPoints('training_card_swipe')
+    if (result.earned) {
+      setShowPointsBurst(true)
+      setTimeout(() => setShowPointsBurst(false), 1500)
+    }
+
     setLastVote(action)
     setShowVoteResult(true)
 
@@ -454,7 +466,7 @@ export function WorkoutOrPassGame({ userProfile, filters, onStartDrill }: Workou
       setCurrentIndex(prev => prev + 1)
       setDragX(0)
     }, 1500)
-  }, [currentDrill, voteStats, gameStats, trainingHistory, seenDrills, saveVoteStats, saveGameStats, saveTrainingHistory, saveSeenDrills])
+  }, [currentDrill, voteStats, gameStats, trainingHistory, seenDrills, saveVoteStats, saveGameStats, saveTrainingHistory, saveSeenDrills, earnPoints])
 
   // Swipe handlers
   const handleDragStart = useCallback((clientX: number) => {
@@ -693,6 +705,9 @@ export function WorkoutOrPassGame({ userProfile, filters, onStartDrill }: Workou
                   onMouseUp={handleMouseUp}
                   onMouseLeave={handleMouseLeave}
                 >
+                  {/* GOLD Video Game Style Points Animation */}
+                  <InlinePointsBurst points={1} show={showPointsBurst} label="IQ" />
+                  
                   {/* Left Swipe Indicator */}
                   <div 
                     className="z-20 flex items-center gap-0 pointer-events-none transition-all duration-150"
