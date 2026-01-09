@@ -1458,28 +1458,28 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
         )}
       </AnimatePresence>
 
-      {/* Metric Settings Modal */}
+      {/* Metric Settings Modal - Scrollable with fixed header/footer */}
       <AnimatePresence>
         {showMetricSettings && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+            className="absolute inset-0 z-50 bg-black/90 flex items-end sm:items-center justify-center"
             onClick={() => setShowMetricSettings(false)}
           >
             <motion.div
-              initial={{ scale: 0.9, y: 20 }}
+              initial={{ scale: 0.95, y: 50 }}
               animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              className="bg-[#1a1a1a] rounded-2xl p-6 max-w-md w-full border border-[#FF6B35]/30"
+              exit={{ scale: 0.95, y: 50 }}
+              className="bg-[#1a1a1a] rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md max-h-[85vh] flex flex-col border-t sm:border border-[#FF6B35]/30"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Header */}
-              <div className="flex items-center justify-between mb-6">
+              {/* Fixed Header */}
+              <div className="flex items-center justify-between p-4 border-b border-white/10 flex-shrink-0">
                 <div>
-                  <h2 className="text-xl font-bold text-white">Display Settings</h2>
-                  <p className="text-white/50 text-sm">Choose which metrics to show</p>
+                  <h2 className="text-lg font-bold text-white">Display Settings</h2>
+                  <p className="text-white/50 text-xs">Choose which metrics to show</p>
                 </div>
                 <button
                   onClick={() => setShowMetricSettings(false)}
@@ -1489,8 +1489,8 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
                 </button>
               </div>
 
-              {/* Metrics Selection */}
-              <div className="space-y-3 mb-6">
+              {/* Scrollable Content */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-2">
                 {AVAILABLE_METRICS.map((metric) => {
                   const isSelected = selectedMetrics.includes(metric.id)
                   const isOnlyOne = selectedMetrics.length === 1 && isSelected
@@ -1500,60 +1500,65 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
                       key={metric.id}
                       onClick={() => !isOnlyOne && toggleMetric(metric.id)}
                       disabled={isOnlyOne}
-                      className={`w-full flex items-center gap-4 p-4 rounded-xl border transition-all ${
+                      className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all ${
                         isSelected
                           ? 'bg-[#FF6B35]/20 border-[#FF6B35]/50'
                           : 'bg-white/5 border-white/10 hover:border-white/20'
                       } ${isOnlyOne ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       {/* Checkbox */}
-                      <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center ${
+                      <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 ${
                         isSelected ? 'bg-[#FF6B35] border-[#FF6B35]' : 'border-white/30'
                       }`}>
                         {isSelected && (
-                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                           </svg>
                         )}
                       </div>
                       
                       {/* Info */}
-                      <div className="flex-1 text-left">
-                        <p className="text-white font-bold">{metric.label}</p>
-                        <p className="text-white/50 text-xs">{metric.description}</p>
+                      <div className="flex-1 text-left min-w-0">
+                        <p className="text-white font-bold text-sm">{metric.label}</p>
+                        <p className="text-white/50 text-[10px] truncate">{metric.description}</p>
                       </div>
                     </button>
                   )
                 })}
               </div>
 
-              {/* Preview */}
-              <div className="bg-black/50 rounded-xl p-4 mb-4">
-                <p className="text-white/50 text-xs uppercase tracking-wider mb-3">Preview</p>
-                <div className="flex items-center justify-around">
-                  {selectedMetrics.slice(0, 5).map((metricId) => {
-                    const metric = AVAILABLE_METRICS.find(m => m.id === metricId)
-                    if (!metric) return null
-                    const fontSize = selectedMetrics.length <= 2 ? 'text-2xl' : 
-                                     selectedMetrics.length <= 3 ? 'text-xl' : 'text-lg'
-                    return (
-                      <div key={metricId} className="flex flex-col items-center">
-                        <div className={`${fontSize} font-black text-white`}>--</div>
-                        <div className="text-[9px] text-white/50 uppercase">{metric.shortLabel}</div>
-                      </div>
-                    )
-                  })}
+              {/* Fixed Footer with Preview and Save Button */}
+              <div className="p-4 border-t border-white/10 flex-shrink-0 space-y-3">
+                {/* Preview */}
+                <div className="bg-black/50 rounded-xl p-3">
+                  <p className="text-white/50 text-[10px] uppercase tracking-wider mb-2">Preview ({selectedMetrics.length} metrics)</p>
+                  <div className="flex items-center justify-around flex-wrap gap-2">
+                    {selectedMetrics.slice(0, 5).map((metricId) => {
+                      const metric = AVAILABLE_METRICS.find(m => m.id === metricId)
+                      if (!metric) return null
+                      const fontSize = selectedMetrics.length <= 2 ? 'text-xl' : 
+                                       selectedMetrics.length <= 3 ? 'text-lg' : 'text-base'
+                      return (
+                        <div key={metricId} className="flex flex-col items-center">
+                          <div className={`${fontSize} font-black text-white`}>--</div>
+                          <div className="text-[8px] text-white/50 uppercase">{metric.shortLabel}</div>
+                        </div>
+                      )
+                    })}
+                    {selectedMetrics.length > 5 && (
+                      <div className="text-white/40 text-xs">+{selectedMetrics.length - 5} more</div>
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              {/* Note */}
-              <p className="text-white/40 text-xs text-center">
-                {selectedMetrics.length <= 2 
-                  ? '📊 Large display mode - perfect for quick glances'
-                  : selectedMetrics.length <= 3
-                  ? '📊 Medium display mode - balanced view'
-                  : '📊 Compact mode - see all metrics at once'}
-              </p>
+                {/* Save Button */}
+                <button
+                  onClick={() => setShowMetricSettings(false)}
+                  className="w-full py-3 bg-[#FF6B35] hover:bg-[#E55A2A] text-white font-bold rounded-xl transition-colors"
+                >
+                  Done
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}
