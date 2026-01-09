@@ -11,7 +11,7 @@ import { AnalysisCardGame } from "@/components/analysis/AnalysisCardGame"
 import { EnhancedShotStrip } from "@/components/analysis/EnhancedShotStrip"
 import { AutoScreenshots } from "@/components/analysis/AutoScreenshots"
 import { VideoPlayerSection } from "@/components/analysis/VideoPlayerSection"
-import { LiveAnalysis } from "@/components/live"
+import { LiveAnalysis, FullscreenLiveCamera } from "@/components/live"
 import { GoalTransitMap } from "@/components/goals"
 import { User, Upload, Check, X, Image as ImageIcon, Video, BookOpen, Users, Search, BarChart3, Award, ArrowRight, Zap, Trophy, Target, ClipboardList, Flame, Dumbbell, CircleDot, Share2, Download, Copy, Twitter, Facebook, Linkedin, ChevronLeft, ChevronRight, Calendar, ChevronDown, ChevronUp, AlertTriangle, Lightbulb, Plus, Eye, EyeOff, Layers, GitBranch, Circle, Tag, Camera, Play, Info, TrendingUp, Shirt, Medal, Timer, Footprints, ArrowLeftRight, Move, Instagram, MessageCircle, Globe, Clock, PieChart, Grid3X3, Activity, MoreVertical, Radio, Star, Crown, MapPin, SlidersHorizontal, Filter } from "lucide-react"
 import Link from "next/link"
@@ -2032,9 +2032,7 @@ function DemoResultsPageContent() {
               {/* 📹 LIVE TAB: Real-time camera analysis */}
                   {resultsMode === "live" && (
                     <ErrorBoundary>
-                      <div className="p-6">
-                        <LiveAnalysis />
-                      </div>
+                      <FullscreenLiveCamera onClose={() => setResultsMode("image")} />
                     </ErrorBoundary>
                   )}
             </div>

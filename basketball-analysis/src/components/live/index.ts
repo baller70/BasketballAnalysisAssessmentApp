@@ -9,6 +9,7 @@ export { SkeletonOverlay } from './SkeletonOverlay';
 export { LiveMetrics } from './LiveMetrics';
 export { LiveFeedback } from './LiveFeedback';
 export { RecordingControls } from './RecordingControls';
+export { FullscreenLiveCamera } from './FullscreenLiveCamera';
 
 
 
