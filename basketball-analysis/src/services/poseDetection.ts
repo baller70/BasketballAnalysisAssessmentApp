@@ -48,6 +48,10 @@ export interface ShootingFormFeedback {
   shoulderMessage: string;
   hipStatus: 'good' | 'warning' | 'critical' | 'unknown';
   hipMessage: string;
+  releaseStatus: 'good' | 'warning' | 'critical' | 'unknown';
+  releaseMessage: string;
+  wristStatus: 'good' | 'warning' | 'critical' | 'unknown';
+  wristMessage: string;
   overallScore: number;
   tips: string[];
 }
@@ -230,6 +234,7 @@ class PoseDetectionService {
   
   /**
    * Calculate all shooting-relevant angles from a pose
+   * Industry standard basketball shooting form analysis
    */
   calculateShootingAngles(pose: Pose): ShootingAngles {
     const angles: ShootingAngles = {
@@ -241,9 +246,18 @@ class PoseDetectionService {
       wristAngle: null,
     };
     
-    // Determine shooting side (right hand dominant by default)
-    // Could be enhanced to detect dominant hand
-    const side = 'right';
+    // Determine shooting side based on which wrist is higher (shooting hand)
+    // This auto-detects left vs right handed shooters
+    const rightWrist = this.getKeypoint(pose, 'right_wrist');
+    const leftWrist = this.getKeypoint(pose, 'left_wrist');
+    
+    let side: 'right' | 'left' = 'right';
+    if (rightWrist && leftWrist) {
+      // The higher wrist (lower y value) is likely the shooting hand
+      side = rightWrist.y < leftWrist.y ? 'right' : 'left';
+    } else if (leftWrist && !rightWrist) {
+      side = 'left';
+    }
     
     // Get keypoints for the shooting side
     const shoulder = this.getKeypoint(pose, `${side}_shoulder` as keyof typeof KEYPOINT_INDICES);
@@ -253,32 +267,55 @@ class PoseDetectionService {
     const knee = this.getKeypoint(pose, `${side}_knee` as keyof typeof KEYPOINT_INDICES);
     const ankle = this.getKeypoint(pose, `${side}_ankle` as keyof typeof KEYPOINT_INDICES);
     
+    // Get opposite side for balance calculations
+    const oppositeSide = side === 'right' ? 'left' : 'right';
+    const oppositeHip = this.getKeypoint(pose, `${oppositeSide}_hip` as keyof typeof KEYPOINT_INDICES);
+    const oppositeShoulder = this.getKeypoint(pose, `${oppositeSide}_shoulder` as keyof typeof KEYPOINT_INDICES);
+    
     // Calculate elbow angle (shoulder-elbow-wrist)
+    // Ideal: 85-95° at set point, extends to ~170° at release
     if (shoulder && elbow && wrist) {
       angles.elbowAngle = this.calculateAngle(shoulder, elbow, wrist);
     }
     
     // Calculate knee angle (hip-knee-ankle)
+    // Ideal: 130-150° for athletic stance with good power generation
     if (hip && knee && ankle) {
       angles.kneeAngle = this.calculateAngle(hip, knee, ankle);
     }
     
     // Calculate shoulder angle (elbow-shoulder-hip)
+    // Measures arm lift - ideal: 45-90° depending on shot phase
     if (elbow && shoulder && hip) {
       angles.shoulderAngle = this.calculateAngle(elbow, shoulder, hip);
     }
     
     // Calculate hip angle (shoulder-hip-knee)
+    // Measures body alignment/lean - ideal: 160-180° for upright posture
     if (shoulder && hip && knee) {
       angles.hipAngle = this.calculateAngle(shoulder, hip, knee);
     }
     
-    // Calculate release angle (vertical line from wrist)
+    // Calculate release angle (arm angle from vertical)
+    // 0° = straight up, positive = forward lean
     if (wrist && elbow) {
-      // Angle from vertical (0 = straight up)
       const dx = wrist.x - elbow.x;
       const dy = elbow.y - wrist.y; // Inverted because y increases downward
       angles.releaseAngle = Math.round(Math.atan2(dx, dy) * 180 / Math.PI);
+    }
+    
+    // Calculate wrist/arm angle (elbow-wrist angle relative to vertical)
+    // This measures the follow-through angle
+    // Ideal: 45-60° at release for optimal arc
+    if (elbow && wrist) {
+      // Calculate angle of forearm from horizontal
+      const dx = wrist.x - elbow.x;
+      const dy = wrist.y - elbow.y;
+      // Convert to degrees from horizontal (0° = horizontal, 90° = vertical up, -90° = vertical down)
+      let armAngle = Math.round(Math.atan2(-dy, dx) * 180 / Math.PI);
+      // Normalize to 0-180 range for display
+      if (armAngle < 0) armAngle += 180;
+      angles.wristAngle = armAngle;
     }
     
     return angles;
@@ -286,6 +323,7 @@ class PoseDetectionService {
   
   /**
    * Analyze shooting form and provide feedback
+   * Industry standard basketball shooting form analysis
    */
   analyzeShootingForm(angles: ShootingAngles): ShootingFormFeedback {
     const feedback: ShootingFormFeedback = {
@@ -297,6 +335,10 @@ class PoseDetectionService {
       shoulderMessage: 'Cannot detect shoulder',
       hipStatus: 'unknown',
       hipMessage: 'Cannot detect hip',
+      releaseStatus: 'unknown',
+      releaseMessage: 'Cannot detect release',
+      wristStatus: 'unknown',
+      wristMessage: 'Cannot detect arm angle',
       overallScore: 0,
       tips: [],
     };
@@ -394,6 +436,53 @@ class PoseDetectionService {
         feedback.hipMessage = `Hip at ${angles.hipAngle}° - Leaning too much`;
         totalScore += 40;
         feedback.tips.push('Maintain a more vertical posture');
+      }
+    }
+    
+    // Analyze release angle (ideal: -10° to 15° from vertical for optimal arc)
+    // Negative = arm tilted back, Positive = arm tilted forward
+    if (angles.releaseAngle !== null) {
+      validMetrics++;
+      const absRelease = Math.abs(angles.releaseAngle);
+      if (absRelease <= 15) {
+        feedback.releaseStatus = 'good';
+        feedback.releaseMessage = `Release at ${angles.releaseAngle}° - Great follow-through`;
+        totalScore += 100;
+      } else if (absRelease <= 25) {
+        feedback.releaseStatus = 'warning';
+        feedback.releaseMessage = `Release at ${angles.releaseAngle}° - Adjust angle`;
+        totalScore += 70;
+        feedback.tips.push(angles.releaseAngle > 0 
+          ? 'Extend more vertically on release' 
+          : 'Follow through more forward');
+      } else {
+        feedback.releaseStatus = 'critical';
+        feedback.releaseMessage = `Release at ${angles.releaseAngle}° - Needs work`;
+        totalScore += 40;
+        feedback.tips.push('Focus on a more vertical release for better arc');
+      }
+    }
+    
+    // Analyze wrist/arm angle (ideal: 60-90° from horizontal for proper arc)
+    // This measures the forearm angle during the shot
+    if (angles.wristAngle !== null) {
+      validMetrics++;
+      if (angles.wristAngle >= 50 && angles.wristAngle <= 100) {
+        feedback.wristStatus = 'good';
+        feedback.wristMessage = `Arm at ${angles.wristAngle}° - Good arc`;
+        totalScore += 100;
+      } else if (angles.wristAngle >= 35 && angles.wristAngle <= 120) {
+        feedback.wristStatus = 'warning';
+        feedback.wristMessage = `Arm at ${angles.wristAngle}° - Adjust for better arc`;
+        totalScore += 70;
+        feedback.tips.push(angles.wristAngle < 50 
+          ? 'Raise your arm higher for better arc' 
+          : 'Don\'t over-extend on release');
+      } else {
+        feedback.wristStatus = 'critical';
+        feedback.wristMessage = `Arm at ${angles.wristAngle}° - Flat shot`;
+        totalScore += 40;
+        feedback.tips.push('Get more lift on your shot for better arc');
       }
     }
     

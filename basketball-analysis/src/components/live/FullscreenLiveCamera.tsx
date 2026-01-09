@@ -51,6 +51,89 @@ interface CapturedFrame {
 
 type Orientation = 'portrait' | 'landscape'
 
+// Available metrics that users can select
+// All metrics are fully functional with MoveNet pose detection
+export type MetricId = 'form' | 'elbow' | 'knee' | 'shoulder' | 'hip' | 'release' | 'arm'
+
+export interface MetricConfig {
+  id: MetricId
+  label: string
+  shortLabel: string
+  unit: string
+  description: string
+  getStatus: (feedback: any) => 'good' | 'warning' | 'critical' | 'unknown'
+}
+
+// Industry-standard metrics configuration
+// Based on Shot Science and professional basketball analysis
+// ALL metrics are fully functional and provide real-time feedback
+export const AVAILABLE_METRICS: MetricConfig[] = [
+  {
+    id: 'form',
+    label: 'FORM SCORE',
+    shortLabel: 'FORM',
+    unit: '',
+    description: 'Overall shooting form quality (0-100)',
+    getStatus: (feedback) => {
+      const score = feedback?.overallScore ?? 0
+      if (score >= 80) return 'good'
+      if (score >= 60) return 'warning'
+      return 'critical'
+    }
+  },
+  {
+    id: 'elbow',
+    label: 'ELBOW ANGLE',
+    shortLabel: 'ELBOW',
+    unit: '°',
+    description: 'Angle at elbow joint (ideal: 85-95° at set)',
+    getStatus: (feedback) => feedback?.elbowStatus ?? 'unknown'
+  },
+  {
+    id: 'knee',
+    label: 'LEG ANGLE',
+    shortLabel: 'LEG',
+    unit: '°',
+    description: 'Knee bend angle (ideal: 130-150°)',
+    getStatus: (feedback) => feedback?.kneeStatus ?? 'unknown'
+  },
+  {
+    id: 'shoulder',
+    label: 'SHOULDER',
+    shortLabel: 'SHOULDER',
+    unit: '°',
+    description: 'Shoulder alignment angle (ideal: 45-90°)',
+    getStatus: (feedback) => feedback?.shoulderStatus ?? 'unknown'
+  },
+  {
+    id: 'hip',
+    label: 'HIP ALIGN',
+    shortLabel: 'HIP',
+    unit: '°',
+    description: 'Hip alignment for posture (ideal: 160-180°)',
+    getStatus: (feedback) => feedback?.hipStatus ?? 'unknown'
+  },
+  {
+    id: 'release',
+    label: 'RELEASE ANGLE',
+    shortLabel: 'RELEASE',
+    unit: '°',
+    description: 'Release angle from vertical (ideal: -10° to 15°)',
+    getStatus: (feedback) => feedback?.releaseStatus ?? 'unknown'
+  },
+  {
+    id: 'arm',
+    label: 'ARM ANGLE',
+    shortLabel: 'ARM',
+    unit: '°',
+    description: 'Forearm angle for shot arc (ideal: 60-90°)',
+    getStatus: (feedback) => feedback?.wristStatus ?? 'unknown'
+  }
+]
+
+// Default metrics to show (all by default)
+const DEFAULT_SELECTED_METRICS: MetricId[] = ['form', 'elbow', 'knee', 'shoulder', 'hip', 'release', 'arm']
+
 // ============================================
 // HELPERS
 // ============================================
@@ -106,6 +189,23 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   const [showSaveSuccess, setShowSaveSuccess] = useState(false)
   const [showSaveChoice, setShowSaveChoice] = useState(false)
   const [showLimitWarning, setShowLimitWarning] = useState(false)
+  
+  // Metric selection state
+  const [selectedMetrics, setSelectedMetrics] = useState<MetricId[]>(() => {
+    // Load from localStorage if available
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('shotiq_live_metrics')
+      if (saved) {
+        try {
+          return JSON.parse(saved)
+        } catch {
+          return DEFAULT_SELECTED_METRICS
+        }
+      }
+    }
+    return DEFAULT_SELECTED_METRICS
+  })
+  const [showMetricSettings, setShowMetricSettings] = useState(false)
   
   // Throttled pose state to reduce glitching
   const [throttledPose, setThrottledPose] = useState<any>(null)
@@ -327,13 +427,25 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     }
   }, []) // Only run on mount/unmount - initCamera and cleanupCamera are stable
 
-  // Recording timer
+  // Maximum recording duration (2 minutes)
+  const MAX_RECORDING_DURATION = 120 // seconds
+  const shouldStopRef = useRef(false)
+
+  // Recording timer with auto-stop at 2 minutes
   useEffect(() => {
     let interval: NodeJS.Timeout
 
     if (isRecording && !isPaused) {
       interval = setInterval(() => {
-        setRecordingDuration(prev => prev + 1)
+        setRecordingDuration(prev => {
+          const newDuration = prev + 1
+          // Flag for auto-stop at 2 minutes
+          if (newDuration >= MAX_RECORDING_DURATION) {
+            console.log('[FullscreenLive] Max recording duration reached, flagging stop...')
+            shouldStopRef.current = true
+          }
+          return newDuration
+        })
       }, 1000)
     }
 
@@ -341,6 +453,18 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       if (interval) clearInterval(interval)
     }
   }, [isRecording, isPaused])
+
+  // Handle auto-stop when max duration reached
+  useEffect(() => {
+    if (shouldStopRef.current && isRecording) {
+      shouldStopRef.current = false
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop()
+      }
+      setIsRecording(false)
+      setShowControls(true)
+    }
+  }, [recordingDuration, isRecording])
 
   // Flip camera
   const handleFlipCamera = useCallback(async () => {
@@ -442,6 +566,25 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     }
     setIsRecording(false)
     setShowControls(true)
+  }, [])
+
+  // Toggle metric selection
+  const toggleMetric = useCallback((metricId: MetricId) => {
+    setSelectedMetrics(prev => {
+      const newMetrics = prev.includes(metricId)
+        ? prev.filter(m => m !== metricId)
+        : [...prev, metricId]
+      
+      // Ensure at least one metric is selected
+      if (newMetrics.length === 0) return prev
+      
+      // Save to localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('shotiq_live_metrics', JSON.stringify(newMetrics))
+      }
+      
+      return newMetrics
+    })
   }, [])
 
   // Capture frame
@@ -642,76 +785,126 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
 
   // Get key metrics for display
   const formScore = feedback?.overallScore ?? 0
-  const legAngle = angles?.kneeAngle ?? null
-  const releaseAngle = angles?.shoulderAngle ?? null
+  const kneeAngle = angles?.kneeAngle ?? null
+  const shoulderAngle = angles?.shoulderAngle ?? null
   const elbowAngle = angles?.elbowAngle ?? null
   const hipAngle = angles?.hipAngle ?? null
+  const releaseAngle = angles?.releaseAngle ?? null
+  const armAngle = angles?.wristAngle ?? null // Arm/forearm angle
+  
+  // Get current feedback tip
+  const currentTip = feedback?.tips?.[0] || null
+  
+  // Get metric value by ID
+  const getMetricValue = (metricId: MetricId): number | null => {
+    switch (metricId) {
+      case 'form': return throttledPose ? formScore : null
+      case 'elbow': return elbowAngle
+      case 'knee': return kneeAngle
+      case 'shoulder': return shoulderAngle
+      case 'hip': return hipAngle
+      case 'release': return releaseAngle
+      case 'arm': return armAngle
+      default: return null
+    }
+  }
+  
+  // Get metric status by ID
+  const getMetricStatus = (metricId: MetricId): 'good' | 'warning' | 'critical' | 'unknown' => {
+    const metric = AVAILABLE_METRICS.find(m => m.id === metricId)
+    if (!metric) return 'unknown'
+    return metric.getStatus(feedback)
+  }
+  
+  // Get status color
+  const getStatusColor = (status: 'good' | 'warning' | 'critical' | 'unknown'): string => {
+    switch (status) {
+      case 'good': return '#22c55e'
+      case 'warning': return '#eab308'
+      case 'critical': return '#ef4444'
+      default: return '#ffffff'
+    }
+  }
+  
+  // Calculate dynamic font size based on number of selected metrics (Shot Science style)
+  const getMetricFontSize = (): { value: string; label: string } => {
+    const count = selectedMetrics.length
+    if (count <= 2) return { value: 'text-4xl', label: 'text-sm' } // Very large - like Shot Science
+    if (count <= 3) return { value: 'text-3xl', label: 'text-xs' }
+    if (count <= 4) return { value: 'text-2xl', label: 'text-[10px]' }
+    return { value: 'text-lg', label: 'text-[9px]' } // Standard size for 5+
+  }
+  
+  const fontSize = getMetricFontSize()
 
-  // Render metrics bar (portrait - bottom)
+  // Render metrics bar (portrait - bottom) - DYNAMIC based on selection
   const renderMetricsBar = () => (
     <motion.div
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="absolute bottom-0 left-0 right-0 bg-black/70 backdrop-blur-sm"
-      onClick={() => setShowExpandedMetrics(!showExpandedMetrics)}
+      className="absolute bottom-0 left-0 right-0 bg-black/85 backdrop-blur-md"
     >
-      {/* Main metrics row */}
-      <div className="flex items-center justify-around py-3 px-4">
-        {/* Form Score */}
-        <div className="flex flex-col items-center">
-          <div 
-            className="text-2xl font-black"
-            style={{ color: getScoreColor(formScore) }}
+      {/* Feedback tip - always visible when available */}
+      <AnimatePresence>
+        {currentTip && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="bg-gradient-to-r from-[#FF6B35]/20 to-transparent border-b border-[#FF6B35]/20 px-4 py-2"
           >
-            {pose ? formScore : '--'}
-          </div>
-          <div className="text-[10px] text-white/60 uppercase tracking-wider">Form</div>
-        </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[#FF6B35] text-sm">💡</span>
+              <span className="text-white/90 text-xs font-medium">{currentTip}</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-        {/* Divider */}
-        <div className="w-px h-8 bg-white/20" />
+      {/* Dynamic metrics row - Shot Science style */}
+      <div 
+        className="flex items-center justify-around py-4 px-4"
+        onClick={() => setShowExpandedMetrics(!showExpandedMetrics)}
+      >
+        {selectedMetrics.map((metricId) => {
+          const metric = AVAILABLE_METRICS.find(m => m.id === metricId)
+          if (!metric) return null
+          
+          const value = getMetricValue(metricId)
+          const status = getMetricStatus(metricId)
+          const isFormScore = metricId === 'form'
+          
+          return (
+            <div key={metricId} className="flex flex-col items-center">
+              <div 
+                className={`${fontSize.value} font-black`}
+                style={{ color: isFormScore ? getScoreColor(value ?? 0) : getStatusColor(status) }}
+              >
+                {value !== null ? (isFormScore ? value : `${value}${metric.unit}`) : '--'}
+              </div>
+              <div className={`${fontSize.label} text-white/60 uppercase tracking-wider mt-1`}>
+                {metric.shortLabel}
+              </div>
+            </div>
+          )
+        })}
 
-        {/* Leg Angle */}
-        <div className="flex flex-col items-center">
-          <div className="text-xl font-bold text-white">
-            {legAngle !== null ? `${legAngle}°` : '--'}
-          </div>
-          <div className="text-[10px] text-white/60 uppercase tracking-wider">Leg</div>
-        </div>
-
-        {/* Divider */}
-        <div className="w-px h-8 bg-white/20" />
-
-        {/* Release Angle */}
-        <div className="flex flex-col items-center">
-          <div className="text-xl font-bold text-white">
-            {releaseAngle !== null ? `${releaseAngle}°` : '--'}
-          </div>
-          <div className="text-[10px] text-white/60 uppercase tracking-wider">Release</div>
-        </div>
-
-        {/* Divider */}
-        <div className="w-px h-8 bg-white/20" />
-
-        {/* Elbow */}
-        <div className="flex flex-col items-center">
-          <div className="text-xl font-bold text-white">
-            {elbowAngle !== null ? `${elbowAngle}°` : '--'}
-          </div>
-          <div className="text-[10px] text-white/60 uppercase tracking-wider">Elbow</div>
-        </div>
-
-        {/* Expand indicator */}
-        <div className="absolute right-2 top-1">
-          {showExpandedMetrics ? (
-            <ChevronDown className="w-4 h-4 text-white/40" />
-          ) : (
-            <ChevronUp className="w-4 h-4 text-white/40" />
-          )}
-        </div>
+        {/* Settings gear icon */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            setShowMetricSettings(true)
+          }}
+          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+        >
+          <svg className="w-4 h-4 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </button>
       </div>
 
-      {/* Expanded metrics */}
+      {/* Expanded metrics with all tips */}
       <AnimatePresence>
         {showExpandedMetrics && (
           <motion.div
@@ -720,20 +913,39 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
             exit={{ height: 0, opacity: 0 }}
             className="border-t border-white/10 overflow-hidden"
           >
-            <div className="p-4 space-y-3">
-              {/* Detailed metrics grid */}
-              <div className="grid grid-cols-4 gap-2">
-                <MetricBox label="ELBOW" value={elbowAngle} status={feedback?.elbowStatus} />
-                <MetricBox label="KNEE" value={legAngle} status={feedback?.kneeStatus} />
-                <MetricBox label="SHOULDER" value={releaseAngle} status={feedback?.shoulderStatus} />
-                <MetricBox label="HIP" value={hipAngle} status={feedback?.hipStatus} />
+            <div className="p-3 space-y-3">
+              {/* Detailed metrics grid - dynamic columns */}
+              <div className={`grid gap-1.5 ${
+                selectedMetrics.length <= 3 ? 'grid-cols-3' : 
+                selectedMetrics.length === 4 ? 'grid-cols-4' : 'grid-cols-5'
+              }`}>
+                {selectedMetrics.map((metricId) => {
+                  const value = getMetricValue(metricId)
+                  const status = getMetricStatus(metricId)
+                  const metric = AVAILABLE_METRICS.find(m => m.id === metricId)
+                  if (!metric) return null
+                  return (
+                    <MetricBox 
+                      key={metricId}
+                      label={metric.shortLabel} 
+                      value={metricId === 'form' ? value : value} 
+                      status={status}
+                      isScore={metricId === 'form'}
+                    />
+                  )
+                })}
               </div>
 
-              {/* Tips */}
+              {/* All Tips */}
               {feedback?.tips && feedback.tips.length > 0 && (
-                <div className="bg-white/5 rounded-lg p-3">
-                  <div className="text-[10px] text-[#FF6B35] uppercase tracking-wider mb-1">💡 Tip</div>
-                  <div className="text-xs text-white/80">{feedback.tips[0]}</div>
+                <div className="space-y-2">
+                  <div className="text-[10px] text-[#FF6B35] uppercase tracking-wider font-bold">Coaching Tips</div>
+                  {feedback.tips.slice(0, 3).map((tip, i) => (
+                    <div key={i} className="bg-white/5 rounded-lg p-2 flex items-start gap-2">
+                      <span className="text-[#FF6B35] text-xs mt-0.5">{i + 1}.</span>
+                      <span className="text-xs text-white/80">{tip}</span>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -743,56 +955,71 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     </motion.div>
   )
 
-  // Render metrics strip (landscape - right side)
-  const renderMetricsStrip = () => (
-    <motion.div
-      initial={{ x: 100, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      className="absolute top-0 right-0 bottom-16 w-20 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center gap-4 py-4"
-    >
-      {/* Form Score */}
-      <div className="flex flex-col items-center">
-        <div 
-          className="text-3xl font-black"
-          style={{ color: getScoreColor(formScore) }}
+  // Render metrics strip (landscape - right side) - DYNAMIC
+  const renderMetricsStrip = () => {
+    // Calculate dynamic sizing for landscape
+    const landscapeFontSize = selectedMetrics.length <= 2 ? 'text-3xl' : 
+                              selectedMetrics.length <= 3 ? 'text-2xl' : 'text-lg'
+    const landscapeLabelSize = selectedMetrics.length <= 3 ? 'text-[10px]' : 'text-[8px]'
+    
+    return (
+      <motion.div
+        initial={{ x: 100, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        className="absolute top-0 right-0 bottom-16 w-24 bg-black/85 backdrop-blur-md flex flex-col items-center justify-center gap-3 py-3 overflow-y-auto"
+      >
+        {selectedMetrics.map((metricId, index) => {
+          const metric = AVAILABLE_METRICS.find(m => m.id === metricId)
+          if (!metric) return null
+          
+          const value = getMetricValue(metricId)
+          const status = getMetricStatus(metricId)
+          const isFormScore = metricId === 'form'
+          
+          return (
+            <React.Fragment key={metricId}>
+              {index > 0 && <div className="w-14 h-px bg-white/20" />}
+              <div className="flex flex-col items-center">
+                <div 
+                  className={`${landscapeFontSize} font-black`}
+                  style={{ color: isFormScore ? getScoreColor(value ?? 0) : getStatusColor(status) }}
+                >
+                  {value !== null ? (isFormScore ? value : `${value}${metric.unit}`) : '--'}
+                </div>
+                <div className={`${landscapeLabelSize} text-white/60 uppercase tracking-wider`}>
+                  {metric.shortLabel}
+                </div>
+              </div>
+            </React.Fragment>
+          )
+        })}
+
+        {/* Settings button */}
+        <button
+          onClick={() => setShowMetricSettings(true)}
+          className="mt-2 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
         >
-          {pose ? formScore : '--'}
+          <svg className="w-4 h-4 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </button>
+
+        {/* Tip in landscape */}
+        {currentTip && (
+          <div className="px-2 py-1 mt-2 border-t border-white/10 pt-2">
+            <div className="text-[8px] text-[#FF6B35] uppercase mb-1">💡 Tip</div>
+            <div className="text-[9px] text-white/70 leading-tight">{currentTip.slice(0, 50)}...</div>
+          </div>
+        )}
+
+        {/* FPS indicator */}
+        <div className="mt-auto">
+          <div className="text-[10px] text-white/40">{fps} FPS</div>
         </div>
-        <div className="text-[9px] text-white/60 uppercase tracking-wider">Form</div>
-      </div>
-
-      <div className="w-12 h-px bg-white/20" />
-
-      {/* Leg Angle */}
-      <div className="flex flex-col items-center">
-        <div className="text-lg font-bold text-white">
-          {legAngle !== null ? `${legAngle}°` : '--'}
-        </div>
-        <div className="text-[9px] text-white/60 uppercase tracking-wider">Leg</div>
-      </div>
-
-      {/* Release Angle */}
-      <div className="flex flex-col items-center">
-        <div className="text-lg font-bold text-white">
-          {releaseAngle !== null ? `${releaseAngle}°` : '--'}
-        </div>
-        <div className="text-[9px] text-white/60 uppercase tracking-wider">Release</div>
-      </div>
-
-      {/* Elbow */}
-      <div className="flex flex-col items-center">
-        <div className="text-lg font-bold text-white">
-          {elbowAngle !== null ? `${elbowAngle}°` : '--'}
-        </div>
-        <div className="text-[9px] text-white/60 uppercase tracking-wider">Elbow</div>
-      </div>
-
-      {/* FPS indicator */}
-      <div className="mt-auto">
-        <div className="text-[10px] text-white/40">{fps} FPS</div>
-      </div>
-    </motion.div>
-  )
+      </motion.div>
+    )
+  }
 
   // Render controls
   const renderControls = () => (
@@ -931,17 +1158,28 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
         </button>
       )}
 
-      {/* Recording indicator */}
+      {/* Recording indicator with time limit */}
       {isRecording && (
-        <div className="absolute top-4 right-4 z-50 flex items-center gap-2 px-3 py-1.5 bg-red-500/90 rounded-full">
-          <motion.div
-            animate={{ opacity: [1, 0.3, 1] }}
-            transition={{ duration: 1, repeat: Infinity }}
-            className="w-2 h-2 bg-white rounded-full"
-          />
-          <span className="text-white text-sm font-mono font-bold">
-            {formatDuration(recordingDuration)}
-          </span>
+        <div className="absolute top-4 right-4 z-50 flex flex-col items-end gap-1">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-red-500/90 rounded-full">
+            <motion.div
+              animate={{ opacity: [1, 0.3, 1] }}
+              transition={{ duration: 1, repeat: Infinity }}
+              className="w-2 h-2 bg-white rounded-full"
+            />
+            <span className="text-white text-sm font-mono font-bold">
+              {formatDuration(recordingDuration)}
+            </span>
+            <span className="text-white/60 text-xs">/ {formatDuration(MAX_RECORDING_DURATION)}</span>
+          </div>
+          {/* Progress bar */}
+          <div className="w-full h-1 bg-white/20 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full bg-white"
+              style={{ width: `${(recordingDuration / MAX_RECORDING_DURATION) * 100}%` }}
+              animate={{ width: `${(recordingDuration / MAX_RECORDING_DURATION) * 100}%` }}
+            />
+          </div>
         </div>
       )}
 
@@ -1219,6 +1457,107 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Metric Settings Modal */}
+      <AnimatePresence>
+        {showMetricSettings && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+            onClick={() => setShowMetricSettings(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-[#1a1a1a] rounded-2xl p-6 max-w-md w-full border border-[#FF6B35]/30"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-xl font-bold text-white">Display Settings</h2>
+                  <p className="text-white/50 text-sm">Choose which metrics to show</p>
+                </div>
+                <button
+                  onClick={() => setShowMetricSettings(false)}
+                  className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                >
+                  <X className="w-5 h-5 text-white" />
+                </button>
+              </div>
+
+              {/* Metrics Selection */}
+              <div className="space-y-3 mb-6">
+                {AVAILABLE_METRICS.map((metric) => {
+                  const isSelected = selectedMetrics.includes(metric.id)
+                  const isOnlyOne = selectedMetrics.length === 1 && isSelected
+                  
+                  return (
+                    <button
+                      key={metric.id}
+                      onClick={() => !isOnlyOne && toggleMetric(metric.id)}
+                      disabled={isOnlyOne}
+                      className={`w-full flex items-center gap-4 p-4 rounded-xl border transition-all ${
+                        isSelected
+                          ? 'bg-[#FF6B35]/20 border-[#FF6B35]/50'
+                          : 'bg-white/5 border-white/10 hover:border-white/20'
+                      } ${isOnlyOne ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      {/* Checkbox */}
+                      <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center ${
+                        isSelected ? 'bg-[#FF6B35] border-[#FF6B35]' : 'border-white/30'
+                      }`}>
+                        {isSelected && (
+                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </div>
+                      
+                      {/* Info */}
+                      <div className="flex-1 text-left">
+                        <p className="text-white font-bold">{metric.label}</p>
+                        <p className="text-white/50 text-xs">{metric.description}</p>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* Preview */}
+              <div className="bg-black/50 rounded-xl p-4 mb-4">
+                <p className="text-white/50 text-xs uppercase tracking-wider mb-3">Preview</p>
+                <div className="flex items-center justify-around">
+                  {selectedMetrics.slice(0, 5).map((metricId) => {
+                    const metric = AVAILABLE_METRICS.find(m => m.id === metricId)
+                    if (!metric) return null
+                    const fontSize = selectedMetrics.length <= 2 ? 'text-2xl' : 
+                                     selectedMetrics.length <= 3 ? 'text-xl' : 'text-lg'
+                    return (
+                      <div key={metricId} className="flex flex-col items-center">
+                        <div className={`${fontSize} font-black text-white`}>--</div>
+                        <div className="text-[9px] text-white/50 uppercase">{metric.shortLabel}</div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Note */}
+              <p className="text-white/40 text-xs text-center">
+                {selectedMetrics.length <= 2 
+                  ? '📊 Large display mode - perfect for quick glances'
+                  : selectedMetrics.length <= 3
+                  ? '📊 Medium display mode - balanced view'
+                  : '📊 Compact mode - see all metrics at once'}
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
@@ -1230,11 +1569,13 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
 function MetricBox({ 
   label, 
   value, 
-  status 
+  status,
+  isScore = false
 }: { 
   label: string
   value: number | null
-  status?: string 
+  status?: 'good' | 'warning' | 'critical' | 'unknown'
+  isScore?: boolean
 }) {
   const getStatusColor = (s?: string) => {
     switch (s) {
@@ -1253,13 +1594,22 @@ function MetricBox({
       default: return ''
     }
   }
+  
+  const getValueColor = (s?: string) => {
+    switch (s) {
+      case 'good': return 'text-green-400'
+      case 'warning': return 'text-yellow-400'
+      case 'critical': return 'text-red-400'
+      default: return 'text-white'
+    }
+  }
 
   return (
     <div className={`p-2 rounded-lg border ${getStatusColor(status)} text-center`}>
       <div className="text-[10px] text-white/60 uppercase">{label}</div>
-      <div className="text-lg font-bold text-white flex items-center justify-center gap-1">
-        {value !== null ? `${value}°` : '--'}
-        {status && <span className="text-xs">{getStatusIcon(status)}</span>}
+      <div className={`text-lg font-bold flex items-center justify-center gap-1 ${getValueColor(status)}`}>
+        {value !== null ? (isScore ? value : `${value}°`) : '--'}
+        {status && status !== 'unknown' && <span className="text-xs">{getStatusIcon(status)}</span>}
       </div>
     </div>
   )
