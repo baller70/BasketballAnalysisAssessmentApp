@@ -1941,16 +1941,96 @@ function DemoResultsPageContent() {
                 accept="video/*"
                 ref={(el) => { if (el) (window as any).__videoUploadInput = el }}
                 className="hidden"
-                onChange={(e) => {
+                onChange={async (e) => {
                   const file = e.target.files?.[0]
                   if (file) {
-                    // Create blob URL for video
-                    const url = URL.createObjectURL(file)
-                    setVideoAnalysisData({
-                      videoUrl: url,
-                      frames: [],
-                    })
-                    setResultsMode("video")
+                    // Import and use the video analysis service directly
+                    try {
+                      const { analyzeVideoShooting, convertVideoToSessionFormat } = await import('@/services/videoAnalysis')
+                      const { createSessionFromAnalysis, saveSession } = await import('@/services/sessionStorage')
+                      const { detectFlawsFromAngles, getShooterLevel } = await import('@/lib/flawDetection')
+                      
+                      // Show loading state
+                      setResultsMode("video")
+                      
+                      // Analyze the video
+                      const analysisResult = await analyzeVideoShooting(file)
+                      
+                      if (!analysisResult.success) {
+                        console.error('Video analysis failed:', analysisResult.error)
+                        alert('Video analysis failed: ' + (analysisResult.error || 'Unknown error'))
+                        return
+                      }
+                      
+                      // Convert to session format
+                      const sessionData = convertVideoToSessionFormat(analysisResult)
+                      
+                      // Store in analysis store
+                      setUploadedImageBase64(sessionData.mainImageBase64)
+                      
+                      // Set video analysis data with frames
+                      setVideoAnalysisData({
+                        videoUrl: URL.createObjectURL(file),
+                        frames: analysisResult.frame_data || [],
+                        annotatedFramesBase64: analysisResult.annotated_frames_base64,
+                        fps: analysisResult.fps,
+                        frameData: analysisResult.frame_data,
+                        keyScreenshots: analysisResult.key_screenshots,
+                        allKeypoints: analysisResult.all_keypoints,
+                      })
+                      
+                      // Create vision analysis result for compatibility
+                      const visionResult = {
+                        success: true,
+                        overall_score: sessionData.overallScore,
+                        keypoints: sessionData.keypoints || undefined,
+                        angles: sessionData.angles,
+                        feedback: sessionData.feedback.map((msg: string) => ({ type: 'info', area: 'general', message: msg })),
+                        analysis: {
+                          overallScore: sessionData.overallScore,
+                          category: sessionData.overallScore >= 85 ? 'EXCELLENT' : sessionData.overallScore >= 65 ? 'GOOD' : 'NEEDS_IMPROVEMENT',
+                          bodyPositions: {},
+                          strengths: sessionData.strengths,
+                          improvements: sessionData.improvements,
+                          measurements: sessionData.angles
+                        }
+                      }
+                      
+                      storeData?.setVisionAnalysisResult?.(visionResult as any)
+                      
+                      // Save session
+                      const detectedFlaws = detectFlawsFromAngles(sessionData.angles).map((f: any) => f.name)
+                      const shooterLevel = getShooterLevel(sessionData.overallScore)
+                      
+                      const session = createSessionFromAnalysis(
+                        sessionData.mainImageBase64,
+                        sessionData.skeletonImageBase64,
+                        sessionData.screenshots.map((ss: any, idx: number) => ({
+                          id: `video-${idx}`,
+                          label: ss.label,
+                          imageBase64: ss.imageBase64,
+                          analysis: ss.analysis
+                        })),
+                        {
+                          overallScore: sessionData.overallScore,
+                          shooterLevel: shooterLevel.name,
+                          angles: sessionData.angles,
+                          detectedFlaws,
+                          measurements: sessionData.angles
+                        },
+                        storeData?.playerProfile?.name || 'Player',
+                        undefined,
+                        undefined,
+                        analysisResult.key_screenshots?.length || 3
+                      )
+                      
+                      saveSession(session)
+                      console.log("✅ Video session saved:", session.id)
+                      
+                    } catch (err) {
+                      console.error('Video upload error:', err)
+                      alert('Failed to process video: ' + (err instanceof Error ? err.message : 'Unknown error'))
+                    }
                   }
                   e.target.value = '' // Reset for next upload
                 }}
@@ -3333,17 +3413,17 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
       <div className="p-6">
         <div className="bg-gradient-to-br from-[#1a1a1a] via-[#252525] to-[#1a1a1a] rounded-lg border border-[#3a3a3a] p-12">
           <div className="text-center py-8">
-            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-[#ef4444]/20 to-[#dc2626]/20 border border-[#ef4444]/30 flex items-center justify-center">
-              <Video className="w-10 h-10 text-[#ef4444]" />
+            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FF4500]/20 border border-[#FF6B35]/30 flex items-center justify-center">
+              <Video className="w-10 h-10 text-[#FF6B35]" />
             </div>
-            <h3 className="text-[#ef4444] font-bold text-2xl mb-3 tracking-tight">No Video Uploaded</h3>
+            <h3 className="text-[#FF6B35] font-bold text-2xl mb-3 tracking-tight">No Video Uploaded</h3>
             {/* Desktop: Show description and upload button */}
             <p className="hidden md:block text-[#E5E5E5] text-sm mb-8 max-w-md mx-auto leading-relaxed">
               Click the button below to upload a video and see your shooting form analysis with frame-by-frame breakdown.
             </p>
             <button 
               onClick={() => (window as any).__videoUploadInput?.click()}
-              className="hidden md:inline-flex items-center gap-2 bg-gradient-to-r from-[#ef4444] to-[#dc2626] hover:from-[#dc2626] hover:to-[#b91c1c] text-white font-semibold px-8 py-3.5 rounded-xl transition-all duration-200 shadow-lg shadow-[#ef4444]/20 hover:shadow-[#ef4444]/40 hover:scale-105"
+              className="hidden md:inline-flex items-center gap-2 bg-gradient-to-r from-[#FF6B35] to-[#FF4500] hover:from-[#E55300] hover:to-[#E5A000] text-[#1a1a1a] font-semibold px-8 py-3.5 rounded-xl transition-all duration-200 shadow-lg shadow-[#FF6B35]/20 hover:shadow-[#FF6B35]/40 hover:scale-105"
             >
               <Upload className="w-5 h-5" />
               Upload Video
