@@ -436,9 +436,26 @@ export function FullScreenShotTracker({
     }
   }, [isActive, cameraActive, isPaused, runDetection])
 
-  // Always show controls (removed auto-hide for better usability)
+  // Hide controls after 3 seconds of inactivity
   useEffect(() => {
-    setShowControls(true)
+    let timeout: NodeJS.Timeout
+    
+    const resetTimer = () => {
+      setShowControls(true)
+      clearTimeout(timeout)
+      timeout = setTimeout(() => setShowControls(false), 3000)
+    }
+    
+    window.addEventListener('touchstart', resetTimer)
+    window.addEventListener('mousemove', resetTimer)
+    
+    resetTimer()
+    
+    return () => {
+      clearTimeout(timeout)
+      window.removeEventListener('touchstart', resetTimer)
+      window.removeEventListener('mousemove', resetTimer)
+    }
   }, [])
 
   // ============================================
@@ -492,7 +509,7 @@ export function FullScreenShotTracker({
         )}
         
         {/* Top Controls - Close Button & Status */}
-        <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between z-20">
+        <div className={`absolute top-0 left-0 right-0 p-4 flex items-center justify-between z-20 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
           <button
             onClick={onClose}
             className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center"
@@ -530,7 +547,7 @@ export function FullScreenShotTracker({
         </div>
         
         {/* Mini Court Diagram - Top Right */}
-        <div className="absolute top-20 right-4 z-20">
+        <div className={`absolute top-20 right-4 z-20 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
           <div className="w-24 h-24 bg-black/60 backdrop-blur-sm rounded-xl p-2 border border-white/20">
             <svg viewBox="0 0 100 100" className="w-full h-full">
               <rect x="5" y="5" width="90" height="90" fill="none" stroke="white" strokeWidth="1" opacity="0.5" rx="2" />
@@ -566,7 +583,7 @@ export function FullScreenShotTracker({
       </div>
       
       {/* Bottom Stats Overlay - Fixed at bottom */}
-      <div className="bg-gradient-to-t from-black via-black/95 to-black/80 px-4 py-6 safe-area-inset-bottom">
+      <div className={`bg-gradient-to-t from-black via-black/95 to-black/80 px-4 py-6 safe-area-inset-bottom transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
         {/* Current Spot Indicator */}
         {currentSpot && (
           <div className="text-center mb-3">
