@@ -1143,8 +1143,10 @@ export function WorkoutOrPassGame({ userProfile, filters, onStartDrill }: Workou
           drill={selectedDrill} 
           onClose={() => setSelectedDrill(null)}
           onStartDrill={() => {
+            // Don't close the panel - the drill is now active and user needs to track shots
             if (onStartDrill) onStartDrill(selectedDrill)
-            setSelectedDrill(null)
+            // Note: We intentionally do NOT call setSelectedDrill(null) here
+            // The panel stays open so user can track their shots with the camera or manual buttons
           }}
         />
       )}

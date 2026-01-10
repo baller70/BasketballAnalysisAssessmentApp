@@ -1841,7 +1841,6 @@ function DemoResultsPageContent() {
   const [resultsMode, setResultsMode] = useState<ResultsMode>("image")
   const [isLoading, setIsLoading] = useState(false)
   const [showFabMenu, setShowFabMenu] = useState(false)
-  const [showAnalyzeSubMenu, setShowAnalyzeSubMenu] = useState(false)
   
   // Processing screen state for 7-stage popup
   const [showProcessingScreen, setShowProcessingScreen] = useState(false)
@@ -2247,84 +2246,65 @@ function DemoResultsPageContent() {
                     
                     {/* Menu Container - Modern card style */}
                     <div className="absolute bottom-16 right-0 mb-3 flex flex-col gap-2 items-end">
-                      {/* Start Workout */}
+                      {/* Analyze Shot - Goes to analysis tab */}
                       <button
                         onClick={() => {
-                          setActiveTab('training')
+                          setActiveTab('analysis')
                           setShowFabMenu(false)
                         }}
                         className="group flex items-center gap-3 bg-zinc-900/90 backdrop-blur-xl border border-zinc-700/50 rounded-2xl pl-5 pr-3 py-2.5 shadow-2xl transition-all duration-200 hover:bg-zinc-800/90 hover:scale-[1.02] animate-in slide-in-from-bottom-2 fade-in duration-200"
                         style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)' }}
                       >
-                        <span className="text-zinc-100 text-sm font-medium whitespace-nowrap tracking-wide">Start Workout</span>
-                        <div className="w-9 h-9 bg-gradient-to-br from-emerald-400 to-green-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/30">
-                          <Dumbbell className="w-4.5 h-4.5 text-white" />
+                        <span className="text-zinc-100 text-sm font-medium whitespace-nowrap tracking-wide">Analyze Shot</span>
+                        <div className="w-9 h-9 bg-gradient-to-br from-orange-400 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/30">
+                          <Target className="w-4.5 h-4.5 text-white" />
                         </div>
                       </button>
                       
-                      {/* Analyze Shot - Opens sub-menu */}
-                      <div className="relative">
-                        <button
-                          onClick={() => setShowAnalyzeSubMenu(!showAnalyzeSubMenu)}
-                          className="group flex items-center gap-3 bg-zinc-900/90 backdrop-blur-xl border border-zinc-700/50 rounded-2xl pl-5 pr-3 py-2.5 shadow-2xl transition-all duration-200 hover:bg-zinc-800/90 hover:scale-[1.02] animate-in slide-in-from-bottom-2 fade-in duration-200 delay-75"
-                          style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)' }}
-                        >
-                          <span className="text-zinc-100 text-sm font-medium whitespace-nowrap tracking-wide">Analyze Shot</span>
-                          <div className="w-9 h-9 bg-gradient-to-br from-orange-400 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/30">
-                            <Target className="w-4.5 h-4.5 text-white" />
-                          </div>
-                        </button>
-                        
-                        {/* Analyze Sub-Menu - Floating cards */}
-                        {showAnalyzeSubMenu && (
-                          <div className="absolute bottom-full right-0 mb-2 flex flex-col gap-1.5 items-end">
-                            {/* Live Camera */}
-                            <button
-                              onClick={() => {
-                                setResultsMode("live")
-                                setShowFabMenu(false)
-                                setShowAnalyzeSubMenu(false)
-                              }}
-                              className="flex items-center gap-2.5 bg-zinc-800/95 backdrop-blur-xl border border-zinc-600/40 rounded-xl pl-4 pr-2.5 py-2 shadow-xl transition-all duration-150 hover:bg-zinc-700/95 hover:scale-[1.02] animate-in slide-in-from-bottom-1 fade-in duration-150"
-                            >
-                              <span className="text-zinc-200 text-xs font-medium whitespace-nowrap">Live Camera</span>
-                              <div className="w-7 h-7 bg-gradient-to-br from-emerald-400 to-green-600 rounded-lg flex items-center justify-center">
-                                <Radio className="w-3.5 h-3.5 text-white" />
-                              </div>
-                            </button>
-                            
-                            {/* Upload Video */}
-                            <button
-                              onClick={() => {
-                                setShowFabMenu(false)
-                                setShowAnalyzeSubMenu(false)
-                                ;(window as any).__videoUploadInput?.click()
-                              }}
-                              className="flex items-center gap-2.5 bg-zinc-800/95 backdrop-blur-xl border border-zinc-600/40 rounded-xl pl-4 pr-2.5 py-2 shadow-xl transition-all duration-150 hover:bg-zinc-700/95 hover:scale-[1.02] animate-in slide-in-from-bottom-1 fade-in duration-150 delay-50"
-                            >
-                              <span className="text-zinc-200 text-xs font-medium whitespace-nowrap">Upload Video</span>
-                              <div className="w-7 h-7 bg-gradient-to-br from-rose-400 to-red-600 rounded-lg flex items-center justify-center">
-                                <Video className="w-3.5 h-3.5 text-white" />
-                              </div>
-                            </button>
-                            
-                            {/* Upload Image */}
-                            <button
-                              onClick={() => {
-                                setShowFabMenu(false)
-                                setShowAnalyzeSubMenu(false)
-                                ;(window as any).__imageUploadInput?.click()
-                              }}
-                              className="flex items-center gap-2.5 bg-zinc-800/95 backdrop-blur-xl border border-zinc-600/40 rounded-xl pl-4 pr-2.5 py-2 shadow-xl transition-all duration-150 hover:bg-zinc-700/95 hover:scale-[1.02] animate-in slide-in-from-bottom-1 fade-in duration-150 delay-100"
-                            >
-                              <span className="text-zinc-200 text-xs font-medium whitespace-nowrap">Upload Image</span>
-                              <div className="w-7 h-7 bg-gradient-to-br from-sky-400 to-blue-600 rounded-lg flex items-center justify-center">
-                                <ImageIcon className="w-3.5 h-3.5 text-white" />
-                              </div>
-                            </button>
-                          </div>
-                        )}
-                      </div>
+                      {/* Upload Image */}
+                      <button
+                        onClick={() => {
+                          setShowFabMenu(false)
+                          ;(window as any).__imageUploadInput?.click()
+                        }}
+                        className="group flex items-center gap-3 bg-zinc-900/90 backdrop-blur-xl border border-zinc-700/50 rounded-2xl pl-5 pr-3 py-2.5 shadow-2xl transition-all duration-200 hover:bg-zinc-800/90 hover:scale-[1.02] animate-in slide-in-from-bottom-2 fade-in duration-200 delay-75"
+                        style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)' }}
+                      >
+                        <span className="text-zinc-100 text-sm font-medium whitespace-nowrap tracking-wide">Upload Image</span>
+                        <div className="w-9 h-9 bg-gradient-to-br from-sky-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-sky-500/30">
+                          <ImageIcon className="w-4.5 h-4.5 text-white" />
+                        </div>
+                      </button>
+                      
+                      {/* Upload Video */}
+                      <button
+                        onClick={() => {
+                          setShowFabMenu(false)
+                          ;(window as any).__videoUploadInput?.click()
+                        }}
+                        className="group flex items-center gap-3 bg-zinc-900/90 backdrop-blur-xl border border-zinc-700/50 rounded-2xl pl-5 pr-3 py-2.5 shadow-2xl transition-all duration-200 hover:bg-zinc-800/90 hover:scale-[1.02] animate-in slide-in-from-bottom-2 fade-in duration-200 delay-100"
+                        style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)' }}
+                      >
+                        <span className="text-zinc-100 text-sm font-medium whitespace-nowrap tracking-wide">Upload Video</span>
+                        <div className="w-9 h-9 bg-gradient-to-br from-rose-400 to-red-600 rounded-xl flex items-center justify-center shadow-lg shadow-rose-500/30">
+                          <Video className="w-4.5 h-4.5 text-white" />
+                        </div>
+                      </button>
+                      
+                      {/* Live Camera */}
+                      <button
+                        onClick={() => {
+                          setResultsMode("live")
+                          setShowFabMenu(false)
+                        }}
+                        className="group flex items-center gap-3 bg-zinc-900/90 backdrop-blur-xl border border-zinc-700/50 rounded-2xl pl-5 pr-3 py-2.5 shadow-2xl transition-all duration-200 hover:bg-zinc-800/90 hover:scale-[1.02] animate-in slide-in-from-bottom-2 fade-in duration-200 delay-150"
+                        style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)' }}
+                      >
+                        <span className="text-zinc-100 text-sm font-medium whitespace-nowrap tracking-wide">Live Camera</span>
+                        <div className="w-9 h-9 bg-gradient-to-br from-emerald-400 to-green-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                          <Radio className="w-4.5 h-4.5 text-white" />
+                        </div>
+                      </button>
                     </div>
                   </>
                 )}
@@ -2333,7 +2313,6 @@ function DemoResultsPageContent() {
                 <button
                   onClick={() => {
                     setShowFabMenu(!showFabMenu)
-                    if (showFabMenu) setShowAnalyzeSubMenu(false)
                   }}
                   className={`
                     group relative flex items-center justify-center w-14 h-14 rounded-2xl
