@@ -139,6 +139,7 @@ export function PlayerLockInGame({
   const [seenCards, setSeenCards] = useState<Set<string>>(new Set())
   const [dragX, setDragX] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
+  const [isHorizontalSwipe, setIsHorizontalSwipe] = useState(false)
   const [arrowTop, setArrowTop] = useState(50)
   const cardWrapperRef = useRef<HTMLDivElement>(null)
   const [showVoteResult, setShowVoteResult] = useState(false)
@@ -149,6 +150,8 @@ export function PlayerLockInGame({
   
   const { earnPoints } = usePoints()
   const dragStartX = useRef(0)
+  const dragStartY = useRef(0)
+  const hasDecidedDirection = useRef(false)
   
   // Handler for opening analytics popups - awards points
   const handleOpenAnalyticsPopup = useCallback((openPopupFn: () => void) => {
@@ -774,9 +777,54 @@ export function PlayerLockInGame({
     setTimeout(() => { setShowVoteResult(false); setLastAction(null); setDragX(0); setCurrentIndex(p => p + 1) }, 1200)
   }, [currentCard, lockedInSections, seenCards, gameStats, earnPoints])
   
-  const handleDragStart = useCallback((x: number) => { setIsDragging(true); dragStartX.current = x }, [])
-  const handleDragMove = useCallback((x: number) => { if (isDragging) setDragX(x - dragStartX.current) }, [isDragging])
-  const handleDragEnd = useCallback(() => { if (!isDragging) return; setIsDragging(false); if (dragX > 100) handleVote('lockin'); else if (dragX < -100) handleVote('save'); else setDragX(0) }, [isDragging, dragX, handleVote])
+  const handleDragStart = useCallback((x: number, y: number) => { 
+    setIsDragging(true)
+    dragStartX.current = x
+    dragStartY.current = y
+    hasDecidedDirection.current = false
+    setIsHorizontalSwipe(false)
+  }, [])
+  
+  const handleDragMove = useCallback((x: number, y: number) => { 
+    if (!isDragging) return
+    
+    const deltaX = x - dragStartX.current
+    const deltaY = y - dragStartY.current
+    
+    // Decide direction once we have enough movement (10px threshold)
+    if (!hasDecidedDirection.current && (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10)) {
+      hasDecidedDirection.current = true
+      // If horizontal movement is greater, it's a swipe
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        setIsHorizontalSwipe(true)
+      } else {
+        // Vertical scroll - cancel drag and let page scroll
+        setIsDragging(false)
+        setIsHorizontalSwipe(false)
+        return
+      }
+    }
+    
+    // Only update dragX if we're doing a horizontal swipe
+    if (isHorizontalSwipe || !hasDecidedDirection.current) {
+      setDragX(deltaX)
+    }
+  }, [isDragging, isHorizontalSwipe])
+  
+  const handleDragEnd = useCallback(() => { 
+    if (!isDragging) return
+    setIsDragging(false)
+    
+    // Only trigger action if it was a horizontal swipe
+    if (isHorizontalSwipe) {
+      if (dragX > 100) handleVote('lockin')
+      else if (dragX < -100) handleVote('save')
+    }
+    
+    setDragX(0)
+    setIsHorizontalSwipe(false)
+    hasDecidedDirection.current = false
+  }, [isDragging, dragX, handleVote, isHorizontalSwipe])
   const resetGame = useCallback(() => { setCurrentIndex(0); setSeenCards(new Set()); saveToStorage(STORAGE_KEYS.SEEN, []) }, [])
   
   if (!isHydrated) return <div className="flex items-center justify-center h-[400px]"><div className="w-10 h-10 border-4 border-[#FF6B35] border-t-transparent rounded-full animate-spin" /></div>
@@ -896,7 +944,7 @@ export function PlayerLockInGame({
             <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none z-10 transition-opacity duration-200" style={{ opacity: dragX > 40 ? Math.min(1, dragX / 100) : 0 }}><Lock className="w-8 h-8 text-[#FF6B35] drop-shadow-lg" /></div>
             {/* Card with dynamic border glow */}
             <div 
-              className="relative z-5 touch-none select-none cursor-grab active:cursor-grabbing rounded-xl transition-all"
+              className={`relative z-5 select-none cursor-grab active:cursor-grabbing rounded-xl transition-all ${isHorizontalSwipe ? 'touch-none' : ''}`}
               style={{ 
                 transform: `translateX(${dragX}px) rotate(${dragX * 0.02}deg)`, 
                 transition: isDragging ? 'none' : 'transform 0.3s, box-shadow 0.2s',
@@ -906,11 +954,15 @@ export function PlayerLockInGame({
                   ? `0 0 30px rgba(59,130,246,${Math.min(0.5, Math.abs(dragX)/200)}), inset 0 0 0 2px rgba(59,130,246,${Math.min(0.6, Math.abs(dragX)/150)})`
                   : 'none'
               }} 
-              onTouchStart={(e) => handleDragStart(e.touches[0].clientX)} 
-              onTouchMove={(e) => handleDragMove(e.touches[0].clientX)} 
+              onTouchStart={(e) => handleDragStart(e.touches[0].clientX, e.touches[0].clientY)} 
+              onTouchMove={(e) => {
+                // Only prevent default if we're doing a horizontal swipe
+                if (isHorizontalSwipe) e.preventDefault()
+                handleDragMove(e.touches[0].clientX, e.touches[0].clientY)
+              }} 
               onTouchEnd={handleDragEnd} 
-              onMouseDown={(e) => handleDragStart(e.clientX)} 
-              onMouseMove={(e) => handleDragMove(e.clientX)} 
+              onMouseDown={(e) => handleDragStart(e.clientX, e.clientY)} 
+              onMouseMove={(e) => handleDragMove(e.clientX, e.clientY)} 
               onMouseUp={handleDragEnd} 
               onMouseLeave={() => { if (isDragging) handleDragEnd() }}
             >

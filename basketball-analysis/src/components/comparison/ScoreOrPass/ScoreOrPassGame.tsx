@@ -169,53 +169,103 @@ function PlayerCard({ shooter, onVote, isRevealing, voteResult, userVote, onDrag
     if (onDragChange) onDragChange(value)
   }
   const [isDragging, setIsDragging] = useState(false)
+  const [isHorizontalSwipe, setIsHorizontalSwipe] = useState(false)
   const startX = useRef(0)
+  const startY = useRef(0)
+  const hasDecidedDirection = useRef(false)
   
   const handleTouchStart = (e: React.TouchEvent) => {
     if (isRevealing) return
     startX.current = e.touches[0].clientX
+    startY.current = e.touches[0].clientY
     setIsDragging(true)
+    hasDecidedDirection.current = false
+    setIsHorizontalSwipe(false)
   }
   
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging || isRevealing) return
     const currentX = e.touches[0].clientX
-    const diff = currentX - startX.current
-    setDragX(Math.max(-200, Math.min(200, diff)))
+    const currentY = e.touches[0].clientY
+    const deltaX = currentX - startX.current
+    const deltaY = currentY - startY.current
+    
+    // Decide direction once we have enough movement
+    if (!hasDecidedDirection.current && (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10)) {
+      hasDecidedDirection.current = true
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        setIsHorizontalSwipe(true)
+      } else {
+        setIsDragging(false)
+        setIsHorizontalSwipe(false)
+        return
+      }
+    }
+    
+    if (isHorizontalSwipe) {
+      e.preventDefault()
+      setDragX(Math.max(-200, Math.min(200, deltaX)))
+    }
   }
   
   const handleTouchEnd = () => {
     if (!isDragging) return
     setIsDragging(false)
-    if (dragX > 100) {
-      onVote(true) // Score
-    } else if (dragX < -100) {
-      onVote(false) // Pass
+    if (isHorizontalSwipe) {
+      if (dragX > 100) {
+        onVote(true) // Score
+      } else if (dragX < -100) {
+        onVote(false) // Pass
+      }
     }
     setDragX(0)
+    setIsHorizontalSwipe(false)
+    hasDecidedDirection.current = false
   }
   
   const handleMouseDown = (e: React.MouseEvent) => {
     if (isRevealing) return
     startX.current = e.clientX
+    startY.current = e.clientY
     setIsDragging(true)
+    hasDecidedDirection.current = false
+    setIsHorizontalSwipe(false)
   }
   
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging || isRevealing) return
-    const diff = e.clientX - startX.current
-    setDragX(Math.max(-200, Math.min(200, diff)))
+    const deltaX = e.clientX - startX.current
+    const deltaY = e.clientY - startY.current
+    
+    if (!hasDecidedDirection.current && (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10)) {
+      hasDecidedDirection.current = true
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        setIsHorizontalSwipe(true)
+      } else {
+        setIsDragging(false)
+        setIsHorizontalSwipe(false)
+        return
+      }
+    }
+    
+    if (isHorizontalSwipe || !hasDecidedDirection.current) {
+      setDragX(Math.max(-200, Math.min(200, deltaX)))
+    }
   }
   
   const handleMouseUp = () => {
     if (!isDragging) return
     setIsDragging(false)
-    if (dragX > 100) {
-      onVote(true) // Score
-    } else if (dragX < -100) {
-      onVote(false) // Pass
+    if (isHorizontalSwipe) {
+      if (dragX > 100) {
+        onVote(true) // Score
+      } else if (dragX < -100) {
+        onVote(false) // Pass
+      }
     }
     setDragX(0)
+    setIsHorizontalSwipe(false)
+    hasDecidedDirection.current = false
   }
   
   const tierColor = TIER_COLORS[shooter.tier]
@@ -223,7 +273,7 @@ function PlayerCard({ shooter, onVote, isRevealing, voteResult, userVote, onDrag
   
   return (
     <div 
-      className="cursor-grab active:cursor-grabbing select-none touch-none"
+      className={`cursor-grab active:cursor-grabbing select-none ${isHorizontalSwipe ? 'touch-none' : ''}`}
       style={{ 
         transform: `translateX(${dragX}px) rotate(${rotation}deg)`,
         transition: isDragging ? 'none' : 'transform 0.3s ease-out'

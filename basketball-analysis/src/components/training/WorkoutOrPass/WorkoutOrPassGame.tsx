@@ -286,7 +286,10 @@ export function WorkoutOrPassGame({ userProfile, filters, onStartDrill }: Workou
   // Swipe state
   const [dragX, setDragX] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
+  const [isHorizontalSwipe, setIsHorizontalSwipe] = useState(false)
   const dragStartX = useRef(0)
+  const dragStartY = useRef(0)
+  const hasDecidedDirection = useRef(false)
   const cardRef = useRef<HTMLDivElement>(null)
   const [arrowTop, setArrowTop] = useState(50)
   
@@ -468,37 +471,65 @@ export function WorkoutOrPassGame({ userProfile, filters, onStartDrill }: Workou
     }, 1500)
   }, [currentDrill, voteStats, gameStats, trainingHistory, seenDrills, saveVoteStats, saveGameStats, saveTrainingHistory, saveSeenDrills, earnPoints])
 
-  // Swipe handlers
-  const handleDragStart = useCallback((clientX: number) => {
+  // Swipe handlers - with vertical scroll support
+  const handleDragStart = useCallback((clientX: number, clientY: number) => {
     setIsDragging(true)
     dragStartX.current = clientX
+    dragStartY.current = clientY
+    hasDecidedDirection.current = false
+    setIsHorizontalSwipe(false)
   }, [])
 
-  const handleDragMove = useCallback((clientX: number) => {
+  const handleDragMove = useCallback((clientX: number, clientY: number) => {
     if (!isDragging) return
-    const delta = clientX - dragStartX.current
-    setDragX(delta)
-  }, [isDragging])
+    
+    const deltaX = clientX - dragStartX.current
+    const deltaY = clientY - dragStartY.current
+    
+    // Decide direction once we have enough movement (10px threshold)
+    if (!hasDecidedDirection.current && (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10)) {
+      hasDecidedDirection.current = true
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        setIsHorizontalSwipe(true)
+      } else {
+        // Vertical scroll - cancel drag and let page scroll
+        setIsDragging(false)
+        setIsHorizontalSwipe(false)
+        return
+      }
+    }
+    
+    if (isHorizontalSwipe || !hasDecidedDirection.current) {
+      setDragX(deltaX)
+    }
+  }, [isDragging, isHorizontalSwipe])
 
   const handleDragEnd = useCallback(() => {
     if (!isDragging) return
     setIsDragging(false)
     
-    if (dragX > 100) {
-      handleVote('train')
-    } else if (dragX < -100) {
-      handleVote('pass')
-    } else {
-      setDragX(0)
+    if (isHorizontalSwipe) {
+      if (dragX > 100) {
+        handleVote('train')
+      } else if (dragX < -100) {
+        handleVote('pass')
+      }
     }
-  }, [isDragging, dragX, handleVote])
+    
+    setDragX(0)
+    setIsHorizontalSwipe(false)
+    hasDecidedDirection.current = false
+  }, [isDragging, dragX, handleVote, isHorizontalSwipe])
 
-  const handleTouchStart = (e: React.TouchEvent) => handleDragStart(e.touches[0].clientX)
-  const handleTouchMove = (e: React.TouchEvent) => handleDragMove(e.touches[0].clientX)
+  const handleTouchStart = (e: React.TouchEvent) => handleDragStart(e.touches[0].clientX, e.touches[0].clientY)
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (isHorizontalSwipe) e.preventDefault()
+    handleDragMove(e.touches[0].clientX, e.touches[0].clientY)
+  }
   const handleTouchEnd = () => handleDragEnd()
 
-  const handleMouseDown = (e: React.MouseEvent) => handleDragStart(e.clientX)
-  const handleMouseMove = (e: React.MouseEvent) => handleDragMove(e.clientX)
+  const handleMouseDown = (e: React.MouseEvent) => handleDragStart(e.clientX, e.clientY)
+  const handleMouseMove = (e: React.MouseEvent) => handleDragMove(e.clientX, e.clientY)
   const handleMouseUp = () => handleDragEnd()
   const handleMouseLeave = () => { if (isDragging) handleDragEnd() }
 
@@ -682,7 +713,7 @@ export function WorkoutOrPassGame({ userProfile, filters, onStartDrill }: Workou
                 {/* Drill Card - Redesigned */}
                 <div
                   ref={cardRef}
-                  className="relative bg-gradient-to-b from-[#1a1a1a] to-[#0a0a0a] rounded-3xl overflow-hidden border-2 shadow-2xl touch-none select-none cursor-grab active:cursor-grabbing transition-all duration-150"
+                  className={`relative bg-gradient-to-b from-[#1a1a1a] to-[#0a0a0a] rounded-3xl overflow-hidden border-2 shadow-2xl select-none cursor-grab active:cursor-grabbing transition-all duration-150 ${isHorizontalSwipe ? 'touch-none' : ''}`}
                   style={{
                     transform: `translateX(${dragX}px) rotate(${dragX * 0.05}deg)`,
                     transition: isDragging ? 'none' : 'transform 0.3s ease-out',

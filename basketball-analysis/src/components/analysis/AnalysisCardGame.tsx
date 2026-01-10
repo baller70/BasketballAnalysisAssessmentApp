@@ -574,28 +574,60 @@ export function AnalysisCardGame({ measurements, sessionId }: AnalysisCardGamePr
     }, 300)
   }, [currentIndex, currentMetricKey, metricKeys.length, earnPoints])
 
-  const handleStart = (clientX: number) => {
+  const startY = useRef(0)
+  const hasDecidedDirection = useRef(false)
+  const [isHorizontalSwipe, setIsHorizontalSwipe] = useState(false)
+
+  const handleStart = (clientX: number, clientY: number) => {
     setIsDragging(true)
     startX.current = clientX
+    startY.current = clientY
+    hasDecidedDirection.current = false
+    setIsHorizontalSwipe(false)
   }
 
-  const handleMove = (clientX: number) => {
+  const handleMove = (clientX: number, clientY: number) => {
     if (!isDragging) return
-    const diff = clientX - startX.current
-    setDragX(diff)
+    
+    const deltaX = clientX - startX.current
+    const deltaY = clientY - startY.current
+    
+    // Decide direction once we have enough movement (10px threshold)
+    if (!hasDecidedDirection.current && (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10)) {
+      hasDecidedDirection.current = true
+      // If horizontal movement is greater, it's a swipe
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        setIsHorizontalSwipe(true)
+      } else {
+        // Vertical scroll - cancel drag and let page scroll
+        setIsDragging(false)
+        setIsHorizontalSwipe(false)
+        return
+      }
+    }
+    
+    // Only update dragX if we're doing a horizontal swipe
+    if (isHorizontalSwipe || !hasDecidedDirection.current) {
+      setDragX(deltaX)
+    }
   }
 
   const handleEnd = () => {
     if (!isDragging) return
     setIsDragging(false)
     
-    if (dragX > 100) {
-      handleAction('lockIn')
-    } else if (dragX < -100) {
-      handleAction('save')
-    } else {
-      setDragX(0)
+    // Only trigger action if it was a horizontal swipe
+    if (isHorizontalSwipe) {
+      if (dragX > 100) {
+        handleAction('lockIn')
+      } else if (dragX < -100) {
+        handleAction('save')
+      }
     }
+    
+    setDragX(0)
+    setIsHorizontalSwipe(false)
+    hasDecidedDirection.current = false
   }
 
   const goToPrevious = () => {
@@ -657,13 +689,16 @@ export function AnalysisCardGame({ measurements, sessionId }: AnalysisCardGamePr
       {!isComplete ? (
         <div
           ref={cardRef}
-          className="relative cursor-grab active:cursor-grabbing"
-          onMouseDown={(e) => handleStart(e.clientX)}
-          onMouseMove={(e) => handleMove(e.clientX)}
+          className={`relative cursor-grab active:cursor-grabbing ${isHorizontalSwipe ? 'touch-none' : ''}`}
+          onMouseDown={(e) => handleStart(e.clientX, e.clientY)}
+          onMouseMove={(e) => handleMove(e.clientX, e.clientY)}
           onMouseUp={handleEnd}
           onMouseLeave={handleEnd}
-          onTouchStart={(e) => handleStart(e.touches[0].clientX)}
-          onTouchMove={(e) => handleMove(e.touches[0].clientX)}
+          onTouchStart={(e) => handleStart(e.touches[0].clientX, e.touches[0].clientY)}
+          onTouchMove={(e) => {
+            if (isHorizontalSwipe) e.preventDefault()
+            handleMove(e.touches[0].clientX, e.touches[0].clientY)
+          }}
           onTouchEnd={handleEnd}
           style={{
             transform: `translateX(${dragX}px) rotate(${dragX * 0.02}deg)`,
