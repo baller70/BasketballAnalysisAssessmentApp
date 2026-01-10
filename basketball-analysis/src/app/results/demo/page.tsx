@@ -1948,7 +1948,7 @@ function DemoResultsPageContent() {
                     try {
                       const { analyzeVideoShooting, convertVideoToSessionFormat } = await import('@/services/videoAnalysis')
                       const { createSessionFromAnalysis, saveSession } = await import('@/services/sessionStorage')
-                      const { detectFlawsFromAngles, getShooterLevel } = await import('@/lib/flawDetection')
+                      const { detectFlawsFromAngles, getShooterLevel } = await import('@/data/shootingFlawsDatabase')
                       
                       // Show loading state
                       setResultsMode("video")
