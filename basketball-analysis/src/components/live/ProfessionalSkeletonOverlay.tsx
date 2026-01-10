@@ -203,7 +203,7 @@ export function ProfessionalSkeletonOverlay({
     const canvasW = canvasSize.width || displayWidth || videoWidth
     const canvasH = canvasSize.height || displayHeight || videoHeight
 
-    // Set canvas resolution
+    // Set canvas resolution to match container
     canvas.width = canvasW
     canvas.height = canvasH
 
@@ -212,82 +212,34 @@ export function ProfessionalSkeletonOverlay({
 
     if (!pose || pose.keypoints.length === 0) return
 
-    // Determine if we need to handle orientation mismatch
-    // Video is landscape (width > height) but display is portrait (canvasH > canvasW)
-    const videoIsLandscape = videoWidth > videoHeight
-    const displayIsPortrait = canvasH > canvasW
-    const needsRotation = videoIsLandscape && displayIsPortrait
+    // Calculate object-cover scaling (same as CSS object-cover)
+    // This ensures the skeleton aligns with how the video is displayed
+    const videoAspect = videoWidth / videoHeight
+    const canvasAspect = canvasW / canvasH
     
-    // For object-cover behavior, we need to calculate how the video is scaled and positioned
-    let scaleX: number, scaleY: number, offsetX = 0, offsetY = 0
+    let scale: number
+    let offsetX = 0
+    let offsetY = 0
     
-    if (needsRotation) {
-      // Video is rotated 90 degrees for display
-      // The video's width becomes the display's height and vice versa
-      // Keypoints need to be transformed: (x, y) -> (y, videoWidth - x)
-      
-      // For object-cover with rotation:
-      // The rotated video has dimensions (videoHeight x videoWidth)
-      const rotatedVideoWidth = videoHeight
-      const rotatedVideoHeight = videoWidth
-      
-      const videoAspect = rotatedVideoWidth / rotatedVideoHeight
-      const canvasAspect = canvasW / canvasH
-      
-      if (videoAspect > canvasAspect) {
-        // Rotated video is wider - scale to height, crop width
-        scaleY = canvasH / rotatedVideoHeight
-        scaleX = scaleY
-        offsetX = (canvasW - rotatedVideoWidth * scaleX) / 2
-      } else {
-        // Rotated video is taller - scale to width, crop height
-        scaleX = canvasW / rotatedVideoWidth
-        scaleY = scaleX
-        offsetY = (canvasH - rotatedVideoHeight * scaleY) / 2
-      }
-      
-      // Transform keypoints: rotate 90 degrees clockwise
-      // (x, y) in video coords -> (y, videoWidth - x) in rotated coords
-      // Then scale to canvas
-      const keypoints = pose.keypoints.map(kp => {
-        // Rotate 90 degrees clockwise
-        const rotatedX = kp.y
-        const rotatedY = videoWidth - kp.x
-        
-        return {
-          ...kp,
-          x: rotatedX * scaleX + offsetX,
-          y: rotatedY * scaleY + offsetY,
-        }
-      })
-      
-      drawSkeletonWithKeypoints(ctx, keypoints, canvasW, canvasH)
+    if (videoAspect > canvasAspect) {
+      // Video is wider than container - scale by height, crop width
+      scale = canvasH / videoHeight
+      offsetX = (canvasW - videoWidth * scale) / 2
     } else {
-      // No rotation needed - standard object-cover scaling
-      const videoAspect = videoWidth / videoHeight
-      const canvasAspect = canvasW / canvasH
-      
-      if (videoAspect > canvasAspect) {
-        // Video is wider - scale to height, crop width
-        scaleY = canvasH / videoHeight
-        scaleX = scaleY
-        offsetX = (canvasW - videoWidth * scaleX) / 2
-      } else {
-        // Video is taller - scale to width, crop height
-        scaleX = canvasW / videoWidth
-        scaleY = scaleX
-        offsetY = (canvasH - videoHeight * scaleY) / 2
-      }
-      
-      // Transform keypoints to canvas coordinates
-      const keypoints = pose.keypoints.map(kp => ({
-        ...kp,
-        x: kp.x * scaleX + offsetX,
-        y: kp.y * scaleY + offsetY,
-      }))
-      
-      drawSkeletonWithKeypoints(ctx, keypoints, canvasW, canvasH)
+      // Video is taller than container - scale by width, crop height
+      scale = canvasW / videoWidth
+      offsetY = (canvasH - videoHeight * scale) / 2
     }
+    
+    // Transform keypoints from video coordinates to canvas coordinates
+    // MoveNet returns pixel coordinates in the original video space
+    const transformedKeypoints = pose.keypoints.map(kp => ({
+      ...kp,
+      x: kp.x * scale + offsetX,
+      y: kp.y * scale + offsetY,
+    }))
+    
+    drawSkeletonWithKeypoints(ctx, transformedKeypoints, canvasW, canvasH)
     
     function drawSkeletonWithKeypoints(
       ctx: CanvasRenderingContext2D, 
