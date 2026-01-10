@@ -28,6 +28,10 @@ import {
   Eye,
   AlertCircle,
   Settings,
+  Crosshair,
+  Zap,
+  BarChart3,
+  Activity,
 } from 'lucide-react'
 import { usePoseDetection } from '@/hooks/usePoseDetection'
 import { ProfessionalSkeletonOverlay } from './ProfessionalSkeletonOverlay'
@@ -141,7 +145,7 @@ type PresetMode = 'form' | 'power' | 'full' | 'custom'
 interface PresetConfig {
   id: PresetMode
   name: string
-  icon: string
+  iconType: 'crosshair' | 'zap' | 'barchart'
   description: string
   metrics: MetricId[]
 }
@@ -150,25 +154,37 @@ const PRESET_MODES: PresetConfig[] = [
   {
     id: 'form',
     name: 'Form Focus',
-    icon: '🎯',
+    iconType: 'crosshair',
     description: 'Form, Elbow, Release',
     metrics: ['form', 'elbow', 'release']
   },
   {
     id: 'power',
     name: 'Power Focus',
-    icon: '💪',
+    iconType: 'zap',
     description: 'Knee, Hip, Shoulder',
     metrics: ['knee', 'hip', 'shoulder']
   },
   {
     id: 'full',
     name: 'Full Analysis',
-    icon: '📊',
+    iconType: 'barchart',
     description: 'All 6 metrics',
     metrics: ['form', 'elbow', 'knee', 'shoulder', 'hip', 'release']
   }
 ]
+
+// Helper to render preset icons
+const PresetIcon = ({ type, className }: { type: 'crosshair' | 'zap' | 'barchart', className?: string }) => {
+  switch (type) {
+    case 'crosshair':
+      return <Crosshair className={className} />
+    case 'zap':
+      return <Zap className={className} />
+    case 'barchart':
+      return <BarChart3 className={className} />
+  }
+}
 
 // ============================================
 // HELPERS
@@ -1660,7 +1676,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
             animate={{ scale: 1 }}
             className="flex items-center gap-2 px-3 py-1.5 bg-[#FF6B35]/90 rounded-full"
           >
-            <span className="text-lg">🏀</span>
+            <Activity className="w-4 h-4 text-white" />
             <span className="text-white text-sm font-bold">{shotCount}</span>
             <span className="text-white/70 text-xs">shots</span>
           </motion.div>
@@ -1731,9 +1747,9 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
               <motion.div
                 animate={{ scale: [1, 1.2, 1] }}
                 transition={{ duration: 0.5 }}
-                className="text-6xl mb-2"
+                className="mb-2"
               >
-                🏀
+                <Target className="w-16 h-16 text-[#FF6B35] mx-auto" />
               </motion.div>
               <div className="text-3xl font-black text-white mb-1">SHOT DETECTED</div>
               <div 
@@ -1991,7 +2007,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
                             : 'bg-white/5 border-white/10 hover:border-white/20'
                         }`}
                       >
-                        <span className="text-2xl block mb-1">{preset.icon}</span>
+                        <PresetIcon type={preset.iconType} className="w-6 h-6 mx-auto mb-1 text-[#FF6B35]" />
                         <span className="text-white text-xs font-bold block">{preset.name}</span>
                         <span className="text-white/50 text-[9px] block">{preset.description}</span>
                       </button>
