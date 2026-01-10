@@ -207,6 +207,15 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   })
   const [showMetricSettings, setShowMetricSettings] = useState(false)
   
+  // Skeleton overlay visibility
+  const [showSkeleton, setShowSkeleton] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('shotiq_show_skeleton')
+      return saved !== 'false' // Default to true
+    }
+    return true
+  })
+  
   // Throttled pose state to reduce glitching
   const [throttledPose, setThrottledPose] = useState<any>(null)
   const lastPoseUpdateRef = useRef<number>(0)
@@ -826,24 +835,31 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     }
   }
   
-  // Calculate dynamic font size based on number of selected metrics (Shot Science style)
+  // Calculate dynamic font size based on number of displayed metrics (Shot Science style)
   // MUCH BIGGER sizes for fewer metrics
+  // Max 6 metrics displayed, max 3 per row
+  const MAX_DISPLAYED_METRICS = 6
+  const MAX_PER_ROW = 3
+  
+  // Only display first 6 metrics (all are still calculated)
+  const displayedMetrics = selectedMetrics.slice(0, MAX_DISPLAYED_METRICS)
+  
   const getMetricFontSize = (): { value: string; label: string; gap: string } => {
-    const count = selectedMetrics.length
-    if (count === 1) return { value: 'text-7xl', label: 'text-xl', gap: 'gap-4' } // HUGE - single metric
-    if (count === 2) return { value: 'text-6xl', label: 'text-lg', gap: 'gap-6' } // Very large
-    if (count === 3) return { value: 'text-5xl', label: 'text-base', gap: 'gap-4' } // Large
-    if (count === 4) return { value: 'text-4xl', label: 'text-sm', gap: 'gap-3' } // Medium-large
-    return { value: 'text-3xl', label: 'text-xs', gap: 'gap-2' } // Standard for 5+
+    const count = displayedMetrics.length
+    if (count === 1) return { value: 'text-8xl', label: 'text-2xl', gap: 'gap-4' } // HUGE - single metric
+    if (count === 2) return { value: 'text-7xl', label: 'text-xl', gap: 'gap-6' } // Very large
+    if (count === 3) return { value: 'text-6xl', label: 'text-lg', gap: 'gap-4' } // Large - one row
+    if (count === 4) return { value: 'text-5xl', label: 'text-base', gap: 'gap-3' } // Medium-large
+    if (count === 5) return { value: 'text-4xl', label: 'text-sm', gap: 'gap-3' } // Medium
+    return { value: 'text-4xl', label: 'text-sm', gap: 'gap-2' } // Standard for 6
   }
   
   const fontSize = getMetricFontSize()
   
-  // Split metrics into rows (max 4 per row for readability)
-  const MAX_PER_ROW = 4
+  // Split metrics into rows (max 3 per row)
   const metricsRows: MetricId[][] = []
-  for (let i = 0; i < selectedMetrics.length; i += MAX_PER_ROW) {
-    metricsRows.push(selectedMetrics.slice(i, i + MAX_PER_ROW))
+  for (let i = 0; i < displayedMetrics.length; i += MAX_PER_ROW) {
+    metricsRows.push(displayedMetrics.slice(i, i + MAX_PER_ROW))
   }
 
   // Render metrics bar (portrait - bottom) - DYNAMIC based on selection
@@ -1228,13 +1244,13 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
 
       {/* Skeleton Overlay - uses throttled pose to reduce glitching */}
       <AnimatePresence>
-        {throttledPose && (
+        {showSkeleton && throttledPose && (
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: 0.8 }}
+            animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.1 }}
-            className="absolute inset-0 pointer-events-none"
+            transition={{ duration: 0.15 }}
+            className="absolute inset-0 pointer-events-none z-10"
             style={{ transform: facingMode === 'user' ? 'scaleX(-1)' : 'none' }}
           >
             <SkeletonOverlay
@@ -1242,9 +1258,14 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
               height={videoDimensions.height}
               pose={throttledPose}
               angles={angles}
-              showAngles={false}
+              showAngles={true}
               showKeypoints={true}
               showSkeleton={true}
+              skeletonColor="#FF6B35"
+              keypointColor="#FFFFFF"
+              lineWidth={4}
+              keypointRadius={8}
+              minConfidence={0.2}
             />
           </motion.div>
         )}
@@ -1497,7 +1518,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
               <div className="flex items-center justify-between p-4 border-b border-white/10 flex-shrink-0">
                 <div>
                   <h2 className="text-lg font-bold text-white">Display Settings</h2>
-                  <p className="text-white/50 text-xs">Choose which metrics to show</p>
+                  <p className="text-white/50 text-xs">Max 6 metrics shown (3 per row)</p>
                 </div>
                 <button
                   onClick={() => setShowMetricSettings(false)}
@@ -1508,10 +1529,50 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
               </div>
 
               {/* Scrollable Content */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-2">
-                {AVAILABLE_METRICS.map((metric) => {
+              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                {/* Skeleton Toggle */}
+                <button
+                  onClick={() => {
+                    const newValue = !showSkeleton
+                    setShowSkeleton(newValue)
+                    localStorage.setItem('shotiq_show_skeleton', String(newValue))
+                  }}
+                  className={`w-full flex items-center gap-3 p-4 rounded-xl border transition-all ${
+                    showSkeleton
+                      ? 'bg-green-500/20 border-green-500/50'
+                      : 'bg-white/5 border-white/10 hover:border-white/20'
+                  }`}
+                >
+                  {/* Toggle */}
+                  <div className={`w-12 h-6 rounded-full flex items-center px-1 transition-colors ${
+                    showSkeleton ? 'bg-green-500' : 'bg-white/20'
+                  }`}>
+                    <div className={`w-4 h-4 rounded-full bg-white transition-transform ${
+                      showSkeleton ? 'translate-x-6' : 'translate-x-0'
+                    }`} />
+                  </div>
+                  
+                  {/* Info */}
+                  <div className="flex-1 text-left">
+                    <p className="text-white font-bold text-sm">SKELETON OVERLAY</p>
+                    <p className="text-white/50 text-[10px]">Show pose tracking lines on player</p>
+                  </div>
+                  
+                  {/* Status */}
+                  <span className={`text-xs font-bold ${showSkeleton ? 'text-green-400' : 'text-white/40'}`}>
+                    {showSkeleton ? 'ON' : 'OFF'}
+                  </span>
+                </button>
+
+                <div className="border-t border-white/10 pt-3">
+                  <p className="text-white/40 text-[10px] uppercase tracking-wider mb-2">Metrics to Display</p>
+                </div>
+
+                {AVAILABLE_METRICS.map((metric, index) => {
                   const isSelected = selectedMetrics.includes(metric.id)
                   const isOnlyOne = selectedMetrics.length === 1 && isSelected
+                  const displayIndex = selectedMetrics.indexOf(metric.id)
+                  const willBeHidden = isSelected && displayIndex >= 6
                   
                   return (
                     <button
@@ -1520,7 +1581,9 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
                       disabled={isOnlyOne}
                       className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all ${
                         isSelected
-                          ? 'bg-[#FF6B35]/20 border-[#FF6B35]/50'
+                          ? willBeHidden 
+                            ? 'bg-yellow-500/10 border-yellow-500/30'
+                            : 'bg-[#FF6B35]/20 border-[#FF6B35]/50'
                           : 'bg-white/5 border-white/10 hover:border-white/20'
                       } ${isOnlyOne ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
@@ -1540,32 +1603,44 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
                         <p className="text-white font-bold text-sm">{metric.label}</p>
                         <p className="text-white/50 text-[10px] truncate">{metric.description}</p>
                       </div>
+                      
+                      {/* Position indicator */}
+                      {isSelected && (
+                        <span className={`text-xs font-bold ${willBeHidden ? 'text-yellow-400' : 'text-[#FF6B35]'}`}>
+                          {willBeHidden ? 'Hidden' : `#${displayIndex + 1}`}
+                        </span>
+                      )}
                     </button>
                   )
                 })}
+                
+                {selectedMetrics.length > 6 && (
+                  <p className="text-yellow-400/80 text-xs text-center py-2">
+                    ⚠️ {selectedMetrics.length - 6} metric(s) hidden - max 6 shown on screen
+                  </p>
+                )}
               </div>
 
               {/* Fixed Footer with Preview and Save Button */}
               <div className="p-4 border-t border-white/10 flex-shrink-0 space-y-3">
                 {/* Preview */}
                 <div className="bg-black/50 rounded-xl p-3">
-                  <p className="text-white/50 text-[10px] uppercase tracking-wider mb-2">Preview ({selectedMetrics.length} metrics)</p>
+                  <p className="text-white/50 text-[10px] uppercase tracking-wider mb-2">
+                    Preview ({Math.min(selectedMetrics.length, 6)} of {selectedMetrics.length} shown)
+                  </p>
                   <div className="flex items-center justify-around flex-wrap gap-2">
-                    {selectedMetrics.slice(0, 5).map((metricId) => {
+                    {selectedMetrics.slice(0, 6).map((metricId, idx) => {
                       const metric = AVAILABLE_METRICS.find(m => m.id === metricId)
                       if (!metric) return null
-                      const fontSize = selectedMetrics.length <= 2 ? 'text-xl' : 
+                      const previewSize = selectedMetrics.length <= 2 ? 'text-xl' : 
                                        selectedMetrics.length <= 3 ? 'text-lg' : 'text-base'
                       return (
                         <div key={metricId} className="flex flex-col items-center">
-                          <div className={`${fontSize} font-black text-white`}>--</div>
+                          <div className={`${previewSize} font-black text-white`}>--</div>
                           <div className="text-[8px] text-white/50 uppercase">{metric.shortLabel}</div>
                         </div>
                       )
                     })}
-                    {selectedMetrics.length > 5 && (
-                      <div className="text-white/40 text-xs">+{selectedMetrics.length - 5} more</div>
-                    )}
                   </div>
                 </div>
 
