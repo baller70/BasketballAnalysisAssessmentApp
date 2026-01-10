@@ -1740,7 +1740,7 @@ function DemoResultsPageContent() {
   // Get uploaded image and form analysis from store - hooks must be called unconditionally
   const storeData = useAnalysisStore()
   
-  const { formAnalysisResult, visionAnalysisResult, playerProfile, poseConfidence, teaserFrames, fullFrames, allUploadedUrls, uploadedImageBase64, roboflowBallDetection, videoAnalysisData, mediaType } = storeData || {}
+  const { formAnalysisResult, visionAnalysisResult, playerProfile, poseConfidence, teaserFrames, fullFrames, allUploadedUrls, uploadedImageBase64, roboflowBallDetection, videoAnalysisData, mediaType, setUploadedImageBase64, setVideoAnalysisData } = storeData || {}
   
   // 🎒 BACKPACK SYSTEM: Load latest sessions by media type from session storage
   const [latestImageSession, setLatestImageSession] = useState<AnalysisSession | null>(null)
