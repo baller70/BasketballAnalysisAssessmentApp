@@ -135,6 +135,41 @@ export const AVAILABLE_METRICS: MetricConfig[] = [
 // Default metrics to show (all by default)
 const DEFAULT_SELECTED_METRICS: MetricId[] = ['form', 'elbow', 'knee', 'shoulder', 'hip', 'release', 'arm']
 
+// Quick Preset Modes for easy setup
+type PresetMode = 'form' | 'power' | 'full' | 'custom'
+
+interface PresetConfig {
+  id: PresetMode
+  name: string
+  icon: string
+  description: string
+  metrics: MetricId[]
+}
+
+const PRESET_MODES: PresetConfig[] = [
+  {
+    id: 'form',
+    name: 'Form Focus',
+    icon: '🎯',
+    description: 'Form, Elbow, Release',
+    metrics: ['form', 'elbow', 'release']
+  },
+  {
+    id: 'power',
+    name: 'Power Focus',
+    icon: '💪',
+    description: 'Knee, Hip, Shoulder',
+    metrics: ['knee', 'hip', 'shoulder']
+  },
+  {
+    id: 'full',
+    name: 'Full Analysis',
+    icon: '📊',
+    description: 'All 6 metrics',
+    metrics: ['form', 'elbow', 'knee', 'shoulder', 'hip', 'release']
+  }
+]
+
 // ============================================
 // HELPERS
 // ============================================
@@ -243,6 +278,33 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     return true
   })
   
+  // Audio feedback toggle
+  const [audioFeedbackEnabled, setAudioFeedbackEnabled] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('shotiq_audio_feedback')
+      return saved === 'true' // Default to false
+    }
+    return false
+  })
+  
+  // Current preset mode
+  const [currentPreset, setCurrentPreset] = useState<PresetMode>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('shotiq_preset_mode')
+      if (saved && ['form', 'power', 'full', 'custom'].includes(saved)) {
+        return saved as PresetMode
+      }
+    }
+    return 'full'
+  })
+  
+  // Countdown state
+  const [showCountdown, setShowCountdown] = useState(false)
+  const [countdownValue, setCountdownValue] = useState(3)
+  
+  // Shot counter
+  const [shotCount, setShotCount] = useState(0)
+  
   // Throttled pose state to reduce glitching
   const [throttledPose, setThrottledPose] = useState<any>(null)
   const lastPoseUpdateRef = useRef<number>(0)
@@ -271,10 +333,37 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     targetFps: 10, // Reduced to 10fps for smoother skeleton rendering
     onShootingDetected: (detectedPose) => {
       console.log('[FullscreenLive] Shooting motion detected!')
-      // Show shot flash
+      // Show shot flash and increment counter
       if (feedback?.overallScore) {
         setLastShotScore(feedback.overallScore)
         setShowShotFlash(true)
+        setShotCount(prev => prev + 1)
+        
+        // Play audio feedback if enabled
+        if (audioFeedbackEnabled) {
+          try {
+            // Create a simple beep sound
+            const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+            const oscillator = audioContext.createOscillator()
+            const gainNode = audioContext.createGain()
+            
+            oscillator.connect(gainNode)
+            gainNode.connect(audioContext.destination)
+            
+            // Higher pitch for good shots, lower for poor shots
+            oscillator.frequency.value = feedback.overallScore >= 70 ? 880 : 440
+            oscillator.type = 'sine'
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime)
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3)
+            
+            oscillator.start(audioContext.currentTime)
+            oscillator.stop(audioContext.currentTime + 0.3)
+          } catch (e) {
+            console.log('[FullscreenLive] Audio feedback not available')
+          }
+        }
+        
         setTimeout(() => setShowShotFlash(false), 1500)
       }
     },
@@ -626,11 +715,13 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     stableAnglesRef.current = stableAngles
   }, [throttledPose, stableFeedback, showSkeleton, selectedMetrics, stableAngles])
   
-  const handleStartRecording = useCallback(() => {
+  // Actual recording start (after countdown)
+  const startActualRecording = useCallback(() => {
     if (!streamRef.current || !videoRef.current) return
 
     recordedChunksRef.current = []
     setRecordingDuration(0)
+    setShotCount(0) // Reset shot counter
     setShowControls(false) // Hide controls when recording starts
 
     // Create composite canvas for recording with overlay
@@ -839,6 +930,59 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     setIsRecording(true)
   }, [capturedFrames, setVideoAnalysisData, videoDimensions])
 
+  // Start recording with countdown
+  const handleStartRecording = useCallback(() => {
+    if (!streamRef.current || !videoRef.current) return
+    
+    // Start countdown
+    setShowCountdown(true)
+    setCountdownValue(3)
+    
+    // Play countdown sound if audio enabled
+    const playCountdownBeep = (isLast: boolean) => {
+      if (audioFeedbackEnabled) {
+        try {
+          const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+          const oscillator = audioContext.createOscillator()
+          const gainNode = audioContext.createGain()
+          
+          oscillator.connect(gainNode)
+          gainNode.connect(audioContext.destination)
+          
+          oscillator.frequency.value = isLast ? 880 : 440
+          oscillator.type = 'sine'
+          
+          gainNode.gain.setValueAtTime(0.2, audioContext.currentTime)
+          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2)
+          
+          oscillator.start(audioContext.currentTime)
+          oscillator.stop(audioContext.currentTime + 0.2)
+        } catch (e) {
+          // Audio not available
+        }
+      }
+    }
+    
+    playCountdownBeep(false)
+    
+    // Countdown sequence
+    setTimeout(() => {
+      setCountdownValue(2)
+      playCountdownBeep(false)
+    }, 1000)
+    
+    setTimeout(() => {
+      setCountdownValue(1)
+      playCountdownBeep(false)
+    }, 2000)
+    
+    setTimeout(() => {
+      setShowCountdown(false)
+      playCountdownBeep(true)
+      startActualRecording()
+    }, 3000)
+  }, [audioFeedbackEnabled, startActualRecording])
+
   // Stop recording
   const handleStopRecording = useCallback(() => {
     // Stop composite animation first
@@ -869,7 +1013,35 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
         localStorage.setItem('shotiq_live_metrics', JSON.stringify(newMetrics))
       }
       
+      // Set to custom preset when manually changing
+      setCurrentPreset('custom')
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('shotiq_preset_mode', 'custom')
+      }
+      
       return newMetrics
+    })
+  }, [])
+  
+  // Apply preset mode
+  const applyPreset = useCallback((preset: PresetConfig) => {
+    setSelectedMetrics(preset.metrics)
+    setCurrentPreset(preset.id)
+    
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('shotiq_live_metrics', JSON.stringify(preset.metrics))
+      localStorage.setItem('shotiq_preset_mode', preset.id)
+    }
+  }, [])
+  
+  // Toggle audio feedback
+  const toggleAudioFeedback = useCallback(() => {
+    setAudioFeedbackEnabled(prev => {
+      const newValue = !prev
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('shotiq_audio_feedback', String(newValue))
+      }
+      return newValue
     })
   }, [])
 
@@ -1431,9 +1603,38 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
         </button>
       )}
 
-      {/* Recording indicator with time limit */}
+      {/* Countdown Overlay */}
+      <AnimatePresence>
+        {showCountdown && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-[60] flex items-center justify-center bg-black/60"
+          >
+            <motion.div
+              key={countdownValue}
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 1.5, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="text-center"
+            >
+              <div className="text-9xl font-black text-white drop-shadow-2xl">
+                {countdownValue}
+              </div>
+              <div className="text-xl text-white/70 mt-4 uppercase tracking-widest">
+                Get Ready
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Recording indicator with time limit and shot counter */}
       {isRecording && (
-        <div className="absolute top-4 right-4 z-50 flex flex-col items-end gap-1">
+        <div className="absolute top-4 right-4 z-50 flex flex-col items-end gap-2">
+          {/* Recording time */}
           <div className="flex items-center gap-2 px-3 py-1.5 bg-red-500/90 rounded-full">
             <motion.div
               animate={{ opacity: [1, 0.3, 1] }}
@@ -1453,6 +1654,16 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
               animate={{ width: `${(recordingDuration / MAX_RECORDING_DURATION) * 100}%` }}
             />
           </div>
+          {/* Shot counter badge */}
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="flex items-center gap-2 px-3 py-1.5 bg-[#FF6B35]/90 rounded-full"
+          >
+            <span className="text-lg">🏀</span>
+            <span className="text-white text-sm font-bold">{shotCount}</span>
+            <span className="text-white/70 text-xs">shots</span>
+          </motion.div>
         </div>
       )}
 
@@ -1766,6 +1977,36 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
 
               {/* Scrollable Content */}
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                {/* Quick Presets */}
+                <div className="mb-4">
+                  <p className="text-white/40 text-[10px] uppercase tracking-wider mb-2">Quick Presets</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {PRESET_MODES.map((preset) => (
+                      <button
+                        key={preset.id}
+                        onClick={() => applyPreset(preset)}
+                        className={`p-3 rounded-xl border transition-all text-center ${
+                          currentPreset === preset.id
+                            ? 'bg-[#FF6B35]/20 border-[#FF6B35]/50'
+                            : 'bg-white/5 border-white/10 hover:border-white/20'
+                        }`}
+                      >
+                        <span className="text-2xl block mb-1">{preset.icon}</span>
+                        <span className="text-white text-xs font-bold block">{preset.name}</span>
+                        <span className="text-white/50 text-[9px] block">{preset.description}</span>
+                      </button>
+                    ))}
+                  </div>
+                  {currentPreset === 'custom' && (
+                    <p className="text-[#FF6B35]/70 text-xs text-center mt-2">Custom selection active</p>
+                  )}
+                </div>
+                
+                {/* Toggles Section */}
+                <div className="border-t border-white/10 pt-3">
+                  <p className="text-white/40 text-[10px] uppercase tracking-wider mb-2">Display Options</p>
+                </div>
+                
                 {/* Skeleton Toggle */}
                 <button
                   onClick={() => {
@@ -1797,6 +2038,36 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
                   {/* Status */}
                   <span className={`text-xs font-bold ${showSkeleton ? 'text-green-400' : 'text-white/40'}`}>
                     {showSkeleton ? 'ON' : 'OFF'}
+                  </span>
+                </button>
+                
+                {/* Audio Feedback Toggle */}
+                <button
+                  onClick={toggleAudioFeedback}
+                  className={`w-full flex items-center gap-3 p-4 rounded-xl border transition-all ${
+                    audioFeedbackEnabled
+                      ? 'bg-green-500/20 border-green-500/50'
+                      : 'bg-white/5 border-white/10 hover:border-white/20'
+                  }`}
+                >
+                  {/* Toggle */}
+                  <div className={`w-12 h-6 rounded-full flex items-center px-1 transition-colors ${
+                    audioFeedbackEnabled ? 'bg-green-500' : 'bg-white/20'
+                  }`}>
+                    <div className={`w-4 h-4 rounded-full bg-white transition-transform ${
+                      audioFeedbackEnabled ? 'translate-x-6' : 'translate-x-0'
+                    }`} />
+                  </div>
+                  
+                  {/* Info */}
+                  <div className="flex-1 text-left">
+                    <p className="text-white font-bold text-sm">AUDIO FEEDBACK</p>
+                    <p className="text-white/50 text-[10px]">Sound cues for shots & countdown</p>
+                  </div>
+                  
+                  {/* Status */}
+                  <span className={`text-xs font-bold ${audioFeedbackEnabled ? 'text-green-400' : 'text-white/40'}`}>
+                    {audioFeedbackEnabled ? 'ON' : 'OFF'}
                   </span>
                 </button>
 
