@@ -130,13 +130,10 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // 1. HANDS & RELEASE: Focus on BALL + BOTH HANDS with ALL FINGERS visible
-    // The key is to include the basketball and extend well beyond wrists to capture fingertips
+    // 1. HAND POSITION: Close-up of hand placement on the ball
     if (rightWrist || leftWrist) {
-      // Use wrists as anchor points, but we need to capture ABOVE them for fingers during release
       const wristPoints = [rightWrist, leftWrist].filter(Boolean)
       
-      // Start with wrist positions
       let minX = Math.min(...wristPoints.map(p => p!.x))
       let maxX = Math.max(...wristPoints.map(p => p!.x))
       let minY = Math.min(...wristPoints.map(p => p!.y))
@@ -151,51 +148,55 @@ export async function POST(request: NextRequest) {
         maxY = Math.max(maxY, basketball.y + ballRadius)
       }
       
-      // CRITICAL: Fingers extend ABOVE wrists during shooting release
-      // Add significant padding ABOVE (negative Y direction) to capture fingertips
-      const fingerExtensionAbove = 150  // Fingers extend above wrists
-      const fingerExtensionBelow = 80   // Some extension below too
-      const sidePadding = 80            // Side padding for full hand width
+      const fingerExtensionAbove = 120
+      const fingerExtensionBelow = 60
+      const sidePadding = 70
       
       regions.push({
         id: 'hands-area',
-        name: 'Hands & Release',
+        name: 'Hand Position',
         minX: minX - sidePadding,
-        minY: minY - fingerExtensionAbove,  // ABOVE wrists to catch fingertips
+        minY: minY - fingerExtensionAbove,
         maxX: maxX + sidePadding,
         maxY: maxY + fingerExtensionBelow
       })
     }
 
-    // 2. ANKLES & FEET: Include KNEES + ankles + floor space
-    if (leftAnkle || rightAnkle || leftKnee || rightKnee) {
-      const lowerBodyPoints = [leftAnkle, rightAnkle, leftKnee, rightKnee].filter(Boolean)
-      if (lowerBodyPoints.length > 0) {
-        const padding = 40
-        const maxY = Math.max(...lowerBodyPoints.map(p => p!.y))
+    // 2. RELEASE POINT: The release mechanics including elbow and wrist
+    if ((rightWrist || leftWrist) && (rightElbow || leftElbow)) {
+      // Determine shooting hand (typically right, but check which wrist is higher)
+      const shootingWrist = rightWrist && leftWrist 
+        ? (rightWrist.y < leftWrist.y ? rightWrist : leftWrist)
+        : (rightWrist || leftWrist)
+      const shootingElbow = rightWrist && leftWrist
+        ? (rightWrist.y < leftWrist.y ? rightElbow : leftElbow)
+        : (rightElbow || leftElbow)
+      
+      if (shootingWrist && shootingElbow) {
+        const padding = 100
         regions.push({
-          id: 'ankles-area',
-          name: 'Legs & Feet',
-          minX: Math.min(...lowerBodyPoints.map(p => p!.x)) - padding * 1.5,
-          minY: Math.min(...lowerBodyPoints.map(p => p!.y)) - padding,  // Start from knees
-          maxX: Math.max(...lowerBodyPoints.map(p => p!.x)) + padding * 1.5,
-          maxY: maxY + padding * 2  // Extra space below for floor
+          id: 'release-area',
+          name: 'Release Point',
+          minX: Math.min(shootingWrist.x, shootingElbow.x) - padding,
+          minY: Math.min(shootingWrist.y, shootingElbow.y) - padding * 1.5,
+          maxX: Math.max(shootingWrist.x, shootingElbow.x) + padding,
+          maxY: Math.max(shootingWrist.y, shootingElbow.y) + padding * 0.5
         })
       }
     }
 
-    // 3. ABS & HIPS: core area from shoulders to hips
-    if (leftHip || rightHip || leftShoulder || rightShoulder) {
-      const corePoints = [leftShoulder, rightShoulder, leftHip, rightHip].filter(Boolean)
-      if (corePoints.length > 0) {
-        const padding = 30
+    // 3. UPPER BODY: Shoulders and shooting arm alignment
+    if (leftShoulder || rightShoulder) {
+      const upperBodyPoints = [leftShoulder, rightShoulder, leftElbow, rightElbow].filter(Boolean)
+      if (upperBodyPoints.length > 0) {
+        const padding = 50
         regions.push({
-          id: 'ball-area',
-          name: 'Abs & Hips',
-          minX: Math.min(...corePoints.map(p => p!.x)) - padding,
-          minY: Math.min(...corePoints.map(p => p!.y)) - padding,
-          maxX: Math.max(...corePoints.map(p => p!.x)) + padding,
-          maxY: Math.max(...corePoints.map(p => p!.y)) + padding
+          id: 'upper-body',
+          name: 'Upper Body',
+          minX: Math.min(...upperBodyPoints.map(p => p!.x)) - padding,
+          minY: Math.min(...upperBodyPoints.map(p => p!.y)) - padding,
+          maxX: Math.max(...upperBodyPoints.map(p => p!.x)) + padding,
+          maxY: Math.max(...upperBodyPoints.map(p => p!.y)) + padding * 1.5
         })
       }
     }
@@ -206,44 +207,69 @@ export async function POST(request: NextRequest) {
       size: { w: r.maxX - r.minX, h: r.maxY - r.minY }
     })))
 
-    // Now crop using Jimp
-    const { Jimp } = await import('jimp')
+    // Now crop using Sharp (supports WebP, PNG, JPEG, etc.)
+    const sharp = (await import('sharp')).default
     const imageBuffer = Buffer.from(imageBase64, 'base64')
-    const image = await Jimp.read(imageBuffer)
-    const imgW = image.width
-    const imgH = image.height
-
-    console.log('[BodyPix Crop API] Image size:', imgW, 'x', imgH)
+    
+    let imgW: number
+    let imgH: number
+    
+    try {
+      const metadata = await sharp(imageBuffer).metadata()
+      imgW = metadata.width || 0
+      imgH = metadata.height || 0
+      console.log('[BodyPix Crop API] Image size:', imgW, 'x', imgH, 'format:', metadata.format)
+    } catch (sharpError) {
+      console.error('[BodyPix Crop API] Sharp error:', sharpError)
+      return NextResponse.json(
+        { success: false, error: `Failed to load image: ${sharpError instanceof Error ? sharpError.message : 'Unknown error'}` },
+        { status: 500 }
+      )
+    }
+    
+    if (imgW <= 0 || imgH <= 0) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid image dimensions' },
+        { status: 400 }
+      )
+    }
 
     const croppedImages: Array<{ id: string; name: string; dataUrl: string }> = []
 
     for (const region of regions) {
       // Clamp to image bounds
-      const cropX = Math.max(0, Math.round(region.minX))
-      const cropY = Math.max(0, Math.round(region.minY))
+      let cropX = Math.max(0, Math.round(region.minX))
+      let cropY = Math.max(0, Math.round(region.minY))
       let cropW = Math.round(region.maxX - region.minX)
       let cropH = Math.round(region.maxY - region.minY)
 
       // Ensure within bounds
       if (cropX + cropW > imgW) cropW = imgW - cropX
       if (cropY + cropH > imgH) cropH = imgH - cropY
+      
+      // Ensure we don't go negative
+      if (cropW <= 0) cropW = Math.min(100, imgW - cropX)
+      if (cropH <= 0) cropH = Math.min(100, imgH - cropY)
+      
+      // If still invalid, skip this region
+      if (cropW <= 0 || cropH <= 0 || cropX >= imgW || cropY >= imgH) {
+        console.log(`[BodyPix Crop API] Skipping ${region.id} - invalid bounds after clamping`)
+        continue
+      }
 
-      // Minimum size
-      cropW = Math.max(cropW, 100)
-      cropH = Math.max(cropH, 100)
+      // Minimum size (but don't exceed image bounds)
+      cropW = Math.min(Math.max(cropW, 50), imgW - cropX)
+      cropH = Math.min(Math.max(cropH, 50), imgH - cropY)
 
-      console.log(`[BodyPix Crop API] Cropping ${region.id}:`, { cropX, cropY, cropW, cropH })
+      console.log(`[BodyPix Crop API] Cropping ${region.id}:`, { cropX, cropY, cropW, cropH, imgW, imgH })
 
       try {
-        const croppedImage = image.clone().crop({
-          x: cropX,
-          y: cropY,
-          w: cropW,
-          h: cropH
-        })
+        const croppedBuffer = await sharp(imageBuffer)
+          .extract({ left: cropX, top: cropY, width: cropW, height: cropH })
+          .png()
+          .toBuffer()
 
-        const pngBuffer = await croppedImage.getBuffer('image/png')
-        const base64 = pngBuffer.toString('base64')
+        const base64 = croppedBuffer.toString('base64')
         const dataUrl = `data:image/png;base64,${base64}`
 
         croppedImages.push({
@@ -251,6 +277,7 @@ export async function POST(request: NextRequest) {
           name: region.name,
           dataUrl
         })
+        console.log(`[BodyPix Crop API] Successfully cropped ${region.id}`)
       } catch (cropError) {
         console.error(`[BodyPix Crop API] Error cropping ${region.id}:`, cropError)
       }

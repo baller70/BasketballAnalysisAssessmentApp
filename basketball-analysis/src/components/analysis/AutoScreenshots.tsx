@@ -250,14 +250,27 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
     }
   }, [screenshots, hybridCache, processScreenshotHybrid])
 
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  
   const captureScreenshots = useCallback(async () => {
+    console.log("[AutoScreenshots] captureScreenshots called with:", {
+      hasImageUrl: !!imageUrl,
+      imageUrlLength: imageUrl?.length,
+      hasPassedKeypoints: !!passedKeypoints,
+      keypointCount: passedKeypoints ? Object.keys(passedKeypoints).length : 0,
+      passedKeypointNames: passedKeypoints ? Object.keys(passedKeypoints) : []
+    })
+    
     if (!imageUrl) {
       console.log("[AutoScreenshots] No imageUrl, skipping")
+      setErrorMessage("No image URL provided")
       setIsProcessing(false)
       return
     }
     
+    console.log("[AutoScreenshots] Starting capture with imageUrl:", imageUrl.substring(0, 100) + "...")
     setIsProcessing(true)
+    setErrorMessage(null)
     
     try {
       // Load the image first
@@ -402,10 +415,19 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
       
       const cropSize = Math.max(personHeight * 0.6, 600)
       
+      // Get additional keypoints for release analysis
+      const rightElbow = getKeypointPos('right_elbow', personCenterX + personWidth * 0.15, personMinY + personHeight * 0.25)
+      const leftElbow = getKeypointPos('left_elbow', personCenterX - personWidth * 0.15, personMinY + personHeight * 0.25)
+      const leftWrist = getKeypointPos('left_wrist', personCenterX - personWidth * 0.1, personMinY + personHeight * 0.3)
+      
+      // Determine shooting hand (typically right, but check which wrist is higher)
+      const shootingWrist = rightWrist.y < leftWrist.y ? rightWrist : leftWrist
+      const shootingElbow = rightWrist.y < leftWrist.y ? rightElbow : leftElbow
+      
       const regions = [
         {
           id: "main-body",
-          name: "FULL BODY",
+          name: "FULL FORM",
           centerX: imgW / 2,
           centerY: imgH / 2,
           width: imgW,
@@ -420,7 +442,7 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
           getAnalysis: () => {
             const elbowAngle = angles?.elbow_angle || angles?.left_elbow_angle || angles?.right_elbow_angle
             const kneeAngle = angles?.knee_angle || angles?.left_knee_angle || angles?.right_knee_angle
-            let analysis = "Full body shooting form analysis"
+            let analysis = "Complete shooting form analysis"
             if (elbowAngle) analysis += ` | Elbow: ${elbowAngle.toFixed(0)}°`
             if (kneeAngle) analysis += ` | Knee: ${kneeAngle.toFixed(0)}°`
             return analysis
@@ -428,11 +450,11 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
         },
         {
           id: "hands-area",
-          name: "HANDS AND RELEASE",
-          centerX: handsKeypoint.x,
-          centerY: handsKeypoint.y,
-          width: cropSize * 1.3,
-          height: cropSize * 1.1,
+          name: "HAND POSITION",
+          centerX: shootingWrist.x,
+          centerY: shootingWrist.y,
+          width: cropSize * 1.0,
+          height: cropSize * 0.9,
           getStatus: (): "good" | "warning" | "critical" => {
             const elbowAngle = angles?.elbow_angle || angles?.left_elbow_angle || angles?.right_elbow_angle
             if (elbowAngle && elbowAngle >= 80 && elbowAngle <= 110) return "good"
@@ -440,49 +462,49 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
             return "good"
           },
           getAnalysis: () => {
-            const elbowAngle = angles?.elbow_angle || angles?.left_elbow_angle || angles?.right_elbow_angle
-            if (elbowAngle) {
-              if (elbowAngle >= 80 && elbowAngle <= 110) return `Good elbow angle: ${elbowAngle.toFixed(0)}°`
-              return `Elbow angle: ${elbowAngle.toFixed(0)}° - aim for 90°`
-            }
-            return "Hand position and ball release"
+            return "Hand placement on the ball - fingers spread, guide hand support"
           }
         },
         {
-          id: "ankles-area",
-          name: "LEGS AND FEET",
-          centerX: anklesKeypoint.x,
-          centerY: anklesKeypoint.y,
-          width: imgW * 0.8,
-          height: feetCropHeight,
+          id: "release-area",
+          name: "RELEASE POINT",
+          centerX: (shootingWrist.x + shootingElbow.x) / 2,
+          centerY: Math.min(shootingWrist.y, shootingElbow.y) - cropSize * 0.1,
+          width: cropSize * 1.4,
+          height: cropSize * 1.2,
           getStatus: (): "good" | "warning" | "critical" => {
-            const stanceWidth = Math.abs(rightAnkle.x - leftAnkle.x)
-            const shoulderWidth = Math.abs(rightShoulder.x - leftShoulder.x)
-            if (stanceWidth >= shoulderWidth * 0.8 && stanceWidth <= shoulderWidth * 1.3) return "good"
-            if (stanceWidth < shoulderWidth * 0.6) return "warning"
+            const elbowAngle = angles?.elbow_angle || angles?.left_elbow_angle || angles?.right_elbow_angle
+            if (elbowAngle && elbowAngle >= 85 && elbowAngle <= 100) return "good"
+            if (elbowAngle && (elbowAngle >= 75 || elbowAngle <= 115)) return "warning"
             return "good"
           },
           getAnalysis: () => {
-            return "Foot position and base alignment"
+            const elbowAngle = angles?.elbow_angle || angles?.left_elbow_angle || angles?.right_elbow_angle
+            if (elbowAngle) {
+              if (elbowAngle >= 85 && elbowAngle <= 100) return `Excellent release angle: ${elbowAngle.toFixed(0)}° - textbook form`
+              if (elbowAngle < 85) return `Elbow too tight at release: ${elbowAngle.toFixed(0)}° - extend more`
+              return `Elbow over-extended: ${elbowAngle.toFixed(0)}° - maintain L-shape`
+            }
+            return "Release point and follow-through mechanics"
           }
         },
         {
-          id: "ball-area",
-          name: "ABS AND HIPS",
-          centerX: (rightShoulder.x + leftShoulder.x + rightHip.x + leftHip.x) / 4,
-          centerY: (rightShoulder.y + leftShoulder.y + rightHip.y + leftHip.y) / 4,
-          width: cropSize * 1.2,
-          height: cropSize * 1.2,
+          id: "upper-body",
+          name: "UPPER BODY",
+          centerX: (rightShoulder.x + leftShoulder.x) / 2,
+          centerY: (rightShoulder.y + leftShoulder.y + shootingElbow.y) / 3,
+          width: cropSize * 1.3,
+          height: cropSize * 1.1,
           getStatus: (): "good" | "warning" | "critical" => {
-            const hipDiff = Math.abs(rightHip.y - leftHip.y)
-            if (hipDiff < 20) return "good"
-            if (hipDiff < 40) return "warning"
+            const shoulderDiff = Math.abs(rightShoulder.y - leftShoulder.y)
+            if (shoulderDiff < 15) return "good"
+            if (shoulderDiff < 30) return "warning"
             return "critical"
           },
           getAnalysis: () => {
-            const hipDiff = Math.abs(rightHip.y - leftHip.y)
-            if (hipDiff < 20) return "Good core alignment and hip stability"
-            return `Hip alignment off by ${hipDiff.toFixed(0)}px - keep hips level`
+            const shoulderDiff = Math.abs(rightShoulder.y - leftShoulder.y)
+            if (shoulderDiff < 15) return "Good shoulder alignment - square to basket"
+            return `Shoulders uneven by ${shoulderDiff.toFixed(0)}px - keep level`
           }
         }
       ]
@@ -526,8 +548,13 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
 
       console.log("[AutoScreenshots] Captured", captured.length, "screenshots")
       setScreenshots(captured)
+      
+      if (captured.length === 0) {
+        setErrorMessage("No screenshots could be generated - check if keypoints are available")
+      }
     } catch (error) {
       console.error("[AutoScreenshots] Failed:", error)
+      setErrorMessage(error instanceof Error ? error.message : "Failed to generate screenshots")
     } finally {
       setIsProcessing(false)
     }
@@ -995,8 +1022,11 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
       )}
       
       {!isProcessing && screenshots.length === 0 && (
-        <div className="text-center py-4 text-[#888]">
-          No screenshots available
+        <div className="text-center py-4">
+          <p className="text-[#888]">No screenshots available</p>
+          {errorMessage && (
+            <p className="text-red-400 text-sm mt-2">{errorMessage}</p>
+          )}
         </div>
       )}
 

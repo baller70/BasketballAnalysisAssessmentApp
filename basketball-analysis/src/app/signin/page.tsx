@@ -37,7 +37,9 @@ export default function SignInPage() {
       if (result.success) {
         setTimeout(() => {
           const { user } = useAuthStore.getState()
-          const targetUrl = user?.profileComplete ? "/upload" : "/onboarding"
+          // Returning users (profile complete) go directly to dashboard
+          // New users go to onboarding to set up their profile
+          const targetUrl = user?.profileComplete ? "/results/demo" : "/onboarding"
           router.push(targetUrl)
         }, 200)
       } else {

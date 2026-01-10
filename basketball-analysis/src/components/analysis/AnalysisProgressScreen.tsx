@@ -11,12 +11,14 @@ import {
   Users, 
   Lightbulb, 
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  X,
+  Sparkles
 } from "lucide-react"
 
 // ============================================
 // PHASE 5: PROCESSING EXPERIENCE & USER ENGAGEMENT
-// 7-Stage Processing Pipeline for Perceived Value
+// 7-Stage Processing Pipeline - Modern UI Design
 // ============================================
 
 interface ProcessingStage {
@@ -24,119 +26,109 @@ interface ProcessingStage {
   label: string
   subtext: string
   icon: React.ReactNode
-  color: string // Tailwind color class
-  bgColor: string
-  borderColor: string
-  durationMs: number // Display duration in milliseconds
+  color: string
+  gradient: string
+  durationMs: number
 }
 
-// The 7 stages as specified in Phase 5
+// The 7 stages with modern color scheme
 const PROCESSING_STAGES: ProcessingStage[] = [
   {
     id: "upload_quality",
-    label: "Analyzing Upload Quality",
-    subtext: "Checking resolution, lighting, and framing...",
-    icon: <Search className="w-6 h-6" />,
-    color: "text-blue-400",
-    bgColor: "bg-blue-500/20",
-    borderColor: "border-blue-500/40",
-    durationMs: 3000 // 3 seconds
+    label: "Analyzing Upload",
+    subtext: "Checking resolution & lighting",
+    icon: <Search className="w-4 h-4" />,
+    color: "text-sky-400",
+    gradient: "from-sky-500 to-blue-600",
+    durationMs: 3000
   },
   {
     id: "body_detection",
-    label: "Detecting Body Position",
-    subtext: "Identifying feet, knees, hips, shoulders, elbows, wrists...",
-    icon: <User className="w-6 h-6" />,
-    color: "text-green-400",
-    bgColor: "bg-green-500/20",
-    borderColor: "border-green-500/40",
-    durationMs: 5000 // 5 seconds
+    label: "Body Detection",
+    subtext: "Identifying key points",
+    icon: <User className="w-4 h-4" />,
+    color: "text-emerald-400",
+    gradient: "from-emerald-500 to-green-600",
+    durationMs: 5000
   },
   {
     id: "angle_measurement",
-    label: "Measuring Shooting Angles",
-    subtext: "Calculating elbow angle, release angle, knee bend...",
-    icon: <Ruler className="w-6 h-6" />,
-    color: "text-orange-400",
-    bgColor: "bg-orange-500/20",
-    borderColor: "border-orange-500/40",
-    durationMs: 5000 // 5 seconds
+    label: "Measuring Angles",
+    subtext: "Elbow, release, knee bend",
+    icon: <Ruler className="w-4 h-4" />,
+    color: "text-amber-400",
+    gradient: "from-amber-500 to-orange-600",
+    durationMs: 5000
   },
   {
     id: "form_analysis",
-    label: "Analyzing Shooting Form",
-    subtext: "Evaluating balance, alignment, follow-through...",
-    icon: <ClipboardCheck className="w-6 h-6" />,
-    color: "text-green-400",
-    bgColor: "bg-green-500/20",
-    borderColor: "border-green-500/40",
-    durationMs: 6000 // 6 seconds
+    label: "Form Analysis",
+    subtext: "Balance & alignment",
+    icon: <ClipboardCheck className="w-4 h-4" />,
+    color: "text-violet-400",
+    gradient: "from-violet-500 to-purple-600",
+    durationMs: 6000
   },
   {
     id: "optimal_comparison",
-    label: "Comparing to Optimal Form",
-    subtext: "Matching your form to players with similar body type...",
-    icon: <Users className="w-6 h-6" />,
-    color: "text-purple-400",
-    bgColor: "bg-purple-500/20",
-    borderColor: "border-purple-500/40",
-    durationMs: 5000 // 5 seconds
+    label: "Pro Comparison",
+    subtext: "Matching elite shooters",
+    icon: <Users className="w-4 h-4" />,
+    color: "text-pink-400",
+    gradient: "from-pink-500 to-rose-600",
+    durationMs: 5000
   },
   {
     id: "recommendations",
-    label: "Generating Personalized Recommendations",
-    subtext: "Creating your custom improvement plan...",
-    icon: <Lightbulb className="w-6 h-6" />,
-    color: "text-orange-400",
-    bgColor: "bg-orange-500/20",
-    borderColor: "border-orange-500/40",
-    durationMs: 5000 // 5 seconds
+    label: "Generating Tips",
+    subtext: "Custom improvement plan",
+    icon: <Lightbulb className="w-4 h-4" />,
+    color: "text-cyan-400",
+    gradient: "from-cyan-500 to-teal-600",
+    durationMs: 5000
   },
   {
     id: "finalization",
-    label: "Finalizing Your Analysis",
-    subtext: "Your analysis is ready!",
-    icon: <CheckCircle2 className="w-6 h-6" />,
+    label: "Finalizing",
+    subtext: "Almost ready!",
+    icon: <CheckCircle2 className="w-4 h-4" />,
     color: "text-green-400",
-    bgColor: "bg-green-500/20",
-    borderColor: "border-green-500/40",
-    durationMs: 3000 // 3 seconds
+    gradient: "from-green-500 to-emerald-600",
+    durationMs: 3000
   }
 ]
 
-// Did You Know facts to display during processing
+// Did You Know facts
 const DID_YOU_KNOW_FACTS = [
-  "Stephen Curry's shooting elbow stays within 5° of perfect 90° alignment on every shot.",
-  "Elite shooters release the ball in under 0.4 seconds from catch to release.",
-  "A 45° entry angle gives the ball 2x more rim area to fall through compared to a flat shot.",
-  "Kyle Korver made 2,450 three-pointers in his career with one of the purest shooting forms ever.",
-  "The optimal knee bend for shooting is between 35-55 degrees for maximum power transfer.",
-  "Ray Allen practiced the same shooting routine every single game day for 18 years.",
+  "Stephen Curry's shooting elbow stays within 5° of perfect 90° alignment.",
+  "Elite shooters release the ball in under 0.4 seconds from catch.",
+  "A 45° entry angle gives the ball 2x more rim area to fall through.",
+  "Kyle Korver made 2,450 three-pointers with textbook form.",
+  "Optimal knee bend is between 35-55 degrees for max power.",
+  "Ray Allen practiced the same routine every game day for 18 years.",
   "A proper follow-through should hold until the ball reaches the basket.",
-  "Your guide hand should only stabilize the ball, never push or steer the shot.",
-  "Klay Thompson's shooting motion is so consistent it varies by less than 2° between shots.",
-  "The 'one-motion' shot (fluid dip to release) is common among modern elite shooters.",
-  "Proper balance means your weight is distributed 60% on your shooting-side foot.",
-  "Steve Nash shot 90% from the free throw line by focusing on his breathing rhythm."
+  "Klay Thompson's motion varies by less than 2° between shots.",
+  "Proper balance means 60% weight on your shooting-side foot.",
+  "Steve Nash shot 90% FT by focusing on breathing rhythm."
 ]
 
-// Processing time estimates based on input type
+// Processing time estimates
 export type InputType = "3_images" | "5_images" | "7_images" | "1_video" | "2_videos" | "3_videos"
 
 const PROCESSING_TIME_ESTIMATES: Record<InputType, { min: number; max: number; label: string }> = {
-  "3_images": { min: 30, max: 45, label: "Quick analysis" },
-  "5_images": { min: 45, max: 60, label: "Standard analysis" },
-  "7_images": { min: 60, max: 90, label: "Comprehensive analysis" },
-  "1_video": { min: 45, max: 60, label: "Video processing" },
-  "2_videos": { min: 60, max: 90, label: "Extended video analysis" },
-  "3_videos": { min: 90, max: 120, label: "Full video suite" }
+  "3_images": { min: 30, max: 45, label: "Quick Analysis" },
+  "5_images": { min: 45, max: 60, label: "Standard Analysis" },
+  "7_images": { min: 60, max: 90, label: "Deep Analysis" },
+  "1_video": { min: 45, max: 60, label: "Video Analysis" },
+  "2_videos": { min: 60, max: 90, label: "Multi-Video Analysis" },
+  "3_videos": { min: 90, max: 120, label: "Full Suite Analysis" }
 }
 
 interface AnalysisProgressScreenProps {
   isVisible: boolean
   onComplete?: () => void
   inputType?: InputType
-  actualProcessingComplete?: boolean // When true, skip to end
+  actualProcessingComplete?: boolean
   errorMessage?: string | null
   onRetry?: () => void
   onCancel?: () => void
@@ -179,28 +171,23 @@ export function AnalysisProgressScreen({
     }
   }, [isVisible])
 
-  // Track total elapsed time
+  // Track elapsed time
   useEffect(() => {
     if (!isVisible) return
-    
-    const timer = setInterval(() => {
-      setTotalElapsedTime(prev => prev + 1)
-    }, 1000)
-    
+    const timer = setInterval(() => setTotalElapsedTime(prev => prev + 1), 1000)
     return () => clearInterval(timer)
   }, [isVisible])
 
-  // Check for extended processing (taking longer than expected)
+  // Extended processing check
   useEffect(() => {
     if (totalElapsedTime > processingEstimate.max && !actualProcessingComplete) {
       setIsExtendedProcessing(true)
     }
   }, [totalElapsedTime, processingEstimate.max, actualProcessingComplete])
 
-  // Rotate facts every 5 seconds
+  // Rotate facts
   useEffect(() => {
     if (!isVisible) return
-
     const factInterval = setInterval(() => {
       setFactIndex(prev => {
         const newIndex = (prev + 1) % DID_YOU_KNOW_FACTS.length
@@ -208,26 +195,22 @@ export function AnalysisProgressScreen({
         return newIndex
       })
     }, 5000)
-
     return () => clearInterval(factInterval)
   }, [isVisible])
 
-  // Animate through stages - ALWAYS complete all 7 stages before navigating
+  // Animate through stages
   useEffect(() => {
     if (!isVisible || errorMessage) return
 
     const stage = PROCESSING_STAGES[currentStageIndex]
     
-    // If we've completed all stages
     if (!stage) {
       setAllStagesComplete(true)
       return
     }
 
-    // Calculate progress increment based on stage duration
     const progressIncrement = 100 / (stage.durationMs / 100)
 
-    // Animate stage progress
     const progressInterval = setInterval(() => {
       setStageProgress(prev => {
         if (prev >= 100) {
@@ -238,7 +221,6 @@ export function AnalysisProgressScreen({
       })
     }, 100)
 
-    // Complete stage after duration
     const stageTimeout = setTimeout(() => {
       setCompletedStages(prev => [...prev, stage.id])
       setCurrentStageIndex(prev => prev + 1)
@@ -251,20 +233,14 @@ export function AnalysisProgressScreen({
     }
   }, [isVisible, currentStageIndex, errorMessage])
 
-  // Only call onComplete when BOTH conditions are met:
-  // 1. All 7 stages have completed their animations
-  // 2. Actual processing is complete (we have results)
+  // Complete when both conditions met
   useEffect(() => {
     if (allStagesComplete && actualProcessingComplete) {
-      // Small delay for the completion animation
-      const completeTimeout = setTimeout(() => {
-        onComplete?.()
-      }, 1000)
+      const completeTimeout = setTimeout(() => onComplete?.(), 1000)
       return () => clearTimeout(completeTimeout)
     }
   }, [allStagesComplete, actualProcessingComplete, onComplete])
 
-  // Handle cancel
   const handleCancel = useCallback(() => {
     if (showCancelConfirm) {
       onCancel?.()
@@ -276,41 +252,36 @@ export function AnalysisProgressScreen({
 
   if (!isVisible) return null
 
-  // Calculate overall progress
   const overallProgress = Math.round(
     ((completedStages.length + stageProgress / 100) / PROCESSING_STAGES.length) * 100
   )
 
-  // Error state
+  // Error state - modern design
   if (errorMessage) {
     return (
-      <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4">
-        <div className="bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] rounded-2xl max-w-lg w-full p-8 border border-red-500/30 shadow-2xl">
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-xl z-50 flex items-center justify-center p-4">
+        <div className="bg-zinc-900/90 backdrop-blur-2xl rounded-3xl max-w-sm w-full p-6 border border-red-500/20 shadow-2xl shadow-red-500/10">
           <div className="text-center">
-            <div className="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-500/40">
-              <AlertCircle className="w-10 h-10 text-red-400" />
+            <div className="w-14 h-14 bg-gradient-to-br from-red-500/20 to-red-600/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-red-500/30">
+              <AlertCircle className="w-7 h-7 text-red-400" />
             </div>
-            <h2 className="text-2xl font-black text-red-400 uppercase tracking-wider mb-4">
-              Something Went Wrong
-            </h2>
-            <p className="text-[#888] text-sm mb-6">
-              {errorMessage}
-            </p>
-            <div className="flex gap-4 justify-center">
+            <h2 className="text-lg font-semibold text-white mb-2">Something Went Wrong</h2>
+            <p className="text-zinc-400 text-sm mb-6 leading-relaxed">{errorMessage}</p>
+            <div className="flex gap-3 justify-center">
               {onRetry && (
                 <button
                   onClick={onRetry}
-                  className="px-6 py-3 bg-[#FF6B35] text-[#1a1a1a] font-bold rounded-lg hover:bg-[#e6c200] transition-colors whitespace-nowrap"
+                  className="px-5 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-medium rounded-xl hover:opacity-90 transition-opacity text-sm"
                 >
-                  Retry
+                  Try Again
                 </button>
               )}
               {onCancel && (
                 <button
                   onClick={onCancel}
-                  className="px-6 py-3 bg-[#2a2a2a] text-[#E5E5E5] font-bold rounded-lg hover:bg-[#3a3a3a] transition-colors border border-[#3a3a3a] whitespace-nowrap"
+                  className="px-5 py-2.5 bg-zinc-800 text-zinc-300 font-medium rounded-xl hover:bg-zinc-700 transition-colors border border-zinc-700 text-sm"
                 >
-                  Back
+                  Go Back
                 </button>
               )}
             </div>
@@ -320,31 +291,29 @@ export function AnalysisProgressScreen({
     )
   }
 
-  // Cancel confirmation modal
+  // Cancel confirmation - modern design
   if (showCancelConfirm) {
     return (
-      <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4">
-        <div className="bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] rounded-2xl max-w-md w-full p-8 border border-[#FF6B35]/30 shadow-2xl">
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-xl z-50 flex items-center justify-center p-4">
+        <div className="bg-zinc-900/90 backdrop-blur-2xl rounded-3xl max-w-sm w-full p-6 border border-orange-500/20 shadow-2xl">
           <div className="text-center">
-            <div className="w-16 h-16 bg-[#FF6B35]/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-[#FF6B35]/40">
-              <AlertCircle className="w-8 h-8 text-[#FF6B35]" />
+            <div className="w-14 h-14 bg-gradient-to-br from-orange-500/20 to-amber-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-orange-500/30">
+              <AlertCircle className="w-7 h-7 text-orange-400" />
             </div>
-            <h3 className="text-xl font-bold text-[#FF6B35] mb-2">Cancel Analysis?</h3>
-            <p className="text-[#888] text-sm mb-6">
-              Are you sure? You&apos;ll lose this analysis and need to start over.
-            </p>
-            <div className="flex gap-4 justify-center">
+            <h3 className="text-lg font-semibold text-white mb-2">Cancel Analysis?</h3>
+            <p className="text-zinc-400 text-sm mb-6">You&apos;ll need to start over if you cancel now.</p>
+            <div className="flex gap-3 justify-center">
               <button
                 onClick={() => setShowCancelConfirm(false)}
-                className="px-6 py-3 bg-[#FF6B35] text-[#1a1a1a] font-bold rounded-lg hover:bg-[#e6c200] transition-colors"
+                className="px-5 py-2.5 bg-gradient-to-r from-orange-500 to-amber-500 text-white font-medium rounded-xl hover:opacity-90 transition-opacity text-sm"
               >
-                Continue Analysis
+                Continue
               </button>
               <button
                 onClick={() => onCancel?.()}
-                className="px-6 py-3 bg-[#2a2a2a] text-[#E5E5E5] font-bold rounded-lg hover:bg-[#3a3a3a] transition-colors border border-[#3a3a3a]"
+                className="px-5 py-2.5 bg-zinc-800 text-zinc-300 font-medium rounded-xl hover:bg-zinc-700 transition-colors border border-zinc-700 text-sm"
               >
-                Yes, Cancel
+                Cancel
               </button>
             </div>
           </div>
@@ -354,178 +323,178 @@ export function AnalysisProgressScreen({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] rounded-2xl max-w-2xl w-full p-8 border border-[#3a3a3a] shadow-2xl my-4">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-xl z-50 flex items-center justify-center p-3 overflow-y-auto">
+      <div className="bg-zinc-900/90 backdrop-blur-2xl rounded-3xl max-w-md w-full border border-zinc-800/80 shadow-2xl my-auto relative overflow-hidden">
         
-        {/* Header with animated icon */}
-        <div className="text-center mb-8">
-          <div className="relative w-24 h-24 mx-auto mb-6">
-            {/* Outer rotating ring */}
-            <div className="absolute inset-0 border-4 border-[#FF6B35]/20 rounded-full animate-pulse" />
-            <div 
-              className="absolute inset-0 border-4 border-transparent border-t-[#FF6B35] rounded-full animate-spin"
-              style={{ animationDuration: '2s' }}
-            />
-            {/* Inner icon */}
-            <div className="absolute inset-2 bg-gradient-to-br from-[#FF6B35]/20 to-[#FF4500]/10 rounded-full flex items-center justify-center border border-[#FF6B35]/40">
-              {PROCESSING_STAGES[currentStageIndex]?.icon || <CheckCircle2 className="w-10 h-10 text-[#FF6B35]" />}
+        {/* Ambient glow effect */}
+        <div className="absolute -top-24 -right-24 w-48 h-48 bg-orange-500/20 rounded-full blur-3xl" />
+        <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl" />
+        
+        {/* Close button */}
+        {onCancel && (
+          <button
+            onClick={handleCancel}
+            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-zinc-800/80 hover:bg-zinc-700 flex items-center justify-center transition-colors z-10"
+          >
+            <X className="w-4 h-4 text-zinc-400" />
+          </button>
+        )}
+
+        <div className="relative p-5">
+          {/* Header */}
+          <div className="text-center mb-5">
+            {/* Animated loader */}
+            <div className="relative w-16 h-16 mx-auto mb-4">
+              {/* Outer ring */}
+              <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                <circle
+                  cx="50" cy="50" r="45"
+                  fill="none"
+                  stroke="rgba(255,255,255,0.05)"
+                  strokeWidth="6"
+                />
+                <circle
+                  cx="50" cy="50" r="45"
+                  fill="none"
+                  stroke="url(#progressGradient)"
+                  strokeWidth="6"
+                  strokeLinecap="round"
+                  strokeDasharray={`${overallProgress * 2.83} 283`}
+                  className="transition-all duration-300"
+                />
+                <defs>
+                  <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#f97316" />
+                    <stop offset="100%" stopColor="#f59e0b" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              {/* Center percentage */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-lg font-bold text-white">{overallProgress}%</span>
+              </div>
             </div>
-          </div>
-          
-          <h2 className="text-3xl font-black text-[#FF6B35] uppercase tracking-wider mb-2" style={{ textShadow: '0 0 30px rgba(255, 215, 0, 0.3)' }}>
-            Analyzing Your Shot
-          </h2>
-          <p className="text-[#888] text-sm">
-            {processingEstimate.label} • Estimated {processingEstimate.min}-{processingEstimate.max} seconds
-          </p>
-          
-          {/* Extended processing message */}
-          {isExtendedProcessing && (
-            <p className="text-[#FF6B35] text-sm mt-2 animate-pulse">
-              Taking a bit longer... ensuring accuracy
+            
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <Sparkles className="w-4 h-4 text-orange-400" />
+              <h2 className="text-lg font-semibold text-white">Analyzing Your Shot</h2>
+            </div>
+            <p className="text-zinc-500 text-xs">
+              {processingEstimate.label} • {totalElapsedTime}s
+              {isExtendedProcessing && <span className="text-orange-400 ml-1">• Optimizing...</span>}
             </p>
-          )}
-        </div>
-
-        {/* Overall Progress Bar */}
-        <div className="mb-8">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-[#888] text-sm font-medium">Overall Progress</span>
-            <span className="text-[#FF6B35] font-black text-lg">{overallProgress}%</span>
           </div>
-          <div className="h-4 bg-[#2a2a2a] rounded-full overflow-hidden border border-[#3a3a3a]">
-            <div 
-              className="h-full bg-gradient-to-r from-[#FF6B35] via-[#FF4500] to-[#FF6B35] transition-all duration-300 ease-out relative"
-              style={{ width: `${overallProgress}%` }}
-            >
-              {/* Animated shine effect */}
-              <div 
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-                style={{ 
-                  animation: 'shimmer 2s infinite',
-                  backgroundSize: '200% 100%'
-                }}
-              />
-            </div>
-          </div>
-          <div className="flex justify-between mt-2 text-xs text-[#666]">
-            <span>Stage {Math.min(currentStageIndex + 1, PROCESSING_STAGES.length)} of {PROCESSING_STAGES.length}</span>
-            <span>{totalElapsedTime}s elapsed</span>
-          </div>
-        </div>
 
-        {/* Stages List */}
-        <div className="space-y-3 mb-8">
-          {PROCESSING_STAGES.map((stage, index) => {
-            const isCompleted = completedStages.includes(stage.id)
-            const isCurrent = index === currentStageIndex
-            const isPending = index > currentStageIndex
-
-            return (
-              <div 
-                key={stage.id}
-                className={`
-                  relative flex items-center gap-4 p-4 rounded-xl transition-all duration-500
-                  ${isCompleted ? `${stage.bgColor} border ${stage.borderColor}` : ''}
-                  ${isCurrent ? 'bg-[#2a2a2a] border border-[#FF6B35]/50 shadow-lg shadow-[#FF6B35]/10' : ''}
-                  ${isPending ? 'bg-[#1a1a1a]/50 border border-[#2a2a2a] opacity-50' : ''}
-                `}
-              >
-                {/* Stage Icon */}
-                <div className={`
-                  w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-300
-                  ${isCompleted ? `${stage.bgColor} border ${stage.borderColor} ${stage.color}` : ''}
-                  ${isCurrent ? 'bg-[#FF6B35] text-[#1a1a1a]' : ''}
-                  ${isPending ? 'bg-[#2a2a2a] text-[#555] border border-[#3a3a3a]' : ''}
-                `}>
-                  {isCompleted ? (
-                    <Check className="w-6 h-6" />
-                  ) : isCurrent ? (
-                    <Loader2 className="w-6 h-6 animate-spin" />
-                  ) : (
-                    stage.icon
-                  )}
+          {/* Stages - Compact horizontal pills */}
+          <div className="grid grid-cols-7 gap-1.5 mb-5">
+            {PROCESSING_STAGES.map((stage, index) => {
+              const isCompleted = completedStages.includes(stage.id)
+              const isCurrent = index === currentStageIndex
+              
+              return (
+                <div key={stage.id} className="flex flex-col items-center">
+                  <div 
+                    className={`
+                      w-full h-1.5 rounded-full transition-all duration-500
+                      ${isCompleted ? `bg-gradient-to-r ${stage.gradient}` : ''}
+                      ${isCurrent ? 'bg-gradient-to-r from-orange-500/50 to-amber-500/50 animate-pulse' : ''}
+                      ${!isCompleted && !isCurrent ? 'bg-zinc-800' : ''}
+                    `}
+                  />
                 </div>
+              )
+            })}
+          </div>
 
-                {/* Stage Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <h4 className={`
-                      font-bold text-sm uppercase tracking-wide
-                      ${isCompleted ? stage.color : ''}
-                      ${isCurrent ? 'text-[#FF6B35]' : ''}
-                      ${isPending ? 'text-[#555]' : ''}
-                    `}>
-                      {stage.label}
-                    </h4>
-                    {isCompleted && (
-                      <span className={`text-xs font-bold uppercase tracking-wider ${stage.color}`}>
-                        ✓ Complete
-                      </span>
-                    )}
-                  </div>
-                  <p className={`
-                    text-xs
-                    ${isCurrent ? 'text-[#E5E5E5]' : 'text-[#666]'}
-                  `}>
-                    {stage.subtext}
-                  </p>
-                  
-                  {/* Current Stage Progress Bar */}
-                  {isCurrent && (
-                    <div className="mt-3 h-1.5 bg-[#1a1a1a] rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF4500] transition-all duration-100"
-                        style={{ width: `${stageProgress}%` }}
-                      />
+          {/* Current Stage Display */}
+          <div className="bg-zinc-800/50 rounded-2xl p-4 mb-4 border border-zinc-700/50">
+            <div className="flex items-center gap-3">
+              <div className={`
+                w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-300
+                bg-gradient-to-br ${PROCESSING_STAGES[currentStageIndex]?.gradient || 'from-green-500 to-emerald-600'}
+              `}>
+                {allStagesComplete ? (
+                  <Check className="w-5 h-5 text-white" />
+                ) : (
+                  <Loader2 className="w-5 h-5 text-white animate-spin" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-white font-medium text-sm truncate">
+                  {allStagesComplete ? 'Analysis Complete!' : PROCESSING_STAGES[currentStageIndex]?.label}
+                </p>
+                <p className="text-zinc-500 text-xs truncate">
+                  {allStagesComplete ? 'Preparing your results...' : PROCESSING_STAGES[currentStageIndex]?.subtext}
+                </p>
+              </div>
+              <div className="text-right">
+                <span className="text-xs font-medium text-zinc-400">
+                  {Math.min(currentStageIndex + 1, 7)}/7
+                </span>
+              </div>
+            </div>
+            
+            {/* Stage progress bar */}
+            {!allStagesComplete && (
+              <div className="mt-3 h-1 bg-zinc-700 rounded-full overflow-hidden">
+                <div 
+                  className={`h-full bg-gradient-to-r ${PROCESSING_STAGES[currentStageIndex]?.gradient || 'from-green-500 to-emerald-600'} transition-all duration-100`}
+                  style={{ width: `${stageProgress}%` }}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Completed stages - mini icons */}
+          <div className="flex items-center justify-center gap-2 mb-4">
+            {PROCESSING_STAGES.map((stage, index) => {
+              const isCompleted = completedStages.includes(stage.id)
+              const isCurrent = index === currentStageIndex
+              
+              return (
+                <div
+                  key={stage.id}
+                  className={`
+                    w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-300
+                    ${isCompleted ? `bg-gradient-to-br ${stage.gradient} shadow-lg` : ''}
+                    ${isCurrent ? 'bg-zinc-700 ring-2 ring-orange-500/50' : ''}
+                    ${!isCompleted && !isCurrent ? 'bg-zinc-800/50' : ''}
+                  `}
+                  title={stage.label}
+                >
+                  {isCompleted ? (
+                    <Check className="w-3.5 h-3.5 text-white" />
+                  ) : (
+                    <div className={`${isCurrent ? 'text-orange-400' : 'text-zinc-600'}`}>
+                      {stage.icon}
                     </div>
                   )}
                 </div>
+              )
+            })}
+          </div>
+
+          {/* Did You Know - Floating card */}
+          <div className="bg-gradient-to-r from-orange-500/10 to-amber-500/5 rounded-xl p-3 border border-orange-500/20">
+            <div className="flex items-start gap-2.5">
+              <div className="w-6 h-6 bg-orange-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Lightbulb className="w-3.5 h-3.5 text-orange-400" />
               </div>
-            )
-          })}
-        </div>
-
-        {/* Did You Know Section */}
-        <div className="bg-gradient-to-r from-[#FF6B35]/10 to-transparent rounded-xl p-5 border border-[#FF6B35]/20">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 bg-[#FF6B35]/20 rounded-lg flex items-center justify-center flex-shrink-0 border border-[#FF6B35]/30">
-              <Lightbulb className="w-5 h-5 text-[#FF6B35]" />
-            </div>
-            <div>
-              <p className="text-[#FF6B35] text-xs font-black uppercase tracking-wider mb-2">
-                Did You Know?
-              </p>
-              <p className="text-[#E5E5E5] text-sm leading-relaxed transition-opacity duration-500">
-                {currentFact}
-              </p>
+              <div className="flex-1 min-w-0">
+                <p className="text-orange-400/80 text-[10px] font-semibold uppercase tracking-wider mb-0.5">
+                  Pro Tip
+                </p>
+                <p className="text-zinc-300 text-xs leading-relaxed line-clamp-2">
+                  {currentFact}
+                </p>
+              </div>
             </div>
           </div>
         </div>
-
-        {/* Cancel Button */}
-        {onCancel && (
-          <div className="mt-6 text-center">
-            <button
-              onClick={handleCancel}
-              className="text-[#666] hover:text-[#888] text-sm transition-colors"
-            >
-              Cancel Analysis
-            </button>
-          </div>
-        )}
       </div>
-
-      {/* CSS for shimmer animation */}
-      <style jsx>{`
-        @keyframes shimmer {
-          0% { background-position: -200% 0; }
-          100% { background-position: 200% 0; }
-        }
-      `}</style>
     </div>
   )
 }
 
-// Export processing time estimates for use in other components
+// Export for use in other components
 export { PROCESSING_TIME_ESTIMATES, PROCESSING_STAGES }

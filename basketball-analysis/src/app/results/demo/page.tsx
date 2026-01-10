@@ -10,6 +10,7 @@ import { AnalysisDashboard } from "@/components/analysis/AnalysisDashboard"
 import { AnalysisCardGame } from "@/components/analysis/AnalysisCardGame"
 import { EnhancedShotStrip } from "@/components/analysis/EnhancedShotStrip"
 import { AutoScreenshots } from "@/components/analysis/AutoScreenshots"
+import { AnalysisProgressScreen, type InputType } from "@/components/analysis/AnalysisProgressScreen"
 import { VideoPlayerSection } from "@/components/analysis/VideoPlayerSection"
 import { LiveAnalysis, FullscreenLiveCamera } from "@/components/live"
 import { GoalTransitMap } from "@/components/goals"
@@ -171,13 +172,33 @@ interface HybridSkeletonDisplayProps {
   confidence?: number
   showStats?: boolean // Controls whether to show Confidence, Keypoints, Joint Angles, and Legend
   overlayToggles?: OverlayToggles // Controls which overlays to show
+  onDownload?: (downloadFn: () => void) => void // Callback to expose download function
 }
 
-function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, angles, confidence, showStats = true, overlayToggles }: HybridSkeletonDisplayProps) {
+function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, angles, confidence, showStats = true, overlayToggles, onDownload }: HybridSkeletonDisplayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const logoImageRef = useRef<HTMLImageElement | null>(null)
   const [logoLoaded, setLogoLoaded] = useState(false)
+  
+  // Download function to export canvas as PNG
+  const downloadCanvas = useCallback(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    
+    const dataUrl = canvas.toDataURL('image/png', 1.0)
+    const link = document.createElement('a')
+    link.download = `shotiq_analysis_${Date.now()}.png`
+    link.href = dataUrl
+    link.click()
+  }, [])
+  
+  // Expose download function to parent via callback
+  useEffect(() => {
+    if (onDownload) {
+      onDownload(downloadCanvas)
+    }
+  }, [onDownload, downloadCanvas])
   
   // Zoom state for hover zoom effect
   const [isZoomed, setIsZoomed] = useState(false)
@@ -764,6 +785,63 @@ function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, ang
 }
 
 // ============================================
+// MAIN ANALYSIS IMAGE SECTION - With Download Button
+// Wraps HybridSkeletonDisplay with controls and download
+// ============================================
+interface MainAnalysisImageSectionProps {
+  mainImageUrl: string
+  visionAnalysis?: VisionAnalysisResult | null
+  analysisData: AnalysisData
+  overlayToggles: OverlayToggles
+  setOverlayToggles: React.Dispatch<React.SetStateAction<OverlayToggles>>
+}
+
+function MainAnalysisImageSection({ mainImageUrl, visionAnalysis, analysisData, overlayToggles, setOverlayToggles }: MainAnalysisImageSectionProps) {
+  const [downloadFn, setDownloadFn] = useState<(() => void) | null>(null)
+  
+  return (
+    <div className="bg-[#2a2a2a] rounded-lg border border-[#4a4a4a] p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-[#FF6B35] font-bold text-sm uppercase tracking-wider flex items-center gap-2">
+          <Camera className="w-4 h-4" />
+          Main Analysis Image
+        </h3>
+        {downloadFn && (
+          <button
+            onClick={downloadFn}
+            className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-[#FF6B35] to-[#FF4500] hover:from-[#E55300] hover:to-[#E5A000] text-[#1a1a1a] font-semibold text-sm rounded-lg transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105"
+          >
+            <Download className="w-4 h-4" />
+            Download
+          </button>
+        )}
+      </div>
+      <HybridSkeletonDisplay
+        imageUrl={mainImageUrl}
+        keypoints={visionAnalysis?.keypoints}
+        basketball={visionAnalysis?.basketball}
+        imageSize={visionAnalysis?.image_size}
+        angles={visionAnalysis?.angles}
+        confidence={visionAnalysis?.confidence}
+        showStats={false}
+        overlayToggles={overlayToggles}
+        onDownload={(fn) => setDownloadFn(() => fn)}
+      />
+      {/* Overlay Controls directly under main image */}
+      <div className="mt-4">
+        <OverlayControls toggles={overlayToggles} setToggles={setOverlayToggles} />
+      </div>
+      {/* Flaws/Fixes Section - same as video mode */}
+      <div className="mt-6">
+        <AnnotationDropdownList 
+          fixes={generateFixesFromAngles(visionAnalysis?.angles || analysisData?.angles || {})} 
+        />
+      </div>
+    </div>
+  )
+}
+
+// ============================================
 // ANIMATED IMAGE WALKTHROUGH - Turns image into animated video
 // Zooms into each annotation, then back to full image
 // ============================================
@@ -781,6 +859,18 @@ function AnimatedImageWalkthrough({ imageUrl, keypoints, angles, imageSize }: An
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentPhase, setCurrentPhase] = useState<string>('ready')
   const [progress, setProgress] = useState(0)
+  
+  // Download function to export canvas as PNG
+  const downloadCanvas = useCallback(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    
+    const dataUrl = canvas.toDataURL('image/png', 1.0)
+    const link = document.createElement('a')
+    link.download = `shotiq_animated_form_${Date.now()}.png`
+    link.href = dataUrl
+    link.click()
+  }, [])
   
   // Animation state
   const [zoomLevel, setZoomLevel] = useState(1)
@@ -1213,11 +1303,20 @@ function AnimatedImageWalkthrough({ imageUrl, keypoints, angles, imageSize }: An
   
   return (
     <div className="space-y-4">
-      <div className="text-center">
-        <h3 className="text-[#FF6B35] font-bold text-sm uppercase tracking-wider mb-2">
-          Animated Form Walkthrough
-        </h3>
-        <p className="text-[#888] text-xs">Watch as we highlight each key point of your form</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-[#FF6B35] font-bold text-sm uppercase tracking-wider mb-1">
+            Animated Form Walkthrough
+          </h3>
+          <p className="text-[#888] text-xs">Watch as we highlight each key point of your form</p>
+        </div>
+        <button
+          onClick={downloadCanvas}
+          className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-[#FF6B35] to-[#FF4500] hover:from-[#E55300] hover:to-[#E5A000] text-[#1a1a1a] font-semibold text-sm rounded-lg transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105"
+        >
+          <Download className="w-4 h-4" />
+          Download
+        </button>
       </div>
       
       {/* Canvas container */}
@@ -1437,6 +1536,7 @@ interface AnalysisData {
   measurements: { shoulderAngle: number; elbowAngle: number; hipAngle: number; kneeAngle: number; ankleAngle: number; releaseHeight: number; releaseAngle: number; entryAngle: number }
   matchedShooter: { name: string; team: string; similarityScore: number; position: string }
   shootingStats: { release: number; form: number; balance: number; arc: number; elbow: number; follow: number; consist: number; power: number }
+  angles?: Record<string, number> // Raw angles from pose detection for Form Analysis Breakdown
 }
 
 // Import types from analysisStore (where they are now defined)
@@ -1545,6 +1645,8 @@ function convertVisionToAnalysisData(vision: VisionAnalysisResult | null): Analy
       team: "Golden State Warriors",
       position: "PG",
     },
+    // Pass through raw angles for Form Analysis Breakdown
+    angles: hybridAngles,
   }
 }
 
@@ -1617,7 +1719,19 @@ function convertFormAnalysisToAnalysisData(formAnalysis: FormAnalysisResult | nu
       follow: Math.round(70 + Math.random() * 15),
       consist: Math.round(65 + Math.random() * 20),
       power: Math.round(calculateScore(kneeAngle, 130, 160, 30))
-    }
+    },
+    // Convert formAnalysis angles to the format expected by generateFixesFromAngles
+    angles: formAnalysis.angles?.reduce((acc, a) => {
+      // Map angle names to expected keys
+      if (a.name === 'Elbow Angle') {
+        acc['right_elbow_angle'] = a.angle
+      } else if (a.name === 'Knee Bend') {
+        acc['right_knee_angle'] = a.angle
+      } else if (a.name === 'Shoulder Angle') {
+        acc['shoulder_tilt'] = a.angle
+      }
+      return acc
+    }, {} as Record<string, number>) || {}
   }
 }
 
@@ -1729,6 +1843,12 @@ function DemoResultsPageContent() {
   const [showFabMenu, setShowFabMenu] = useState(false)
   const [showAnalyzeSubMenu, setShowAnalyzeSubMenu] = useState(false)
   
+  // Processing screen state for 7-stage popup
+  const [showProcessingScreen, setShowProcessingScreen] = useState(false)
+  const [processingComplete, setProcessingComplete] = useState(false)
+  const [processingError, setProcessingError] = useState<string | null>(null)
+  const [processingInputType, setProcessingInputType] = useState<InputType>("3_images")
+  
   // Handle ?tab= query parameter to auto-switch tabs
   useEffect(() => {
     const tabParam = searchParams.get('tab')
@@ -1740,7 +1860,7 @@ function DemoResultsPageContent() {
   // Get uploaded image and form analysis from store - hooks must be called unconditionally
   const storeData = useAnalysisStore()
   
-  const { formAnalysisResult, visionAnalysisResult, playerProfile, poseConfidence, teaserFrames, fullFrames, allUploadedUrls, uploadedImageBase64, roboflowBallDetection, videoAnalysisData, mediaType, setUploadedImageBase64, setVideoAnalysisData } = storeData || {}
+  const { formAnalysisResult, visionAnalysisResult, playerProfile, poseConfidence, teaserFrames, fullFrames, allUploadedUrls, uploadedImageBase64, roboflowBallDetection, videoAnalysisData, mediaType, setUploadedImageBase64, setVideoAnalysisData, setVisionAnalysisResult, setMediaType } = storeData || {}
   
   // 🎒 BACKPACK SYSTEM: Load latest sessions by media type from session storage
   const [latestImageSession, setLatestImageSession] = useState<AnalysisSession | null>(null)
@@ -1795,68 +1915,56 @@ function DemoResultsPageContent() {
     }
   }, [mediaType, videoAnalysisData])
   
-  // 🎒 IMAGE TAB: Use store data first, fall back to latest image session
+  // 🎒 IMAGE TAB: ONLY show data if an image was uploaded in this session
+  // Do NOT fall back to stored sessions - keep IMAGE and VIDEO completely separate
   const imageMainUrl = useMemo(() => {
-    // First try store data (current analysis)
-    if (uploadedImageBase64 && mediaType !== "VIDEO") return uploadedImageBase64
-    if (allUploadedUrls.length > 0 && mediaType !== "VIDEO") return allUploadedUrls[0]
-    // Fall back to latest image session from storage
-    if (latestImageSession?.mainImageBase64) return latestImageSession.mainImageBase64
+    // Only show image data if mediaType is IMAGE (user uploaded an image)
+    if (mediaType === "IMAGE") {
+      if (uploadedImageBase64) return uploadedImageBase64
+      if (allUploadedUrls.length > 0) return allUploadedUrls[0]
+    }
+    // Return null if no image uploaded - show empty upload state
     return null
-  }, [uploadedImageBase64, allUploadedUrls, mediaType, latestImageSession])
+  }, [uploadedImageBase64, allUploadedUrls, mediaType])
   
   const imageVisionAnalysis = useMemo(() => {
-    // First try store data (current analysis)
-    if (visionAnalysisResult && mediaType !== "VIDEO") return visionAnalysisResult
-    // Fall back to latest image session - reconstruct vision analysis from session data
-    if (latestImageSession?.analysisData) {
-      return {
-        success: true,
-        angles: latestImageSession.analysisData.angles,
-        keypoints: (latestImageSession.analysisData as any).keypoints,
-        basketball: (latestImageSession.analysisData as any).basketball,
-        image_size: (latestImageSession.analysisData as any).imageSize,
-        overall_score: latestImageSession.analysisData.overallScore,
-      }
+    // Only show vision analysis if mediaType is IMAGE (user uploaded an image)
+    if (mediaType === "IMAGE" && visionAnalysisResult) {
+      return visionAnalysisResult
     }
+    // Return null if no image uploaded - show empty upload state
     return null
-  }, [visionAnalysisResult, mediaType, latestImageSession])
+  }, [visionAnalysisResult, mediaType])
   
-  // 🎒 VIDEO TAB: Use store data first, fall back to latest video session
+  // 🎒 VIDEO TAB: ONLY show data if a video was uploaded in this session
+  // Do NOT fall back to stored sessions - keep IMAGE and VIDEO completely separate
   const videoMainUrl = useMemo(() => {
-    // First try store data (full video frames)
-    if (videoAnalysisData?.annotatedFramesBase64?.[0]) return videoAnalysisData.annotatedFramesBase64[0]
-    if (uploadedImageBase64 && mediaType === "VIDEO") return uploadedImageBase64
-    // Fall back to latest video session
-    if (latestVideoSession?.videoData?.annotatedFramesBase64?.[0]) return latestVideoSession.videoData.annotatedFramesBase64[0]
-    if (latestVideoSession?.mainImageBase64) return latestVideoSession.mainImageBase64
+    // Only show video data if mediaType is VIDEO (user uploaded a video)
+    if (mediaType === "VIDEO") {
+      if (videoAnalysisData?.annotatedFramesBase64?.[0]) return videoAnalysisData.annotatedFramesBase64[0]
+      if (uploadedImageBase64) return uploadedImageBase64
+    }
+    // Return null if no video uploaded - show empty upload state
     return null
-  }, [videoAnalysisData, uploadedImageBase64, mediaType, latestVideoSession])
+  }, [videoAnalysisData, uploadedImageBase64, mediaType])
   
   const videoVisionAnalysis = useMemo(() => {
-    // First try store data
-    if (visionAnalysisResult && mediaType === "VIDEO") return visionAnalysisResult
-    // Fall back to latest video session - reconstruct vision analysis from session data
-    if (latestVideoSession?.analysisData) {
-      return {
-        success: true,
-        angles: latestVideoSession.analysisData.angles,
-        keypoints: (latestVideoSession.analysisData as any).keypoints,
-        basketball: (latestVideoSession.analysisData as any).basketball,
-        image_size: (latestVideoSession.analysisData as any).imageSize,
-        overall_score: latestVideoSession.analysisData.overallScore,
-      }
+    // Only show vision analysis if mediaType is VIDEO (user uploaded a video)
+    if (mediaType === "VIDEO" && visionAnalysisResult) {
+      return visionAnalysisResult
     }
+    // Return null if no video uploaded - show empty upload state
     return null
-  }, [visionAnalysisResult, mediaType, latestVideoSession])
+  }, [visionAnalysisResult, mediaType])
   
   const effectiveVideoData = useMemo(() => {
-    // First try store data
-    if (videoAnalysisData) return videoAnalysisData
-    // Fall back to latest video session
-    if (latestVideoSession?.videoData) return latestVideoSession.videoData
+    // Only show video data if mediaType is VIDEO (user uploaded a video)
+    if (mediaType === "VIDEO" && videoAnalysisData) {
+      return videoAnalysisData
+    }
+    // Return null if no video uploaded - show empty upload state
     return null
-  }, [videoAnalysisData, latestVideoSession])
+  }, [videoAnalysisData, mediaType])
   
   // Use base64 image (persists across navigation) or fall back to blob URL
   // This is the original mainImageUrl for backward compatibility
@@ -1886,7 +1994,7 @@ function DemoResultsPageContent() {
               {/* Tab Navigation - Hidden on mobile (FAB handles it) */}
               <div className="hidden md:block p-4 border-b border-[#3a3a3a]">
                 <div className="flex items-center justify-center">
-                  {/* Tab Navigation - Just switches modes, upload buttons are in content area */}
+                  {/* Tab Navigation */}
                   <div className="inline-flex rounded-lg bg-[#1a1a1a] p-1">
                     {(["video", "image", "live"] as ResultsMode[]).map((mode) => (
                       <button 
@@ -1912,6 +2020,9 @@ function DemoResultsPageContent() {
                       </button>
                     ))}
                   </div>
+                  
+                  {/* Right: Spacer for balance */}
+                  <div className="w-[120px]"></div>
                 </div>
               </div>
               
@@ -1921,17 +2032,86 @@ function DemoResultsPageContent() {
                 accept="image/*"
                 ref={(el) => { if (el) (window as any).__imageUploadInput = el }}
                 className="hidden"
-                onChange={(e) => {
+                onChange={async (e) => {
                   const file = e.target.files?.[0]
+                  console.log('📸 Image file selected:', file?.name, file?.size)
                   if (file) {
-                    // Convert to base64 and store
-                    const reader = new FileReader()
-                    reader.onload = (event) => {
-                      const base64 = event.target?.result as string
-                      setUploadedImageBase64(base64)
+                    try {
+                      console.log('📸 Starting image analysis...')
                       setResultsMode("image")
+                      
+                      // Show 7-stage processing screen
+                      setProcessingInputType("3_images")
+                      setProcessingComplete(false)
+                      setProcessingError(null)
+                      setShowProcessingScreen(true)
+                      
+                      // Import the hybrid analysis service
+                      const { analyzeShootingForm } = await import('@/services/visionAnalysis')
+                      const { createSessionFromAnalysis, saveSession } = await import('@/services/sessionStorage')
+                      const { detectFlawsFromAngles, getShooterLevel } = await import('@/data/shootingFlawsDatabase')
+                      
+                      // Convert file to base64 for storage
+                      const reader = new FileReader()
+                      const base64Promise = new Promise<string>((resolve) => {
+                        reader.onload = (event) => resolve(event.target?.result as string)
+                        reader.readAsDataURL(file)
+                      })
+                      const imageBase64 = await base64Promise
+                      
+                      // Call the hybrid backend
+                      console.log('📸 Calling hybrid analyzeShootingForm...')
+                      const analysisResult = await analyzeShootingForm(file)
+                      console.log('📸 Analysis result:', analysisResult)
+                      
+                      if (!analysisResult.success) {
+                        console.error('Image analysis failed:', analysisResult.error)
+                        setProcessingError(analysisResult.error || 'Image analysis failed')
+                        return
+                      }
+                      
+                      // Store the image
+                      setUploadedImageBase64(imageBase64)
+                      
+                      // Set media type to IMAGE
+                      setMediaType?.("IMAGE")
+                      
+                      // Store the vision analysis result
+                      storeData?.setVisionAnalysisResult?.(analysisResult as any)
+                      
+                      // Save session
+                      const overallScore = analysisResult.overall_score || analysisResult.analysis?.overallScore || 70
+                      const angles = analysisResult.angles || analysisResult.analysis?.measurements || {}
+                      const detectedFlaws = detectFlawsFromAngles(angles).map((f: any) => f.name)
+                      const shooterLevel = getShooterLevel(overallScore)
+                      
+                      const session = createSessionFromAnalysis(
+                        imageBase64,
+                        imageBase64, // skeleton image (same for now)
+                        [], // screenshots
+                        {
+                          overallScore,
+                          shooterLevel: shooterLevel.name,
+                          angles,
+                          detectedFlaws,
+                          measurements: angles
+                        },
+                        storeData?.playerProfile?.name || 'Player',
+                        undefined,
+                        undefined,
+                        1 // imagesAnalyzed
+                      )
+                      
+                      saveSession(session)
+                      console.log('✅ Image session saved:', session.id)
+                      
+                      // Signal processing complete - the popup will close after animations finish
+                      setProcessingComplete(true)
+                      
+                    } catch (err) {
+                      console.error('Image upload error:', err)
+                      setProcessingError(err instanceof Error ? err.message : 'Failed to process image')
                     }
-                    reader.readAsDataURL(file)
                   }
                   e.target.value = '' // Reset for next upload
                 }}
@@ -1943,41 +2123,56 @@ function DemoResultsPageContent() {
                 className="hidden"
                 onChange={async (e) => {
                   const file = e.target.files?.[0]
+                  console.log('📹 Video file selected:', file?.name, file?.size)
                   if (file) {
-                    // Import and use the video analysis service directly
                     try {
+                      console.log('📹 Starting video analysis...')
+                      // Import video analysis service
                       const { analyzeVideoShooting, convertVideoToSessionFormat } = await import('@/services/videoAnalysis')
                       const { createSessionFromAnalysis, saveSession } = await import('@/services/sessionStorage')
                       const { detectFlawsFromAngles, getShooterLevel } = await import('@/data/shootingFlawsDatabase')
                       
-                      // Show loading state
+                      // Show 7-stage processing screen
                       setResultsMode("video")
+                      setProcessingInputType("1_video")
+                      setProcessingComplete(false)
+                      setProcessingError(null)
+                      setShowProcessingScreen(true)
                       
-                      // Analyze the video
+                      // Call Python backend to analyze video
+                      console.log('📹 Calling analyzeVideoShooting...')
                       const analysisResult = await analyzeVideoShooting(file)
+                      console.log('📹 Analysis result:', analysisResult)
                       
                       if (!analysisResult.success) {
                         console.error('Video analysis failed:', analysisResult.error)
-                        alert('Video analysis failed: ' + (analysisResult.error || 'Unknown error'))
+                        setProcessingError(analysisResult.error || 'Video analysis failed')
                         return
                       }
                       
                       // Convert to session format
                       const sessionData = convertVideoToSessionFormat(analysisResult)
                       
-                      // Store in analysis store
-                      setUploadedImageBase64(sessionData.mainImageBase64)
+                      // Store main image in analysis store
+                      storeData?.setUploadedImageBase64?.(sessionData.mainImageBase64)
                       
-                      // Set video analysis data with frames
-                      setVideoAnalysisData({
+                      // Set media type to VIDEO
+                      setMediaType?.("VIDEO")
+                      
+                      // Set video analysis data with ALL the data from Python backend
+                      console.log('📹 Setting video analysis data with', analysisResult.annotated_frames_base64?.length, 'frames')
+                      storeData?.setVideoAnalysisData?.({
                         videoUrl: URL.createObjectURL(file),
                         frames: analysisResult.frame_data || [],
                         annotatedFramesBase64: analysisResult.annotated_frames_base64,
-                        fps: analysisResult.fps,
+                        fps: analysisResult.fps || 10,
                         frameData: analysisResult.frame_data,
                         keyScreenshots: analysisResult.key_screenshots,
                         allKeypoints: analysisResult.all_keypoints,
+                        phases: analysisResult.phases,
+                        metrics: analysisResult.metrics,
                       })
+                      console.log('📹 Video analysis data set in store')
                       
                       // Create vision analysis result for compatibility
                       const visionResult = {
@@ -2027,68 +2222,73 @@ function DemoResultsPageContent() {
                       saveSession(session)
                       console.log("✅ Video session saved:", session.id)
                       
+                      // Signal processing complete - the popup will close after animations finish
+                      setProcessingComplete(true)
+                      
                     } catch (err) {
                       console.error('Video upload error:', err)
-                      alert('Failed to process video: ' + (err instanceof Error ? err.message : 'Unknown error'))
+                      setProcessingError(err instanceof Error ? err.message : 'Failed to process video')
                     }
                   }
                   e.target.value = '' // Reset for next upload
                 }}
               />
 
-              {/* Mobile FAB (Floating Action Button) with Simplified Menu */}
-              <div className="md:hidden fixed bottom-24 right-4 z-50">
-                {/* FAB Menu Options - Simplified to 2 main actions */}
+              {/* FAB (Floating Action Button) - Modern Professional Design */}
+              <div className="fixed bottom-24 right-4 z-50">
+                {/* FAB Menu - Glass morphism style */}
                 {showFabMenu && (
                   <>
-                    {/* Backdrop */}
+                    {/* Backdrop with blur */}
                     <div 
-                      className="fixed inset-0 bg-black/50 -z-10"
+                      className="fixed inset-0 bg-black/40 backdrop-blur-sm -z-10"
                       onClick={() => setShowFabMenu(false)}
                     />
                     
-                    {/* Menu Items - Only 2 Primary Actions */}
-                    <div className="absolute bottom-16 right-0 flex flex-col gap-3 items-end mb-2">
-                      {/* Start Workout - Takes to Training tab */}
+                    {/* Menu Container - Modern card style */}
+                    <div className="absolute bottom-16 right-0 mb-3 flex flex-col gap-2 items-end">
+                      {/* Start Workout */}
                       <button
                         onClick={() => {
                           setActiveTab('training')
                           setShowFabMenu(false)
                         }}
-                        className="flex items-center gap-3 bg-[#2a2a2a] border border-[#3a3a3a] rounded-full pl-4 pr-3 py-2 shadow-lg animate-in slide-in-from-bottom-2 duration-200"
+                        className="group flex items-center gap-3 bg-zinc-900/90 backdrop-blur-xl border border-zinc-700/50 rounded-2xl pl-5 pr-3 py-2.5 shadow-2xl transition-all duration-200 hover:bg-zinc-800/90 hover:scale-[1.02] animate-in slide-in-from-bottom-2 fade-in duration-200"
+                        style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)' }}
                       >
-                        <span className="text-white text-sm font-medium whitespace-nowrap">Start Workout</span>
-                        <div className="w-10 h-10 bg-[#22c55e] rounded-full flex items-center justify-center">
-                          <Dumbbell className="w-5 h-5 text-white" />
+                        <span className="text-zinc-100 text-sm font-medium whitespace-nowrap tracking-wide">Start Workout</span>
+                        <div className="w-9 h-9 bg-gradient-to-br from-emerald-400 to-green-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                          <Dumbbell className="w-4.5 h-4.5 text-white" />
                         </div>
                       </button>
                       
                       {/* Analyze Shot - Opens sub-menu */}
-                      <div className="relative group">
+                      <div className="relative">
                         <button
                           onClick={() => setShowAnalyzeSubMenu(!showAnalyzeSubMenu)}
-                          className="flex items-center gap-3 bg-[#2a2a2a] border border-[#3a3a3a] rounded-full pl-4 pr-3 py-2 shadow-lg animate-in slide-in-from-bottom-2 duration-200 delay-75"
+                          className="group flex items-center gap-3 bg-zinc-900/90 backdrop-blur-xl border border-zinc-700/50 rounded-2xl pl-5 pr-3 py-2.5 shadow-2xl transition-all duration-200 hover:bg-zinc-800/90 hover:scale-[1.02] animate-in slide-in-from-bottom-2 fade-in duration-200 delay-75"
+                          style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)' }}
                         >
-                          <span className="text-white text-sm font-medium whitespace-nowrap">Analyze Shot</span>
-                          <div className="w-10 h-10 bg-[#FF6B35] rounded-full flex items-center justify-center">
-                            <Target className="w-5 h-5 text-white" />
+                          <span className="text-zinc-100 text-sm font-medium whitespace-nowrap tracking-wide">Analyze Shot</span>
+                          <div className="w-9 h-9 bg-gradient-to-br from-orange-400 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/30">
+                            <Target className="w-4.5 h-4.5 text-white" />
                           </div>
                         </button>
                         
-                        {/* Analyze Sub-Menu */}
+                        {/* Analyze Sub-Menu - Floating cards */}
                         {showAnalyzeSubMenu && (
-                          <div className="absolute bottom-full right-0 mb-2 flex flex-col gap-2 items-end">
-                            {/* Go Live */}
+                          <div className="absolute bottom-full right-0 mb-2 flex flex-col gap-1.5 items-end">
+                            {/* Live Camera */}
                             <button
                               onClick={() => {
                                 setResultsMode("live")
                                 setShowFabMenu(false)
                                 setShowAnalyzeSubMenu(false)
                               }}
-                              className="flex items-center gap-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-full pl-3 pr-2 py-1.5 shadow-lg animate-in slide-in-from-bottom-1 duration-150"
+                              className="flex items-center gap-2.5 bg-zinc-800/95 backdrop-blur-xl border border-zinc-600/40 rounded-xl pl-4 pr-2.5 py-2 shadow-xl transition-all duration-150 hover:bg-zinc-700/95 hover:scale-[1.02] animate-in slide-in-from-bottom-1 fade-in duration-150"
                             >
-                              <span className="text-white text-xs font-medium whitespace-nowrap">Live Camera</span>
-                              <div className="w-7 h-7 bg-[#22c55e] rounded-full flex items-center justify-center">
+                              <span className="text-zinc-200 text-xs font-medium whitespace-nowrap">Live Camera</span>
+                              <div className="w-7 h-7 bg-gradient-to-br from-emerald-400 to-green-600 rounded-lg flex items-center justify-center">
                                 <Radio className="w-3.5 h-3.5 text-white" />
                               </div>
                             </button>
@@ -2100,10 +2300,10 @@ function DemoResultsPageContent() {
                                 setShowAnalyzeSubMenu(false)
                                 ;(window as any).__videoUploadInput?.click()
                               }}
-                              className="flex items-center gap-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-full pl-3 pr-2 py-1.5 shadow-lg animate-in slide-in-from-bottom-1 duration-150 delay-50"
+                              className="flex items-center gap-2.5 bg-zinc-800/95 backdrop-blur-xl border border-zinc-600/40 rounded-xl pl-4 pr-2.5 py-2 shadow-xl transition-all duration-150 hover:bg-zinc-700/95 hover:scale-[1.02] animate-in slide-in-from-bottom-1 fade-in duration-150 delay-50"
                             >
-                              <span className="text-white text-xs font-medium whitespace-nowrap">Upload Video</span>
-                              <div className="w-7 h-7 bg-[#ef4444] rounded-full flex items-center justify-center">
+                              <span className="text-zinc-200 text-xs font-medium whitespace-nowrap">Upload Video</span>
+                              <div className="w-7 h-7 bg-gradient-to-br from-rose-400 to-red-600 rounded-lg flex items-center justify-center">
                                 <Video className="w-3.5 h-3.5 text-white" />
                               </div>
                             </button>
@@ -2115,10 +2315,10 @@ function DemoResultsPageContent() {
                                 setShowAnalyzeSubMenu(false)
                                 ;(window as any).__imageUploadInput?.click()
                               }}
-                              className="flex items-center gap-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-full pl-3 pr-2 py-1.5 shadow-lg animate-in slide-in-from-bottom-1 duration-150 delay-100"
+                              className="flex items-center gap-2.5 bg-zinc-800/95 backdrop-blur-xl border border-zinc-600/40 rounded-xl pl-4 pr-2.5 py-2 shadow-xl transition-all duration-150 hover:bg-zinc-700/95 hover:scale-[1.02] animate-in slide-in-from-bottom-1 fade-in duration-150 delay-100"
                             >
-                              <span className="text-white text-xs font-medium whitespace-nowrap">Upload Image</span>
-                              <div className="w-7 h-7 bg-[#3b82f6] rounded-full flex items-center justify-center">
+                              <span className="text-zinc-200 text-xs font-medium whitespace-nowrap">Upload Image</span>
+                              <div className="w-7 h-7 bg-gradient-to-br from-sky-400 to-blue-600 rounded-lg flex items-center justify-center">
                                 <ImageIcon className="w-3.5 h-3.5 text-white" />
                               </div>
                             </button>
@@ -2129,16 +2329,46 @@ function DemoResultsPageContent() {
                   </>
                 )}
                 
-                {/* Main FAB Button */}
+                {/* Main FAB Button - Modern Professional Design */}
                 <button
                   onClick={() => {
                     setShowFabMenu(!showFabMenu)
                     if (showFabMenu) setShowAnalyzeSubMenu(false)
                   }}
-                  className={`flex items-center justify-center w-14 h-14 bg-[#FF6B35] text-white rounded-full shadow-lg shadow-[#FF6B35]/30 transition-all duration-200 ${showFabMenu ? 'rotate-45 bg-[#E55300]' : 'hover:bg-[#E55300] hover:scale-105 active:scale-95'}`}
+                  className={`
+                    group relative flex items-center justify-center w-14 h-14 rounded-2xl
+                    transition-all duration-300 ease-out
+                    ${showFabMenu 
+                      ? 'bg-zinc-800 rotate-45 scale-95' 
+                      : 'bg-gradient-to-br from-orange-500 via-orange-600 to-amber-600 hover:scale-110 active:scale-95'
+                    }
+                  `}
                   aria-label="Quick actions"
+                  style={{
+                    boxShadow: showFabMenu 
+                      ? '0 4px 20px rgba(0,0,0,0.3)' 
+                      : '0 8px 32px rgba(249, 115, 22, 0.4), 0 4px 16px rgba(249, 115, 22, 0.3), inset 0 1px 0 rgba(255,255,255,0.2)'
+                  }}
                 >
-                  <Plus className="w-6 h-6" />
+                  {/* Glow ring effect */}
+                  <div className={`
+                    absolute inset-0 rounded-2xl transition-opacity duration-300
+                    ${showFabMenu ? 'opacity-0' : 'opacity-100'}
+                  `} style={{
+                    background: 'linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%)',
+                    borderRadius: 'inherit'
+                  }} />
+                  
+                  {/* Pulse animation ring */}
+                  {!showFabMenu && (
+                    <div className="absolute inset-0 rounded-2xl animate-ping opacity-20 bg-orange-500" style={{ animationDuration: '2s' }} />
+                  )}
+                  
+                  {/* Icon */}
+                  <Plus className={`
+                    w-6 h-6 relative z-10 transition-all duration-300
+                    ${showFabMenu ? 'text-zinc-400' : 'text-white drop-shadow-sm'}
+                  `} strokeWidth={2.5} />
                 </button>
               </div>
               {/* 🎒 VIDEO TAB: Uses red backpack (effectiveVideoData, videoMainUrl, videoVisionAnalysis) */}
@@ -2199,6 +2429,29 @@ function DemoResultsPageContent() {
             </div>
           </div>
         </div>
+        
+        {/* 7-Stage Processing Screen Popup */}
+        <AnalysisProgressScreen
+          isVisible={showProcessingScreen}
+          inputType={processingInputType}
+          actualProcessingComplete={processingComplete}
+          errorMessage={processingError}
+          onComplete={() => {
+            setShowProcessingScreen(false)
+            setProcessingComplete(false)
+            setProcessingError(null)
+          }}
+          onCancel={() => {
+            setShowProcessingScreen(false)
+            setProcessingComplete(false)
+            setProcessingError(null)
+          }}
+          onRetry={() => {
+            setProcessingError(null)
+            setShowProcessingScreen(false)
+            // User will need to click upload again
+          }}
+        />
       </main>
   )
 }
@@ -2966,19 +3219,9 @@ function AnnotationDropdownList({ fixes }: AnnotationDropdownListProps) {
     bad: 'FIX THIS',
   }
 
-  // Show message if no fixes detected
+  // Hide entirely if no fixes detected (instead of showing empty message)
   if (!fixes || fixes.length === 0) {
-    return (
-      <div className="space-y-2 mt-4">
-        <h4 className="text-[#888] text-xs uppercase tracking-wider flex items-center gap-2 mb-3">
-          <ClipboardList className="w-3 h-3" />
-          Form Analysis Breakdown
-        </h4>
-        <div className="bg-[#1a1a1a] rounded-lg p-4 text-center">
-          <p className="text-[#888]">No angle data available for this frame. Try selecting a different phase.</p>
-        </div>
-      </div>
-    )
+    return null
   }
 
   return (
@@ -3407,34 +3650,27 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
     return visionAnalysis
   }, [releaseKeypoints, releaseBall, releaseMetrics, visionAnalysis])
   
-  // If no video data, show "No Video Uploaded" screen with upload button
-  if (!videoData || !videoData.annotatedFramesBase64 || videoData.annotatedFramesBase64.length === 0) {
+  // Check if we have video data
+  const hasVideoData = videoData && videoData.annotatedFramesBase64 && videoData.annotatedFramesBase64.length > 0
+  
+  // If no video data, render ImageModeContent with hideMainImage=false so it shows the upload box
+  // but still displays the full dashboard (player card, elite shooters, etc.)
+  if (!hasVideoData) {
     return (
-      <div className="p-6">
-        <div className="bg-gradient-to-br from-[#1a1a1a] via-[#252525] to-[#1a1a1a] rounded-lg border border-[#3a3a3a] p-12">
-          <div className="text-center py-8">
-            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FF4500]/20 border border-[#FF6B35]/30 flex items-center justify-center">
-              <Video className="w-10 h-10 text-[#FF6B35]" />
-            </div>
-            <h3 className="text-[#FF6B35] font-bold text-2xl mb-3 tracking-tight">No Video Uploaded</h3>
-            {/* Desktop: Show description and upload button */}
-            <p className="hidden md:block text-[#E5E5E5] text-sm mb-8 max-w-md mx-auto leading-relaxed">
-              Click the button below to upload a video and see your shooting form analysis with frame-by-frame breakdown.
-            </p>
-            <button 
-              onClick={() => (window as any).__videoUploadInput?.click()}
-              className="hidden md:inline-flex items-center gap-2 bg-gradient-to-r from-[#FF6B35] to-[#FF4500] hover:from-[#E55300] hover:to-[#E5A000] text-[#1a1a1a] font-semibold px-8 py-3.5 rounded-xl transition-all duration-200 shadow-lg shadow-[#FF6B35]/20 hover:shadow-[#FF6B35]/40 hover:scale-105"
-            >
-              <Upload className="w-5 h-5" />
-              Upload Video
-            </button>
-            {/* Mobile: Just hint to use FAB */}
-            <p className="md:hidden text-[#666] text-sm mt-4">
-              Tap the <span className="text-[#FF6B35] font-semibold">+</span> button to get started
-            </p>
-          </div>
-        </div>
-      </div>
+      <ImageModeContent 
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        analysisData={analysisData}
+        playerName={playerName}
+        poseConfidence={poseConfidence}
+        teaserFrames={teaserFrames}
+        fullFrames={fullFrames}
+        allUploadedUrls={allUploadedUrls}
+        mainImageUrl={null}  // No image = shows upload box
+        visionAnalysis={null}
+        roboflowBallDetection={roboflowBallDetection}
+        isVideoMode={true}  // Tell ImageModeContent to show video upload button
+      />
     )
   }
   
@@ -3462,8 +3698,11 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
       <div className="p-6 border-b border-[#3a3a3a]">
         <div className="max-w-3xl mx-auto">
           {(() => {
-            // Get angles from current frame metrics or analysisData
-            // Video frameData stores angles in the 'metrics' field
+            // Get angles from multiple sources with fallback chain:
+            // 1. Current frame metrics from frameData
+            // 2. Video summary metrics (elbow_angle_range, knee_angle_range)
+            // 3. analysisData.angles
+            
             const currentFrameData = videoData.frameData?.[currentFrame]
             const frameMetrics = currentFrameData?.metrics || {}
             
@@ -3471,7 +3710,7 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
             // The backend stores angles like 'elbow_angle', 'knee_angle' in metrics
             const frameAngles: Record<string, number> = {}
             
-            // Map common metric names to angle names
+            // Map from frame-level metrics
             if (frameMetrics.elbow_angle !== undefined) {
               frameAngles.right_elbow_angle = frameMetrics.elbow_angle
             }
@@ -3484,6 +3723,7 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
             if (frameMetrics.hip_tilt !== undefined) {
               frameAngles.hip_tilt = frameMetrics.hip_tilt
             }
+            // Direct mappings if already in correct format
             if (frameMetrics.left_elbow_angle !== undefined) {
               frameAngles.left_elbow_angle = frameMetrics.left_elbow_angle
             }
@@ -3497,7 +3737,18 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
               frameAngles.right_knee_angle = frameMetrics.right_knee_angle
             }
             
-            // Fall back to analysisData.angles if no frame-specific angles
+            // If no frame-specific angles, try video summary metrics
+            if (Object.keys(frameAngles).length === 0 && videoData.metrics) {
+              const summaryMetrics = videoData.metrics
+              if (summaryMetrics.elbow_angle_range?.at_release) {
+                frameAngles.right_elbow_angle = summaryMetrics.elbow_angle_range.at_release
+              }
+              if (summaryMetrics.knee_angle_range?.min) {
+                frameAngles.right_knee_angle = summaryMetrics.knee_angle_range.min
+              }
+            }
+            
+            // Final fallback to analysisData.angles
             const finalAngles = Object.keys(frameAngles).length > 0 
               ? frameAngles 
               : (analysisData?.angles || {})
@@ -3550,7 +3801,7 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
         visionAnalysis={videoVisionAnalysisForScreenshots}
         roboflowBallDetection={roboflowBallDetection}
         hideAnimatedWalkthrough={true}
-        hideAutoScreenshots={false}
+        hideAutoScreenshots={true}
         hideMainImage={true}
       />
     </>
@@ -3643,9 +3894,10 @@ interface ImageModeContentProps {
   hideAnimatedWalkthrough?: boolean  // Hide animated walkthrough for video mode
   hideAutoScreenshots?: boolean  // Hide auto screenshots for video mode
   hideMainImage?: boolean  // Hide main analysis image for video mode (we have GSAP player)
+  isVideoMode?: boolean  // When true, show video upload button instead of image upload button
 }
 
-function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, poseConfidence, teaserFrames, fullFrames, allUploadedUrls, mainImageUrl, cleanImageUrl, visionAnalysis, roboflowBallDetection, hideAnimatedWalkthrough = false, hideAutoScreenshots = false, hideMainImage = false }: ImageModeContentProps) {
+function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, poseConfidence, teaserFrames, fullFrames, allUploadedUrls, mainImageUrl, cleanImageUrl, visionAnalysis, roboflowBallDetection, hideAnimatedWalkthrough = false, hideAutoScreenshots = false, hideMainImage = false, isVideoMode = false }: ImageModeContentProps) {
   // Track hydration to handle SSR/client mismatch
   // const [isHydrated, setIsHydrated] = useState(false)
   
@@ -3900,43 +4152,38 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
           
           {/* Main Analysis Image removed for video mode - using GSAP player instead */}
           {!hideMainImage && mainImageUrl ? (
-            <div className="bg-[#2a2a2a] rounded-lg border border-[#4a4a4a] p-6">
-              <h3 className="text-[#FF6B35] font-bold text-sm uppercase tracking-wider mb-4 flex items-center gap-2">
-                <Camera className="w-4 h-4" />
-                Main Analysis Image
-              </h3>
-              <HybridSkeletonDisplay
-                imageUrl={mainImageUrl}
-                keypoints={visionAnalysis?.keypoints}
-                basketball={visionAnalysis?.basketball}
-                imageSize={visionAnalysis?.image_size}
-                angles={visionAnalysis?.angles}
-                confidence={visionAnalysis?.confidence}
-                showStats={false}
-                overlayToggles={overlayToggles}
-              />
-              {/* Overlay Controls directly under main image */}
-              <div className="mt-4">
-                <OverlayControls toggles={overlayToggles} setToggles={setOverlayToggles} />
-              </div>
-            </div>
+            <MainAnalysisImageSection
+              mainImageUrl={mainImageUrl}
+              visionAnalysis={visionAnalysis}
+              analysisData={analysisData}
+              overlayToggles={overlayToggles}
+              setOverlayToggles={setOverlayToggles}
+            />
           ) : !hideMainImage ? (
             <div className="bg-gradient-to-br from-[#1a1a1a] via-[#252525] to-[#1a1a1a] rounded-lg border border-[#3a3a3a] p-12">
               <div className="text-center py-8">
                 <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FF4500]/20 border border-[#FF6B35]/30 flex items-center justify-center">
-                  <ImageIcon className="w-10 h-10 text-[#FF6B35]" />
+                  {isVideoMode ? <Video className="w-10 h-10 text-[#FF6B35]" /> : <ImageIcon className="w-10 h-10 text-[#FF6B35]" />}
                 </div>
-                <h3 className="text-[#FF6B35] font-bold text-2xl mb-3 tracking-tight">No Image Uploaded</h3>
+                <h3 className="text-[#FF6B35] font-bold text-2xl mb-3 tracking-tight">
+                  {isVideoMode ? "No Video Uploaded" : "No Image Uploaded"}
+                </h3>
                 {/* Desktop: Show description and upload button */}
                 <p className="hidden md:block text-[#E5E5E5] text-sm mb-8 max-w-md mx-auto leading-relaxed">
-                  Click the button below to upload an image and see your shooting form analysis with detailed biomechanical measurements.
+                  {isVideoMode 
+                    ? "Upload a video to see your shooting form analysis with the 3-stage breakdown: Full Speed, Label Tutorial, and Slow Motion."
+                    : "Upload an image to see your shooting form analysis with detailed biomechanical measurements."
+                  }
                 </p>
                 <button 
-                  onClick={() => (window as any).__imageUploadInput?.click()}
+                  onClick={() => isVideoMode 
+                    ? (window as any).__videoUploadInput?.click() 
+                    : (window as any).__imageUploadInput?.click()
+                  }
                   className="hidden md:inline-flex items-center gap-2 bg-gradient-to-r from-[#FF6B35] to-[#FF4500] hover:from-[#E55300] hover:to-[#E5A000] text-[#1a1a1a] font-semibold px-8 py-3.5 rounded-xl transition-all duration-200 shadow-lg shadow-[#FF6B35]/20 hover:shadow-[#FF6B35]/40 hover:scale-105"
                 >
                   <Upload className="w-5 h-5" />
-                  Upload
+                  {isVideoMode ? "Upload Video" : "Upload Image"}
                 </button>
                 {/* Mobile: Just hint to use FAB */}
                 <p className="md:hidden text-[#666] text-sm mt-4">
@@ -3947,38 +4194,7 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
           ) : null}
 
           {/* ============================================ */}
-          {/* 2. FORM ANALYSIS BREAKDOWN (always visible) */}
-          {/* ============================================ */}
-          {mainImageUrl && (
-            <div className="bg-gradient-to-br from-[#1a1a1a] via-[#252525] to-[#1a1a1a] rounded-lg p-6 border border-[#FF6B35]/30">
-              <h3 className="text-[#FF6B35] font-bold text-sm uppercase tracking-wider mb-4 flex items-center gap-2">
-                <BarChart3 className="w-4 h-4" />
-                Form Analysis Breakdown
-              </h3>
-              <div>
-                <h2 className="text-xl font-black text-white mb-2 uppercase tracking-wide">
-                  {analysisData.overallScore >= 80 ? "EXCELLENT FORM" : analysisData.overallScore >= 65 ? "SOLID FORM WITH MINOR ADJUSTMENTS NEEDED" : "FORM NEEDS IMPROVEMENT"}
-                </h2>
-                <p className="text-[#888] text-sm mb-3">
-                  {analysisData.overallScore >= 80
-                    ? "Your shooting mechanics are well-aligned with elite standards."
-                    : analysisData.overallScore >= 65
-                    ? "Good foundation with a few areas to refine for consistency."
-                    : "Focus on the fundamentals below to improve your shot."}
-                </p>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  <span className="text-xs px-2 py-1 rounded bg-[#FF6B35]/20 text-[#FF6B35]">Top Fix: Elbow alignment</span>
-                  <span className="text-xs px-2 py-1 rounded bg-[#FF6B35]/20 text-[#FF6B35]">Top Fix: Follow-through</span>
-                  <span className="text-xs px-2 py-1 rounded bg-[#FF6B35]/20 text-[#FF6B35]">Top Fix: Balance</span>
-                </div>
-              </div>
-              {/* Annotation Dropdown List - detailed fixes */}
-              <AnnotationDropdownList fixes={generateFixesFromAngles(visionAnalysis?.angles || {})} />
-            </div>
-          )}
-
-          {/* ============================================ */}
-          {/* 3. ANIMATED FORM WALKTHROUGH (collapsible dropdown) */}
+          {/* 2. ANIMATED FORM WALKTHROUGH (collapsible dropdown) */}
           {/* ============================================ */}
           {mainImageUrl && !hideAnimatedWalkthrough && (
             <CollapsibleDropdown
@@ -4055,12 +4271,7 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
               title="Sample Strip"
               watermark="SAMPLE"
             />
-          ) : (
-            <div className="bg-[#2a2a2a] rounded-lg p-6 border border-[#4a4a4a] text-center">
-              <p className="text-[#888] text-sm">No shot breakdown frames available.</p>
-              <p className="text-[#666] text-xs mt-1">Upload 3-7 images on the home page to see your shot breakdown.</p>
-            </div>
-          )}
+          ) : null}
 
           {/* Media Thumbnails */}
           {allUploadedUrls.length > 0 && (

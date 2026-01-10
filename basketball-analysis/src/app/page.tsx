@@ -9,7 +9,7 @@ import { useProfileStore } from '@/stores/profileStore'
  * Landing page that handles authentication routing
  * - If not authenticated: redirect to /signin
  * - If authenticated but profile incomplete: redirect to /onboarding  
- * - If authenticated with complete profile: redirect to /upload
+ * - If authenticated with complete profile: redirect to /results/demo (dashboard)
  */
 export default function Home() {
   const router = useRouter()
@@ -24,7 +24,8 @@ export default function Home() {
       } else if (!profileComplete && !user?.profileComplete) {
         router.replace('/onboarding')
       } else {
-        router.replace('/upload')
+        // Returning users go directly to dashboard
+        router.replace('/results/demo')
       }
     }, 100)
 

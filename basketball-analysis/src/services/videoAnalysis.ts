@@ -239,13 +239,37 @@ export function convertVideoToSessionFormat(
   overallScore = Math.min(100, Math.max(0, overallScore))
   
   // Build angles from release frame metrics
+  // Map to the format expected by generateFixesFromAngles (right_elbow_angle, right_knee_angle, etc.)
   const angles: Record<string, number> = {}
   if (videoResult.metrics) {
     if (videoResult.metrics.elbow_angle_range.at_release) {
+      // Map to both formats for compatibility
       angles['elbow_angle'] = videoResult.metrics.elbow_angle_range.at_release
+      angles['right_elbow_angle'] = videoResult.metrics.elbow_angle_range.at_release
     }
     if (videoResult.metrics.knee_angle_range.min) {
+      // Map to both formats for compatibility
       angles['knee_angle'] = videoResult.metrics.knee_angle_range.min
+      angles['right_knee_angle'] = videoResult.metrics.knee_angle_range.min
+    }
+  }
+  
+  // Also try to get angles from the release frame's metrics directly
+  const releaseFrame = videoResult.metrics?.release_frame ?? 0
+  const releaseFrameData = videoResult.frame_data?.[releaseFrame]
+  if (releaseFrameData?.metrics) {
+    const fm = releaseFrameData.metrics
+    if (fm.elbow_angle !== undefined && !angles['right_elbow_angle']) {
+      angles['right_elbow_angle'] = fm.elbow_angle
+    }
+    if (fm.knee_angle !== undefined && !angles['right_knee_angle']) {
+      angles['right_knee_angle'] = fm.knee_angle
+    }
+    if (fm.shoulder_tilt !== undefined) {
+      angles['shoulder_tilt'] = fm.shoulder_tilt
+    }
+    if (fm.hip_tilt !== undefined) {
+      angles['hip_tilt'] = fm.hip_tilt
     }
   }
   
