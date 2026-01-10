@@ -219,7 +219,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   // Throttled pose state to reduce glitching
   const [throttledPose, setThrottledPose] = useState<any>(null)
   const lastPoseUpdateRef = useRef<number>(0)
-  const POSE_UPDATE_INTERVAL = 100 // Update skeleton every 100ms (10fps) to reduce glitching
+  const POSE_UPDATE_INTERVAL = 150 // Update skeleton every 150ms (~7fps) for smoother visuals
 
   // Pose detection hook - reduced FPS to prevent glitching
   const {
@@ -235,7 +235,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     stopDetection,
   } = usePoseDetection({
     modelType: 'lightning',
-    targetFps: 15, // Reduced from 30 to prevent glitching - smoother performance
+    targetFps: 12, // Reduced to 12fps for smoother skeleton rendering
     onShootingDetected: (detectedPose) => {
       console.log('[FullscreenLive] Shooting motion detected!')
       // Show shot flash
@@ -247,16 +247,33 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     },
   })
 
-  // Throttle pose updates to reduce visual glitching
+  // Throttle and smooth pose updates to reduce visual glitching
   useEffect(() => {
     if (pose) {
       const now = Date.now()
       if (now - lastPoseUpdateRef.current >= POSE_UPDATE_INTERVAL) {
-        setThrottledPose(pose)
+        // Apply smoothing by interpolating between old and new pose
+        if (throttledPose && throttledPose.keypoints) {
+          const smoothingFactor = 0.4 // 0 = no smoothing, 1 = full smoothing (no movement)
+          const smoothedKeypoints = pose.keypoints.map((kp: any, i: number) => {
+            const oldKp = throttledPose.keypoints[i]
+            if (oldKp && kp.score > 0.2) {
+              return {
+                ...kp,
+                x: oldKp.x + (kp.x - oldKp.x) * (1 - smoothingFactor),
+                y: oldKp.y + (kp.y - oldKp.y) * (1 - smoothingFactor),
+              }
+            }
+            return kp
+          })
+          setThrottledPose({ ...pose, keypoints: smoothedKeypoints })
+        } else {
+          setThrottledPose(pose)
+        }
         lastPoseUpdateRef.current = now
       }
     }
-  }, [pose])
+  }, [pose, throttledPose])
 
   // Detect orientation
   useEffect(() => {
@@ -867,7 +884,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     <motion.div
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="absolute bottom-0 left-0 right-0 bg-black/90 backdrop-blur-md"
+      className="absolute bottom-0 left-0 right-0 bg-black/40 backdrop-blur-sm"
     >
       {/* AI Feedback - PROMINENT display */}
       <AnimatePresence>
@@ -1000,7 +1017,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       <motion.div
         initial={{ x: 100, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
-        className="absolute top-0 right-0 bottom-16 w-24 bg-black/85 backdrop-blur-md flex flex-col items-center justify-center gap-3 py-3 overflow-y-auto"
+        className="absolute top-0 right-0 bottom-16 w-24 bg-black/40 backdrop-blur-sm flex flex-col items-center justify-center gap-3 py-3 overflow-y-auto"
       >
         {selectedMetrics.map((metricId, index) => {
           const metric = AVAILABLE_METRICS.find(m => m.id === metricId)
