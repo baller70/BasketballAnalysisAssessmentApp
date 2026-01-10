@@ -156,12 +156,13 @@ export function ProfessionalSkeletonOverlay({
   const containerRef = useRef<HTMLDivElement>(null)
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
   
-  // Use ResizeObserver for more reliable size tracking
+  // Use ResizeObserver to trigger redraws when container size changes
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
     
-    const updateSize = () => {
+    const triggerRedraw = () => {
+      // Force a state update to trigger redraw
       const rect = container.getBoundingClientRect()
       if (rect.width > 0 && rect.height > 0) {
         setCanvasSize({ width: rect.width, height: rect.height })
@@ -169,41 +170,47 @@ export function ProfessionalSkeletonOverlay({
     }
     
     // Initial size
-    updateSize()
+    triggerRedraw()
     
     // Use ResizeObserver for reliable updates
     const resizeObserver = new ResizeObserver(() => {
-      updateSize()
+      triggerRedraw()
     })
     resizeObserver.observe(container)
     
     // Also listen for orientation changes on mobile
     const handleOrientationChange = () => {
       // Small delay to let the layout settle
-      setTimeout(updateSize, 100)
+      setTimeout(triggerRedraw, 100)
     }
     window.addEventListener('orientationchange', handleOrientationChange)
-    window.addEventListener('resize', updateSize)
+    window.addEventListener('resize', triggerRedraw)
     
     return () => {
       resizeObserver.disconnect()
       window.removeEventListener('orientationchange', handleOrientationChange)
-      window.removeEventListener('resize', updateSize)
+      window.removeEventListener('resize', triggerRedraw)
     }
   }, [])
 
   const drawSkeleton = useCallback(() => {
     const canvas = canvasRef.current
-    if (!canvas) return
+    const container = containerRef.current
+    if (!canvas || !container) return
 
     const ctx = canvas.getContext('2d')
     if (!ctx) return
     
-    // Use container size or fallback to video dimensions
-    const canvasW = canvasSize.width || displayWidth || videoWidth
-    const canvasH = canvasSize.height || displayHeight || videoHeight
+    // CRITICAL: Get the actual container size from the DOM
+    // This ensures we match exactly what the video element displays with object-cover
+    const rect = container.getBoundingClientRect()
+    const canvasW = rect.width
+    const canvasH = rect.height
+    
+    // Don't draw if container isn't sized yet
+    if (canvasW <= 0 || canvasH <= 0) return
 
-    // Set canvas resolution to match container
+    // Set canvas resolution to match container exactly
     canvas.width = canvasW
     canvas.height = canvasH
 
@@ -211,6 +218,9 @@ export function ProfessionalSkeletonOverlay({
     ctx.clearRect(0, 0, canvasW, canvasH)
 
     if (!pose || pose.keypoints.length === 0) return
+    
+    // Ensure we have valid video dimensions
+    if (videoWidth <= 0 || videoHeight <= 0) return
 
     // Calculate object-cover scaling (same as CSS object-cover)
     // This ensures the skeleton aligns with how the video is displayed
@@ -444,7 +454,8 @@ export function ProfessionalSkeletonOverlay({
         }
       }
     }
-  }, [pose, angles, feedback, videoWidth, videoHeight, canvasSize, displayWidth, displayHeight, showAngles, showKeypoints, showSkeleton, minConfidence])
+  // Note: canvasSize is used to trigger redraws when container resizes
+  }, [pose, angles, feedback, videoWidth, videoHeight, canvasSize, showAngles, showKeypoints, showSkeleton, minConfidence])
 
   useEffect(() => {
     drawSkeleton()
