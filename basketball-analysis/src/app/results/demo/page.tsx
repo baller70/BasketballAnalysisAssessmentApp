@@ -1727,6 +1727,7 @@ function DemoResultsPageContent() {
   const [resultsMode, setResultsMode] = useState<ResultsMode>("image")
   const [isLoading, setIsLoading] = useState(false)
   const [showFabMenu, setShowFabMenu] = useState(false)
+  const [showAnalyzeSubMenu, setShowAnalyzeSubMenu] = useState(false)
   
   // Handle ?tab= query parameter to auto-switch tabs
   useEffect(() => {
@@ -1958,9 +1959,9 @@ function DemoResultsPageContent() {
                 }}
               />
 
-              {/* Mobile FAB (Floating Action Button) with Menu */}
+              {/* Mobile FAB (Floating Action Button) with Simplified Menu */}
               <div className="md:hidden fixed bottom-24 right-4 z-50">
-                {/* FAB Menu Options */}
+                {/* FAB Menu Options - Simplified to 2 main actions */}
                 {showFabMenu && (
                   <>
                     {/* Backdrop */}
@@ -1969,70 +1970,96 @@ function DemoResultsPageContent() {
                       onClick={() => setShowFabMenu(false)}
                     />
                     
-                    {/* Menu Items */}
+                    {/* Menu Items - Only 2 Primary Actions */}
                     <div className="absolute bottom-16 right-0 flex flex-col gap-3 items-end mb-2">
-                      {/* My Media Gallery */}
-                      <Link
-                        href="/media"
-                        onClick={() => setShowFabMenu(false)}
+                      {/* Start Workout - Takes to Training tab */}
+                      <button
+                        onClick={() => {
+                          setActiveTab('training')
+                          setShowFabMenu(false)
+                        }}
                         className="flex items-center gap-3 bg-[#2a2a2a] border border-[#3a3a3a] rounded-full pl-4 pr-3 py-2 shadow-lg animate-in slide-in-from-bottom-2 duration-200"
                       >
-                        <span className="text-white text-sm font-medium whitespace-nowrap">My Media</span>
-                        <div className="w-10 h-10 bg-[#8b5cf6] rounded-full flex items-center justify-center">
-                          <FolderOpen className="w-5 h-5 text-white" />
-                        </div>
-                      </Link>
-                      
-                      {/* Go Live */}
-                      <button
-                        onClick={() => {
-                          setResultsMode("live")
-                          setShowFabMenu(false)
-                        }}
-                        className="flex items-center gap-3 bg-[#2a2a2a] border border-[#3a3a3a] rounded-full pl-4 pr-3 py-2 shadow-lg animate-in slide-in-from-bottom-2 duration-200 delay-75"
-                      >
-                        <span className="text-white text-sm font-medium whitespace-nowrap">Go Live</span>
+                        <span className="text-white text-sm font-medium whitespace-nowrap">Start Workout</span>
                         <div className="w-10 h-10 bg-[#22c55e] rounded-full flex items-center justify-center">
-                          <Radio className="w-5 h-5 text-white" />
+                          <Dumbbell className="w-5 h-5 text-white" />
                         </div>
                       </button>
                       
-                      {/* Upload Video - Opens file picker */}
-                      <button
-                        onClick={() => {
-                          setShowFabMenu(false)
-                          ;(window as any).__videoUploadInput?.click()
-                        }}
-                        className="flex items-center gap-3 bg-[#2a2a2a] border border-[#3a3a3a] rounded-full pl-4 pr-3 py-2 shadow-lg animate-in slide-in-from-bottom-2 duration-200 delay-150"
-                      >
-                        <span className="text-white text-sm font-medium whitespace-nowrap">Upload Video</span>
-                        <div className="w-10 h-10 bg-[#ef4444] rounded-full flex items-center justify-center">
-                          <Video className="w-5 h-5 text-white" />
-                        </div>
-                      </button>
-                      
-                      {/* Upload Image - Opens file picker */}
-                      <button
-                        onClick={() => {
-                          setShowFabMenu(false)
-                          ;(window as any).__imageUploadInput?.click()
-                        }}
-                        className="flex items-center gap-3 bg-[#2a2a2a] border border-[#3a3a3a] rounded-full pl-4 pr-3 py-2 shadow-lg animate-in slide-in-from-bottom-2 duration-200 delay-200"
-                      >
-                        <span className="text-white text-sm font-medium whitespace-nowrap">Upload Image</span>
-                        <div className="w-10 h-10 bg-[#3b82f6] rounded-full flex items-center justify-center">
-                          <ImageIcon className="w-5 h-5 text-white" />
-                        </div>
-                      </button>
+                      {/* Analyze Shot - Opens sub-menu */}
+                      <div className="relative group">
+                        <button
+                          onClick={() => setShowAnalyzeSubMenu(!showAnalyzeSubMenu)}
+                          className="flex items-center gap-3 bg-[#2a2a2a] border border-[#3a3a3a] rounded-full pl-4 pr-3 py-2 shadow-lg animate-in slide-in-from-bottom-2 duration-200 delay-75"
+                        >
+                          <span className="text-white text-sm font-medium whitespace-nowrap">Analyze Shot</span>
+                          <div className="w-10 h-10 bg-[#FF6B35] rounded-full flex items-center justify-center">
+                            <Target className="w-5 h-5 text-white" />
+                          </div>
+                        </button>
+                        
+                        {/* Analyze Sub-Menu */}
+                        {showAnalyzeSubMenu && (
+                          <div className="absolute bottom-full right-0 mb-2 flex flex-col gap-2 items-end">
+                            {/* Go Live */}
+                            <button
+                              onClick={() => {
+                                setResultsMode("live")
+                                setShowFabMenu(false)
+                                setShowAnalyzeSubMenu(false)
+                              }}
+                              className="flex items-center gap-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-full pl-3 pr-2 py-1.5 shadow-lg animate-in slide-in-from-bottom-1 duration-150"
+                            >
+                              <span className="text-white text-xs font-medium whitespace-nowrap">Live Camera</span>
+                              <div className="w-7 h-7 bg-[#22c55e] rounded-full flex items-center justify-center">
+                                <Radio className="w-3.5 h-3.5 text-white" />
+                              </div>
+                            </button>
+                            
+                            {/* Upload Video */}
+                            <button
+                              onClick={() => {
+                                setShowFabMenu(false)
+                                setShowAnalyzeSubMenu(false)
+                                ;(window as any).__videoUploadInput?.click()
+                              }}
+                              className="flex items-center gap-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-full pl-3 pr-2 py-1.5 shadow-lg animate-in slide-in-from-bottom-1 duration-150 delay-50"
+                            >
+                              <span className="text-white text-xs font-medium whitespace-nowrap">Upload Video</span>
+                              <div className="w-7 h-7 bg-[#ef4444] rounded-full flex items-center justify-center">
+                                <Video className="w-3.5 h-3.5 text-white" />
+                              </div>
+                            </button>
+                            
+                            {/* Upload Image */}
+                            <button
+                              onClick={() => {
+                                setShowFabMenu(false)
+                                setShowAnalyzeSubMenu(false)
+                                ;(window as any).__imageUploadInput?.click()
+                              }}
+                              className="flex items-center gap-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-full pl-3 pr-2 py-1.5 shadow-lg animate-in slide-in-from-bottom-1 duration-150 delay-100"
+                            >
+                              <span className="text-white text-xs font-medium whitespace-nowrap">Upload Image</span>
+                              <div className="w-7 h-7 bg-[#3b82f6] rounded-full flex items-center justify-center">
+                                <ImageIcon className="w-3.5 h-3.5 text-white" />
+                              </div>
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </>
                 )}
                 
                 {/* Main FAB Button */}
                 <button
-                  onClick={() => setShowFabMenu(!showFabMenu)}
+                  onClick={() => {
+                    setShowFabMenu(!showFabMenu)
+                    if (showFabMenu) setShowAnalyzeSubMenu(false)
+                  }}
                   className={`flex items-center justify-center w-14 h-14 bg-[#FF6B35] text-white rounded-full shadow-lg shadow-[#FF6B35]/30 transition-all duration-200 ${showFabMenu ? 'rotate-45 bg-[#E55300]' : 'hover:bg-[#E55300] hover:scale-105 active:scale-95'}`}
-                  aria-label="New upload options"
+                  aria-label="Quick actions"
                 >
                   <Plus className="w-6 h-6" />
                 </button>

@@ -1618,12 +1618,34 @@ function BuildDrillTab({
           </div>
         </div>
         
-        {/* Makes / Misses / Streak Row - Editable for Manual Tracking */}
+        {/* Misses / Made / Accuracy Row - Editable for Manual Tracking */}
         <div className="grid grid-cols-3 gap-4 mb-4">
+          {/* MISSED - First */}
+          <div className="bg-[#1a1a1a] rounded-xl p-3 text-center border border-red-500/30">
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <XCircle className="w-4 h-4 text-red-400" />
+              <span className="text-[#888] text-xs uppercase">Missed</span>
+            </div>
+            {trackingMode === 'manual' && !isDrillActive ? (
+              <input
+                type="number"
+                min="0"
+                value={attempts - madeShots}
+                onChange={(e) => {
+                  const misses = Math.max(0, parseInt(e.target.value) || 0)
+                  setAttempts(madeShots + misses)
+                }}
+                className="w-full text-red-400 text-2xl font-black text-center bg-transparent border-b-2 border-red-500/30 focus:border-red-500 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              />
+            ) : (
+              <p className="text-red-400 text-2xl font-black">{attempts - madeShots}</p>
+            )}
+          </div>
+          {/* MADE - Second */}
           <div className="bg-[#1a1a1a] rounded-xl p-3 text-center border border-green-500/30">
             <div className="flex items-center justify-center gap-1 mb-1">
               <CheckCircle className="w-4 h-4 text-green-400" />
-              <span className="text-[#888] text-xs uppercase">Makes</span>
+              <span className="text-[#888] text-xs uppercase">Made</span>
             </div>
             {trackingMode === 'manual' && !isDrillActive ? (
               <input
@@ -1641,34 +1663,26 @@ function BuildDrillTab({
               <p className="text-green-400 text-2xl font-black">{madeShots}</p>
             )}
           </div>
-          <div className="bg-[#1a1a1a] rounded-xl p-3 text-center border border-red-500/30">
-            <div className="flex items-center justify-center gap-1 mb-1">
-              <XCircle className="w-4 h-4 text-red-400" />
-              <span className="text-[#888] text-xs uppercase">Misses</span>
-            </div>
-            {trackingMode === 'manual' && !isDrillActive ? (
-              <input
-                type="number"
-                min="0"
-                value={attempts - madeShots}
-                onChange={(e) => {
-                  const misses = Math.max(0, parseInt(e.target.value) || 0)
-                  setAttempts(madeShots + misses)
-                }}
-                className="w-full text-red-400 text-2xl font-black text-center bg-transparent border-b-2 border-red-500/30 focus:border-red-500 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              />
-            ) : (
-              <p className="text-red-400 text-2xl font-black">{attempts - madeShots}</p>
-            )}
-          </div>
+          {/* ACCURACY - Third */}
           <div className="bg-[#1a1a1a] rounded-xl p-3 text-center border border-[#FF6B35]/30">
             <div className="flex items-center justify-center gap-1 mb-1">
-              <Flame className="w-4 h-4 text-[#FF6B35]" />
-              <span className="text-[#888] text-xs uppercase">Streak</span>
+              <Target className="w-4 h-4 text-[#FF6B35]" />
+              <span className="text-[#888] text-xs uppercase">Accuracy</span>
             </div>
-            <p className="text-[#FF6B35] text-2xl font-black">{currentStreak}</p>
+            <p className={`text-2xl font-black ${
+              shootingPercentage >= 70 ? 'text-green-400' : 
+              shootingPercentage >= 50 ? 'text-yellow-400' : 'text-[#FF6B35]'
+            }`}>{shootingPercentage}%</p>
           </div>
         </div>
+        
+        {/* Streak indicator (smaller, below main stats) */}
+        {currentStreak > 0 && (
+          <div className="flex items-center justify-center gap-2 mb-4 py-2 bg-[#FF6B35]/10 rounded-lg border border-[#FF6B35]/30">
+            <Flame className="w-4 h-4 text-[#FF6B35]" />
+            <span className="text-[#FF6B35] font-bold">{currentStreak} in a row!</span>
+          </div>
+        )}
         
         {/* Manual tracking hint */}
         {trackingMode === 'manual' && !isDrillActive && (
