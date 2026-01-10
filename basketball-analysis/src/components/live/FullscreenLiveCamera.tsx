@@ -720,6 +720,9 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   const showSkeletonRef = useRef<boolean>(true)
   const selectedMetricsRef = useRef<MetricId[]>(DEFAULT_SELECTED_METRICS)
   const stableAnglesRef = useRef<any>(null)
+  const showShotFlashRef = useRef<boolean>(false)
+  const lastShotScoreRef = useRef<number | null>(null)
+  const shotCountRef = useRef<number>(0)
   
   // Keep refs updated
   useEffect(() => {
@@ -729,7 +732,10 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     showSkeletonRef.current = showSkeleton
     selectedMetricsRef.current = selectedMetrics
     stableAnglesRef.current = stableAngles
-  }, [throttledPose, stableFeedback, showSkeleton, selectedMetrics, stableAngles])
+    showShotFlashRef.current = showShotFlash
+    lastShotScoreRef.current = lastShotScore
+    shotCountRef.current = shotCount
+  }, [throttledPose, stableFeedback, showSkeleton, selectedMetrics, stableAngles, showShotFlash, lastShotScore, shotCount])
   
   // Actual recording start (after countdown)
   const startActualRecording = useCallback(() => {
@@ -758,6 +764,9 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       const skeletonEnabled = showSkeletonRef.current
       const metrics = selectedMetricsRef.current
       const anglesData = stableAnglesRef.current
+      const shotFlashActive = showShotFlashRef.current
+      const shotScore = lastShotScoreRef.current
+      const currentShotCount = shotCountRef.current
       
       // Draw video frame
       compositeCtx.drawImage(video, 0, 0, compositeCanvas.width, compositeCanvas.height)
@@ -826,15 +835,61 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
         compositeCtx.globalAlpha = 1.0
       }
       
-      // Draw metrics overlay at bottom
-      const barHeight = 80
+      // ===== DRAW AI COACHING TIP AT TOP =====
+      if (tip) {
+        const tipBarHeight = 60
+        
+        // Background gradient
+        const gradient = compositeCtx.createLinearGradient(0, 0, compositeCanvas.width, 0)
+        gradient.addColorStop(0, 'rgba(255, 107, 53, 0.8)')
+        gradient.addColorStop(1, 'rgba(255, 107, 53, 0.4)')
+        compositeCtx.fillStyle = gradient
+        compositeCtx.fillRect(0, 0, compositeCanvas.width, tipBarHeight)
+        
+        // "AI" label with icon-style box
+        compositeCtx.fillStyle = 'rgba(0, 0, 0, 0.3)'
+        compositeCtx.beginPath()
+        compositeCtx.roundRect(12, 15, 40, 30, 6)
+        compositeCtx.fill()
+        
+        compositeCtx.fillStyle = '#ffffff'
+        compositeCtx.font = 'bold 16px system-ui, sans-serif'
+        compositeCtx.textAlign = 'center'
+        compositeCtx.textBaseline = 'middle'
+        compositeCtx.fillText('AI', 32, 30)
+        
+        // Tip text
+        compositeCtx.fillStyle = '#ffffff'
+        compositeCtx.font = 'bold 16px system-ui, sans-serif'
+        compositeCtx.textAlign = 'left'
+        const maxTipWidth = compositeCanvas.width - 80
+        const truncatedTip = tip.length > 50 ? tip.slice(0, 50) + '...' : tip
+        compositeCtx.fillText(truncatedTip, 62, 30)
+      }
+      
+      // ===== DRAW METRICS OVERLAY AT BOTTOM =====
+      const barHeight = 100
       const y = compositeCanvas.height - barHeight
       
-      compositeCtx.fillStyle = 'rgba(0, 0, 0, 0.5)'
+      // Background with gradient
+      const metricsGradient = compositeCtx.createLinearGradient(0, y, 0, compositeCanvas.height)
+      metricsGradient.addColorStop(0, 'rgba(0, 0, 0, 0.7)')
+      metricsGradient.addColorStop(1, 'rgba(0, 0, 0, 0.9)')
+      compositeCtx.fillStyle = metricsGradient
       compositeCtx.fillRect(0, y, compositeCanvas.width, barHeight)
       
+      // Top border line
+      compositeCtx.strokeStyle = 'rgba(255, 107, 53, 0.5)'
+      compositeCtx.lineWidth = 2
+      compositeCtx.beginPath()
+      compositeCtx.moveTo(0, y)
+      compositeCtx.lineTo(compositeCanvas.width, y)
+      compositeCtx.stroke()
+      
       const metricsToShow = metrics.slice(0, 6)
-      const metricWidth = compositeCanvas.width / metricsToShow.length
+      const metricWidth = compositeCanvas.width / Math.min(metricsToShow.length, 3)
+      const rows = Math.ceil(metricsToShow.length / 3)
+      const rowHeight = barHeight / rows
       
       compositeCtx.textAlign = 'center'
       compositeCtx.textBaseline = 'middle'
@@ -859,33 +914,107 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
         const status = metric.getStatus(feedbackData)
         const color = status === 'good' ? '#22c55e' : status === 'warning' ? '#eab308' : status === 'critical' ? '#ef4444' : '#ffffff'
         
-        const x = metricWidth * index + metricWidth / 2
+        const row = Math.floor(index / 3)
+        const col = index % 3
+        const x = metricWidth * col + metricWidth / 2
+        const metricY = y + row * rowHeight + rowHeight / 2
         
-        // Value
+        // Value - larger font
         compositeCtx.fillStyle = color
-        compositeCtx.font = 'bold 28px system-ui, sans-serif'
-        compositeCtx.fillText(value !== null ? `${Math.round(value)}${metric.unit}` : '--', x, y + 30)
+        compositeCtx.font = 'bold 32px system-ui, sans-serif'
+        compositeCtx.fillText(value !== null ? `${Math.round(value)}${metric.unit}` : '--', x, metricY - 8)
         
         // Label
-        compositeCtx.fillStyle = 'rgba(255, 255, 255, 0.6)'
-        compositeCtx.font = '10px system-ui, sans-serif'
-        compositeCtx.fillText(metric.shortLabel, x, y + 55)
+        compositeCtx.fillStyle = 'rgba(255, 255, 255, 0.7)'
+        compositeCtx.font = 'bold 12px system-ui, sans-serif'
+        compositeCtx.fillText(metric.shortLabel, x, metricY + 22)
       })
       
-      // Draw AI coaching tip at top
-      if (tip) {
-        compositeCtx.fillStyle = 'rgba(255, 107, 53, 0.3)'
-        compositeCtx.fillRect(0, 0, compositeCanvas.width, 50)
+      // ===== DRAW SHOT COUNTER BADGE (top right) =====
+      if (currentShotCount > 0) {
+        const badgeX = compositeCanvas.width - 80
+        const badgeY = tip ? 70 : 15
         
-        compositeCtx.fillStyle = '#FF6B35'
-        compositeCtx.font = '20px system-ui, sans-serif'
-        compositeCtx.textAlign = 'left'
-        compositeCtx.fillText('🤖', 15, 30)
+        // Badge background
+        compositeCtx.fillStyle = 'rgba(255, 107, 53, 0.9)'
+        compositeCtx.beginPath()
+        compositeCtx.roundRect(badgeX, badgeY, 70, 30, 15)
+        compositeCtx.fill()
         
+        // Shot count text
         compositeCtx.fillStyle = '#ffffff'
-        compositeCtx.font = '14px system-ui, sans-serif'
-        const truncatedTip = tip.length > 60 ? tip.slice(0, 60) + '...' : tip
-        compositeCtx.fillText(truncatedTip, 45, 30)
+        compositeCtx.font = 'bold 14px system-ui, sans-serif'
+        compositeCtx.textAlign = 'center'
+        compositeCtx.fillText(`${currentShotCount} shots`, badgeX + 35, badgeY + 16)
+      }
+      
+      // ===== DRAW SHOT DETECTED FLASH =====
+      if (shotFlashActive && shotScore !== null) {
+        // Semi-transparent overlay
+        compositeCtx.fillStyle = 'rgba(0, 0, 0, 0.5)'
+        compositeCtx.fillRect(0, 0, compositeCanvas.width, compositeCanvas.height)
+        
+        // Center badge background
+        const centerX = compositeCanvas.width / 2
+        const centerY = compositeCanvas.height / 2
+        const badgeWidth = 200
+        const badgeHeight = 120
+        
+        // Glow effect
+        compositeCtx.shadowColor = '#FF6B35'
+        compositeCtx.shadowBlur = 30
+        
+        // Badge background
+        compositeCtx.fillStyle = 'rgba(0, 0, 0, 0.9)'
+        compositeCtx.beginPath()
+        compositeCtx.roundRect(centerX - badgeWidth/2, centerY - badgeHeight/2, badgeWidth, badgeHeight, 16)
+        compositeCtx.fill()
+        
+        // Border
+        compositeCtx.strokeStyle = '#FF6B35'
+        compositeCtx.lineWidth = 3
+        compositeCtx.beginPath()
+        compositeCtx.roundRect(centerX - badgeWidth/2, centerY - badgeHeight/2, badgeWidth, badgeHeight, 16)
+        compositeCtx.stroke()
+        
+        compositeCtx.shadowBlur = 0
+        
+        // Target icon (crosshair)
+        compositeCtx.strokeStyle = '#FF6B35'
+        compositeCtx.lineWidth = 3
+        const iconY = centerY - 30
+        // Outer circle
+        compositeCtx.beginPath()
+        compositeCtx.arc(centerX, iconY, 15, 0, Math.PI * 2)
+        compositeCtx.stroke()
+        // Inner dot
+        compositeCtx.fillStyle = '#FF6B35'
+        compositeCtx.beginPath()
+        compositeCtx.arc(centerX, iconY, 4, 0, Math.PI * 2)
+        compositeCtx.fill()
+        // Crosshair lines
+        compositeCtx.beginPath()
+        compositeCtx.moveTo(centerX - 22, iconY)
+        compositeCtx.lineTo(centerX - 10, iconY)
+        compositeCtx.moveTo(centerX + 10, iconY)
+        compositeCtx.lineTo(centerX + 22, iconY)
+        compositeCtx.moveTo(centerX, iconY - 22)
+        compositeCtx.lineTo(centerX, iconY - 10)
+        compositeCtx.moveTo(centerX, iconY + 10)
+        compositeCtx.lineTo(centerX, iconY + 22)
+        compositeCtx.stroke()
+        
+        // "SHOT DETECTED" text
+        compositeCtx.fillStyle = '#ffffff'
+        compositeCtx.font = 'bold 18px system-ui, sans-serif'
+        compositeCtx.textAlign = 'center'
+        compositeCtx.fillText('SHOT DETECTED', centerX, centerY + 10)
+        
+        // Score
+        const scoreColor = shotScore >= 80 ? '#22c55e' : shotScore >= 60 ? '#eab308' : '#ef4444'
+        compositeCtx.fillStyle = scoreColor
+        compositeCtx.font = 'bold 28px system-ui, sans-serif'
+        compositeCtx.fillText(`${shotScore}`, centerX, centerY + 42)
       }
       
       compositeAnimationRef.current = requestAnimationFrame(drawCompositeFrame)
