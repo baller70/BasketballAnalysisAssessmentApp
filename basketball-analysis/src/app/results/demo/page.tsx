@@ -3843,15 +3843,15 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                 <h3 className="text-[#FF6B35] font-bold text-2xl mb-3 tracking-tight">No Image Uploaded</h3>
                 {/* Desktop: Show description and upload button */}
                 <p className="hidden md:block text-[#E5E5E5] text-sm mb-8 max-w-md mx-auto leading-relaxed">
-                  Upload an image on the home page to see your shooting form analysis with detailed biomechanical measurements.
+                  Click the button below to upload an image and see your shooting form analysis with detailed biomechanical measurements.
                 </p>
-                <Link 
-                  href="/" 
+                <button 
+                  onClick={() => (window as any).__imageUploadInput?.click()}
                   className="hidden md:inline-flex items-center gap-2 bg-gradient-to-r from-[#FF6B35] to-[#FF4500] hover:from-[#E55300] hover:to-[#E5A000] text-[#1a1a1a] font-semibold px-8 py-3.5 rounded-xl transition-all duration-200 shadow-lg shadow-[#FF6B35]/20 hover:shadow-[#FF6B35]/40 hover:scale-105"
                 >
                   <Upload className="w-5 h-5" />
                   Upload
-                </Link>
+                </button>
                 {/* Mobile: Just hint to use FAB */}
                 <p className="md:hidden text-[#666] text-sm mt-4">
                   Tap the <span className="text-[#FF6B35] font-semibold">+</span> button to get started
