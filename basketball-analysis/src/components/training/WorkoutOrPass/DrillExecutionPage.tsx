@@ -21,6 +21,7 @@ import {
 } from "lucide-react"
 import { Drill, DrillFocusArea } from "@/data/drillDatabase"
 import { HybridShotDetector } from "../HybridShotDetector"
+import { FullScreenShotTracker } from "../FullScreenShotTracker"
 
 // ============================================
 // TYPES
@@ -793,7 +794,36 @@ export function DrillExecutionPage({ drill, onClose, onStartDrill }: DrillExecut
   }
 
   return (
-    <div className="fixed inset-0 z-[100] bg-[#1a1a1a] flex flex-col">
+    <>
+      {/* Full Screen Shot Tracker - Opens when AI Shot Detection is active */}
+      {isDrillActive && trackingMode === 'automatic' && !isPaused && (
+        <FullScreenShotTracker
+          isActive={true}
+          onClose={endDrill}
+          onPause={togglePause}
+          onResume={togglePause}
+          isPaused={isPaused}
+          madeShots={currentSpotIndex < spots.length ? (spots[currentSpotIndex]?.madeShots || 0) : totalMade}
+          missedShots={currentSpotIndex < spots.length ? (spots[currentSpotIndex]?.missedShots || 0) : totalMissed}
+          currentSpot={currentSpotIndex < spots.length ? {
+            name: spots[currentSpotIndex]?.name || `Spot ${currentSpotIndex + 1}`,
+            index: currentSpotIndex,
+            total: spots.length
+          } : undefined}
+          spots={spots.map(s => ({
+            id: s.id,
+            x: s.x,
+            y: s.y,
+            madeShots: s.madeShots || 0,
+            missedShots: s.missedShots || 0
+          }))}
+          onMade={() => recordMade('automatic')}
+          onMiss={() => recordMiss('automatic')}
+          enableSound={true}
+        />
+      )}
+      
+      <div className="fixed inset-0 z-[100] bg-[#1a1a1a] flex flex-col">
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-4 border-b border-[#3a3a3a]">
         <button 
@@ -1041,6 +1071,7 @@ export function DrillExecutionPage({ drill, onClose, onStartDrill }: DrillExecut
         )}
       </div>
     </div>
+    </>
   )
 }
 
