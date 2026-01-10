@@ -44,6 +44,9 @@ const TIER_DAILY_LIMITS: Record<TierLevel, number> = {
   elite: Infinity, // Unlimited
 }
 
+// TESTING MODE - Set to true to bypass all limits
+const TESTING_MODE = true
+
 // ============================================
 // STORAGE
 // ============================================
@@ -129,12 +132,22 @@ export function UsageProvider({ children }: { children: ReactNode }) {
   
   // Get current tier's daily limit
   const currentTier = getCurrentTierConfig()
-  const dailyLimit = TIER_DAILY_LIMITS[currentTier?.id || 'free']
-  const canAnalyze = state.dailyAnalysisCount < dailyLimit
-  const remainingToday = Math.max(0, dailyLimit - state.dailyAnalysisCount)
+  const dailyLimit = TESTING_MODE ? Infinity : TIER_DAILY_LIMITS[currentTier?.id || 'free']
+  const canAnalyze = TESTING_MODE ? true : state.dailyAnalysisCount < dailyLimit
+  const remainingToday = TESTING_MODE ? Infinity : Math.max(0, dailyLimit - state.dailyAnalysisCount)
   
   // Increment usage
   const incrementUsage = useCallback((): boolean => {
+    // In testing mode, always allow
+    if (TESTING_MODE) {
+      setState(prev => ({
+        ...prev,
+        dailyAnalysisCount: prev.dailyAnalysisCount + 1,
+        totalAnalysisCount: prev.totalAnalysisCount + 1,
+      }))
+      return true
+    }
+    
     if (!canAnalyze) {
       return false
     }

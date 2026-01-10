@@ -13,7 +13,7 @@
 
 "use client"
 
-import React, { useEffect, useRef, useCallback } from 'react'
+import React, { useEffect, useRef, useCallback, useState } from 'react'
 import {
   type Pose,
   type ShootingAngles,
@@ -26,8 +26,14 @@ import {
 // ============================================
 
 interface ProfessionalSkeletonOverlayProps {
+  /** Original video width (for coordinate scaling) */
   width: number
+  /** Original video height (for coordinate scaling) */
   height: number
+  /** Display width (actual canvas size) */
+  displayWidth?: number
+  /** Display height (actual canvas size) */
+  displayHeight?: number
   pose: Pose | null
   angles: ShootingAngles | null
   feedback?: {
@@ -132,6 +138,8 @@ function getKeypointStatusColor(
 export function ProfessionalSkeletonOverlay({
   width,
   height,
+  displayWidth,
+  displayHeight,
   pose,
   angles,
   feedback,
@@ -141,6 +149,24 @@ export function ProfessionalSkeletonOverlay({
   minConfidence = 0.2,
 }: ProfessionalSkeletonOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
+  
+  // Get actual container size for canvas
+  useEffect(() => {
+    const updateSize = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect()
+        setCanvasSize({ width: rect.width, height: rect.height })
+      } else if (displayWidth && displayHeight) {
+        setCanvasSize({ width: displayWidth, height: displayHeight })
+      }
+    }
+    
+    updateSize()
+    window.addEventListener('resize', updateSize)
+    return () => window.removeEventListener('resize', updateSize)
+  }, [displayWidth, displayHeight])
 
   const drawSkeleton = useCallback(() => {
     const canvas = canvasRef.current
@@ -148,13 +174,40 @@ export function ProfessionalSkeletonOverlay({
 
     const ctx = canvas.getContext('2d')
     if (!ctx) return
+    
+    const canvasW = canvasSize.width || width
+    const canvasH = canvasSize.height || height
 
     // Clear canvas
-    ctx.clearRect(0, 0, width, height)
+    ctx.clearRect(0, 0, canvasW, canvasH)
 
     if (!pose || pose.keypoints.length === 0) return
 
-    const keypoints = pose.keypoints
+    // Calculate scale factors to map video coordinates to canvas coordinates
+    // This handles the object-cover scaling of the video
+    const videoAspect = width / height
+    const canvasAspect = canvasW / canvasH
+    
+    let scaleX: number, scaleY: number, offsetX = 0, offsetY = 0
+    
+    if (videoAspect > canvasAspect) {
+      // Video is wider - height fits, width is cropped
+      scaleY = canvasH / height
+      scaleX = scaleY
+      offsetX = (canvasW - width * scaleX) / 2
+    } else {
+      // Video is taller - width fits, height is cropped
+      scaleX = canvasW / width
+      scaleY = scaleX
+      offsetY = (canvasH - height * scaleY) / 2
+    }
+    
+    // Transform keypoints to canvas coordinates
+    const keypoints = pose.keypoints.map(kp => ({
+      ...kp,
+      x: kp.x * scaleX + offsetX,
+      y: kp.y * scaleY + offsetY,
+    }))
 
     // ===== DRAW SKELETON CONNECTIONS =====
     if (showSkeleton) {
@@ -352,20 +405,24 @@ export function ProfessionalSkeletonOverlay({
         }
       }
     }
-  }, [pose, angles, feedback, width, height, showAngles, showKeypoints, showSkeleton, minConfidence])
+  }, [pose, angles, feedback, width, height, canvasSize, showAngles, showKeypoints, showSkeleton, minConfidence])
 
   useEffect(() => {
     drawSkeleton()
   }, [drawSkeleton])
 
+  const canvasW = canvasSize.width || width
+  const canvasH = canvasSize.height || height
+
   return (
-    <canvas
-      ref={canvasRef}
-      width={width}
-      height={height}
-      className="absolute top-0 left-0 pointer-events-none"
-      style={{ width: '100%', height: '100%' }}
-    />
+    <div ref={containerRef} className="absolute inset-0 pointer-events-none">
+      <canvas
+        ref={canvasRef}
+        width={canvasW}
+        height={canvasH}
+        className="absolute inset-0 w-full h-full"
+      />
+    </div>
   )
 }
 
