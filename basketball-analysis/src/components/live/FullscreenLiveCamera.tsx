@@ -29,7 +29,7 @@ import {
   AlertCircle,
 } from 'lucide-react'
 import { usePoseDetection } from '@/hooks/usePoseDetection'
-import { SkeletonOverlay } from './SkeletonOverlay'
+import { ProfessionalSkeletonOverlay } from './ProfessionalSkeletonOverlay'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import { useRouter } from 'next/navigation'
 import { isMobile } from '@/utils/platform'
@@ -1253,18 +1253,15 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
             className="absolute inset-0 pointer-events-none z-10"
             style={{ transform: facingMode === 'user' ? 'scaleX(-1)' : 'none' }}
           >
-            <SkeletonOverlay
+            <ProfessionalSkeletonOverlay
               width={videoDimensions.width}
               height={videoDimensions.height}
               pose={throttledPose}
               angles={angles}
+              feedback={feedback}
               showAngles={true}
               showKeypoints={true}
               showSkeleton={true}
-              skeletonColor="#FF6B35"
-              keypointColor="#FFFFFF"
-              lineWidth={4}
-              keypointRadius={8}
               minConfidence={0.2}
             />
           </motion.div>

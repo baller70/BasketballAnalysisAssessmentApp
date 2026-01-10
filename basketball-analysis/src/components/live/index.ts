@@ -6,6 +6,7 @@
 
 export { LiveAnalysis } from './LiveAnalysis';
 export { SkeletonOverlay } from './SkeletonOverlay';
+export { ProfessionalSkeletonOverlay } from './ProfessionalSkeletonOverlay';
 export { LiveMetrics } from './LiveMetrics';
 export { LiveFeedback } from './LiveFeedback';
 export { RecordingControls } from './RecordingControls';
