@@ -150,6 +150,31 @@ const getScoreColor = (score: number): string => {
   return '#ef4444' // red
 }
 
+// Body part colors for skeleton (same as ProfessionalSkeletonOverlay)
+const BODY_PART_COLORS: Record<number, string> = {
+  0: '#ffffff', 1: '#ffffff', 2: '#ffffff', 3: '#ffffff', 4: '#ffffff', // Face
+  5: '#00d4ff', 6: '#00d4ff', // Shoulders
+  7: '#00ffcc', 8: '#00ffcc', // Elbows
+  9: '#00ff99', 10: '#00ff99', // Wrists
+  11: '#ff9900', 12: '#ff9900', // Hips
+  13: '#ffcc00', 14: '#ffcc00', // Knees
+  15: '#ffff00', 16: '#ffff00', // Ankles
+}
+
+// Skeleton connections
+const SKELETON_CONNECTIONS: [number, number][] = [
+  [5, 6], [5, 7], [7, 9], [6, 8], [8, 10], // Arms
+  [5, 11], [6, 12], [11, 12], // Torso
+  [11, 13], [13, 15], [12, 14], [14, 16], // Legs
+]
+
+const STATUS_COLORS = {
+  good: '#22c55e',
+  warning: '#eab308',
+  critical: '#ef4444',
+  unknown: '#3b82f6',
+}
+
 // ============================================
 // COMPONENT
 // ============================================
@@ -163,11 +188,13 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const compositeCanvasRef = useRef<HTMLCanvasElement | null>(null) // For recording with overlay
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const recordedChunksRef = useRef<Blob[]>([])
   const streamRef = useRef<MediaStream | null>(null)
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const recordingBlobRef = useRef<Blob | null>(null)
+  const compositeAnimationRef = useRef<number | null>(null) // For composite canvas animation loop
 
   // State
   const [cameraError, setCameraError] = useState<string | null>(null)
@@ -218,8 +245,14 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   // Throttled pose state to reduce glitching
   const [throttledPose, setThrottledPose] = useState<any>(null)
   const lastPoseUpdateRef = useRef<number>(0)
-  const POSE_UPDATE_INTERVAL = 150 // Update skeleton every 150ms (~7fps) for smoother visuals
+  const POSE_UPDATE_INTERVAL = 200 // Update skeleton every 200ms (5fps) for much smoother visuals
 
+  // Stabilized metrics - hold values for longer so users can read them
+  const [stableAngles, setStableAngles] = useState<any>(null)
+  const [stableFeedback, setStableFeedback] = useState<any>(null)
+  const lastMetricUpdateRef = useRef<number>(0)
+  const METRIC_UPDATE_INTERVAL = 2500 // Only update metrics every 2.5 seconds so users can read them
+  
   // Pose detection hook - reduced FPS to prevent glitching
   const {
     isLoading,
@@ -234,7 +267,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     stopDetection,
   } = usePoseDetection({
     modelType: 'lightning',
-    targetFps: 12, // Reduced to 12fps for smoother skeleton rendering
+    targetFps: 10, // Reduced to 10fps for smoother skeleton rendering
     onShootingDetected: (detectedPose) => {
       console.log('[FullscreenLive] Shooting motion detected!')
       // Show shot flash
@@ -251,9 +284,9 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     if (pose) {
       const now = Date.now()
       if (now - lastPoseUpdateRef.current >= POSE_UPDATE_INTERVAL) {
-        // Apply smoothing by interpolating between old and new pose
+        // Apply heavy smoothing by interpolating between old and new pose
         if (throttledPose && throttledPose.keypoints) {
-          const smoothingFactor = 0.4 // 0 = no smoothing, 1 = full smoothing (no movement)
+          const smoothingFactor = 0.6 // Higher = smoother but slower to respond
           const smoothedKeypoints = pose.keypoints.map((kp: any, i: number) => {
             const oldKp = throttledPose.keypoints[i]
             if (oldKp && kp.score > 0.2) {
@@ -273,6 +306,19 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       }
     }
   }, [pose, throttledPose])
+  
+  // Stabilize metrics - only update every 2.5 seconds so users can actually read them
+  useEffect(() => {
+    if (angles || feedback) {
+      const now = Date.now()
+      // Only update if enough time has passed OR if we don't have any values yet
+      if (!stableAngles || !stableFeedback || now - lastMetricUpdateRef.current >= METRIC_UPDATE_INTERVAL) {
+        if (angles) setStableAngles(angles)
+        if (feedback) setStableFeedback(feedback)
+        lastMetricUpdateRef.current = now
+      }
+    }
+  }, [angles, feedback, stableAngles, stableFeedback])
 
   // Detect orientation
   useEffect(() => {
@@ -538,14 +584,193 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   }, [isRecording])
 
   // Start recording
+  // Refs for composite recording state (to avoid stale closures)
+  const currentPoseRef = useRef<any>(null)
+  const currentFeedbackRef = useRef<any>(null)
+  const currentTipRef = useRef<string | null>(null)
+  const showSkeletonRef = useRef<boolean>(true)
+  const selectedMetricsRef = useRef<MetricId[]>(DEFAULT_SELECTED_METRICS)
+  const stableAnglesRef = useRef<any>(null)
+  
+  // Keep refs updated
+  useEffect(() => {
+    currentPoseRef.current = throttledPose
+    currentFeedbackRef.current = stableFeedback
+    currentTipRef.current = stableFeedback?.tips?.[0] || null
+    showSkeletonRef.current = showSkeleton
+    selectedMetricsRef.current = selectedMetrics
+    stableAnglesRef.current = stableAngles
+  }, [throttledPose, stableFeedback, showSkeleton, selectedMetrics, stableAngles])
+  
   const handleStartRecording = useCallback(() => {
-    if (!streamRef.current) return
+    if (!streamRef.current || !videoRef.current) return
 
     recordedChunksRef.current = []
     setRecordingDuration(0)
     setShowControls(false) // Hide controls when recording starts
 
-    const mediaRecorder = new MediaRecorder(streamRef.current, {
+    // Create composite canvas for recording with overlay
+    const compositeCanvas = document.createElement('canvas')
+    compositeCanvas.width = videoDimensions.width
+    compositeCanvas.height = videoDimensions.height
+    compositeCanvasRef.current = compositeCanvas
+    const compositeCtx = compositeCanvas.getContext('2d')
+
+    // Animation loop to draw video + overlay to composite canvas
+    const drawCompositeFrame = () => {
+      if (!compositeCtx || !videoRef.current) return
+      
+      const video = videoRef.current
+      const poseData = currentPoseRef.current
+      const feedbackData = currentFeedbackRef.current
+      const tip = currentTipRef.current
+      const skeletonEnabled = showSkeletonRef.current
+      const metrics = selectedMetricsRef.current
+      const anglesData = stableAnglesRef.current
+      
+      // Draw video frame
+      compositeCtx.drawImage(video, 0, 0, compositeCanvas.width, compositeCanvas.height)
+      
+      // Draw skeleton overlay if enabled and pose exists
+      if (skeletonEnabled && poseData && poseData.keypoints) {
+        const keypoints = poseData.keypoints
+        
+        // Draw skeleton connections with glow
+        compositeCtx.lineCap = 'round'
+        compositeCtx.lineJoin = 'round'
+        
+        for (const [i, j] of SKELETON_CONNECTIONS) {
+          const kp1 = keypoints[i]
+          const kp2 = keypoints[j]
+          
+          if (kp1 && kp2 && (kp1.score === undefined || kp1.score >= 0.2) && (kp2.score === undefined || kp2.score >= 0.2)) {
+            const color = BODY_PART_COLORS[i] || '#00d4ff'
+            
+            // Outer glow
+            compositeCtx.strokeStyle = color
+            compositeCtx.lineWidth = 12
+            compositeCtx.globalAlpha = 0.2
+            compositeCtx.beginPath()
+            compositeCtx.moveTo(kp1.x, kp1.y)
+            compositeCtx.lineTo(kp2.x, kp2.y)
+            compositeCtx.stroke()
+            
+            // Core line
+            compositeCtx.lineWidth = 4
+            compositeCtx.globalAlpha = 1.0
+            compositeCtx.beginPath()
+            compositeCtx.moveTo(kp1.x, kp1.y)
+            compositeCtx.lineTo(kp2.x, kp2.y)
+            compositeCtx.stroke()
+          }
+        }
+        
+        // Draw keypoints
+        for (let idx = 0; idx < keypoints.length; idx++) {
+          const kp = keypoints[idx]
+          if (kp.score !== undefined && kp.score < 0.2) continue
+          
+          const color = BODY_PART_COLORS[idx] || '#00d4ff'
+          
+          // Glow
+          compositeCtx.beginPath()
+          compositeCtx.arc(kp.x, kp.y, 12, 0, Math.PI * 2)
+          compositeCtx.fillStyle = color
+          compositeCtx.globalAlpha = 0.3
+          compositeCtx.fill()
+          
+          // Main circle
+          compositeCtx.beginPath()
+          compositeCtx.arc(kp.x, kp.y, 8, 0, Math.PI * 2)
+          compositeCtx.globalAlpha = 1.0
+          compositeCtx.fill()
+          
+          // Center highlight
+          compositeCtx.beginPath()
+          compositeCtx.arc(kp.x, kp.y, 4, 0, Math.PI * 2)
+          compositeCtx.fillStyle = 'rgba(255,255,255,0.7)'
+          compositeCtx.fill()
+        }
+        
+        compositeCtx.globalAlpha = 1.0
+      }
+      
+      // Draw metrics overlay at bottom
+      const barHeight = 80
+      const y = compositeCanvas.height - barHeight
+      
+      compositeCtx.fillStyle = 'rgba(0, 0, 0, 0.5)'
+      compositeCtx.fillRect(0, y, compositeCanvas.width, barHeight)
+      
+      const metricsToShow = metrics.slice(0, 6)
+      const metricWidth = compositeCanvas.width / metricsToShow.length
+      
+      compositeCtx.textAlign = 'center'
+      compositeCtx.textBaseline = 'middle'
+      
+      metricsToShow.forEach((metricId, index) => {
+        const metric = AVAILABLE_METRICS.find(m => m.id === metricId)
+        if (!metric) return
+        
+        const value = (() => {
+          switch (metricId) {
+            case 'form': return feedbackData?.overallScore ?? null
+            case 'elbow': return anglesData?.elbowAngle ?? null
+            case 'knee': return anglesData?.kneeAngle ?? null
+            case 'shoulder': return anglesData?.shoulderAngle ?? null
+            case 'hip': return anglesData?.hipAngle ?? null
+            case 'release': return anglesData?.releaseAngle ?? null
+            case 'arm': return anglesData?.wristAngle ?? null
+            default: return null
+          }
+        })()
+        
+        const status = metric.getStatus(feedbackData)
+        const color = status === 'good' ? '#22c55e' : status === 'warning' ? '#eab308' : status === 'critical' ? '#ef4444' : '#ffffff'
+        
+        const x = metricWidth * index + metricWidth / 2
+        
+        // Value
+        compositeCtx.fillStyle = color
+        compositeCtx.font = 'bold 28px system-ui, sans-serif'
+        compositeCtx.fillText(value !== null ? `${Math.round(value)}${metric.unit}` : '--', x, y + 30)
+        
+        // Label
+        compositeCtx.fillStyle = 'rgba(255, 255, 255, 0.6)'
+        compositeCtx.font = '10px system-ui, sans-serif'
+        compositeCtx.fillText(metric.shortLabel, x, y + 55)
+      })
+      
+      // Draw AI coaching tip at top
+      if (tip) {
+        compositeCtx.fillStyle = 'rgba(255, 107, 53, 0.3)'
+        compositeCtx.fillRect(0, 0, compositeCanvas.width, 50)
+        
+        compositeCtx.fillStyle = '#FF6B35'
+        compositeCtx.font = '20px system-ui, sans-serif'
+        compositeCtx.textAlign = 'left'
+        compositeCtx.fillText('🤖', 15, 30)
+        
+        compositeCtx.fillStyle = '#ffffff'
+        compositeCtx.font = '14px system-ui, sans-serif'
+        const truncatedTip = tip.length > 60 ? tip.slice(0, 60) + '...' : tip
+        compositeCtx.fillText(truncatedTip, 45, 30)
+      }
+      
+      compositeAnimationRef.current = requestAnimationFrame(drawCompositeFrame)
+    }
+    
+    // Start composite drawing
+    drawCompositeFrame()
+    
+    // Create stream from composite canvas
+    const compositeStream = compositeCanvas.captureStream(30) // 30fps
+    
+    // Add audio from original stream if available
+    const audioTracks = streamRef.current.getAudioTracks()
+    audioTracks.forEach(track => compositeStream.addTrack(track))
+
+    const mediaRecorder = new MediaRecorder(compositeStream, {
       mimeType: 'video/webm;codecs=vp9',
     })
 
@@ -556,6 +781,12 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     }
 
     mediaRecorder.onstop = async () => {
+      // Stop composite animation
+      if (compositeAnimationRef.current) {
+        cancelAnimationFrame(compositeAnimationRef.current)
+        compositeAnimationRef.current = null
+      }
+      
       const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' })
       const url = URL.createObjectURL(blob)
       
@@ -582,10 +813,16 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     mediaRecorderRef.current = mediaRecorder
     mediaRecorder.start(1000)
     setIsRecording(true)
-  }, [capturedFrames, setVideoAnalysisData])
+  }, [capturedFrames, setVideoAnalysisData, videoDimensions])
 
   // Stop recording
   const handleStopRecording = useCallback(() => {
+    // Stop composite animation first
+    if (compositeAnimationRef.current) {
+      cancelAnimationFrame(compositeAnimationRef.current)
+      compositeAnimationRef.current = null
+    }
+    
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop()
     }
@@ -808,17 +1045,17 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     router.push('/results/demo')
   }, [handleUseAnalysis, earnPoints, router])
 
-  // Get key metrics for display
-  const formScore = feedback?.overallScore ?? 0
-  const kneeAngle = angles?.kneeAngle ?? null
-  const shoulderAngle = angles?.shoulderAngle ?? null
-  const elbowAngle = angles?.elbowAngle ?? null
-  const hipAngle = angles?.hipAngle ?? null
-  const releaseAngle = angles?.releaseAngle ?? null
-  const armAngle = angles?.wristAngle ?? null // Arm/forearm angle
+  // Get key metrics for display - USE STABLE VALUES so they don't flicker
+  const formScore = stableFeedback?.overallScore ?? 0
+  const kneeAngle = stableAngles?.kneeAngle ?? null
+  const shoulderAngle = stableAngles?.shoulderAngle ?? null
+  const elbowAngle = stableAngles?.elbowAngle ?? null
+  const hipAngle = stableAngles?.hipAngle ?? null
+  const releaseAngle = stableAngles?.releaseAngle ?? null
+  const armAngle = stableAngles?.wristAngle ?? null // Arm/forearm angle
   
-  // Get current feedback tip
-  const currentTip = feedback?.tips?.[0] || null
+  // Get current feedback tip - USE STABLE VALUES so it doesn't flicker
+  const currentTip = stableFeedback?.tips?.[0] || null
   
   // Get metric value by ID
   const getMetricValue = (metricId: MetricId): number | null => {
@@ -834,11 +1071,11 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     }
   }
   
-  // Get metric status by ID
+  // Get metric status by ID - USE STABLE FEEDBACK
   const getMetricStatus = (metricId: MetricId): 'good' | 'warning' | 'critical' | 'unknown' => {
     const metric = AVAILABLE_METRICS.find(m => m.id === metricId)
     if (!metric) return 'unknown'
-    return metric.getStatus(feedback)
+    return metric.getStatus(stableFeedback)
   }
   
   // Get status color
