@@ -180,7 +180,6 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   const [videoDimensions, setVideoDimensions] = useState({ width: 640, height: 480 })
   const [orientation, setOrientation] = useState<Orientation>('portrait')
   const [showControls, setShowControls] = useState(true)
-  const [showExpandedMetrics, setShowExpandedMetrics] = useState(false)
   const [showShotFlash, setShowShotFlash] = useState(false)
   const [lastShotScore, setLastShotScore] = useState<number | null>(null)
 
@@ -909,10 +908,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       </AnimatePresence>
 
       {/* Dynamic metrics - multiple rows if needed */}
-      <div 
-        className="py-4 px-4"
-        onClick={() => setShowExpandedMetrics(!showExpandedMetrics)}
-      >
+      <div className="py-4 px-4">
         {metricsRows.map((row, rowIndex) => (
           <div key={rowIndex} className={`flex items-center justify-around ${rowIndex > 0 ? 'mt-3 pt-3 border-t border-white/10' : ''}`}>
             {row.map((metricId) => {
@@ -954,55 +950,6 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
           </svg>
         </button>
       </div>
-
-      {/* Expanded metrics with all tips */}
-      <AnimatePresence>
-        {showExpandedMetrics && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="border-t border-white/10 overflow-hidden"
-          >
-            <div className="p-3 space-y-3">
-              {/* Detailed metrics grid - dynamic columns */}
-              <div className={`grid gap-1.5 ${
-                selectedMetrics.length <= 3 ? 'grid-cols-3' : 
-                selectedMetrics.length === 4 ? 'grid-cols-4' : 'grid-cols-5'
-              }`}>
-                {selectedMetrics.map((metricId) => {
-                  const value = getMetricValue(metricId)
-                  const status = getMetricStatus(metricId)
-                  const metric = AVAILABLE_METRICS.find(m => m.id === metricId)
-                  if (!metric) return null
-                  return (
-                    <MetricBox 
-                      key={metricId}
-                      label={metric.shortLabel} 
-                      value={metricId === 'form' ? value : value} 
-                      status={status}
-                      isScore={metricId === 'form'}
-                    />
-                  )
-                })}
-              </div>
-
-              {/* All Tips */}
-              {feedback?.tips && feedback.tips.length > 0 && (
-                <div className="space-y-2">
-                  <div className="text-[10px] text-[#FF6B35] uppercase tracking-wider font-bold">Coaching Tips</div>
-                  {feedback.tips.slice(0, 3).map((tip, i) => (
-                    <div key={i} className="bg-white/5 rounded-lg p-2 flex items-start gap-2">
-                      <span className="text-[#FF6B35] text-xs mt-0.5">{i + 1}.</span>
-                      <span className="text-xs text-white/80">{tip}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </motion.div>
   )
 
