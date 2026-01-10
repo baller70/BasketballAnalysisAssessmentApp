@@ -435,12 +435,26 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
             console.log('[FullscreenLive] Video metadata loaded:', video.videoWidth, 'x', video.videoHeight)
             video.removeEventListener('loadedmetadata', handleLoadedMetadata)
             
+            // Get actual track settings for more accurate dimensions
+            const videoTrack = stream.getVideoTracks()[0]
+            const settings = videoTrack?.getSettings()
+            console.log('[FullscreenLive] Track settings:', settings)
+            
             video.play()
               .then(() => {
                 console.log('[FullscreenLive] Video playing')
+                
+                // Use track settings if available, otherwise fall back to video element dimensions
+                const actualWidth = settings?.width || video.videoWidth
+                const actualHeight = settings?.height || video.videoHeight
+                
+                console.log('[FullscreenLive] Using dimensions:', actualWidth, 'x', actualHeight)
+                console.log('[FullscreenLive] Display orientation:', window.innerWidth > window.innerHeight ? 'landscape' : 'portrait')
+                console.log('[FullscreenLive] Video orientation:', actualWidth > actualHeight ? 'landscape' : 'portrait')
+                
                 setVideoDimensions({
-                  width: video.videoWidth,
-                  height: video.videoHeight,
+                  width: actualWidth,
+                  height: actualHeight,
                 })
                 setCameraReady(true)
                 resolve()
@@ -562,9 +576,18 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       if (videoRef.current) {
         videoRef.current.srcObject = stream
         await videoRef.current.play()
+        
+        // Get actual track settings for more accurate dimensions
+        const videoTrack = stream.getVideoTracks()[0]
+        const settings = videoTrack?.getSettings()
+        const actualWidth = settings?.width || videoRef.current.videoWidth
+        const actualHeight = settings?.height || videoRef.current.videoHeight
+        
+        console.log('[FullscreenLive] Flip camera - dimensions:', actualWidth, 'x', actualHeight)
+        
         setVideoDimensions({
-          width: videoRef.current.videoWidth,
-          height: videoRef.current.videoHeight,
+          width: actualWidth,
+          height: actualHeight,
         })
         setCameraReady(true)
         

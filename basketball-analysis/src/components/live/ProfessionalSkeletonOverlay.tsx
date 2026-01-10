@@ -9,6 +9,7 @@
  * - Multi-layered glow effects for professional look
  * - Detailed keypoint rendering with rings and highlights
  * - Body part color coding (cyan arms, purple torso, orange hips, yellow legs)
+ * - Automatic orientation handling for mobile cameras
  */
 
 "use client"
@@ -26,13 +27,13 @@ import {
 // ============================================
 
 interface ProfessionalSkeletonOverlayProps {
-  /** Original video width (for coordinate scaling) */
+  /** Original video width (intrinsic video dimensions) */
   width: number
-  /** Original video height (for coordinate scaling) */
+  /** Original video height (intrinsic video dimensions) */
   height: number
-  /** Display width (actual canvas size) */
+  /** Display width (actual canvas size) - optional, will use container size */
   displayWidth?: number
-  /** Display height (actual canvas size) */
+  /** Display height (actual canvas size) - optional, will use container size */
   displayHeight?: number
   pose: Pose | null
   angles: ShootingAngles | null
@@ -46,6 +47,8 @@ interface ProfessionalSkeletonOverlayProps {
   showKeypoints?: boolean
   showSkeleton?: boolean
   minConfidence?: number
+  /** Whether the video is mirrored (front camera) */
+  isMirrored?: boolean
 }
 
 // ============================================
@@ -136,8 +139,8 @@ function getKeypointStatusColor(
 // ============================================
 
 export function ProfessionalSkeletonOverlay({
-  width,
-  height,
+  width: videoWidth,
+  height: videoHeight,
   displayWidth,
   displayHeight,
   pose,
@@ -147,26 +150,47 @@ export function ProfessionalSkeletonOverlay({
   showKeypoints = true,
   showSkeleton = true,
   minConfidence = 0.2,
+  isMirrored = false,
 }: ProfessionalSkeletonOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
   
-  // Get actual container size for canvas
+  // Use ResizeObserver for more reliable size tracking
   useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+    
     const updateSize = () => {
-      if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect()
+      const rect = container.getBoundingClientRect()
+      if (rect.width > 0 && rect.height > 0) {
         setCanvasSize({ width: rect.width, height: rect.height })
-      } else if (displayWidth && displayHeight) {
-        setCanvasSize({ width: displayWidth, height: displayHeight })
       }
     }
     
+    // Initial size
     updateSize()
+    
+    // Use ResizeObserver for reliable updates
+    const resizeObserver = new ResizeObserver(() => {
+      updateSize()
+    })
+    resizeObserver.observe(container)
+    
+    // Also listen for orientation changes on mobile
+    const handleOrientationChange = () => {
+      // Small delay to let the layout settle
+      setTimeout(updateSize, 100)
+    }
+    window.addEventListener('orientationchange', handleOrientationChange)
     window.addEventListener('resize', updateSize)
-    return () => window.removeEventListener('resize', updateSize)
-  }, [displayWidth, displayHeight])
+    
+    return () => {
+      resizeObserver.disconnect()
+      window.removeEventListener('orientationchange', handleOrientationChange)
+      window.removeEventListener('resize', updateSize)
+    }
+  }, [])
 
   const drawSkeleton = useCallback(() => {
     const canvas = canvasRef.current
@@ -175,251 +199,309 @@ export function ProfessionalSkeletonOverlay({
     const ctx = canvas.getContext('2d')
     if (!ctx) return
     
-    const canvasW = canvasSize.width || width
-    const canvasH = canvasSize.height || height
+    // Use container size or fallback to video dimensions
+    const canvasW = canvasSize.width || displayWidth || videoWidth
+    const canvasH = canvasSize.height || displayHeight || videoHeight
+
+    // Set canvas resolution
+    canvas.width = canvasW
+    canvas.height = canvasH
 
     // Clear canvas
     ctx.clearRect(0, 0, canvasW, canvasH)
 
     if (!pose || pose.keypoints.length === 0) return
 
-    // Calculate scale factors to map video coordinates to canvas coordinates
-    // This handles the object-cover scaling of the video
-    const videoAspect = width / height
-    const canvasAspect = canvasW / canvasH
+    // Determine if we need to handle orientation mismatch
+    // Video is landscape (width > height) but display is portrait (canvasH > canvasW)
+    const videoIsLandscape = videoWidth > videoHeight
+    const displayIsPortrait = canvasH > canvasW
+    const needsRotation = videoIsLandscape && displayIsPortrait
     
+    // For object-cover behavior, we need to calculate how the video is scaled and positioned
     let scaleX: number, scaleY: number, offsetX = 0, offsetY = 0
     
-    if (videoAspect > canvasAspect) {
-      // Video is wider - height fits, width is cropped
-      scaleY = canvasH / height
-      scaleX = scaleY
-      offsetX = (canvasW - width * scaleX) / 2
+    if (needsRotation) {
+      // Video is rotated 90 degrees for display
+      // The video's width becomes the display's height and vice versa
+      // Keypoints need to be transformed: (x, y) -> (y, videoWidth - x)
+      
+      // For object-cover with rotation:
+      // The rotated video has dimensions (videoHeight x videoWidth)
+      const rotatedVideoWidth = videoHeight
+      const rotatedVideoHeight = videoWidth
+      
+      const videoAspect = rotatedVideoWidth / rotatedVideoHeight
+      const canvasAspect = canvasW / canvasH
+      
+      if (videoAspect > canvasAspect) {
+        // Rotated video is wider - scale to height, crop width
+        scaleY = canvasH / rotatedVideoHeight
+        scaleX = scaleY
+        offsetX = (canvasW - rotatedVideoWidth * scaleX) / 2
+      } else {
+        // Rotated video is taller - scale to width, crop height
+        scaleX = canvasW / rotatedVideoWidth
+        scaleY = scaleX
+        offsetY = (canvasH - rotatedVideoHeight * scaleY) / 2
+      }
+      
+      // Transform keypoints: rotate 90 degrees clockwise
+      // (x, y) in video coords -> (y, videoWidth - x) in rotated coords
+      // Then scale to canvas
+      const keypoints = pose.keypoints.map(kp => {
+        // Rotate 90 degrees clockwise
+        const rotatedX = kp.y
+        const rotatedY = videoWidth - kp.x
+        
+        return {
+          ...kp,
+          x: rotatedX * scaleX + offsetX,
+          y: rotatedY * scaleY + offsetY,
+        }
+      })
+      
+      drawSkeletonWithKeypoints(ctx, keypoints, canvasW, canvasH)
     } else {
-      // Video is taller - width fits, height is cropped
-      scaleX = canvasW / width
-      scaleY = scaleX
-      offsetY = (canvasH - height * scaleY) / 2
+      // No rotation needed - standard object-cover scaling
+      const videoAspect = videoWidth / videoHeight
+      const canvasAspect = canvasW / canvasH
+      
+      if (videoAspect > canvasAspect) {
+        // Video is wider - scale to height, crop width
+        scaleY = canvasH / videoHeight
+        scaleX = scaleY
+        offsetX = (canvasW - videoWidth * scaleX) / 2
+      } else {
+        // Video is taller - scale to width, crop height
+        scaleX = canvasW / videoWidth
+        scaleY = scaleX
+        offsetY = (canvasH - videoHeight * scaleY) / 2
+      }
+      
+      // Transform keypoints to canvas coordinates
+      const keypoints = pose.keypoints.map(kp => ({
+        ...kp,
+        x: kp.x * scaleX + offsetX,
+        y: kp.y * scaleY + offsetY,
+      }))
+      
+      drawSkeletonWithKeypoints(ctx, keypoints, canvasW, canvasH)
     }
     
-    // Transform keypoints to canvas coordinates
-    const keypoints = pose.keypoints.map(kp => ({
-      ...kp,
-      x: kp.x * scaleX + offsetX,
-      y: kp.y * scaleY + offsetY,
-    }))
+    function drawSkeletonWithKeypoints(
+      ctx: CanvasRenderingContext2D, 
+      keypoints: Array<{ x: number; y: number; score?: number; name?: string }>,
+      canvasW: number,
+      canvasH: number
+    ) {
+      // ===== DRAW SKELETON CONNECTIONS =====
+      if (showSkeleton) {
+        ctx.lineCap = 'round'
+        ctx.lineJoin = 'round'
 
-    // ===== DRAW SKELETON CONNECTIONS =====
-    if (showSkeleton) {
-      ctx.lineCap = 'round'
-      ctx.lineJoin = 'round'
+        for (const [i, j] of SKELETON_CONNECTIONS) {
+          const kp1 = keypoints[i]
+          const kp2 = keypoints[j]
 
-      for (const [i, j] of SKELETON_CONNECTIONS) {
-        const kp1 = keypoints[i]
-        const kp2 = keypoints[j]
+          if (
+            kp1 && kp2 &&
+            (kp1.score === undefined || kp1.score >= minConfidence) &&
+            (kp2.score === undefined || kp2.score >= minConfidence)
+          ) {
+            // Determine color - use status color if available, otherwise body part color
+            const statusColor1 = getKeypointStatusColor(i, feedback)
+            const statusColor2 = getKeypointStatusColor(j, feedback)
+            const lineColor = statusColor1 || statusColor2 || BODY_PART_COLORS[i] || '#00d4ff'
 
-        if (
-          kp1 && kp2 &&
-          (kp1.score === undefined || kp1.score >= minConfidence) &&
-          (kp2.score === undefined || kp2.score >= minConfidence)
-        ) {
+            // Layer 1: Outer glow (largest, most transparent)
+            ctx.strokeStyle = lineColor
+            ctx.lineWidth = 16
+            ctx.globalAlpha = 0.15
+            ctx.beginPath()
+            ctx.moveTo(kp1.x, kp1.y)
+            ctx.lineTo(kp2.x, kp2.y)
+            ctx.stroke()
+
+            // Layer 2: Middle glow
+            ctx.lineWidth = 10
+            ctx.globalAlpha = 0.25
+            ctx.beginPath()
+            ctx.moveTo(kp1.x, kp1.y)
+            ctx.lineTo(kp2.x, kp2.y)
+            ctx.stroke()
+
+            // Layer 3: Inner glow
+            ctx.lineWidth = 6
+            ctx.globalAlpha = 0.4
+            ctx.beginPath()
+            ctx.moveTo(kp1.x, kp1.y)
+            ctx.lineTo(kp2.x, kp2.y)
+            ctx.stroke()
+
+            // Layer 4: Core line (solid)
+            ctx.lineWidth = 4
+            ctx.globalAlpha = 1.0
+            ctx.beginPath()
+            ctx.moveTo(kp1.x, kp1.y)
+            ctx.lineTo(kp2.x, kp2.y)
+            ctx.stroke()
+
+            // Layer 5: Bright center highlight
+            ctx.strokeStyle = '#ffffff'
+            ctx.lineWidth = 1.5
+            ctx.globalAlpha = 0.6
+            ctx.beginPath()
+            ctx.moveTo(kp1.x, kp1.y)
+            ctx.lineTo(kp2.x, kp2.y)
+            ctx.stroke()
+
+            ctx.globalAlpha = 1.0
+          }
+        }
+      }
+
+      // ===== DRAW KEYPOINTS =====
+      if (showKeypoints) {
+        const pointRadius = 10
+
+        for (let i = 0; i < keypoints.length; i++) {
+          const keypoint = keypoints[i]
+          if (keypoint.score !== undefined && keypoint.score < minConfidence) continue
+
+          const x = keypoint.x
+          const y = keypoint.y
+
           // Determine color - use status color if available, otherwise body part color
-          const statusColor1 = getKeypointStatusColor(i, feedback)
-          const statusColor2 = getKeypointStatusColor(j, feedback)
-          const lineColor = statusColor1 || statusColor2 || BODY_PART_COLORS[i] || '#00d4ff'
+          const statusColor = getKeypointStatusColor(i, feedback)
+          const color = statusColor || BODY_PART_COLORS[i] || '#00d4ff'
 
-          // Layer 1: Outer glow (largest, most transparent)
-          ctx.strokeStyle = lineColor
-          ctx.lineWidth = 16
-          ctx.globalAlpha = 0.15
+          // Layer 1: Outer glow (largest)
           ctx.beginPath()
-          ctx.moveTo(kp1.x, kp1.y)
-          ctx.lineTo(kp2.x, kp2.y)
-          ctx.stroke()
+          ctx.arc(x, y, pointRadius + 8, 0, Math.PI * 2)
+          ctx.fillStyle = color
+          ctx.globalAlpha = 0.15
+          ctx.fill()
 
           // Layer 2: Middle glow
-          ctx.lineWidth = 10
-          ctx.globalAlpha = 0.25
           ctx.beginPath()
-          ctx.moveTo(kp1.x, kp1.y)
-          ctx.lineTo(kp2.x, kp2.y)
-          ctx.stroke()
+          ctx.arc(x, y, pointRadius + 5, 0, Math.PI * 2)
+          ctx.globalAlpha = 0.25
+          ctx.fill()
 
           // Layer 3: Inner glow
-          ctx.lineWidth = 6
+          ctx.beginPath()
+          ctx.arc(x, y, pointRadius + 2, 0, Math.PI * 2)
           ctx.globalAlpha = 0.4
-          ctx.beginPath()
-          ctx.moveTo(kp1.x, kp1.y)
-          ctx.lineTo(kp2.x, kp2.y)
-          ctx.stroke()
+          ctx.fill()
 
-          // Layer 4: Core line (solid)
-          ctx.lineWidth = 4
+          // Layer 4: Main joint circle (solid)
+          ctx.beginPath()
+          ctx.arc(x, y, pointRadius, 0, Math.PI * 2)
+          ctx.fillStyle = color
           ctx.globalAlpha = 1.0
+          ctx.fill()
+
+          // Layer 5: Dark inner ring for depth
           ctx.beginPath()
-          ctx.moveTo(kp1.x, kp1.y)
-          ctx.lineTo(kp2.x, kp2.y)
+          ctx.arc(x, y, pointRadius * 0.7, 0, Math.PI * 2)
+          ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)'
+          ctx.lineWidth = 2
           ctx.stroke()
 
-          // Layer 5: Bright center highlight
-          ctx.strokeStyle = '#ffffff'
-          ctx.lineWidth = 1.5
-          ctx.globalAlpha = 0.6
+          // Layer 6: Bright center highlight
           ctx.beginPath()
-          ctx.moveTo(kp1.x, kp1.y)
-          ctx.lineTo(kp2.x, kp2.y)
-          ctx.stroke()
+          ctx.arc(x, y, pointRadius * 0.5, 0, Math.PI * 2)
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.7)'
+          ctx.fill()
 
+          // Layer 7: Tiny reflection dot
+          ctx.beginPath()
+          ctx.arc(x - pointRadius * 0.25, y - pointRadius * 0.25, pointRadius * 0.2, 0, Math.PI * 2)
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'
+          ctx.fill()
+        }
+      }
+
+      // ===== DRAW ANGLE LABELS =====
+      if (showAngles && angles) {
+        ctx.font = 'bold 14px Inter, system-ui, sans-serif'
+        ctx.textAlign = 'left'
+        ctx.textBaseline = 'middle'
+
+        const drawLabel = (
+          x: number,
+          y: number,
+          text: string,
+          status: 'good' | 'warning' | 'critical' | 'unknown' = 'unknown',
+          labelOffsetX: number = 20,
+          labelOffsetY: number = 0
+        ) => {
+          const labelX = x + labelOffsetX
+          const labelY = y + labelOffsetY
+
+          const metrics = ctx.measureText(text)
+          const padding = 8
+          const bgWidth = metrics.width + padding * 2
+          const bgHeight = 24
+
+          // Background with status color
+          const bgColor = STATUS_COLORS[status] || STATUS_COLORS.unknown
+          ctx.fillStyle = bgColor
+          ctx.globalAlpha = 0.9
+          ctx.beginPath()
+          ctx.roundRect(labelX - padding, labelY - bgHeight / 2, bgWidth, bgHeight, 6)
+          ctx.fill()
+
+          // Text
           ctx.globalAlpha = 1.0
+          ctx.fillStyle = '#ffffff'
+          ctx.fillText(text, labelX, labelY)
+        }
+
+        // Elbow angle
+        if (angles.elbowAngle !== null) {
+          const elbow = keypoints[KEYPOINT_INDICES.right_elbow]
+          if (elbow && (elbow.score === undefined || elbow.score >= minConfidence)) {
+            drawLabel(elbow.x, elbow.y, `${angles.elbowAngle}°`, feedback?.elbowStatus || 'unknown', 25, -25)
+          }
+        }
+
+        // Knee angle
+        if (angles.kneeAngle !== null) {
+          const knee = keypoints[KEYPOINT_INDICES.right_knee]
+          if (knee && (knee.score === undefined || knee.score >= minConfidence)) {
+            drawLabel(knee.x, knee.y, `${angles.kneeAngle}°`, feedback?.kneeStatus || 'unknown', 25, 0)
+          }
+        }
+
+        // Shoulder angle
+        if (angles.shoulderAngle !== null) {
+          const shoulder = keypoints[KEYPOINT_INDICES.right_shoulder]
+          if (shoulder && (shoulder.score === undefined || shoulder.score >= minConfidence)) {
+            drawLabel(shoulder.x, shoulder.y, `${angles.shoulderAngle}°`, feedback?.shoulderStatus || 'unknown', -80, -25)
+          }
+        }
+
+        // Hip angle
+        if (angles.hipAngle !== null) {
+          const hip = keypoints[KEYPOINT_INDICES.right_hip]
+          if (hip && (hip.score === undefined || hip.score >= minConfidence)) {
+            drawLabel(hip.x, hip.y, `${angles.hipAngle}°`, feedback?.hipStatus || 'unknown', -70, 0)
+          }
         }
       }
     }
-
-    // ===== DRAW KEYPOINTS =====
-    if (showKeypoints) {
-      const pointRadius = 10
-
-      for (let i = 0; i < keypoints.length; i++) {
-        const keypoint = keypoints[i]
-        if (keypoint.score !== undefined && keypoint.score < minConfidence) continue
-
-        const x = keypoint.x
-        const y = keypoint.y
-
-        // Determine color - use status color if available, otherwise body part color
-        const statusColor = getKeypointStatusColor(i, feedback)
-        const color = statusColor || BODY_PART_COLORS[i] || '#00d4ff'
-
-        // Layer 1: Outer glow (largest)
-        ctx.beginPath()
-        ctx.arc(x, y, pointRadius + 8, 0, Math.PI * 2)
-        ctx.fillStyle = color
-        ctx.globalAlpha = 0.15
-        ctx.fill()
-
-        // Layer 2: Middle glow
-        ctx.beginPath()
-        ctx.arc(x, y, pointRadius + 5, 0, Math.PI * 2)
-        ctx.globalAlpha = 0.25
-        ctx.fill()
-
-        // Layer 3: Inner glow
-        ctx.beginPath()
-        ctx.arc(x, y, pointRadius + 2, 0, Math.PI * 2)
-        ctx.globalAlpha = 0.4
-        ctx.fill()
-
-        // Layer 4: Main joint circle (solid)
-        ctx.beginPath()
-        ctx.arc(x, y, pointRadius, 0, Math.PI * 2)
-        ctx.fillStyle = color
-        ctx.globalAlpha = 1.0
-        ctx.fill()
-
-        // Layer 5: Dark inner ring for depth
-        ctx.beginPath()
-        ctx.arc(x, y, pointRadius * 0.7, 0, Math.PI * 2)
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)'
-        ctx.lineWidth = 2
-        ctx.stroke()
-
-        // Layer 6: Bright center highlight
-        ctx.beginPath()
-        ctx.arc(x, y, pointRadius * 0.5, 0, Math.PI * 2)
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)'
-        ctx.fill()
-
-        // Layer 7: Tiny reflection dot
-        ctx.beginPath()
-        ctx.arc(x - pointRadius * 0.25, y - pointRadius * 0.25, pointRadius * 0.2, 0, Math.PI * 2)
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'
-        ctx.fill()
-      }
-    }
-
-    // ===== DRAW ANGLE LABELS =====
-    if (showAngles && angles) {
-      ctx.font = 'bold 14px Inter, system-ui, sans-serif'
-      ctx.textAlign = 'left'
-      ctx.textBaseline = 'middle'
-
-      const drawLabel = (
-        x: number,
-        y: number,
-        text: string,
-        status: 'good' | 'warning' | 'critical' | 'unknown' = 'unknown',
-        offsetX: number = 20,
-        offsetY: number = 0
-      ) => {
-        const labelX = x + offsetX
-        const labelY = y + offsetY
-
-        const metrics = ctx.measureText(text)
-        const padding = 8
-        const bgWidth = metrics.width + padding * 2
-        const bgHeight = 24
-
-        // Background with status color
-        const bgColor = STATUS_COLORS[status] || STATUS_COLORS.unknown
-        ctx.fillStyle = bgColor
-        ctx.globalAlpha = 0.9
-        ctx.beginPath()
-        ctx.roundRect(labelX - padding, labelY - bgHeight / 2, bgWidth, bgHeight, 6)
-        ctx.fill()
-
-        // Text
-        ctx.globalAlpha = 1.0
-        ctx.fillStyle = '#ffffff'
-        ctx.fillText(text, labelX, labelY)
-      }
-
-      // Elbow angle
-      if (angles.elbowAngle !== null) {
-        const elbow = keypoints[KEYPOINT_INDICES.right_elbow]
-        if (elbow && (elbow.score === undefined || elbow.score >= minConfidence)) {
-          drawLabel(elbow.x, elbow.y, `${angles.elbowAngle}°`, feedback?.elbowStatus || 'unknown', 25, -25)
-        }
-      }
-
-      // Knee angle
-      if (angles.kneeAngle !== null) {
-        const knee = keypoints[KEYPOINT_INDICES.right_knee]
-        if (knee && (knee.score === undefined || knee.score >= minConfidence)) {
-          drawLabel(knee.x, knee.y, `${angles.kneeAngle}°`, feedback?.kneeStatus || 'unknown', 25, 0)
-        }
-      }
-
-      // Shoulder angle
-      if (angles.shoulderAngle !== null) {
-        const shoulder = keypoints[KEYPOINT_INDICES.right_shoulder]
-        if (shoulder && (shoulder.score === undefined || shoulder.score >= minConfidence)) {
-          drawLabel(shoulder.x, shoulder.y, `${angles.shoulderAngle}°`, feedback?.shoulderStatus || 'unknown', -80, -25)
-        }
-      }
-
-      // Hip angle
-      if (angles.hipAngle !== null) {
-        const hip = keypoints[KEYPOINT_INDICES.right_hip]
-        if (hip && (hip.score === undefined || hip.score >= minConfidence)) {
-          drawLabel(hip.x, hip.y, `${angles.hipAngle}°`, feedback?.hipStatus || 'unknown', -70, 0)
-        }
-      }
-    }
-  }, [pose, angles, feedback, width, height, canvasSize, showAngles, showKeypoints, showSkeleton, minConfidence])
+  }, [pose, angles, feedback, videoWidth, videoHeight, canvasSize, displayWidth, displayHeight, showAngles, showKeypoints, showSkeleton, minConfidence])
 
   useEffect(() => {
     drawSkeleton()
   }, [drawSkeleton])
 
-  const canvasW = canvasSize.width || width
-  const canvasH = canvasSize.height || height
-
   return (
     <div ref={containerRef} className="absolute inset-0 pointer-events-none">
       <canvas
         ref={canvasRef}
-        width={canvasW}
-        height={canvasH}
         className="absolute inset-0 w-full h-full"
       />
     </div>
