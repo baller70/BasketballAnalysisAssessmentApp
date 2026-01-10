@@ -817,8 +817,8 @@ export function DrillExecutionPage({ drill, onClose, onStartDrill }: DrillExecut
             madeShots: s.madeShots || 0,
             missedShots: s.missedShots || 0
           }))}
-          onMade={() => recordMade('automatic')}
-          onMiss={() => recordMiss('automatic')}
+          onMade={() => recordMade('coco')}
+          onMiss={() => recordMiss('coco')}
           enableSound={true}
         />
       )}
