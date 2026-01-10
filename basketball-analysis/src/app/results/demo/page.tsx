@@ -1885,8 +1885,26 @@ function DemoResultsPageContent() {
             <div className="bg-[#2C2C2C] rounded-lg overflow-hidden shadow-lg">
               {/* Tab Navigation - Hidden on mobile (FAB handles it) */}
               <div className="hidden md:block p-4 border-b border-[#3a3a3a]">
-                <div className="flex items-center justify-center">
-                  {/* Tab Navigation */}
+                <div className="flex items-center justify-between">
+                  {/* Left: Upload Buttons */}
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => (window as any).__imageUploadInput?.click()}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#3b82f6]/10 border border-[#3b82f6]/30 text-[#3b82f6] hover:bg-[#3b82f6]/20 transition-colors text-sm font-medium"
+                    >
+                      <ImageIcon className="w-4 h-4" />
+                      <span>Upload Image</span>
+                    </button>
+                    <button
+                      onClick={() => (window as any).__videoUploadInput?.click()}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#ef4444]/10 border border-[#ef4444]/30 text-[#ef4444] hover:bg-[#ef4444]/20 transition-colors text-sm font-medium"
+                    >
+                      <Video className="w-4 h-4" />
+                      <span>Upload Video</span>
+                    </button>
+                  </div>
+                  
+                  {/* Center: Tab Navigation */}
                   <div className="inline-flex rounded-lg bg-[#1a1a1a] p-1">
                     {(["video", "image", "live"] as ResultsMode[]).map((mode) => (
                       <button 
@@ -1913,8 +1931,14 @@ function DemoResultsPageContent() {
                     ))}
                   </div>
                   
-                  {/* Right: Spacer for balance */}
-                  <div className="w-[120px]"></div>
+                  {/* Right: My Media Link */}
+                  <Link
+                    href="/media"
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#FF6B35]/10 border border-[#FF6B35]/30 text-[#FF6B35] hover:bg-[#FF6B35]/20 transition-colors text-sm font-medium"
+                  >
+                    <FolderOpen className="w-4 h-4" />
+                    <span>My Media</span>
+                  </Link>
                 </div>
               </div>
               
