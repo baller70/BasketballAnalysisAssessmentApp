@@ -240,6 +240,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null) // Main container for display size
   const compositeCanvasRef = useRef<HTMLCanvasElement | null>(null) // For recording with overlay
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const recordedChunksRef = useRef<Blob[]>([])
@@ -739,19 +740,56 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   
   // Actual recording start (after countdown)
   const startActualRecording = useCallback(() => {
-    if (!streamRef.current || !videoRef.current) return
+    if (!streamRef.current || !videoRef.current || !containerRef.current) return
 
     recordedChunksRef.current = []
     setRecordingDuration(0)
     setShotCount(0) // Reset shot counter
     setShowControls(false) // Hide controls when recording starts
 
-    // Create composite canvas for recording with overlay
+    // Get the DISPLAY dimensions (what user sees on screen)
+    const container = containerRef.current
+    const displayWidth = container.clientWidth
+    const displayHeight = container.clientHeight
+    
+    // Video intrinsic dimensions
+    const videoWidth = videoDimensions.width
+    const videoHeight = videoDimensions.height
+
+    // Create composite canvas at DISPLAY size for exact screen capture
     const compositeCanvas = document.createElement('canvas')
-    compositeCanvas.width = videoDimensions.width
-    compositeCanvas.height = videoDimensions.height
+    compositeCanvas.width = displayWidth
+    compositeCanvas.height = displayHeight
     compositeCanvasRef.current = compositeCanvas
     const compositeCtx = compositeCanvas.getContext('2d')
+
+    // Calculate object-cover scaling (same as CSS object-cover)
+    // This tells us how the video is scaled and positioned in the display
+    const videoAspect = videoWidth / videoHeight
+    const displayAspect = displayWidth / displayHeight
+    
+    let videoScale: number
+    let videoOffsetX = 0
+    let videoOffsetY = 0
+    let drawWidth: number
+    let drawHeight: number
+    
+    if (videoAspect > displayAspect) {
+      // Video is wider - scale by height, crop width
+      videoScale = displayHeight / videoHeight
+      drawWidth = videoWidth * videoScale
+      drawHeight = displayHeight
+      videoOffsetX = (displayWidth - drawWidth) / 2
+    } else {
+      // Video is taller - scale by width, crop height
+      videoScale = displayWidth / videoWidth
+      drawWidth = displayWidth
+      drawHeight = videoHeight * videoScale
+      videoOffsetY = (displayHeight - drawHeight) / 2
+    }
+
+    // Scale factor for UI elements (to match screen appearance)
+    const uiScale = Math.min(displayWidth / 390, displayHeight / 844) // Based on iPhone 14 Pro dimensions
 
     // Animation loop to draw video + overlay to composite canvas
     const drawCompositeFrame = () => {
@@ -768,12 +806,21 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       const shotScore = lastShotScoreRef.current
       const currentShotCount = shotCountRef.current
       
-      // Draw video frame
-      compositeCtx.drawImage(video, 0, 0, compositeCanvas.width, compositeCanvas.height)
+      // Clear canvas
+      compositeCtx.fillStyle = '#000000'
+      compositeCtx.fillRect(0, 0, displayWidth, displayHeight)
+      
+      // Draw video frame with object-cover positioning
+      compositeCtx.drawImage(video, videoOffsetX, videoOffsetY, drawWidth, drawHeight)
       
       // Draw skeleton overlay if enabled and pose exists
+      // Transform keypoints from video coordinates to display coordinates
       if (skeletonEnabled && poseData && poseData.keypoints) {
-        const keypoints = poseData.keypoints
+        const keypoints = poseData.keypoints.map((kp: any) => ({
+          ...kp,
+          x: kp.x * videoScale + videoOffsetX,
+          y: kp.y * videoScale + videoOffsetY,
+        }))
         
         // Draw skeleton connections with glow
         compositeCtx.lineCap = 'round'
@@ -788,16 +835,33 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
             
             // Outer glow
             compositeCtx.strokeStyle = color
-            compositeCtx.lineWidth = 12
-            compositeCtx.globalAlpha = 0.2
+            compositeCtx.lineWidth = 16 * uiScale
+            compositeCtx.globalAlpha = 0.15
+            compositeCtx.beginPath()
+            compositeCtx.moveTo(kp1.x, kp1.y)
+            compositeCtx.lineTo(kp2.x, kp2.y)
+            compositeCtx.stroke()
+            
+            // Middle glow
+            compositeCtx.lineWidth = 10 * uiScale
+            compositeCtx.globalAlpha = 0.25
             compositeCtx.beginPath()
             compositeCtx.moveTo(kp1.x, kp1.y)
             compositeCtx.lineTo(kp2.x, kp2.y)
             compositeCtx.stroke()
             
             // Core line
-            compositeCtx.lineWidth = 4
+            compositeCtx.lineWidth = 4 * uiScale
             compositeCtx.globalAlpha = 1.0
+            compositeCtx.beginPath()
+            compositeCtx.moveTo(kp1.x, kp1.y)
+            compositeCtx.lineTo(kp2.x, kp2.y)
+            compositeCtx.stroke()
+            
+            // White highlight
+            compositeCtx.strokeStyle = '#ffffff'
+            compositeCtx.lineWidth = 1.5 * uiScale
+            compositeCtx.globalAlpha = 0.6
             compositeCtx.beginPath()
             compositeCtx.moveTo(kp1.x, kp1.y)
             compositeCtx.lineTo(kp2.x, kp2.y)
@@ -806,29 +870,55 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
         }
         
         // Draw keypoints
+        const pointRadius = 10 * uiScale
         for (let idx = 0; idx < keypoints.length; idx++) {
           const kp = keypoints[idx]
           if (kp.score !== undefined && kp.score < 0.2) continue
           
           const color = BODY_PART_COLORS[idx] || '#00d4ff'
           
-          // Glow
+          // Outer glow
           compositeCtx.beginPath()
-          compositeCtx.arc(kp.x, kp.y, 12, 0, Math.PI * 2)
+          compositeCtx.arc(kp.x, kp.y, pointRadius + 8 * uiScale, 0, Math.PI * 2)
           compositeCtx.fillStyle = color
-          compositeCtx.globalAlpha = 0.3
+          compositeCtx.globalAlpha = 0.15
+          compositeCtx.fill()
+          
+          // Middle glow
+          compositeCtx.beginPath()
+          compositeCtx.arc(kp.x, kp.y, pointRadius + 5 * uiScale, 0, Math.PI * 2)
+          compositeCtx.globalAlpha = 0.25
+          compositeCtx.fill()
+          
+          // Inner glow
+          compositeCtx.beginPath()
+          compositeCtx.arc(kp.x, kp.y, pointRadius + 2 * uiScale, 0, Math.PI * 2)
+          compositeCtx.globalAlpha = 0.4
           compositeCtx.fill()
           
           // Main circle
           compositeCtx.beginPath()
-          compositeCtx.arc(kp.x, kp.y, 8, 0, Math.PI * 2)
+          compositeCtx.arc(kp.x, kp.y, pointRadius, 0, Math.PI * 2)
           compositeCtx.globalAlpha = 1.0
           compositeCtx.fill()
           
+          // Dark ring for depth
+          compositeCtx.beginPath()
+          compositeCtx.arc(kp.x, kp.y, pointRadius * 0.7, 0, Math.PI * 2)
+          compositeCtx.strokeStyle = 'rgba(0, 0, 0, 0.4)'
+          compositeCtx.lineWidth = 2 * uiScale
+          compositeCtx.stroke()
+          
           // Center highlight
           compositeCtx.beginPath()
-          compositeCtx.arc(kp.x, kp.y, 4, 0, Math.PI * 2)
+          compositeCtx.arc(kp.x, kp.y, pointRadius * 0.5, 0, Math.PI * 2)
           compositeCtx.fillStyle = 'rgba(255,255,255,0.7)'
+          compositeCtx.fill()
+          
+          // Tiny reflection
+          compositeCtx.beginPath()
+          compositeCtx.arc(kp.x - pointRadius * 0.25, kp.y - pointRadius * 0.25, pointRadius * 0.2, 0, Math.PI * 2)
+          compositeCtx.fillStyle = 'rgba(255,255,255,0.9)'
           compositeCtx.fill()
         }
         
@@ -837,59 +927,62 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       
       // ===== DRAW AI COACHING TIP AT TOP =====
       if (tip) {
-        const tipBarHeight = 60
+        const tipBarHeight = 70 * uiScale
         
         // Background gradient
-        const gradient = compositeCtx.createLinearGradient(0, 0, compositeCanvas.width, 0)
-        gradient.addColorStop(0, 'rgba(255, 107, 53, 0.8)')
-        gradient.addColorStop(1, 'rgba(255, 107, 53, 0.4)')
+        const gradient = compositeCtx.createLinearGradient(0, 0, displayWidth, 0)
+        gradient.addColorStop(0, 'rgba(255, 107, 53, 0.85)')
+        gradient.addColorStop(1, 'rgba(255, 107, 53, 0.5)')
         compositeCtx.fillStyle = gradient
-        compositeCtx.fillRect(0, 0, compositeCanvas.width, tipBarHeight)
+        compositeCtx.fillRect(0, 0, displayWidth, tipBarHeight)
         
-        // "AI" label with icon-style box
+        // "AI" label box
+        const aiBoxSize = 36 * uiScale
         compositeCtx.fillStyle = 'rgba(0, 0, 0, 0.3)'
         compositeCtx.beginPath()
-        compositeCtx.roundRect(12, 15, 40, 30, 6)
+        compositeCtx.roundRect(16 * uiScale, (tipBarHeight - aiBoxSize) / 2, aiBoxSize, aiBoxSize, 8 * uiScale)
         compositeCtx.fill()
         
         compositeCtx.fillStyle = '#ffffff'
-        compositeCtx.font = 'bold 16px system-ui, sans-serif'
+        compositeCtx.font = `bold ${18 * uiScale}px system-ui, sans-serif`
         compositeCtx.textAlign = 'center'
         compositeCtx.textBaseline = 'middle'
-        compositeCtx.fillText('AI', 32, 30)
+        compositeCtx.fillText('AI', 16 * uiScale + aiBoxSize / 2, tipBarHeight / 2)
         
         // Tip text
         compositeCtx.fillStyle = '#ffffff'
-        compositeCtx.font = 'bold 16px system-ui, sans-serif'
+        compositeCtx.font = `bold ${16 * uiScale}px system-ui, sans-serif`
         compositeCtx.textAlign = 'left'
-        const maxTipWidth = compositeCanvas.width - 80
-        const truncatedTip = tip.length > 50 ? tip.slice(0, 50) + '...' : tip
-        compositeCtx.fillText(truncatedTip, 62, 30)
+        const truncatedTip = tip.length > 40 ? tip.slice(0, 40) + '...' : tip
+        compositeCtx.fillText(truncatedTip, 60 * uiScale, tipBarHeight / 2)
       }
       
       // ===== DRAW METRICS OVERLAY AT BOTTOM =====
-      const barHeight = 100
-      const y = compositeCanvas.height - barHeight
-      
-      // Background with gradient
-      const metricsGradient = compositeCtx.createLinearGradient(0, y, 0, compositeCanvas.height)
-      metricsGradient.addColorStop(0, 'rgba(0, 0, 0, 0.7)')
-      metricsGradient.addColorStop(1, 'rgba(0, 0, 0, 0.9)')
-      compositeCtx.fillStyle = metricsGradient
-      compositeCtx.fillRect(0, y, compositeCanvas.width, barHeight)
-      
-      // Top border line
-      compositeCtx.strokeStyle = 'rgba(255, 107, 53, 0.5)'
-      compositeCtx.lineWidth = 2
-      compositeCtx.beginPath()
-      compositeCtx.moveTo(0, y)
-      compositeCtx.lineTo(compositeCanvas.width, y)
-      compositeCtx.stroke()
-      
       const metricsToShow = metrics.slice(0, 6)
-      const metricWidth = compositeCanvas.width / Math.min(metricsToShow.length, 3)
-      const rows = Math.ceil(metricsToShow.length / 3)
-      const rowHeight = barHeight / rows
+      const numMetrics = metricsToShow.length
+      
+      // Calculate font sizes based on number of metrics (matching screen display)
+      const getFontSize = () => {
+        if (numMetrics <= 1) return 96 * uiScale
+        if (numMetrics <= 2) return 80 * uiScale
+        if (numMetrics <= 3) return 64 * uiScale
+        if (numMetrics <= 4) return 56 * uiScale
+        return 48 * uiScale
+      }
+      const valueFontSize = getFontSize()
+      const labelFontSize = 12 * uiScale
+      
+      const rows = Math.ceil(numMetrics / 3)
+      const rowHeight = 80 * uiScale
+      const barHeight = rows * rowHeight + 20 * uiScale
+      const y = displayHeight - barHeight
+      
+      // Background with transparency (matching screen)
+      compositeCtx.fillStyle = 'rgba(0, 0, 0, 0.4)'
+      compositeCtx.fillRect(0, y, displayWidth, barHeight)
+      
+      const metricsPerRow = Math.min(numMetrics, 3)
+      const metricWidth = displayWidth / metricsPerRow
       
       compositeCtx.textAlign = 'center'
       compositeCtx.textBaseline = 'middle'
@@ -917,104 +1010,104 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
         const row = Math.floor(index / 3)
         const col = index % 3
         const x = metricWidth * col + metricWidth / 2
-        const metricY = y + row * rowHeight + rowHeight / 2
+        const metricY = y + 10 * uiScale + row * rowHeight + rowHeight / 2
         
-        // Value - larger font
+        // Value
         compositeCtx.fillStyle = color
-        compositeCtx.font = 'bold 32px system-ui, sans-serif'
-        compositeCtx.fillText(value !== null ? `${Math.round(value)}${metric.unit}` : '--', x, metricY - 8)
+        compositeCtx.font = `900 ${valueFontSize}px system-ui, sans-serif`
+        compositeCtx.fillText(value !== null ? `${Math.round(value)}${metric.unit}` : '--', x, metricY - 10 * uiScale)
         
         // Label
-        compositeCtx.fillStyle = 'rgba(255, 255, 255, 0.7)'
-        compositeCtx.font = 'bold 12px system-ui, sans-serif'
-        compositeCtx.fillText(metric.shortLabel, x, metricY + 22)
+        compositeCtx.fillStyle = 'rgba(255, 255, 255, 0.6)'
+        compositeCtx.font = `bold ${labelFontSize}px system-ui, sans-serif`
+        compositeCtx.fillText(metric.shortLabel, x, metricY + valueFontSize / 2 + 5 * uiScale)
       })
       
       // ===== DRAW SHOT COUNTER BADGE (top right) =====
       if (currentShotCount > 0) {
-        const badgeX = compositeCanvas.width - 80
-        const badgeY = tip ? 70 : 15
+        const badgeWidth = 90 * uiScale
+        const badgeHeight = 36 * uiScale
+        const badgeX = displayWidth - badgeWidth - 16 * uiScale
+        const badgeY = tip ? 80 * uiScale : 16 * uiScale
         
         // Badge background
         compositeCtx.fillStyle = 'rgba(255, 107, 53, 0.9)'
         compositeCtx.beginPath()
-        compositeCtx.roundRect(badgeX, badgeY, 70, 30, 15)
+        compositeCtx.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, badgeHeight / 2)
         compositeCtx.fill()
         
         // Shot count text
         compositeCtx.fillStyle = '#ffffff'
-        compositeCtx.font = 'bold 14px system-ui, sans-serif'
+        compositeCtx.font = `bold ${14 * uiScale}px system-ui, sans-serif`
         compositeCtx.textAlign = 'center'
-        compositeCtx.fillText(`${currentShotCount} shots`, badgeX + 35, badgeY + 16)
+        compositeCtx.fillText(`${currentShotCount} shots`, badgeX + badgeWidth / 2, badgeY + badgeHeight / 2)
       }
       
       // ===== DRAW SHOT DETECTED FLASH =====
       if (shotFlashActive && shotScore !== null) {
         // Semi-transparent overlay
-        compositeCtx.fillStyle = 'rgba(0, 0, 0, 0.5)'
-        compositeCtx.fillRect(0, 0, compositeCanvas.width, compositeCanvas.height)
+        compositeCtx.fillStyle = 'rgba(0, 0, 0, 0.6)'
+        compositeCtx.fillRect(0, 0, displayWidth, displayHeight)
         
-        // Center badge background
-        const centerX = compositeCanvas.width / 2
-        const centerY = compositeCanvas.height / 2
-        const badgeWidth = 200
-        const badgeHeight = 120
+        // Center badge
+        const centerX = displayWidth / 2
+        const centerY = displayHeight / 2
+        const badgeWidth = 220 * uiScale
+        const badgeHeight = 140 * uiScale
         
         // Glow effect
         compositeCtx.shadowColor = '#FF6B35'
-        compositeCtx.shadowBlur = 30
+        compositeCtx.shadowBlur = 40 * uiScale
         
         // Badge background
-        compositeCtx.fillStyle = 'rgba(0, 0, 0, 0.9)'
+        compositeCtx.fillStyle = 'rgba(0, 0, 0, 0.95)'
         compositeCtx.beginPath()
-        compositeCtx.roundRect(centerX - badgeWidth/2, centerY - badgeHeight/2, badgeWidth, badgeHeight, 16)
+        compositeCtx.roundRect(centerX - badgeWidth/2, centerY - badgeHeight/2, badgeWidth, badgeHeight, 20 * uiScale)
         compositeCtx.fill()
         
         // Border
         compositeCtx.strokeStyle = '#FF6B35'
-        compositeCtx.lineWidth = 3
+        compositeCtx.lineWidth = 3 * uiScale
         compositeCtx.beginPath()
-        compositeCtx.roundRect(centerX - badgeWidth/2, centerY - badgeHeight/2, badgeWidth, badgeHeight, 16)
+        compositeCtx.roundRect(centerX - badgeWidth/2, centerY - badgeHeight/2, badgeWidth, badgeHeight, 20 * uiScale)
         compositeCtx.stroke()
         
         compositeCtx.shadowBlur = 0
         
-        // Target icon (crosshair)
+        // Target icon
         compositeCtx.strokeStyle = '#FF6B35'
-        compositeCtx.lineWidth = 3
-        const iconY = centerY - 30
-        // Outer circle
+        compositeCtx.lineWidth = 3 * uiScale
+        const iconY = centerY - 35 * uiScale
+        const iconSize = 18 * uiScale
         compositeCtx.beginPath()
-        compositeCtx.arc(centerX, iconY, 15, 0, Math.PI * 2)
+        compositeCtx.arc(centerX, iconY, iconSize, 0, Math.PI * 2)
         compositeCtx.stroke()
-        // Inner dot
         compositeCtx.fillStyle = '#FF6B35'
         compositeCtx.beginPath()
-        compositeCtx.arc(centerX, iconY, 4, 0, Math.PI * 2)
+        compositeCtx.arc(centerX, iconY, 5 * uiScale, 0, Math.PI * 2)
         compositeCtx.fill()
-        // Crosshair lines
         compositeCtx.beginPath()
-        compositeCtx.moveTo(centerX - 22, iconY)
-        compositeCtx.lineTo(centerX - 10, iconY)
-        compositeCtx.moveTo(centerX + 10, iconY)
-        compositeCtx.lineTo(centerX + 22, iconY)
-        compositeCtx.moveTo(centerX, iconY - 22)
-        compositeCtx.lineTo(centerX, iconY - 10)
-        compositeCtx.moveTo(centerX, iconY + 10)
-        compositeCtx.lineTo(centerX, iconY + 22)
+        compositeCtx.moveTo(centerX - iconSize - 8 * uiScale, iconY)
+        compositeCtx.lineTo(centerX - iconSize + 5 * uiScale, iconY)
+        compositeCtx.moveTo(centerX + iconSize - 5 * uiScale, iconY)
+        compositeCtx.lineTo(centerX + iconSize + 8 * uiScale, iconY)
+        compositeCtx.moveTo(centerX, iconY - iconSize - 8 * uiScale)
+        compositeCtx.lineTo(centerX, iconY - iconSize + 5 * uiScale)
+        compositeCtx.moveTo(centerX, iconY + iconSize - 5 * uiScale)
+        compositeCtx.lineTo(centerX, iconY + iconSize + 8 * uiScale)
         compositeCtx.stroke()
         
         // "SHOT DETECTED" text
         compositeCtx.fillStyle = '#ffffff'
-        compositeCtx.font = 'bold 18px system-ui, sans-serif'
+        compositeCtx.font = `bold ${20 * uiScale}px system-ui, sans-serif`
         compositeCtx.textAlign = 'center'
-        compositeCtx.fillText('SHOT DETECTED', centerX, centerY + 10)
+        compositeCtx.fillText('SHOT DETECTED', centerX, centerY + 10 * uiScale)
         
         // Score
         const scoreColor = shotScore >= 80 ? '#22c55e' : shotScore >= 60 ? '#eab308' : '#ef4444'
         compositeCtx.fillStyle = scoreColor
-        compositeCtx.font = 'bold 28px system-ui, sans-serif'
-        compositeCtx.fillText(`${shotScore}`, centerX, centerY + 42)
+        compositeCtx.font = `900 ${36 * uiScale}px system-ui, sans-serif`
+        compositeCtx.fillText(`${shotScore}`, centerX, centerY + 50 * uiScale)
       }
       
       compositeAnimationRef.current = requestAnimationFrame(drawCompositeFrame)
@@ -1718,6 +1811,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
 
   return (
     <div 
+      ref={containerRef}
       className="fixed inset-0 z-50 bg-black"
       onClick={handleScreenTap}
     >
