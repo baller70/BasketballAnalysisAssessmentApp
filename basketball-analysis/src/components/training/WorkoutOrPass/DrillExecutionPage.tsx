@@ -803,8 +803,8 @@ export function DrillExecutionPage({ drill, onClose, onStartDrill }: DrillExecut
           onPause={togglePause}
           onResume={togglePause}
           isPaused={isPaused}
-          madeShots={currentSpotIndex < spots.length ? (spots[currentSpotIndex]?.madeShots || 0) : totalMade}
-          missedShots={currentSpotIndex < spots.length ? (spots[currentSpotIndex]?.missedShots || 0) : totalMissed}
+          madeShots={currentSpotIndex < spots.length ? (spots[currentSpotIndex]?.madeShots || 0) : madeShots}
+          missedShots={currentSpotIndex < spots.length ? (spots[currentSpotIndex]?.missedShots || 0) : (attempts - madeShots)}
           currentSpot={currentSpotIndex < spots.length ? {
             name: spots[currentSpotIndex]?.name || `Spot ${currentSpotIndex + 1}`,
             index: currentSpotIndex,
