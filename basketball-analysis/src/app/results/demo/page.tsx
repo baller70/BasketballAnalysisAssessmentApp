@@ -1886,7 +1886,7 @@ function DemoResultsPageContent() {
               {/* Tab Navigation - Hidden on mobile (FAB handles it) */}
               <div className="hidden md:block p-4 border-b border-[#3a3a3a]">
                 <div className="flex items-center justify-center">
-                  {/* Tab Navigation - Clicking VIDEO/IMAGE also opens file picker */}
+                  {/* Tab Navigation - Just switches modes, upload buttons are in content area */}
                   <div className="inline-flex rounded-lg bg-[#1a1a1a] p-1">
                     {(["video", "image", "live"] as ResultsMode[]).map((mode) => (
                       <button 
@@ -1894,12 +1894,6 @@ function DemoResultsPageContent() {
                         onClick={() => {
                           try {
                             setResultsMode(mode)
-                            // Trigger file picker for video/image modes
-                            if (mode === "video") {
-                              (window as any).__videoUploadInput?.click()
-                            } else if (mode === "image") {
-                              (window as any).__imageUploadInput?.click()
-                            }
                           } catch (error) {
                             console.error('Error switching tab:', error)
                           }
@@ -3333,22 +3327,34 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
     return visionAnalysis
   }, [releaseKeypoints, releaseBall, releaseMetrics, visionAnalysis])
   
-  // If no video data, just render ImageModeContent
+  // If no video data, show "No Video Uploaded" screen with upload button
   if (!videoData || !videoData.annotatedFramesBase64 || videoData.annotatedFramesBase64.length === 0) {
     return (
-      <ImageModeContent 
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        analysisData={analysisData}
-        playerName={playerName}
-        poseConfidence={poseConfidence}
-        teaserFrames={teaserFrames}
-        fullFrames={fullFrames}
-        allUploadedUrls={allUploadedUrls}
-        mainImageUrl={mainImageUrl}
-        visionAnalysis={visionAnalysis}
-        roboflowBallDetection={roboflowBallDetection}
-      />
+      <div className="p-6">
+        <div className="bg-gradient-to-br from-[#1a1a1a] via-[#252525] to-[#1a1a1a] rounded-lg border border-[#3a3a3a] p-12">
+          <div className="text-center py-8">
+            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-[#ef4444]/20 to-[#dc2626]/20 border border-[#ef4444]/30 flex items-center justify-center">
+              <Video className="w-10 h-10 text-[#ef4444]" />
+            </div>
+            <h3 className="text-[#ef4444] font-bold text-2xl mb-3 tracking-tight">No Video Uploaded</h3>
+            {/* Desktop: Show description and upload button */}
+            <p className="hidden md:block text-[#E5E5E5] text-sm mb-8 max-w-md mx-auto leading-relaxed">
+              Click the button below to upload a video and see your shooting form analysis with frame-by-frame breakdown.
+            </p>
+            <button 
+              onClick={() => (window as any).__videoUploadInput?.click()}
+              className="hidden md:inline-flex items-center gap-2 bg-gradient-to-r from-[#ef4444] to-[#dc2626] hover:from-[#dc2626] hover:to-[#b91c1c] text-white font-semibold px-8 py-3.5 rounded-xl transition-all duration-200 shadow-lg shadow-[#ef4444]/20 hover:shadow-[#ef4444]/40 hover:scale-105"
+            >
+              <Upload className="w-5 h-5" />
+              Upload Video
+            </button>
+            {/* Mobile: Just hint to use FAB */}
+            <p className="md:hidden text-[#666] text-sm mt-4">
+              Tap the <span className="text-[#FF6B35] font-semibold">+</span> button to get started
+            </p>
+          </div>
+        </div>
+      </div>
     )
   }
   
