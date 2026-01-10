@@ -13,7 +13,7 @@ import { AutoScreenshots } from "@/components/analysis/AutoScreenshots"
 import { VideoPlayerSection } from "@/components/analysis/VideoPlayerSection"
 import { LiveAnalysis, FullscreenLiveCamera } from "@/components/live"
 import { GoalTransitMap } from "@/components/goals"
-import { User, Upload, Check, X, Image as ImageIcon, Video, BookOpen, Users, Search, BarChart3, Award, ArrowRight, Zap, Trophy, Target, ClipboardList, Flame, Dumbbell, CircleDot, Share2, Download, Copy, Twitter, Facebook, Linkedin, ChevronLeft, ChevronRight, Calendar, ChevronDown, ChevronUp, AlertTriangle, Lightbulb, Plus, Eye, EyeOff, Layers, GitBranch, Circle, Tag, Camera, Play, Info, TrendingUp, Shirt, Medal, Timer, Footprints, ArrowLeftRight, Move, Instagram, MessageCircle, Globe, Clock, PieChart, Grid3X3, Activity, MoreVertical, Radio, Star, Crown, MapPin, SlidersHorizontal, Filter } from "lucide-react"
+import { User, Upload, Check, X, Image as ImageIcon, Video, BookOpen, Users, Search, BarChart3, Award, ArrowRight, Zap, Trophy, Target, ClipboardList, Flame, Dumbbell, CircleDot, Share2, Download, Copy, Twitter, Facebook, Linkedin, ChevronLeft, ChevronRight, Calendar, ChevronDown, ChevronUp, AlertTriangle, Lightbulb, Plus, Eye, EyeOff, Layers, GitBranch, Circle, Tag, Camera, Play, Info, TrendingUp, Shirt, Medal, Timer, Footprints, ArrowLeftRight, Move, Instagram, MessageCircle, Globe, Clock, PieChart, Grid3X3, Activity, MoreVertical, Radio, Star, Crown, MapPin, SlidersHorizontal, Filter, FolderOpen } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { useSearchParams } from "next/navigation"
@@ -1917,6 +1917,47 @@ function DemoResultsPageContent() {
                 </div>
               </div>
               
+              {/* Hidden file inputs for uploads */}
+              <input
+                type="file"
+                accept="image/*"
+                ref={(el) => { if (el) (window as any).__imageUploadInput = el }}
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) {
+                    // Convert to base64 and store
+                    const reader = new FileReader()
+                    reader.onload = (event) => {
+                      const base64 = event.target?.result as string
+                      setUploadedImageBase64(base64)
+                      setResultsMode("image")
+                    }
+                    reader.readAsDataURL(file)
+                  }
+                  e.target.value = '' // Reset for next upload
+                }}
+              />
+              <input
+                type="file"
+                accept="video/*"
+                ref={(el) => { if (el) (window as any).__videoUploadInput = el }}
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) {
+                    // Create blob URL for video
+                    const url = URL.createObjectURL(file)
+                    setVideoAnalysisData({
+                      videoUrl: url,
+                      frames: [],
+                    })
+                    setResultsMode("video")
+                  }
+                  e.target.value = '' // Reset for next upload
+                }}
+              />
+
               {/* Mobile FAB (Floating Action Button) with Menu */}
               <div className="md:hidden fixed bottom-24 right-4 z-50">
                 {/* FAB Menu Options */}
@@ -1930,13 +1971,25 @@ function DemoResultsPageContent() {
                     
                     {/* Menu Items */}
                     <div className="absolute bottom-16 right-0 flex flex-col gap-3 items-end mb-2">
+                      {/* My Media Gallery */}
+                      <Link
+                        href="/media"
+                        onClick={() => setShowFabMenu(false)}
+                        className="flex items-center gap-3 bg-[#2a2a2a] border border-[#3a3a3a] rounded-full pl-4 pr-3 py-2 shadow-lg animate-in slide-in-from-bottom-2 duration-200"
+                      >
+                        <span className="text-white text-sm font-medium whitespace-nowrap">My Media</span>
+                        <div className="w-10 h-10 bg-[#8b5cf6] rounded-full flex items-center justify-center">
+                          <FolderOpen className="w-5 h-5 text-white" />
+                        </div>
+                      </Link>
+                      
                       {/* Go Live */}
                       <button
                         onClick={() => {
                           setResultsMode("live")
                           setShowFabMenu(false)
                         }}
-                        className="flex items-center gap-3 bg-[#2a2a2a] border border-[#3a3a3a] rounded-full pl-4 pr-3 py-2 shadow-lg animate-in slide-in-from-bottom-2 duration-200"
+                        className="flex items-center gap-3 bg-[#2a2a2a] border border-[#3a3a3a] rounded-full pl-4 pr-3 py-2 shadow-lg animate-in slide-in-from-bottom-2 duration-200 delay-75"
                       >
                         <span className="text-white text-sm font-medium whitespace-nowrap">Go Live</span>
                         <div className="w-10 h-10 bg-[#22c55e] rounded-full flex items-center justify-center">
@@ -1944,29 +1997,33 @@ function DemoResultsPageContent() {
                         </div>
                       </button>
                       
-                      {/* Upload Video */}
-                      <Link
-                        href="/?mode=video"
-                        onClick={() => setShowFabMenu(false)}
-                        className="flex items-center gap-3 bg-[#2a2a2a] border border-[#3a3a3a] rounded-full pl-4 pr-3 py-2 shadow-lg animate-in slide-in-from-bottom-2 duration-200 delay-75"
+                      {/* Upload Video - Opens file picker */}
+                      <button
+                        onClick={() => {
+                          setShowFabMenu(false)
+                          ;(window as any).__videoUploadInput?.click()
+                        }}
+                        className="flex items-center gap-3 bg-[#2a2a2a] border border-[#3a3a3a] rounded-full pl-4 pr-3 py-2 shadow-lg animate-in slide-in-from-bottom-2 duration-200 delay-150"
                       >
                         <span className="text-white text-sm font-medium whitespace-nowrap">Upload Video</span>
                         <div className="w-10 h-10 bg-[#ef4444] rounded-full flex items-center justify-center">
                           <Video className="w-5 h-5 text-white" />
                         </div>
-                      </Link>
+                      </button>
                       
-                      {/* Upload Image */}
-                      <Link
-                        href="/?mode=image"
-                        onClick={() => setShowFabMenu(false)}
-                        className="flex items-center gap-3 bg-[#2a2a2a] border border-[#3a3a3a] rounded-full pl-4 pr-3 py-2 shadow-lg animate-in slide-in-from-bottom-2 duration-200 delay-150"
+                      {/* Upload Image - Opens file picker */}
+                      <button
+                        onClick={() => {
+                          setShowFabMenu(false)
+                          ;(window as any).__imageUploadInput?.click()
+                        }}
+                        className="flex items-center gap-3 bg-[#2a2a2a] border border-[#3a3a3a] rounded-full pl-4 pr-3 py-2 shadow-lg animate-in slide-in-from-bottom-2 duration-200 delay-200"
                       >
                         <span className="text-white text-sm font-medium whitespace-nowrap">Upload Image</span>
                         <div className="w-10 h-10 bg-[#3b82f6] rounded-full flex items-center justify-center">
                           <ImageIcon className="w-5 h-5 text-white" />
                         </div>
-                      </Link>
+                      </button>
                     </div>
                   </>
                 )}

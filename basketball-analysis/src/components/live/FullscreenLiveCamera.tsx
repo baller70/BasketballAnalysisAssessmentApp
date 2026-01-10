@@ -827,67 +827,85 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   }
   
   // Calculate dynamic font size based on number of selected metrics (Shot Science style)
-  const getMetricFontSize = (): { value: string; label: string } => {
+  // MUCH BIGGER sizes for fewer metrics
+  const getMetricFontSize = (): { value: string; label: string; gap: string } => {
     const count = selectedMetrics.length
-    if (count <= 2) return { value: 'text-4xl', label: 'text-sm' } // Very large - like Shot Science
-    if (count <= 3) return { value: 'text-3xl', label: 'text-xs' }
-    if (count <= 4) return { value: 'text-2xl', label: 'text-[10px]' }
-    return { value: 'text-lg', label: 'text-[9px]' } // Standard size for 5+
+    if (count === 1) return { value: 'text-7xl', label: 'text-xl', gap: 'gap-4' } // HUGE - single metric
+    if (count === 2) return { value: 'text-6xl', label: 'text-lg', gap: 'gap-6' } // Very large
+    if (count === 3) return { value: 'text-5xl', label: 'text-base', gap: 'gap-4' } // Large
+    if (count === 4) return { value: 'text-4xl', label: 'text-sm', gap: 'gap-3' } // Medium-large
+    return { value: 'text-3xl', label: 'text-xs', gap: 'gap-2' } // Standard for 5+
   }
   
   const fontSize = getMetricFontSize()
+  
+  // Split metrics into rows (max 4 per row for readability)
+  const MAX_PER_ROW = 4
+  const metricsRows: MetricId[][] = []
+  for (let i = 0; i < selectedMetrics.length; i += MAX_PER_ROW) {
+    metricsRows.push(selectedMetrics.slice(i, i + MAX_PER_ROW))
+  }
 
   // Render metrics bar (portrait - bottom) - DYNAMIC based on selection
   const renderMetricsBar = () => (
     <motion.div
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="absolute bottom-0 left-0 right-0 bg-black/85 backdrop-blur-md"
+      className="absolute bottom-0 left-0 right-0 bg-black/90 backdrop-blur-md"
     >
-      {/* Feedback tip - always visible when available */}
+      {/* AI Feedback - PROMINENT display */}
       <AnimatePresence>
         {currentTip && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="bg-gradient-to-r from-[#FF6B35]/20 to-transparent border-b border-[#FF6B35]/20 px-4 py-2"
+            className="bg-gradient-to-r from-[#FF6B35]/30 to-[#FF6B35]/10 border-b border-[#FF6B35]/30 px-4 py-3"
           >
-            <div className="flex items-center gap-2">
-              <span className="text-[#FF6B35] text-sm">💡</span>
-              <span className="text-white/90 text-xs font-medium">{currentTip}</span>
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-full bg-[#FF6B35] flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-lg">🤖</span>
+              </div>
+              <div className="flex-1">
+                <p className="text-[#FF6B35] text-xs font-bold uppercase tracking-wider mb-1">AI Coaching</p>
+                <p className="text-white text-sm font-medium leading-snug">{currentTip}</p>
+              </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Dynamic metrics row - Shot Science style */}
+      {/* Dynamic metrics - multiple rows if needed */}
       <div 
-        className="flex items-center justify-around py-4 px-4"
+        className="py-4 px-4"
         onClick={() => setShowExpandedMetrics(!showExpandedMetrics)}
       >
-        {selectedMetrics.map((metricId) => {
-          const metric = AVAILABLE_METRICS.find(m => m.id === metricId)
-          if (!metric) return null
-          
-          const value = getMetricValue(metricId)
-          const status = getMetricStatus(metricId)
-          const isFormScore = metricId === 'form'
-          
-          return (
-            <div key={metricId} className="flex flex-col items-center">
-              <div 
-                className={`${fontSize.value} font-black`}
-                style={{ color: isFormScore ? getScoreColor(value ?? 0) : getStatusColor(status) }}
-              >
-                {value !== null ? (isFormScore ? value : `${value}${metric.unit}`) : '--'}
-              </div>
-              <div className={`${fontSize.label} text-white/60 uppercase tracking-wider mt-1`}>
-                {metric.shortLabel}
-              </div>
-            </div>
-          )
-        })}
+        {metricsRows.map((row, rowIndex) => (
+          <div key={rowIndex} className={`flex items-center justify-around ${rowIndex > 0 ? 'mt-3 pt-3 border-t border-white/10' : ''}`}>
+            {row.map((metricId) => {
+              const metric = AVAILABLE_METRICS.find(m => m.id === metricId)
+              if (!metric) return null
+              
+              const value = getMetricValue(metricId)
+              const status = getMetricStatus(metricId)
+              const isFormScore = metricId === 'form'
+              
+              return (
+                <div key={metricId} className={`flex flex-col items-center ${fontSize.gap}`}>
+                  <div 
+                    className={`${fontSize.value} font-black leading-none`}
+                    style={{ color: isFormScore ? getScoreColor(value ?? 0) : getStatusColor(status) }}
+                  >
+                    {value !== null ? (isFormScore ? value : `${value}${metric.unit}`) : '--'}
+                  </div>
+                  <div className={`${fontSize.label} text-white/60 uppercase tracking-wider mt-2`}>
+                    {metric.shortLabel}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        ))}
 
         {/* Settings gear icon */}
         <button
@@ -895,9 +913,9 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
             e.stopPropagation()
             setShowMetricSettings(true)
           }}
-          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+          className="absolute right-3 top-4 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
         >
-          <svg className="w-4 h-4 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
