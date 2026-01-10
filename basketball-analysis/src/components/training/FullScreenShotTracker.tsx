@@ -10,8 +10,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react"
 import { 
   X, Pause, Play, Volume2, VolumeX, 
-  Maximize2, Minimize2, RotateCcw, Settings,
-  CheckCircle, XCircle, Target, Camera, CameraOff
+  Maximize2, CheckCircle, XCircle, Target, Camera, CameraOff
 } from "lucide-react"
 
 // ============================================
@@ -94,9 +93,63 @@ export function FullScreenShotTracker({
   const makeSoundRef = useRef<HTMLAudioElement | null>(null)
   const missSoundRef = useRef<HTMLAudioElement | null>(null)
   
-  // Calculate stats
+  // Calculate stats from props
   const totalAttempts = madeShots + missedShots
   const percentage = totalAttempts > 0 ? Math.round((madeShots / totalAttempts) * 100) : 0
+
+  // ============================================
+  // MANUAL SHOT HANDLERS (These call the parent's functions)
+  // ============================================
+  
+  const handleManualMade = useCallback(() => {
+    console.log('[FullScreenShotTracker] Manual MADE button pressed')
+    setDetectionStatus('made')
+    
+    // Add to shot locations for mini court
+    setShotLocations(prev => [...prev, { 
+      x: 30 + Math.random() * 40, 
+      y: 30 + Math.random() * 40, 
+      made: true, 
+      timestamp: Date.now() 
+    }])
+    
+    // Play sound
+    if (soundEnabled && makeSoundRef.current) {
+      makeSoundRef.current.currentTime = 0
+      makeSoundRef.current.play().catch(() => {})
+    }
+    
+    // Call parent's onMade function to update the actual count
+    onMade()
+    
+    // Reset status after animation
+    setTimeout(() => setDetectionStatus('detecting'), 1000)
+  }, [onMade, soundEnabled])
+  
+  const handleManualMiss = useCallback(() => {
+    console.log('[FullScreenShotTracker] Manual MISS button pressed')
+    setDetectionStatus('missed')
+    
+    // Add to shot locations for mini court
+    setShotLocations(prev => [...prev, { 
+      x: 30 + Math.random() * 40, 
+      y: 30 + Math.random() * 40, 
+      made: false, 
+      timestamp: Date.now() 
+    }])
+    
+    // Play sound
+    if (soundEnabled && missSoundRef.current) {
+      missSoundRef.current.currentTime = 0
+      missSoundRef.current.play().catch(() => {})
+    }
+    
+    // Call parent's onMiss function to update the actual count
+    onMiss()
+    
+    // Reset status after animation
+    setTimeout(() => setDetectionStatus('detecting'), 1000)
+  }, [onMiss, soundEnabled])
 
   // ============================================
   // INITIALIZATION
@@ -155,6 +208,7 @@ export function FullScreenShotTracker({
       }
       
       setCameraActive(true)
+      setDetectionStatus('detecting')
       console.log('[FullScreenShotTracker] Camera initialized')
     } catch (err) {
       console.error('[FullScreenShotTracker] Camera error:', err)
@@ -334,26 +388,10 @@ export function FullScreenShotTracker({
     const isApproachingRim = analyzeTrajectory(ballDetection)
     const { movement: netMoved, confidence: netConfidence } = detectNetMovement()
     
-    // Shot detection logic
+    // Auto shot detection logic
     if (netMoved && netConfidence > 0.3 && isApproachingRim) {
       lastShotTimeRef.current = now
-      setDetectionStatus('made')
-      onMade()
-      
-      // Add to shot locations
-      setShotLocations(prev => [...prev, { 
-        x: Math.random() * 100, 
-        y: Math.random() * 100, 
-        made: true, 
-        timestamp: now 
-      }])
-      
-      if (soundEnabled && makeSoundRef.current) {
-        makeSoundRef.current.currentTime = 0
-        makeSoundRef.current.play().catch(() => {})
-      }
-      
-      setTimeout(() => setDetectionStatus('detecting'), 1000)
+      handleManualMade() // Use the same handler for consistency
     } else if (isApproachingRim && trajectoryHistoryRef.current.length > 5) {
       const recentPoints = trajectoryHistoryRef.current.slice(-5)
       const isBouncingAway = recentPoints[recentPoints.length - 1].y > recentPoints[0].y &&
@@ -361,27 +399,12 @@ export function FullScreenShotTracker({
       
       if (isBouncingAway && netConfidence < 0.2) {
         lastShotTimeRef.current = now
-        setDetectionStatus('missed')
-        onMiss()
-        
-        setShotLocations(prev => [...prev, { 
-          x: Math.random() * 100, 
-          y: Math.random() * 100, 
-          made: false, 
-          timestamp: now 
-        }])
-        
-        if (soundEnabled && missSoundRef.current) {
-          missSoundRef.current.currentTime = 0
-          missSoundRef.current.play().catch(() => {})
-        }
-        
-        setTimeout(() => setDetectionStatus('detecting'), 1000)
+        handleManualMiss() // Use the same handler for consistency
       }
     }
     
     animationRef.current = requestAnimationFrame(runDetection)
-  }, [isActive, cameraActive, isPaused, detectWithCOCO, detectWithColor, analyzeTrajectory, detectNetMovement, onMade, onMiss, soundEnabled])
+  }, [isActive, cameraActive, isPaused, detectWithCOCO, detectWithColor, analyzeTrajectory, detectNetMovement, handleManualMade, handleManualMiss])
 
   // ============================================
   // EFFECTS
@@ -413,26 +436,9 @@ export function FullScreenShotTracker({
     }
   }, [isActive, cameraActive, isPaused, runDetection])
 
-  // Hide controls after 3 seconds of inactivity
+  // Always show controls (removed auto-hide for better usability)
   useEffect(() => {
-    let timeout: NodeJS.Timeout
-    
-    const resetTimer = () => {
-      setShowControls(true)
-      clearTimeout(timeout)
-      timeout = setTimeout(() => setShowControls(false), 3000)
-    }
-    
-    window.addEventListener('touchstart', resetTimer)
-    window.addEventListener('mousemove', resetTimer)
-    
-    resetTimer()
-    
-    return () => {
-      clearTimeout(timeout)
-      window.removeEventListener('touchstart', resetTimer)
-      window.removeEventListener('mousemove', resetTimer)
-    }
+    setShowControls(true)
   }, [])
 
   // ============================================
@@ -442,251 +448,202 @@ export function FullScreenShotTracker({
   if (!isActive) return null
   
   return (
-    <div className="fixed inset-0 z-[200] bg-black">
-      {/* Camera Feed */}
-      <video
-        ref={videoRef}
-        className="absolute inset-0 w-full h-full object-cover"
-        playsInline
-        muted
-      />
-      
-      {/* Hidden Canvas for Processing */}
-      <canvas ref={canvasRef} className="hidden" />
-      
-      {/* Overlay Canvas */}
-      <canvas
-        ref={overlayCanvasRef}
-        className="absolute inset-0 w-full h-full pointer-events-none"
-      />
-      
-      {/* Loading Overlay */}
-      {isLoading && (
-        <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-10">
-          <div className="animate-spin w-16 h-16 border-4 border-[#FF6B35] border-t-transparent rounded-full mb-4" />
-          <p className="text-white text-lg font-bold">Loading AI Detection...</p>
-          <p className="text-[#888] text-sm mt-1">Preparing camera and models</p>
-        </div>
-      )}
-      
-      {/* Camera Off State */}
-      {!cameraActive && !isLoading && (
-        <div className="absolute inset-0 bg-[#0a0a0a] flex flex-col items-center justify-center">
-          <CameraOff className="w-20 h-20 text-[#555] mb-4" />
-          <p className="text-white text-xl font-bold">Camera Unavailable</p>
-          <p className="text-[#888] text-sm mt-2">Please allow camera access</p>
+    <div className="fixed inset-0 z-[300] bg-black flex flex-col">
+      {/* Camera Feed - Takes up the top portion */}
+      <div className="flex-1 relative overflow-hidden">
+        <video
+          ref={videoRef}
+          className="absolute inset-0 w-full h-full object-cover"
+          playsInline
+          muted
+        />
+        
+        {/* Hidden Canvas for Processing */}
+        <canvas ref={canvasRef} className="hidden" />
+        
+        {/* Overlay Canvas */}
+        <canvas
+          ref={overlayCanvasRef}
+          className="absolute inset-0 w-full h-full pointer-events-none"
+        />
+        
+        {/* Loading Overlay */}
+        {isLoading && (
+          <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-10">
+            <div className="animate-spin w-16 h-16 border-4 border-[#FF6B35] border-t-transparent rounded-full mb-4" />
+            <p className="text-white text-lg font-bold">Loading AI Detection...</p>
+            <p className="text-[#888] text-sm mt-1">Preparing camera and models</p>
+          </div>
+        )}
+        
+        {/* Camera Off State */}
+        {!cameraActive && !isLoading && (
+          <div className="absolute inset-0 bg-[#0a0a0a] flex flex-col items-center justify-center">
+            <CameraOff className="w-20 h-20 text-[#555] mb-4" />
+            <p className="text-white text-xl font-bold">Camera Unavailable</p>
+            <p className="text-[#888] text-sm mt-2">Please allow camera access</p>
+            <button
+              onClick={initializeCamera}
+              className="mt-6 px-6 py-3 bg-[#FF6B35] text-white font-bold rounded-xl"
+            >
+              Retry Camera
+            </button>
+          </div>
+        )}
+        
+        {/* Top Controls - Close Button & Status */}
+        <div className="absolute top-0 left-0 right-0 p-4 flex items-center justify-between z-20">
           <button
-            onClick={initializeCamera}
-            className="mt-6 px-6 py-3 bg-[#FF6B35] text-white font-bold rounded-xl"
+            onClick={onClose}
+            className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center"
           >
-            Retry Camera
+            <X className="w-6 h-6 text-white" />
+          </button>
+          
+          {/* Detection Status */}
+          <div className={`px-4 py-2 rounded-full flex items-center gap-2 ${
+            detectionStatus === 'made' ? 'bg-green-500' :
+            detectionStatus === 'missed' ? 'bg-red-500' :
+            detectionStatus === 'detecting' ? 'bg-[#FF6B35]' :
+            'bg-black/60'
+          } backdrop-blur-sm`}>
+            {detectionStatus === 'made' && <CheckCircle className="w-5 h-5 text-white" />}
+            {detectionStatus === 'missed' && <XCircle className="w-5 h-5 text-white" />}
+            {detectionStatus === 'detecting' && <Target className="w-5 h-5 text-white animate-pulse" />}
+            <span className="text-white font-bold text-sm uppercase">
+              {detectionStatus === 'made' ? 'MADE!' :
+               detectionStatus === 'missed' ? 'MISSED' :
+               detectionStatus === 'detecting' ? 'DETECTING' : 'READY'}
+            </span>
+          </div>
+          
+          <button
+            onClick={() => setSoundEnabled(!soundEnabled)}
+            className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center"
+          >
+            {soundEnabled ? (
+              <Volume2 className="w-6 h-6 text-white" />
+            ) : (
+              <VolumeX className="w-6 h-6 text-[#888]" />
+            )}
           </button>
         </div>
-      )}
-      
-      {/* Top Controls - Close Button */}
-      <div className={`absolute top-0 left-0 right-0 p-4 flex items-center justify-between z-20 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
-        <button
-          onClick={onClose}
-          className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center"
-        >
-          <X className="w-6 h-6 text-white" />
-        </button>
         
-        {/* Detection Status */}
-        <div className={`px-4 py-2 rounded-full flex items-center gap-2 ${
-          detectionStatus === 'made' ? 'bg-green-500' :
-          detectionStatus === 'missed' ? 'bg-red-500' :
-          detectionStatus === 'detecting' ? 'bg-[#FF6B35]' :
-          'bg-black/50'
-        } backdrop-blur-sm`}>
-          {detectionStatus === 'made' && <CheckCircle className="w-5 h-5 text-white" />}
-          {detectionStatus === 'missed' && <XCircle className="w-5 h-5 text-white" />}
-          {detectionStatus === 'detecting' && <Target className="w-5 h-5 text-white animate-pulse" />}
-          <span className="text-white font-bold text-sm uppercase">
-            {detectionStatus === 'made' ? 'MADE!' :
-             detectionStatus === 'missed' ? 'MISSED' :
-             detectionStatus === 'detecting' ? 'DETECTING' : 'READY'}
-          </span>
-        </div>
-        
-        <button
-          onClick={() => setSoundEnabled(!soundEnabled)}
-          className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center"
-        >
-          {soundEnabled ? (
-            <Volume2 className="w-6 h-6 text-white" />
-          ) : (
-            <VolumeX className="w-6 h-6 text-[#888]" />
-          )}
-        </button>
-      </div>
-      
-      {/* Mini Court Diagram - Top Right */}
-      <div className={`absolute top-20 right-4 z-20 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
-        <div className="w-28 h-28 bg-black/60 backdrop-blur-sm rounded-xl p-2 border border-white/20">
-          {/* Mini Court SVG */}
-          <svg viewBox="0 0 100 100" className="w-full h-full">
-            {/* Court outline */}
-            <rect x="5" y="5" width="90" height="90" fill="none" stroke="white" strokeWidth="1" opacity="0.5" rx="2" />
-            
-            {/* Three point arc */}
-            <path d="M 15 5 L 15 30 Q 15 55 50 55 Q 85 55 85 30 L 85 5" fill="none" stroke="white" strokeWidth="1" opacity="0.5" />
-            
-            {/* Key/Paint */}
-            <rect x="35" y="5" width="30" height="25" fill="none" stroke="white" strokeWidth="1" opacity="0.5" />
-            
-            {/* Basket */}
-            <circle cx="50" cy="10" r="3" fill="#FF6B35" />
-            
-            {/* Shot locations */}
-            {spots.map((spot, i) => (
-              <g key={spot.id}>
-                <circle 
-                  cx={spot.x} 
-                  cy={spot.y} 
-                  r="4" 
-                  fill={spot.madeShots > spot.missedShots ? '#22c55e' : spot.missedShots > 0 ? '#ef4444' : '#666'}
-                  opacity="0.8"
-                />
-                {currentSpot?.index === i && (
+        {/* Mini Court Diagram - Top Right */}
+        <div className="absolute top-20 right-4 z-20">
+          <div className="w-24 h-24 bg-black/60 backdrop-blur-sm rounded-xl p-2 border border-white/20">
+            <svg viewBox="0 0 100 100" className="w-full h-full">
+              <rect x="5" y="5" width="90" height="90" fill="none" stroke="white" strokeWidth="1" opacity="0.5" rx="2" />
+              <path d="M 15 5 L 15 30 Q 15 55 50 55 Q 85 55 85 30 L 85 5" fill="none" stroke="white" strokeWidth="1" opacity="0.5" />
+              <rect x="35" y="5" width="30" height="25" fill="none" stroke="white" strokeWidth="1" opacity="0.5" />
+              <circle cx="50" cy="10" r="3" fill="#FF6B35" />
+              
+              {spots.map((spot, i) => (
+                <g key={spot.id}>
                   <circle 
                     cx={spot.x} 
                     cy={spot.y} 
-                    r="6" 
-                    fill="none" 
-                    stroke="#FF6B35" 
-                    strokeWidth="2"
-                    className="animate-pulse"
+                    r="4" 
+                    fill={spot.madeShots > spot.missedShots ? '#22c55e' : spot.missedShots > 0 ? '#ef4444' : '#666'}
+                    opacity="0.8"
                   />
-                )}
-              </g>
-            ))}
-            
-            {/* Recent shot locations */}
-            {shotLocations.slice(-5).map((shot, i) => (
-              <g key={i}>
-                <text 
-                  x={shot.x} 
-                  y={shot.y} 
-                  fontSize="12" 
-                  fill={shot.made ? '#22c55e' : '#ef4444'}
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                >
-                  {shot.made ? '✓' : '✗'}
-                </text>
-              </g>
-            ))}
-          </svg>
+                  {currentSpot?.index === i && (
+                    <circle 
+                      cx={spot.x} 
+                      cy={spot.y} 
+                      r="6" 
+                      fill="none" 
+                      stroke="#FF6B35" 
+                      strokeWidth="2"
+                      className="animate-pulse"
+                    />
+                  )}
+                </g>
+              ))}
+            </svg>
+          </div>
         </div>
       </div>
       
-      {/* Bottom Stats Overlay */}
-      <div className="absolute bottom-0 left-0 right-0 z-20">
-        {/* Gradient Background */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent pointer-events-none" />
+      {/* Bottom Stats Overlay - Fixed at bottom */}
+      <div className="bg-gradient-to-t from-black via-black/95 to-black/80 px-4 py-6 safe-area-inset-bottom">
+        {/* Current Spot Indicator */}
+        {currentSpot && (
+          <div className="text-center mb-3">
+            <p className="text-[#888] text-xs uppercase tracking-wider">Current Spot</p>
+            <p className="text-white text-base font-bold">{currentSpot.name} ({currentSpot.index + 1}/{currentSpot.total})</p>
+          </div>
+        )}
         
-        {/* Stats Content */}
-        <div className="relative px-6 pb-8 pt-16">
-          {/* Current Spot Indicator */}
-          {currentSpot && (
-            <div className="text-center mb-4">
-              <p className="text-[#888] text-sm uppercase tracking-wider">Current Spot</p>
-              <p className="text-white text-lg font-bold">{currentSpot.name} ({currentSpot.index + 1}/{currentSpot.total})</p>
-            </div>
-          )}
-          
-          {/* Main Stats Display */}
-          <div className="flex items-end justify-center gap-6">
-            {/* Makes */}
-            <div className="text-center">
-              <p className="text-6xl md:text-8xl font-black text-white tabular-nums">
-                {madeShots}
-              </p>
-              <p className="text-[#888] text-sm md:text-base uppercase tracking-widest mt-1">MAKES</p>
-            </div>
-            
-            {/* Divider */}
-            <div className="text-4xl md:text-6xl text-[#555] font-light mb-4">/</div>
-            
-            {/* Attempts */}
-            <div className="text-center">
-              <p className="text-6xl md:text-8xl font-black text-white tabular-nums">
-                {totalAttempts}
-              </p>
-              <p className="text-[#888] text-sm md:text-base uppercase tracking-widest mt-1">ATTEMPTS</p>
-            </div>
+        {/* Main Stats Display */}
+        <div className="flex items-center justify-center gap-4 mb-4">
+          {/* Makes */}
+          <div className="text-center">
+            <p className="text-5xl font-black text-white tabular-nums">
+              {madeShots}
+            </p>
+            <p className="text-[#888] text-xs uppercase tracking-widest">MAKES</p>
           </div>
           
-          {/* Percentage Bar */}
-          <div className="mt-6 max-w-md mx-auto">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[#888] text-sm">Accuracy</span>
-              <span className="text-white text-2xl font-black">{percentage}%</span>
-            </div>
-            <div className="h-2 bg-[#2a2a2a] rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF8F35] rounded-full transition-all duration-500"
-                style={{ width: `${percentage}%` }}
-              />
-            </div>
+          {/* Divider */}
+          <div className="text-3xl text-[#555] font-light">/</div>
+          
+          {/* Attempts */}
+          <div className="text-center">
+            <p className="text-5xl font-black text-white tabular-nums">
+              {totalAttempts}
+            </p>
+            <p className="text-[#888] text-xs uppercase tracking-widest">ATTEMPTS</p>
           </div>
           
-          {/* Control Buttons */}
-          <div className={`flex items-center justify-center gap-4 mt-6 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
-            {/* Pause/Resume */}
-            <button
-              onClick={isPaused ? onResume : onPause}
-              className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20"
-            >
-              {isPaused ? (
-                <Play className="w-7 h-7 text-white" />
-              ) : (
-                <Pause className="w-7 h-7 text-white" />
-              )}
-            </button>
-            
-            {/* Manual Make Button */}
-            <button
-              onClick={onMade}
-              className="w-20 h-20 rounded-full bg-green-500/80 backdrop-blur-sm flex items-center justify-center border-4 border-green-400 shadow-lg shadow-green-500/30"
-            >
-              <CheckCircle className="w-10 h-10 text-white" />
-            </button>
-            
-            {/* Manual Miss Button */}
-            <button
-              onClick={onMiss}
-              className="w-20 h-20 rounded-full bg-red-500/80 backdrop-blur-sm flex items-center justify-center border-4 border-red-400 shadow-lg shadow-red-500/30"
-            >
-              <XCircle className="w-10 h-10 text-white" />
-            </button>
-            
-            {/* End Drill */}
-            <button
-              onClick={onClose}
-              className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20"
-            >
-              <X className="w-7 h-7 text-white" />
-            </button>
+          {/* Percentage */}
+          <div className="text-center ml-4 pl-4 border-l border-[#333]">
+            <p className="text-5xl font-black text-[#FF6B35] tabular-nums">
+              {percentage}%
+            </p>
+            <p className="text-[#888] text-xs uppercase tracking-widest">ACCURACY</p>
           </div>
         </div>
+        
+        {/* Control Buttons */}
+        <div className="flex items-center justify-center gap-3">
+          {/* Pause/Resume */}
+          <button
+            onClick={isPaused ? onResume : onPause}
+            className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20 active:scale-95 transition-transform"
+          >
+            {isPaused ? (
+              <Play className="w-7 h-7 text-white" />
+            ) : (
+              <Pause className="w-7 h-7 text-white" />
+            )}
+          </button>
+          
+          {/* Manual Make Button */}
+          <button
+            onClick={handleManualMade}
+            className="w-20 h-20 rounded-full bg-green-500 flex items-center justify-center border-4 border-green-400 shadow-lg shadow-green-500/30 active:scale-95 transition-transform"
+          >
+            <CheckCircle className="w-10 h-10 text-white" />
+          </button>
+          
+          {/* Manual Miss Button */}
+          <button
+            onClick={handleManualMiss}
+            className="w-20 h-20 rounded-full bg-red-500 flex items-center justify-center border-4 border-red-400 shadow-lg shadow-red-500/30 active:scale-95 transition-transform"
+          >
+            <XCircle className="w-10 h-10 text-white" />
+          </button>
+          
+          {/* End Drill */}
+          <button
+            onClick={onClose}
+            className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20 active:scale-95 transition-transform"
+          >
+            <X className="w-7 h-7 text-white" />
+          </button>
+        </div>
       </div>
-      
-      {/* Fullscreen expand button */}
-      <button
-        onClick={() => {
-          if (document.fullscreenElement) {
-            document.exitFullscreen()
-          } else {
-            document.documentElement.requestFullscreen()
-          }
-        }}
-        className={`absolute bottom-32 right-4 w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center z-20 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}
-      >
-        <Maximize2 className="w-6 h-6 text-white" />
-      </button>
     </div>
   )
 }
