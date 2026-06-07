@@ -229,16 +229,16 @@ function AnalyticsCard({ metricKey, data, dragX }: AnalyticsCardProps) {
       case 'sessions':
         return (
           <div className="text-center py-6">
-            <p className="text-7xl font-black text-white mb-2">{data.totalSessions}</p>
-            <p className="text-[#888] text-sm uppercase tracking-wider">Total Sessions</p>
+            <p className="text-7xl font-black text-slate-900 mb-2">{data.totalSessions}</p>
+            <p className="text-slate-500 text-sm uppercase tracking-wider">Total Sessions</p>
             <div className="flex justify-center gap-8 mt-6">
               <div className="text-center">
                 <p className="text-2xl font-bold text-[#FF6B35]">{data.thisWeekSessions}</p>
-                <p className="text-[#666] text-xs">This Week</p>
+                <p className="text-slate-400 text-xs">This Week</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-bold text-[#888]">{data.lastWeekSessions}</p>
-                <p className="text-[#666] text-xs">Last Week</p>
+                <p className="text-2xl font-bold text-slate-500">{data.lastWeekSessions}</p>
+                <p className="text-slate-400 text-xs">Last Week</p>
               </div>
             </div>
           </div>
@@ -270,7 +270,7 @@ function AnalyticsCard({ metricKey, data, dragX }: AnalyticsCardProps) {
                   cy="100"
                   r="85"
                   fill="none"
-                  stroke="#2a2a2a"
+                  stroke="#e2e8f0"
                   strokeWidth="12"
                   strokeLinecap="round"
                   strokeDasharray={circumference * 0.75}
@@ -325,7 +325,7 @@ function AnalyticsCard({ metricKey, data, dragX }: AnalyticsCardProps) {
                       y1={y1}
                       x2={x2}
                       y2={y2}
-                      stroke="#555"
+                      stroke="#94a3b8"
                       strokeWidth="2"
                       strokeLinecap="round"
                     />
@@ -346,7 +346,7 @@ function AnalyticsCard({ metricKey, data, dragX }: AnalyticsCardProps) {
                     >
                       {data.averageScore}
                     </span>
-                    <span className="text-2xl font-bold text-[#666] ml-1">%</span>
+                    <span className="text-2xl font-bold text-slate-400 ml-1">%</span>
                   </div>
                   <div 
                     className="mt-2 px-4 py-1.5 rounded-full text-sm font-black uppercase tracking-wider"
@@ -364,27 +364,27 @@ function AnalyticsCard({ metricKey, data, dragX }: AnalyticsCardProps) {
             
             {/* Score breakdown */}
             <div className="mt-6 grid grid-cols-3 gap-3">
-              <div className="bg-[#1a1a1a] rounded-xl p-3 border border-[#333] text-center">
-                <p className="text-[#666] text-[10px] uppercase tracking-wider mb-1">Best</p>
+              <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 text-center">
+                <p className="text-slate-400 text-[10px] uppercase tracking-wider mb-1">Best</p>
                 <p className="text-green-500 text-xl font-black">92%</p>
               </div>
-              <div className="bg-[#1a1a1a] rounded-xl p-3 border border-[#333] text-center">
-                <p className="text-[#666] text-[10px] uppercase tracking-wider mb-1">Average</p>
+              <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 text-center">
+                <p className="text-slate-400 text-[10px] uppercase tracking-wider mb-1">Average</p>
                 <p className="text-xl font-black" style={{ color: scoreColor }}>{data.averageScore}%</p>
               </div>
-              <div className="bg-[#1a1a1a] rounded-xl p-3 border border-[#333] text-center">
-                <p className="text-[#666] text-[10px] uppercase tracking-wider mb-1">Lowest</p>
+              <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 text-center">
+                <p className="text-slate-400 text-[10px] uppercase tracking-wider mb-1">Lowest</p>
                 <p className="text-red-400 text-xl font-black">58%</p>
               </div>
             </div>
             
             {/* Comparison to elite */}
-            <div className="mt-4 bg-gradient-to-r from-[#1a1a1a] to-[#252525] rounded-xl p-4 border border-[#333]">
+            <div className="mt-4 bg-slate-50 rounded-xl p-4 border border-slate-100">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[#888] text-sm font-medium">vs. Elite Players</span>
+                <span className="text-slate-500 text-sm font-medium">vs. Elite Players</span>
                 <span className="text-[#FF6B35] text-sm font-bold">Top 25%</span>
               </div>
-              <div className="relative h-2 bg-[#2a2a2a] rounded-full overflow-hidden">
+              <div className="relative h-2 bg-slate-200 rounded-full overflow-hidden">
                 <div 
                   className="absolute left-0 top-0 h-full bg-gradient-to-r from-[#FF6B35] to-[#ffaa77] rounded-full"
                   style={{ width: `${data.averageScore}%` }}
@@ -395,7 +395,7 @@ function AnalyticsCard({ metricKey, data, dragX }: AnalyticsCardProps) {
                   style={{ left: '85%' }}
                 />
               </div>
-              <div className="flex justify-between mt-1 text-[10px] text-[#666]">
+              <div className="flex justify-between mt-1 text-[10px] text-slate-400">
                 <span>Beginner</span>
                 <span>Elite (85%+)</span>
               </div>
@@ -417,10 +417,10 @@ function AnalyticsCard({ metricKey, data, dragX }: AnalyticsCardProps) {
                 {isPositive ? '+' : ''}{data.progressPercent}%
               </p>
             </div>
-            <p className="text-[#888] text-sm">Since your first session</p>
-            <div className="mt-6 p-4 bg-[#1a1a1a] rounded-xl border border-[#333]">
-              <p className="text-[#666] text-xs uppercase tracking-wider mb-1">Total Practice Time</p>
-              <p className="text-white text-2xl font-bold">{Math.floor(data.totalPracticeMinutes / 60)}h {data.totalPracticeMinutes % 60}m</p>
+            <p className="text-slate-500 text-sm">Since your first session</p>
+            <div className="mt-6 p-4 bg-slate-50 rounded-xl border border-slate-100">
+              <p className="text-slate-400 text-xs uppercase tracking-wider mb-1">Total Practice Time</p>
+              <p className="text-slate-900 text-2xl font-bold">{Math.floor(data.totalPracticeMinutes / 60)}h {data.totalPracticeMinutes % 60}m</p>
             </div>
           </div>
         )
@@ -443,7 +443,7 @@ function AnalyticsCard({ metricKey, data, dragX }: AnalyticsCardProps) {
             >
               {data.trendDirection === 'up' ? 'Trending Up!' : data.trendDirection === 'down' ? 'Needs Attention' : 'Holding Steady'}
             </p>
-            <p className="text-[#888] text-sm mt-2">Last 7 days performance</p>
+            <p className="text-slate-500 text-sm mt-2">Last 7 days performance</p>
           </div>
         )
         
@@ -459,14 +459,14 @@ function AnalyticsCard({ metricKey, data, dragX }: AnalyticsCardProps) {
                     className="w-full rounded-t-lg transition-all duration-300"
                     style={{ 
                       height: `${score}%`, 
-                      backgroundColor: idx === timelineData.length - 1 ? '#FF6B35' : '#3a3a3a'
+                      backgroundColor: idx === timelineData.length - 1 ? '#FF6B35' : '#e2e8f0'
                     }}
                   />
-                  <span className="text-[10px] text-[#666]">{idx === timelineData.length - 1 ? 'Now' : `W${idx + 1}`}</span>
+                  <span className="text-[10px] text-slate-400">{idx === timelineData.length - 1 ? 'Now' : `W${idx + 1}`}</span>
                 </div>
               ))}
             </div>
-            <p className="text-center text-[#888] text-sm mt-4">Score progression over 8 weeks</p>
+            <p className="text-center text-slate-500 text-sm mt-4">Score progression over 8 weeks</p>
           </div>
         )
         
@@ -487,7 +487,7 @@ function AnalyticsCard({ metricKey, data, dragX }: AnalyticsCardProps) {
             {/* Chart Header */}
             <div className="flex items-center gap-2 mb-4">
               <div className="w-4 h-4 bg-gradient-to-br from-teal-400 to-cyan-400 rounded"></div>
-              <h4 className="text-sm font-bold text-[#E5E5E5] uppercase">Performance Over Time</h4>
+              <h4 className="text-sm font-bold text-slate-700 uppercase">Performance Over Time</h4>
             </div>
             
             {/* Chart Container */}
@@ -495,7 +495,7 @@ function AnalyticsCard({ metricKey, data, dragX }: AnalyticsCardProps) {
               {/* Y-Axis Labels */}
               <div className="absolute left-0 top-0 bottom-8 w-8 flex flex-col justify-between text-right pr-2">
                 {[100, 75, 50, 25, 0].map(v => (
-                  <span key={v} className="text-[10px] text-[#888] font-medium">{v}</span>
+                  <span key={v} className="text-[10px] text-slate-400 font-medium">{v}</span>
                 ))}
               </div>
               
@@ -504,7 +504,7 @@ function AnalyticsCard({ metricKey, data, dragX }: AnalyticsCardProps) {
                 {[0, 1, 2, 3, 4].map(i => (
                   <div 
                     key={i} 
-                    className="absolute w-full border-t border-[#3a3a3a]/30" 
+                    className="absolute w-full border-t border-slate-200/50" 
                     style={{ top: `${i * 25}%` }}
                   />
                 ))}
@@ -533,7 +533,7 @@ function AnalyticsCard({ metricKey, data, dragX }: AnalyticsCardProps) {
                                   ? isCurrentWeek
                                     ? 'bg-gradient-to-b from-[#FF6B35] via-[#ff8555] to-[#ffaa77]'
                                     : 'bg-gradient-to-b from-teal-600 via-cyan-500 to-emerald-400' 
-                                  : 'bg-[#2a2a2a]'
+                                  : 'bg-slate-200'
                               }`}
                               style={{
                                 height: '10%',
@@ -546,7 +546,7 @@ function AnalyticsCard({ metricKey, data, dragX }: AnalyticsCardProps) {
                       
                       {/* Hover Tooltip */}
                       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
-                        <div className="bg-[#050505] border border-teal-400/50 rounded-lg px-2 py-1 shadow-xl whitespace-nowrap">
+                        <div className="bg-white border border-slate-200 rounded-lg px-2 py-1 shadow-xl whitespace-nowrap">
                           <p className={`font-bold text-xs ${isCurrentWeek ? 'text-[#FF6B35]' : 'text-teal-400'}`}>{point.score}%</p>
                         </div>
                       </div>
@@ -561,7 +561,7 @@ function AnalyticsCard({ metricKey, data, dragX }: AnalyticsCardProps) {
                   <span 
                     key={i} 
                     className={`text-[10px] font-medium uppercase text-center flex-1 ${
-                      i === chartData.length - 1 ? 'text-[#FF6B35] font-bold' : 'text-[#888]'
+                      i === chartData.length - 1 ? 'text-[#FF6B35] font-bold' : 'text-slate-400'
                     }`}
                   >
                     {point.label}
@@ -574,11 +574,11 @@ function AnalyticsCard({ metricKey, data, dragX }: AnalyticsCardProps) {
             <div className="flex items-center justify-center gap-6 mt-4 text-xs">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded bg-gradient-to-br from-teal-600 to-emerald-400" />
-                <span className="text-[#888]">Past Weeks</span>
+                <span className="text-slate-500">Past Weeks</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded bg-gradient-to-br from-[#FF6B35] to-[#ffaa77]" />
-                <span className="text-[#888]">Current</span>
+                <span className="text-slate-500">Current</span>
               </div>
             </div>
           </div>
@@ -596,12 +596,12 @@ function AnalyticsCard({ metricKey, data, dragX }: AnalyticsCardProps) {
         return (
           <div className="py-4">
             {/* Overall Score Header */}
-            <div className="flex items-center justify-between mb-4 p-3 bg-[#1a1a1a] rounded-xl border border-[#333]">
+            <div className="flex items-center justify-between mb-4 p-3 bg-slate-50 rounded-xl border border-slate-100">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-gradient-to-br from-teal-400 to-cyan-400 rounded-lg flex items-center justify-center">
                   <BarChart3 className="w-4 h-4 text-white" />
                 </div>
-                <span className="text-[#888] text-sm font-medium">Overall Form Score</span>
+                <span className="text-slate-500 text-sm font-medium">Overall Form Score</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-2xl font-black" style={{ color: getScoreColor(avgMetricScore) }}>{avgMetricScore}%</span>
@@ -621,7 +621,7 @@ function AnalyticsCard({ metricKey, data, dragX }: AnalyticsCardProps) {
                 return (
                   <div key={idx} className="space-y-1.5">
                     <div className="flex justify-between items-center text-sm">
-                      <span className="text-[#ccc] font-medium">{m.label}</span>
+                      <span className="text-slate-700 font-medium">{m.label}</span>
                       <div className="flex items-center gap-2">
                         <span className="font-black" style={{ color: getScoreColor(m.value) }}>{m.value}%</span>
                       </div>
@@ -636,7 +636,7 @@ function AnalyticsCard({ metricKey, data, dragX }: AnalyticsCardProps) {
                             className={`flex-1 rounded-sm transition-all duration-300 ${
                               isFilled 
                                 ? 'bg-gradient-to-b from-teal-600 via-cyan-500 to-emerald-400' 
-                                : 'bg-[#2a2a2a]'
+                                : 'bg-slate-200'
                             }`}
                             style={{ opacity: isFilled ? 1 : 0.3 }}
                           />
@@ -649,9 +649,9 @@ function AnalyticsCard({ metricKey, data, dragX }: AnalyticsCardProps) {
             </div>
             
             {/* Summary */}
-            <div className="mt-4 pt-4 border-t border-[#333] flex items-center justify-between">
-              <span className="text-[#666] text-xs">Lowest: <span className="text-red-400 font-bold">Knee Bend (70%)</span></span>
-              <span className="text-[#666] text-xs">Highest: <span className="text-green-400 font-bold">Hip Position (92%)</span></span>
+            <div className="mt-4 pt-4 border-t border-slate-200 flex items-center justify-between">
+              <span className="text-slate-400 text-xs">Lowest: <span className="text-red-400 font-bold">Knee Bend (70%)</span></span>
+              <span className="text-slate-400 text-xs">Highest: <span className="text-green-400 font-bold">Hip Position (92%)</span></span>
             </div>
           </div>
         )
@@ -664,15 +664,15 @@ function AnalyticsCard({ metricKey, data, dragX }: AnalyticsCardProps) {
                 <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#ff8f5a] flex items-center justify-center mb-2">
                   <Flame className="w-10 h-10 text-white" />
                 </div>
-                <p className="text-3xl font-black text-white">{data.currentStreak}</p>
-                <p className="text-[#888] text-xs uppercase">Current Streak</p>
+                <p className="text-3xl font-black text-slate-900">{data.currentStreak}</p>
+                <p className="text-slate-500 text-xs uppercase">Current Streak</p>
               </div>
               <div className="text-center">
                 <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#FFD700] to-[#FFA500] flex items-center justify-center mb-2">
                   <Trophy className="w-10 h-10 text-white" />
                 </div>
-                <p className="text-3xl font-black text-white">{data.bestStreak}</p>
-                <p className="text-[#888] text-xs uppercase">Best Streak</p>
+                <p className="text-3xl font-black text-slate-900">{data.bestStreak}</p>
+                <p className="text-slate-500 text-xs uppercase">Best Streak</p>
               </div>
             </div>
             {data.currentStreak >= data.bestStreak && data.currentStreak > 0 && (
@@ -688,7 +688,7 @@ function AnalyticsCard({ metricKey, data, dragX }: AnalyticsCardProps) {
           <div className="py-4">
             <div className="grid grid-cols-7 gap-1">
               {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, idx) => (
-                <div key={idx} className="text-center text-[#666] text-[10px] font-bold py-1">{day}</div>
+                <div key={idx} className="text-center text-slate-400 text-[10px] font-bold py-1">{day}</div>
               ))}
               {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => (
                 <div
@@ -697,7 +697,7 @@ function AnalyticsCard({ metricKey, data, dragX }: AnalyticsCardProps) {
                     aspect-square rounded-md flex items-center justify-center text-xs font-medium
                     ${activeDaysSet.has(day) 
                       ? 'bg-green-500/20 text-green-500 border border-green-500/30' 
-                      : 'bg-[#2a2a2a] text-[#666]'
+                      : 'bg-slate-100 text-slate-400'
                     }
                   `}
                 >
@@ -708,11 +708,11 @@ function AnalyticsCard({ metricKey, data, dragX }: AnalyticsCardProps) {
             <div className="flex justify-center gap-4 mt-4 text-xs">
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 rounded bg-green-500/20 border border-green-500/30" />
-                <span className="text-[#888]">Active</span>
+                <span className="text-slate-500">Active</span>
               </div>
               <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded bg-[#2a2a2a]" />
-                <span className="text-[#888]">Rest</span>
+                <div className="w-3 h-3 rounded bg-slate-100" />
+                <span className="text-slate-500">Rest</span>
               </div>
             </div>
           </div>
@@ -738,7 +738,7 @@ function AnalyticsCard({ metricKey, data, dragX }: AnalyticsCardProps) {
       )}
       
       {/* Card with scroll-following swipe indicators */}
-      <div ref={cardRef} className="bg-[#0d0d0d] rounded-3xl border-2 border-[#FF6B35]/50 overflow-hidden shadow-2xl relative">
+      <div ref={cardRef} className="bg-white rounded-3xl border-2 border-[#FF6B35]/50 overflow-hidden shadow-sm relative">
         {/* Left Swipe Indicator - follows scroll within card bounds */}
         <div 
           className="z-10 flex items-center gap-0 pointer-events-none transition-all duration-150"
@@ -753,14 +753,14 @@ function AnalyticsCard({ metricKey, data, dragX }: AnalyticsCardProps) {
         >
           <svg width="70" height="70" viewBox="0 0 70 70">
             {/* Arrow 1 - EXTRA FAT HOLLOW */}
-            <path d="M32 5 L5 35 L32 65" stroke={dragX < -20 ? "#3b82f6" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="1" className="transition-all duration-150" />
-            <path d="M50 5 L23 35 L50 65" stroke={dragX < -20 ? "#3b82f6" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="1" className="transition-all duration-150" />
+            <path d="M32 5 L5 35 L32 65" stroke={dragX < -20 ? "#3b82f6" : "#94a3b8"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="1" className="transition-all duration-150" />
+            <path d="M50 5 L23 35 L50 65" stroke={dragX < -20 ? "#3b82f6" : "#94a3b8"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="1" className="transition-all duration-150" />
             {/* Arrow 2 - EXTRA FAT HOLLOW */}
-            <path d="M18 5 L-9 35 L18 65" stroke={dragX < -20 ? "#3b82f6" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" className="transition-all duration-150" />
-            <path d="M36 5 L9 35 L36 65" stroke={dragX < -20 ? "#3b82f6" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" className="transition-all duration-150" />
+            <path d="M18 5 L-9 35 L18 65" stroke={dragX < -20 ? "#3b82f6" : "#94a3b8"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" className="transition-all duration-150" />
+            <path d="M36 5 L9 35 L36 65" stroke={dragX < -20 ? "#3b82f6" : "#94a3b8"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" className="transition-all duration-150" />
             {/* Arrow 3 - EXTRA FAT HOLLOW */}
-            <path d="M46 5 L19 35 L46 65" stroke={dragX < -20 ? "#3b82f6" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.25" className="transition-all duration-150" />
-            <path d="M64 5 L37 35 L64 65" stroke={dragX < -20 ? "#3b82f6" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.25" className="transition-all duration-150" />
+            <path d="M46 5 L19 35 L46 65" stroke={dragX < -20 ? "#3b82f6" : "#94a3b8"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.25" className="transition-all duration-150" />
+            <path d="M64 5 L37 35 L64 65" stroke={dragX < -20 ? "#3b82f6" : "#94a3b8"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.25" className="transition-all duration-150" />
           </svg>
           {/* SWIPE text - turns BLUE when swiping left */}
           <svg width="100" height="40" viewBox="0 0 100 40" className="-ml-2">
@@ -777,7 +777,7 @@ function AnalyticsCard({ metricKey, data, dragX }: AnalyticsCardProps) {
               fontWeight="400" 
               fontFamily="Russo One, Arial Black, sans-serif"
               fill="none" 
-              stroke={dragX < -20 ? "#3b82f6" : "white"}
+              stroke={dragX < -20 ? "#3b82f6" : "#94a3b8"}
               strokeWidth="1.5"
               letterSpacing="3"
               className="transition-all duration-150"
@@ -814,7 +814,7 @@ function AnalyticsCard({ metricKey, data, dragX }: AnalyticsCardProps) {
               fontWeight="400" 
               fontFamily="Russo One, Arial Black, sans-serif"
               fill="none" 
-              stroke={dragX > 20 ? "#22c55e" : "white"}
+              stroke={dragX > 20 ? "#22c55e" : "#94a3b8"}
               strokeWidth="1.5"
               letterSpacing="3"
               className="transition-all duration-150"
@@ -824,18 +824,18 @@ function AnalyticsCard({ metricKey, data, dragX }: AnalyticsCardProps) {
           </svg>
           <svg width="70" height="70" viewBox="0 0 70 70">
             {/* Arrow 1 - EXTRA FAT HOLLOW */}
-            <path d="M38 5 L65 35 L38 65" stroke={dragX > 20 ? "#22c55e" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="1" className="transition-all duration-150" />
-            <path d="M20 5 L47 35 L20 65" stroke={dragX > 20 ? "#22c55e" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="1" className="transition-all duration-150" />
+            <path d="M38 5 L65 35 L38 65" stroke={dragX > 20 ? "#22c55e" : "#94a3b8"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="1" className="transition-all duration-150" />
+            <path d="M20 5 L47 35 L20 65" stroke={dragX > 20 ? "#22c55e" : "#94a3b8"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="1" className="transition-all duration-150" />
             {/* Arrow 2 - EXTRA FAT HOLLOW */}
-            <path d="M52 5 L79 35 L52 65" stroke={dragX > 20 ? "#22c55e" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" className="transition-all duration-150" />
-            <path d="M34 5 L61 35 L34 65" stroke={dragX > 20 ? "#22c55e" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" className="transition-all duration-150" />
+            <path d="M52 5 L79 35 L52 65" stroke={dragX > 20 ? "#22c55e" : "#94a3b8"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" className="transition-all duration-150" />
+            <path d="M34 5 L61 35 L34 65" stroke={dragX > 20 ? "#22c55e" : "#94a3b8"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" className="transition-all duration-150" />
             {/* Arrow 3 - EXTRA FAT HOLLOW */}
-            <path d="M24 5 L51 35 L24 65" stroke={dragX > 20 ? "#22c55e" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.25" className="transition-all duration-150" />
-            <path d="M6 5 L33 35 L6 65" stroke={dragX > 20 ? "#22c55e" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.25" className="transition-all duration-150" />
+            <path d="M24 5 L51 35 L24 65" stroke={dragX > 20 ? "#22c55e" : "#94a3b8"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.25" className="transition-all duration-150" />
+            <path d="M6 5 L33 35 L6 65" stroke={dragX > 20 ? "#22c55e" : "#94a3b8"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.25" className="transition-all duration-150" />
           </svg>
         </div>
         {/* Premium Banner - Inspired by Analysis Tab */}
-        <div className="relative h-28 overflow-hidden bg-gradient-to-br from-[#FF6B35]/20 via-[#1a1a1a] to-[#1a1a1a]">
+        <div className="relative h-28 overflow-hidden bg-gradient-to-br from-[#FF6B35]/10 via-white to-white">
           {/* Glowing Orbs Background */}
           <div className="absolute inset-0 opacity-40">
             <div className="absolute -top-8 -left-8 w-32 h-32 bg-[#FF6B35]/20 rounded-full blur-2xl" />
@@ -856,14 +856,14 @@ function AnalyticsCard({ metricKey, data, dragX }: AnalyticsCardProps) {
                 width={96}
                 height={96}
                 className="relative z-10 w-full h-full object-contain drop-shadow-2xl opacity-30"
-                style={{ filter: 'invert(1) brightness(1.2) drop-shadow(0 0 15px rgba(255, 107, 53, 0.15))' }}
+                style={{ filter: 'brightness(0.8) drop-shadow(0 0 15px rgba(255, 107, 53, 0.15))' }}
               />
             </div>
           </div>
           
           {/* Title & Subtitle */}
           <div className="absolute left-6 top-1/2 -translate-y-1/2 z-10">
-            <h3 className="text-white font-black text-xl uppercase tracking-wider drop-shadow-lg">{metric.title}</h3>
+            <h3 className="text-slate-900 font-black text-xl uppercase tracking-wider drop-shadow-lg">{metric.title}</h3>
             <p className="text-[#FF6B35] text-sm font-semibold uppercase tracking-wider mt-1">{metric.subtitle}</p>
           </div>
           
@@ -877,21 +877,21 @@ function AnalyticsCard({ metricKey, data, dragX }: AnalyticsCardProps) {
           {renderMetricContent()}
           
           {/* Explanation */}
-          <div className="bg-[#1a1a1a] rounded-xl p-4 border border-[#333]">
+          <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
             <div className="flex items-center gap-2 mb-2">
               <Lightbulb className="w-4 h-4 text-[#FF6B35]" />
               <p className="text-[#FF6B35] text-xs font-semibold uppercase tracking-wider">What This Means</p>
             </div>
-            <p className="text-[#ccc] text-sm leading-relaxed">{metric.explanation}</p>
+            <p className="text-slate-600 text-sm leading-relaxed">{metric.explanation}</p>
           </div>
           
           {/* Why It Matters */}
-          <div className="bg-[#1a1a1a] rounded-xl p-4 border border-[#333]">
+          <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
             <div className="flex items-center gap-2 mb-2">
               <Target className="w-4 h-4 text-green-500" />
               <p className="text-green-500 text-xs font-semibold uppercase tracking-wider">Why It Matters</p>
             </div>
-            <p className="text-[#aaa] text-sm leading-relaxed">{metric.whyItMatters}</p>
+            <p className="text-slate-500 text-sm leading-relaxed">{metric.whyItMatters}</p>
           </div>
           
           {/* Pro Tip */}
@@ -1042,12 +1042,12 @@ export function AnalyticsCardGame({ data = DEFAULT_DATA }: AnalyticsCardGameProp
             <Sparkles className="w-5 h-5 text-[#FF6B35]" />
           </div>
           <div className="flex-1">
-            <p className="text-white font-bold text-sm">New Analytics Available!</p>
-            <p className="text-[#888] text-xs">Swipe through {METRIC_KEYS.length} cards to review your performance</p>
+            <p className="text-slate-900 font-bold text-sm">New Analytics Available!</p>
+            <p className="text-slate-500 text-xs">Swipe through {METRIC_KEYS.length} cards to review your performance</p>
           </div>
           <button 
             onClick={() => setHasNewAnalytics(false)}
-            className="text-[#888] hover:text-white text-xs"
+            className="text-slate-400 hover:text-slate-600 text-xs"
           >
             Dismiss
           </button>
@@ -1058,7 +1058,7 @@ export function AnalyticsCardGame({ data = DEFAULT_DATA }: AnalyticsCardGameProp
       <div>
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-black text-white uppercase tracking-wide">YOUR ANALYTICS</h2>
+            <h2 className="text-2xl font-black text-slate-900 uppercase tracking-wide">YOUR ANALYTICS</h2>
             <p className="text-[#FF6B35] text-sm font-semibold uppercase tracking-wider mt-1">PERFORMANCE INSIGHTS</p>
           </div>
           
@@ -1066,7 +1066,7 @@ export function AnalyticsCardGame({ data = DEFAULT_DATA }: AnalyticsCardGameProp
           {(currentIndex > 0 || gameStats.keepItUp > 0 || gameStats.workOnIt > 0) && (
             <button
               onClick={handleStartOver}
-              className="flex items-center gap-2 px-4 py-2 bg-[#1a1a1a] border border-[#333] rounded-xl text-[#888] hover:text-white hover:border-[#FF6B35]/50 transition-all whitespace-nowrap"
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-500 hover:text-slate-700 hover:border-[#FF6B35]/50 transition-all whitespace-nowrap"
             >
               <RotateCcw className="w-4 h-4" />
               <span className="text-sm font-semibold">Reset</span>
@@ -1075,34 +1075,34 @@ export function AnalyticsCardGame({ data = DEFAULT_DATA }: AnalyticsCardGameProp
         </div>
         
         <div className="flex items-center gap-3 mt-4">
-          <div className="flex items-center gap-2 bg-[#1a1a1a] px-3 py-1.5 rounded-full border border-[#333]">
+          <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-slate-200">
             <Check className="w-4 h-4 text-green-500" />
-            <span className="text-white font-bold">{gameStats.keepItUp}</span>
-            <span className="text-[#666] text-sm">Strong</span>
+            <span className="text-slate-900 font-bold">{gameStats.keepItUp}</span>
+            <span className="text-slate-400 text-sm">Strong</span>
           </div>
-          <div className="flex items-center gap-2 bg-[#1a1a1a] px-3 py-1.5 rounded-full border border-[#333]">
+          <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-slate-200">
             <Target className="w-4 h-4 text-blue-500" />
-            <span className="text-white font-bold">{gameStats.workOnIt}</span>
-            <span className="text-[#666] text-sm">Focus</span>
+            <span className="text-slate-900 font-bold">{gameStats.workOnIt}</span>
+            <span className="text-slate-400 text-sm">Focus</span>
           </div>
-          <div className="flex items-center gap-2 bg-[#1a1a1a] px-3 py-1.5 rounded-full border border-[#333]">
+          <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-slate-200">
             <Trophy className="w-4 h-4 text-[#FFD700]" />
-            <span className="text-white font-bold">{gameStats.xp}</span>
-            <span className="text-[#666] text-sm">XP</span>
+            <span className="text-slate-900 font-bold">{gameStats.xp}</span>
+            <span className="text-slate-400 text-sm">XP</span>
           </div>
         </div>
         
-        <p className="text-[#555] text-xs uppercase tracking-wider mt-4">SWIPE THROUGH YOUR STATS</p>
+        <p className="text-slate-400 text-xs uppercase tracking-wider mt-4">SWIPE THROUGH YOUR STATS</p>
       </div>
 
       {/* Progress */}
       <div className="flex items-center justify-between text-sm">
-        <span className="text-[#888]">Card {currentIndex + 1} of {METRIC_KEYS.length}</span>
+        <span className="text-slate-500">Card {currentIndex + 1} of {METRIC_KEYS.length}</span>
         <div className="flex gap-1">
           {METRIC_KEYS.map((_, idx) => (
             <div
               key={idx}
-              className={`w-2 h-2 rounded-full ${idx < currentIndex ? 'bg-[#FF6B35]' : idx === currentIndex ? 'bg-green-500' : 'bg-[#3a3a3a]'}`}
+              className={`w-2 h-2 rounded-full ${idx < currentIndex ? 'bg-[#FF6B35]' : idx === currentIndex ? 'bg-green-500' : 'bg-slate-200'}`}
             />
           ))}
         </div>
@@ -1134,7 +1134,7 @@ export function AnalyticsCardGame({ data = DEFAULT_DATA }: AnalyticsCardGameProp
           />
         </div>
       ) : (
-        <div className="text-center py-12 bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] rounded-2xl border border-[#333] relative overflow-hidden">
+        <div className="text-center py-12 bg-white rounded-2xl border border-slate-200 relative overflow-hidden shadow-sm">
           {/* Background decoration */}
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-0 left-1/4 w-32 h-32 bg-[#FFD700] rounded-full blur-3xl" />
@@ -1145,8 +1145,8 @@ export function AnalyticsCardGame({ data = DEFAULT_DATA }: AnalyticsCardGameProp
             <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-[#FFD700] to-[#FFA500] rounded-full flex items-center justify-center shadow-lg shadow-[#FFD700]/30">
               <Trophy className="w-10 h-10 text-white" />
             </div>
-            <h3 className="text-white text-2xl font-black mb-2 uppercase tracking-wide">Review Complete!</h3>
-            <p className="text-[#888] mb-6">You&apos;ve reviewed all {METRIC_KEYS.length} analytics cards</p>
+            <h3 className="text-slate-900 text-2xl font-black mb-2 uppercase tracking-wide">Review Complete!</h3>
+            <p className="text-slate-500 mb-6">You&apos;ve reviewed all {METRIC_KEYS.length} analytics cards</p>
             
             <div className="flex justify-center gap-8 mb-8">
               <div className="text-center">
@@ -1154,21 +1154,21 @@ export function AnalyticsCardGame({ data = DEFAULT_DATA }: AnalyticsCardGameProp
                   <Check className="w-8 h-8 text-green-500" />
                 </div>
                 <p className="text-green-500 text-3xl font-black">{gameStats.keepItUp}</p>
-                <p className="text-[#666] text-xs uppercase tracking-wider">Keep It Up</p>
+                <p className="text-slate-400 text-xs uppercase tracking-wider">Keep It Up</p>
               </div>
               <div className="text-center">
                 <div className="w-16 h-16 mx-auto mb-2 bg-blue-500/10 border border-blue-500/30 rounded-xl flex items-center justify-center">
                   <Target className="w-8 h-8 text-blue-500" />
                 </div>
                 <p className="text-blue-500 text-3xl font-black">{gameStats.workOnIt}</p>
-                <p className="text-[#666] text-xs uppercase tracking-wider">Work On It</p>
+                <p className="text-slate-400 text-xs uppercase tracking-wider">Work On It</p>
               </div>
               <div className="text-center">
                 <div className="w-16 h-16 mx-auto mb-2 bg-[#FFD700]/10 border border-[#FFD700]/30 rounded-xl flex items-center justify-center">
                   <Zap className="w-8 h-8 text-[#FFD700]" />
                 </div>
                 <p className="text-[#FFD700] text-3xl font-black">+{gameStats.xp}</p>
-                <p className="text-[#666] text-xs uppercase tracking-wider">XP Earned</p>
+                <p className="text-slate-400 text-xs uppercase tracking-wider">XP Earned</p>
               </div>
             </div>
             
@@ -1180,7 +1180,7 @@ export function AnalyticsCardGame({ data = DEFAULT_DATA }: AnalyticsCardGameProp
                 <RotateCcw className="w-5 h-5" />
                 Restart
               </button>
-              <p className="text-[#555] text-xs">Review again to change your ratings</p>
+              <p className="text-slate-400 text-xs">Review again to change your ratings</p>
             </div>
           </div>
         </div>
@@ -1188,7 +1188,7 @@ export function AnalyticsCardGame({ data = DEFAULT_DATA }: AnalyticsCardGameProp
 
       {/* Swipe Hint */}
       {!isComplete && (
-        <div className="flex items-center justify-center gap-4 text-[#666] text-sm">
+        <div className="flex items-center justify-center gap-4 text-slate-400 text-sm">
           <span className="flex items-center gap-1">
             <ArrowLeft className="w-4 h-4 text-blue-400" />
             <span className="text-blue-400">Focus</span>
@@ -1227,7 +1227,7 @@ export function AnalyticsCardGame({ data = DEFAULT_DATA }: AnalyticsCardGameProp
           <button
             onClick={goToPrevious}
             disabled={currentIndex === 0}
-            className="text-[#888] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
+            className="text-slate-500 hover:text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
           >
             <ArrowLeft className="w-4 h-4" />
             Previous
@@ -1235,7 +1235,7 @@ export function AnalyticsCardGame({ data = DEFAULT_DATA }: AnalyticsCardGameProp
           <button
             onClick={goToNext}
             disabled={currentIndex >= METRIC_KEYS.length - 1}
-            className="text-[#888] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
+            className="text-slate-500 hover:text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
           >
             Next
             <ArrowRight className="w-4 h-4" />

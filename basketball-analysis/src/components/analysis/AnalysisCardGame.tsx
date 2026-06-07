@@ -285,9 +285,9 @@ function AnalysisCard({ metricKey, value, dragX }: AnalysisCardProps) {
   return (
     <div 
       ref={cardRef}
-      className="relative rounded-2xl border-2 overflow-hidden bg-[#1a1a1a] transition-all duration-200"
+      className="relative rounded-2xl border-2 overflow-hidden bg-white shadow-sm transition-all duration-200"
       style={{
-        borderColor: rightGlow > 0 ? `rgba(34, 197, 94, ${0.3 + rightGlow})` : leftGlow > 0 ? `rgba(59, 130, 246, ${0.3 + leftGlow})` : '#3a3a3a',
+        borderColor: rightGlow > 0 ? `rgba(34, 197, 94, ${0.3 + rightGlow})` : leftGlow > 0 ? `rgba(59, 130, 246, ${0.3 + leftGlow})` : '#e2e8f0',
         boxShadow: rightGlow > 0 
           ? `0 0 30px rgba(34, 197, 94, ${rightGlow}), inset 0 0 30px rgba(34, 197, 94, ${rightGlow * 0.3})`
           : leftGlow > 0
@@ -308,15 +308,15 @@ function AnalysisCard({ metricKey, value, dragX }: AnalysisCardProps) {
         }}
       >
         <svg width="70" height="70" viewBox="0 0 70 70">
-          <path d="M32 5 L5 35 L32 65" stroke={dragX < -20 ? "#3b82f6" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="1" className="transition-all duration-150" />
-          <path d="M50 5 L23 35 L50 65" stroke={dragX < -20 ? "#3b82f6" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="1" className="transition-all duration-150" />
-          <path d="M18 5 L-9 35 L18 65" stroke={dragX < -20 ? "#3b82f6" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" className="transition-all duration-150" />
-          <path d="M36 5 L9 35 L36 65" stroke={dragX < -20 ? "#3b82f6" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" className="transition-all duration-150" />
-          <path d="M46 5 L19 35 L46 65" stroke={dragX < -20 ? "#3b82f6" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.25" className="transition-all duration-150" />
-          <path d="M64 5 L37 35 L64 65" stroke={dragX < -20 ? "#3b82f6" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.25" className="transition-all duration-150" />
+          <path d="M32 5 L5 35 L32 65" stroke={dragX < -20 ? "#3b82f6" : "#cbd5e1"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="1" className="transition-all duration-150" />
+          <path d="M50 5 L23 35 L50 65" stroke={dragX < -20 ? "#3b82f6" : "#cbd5e1"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="1" className="transition-all duration-150" />
+          <path d="M18 5 L-9 35 L18 65" stroke={dragX < -20 ? "#3b82f6" : "#cbd5e1"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" className="transition-all duration-150" />
+          <path d="M36 5 L9 35 L36 65" stroke={dragX < -20 ? "#3b82f6" : "#cbd5e1"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" className="transition-all duration-150" />
+          <path d="M46 5 L19 35 L46 65" stroke={dragX < -20 ? "#3b82f6" : "#cbd5e1"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.25" className="transition-all duration-150" />
+          <path d="M64 5 L37 35 L64 65" stroke={dragX < -20 ? "#3b82f6" : "#cbd5e1"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.25" className="transition-all duration-150" />
         </svg>
         <svg width="100" height="40" viewBox="0 0 100 40" className="-ml-2">
-          <text x="50" y="30" textAnchor="middle" fontSize="24" fontWeight="900" fontFamily="Arial Black, sans-serif" fill="none" stroke={dragX < -20 ? "#3b82f6" : "white"} strokeWidth="1.5" letterSpacing="3" className="transition-all duration-150">SWIPE</text>
+          <text x="50" y="30" textAnchor="middle" fontSize="24" fontWeight="900" fontFamily="Arial Black, sans-serif" fill="none" stroke={dragX < -20 ? "#3b82f6" : "#cbd5e1"} strokeWidth="1.5" letterSpacing="3" className="transition-all duration-150">SWIPE</text>
         </svg>
       </div>
       
@@ -333,23 +333,23 @@ function AnalysisCard({ metricKey, value, dragX }: AnalysisCardProps) {
         }}
       >
         <svg width="100" height="40" viewBox="0 0 100 40" className="-mr-2">
-          <text x="50" y="30" textAnchor="middle" fontSize="24" fontWeight="900" fontFamily="Arial Black, sans-serif" fill="none" stroke={dragX > 20 ? "#22c55e" : "white"} strokeWidth="1.5" letterSpacing="3" className="transition-all duration-150">SWIPE</text>
+          <text x="50" y="30" textAnchor="middle" fontSize="24" fontWeight="900" fontFamily="Arial Black, sans-serif" fill="none" stroke={dragX > 20 ? "#22c55e" : "#cbd5e1"} strokeWidth="1.5" letterSpacing="3" className="transition-all duration-150">SWIPE</text>
         </svg>
         <svg width="70" height="70" viewBox="0 0 70 70">
-          <path d="M38 5 L65 35 L38 65" stroke={dragX > 20 ? "#22c55e" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="1" className="transition-all duration-150" />
-          <path d="M20 5 L47 35 L20 65" stroke={dragX > 20 ? "#22c55e" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="1" className="transition-all duration-150" />
-          <path d="M52 5 L79 35 L52 65" stroke={dragX > 20 ? "#22c55e" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" className="transition-all duration-150" />
-          <path d="M34 5 L61 35 L34 65" stroke={dragX > 20 ? "#22c55e" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" className="transition-all duration-150" />
-          <path d="M24 5 L51 35 L24 65" stroke={dragX > 20 ? "#22c55e" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.25" className="transition-all duration-150" />
-          <path d="M6 5 L33 35 L6 65" stroke={dragX > 20 ? "#22c55e" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.25" className="transition-all duration-150" />
+          <path d="M38 5 L65 35 L38 65" stroke={dragX > 20 ? "#22c55e" : "#cbd5e1"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="1" className="transition-all duration-150" />
+          <path d="M20 5 L47 35 L20 65" stroke={dragX > 20 ? "#22c55e" : "#cbd5e1"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="1" className="transition-all duration-150" />
+          <path d="M52 5 L79 35 L52 65" stroke={dragX > 20 ? "#22c55e" : "#cbd5e1"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" className="transition-all duration-150" />
+          <path d="M34 5 L61 35 L34 65" stroke={dragX > 20 ? "#22c55e" : "#cbd5e1"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" className="transition-all duration-150" />
+          <path d="M24 5 L51 35 L24 65" stroke={dragX > 20 ? "#22c55e" : "#cbd5e1"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.25" className="transition-all duration-150" />
+          <path d="M6 5 L33 35 L6 65" stroke={dragX > 20 ? "#22c55e" : "#cbd5e1"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.25" className="transition-all duration-150" />
         </svg>
       </div>
 
       {/* Banner */}
-      <div className="relative h-28 overflow-hidden bg-gradient-to-br from-[#FF6B35]/20 via-[#1a1a1a] to-[#1a1a1a]">
+      <div className="relative h-28 overflow-hidden bg-gradient-to-br from-[#FF6B35]/10 via-slate-50 to-white">
         <div className="absolute inset-0 opacity-30">
-          <div className="absolute -top-8 -left-8 w-24 h-24 bg-[#FF6B35]/10 rounded-full blur-xl" />
-          <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-[#FF6B35]/10 rounded-full blur-xl" />
+          <div className="absolute -top-8 -left-8 w-24 h-24 bg-[#FF6B35]/5 rounded-full blur-xl" />
+          <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-[#FF6B35]/5 rounded-full blur-xl" />
         </div>
         
         <div className="absolute inset-0 flex items-center justify-end pr-4">
@@ -365,7 +365,7 @@ function AnalysisCard({ metricKey, value, dragX }: AnalysisCardProps) {
         </div>
         
         <div className="absolute left-6 top-1/2 -translate-y-1/2">
-          <h3 className="text-white font-bold text-xl uppercase tracking-wider">{metric.title}</h3>
+          <h3 className="text-slate-900 font-bold text-xl uppercase tracking-wider">{metric.title}</h3>
           <p className="text-[#FF6B35] text-sm uppercase">Biomechanical Analysis</p>
         </div>
         
@@ -378,19 +378,19 @@ function AnalysisCard({ metricKey, value, dragX }: AnalysisCardProps) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <span className="text-[#FF6B35] text-4xl font-black">{value}{range.unit}</span>
-            <span className={`px-3 py-1 rounded-full text-xs font-bold ${isGood ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'}`}>
+            <span className={`px-3 py-1 rounded-full text-xs font-bold ${isGood ? 'bg-green-50 text-green-600 border border-green-200' : 'bg-red-50 text-red-600 border border-red-200'}`}>
               {isGood ? 'Good' : 'Needs Work'}
             </span>
           </div>
           <div className="text-right">
-            <span className="text-white text-2xl font-black">{score}%</span>
-            <p className="text-[#888] text-xs">Score</p>
+            <span className="text-slate-900 text-2xl font-black">{score}%</span>
+            <p className="text-slate-400 text-xs">Score</p>
           </div>
         </div>
 
         {/* Progress Bar */}
         <div className="space-y-2">
-          <div className="h-4 bg-[#2a2a2a] rounded-full overflow-hidden relative">
+          <div className="h-4 bg-slate-200 rounded-full overflow-hidden relative">
             <div 
               className={`h-full rounded-full relative overflow-hidden ${isGood ? 'bg-gradient-to-r from-green-500 to-green-600' : 'bg-gradient-to-r from-red-500 to-red-600'}`}
               style={{ width: `${score}%` }}
@@ -401,28 +401,28 @@ function AnalysisCard({ metricKey, value, dragX }: AnalysisCardProps) {
               />
             </div>
           </div>
-          <p className="text-[#888] text-xs">Optimal: {range.min}{range.unit} - {range.max}{range.unit}</p>
+          <p className="text-slate-500 text-xs">Optimal: {range.min}{range.unit} - {range.max}{range.unit}</p>
         </div>
 
         {/* Why It Matters */}
-        <div className="bg-[#252525] rounded-xl p-4 border border-[#333]">
+        <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
           <div className="flex items-center gap-2 mb-2">
-            <Lightbulb className="w-4 h-4 text-orange-400" />
-            <p className="text-orange-400 text-xs font-semibold uppercase tracking-wider">Why It Matters</p>
+            <Lightbulb className="w-4 h-4 text-[#FF6B35]" />
+            <p className="text-[#FF6B35] text-xs font-semibold uppercase tracking-wider">Why It Matters</p>
           </div>
-          <p className="text-[#999] text-sm leading-relaxed">{metric.whyItMatters}</p>
+          <p className="text-slate-600 text-sm leading-relaxed">{metric.whyItMatters}</p>
         </div>
 
         {/* Comparison Section */}
-        <div className="bg-[#1e1e1e] rounded-xl p-4 border border-[#333]">
+        <div className="bg-white rounded-xl p-4 border border-slate-200">
           <div className="flex items-center gap-2 mb-4">
             <GraduationCap className="w-4 h-4 text-[#FF6B35]" />
             <p className="text-[#FF6B35] text-xs font-semibold uppercase tracking-wider">How Do You Compare?</p>
           </div>
 
-          <div className="flex items-center gap-2 mb-4 bg-[#2a2a2a] rounded-lg p-3 border border-[#3a3a3a]">
-            <Target className="w-4 h-4 text-[#888]" />
-            <span className="text-[#888] text-sm">Your Level:</span>
+          <div className="flex items-center gap-2 mb-4 bg-slate-50 rounded-lg p-3 border border-slate-200">
+            <Target className="w-4 h-4 text-slate-500" />
+            <span className="text-slate-500 text-sm">Your Level:</span>
             <span 
               className="px-3 py-1 rounded-full text-xs font-bold"
               style={{ 
@@ -436,12 +436,12 @@ function AnalysisCard({ metricKey, value, dragX }: AnalysisCardProps) {
           </div>
 
           <div className="space-y-2">
-            <div className="flex justify-between text-[#888] text-xs">
+            <div className="flex justify-between text-slate-500 text-xs">
               <span>← Beginner</span>
               <span>Advanced →</span>
             </div>
             
-            <div className="relative h-10 bg-gradient-to-r from-[#8b5cf6]/30 via-[#3b82f6]/30 via-[#22c55e]/30 to-[#FF6B35]/30 rounded-lg">
+            <div className="relative h-10 bg-gradient-to-r from-[#8b5cf6]/20 via-[#3b82f6]/20 via-[#22c55e]/20 to-[#FF6B35]/20 rounded-lg">
               {SKILL_LEVELS.map((level) => {
                 const levelValue = SKILL_BENCHMARKS[level].data[metricKey]
                 const position = getPositionOnBar(levelValue)
@@ -477,32 +477,32 @@ function AnalysisCard({ metricKey, value, dragX }: AnalysisCardProps) {
                   >
                     <span className="font-bold">{SKILL_BENCHMARKS[level].shortLabel}</span>
                     <br />
-                    <span className="text-[#888]">{levelValue}{range.unit}</span>
+                    <span className="text-slate-400">{levelValue}{range.unit}</span>
                   </div>
                 )
               })}
             </div>
           </div>
 
-          <div className="flex items-center gap-4 mt-6 text-[10px] text-[#888]">
+          <div className="flex items-center gap-4 mt-6 text-[10px] text-slate-500">
             <div className="flex items-center gap-1">
               <div className="w-3 h-3 bg-[#FF6B35] rotate-45" />
               <span>= Your measurement</span>
             </div>
             <div className="flex items-center gap-1">
-              <div className="w-3 h-0.5 bg-[#888]" />
+              <div className="w-3 h-0.5 bg-slate-400" />
               <span>= Average for each level</span>
             </div>
           </div>
         </div>
 
         {/* Pro Tip */}
-        <div className="bg-[#FF6B35]/10 rounded-xl p-4 border border-[#FF6B35]/30">
+        <div className="bg-orange-50 rounded-xl p-4 border border-orange-200">
           <div className="flex items-center gap-2 mb-2">
             <Star className="w-4 h-4 text-[#FF6B35]" />
             <p className="text-[#FF6B35] text-xs font-semibold uppercase tracking-wider">Pro Tip</p>
           </div>
-          <p className="text-[#FF6B35]/80 text-sm leading-relaxed">{metric.tip}</p>
+          <p className="text-[#FF6B35] text-sm leading-relaxed">{metric.tip}</p>
         </div>
       </div>
     </div>
@@ -648,38 +648,38 @@ export function AnalysisCardGame({ measurements, sessionId }: AnalysisCardGamePr
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-black text-white uppercase tracking-wide">BIOMECHANICAL ANALYSIS</h2>
+        <h2 className="text-2xl font-black text-slate-900 uppercase tracking-wide">BIOMECHANICAL ANALYSIS</h2>
         <p className="text-[#FF6B35] text-sm font-semibold uppercase tracking-wider mt-1">SHOOTING FORM BREAKDOWN</p>
         
         <div className="flex items-center gap-3 mt-4">
-          <div className="flex items-center gap-2 bg-[#1a1a1a] px-3 py-1.5 rounded-full border border-[#333]">
+          <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-slate-200 shadow-sm">
             <Flame className="w-4 h-4 text-[#FF6B35]" />
-            <span className="text-white font-bold">{gameStats.currentStreak}</span>
-            <span className="text-[#666] text-sm">Streak</span>
+            <span className="text-slate-900 font-bold">{gameStats.currentStreak}</span>
+            <span className="text-slate-500 text-sm">Streak</span>
           </div>
-          <div className="flex items-center gap-2 bg-[#1a1a1a] px-3 py-1.5 rounded-full border border-[#333]">
-            <Lock className="w-4 h-4 text-[#888]" />
-            <span className="text-white font-bold">{gameStats.lockedIn}</span>
-            <span className="text-[#666] text-sm">Locked</span>
+          <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-slate-200 shadow-sm">
+            <Lock className="w-4 h-4 text-slate-400" />
+            <span className="text-slate-900 font-bold">{gameStats.lockedIn}</span>
+            <span className="text-slate-500 text-sm">Locked</span>
           </div>
-          <div className="flex items-center gap-2 bg-[#1a1a1a] px-3 py-1.5 rounded-full border border-[#333]">
+          <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-slate-200 shadow-sm">
             <Trophy className="w-4 h-4 text-[#FFD700]" />
-            <span className="text-white font-bold">{gameStats.xp}</span>
-            <span className="text-[#666] text-sm">XP</span>
+            <span className="text-slate-900 font-bold">{gameStats.xp}</span>
+            <span className="text-slate-500 text-sm">XP</span>
           </div>
         </div>
         
-        <p className="text-[#555] text-xs uppercase tracking-wider mt-4">SWIPE THROUGH YOUR MEASUREMENTS</p>
+        <p className="text-slate-400 text-xs uppercase tracking-wider mt-4">SWIPE THROUGH YOUR MEASUREMENTS</p>
       </div>
 
       {/* Progress */}
       <div className="flex items-center justify-between text-sm">
-        <span className="text-[#888]">Card {currentIndex + 1} of {metricKeys.length}</span>
+        <span className="text-slate-500">Card {currentIndex + 1} of {metricKeys.length}</span>
         <div className="flex gap-1">
           {metricKeys.map((_, idx) => (
             <div
               key={idx}
-              className={`w-2 h-2 rounded-full ${idx < currentIndex ? 'bg-[#FF6B35]' : idx === currentIndex ? 'bg-green-500' : 'bg-[#3a3a3a]'}`}
+              className={`w-2 h-2 rounded-full ${idx < currentIndex ? 'bg-[#FF6B35]' : idx === currentIndex ? 'bg-green-500' : 'bg-slate-200'}`}
             />
           ))}
         </div>
@@ -715,10 +715,10 @@ export function AnalysisCardGame({ measurements, sessionId }: AnalysisCardGamePr
           />
         </div>
       ) : (
-        <div className="text-center py-12 bg-[#1a1a1a] rounded-2xl border border-[#333]">
+        <div className="text-center py-12 bg-white rounded-2xl border border-slate-200 shadow-sm">
           <Trophy className="w-16 h-16 text-[#FFD700] mx-auto mb-4" />
-          <h3 className="text-white text-2xl font-bold mb-2">Analysis Complete!</h3>
-          <p className="text-[#888] mb-6">You&apos;ve reviewed all 8 measurements</p>
+          <h3 className="text-slate-900 text-2xl font-bold mb-2">Analysis Complete!</h3>
+          <p className="text-slate-500 mb-6">You&apos;ve reviewed all 8 measurements</p>
           <button
             onClick={() => {
               setCurrentIndex(0)
@@ -733,7 +733,7 @@ export function AnalysisCardGame({ measurements, sessionId }: AnalysisCardGamePr
 
       {/* Swipe Hint */}
       {!isComplete && (
-        <div className="flex items-center justify-center gap-4 text-[#666] text-sm">
+        <div className="flex items-center justify-center gap-4 text-slate-400 text-sm">
           <span className="flex items-center gap-1">
             <ArrowLeft className="w-4 h-4 text-blue-400" />
             <span className="text-blue-400">Save</span>
@@ -751,14 +751,14 @@ export function AnalysisCardGame({ measurements, sessionId }: AnalysisCardGamePr
         <div className="flex items-center justify-center gap-4">
           <button
             onClick={() => handleAction('save')}
-            className="flex-1 bg-transparent border-2 border-blue-500/30 text-blue-400 py-4 rounded-xl font-bold uppercase tracking-wider hover:bg-blue-500/10 transition-all flex items-center justify-center gap-2 whitespace-nowrap"
+            className="flex-1 bg-white border-2 border-blue-200 text-blue-600 py-4 rounded-xl font-bold uppercase tracking-wider hover:bg-blue-50 transition-all flex items-center justify-center gap-2 whitespace-nowrap"
           >
             <Bookmark className="w-5 h-5" />
             Save
           </button>
           <button
             onClick={() => handleAction('lockIn')}
-            className="flex-1 bg-transparent border-2 border-[#FF6B35]/30 text-[#FF6B35] py-4 rounded-xl font-bold uppercase tracking-wider hover:bg-[#FF6B35]/10 transition-all flex items-center justify-center gap-2 whitespace-nowrap"
+            className="flex-1 bg-white border-2 border-[#FF6B35]/40 text-[#FF6B35] py-4 rounded-xl font-bold uppercase tracking-wider hover:bg-orange-50 transition-all flex items-center justify-center gap-2 whitespace-nowrap"
           >
             <Lock className="w-5 h-5" />
             Lock
@@ -772,7 +772,7 @@ export function AnalysisCardGame({ measurements, sessionId }: AnalysisCardGamePr
           <button
             onClick={goToPrevious}
             disabled={currentIndex === 0}
-            className="text-[#888] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
+            className="text-slate-400 hover:text-slate-900 disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
           >
             <ArrowLeft className="w-4 h-4" />
             Previous
@@ -780,7 +780,7 @@ export function AnalysisCardGame({ measurements, sessionId }: AnalysisCardGamePr
           <button
             onClick={goToNext}
             disabled={currentIndex >= metricKeys.length - 1}
-            className="text-[#888] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
+            className="text-slate-400 hover:text-slate-900 disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1"
           >
             Next
             <ArrowRight className="w-4 h-4" />

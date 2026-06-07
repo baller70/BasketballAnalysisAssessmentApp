@@ -567,16 +567,16 @@ export function WorkoutOrPassGame({ userProfile, filters, onStartDrill }: Workou
         {/* Title Row */}
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-white font-bold text-xl tracking-tight">Discover Drills</h2>
-            <p className="text-[#666] text-sm">Swipe to find your perfect workout</p>
+            <h2 className="text-slate-900 font-bold text-xl tracking-tight">Discover Drills</h2>
+            <p className="text-slate-400 text-sm">Swipe to find your perfect workout</p>
           </div>
           
           {/* Level Badge */}
           <div className="flex items-center gap-2">
             <div className="relative">
               <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#FF4500] p-[2px]">
-                <div className="w-full h-full rounded-full bg-[#0a0a0a] flex items-center justify-center">
-                  <span className="text-white font-black text-lg">{gameStats.level}</span>
+                <div className="w-full h-full rounded-full bg-white flex items-center justify-center">
+                  <span className="text-[#FF6B35] font-black text-lg">{gameStats.level}</span>
                 </div>
               </div>
               <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-[#FF6B35] rounded-full">
@@ -587,14 +587,14 @@ export function WorkoutOrPassGame({ userProfile, filters, onStartDrill }: Workou
         </div>
         
         {/* Stats Bar */}
-        <div className="flex items-center gap-3 p-3 bg-[#111] rounded-2xl border border-[#1a1a1a]">
+        <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-200">
           {/* XP Progress */}
           <div className="flex-1">
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[#888] text-xs font-medium">Progress</span>
+              <span className="text-slate-500 text-xs font-medium">Progress</span>
               <span className="text-[#FF6B35] text-xs font-bold">{gameStats.xp} XP</span>
             </div>
-            <div className="h-1.5 bg-[#1a1a1a] rounded-full overflow-hidden">
+            <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
               <div 
                 className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF8555] rounded-full transition-all duration-500"
                 style={{ width: `${Math.min(100, (gameStats.xp % 500) / 5)}%` }}
@@ -603,37 +603,37 @@ export function WorkoutOrPassGame({ userProfile, filters, onStartDrill }: Workou
           </div>
           
           {/* Divider */}
-          <div className="w-px h-8 bg-[#222]" />
+          <div className="w-px h-8 bg-slate-200" />
           
           {/* Quick Stats */}
           <div className="flex items-center gap-4">
             <div className="text-center">
               <div className="flex items-center justify-center gap-1">
                 <Flame className="w-3.5 h-3.5 text-[#FF6B35]" />
-                <span className="text-white font-bold text-sm">{gameStats.currentStreak}</span>
+                <span className="text-slate-900 font-bold text-sm">{gameStats.currentStreak}</span>
               </div>
-              <span className="text-[#555] text-[10px]">Streak</span>
+              <span className="text-slate-400 text-[10px]">Streak</span>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center gap-1">
                 <Check className="w-3.5 h-3.5 text-green-500" />
-                <span className="text-white font-bold text-sm">{gameStats.trainCount}</span>
+                <span className="text-slate-900 font-bold text-sm">{gameStats.trainCount}</span>
               </div>
-              <span className="text-[#555] text-[10px]">Done</span>
+              <span className="text-slate-400 text-[10px]">Done</span>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center gap-1">
                 <Trophy className="w-3.5 h-3.5 text-[#FFD700]" />
-                <span className="text-white font-bold text-sm">{gameStats.bestStreak}</span>
+                <span className="text-slate-900 font-bold text-sm">{gameStats.bestStreak}</span>
               </div>
-              <span className="text-[#555] text-[10px]">Best</span>
+              <span className="text-slate-400 text-[10px]">Best</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Tab Navigation */}
-      <div className="relative flex p-1 mb-4 bg-[#111] rounded-2xl border border-[#222]">
+      <div className="relative flex p-1 mb-4 bg-slate-100 rounded-2xl border border-slate-200">
         {/* Active Tab Indicator */}
         <div 
           className="absolute top-1 bottom-1 bg-gradient-to-r from-[#FF6B35] to-[#FF8555] rounded-xl transition-all duration-300 ease-out shadow-lg shadow-[#FF6B35]/20"
@@ -654,7 +654,7 @@ export function WorkoutOrPassGame({ userProfile, filters, onStartDrill }: Workou
             className={`relative z-10 flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 ${
               activeTab === tab.id
                 ? 'text-white'
-                : 'text-[#666] hover:text-[#999]'
+                : 'text-slate-400 hover:text-slate-600'
             }`}
           >
             <tab.icon className={`w-4 h-4 transition-transform duration-300 ${activeTab === tab.id ? 'scale-110' : ''}`} />
@@ -713,7 +713,7 @@ export function WorkoutOrPassGame({ userProfile, filters, onStartDrill }: Workou
                 {/* Drill Card - Redesigned */}
                 <div
                   ref={cardRef}
-                  className={`relative bg-gradient-to-b from-[#1a1a1a] to-[#0a0a0a] rounded-3xl overflow-hidden border-2 shadow-2xl select-none cursor-grab active:cursor-grabbing transition-all duration-150 ${isHorizontalSwipe ? 'touch-none' : ''}`}
+                  className={`relative bg-white rounded-3xl overflow-hidden border-2 shadow-sm select-none cursor-grab active:cursor-grabbing transition-all duration-150 ${isHorizontalSwipe ? 'touch-none' : ''}`}
                   style={{
                     transform: `translateX(${dragX}px) rotate(${dragX * 0.05}deg)`,
                     transition: isDragging ? 'none' : 'transform 0.3s ease-out',
@@ -721,7 +721,7 @@ export function WorkoutOrPassGame({ userProfile, filters, onStartDrill }: Workou
                       ? `rgba(255, 107, 53, ${Math.min(1, dragX / 100)})` 
                       : dragX < -30 
                         ? `rgba(239, 68, 68, ${Math.min(1, Math.abs(dragX) / 100)})` 
-                        : '#3a3a3a',
+                        : '#e2e8f0',
                     boxShadow: dragX > 30 
                       ? `0 0 30px rgba(255, 107, 53, ${Math.min(0.5, dragX / 150)})` 
                       : dragX < -30 
@@ -790,7 +790,7 @@ export function WorkoutOrPassGame({ userProfile, filters, onStartDrill }: Workou
                   </div>
 
                 {/* Image Section */}
-                <div className="relative h-[280px] bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a] overflow-hidden">
+                <div className="relative h-[280px] bg-gradient-to-br from-slate-100 to-slate-50 overflow-hidden">
                   <img 
                     src={WORKOUT_IMAGES[currentDrill.focusArea]} 
                     alt={currentDrill.title}
@@ -864,29 +864,29 @@ export function WorkoutOrPassGame({ userProfile, filters, onStartDrill }: Workou
                   </div>
                   
                   {/* Gradient Overlay */}
-                  <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#0a0a0a] to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-white to-transparent" />
                 </div>
 
                 {/* Card Body */}
                 <div className="p-5 space-y-4">
                   <div>
-                    <h3 className="text-2xl font-black text-white tracking-tight">{currentDrill.title}</h3>
-                    <p className="text-[#888] text-sm mt-1 line-clamp-2">{currentDrill.description}</p>
+                    <h3 className="text-2xl font-black text-slate-900 tracking-tight">{currentDrill.title}</h3>
+                    <p className="text-slate-500 text-sm mt-1 line-clamp-2">{currentDrill.description}</p>
                   </div>
                   
                   {/* Stats Grid */}
                   <div className="grid grid-cols-3 gap-2">
-                    <div className="bg-[#1a1a1a] rounded-xl p-3 text-center">
+                    <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
                       <ListChecks className="w-4 h-4 text-[#FF6B35] mx-auto mb-1" />
-                      <p className="text-lg font-bold text-white">{currentDrill.steps.length}</p>
-                      <p className="text-xs text-[#888]">Steps</p>
+                      <p className="text-lg font-bold text-slate-900">{currentDrill.steps.length}</p>
+                      <p className="text-xs text-slate-500">Steps</p>
                     </div>
-                    <div className="bg-[#1a1a1a] rounded-xl p-3 text-center">
+                    <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
                       <Clock className="w-4 h-4 text-[#3B82F6] mx-auto mb-1" />
-                      <p className="text-lg font-bold text-white">{currentDrill.duration}</p>
-                      <p className="text-xs text-[#888]">Minutes</p>
+                      <p className="text-lg font-bold text-slate-900">{currentDrill.duration}</p>
+                      <p className="text-xs text-slate-500">Minutes</p>
                     </div>
-                    <div className="bg-[#1a1a1a] rounded-xl p-3 text-center">
+                    <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
                       <Gauge className={`w-4 h-4 mx-auto mb-1 ${
                         currentDrill.difficulty <= 2 ? 'text-green-400' : currentDrill.difficulty <= 3 ? 'text-yellow-400' : currentDrill.difficulty <= 4 ? 'text-orange-400' : 'text-red-400'
                       }`} />
@@ -909,7 +909,7 @@ export function WorkoutOrPassGame({ userProfile, filters, onStartDrill }: Workou
                           />
                         ))}
                       </div>
-                      <p className="text-xs text-[#888]">Difficulty</p>
+                      <p className="text-xs text-slate-500">Difficulty</p>
                     </div>
                   </div>
 
@@ -924,7 +924,7 @@ export function WorkoutOrPassGame({ userProfile, filters, onStartDrill }: Workou
                   {/* Expected Outcomes */}
                   <div className="flex flex-wrap gap-2">
                     {currentDrill.expectedOutcomes.slice(0, 3).map((outcome, i) => (
-                      <span key={i} className="px-3 py-1 bg-[#2a2a2a] text-[#E5E5E5] rounded-lg text-xs flex items-center gap-1">
+                      <span key={i} className="px-3 py-1 bg-slate-50 text-slate-700 rounded-lg text-xs flex items-center gap-1 border border-slate-100">
                         <Check className="w-3 h-3 text-green-500" />
                         {outcome}
                       </span>
@@ -1101,7 +1101,7 @@ export function WorkoutOrPassGame({ userProfile, filters, onStartDrill }: Workou
 
               {/* Progress */}
               <div className="text-center mt-4">
-                <p className="text-[#666] text-sm">
+                <p className="text-slate-400 text-sm">
                   {currentIndex + 1} of {matchedDrills.length} drills
                 </p>
               </div>
@@ -1109,8 +1109,8 @@ export function WorkoutOrPassGame({ userProfile, filters, onStartDrill }: Workou
           ) : (
             <div className="text-center py-12">
               <Trophy className="w-16 h-16 text-[#FF6B35] mx-auto mb-4" />
-              <h3 className="text-white font-bold text-xl mb-2">All Done!</h3>
-              <p className="text-[#888] mb-4">You&apos;ve seen all available drills</p>
+              <h3 className="text-slate-900 font-bold text-xl mb-2">All Done!</h3>
+              <p className="text-slate-500 mb-4">You&apos;ve seen all available drills</p>
               <button
                 type="button"
                 onClick={resetGame}
@@ -1217,8 +1217,8 @@ function TrendingDrills({ voteStats, onSelectDrill }: TrendingDrillsProps) {
     } else {
       // #4+ - Simple number
       return (
-        <div className="w-12 h-12 rounded-2xl bg-[#1a1a1a] border border-[#333] flex items-center justify-center">
-          <span className="text-lg font-black text-[#666]">{index + 1}</span>
+        <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center">
+          <span className="text-lg font-black text-slate-400">{index + 1}</span>
         </div>
       )
     }
@@ -1227,15 +1227,15 @@ function TrendingDrills({ voteStats, onSelectDrill }: TrendingDrillsProps) {
   return (
     <div className="space-y-4">
       {/* Premium Header */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1a1a1a] via-[#252525] to-[#1a1a1a] p-5 border border-[#333]">
+      <div className="relative overflow-hidden rounded-2xl bg-white p-5 border border-slate-200 shadow-sm">
         <div className="absolute top-0 right-0 w-32 h-32 bg-[#FF6B35]/10 rounded-full blur-3xl" />
         <div className="relative flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#FF6B35] to-[#FF4500] flex items-center justify-center shadow-lg shadow-[#FF6B35]/30">
             <Trophy className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h3 className="text-xl font-black text-white tracking-tight">TOP RATED DRILLS</h3>
-            <p className="text-[#888] text-sm">Community favorites • Updated live</p>
+            <h3 className="text-xl font-black text-slate-900 tracking-tight">TOP RATED DRILLS</h3>
+            <p className="text-slate-500 text-sm">Community favorites • Updated live</p>
           </div>
         </div>
       </div>
@@ -1255,10 +1255,10 @@ function TrendingDrills({ voteStats, onSelectDrill }: TrendingDrillsProps) {
               onClick={() => onSelectDrill(drill.drill)}
               className={`relative rounded-2xl overflow-hidden transition-all hover:scale-[1.02] ${
                 actualIndex === 0 
-                  ? 'bg-gradient-to-b from-[#FFD700]/20 to-[#1a1a1a] border-2 border-[#FFD700]/50 row-span-1 -mt-2' 
+                  ? 'bg-gradient-to-b from-[#FFD700]/10 to-white border-2 border-[#FFD700]/50 row-span-1 -mt-2' 
                   : actualIndex === 1 
-                    ? 'bg-gradient-to-b from-[#C0C0C0]/20 to-[#1a1a1a] border border-[#C0C0C0]/30 mt-4' 
-                    : 'bg-gradient-to-b from-[#CD7F32]/20 to-[#1a1a1a] border border-[#CD7F32]/30 mt-4'
+                    ? 'bg-gradient-to-b from-[#C0C0C0]/10 to-white border border-[#C0C0C0]/30 mt-4' 
+                    : 'bg-gradient-to-b from-[#CD7F32]/10 to-white border border-[#CD7F32]/30 mt-4'
               }`}
               style={{ order }}
             >
@@ -1286,7 +1286,7 @@ function TrendingDrills({ voteStats, onSelectDrill }: TrendingDrillsProps) {
                 {/* Title */}
                 <div className="absolute bottom-0 left-0 right-0 p-3">
                   <p className="text-white font-bold text-xs line-clamp-2 leading-tight">{drill.drill.title}</p>
-                  <p className="text-[#888] text-[10px] mt-1">{drill.drill.duration} min</p>
+                  <p className="text-slate-500 text-[10px] mt-1">{drill.drill.duration} min</p>
                 </div>
               </div>
             </button>
@@ -1305,13 +1305,13 @@ function TrendingDrills({ voteStats, onSelectDrill }: TrendingDrillsProps) {
               key={item.drill.id}
               type="button"
               onClick={() => onSelectDrill(item.drill)}
-              className="w-full bg-[#141414] hover:bg-[#1a1a1a] rounded-2xl p-3 flex items-center gap-3 transition-all border border-[#252525] hover:border-[#333] group"
+              className="w-full bg-white hover:bg-slate-50 rounded-2xl p-3 flex items-center gap-3 transition-all border border-slate-200 hover:border-slate-300 group shadow-sm"
             >
               {/* Rank Number */}
               {renderRankBadge(index)}
 
               {/* Image */}
-              <div className="w-14 h-14 rounded-xl overflow-hidden bg-[#2a2a2a] flex-shrink-0 ring-1 ring-[#333]">
+              <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0 ring-1 ring-slate-200">
                 <img 
                   src={WORKOUT_IMAGES[item.drill.focusArea]} 
                   alt={item.drill.title}
@@ -1321,21 +1321,21 @@ function TrendingDrills({ voteStats, onSelectDrill }: TrendingDrillsProps) {
 
               {/* Info */}
               <div className="flex-1 text-left min-w-0">
-                <h4 className="text-white font-bold text-sm truncate group-hover:text-[#FF6B35] transition-colors">{item.drill.title}</h4>
+                <h4 className="text-slate-900 font-bold text-sm truncate group-hover:text-[#FF6B35] transition-colors">{item.drill.title}</h4>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-[#666] text-xs flex items-center gap-1">
+                  <span className="text-slate-400 text-xs flex items-center gap-1">
                     <FocusIcon className="w-3 h-3" />
                     {FOCUS_AREA_LABELS[item.drill.focusArea]}
                   </span>
-                  <span className="text-[#444]">•</span>
-                  <span className="text-[#666] text-xs">{item.drill.duration} min</span>
+                  <span className="text-slate-300">•</span>
+                  <span className="text-slate-400 text-xs">{item.drill.duration} min</span>
                 </div>
               </div>
 
               {/* Train Rate */}
               <div className="text-right flex flex-col items-end gap-1">
                 <div className="flex items-center gap-1">
-                  <div className="w-16 h-1.5 bg-[#252525] rounded-full overflow-hidden">
+                  <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-gradient-to-r from-[#4ADE80] to-[#22C55E] rounded-full transition-all"
                       style={{ width: `${item.trainPercent}%` }}
@@ -1343,10 +1343,10 @@ function TrendingDrills({ voteStats, onSelectDrill }: TrendingDrillsProps) {
                   </div>
                   <span className="text-[#4ADE80] text-sm font-bold min-w-[40px] text-right">{Math.round(item.trainPercent)}%</span>
                 </div>
-                <span className="text-[#555] text-[10px] uppercase tracking-wider">approval</span>
+                <span className="text-slate-400 text-[10px] uppercase tracking-wider">approval</span>
               </div>
 
-              <ChevronRight className="w-4 h-4 text-[#444] group-hover:text-[#FF6B35] transition-colors" />
+              <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-[#FF6B35] transition-colors" />
             </button>
           )
         })}
@@ -1371,8 +1371,8 @@ function TrainingHistoryView({ history, gameStats, onSelectDrill }: TrainingHist
   return (
     <div className="space-y-4">
       {/* Stats Summary */}
-      <div className="bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] rounded-xl p-4 border border-[#2a2a2a]">
-        <h3 className="text-white font-bold mb-3 flex items-center gap-2">
+      <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+        <h3 className="text-slate-900 font-bold mb-3 flex items-center gap-2">
           <BarChart3 className="w-5 h-5 text-[#FF6B35]" />
           Your Training Journey
         </h3>
@@ -1383,39 +1383,39 @@ function TrainingHistoryView({ history, gameStats, onSelectDrill }: TrainingHist
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-green-500">{trainedDrills.length}</div>
-            <div className="text-[#888] text-xs">Attempted</div>
+            <div className="text-slate-500 text-xs">Attempted</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-[#FFD700]">{gameStats.bestStreak}</div>
-            <div className="text-[#888] text-xs">Best Streak</div>
+            <div className="text-slate-500 text-xs">Best Streak</div>
           </div>
         </div>
       </div>
 
       {/* My Drills List - Premium Design */}
-      <div className="bg-gradient-to-b from-[#0f0f0f] to-[#0a0a0a] rounded-2xl border border-[#1a1a1a] overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
         {/* Section Header */}
-        <div className="p-4 border-b border-[#1a1a1a]">
+        <div className="p-4 border-b border-slate-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border border-[#2a2a2a] flex items-center justify-center shadow-lg">
+              <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center shadow-sm">
                 <Clock className="w-5 h-5 text-[#FF6B35]" />
               </div>
               <div>
-                <h4 className="text-white font-bold text-sm tracking-wide">TRAINING HISTORY</h4>
-                <p className="text-[#555] text-xs">{history.length} sessions logged</p>
+                <h4 className="text-slate-900 font-bold text-sm tracking-wide">TRAINING HISTORY</h4>
+                <p className="text-slate-400 text-xs">{history.length} sessions logged</p>
               </div>
             </div>
             {history.length > 0 && (
-              <div className="px-3 py-1.5 rounded-full bg-[#1a1a1a] border border-[#2a2a2a]">
-                <span className="text-[#888] text-xs font-medium">Last {Math.min(history.length, 20)}</span>
+              <div className="px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200">
+                <span className="text-slate-500 text-xs font-medium">Last {Math.min(history.length, 20)}</span>
               </div>
             )}
           </div>
         </div>
 
         {history.length > 0 ? (
-          <div className="divide-y divide-[#151515]">
+          <div className="divide-y divide-slate-100">
             {history.slice(0, 20).map((item, index) => {
               const FocusIcon = FOCUS_AREA_ICONS[item.drill.focusArea]
               const dateObj = new Date(item.completedAt)
@@ -1426,19 +1426,19 @@ function TrainingHistoryView({ history, gameStats, onSelectDrill }: TrainingHist
                   key={`${item.drillId}-${index}`}
                   type="button"
                   onClick={() => onSelectDrill(item.drill)}
-                  className="w-full p-4 flex items-center gap-4 transition-all hover:bg-[#111] group"
+                  className="w-full p-4 flex items-center gap-4 transition-all hover:bg-slate-50 group"
                 >
                   {/* Icon with Glow Effect */}
                   <div className="relative">
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
                       item.action === 'train' 
                         ? 'bg-gradient-to-br from-green-500/20 to-green-600/10 border border-green-500/20 group-hover:border-green-500/40' 
-                        : 'bg-[#1a1a1a] border border-[#2a2a2a] group-hover:border-[#3a3a3a]'
+                        : 'bg-slate-50 border border-slate-200 group-hover:border-slate-300'
                     }`}>
                       {item.action === 'train' ? (
                         <CheckCircle className="w-6 h-6 text-green-500" />
                       ) : (
-                        <SkipForward className="w-5 h-5 text-[#666]" />
+                        <SkipForward className="w-5 h-5 text-slate-400" />
                       )}
                     </div>
                     {/* Subtle glow for trained items */}
@@ -1450,17 +1450,17 @@ function TrainingHistoryView({ history, gameStats, onSelectDrill }: TrainingHist
                   {/* Content */}
                   <div className="flex-1 text-left min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <h5 className="text-white text-sm font-semibold truncate group-hover:text-[#FF6B35] transition-colors">
+                      <h5 className="text-slate-900 text-sm font-semibold truncate group-hover:text-[#FF6B35] transition-colors">
                         {item.drill.title}
                       </h5>
                     </div>
                     <div className="flex items-center gap-3 text-xs">
-                      <span className="flex items-center gap-1 text-[#666]">
+                      <span className="flex items-center gap-1 text-slate-400">
                         <FocusIcon className="w-3 h-3" />
                         {FOCUS_AREA_LABELS[item.drill.focusArea]}
                       </span>
-                      <span className="w-1 h-1 rounded-full bg-[#333]" />
-                      <span className="text-[#555]">{timeAgo}</span>
+                      <span className="w-1 h-1 rounded-full bg-slate-300" />
+                      <span className="text-slate-400">{timeAgo}</span>
                     </div>
                   </div>
                   
@@ -1469,11 +1469,11 @@ function TrainingHistoryView({ history, gameStats, onSelectDrill }: TrainingHist
                     <div className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide transition-all ${
                       item.action === 'train'
                         ? 'bg-green-500/10 text-green-500 border border-green-500/20'
-                        : 'bg-[#1a1a1a] text-[#666] border border-[#2a2a2a]'
+                        : 'bg-slate-50 text-slate-400 border border-slate-200'
                     }`}>
                       {item.action === 'train' ? 'Trained' : 'Skipped'}
                     </div>
-                    <ChevronRight className="w-4 h-4 text-[#333] group-hover:text-[#666] transition-colors" />
+                    <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-colors" />
                   </div>
                 </button>
               )
@@ -1481,11 +1481,11 @@ function TrainingHistoryView({ history, gameStats, onSelectDrill }: TrainingHist
           </div>
         ) : (
           <div className="text-center py-12 px-6">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#1a1a1a] to-[#0f0f0f] border border-[#2a2a2a] flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <Calendar className="w-8 h-8 text-[#333]" />
+            <div className="w-16 h-16 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-center mx-auto mb-4 shadow-sm">
+              <Calendar className="w-8 h-8 text-slate-300" />
             </div>
-            <h5 className="text-[#888] font-bold mb-1">No Training History Yet</h5>
-            <p className="text-[#555] text-sm max-w-[200px] mx-auto">Start swiping through drills to build your training log</p>
+            <h5 className="text-slate-500 font-bold mb-1">No Training History Yet</h5>
+            <p className="text-slate-400 text-sm max-w-[200px] mx-auto">Start swiping through drills to build your training log</p>
           </div>
         )}
       </div>
@@ -1571,7 +1571,7 @@ function DrillDetailModal({ drill, voteStats, onClose, onStartDrill }: DrillDeta
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bg-[#1a1a1a] rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-[#3a3a3a] shadow-2xl">
+      <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-slate-200 shadow-2xl">
         {/* Header */}
         <div className={`${colors.bg} p-6 rounded-t-2xl border-b ${colors.border}`}>
           <div className="flex items-center justify-between">
@@ -1580,12 +1580,12 @@ function DrillDetailModal({ drill, voteStats, onClose, onStartDrill }: DrillDeta
                 <FocusIcon className={`w-8 h-8 ${colors.text}`} />
               </div>
               <div>
-                <h2 className="text-xl font-black text-white uppercase">{drill.title}</h2>
+                <h2 className="text-xl font-black text-slate-900 uppercase">{drill.title}</h2>
                 <div className="flex items-center gap-2 mt-1">
                   <span className={`text-xs px-2 py-0.5 rounded-full uppercase ${colors.bg} ${colors.text} border ${colors.border}`}>
                     {FOCUS_AREA_LABELS[drill.focusArea]}
                   </span>
-                  <span className="text-[#888] text-sm flex items-center gap-1">
+                  <span className="text-slate-500 text-sm flex items-center gap-1">
                     <Clock className="w-3 h-3" />
                     {drill.duration} MINUTES
                   </span>
@@ -1599,33 +1599,33 @@ function DrillDetailModal({ drill, voteStats, onClose, onStartDrill }: DrillDeta
         </div>
         
         {/* Focus Area Section */}
-        <div className="p-5 border-b border-[#3a3a3a] bg-[#2a2a2a]/50">
+        <div className="p-5 border-b border-slate-200 bg-slate-50">
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-lg ${colors.bg} border ${colors.border} flex items-center justify-center`}>
               <Target className={`w-5 h-5 ${colors.text}`} />
             </div>
             <div>
-              <p className="text-[#888] text-xs uppercase tracking-wider">FOCUS</p>
+              <p className="text-slate-500 text-xs uppercase tracking-wider">FOCUS</p>
               <p className={`${colors.text} font-bold uppercase`}>{FOCUS_AREA_LABELS[drill.focusArea]}</p>
             </div>
           </div>
         </div>
         
         {/* Reps / Duration Section */}
-        <div className="p-5 border-b border-[#3a3a3a]">
+        <div className="p-5 border-b border-slate-200">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-[#FF6B35]/20 border border-[#FF6B35]/30 flex items-center justify-center">
               <RotateCcw className="w-5 h-5 text-[#FF6B35]" />
             </div>
             <div>
-              <p className="text-[#888] text-xs uppercase tracking-wider">REPS / DURATION</p>
-              <p className="text-[#E5E5E5] font-bold">{drill.duration} minutes</p>
+              <p className="text-slate-500 text-xs uppercase tracking-wider">REPS / DURATION</p>
+              <p className="text-slate-700 font-bold">{drill.duration} minutes</p>
             </div>
           </div>
         </div>
         
         {/* Step-by-Step Instructions */}
-        <div className="p-6 border-b border-[#3a3a3a]">
+        <div className="p-6 border-b border-slate-200">
           <h3 className="text-[#FF6B35] font-bold mb-4 flex items-center gap-3 uppercase text-lg">
             <img 
               src="/icons/coach-feedback.png" 
@@ -1657,7 +1657,7 @@ function DrillDetailModal({ drill, voteStats, onClose, onStartDrill }: DrillDeta
                   )}
                 </div>
                 <div className="flex-1 pt-2 border-l-2 border-[#FF6B35]/20 pl-4">
-                  <p className="text-[#E5E5E5] leading-relaxed">{step}</p>
+                  <p className="text-slate-700 leading-relaxed">{step}</p>
                 </div>
               </div>
             ))}
@@ -1665,25 +1665,25 @@ function DrillDetailModal({ drill, voteStats, onClose, onStartDrill }: DrillDeta
         </div>
         
         {/* Key Points - What Makes It Right */}
-        <div className="p-6 border-b border-[#3a3a3a]">
+        <div className="p-6 border-b border-slate-200">
           <h3 className="text-[#FF6B35] font-bold mb-4 flex items-center gap-2 uppercase">
             <Check className="w-5 h-5" />
             KEY POINTS - DO IT RIGHT
           </h3>
           <div className="space-y-3">
             {keyPoints.map((point, i) => (
-              <div key={i} className="flex items-center gap-3 bg-[#2a2a2a] rounded-lg p-3 border border-[#3a3a3a]">
+              <div key={i} className="flex items-center gap-3 bg-slate-50 rounded-lg p-3 border border-slate-100">
                 <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
                   <Check className="w-4 h-4 text-green-400" />
                 </div>
-                <span className="text-[#E5E5E5] text-sm">{point}</span>
+                <span className="text-slate-700 text-sm">{point}</span>
               </div>
             ))}
           </div>
         </div>
         
         {/* Pro Tips Section */}
-        <div className="p-6 border-b border-[#3a3a3a]">
+        <div className="p-6 border-b border-slate-200">
           <h3 className="text-[#FF6B35] font-bold mb-4 flex items-center gap-2 uppercase">
             <Star className="w-5 h-5" />
             PRO TIPS
@@ -1691,18 +1691,18 @@ function DrillDetailModal({ drill, voteStats, onClose, onStartDrill }: DrillDeta
           <ul className="space-y-3">
             <li className="flex items-start gap-3">
               <div className="w-2 h-2 rounded-full bg-[#FF6B35] flex-shrink-0 mt-2" />
-              <span className="text-[#888] text-sm">{drill.whyItMatters}</span>
+              <span className="text-slate-500 text-sm">{drill.whyItMatters}</span>
             </li>
             {drill.technicalNote && (
               <li className="flex items-start gap-3">
                 <div className="w-2 h-2 rounded-full bg-[#FF6B35] flex-shrink-0 mt-2" />
-                <span className="text-[#888] text-sm">{drill.technicalNote}</span>
+                <span className="text-slate-500 text-sm">{drill.technicalNote}</span>
               </li>
             )}
             {drill.expectedOutcomes.slice(0, 2).map((outcome, i) => (
               <li key={i} className="flex items-start gap-3">
                 <div className="w-2 h-2 rounded-full bg-[#FF6B35] flex-shrink-0 mt-2" />
-                <span className="text-[#888] text-sm">{outcome}</span>
+                <span className="text-slate-500 text-sm">{outcome}</span>
               </li>
             ))}
           </ul>

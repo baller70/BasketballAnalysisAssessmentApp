@@ -1986,8 +1986,8 @@ export function GSAPVideoPlayer({ videoData, className = "", externalOverlayTogg
   
   if (!videoData || !videoData.annotatedFramesBase64?.length) {
     return (
-      <div className={`bg-[#1a1a1a] rounded-xl p-8 text-center ${className}`}>
-        <p className="text-[#888]">No video data available</p>
+      <div className={`bg-white rounded-xl p-8 text-center border border-slate-200 ${className}`}>
+        <p className="text-slate-500">No video data available</p>
       </div>
     )
   }
@@ -1995,11 +1995,11 @@ export function GSAPVideoPlayer({ videoData, className = "", externalOverlayTogg
   const currentTimestamp = currentFrame / fps
   
   return (
-    <div className={`bg-[#1a1a1a] rounded-xl overflow-hidden shadow-2xl ${className}`}>
+    <div className={`bg-white rounded-xl overflow-hidden shadow-sm border border-slate-200 ${className}`}>
       {/* Header */}
-      <div className="text-center py-4 border-b border-[#3a3a3a]">
+      <div className="text-center py-4 border-b border-slate-200">
         <h2 className="text-2xl font-bold text-[#FF6B35] mb-1">SHOOTING FORM ANALYSIS</h2>
-        <p className="text-[#888] text-sm mb-3">3-Stage Breakdown: Full Speed → Label Tutorial → Slow Motion</p>
+        <p className="text-slate-500 text-sm mb-3">3-Stage Breakdown: Full Speed → Label Tutorial → Slow Motion</p>
         
         {/* Stage Navigation Buttons */}
         <div className="flex justify-center gap-2">
@@ -2008,7 +2008,7 @@ export function GSAPVideoPlayer({ videoData, className = "", externalOverlayTogg
             className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
               sequencePhase === "stage1" 
                 ? "bg-[#FF6B35] text-white" 
-                : "bg-[#3a3a3a] text-white hover:bg-[#4a4a4a]"
+                : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
             }`}
           >
             Stage 1: Full Speed
@@ -2018,7 +2018,7 @@ export function GSAPVideoPlayer({ videoData, className = "", externalOverlayTogg
             className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
               sequencePhase === "stage2" 
                 ? "bg-[#4ade80] text-white" 
-                : "bg-[#3a3a3a] text-white hover:bg-[#4a4a4a]"
+                : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
             }`}
           >
             Stage 2: Labels
@@ -2028,7 +2028,7 @@ export function GSAPVideoPlayer({ videoData, className = "", externalOverlayTogg
             className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
               sequencePhase === "stage3" 
                 ? "bg-[#f97316] text-white" 
-                : "bg-[#3a3a3a] text-white hover:bg-[#4a4a4a]"
+                : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
             }`}
           >
             Stage 3: Slow-Mo
@@ -2107,7 +2107,7 @@ export function GSAPVideoPlayer({ videoData, className = "", externalOverlayTogg
                         ? "bg-[#4ade80]"
                         : idx === currentAnnotationIndex
                         ? "bg-[#4ade80]/50"
-                        : "bg-[#3a3a3a]"
+                        : "bg-slate-200"
                     }`}
                   />
                 ))}
@@ -2128,7 +2128,7 @@ export function GSAPVideoPlayer({ videoData, className = "", externalOverlayTogg
       </div>
       
       {/* Controls */}
-      <div className="p-4 bg-[#2a2a2a]">
+      <div className="p-4 bg-slate-50 border-t border-slate-200">
         {/* Progress Bar */}
         <div className="mb-4 relative">
           {/* Phase markers */}
@@ -2153,10 +2153,10 @@ export function GSAPVideoPlayer({ videoData, className = "", externalOverlayTogg
             max={totalFrames - 1}
             value={currentFrame}
             onChange={(e) => seekToFrame(parseInt(e.target.value))}
-            className="w-full h-2 bg-[#4a4a4a] rounded-lg appearance-none cursor-pointer accent-[#FF6B35]"
+            className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#FF6B35]"
           />
           
-          <div className="flex justify-between text-xs text-[#888] mt-1">
+          <div className="flex justify-between text-xs text-slate-500 mt-1">
             <span>0s</span>
             <span>{((totalFrames - 1) / fps).toFixed(1)}s</span>
           </div>
@@ -2168,7 +2168,7 @@ export function GSAPVideoPlayer({ videoData, className = "", externalOverlayTogg
             {/* Skip to start */}
             <button
               onClick={() => seekToFrame(0)}
-              className="p-2 rounded-lg bg-[#3a3a3a] hover:bg-[#4a4a4a] text-white transition-colors"
+              className="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors"
               title="Go to start"
             >
               <SkipBack className="w-5 h-5" />
@@ -2189,7 +2189,7 @@ export function GSAPVideoPlayer({ videoData, className = "", externalOverlayTogg
             {/* Skip to end */}
             <button
               onClick={() => seekToFrame(totalFrames - 1)}
-              className="p-2 rounded-lg bg-[#3a3a3a] hover:bg-[#4a4a4a] text-white transition-colors"
+              className="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors"
               title="Go to end"
             >
               <SkipForward className="w-5 h-5" />
@@ -2198,7 +2198,7 @@ export function GSAPVideoPlayer({ videoData, className = "", externalOverlayTogg
             {/* Reset */}
             <button
               onClick={resetSequence}
-              className="p-2 rounded-lg bg-[#3a3a3a] hover:bg-[#4a4a4a] text-white transition-colors"
+              className="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors"
               title="Reset sequence"
             >
               <RotateCcw className="w-5 h-5" />
@@ -2207,11 +2207,11 @@ export function GSAPVideoPlayer({ videoData, className = "", externalOverlayTogg
           
           <div className="flex items-center gap-3">
             {/* Frame counter */}
-            <div className="bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-3 py-2">
-              <div className="text-white font-mono text-sm">
+            <div className="bg-white border border-slate-200 rounded-lg px-3 py-2 shadow-sm">
+              <div className="text-slate-900 font-mono text-sm">
                 Frame <span className="text-[#FF6B35]">{currentFrame + 1}</span> / {totalFrames}
               </div>
-              <div className="text-[#888] font-mono text-xs">
+              <div className="text-slate-500 font-mono text-xs">
                 {currentTimestamp.toFixed(2)}s
               </div>
             </div>
@@ -2244,49 +2244,49 @@ export function GSAPVideoPlayer({ videoData, className = "", externalOverlayTogg
               
               {/* Dropdown Menu */}
               {showDownloadMenu && !isGeneratingVideo && (
-                <div className="absolute right-0 bottom-full mb-2 w-56 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg shadow-xl z-50 overflow-hidden">
-                  <div className="p-2 border-b border-[#3a3a3a]">
-                    <span className="text-xs text-[#888] font-semibold">DOWNLOAD OPTIONS</span>
+                <div className="absolute right-0 bottom-full mb-2 w-56 bg-white border border-slate-200 rounded-lg shadow-xl z-50 overflow-hidden">
+                  <div className="p-2 border-b border-slate-200">
+                    <span className="text-xs text-slate-400 font-semibold">DOWNLOAD OPTIONS</span>
                   </div>
                   <button
                     onClick={() => downloadStage(1)}
-                    className="w-full px-4 py-3 text-left text-sm text-white hover:bg-[#3a3a3a] flex items-center gap-3 transition-colors"
+                    className="w-full px-4 py-3 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors"
                   >
                     <div className="w-2 h-2 rounded-full bg-[#FF6B35]" />
                     <div>
                       <div className="font-semibold">Stage 1: Full Speed</div>
-                      <div className="text-xs text-[#888]">Normal playback</div>
+                      <div className="text-xs text-slate-400">Normal playback</div>
                     </div>
                   </button>
                   <button
                     onClick={() => downloadStage(2)}
-                    className="w-full px-4 py-3 text-left text-sm text-white hover:bg-[#3a3a3a] flex items-center gap-3 transition-colors"
+                    className="w-full px-4 py-3 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors"
                   >
                     <div className="w-2 h-2 rounded-full bg-[#4ade80]" />
                     <div>
                       <div className="font-semibold">Stage 2: Label Tutorial</div>
-                      <div className="text-xs text-[#888]">Labels appearing one by one</div>
+                      <div className="text-xs text-slate-400">Labels appearing one by one</div>
                     </div>
                   </button>
                   <button
                     onClick={() => downloadStage(3)}
-                    className="w-full px-4 py-3 text-left text-sm text-white hover:bg-[#3a3a3a] flex items-center gap-3 transition-colors"
+                    className="w-full px-4 py-3 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors"
                   >
                     <div className="w-2 h-2 rounded-full bg-[#f97316]" />
                     <div>
                       <div className="font-semibold">Stage 3: Slow Motion</div>
-                      <div className="text-xs text-[#888]">0.25x speed with labels</div>
+                      <div className="text-xs text-slate-400">0.25x speed with labels</div>
                     </div>
                   </button>
-                  <div className="border-t border-[#3a3a3a]">
+                  <div className="border-t border-slate-200">
                     <button
                       onClick={() => downloadStage('all')}
-                      className="w-full px-4 py-3 text-left text-sm text-white hover:bg-[#3a3a3a] flex items-center gap-3 transition-colors bg-[#1a1a1a]"
+                      className="w-full px-4 py-3 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors bg-slate-50"
                     >
                       <Film className="w-4 h-4 text-[#FF6B35]" />
                       <div>
                         <div className="font-semibold text-[#FF6B35]">All 3 Stages Combined</div>
-                        <div className="text-xs text-[#888]">Full analysis video</div>
+                        <div className="text-xs text-slate-400">Full analysis video</div>
                       </div>
                     </button>
                   </div>
@@ -2300,7 +2300,7 @@ export function GSAPVideoPlayer({ videoData, className = "", externalOverlayTogg
               className={`p-2 rounded-lg transition-colors ${
                 isRecording 
                   ? "bg-red-600 hover:bg-red-700 text-white" 
-                  : "bg-[#3a3a3a] hover:bg-[#4a4a4a] text-white"
+                  : "bg-white border border-slate-200 hover:bg-slate-50 text-slate-700"
               }`}
               title={isRecording ? "Stop recording" : "Screen record while playing"}
             >
@@ -2310,7 +2310,7 @@ export function GSAPVideoPlayer({ videoData, className = "", externalOverlayTogg
             {/* Fullscreen */}
             <button
               onClick={toggleFullscreen}
-              className="p-2 rounded-lg bg-[#3a3a3a] hover:bg-[#4a4a4a] text-white transition-colors"
+              className="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 transition-colors"
               title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
             >
               {isFullscreen ? (
@@ -2339,7 +2339,7 @@ export function GSAPVideoPlayer({ videoData, className = "", externalOverlayTogg
                 Generating {downloadingStage === 'all' ? 'full video' : downloadingStage?.replace('stage', 'Stage ')}... {generationProgress}%
               </span>
             </div>
-            <div className="w-full bg-[#3a3a3a] rounded-full h-2">
+            <div className="w-full bg-slate-200 rounded-full h-2">
               <div 
                 className="bg-[#FF6B35] h-2 rounded-full transition-all duration-300"
                 style={{ width: `${generationProgress}%` }}

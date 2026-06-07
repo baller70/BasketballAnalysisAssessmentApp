@@ -823,29 +823,29 @@ export function DrillExecutionPage({ drill, onClose, onStartDrill }: DrillExecut
         />
       )}
       
-      <div className="fixed inset-0 z-[100] bg-[#1a1a1a] flex flex-col">
+      <div className="fixed inset-0 z-[100] bg-white flex flex-col">
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-4 border-b border-[#3a3a3a]">
+      <header className="flex items-center justify-between px-4 py-4 border-b border-slate-200">
         <button 
           onClick={onClose}
           className="w-10 h-10 flex items-center justify-center"
         >
-          <ArrowLeft className="w-6 h-6 text-white" />
+          <ArrowLeft className="w-6 h-6 text-slate-700" />
         </button>
-        <h1 className="text-white font-bold text-lg uppercase tracking-wider truncate max-w-[200px]">{drill.title}</h1>
+        <h1 className="text-slate-900 font-bold text-lg uppercase tracking-wider truncate max-w-[200px]">{drill.title}</h1>
         <button className="w-10 h-10 flex items-center justify-center">
-          <MoreVertical className="w-6 h-6 text-white" />
+          <MoreVertical className="w-6 h-6 text-slate-700" />
         </button>
       </header>
       
       {/* Tab Navigation */}
-      <div className="flex border-b border-[#3a3a3a]">
+      <div className="flex border-b border-slate-200">
         <button
           onClick={() => setActiveTab('build')}
           className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider transition-colors ${
             activeTab === 'build'
               ? 'text-[#FF6B35] border-b-2 border-[#FF6B35]'
-              : 'text-[#888]'
+              : 'text-slate-500'
           }`}
         >
           Drill
@@ -855,7 +855,7 @@ export function DrillExecutionPage({ drill, onClose, onStartDrill }: DrillExecut
           className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider transition-colors ${
             activeTab === 'instructions'
               ? 'text-[#FF6B35] border-b-2 border-[#FF6B35]'
-              : 'text-[#888]'
+              : 'text-slate-500'
           }`}
         >
           Instructions
@@ -976,8 +976,8 @@ export function DrillExecutionPage({ drill, onClose, onStartDrill }: DrillExecut
       
       {/* Drill Completion Modal */}
       {showCompletionModal && (
-        <div className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-4">
-          <div className="bg-[#1a1a1a] rounded-2xl max-w-md w-full p-6 border border-[#3a3a3a]">
+        <div className="fixed inset-0 z-[200] bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 border border-slate-200">
             {/* Trophy Icon */}
             <div className="flex justify-center mb-6">
               <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#FF8555] flex items-center justify-center">
@@ -986,30 +986,30 @@ export function DrillExecutionPage({ drill, onClose, onStartDrill }: DrillExecut
             </div>
             
             {/* Title */}
-            <h2 className="text-white text-2xl font-black text-center mb-2 uppercase tracking-wider">
+            <h2 className="text-slate-900 text-2xl font-black text-center mb-2 uppercase tracking-wider">
               Drill Complete!
             </h2>
-            <p className="text-[#888] text-center mb-6">
+            <p className="text-slate-500 text-center mb-6">
               Great work! Here's your performance summary.
             </p>
             
             {/* Stats Grid */}
             <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="bg-[#0a0a0a] rounded-xl p-4 text-center">
+              <div className="bg-slate-50 rounded-xl p-4 text-center">
                 <p className="text-[#FF6B35] text-3xl font-black">{madeShots}</p>
-                <p className="text-[#888] text-xs uppercase tracking-wider">Makes</p>
+                <p className="text-slate-500 text-xs uppercase tracking-wider">Makes</p>
               </div>
-              <div className="bg-[#0a0a0a] rounded-xl p-4 text-center">
-                <p className="text-white text-3xl font-black">{attempts}</p>
-                <p className="text-[#888] text-xs uppercase tracking-wider">Attempts</p>
+              <div className="bg-slate-50 rounded-xl p-4 text-center">
+                <p className="text-slate-900 text-3xl font-black">{attempts}</p>
+                <p className="text-slate-500 text-xs uppercase tracking-wider">Attempts</p>
               </div>
-              <div className="bg-[#0a0a0a] rounded-xl p-4 text-center">
+              <div className="bg-slate-50 rounded-xl p-4 text-center">
                 <p className="text-green-400 text-3xl font-black">{shootingPercentage}%</p>
-                <p className="text-[#888] text-xs uppercase tracking-wider">Accuracy</p>
+                <p className="text-slate-500 text-xs uppercase tracking-wider">Accuracy</p>
               </div>
-              <div className="bg-[#0a0a0a] rounded-xl p-4 text-center">
+              <div className="bg-slate-50 rounded-xl p-4 text-center">
                 <p className="text-blue-400 text-3xl font-black">{formatTime(elapsedTime)}</p>
-                <p className="text-[#888] text-xs uppercase tracking-wider">Time</p>
+                <p className="text-slate-500 text-xs uppercase tracking-wider">Time</p>
               </div>
             </div>
             
@@ -1041,7 +1041,7 @@ export function DrillExecutionPage({ drill, onClose, onStartDrill }: DrillExecut
                   setShowCompletionModal(false)
                   onClose()
                 }}
-                className="w-full py-4 bg-[#2a2a2a] text-white font-bold text-lg uppercase tracking-wider rounded-lg hover:bg-[#3a3a3a] transition-colors"
+                className="w-full py-4 bg-slate-50 text-slate-700 font-bold text-lg uppercase tracking-wider rounded-lg hover:bg-slate-100 transition-colors"
               >
                 Done
               </button>
@@ -1051,11 +1051,11 @@ export function DrillExecutionPage({ drill, onClose, onStartDrill }: DrillExecut
       )}
       
       {/* Start/End Button */}
-      <div className="p-4 border-t border-[#3a3a3a]">
+      <div className="p-4 border-t border-slate-200">
         {isDrillActive ? (
           <button
             onClick={endDrill}
-            className="w-full py-4 bg-[#2a2a2a] text-white font-bold text-lg uppercase tracking-wider rounded-lg hover:bg-[#3a3a3a] transition-colors flex items-center justify-center gap-3"
+            className="w-full py-4 bg-slate-50 text-slate-700 font-bold text-lg uppercase tracking-wider rounded-lg hover:bg-slate-100 transition-colors flex items-center justify-center gap-3"
           >
             <X className="w-6 h-6" />
             End Drill
@@ -1129,10 +1129,10 @@ function TimeLimitInput({ timeLimitSeconds, setTimeLimitSeconds, formatTime }: T
   }
   
   return (
-    <div className="bg-[#2a2a2a] rounded-lg p-4 mb-4">
+    <div className="bg-slate-50 rounded-lg p-4 mb-4">
       <div className="flex items-center gap-2 mb-3">
         <Timer className="w-5 h-5 text-blue-500" />
-        <span className="text-white font-bold text-sm uppercase tracking-wider">Drill Time Limit</span>
+        <span className="text-slate-900 font-bold text-sm uppercase tracking-wider">Drill Time Limit</span>
         {isEditing && (
           <span className="ml-auto text-blue-400 text-xs">Press Enter to save</span>
         )}
@@ -1140,7 +1140,7 @@ function TimeLimitInput({ timeLimitSeconds, setTimeLimitSeconds, formatTime }: T
       
       {isEditing ? (
         <div className="flex items-center justify-center gap-2 py-2">
-          <div className="flex items-center gap-1 bg-[#1a1a1a] rounded-lg p-2">
+          <div className="flex items-center gap-1 bg-white rounded-lg p-2">
             <input
               ref={minutesRef}
               type="number"
@@ -1149,13 +1149,13 @@ function TimeLimitInput({ timeLimitSeconds, setTimeLimitSeconds, formatTime }: T
               value={editMinutes}
               onChange={(e) => setEditMinutes(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="w-16 bg-transparent text-white text-4xl font-black text-center focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className="w-16 bg-transparent text-slate-900 text-4xl font-black text-center focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               placeholder="0"
             />
-            <span className="text-[#888] text-sm">min</span>
+            <span className="text-slate-500 text-sm">min</span>
           </div>
-          <span className="text-white text-4xl font-black">:</span>
-          <div className="flex items-center gap-1 bg-[#1a1a1a] rounded-lg p-2">
+          <span className="text-slate-900 text-4xl font-black">:</span>
+          <div className="flex items-center gap-1 bg-white rounded-lg p-2">
             <input
               type="number"
               min="0"
@@ -1168,10 +1168,10 @@ function TimeLimitInput({ timeLimitSeconds, setTimeLimitSeconds, formatTime }: T
                 }
               }}
               onKeyDown={handleKeyDown}
-              className="w-16 bg-transparent text-white text-4xl font-black text-center focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className="w-16 bg-transparent text-slate-900 text-4xl font-black text-center focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               placeholder="00"
             />
-            <span className="text-[#888] text-sm">sec</span>
+            <span className="text-slate-500 text-sm">sec</span>
           </div>
         </div>
       ) : (
@@ -1190,20 +1190,20 @@ function TimeLimitInput({ timeLimitSeconds, setTimeLimitSeconds, formatTime }: T
               }
               document.addEventListener('mouseup', stopInterval)
             }}
-            className="w-12 h-12 rounded-full bg-[#3a3a3a] flex items-center justify-center hover:bg-[#4a4a4a] transition-colors active:bg-[#5a5a5a]"
+            className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors active:bg-slate-200"
           >
-            <Minus className="w-5 h-5 text-white" />
+            <Minus className="w-5 h-5 text-slate-700" />
           </button>
           
           {/* Clickable time display */}
           <button
             onClick={startEditing}
-            className="text-center flex-1 py-2 hover:bg-[#3a3a3a] rounded-lg transition-colors cursor-text group"
+            className="text-center flex-1 py-2 hover:bg-slate-100 rounded-lg transition-colors cursor-text group"
           >
-            <div className="text-white font-black text-4xl group-hover:text-blue-400 transition-colors">
+            <div className="text-slate-900 font-black text-4xl group-hover:text-blue-400 transition-colors">
               {formatTime(timeLimitSeconds)}
             </div>
-            <div className="text-[#888] text-sm uppercase tracking-wider group-hover:text-blue-400/70">
+            <div className="text-slate-500 text-sm uppercase tracking-wider group-hover:text-blue-400/70">
               Tap to edit
             </div>
           </button>
@@ -1222,9 +1222,9 @@ function TimeLimitInput({ timeLimitSeconds, setTimeLimitSeconds, formatTime }: T
               }
               document.addEventListener('mouseup', stopInterval)
             }}
-            className="w-12 h-12 rounded-full bg-[#3a3a3a] flex items-center justify-center hover:bg-[#4a4a4a] transition-colors active:bg-[#5a5a5a]"
+            className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors active:bg-slate-200"
           >
-            <Plus className="w-5 h-5 text-white" />
+            <Plus className="w-5 h-5 text-slate-700" />
           </button>
         </div>
       )}
@@ -1240,7 +1240,7 @@ function TimeLimitInput({ timeLimitSeconds, setTimeLimitSeconds, formatTime }: T
           </button>
           <button
             onClick={cancelEditing}
-            className="px-4 py-2 bg-[#3a3a3a] text-[#888] font-bold text-sm rounded-lg hover:text-white transition-colors"
+            className="px-4 py-2 bg-slate-100 text-slate-500 font-bold text-sm rounded-lg hover:text-slate-700 transition-colors"
           >
             Cancel
           </button>
@@ -1539,7 +1539,7 @@ function BuildDrillTab({
       <div className="relative">
         <button
           onClick={() => setShowTrackingModeSelector(!showTrackingModeSelector)}
-          className="w-full bg-gradient-to-r from-[#2a2a2a] to-[#1a1a1a] rounded-xl p-4 border border-[#3a3a3a] hover:border-[#FF6B35]/50 transition-colors"
+          className="w-full bg-gradient-to-r from-[#2a2a2a] to-[#1a1a1a] rounded-xl p-4 border border-slate-200 hover:border-[#FF6B35]/50 transition-colors"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -1553,49 +1553,49 @@ function BuildDrillTab({
                 </div>
               )}
               <div>
-                <h3 className="text-white font-black text-lg uppercase tracking-wide">
+                <h3 className="text-slate-900 font-black text-lg uppercase tracking-wide">
                   {trackingMode === 'manual' ? 'Manual Tracking' : 'AI Shot Detection'}
                 </h3>
-                <p className="text-[#888] text-sm">
+                <p className="text-slate-500 text-sm">
                   {trackingMode === 'manual' 
                     ? 'Tap to record makes & misses' 
                     : 'Camera auto-detects your shots'}
                 </p>
               </div>
             </div>
-            <ChevronDown className={`w-6 h-6 text-[#888] transition-transform ${showTrackingModeSelector ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`w-6 h-6 text-slate-500 transition-transform ${showTrackingModeSelector ? 'rotate-180' : ''}`} />
           </div>
         </button>
         
         {/* Tracking Mode Dropdown */}
         {showTrackingModeSelector && (
-          <div className="absolute top-full left-0 right-0 mt-2 bg-[#2a2a2a] rounded-xl border border-[#3a3a3a] overflow-hidden z-50 shadow-xl">
+          <div className="absolute top-full left-0 right-0 mt-2 bg-slate-50 rounded-xl border border-slate-200 overflow-hidden z-50 shadow-xl">
             <button
               onClick={() => { setTrackingMode('manual'); setShowTrackingModeSelector(false); }}
-              className={`w-full p-4 text-left flex items-center gap-4 hover:bg-[#3a3a3a] transition-colors ${trackingMode === 'manual' ? 'bg-[#3a3a3a] border-l-4 border-[#FF6B35]' : ''}`}
+              className={`w-full p-4 text-left flex items-center gap-4 hover:bg-slate-100 transition-colors ${trackingMode === 'manual' ? 'bg-slate-100 border-l-4 border-[#FF6B35]' : ''}`}
             >
               <div className="w-10 h-10 rounded-lg bg-[#FF6B35]/20 flex items-center justify-center">
                 <Hand className="w-5 h-5 text-[#FF6B35]" />
               </div>
               <div>
-                <p className="text-white font-bold">Manual Tracking</p>
-                <p className="text-[#888] text-xs">Tap buttons to record shots</p>
+                <p className="text-slate-900 font-bold">Manual Tracking</p>
+                <p className="text-slate-500 text-xs">Tap buttons to record shots</p>
               </div>
             </button>
             
             <button
               onClick={() => { setTrackingMode('automatic'); setShowTrackingModeSelector(false); }}
-              className={`w-full p-4 text-left flex items-center gap-4 hover:bg-[#3a3a3a] transition-colors border-t border-[#3a3a3a] ${trackingMode === 'automatic' ? 'bg-[#3a3a3a] border-l-4 border-[#FF6B35]' : ''}`}
+              className={`w-full p-4 text-left flex items-center gap-4 hover:bg-slate-100 transition-colors border-t border-slate-200 ${trackingMode === 'automatic' ? 'bg-slate-100 border-l-4 border-[#FF6B35]' : ''}`}
             >
               <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#FF6B35]/20 to-[#FF8555]/20 flex items-center justify-center">
                 <Camera className="w-5 h-5 text-[#FF6B35]" />
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <p className="text-white font-bold">AI Shot Detection</p>
+                  <p className="text-slate-900 font-bold">AI Shot Detection</p>
                   <span className="px-2 py-0.5 bg-gradient-to-r from-[#FF6B35] to-[#FF8555] text-white text-[10px] font-bold rounded-full uppercase">Beta</span>
                 </div>
-                <p className="text-[#888] text-xs">Hybrid detection: YOLO + Color + Motion</p>
+                <p className="text-slate-500 text-xs">Hybrid detection: YOLO + Color + Motion</p>
               </div>
               <Zap className="w-5 h-5 text-[#FF6B35]" />
             </button>
@@ -1604,11 +1604,11 @@ function BuildDrillTab({
       </div>
       
       {/* Timer & Stats Display */}
-      <div className="bg-[#0a0a0a] rounded-xl p-6">
+      <div className="bg-slate-50 rounded-xl p-6">
         {/* Timer Row */}
         <div className="flex items-center justify-between mb-4">
           <div className="text-center flex-1">
-            <p className="text-[#666] text-xs font-bold uppercase tracking-wider mb-1">
+            <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">
               {isDrillActive ? (drillMode === 'time' ? 'Remaining' : 'Elapsed') : 'Set Time'}
             </p>
             <p className={`text-4xl font-black tracking-tight ${
@@ -1616,8 +1616,8 @@ function BuildDrillTab({
                 ? drillMode === 'time' 
                   ? timeLimitSeconds - elapsedTime <= 30 
                     ? 'text-red-400 animate-pulse' 
-                    : 'text-white'
-                  : 'text-white'
+                    : 'text-slate-700'
+                  : 'text-slate-700'
                 : 'text-blue-400'
             }`}>
               {isDrillActive 
@@ -1628,9 +1628,9 @@ function BuildDrillTab({
               }
             </p>
           </div>
-          <div className="w-px h-16 bg-[#3a3a3a]" />
+          <div className="w-px h-16 bg-slate-100" />
           <div className="text-center flex-1">
-            <p className="text-[#666] text-xs font-bold uppercase tracking-wider mb-1">Accuracy</p>
+            <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Accuracy</p>
             <p className="text-green-400 text-4xl font-black tracking-tight">{shootingPercentage}%</p>
           </div>
         </div>
@@ -1638,10 +1638,10 @@ function BuildDrillTab({
         {/* Progress Bar */}
         <div className="mb-4">
           <div className="flex items-center justify-between text-xs mb-1">
-            <span className="text-[#888] uppercase tracking-wider">Progress</span>
-            <span className="text-white font-bold">{Math.round(progressPercent)}%</span>
+            <span className="text-slate-500 uppercase tracking-wider">Progress</span>
+            <span className="text-slate-900 font-bold">{Math.round(progressPercent)}%</span>
           </div>
-          <div className="h-3 bg-[#2a2a2a] rounded-full overflow-hidden">
+          <div className="h-3 bg-slate-50 rounded-full overflow-hidden">
             <div 
               className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF8555] rounded-full transition-all duration-300"
               style={{ width: `${progressPercent}%` }}
@@ -1652,10 +1652,10 @@ function BuildDrillTab({
         {/* Misses / Made / Accuracy Row - Editable for Manual Tracking */}
         <div className="grid grid-cols-3 gap-4 mb-4">
           {/* MISSED - First */}
-          <div className="bg-[#1a1a1a] rounded-xl p-3 text-center border border-red-500/30">
+          <div className="bg-white rounded-xl p-3 text-center border border-red-500/30">
             <div className="flex items-center justify-center gap-1 mb-1">
               <XCircle className="w-4 h-4 text-red-400" />
-              <span className="text-[#888] text-xs uppercase">Missed</span>
+              <span className="text-slate-500 text-xs uppercase">Missed</span>
             </div>
             {trackingMode === 'manual' && !isDrillActive ? (
               <input
@@ -1673,10 +1673,10 @@ function BuildDrillTab({
             )}
           </div>
           {/* MADE - Second */}
-          <div className="bg-[#1a1a1a] rounded-xl p-3 text-center border border-green-500/30">
+          <div className="bg-white rounded-xl p-3 text-center border border-green-500/30">
             <div className="flex items-center justify-center gap-1 mb-1">
               <CheckCircle className="w-4 h-4 text-green-400" />
-              <span className="text-[#888] text-xs uppercase">Made</span>
+              <span className="text-slate-500 text-xs uppercase">Made</span>
             </div>
             {trackingMode === 'manual' && !isDrillActive ? (
               <input
@@ -1695,10 +1695,10 @@ function BuildDrillTab({
             )}
           </div>
           {/* ACCURACY - Third */}
-          <div className="bg-[#1a1a1a] rounded-xl p-3 text-center border border-[#FF6B35]/30">
+          <div className="bg-white rounded-xl p-3 text-center border border-[#FF6B35]/30">
             <div className="flex items-center justify-center gap-1 mb-1">
               <Target className="w-4 h-4 text-[#FF6B35]" />
-              <span className="text-[#888] text-xs uppercase">Accuracy</span>
+              <span className="text-slate-500 text-xs uppercase">Accuracy</span>
             </div>
             <p className={`text-2xl font-black ${
               shootingPercentage >= 70 ? 'text-green-400' : 
@@ -1717,7 +1717,7 @@ function BuildDrillTab({
         
         {/* Manual tracking hint */}
         {trackingMode === 'manual' && !isDrillActive && (
-          <p className="text-center text-[#666] text-xs mb-4">
+          <p className="text-center text-slate-400 text-xs mb-4">
             Tap makes/misses to manually enter your scores
           </p>
         )}
@@ -1727,8 +1727,8 @@ function BuildDrillTab({
           <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 mb-4">
             <div className="text-center">
               <p className="text-blue-400 text-sm uppercase tracking-wider mb-1">Rest Period</p>
-              <p className="text-white text-4xl font-black">{formatTime(restTimeRemaining)}</p>
-              <p className="text-[#888] text-sm mt-2">Set {currentSet} complete! Next set starting soon...</p>
+              <p className="text-slate-900 text-4xl font-black">{formatTime(restTimeRemaining)}</p>
+              <p className="text-slate-500 text-sm mt-2">Set {currentSet} complete! Next set starting soon...</p>
               <button
                 onClick={startNextSet}
                 className="mt-3 px-6 py-2 bg-blue-500 text-white font-bold text-sm uppercase rounded-lg hover:bg-blue-600 transition-colors"
@@ -1741,11 +1741,11 @@ function BuildDrillTab({
         
         {/* Per-Set Stats Display */}
         {numberOfSets > 1 && (
-          <div className="bg-[#1a1a1a] rounded-xl p-4 mb-4 border border-[#3a3a3a]">
+          <div className="bg-white rounded-xl p-4 mb-4 border border-slate-200">
             <div className="flex items-center gap-2 mb-3">
               <RotateCcw className="w-4 h-4 text-[#FF6B35]" />
-              <span className="text-white font-bold text-sm uppercase tracking-wider">Set Stats</span>
-              <span className="ml-auto text-[#888] text-xs">
+              <span className="text-slate-900 font-bold text-sm uppercase tracking-wider">Set Stats</span>
+              <span className="ml-auto text-slate-500 text-xs">
                 Set {currentSet} of {numberOfSets}
               </span>
             </div>
@@ -1765,13 +1765,13 @@ function BuildDrillTab({
                         ? 'bg-[#FF6B35]/10 border border-[#FF6B35]/50' 
                         : isCompleted
                           ? 'bg-green-500/5 border border-green-500/20'
-                          : 'bg-[#0a0a0a] border border-[#2a2a2a]'
+                          : 'bg-slate-50 border border-slate-200'
                     }`}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className={`font-bold text-sm ${
-                          isCurrentSet ? 'text-[#FF6B35]' : isCompleted ? 'text-green-400' : 'text-[#555]'
+                          isCurrentSet ? 'text-[#FF6B35]' : isCompleted ? 'text-green-400' : 'text-slate-500'
                         }`}>
                           Set {setNum}
                         </span>
@@ -1793,14 +1793,14 @@ function BuildDrillTab({
                             <span className="text-green-400 font-bold">
                               {isCurrentSet && !isCompleted ? madeShots : stats?.makes || 0}
                             </span>
-                            <span className="text-[#555]">M</span>
+                            <span className="text-slate-500">M</span>
                           </div>
                           {/* Misses */}
                           <div className="flex items-center gap-1">
                             <span className="text-red-400 font-bold">
                               {isCurrentSet && !isCompleted ? (attempts - madeShots) : stats?.misses || 0}
                             </span>
-                            <span className="text-[#555]">X</span>
+                            <span className="text-slate-500">X</span>
                           </div>
                           {/* Accuracy */}
                           <div className={`px-2 py-0.5 rounded text-xs font-bold ${
@@ -1814,22 +1814,22 @@ function BuildDrillTab({
                           </div>
                         </div>
                       ) : (
-                        <span className="text-[#444] text-sm">—</span>
+                        <span className="text-slate-500 text-sm">—</span>
                       )}
                     </div>
                     
                     {/* Editable inputs for completed sets (manual tracking) */}
                     {trackingMode === 'manual' && isCompleted && !isDrillActive && (
-                      <div className="flex items-center gap-4 mt-2 pt-2 border-t border-[#2a2a2a]">
+                      <div className="flex items-center gap-4 mt-2 pt-2 border-t border-slate-200">
                         <div className="flex items-center gap-1">
                           <input
                             type="number"
                             min="0"
                             value={stats?.makes || 0}
                             onChange={(e) => updateSetMakes(setNum, Math.max(0, parseInt(e.target.value) || 0))}
-                            className="w-12 px-1 py-0.5 bg-[#1a1a1a] border border-[#3a3a3a] rounded text-green-400 text-sm font-bold text-center focus:outline-none focus:border-green-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            className="w-12 px-1 py-0.5 bg-white border border-slate-200 rounded text-green-400 text-sm font-bold text-center focus:outline-none focus:border-green-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
-                          <span className="text-[#555] text-xs">makes</span>
+                          <span className="text-slate-500 text-xs">makes</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <input
@@ -1837,9 +1837,9 @@ function BuildDrillTab({
                             min="0"
                             value={stats?.misses || 0}
                             onChange={(e) => updateSetMisses(setNum, Math.max(0, parseInt(e.target.value) || 0))}
-                            className="w-12 px-1 py-0.5 bg-[#1a1a1a] border border-[#3a3a3a] rounded text-red-400 text-sm font-bold text-center focus:outline-none focus:border-red-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            className="w-12 px-1 py-0.5 bg-white border border-slate-200 rounded text-red-400 text-sm font-bold text-center focus:outline-none focus:border-red-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           />
-                          <span className="text-[#555] text-xs">misses</span>
+                          <span className="text-slate-500 text-xs">misses</span>
                         </div>
                       </div>
                     )}
@@ -1852,7 +1852,7 @@ function BuildDrillTab({
             {isDrillActive && !isRestPeriod && numberOfSets > 1 && (
               <button
                 onClick={completeCurrentSet}
-                className="w-full mt-3 py-2 bg-[#2a2a2a] hover:bg-[#3a3a3a] text-[#FF6B35] font-bold text-sm uppercase tracking-wider rounded-lg transition-colors border border-[#FF6B35]/30"
+                className="w-full mt-3 py-2 bg-slate-50 hover:bg-slate-100 text-[#FF6B35] font-bold text-sm uppercase tracking-wider rounded-lg transition-colors border border-[#FF6B35]/30"
               >
                 Complete Set {currentSet}
               </button>
@@ -1862,15 +1862,15 @@ function BuildDrillTab({
         
         {/* Current Spot Indicator */}
         {spots.length > 0 && (
-          <div className="bg-[#1a1a1a] rounded-lg p-3 flex items-center justify-between mb-4">
+          <div className="bg-white rounded-lg p-3 flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <CircleDot className="w-5 h-5 text-[#FF6B35]" />
-              <span className="text-[#888] text-sm">Current Spot:</span>
+              <span className="text-slate-500 text-sm">Current Spot:</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-white font-bold text-lg">{currentSpotIndex + 1}</span>
-              <span className="text-[#555]">of</span>
-              <span className="text-[#888]">{spots.length}</span>
+              <span className="text-slate-900 font-bold text-lg">{currentSpotIndex + 1}</span>
+              <span className="text-slate-500">of</span>
+              <span className="text-slate-500">{spots.length}</span>
             </div>
           </div>
         )}
@@ -1882,7 +1882,7 @@ function BuildDrillTab({
             <div className="flex gap-3">
               <button
                 onClick={togglePause}
-                className="flex-1 py-3 bg-[#2a2a2a] hover:bg-[#3a3a3a] text-white font-bold text-sm uppercase tracking-wider rounded-xl transition-colors flex items-center justify-center gap-2 border border-[#3a3a3a]"
+                className="flex-1 py-3 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-sm uppercase tracking-wider rounded-xl transition-colors flex items-center justify-center gap-2 border border-slate-200"
               >
                 {isPaused ? (
                   <>
@@ -1898,7 +1898,7 @@ function BuildDrillTab({
               </button>
               <button
                 onClick={endDrill}
-                className="flex-1 py-3 bg-[#3a3a3a] hover:bg-[#4a4a4a] text-white font-bold text-sm uppercase tracking-wider rounded-xl transition-colors flex items-center justify-center gap-2"
+                className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm uppercase tracking-wider rounded-xl transition-colors flex items-center justify-center gap-2"
               >
                 <X className="w-5 h-5" />
                 End
@@ -1927,7 +1927,7 @@ function BuildDrillTab({
             
             {/* Automatic Shot Detection Camera */}
             {trackingMode === 'automatic' && !isPaused && (
-              <div className="rounded-xl overflow-hidden border border-[#3a3a3a]">
+              <div className="rounded-xl overflow-hidden border border-slate-200">
                 <HybridShotDetector
                   isActive={isDrillActive && !isPaused}
                   onShotDetected={onAutoShotDetected}
@@ -1941,19 +1941,19 @@ function BuildDrillTab({
       </div>
       
       {/* Drill Setup Stats - X Spots, X Per Spot, Total */}
-      <div className="bg-[#0a0a0a] rounded-xl p-4 border border-[#2a2a2a]">
+      <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
         <div className="grid grid-cols-3 gap-4">
           <div className="text-center">
             <p className="text-[#FF6B35] text-3xl font-black">{spots.length}</p>
-            <p className="text-[#888] text-xs uppercase tracking-wider">Spots</p>
+            <p className="text-slate-500 text-xs uppercase tracking-wider">Spots</p>
           </div>
-          <div className="text-center border-l border-r border-[#2a2a2a]">
-            <p className="text-white text-3xl font-black">{ballsPerSpot}</p>
-            <p className="text-[#888] text-xs uppercase tracking-wider">Per Spot</p>
+          <div className="text-center border-l border-r border-slate-200">
+            <p className="text-slate-900 text-3xl font-black">{ballsPerSpot}</p>
+            <p className="text-slate-500 text-xs uppercase tracking-wider">Per Spot</p>
           </div>
           <div className="text-center">
-            <p className="text-white text-3xl font-black">{spots.length * ballsPerSpot}</p>
-            <p className="text-[#888] text-xs uppercase tracking-wider">Total</p>
+            <p className="text-slate-900 text-3xl font-black">{spots.length * ballsPerSpot}</p>
+            <p className="text-slate-500 text-xs uppercase tracking-wider">Total</p>
           </div>
         </div>
       </div>
@@ -1971,7 +1971,7 @@ function BuildDrillTab({
         onMouseLeave={handleDragEnd}
         onTouchMove={handleDragMove}
         onTouchEnd={handleDragEnd}
-        className={`relative bg-[#1a1a1a] rounded-lg overflow-hidden touch-none ${
+        className={`relative bg-white rounded-lg overflow-hidden touch-none ${
           isPlacingSpot ? 'cursor-crosshair' : draggingSpot ? 'cursor-grabbing' : 'cursor-default'
         }`}
         style={{ aspectRatio: '50/47' }}
@@ -2050,8 +2050,8 @@ function BuildDrillTab({
         
         {/* SHOT IQ Logo near basket (top) */}
         <div className="absolute top-[5%] left-1/2 -translate-x-1/2">
-          <div className="w-12 h-12 bg-[#2a2a2a] rounded-lg flex items-center justify-center border border-[#3a3a3a] rotate-45">
-            <span className="text-[7px] text-[#666] font-bold text-center leading-tight -rotate-45">
+          <div className="w-12 h-12 bg-slate-50 rounded-lg flex items-center justify-center border border-slate-200 rotate-45">
+            <span className="text-[7px] text-slate-400 font-bold text-center leading-tight -rotate-45">
               SHOT<br/>IQ
             </span>
           </div>
@@ -2071,7 +2071,7 @@ function BuildDrillTab({
               y1={spot.y}
               x2={50}
               y2={11}
-              stroke="#4B5563"
+              stroke="#94a3b8"
               strokeWidth="0.3"
               strokeDasharray="1 1"
               opacity="0.5"
@@ -2212,7 +2212,7 @@ function BuildDrillTab({
                 onClick={(e) => { e.stopPropagation(); deleteLine(line.id) }}
                 className="w-7 h-7 bg-red-500 rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors"
               >
-                <X className="w-4 h-4 text-white" />
+                <X className="w-4 h-4 text-slate-700" />
               </button>
             </div>
           )
@@ -2245,21 +2245,21 @@ function BuildDrillTab({
               <svg width="30" height="36" viewBox="0 0 30 36">
                 <polygon 
                   points="15,2 28,34 2,34" 
-                  fill="#4B5563"
+                  fill="#94a3b8"
                   stroke={isSelected ? '#fff' : '#6B7280'}
                   strokeWidth="2"
                   filter={isDragging ? 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))' : ''}
                 />
                 {/* Cone stripes */}
-                <line x1="7" y1="20" x2="23" y2="20" stroke="#374151" strokeWidth="2" />
-                <line x1="5" y1="28" x2="25" y2="28" stroke="#374151" strokeWidth="2" />
+                <line x1="7" y1="20" x2="23" y2="20" stroke="#94a3b8" strokeWidth="2" />
+                <line x1="5" y1="28" x2="25" y2="28" stroke="#94a3b8" strokeWidth="2" />
               </svg>
               {isSelected && !isDragging && (
                 <button
                   onClick={(e) => { e.stopPropagation(); deleteCone(cone.id) }}
                   className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center shadow-lg"
                 >
-                  <X className="w-3 h-3 text-white" />
+                  <X className="w-3 h-3 text-slate-700" />
                 </button>
               )}
             </div>
@@ -2291,7 +2291,7 @@ function BuildDrillTab({
               }}
             >
               <div 
-                className="px-2 py-1 rounded text-xs font-bold whitespace-nowrap bg-[#374151] text-white"
+                className="px-2 py-1 rounded text-xs font-bold whitespace-nowrap bg-slate-100 text-slate-700"
                 style={{ 
                   border: isSelected ? '2px solid white' : '1px solid #4B5563',
                   filter: isDragging ? 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))' : ''
@@ -2304,7 +2304,7 @@ function BuildDrillTab({
                   onClick={(e) => { e.stopPropagation(); deleteTextLabel(text.id) }}
                   className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center shadow-lg"
                 >
-                  <X className="w-3 h-3 text-white" />
+                  <X className="w-3 h-3 text-slate-700" />
                 </button>
               )}
             </div>
@@ -2363,7 +2363,7 @@ function BuildDrillTab({
                   }}
                   className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center shadow-lg"
                 >
-                  <X className="w-4 h-4 text-white" />
+                  <X className="w-4 h-4 text-slate-700" />
                 </button>
               )}
             </div>
@@ -2381,7 +2381,7 @@ function BuildDrillTab({
         {/* Placement indicator */}
         {isPlacingSpot && !isDrawingLine && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="bg-black/80 text-white px-4 py-2 rounded-lg text-sm font-medium">
+            <div className="bg-black/40 text-white px-4 py-2 rounded-lg text-sm font-medium">
               {selectedTool === 'shot' && `Tap to place spot #${spots.length + 1}`}
               {selectedTool === 'cone' && 'Tap to place cone'}
               {selectedTool === 'text' && 'Tap to place text label'}
@@ -2404,24 +2404,24 @@ function BuildDrillTab({
       </div>
       
       {/* Drill Setup Toolset */}
-      <div className="bg-[#0a0a0a] rounded-xl border border-[#2a2a2a] overflow-hidden">
+      <div className="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
         {/* Toolset Header */}
-        <div className="bg-gradient-to-r from-[#1a1a1a] to-[#2a2a2a] px-4 py-3 border-b border-[#2a2a2a]">
+        <div className="bg-gradient-to-r from-[#1a1a1a] to-[#2a2a2a] px-4 py-3 border-b border-slate-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Grip className="w-5 h-5 text-[#FF6B35]" />
-              <h4 className="text-white font-bold text-sm uppercase tracking-wider">Toolset</h4>
+              <h4 className="text-slate-900 font-bold text-sm uppercase tracking-wider">Toolset</h4>
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={clearAllSpots}
-                className="px-2 py-1 rounded text-[#888] hover:text-white hover:bg-[#2a2a2a] text-xs font-bold uppercase transition-all"
+                className="px-2 py-1 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-50 text-xs font-bold uppercase transition-all"
               >
                 Clear
               </button>
               <button
                 onClick={resetSpots}
-                className="px-2 py-1 rounded text-[#888] hover:text-white hover:bg-[#2a2a2a] text-xs font-bold uppercase transition-all"
+                className="px-2 py-1 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-50 text-xs font-bold uppercase transition-all"
               >
                 Reset
               </button>
@@ -2439,7 +2439,7 @@ function BuildDrillTab({
                 ? 'bg-[#FF6B35] text-white shadow-lg shadow-[#FF6B35]/30 ring-2 ring-[#FF6B35]'
                 : selectedTool === 'shot'
                 ? 'bg-[#FF6B35]/20 text-[#FF6B35] border border-[#FF6B35]/50'
-                : 'bg-[#1a1a1a] text-[#888] hover:bg-[#2a2a2a] hover:text-white border border-[#2a2a2a]'
+                : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900 border border-slate-200'
             }`}
           >
             <Crosshair className="w-5 h-5 mb-1" />
@@ -2451,10 +2451,10 @@ function BuildDrillTab({
             onClick={() => { setSelectedTool('pass'); setIsPlacingSpot(true); }}
             className={`flex flex-col items-center justify-center p-2 rounded-lg transition-all ${
               selectedTool === 'pass' && isPlacingSpot
-                ? 'bg-[#3B82F6] text-white shadow-lg shadow-[#3B82F6]/30 ring-2 ring-[#3B82F6]'
+                ? 'bg-blue-500 text-white shadow-lg shadow-[#3B82F6]/30 ring-2 ring-[#3B82F6]'
                 : selectedTool === 'pass'
-                ? 'bg-[#3B82F6]/20 text-[#3B82F6] border border-[#3B82F6]/50'
-                : 'bg-[#1a1a1a] text-[#888] hover:bg-[#2a2a2a] hover:text-white border border-[#2a2a2a]'
+                ? 'bg-blue-500/20 text-blue-500 border border-blue-500/50'
+                : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900 border border-slate-200'
             }`}
           >
             <svg className="w-5 h-5 mb-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -2468,10 +2468,10 @@ function BuildDrillTab({
             onClick={() => { setSelectedTool('dribble'); setIsPlacingSpot(true); }}
             className={`flex flex-col items-center justify-center p-2 rounded-lg transition-all ${
               selectedTool === 'dribble' && isPlacingSpot
-                ? 'bg-[#10B981] text-white shadow-lg shadow-[#10B981]/30 ring-2 ring-[#10B981]'
+                ? 'bg-green-500 text-white shadow-lg shadow-[#10B981]/30 ring-2 ring-[#10B981]'
                 : selectedTool === 'dribble'
-                ? 'bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/50'
-                : 'bg-[#1a1a1a] text-[#888] hover:bg-[#2a2a2a] hover:text-white border border-[#2a2a2a]'
+                ? 'bg-green-500/20 text-green-500 border border-green-500/50'
+                : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900 border border-slate-200'
             }`}
           >
             <Move className="w-5 h-5 mb-1" />
@@ -2483,10 +2483,10 @@ function BuildDrillTab({
             onClick={() => { setSelectedTool('cone'); setIsPlacingSpot(true); }}
             className={`flex flex-col items-center justify-center p-2 rounded-lg transition-all ${
               selectedTool === 'cone' && isPlacingSpot
-                ? 'bg-[#F59E0B] text-white shadow-lg shadow-[#F59E0B]/30 ring-2 ring-[#F59E0B]'
+                ? 'bg-yellow-500 text-white shadow-lg shadow-[#F59E0B]/30 ring-2 ring-[#F59E0B]'
                 : selectedTool === 'cone'
-                ? 'bg-[#F59E0B]/20 text-[#F59E0B] border border-[#F59E0B]/50'
-                : 'bg-[#1a1a1a] text-[#888] hover:bg-[#2a2a2a] hover:text-white border border-[#2a2a2a]'
+                ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/50'
+                : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900 border border-slate-200'
             }`}
           >
             <svg className="w-5 h-5 mb-1" viewBox="0 0 24 24" fill="currentColor">
@@ -2500,10 +2500,10 @@ function BuildDrillTab({
             onClick={() => { setSelectedTool('text'); setIsPlacingSpot(true); }}
             className={`flex flex-col items-center justify-center p-2 rounded-lg transition-all ${
               selectedTool === 'text' && isPlacingSpot
-                ? 'bg-[#8B5CF6] text-white shadow-lg shadow-[#8B5CF6]/30 ring-2 ring-[#8B5CF6]'
+                ? 'bg-purple-500 text-white shadow-lg shadow-[#8B5CF6]/30 ring-2 ring-[#8B5CF6]'
                 : selectedTool === 'text'
-                ? 'bg-[#8B5CF6]/20 text-[#8B5CF6] border border-[#8B5CF6]/50'
-                : 'bg-[#1a1a1a] text-[#888] hover:bg-[#2a2a2a] hover:text-white border border-[#2a2a2a]'
+                ? 'bg-purple-500/20 text-purple-500 border border-purple-500/50'
+                : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900 border border-slate-200'
             }`}
           >
             <Type className="w-5 h-5 mb-1" />
@@ -2516,10 +2516,10 @@ function BuildDrillTab({
           <div className="px-3 pb-3">
             <div className={`px-3 py-2 rounded-lg text-center text-xs font-bold uppercase animate-pulse ${
               selectedTool === 'shot' ? 'bg-[#FF6B35]/20 text-[#FF6B35]' :
-              selectedTool === 'pass' ? 'bg-[#3B82F6]/20 text-[#3B82F6]' :
-              selectedTool === 'dribble' ? 'bg-[#10B981]/20 text-[#10B981]' :
-              selectedTool === 'cone' ? 'bg-[#F59E0B]/20 text-[#F59E0B]' :
-              'bg-[#8B5CF6]/20 text-[#8B5CF6]'
+              selectedTool === 'pass' ? 'bg-blue-500/20 text-blue-500' :
+              selectedTool === 'dribble' ? 'bg-green-500/20 text-green-500' :
+              selectedTool === 'cone' ? 'bg-yellow-500/20 text-yellow-500' :
+              'bg-purple-500/20 text-purple-500'
             }`}>
               Tap court to place {selectedTool}
             </div>
@@ -2527,39 +2527,39 @@ function BuildDrillTab({
         )}
         
         {/* Quick Stats - Small Cards */}
-        <div className="grid grid-cols-4 gap-2 p-3 bg-[#0a0a0a] border-t border-[#2a2a2a]">
-          <div className="bg-[#1a1a1a] rounded-lg p-2 text-center border border-[#FF6B35]/30">
+        <div className="grid grid-cols-4 gap-2 p-3 bg-slate-50 border-t border-slate-200">
+          <div className="bg-white rounded-lg p-2 text-center border border-[#FF6B35]/30">
             <p className="text-[#FF6B35] text-lg font-black">{spots.length}</p>
-            <p className="text-[#888] text-[9px] uppercase tracking-wider">Shots</p>
+            <p className="text-slate-500 text-[9px] uppercase tracking-wider">Shots</p>
           </div>
-          <div className="bg-[#1a1a1a] rounded-lg p-2 text-center border border-[#3a3a3a]">
-            <p className="text-white text-lg font-black">{lines.filter(l => l.type === 'pass').length}</p>
-            <p className="text-[#888] text-[9px] uppercase tracking-wider">Pass</p>
+          <div className="bg-white rounded-lg p-2 text-center border border-slate-200">
+            <p className="text-slate-700 text-lg font-black">{lines.filter(l => l.type === 'pass').length}</p>
+            <p className="text-slate-500 text-[9px] uppercase tracking-wider">Pass</p>
           </div>
-          <div className="bg-[#1a1a1a] rounded-lg p-2 text-center border border-[#3a3a3a]">
-            <p className="text-white text-lg font-black">{lines.filter(l => l.type === 'dribble').length}</p>
-            <p className="text-[#888] text-[9px] uppercase tracking-wider">Dribble</p>
+          <div className="bg-white rounded-lg p-2 text-center border border-slate-200">
+            <p className="text-slate-700 text-lg font-black">{lines.filter(l => l.type === 'dribble').length}</p>
+            <p className="text-slate-500 text-[9px] uppercase tracking-wider">Dribble</p>
           </div>
-          <div className="bg-[#1a1a1a] rounded-lg p-2 text-center border border-[#3a3a3a]">
-            <p className="text-white text-lg font-black">{cones.length}</p>
-            <p className="text-[#888] text-[9px] uppercase tracking-wider">Cones</p>
+          <div className="bg-white rounded-lg p-2 text-center border border-slate-200">
+            <p className="text-slate-700 text-lg font-black">{cones.length}</p>
+            <p className="text-slate-500 text-[9px] uppercase tracking-wider">Cones</p>
           </div>
         </div>
       </div>
       
       {/* Text Input Modal */}
       {textInputId && (
-        <div className="bg-[#1a1a1a] rounded-xl p-4 border border-[#6B7280]/50">
+        <div className="bg-white rounded-xl p-4 border border-slate-300/50">
           <div className="flex items-center gap-2 mb-3">
-            <Type className="w-5 h-5 text-[#6B7280]" />
-            <span className="text-white font-bold text-sm">Add Label</span>
+            <Type className="w-5 h-5 text-slate-400" />
+            <span className="text-slate-900 font-bold text-sm">Add Label</span>
           </div>
           <input
             type="text"
             value={textInputValue}
             onChange={(e) => setTextInputValue(e.target.value)}
             placeholder="Enter text..."
-            className="w-full bg-[#0a0a0a] border border-[#3a3a3a] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#6B7280] mb-3"
+            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-700 text-sm focus:outline-none focus:border-slate-300 mb-3"
             autoFocus
           />
           <div className="flex gap-2">
@@ -2571,7 +2571,7 @@ function BuildDrillTab({
                 setTextInputId(null)
                 setTextInputValue('')
               }}
-              className="flex-1 py-2 bg-[#6B7280] text-white font-bold text-sm rounded-lg hover:bg-[#4B5563] transition-colors"
+              className="flex-1 py-2 bg-slate-200 text-slate-700 font-bold text-sm rounded-lg hover:bg-slate-200 transition-colors"
             >
               Save
             </button>
@@ -2581,7 +2581,7 @@ function BuildDrillTab({
                 setTextInputId(null)
                 setTextInputValue('')
               }}
-              className="px-4 py-2 bg-[#2a2a2a] text-[#888] font-bold text-sm rounded-lg hover:text-white transition-colors"
+              className="px-4 py-2 bg-slate-50 text-slate-500 font-bold text-sm rounded-lg hover:text-slate-900 transition-colors"
             >
               Cancel
             </button>
@@ -2593,7 +2593,7 @@ function BuildDrillTab({
       <div className="relative">
         <button
           onClick={() => setShowModeDropdown(!showModeDropdown)}
-          className="w-full bg-[#2a2a2a] rounded-lg p-4 border-l-4 border-[#FF6B35] text-left"
+          className="w-full bg-slate-50 rounded-lg p-4 border-l-4 border-[#FF6B35] text-left"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -2602,13 +2602,13 @@ function BuildDrillTab({
               {drillMode === 'time' && <Timer className="w-6 h-6 text-blue-500" />}
               {drillMode === 'streak' && <Flame className="w-6 h-6 text-orange-500" />}
               <div>
-                <h3 className="text-white font-black text-xl italic uppercase">
+                <h3 className="text-slate-900 font-black text-xl italic uppercase">
                   {drillMode === 'attempts' && 'Attempts Mode'}
                   {drillMode === 'made' && 'Made Mode'}
                   {drillMode === 'time' && 'Time Mode'}
                   {drillMode === 'streak' && 'Streak Mode'}
                 </h3>
-                <p className="text-[#888] text-sm uppercase tracking-wider">
+                <p className="text-slate-500 text-sm uppercase tracking-wider">
                   {drillMode === 'attempts' && 'Take a set number of shots'}
                   {drillMode === 'made' && 'Make a set number of shots'}
                   {drillMode === 'time' && 'Shoot for a fixed amount of time'}
@@ -2616,58 +2616,58 @@ function BuildDrillTab({
                 </p>
               </div>
             </div>
-            <ChevronDown className={`w-6 h-6 text-[#888] transition-transform ${showModeDropdown ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`w-6 h-6 text-slate-500 transition-transform ${showModeDropdown ? 'rotate-180' : ''}`} />
           </div>
         </button>
         
         {/* Dropdown Menu */}
         {showModeDropdown && (
-          <div className="absolute top-full left-0 right-0 mt-2 bg-[#2a2a2a] rounded-lg border border-[#3a3a3a] overflow-hidden z-50 shadow-xl">
+          <div className="absolute top-full left-0 right-0 mt-2 bg-slate-50 rounded-lg border border-slate-200 overflow-hidden z-50 shadow-xl">
             {/* Attempts Mode */}
             <button
               onClick={() => { setDrillMode('attempts'); setShowModeDropdown(false); }}
-              className={`w-full p-4 text-left flex items-center gap-3 hover:bg-[#3a3a3a] transition-colors ${drillMode === 'attempts' ? 'bg-[#3a3a3a] border-l-4 border-[#FF6B35]' : ''}`}
+              className={`w-full p-4 text-left flex items-center gap-3 hover:bg-slate-100 transition-colors ${drillMode === 'attempts' ? 'bg-slate-100 border-l-4 border-[#FF6B35]' : ''}`}
             >
               <Target className="w-5 h-5 text-[#FF6B35]" />
               <div>
-                <p className="text-white font-bold">Attempts Mode</p>
-                <p className="text-[#888] text-xs">Take a set number of shots</p>
+                <p className="text-slate-900 font-bold">Attempts Mode</p>
+                <p className="text-slate-500 text-xs">Take a set number of shots</p>
               </div>
             </button>
             
             {/* Made Mode */}
             <button
               onClick={() => { setDrillMode('made'); setShowModeDropdown(false); }}
-              className={`w-full p-4 text-left flex items-center gap-3 hover:bg-[#3a3a3a] transition-colors border-t border-[#3a3a3a] ${drillMode === 'made' ? 'bg-[#3a3a3a] border-l-4 border-green-500' : ''}`}
+              className={`w-full p-4 text-left flex items-center gap-3 hover:bg-slate-100 transition-colors border-t border-slate-200 ${drillMode === 'made' ? 'bg-slate-100 border-l-4 border-green-500' : ''}`}
             >
               <Check className="w-5 h-5 text-green-500" />
               <div>
-                <p className="text-white font-bold">Made Mode</p>
-                <p className="text-[#888] text-xs">Make a set number of shots</p>
+                <p className="text-slate-900 font-bold">Made Mode</p>
+                <p className="text-slate-500 text-xs">Make a set number of shots</p>
               </div>
             </button>
             
             {/* Time Mode */}
             <button
               onClick={() => { setDrillMode('time'); setShowModeDropdown(false); }}
-              className={`w-full p-4 text-left flex items-center gap-3 hover:bg-[#3a3a3a] transition-colors border-t border-[#3a3a3a] ${drillMode === 'time' ? 'bg-[#3a3a3a] border-l-4 border-blue-500' : ''}`}
+              className={`w-full p-4 text-left flex items-center gap-3 hover:bg-slate-100 transition-colors border-t border-slate-200 ${drillMode === 'time' ? 'bg-slate-100 border-l-4 border-blue-500' : ''}`}
             >
               <Timer className="w-5 h-5 text-blue-500" />
               <div>
-                <p className="text-white font-bold">Time Mode</p>
-                <p className="text-[#888] text-xs">Shoot for a fixed amount of time</p>
+                <p className="text-slate-900 font-bold">Time Mode</p>
+                <p className="text-slate-500 text-xs">Shoot for a fixed amount of time</p>
               </div>
             </button>
             
             {/* Streak Mode */}
             <button
               onClick={() => { setDrillMode('streak'); setShowModeDropdown(false); }}
-              className={`w-full p-4 text-left flex items-center gap-3 hover:bg-[#3a3a3a] transition-colors border-t border-[#3a3a3a] ${drillMode === 'streak' ? 'bg-[#3a3a3a] border-l-4 border-orange-500' : ''}`}
+              className={`w-full p-4 text-left flex items-center gap-3 hover:bg-slate-100 transition-colors border-t border-slate-200 ${drillMode === 'streak' ? 'bg-slate-100 border-l-4 border-orange-500' : ''}`}
             >
               <Flame className="w-5 h-5 text-orange-500" />
               <div>
-                <p className="text-white font-bold">Streak Mode</p>
-                <p className="text-[#888] text-xs">Make shots in a row before moving</p>
+                <p className="text-slate-900 font-bold">Streak Mode</p>
+                <p className="text-slate-500 text-xs">Make shots in a row before moving</p>
               </div>
             </button>
           </div>
@@ -2683,66 +2683,66 @@ function BuildDrillTab({
       )}
       
       {drillMode === 'streak' && (
-        <div className="bg-[#2a2a2a] rounded-lg p-4 flex items-center justify-between">
+        <div className="bg-slate-50 rounded-lg p-4 flex items-center justify-between">
           <button 
             onClick={() => setStreakTarget(Math.max(2, streakTarget - 1))}
-            className="w-10 h-10 rounded-full bg-[#1a1a1a] flex items-center justify-center"
+            className="w-10 h-10 rounded-full bg-white flex items-center justify-center"
           >
-            <Minus className="w-5 h-5 text-white" />
+            <Minus className="w-5 h-5 text-slate-700" />
           </button>
           <div className="text-center">
-            <p className="text-white text-3xl font-black">{streakTarget}</p>
-            <p className="text-[#888] text-xs uppercase tracking-wider">In a Row</p>
+            <p className="text-slate-900 text-3xl font-black">{streakTarget}</p>
+            <p className="text-slate-500 text-xs uppercase tracking-wider">In a Row</p>
           </div>
           <button 
             onClick={() => setStreakTarget(streakTarget + 1)}
-            className="w-10 h-10 rounded-full bg-[#1a1a1a] flex items-center justify-center"
+            className="w-10 h-10 rounded-full bg-white flex items-center justify-center"
           >
-            <Plus className="w-5 h-5 text-white" />
+            <Plus className="w-5 h-5 text-slate-700" />
           </button>
         </div>
       )}
       
       {/* Balls Per Spot */}
-      <div className="bg-[#2a2a2a] rounded-lg p-4 flex items-center justify-between">
+      <div className="bg-slate-50 rounded-lg p-4 flex items-center justify-between">
         <button
           onClick={() => setBallsPerSpot(Math.max(1, ballsPerSpot - 1))}
-          className="w-14 h-14 rounded-full bg-[#3a3a3a] flex items-center justify-center hover:bg-[#4a4a4a] transition-colors"
+          className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors"
         >
-          <Minus className="w-6 h-6 text-white" />
+          <Minus className="w-6 h-6 text-slate-700" />
         </button>
         <div className="text-center">
-          <div className="text-white font-black text-4xl">{ballsPerSpot}</div>
-          <div className="text-[#888] text-sm uppercase tracking-wider">Balls Per Spot</div>
+          <div className="text-slate-900 font-black text-4xl">{ballsPerSpot}</div>
+          <div className="text-slate-500 text-sm uppercase tracking-wider">Balls Per Spot</div>
         </div>
         <button
           onClick={() => setBallsPerSpot(Math.min(20, ballsPerSpot + 1))}
-          className="w-14 h-14 rounded-full bg-[#3a3a3a] flex items-center justify-center hover:bg-[#4a4a4a] transition-colors"
+          className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors"
         >
-          <Plus className="w-6 h-6 text-white" />
+          <Plus className="w-6 h-6 text-slate-700" />
         </button>
       </div>
       
       {/* Shots to Take - only for attempts and made modes */}
       {(drillMode === 'attempts' || drillMode === 'made') && (
-        <div className="bg-[#2a2a2a] rounded-lg p-4 flex items-center justify-between">
+        <div className="bg-slate-50 rounded-lg p-4 flex items-center justify-between">
           <button
             onClick={() => setShotsToTake(Math.max(10, shotsToTake - 10))}
-            className="w-14 h-14 rounded-full bg-[#3a3a3a] flex items-center justify-center hover:bg-[#4a4a4a] transition-colors"
+            className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors"
           >
-            <Minus className="w-6 h-6 text-white" />
+            <Minus className="w-6 h-6 text-slate-700" />
           </button>
           <div className="text-center">
-            <div className="text-white font-black text-4xl">{shotsToTake}</div>
-            <div className="text-[#888] text-sm uppercase tracking-wider">
+            <div className="text-slate-900 font-black text-4xl">{shotsToTake}</div>
+            <div className="text-slate-500 text-sm uppercase tracking-wider">
               {drillMode === 'attempts' ? 'Shots to Take' : 'Shots to Make'}
             </div>
           </div>
           <button
             onClick={() => setShotsToTake(Math.min(200, shotsToTake + 10))}
-            className="w-14 h-14 rounded-full bg-[#3a3a3a] flex items-center justify-center hover:bg-[#4a4a4a] transition-colors"
+            className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors"
           >
-            <Plus className="w-6 h-6 text-white" />
+            <Plus className="w-6 h-6 text-slate-700" />
           </button>
         </div>
       )}
@@ -2763,7 +2763,7 @@ function BuildDrillTab({
             className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${
               timeLimitSeconds === seconds 
                 ? 'bg-blue-500 text-white' 
-                : 'bg-[#1a1a1a] text-[#888] hover:text-white hover:bg-[#3a3a3a]'
+                : 'bg-white text-slate-500 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
             {seconds < 60 ? `${seconds}s` : `${seconds / 60}m`}
@@ -2772,10 +2772,10 @@ function BuildDrillTab({
       </div>
       
       {/* Number of Sets */}
-      <div className="bg-[#2a2a2a] rounded-lg p-4">
+      <div className="bg-slate-50 rounded-lg p-4">
         <div className="flex items-center gap-2 mb-3">
           <RotateCcw className="w-5 h-5 text-[#FF6B35]" />
-          <span className="text-white font-bold text-sm uppercase tracking-wider">Sets</span>
+          <span className="text-slate-900 font-bold text-sm uppercase tracking-wider">Sets</span>
           {isDrillActive && (
             <span className="ml-auto px-2 py-0.5 bg-[#FF6B35]/20 rounded text-[#FF6B35] text-xs font-bold">
               Set {currentSet}/{numberOfSets}
@@ -2785,38 +2785,38 @@ function BuildDrillTab({
         <div className="flex items-center justify-between">
           <button
             onClick={() => setNumberOfSets(Math.max(1, numberOfSets - 1))}
-            className="w-12 h-12 rounded-full bg-[#3a3a3a] flex items-center justify-center hover:bg-[#4a4a4a] transition-colors"
+            className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors"
           >
-            <Minus className="w-5 h-5 text-white" />
+            <Minus className="w-5 h-5 text-slate-700" />
           </button>
           <div className="text-center flex-1">
-            <div className="text-white font-black text-4xl">{numberOfSets}</div>
-            <div className="text-[#888] text-sm uppercase tracking-wider">Sets</div>
+            <div className="text-slate-900 font-black text-4xl">{numberOfSets}</div>
+            <div className="text-slate-500 text-sm uppercase tracking-wider">Sets</div>
           </div>
           <button
             onClick={() => setNumberOfSets(Math.min(10, numberOfSets + 1))}
-            className="w-12 h-12 rounded-full bg-[#3a3a3a] flex items-center justify-center hover:bg-[#4a4a4a] transition-colors"
+            className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors"
           >
-            <Plus className="w-5 h-5 text-white" />
+            <Plus className="w-5 h-5 text-slate-700" />
           </button>
         </div>
         {numberOfSets > 1 && (
-          <div className="mt-4 pt-4 border-t border-[#3a3a3a]">
+          <div className="mt-4 pt-4 border-t border-slate-200">
             <div className="flex items-center justify-between">
-              <span className="text-[#888] text-sm">Rest Between Sets</span>
+              <span className="text-slate-500 text-sm">Rest Between Sets</span>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setRestBetweenSets(Math.max(10, restBetweenSets - 10))}
-                  className="w-8 h-8 rounded-full bg-[#3a3a3a] flex items-center justify-center hover:bg-[#4a4a4a] transition-colors"
+                  className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors"
                 >
-                  <Minus className="w-4 h-4 text-white" />
+                  <Minus className="w-4 h-4 text-slate-700" />
                 </button>
-                <span className="text-white font-bold w-16 text-center">{restBetweenSets}s</span>
+                <span className="text-slate-900 font-bold w-16 text-center">{restBetweenSets}s</span>
                 <button
                   onClick={() => setRestBetweenSets(Math.min(120, restBetweenSets + 10))}
-                  className="w-8 h-8 rounded-full bg-[#3a3a3a] flex items-center justify-center hover:bg-[#4a4a4a] transition-colors"
+                  className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors"
                 >
-                  <Plus className="w-4 h-4 text-white" />
+                  <Plus className="w-4 h-4 text-slate-700" />
                 </button>
               </div>
             </div>
@@ -2826,32 +2826,32 @@ function BuildDrillTab({
       
       {/* Spot Intervals - Shows each spot with its position name */}
       {spots.length > 0 && (
-        <div className="bg-[#2a2a2a] rounded-lg p-4">
+        <div className="bg-slate-50 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-3">
             <MapPin className="w-5 h-5 text-[#FF6B35]" />
-            <span className="text-white font-bold text-sm uppercase tracking-wider">Spot Intervals</span>
-            <span className="ml-auto text-[#888] text-xs">{spots.length} positions</span>
+            <span className="text-slate-900 font-bold text-sm uppercase tracking-wider">Spot Intervals</span>
+            <span className="ml-auto text-slate-500 text-xs">{spots.length} positions</span>
           </div>
           <div className="space-y-2 max-h-48 overflow-y-auto">
             {spots.map((spot, index) => (
               <div 
                 key={spot.id}
-                className={`flex items-center gap-3 p-3 rounded-lg bg-[#1a1a1a] border transition-colors ${
+                className={`flex items-center gap-3 p-3 rounded-lg bg-white border transition-colors ${
                   currentSpotIndex === index && isDrillActive 
                     ? 'border-[#FF6B35] bg-[#FF6B35]/10' 
-                    : 'border-[#3a3a3a] hover:border-[#4a4a4a]'
+                    : 'border-slate-200 hover:border-slate-200'
                 }`}
               >
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm ${
                   currentSpotIndex === index && isDrillActive 
                     ? 'bg-[#FF6B35] text-white' 
-                    : 'bg-[#3a3a3a] text-white'
+                    : 'bg-slate-100 text-slate-700'
                 }`}>
                   {spot.order}
                 </div>
                 <div className="flex-1">
-                  <p className="text-white font-bold text-sm">{spot.name}</p>
-                  <p className="text-[#888] text-xs">{ballsPerSpot} shots per spot</p>
+                  <p className="text-slate-900 font-bold text-sm">{spot.name}</p>
+                  <p className="text-slate-500 text-xs">{ballsPerSpot} shots per spot</p>
                 </div>
                 {isDrillActive && currentSpotIndex === index && (
                   <div className="flex items-center gap-1 text-[#FF6B35]">
@@ -2869,9 +2869,9 @@ function BuildDrillTab({
                         ))
                       }
                     }}
-                    className="p-2 rounded-lg bg-[#3a3a3a] hover:bg-[#4a4a4a] transition-colors"
+                    className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 transition-colors"
                   >
-                    <Edit2 className="w-4 h-4 text-[#888]" />
+                    <Edit2 className="w-4 h-4 text-slate-500" />
                   </button>
                 )}
               </div>
@@ -2961,28 +2961,28 @@ function InstructionsTab({ drill, keyPoints, timeLimitSeconds, numberOfSets, spo
   return (
     <div className="p-4 space-y-6">
       {/* Focus Area Section */}
-      <div className="bg-[#2a2a2a] rounded-lg p-4 border-l-4 border-[#FF6B35]">
+      <div className="bg-slate-50 rounded-lg p-4 border-l-4 border-[#FF6B35]">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-[#FF6B35]/20 flex items-center justify-center">
             <Target className="w-5 h-5 text-[#FF6B35]" />
           </div>
           <div>
-            <p className="text-[#888] text-xs uppercase tracking-wider">FOCUS</p>
+            <p className="text-slate-500 text-xs uppercase tracking-wider">FOCUS</p>
             <p className="text-[#FF6B35] font-bold uppercase">{FOCUS_AREA_LABELS[drill.focusArea]}</p>
           </div>
         </div>
       </div>
       
       {/* Duration - Tied to Drill tab timer */}
-      <div className="bg-[#2a2a2a] rounded-lg p-4">
+      <div className="bg-slate-50 rounded-lg p-4">
         <div className="grid grid-cols-3 gap-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
               <Timer className="w-5 h-5 text-blue-500" />
             </div>
             <div>
-              <p className="text-[#888] text-xs uppercase tracking-wider">DURATION</p>
-              <p className="text-white font-bold">
+              <p className="text-slate-500 text-xs uppercase tracking-wider">DURATION</p>
+              <p className="text-slate-900 font-bold">
                 {timeLimitSeconds >= 60 
                   ? `${Math.floor(timeLimitSeconds / 60)}:${(timeLimitSeconds % 60).toString().padStart(2, '0')}`
                   : `${timeLimitSeconds}s`
@@ -2995,8 +2995,8 @@ function InstructionsTab({ drill, keyPoints, timeLimitSeconds, numberOfSets, spo
               <RotateCcw className="w-5 h-5 text-[#FF6B35]" />
             </div>
             <div>
-              <p className="text-[#888] text-xs uppercase tracking-wider">SETS</p>
-              <p className="text-white font-bold">{numberOfSets}</p>
+              <p className="text-slate-500 text-xs uppercase tracking-wider">SETS</p>
+              <p className="text-slate-900 font-bold">{numberOfSets}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -3004,27 +3004,27 @@ function InstructionsTab({ drill, keyPoints, timeLimitSeconds, numberOfSets, spo
               <MapPin className="w-5 h-5 text-green-500" />
             </div>
             <div>
-              <p className="text-[#888] text-xs uppercase tracking-wider">SPOTS</p>
-              <p className="text-white font-bold">{spots.length} × {ballsPerSpot}</p>
+              <p className="text-slate-500 text-xs uppercase tracking-wider">SPOTS</p>
+              <p className="text-slate-900 font-bold">{spots.length} × {ballsPerSpot}</p>
             </div>
           </div>
         </div>
       </div>
       
       {/* Coach's Instructions - Editable & Draggable */}
-      <div className="bg-[#2a2a2a] rounded-lg p-4">
+      <div className="bg-slate-50 rounded-lg p-4">
         <h3 className="text-[#FF6B35] font-bold mb-4 flex items-center gap-3 uppercase text-lg">
           <img 
             src="/icons/coach-feedback.png" 
             alt="Coach" 
             className="w-12 h-12"
-            style={{ filter: 'invert(1) brightness(2)' }}
+            style={{ filter: 'none' }}
             onError={(e) => {
               (e.target as HTMLImageElement).style.display = 'none'
             }}
           />
           COACH&apos;S INSTRUCTIONS
-          <span className="ml-auto text-xs text-[#888] font-normal normal-case">Drag to reorder</span>
+          <span className="ml-auto text-xs text-slate-500 font-normal normal-case">Drag to reorder</span>
         </h3>
         <div className="space-y-3">
           {customInstructions.map((step, i) => (
@@ -3034,12 +3034,12 @@ function InstructionsTab({ drill, keyPoints, timeLimitSeconds, numberOfSets, spo
               onDragStart={() => handleDragStart(i)}
               onDragOver={(e) => handleDragOver(e, i)}
               onDragEnd={handleDragEnd}
-              className={`flex items-start gap-3 p-3 rounded-lg bg-[#1a1a1a] border cursor-move transition-all ${
-                draggedIndex === i ? 'border-[#FF6B35] bg-[#FF6B35]/10 opacity-50' : 'border-[#3a3a3a] hover:border-[#4a4a4a]'
+              className={`flex items-start gap-3 p-3 rounded-lg bg-white border cursor-move transition-all ${
+                draggedIndex === i ? 'border-[#FF6B35] bg-[#FF6B35]/10 opacity-50' : 'border-slate-200 hover:border-slate-200'
               }`}
             >
               <div className="flex items-center gap-2">
-                <Grip className="w-4 h-4 text-[#555]" />
+                <Grip className="w-4 h-4 text-slate-500" />
                 <span className="font-russo text-xl font-bold text-[#FF6B35] w-6 text-center">
                   {i + 1}
                 </span>
@@ -3050,7 +3050,7 @@ function InstructionsTab({ drill, keyPoints, timeLimitSeconds, numberOfSets, spo
                     type="text"
                     value={editValue}
                     onChange={(e) => setEditValue(e.target.value)}
-                    className="flex-1 bg-[#0a0a0a] border border-[#3a3a3a] rounded px-3 py-1 text-white text-sm focus:outline-none focus:border-[#FF6B35]"
+                    className="flex-1 bg-slate-50 border border-slate-200 rounded px-3 py-1 text-slate-700 text-sm focus:outline-none focus:border-[#FF6B35]"
                     autoFocus
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') saveEdit()
@@ -3072,19 +3072,19 @@ function InstructionsTab({ drill, keyPoints, timeLimitSeconds, numberOfSets, spo
                 </div>
               ) : (
                 <>
-                  <p className="flex-1 text-[#E5E5E5] leading-relaxed text-sm">{step}</p>
+                  <p className="flex-1 text-slate-700 leading-relaxed text-sm">{step}</p>
                   <div className="flex gap-1">
                     <button
                       onClick={() => startEditing(i)}
-                      className="p-1.5 rounded bg-[#3a3a3a] hover:bg-[#4a4a4a] transition-colors"
+                      className="p-1.5 rounded bg-slate-100 hover:bg-slate-200 transition-colors"
                     >
-                      <Edit2 className="w-3 h-3 text-[#888]" />
+                      <Edit2 className="w-3 h-3 text-slate-500" />
                     </button>
                     <button
                       onClick={() => deleteInstruction(i)}
-                      className="p-1.5 rounded bg-[#3a3a3a] hover:bg-red-500/20 hover:text-red-400 transition-colors"
+                      className="p-1.5 rounded bg-slate-100 hover:bg-red-500/20 hover:text-red-400 transition-colors"
                     >
-                      <Trash2 className="w-3 h-3 text-[#888]" />
+                      <Trash2 className="w-3 h-3 text-slate-500" />
                     </button>
                   </div>
                 </>
@@ -3099,7 +3099,7 @@ function InstructionsTab({ drill, keyPoints, timeLimitSeconds, numberOfSets, spo
               value={newInstruction}
               onChange={(e) => setNewInstruction(e.target.value)}
               placeholder="Add new instruction..."
-              className="flex-1 bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-[#FF6B35] placeholder:text-[#555]"
+              className="flex-1 bg-white border border-slate-200 rounded-lg px-4 py-3 text-slate-700 text-sm focus:outline-none focus:border-[#FF6B35] placeholder:text-slate-500"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') addInstruction()
               }}
@@ -3116,7 +3116,7 @@ function InstructionsTab({ drill, keyPoints, timeLimitSeconds, numberOfSets, spo
       </div>
       
       {/* Key Points - AI Generated */}
-      <div className="bg-[#2a2a2a] rounded-lg p-4">
+      <div className="bg-slate-50 rounded-lg p-4">
         <h3 className="text-[#FF6B35] font-bold mb-4 flex items-center gap-2 uppercase">
           <Check className="w-5 h-5" />
           KEY POINTS - DO IT RIGHT
@@ -3127,18 +3127,18 @@ function InstructionsTab({ drill, keyPoints, timeLimitSeconds, numberOfSets, spo
         </h3>
         <div className="space-y-3">
           {keyPoints.map((point, i) => (
-            <div key={i} className="flex items-center gap-3 bg-[#1a1a1a] rounded-lg p-3">
+            <div key={i} className="flex items-center gap-3 bg-white rounded-lg p-3">
               <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
                 <Check className="w-4 h-4 text-green-400" />
               </div>
-              <span className="text-[#E5E5E5] text-sm">{point}</span>
+              <span className="text-slate-700 text-sm">{point}</span>
             </div>
           ))}
         </div>
       </div>
       
       {/* Pro Tips - AI Generated */}
-      <div className="bg-[#2a2a2a] rounded-lg p-4">
+      <div className="bg-slate-50 rounded-lg p-4">
         <h3 className="text-[#FF6B35] font-bold mb-4 flex items-center gap-2 uppercase">
           <Star className="w-5 h-5" />
           PRO TIPS
@@ -3150,18 +3150,18 @@ function InstructionsTab({ drill, keyPoints, timeLimitSeconds, numberOfSets, spo
         <ul className="space-y-3">
           <li className="flex items-start gap-3">
             <div className="w-2 h-2 rounded-full bg-[#FF6B35] flex-shrink-0 mt-2" />
-            <span className="text-[#888] text-sm">{drill.whyItMatters}</span>
+            <span className="text-slate-500 text-sm">{drill.whyItMatters}</span>
           </li>
           {drill.technicalNote && (
             <li className="flex items-start gap-3">
               <div className="w-2 h-2 rounded-full bg-[#FF6B35] flex-shrink-0 mt-2" />
-              <span className="text-[#888] text-sm">{drill.technicalNote}</span>
+              <span className="text-slate-500 text-sm">{drill.technicalNote}</span>
             </li>
           )}
           {drill.expectedOutcomes.slice(0, 2).map((outcome, i) => (
             <li key={i} className="flex items-start gap-3">
               <div className="w-2 h-2 rounded-full bg-[#FF6B35] flex-shrink-0 mt-2" />
-              <span className="text-[#888] text-sm">{outcome}</span>
+              <span className="text-slate-500 text-sm">{outcome}</span>
             </li>
           ))}
         </ul>

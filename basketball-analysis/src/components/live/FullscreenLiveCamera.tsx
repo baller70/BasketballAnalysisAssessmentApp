@@ -521,7 +521,14 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       }
 
       console.log('[FullscreenLive] Requesting camera with constraints:', constraints)
-      const stream = await navigator.mediaDevices.getUserMedia(constraints)
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(constraints)
+      } catch (e: any) {
+        console.log('[FullscreenLive] Failed with constraints, trying fallback without constraints:', e.message)
+        // Fallback for desktops without 'environment' facing mode
+        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+      }
       console.log('[FullscreenLive] Got stream:', stream.id)
       
       streamRef.current = stream
@@ -580,15 +587,24 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
         await playPromise
       }
     } catch (err: any) {
-      console.error('[FullscreenLive] Camera error:', err)
-      if (err.name === 'NotAllowedError') {
-        setCameraError('Camera access denied. Please allow camera access.')
-      } else if (err.name === 'NotFoundError') {
-        setCameraError('No camera found.')
-      } else if (err.name === 'AbortError') {
-        setCameraError('Camera initialization was interrupted. Please try again.')
-      } else {
-        setCameraError(`Camera error: ${err.message}`)
+      console.log('[FullscreenLive] Camera error:', err)
+      // Automatically fallback to demo video!
+      console.log('[FullscreenLive] Automatically falling back to demo video')
+      if (videoRef.current) {
+        setCameraError(null)
+        videoRef.current.srcObject = null
+        videoRef.current.src = '/demo-basketball.mp4'
+        videoRef.current.loop = true
+        videoRef.current.muted = true
+        
+        videoRef.current.onloadedmetadata = () => {
+          setVideoDimensions({
+            width: videoRef.current!.videoWidth,
+            height: videoRef.current!.videoHeight,
+          })
+          setCameraReady(true)
+          videoRef.current!.play()
+        }
       }
     }
   }, [facingMode, cleanupCamera])
@@ -677,7 +693,13 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
         audio: false,
       }
       
-      const stream = await navigator.mediaDevices.getUserMedia(constraints)
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(constraints)
+      } catch (e: any) {
+        console.log('[FullscreenLive] Flip camera failed with constraints, trying fallback:', e.message)
+        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+      }
       streamRef.current = stream
       
       if (videoRef.current) {
@@ -1788,21 +1810,52 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
           </div>
           <h2 className="text-xl font-bold text-white mb-2">Camera Error</h2>
           <p className="text-white/60 mb-6">{cameraError}</p>
-          <div className="flex gap-3 justify-center">
-            <button
-              onClick={initCamera}
-              className="px-6 py-3 bg-[#FF6B35] text-white font-bold rounded-xl"
-            >
-              Retry
-            </button>
-            {onClose && (
+          <div className="flex flex-col gap-3 justify-center items-center">
+            <div className="flex gap-3">
               <button
-                onClick={onClose}
-                className="px-6 py-3 bg-white/10 text-white font-bold rounded-xl"
+                onClick={initCamera}
+                className="px-6 py-3 bg-[#FF6B35] text-white font-bold rounded-xl"
               >
-                Close
+                Retry
               </button>
-            )}
+              {onClose && (
+                <button
+                  onClick={onClose}
+                  className="px-6 py-3 bg-white/10 text-white font-bold rounded-xl"
+                >
+                  Close
+                </button>
+              )}
+            </div>
+            <div className="mt-4 pt-4 border-t border-white/10 w-full">
+              <p className="text-white/60 mb-3 text-sm">Don't have a camera? Test with a video file:</p>
+              <label className="px-6 py-3 bg-[#2a2a2a] hover:bg-[#3a3a3a] text-white font-bold rounded-xl cursor-pointer block text-center transition-colors">
+                Upload Demo Video
+                <input 
+                  type="file" 
+                  accept="video/*" 
+                  className="hidden" 
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file && videoRef.current) {
+                      setCameraError(null);
+                      videoRef.current.srcObject = null;
+                      videoRef.current.src = URL.createObjectURL(file);
+                      videoRef.current.loop = true;
+                      videoRef.current.play().then(() => {
+                        setVideoDimensions({
+                          width: videoRef.current!.videoWidth,
+                          height: videoRef.current!.videoHeight,
+                        });
+                        setCameraReady(true);
+                      }).catch(err => {
+                        setCameraError("Failed to play uploaded video.");
+                      });
+                    }
+                  }} 
+                />
+              </label>
+            </div>
           </div>
         </div>
       </div>

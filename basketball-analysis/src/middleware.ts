@@ -17,7 +17,10 @@ const PUBLIC_ROUTES = [
   '/test-basic-dashboard',
   '/test-sneakers',
   '/test-llm',
-  '/test-sneaker-badges'
+  '/test-sneaker-badges',
+  '/elite-shooters',
+  '/guide',
+  '/points'
 ]
 
 // Routes that require authentication

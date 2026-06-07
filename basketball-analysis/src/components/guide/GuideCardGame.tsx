@@ -656,7 +656,7 @@ function GuideCardComponent({ card, data, isActive, dragX }: GuideCardProps) {
       className={`relative w-full transition-all duration-300 ${isActive ? 'scale-100 opacity-100' : 'scale-95 opacity-50'}`}
     >
       {/* Card Container */}
-      <div className="relative bg-gradient-to-b from-[#1a1a1a] to-[#0d0d0d] rounded-3xl overflow-hidden border-2 shadow-2xl"
+      <div className="relative bg-white rounded-3xl overflow-hidden border-2 shadow-sm"
         style={{ borderColor: `${card.color}50` }}
       >
         {/* Left Swipe Indicator - Previous */}
@@ -738,7 +738,7 @@ function GuideCardComponent({ card, data, isActive, dragX }: GuideCardProps) {
         </div>
         
         {/* Banner */}
-        <div className="relative h-24 overflow-hidden" style={{ background: `linear-gradient(135deg, ${card.color}20, #1a1a1a, #1a1a1a)` }}>
+        <div className="relative h-24 overflow-hidden" style={{ background: `linear-gradient(135deg, ${card.color}15, #ffffff, #f8fafc)` }}>
           {/* Glowing Orbs Background */}
           <div className="absolute inset-0 opacity-40 pointer-events-none">
             <div 
@@ -754,8 +754,9 @@ function GuideCardComponent({ card, data, isActive, dragX }: GuideCardProps) {
           {/* Large Icon */}
           <div className="absolute inset-0 flex items-center justify-end pr-5">
             <div 
-              className="relative w-16 h-16 flex items-center justify-center text-white"
+              className="relative w-16 h-16 flex items-center justify-center" 
               style={{
+                color: card.color,
                 borderRadius: '50%',
                 boxShadow: `0 0 30px ${card.color}40, 0 0 60px ${card.color}20`
               }}
@@ -766,7 +767,7 @@ function GuideCardComponent({ card, data, isActive, dragX }: GuideCardProps) {
           
           {/* Title and Subtitle */}
           <div className="absolute inset-0 flex flex-col justify-center pl-5">
-            <h3 className="text-white font-black text-lg uppercase tracking-wider">{card.title}</h3>
+            <h3 className="text-slate-900 font-black text-lg uppercase tracking-wider">{card.title}</h3>
             <p className="text-xs font-semibold uppercase tracking-wider mt-0.5" style={{ color: card.color }}>{card.subtitle}</p>
           </div>
         </div>
@@ -779,16 +780,16 @@ function GuideCardComponent({ card, data, isActive, dragX }: GuideCardProps) {
               {isCorrect && <Check className="w-5 h-5 text-green-400" />}
               {isIncorrect && <X className="w-5 h-5 text-red-400" />}
               {isCompletion && <Trophy className="w-5 h-5 text-yellow-400" />}
-              <span className={`font-bold text-sm ${isCompletion ? 'text-yellow-400' : 'text-white'}`}>{data.title}</span>
+              <span className={`font-bold text-sm ${isCompletion ? 'text-yellow-600' : 'text-slate-900'}`}>{data.title}</span>
             </div>
             <div className="flex items-center gap-1">
               <ShotIQLogoIcon className="w-4 h-4" />
-              <span className="text-[#888] text-[10px] font-semibold">SHOTIQ AI</span>
+              <span className="text-slate-400 text-[10px] font-semibold">SHOTIQ AI</span>
             </div>
           </div>
           
           {/* Description */}
-          <p className="text-[#aaa] text-sm leading-relaxed">{data.description}</p>
+          <p className="text-slate-500 text-sm leading-relaxed">{data.description}</p>
           
           {/* Image Placeholder */}
           {data.imagePlaceholder && (
@@ -806,8 +807,8 @@ function GuideCardComponent({ card, data, isActive, dragX }: GuideCardProps) {
                     <Camera className="w-6 h-6" style={{ color: card.color }} />
                   )}
                 </div>
-                <p className="text-[#666] text-xs">{data.imageDescription}</p>
-                <p className="text-[#444] text-[10px] mt-1">(Image placeholder)</p>
+                <p className="text-slate-500 text-xs">{data.imageDescription}</p>
+                <p className="text-slate-400 text-[10px] mt-1">(Image placeholder)</p>
               </div>
             </div>
           )}
@@ -830,24 +831,24 @@ function GuideCardComponent({ card, data, isActive, dragX }: GuideCardProps) {
                     {isCompletion ? (
                       <>
                         {completionIcons[i] || <Check className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: card.color }} />}
-                        <span className="text-[#ccc]">{point}</span>
+                        <span className="text-slate-600">{point}</span>
                       </>
                     ) : isCorrect ? (
                       <>
                         <Check className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-                        <span className="text-[#ccc]">{point}</span>
+                        <span className="text-slate-600">{point}</span>
                       </>
                     ) : isIncorrect ? (
                       <>
                         <X className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
-                        <span className="text-[#ccc]">{point}</span>
+                        <span className="text-slate-600">{point}</span>
                       </>
                     ) : (
                       <>
                         <div className="w-4 h-4 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0" style={{ backgroundColor: card.color }}>
                           <span className="text-white text-[10px] font-bold">{i + 1}</span>
                         </div>
-                        <span className="text-[#ccc]">{point}</span>
+                        <span className="text-slate-600">{point}</span>
                       </>
                     )}
                   </li>
@@ -887,7 +888,7 @@ function GuideCardComponent({ card, data, isActive, dragX }: GuideCardProps) {
                 className="w-full py-3 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
                 style={{ 
                   background: `linear-gradient(135deg, ${card.color}, #FF6B35)`,
-                  color: '#000',
+                  color: '#fff',
                   boxShadow: `0 4px 20px ${card.color}40`
                 }}
                 onClick={() => {
@@ -903,7 +904,7 @@ function GuideCardComponent({ card, data, isActive, dragX }: GuideCardProps) {
         </div>
         
         {/* Footer */}
-        <div className="p-3 border-t border-[#2a2a2a] bg-[#0a0a0a]">
+        <div className="p-3 border-t border-slate-200 bg-slate-50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded overflow-hidden">
@@ -917,7 +918,7 @@ function GuideCardComponent({ card, data, isActive, dragX }: GuideCardProps) {
               </div>
               <span className="text-[#FF6B35] text-[10px] font-bold">SHOTIQ AI GUIDE</span>
             </div>
-            <span className="text-[#666] text-[10px]">shotiqai.com</span>
+            <span className="text-slate-400 text-[10px]">shotiqai.com</span>
           </div>
         </div>
       </div>
@@ -956,7 +957,7 @@ function CategoryFilter({ activeCategory, onCategoryChange }: CategoryFilterProp
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
             activeCategory === cat.id 
               ? 'text-white' 
-              : 'bg-[#1a1a1a] text-[#888] hover:text-white hover:bg-[#2a2a2a]'
+              : 'bg-white text-slate-500 border border-slate-200 hover:text-slate-900 hover:border-slate-300'
           }`}
           style={activeCategory === cat.id ? { backgroundColor: cat.color } : {}}
         >
@@ -1106,7 +1107,7 @@ export function GuideCardGame() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-white font-black text-xl uppercase tracking-wider flex items-center gap-2">
+          <h2 className="text-slate-900 font-black text-xl uppercase tracking-wider flex items-center gap-2">
             <BookOpen className="w-6 h-6 text-[#FF6B35]" />
             Guide
           </h2>
@@ -1115,9 +1116,9 @@ export function GuideCardGame() {
         
         <div className="flex items-center gap-3">
           {/* Points Display - Mini version */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-black/40 rounded-full border border-yellow-500/30">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 rounded-full border border-yellow-200">
             <Zap className="w-4 h-4 text-yellow-400" />
-            <span className="font-bold text-white text-sm">{pointsState.totalPoints}</span>
+            <span className="font-bold text-slate-900 text-sm">{pointsState.totalPoints}</span>
           </div>
           
           <button
@@ -1145,7 +1146,7 @@ export function GuideCardGame() {
                 : ''
             }`}
             style={{ 
-              backgroundColor: i === currentIndex ? card.color : '#333'
+              backgroundColor: i === currentIndex ? card.color : '#cbd5e1'
             }}
           />
         ))}
@@ -1189,20 +1190,20 @@ export function GuideCardGame() {
         <button
           onClick={goToPrev}
           disabled={currentIndex === 0}
-          className="flex items-center gap-2 px-4 py-2 bg-[#1a1a1a] border border-[#333] rounded-xl text-white font-semibold text-sm disabled:opacity-30 disabled:cursor-not-allowed hover:border-[#FF6B35]/50 transition-all"
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-700 font-semibold text-sm disabled:opacity-30 disabled:cursor-not-allowed hover:border-[#FF6B35]/50 hover:shadow-sm transition-all"
         >
           <ChevronLeft className="w-4 h-4" />
           Prev
         </button>
         
-        <span className="text-[#666] text-sm font-medium">
+        <span className="text-slate-400 text-sm font-medium">
           {currentIndex + 1} of {filteredCards.length}
         </span>
         
         <button
           onClick={goToNext}
           disabled={currentIndex === filteredCards.length - 1}
-          className="flex items-center gap-2 px-4 py-2 bg-[#1a1a1a] border border-[#333] rounded-xl text-white font-semibold text-sm disabled:opacity-30 disabled:cursor-not-allowed hover:border-[#FF6B35]/50 transition-all"
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-700 font-semibold text-sm disabled:opacity-30 disabled:cursor-not-allowed hover:border-[#FF6B35]/50 hover:shadow-sm transition-all"
         >
           Next
           <ChevronRight className="w-4 h-4" />
@@ -1213,24 +1214,24 @@ export function GuideCardGame() {
       <div className="grid grid-cols-3 gap-3">
         <button
           onClick={() => router.push('/upload?mode=image')}
-          className="flex flex-col items-center gap-2 p-4 bg-[#1a1a1a] border border-[#333] rounded-xl hover:border-[#3B82F6]/50 transition-all group"
+          className="flex flex-col items-center gap-2 p-4 bg-white border border-slate-200 rounded-xl hover:border-[#3B82F6]/50 hover:shadow-sm transition-all group"
         >
           <Camera className="w-6 h-6 text-[#3B82F6] group-hover:scale-110 transition-transform" />
-          <span className="text-white text-xs font-semibold">Upload Image</span>
+          <span className="text-slate-700 text-xs font-semibold">Upload Image</span>
         </button>
         <button
           onClick={() => router.push('/upload?mode=video')}
-          className="flex flex-col items-center gap-2 p-4 bg-[#1a1a1a] border border-[#333] rounded-xl hover:border-[#8B5CF6]/50 transition-all group"
+          className="flex flex-col items-center gap-2 p-4 bg-white border border-slate-200 rounded-xl hover:border-[#8B5CF6]/50 hover:shadow-sm transition-all group"
         >
           <Video className="w-6 h-6 text-[#8B5CF6] group-hover:scale-110 transition-transform" />
-          <span className="text-white text-xs font-semibold">Upload Video</span>
+          <span className="text-slate-700 text-xs font-semibold">Upload Video</span>
         </button>
         <button
           onClick={() => router.push('/live')}
-          className="flex flex-col items-center gap-2 p-4 bg-[#1a1a1a] border border-[#333] rounded-xl hover:border-[#F59E0B]/50 transition-all group"
+          className="flex flex-col items-center gap-2 p-4 bg-white border border-slate-200 rounded-xl hover:border-[#F59E0B]/50 hover:shadow-sm transition-all group"
         >
           <Radio className="w-6 h-6 text-[#F59E0B] group-hover:scale-110 transition-transform" />
-          <span className="text-white text-xs font-semibold">Go Live</span>
+          <span className="text-slate-700 text-xs font-semibold">Go Live</span>
         </button>
       </div>
     </div>

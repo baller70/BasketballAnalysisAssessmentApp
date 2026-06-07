@@ -734,17 +734,17 @@ export default function HistoricalDataSection() {
         {/* Section Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-white uppercase tracking-wider">Overview</h2>
-            <p className="text-[#888] text-sm">Your key performance metrics at a glance</p>
+            <h2 className="text-lg font-bold text-slate-900 uppercase tracking-wider">Overview</h2>
+            <p className="text-slate-500 text-sm">Your key performance metrics at a glance</p>
           </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a]">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200">
             <Calendar className="w-4 h-4 text-[#FF6B35]" />
-            <span className="text-[#888] text-sm font-medium">Last 90 Days</span>
+            <span className="text-slate-500 text-sm font-medium">Last 90 Days</span>
           </div>
         </div>
         
         {/* Stats Cards */}
-        <Card className="bg-gradient-to-br from-[#1a1a1a] via-[#222222] to-[#1a1a1a] border-[#2a2a2a] shadow-2xl overflow-hidden">
+        <Card className="bg-white border-slate-200 shadow-sm overflow-hidden">
           <CardContent className="p-0">
             {/* Premium Unified Stats Layout */}
             <div className="relative p-6 lg:p-8 overflow-hidden">
@@ -758,8 +758,8 @@ export default function HistoricalDataSection() {
             <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
               {/* Sessions - Hero Number */}
               <div className="lg:col-span-4 relative group">
-                <div className="relative bg-gradient-to-br from-[#1a1a1a]/80 via-[#252525]/80 to-[#1a1a1a]/80 backdrop-blur-xl rounded-3xl p-8 lg:p-10 border border-[#3a3a3a]/30 hover:border-[#FF6B35]/40 transition-all duration-500 overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent"></div>
+                <div className="relative bg-white rounded-3xl p-8 lg:p-10 border border-slate-200 hover:border-[#FF6B35]/40 transition-all duration-500 overflow-hidden shadow-sm">
+                  <div className="absolute inset-0 bg-gradient-to-br from-[#FF6B35]/[0.02] to-transparent"></div>
                   
                   <div className="relative mb-6">
                     <div className="flex items-baseline gap-2">
@@ -773,11 +773,11 @@ export default function HistoricalDataSection() {
                   </div>
                   
                   <div className="relative">
-                    <p className="text-sm font-bold text-[#888] uppercase tracking-[0.15em] mb-1">SESSIONS</p>
+                    <p className="text-sm font-bold text-slate-400 uppercase tracking-[0.15em] mb-1">SESSIONS</p>
                     <div className="h-0.5 w-16 bg-gradient-to-r from-[#FF6B35]/40 to-transparent"></div>
                   </div>
                   
-                  <div className="mt-6 pt-6 border-t border-[#3a3a3a]/30">
+                  <div className="mt-6 pt-6 border-t border-slate-200/50">
                     <div className="flex items-end gap-1 h-12">
                       {[...Array(8)].map((_, i) => (
                         <div 
@@ -793,12 +793,12 @@ export default function HistoricalDataSection() {
               
               {/* Avg Score - Circular Progress */}
               <div className="lg:col-span-3 relative group">
-                <div className="relative bg-gradient-to-br from-[#1a1a1a]/80 via-[#252525]/80 to-[#1a1a1a]/80 backdrop-blur-xl rounded-3xl p-8 lg:p-10 border border-[#3a3a3a]/30 hover:border-blue-500/40 transition-all duration-500 overflow-hidden h-full flex flex-col justify-between">
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent"></div>
+                <div className="relative bg-white rounded-3xl p-8 lg:p-10 border border-slate-200 hover:border-blue-500/40 transition-all duration-500 overflow-hidden h-full flex flex-col justify-between shadow-sm">
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/[0.02] to-transparent"></div>
                   
                   <div className="relative w-32 h-32 mx-auto mb-6">
                     <svg className="w-full h-full transform -rotate-90" viewBox="0 0 120 120">
-                      <circle cx="60" cy="60" r="50" fill="none" stroke="#3a3a3a" strokeWidth="8" />
+                      <circle cx="60" cy="60" r="50" fill="none" stroke="#e2e8f0" strokeWidth="8" />
                       <circle 
                         cx="60" cy="60" r="50" 
                         fill="none" 
@@ -817,14 +817,14 @@ export default function HistoricalDataSection() {
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="text-center">
-                        <span className="text-4xl font-black text-blue-400 tabular-nums leading-none block">{progressStats?.avgScore || 0}</span>
-                        <span className="text-lg font-bold text-blue-400/70">%</span>
+                        <span className="text-4xl font-black text-blue-600 tabular-nums leading-none block">{progressStats?.avgScore || 0}</span>
+                        <span className="text-lg font-bold text-blue-600/70">%</span>
                       </div>
                     </div>
                   </div>
                   
                   <div>
-                    <p className="text-sm font-bold text-[#888] uppercase tracking-[0.15em] mb-1">AVG SCORE</p>
+                    <p className="text-sm font-bold text-slate-400 uppercase tracking-[0.15em] mb-1">AVG SCORE</p>
                     <div className="h-0.5 w-16 bg-gradient-to-r from-blue-500/40 to-transparent"></div>
                   </div>
                 </div>
@@ -832,8 +832,8 @@ export default function HistoricalDataSection() {
               
               {/* Progress */}
               <div className="lg:col-span-3 relative group">
-                <div className="relative bg-gradient-to-br from-[#1a1a1a]/80 via-[#252525]/80 to-[#1a1a1a]/80 backdrop-blur-xl rounded-3xl p-8 lg:p-10 border border-[#3a3a3a]/30 hover:border-green-500/40 transition-all duration-500 overflow-hidden h-full flex flex-col justify-between">
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent"></div>
+                <div className="relative bg-white rounded-3xl p-8 lg:p-10 border border-slate-200 hover:border-green-500/40 transition-all duration-500 overflow-hidden h-full flex flex-col justify-between shadow-sm">
+                  <div className="absolute inset-0 bg-gradient-to-br from-green-500/[0.02] to-transparent"></div>
                   
                   <div className="mb-6">
                     <span className={`text-7xl lg:text-8xl font-black tabular-nums leading-none tracking-tight ${
@@ -852,7 +852,7 @@ export default function HistoricalDataSection() {
                       <TrendingUp className={`w-5 h-5 ${
                         (progressStats?.scoreChange || 0) >= 0 ? 'text-green-400' : 'text-red-400 rotate-180'
                       }`} />
-                      <p className="text-sm font-bold text-[#888] uppercase tracking-[0.15em]">PROGRESS</p>
+                      <p className="text-sm font-bold text-slate-400 uppercase tracking-[0.15em]">PROGRESS</p>
                     </div>
                     <div className={`h-0.5 w-16 bg-gradient-to-r ${
                       (progressStats?.scoreChange || 0) >= 0 ? 'from-green-500/40' : 'from-red-500/40'
@@ -863,14 +863,14 @@ export default function HistoricalDataSection() {
               
               {/* Trend */}
               <div className="lg:col-span-2 relative group">
-                <div className={`relative bg-gradient-to-br from-[#1a1a1a]/80 via-[#252525]/80 to-[#1a1a1a]/80 backdrop-blur-xl rounded-3xl p-8 lg:p-10 border transition-all duration-500 overflow-hidden h-full flex flex-col justify-center items-center ${
+                <div className={`relative bg-white rounded-3xl p-8 lg:p-10 border transition-all duration-500 overflow-hidden h-full flex flex-col justify-center items-center shadow-sm ${
                   progressStats?.trend === 'improving' 
                     ? 'border-green-500/30 hover:border-green-500/50' 
                     : progressStats?.trend === 'declining'
                     ? 'border-red-500/30 hover:border-red-500/50'
                     : 'border-orange-500/30 hover:border-orange-500/50'
                 }`}>
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent"></div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-slate-50/50 to-transparent"></div>
                   
                   <div className={`relative mb-6 px-6 py-4 rounded-2xl backdrop-blur-md border-2 ${
                     progressStats?.trend === 'improving' 
@@ -893,7 +893,7 @@ export default function HistoricalDataSection() {
                     </div>
                   </div>
                   
-                  <p className="text-sm font-bold text-[#888] uppercase tracking-[0.15em]">TREND</p>
+                  <p className="text-sm font-bold text-slate-400 uppercase tracking-[0.15em]">TREND</p>
                 </div>
               </div>
             </div>
@@ -908,8 +908,8 @@ export default function HistoricalDataSection() {
       <div className="space-y-4">
         {/* Section Header */}
         <div>
-          <h2 className="text-lg font-bold text-white uppercase tracking-wider">Detailed Analytics</h2>
-          <p className="text-[#888] text-sm">Explore your training history, performance trends, and activity patterns</p>
+          <h2 className="text-lg font-bold text-slate-900 uppercase tracking-wider">Detailed Analytics</h2>
+          <p className="text-slate-500 text-sm">Explore your training history, performance trends, and activity patterns</p>
         </div>
         
         {/* Tab Navigation */}
@@ -922,16 +922,16 @@ export default function HistoricalDataSection() {
           console.error('Error changing view mode:', error)
         }
       }} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-6 bg-[#1a1a1a] border border-[#2a2a2a] p-1 h-auto">
-          <TabsTrigger value="sessions" className="data-[state=active]:bg-[#FF6B35] data-[state=active]:text-[#1a1a1a] flex flex-col py-3 gap-0.5">
+        <TabsList className="grid w-full grid-cols-3 mb-6 bg-slate-100 border border-slate-200 p-1 h-auto">
+          <TabsTrigger value="sessions" className="data-[state=active]:bg-[#FF6B35] data-[state=active]:text-white flex flex-col py-3 gap-0.5">
             <span className="font-bold text-sm">Timeline</span>
             <span className="text-[10px] opacity-70 hidden sm:block">Session History</span>
           </TabsTrigger>
-          <TabsTrigger value="analytics" className="data-[state=active]:bg-[#FF6B35] data-[state=active]:text-[#1a1a1a] flex flex-col py-3 gap-0.5">
+          <TabsTrigger value="analytics" className="data-[state=active]:bg-[#FF6B35] data-[state=active]:text-white flex flex-col py-3 gap-0.5">
             <span className="font-bold text-sm">Charts</span>
             <span className="text-[10px] opacity-70 hidden sm:block">Performance Trends</span>
           </TabsTrigger>
-          <TabsTrigger value="heatmap" className="data-[state=active]:bg-[#FF6B35] data-[state=active]:text-[#1a1a1a] flex flex-col py-3 gap-0.5">
+          <TabsTrigger value="heatmap" className="data-[state=active]:bg-[#FF6B35] data-[state=active]:text-white flex flex-col py-3 gap-0.5">
             <span className="font-bold text-sm">Activity</span>
             <span className="text-[10px] opacity-70 hidden sm:block">Training Consistency</span>
           </TabsTrigger>
@@ -939,40 +939,40 @@ export default function HistoricalDataSection() {
         
         {/* TAB 1: SESSION TIMELINE */}
         <TabsContent value="sessions" className="mt-0">
-          <Card className="bg-[#1a1a1a] border-[#2a2a2a] shadow-xl overflow-hidden">
-            <CardHeader className="border-b border-[#2a2a2a]/50 bg-gradient-to-r from-[#1d1d1d] via-[#222] to-[#1d1d1d] pb-4">
+          <Card className="bg-white border-slate-200 shadow-sm overflow-hidden">
+            <CardHeader className="border-b border-slate-200 bg-slate-50 pb-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="relative">
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#FF6B35] via-[#FF4500] to-[#FF8C00] flex items-center justify-center shadow-lg shadow-[#FF6B35]/20">
-                      <Clock className="w-6 h-6 text-[#1a1a1a]" />
+                      <Clock className="w-6 h-6 text-white" />
                     </div>
-                    <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-green-500 border-2 border-[#1d1d1d] animate-pulse"></div>
+                    <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-green-500 border-2 border-white animate-pulse"></div>
                   </div>
                   <div>
-                    <CardTitle className="text-lg font-bold text-[#E5E5E5] tracking-tight">SESSION TIMELINE</CardTitle>
-                    <CardDescription className="text-[#888] text-sm">Your training journey at a glance</CardDescription>
+                    <CardTitle className="text-lg font-bold text-slate-900 tracking-tight">SESSION TIMELINE</CardTitle>
+                    <CardDescription className="text-slate-500 text-sm">Your training journey at a glance</CardDescription>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#252525]/80 border border-[#3a3a3a]/50 backdrop-blur-sm">
+                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-100 border border-slate-200">
                   <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                  <span className="text-xs font-medium text-[#888] uppercase tracking-wider">{(allSessionsData?.length || 0)} Sessions</span>
+                  <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">{(allSessionsData?.length || 0)} Sessions</span>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="p-0">
               {(!allSessionsData || allSessionsData.length === 0) ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center px-6">
-                  <div className="w-20 h-20 rounded-full bg-[#252525] flex items-center justify-center mb-4">
-                    <Clock className="w-10 h-10 text-[#555]" />
+                  <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+                    <Clock className="w-10 h-10 text-slate-300" />
                   </div>
-                  <p className="text-[#888] text-base font-medium mb-2">No Sessions Yet</p>
-                  <p className="text-[#555] text-sm">Complete your first analysis to start tracking progress</p>
+                  <p className="text-slate-500 text-base font-medium mb-2">No Sessions Yet</p>
+                  <p className="text-slate-400 text-sm">Complete your first analysis to start tracking progress</p>
                 </div>
               ) : (
                 <div className="relative">
                   <div className="relative max-w-6xl mx-auto py-8 px-4 md:px-6">
-                    <div className="absolute left-10 md:left-10 top-0 bottom-0 w-0.5 bg-gradient-to-b from-[#FF6B35] via-[#3a3a3a] to-transparent"></div>
+                    <div className="absolute left-10 md:left-10 top-0 bottom-0 w-0.5 bg-gradient-to-b from-[#FF6B35] via-slate-200 to-transparent"></div>
                     
                     <div className="space-y-12">
                       {((allSessionsData && Array.isArray(allSessionsData)) ? [...allSessionsData] : []).filter(s => s).reverse().slice(0, 8).map((session, index) => {
@@ -1012,9 +1012,9 @@ export default function HistoricalDataSection() {
                                   isFirst ? 'shadow-lg shadow-[#FF6B35]/40' : ''
                                 }`}
                                 style={{
-                                  backgroundColor: isFirst ? '#FF6B35' : '#1a1a1a',
+                                  backgroundColor: isFirst ? '#FF6B35' : '#ffffff',
                                   border: `3px solid ${theme.main}`,
-                                  color: isFirst ? '#1a1a1a' : theme.main
+                                  color: isFirst ? '#ffffff' : theme.main
                                 }}
                               >
                                 <div className="text-center leading-tight uppercase px-1 flex flex-col items-center justify-center">
@@ -1042,7 +1042,7 @@ export default function HistoricalDataSection() {
                             
                             <div className="flex-1 ml-8 md:ml-24">
                               <div 
-                                className={`relative bg-[#252525] rounded-xl p-4 md:p-6 shadow-xl transition-all duration-300 group-hover:shadow-2xl ${
+                                className={`relative bg-white rounded-xl p-4 md:p-6 shadow-sm transition-all duration-300 group-hover:shadow-md ${
                                   isFirst ? 'ring-2 ring-[#FF6B35]' : ''
                                 }`}
                                 style={{
@@ -1119,18 +1119,18 @@ export default function HistoricalDataSection() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-base font-bold text-white uppercase tracking-wider">Streak Statistics</h3>
-                <p className="text-[#888] text-xs">Track your training consistency and streaks</p>
+                <h3 className="text-base font-bold text-slate-900 uppercase tracking-wider">Streak Statistics</h3>
+                <p className="text-slate-500 text-xs">Track your training consistency and streaks</p>
               </div>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {/* Active Days Card */}
-                <Card className="bg-gradient-to-br from-[#1a1a1a] to-[#252525] border-[#3a3a3a] hover:border-green-500/30 transition-all overflow-hidden relative">
+                <Card className="bg-white border-slate-200 hover:border-green-500/30 transition-all overflow-hidden relative shadow-sm">
                   <CardContent className="p-5">
                     <div className="flex items-start justify-between mb-4">
                       <div>
-                        <h3 className="text-sm font-bold text-[#E5E5E5] mb-1">ACTIVE DAYS</h3>
-                        <p className="text-xs text-[#888]">Last 18 weeks</p>
+                        <h3 className="text-sm font-bold text-slate-900 mb-1">ACTIVE DAYS</h3>
+                        <p className="text-xs text-slate-500">Last 18 weeks</p>
                       </div>
                       <button className="text-[#888] hover:text-[#E5E5E5] transition-colors">
                         <MoreVertical className="w-4 h-4" />
@@ -1140,7 +1140,7 @@ export default function HistoricalDataSection() {
                     <div className="relative h-20 mb-4">
                       <svg className="w-full h-full" viewBox="0 0 200 60" preserveAspectRatio="none">
                         {[0, 15, 30, 45, 60].map((y) => (
-                          <line key={y} x1="0" y1={y} x2="200" y2={y} stroke="#3a3a3a" strokeWidth="0.5" />
+                          <line key={y} x1="0" y1={y} x2="200" y2={y} stroke="#e2e8f0" strokeWidth="0.5" />
                         ))}
                         <polyline
                           points={Array.from({ length: 8 }, (_, i) => {
@@ -1168,13 +1168,13 @@ export default function HistoricalDataSection() {
                     
                     <div className="mb-4">
                       <div className="flex items-center justify-between mb-1">
-                        <div className="h-2 bg-[#3a3a3a] rounded-full flex-1 mr-2">
+                        <div className="h-2 bg-slate-100 rounded-full flex-1 mr-2">
                           <div 
                             className="h-full bg-gradient-to-r from-green-500 to-green-400 rounded-full transition-all duration-500"
                             style={{ width: `${Math.min(100, (new Set(allSessionsData.map(s => new Date(s.date).toISOString().split('T')[0])).size / 10) * 100)}%` }}
                           ></div>
                         </div>
-                        <span className="text-xs font-medium text-[#888]">
+                        <span className="text-xs font-medium text-slate-500">
                           {Math.min(100, Math.round((new Set(allSessionsData.map(s => new Date(s.date).toISOString().split('T')[0])).size / 10) * 100))}%
                         </span>
                       </div>
@@ -1186,18 +1186,18 @@ export default function HistoricalDataSection() {
                           {new Set(allSessionsData.map(s => new Date(s.date).toISOString().split('T')[0])).size}
                         </span>
                       </div>
-                      <p className="text-xs text-[#888]">Compare to last week</p>
+                      <p className="text-xs text-slate-500">Compare to last week</p>
                     </div>
                   </CardContent>
                 </Card>
                 
                 {/* Current Streak Card */}
-                <Card className="bg-gradient-to-br from-[#1a1a1a] to-[#252525] border-[#3a3a3a] hover:border-orange-500/30 transition-all overflow-hidden relative">
+                <Card className="bg-white border-slate-200 hover:border-orange-500/30 transition-all overflow-hidden relative shadow-sm">
                   <CardContent className="p-5">
                     <div className="flex items-start justify-between mb-4">
                       <div>
-                        <h3 className="text-sm font-bold text-[#E5E5E5] mb-1">CURRENT STREAK</h3>
-                        <p className="text-xs text-[#888]">Last 18 weeks</p>
+                        <h3 className="text-sm font-bold text-slate-900 mb-1">CURRENT STREAK</h3>
+                        <p className="text-xs text-slate-500">Last 18 weeks</p>
                       </div>
                       <button className="text-[#888] hover:text-[#E5E5E5] transition-colors">
                         <MoreVertical className="w-4 h-4" />
@@ -1230,12 +1230,12 @@ export default function HistoricalDataSection() {
                 </Card>
                 
                 {/* Best Streak Card */}
-                <Card className="bg-gradient-to-br from-[#1a1a1a] to-[#252525] border-[#3a3a3a] hover:border-purple-500/30 transition-all overflow-hidden relative">
+                <Card className="bg-white border-slate-200 hover:border-purple-500/30 transition-all overflow-hidden relative shadow-sm">
                   <CardContent className="p-5">
                     <div className="flex items-start justify-between mb-4">
                       <div>
-                        <h3 className="text-sm font-bold text-[#E5E5E5] mb-1">BEST STREAK</h3>
-                        <p className="text-xs text-[#888]">Last 18 weeks</p>
+                        <h3 className="text-sm font-bold text-slate-900 mb-1">BEST STREAK</h3>
+                        <p className="text-xs text-slate-500">Last 18 weeks</p>
                       </div>
                       <button className="text-[#888] hover:text-[#E5E5E5] transition-colors">
                         <MoreVertical className="w-4 h-4" />
@@ -1274,12 +1274,12 @@ export default function HistoricalDataSection() {
                 </Card>
                 
                 {/* Avg/Week Card */}
-                <Card className="bg-gradient-to-br from-[#1a1a1a] to-[#252525] border-[#3a3a3a] hover:border-[#FF6B35]/30 transition-all overflow-hidden relative">
+                <Card className="bg-white border-slate-200 hover:border-[#FF6B35]/30 transition-all overflow-hidden relative shadow-sm">
                   <CardContent className="p-5">
                     <div className="flex items-start justify-between mb-4">
                       <div>
-                        <h3 className="text-sm font-bold text-[#E5E5E5] mb-1">AVG/WEEK</h3>
-                        <p className="text-xs text-[#888]">Last 18 weeks</p>
+                        <h3 className="text-sm font-bold text-slate-900 mb-1">AVG/WEEK</h3>
+                        <p className="text-xs text-slate-500">Last 18 weeks</p>
                       </div>
                       <button className="text-[#888] hover:text-[#E5E5E5] transition-colors">
                         <MoreVertical className="w-4 h-4" />
@@ -1292,7 +1292,7 @@ export default function HistoricalDataSection() {
                           {allSessionsData.length > 0 ? (Math.round(allSessionsData.length / 18 * 10) / 10).toFixed(1) : '0.0'}
                         </span>
                       </div>
-                      <p className="text-xs text-[#888]">Sessions</p>
+                      <p className="text-xs text-slate-500">Sessions</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -1303,13 +1303,13 @@ export default function HistoricalDataSection() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-base font-bold text-white uppercase tracking-wider">Activity Calendar</h3>
-                <p className="text-[#888] text-xs">Visual representation of your training frequency</p>
+                <h3 className="text-base font-bold text-slate-900 uppercase tracking-wider">Activity Calendar</h3>
+                <p className="text-slate-500 text-xs">Visual representation of your training frequency</p>
               </div>
-              <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a]">
-                <span className="text-[10px] font-medium text-[#666] uppercase tracking-wider">Intensity</span>
+              <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-slate-50 border border-slate-200">
+                <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Intensity</span>
                 <div className="flex items-center gap-0.5">
-                  <div className="w-3 h-3 rounded-[3px] bg-[#1a1a1a] border border-[#2a2a2a]" title="No activity"></div>
+                  <div className="w-3 h-3 rounded-[3px] bg-slate-100 border border-slate-200" title="No activity"></div>
                   <div className="w-3 h-3 rounded-[3px] bg-green-900/50" title="1 session"></div>
                   <div className="w-3 h-3 rounded-[3px] bg-green-700/70" title="2 sessions"></div>
                   <div className="w-3 h-3 rounded-[3px] bg-green-500" title="3+ sessions"></div>
@@ -1317,7 +1317,7 @@ export default function HistoricalDataSection() {
               </div>
             </div>
             
-            <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
+            <Card className="bg-white border-slate-200 shadow-sm">
               <CardContent className="p-5">
                 <div className="flex mb-3 pl-8">
                   {(() => {
@@ -1329,7 +1329,7 @@ export default function HistoricalDataSection() {
                       months.push(d.toLocaleDateString('en-US', { month: 'short' }))
                     }
                     return months.map((month, i) => (
-                      <div key={i} className="flex-1 text-[10px] text-[#555] font-medium">{month}</div>
+                      <div key={i} className="flex-1 text-[10px] text-slate-400 font-medium">{month}</div>
                     ))
                   })()}
                 </div>
@@ -1337,7 +1337,7 @@ export default function HistoricalDataSection() {
                 <div className="flex gap-1.5">
                   <div className="flex flex-col gap-1.5 pr-2">
                     {['', 'Mon', '', 'Wed', '', 'Fri', ''].map((day, i) => (
-                      <div key={i} className="h-[14px] text-[9px] text-[#555] font-medium flex items-center justify-end">{day}</div>
+                      <div key={i} className="h-[14px] text-[9px] text-slate-400 font-medium flex items-center justify-end">{day}</div>
                     ))}
                   </div>
                   
@@ -1355,7 +1355,7 @@ export default function HistoricalDataSection() {
                           )
                           const activityLevel = sessionsOnDay.length
                           
-                          let bgClass = 'bg-[#1a1a1a] border-[#252525]'
+                          let bgClass = 'bg-slate-100 border-slate-200'
                           let shadowClass = ''
                           if (activityLevel === 1) {
                             bgClass = 'bg-green-900/40 border-green-800/30'

@@ -484,8 +484,8 @@ function FrequencyInfoPopup({ frequency, onClose, onConfirm }: FrequencyPopupPro
   const data = FREQUENCY_RESEARCH[frequency]
   
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bg-[#1a1a1a] rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-[#3a3a3a] shadow-2xl">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-slate-200 shadow-lg">
         {/* Header */}
         <div className={`bg-gradient-to-r ${data.color} p-5 rounded-t-2xl`}>
           <div className="flex items-center justify-between">
@@ -505,21 +505,21 @@ function FrequencyInfoPopup({ frequency, onClose, onConfirm }: FrequencyPopupPro
         </div>
         
         {/* Stats */}
-        <div className="grid grid-cols-2 gap-3 p-4 border-b border-[#3a3a3a]">
-          <div className="bg-[#2a2a2a] rounded-xl p-3 text-center">
+        <div className="grid grid-cols-2 gap-3 p-4 border-b border-slate-200">
+          <div className="bg-slate-50 rounded-xl p-3 text-center">
             <TrendingUp className="w-6 h-6 text-green-400 mx-auto mb-1" />
             <p className="text-xl font-black text-green-400">{data.improvement}</p>
-            <p className="text-[#888] text-xs">Expected Improvement</p>
+            <p className="text-slate-500 text-xs">Expected Improvement</p>
           </div>
-          <div className="bg-[#2a2a2a] rounded-xl p-3 text-center">
+          <div className="bg-slate-50 rounded-xl p-3 text-center">
             <Clock className="w-6 h-6 text-blue-400 mx-auto mb-1" />
             <p className="text-xl font-black text-blue-400">{data.timeToResults}</p>
-            <p className="text-[#888] text-xs">Time to See Results</p>
+            <p className="text-slate-500 text-xs">Time to See Results</p>
           </div>
         </div>
         
         {/* Facts */}
-        <div className="p-4 border-b border-[#3a3a3a]">
+        <div className="p-4 border-b border-slate-200">
           <h3 className="text-[#FF6B35] font-bold mb-3 flex items-center gap-2 text-sm">
             <Lightbulb className="w-4 h-4" />
             Research-Backed Facts
@@ -528,37 +528,37 @@ function FrequencyInfoPopup({ frequency, onClose, onConfirm }: FrequencyPopupPro
             {data.facts.map((fact, i) => (
               <li key={i} className="flex items-start gap-2">
                 <Check className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
-                <span className="text-[#E5E5E5] text-sm">{fact}</span>
+                <span className="text-slate-700 text-sm">{fact}</span>
               </li>
             ))}
           </ul>
         </div>
         
         {/* Recommendation */}
-        <div className="p-4 border-b border-[#3a3a3a]">
+        <div className="p-4 border-b border-slate-200">
           <h3 className="text-[#FF6B35] font-bold mb-2 flex items-center gap-2 text-sm">
             <Star className="w-4 h-4" />
             Our Recommendation
           </h3>
-          <p className="text-[#E5E5E5] bg-[#2a2a2a] rounded-xl p-3 text-sm border border-[#3a3a3a]">
+          <p className="text-slate-700 bg-slate-50 rounded-xl p-3 text-sm border border-slate-200">
             {data.recommendation}
           </p>
         </div>
         
         {/* Research */}
-        <div className="p-4 border-b border-[#3a3a3a]">
-          <h3 className="text-[#888] font-bold mb-2 flex items-center gap-2 text-sm">
+        <div className="p-4 border-b border-slate-200">
+          <h3 className="text-slate-500 font-bold mb-2 flex items-center gap-2 text-sm">
             <BookOpen className="w-4 h-4" />
             Research Source
           </h3>
-          <p className="text-[#888] text-xs italic">{data.research}</p>
+          <p className="text-slate-500 text-xs italic">{data.research}</p>
         </div>
         
         {/* Actions */}
         <div className="p-4 flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 py-3 rounded-xl bg-[#2a2a2a] text-[#888] font-bold hover:bg-[#3a3a3a] transition-colors text-sm"
+            className="flex-1 py-3 rounded-xl bg-slate-50 text-slate-500 font-bold hover:bg-slate-100 transition-colors text-sm"
           >
             Choose Different
           </button>
@@ -584,8 +584,8 @@ function DrillCountInfoPopup({ count, onClose, onConfirm }: DrillCountPopupProps
   const data = DRILL_COUNT_RESEARCH[count]
   
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bg-[#1a1a1a] rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-[#3a3a3a] shadow-2xl">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-slate-200 shadow-lg">
         {/* Header */}
         <div className={`bg-gradient-to-r ${data.color} p-5 rounded-t-2xl`}>
           <div className="flex items-center justify-between">
@@ -605,7 +605,7 @@ function DrillCountInfoPopup({ count, onClose, onConfirm }: DrillCountPopupProps
         </div>
         
         {/* Facts */}
-        <div className="p-4 border-b border-[#3a3a3a]">
+        <div className="p-4 border-b border-slate-200">
           <h3 className="text-[#FF6B35] font-bold mb-3 flex items-center gap-2 text-sm">
             <Lightbulb className="w-4 h-4" />
             What You Should Know
@@ -614,37 +614,37 @@ function DrillCountInfoPopup({ count, onClose, onConfirm }: DrillCountPopupProps
             {data.facts.map((fact, i) => (
               <li key={i} className="flex items-start gap-2">
                 <Check className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
-                <span className="text-[#E5E5E5] text-sm">{fact}</span>
+                <span className="text-slate-700 text-sm">{fact}</span>
               </li>
             ))}
           </ul>
         </div>
         
         {/* Recommendation */}
-        <div className="p-4 border-b border-[#3a3a3a]">
+        <div className="p-4 border-b border-slate-200">
           <h3 className="text-[#FF6B35] font-bold mb-2 flex items-center gap-2 text-sm">
             <Star className="w-4 h-4" />
             Our Recommendation
           </h3>
-          <p className="text-[#E5E5E5] bg-[#2a2a2a] rounded-xl p-3 text-sm border border-[#3a3a3a]">
+          <p className="text-slate-700 bg-slate-50 rounded-xl p-3 text-sm border border-slate-200">
             {data.recommendation}
           </p>
         </div>
         
         {/* Research */}
-        <div className="p-4 border-b border-[#3a3a3a]">
-          <h3 className="text-[#888] font-bold mb-2 flex items-center gap-2 text-sm">
+        <div className="p-4 border-b border-slate-200">
+          <h3 className="text-slate-500 font-bold mb-2 flex items-center gap-2 text-sm">
             <BookOpen className="w-4 h-4" />
             Research Source
           </h3>
-          <p className="text-[#888] text-xs italic">{data.research}</p>
+          <p className="text-slate-500 text-xs italic">{data.research}</p>
         </div>
         
         {/* Actions */}
         <div className="p-4 flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 py-3 rounded-xl bg-[#2a2a2a] text-[#888] font-bold hover:bg-[#3a3a3a] transition-colors text-sm"
+            className="flex-1 py-3 rounded-xl bg-slate-50 text-slate-500 font-bold hover:bg-slate-100 transition-colors text-sm"
           >
             Choose Different
           </button>
@@ -670,8 +670,8 @@ function DurationInfoPopup({ duration, onClose, onConfirm }: DurationPopupProps)
   const data = DURATION_RESEARCH[duration]
   
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bg-[#1a1a1a] rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-[#3a3a3a] shadow-2xl">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-slate-200 shadow-lg">
         {/* Header */}
         <div className={`bg-gradient-to-r ${data.color} p-5 rounded-t-2xl`}>
           <div className="flex items-center justify-between">
@@ -691,7 +691,7 @@ function DurationInfoPopup({ duration, onClose, onConfirm }: DurationPopupProps)
         </div>
         
         {/* Facts */}
-        <div className="p-4 border-b border-[#3a3a3a]">
+        <div className="p-4 border-b border-slate-200">
           <h3 className="text-[#FF6B35] font-bold mb-3 flex items-center gap-2 text-sm">
             <Lightbulb className="w-4 h-4" />
             What You Should Know
@@ -700,37 +700,37 @@ function DurationInfoPopup({ duration, onClose, onConfirm }: DurationPopupProps)
             {data.facts.map((fact, i) => (
               <li key={i} className="flex items-start gap-2">
                 <Check className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
-                <span className="text-[#E5E5E5] text-sm">{fact}</span>
+                <span className="text-slate-700 text-sm">{fact}</span>
               </li>
             ))}
           </ul>
         </div>
         
         {/* Recommendation */}
-        <div className="p-4 border-b border-[#3a3a3a]">
+        <div className="p-4 border-b border-slate-200">
           <h3 className="text-[#FF6B35] font-bold mb-2 flex items-center gap-2 text-sm">
             <Star className="w-4 h-4" />
             Our Recommendation
           </h3>
-          <p className="text-[#E5E5E5] bg-[#2a2a2a] rounded-xl p-3 text-sm border border-[#3a3a3a]">
+          <p className="text-slate-700 bg-slate-50 rounded-xl p-3 text-sm border border-slate-200">
             {data.recommendation}
           </p>
         </div>
         
         {/* Research */}
-        <div className="p-4 border-b border-[#3a3a3a]">
-          <h3 className="text-[#888] font-bold mb-2 flex items-center gap-2 text-sm">
+        <div className="p-4 border-b border-slate-200">
+          <h3 className="text-slate-500 font-bold mb-2 flex items-center gap-2 text-sm">
             <BookOpen className="w-4 h-4" />
             Research Source
           </h3>
-          <p className="text-[#888] text-xs italic">{data.research}</p>
+          <p className="text-slate-500 text-xs italic">{data.research}</p>
         </div>
         
         {/* Actions */}
         <div className="p-4 flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 py-3 rounded-xl bg-[#2a2a2a] text-[#888] font-bold hover:bg-[#3a3a3a] transition-colors text-sm"
+            className="flex-1 py-3 rounded-xl bg-slate-50 text-slate-500 font-bold hover:bg-slate-100 transition-colors text-sm"
           >
             Choose Different
           </button>
@@ -756,8 +756,8 @@ function AgeLevelInfoPopup({ ageLevel, onClose, onConfirm }: AgeLevelPopupProps)
   const config = AGE_LEVEL_CONFIG[ageLevel]
   
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bg-[#1a1a1a] rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-[#3a3a3a] shadow-2xl">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-slate-200 shadow-lg">
         {/* Header */}
         <div className={`bg-gradient-to-r ${config.bgColor} p-5 rounded-t-2xl border-b ${config.borderColor}`}>
           <div className="flex items-center justify-between">
@@ -767,10 +767,10 @@ function AgeLevelInfoPopup({ ageLevel, onClose, onConfirm }: AgeLevelPopupProps)
               </div>
               <div>
                 <h2 className={`text-xl font-black uppercase ${config.color}`}>{config.name}</h2>
-                <p className="text-[#888] text-sm">{config.description}</p>
+                <p className="text-slate-500 text-sm">{config.description}</p>
               </div>
             </div>
-            <button onClick={onClose} className="text-[#888] hover:text-white p-1">
+            <button onClick={onClose} className="text-slate-500 hover:text-slate-900 p-1">
               <X className="w-6 h-6" />
             </button>
           </div>
@@ -788,7 +788,7 @@ function AgeLevelInfoPopup({ ageLevel, onClose, onConfirm }: AgeLevelPopupProps)
         </div>
         
         {/* Tips */}
-        <div className="p-4 border-b border-[#3a3a3a]">
+        <div className="p-4 border-b border-slate-200">
           <h3 className="text-[#FF6B35] font-bold mb-3 flex items-center gap-2 text-sm">
             <Lightbulb className="w-4 h-4" />
             Tips for {config.name} Players
@@ -797,7 +797,7 @@ function AgeLevelInfoPopup({ ageLevel, onClose, onConfirm }: AgeLevelPopupProps)
             {config.tips.map((tip, i) => (
               <li key={i} className="flex items-start gap-2">
                 <Check className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
-                <span className="text-[#E5E5E5] text-sm">{tip}</span>
+                <span className="text-slate-700 text-sm">{tip}</span>
               </li>
             ))}
           </ul>
@@ -807,7 +807,7 @@ function AgeLevelInfoPopup({ ageLevel, onClose, onConfirm }: AgeLevelPopupProps)
         <div className="p-4 flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 py-3 rounded-xl bg-[#2a2a2a] text-[#888] font-bold hover:bg-[#3a3a3a] transition-colors text-sm"
+            className="flex-1 py-3 rounded-xl bg-slate-50 text-slate-500 font-bold hover:bg-slate-100 transition-colors text-sm"
           >
             Choose Different
           </button>
@@ -1081,7 +1081,7 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="bg-[#1a1a1a] rounded-xl p-4 border border-[#3a3a3a]">
+      <div className="bg-white rounded-xl p-4 border border-slate-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-[#FF6B35]/20">
@@ -1089,13 +1089,13 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
             </div>
             <div>
               <h2 className="text-[#FF6B35] font-black text-lg uppercase tracking-wide">TRAINING CALENDAR</h2>
-              <p className="text-[#888] text-sm">{preferences.frequency}x per week • {preferences.preferredDuration} min workouts</p>
+              <p className="text-slate-500 text-sm">{preferences.frequency}x per week • {preferences.preferredDuration} min workouts</p>
             </div>
           </div>
           <button
             onClick={() => setShowSettings(!showSettings)}
             className={`p-2 rounded-lg transition-colors ${
-              showSettings ? 'bg-[#FF6B35] text-[#1a1a1a]' : 'bg-[#2a2a2a] text-[#888] hover:text-white'
+              showSettings ? 'bg-[#FF6B35] text-slate-900' : 'bg-slate-50 text-slate-500 hover:text-slate-900'
             }`}
           >
             <Settings className="w-5 h-5" />
@@ -1105,7 +1105,7 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
 
       {/* Settings Panel */}
       {showSettings && (
-        <div className="bg-[#1a1a1a] rounded-xl p-4 md:p-6 border border-[#3a3a3a] space-y-6">
+        <div className="bg-white rounded-xl p-4 md:p-6 border border-slate-200 space-y-6">
           <h3 className="text-[#FF6B35] font-bold text-lg flex items-center gap-2 uppercase">
             <Settings className="w-5 h-5" />
             TRAINING PREFERENCES
@@ -1113,7 +1113,7 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
           
           {/* Frequency Selector */}
           <div>
-            <label className="text-[#888] text-sm uppercase tracking-wider block mb-3">
+            <label className="text-slate-500 text-sm uppercase tracking-wider block mb-3">
               TRAINING FREQUENCY (DAYS PER WEEK)
               <span className="text-[#FF6B35] text-xs ml-2">(tap to learn more)</span>
             </label>
@@ -1124,8 +1124,8 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
                   onClick={() => setPendingFrequency(freq)}
                   className={`p-2 md:p-3 rounded-xl text-center transition-all ${
                     preferences.frequency === freq
-                      ? 'bg-[#FF6B35] text-[#1a1a1a] font-bold'
-                      : 'bg-[#2a2a2a] text-[#888] hover:text-white border border-[#3a3a3a]'
+                      ? 'bg-[#FF6B35] text-slate-900 font-bold'
+                      : 'bg-slate-50 text-slate-500 hover:text-slate-900 border border-slate-200'
                   }`}
                 >
                   <span className="text-base md:text-lg font-bold">{freq}</span>
@@ -1137,7 +1137,7 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
           
           {/* Duration Selector */}
           <div>
-            <label className="text-[#888] text-sm uppercase tracking-wider block mb-3">
+            <label className="text-slate-500 text-sm uppercase tracking-wider block mb-3">
               WORKOUT DURATION
               <span className="text-[#FF6B35] text-xs ml-2">(tap to learn more)</span>
             </label>
@@ -1152,10 +1152,10 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
                       preferences.preferredDuration === duration
                         ? isSweet 
                           ? 'bg-green-500 text-white font-bold ring-2 ring-green-400'
-                          : 'bg-[#FF6B35] text-[#1a1a1a] font-bold'
+                          : 'bg-[#FF6B35] text-slate-900 font-bold'
                         : isSweet
                           ? 'bg-green-500/20 text-green-400 border border-green-500/50'
-                          : 'bg-[#2a2a2a] text-[#888] hover:text-white border border-[#3a3a3a]'
+                          : 'bg-slate-50 text-slate-500 hover:text-slate-900 border border-slate-200'
                     }`}
                   >
                     {isSweet && <Star className="w-3 h-3 absolute top-1 right-1 text-green-400" />}
@@ -1165,7 +1165,7 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
                 )
               })}
             </div>
-            <p className="text-[#666] text-xs mt-2">
+            <p className="text-slate-400 text-xs mt-2">
               {(preferences.preferredDuration === 15 || preferences.preferredDuration === 20) && (
                 <span className="text-green-400 font-medium">RECOMMENDED: 15-20 minutes is optimal for skill development</span>
               )}
@@ -1174,7 +1174,7 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
           
           {/* Drill Count Selector */}
           <div>
-            <label className="text-[#888] text-sm uppercase tracking-wider block mb-3">
+            <label className="text-slate-500 text-sm uppercase tracking-wider block mb-3">
               DRILLS PER WORKOUT
               <span className="text-[#FF6B35] text-xs ml-2">(tap to learn more)</span>
             </label>
@@ -1189,10 +1189,10 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
                       preferences.drillCount === count
                         ? isSweet 
                           ? 'bg-green-500 text-white font-bold ring-2 ring-green-400'
-                          : 'bg-[#FF6B35] text-[#1a1a1a] font-bold'
+                          : 'bg-[#FF6B35] text-slate-900 font-bold'
                         : isSweet
                           ? 'bg-green-500/20 text-green-400 border border-green-500/50'
-                          : 'bg-[#2a2a2a] text-[#888] hover:text-white border border-[#3a3a3a]'
+                          : 'bg-slate-50 text-slate-500 hover:text-slate-900 border border-slate-200'
                     }`}
                   >
                     {isSweet && <Star className="w-3 h-3 absolute top-1 right-1 text-green-400" />}
@@ -1209,7 +1209,7 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
           
           {/* Workout Mode */}
           <div>
-            <label className="text-[#888] text-sm uppercase tracking-wider block mb-3">
+            <label className="text-slate-500 text-sm uppercase tracking-wider block mb-3">
               WORKOUT MODE
             </label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -1218,14 +1218,14 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
                 className={`p-4 rounded-xl text-left transition-all ${
                   preferences.workoutMode === 'continuous'
                     ? 'bg-[#FF6B35]/20 border-2 border-[#FF6B35]'
-                    : 'bg-[#2a2a2a] border border-[#3a3a3a] hover:border-[#FF6B35]'
+                    : 'bg-slate-50 border border-slate-200 hover:border-[#FF6B35]'
                 }`}
               >
-                <Play className={`w-6 h-6 mb-2 ${preferences.workoutMode === 'continuous' ? 'text-[#FF6B35]' : 'text-[#888]'}`} />
-                <h4 className={`font-bold uppercase ${preferences.workoutMode === 'continuous' ? 'text-[#FF6B35]' : 'text-[#E5E5E5]'}`}>
+                <Play className={`w-6 h-6 mb-2 ${preferences.workoutMode === 'continuous' ? 'text-[#FF6B35]' : 'text-slate-500'}`} />
+                <h4 className={`font-bold uppercase ${preferences.workoutMode === 'continuous' ? 'text-[#FF6B35]' : 'text-slate-700'}`}>
                   CONTINUOUS
                 </h4>
-                <p className="text-[#888] text-sm mt-1">
+                <p className="text-slate-500 text-sm mt-1">
                   Drills flow automatically without stopping. When one drill ends, the next begins immediately. Best for building endurance and maintaining workout intensity.
                 </p>
               </button>
@@ -1234,19 +1234,19 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
                 className={`p-4 rounded-xl text-left transition-all ${
                   preferences.workoutMode === 'step-by-step'
                     ? 'bg-[#FF6B35]/20 border-2 border-[#FF6B35]'
-                    : 'bg-[#2a2a2a] border border-[#3a3a3a] hover:border-[#FF6B35]'
+                    : 'bg-slate-50 border border-slate-200 hover:border-[#FF6B35]'
                 }`}
               >
-                <Pause className={`w-6 h-6 mb-2 ${preferences.workoutMode === 'step-by-step' ? 'text-[#FF6B35]' : 'text-[#888]'}`} />
-                <h4 className={`font-bold uppercase ${preferences.workoutMode === 'step-by-step' ? 'text-[#FF6B35]' : 'text-[#E5E5E5]'}`}>
+                <Pause className={`w-6 h-6 mb-2 ${preferences.workoutMode === 'step-by-step' ? 'text-[#FF6B35]' : 'text-slate-500'}`} />
+                <h4 className={`font-bold uppercase ${preferences.workoutMode === 'step-by-step' ? 'text-[#FF6B35]' : 'text-slate-700'}`}>
                   STEP-BY-STEP
                 </h4>
-                <p className="text-[#888] text-sm mt-1">
+                <p className="text-slate-500 text-sm mt-1">
                   After each drill, the workout pauses with a popup explaining the next drill. Take time to rest, review technique, and ensure you are ready before pressing START.
                 </p>
               </button>
             </div>
-            <p className="text-[#666] text-xs mt-3 bg-[#2a2a2a] p-3 rounded-lg">
+            <p className="text-slate-400 text-xs mt-3 bg-slate-50 p-3 rounded-lg">
               <span className="text-[#FF6B35] font-bold">TIP:</span> {preferences.workoutMode === 'continuous' 
                 ? "Continuous mode is great for experienced players who know the drills. Keeps your heart rate up and simulates game conditions."
                 : "Step-by-step mode is ideal for beginners or when learning new drills. Focus on form over speed."}
@@ -1255,7 +1255,7 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
           
           {/* Workout Level */}
           <div>
-            <label className="text-[#888] text-sm uppercase tracking-wider block mb-3">
+            <label className="text-slate-500 text-sm uppercase tracking-wider block mb-3">
               WORKOUT LEVEL
               <span className="text-[#FF6B35] text-xs ml-2">(tap to learn more)</span>
             </label>
@@ -1270,7 +1270,7 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
                     className={`p-2 md:p-3 rounded-xl text-center transition-all ${
                       isActive
                         ? `bg-gradient-to-r ${config.bgColor} ${config.color} border-2 ${config.borderColor}`
-                        : 'bg-[#2a2a2a] text-[#666] hover:text-white border border-[#3a3a3a]'
+                        : 'bg-slate-50 text-slate-400 hover:text-slate-900 border border-slate-200'
                     }`}
                     title={config.description}
                   >
@@ -1280,12 +1280,12 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
                 )
               })}
             </div>
-            <p className="text-[#666] text-xs mt-2">{currentAgeLevelConfig.description}</p>
+            <p className="text-slate-400 text-xs mt-2">{currentAgeLevelConfig.description}</p>
             
             {/* Tips Toggle */}
             <button
               onClick={() => setShowAgeLevelInfo(!showAgeLevelInfo)}
-              className="flex items-center gap-2 text-xs text-[#888] hover:text-white transition-colors mt-3"
+              className="flex items-center gap-2 text-xs text-slate-500 hover:text-slate-900 transition-colors mt-3"
             >
               <Info className="w-3 h-3" />
               {showAgeLevelInfo ? 'Hide' : 'Show'} tips for {currentAgeLevelConfig.name} players
@@ -1295,9 +1295,9 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
             {showAgeLevelInfo && (
               <div className="mt-2 space-y-1">
                 {currentAgeLevelConfig.tips.map((tip, i) => (
-                  <div key={i} className="flex items-start gap-2 bg-[#2a2a2a] rounded-lg p-2">
+                  <div key={i} className="flex items-start gap-2 bg-slate-50 rounded-lg p-2">
                     <Check className="w-3 h-3 text-green-400 flex-shrink-0 mt-0.5" />
-                    <span className="text-[#E5E5E5] text-xs">{tip}</span>
+                    <span className="text-slate-700 text-xs">{tip}</span>
                   </div>
                 ))}
               </div>
@@ -1307,13 +1307,13 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
           {/* Sound Toggle */}
           <div className="flex items-center justify-between">
             <div>
-              <h4 className="text-[#E5E5E5] font-bold uppercase">SOUND EFFECTS</h4>
-              <p className="text-[#888] text-sm">Play chime when exercise completes</p>
+              <h4 className="text-slate-700 font-bold uppercase">SOUND EFFECTS</h4>
+              <p className="text-slate-500 text-sm">Play chime when exercise completes</p>
             </div>
             <button
               onClick={() => setPreferences(prev => ({ ...prev, soundEnabled: !prev.soundEnabled }))}
               className={`w-14 h-8 rounded-full transition-all ${
-                preferences.soundEnabled ? 'bg-[#FF6B35]' : 'bg-[#3a3a3a]'
+                preferences.soundEnabled ? 'bg-[#FF6B35]' : 'bg-slate-100'
               }`}
             >
               <div className={`w-6 h-6 rounded-full bg-white shadow-md transform transition-transform ${
@@ -1323,14 +1323,14 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
           </div>
           
           {/* Auto-Populate Toggle */}
-          <div className="border-t border-[#3a3a3a] pt-6">
+          <div className="border-t border-slate-200 pt-6">
             <div className="flex items-center justify-between">
               <div className="flex-1 mr-4">
-                <h4 className="text-[#E5E5E5] font-bold uppercase flex items-center gap-2">
+                <h4 className="text-slate-700 font-bold uppercase flex items-center gap-2">
                   <Target className="w-4 h-4 text-[#FF6B35]" />
                   AUTO-POPULATE FROM FLAWS
                 </h4>
-                <p className="text-[#888] text-sm mt-1">
+                <p className="text-slate-500 text-sm mt-1">
                   Automatically generate workouts based on your identified shooting flaws
                 </p>
                 {userFlaws.length > 0 ? (
@@ -1339,7 +1339,7 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
                     {userFlaws.length} flaw{userFlaws.length > 1 ? 's' : ''} detected - ready to create personalized workouts
                   </p>
                 ) : (
-                  <p className="text-[#666] text-xs mt-2 flex items-center gap-1">
+                  <p className="text-slate-400 text-xs mt-2 flex items-center gap-1">
                     <AlertTriangle className="w-3 h-3" />
                     No flaws detected yet. Upload a shooting image to identify areas for improvement.
                   </p>
@@ -1348,7 +1348,7 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
               <button
                 onClick={() => setPreferences(prev => ({ ...prev, autoPopulateFromFlaws: !prev.autoPopulateFromFlaws }))}
                 className={`w-14 h-8 rounded-full transition-all ${
-                  preferences.autoPopulateFromFlaws ? 'bg-green-500' : 'bg-[#3a3a3a]'
+                  preferences.autoPopulateFromFlaws ? 'bg-green-500' : 'bg-slate-100'
                 }`}
               >
                 <div className={`w-6 h-6 rounded-full bg-white shadow-md transform transition-transform ${
@@ -1361,25 +1361,25 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
       )}
 
       {/* Calendar */}
-      <div className="bg-[#1a1a1a] rounded-xl p-4 border border-[#3a3a3a]">
+      <div className="bg-white rounded-xl p-4 border border-slate-200">
         {/* Navigation */}
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <button
             onClick={() => navigateCalendar('prev')}
-            className="p-2 rounded-lg bg-[#2a2a2a] text-[#888] hover:text-white transition-colors"
+            className="p-2 rounded-lg bg-slate-50 text-slate-500 hover:text-slate-900 transition-colors"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
           
           <div className="flex items-center gap-2 md:gap-4 flex-wrap justify-center">
-            <h3 className="text-[#E5E5E5] font-bold text-sm md:text-lg">{formatDateHeader()}</h3>
-            <div className="flex items-center gap-1 bg-[#2a2a2a] rounded-lg p-1">
+            <h3 className="text-slate-700 font-bold text-sm md:text-lg">{formatDateHeader()}</h3>
+            <div className="flex items-center gap-1 bg-slate-50 rounded-lg p-1">
               {(['day', 'week', 'month'] as const).map(view => (
                 <button
                   key={view}
                   onClick={() => setCalendarView(view)}
                   className={`px-2 md:px-3 py-1 rounded text-xs md:text-sm font-medium transition-colors ${
-                    calendarView === view ? 'bg-[#FF6B35] text-[#1a1a1a]' : 'text-[#888] hover:text-white'
+                    calendarView === view ? 'bg-[#FF6B35] text-slate-900' : 'text-slate-500 hover:text-slate-900'
                   }`}
                 >
                   {view.toUpperCase()}
@@ -1390,7 +1390,7 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
           
           <button
             onClick={() => navigateCalendar('next')}
-            className="p-2 rounded-lg bg-[#2a2a2a] text-[#888] hover:text-white transition-colors"
+            className="p-2 rounded-lg bg-slate-50 text-slate-500 hover:text-slate-900 transition-colors"
           >
             <ChevronRight className="w-5 h-5" />
           </button>
@@ -1400,7 +1400,7 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
         <div className={`grid ${calendarView === 'day' ? 'grid-cols-1' : 'grid-cols-7'} gap-1 md:gap-2`}>
           {/* Day Headers */}
           {calendarView !== 'day' && ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map(day => (
-            <div key={day} className="text-center text-[#888] text-[10px] md:text-xs font-bold py-1 md:py-2">
+            <div key={day} className="text-center text-slate-500 text-[10px] md:text-xs font-bold py-1 md:py-2">
               {day}
             </div>
           ))}
@@ -1426,11 +1426,11 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
                       ? allCompleted
                         ? 'bg-green-500/10 border border-green-500/30'
                         : 'bg-green-500/10 border border-green-500/30 hover:border-green-500'
-                      : 'bg-[#2a2a2a] border border-[#3a3a3a] hover:border-[#4a4a4a]'
+                      : 'bg-slate-50 border border-slate-200 hover:border-slate-200'
                 } ${!isCurrentMonth && calendarView === 'month' ? 'opacity-40' : ''}`}
               >
                 <span className={`text-xs md:text-sm font-bold ${
-                  isToday ? 'text-[#FF6B35]' : isCurrentMonth ? 'text-[#E5E5E5]' : 'text-[#666]'
+                  isToday ? 'text-[#FF6B35]' : isCurrentMonth ? 'text-slate-700' : 'text-slate-400'
                 }`}>
                   {date.getDate()}
                 </span>
@@ -1457,7 +1457,7 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
       </div>
 
       {/* Start Workout Section */}
-      <div className="bg-[#1a1a1a] rounded-xl p-4 md:p-6 border border-[#3a3a3a]">
+      <div className="bg-white rounded-xl p-4 md:p-6 border border-slate-200">
         <h3 className="text-[#FF6B35] font-bold text-lg mb-4 flex items-center gap-2 uppercase">
           <Dumbbell className="w-5 h-5" />
           START A WORKOUT
@@ -1474,7 +1474,7 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
           </button>
           <button
             onClick={() => setShowBuildWorkoutPopup(true)}
-            className="flex-1 min-w-[140px] py-3 rounded-lg font-bold transition-all flex items-center justify-center gap-2 bg-[#2a2a2a] text-[#888] hover:text-white border border-[#3a3a3a]"
+            className="flex-1 min-w-[140px] py-3 rounded-lg font-bold transition-all flex items-center justify-center gap-2 bg-slate-50 text-slate-500 hover:text-slate-900 border border-slate-200"
           >
             <GripVertical className="w-4 h-4" />
             <span className="text-xs md:text-sm">BUILD WORKOUT</span>
@@ -1482,19 +1482,19 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
         </div>
         
         {/* Notifications Toggle */}
-        <div className="flex items-center justify-between mb-4 p-3 bg-[#2a2a2a] rounded-lg">
+        <div className="flex items-center justify-between mb-4 p-3 bg-slate-50 rounded-lg">
           <div className="flex items-center gap-2">
             {notificationsEnabled ? (
               <BellRing className="w-4 h-4 text-[#FF6B35]" />
             ) : (
-              <Bell className="w-4 h-4 text-[#888]" />
+              <Bell className="w-4 h-4 text-slate-500" />
             )}
-            <span className="text-sm text-[#888]">WORKOUT REMINDERS</span>
+            <span className="text-sm text-slate-500">WORKOUT REMINDERS</span>
           </div>
           <button
             onClick={() => setNotificationsEnabled(!notificationsEnabled)}
             className={`w-12 h-6 rounded-full transition-colors ${
-              notificationsEnabled ? 'bg-[#FF6B35]' : 'bg-[#3a3a3a]'
+              notificationsEnabled ? 'bg-[#FF6B35]' : 'bg-slate-100'
             }`}
           >
             <div className={`w-5 h-5 rounded-full bg-white transition-transform ${
@@ -1503,25 +1503,25 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
           </button>
         </div>
         
-        <p className="text-[#888] text-sm mb-4">
+        <p className="text-slate-500 text-sm mb-4">
           Use <span className="text-[#FF6B35] font-bold">Auto-Generate</span> to create AI-powered workouts based on your flaws, 
-          or <span className="text-white font-bold">Build Workout</span> to create your own custom training plan.
+          or <span className="text-slate-900 font-bold">Build Workout</span> to create your own custom training plan.
         </p>
         
         {/* Quick Start Options */}
-        <div className="p-3 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl">
-          <p className="text-[#666] text-xs mb-2">Quick options</p>
+        <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+          <p className="text-slate-400 text-xs mb-2">Quick options</p>
           <div className="flex gap-2">
             <button
               onClick={() => setShowDrillPickerPopup(true)}
-              className="flex-1 py-2.5 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a] text-[#888] font-bold text-xs hover:border-[#FF6B35]/50 hover:text-white transition-all flex items-center justify-center gap-2"
+              className="flex-1 py-2.5 rounded-lg bg-white border border-slate-200 text-slate-500 font-bold text-xs hover:border-[#FF6B35]/50 hover:text-slate-900 transition-all flex items-center justify-center gap-2"
             >
               <Target className="w-4 h-4" />
               PICK A DRILL
             </button>
             <button
               onClick={startWorkout}
-              className="flex-1 py-2.5 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a] text-[#888] font-bold text-xs hover:border-[#FF6B35]/50 hover:text-white transition-all flex items-center justify-center gap-2"
+              className="flex-1 py-2.5 rounded-lg bg-white border border-slate-200 text-slate-500 font-bold text-xs hover:border-[#FF6B35]/50 hover:text-slate-900 transition-all flex items-center justify-center gap-2"
             >
               <Play className="w-4 h-4" />
               QUICK START
@@ -1782,17 +1782,17 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
       {/* Schedule Success Toast */}
       {scheduleSuccessInfo?.show && (
         <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[250] animate-in slide-in-from-bottom-4 fade-in duration-300">
-          <div className="bg-gradient-to-r from-green-600 to-green-500 rounded-2xl p-4 shadow-2xl shadow-green-500/30 max-w-sm mx-4">
+          <div className="bg-gradient-to-r from-green-600 to-green-500 rounded-2xl p-4 shadow-lg shadow-green-500/30 max-w-sm mx-4">
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
                 <Check className="w-6 h-6 text-white" />
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="text-white font-bold text-sm">Workout Scheduled!</h4>
-                <p className="text-white/90 text-xs mt-0.5 truncate">
+                <h4 className="text-slate-900 font-bold text-sm">Workout Scheduled!</h4>
+                <p className="text-slate-600 text-xs mt-0.5 truncate">
                   {scheduleSuccessInfo.workoutName}
                 </p>
-                <p className="text-white/70 text-xs mt-1">
+                <p className="text-slate-500 text-xs mt-1">
                   {scheduleSuccessInfo.isRecurring ? (
                     <>
                       <span className="text-white font-bold">{scheduleSuccessInfo.frequency}</span> starting{' '}
@@ -1810,7 +1810,7 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
               </div>
               <button 
                 onClick={() => setScheduleSuccessInfo(null)}
-                className="text-white/70 hover:text-white p-1"
+                className="text-slate-500 hover:text-slate-900 p-1"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1869,10 +1869,10 @@ function DayDetailPopup({
   const isToday = date.toDateString() === new Date().toDateString()
   
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bg-[#0a0a0a] rounded-2xl max-w-md w-full max-h-[90vh] overflow-hidden border border-[#2a2a2a] shadow-2xl">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div className="bg-slate-50 rounded-2xl max-w-md w-full max-h-[90vh] overflow-hidden border border-slate-200 shadow-lg">
         {/* Header */}
-        <div className="bg-[#141414] p-5 border-b border-[#2a2a2a]">
+        <div className="bg-slate-50 p-5 border-b border-slate-200">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-[#FF6B35]/20 border border-[#FF6B35]/30 flex items-center justify-center">
@@ -1880,12 +1880,12 @@ function DayDetailPopup({
               </div>
               <div>
                 <h2 className="text-xl font-black text-[#FF6B35] tracking-wide">{dayName}</h2>
-                <p className="text-[#888] text-sm">{dateString}</p>
+                <p className="text-slate-500 text-sm">{dateString}</p>
               </div>
             </div>
             <button 
               onClick={onClose}
-              className="text-[#666] hover:text-white p-1 transition-colors"
+              className="text-slate-400 hover:text-slate-900 p-1 transition-colors"
             >
               <X className="w-6 h-6" />
             </button>
@@ -1903,25 +1903,25 @@ function DayDetailPopup({
           {workouts.length === 0 ? (
             // Empty State
             <div className="text-center py-8">
-              <div className="w-16 h-16 rounded-2xl bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center mx-auto mb-4">
-                <Dumbbell className="w-8 h-8 text-[#333]" />
+              <div className="w-16 h-16 rounded-2xl bg-white border border-slate-200 flex items-center justify-center mx-auto mb-4">
+                <Dumbbell className="w-8 h-8 text-slate-700" />
               </div>
-              <h3 className="text-[#888] font-bold mb-2">NO TRAINING SCHEDULED</h3>
-              <p className="text-[#555] text-sm">Add a workout or drill to this day to get started</p>
+              <h3 className="text-slate-500 font-bold mb-2">NO TRAINING SCHEDULED</h3>
+              <p className="text-slate-500 text-sm">Add a workout or drill to this day to get started</p>
             </div>
           ) : (
             // Workout List
             <div className="space-y-3">
-              <h3 className="text-[#888] text-xs font-bold uppercase tracking-wider mb-3">
+              <h3 className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-3">
                 {workouts.length} WORKOUT{workouts.length > 1 ? 'S' : ''} SCHEDULED
               </h3>
               {workouts.map((workout) => (
                 <div 
                   key={workout.id}
-                  className={`bg-[#1a1a1a] rounded-xl p-4 border ${
+                  className={`bg-white rounded-xl p-4 border ${
                     workout.completed 
                       ? 'border-green-500/30 bg-green-500/5' 
-                      : 'border-[#2a2a2a]'
+                      : 'border-slate-200'
                   }`}
                 >
                   <div className="flex items-start justify-between mb-3">
@@ -1935,13 +1935,13 @@ function DayDetailPopup({
                           <Dumbbell className="w-3 h-3 text-[#FF6B35]" />
                         </div>
                       )}
-                      <span className={`font-bold ${workout.completed ? 'text-green-400' : 'text-white'}`}>
+                      <span className={`font-bold ${workout.completed ? 'text-green-400' : 'text-slate-700'}`}>
                         {workout.completed ? 'COMPLETED' : 'SCHEDULED'}
                       </span>
                     </div>
                     <button
                       onClick={() => onRemoveWorkout(workout.id)}
-                      className="text-[#666] hover:text-red-400 p-1 transition-colors"
+                      className="text-slate-400 hover:text-red-400 p-1 transition-colors"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -1951,11 +1951,11 @@ function DayDetailPopup({
                   <div className="space-y-2 mb-4">
                     {workout.drills.map((drill, idx) => (
                       <div key={drill.id} className="flex items-center gap-3 text-sm">
-                        <span className="w-5 h-5 rounded bg-[#2a2a2a] text-[#666] text-xs font-bold flex items-center justify-center">
+                        <span className="w-5 h-5 rounded bg-slate-50 text-slate-400 text-xs font-bold flex items-center justify-center">
                           {idx + 1}
                         </span>
-                        <span className="text-[#E5E5E5] flex-1">{drill.title}</span>
-                        <span className="text-[#666] text-xs">{drill.duration}m</span>
+                        <span className="text-slate-700 flex-1">{drill.title}</span>
+                        <span className="text-slate-400 text-xs">{drill.duration}m</span>
                       </div>
                     ))}
                   </div>
@@ -1966,7 +1966,7 @@ function DayDetailPopup({
                       onClick={() => onToggleComplete(workout.id)}
                       className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${
                         workout.completed
-                          ? 'bg-[#2a2a2a] text-[#888] hover:text-white'
+                          ? 'bg-slate-50 text-slate-500 hover:text-slate-900'
                           : 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
                       }`}
                     >
@@ -1990,7 +1990,7 @@ function DayDetailPopup({
         </div>
         
         {/* Footer - Add Workout or Drill Buttons */}
-        <div className="p-5 border-t border-[#2a2a2a] space-y-3">
+        <div className="p-5 border-t border-slate-200 space-y-3">
           <button
             onClick={onAddWorkout}
             className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-white font-bold text-sm hover:brightness-110 transition-all flex items-center justify-center gap-2 uppercase tracking-wider"
@@ -2000,7 +2000,7 @@ function DayDetailPopup({
           </button>
           <button
             onClick={onAddDrill}
-            className="w-full py-3.5 rounded-xl bg-[#1a1a1a] border border-[#FF6B35]/50 text-[#FF6B35] font-bold text-sm hover:bg-[#FF6B35]/10 transition-all flex items-center justify-center gap-2 uppercase tracking-wider"
+            className="w-full py-3.5 rounded-xl bg-white border border-[#FF6B35]/50 text-[#FF6B35] font-bold text-sm hover:bg-[#FF6B35]/10 transition-all flex items-center justify-center gap-2 uppercase tracking-wider"
           >
             <Target className="w-5 h-5" />
             ADD SINGLE DRILL
@@ -2097,22 +2097,22 @@ function BuildWorkoutPopup({ availableDrills, onClose, onSaveWorkout, onStartWor
   }
   
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
-      <div className="bg-[#0a0a0a] rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden border border-[#2a2a2a] shadow-2xl flex flex-col">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div className="bg-slate-50 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden border border-slate-200 shadow-lg flex flex-col">
         {/* Header */}
-        <div className="bg-[#141414] p-5 border-b border-[#2a2a2a] flex items-center justify-between">
+        <div className="bg-slate-50 p-5 border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 rounded-xl bg-[#FF6B35]/20 border border-[#FF6B35]/30 flex items-center justify-center">
               <GripVertical className="w-5 h-5 text-[#FF6B35]" />
             </div>
             <div>
               <h2 className="text-xl font-black text-[#FF6B35]">Build Your Workout</h2>
-              <p className="text-[#888] text-sm">Drag and drop drills to create your custom workout</p>
+              <p className="text-slate-500 text-sm">Drag and drop drills to create your custom workout</p>
             </div>
           </div>
           <button 
             onClick={onClose}
-            className="text-[#666] hover:text-white p-2 transition-colors"
+            className="text-slate-400 hover:text-slate-900 p-2 transition-colors"
           >
             <X className="w-6 h-6" />
           </button>
@@ -2121,11 +2121,11 @@ function BuildWorkoutPopup({ availableDrills, onClose, onSaveWorkout, onStartWor
         {/* Content - Two Panels */}
         <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
           {/* Left Panel - Available Drills */}
-          <div className="w-full md:w-1/2 border-r border-[#2a2a2a] flex flex-col">
-            <div className="p-4 border-b border-[#2a2a2a]">
+          <div className="w-full md:w-1/2 border-r border-slate-200 flex flex-col">
+            <div className="p-4 border-b border-slate-200">
               <div className="flex items-center gap-2 mb-3">
-                <GripVertical className="w-4 h-4 text-[#666]" />
-                <h3 className="text-[#888] text-xs font-bold uppercase tracking-wider">
+                <GripVertical className="w-4 h-4 text-slate-400" />
+                <h3 className="text-slate-500 text-xs font-bold uppercase tracking-wider">
                   AVAILABLE DRILLS - DRAG TO ADD
                 </h3>
               </div>
@@ -2136,7 +2136,7 @@ function BuildWorkoutPopup({ availableDrills, onClose, onSaveWorkout, onStartWor
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search drills..."
-                className="w-full px-3 py-2 bg-[#1a1a1a] border border-[#333] rounded-lg text-white text-sm placeholder:text-[#666] focus:outline-none focus:border-[#FF6B35] mb-2"
+                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 text-sm placeholder:text-slate-400 focus:outline-none focus:border-[#FF6B35] mb-2"
               />
               
               {/* Focus Filter */}
@@ -2144,7 +2144,7 @@ function BuildWorkoutPopup({ availableDrills, onClose, onSaveWorkout, onStartWor
                 <button
                   onClick={() => setFilterFocus('all')}
                   className={`px-2 py-1 rounded text-[10px] font-bold transition-colors ${
-                    filterFocus === 'all' ? 'bg-[#FF6B35] text-white' : 'bg-[#2a2a2a] text-[#888] hover:text-white'
+                    filterFocus === 'all' ? 'bg-[#FF6B35] text-white' : 'bg-slate-50 text-slate-500 hover:text-slate-900'
                   }`}
                 >
                   ALL
@@ -2154,7 +2154,7 @@ function BuildWorkoutPopup({ availableDrills, onClose, onSaveWorkout, onStartWor
                     key={focus}
                     onClick={() => setFilterFocus(focus)}
                     className={`px-2 py-1 rounded text-[10px] font-bold transition-colors ${
-                      filterFocus === focus ? 'bg-[#FF6B35] text-white' : 'bg-[#2a2a2a] text-[#888] hover:text-white'
+                      filterFocus === focus ? 'bg-[#FF6B35] text-white' : 'bg-slate-50 text-slate-500 hover:text-slate-900'
                     }`}
                   >
                     {FOCUS_AREA_LABELS[focus]}
@@ -2170,15 +2170,15 @@ function BuildWorkoutPopup({ availableDrills, onClose, onSaveWorkout, onStartWor
                   key={drill.id}
                   draggable
                   onDragStart={() => handleDragStart(drill)}
-                  className="bg-[#1a1a1a] rounded-xl p-3 border border-[#2a2a2a] hover:border-[#FF6B35]/50 cursor-grab active:cursor-grabbing transition-all group"
+                  className="bg-white rounded-xl p-3 border border-slate-200 hover:border-[#FF6B35]/50 cursor-grab active:cursor-grabbing transition-all group"
                 >
                   <div className="flex items-start gap-3">
                     <div className="mt-1">
-                      <GripVertical className="w-4 h-4 text-[#444] group-hover:text-[#888]" />
+                      <GripVertical className="w-4 h-4 text-slate-500 group-hover:text-slate-500" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <h4 className="text-white font-bold text-sm truncate">{drill.title}</h4>
+                        <h4 className="text-slate-900 font-bold text-sm truncate">{drill.title}</h4>
                         <button
                           type="button"
                           onClick={(e) => {
@@ -2187,7 +2187,7 @@ function BuildWorkoutPopup({ availableDrills, onClose, onSaveWorkout, onStartWor
                           }}
                           className="p-1 hover:bg-[#FF6B35]/20 rounded transition-colors"
                         >
-                          <Info className="w-3 h-3 text-[#666] hover:text-[#FF6B35]" />
+                          <Info className="w-3 h-3 text-slate-400 hover:text-[#FF6B35]" />
                         </button>
                         <button
                           type="button"
@@ -2197,7 +2197,7 @@ function BuildWorkoutPopup({ availableDrills, onClose, onSaveWorkout, onStartWor
                           }}
                           className="p-1 hover:bg-[#FF6B35]/20 rounded transition-colors ml-auto"
                         >
-                          <Plus className="w-4 h-4 text-[#666] group-hover:text-[#FF6B35] flex-shrink-0" />
+                          <Plus className="w-4 h-4 text-slate-400 group-hover:text-[#FF6B35] flex-shrink-0" />
                         </button>
                       </div>
                       <div className="flex items-center gap-2 mb-1">
@@ -2205,8 +2205,8 @@ function BuildWorkoutPopup({ availableDrills, onClose, onSaveWorkout, onStartWor
                           {FOCUS_AREA_LABELS[drill.focusArea]}
                         </span>
                       </div>
-                      <p className="text-[#666] text-xs line-clamp-1">{drill.description}</p>
-                      <div className="flex items-center gap-3 mt-2 text-[#888] text-xs">
+                      <p className="text-slate-400 text-xs line-clamp-1">{drill.description}</p>
+                      <div className="flex items-center gap-3 mt-2 text-slate-500 text-xs">
                         <span className="flex items-center gap-1">
                           <Clock className="w-3 h-3" />
                           {drill.duration} min
@@ -2222,13 +2222,13 @@ function BuildWorkoutPopup({ availableDrills, onClose, onSaveWorkout, onStartWor
           
           {/* Right Panel - Your Workout */}
           <div className="w-full md:w-1/2 flex flex-col">
-            <div className="p-4 border-b border-[#2a2a2a]">
+            <div className="p-4 border-b border-slate-200">
               <div className="flex items-start gap-3">
                 <div className="flex items-center gap-2">
                   <Dumbbell className="w-4 h-4 text-[#FF6B35]" />
                   <div>
                     <h3 className="text-[#FF6B35] text-xs font-bold uppercase tracking-wider">YOUR WORKOUT</h3>
-                    <p className="text-[#666] text-xs">{selectedDrills.length} drills • {totalDuration} min total</p>
+                    <p className="text-slate-400 text-xs">{selectedDrills.length} drills • {totalDuration} min total</p>
                   </div>
                 </div>
                 <input
@@ -2236,7 +2236,7 @@ function BuildWorkoutPopup({ availableDrills, onClose, onSaveWorkout, onStartWor
                   value={workoutName}
                   onChange={(e) => setWorkoutName(e.target.value)}
                   placeholder="Workout name..."
-                  className="flex-1 px-3 py-2 bg-[#1a1a1a] border border-[#333] rounded-lg text-white text-sm placeholder:text-[#666] focus:outline-none focus:border-[#FF6B35]"
+                  className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 text-sm placeholder:text-slate-400 focus:outline-none focus:border-[#FF6B35]"
                 />
               </div>
             </div>
@@ -2248,27 +2248,27 @@ function BuildWorkoutPopup({ availableDrills, onClose, onSaveWorkout, onStartWor
               onDrop={handleDrop}
             >
               {selectedDrills.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center border-2 border-dashed border-[#333] rounded-xl p-8">
-                  <div className="w-16 h-16 rounded-2xl bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center mb-4">
-                    <GripVertical className="w-8 h-8 text-[#333]" />
+                <div className="h-full flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl p-8">
+                  <div className="w-16 h-16 rounded-2xl bg-white border border-slate-200 flex items-center justify-center mb-4">
+                    <GripVertical className="w-8 h-8 text-slate-700" />
                   </div>
-                  <h4 className="text-[#666] font-bold mb-1">Drop drills here</h4>
-                  <p className="text-[#555] text-sm text-center">Drag drills from the left panel to build your workout</p>
+                  <h4 className="text-slate-400 font-bold mb-1">Drop drills here</h4>
+                  <p className="text-slate-500 text-sm text-center">Drag drills from the left panel to build your workout</p>
                 </div>
               ) : (
                 <div className="space-y-2">
                   {selectedDrills.map((drill, index) => (
                     <div
                       key={drill.id}
-                      className="bg-[#1a1a1a] rounded-xl p-3 border border-[#2a2a2a] group"
+                      className="bg-white rounded-xl p-3 border border-slate-200 group"
                     >
                       <div className="flex items-center gap-3">
                         <span className="w-6 h-6 rounded-lg bg-[#FF6B35]/20 text-[#FF6B35] text-xs font-bold flex items-center justify-center">
                           {index + 1}
                         </span>
                         <div className="flex-1 min-w-0">
-                          <h4 className="text-white font-bold text-sm truncate">{drill.title}</h4>
-                          <div className="flex items-center gap-2 text-[#888] text-xs">
+                          <h4 className="text-slate-900 font-bold text-sm truncate">{drill.title}</h4>
+                          <div className="flex items-center gap-2 text-slate-500 text-xs">
                             <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold text-white ${getFocusBadgeColor(drill.focusArea)}`}>
                               {FOCUS_AREA_LABELS[drill.focusArea]}
                             </span>
@@ -2282,7 +2282,7 @@ function BuildWorkoutPopup({ availableDrills, onClose, onSaveWorkout, onStartWor
                           {index > 0 && (
                             <button
                               onClick={() => handleReorderDrill(index, index - 1)}
-                              className="p-1 text-[#666] hover:text-white transition-colors"
+                              className="p-1 text-slate-400 hover:text-slate-900 transition-colors"
                             >
                               <ChevronUp className="w-4 h-4" />
                             </button>
@@ -2290,14 +2290,14 @@ function BuildWorkoutPopup({ availableDrills, onClose, onSaveWorkout, onStartWor
                           {index < selectedDrills.length - 1 && (
                             <button
                               onClick={() => handleReorderDrill(index, index + 1)}
-                              className="p-1 text-[#666] hover:text-white transition-colors"
+                              className="p-1 text-slate-400 hover:text-slate-900 transition-colors"
                             >
                               <ChevronDown className="w-4 h-4" />
                             </button>
                           )}
                           <button
                             onClick={() => handleRemoveDrill(drill.id)}
-                            className="p-1 text-[#666] hover:text-red-400 transition-colors"
+                            className="p-1 text-slate-400 hover:text-red-400 transition-colors"
                           >
                             <X className="w-4 h-4" />
                           </button>
@@ -2312,10 +2312,10 @@ function BuildWorkoutPopup({ availableDrills, onClose, onSaveWorkout, onStartWor
         </div>
         
         {/* Footer */}
-        <div className="p-4 border-t border-[#2a2a2a] flex items-center gap-3">
+        <div className="p-4 border-t border-slate-200 flex items-center gap-3">
           <button
             onClick={onClose}
-            className="px-6 py-3 rounded-xl bg-[#1a1a1a] border border-[#333] text-[#888] font-bold hover:text-white transition-colors"
+            className="px-6 py-3 rounded-xl bg-white border border-slate-200 text-slate-500 font-bold hover:text-slate-900 transition-colors"
           >
             CANCEL
           </button>
@@ -2329,7 +2329,7 @@ function BuildWorkoutPopup({ availableDrills, onClose, onSaveWorkout, onStartWor
             className={`flex-1 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${
               selectedDrills.length > 0
                 ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-white hover:brightness-110'
-                : 'bg-[#2a2a2a] text-[#666] cursor-not-allowed'
+                : 'bg-slate-50 text-slate-400 cursor-not-allowed'
             }`}
           >
             <Play className="w-5 h-5" />
@@ -2340,13 +2340,13 @@ function BuildWorkoutPopup({ availableDrills, onClose, onSaveWorkout, onStartWor
       
       {/* Drill Preview Modal */}
       {previewDrill && (
-        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#0a0a0a] rounded-2xl w-full max-w-md max-h-[85vh] overflow-hidden border border-[#2a2a2a] shadow-2xl flex flex-col">
+        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-slate-50 rounded-2xl w-full max-w-md max-h-[85vh] overflow-hidden border border-slate-200 shadow-lg flex flex-col">
             {/* Header with Close */}
-            <div className="relative h-28 bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border-b border-[#2a2a2a]">
+            <div className="relative h-28 bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border-b border-slate-200">
               <button 
                 onClick={() => setPreviewDrill(null)}
-                className="absolute top-3 right-3 text-[#666] hover:text-white p-1.5 bg-black/50 rounded-lg transition-colors z-10"
+                className="absolute top-3 right-3 text-slate-400 hover:text-slate-900 p-1.5 bg-white/80 rounded-lg transition-colors z-10"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -2356,12 +2356,12 @@ function BuildWorkoutPopup({ availableDrills, onClose, onSaveWorkout, onStartWor
                 </div>
               </div>
               <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-[#0a0a0a] to-transparent">
-                <h3 className="text-white font-black">{previewDrill.title}</h3>
+                <h3 className="text-slate-900 font-black">{previewDrill.title}</h3>
                 <div className="flex items-center gap-2 mt-1">
                   <span className={`px-2 py-0.5 rounded text-[10px] font-bold text-white ${getFocusBadgeColor(previewDrill.focusArea)}`}>
                     {FOCUS_AREA_LABELS[previewDrill.focusArea]}
                   </span>
-                  <span className="text-[#888] text-xs">{previewDrill.duration} min</span>
+                  <span className="text-slate-500 text-xs">{previewDrill.duration} min</span>
                 </div>
               </div>
             </div>
@@ -2369,36 +2369,36 @@ function BuildWorkoutPopup({ availableDrills, onClose, onSaveWorkout, onStartWor
             {/* Scrollable Content */}
             <div className="flex-1 overflow-y-auto">
               {/* Focus */}
-              <div className="p-4 border-b border-[#2a2a2a]">
+              <div className="p-4 border-b border-slate-200">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-lg bg-[#FF6B35]/20 flex items-center justify-center">
                     <Target className="w-4 h-4 text-[#FF6B35]" />
                   </div>
                   <div>
-                    <p className="text-[#888] text-[10px] uppercase">FOCUS</p>
+                    <p className="text-slate-500 text-[10px] uppercase">FOCUS</p>
                     <p className="text-[#FF6B35] font-bold text-sm">{FOCUS_AREA_LABELS[previewDrill.focusArea]}</p>
                   </div>
                 </div>
               </div>
               
               {/* Duration */}
-              <div className="p-4 border-b border-[#2a2a2a]">
+              <div className="p-4 border-b border-slate-200">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-lg bg-[#FF6B35]/20 flex items-center justify-center">
                     <Clock className="w-4 h-4 text-[#FF6B35]" />
                   </div>
                   <div>
-                    <p className="text-[#888] text-[10px] uppercase">REPS / DURATION</p>
-                    <p className="text-[#E5E5E5] font-bold text-sm">{previewDrill.duration} minutes</p>
+                    <p className="text-slate-500 text-[10px] uppercase">REPS / DURATION</p>
+                    <p className="text-slate-700 font-bold text-sm">{previewDrill.duration} minutes</p>
                   </div>
                 </div>
               </div>
               
               {/* Instructions */}
-              <div className="p-4 border-b border-[#2a2a2a]">
+              <div className="p-4 border-b border-slate-200">
                 <div className="flex items-center gap-2 mb-3">
                   <BookOpen className="w-4 h-4 text-[#FF6B35]" />
-                  <h4 className="text-white font-bold text-xs">COACH'S INSTRUCTIONS</h4>
+                  <h4 className="text-slate-900 font-bold text-xs">COACH'S INSTRUCTIONS</h4>
                 </div>
                 <div className="space-y-2">
                   {previewDrill.steps.map((step, idx) => (
@@ -2406,23 +2406,23 @@ function BuildWorkoutPopup({ availableDrills, onClose, onSaveWorkout, onStartWor
                       <div className="w-5 h-5 rounded-full bg-[#FF6B35]/20 flex items-center justify-center flex-shrink-0">
                         <span className="text-[#FF6B35] text-[10px] font-bold">{idx + 1}</span>
                       </div>
-                      <p className="text-[#E5E5E5] text-xs leading-relaxed">{step}</p>
+                      <p className="text-slate-700 text-xs leading-relaxed">{step}</p>
                     </div>
                   ))}
                 </div>
               </div>
               
               {/* Expected Outcomes */}
-              <div className="p-4 border-b border-[#2a2a2a]">
+              <div className="p-4 border-b border-slate-200">
                 <div className="flex items-center gap-2 mb-2">
                   <Check className="w-4 h-4 text-[#FF6B35]" />
-                  <h4 className="text-white font-bold text-xs">KEY POINTS</h4>
+                  <h4 className="text-slate-900 font-bold text-xs">KEY POINTS</h4>
                 </div>
                 <div className="space-y-1.5">
                   {previewDrill.expectedOutcomes.map((outcome, idx) => (
-                    <div key={idx} className="flex items-center gap-2 bg-[#1a1a1a] rounded-lg p-2 border border-[#2a2a2a]">
+                    <div key={idx} className="flex items-center gap-2 bg-white rounded-lg p-2 border border-slate-200">
                       <Check className="w-3 h-3 text-green-400 flex-shrink-0" />
-                      <p className="text-[#E5E5E5] text-xs">{outcome}</p>
+                      <p className="text-slate-700 text-xs">{outcome}</p>
                     </div>
                   ))}
                 </div>
@@ -2436,18 +2436,18 @@ function BuildWorkoutPopup({ availableDrills, onClose, onSaveWorkout, onStartWor
                 </div>
                 <div className="flex items-start gap-2">
                   <div className="w-1 h-1 rounded-full bg-[#FF6B35] mt-1.5 flex-shrink-0" />
-                  <p className="text-[#888] text-xs">{previewDrill.whyItMatters}</p>
+                  <p className="text-slate-500 text-xs">{previewDrill.whyItMatters}</p>
                 </div>
                 {previewDrill.technicalNote && (
-                  <div className="mt-2 p-2 bg-[#1a1a1a] rounded-lg border border-[#FF6B35]/20">
-                    <p className="text-[#888] text-[10px] italic">💡 {previewDrill.technicalNote}</p>
+                  <div className="mt-2 p-2 bg-white rounded-lg border border-[#FF6B35]/20">
+                    <p className="text-slate-500 text-[10px] italic">💡 {previewDrill.technicalNote}</p>
                   </div>
                 )}
               </div>
             </div>
             
             {/* Footer Button */}
-            <div className="p-4 border-t border-[#2a2a2a]">
+            <div className="p-4 border-t border-slate-200">
               <button
                 onClick={() => {
                   handleAddDrill(previewDrill)
@@ -2512,21 +2512,21 @@ function DrillPickerPopup({ availableDrills, onClose, onSelectDrill, onStartDril
   
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
-      <div className="bg-[#0a0a0a] rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden border border-[#2a2a2a] shadow-2xl flex flex-col">
+      <div className="bg-slate-50 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden border border-slate-200 shadow-lg flex flex-col">
         {/* Header */}
-        <div className="bg-[#141414] p-4 border-b border-[#2a2a2a] flex items-center justify-between">
+        <div className="bg-slate-50 p-4 border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[#FF6B35]/20 border border-[#FF6B35]/30 flex items-center justify-center">
               <Target className="w-5 h-5 text-[#FF6B35]" />
             </div>
             <div>
               <h2 className="text-lg font-black text-[#FF6B35]">Pick a Drill</h2>
-              <p className="text-[#888] text-xs">Select a drill to see details</p>
+              <p className="text-slate-500 text-xs">Select a drill to see details</p>
             </div>
           </div>
           <button 
             onClick={onClose}
-            className="text-[#666] hover:text-white p-2 transition-colors"
+            className="text-slate-400 hover:text-slate-900 p-2 transition-colors"
           >
             <X className="w-6 h-6" />
           </button>
@@ -2535,22 +2535,22 @@ function DrillPickerPopup({ availableDrills, onClose, onSelectDrill, onStartDril
         {/* Two-Panel Content */}
         <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
           {/* Left Panel - Drills List */}
-          <div className="w-full md:w-2/5 border-r border-[#2a2a2a] flex flex-col">
+          <div className="w-full md:w-2/5 border-r border-slate-200 flex flex-col">
             {/* Search & Filters */}
-            <div className="p-3 border-b border-[#2a2a2a]">
+            <div className="p-3 border-b border-slate-200">
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search drills..."
-                className="w-full px-3 py-2 bg-[#1a1a1a] border border-[#333] rounded-lg text-white text-sm placeholder:text-[#666] focus:outline-none focus:border-[#FF6B35] mb-2"
+                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-slate-700 text-sm placeholder:text-slate-400 focus:outline-none focus:border-[#FF6B35] mb-2"
               />
               
               <div className="flex flex-wrap gap-1">
                 <button
                   onClick={() => setFilterFocus('all')}
                   className={`px-2 py-1 rounded text-[10px] font-bold transition-colors ${
-                    filterFocus === 'all' ? 'bg-[#FF6B35] text-white' : 'bg-[#2a2a2a] text-[#888] hover:text-white'
+                    filterFocus === 'all' ? 'bg-[#FF6B35] text-white' : 'bg-slate-50 text-slate-500 hover:text-slate-900'
                   }`}
                 >
                   ALL
@@ -2560,7 +2560,7 @@ function DrillPickerPopup({ availableDrills, onClose, onSelectDrill, onStartDril
                     key={focus}
                     onClick={() => setFilterFocus(focus)}
                     className={`px-2 py-1 rounded text-[10px] font-bold transition-colors ${
-                      filterFocus === focus ? 'bg-[#FF6B35] text-white' : 'bg-[#2a2a2a] text-[#888] hover:text-white'
+                      filterFocus === focus ? 'bg-[#FF6B35] text-white' : 'bg-slate-50 text-slate-500 hover:text-slate-900'
                     }`}
                   >
                     {FOCUS_AREA_LABELS[focus]}
@@ -2576,21 +2576,21 @@ function DrillPickerPopup({ availableDrills, onClose, onSelectDrill, onStartDril
                   key={drill.id}
                   type="button"
                   onClick={() => setSelectedDrill(drill)}
-                  className={`w-full text-left bg-[#1a1a1a] rounded-lg p-2.5 border transition-all ${
+                  className={`w-full text-left bg-white rounded-lg p-2.5 border transition-all ${
                     selectedDrill?.id === drill.id 
                       ? 'border-[#FF6B35] bg-[#FF6B35]/10' 
-                      : 'border-[#2a2a2a] hover:border-[#3a3a3a]'
+                      : 'border-slate-200 hover:border-slate-200'
                   }`}
                 >
                   <div className="flex items-center gap-2">
-                    <div className={`w-1.5 h-8 rounded-full ${selectedDrill?.id === drill.id ? 'bg-[#FF6B35]' : 'bg-[#333]'}`} />
+                    <div className={`w-1.5 h-8 rounded-full ${selectedDrill?.id === drill.id ? 'bg-[#FF6B35]' : 'bg-slate-100'}`} />
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-white font-bold text-xs truncate">{drill.title}</h4>
+                      <h4 className="text-slate-900 font-bold text-xs truncate">{drill.title}</h4>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold text-white ${getFocusBadgeColor(drill.focusArea)}`}>
                           {FOCUS_AREA_LABELS[drill.focusArea]}
                         </span>
-                        <span className="text-[#666] text-[10px]">{drill.duration}m</span>
+                        <span className="text-slate-400 text-[10px]">{drill.duration}m</span>
                       </div>
                     </div>
                     {selectedDrill?.id === drill.id && (
@@ -2615,13 +2615,13 @@ function DrillPickerPopup({ availableDrills, onClose, onSelectDrill, onStartDril
                   </div>
                   <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-[#0a0a0a] to-transparent">
                     <div className="flex items-center gap-2">
-                      <h3 className="text-white font-black text-lg">{selectedDrill.title}</h3>
+                      <h3 className="text-slate-900 font-black text-lg">{selectedDrill.title}</h3>
                     </div>
                     <div className="flex items-center gap-2 mt-1">
                       <span className={`px-2 py-0.5 rounded text-[10px] font-bold text-white ${getFocusBadgeColor(selectedDrill.focusArea)}`}>
                         {FOCUS_AREA_LABELS[selectedDrill.focusArea]}
                       </span>
-                      <span className="text-[#888] text-xs flex items-center gap-1">
+                      <span className="text-slate-500 text-xs flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         {selectedDrill.duration} MINUTES
                       </span>
@@ -2630,38 +2630,38 @@ function DrillPickerPopup({ availableDrills, onClose, onSelectDrill, onStartDril
                 </div>
                 
                 {/* Focus Section */}
-                <div className="p-4 border-b border-[#2a2a2a]">
+                <div className="p-4 border-b border-slate-200">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-[#FF6B35]/20 border border-[#FF6B35]/30 flex items-center justify-center">
                       <Target className="w-5 h-5 text-[#FF6B35]" />
                     </div>
                     <div>
-                      <p className="text-[#888] text-xs uppercase tracking-wider">FOCUS</p>
+                      <p className="text-slate-500 text-xs uppercase tracking-wider">FOCUS</p>
                       <p className="text-[#FF6B35] font-bold uppercase">{FOCUS_AREA_LABELS[selectedDrill.focusArea]}</p>
                     </div>
                   </div>
                 </div>
                 
                 {/* Reps / Duration Section */}
-                <div className="p-4 border-b border-[#2a2a2a]">
+                <div className="p-4 border-b border-slate-200">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-[#FF6B35]/20 border border-[#FF6B35]/30 flex items-center justify-center">
                       <Clock className="w-5 h-5 text-[#FF6B35]" />
                     </div>
                     <div>
-                      <p className="text-[#888] text-xs uppercase tracking-wider">REPS / DURATION</p>
-                      <p className="text-[#E5E5E5] font-bold">{selectedDrill.duration} minutes</p>
+                      <p className="text-slate-500 text-xs uppercase tracking-wider">REPS / DURATION</p>
+                      <p className="text-slate-700 font-bold">{selectedDrill.duration} minutes</p>
                     </div>
                   </div>
                 </div>
                 
                 {/* Coach's Instructions */}
-                <div className="p-4 border-b border-[#2a2a2a]">
+                <div className="p-4 border-b border-slate-200">
                   <div className="flex items-center gap-2 mb-4">
                     <div className="w-8 h-8 rounded-full bg-[#FF6B35]/20 flex items-center justify-center">
                       <BookOpen className="w-4 h-4 text-[#FF6B35]" />
                     </div>
-                    <h4 className="text-white font-bold text-sm">COACH'S INSTRUCTIONS</h4>
+                    <h4 className="text-slate-900 font-bold text-sm">COACH'S INSTRUCTIONS</h4>
                   </div>
                   <div className="space-y-3">
                     {selectedDrill.steps.map((step, idx) => (
@@ -2669,25 +2669,25 @@ function DrillPickerPopup({ availableDrills, onClose, onSelectDrill, onStartDril
                         <div className="w-6 h-6 rounded-full bg-[#FF6B35]/20 flex items-center justify-center flex-shrink-0">
                           <span className="text-[#FF6B35] text-xs font-bold">{idx + 1}</span>
                         </div>
-                        <p className="text-[#E5E5E5] text-sm leading-relaxed">{step}</p>
+                        <p className="text-slate-700 text-sm leading-relaxed">{step}</p>
                       </div>
                     ))}
                   </div>
                 </div>
                 
                 {/* Expected Outcomes / Key Points */}
-                <div className="p-4 border-b border-[#2a2a2a]">
+                <div className="p-4 border-b border-slate-200">
                   <div className="flex items-center gap-2 mb-3">
                     <Check className="w-4 h-4 text-[#FF6B35]" />
-                    <h4 className="text-white font-bold text-sm">KEY POINTS - DO IT RIGHT</h4>
+                    <h4 className="text-slate-900 font-bold text-sm">KEY POINTS - DO IT RIGHT</h4>
                   </div>
                   <div className="space-y-2">
                     {selectedDrill.expectedOutcomes.map((outcome, idx) => (
-                      <div key={idx} className="flex items-center gap-3 bg-[#1a1a1a] rounded-lg p-3 border border-[#2a2a2a]">
+                      <div key={idx} className="flex items-center gap-3 bg-white rounded-lg p-3 border border-slate-200">
                         <div className="w-5 h-5 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
                           <Check className="w-3 h-3 text-green-400" />
                         </div>
-                        <p className="text-[#E5E5E5] text-sm">{outcome}</p>
+                        <p className="text-slate-700 text-sm">{outcome}</p>
                       </div>
                     ))}
                   </div>
@@ -2701,11 +2701,11 @@ function DrillPickerPopup({ availableDrills, onClose, onSelectDrill, onStartDril
                   </div>
                   <div className="flex items-start gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-[#FF6B35] mt-2 flex-shrink-0" />
-                    <p className="text-[#888] text-sm">{selectedDrill.whyItMatters}</p>
+                    <p className="text-slate-500 text-sm">{selectedDrill.whyItMatters}</p>
                   </div>
                   {selectedDrill.technicalNote && (
-                    <div className="mt-3 p-3 bg-[#1a1a1a] rounded-lg border border-[#FF6B35]/20">
-                      <p className="text-[#888] text-xs italic">💡 {selectedDrill.technicalNote}</p>
+                    <div className="mt-3 p-3 bg-white rounded-lg border border-[#FF6B35]/20">
+                      <p className="text-slate-500 text-xs italic">💡 {selectedDrill.technicalNote}</p>
                     </div>
                   )}
                 </div>
@@ -2713,21 +2713,21 @@ function DrillPickerPopup({ availableDrills, onClose, onSelectDrill, onStartDril
             ) : (
               // Empty State
               <div className="flex-1 flex flex-col items-center justify-center p-8">
-                <div className="w-20 h-20 rounded-2xl bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center mb-4">
-                  <Target className="w-10 h-10 text-[#333]" />
+                <div className="w-20 h-20 rounded-2xl bg-white border border-slate-200 flex items-center justify-center mb-4">
+                  <Target className="w-10 h-10 text-slate-700" />
                 </div>
-                <h4 className="text-[#666] font-bold mb-1">SELECT A DRILL</h4>
-                <p className="text-[#555] text-sm text-center">Click on a drill from the list to see full details</p>
+                <h4 className="text-slate-400 font-bold mb-1">SELECT A DRILL</h4>
+                <p className="text-slate-500 text-sm text-center">Click on a drill from the list to see full details</p>
               </div>
             )}
             
             {/* Footer - Action Button */}
             {selectedDrill && (
-              <div className="p-4 border-t border-[#2a2a2a] space-y-2">
+              <div className="p-4 border-t border-slate-200 space-y-2">
                 <div className="flex gap-2">
                   <button
                     onClick={() => onSelectDrill(selectedDrill)}
-                    className="flex-1 py-3 rounded-xl bg-[#2a2a2a] border border-[#FF6B35]/50 text-[#FF6B35] font-bold text-sm hover:bg-[#FF6B35]/10 transition-all flex items-center justify-center gap-2"
+                    className="flex-1 py-3 rounded-xl bg-slate-50 border border-[#FF6B35]/50 text-[#FF6B35] font-bold text-sm hover:bg-[#FF6B35]/10 transition-all flex items-center justify-center gap-2"
                   >
                     <Calendar className="w-4 h-4" />
                     SCHEDULE
@@ -2878,23 +2878,23 @@ function AutoGeneratePopup({ availableDrills, currentPreferences, onClose, onGen
   const activeFilterCount = config.focusAreas.length + config.skillLevels.length + config.difficulties.length
   
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
-      <div className="bg-[#0a0a0a] rounded-2xl w-full max-w-lg max-h-[90vh] overflow-hidden border border-[#2a2a2a] shadow-2xl flex flex-col">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div className="bg-slate-50 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-hidden border border-slate-200 shadow-lg flex flex-col">
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#FF6B35]/20 to-[#FF4500]/10 p-5 border-b border-[#2a2a2a]">
+        <div className="bg-gradient-to-r from-[#FF6B35]/20 to-[#FF4500]/10 p-5 border-b border-slate-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#FF4500] flex items-center justify-center shadow-lg shadow-[#FF6B35]/20">
                 <Zap className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h2 className="text-xl font-black text-white">Auto-Generate</h2>
-                <p className="text-[#888] text-sm">AI-powered training plan</p>
+                <h2 className="text-xl font-black text-slate-900">Auto-Generate</h2>
+                <p className="text-slate-500 text-sm">AI-powered training plan</p>
               </div>
             </div>
             <button 
               onClick={onClose}
-              className="text-[#666] hover:text-white p-2 transition-colors"
+              className="text-slate-400 hover:text-slate-900 p-2 transition-colors"
             >
               <X className="w-6 h-6" />
             </button>
@@ -2905,7 +2905,7 @@ function AutoGeneratePopup({ availableDrills, currentPreferences, onClose, onGen
         <div className="flex-1 overflow-y-auto p-5 space-y-5">
           {/* Type Selection */}
           <div>
-            <label className="text-[#888] text-xs font-bold uppercase tracking-wider mb-3 block">
+            <label className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-3 block">
               What do you want to generate?
             </label>
             <div className="grid grid-cols-2 gap-3">
@@ -2915,12 +2915,12 @@ function AutoGeneratePopup({ availableDrills, currentPreferences, onClose, onGen
                 className={`p-4 rounded-xl border-2 transition-all text-left ${
                   config.type === 'workout'
                     ? 'border-[#FF6B35] bg-[#FF6B35]/10'
-                    : 'border-[#2a2a2a] bg-[#1a1a1a] hover:border-[#3a3a3a]'
+                    : 'border-slate-200 bg-white hover:border-slate-200'
                 }`}
               >
-                <Dumbbell className={`w-6 h-6 mb-2 ${config.type === 'workout' ? 'text-[#FF6B35]' : 'text-[#666]'}`} />
-                <h4 className="text-white font-bold text-sm">Full Workout</h4>
-                <p className="text-[#666] text-xs mt-1">Multiple drills combined</p>
+                <Dumbbell className={`w-6 h-6 mb-2 ${config.type === 'workout' ? 'text-[#FF6B35]' : 'text-slate-400'}`} />
+                <h4 className="text-slate-900 font-bold text-sm">Full Workout</h4>
+                <p className="text-slate-400 text-xs mt-1">Multiple drills combined</p>
               </button>
               <button
                 type="button"
@@ -2928,31 +2928,31 @@ function AutoGeneratePopup({ availableDrills, currentPreferences, onClose, onGen
                 className={`p-4 rounded-xl border-2 transition-all text-left ${
                   config.type === 'drill'
                     ? 'border-[#FF6B35] bg-[#FF6B35]/10'
-                    : 'border-[#2a2a2a] bg-[#1a1a1a] hover:border-[#3a3a3a]'
+                    : 'border-slate-200 bg-white hover:border-slate-200'
                 }`}
               >
-                <Target className={`w-6 h-6 mb-2 ${config.type === 'drill' ? 'text-[#FF6B35]' : 'text-[#666]'}`} />
-                <h4 className="text-white font-bold text-sm">Single Drill</h4>
-                <p className="text-[#666] text-xs mt-1">One focused exercise</p>
+                <Target className={`w-6 h-6 mb-2 ${config.type === 'drill' ? 'text-[#FF6B35]' : 'text-slate-400'}`} />
+                <h4 className="text-slate-900 font-bold text-sm">Single Drill</h4>
+                <p className="text-slate-400 text-xs mt-1">One focused exercise</p>
               </button>
             </div>
           </div>
           
           {/* Filter Card */}
-          <div className="bg-gradient-to-r from-[#1a1a1a] to-[#151515] rounded-xl border border-[#2a2a2a] overflow-hidden">
+          <div className="bg-gradient-to-r from-[#1a1a1a] to-[#151515] rounded-xl border border-slate-200 overflow-hidden">
             {/* Filter Header - Always Visible */}
             <button
               type="button"
               onClick={() => setShowFilters(!showFilters)}
-              className="w-full p-4 flex items-center justify-between hover:bg-[#1f1f1f] transition-colors"
+              className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-colors"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-[#FF6B35]/10 border border-[#FF6B35]/20 flex items-center justify-center">
                   <Settings className="w-5 h-5 text-[#FF6B35]" />
                 </div>
                 <div className="text-left">
-                  <h4 className="text-white font-bold text-sm">Filter Drills</h4>
-                  <p className="text-[#666] text-xs">
+                  <h4 className="text-slate-900 font-bold text-sm">Filter Drills</h4>
+                  <p className="text-slate-400 text-xs">
                     {activeFilterCount > 0 
                       ? `${activeFilterCount} filter${activeFilterCount > 1 ? 's' : ''} active`
                       : 'All drills included'
@@ -2967,19 +2967,19 @@ function AutoGeneratePopup({ availableDrills, currentPreferences, onClose, onGen
                   </span>
                 )}
                 {showFilters ? (
-                  <ChevronUp className="w-5 h-5 text-[#666]" />
+                  <ChevronUp className="w-5 h-5 text-slate-400" />
                 ) : (
-                  <ChevronDown className="w-5 h-5 text-[#666]" />
+                  <ChevronDown className="w-5 h-5 text-slate-400" />
                 )}
               </div>
             </button>
             
             {/* Filter Content - Expandable */}
             {showFilters && (
-              <div className="p-4 pt-0 space-y-4 border-t border-[#2a2a2a]">
+              <div className="p-4 pt-0 space-y-4 border-t border-slate-200">
                 {/* Focus Areas */}
                 <div className="pt-4">
-                  <label className="text-[#888] text-xs font-bold uppercase tracking-wider mb-2 block">
+                  <label className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2 block">
                     Focus Area
                   </label>
                   <div className="flex flex-wrap gap-1.5">
@@ -2991,7 +2991,7 @@ function AutoGeneratePopup({ availableDrills, currentPreferences, onClose, onGen
                         className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
                           config.focusAreas.includes(opt.value)
                             ? 'bg-[#FF6B35] text-white'
-                            : 'bg-[#2a2a2a] text-[#888] hover:bg-[#3a3a3a] hover:text-white'
+                            : 'bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-900'
                         }`}
                       >
                         {opt.label}
@@ -3002,7 +3002,7 @@ function AutoGeneratePopup({ availableDrills, currentPreferences, onClose, onGen
                 
                 {/* Skill Level */}
                 <div>
-                  <label className="text-[#888] text-xs font-bold uppercase tracking-wider mb-2 block">
+                  <label className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2 block">
                     Skill Level
                   </label>
                   <div className="flex flex-wrap gap-1.5">
@@ -3014,7 +3014,7 @@ function AutoGeneratePopup({ availableDrills, currentPreferences, onClose, onGen
                         className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
                           config.skillLevels.includes(opt.value)
                             ? `bg-gradient-to-r ${opt.color} text-white`
-                            : 'bg-[#2a2a2a] text-[#888] hover:bg-[#3a3a3a] hover:text-white'
+                            : 'bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-900'
                         }`}
                       >
                         {opt.label}
@@ -3025,7 +3025,7 @@ function AutoGeneratePopup({ availableDrills, currentPreferences, onClose, onGen
                 
                 {/* Difficulty */}
                 <div>
-                  <label className="text-[#888] text-xs font-bold uppercase tracking-wider mb-2 block">
+                  <label className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2 block">
                     Difficulty
                   </label>
                   <div className="flex flex-wrap gap-1.5">
@@ -3037,7 +3037,7 @@ function AutoGeneratePopup({ availableDrills, currentPreferences, onClose, onGen
                         className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
                           config.difficulties.includes(opt.value)
                             ? `${opt.color} text-white`
-                            : 'bg-[#2a2a2a] text-[#888] hover:bg-[#3a3a3a] hover:text-white'
+                            : 'bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-900'
                         }`}
                       >
                         {opt.label}
@@ -3048,7 +3048,7 @@ function AutoGeneratePopup({ availableDrills, currentPreferences, onClose, onGen
                 
                 {/* Duration Range */}
                 <div>
-                  <label className="text-[#888] text-xs font-bold uppercase tracking-wider mb-2 block">
+                  <label className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2 block">
                     Max Duration <span className="text-[#FF6B35]">({config.duration} min)</span>
                   </label>
                   <div className="flex flex-wrap gap-1.5">
@@ -3060,7 +3060,7 @@ function AutoGeneratePopup({ availableDrills, currentPreferences, onClose, onGen
                         className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
                           config.duration === opt.value
                             ? 'bg-[#FF6B35] text-white'
-                            : 'bg-[#2a2a2a] text-[#888] hover:bg-[#3a3a3a] hover:text-white'
+                            : 'bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-900'
                         }`}
                       >
                         {opt.label}
@@ -3079,7 +3079,7 @@ function AutoGeneratePopup({ availableDrills, currentPreferences, onClose, onGen
                       skillLevels: [], 
                       difficulties: [] 
                     }))}
-                    className="w-full py-2 rounded-lg bg-[#2a2a2a] text-[#888] text-xs font-bold hover:bg-[#3a3a3a] hover:text-white transition-all"
+                    className="w-full py-2 rounded-lg bg-slate-50 text-slate-500 text-xs font-bold hover:bg-slate-100 hover:text-slate-900 transition-all"
                   >
                     Clear All Filters
                   </button>
@@ -3090,7 +3090,7 @@ function AutoGeneratePopup({ availableDrills, currentPreferences, onClose, onGen
           
           {/* Frequency Selection */}
           <div>
-            <label className="text-[#888] text-xs font-bold uppercase tracking-wider mb-3 block">
+            <label className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-3 block">
               How often?
             </label>
             <div className="grid grid-cols-3 gap-2">
@@ -3102,13 +3102,13 @@ function AutoGeneratePopup({ availableDrills, currentPreferences, onClose, onGen
                   className={`p-2.5 rounded-lg border transition-all text-center ${
                     config.frequency === opt.value
                       ? 'border-[#FF6B35] bg-[#FF6B35]/10'
-                      : 'border-[#2a2a2a] bg-[#1a1a1a] hover:border-[#3a3a3a]'
+                      : 'border-slate-200 bg-white hover:border-slate-200'
                   }`}
                 >
-                  <div className={`font-bold text-xs ${config.frequency === opt.value ? 'text-[#FF6B35]' : 'text-white'}`}>
+                  <div className={`font-bold text-xs ${config.frequency === opt.value ? 'text-[#FF6B35]' : 'text-slate-700'}`}>
                     {opt.label}
                   </div>
-                  <div className="text-[#666] text-[10px] mt-0.5">{opt.desc}</div>
+                  <div className="text-slate-400 text-[10px] mt-0.5">{opt.desc}</div>
                 </button>
               ))}
             </div>
@@ -3117,25 +3117,25 @@ function AutoGeneratePopup({ availableDrills, currentPreferences, onClose, onGen
           {/* Drill Count (only for workouts) */}
           {config.type === 'workout' && (
             <div>
-              <label className="text-[#888] text-xs font-bold uppercase tracking-wider mb-3 block">
+              <label className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-3 block">
                 Number of drills
               </label>
               <div className="flex items-center gap-4">
                 <button
                   type="button"
                   onClick={() => setConfig(prev => ({ ...prev, drillCount: Math.max(1, prev.drillCount - 1) }))}
-                  className="w-10 h-10 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a] text-white flex items-center justify-center hover:border-[#FF6B35] transition-colors"
+                  className="w-10 h-10 rounded-lg bg-white border border-slate-200 text-slate-700 flex items-center justify-center hover:border-[#FF6B35] transition-colors"
                 >
                   -
                 </button>
                 <div className="flex-1 text-center">
                   <span className="text-3xl font-black text-[#FF6B35]">{config.drillCount}</span>
-                  <span className="text-[#666] text-sm ml-2">drills</span>
+                  <span className="text-slate-400 text-sm ml-2">drills</span>
                 </div>
                 <button
                   type="button"
                   onClick={() => setConfig(prev => ({ ...prev, drillCount: Math.min(10, prev.drillCount + 1) }))}
-                  className="w-10 h-10 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a] text-white flex items-center justify-center hover:border-[#FF6B35] transition-colors"
+                  className="w-10 h-10 rounded-lg bg-white border border-slate-200 text-slate-700 flex items-center justify-center hover:border-[#FF6B35] transition-colors"
                 >
                   +
                 </button>
@@ -3144,13 +3144,13 @@ function AutoGeneratePopup({ availableDrills, currentPreferences, onClose, onGen
           )}
           
           {/* Matching Drills Info */}
-          <div className="bg-[#1a1a1a] rounded-xl p-4 border border-[#2a2a2a]">
+          <div className="bg-white rounded-xl p-4 border border-slate-200">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <BarChart3 className="w-4 h-4 text-[#FF6B35]" />
-                <span className="text-[#888] text-sm">Matching drills:</span>
+                <span className="text-slate-500 text-sm">Matching drills:</span>
               </div>
-              <span className={`font-bold ${matchingDrillCount === 0 ? 'text-red-500' : 'text-white'}`}>
+              <span className={`font-bold ${matchingDrillCount === 0 ? 'text-red-500' : 'text-slate-700'}`}>
                 {matchingDrillCount} available
               </span>
             </div>
@@ -3161,7 +3161,7 @@ function AutoGeneratePopup({ availableDrills, currentPreferences, onClose, onGen
         </div>
         
         {/* Footer */}
-        <div className="p-5 border-t border-[#2a2a2a] space-y-3">
+        <div className="p-5 border-t border-slate-200 space-y-3">
           <div className="flex gap-3">
             <button
               onClick={() => {
@@ -3169,7 +3169,7 @@ function AutoGeneratePopup({ availableDrills, currentPreferences, onClose, onGen
                 onGenerate({ ...config, startNow: false })
               }}
               disabled={matchingDrillCount === 0}
-              className="flex-1 py-3.5 rounded-xl bg-[#1a1a1a] border border-[#FF6B35]/50 text-[#FF6B35] font-bold hover:bg-[#FF6B35]/10 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 py-3.5 rounded-xl bg-white border border-[#FF6B35]/50 text-[#FF6B35] font-bold hover:bg-[#FF6B35]/10 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Calendar className="w-5 h-5" />
               SCHEDULE
@@ -3188,15 +3188,15 @@ function AutoGeneratePopup({ availableDrills, currentPreferences, onClose, onGen
           </div>
           
           {/* Create Custom Drill Option */}
-          <div className="pt-2 border-t border-[#1a1a1a]">
-            <p className="text-[#555] text-xs text-center mb-2">Can't find what you're looking for?</p>
+          <div className="pt-2 border-t border-slate-200">
+            <p className="text-slate-500 text-xs text-center mb-2">Can't find what you're looking for?</p>
             <button
               onClick={() => {
                 onClose()
                 // This will be handled by a separate popup
                 alert('Custom Drill Creator coming soon! This feature will allow you to create your own drills with custom instructions, duration, and focus areas.')
               }}
-              className="w-full py-3 rounded-xl bg-[#1a1a1a] border border-dashed border-[#3a3a3a] text-[#888] font-bold hover:border-[#FF6B35]/50 hover:text-white transition-all flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-xl bg-white border border-dashed border-slate-200 text-slate-500 font-bold hover:border-[#FF6B35]/50 hover:text-slate-900 transition-all flex items-center justify-center gap-2"
             >
               <Plus className="w-5 h-5" />
               CREATE CUSTOM DRILL

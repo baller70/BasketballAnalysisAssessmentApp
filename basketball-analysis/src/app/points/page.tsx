@@ -60,47 +60,47 @@ export default function PointsPage() {
   }, {} as Record<string, typeof POINT_ACTIONS[string][]>)
   
   return (
-    <div className="min-h-screen bg-[#050505]">
+    <div className="min-h-screen bg-white">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-3 mb-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center">
-              <Zap className="w-8 h-8 text-black" />
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#FF6B35] to-[#E55A2B] shadow-lg shadow-[#FF6B35]/20 flex items-center justify-center">
+              <Zap className="w-8 h-8 text-white" />
             </div>
             <div className="text-left">
-              <h1 className="text-3xl font-black text-white">POINTS SYSTEM</h1>
-              <p className="text-[#888] text-sm">Earn rewards, unlock tiers, level up your game</p>
+              <h1 className="text-3xl font-black text-slate-900">POINTS SYSTEM</h1>
+              <p className="text-slate-500 text-sm">Earn rewards, unlock tiers, level up your game</p>
             </div>
           </div>
         </div>
         
         {/* Quick Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-          <div className="bg-gradient-to-br from-yellow-500/20 to-orange-500/20 p-4 rounded-xl border border-yellow-500/30">
-            <Zap className="w-5 h-5 text-yellow-400 mb-2" />
-            <p className="text-2xl font-bold text-white">{state.totalPoints.toLocaleString()}</p>
-            <p className="text-[#888] text-xs">Total Points</p>
+          <div className="bg-gradient-to-br from-[#FF6B35]/10 to-transparent p-4 rounded-xl border border-[#FF6B35]/20">
+            <Zap className="w-5 h-5 text-[#FF6B35] mb-2" />
+            <p className="text-2xl font-bold text-slate-900">{state.totalPoints.toLocaleString()}</p>
+            <p className="text-slate-500 text-xs">Total Points</p>
           </div>
-          <div className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 p-4 rounded-xl border border-purple-500/30">
-            <Trophy className="w-5 h-5 text-purple-400 mb-2" />
+          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+            <Trophy className="w-5 h-5 text-slate-400 mb-2" />
             <p className="text-2xl font-bold" style={{ color: currentTier.color }}>{currentTier.icon}</p>
-            <p className="text-[#888] text-xs">{currentTier.displayName}</p>
+            <p className="text-slate-500 text-xs">{currentTier.displayName}</p>
           </div>
-          <div className="bg-gradient-to-br from-orange-500/20 to-red-500/20 p-4 rounded-xl border border-orange-500/30">
-            <TrendingUp className="w-5 h-5 text-orange-400 mb-2" />
-            <p className="text-2xl font-bold text-white">{state.streak}</p>
-            <p className="text-[#888] text-xs">Day Streak</p>
+          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+            <TrendingUp className="w-5 h-5 text-[#FF6B35] mb-2" />
+            <p className="text-2xl font-bold text-slate-900">{state.streak}</p>
+            <p className="text-slate-500 text-xs">Day Streak</p>
           </div>
-          <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 p-4 rounded-xl border border-green-500/30">
-            <Gift className="w-5 h-5 text-green-400 mb-2" />
-            <p className="text-2xl font-bold text-white">+{state.pointsEarnedToday}</p>
-            <p className="text-[#888] text-xs">Today</p>
+          <div className="bg-[#FF6B35]/5 p-4 rounded-xl border border-[#FF6B35]/10">
+            <Gift className="w-5 h-5 text-[#FF6B35] mb-2" />
+            <p className="text-2xl font-bold text-slate-900">+{state.pointsEarnedToday}</p>
+            <p className="text-slate-500 text-xs">Today</p>
           </div>
         </div>
         
         {/* Progress to Next Tier */}
-        <div className="bg-[#1a1a1a] rounded-2xl p-6 border border-[#333] mb-6">
+        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm mb-6">
           <NextUnlockProgress />
         </div>
         
@@ -118,7 +118,7 @@ export default function PointsPage() {
               className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm whitespace-nowrap transition-all ${
                 activeTab === tab.id
                   ? 'bg-[#FF6B35] text-white'
-                  : 'bg-[#1a1a1a] text-[#888] hover:text-white hover:bg-[#2a2a2a]'
+                  : 'bg-slate-50 text-slate-500 hover:text-slate-900 hover:bg-slate-100 border border-slate-200'
               }`}
             >
               {tab.icon}
@@ -131,46 +131,46 @@ export default function PointsPage() {
         {activeTab === 'overview' && (
           <div className="space-y-6">
             {/* How It Works */}
-            <div className="bg-[#1a1a1a] rounded-2xl p-6 border border-[#333]">
-              <h2 className="text-white font-bold text-lg mb-4 flex items-center gap-2">
+            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+              <h2 className="text-slate-900 font-bold text-lg mb-4 flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-[#FF6B35]" />
                 How It Works
               </h2>
               <div className="space-y-4">
                 <div className="flex gap-4">
-                  <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
-                    <span className="text-yellow-400 font-bold">1</span>
+                  <div className="w-10 h-10 rounded-full bg-[#FF6B35]/10 flex items-center justify-center flex-shrink-0">
+                    <span className="text-[#FF6B35] font-bold">1</span>
                   </div>
                   <div>
-                    <p className="text-white font-medium">Earn Points</p>
-                    <p className="text-[#888] text-sm">Complete actions like uploading shots, finishing workouts, and sharing your progress to earn points.</p>
+                    <p className="text-slate-900 font-medium">Earn Points</p>
+                    <p className="text-slate-500 text-sm">Complete actions like uploading shots, finishing workouts, and sharing your progress to earn points.</p>
                   </div>
                 </div>
                 <div className="flex gap-4">
-                  <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                    <span className="text-blue-400 font-bold">2</span>
+                  <div className="w-10 h-10 rounded-full bg-[#FF6B35]/10 flex items-center justify-center flex-shrink-0">
+                    <span className="text-[#FF6B35] font-bold">2</span>
                   </div>
                   <div>
-                    <p className="text-white font-medium">Unlock Tiers</p>
-                    <p className="text-[#888] text-sm">Reach point thresholds to unlock higher tiers with better features and more AI coaching.</p>
+                    <p className="text-slate-900 font-medium">Unlock Tiers</p>
+                    <p className="text-slate-500 text-sm">Reach point thresholds to unlock higher tiers with better features and more AI coaching.</p>
                   </div>
                 </div>
                 <div className="flex gap-4">
-                  <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
-                    <span className="text-green-400 font-bold">3</span>
+                  <div className="w-10 h-10 rounded-full bg-[#FF6B35]/10 flex items-center justify-center flex-shrink-0">
+                    <span className="text-[#FF6B35] font-bold">3</span>
                   </div>
                   <div>
-                    <p className="text-white font-medium">Bank Access Time</p>
-                    <p className="text-[#888] text-sm">When you unlock a tier, you earn access time that goes into your bank. Activate it whenever you want!</p>
+                    <p className="text-slate-900 font-medium">Bank Access Time</p>
+                    <p className="text-slate-500 text-sm">When you unlock a tier, you earn access time that goes into your bank. Activate it whenever you want!</p>
                   </div>
                 </div>
                 <div className="flex gap-4">
-                  <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0">
-                    <span className="text-purple-400 font-bold">4</span>
+                  <div className="w-10 h-10 rounded-full bg-[#FF6B35]/10 flex items-center justify-center flex-shrink-0">
+                    <span className="text-[#FF6B35] font-bold">4</span>
                   </div>
                   <div>
-                    <p className="text-white font-medium">Keep Earning</p>
-                    <p className="text-[#888] text-sm">Continue using the app to earn more access time. Points refresh annually - inactive points convert to XP badges after 1 year.</p>
+                    <p className="text-slate-900 font-medium">Keep Earning</p>
+                    <p className="text-slate-500 text-sm">Continue using the app to earn more access time. Points refresh annually - inactive points convert to XP badges after 1 year.</p>
                   </div>
                 </div>
               </div>
@@ -185,27 +185,27 @@ export default function PointsPage() {
               <ul className="space-y-2 text-sm">
                 <li className="flex items-start gap-2">
                   <Check className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-                  <span className="text-[#ccc]"><strong className="text-white">Share your progress</strong> - Social sharing gives the most points (25-35 per share)</span>
+                  <span className="text-slate-700"><strong className="text-slate-900">Share your progress</strong> - Social sharing gives the most points (25-35 per share)</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <Check className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-                  <span className="text-[#ccc]"><strong className="text-white">Complete the guide</strong> - Swipe through all cards for 50 bonus points</span>
+                  <span className="text-slate-700"><strong className="text-slate-900">Complete the guide</strong> - Swipe through all cards for 50 bonus points</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <Check className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-                  <span className="text-[#ccc]"><strong className="text-white">Maintain your streak</strong> - Daily login gives 5 points + streak bonuses</span>
+                  <span className="text-slate-700"><strong className="text-slate-900">Maintain your streak</strong> - Daily login gives 5 points + streak bonuses</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <Check className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-                  <span className="text-[#ccc]"><strong className="text-white">Invite friends</strong> - Get 100 points when a friend joins!</span>
+                  <span className="text-slate-700"><strong className="text-slate-900">Invite friends</strong> - Get 100 points when a friend joins!</span>
                 </li>
               </ul>
             </div>
             
             {/* Recent Activity */}
-            <div className="bg-[#1a1a1a] rounded-2xl p-6 border border-[#333]">
-              <h2 className="text-white font-bold text-lg mb-4 flex items-center gap-2">
-                <Clock className="w-5 h-5 text-blue-400" />
+            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+              <h2 className="text-slate-900 font-bold text-lg mb-4 flex items-center gap-2">
+                <Clock className="w-5 h-5 text-[#FF6B35]" />
                 Recent Activity
               </h2>
               {state.history.length > 0 ? (
@@ -213,20 +213,20 @@ export default function PointsPage() {
                   {state.history.slice(0, 10).map((event) => (
                     <div 
                       key={event.id}
-                      className="flex items-center justify-between p-3 bg-[#2a2a2a] rounded-xl"
+                      className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100"
                     >
                       <div>
-                        <p className="text-white text-sm">{event.description}</p>
-                        <p className="text-[#666] text-xs">
+                        <p className="text-slate-900 text-sm">{event.description}</p>
+                        <p className="text-slate-400 text-xs">
                           {new Date(event.timestamp).toLocaleString()}
                         </p>
                       </div>
-                      <span className="text-yellow-400 font-bold">+{event.points}</span>
+                      <span className="text-[#FF6B35] font-bold">+{event.points}</span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-[#666] text-center py-8">No activity yet. Start earning points!</p>
+                <p className="text-slate-400 text-center py-8">No activity yet. Start earning points!</p>
               )}
             </div>
           </div>
@@ -238,8 +238,8 @@ export default function PointsPage() {
               const config = CATEGORY_CONFIG[category] || { icon: <Zap className="w-5 h-5" />, color: '#888', label: category }
               
               return (
-                <div key={category} className="bg-[#1a1a1a] rounded-2xl p-6 border border-[#333]">
-                  <h2 className="text-white font-bold text-lg mb-4 flex items-center gap-2">
+                <div key={category} className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+                  <h2 className="text-slate-900 font-bold text-lg mb-4 flex items-center gap-2">
                     <span style={{ color: config.color }}>{config.icon}</span>
                     {config.label}
                   </h2>
@@ -247,14 +247,14 @@ export default function PointsPage() {
                     {actions.map(action => (
                       <div
                         key={action.id}
-                        className="flex items-center justify-between p-4 bg-[#2a2a2a] rounded-xl border border-[#3a3a3a] hover:border-[#FF6B35]/30 transition-all"
+                        className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100 hover:border-[#FF6B35]/30 transition-all"
                       >
                         <div className="flex-1">
-                          <p className="text-white font-medium">{action.name}</p>
-                          <p className="text-[#888] text-sm">{action.description}</p>
+                          <p className="text-slate-900 font-medium">{action.name}</p>
+                          <p className="text-slate-500 text-sm">{action.description}</p>
                           <div className="flex gap-3 mt-1">
                             {action.cooldown && (
-                              <span className="text-[#666] text-xs flex items-center gap-1">
+                              <span className="text-slate-400 text-xs flex items-center gap-1">
                                 <Clock className="w-3 h-3" />
                                 {action.cooldown >= 86400000 
                                   ? `${Math.round(action.cooldown / 86400000)}d cooldown`
@@ -263,7 +263,7 @@ export default function PointsPage() {
                               </span>
                             )}
                             {action.maxPerDay && (
-                              <span className="text-[#666] text-xs flex items-center gap-1">
+                              <span className="text-slate-400 text-xs flex items-center gap-1">
                                 <Calendar className="w-3 h-3" />
                                 Max {action.maxPerDay}/day
                               </span>
@@ -296,12 +296,12 @@ export default function PointsPage() {
               return (
                 <div 
                   key={tierId}
-                  className={`relative bg-[#1a1a1a] rounded-2xl p-6 border-2 transition-all ${
+                  className={`relative bg-white rounded-2xl p-6 border-2 shadow-sm transition-all ${
                     isCurrent 
                       ? 'border-2' 
                       : isUnlocked 
                         ? 'border-green-500/30' 
-                        : 'border-[#333] opacity-70'
+                        : 'border-slate-200 opacity-70'
                   }`}
                   style={isCurrent ? { borderColor: tier.color } : {}}
                 >
@@ -317,7 +317,7 @@ export default function PointsPage() {
                   
                   {/* Next badge */}
                   {isNext && !isCurrent && (
-                    <div className="absolute -top-3 left-6 px-3 py-1 rounded-full text-xs font-bold bg-white/10 text-white border border-white/20">
+                    <div className="absolute -top-3 left-6 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-900 border border-slate-200">
                       NEXT UNLOCK
                     </div>
                   )}
@@ -340,11 +340,11 @@ export default function PointsPage() {
                         {isUnlocked ? (
                           <Unlock className="w-4 h-4 text-green-400" />
                         ) : (
-                          <Lock className="w-4 h-4 text-[#666]" />
+                          <Lock className="w-4 h-4 text-slate-400" />
                         )}
                       </div>
                       
-                      <p className="text-[#888] text-sm mb-3">
+                      <p className="text-slate-500 text-sm mb-3">
                         {tier.pointsRequired.toLocaleString()} points required
                         {isNext && pointsToNext && (
                           <span className="text-[#FF6B35] ml-2">
@@ -361,7 +361,7 @@ export default function PointsPage() {
                               className="w-4 h-4 mt-0.5 flex-shrink-0" 
                               style={{ color: isUnlocked ? '#22C55E' : '#666' }}
                             />
-                            <span className={isUnlocked ? 'text-[#ccc]' : 'text-[#666]'}>
+                            <span className={isUnlocked ? 'text-slate-700' : 'text-slate-400'}>
                               {feature}
                             </span>
                           </div>
@@ -385,14 +385,14 @@ export default function PointsPage() {
                   
                   {/* Progress bar for next tier */}
                   {isNext && pointsToNext && (
-                    <div className="mt-4 pt-4 border-t border-[#333]">
+                    <div className="mt-4 pt-4 border-t border-slate-200">
                       <div className="flex items-center justify-between text-sm mb-2">
-                        <span className="text-[#888]">Progress</span>
-                        <span className="text-white font-medium">
+                        <span className="text-slate-500">Progress</span>
+                        <span className="text-slate-900 font-medium">
                           {state.totalPoints} / {tier.pointsRequired}
                         </span>
                       </div>
-                      <div className="h-2 bg-[#333] rounded-full overflow-hidden">
+                      <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                         <div 
                           className="h-full rounded-full transition-all duration-500"
                           style={{ 
@@ -412,12 +412,12 @@ export default function PointsPage() {
         {activeTab === 'bank' && (
           <div className="space-y-6">
             {/* Explanation */}
-            <div className="bg-gradient-to-br from-blue-500/10 to-transparent rounded-2xl p-6 border border-blue-500/30">
-              <h3 className="text-blue-400 font-bold mb-2 flex items-center gap-2">
-                <Clock className="w-5 h-5" />
+            <div className="bg-gradient-to-br from-slate-100 to-transparent rounded-2xl p-6 border border-slate-200">
+              <h3 className="text-slate-900 font-bold mb-2 flex items-center gap-2">
+                <Clock className="w-5 h-5 text-[#FF6B35]" />
                 What is the Access Bank?
               </h3>
-              <p className="text-[#ccc] text-sm">
+              <p className="text-slate-700 text-sm">
                 When you unlock a tier, you earn access time that goes into your bank. 
                 You can activate it whenever you want - save it for when you need it most! 
                 Keep earning points to add more time to your bank.
@@ -434,12 +434,12 @@ export default function PointsPage() {
                 return (
                   <div 
                     key={tierId}
-                    className={`bg-[#1a1a1a] rounded-2xl p-6 border-2 transition-all ${
+                    className={`bg-white rounded-2xl p-6 border-2 shadow-sm transition-all ${
                       bankEntry?.isActive 
                         ? 'border-green-500' 
                         : isUnlocked 
-                          ? 'border-[#333]' 
-                          : 'border-[#222] opacity-50'
+                          ? 'border-slate-200' 
+                          : 'border-slate-100 opacity-50'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-4">
@@ -454,7 +454,7 @@ export default function PointsPage() {
                           <h3 className="font-bold" style={{ color: tier.color }}>
                             {tier.displayName}
                           </h3>
-                          <p className="text-[#888] text-sm">
+                          <p className="text-slate-500 text-sm">
                             {tier.pointsRequired.toLocaleString()} points to unlock
                           </p>
                         </div>
@@ -469,23 +469,23 @@ export default function PointsPage() {
                     
                     {/* Time Stats */}
                     <div className="grid grid-cols-3 gap-4 mb-4">
-                      <div className="text-center p-3 bg-[#2a2a2a] rounded-xl">
-                        <p className="text-2xl font-bold text-white">
+                      <div className="text-center p-3 bg-slate-50 rounded-xl border border-slate-100">
+                        <p className="text-2xl font-bold text-slate-900">
                           {bankEntry?.totalDaysEarned.toFixed(0) || 0}
                         </p>
-                        <p className="text-[#888] text-xs">Days Earned</p>
+                        <p className="text-slate-500 text-xs">Days Earned</p>
                       </div>
-                      <div className="text-center p-3 bg-[#2a2a2a] rounded-xl">
-                        <p className="text-2xl font-bold text-white">
+                      <div className="text-center p-3 bg-slate-50 rounded-xl border border-slate-100">
+                        <p className="text-2xl font-bold text-slate-900">
                           {bankEntry?.daysUsed.toFixed(1) || 0}
                         </p>
-                        <p className="text-[#888] text-xs">Days Used</p>
+                        <p className="text-slate-500 text-xs">Days Used</p>
                       </div>
-                      <div className="text-center p-3 bg-[#2a2a2a] rounded-xl">
+                      <div className="text-center p-3 bg-slate-50 rounded-xl border border-slate-100">
                         <p className="text-2xl font-bold" style={{ color: tier.color }}>
                           {bankEntry?.daysRemaining.toFixed(1) || 0}
                         </p>
-                        <p className="text-[#888] text-xs">Days Left</p>
+                        <p className="text-slate-500 text-xs">Days Left</p>
                       </div>
                     </div>
                     
@@ -509,9 +509,9 @@ export default function PointsPage() {
                     )}
                     
                     {!isUnlocked && (
-                      <div className="text-center p-3 bg-[#2a2a2a] rounded-xl">
-                        <Lock className="w-5 h-5 text-[#666] mx-auto mb-1" />
-                        <p className="text-[#666] text-sm">
+                      <div className="text-center p-3 bg-slate-50 rounded-xl border border-slate-100">
+                        <Lock className="w-5 h-5 text-slate-400 mx-auto mb-1" />
+                        <p className="text-slate-400 text-sm">
                           Reach {tier.pointsRequired.toLocaleString()} points to unlock
                         </p>
                       </div>
@@ -522,9 +522,9 @@ export default function PointsPage() {
             </div>
             
             {/* Annual Refresh Note */}
-            <div className="bg-[#1a1a1a] rounded-2xl p-4 border border-[#333] text-center">
-              <Calendar className="w-6 h-6 text-[#888] mx-auto mb-2" />
-              <p className="text-[#888] text-sm">
+            <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm text-center">
+              <Calendar className="w-6 h-6 text-slate-500 mx-auto mb-2" />
+              <p className="text-slate-500 text-sm">
                 Points refresh annually. Inactive points convert to XP badges after 1 year.
               </p>
             </div>

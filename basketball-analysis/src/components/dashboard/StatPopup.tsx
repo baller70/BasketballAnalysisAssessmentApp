@@ -379,7 +379,7 @@ export function StatPopup({
   if (!isOpen || !stat) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
       {/* Points animation - fixed position on top of everything */}
       {showPointsBurst && (
         <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-[60]">
@@ -445,37 +445,38 @@ export function StatPopup({
       )}
       <div 
         ref={popupRef}
-        className="bg-gradient-to-b from-[#1a1a1a] to-[#0d0d0d] rounded-xl border border-[#3a3a3a] shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto relative"
+        className="bg-white rounded-xl border border-slate-300 shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto relative"
+        style={{ boxShadow: '0 25px 50px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.04)' }}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-gradient-to-r from-[#FF6B35]/20 to-transparent p-4 border-b border-[#3a3a3a] flex items-center justify-between">
+        <div className="sticky top-0 bg-gradient-to-r from-[#FF6B35]/10 via-[#FF6B35]/5 to-white p-5 border-b border-slate-300 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[#FF6B35]/10 flex items-center justify-center border border-[#FF6B35]/30">
-              <Info className="w-5 h-5 text-[#FF6B35]" />
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#E55A2B] flex items-center justify-center shadow-lg shadow-[#FF6B35]/20">
+              <Info className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-[#FF6B35] font-bold text-lg uppercase tracking-wider">{stat.name}</h2>
-              <p className="text-[#888] text-xs">{stat.fullName}</p>
+              <h2 className="text-slate-900 font-black text-lg uppercase tracking-wider">{stat.name}</h2>
+              <p className="text-slate-500 text-xs font-medium">{stat.fullName}</p>
             </div>
           </div>
           <button 
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-[#3a3a3a] hover:bg-[#4a4a4a] flex items-center justify-center transition-colors"
+            className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-300 flex items-center justify-center transition-colors shadow-sm"
           >
-            <X className="w-4 h-4 text-[#888]" />
+            <X className="w-4 h-4 text-slate-600" />
           </button>
         </div>
 
         {/* Your Score */}
-        <div className="p-4 border-b border-[#3a3a3a]">
+        <div className="p-5 border-b border-slate-300">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[#888] text-sm uppercase tracking-wider">Your Score</span>
+            <span className="text-slate-500 text-sm uppercase tracking-wider font-semibold">Your Score</span>
             <div className="flex items-center gap-2">
-              <span className="text-white font-black text-3xl">{value}</span>
-              <span className="text-[#888] text-sm">/ 100</span>
+              <span className="text-slate-900 font-black text-3xl">{value}</span>
+              <span className="text-slate-400 text-sm font-medium">/ 100</span>
             </div>
           </div>
-          <div className="h-3 bg-[#3a3a3a] rounded-full overflow-hidden">
+          <div className="h-3.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200" style={{ boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.08)' }}>
             <div 
               className={`h-full rounded-full transition-all duration-500 ${
                 value >= 80 ? 'bg-gradient-to-r from-green-500 to-green-400' : 
@@ -485,7 +486,7 @@ export function StatPopup({
               style={{ width: `${value}%` }} 
             />
           </div>
-          <div className="flex justify-between mt-1 text-[10px] text-[#666]">
+          <div className="flex justify-between mt-1.5 text-[10px] text-slate-500 font-medium">
             <span>0</span>
             <span>Optimal: {stat.optimalRange.min}-{stat.optimalRange.max}</span>
             <span>100</span>
@@ -493,41 +494,45 @@ export function StatPopup({
         </div>
 
         {/* What It Means */}
-        <div className="p-4 border-b border-[#3a3a3a]">
-          <h3 className="text-white font-semibold text-sm mb-2 flex items-center gap-2">
-            <ChevronRight className="w-4 h-4 text-[#FF6B35]" />
+        <div className="p-5 border-b border-slate-300">
+          <h3 className="text-slate-900 font-bold text-sm mb-2.5 flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-[#FF6B35]/10 flex items-center justify-center">
+              <ChevronRight className="w-4 h-4 text-[#FF6B35]" />
+            </div>
             What This Means
           </h3>
-          <p className="text-[#E5E5E5] text-sm leading-relaxed">{stat.description}</p>
-          <p className="text-[#888] text-sm mt-2 leading-relaxed">{stat.whatItMeans}</p>
+          <p className="text-slate-800 text-sm leading-relaxed font-medium">{stat.description}</p>
+          <p className="text-slate-600 text-sm mt-2 leading-relaxed">{stat.whatItMeans}</p>
         </div>
 
         {/* National Average Comparison */}
-        <div className="p-4 border-b border-[#3a3a3a]">
-          <h3 className="text-white font-semibold text-sm mb-3 flex items-center gap-2">
-            <Users className="w-4 h-4 text-[#FF6B35]" />
+        <div className="p-5 border-b border-slate-300">
+          <h3 className="text-slate-900 font-bold text-sm mb-3 flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center border border-blue-100">
+              <Users className="w-4 h-4 text-blue-500" />
+            </div>
             National Average ({ageGroup.label})
           </h3>
-          <div className="bg-[#2a2a2a] rounded-lg p-3">
+          <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[#888] text-sm">Age Group Average</span>
-              <span className="text-white font-bold">{nationalAvg}</span>
+              <span className="text-slate-500 text-sm">Age Group Average</span>
+              <span className="text-slate-900 font-bold">{nationalAvg}</span>
             </div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[#888] text-sm">Your Percentile</span>
+              <span className="text-slate-500 text-sm">Your Percentile</span>
               <span className="text-[#FF6B35] font-bold">{nationalPercentile}th</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[#888] text-sm">Rating</span>
+              <span className="text-slate-500 text-sm">Rating</span>
               <span className={`font-bold ${nationalComparison.color}`}>{nationalComparison.label}</span>
             </div>
             
             {/* Visual comparison bar */}
             <div className="mt-3 relative">
-              <div className="h-2 bg-[#3a3a3a] rounded-full">
+              <div className="h-2 bg-slate-200 rounded-full">
                 {/* Average marker */}
                 <div 
-                  className="absolute top-0 w-0.5 h-4 bg-white/50 -translate-y-1"
+                  className="absolute top-0 w-0.5 h-4 bg-slate-400 -translate-y-1"
                   style={{ left: `${nationalAvg}%` }}
                 />
                 {/* Your position */}
@@ -537,55 +542,57 @@ export function StatPopup({
                 />
               </div>
               <div className="flex justify-between mt-2 text-[10px]">
-                <span className="text-[#666]">0</span>
-                <span className="text-white/50">Avg: {nationalAvg}</span>
-                <span className="text-[#666]">100</span>
+                <span className="text-slate-400">0</span>
+                <span className="text-slate-500">Avg: {nationalAvg}</span>
+                <span className="text-slate-400">100</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* State Comparison */}
-        <div className="p-4 border-b border-[#3a3a3a]">
-          <h3 className="text-white font-semibold text-sm mb-3 flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-[#FF6B35]" />
+        <div className="p-4 border-b border-slate-200">
+          <h3 className="text-slate-900 font-bold text-sm mb-3 flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center border border-emerald-100">
+              <MapPin className="w-4 h-4 text-emerald-500" />
+            </div>
             {stateBenchmark.state} State Average
           </h3>
-          <div className="bg-[#2a2a2a] rounded-lg p-3">
+          <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
             <div className="grid grid-cols-3 gap-2 mb-3 text-center">
-              <div className="bg-[#1a1a1a] rounded p-2">
+              <div className="bg-white rounded p-2 border border-slate-200">
                 <p className="text-[#FF6B35] font-bold text-lg">{stateBenchmark.d1Players}</p>
-                <p className="text-[#888] text-[10px]">D1 Players</p>
+                <p className="text-slate-500 text-[10px]">D1 Players</p>
               </div>
-              <div className="bg-[#1a1a1a] rounded p-2">
-                <p className="text-[#C0C0C0] font-bold text-lg">{stateBenchmark.d2Players}</p>
-                <p className="text-[#888] text-[10px]">D2 Players</p>
+              <div className="bg-white rounded p-2 border border-slate-200">
+                <p className="text-slate-500 font-bold text-lg">{stateBenchmark.d2Players}</p>
+                <p className="text-slate-500 text-[10px]">D2 Players</p>
               </div>
-              <div className="bg-[#1a1a1a] rounded p-2">
+              <div className="bg-white rounded p-2 border border-slate-200">
                 <p className="text-[#CD7F32] font-bold text-lg">{stateBenchmark.d3Players}</p>
-                <p className="text-[#888] text-[10px]">D3 Players</p>
+                <p className="text-slate-500 text-[10px]">D3 Players</p>
               </div>
             </div>
             
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[#888] text-sm">State Average</span>
-              <span className="text-white font-bold">{stateAvg}</span>
+              <span className="text-slate-500 text-sm">State Average</span>
+              <span className="text-slate-900 font-bold">{stateAvg}</span>
             </div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[#888] text-sm">Your State Percentile</span>
+              <span className="text-slate-500 text-sm">Your State Percentile</span>
               <span className="text-[#FF6B35] font-bold">{statePercentile}th</span>
             </div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[#888] text-sm">State Competitiveness</span>
+              <span className="text-slate-500 text-sm">State Competitiveness</span>
               <span className={`font-bold ${
                 stateBenchmark.competitiveness === 'Elite' ? 'text-[#FF6B35]' :
                 stateBenchmark.competitiveness === 'High' ? 'text-green-400' :
                 stateBenchmark.competitiveness === 'Medium' ? 'text-blue-400' :
-                'text-[#888]'
+                'text-slate-500'
               }`}>{stateBenchmark.competitiveness}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[#888] text-sm">Rating vs State</span>
+              <span className="text-slate-500 text-sm">Rating vs State</span>
               <span className={`font-bold ${stateComparison.color}`}>{stateComparison.label}</span>
             </div>
           </div>
@@ -593,25 +600,29 @@ export function StatPopup({
 
         {/* How to Improve */}
         <div className="p-4">
-          <h3 className="text-white font-semibold text-sm mb-3 flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-[#FF6B35]" />
+          <h3 className="text-slate-900 font-bold text-sm mb-3 flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-green-50 flex items-center justify-center border border-green-100">
+              <TrendingUp className="w-4 h-4 text-green-500" />
+            </div>
             How to Improve
           </h3>
-          <ul className="space-y-2">
+          <ul className="space-y-2.5">
             {stat.howToImprove.map((tip, index) => (
-              <li key={index} className="flex items-start gap-2 text-sm">
-                <span className="text-[#FF6B35] mt-0.5">•</span>
-                <span className="text-[#E5E5E5]">{tip}</span>
+              <li key={index} className="flex items-start gap-2.5 text-sm">
+                <span className="w-5 h-5 rounded-full bg-[#FF6B35]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-[#FF6B35] text-xs font-bold">{index + 1}</span>
+                </span>
+                <span className="text-slate-700 font-medium">{tip}</span>
               </li>
             ))}
           </ul>
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-[#1a1a1a] border-t border-[#3a3a3a]">
+        <div className="p-5 bg-slate-50 border-t border-slate-300">
           <button 
             onClick={onClose}
-            className="w-full py-3 bg-[#FF6B35] hover:bg-[#FFC000] text-[#1a1a1a] font-bold rounded-lg transition-colors uppercase tracking-wider text-sm"
+            className="w-full py-3 bg-[#FF6B35] hover:bg-[#e55e2e] text-white font-bold rounded-xl transition-colors uppercase tracking-wider text-sm shadow-lg shadow-[#FF6B35]/20"
           >
             Got It
           </button>
@@ -652,17 +663,17 @@ export function ClickableStat({ statKey, label, value, playerAge = 16, playerSta
     <>
       <div 
         onClick={handleOpenPopup}
-        className="cursor-pointer hover:bg-[#2a2a2a] rounded-lg p-1 -m-1 transition-colors group relative"
+        className="cursor-pointer rounded-lg p-2 -m-1 transition-all duration-200 group relative hover:bg-slate-50 hover:shadow-sm hover:border-l-2 hover:border-l-[#FF6B35] hover:pl-3"
       >
         {/* GOLD Video Game Style Points Animation */}
         <InlinePointsBurst points={1} show={showPointsBurst} label="IQ" />
         
-        <p className="text-[#888] text-[9px] uppercase group-hover:text-[#FF6B35] transition-colors flex items-center gap-1">
+        <p className="text-slate-400 text-[9px] uppercase group-hover:text-[#FF6B35] transition-colors flex items-center gap-1">
           {label}
           <Info className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
         </p>
-        <p className="text-white font-black text-2xl group-hover:text-[#FF6B35] transition-colors">{value}</p>
-        <div className="h-1.5 bg-[#3a3a3a] rounded-full overflow-hidden">
+        <p className="text-slate-900 font-black text-2xl group-hover:text-[#1a1a1a] transition-colors">{value}</p>
+        <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
           <div 
             className={`h-full rounded-full ${value >= 80 ? 'bg-green-500' : 'bg-orange-500'}`} 
             style={{ width: `${value}%` }} 
@@ -719,22 +730,53 @@ export function ClickableStatsGrid({ stats, playerAge = 16, playerState = "CA" }
   }
 
   // Helper to render a single stat item - keeps EXACT same styling as original
-  const renderStat = (statKey: string, label: string, value: number) => (
-    <div 
-      key={statKey}
-      onClick={() => handleOpenPopup(statKey)}
-      className="cursor-pointer hover:bg-[#2a2a2a]/50 rounded p-1 -m-1 transition-colors"
-    >
-      <p className="text-[#888] text-[9px] uppercase">{label}</p>
-      <p className="text-white font-black text-2xl">{value}</p>
-      <div className="h-1.5 bg-[#3a3a3a] rounded-full overflow-hidden">
-        <div 
-          className={`h-full rounded-full ${value >= 80 ? 'bg-green-500' : 'bg-orange-500'}`} 
-          style={{ width: `${value}%` }} 
-        />
+  const renderStat = (statKey: string, label: string, value: number) => {
+    const getBarGradient = (v: number) => {
+      if (v >= 80) return 'linear-gradient(90deg, #22c55e, #4ade80)'
+      if (v >= 65) return 'linear-gradient(90deg, #FF6B35, #ff8c5a)'
+      return 'linear-gradient(90deg, #ef4444, #f87171)'
+    }
+    const getDotColor = (v: number) => {
+      if (v >= 80) return '#4ade80'
+      if (v >= 65) return '#ff8c5a'
+      return '#f87171'
+    }
+    return (
+      <div 
+        key={statKey}
+        onClick={() => handleOpenPopup(statKey)}
+        className="cursor-pointer rounded-lg p-2 -m-1 transition-all duration-200 group hover:bg-slate-50 hover:shadow-sm hover:border-l-2 hover:border-l-[#FF6B35] hover:pl-3"
+      >
+        <p className="text-slate-500 text-[9px] font-semibold uppercase tracking-wide group-hover:text-[#FF6B35] transition-colors">{label}</p>
+        <p className="text-slate-900 font-black text-2xl group-hover:text-[#1a1a1a] transition-colors">{value}</p>
+        <div className="relative h-2 bg-slate-100 rounded-full overflow-hidden mt-1" style={{ boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.06)' }}>
+          <div 
+            className="h-full rounded-full transition-all duration-500 relative"
+            style={{ 
+              width: `${value}%`, 
+              background: getBarGradient(value),
+            }}
+          >
+            {/* Shine highlight */}
+            <div 
+              className="absolute inset-0 rounded-full"
+              style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,0.35) 0%, transparent 60%)' }}
+            />
+          </div>
+          {/* Tip dot */}
+          <div 
+            className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full border-2 border-white transition-all duration-500"
+            style={{ 
+              left: `${value}%`, 
+              transform: `translate(-50%, -50%)`,
+              backgroundColor: getDotColor(value),
+              boxShadow: `0 0 6px ${getDotColor(value)}80`,
+            }}
+          />
+        </div>
       </div>
-    </div>
-  )
+    )
+  }
 
   return (
     <>

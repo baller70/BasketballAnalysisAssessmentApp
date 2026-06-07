@@ -139,7 +139,7 @@ export function BodyTypeCard({
                 p-3 rounded-xl border-2 transition-all flex flex-col items-center
                 ${isSelected
                   ? "border-[#FF6B35] bg-[#FF6B35]/10"
-                  : "border-[#3a3a3a] bg-[#2a2a2a] hover:border-[#4a4a4a]"
+                  : "border-slate-200 bg-slate-50 hover:border-slate-300"
                 }
               `}
             >
@@ -156,14 +156,14 @@ export function BodyTypeCard({
               {/* Label */}
               <h3
                 className={`font-semibold text-sm ${
-                  isSelected ? "text-[#FF6B35]" : "text-white"
+                  isSelected ? "text-[#FF6B35]" : "text-slate-900"
                 }`}
               >
                 {type.label}
               </h3>
               
               {/* Short Description */}
-              <p className="text-xs text-gray-400 text-center mt-1">
+              <p className="text-xs text-slate-500 text-center mt-1">
                 {type.shortDescription}
               </p>
               
@@ -187,7 +187,7 @@ export function BodyTypeCard({
         <div key={type.id} className="mb-2">
           <button
             onClick={() => setExpandedType(expandedType === type.id ? null : type.id)}
-            className="w-full flex items-center justify-between p-2 text-sm text-gray-400 hover:bg-[#2a2a2a] rounded-lg transition-colors"
+            className="w-full flex items-center justify-between p-2 text-sm text-slate-500 hover:bg-slate-50 rounded-lg transition-colors"
           >
             <span>Learn more about {type.label}</span>
             <ChevronDownIcon
@@ -207,12 +207,12 @@ export function BodyTypeCard({
                 exit={{ height: 0, opacity: 0 }}
                 className="overflow-hidden"
               >
-                <div className="p-3 bg-[#2a2a2a] rounded-lg mt-1 text-sm">
-                  <p className="text-gray-300 mb-2">{type.fullDescription}</p>
+                <div className="p-3 bg-slate-50 border border-slate-100 rounded-lg mt-1 text-sm">
+                  <p className="text-slate-700 mb-2">{type.fullDescription}</p>
                   
                   <div className="mb-2">
-                    <p className="font-medium text-white text-xs mb-1">Characteristics:</p>
-                    <ul className="text-xs text-gray-400 list-disc list-inside">
+                    <p className="font-medium text-slate-900 text-xs mb-1">Characteristics:</p>
+                    <ul className="text-xs text-slate-500 list-disc list-inside">
                       {type.characteristics.map((char, i) => (
                         <li key={i}>{char}</li>
                       ))}
@@ -220,12 +220,12 @@ export function BodyTypeCard({
                   </div>
                   
                   <div className="mb-2">
-                    <p className="font-medium text-white text-xs mb-1">Shooting Implications:</p>
-                    <p className="text-xs text-gray-400">{type.shootingImplications}</p>
+                    <p className="font-medium text-slate-900 text-xs mb-1">Shooting Implications:</p>
+                    <p className="text-xs text-slate-500">{type.shootingImplications}</p>
                   </div>
                   
                   <div>
-                    <p className="font-medium text-white text-xs mb-1">NBA Examples:</p>
+                    <p className="font-medium text-slate-900 text-xs mb-1">NBA Examples:</p>
                     <p className="text-xs text-[#FF6B35]">{type.examples.join(", ")}</p>
                   </div>
                 </div>

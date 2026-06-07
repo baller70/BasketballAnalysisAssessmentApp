@@ -76,7 +76,7 @@ export function AgeCard({
         <select
           value={value || ""}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full px-4 py-4 text-lg border-2 border-[#3a3a3a] rounded-xl focus:border-[#FF6B35] focus:ring-0 transition-colors bg-[#0a0a0a] text-white appearance-none cursor-pointer"
+          className="w-full px-4 py-4 text-lg border-2 border-slate-200 rounded-xl focus:border-[#FF6B35] focus:ring-0 transition-colors bg-white text-slate-900 appearance-none cursor-pointer"
           style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23FF6B35'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
             backgroundRepeat: "no-repeat",
@@ -106,10 +106,10 @@ export function AgeCard({
               <p className="text-sm text-[#FF6B35] font-medium">
                 Your Coaching Tier
               </p>
-              <p className="text-lg font-bold text-white">
+              <p className="text-lg font-bold text-slate-900">
                 {coachingTier.label}
               </p>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-slate-500">
                 {coachingTier.description}
               </p>
             </div>
@@ -127,7 +127,7 @@ export function AgeCard({
               className={`p-2 rounded-lg text-center transition-all ${
                 isActive
                   ? "bg-[#FF6B35] text-white"
-                  : "bg-[#2a2a2a] text-gray-500"
+                  : "bg-slate-50 text-slate-500"
               }`}
             >
               <p className="text-[10px] font-medium leading-tight">
@@ -140,7 +140,7 @@ export function AgeCard({
       
       {/* What This Means */}
       {coachingTier && (
-        <div className="mt-4 text-center text-xs text-gray-500">
+        <div className="mt-4 text-center text-xs text-slate-500">
           Your analysis will be tailored to {coachingTier.label.toLowerCase()}-level expectations
         </div>
       )}

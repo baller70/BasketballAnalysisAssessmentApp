@@ -33,7 +33,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <head>
         {/* Cache busting meta tags to prevent stale content */}
         <meta httpEquiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
@@ -44,10 +44,10 @@ export default function RootLayout({
         {/* DISABLED: Cache clearing script was causing infinite reload loops */}
         {/* <Script src="/clear-cache.js" strategy="beforeInteractive" /> */}
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} ${russoOne.variable} antialiased min-h-screen flex flex-col bg-[#050505]`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} ${russoOne.variable} antialiased min-h-screen flex flex-col bg-white`}>
         <Providers>
           <Header />
-          <main className="flex-1 bg-[#050505]">{children}</main>
+          <main className="flex-1 bg-slate-50">{children}</main>
           <Footer />
         </Providers>
       </body>

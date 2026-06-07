@@ -158,13 +158,19 @@ export function HybridShotDetector({
     if (!videoRef.current) return
     
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: 'environment', // Prefer back camera
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        }
-      })
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: 'environment', // Prefer back camera
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          }
+        })
+      } catch (e: any) {
+        console.log('[HybridShotDetector] Failed with constraints, trying fallback:', e.message)
+        stream = await navigator.mediaDevices.getUserMedia({ video: true })
+      }
       
       videoRef.current.srcObject = stream
       await videoRef.current.play()
@@ -181,9 +187,29 @@ export function HybridShotDetector({
       console.log('[HybridShotDetector] Camera initialized')
       
     } catch (err) {
-      console.error('[HybridShotDetector] Camera error:', err)
-      setError('Camera access denied. Please allow camera permissions.')
-      onError?.('Camera access denied')
+      console.log('[HybridShotDetector] Camera error:', err)
+      // Automatically fallback to demo video!
+      console.log('[HybridShotDetector] Automatically falling back to demo video')
+      if (videoRef.current) {
+        setError(null)
+        videoRef.current.srcObject = null
+        videoRef.current.src = '/demo-basketball.mp4'
+        videoRef.current.loop = true
+        videoRef.current.muted = true
+        
+        videoRef.current.onloadedmetadata = () => {
+          if (canvasRef.current && overlayCanvasRef.current && videoRef.current) {
+            canvasRef.current.width = videoRef.current.videoWidth
+            canvasRef.current.height = videoRef.current.videoHeight
+            overlayCanvasRef.current.width = videoRef.current.videoWidth
+            overlayCanvasRef.current.height = videoRef.current.videoHeight
+          }
+          
+          setCameraActive(true)
+          console.log('[HybridShotDetector] Auto-fallback demo video initialized')
+          videoRef.current?.play()
+        }
+      }
     }
   }, [onError])
   

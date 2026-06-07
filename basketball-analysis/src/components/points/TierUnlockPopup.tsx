@@ -27,14 +27,14 @@ export function TierUnlockPopup() {
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-md p-4"
+        className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
       >
         <motion.div
-          className="relative bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] rounded-3xl p-8 max-w-md w-full border overflow-hidden"
-          style={{ borderColor: `${tierConfig.color}50` }}
+          className="relative bg-white rounded-3xl p-8 max-w-md w-full border border-slate-300 shadow-2xl overflow-hidden"
+          style={{ borderColor: `${tierConfig.color}50`, boxShadow: `0 25px 50px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.04)` }}
           initial={{ scale: 0.5, y: 100, rotateX: 45 }}
           animate={{ scale: 1, y: 0, rotateX: 0 }}
           exit={{ scale: 0.5, y: 100, opacity: 0 }}
@@ -43,9 +43,9 @@ export function TierUnlockPopup() {
           {/* Close button */}
           <button
             onClick={handleDismiss}
-            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors z-20"
+            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-300 flex items-center justify-center transition-colors z-20 shadow-sm"
           >
-            <X className="w-4 h-4 text-white/60" />
+            <X className="w-4 h-4 text-slate-600" />
           </button>
           
           {/* Animated background glow */}
@@ -157,7 +157,7 @@ export function TierUnlockPopup() {
             >
               <div className="flex items-center justify-center gap-2 mb-2">
                 <Trophy className="w-6 h-6 text-yellow-400" />
-                <h2 className="text-2xl font-black text-white uppercase tracking-wider">
+                <h2 className="text-2xl font-black text-slate-900 uppercase tracking-wider">
                   Tier Unlocked!
                 </h2>
                 <Trophy className="w-6 h-6 text-yellow-400" />
@@ -178,32 +178,32 @@ export function TierUnlockPopup() {
                 {tierConfig.displayName}
               </motion.p>
               
-              <p className="text-white/60 text-sm mb-6">
+              <p className="text-slate-600 text-sm mb-6 font-medium">
                 You&apos;ve unlocked {tierConfig.displayName} tier features!
               </p>
             </motion.div>
             
             {/* Rewards */}
             <motion.div
-              className="bg-black/40 rounded-xl p-4 mb-6 border border-white/10"
+              className="bg-slate-50 rounded-xl p-5 mb-6 border border-slate-200"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
             >
               <div className="flex items-center justify-center gap-2 mb-3">
                 <Gift className="w-5 h-5" style={{ color: tierConfig.color }} />
-                <span className="text-white font-bold uppercase tracking-wider text-sm">Your Rewards</span>
+                <span className="text-slate-900 font-bold uppercase tracking-wider text-sm">Your Rewards</span>
               </div>
               
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-white/80">
+                <div className="flex items-center gap-2 text-slate-700">
                   <Zap className="w-4 h-4 text-yellow-400" />
-                  <span className="text-sm">+{tierConfig.initialTimeReward} days of {tierConfig.displayName} access</span>
+                  <span className="text-sm font-medium">+{tierConfig.initialTimeReward} days of {tierConfig.displayName} access</span>
                 </div>
                 {tierConfig.features.slice(0, 3).map((feature, i) => (
-                  <div key={i} className="flex items-center gap-2 text-white/60">
+                  <div key={i} className="flex items-center gap-2 text-slate-600">
                     <ChevronRight className="w-4 h-4" style={{ color: tierConfig.color }} />
-                    <span className="text-sm">{feature}</span>
+                    <span className="text-sm font-medium">{feature}</span>
                   </div>
                 ))}
               </div>
@@ -218,7 +218,7 @@ export function TierUnlockPopup() {
             >
               <button
                 onClick={handleDismiss}
-                className="flex-1 py-3.5 px-4 rounded-xl bg-white/10 text-white font-bold uppercase tracking-wider hover:bg-white/20 transition-colors text-sm"
+                className="flex-1 py-3.5 px-4 rounded-xl bg-slate-100 text-slate-700 font-bold uppercase tracking-wider hover:bg-slate-200 transition-colors text-sm border border-slate-300"
               >
                 Save for Later
               </button>

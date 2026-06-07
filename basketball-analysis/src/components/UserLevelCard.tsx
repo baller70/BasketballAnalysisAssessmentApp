@@ -6,14 +6,14 @@ import { Trophy, Flame, Crown, Star, Zap, Target, Medal, TrendingUp, X, Calendar
 
 // User level definitions - All names uppercase, gold/dark color scheme for header
 const USER_LEVELS = [
-  { level: 1, name: "ROOKIE SHOOTER", minXP: 0, maxXP: 500, icon: Target, color: "from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a]" },
-  { level: 2, name: "DEVELOPING PLAYER", minXP: 500, maxXP: 1000, icon: TrendingUp, color: "from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a]" },
-  { level: 3, name: "SKILLED SHOOTER", minXP: 1000, maxXP: 2000, icon: Award, color: "from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a]" },
-  { level: 4, name: "SHARP SHOOTER", minXP: 2000, maxXP: 3500, icon: Zap, color: "from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a]" },
-  { level: 5, name: "VETERAN", minXP: 3500, maxXP: 5000, icon: Medal, color: "from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a]" },
-  { level: 6, name: "ELITE SHOOTER", minXP: 5000, maxXP: 7500, icon: Trophy, color: "from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a]" },
-  { level: 7, name: "ALL-STAR", minXP: 7500, maxXP: 10000, icon: Crown, color: "from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a]" },
-  { level: 8, name: "LEGEND", minXP: 10000, maxXP: Infinity, icon: Crown, color: "from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a]" },
+  { level: 1, name: "ROOKIE SHOOTER", minXP: 0, maxXP: 500, icon: Target, color: "from-white via-slate-50 to-white" },
+  { level: 2, name: "DEVELOPING PLAYER", minXP: 500, maxXP: 1000, icon: TrendingUp, color: "from-white via-slate-50 to-white" },
+  { level: 3, name: "SKILLED SHOOTER", minXP: 1000, maxXP: 2000, icon: Award, color: "from-white via-slate-50 to-white" },
+  { level: 4, name: "SHARP SHOOTER", minXP: 2000, maxXP: 3500, icon: Zap, color: "from-white via-slate-50 to-white" },
+  { level: 5, name: "VETERAN", minXP: 3500, maxXP: 5000, icon: Medal, color: "from-white via-slate-50 to-white" },
+  { level: 6, name: "ELITE SHOOTER", minXP: 5000, maxXP: 7500, icon: Trophy, color: "from-white via-slate-50 to-white" },
+  { level: 7, name: "ALL-STAR", minXP: 7500, maxXP: 10000, icon: Crown, color: "from-white via-slate-50 to-white" },
+  { level: 8, name: "LEGEND", minXP: 10000, maxXP: Infinity, icon: Crown, color: "from-white via-slate-50 to-white" },
 ]
 
 // Get user level based on XP
@@ -80,7 +80,7 @@ function DailyStreakPopup({
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
       
       {/* Popup */}
-      <div className="relative bg-[#2C2C2C] rounded-xl border border-[#3a3a3a] shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+      <div className="relative bg-white rounded-xl border border-slate-200 shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
         {/* Header */}
         <div className="bg-gradient-to-r from-orange-500 to-red-600 p-6">
           <button
@@ -105,42 +105,42 @@ function DailyStreakPopup({
           {/* Current Streak */}
           <div className="text-center mb-6">
             <div className="text-6xl font-bold text-[#FF6B35] mb-2">{streak}</div>
-            <div className="text-[#E5E5E5] text-lg">Day Streak</div>
+            <div className="text-slate-600 text-lg">Day Streak</div>
           </div>
 
           {/* Streak Stats */}
           <div className="grid grid-cols-2 gap-4 mb-6">
-            <div className="bg-[#1a1a1a] rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-orange-400">{longestStreak}</div>
-              <div className="text-[#888] text-sm">Longest Streak</div>
+            <div className="bg-slate-50 rounded-lg p-4 text-center border border-slate-100">
+              <div className="text-2xl font-bold text-[#FF6B35]">{longestStreak}</div>
+              <div className="text-slate-400 text-sm">Longest Streak</div>
             </div>
-            <div className="bg-[#1a1a1a] rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-green-400">+50 XP</div>
-              <div className="text-[#888] text-sm">Daily Bonus</div>
+            <div className="bg-slate-50 rounded-lg p-4 text-center border border-slate-100">
+              <div className="text-2xl font-bold text-green-600">+50 XP</div>
+              <div className="text-slate-400 text-sm">Daily Bonus</div>
             </div>
           </div>
 
           {/* Weekly Calendar */}
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-3">
-              <Calendar className="w-4 h-4 text-[#888]" />
-              <span className="text-[#888] text-sm font-medium">This Week</span>
+              <Calendar className="w-4 h-4 text-slate-400" />
+              <span className="text-slate-400 text-sm font-medium">This Week</span>
             </div>
             <div className="flex justify-between gap-2">
               {last7Days.map((day, idx) => (
                 <div key={idx} className="flex flex-col items-center">
-                  <span className="text-[#666] text-xs mb-1">{day.dayName}</span>
+                  <span className="text-slate-400 text-xs mb-1">{day.dayName}</span>
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                     day.isCompleted 
                       ? 'bg-gradient-to-br from-orange-500 to-red-600' 
                       : day.isToday 
-                        ? 'bg-[#3a3a3a] border-2 border-orange-500' 
-                        : 'bg-[#1a1a1a]'
+                        ? 'bg-slate-50 border-2 border-orange-500' 
+                        : 'bg-slate-100'
                   }`}>
                     {day.isCompleted ? (
                       <Flame className="w-5 h-5 text-white" />
                     ) : (
-                      <span className={`text-sm ${day.isToday ? 'text-orange-400' : 'text-[#666]'}`}>
+                      <span className={`text-sm ${day.isToday ? 'text-orange-500' : 'text-slate-400'}`}>
                         {day.dayNum}
                       </span>
                     )}
@@ -151,23 +151,23 @@ function DailyStreakPopup({
           </div>
 
           {/* Streak Rewards Info */}
-          <div className="bg-[#1a1a1a] rounded-lg p-4">
+          <div className="bg-slate-50 rounded-lg p-4 border border-slate-100">
             <div className="flex items-center gap-2 mb-3">
               <Award className="w-4 h-4 text-[#FF6B35]" />
-              <span className="text-[#E5E5E5] font-medium">Streak Rewards</span>
+              <span className="text-slate-900 font-medium">Streak Rewards</span>
             </div>
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between text-[#888]">
+              <div className="flex justify-between text-slate-500">
                 <span>7 Day Streak</span>
-                <span className="text-green-400">+100 XP Bonus</span>
+                <span className="text-green-600">+100 XP Bonus</span>
               </div>
-              <div className="flex justify-between text-[#888]">
+              <div className="flex justify-between text-slate-500">
                 <span>14 Day Streak</span>
-                <span className="text-blue-400">Special Badge</span>
+                <span className="text-blue-500">Special Badge</span>
               </div>
-              <div className="flex justify-between text-[#888]">
+              <div className="flex justify-between text-slate-500">
                 <span>30 Day Streak</span>
-                <span className="text-purple-400">Elite Badge + 500 XP</span>
+                <span className="text-purple-500">Elite Badge + 500 XP</span>
               </div>
             </div>
           </div>
@@ -197,7 +197,7 @@ function LeaderboardPopup({
     if (rank === 1) return 'from-orange-400 to-amber-500'
     if (rank === 2) return 'from-gray-300 to-gray-400'
     if (rank === 3) return 'from-orange-400 to-orange-600'
-    return 'from-[#3a3a3a] to-[#4a4a4a]'
+    return 'from-slate-200 to-slate-300'
   }
 
   const getRankIcon = (rank: number) => {
@@ -213,7 +213,7 @@ function LeaderboardPopup({
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
       
       {/* Popup */}
-      <div className="relative bg-[#2C2C2C] rounded-xl border border-[#3a3a3a] shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+      <div className="relative bg-white rounded-xl border border-slate-200 shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
         {/* Header */}
         <div className="bg-gradient-to-r from-purple-500 to-violet-600 p-6">
           <button
@@ -234,20 +234,20 @@ function LeaderboardPopup({
         </div>
 
         {/* Your Rank Banner */}
-        <div className="bg-[#1a1a1a] p-4 border-b border-[#3a3a3a]">
+        <div className="bg-slate-50 p-4 border-b border-slate-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF6B35] to-amber-600 flex items-center justify-center">
                 <Users className="w-5 h-5 text-white" />
               </div>
               <div>
-                <div className="text-[#E5E5E5] font-medium">Your Rank</div>
-                <div className="text-[#888] text-sm">Keep improving!</div>
+                <div className="text-slate-900 font-medium">Your Rank</div>
+                <div className="text-slate-400 text-sm">Keep improving!</div>
               </div>
             </div>
             <div className="text-right">
               <div className="text-2xl font-bold text-[#FF6B35]">#{userRank}</div>
-              <div className="text-[#888] text-xs">of {totalUsers.toLocaleString()}</div>
+              <div className="text-slate-400 text-xs">of {totalUsers.toLocaleString()}</div>
             </div>
           </div>
         </div>
@@ -259,7 +259,7 @@ function LeaderboardPopup({
               <div 
                 key={idx}
                 className={`flex items-center gap-3 p-3 rounded-lg ${
-                  user.rank <= 3 ? 'bg-[#1a1a1a]' : 'bg-[#252525]'
+                  user.rank <= 3 ? 'bg-slate-50 border border-slate-100' : 'bg-slate-50'
                 }`}
               >
                 <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${getRankColor(user.rank)} flex items-center justify-center text-white font-bold`}>
@@ -270,12 +270,12 @@ function LeaderboardPopup({
                   )}
                 </div>
                 <div className="flex-1">
-                  <div className="text-[#E5E5E5] font-medium">{user.name}</div>
-                  <div className="text-[#888] text-xs">{user.level}</div>
+                  <div className="text-slate-900 font-medium">{user.name}</div>
+                  <div className="text-slate-400 text-xs">{user.level}</div>
                 </div>
                 <div className="text-right">
                   <div className="text-[#FF6B35] font-bold">{user.xp.toLocaleString()}</div>
-                  <div className="text-[#888] text-xs">XP</div>
+                  <div className="text-slate-400 text-xs">XP</div>
                 </div>
               </div>
             ))}
@@ -283,8 +283,8 @@ function LeaderboardPopup({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-[#3a3a3a] bg-[#1a1a1a]">
-          <div className="text-center text-[#888] text-sm">
+        <div className="p-4 border-t border-slate-200 bg-slate-50">
+          <div className="text-center text-slate-400 text-sm">
             Leaderboard resets every Monday at 12:00 AM
           </div>
         </div>
@@ -361,9 +361,9 @@ export function UserLevelCard() {
 
   return (
     <>
-      <div className="bg-[#2C2C2C] rounded-lg border border-[#3a3a3a] overflow-hidden shadow-lg w-64">
+      <div className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm w-64">
         {/* Level Header - Gold/Dark theme */}
-        <div className={`bg-gradient-to-r ${currentLevel.color} p-4 border-b border-[#FF6B35]/30`}>
+        <div className={`bg-gradient-to-r ${currentLevel.color} p-4 border-b border-slate-200`}>
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-[#FF6B35]/20 rounded-lg flex items-center justify-center border border-[#FF6B35]/40">
               <LevelIcon className="w-6 h-6 text-[#FF6B35]" />
@@ -377,11 +377,11 @@ export function UserLevelCard() {
           {/* XP Progress Bar */}
           {nextLevel && (
             <div className="mt-3">
-              <div className="flex justify-between text-xs text-[#888] mb-1">
+              <div className="flex justify-between text-xs text-slate-400 mb-1">
                 <span>{userStats.xp} XP</span>
                 <span>{nextLevel.minXP} XP</span>
               </div>
-              <div className="h-2 bg-[#3a3a3a] rounded-full overflow-hidden">
+              <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF4500] rounded-full transition-all duration-500"
                   style={{ width: `${progressToNext}%` }}
@@ -393,26 +393,26 @@ export function UserLevelCard() {
 
         {/* Level Perks Section - All text uppercase */}
         <div className="p-4">
-          <div className="text-[#888] text-xs uppercase tracking-wider mb-3 font-semibold">LEVEL PERKS</div>
+          <div className="text-slate-400 text-xs uppercase tracking-wider mb-3 font-semibold">LEVEL PERKS</div>
           
           {/* Latest Badge - Links to badges page */}
           <div className="mb-3">
             <div className="flex items-center gap-2 mb-1">
               <Star className="w-3 h-3 text-[#FF6B35]" />
-              <span className="text-[#888] text-xs uppercase tracking-wide">LATEST BADGE</span>
+              <span className="text-slate-400 text-xs uppercase tracking-wide">LATEST BADGE</span>
             </div>
             {userStats.latestBadge ? (
-              <Link href="/badges" className="flex items-center gap-2 p-2 bg-[#1a1a1a] rounded-lg hover:bg-[#252525] transition-colors">
+              <Link href="/badges" className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors border border-slate-100">
                 <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${userStats.latestBadge.color} flex items-center justify-center`}>
-                  <BadgeIcon className="w-4 h-4 text-[#1a1a1a]" />
+                  <BadgeIcon className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <div className="text-[#E5E5E5] text-sm font-medium uppercase">{userStats.latestBadge.name}</div>
-                  <div className="text-[#666] text-xs uppercase">{userStats.latestBadge.earnedDate}</div>
+                  <div className="text-slate-900 text-sm font-medium uppercase">{userStats.latestBadge.name}</div>
+                  <div className="text-slate-400 text-xs uppercase">{userStats.latestBadge.earnedDate}</div>
                 </div>
               </Link>
             ) : (
-              <div className="p-2 bg-[#1a1a1a] rounded-lg text-[#666] text-sm uppercase">
+              <div className="p-2 bg-slate-50 rounded-lg text-slate-400 text-sm uppercase border border-slate-100">
                 NO BADGES EARNED YET
               </div>
             )}
@@ -422,18 +422,18 @@ export function UserLevelCard() {
           <div className="mb-3">
             <div className="flex items-center gap-2 mb-1">
               <Flame className="w-3 h-3 text-orange-500" />
-              <span className="text-[#888] text-xs uppercase tracking-wide">DAILY STREAK</span>
+              <span className="text-slate-400 text-xs uppercase tracking-wide">DAILY STREAK</span>
             </div>
             <button 
               onClick={() => setShowStreakPopup(true)}
-              className="w-full flex items-center gap-2 p-2 bg-[#1a1a1a] rounded-lg hover:bg-[#252525] transition-colors text-left"
+              className="w-full flex items-center gap-2 p-2 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors text-left border border-slate-100"
             >
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
                 <Flame className="w-4 h-4 text-white" />
               </div>
               <div>
-                <div className="text-[#E5E5E5] text-sm font-bold uppercase">{userStats.dailyStreak} DAYS</div>
-                <div className="text-[#666] text-xs uppercase">KEEP IT GOING!</div>
+                <div className="text-slate-900 text-sm font-bold uppercase">{userStats.dailyStreak} DAYS</div>
+                <div className="text-slate-400 text-xs uppercase">KEEP IT GOING!</div>
               </div>
             </button>
           </div>
@@ -442,18 +442,18 @@ export function UserLevelCard() {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <Crown className="w-3 h-3 text-[#FF6B35]" />
-              <span className="text-[#888] text-xs uppercase tracking-wide">LEADERBOARD</span>
+              <span className="text-slate-400 text-xs uppercase tracking-wide">LEADERBOARD</span>
             </div>
             <button 
               onClick={() => setShowLeaderboardPopup(true)}
-              className="w-full flex items-center gap-2 p-2 bg-[#1a1a1a] rounded-lg hover:bg-[#252525] transition-colors text-left"
+              className="w-full flex items-center gap-2 p-2 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors text-left border border-slate-100"
             >
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#FF4500] flex items-center justify-center">
-                <Crown className="w-4 h-4 text-[#1a1a1a]" />
+                <Crown className="w-4 h-4 text-white" />
               </div>
               <div>
-                <div className="text-[#E5E5E5] text-sm font-bold">#{userStats.leaderboardRank}</div>
-                <div className="text-[#666] text-xs uppercase">OF {userStats.totalUsers.toLocaleString()} USERS</div>
+                <div className="text-slate-900 text-sm font-bold">#{userStats.leaderboardRank}</div>
+                <div className="text-slate-400 text-xs uppercase">OF {userStats.totalUsers.toLocaleString()} USERS</div>
               </div>
             </button>
           </div>

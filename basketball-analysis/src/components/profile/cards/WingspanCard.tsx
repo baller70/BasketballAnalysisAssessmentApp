@@ -92,7 +92,7 @@ export function WingspanCard({
       icon={<WingspanIcon size="lg" color="primary" />}
     >
       {/* Measurement Illustration */}
-      <div className="mb-6 p-4 bg-[#2a2a2a] rounded-xl">
+      <div className="mb-6 p-4 bg-slate-50 border border-slate-100 rounded-xl">
         <div className="flex items-center justify-center">
           <div className="relative">
             {/* Simple stick figure with arms extended */}
@@ -122,20 +122,20 @@ export function WingspanCard({
             </svg>
           </div>
         </div>
-        <p className="text-xs text-center text-gray-400 mt-2">
+        <p className="text-xs text-center text-slate-500 mt-2">
           Arms extended, fingertip to fingertip
         </p>
       </div>
       
       {/* Unit Toggle */}
       <div className="flex justify-center mb-6">
-        <div className="inline-flex bg-[#2a2a2a] rounded-lg p-1">
+        <div className="inline-flex bg-slate-100 rounded-lg p-1">
           <button
             onClick={() => setUseMetric(false)}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
               !useMetric
                 ? "bg-[#FF6B35] text-white shadow-sm"
-                : "text-gray-400 hover:text-gray-300"
+                : "text-slate-500 hover:text-slate-700"
             }`}
           >
             ft/in
@@ -145,7 +145,7 @@ export function WingspanCard({
             className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
               useMetric
                 ? "bg-[#FF6B35] text-white shadow-sm"
-                : "text-gray-400 hover:text-gray-300"
+                : "text-slate-500 hover:text-slate-700"
             }`}
           >
             cm
@@ -158,7 +158,7 @@ export function WingspanCard({
         <select
           value={value || ""}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full px-4 py-4 text-lg border-2 border-[#3a3a3a] rounded-xl focus:border-[#FF6B35] focus:ring-0 transition-colors bg-[#0a0a0a] text-white appearance-none cursor-pointer"
+          className="w-full px-4 py-4 text-lg border-2 border-slate-200 rounded-xl focus:border-[#FF6B35] focus:ring-0 transition-colors bg-white text-slate-900 appearance-none cursor-pointer"
           style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23FF6B35'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
             backgroundRepeat: "no-repeat",
@@ -189,10 +189,10 @@ export function WingspanCard({
       
       {/* Wingspan-to-Height Ratio */}
       {value && heightInches && wingspanValidation.ratio && (
-        <div className="mt-4 p-3 bg-[#2a2a2a] rounded-lg">
+        <div className="mt-4 p-3 bg-slate-50 border border-slate-100 rounded-lg">
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-400">Wingspan-to-Height Ratio:</span>
-            <span className="font-semibold text-white">
+            <span className="text-sm text-slate-500">Wingspan-to-Height Ratio:</span>
+            <span className="font-semibold text-slate-900">
               {wingspanValidation.ratio}%
             </span>
           </div>
@@ -207,7 +207,7 @@ export function WingspanCard({
       {/* Selected Value Display */}
       {value && (
         <div className="mt-4 text-center">
-          <span className="text-sm text-gray-400">Selected: </span>
+          <span className="text-sm text-slate-500">Selected: </span>
           <span className="text-lg font-semibold text-[#FF6B35]">
             {useMetric
               ? `${inchesToCm(value)} cm`

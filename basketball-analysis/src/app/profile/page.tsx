@@ -70,14 +70,14 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#050505] via-[#0a0a0a] to-[#050505] py-8 px-4">
+    <div className="min-h-screen bg-white py-8 px-4">
       <div className="container mx-auto max-w-4xl">
         {/* Header */}
         <div className="mb-8">
           <Button
             variant="ghost"
             onClick={() => router.push("/")}
-            className="mb-4 text-[#888] hover:text-[#FF6B35]"
+            className="mb-4 text-slate-500 hover:text-[#FF6B35]"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Home
@@ -85,11 +85,11 @@ export default function ProfilePage() {
           
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-4xl font-bold text-[#E5E5E5] mb-2 flex items-center gap-3">
+              <h1 className="text-4xl font-bold text-slate-900 mb-2 flex items-center gap-3">
                 <BasketballIcon className="w-10 h-10 text-[#FF6B35]" />
                 Player Profile
               </h1>
-              <p className="text-[#888]">
+              <p className="text-slate-500">
                 {user?.displayName || user?.email || "Your Profile Information"}
               </p>
             </div>
@@ -102,7 +102,7 @@ export default function ProfilePage() {
             ) : (
               <Button
                 onClick={() => router.push("/onboarding")}
-                className="bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-[#1a1a1a] hover:from-[#FF4500] hover:to-[#FF8C00]"
+                className="bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-white hover:from-[#FF4500] hover:to-[#FF8C00]"
               >
                 <Edit className="w-4 h-4 mr-2" />
                 Complete Profile
@@ -114,109 +114,109 @@ export default function ProfilePage() {
         {/* Profile Information Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           {/* Physical Measurements */}
-          <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
-            <CardHeader className="border-b border-[#2a2a2a]">
-              <CardTitle className="text-[#E5E5E5] flex items-center gap-2">
+          <Card className="bg-white border-slate-200 shadow-sm">
+            <CardHeader className="border-b border-slate-200">
+              <CardTitle className="text-slate-900 flex items-center gap-2">
                 <Ruler className="w-5 h-5 text-[#FF6B35]" />
                 Physical Measurements
               </CardTitle>
-              <CardDescription className="text-[#888]">
+              <CardDescription className="text-slate-500">
                 Your body measurements for analysis
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-6 space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-[#888] flex items-center gap-2">
+                <span className="text-slate-500 flex items-center gap-2">
                   <Ruler className="w-4 h-4" />
                   Height
                 </span>
-                <span className="text-[#E5E5E5] font-semibold">
+                <span className="text-slate-900 font-semibold">
                   {formatHeight(profile.heightInches)}
                 </span>
               </div>
               
               <div className="flex items-center justify-between">
-                <span className="text-[#888] flex items-center gap-2">
+                <span className="text-slate-500 flex items-center gap-2">
                   <Weight className="w-4 h-4" />
                   Weight
                 </span>
-                <span className="text-[#E5E5E5] font-semibold">
+                <span className="text-slate-900 font-semibold">
                   {profile.weightLbs ? `${profile.weightLbs} lbs` : "Not set"}
                 </span>
               </div>
               
               <div className="flex items-center justify-between">
-                <span className="text-[#888] flex items-center gap-2">
+                <span className="text-slate-500 flex items-center gap-2">
                   <Ruler className="w-4 h-4" />
                   Wingspan
                 </span>
-                <span className="text-[#E5E5E5] font-semibold">
+                <span className="text-slate-900 font-semibold">
                   {formatHeight(profile.wingspanInches)}
                 </span>
               </div>
               
               {profile.bmi && (
-                <div className="flex items-center justify-between pt-2 border-t border-[#2a2a2a]">
-                  <span className="text-[#888]">BMI</span>
-                  <span className="text-[#E5E5E5] font-semibold">{profile.bmi}</span>
+                <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                  <span className="text-slate-500">BMI</span>
+                  <span className="text-slate-900 font-semibold">{profile.bmi}</span>
                 </div>
               )}
               
               {profile.wingspanToHeightRatio && (
-                <div className="flex items-center justify-between pt-2 border-t border-[#2a2a2a]">
-                  <span className="text-[#888]">Wingspan/Height Ratio</span>
-                  <span className="text-[#E5E5E5] font-semibold">{profile.wingspanToHeightRatio}%</span>
+                <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                  <span className="text-slate-500">Wingspan/Height Ratio</span>
+                  <span className="text-slate-900 font-semibold">{profile.wingspanToHeightRatio}%</span>
                 </div>
               )}
             </CardContent>
           </Card>
 
           {/* Demographics & Experience */}
-          <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
-            <CardHeader className="border-b border-[#2a2a2a]">
-              <CardTitle className="text-[#E5E5E5] flex items-center gap-2">
+          <Card className="bg-white border-slate-200 shadow-sm">
+            <CardHeader className="border-b border-slate-200">
+              <CardTitle className="text-slate-900 flex items-center gap-2">
                 <User className="w-5 h-5 text-[#FF6B35]" />
                 Demographics & Experience
               </CardTitle>
-              <CardDescription className="text-[#888]">
+              <CardDescription className="text-slate-500">
                 Your background and skill level
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-6 space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-[#888] flex items-center gap-2">
+                <span className="text-slate-500 flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
                   Age
                 </span>
-                <span className="text-[#E5E5E5] font-semibold">
+                <span className="text-slate-900 font-semibold">
                   {profile.age ? `${profile.age} years old` : "Not set"}
                 </span>
               </div>
               
               <div className="flex items-center justify-between">
-                <span className="text-[#888] flex items-center gap-2">
+                <span className="text-slate-500 flex items-center gap-2">
                   <Award className="w-4 h-4" />
                   Experience Level
                 </span>
-                <span className="text-[#E5E5E5] font-semibold">
+                <span className="text-slate-900 font-semibold">
                   {formatExperienceLevel(profile.experienceLevel)}
                 </span>
               </div>
               
               <div className="flex items-center justify-between">
-                <span className="text-[#888] flex items-center gap-2">
+                <span className="text-slate-500 flex items-center gap-2">
                   <Activity className="w-4 h-4" />
                   Body Type
                 </span>
-                <span className="text-[#E5E5E5] font-semibold">
+                <span className="text-slate-900 font-semibold">
                   {formatBodyType(profile.bodyType)}
                 </span>
               </div>
               
               {profile.coachingTier && (
-                <div className="flex items-center justify-between pt-2 border-t border-[#2a2a2a]">
-                  <span className="text-[#888]">Coaching Tier</span>
-                  <span className="text-[#E5E5E5] font-semibold">
+                <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                  <span className="text-slate-500">Coaching Tier</span>
+                  <span className="text-slate-900 font-semibold">
                     {formatCoachingTier(profile.coachingTier)}
                   </span>
                 </div>
@@ -225,26 +225,26 @@ export default function ProfilePage() {
           </Card>
 
           {/* Athletic Profile */}
-          <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
-            <CardHeader className="border-b border-[#2a2a2a]">
-              <CardTitle className="text-[#E5E5E5] flex items-center gap-2">
+          <Card className="bg-white border-slate-200 shadow-sm">
+            <CardHeader className="border-b border-slate-200">
+              <CardTitle className="text-slate-900 flex items-center gap-2">
                 <Target className="w-5 h-5 text-[#FF6B35]" />
                 Athletic Profile
               </CardTitle>
-              <CardDescription className="text-[#888]">
+              <CardDescription className="text-slate-500">
                 Your shooting preferences and abilities
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-6 space-y-4">
               {profile.athleticAbility !== null && (
                 <div className="flex items-center justify-between">
-                  <span className="text-[#888] flex items-center gap-2">
+                  <span className="text-slate-500 flex items-center gap-2">
                     <Activity className="w-4 h-4" />
                     Athletic Ability
                   </span>
                   <div className="flex items-center gap-2">
-                    <span className="text-[#E5E5E5] font-semibold">{profile.athleticAbility}/10</span>
-                    <div className="w-24 h-2 bg-[#2a2a2a] rounded-full overflow-hidden">
+                    <span className="text-slate-900 font-semibold">{profile.athleticAbility}/10</span>
+                    <div className="w-24 h-2 bg-slate-200 rounded-full overflow-hidden">
                       <div 
                         className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF4500]"
                         style={{ width: `${(profile.athleticAbility / 10) * 100}%` }}
@@ -255,21 +255,21 @@ export default function ProfilePage() {
               )}
               
               <div className="flex items-center justify-between">
-                <span className="text-[#888] flex items-center gap-2">
+                <span className="text-slate-500 flex items-center gap-2">
                   <Hand className="w-4 h-4" />
                   Dominant Hand
                 </span>
-                <span className="text-[#E5E5E5] font-semibold">
+                <span className="text-slate-900 font-semibold">
                   {formatDominantHand(profile.dominantHand)}
                 </span>
               </div>
               
               <div className="flex items-center justify-between">
-                <span className="text-[#888] flex items-center gap-2">
+                <span className="text-slate-500 flex items-center gap-2">
                   <Target className="w-4 h-4" />
                   Shooting Style
                 </span>
-                <span className="text-[#E5E5E5] font-semibold">
+                <span className="text-slate-900 font-semibold">
                   {formatShootingStyle(profile.shootingStyle)}
                 </span>
               </div>
@@ -277,37 +277,37 @@ export default function ProfilePage() {
           </Card>
 
           {/* Profile Status */}
-          <Card className="bg-[#1a1a1a] border-[#2a2a2a]">
-            <CardHeader className="border-b border-[#2a2a2a]">
-              <CardTitle className="text-[#E5E5E5] flex items-center gap-2">
+          <Card className="bg-white border-slate-200 shadow-sm">
+            <CardHeader className="border-b border-slate-200">
+              <CardTitle className="text-slate-900 flex items-center gap-2">
                 <CheckCircle2 className="w-5 h-5 text-[#FF6B35]" />
                 Profile Status
               </CardTitle>
-              <CardDescription className="text-[#888]">
+              <CardDescription className="text-slate-500">
                 Your profile completion status
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-6 space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-[#888]">Completion Status</span>
+                <span className="text-slate-500">Completion Status</span>
                 <span className={`font-semibold ${profile.profileComplete ? 'text-green-400' : 'text-orange-400'}`}>
                   {profile.profileComplete ? "Complete" : "Incomplete"}
                 </span>
               </div>
               
               {profile.createdAt && (
-                <div className="flex items-center justify-between pt-2 border-t border-[#2a2a2a]">
-                  <span className="text-[#888]">Created</span>
-                  <span className="text-[#E5E5E5] text-sm">
+                <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                  <span className="text-slate-500">Created</span>
+                  <span className="text-slate-900 text-sm">
                     {new Date(profile.createdAt).toLocaleDateString()}
                   </span>
                 </div>
               )}
               
               {profile.updatedAt && (
-                <div className="flex items-center justify-between pt-2 border-t border-[#2a2a2a]">
-                  <span className="text-[#888]">Last Updated</span>
-                  <span className="text-[#E5E5E5] text-sm">
+                <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                  <span className="text-slate-500">Last Updated</span>
+                  <span className="text-slate-900 text-sm">
                     {new Date(profile.updatedAt).toLocaleDateString()}
                   </span>
                 </div>
@@ -316,7 +316,7 @@ export default function ProfilePage() {
               {!profile.profileComplete && (
                 <Button
                   onClick={() => router.push("/onboarding")}
-                  className="w-full mt-4 bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-[#1a1a1a] hover:from-[#FF4500] hover:to-[#FF8C00]"
+                  className="w-full mt-4 bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-white hover:from-[#FF4500] hover:to-[#FF8C00]"
                 >
                   <Edit className="w-4 h-4 mr-2" />
                   Complete Your Profile
@@ -328,9 +328,9 @@ export default function ProfilePage() {
 
         {/* Bio Section */}
         {(profile.bio || profile.enhancedBio) && (
-          <Card className="bg-[#1a1a1a] border-[#2a2a2a] mb-6">
-            <CardHeader className="border-b border-[#2a2a2a]">
-              <CardTitle className="text-[#E5E5E5] flex items-center gap-2">
+          <Card className="bg-white border-slate-200 shadow-sm mb-6">
+            <CardHeader className="border-b border-slate-200">
+              <CardTitle className="text-slate-900 flex items-center gap-2">
                 <User className="w-5 h-5 text-[#FF6B35]" />
                 Bio
               </CardTitle>
@@ -338,14 +338,14 @@ export default function ProfilePage() {
             <CardContent className="pt-6">
               {profile.bio && (
                 <div className="mb-4">
-                  <p className="text-[#888] text-sm mb-2">Your Bio</p>
-                  <p className="text-[#E5E5E5]">{profile.bio}</p>
+                  <p className="text-slate-500 text-sm mb-2">Your Bio</p>
+                  <p className="text-slate-700">{profile.bio}</p>
                 </div>
               )}
               {profile.enhancedBio && (
                 <div>
-                  <p className="text-[#888] text-sm mb-2">Enhanced Bio</p>
-                  <p className="text-[#E5E5E5]">{profile.enhancedBio}</p>
+                  <p className="text-slate-500 text-sm mb-2">Enhanced Bio</p>
+                  <p className="text-slate-700">{profile.enhancedBio}</p>
                 </div>
               )}
             </CardContent>
@@ -356,8 +356,8 @@ export default function ProfilePage() {
             <div className="flex items-start gap-4">
               <BasketballIcon className="w-8 h-8 text-[#FF6B35] flex-shrink-0 mt-1" />
               <div>
-                <h3 className="text-[#E5E5E5] font-semibold mb-2">How Your Profile Helps</h3>
-                <p className="text-[#888] text-sm">
+                <h3 className="text-slate-900 font-semibold mb-2">How Your Profile Helps</h3>
+                <p className="text-slate-500 text-sm">
                   Your profile information is automatically used when you upload images or videos for analysis. 
                   This helps us provide personalized feedback based on your height, experience level, and shooting style. 
                   Your measurements are compared against elite shooters with similar physical attributes to give you 

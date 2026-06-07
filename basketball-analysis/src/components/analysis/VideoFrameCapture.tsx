@@ -185,9 +185,9 @@ export function VideoFrameCapture({
 
   if (!videoSrc) {
     return (
-      <div className="bg-[#2a2a2a] rounded-lg border border-[#4a4a4a] p-8 text-center">
-        <Camera className="w-12 h-12 text-[#4a4a4a] mx-auto mb-4" />
-        <p className="text-[#888]">Upload a video to capture frames</p>
+      <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-8 text-center">
+        <Camera className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+        <p className="text-slate-500">Upload a video to capture frames</p>
       </div>
     )
   }
@@ -198,7 +198,7 @@ export function VideoFrameCapture({
       <canvas ref={canvasRef} className="hidden" />
 
       {/* Video Player */}
-      <div className="bg-[#1a1a1a] rounded-xl overflow-hidden border-2 border-[#3a3a3a]">
+      <div className="bg-white rounded-xl overflow-hidden border-2 border-slate-200 shadow-sm">
         <div className="relative aspect-video bg-black flex items-center justify-center">
           <video
             ref={videoRef}
@@ -214,7 +214,7 @@ export function VideoFrameCapture({
           {/* Capture overlay button */}
           <button
             onClick={captureFrame}
-            className="absolute top-4 right-4 bg-[#FF6B35] hover:bg-[#E55300] text-[#1a1a1a] p-3 rounded-full shadow-lg transition-colors"
+            className="absolute top-4 right-4 bg-[#FF6B35] hover:bg-[#E55300] text-white p-3 rounded-full shadow-lg transition-colors"
             title="Capture Frame"
           >
             <Camera className="w-6 h-6" />
@@ -222,11 +222,11 @@ export function VideoFrameCapture({
         </div>
 
         {/* Controls */}
-        <div className="p-4 bg-[#2a2a2a] space-y-3">
+        <div className="p-4 bg-slate-50 space-y-3">
           {/* Timeline */}
           <div 
             ref={timelineRef}
-            className="relative h-2 bg-[#4a4a4a] rounded-full cursor-pointer"
+            className="relative h-2 bg-slate-200 rounded-full cursor-pointer"
             onClick={handleTimelineClick}
           >
             {/* Progress */}
@@ -258,7 +258,7 @@ export function VideoFrameCapture({
           </div>
 
           {/* Time display */}
-          <div className="flex items-center justify-between text-sm text-[#888]">
+          <div className="flex items-center justify-between text-sm text-slate-500">
             <span>{formatTime(currentTime)}</span>
             <span>{formatTime(duration)}</span>
           </div>
@@ -267,7 +267,7 @@ export function VideoFrameCapture({
           <div className="flex items-center justify-center gap-2">
             <button
               onClick={() => skipTime(-5)}
-              className="p-2 text-[#888] hover:text-white transition-colors"
+              className="p-2 text-slate-400 hover:text-slate-900 transition-colors"
               title="Back 5s"
             >
               <SkipBack className="w-5 h-5" />
@@ -275,7 +275,7 @@ export function VideoFrameCapture({
             
             <button
               onClick={() => stepFrame("back")}
-              className="p-2 text-[#888] hover:text-white transition-colors"
+              className="p-2 text-slate-400 hover:text-slate-900 transition-colors"
               title="Previous Frame"
             >
               <ChevronLeft className="w-5 h-5" />
@@ -283,14 +283,14 @@ export function VideoFrameCapture({
             
             <button
               onClick={togglePlayPause}
-              className="p-3 bg-[#FF6B35] hover:bg-[#E55300] text-[#1a1a1a] rounded-full transition-colors"
+              className="p-3 bg-[#FF6B35] hover:bg-[#E55300] text-white rounded-full transition-colors"
             >
               {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-0.5" />}
             </button>
             
             <button
               onClick={() => stepFrame("forward")}
-              className="p-2 text-[#888] hover:text-white transition-colors"
+              className="p-2 text-slate-400 hover:text-slate-900 transition-colors"
               title="Next Frame"
             >
               <ChevronRight className="w-5 h-5" />
@@ -298,7 +298,7 @@ export function VideoFrameCapture({
             
             <button
               onClick={() => skipTime(5)}
-              className="p-2 text-[#888] hover:text-white transition-colors"
+              className="p-2 text-slate-400 hover:text-slate-900 transition-colors"
               title="Forward 5s"
             >
               <SkipForward className="w-5 h-5" />
@@ -308,7 +308,7 @@ export function VideoFrameCapture({
           {/* Capture button */}
           <button
             onClick={captureFrame}
-            className="w-full bg-[#FF6B35] hover:bg-[#E55300] text-[#1a1a1a] font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-colors"
+            className="w-full bg-[#FF6B35] hover:bg-[#E55300] text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-colors"
           >
             <Camera className="w-5 h-5" />
             Capture This Frame
@@ -318,7 +318,7 @@ export function VideoFrameCapture({
 
       {/* Captured Frames Strip */}
       {capturedFrames.length > 0 && (
-        <div className="bg-[#2a2a2a] rounded-lg border border-[#4a4a4a] p-4">
+        <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4">
           <h4 className="text-[#FF6B35] font-semibold text-sm uppercase tracking-wider mb-3 flex items-center gap-2">
             <Camera className="w-4 h-4" />
             Captured Frames ({capturedFrames.length})
@@ -330,8 +330,8 @@ export function VideoFrameCapture({
                 key={frame.id}
                 className={`relative flex-shrink-0 rounded-lg overflow-hidden border-2 cursor-pointer transition-all ${
                   selectedFrame === frame.id 
-                    ? "border-[#FF6B35] ring-2 ring-[#FF6B35]/50" 
-                    : "border-[#4a4a4a] hover:border-[#6a6a6a]"
+                    ? "border-[#FF6B35] ring-2 ring-[#FF6B35]/30" 
+                    : "border-slate-200 hover:border-slate-300"
                 }`}
                 onClick={() => {
                   setSelectedFrame(frame.id)
@@ -381,7 +381,7 @@ export function VideoFrameCapture({
           
           {/* Use Selected Frame for Analysis */}
           {selectedFrame && (
-            <div className="mt-3 pt-3 border-t border-[#4a4a4a]">
+            <div className="mt-3 pt-3 border-t border-slate-200">
               <button
                 onClick={() => {
                   const frame = capturedFrames.find(f => f.id === selectedFrame)
@@ -400,7 +400,7 @@ export function VideoFrameCapture({
       )}
 
       {/* Instructions */}
-      <div className="text-center text-[#888] text-sm">
+      <div className="text-center text-slate-500 text-sm">
         <p>Use the timeline to find key moments: <strong>Load</strong>, <strong>Set</strong>, <strong>Release</strong>, <strong>Follow-through</strong></p>
         <p className="mt-1">Click <Camera className="w-4 h-4 inline" /> to capture frames for analysis</p>
       </div>

@@ -175,11 +175,11 @@ export function AnnotationToolbar({
   }
 
   return (
-    <div className="bg-[#1a1a1a] rounded-xl border border-[#3a3a3a] p-3 shadow-2xl">
+    <div className="bg-white rounded-xl border border-slate-200 p-3 shadow-sm">
       {/* Main Toolbar Row */}
       <div className="flex items-center gap-2 flex-wrap">
         {/* Drawing Tools */}
-        <div className="flex items-center gap-1 border-r border-[#3a3a3a] pr-3">
+        <div className="flex items-center gap-1 border-r border-slate-200 pr-3">
           {tools.map(({ id, icon: Icon, label }) => (
             <button
               key={id}
@@ -188,7 +188,7 @@ export function AnnotationToolbar({
               className={`p-2 rounded-lg transition-all ${
                 activeTool === id
                   ? 'bg-[#FF6B35]/20 text-[#FF6B35] border border-[#FF6B35]/50'
-                  : 'text-[#888] hover:text-white hover:bg-[#2a2a2a]'
+                  : 'text-slate-400 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
               <Icon className="w-5 h-5" />
@@ -197,20 +197,20 @@ export function AnnotationToolbar({
         </div>
 
         {/* Color Picker */}
-        <div className="relative border-r border-[#3a3a3a] pr-3">
+        <div className="relative border-r border-slate-200 pr-3">
           <button
             onClick={() => setShowColorPicker(!showColorPicker)}
-            className="p-2 rounded-lg hover:bg-[#2a2a2a] flex items-center gap-2"
+            className="p-2 rounded-lg hover:bg-slate-50 flex items-center gap-2"
           >
             <div 
-              className="w-5 h-5 rounded-full border-2 border-white/50"
+              className="w-5 h-5 rounded-full border-2 border-slate-300"
               style={{ backgroundColor: activeColor }}
             />
-            <Palette className="w-4 h-4 text-[#888]" />
+            <Palette className="w-4 h-4 text-slate-400" />
           </button>
           
           {showColorPicker && (
-            <div className="absolute top-full left-0 mt-2 p-2 bg-[#2a2a2a] rounded-lg border border-[#3a3a3a] shadow-xl z-50">
+            <div className="absolute top-full left-0 mt-2 p-2 bg-white rounded-lg border border-slate-200 shadow-lg z-50">
               <div className="grid grid-cols-3 gap-1">
                 {colors.map(color => (
                   <button
@@ -219,16 +219,16 @@ export function AnnotationToolbar({
                       setActiveColor(color)
                       setShowColorPicker(false)
                     }}
-                    className={`w-8 h-8 rounded-lg border-2 transition-all ${
-                      activeColor === color ? 'border-white scale-110' : 'border-transparent hover:scale-105'
+                    className={`w-8 h-8 rounded-lg border-2 transition-all shadow-sm ${
+                      activeColor === color ? 'border-slate-900 scale-110' : 'border-transparent hover:scale-105'
                     }`}
                     style={{ backgroundColor: color }}
                   />
                 ))}
               </div>
               {/* Stroke Width */}
-              <div className="mt-2 pt-2 border-t border-[#3a3a3a]">
-                <label className="text-xs text-[#888] block mb-1">Stroke Width</label>
+              <div className="mt-2 pt-2 border-t border-slate-200">
+                <label className="text-xs text-slate-500 block mb-1">Stroke Width</label>
                 <input
                   type="range"
                   min="1"
@@ -243,13 +243,13 @@ export function AnnotationToolbar({
         </div>
 
         {/* Undo/Redo/Clear */}
-        <div className="flex items-center gap-1 border-r border-[#3a3a3a] pr-3">
+        <div className="flex items-center gap-1 border-r border-slate-200 pr-3">
           <button
             onClick={onUndo}
             disabled={!canUndo}
             title="Undo"
             className={`p-2 rounded-lg transition-all ${
-              canUndo ? 'text-[#888] hover:text-white hover:bg-[#2a2a2a]' : 'text-[#444] cursor-not-allowed'
+              canUndo ? 'text-slate-400 hover:text-slate-900 hover:bg-slate-50' : 'text-slate-300 cursor-not-allowed'
             }`}
           >
             <Undo2 className="w-5 h-5" />
@@ -259,7 +259,7 @@ export function AnnotationToolbar({
             disabled={!canRedo}
             title="Redo"
             className={`p-2 rounded-lg transition-all ${
-              canRedo ? 'text-[#888] hover:text-white hover:bg-[#2a2a2a]' : 'text-[#444] cursor-not-allowed'
+              canRedo ? 'text-slate-400 hover:text-slate-900 hover:bg-slate-50' : 'text-slate-300 cursor-not-allowed'
             }`}
           >
             <Redo2 className="w-5 h-5" />
@@ -267,21 +267,21 @@ export function AnnotationToolbar({
           <button
             onClick={onClear}
             title="Clear All"
-            className="p-2 rounded-lg text-[#888] hover:text-red-400 hover:bg-red-500/10 transition-all"
+            className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all"
           >
             <Trash2 className="w-5 h-5" />
           </button>
         </div>
 
         {/* Video Game Effects Toggle */}
-        <div className="flex items-center gap-1 border-r border-[#3a3a3a] pr-3">
+        <div className="flex items-center gap-1 border-r border-slate-200 pr-3">
           <button
             onClick={() => setShowEffectsPanel(!showEffectsPanel)}
             title="Video Game Effects"
             className={`p-2 rounded-lg flex items-center gap-2 transition-all ${
               showEffectsPanel
                 ? 'bg-[#FF6B35]/20 text-[#FF6B35] border border-[#FF6B35]/50'
-                : 'text-[#888] hover:text-white hover:bg-[#2a2a2a]'
+                : 'text-slate-400 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >
             <Sparkles className="w-5 h-5" />
@@ -290,7 +290,7 @@ export function AnnotationToolbar({
         </div>
 
         {/* Preset Modes */}
-        <div className="flex items-center gap-1 border-r border-[#3a3a3a] pr-3">
+        <div className="flex items-center gap-1 border-r border-slate-200 pr-3">
           {(['broadcast', 'analysis', 'clean'] as PresetMode[]).map(mode => (
             <button
               key={mode}
@@ -298,7 +298,7 @@ export function AnnotationToolbar({
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                 presetMode === mode
                   ? 'bg-[#FF6B35]/20 text-[#FF6B35] border border-[#FF6B35]/50'
-                  : 'text-[#888] hover:text-white hover:bg-[#2a2a2a]'
+                  : 'text-slate-400 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
               {mode.charAt(0).toUpperCase() + mode.slice(1)}
@@ -310,7 +310,7 @@ export function AnnotationToolbar({
         <button
           onClick={onExport}
           title="Export Annotated Image"
-          className="p-2 rounded-lg text-[#888] hover:text-[#4ade80] hover:bg-[#4ade80]/10 transition-all ml-auto"
+          className="p-2 rounded-lg text-slate-400 hover:text-green-600 hover:bg-green-50 transition-all ml-auto"
         >
           <Download className="w-5 h-5" />
         </button>
@@ -318,20 +318,20 @@ export function AnnotationToolbar({
 
       {/* Effects Panel (Expandable) */}
       {showEffectsPanel && (
-        <div className="mt-3 pt-3 border-t border-[#3a3a3a]">
-          <h4 className="text-xs text-[#888] uppercase tracking-wider mb-3 flex items-center gap-2">
+        <div className="mt-3 pt-3 border-t border-slate-200">
+          <h4 className="text-xs text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
             <Zap className="w-3 h-3" />
             Video Game Effects
           </h4>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {/* Player Glow */}
-            <div className="bg-[#2a2a2a] rounded-lg p-3">
+            <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-white">Player Glow</span>
+                <span className="text-sm text-slate-900">Player Glow</span>
                 <button
                   onClick={() => setEffects({ ...effects, playerGlow: !effects.playerGlow })}
-                  className={`p-1 rounded ${effects.playerGlow ? 'text-[#FF6B35]' : 'text-[#666]'}`}
+                  className={`p-1 rounded ${effects.playerGlow ? 'text-[#FF6B35]' : 'text-slate-400'}`}
                 >
                   {effects.playerGlow ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                 </button>
@@ -343,7 +343,7 @@ export function AnnotationToolbar({
                       <button
                         key={color}
                         onClick={() => setEffects({ ...effects, glowColor: color })}
-                        className={`w-5 h-5 rounded-full border ${effects.glowColor === color ? 'border-white' : 'border-transparent'}`}
+                        className={`w-5 h-5 rounded-full border ${effects.glowColor === color ? 'border-slate-900' : 'border-transparent'}`}
                         style={{ backgroundColor: color }}
                       />
                     ))}
@@ -361,19 +361,19 @@ export function AnnotationToolbar({
             </div>
 
             {/* Motion Trails */}
-            <div className="bg-[#2a2a2a] rounded-lg p-3">
+            <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-white">Motion Trails</span>
+                <span className="text-sm text-slate-900">Motion Trails</span>
                 <button
                   onClick={() => setEffects({ ...effects, motionTrails: !effects.motionTrails })}
-                  className={`p-1 rounded ${effects.motionTrails ? 'text-[#FF6B35]' : 'text-[#666]'}`}
+                  className={`p-1 rounded ${effects.motionTrails ? 'text-[#FF6B35]' : 'text-slate-400'}`}
                 >
                   {effects.motionTrails ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                 </button>
               </div>
               {effects.motionTrails && (
                 <div>
-                  <label className="text-xs text-[#888]">Trail Length</label>
+                  <label className="text-xs text-slate-500">Trail Length</label>
                   <input
                     type="range"
                     min="2"
@@ -387,12 +387,12 @@ export function AnnotationToolbar({
             </div>
 
             {/* Stat Pop-ups */}
-            <div className="bg-[#2a2a2a] rounded-lg p-3">
+            <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-white">Stat Pop-ups</span>
+                <span className="text-sm text-slate-900">Stat Pop-ups</span>
                 <button
                   onClick={() => setEffects({ ...effects, statPopups: !effects.statPopups })}
-                  className={`p-1 rounded ${effects.statPopups ? 'text-[#FF6B35]' : 'text-[#666]'}`}
+                  className={`p-1 rounded ${effects.statPopups ? 'text-[#FF6B35]' : 'text-slate-400'}`}
                 >
                   {effects.statPopups ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                 </button>
@@ -406,7 +406,7 @@ export function AnnotationToolbar({
                       className={`px-2 py-1 rounded text-xs ${
                         effects.popupStyle === style 
                           ? 'bg-[#FF6B35]/20 text-[#FF6B35]' 
-                          : 'text-[#888] hover:text-white'
+                          : 'text-slate-400 hover:text-slate-900'
                       }`}
                     >
                       {style}
@@ -417,12 +417,12 @@ export function AnnotationToolbar({
             </div>
 
             {/* X-Ray Mode */}
-            <div className="bg-[#2a2a2a] rounded-lg p-3">
+            <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-white">X-Ray Mode</span>
+                <span className="text-sm text-slate-900">X-Ray Mode</span>
                 <button
                   onClick={() => setEffects({ ...effects, xrayMode: !effects.xrayMode })}
-                  className={`p-1 rounded ${effects.xrayMode ? 'text-[#FF6B35]' : 'text-[#666]'}`}
+                  className={`p-1 rounded ${effects.xrayMode ? 'text-[#FF6B35]' : 'text-slate-400'}`}
                 >
                   {effects.xrayMode ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                 </button>
@@ -430,12 +430,12 @@ export function AnnotationToolbar({
             </div>
 
             {/* Telestrator */}
-            <div className="bg-[#2a2a2a] rounded-lg p-3">
+            <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-white">Telestrator</span>
+                <span className="text-sm text-slate-900">Telestrator</span>
                 <button
                   onClick={() => setEffects({ ...effects, telestrator: !effects.telestrator })}
-                  className={`p-1 rounded ${effects.telestrator ? 'text-[#FF6B35]' : 'text-[#666]'}`}
+                  className={`p-1 rounded ${effects.telestrator ? 'text-[#FF6B35]' : 'text-slate-400'}`}
                 >
                   {effects.telestrator ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                 </button>
@@ -443,19 +443,19 @@ export function AnnotationToolbar({
             </div>
 
             {/* Focus Zoom */}
-            <div className="bg-[#2a2a2a] rounded-lg p-3">
+            <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-white">Focus Zoom</span>
+                <span className="text-sm text-slate-900">Focus Zoom</span>
                 <button
                   onClick={() => setEffects({ ...effects, focusZoom: !effects.focusZoom })}
-                  className={`p-1 rounded ${effects.focusZoom ? 'text-[#FF6B35]' : 'text-[#666]'}`}
+                  className={`p-1 rounded ${effects.focusZoom ? 'text-[#FF6B35]' : 'text-slate-400'}`}
                 >
                   {effects.focusZoom ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                 </button>
               </div>
               {effects.focusZoom && (
                 <div>
-                  <label className="text-xs text-[#888]">Zoom Level</label>
+                  <label className="text-xs text-slate-500">Zoom Level</label>
                   <input
                     type="range"
                     min="1"
@@ -470,12 +470,12 @@ export function AnnotationToolbar({
             </div>
 
             {/* Slow-Mo */}
-            <div className="bg-[#2a2a2a] rounded-lg p-3">
+            <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-white">Slow-Mo</span>
+                <span className="text-sm text-slate-900">Slow-Mo</span>
                 <button
                   onClick={() => setEffects({ ...effects, slowMo: !effects.slowMo })}
-                  className={`p-1 rounded ${effects.slowMo ? 'text-[#FF6B35]' : 'text-[#666]'}`}
+                  className={`p-1 rounded ${effects.slowMo ? 'text-[#FF6B35]' : 'text-slate-400'}`}
                 >
                   {effects.slowMo ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                 </button>
@@ -489,7 +489,7 @@ export function AnnotationToolbar({
                       className={`px-2 py-1 rounded text-xs ${
                         effects.slowMoSpeed === speed 
                           ? 'bg-[#FF6B35]/20 text-[#FF6B35]' 
-                          : 'text-[#888] hover:text-white'
+                          : 'text-slate-400 hover:text-slate-900'
                       }`}
                     >
                       {speed}x

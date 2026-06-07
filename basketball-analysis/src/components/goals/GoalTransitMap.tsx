@@ -5,7 +5,7 @@ import { X, Target, Navigation, ArrowRight, Check, Calendar } from 'lucide-react
 import { useGoals, Goal } from '@/lib/goals'
 
 // Mapbox access token
-const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || 'pk.eyJ1IjoiYmFsbGVyNzAiLCJhIjoiY2xzNXUybnJiMWpmeDJtbXU0c3R6bmYxbCJ9.E8wE8cllAFL9WeZ4WiITDA'
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || ''
 
 interface GoalStop {
   id: string
@@ -149,7 +149,7 @@ export function GoalTransitMap({ playerCity, playerState, playerLat, playerLng }
         
         map.current = new mapboxgl.Map({
           container: mapContainer.current!,
-          style: 'mapbox://styles/mapbox/dark-v11', // Dark style like NJ Transit
+          style: 'mapbox://styles/mapbox/light-v11', // Light style to match app theme
           center: mapCenter as [number, number],
           zoom: 14.5, // Zoomed in tight - user must scroll to see full route
           pitch: 0,
@@ -256,14 +256,15 @@ export function GoalTransitMap({ playerCity, playerState, playerLat, playerLng }
                     </div>
                   </div>
                   <div style="
-                    background: rgba(255, 107, 53, 0.95);
+                    background: rgba(255, 255, 255, 0.95);
                     padding: 8px 14px;
                     border-radius: 8px;
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                    border: 1px solid rgba(255, 107, 53, 0.2);
                     white-space: nowrap;
                   ">
-                    <div style="color: white; font-weight: 800; font-size: 13px; letter-spacing: 0.5px;">${stop.name}</div>
-                    <div style="color: rgba(255,255,255,0.8); font-size: 11px; margin-top: 2px;">${stop.landmark}</div>
+                    <div style="color: #FF6B35; font-weight: 800; font-size: 13px; letter-spacing: 0.5px;">${stop.name}</div>
+                    <div style="color: #64748B; font-size: 11px; margin-top: 2px;">${stop.landmark}</div>
                   </div>
                 </div>
               `
@@ -282,15 +283,16 @@ export function GoalTransitMap({ playerCity, playerState, playerLat, playerLng }
                     flex-shrink: 0;
                   "></div>
                   <div style="
-                    background: rgba(0,0,0,0.7);
+                    background: rgba(255,255,255,0.95);
                     padding: 6px 10px;
                     border-radius: 6px;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                    border: 1px solid rgba(226, 232, 240, 1);
                     white-space: nowrap;
                     backdrop-filter: blur(4px);
                   ">
                     <div style="color: #FF6B35; font-weight: 700; font-size: 11px; letter-spacing: 0.5px;">✓ ${stop.name}</div>
-                    <div style="color: rgba(255,255,255,0.6); font-size: 10px;">${stop.landmark}</div>
+                    <div style="color: #64748b; font-size: 10px;">${stop.landmark}</div>
                   </div>
                 </div>
               `
@@ -302,20 +304,22 @@ export function GoalTransitMap({ playerCity, playerState, playerLat, playerLng }
                   <div style="
                     width: 12px;
                     height: 12px;
-                    background: rgba(255,255,255,0.5);
+                    background: rgba(255,255,255,1);
                     border-radius: 50%;
-                    border: 2px solid rgba(255,255,255,0.3);
+                    border: 2px solid rgba(148,163,184,0.5);
                     flex-shrink: 0;
                   "></div>
                   <div style="
-                    background: rgba(0,0,0,0.5);
+                    background: rgba(255,255,255,0.95);
                     padding: 5px 8px;
                     border-radius: 5px;
+                    border: 1px solid rgba(226,232,240,1);
                     white-space: nowrap;
                     backdrop-filter: blur(4px);
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
                   ">
-                    <div style="color: rgba(255,255,255,0.5); font-weight: 600; font-size: 10px; letter-spacing: 0.5px;">${stop.name}</div>
-                    <div style="color: rgba(255,255,255,0.3); font-size: 9px;">${stop.landmark}</div>
+                    <div style="color: #64748b; font-weight: 600; font-size: 10px; letter-spacing: 0.5px;">${stop.name}</div>
+                    <div style="color: #94a3b8; font-size: 9px;">${stop.landmark}</div>
                   </div>
                 </div>
               `
@@ -404,17 +408,17 @@ export function GoalTransitMap({ playerCity, playerState, playerLat, playerLng }
   }, [centerLat, centerLng])
 
   return (
-    <div className="relative rounded-2xl overflow-hidden border border-[#2a2a2a] shadow-2xl">
+    <div className="relative rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
       {/* Map Container */}
-      <div className="relative h-[500px]" style={{ backgroundColor: '#0a1628' }}>
+      <div className="relative h-[500px]" style={{ backgroundColor: '#e2e8f0' }}>
         <div ref={mapContainer} className="absolute inset-0 w-full h-full" style={{ minHeight: '500px' }} />
         
         {/* Loading indicator */}
         {!mapLoaded && (
-          <div className="absolute inset-0 flex items-center justify-center bg-[#0a1628] z-5">
+          <div className="absolute inset-0 flex items-center justify-center bg-slate-100 z-5">
             <div className="text-center">
               <div className="w-12 h-12 border-4 border-[#FF6B35] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-              <p className="text-white/60 text-sm">Loading map...</p>
+              <p className="text-slate-500 text-sm">Loading map...</p>
             </div>
           </div>
         )}
@@ -422,8 +426,8 @@ export function GoalTransitMap({ playerCity, playerState, playerLat, playerLng }
         {/* Top Left - Journey Progress Overlay */}
         <div className="absolute top-4 left-4 z-10">
           {/* Journey Progress - Orange gradient bars */}
-          <div className="flex items-center gap-2 bg-black/40 backdrop-blur-sm rounded-lg px-3 py-2">
-            <span className="text-white text-sm font-bold tracking-wider drop-shadow-lg">JOURNEY</span>
+          <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-lg px-3 py-2 border border-slate-200 shadow-sm">
+            <span className="text-slate-900 text-sm font-bold tracking-wider">JOURNEY</span>
             <div className="flex gap-0.5">
               {/* Show progress: filled = completed, empty = remaining */}
               {goalStops.map((stop, i) => (
@@ -434,7 +438,7 @@ export function GoalTransitMap({ playerCity, playerState, playerLat, playerLng }
                       ? 'bg-[#FF6B35]' 
                       : stop.current 
                       ? 'bg-[#FF6B35]/60' 
-                      : 'bg-[#3a3a3a]'
+                      : 'bg-slate-300'
                   }`} 
                 />
               ))}
@@ -470,16 +474,16 @@ export function GoalTransitMap({ playerCity, playerState, playerLat, playerLng }
       </div>
       
       {/* Bottom Section - Destination & Controls */}
-      <div className="bg-[#0a1628] p-4">
+      <div className="bg-white border-t border-slate-200 p-4">
         {/* Current Goal Bar */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
-              <ArrowRight className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center">
+              <ArrowRight className="w-6 h-6 text-slate-700" />
             </div>
             <div>
-              <span className="text-white font-bold text-xl">{currentGoal?.name || 'Next Goal'}</span>
-              <span className="text-white/60 text-sm ml-2">via {currentGoal?.landmark || 'Form Training'}</span>
+              <span className="text-slate-900 font-bold text-xl">{currentGoal?.name || 'Next Goal'}</span>
+              <span className="text-slate-500 text-sm ml-2">via {currentGoal?.landmark || 'Form Training'}</span>
             </div>
           </div>
           <button 
@@ -493,45 +497,45 @@ export function GoalTransitMap({ playerCity, playerState, playerLat, playerLng }
         {/* Stat Cards - 3 in a row - Subtle dark theme with orange outline */}
         <div className="grid grid-cols-3 gap-2 mb-4">
           {/* Goals Completed */}
-          <div className="bg-gradient-to-br from-[#1a2a3a] to-[#0f1a24] rounded-xl px-2 py-4 text-center relative overflow-hidden border border-[#FF6B35]/30 hover:border-[#FF6B35]/60 hover:shadow-lg hover:shadow-[#FF6B35]/20 transition-all duration-300 cursor-pointer">
+          <div className="bg-white rounded-xl px-2 py-4 text-center relative overflow-hidden border border-slate-200 hover:border-[#FF6B35]/40 hover:shadow-md transition-all duration-300 cursor-pointer">
             <div className="absolute top-2 right-2 opacity-30">
               <div className="flex gap-0.5">
-                <div className="w-1 h-1 bg-white rounded-full" />
-                <div className="w-1 h-1 bg-white rounded-full" />
+                <div className="w-1 h-1 bg-slate-400 rounded-full" />
+                <div className="w-1 h-1 bg-slate-400 rounded-full" />
               </div>
               <div className="flex gap-0.5 mt-0.5">
-                <div className="w-1 h-1 bg-white rounded-full" />
-                <div className="w-1 h-1 bg-white rounded-full" />
+                <div className="w-1 h-1 bg-slate-400 rounded-full" />
+                <div className="w-1 h-1 bg-slate-400 rounded-full" />
               </div>
             </div>
-            <div className="text-4xl font-black text-white">{completedCount}</div>
-            <div className="text-white/50 text-xs">completed</div>
+            <div className="text-4xl font-black text-slate-900">{completedCount}</div>
+            <div className="text-slate-500 text-xs">completed</div>
             <div className="mt-2 flex justify-center">
               <div className="flex gap-0.5">
                 {goalStops.slice(0, 4).map((stop, i) => (
-                  <div key={i} className={`w-1.5 h-1.5 rounded-full ${stop.completed ? 'bg-[#FF6B35]' : 'bg-white/20'}`} />
+                  <div key={i} className={`w-1.5 h-1.5 rounded-full ${stop.completed ? 'bg-[#FF6B35]' : 'bg-slate-200'}`} />
                 ))}
               </div>
             </div>
           </div>
           
           {/* Goals Remaining */}
-          <div className="bg-gradient-to-br from-[#1a2a3a] to-[#0f1a24] rounded-xl px-2 py-4 text-center relative overflow-hidden border border-[#FF6B35]/30 hover:border-[#FF6B35]/60 hover:shadow-lg hover:shadow-[#FF6B35]/20 transition-all duration-300 cursor-pointer">
+          <div className="bg-white rounded-xl px-2 py-4 text-center relative overflow-hidden border border-slate-200 hover:border-[#FF6B35]/40 hover:shadow-md transition-all duration-300 cursor-pointer">
             <div className="absolute top-2 right-2 opacity-30">
               <div className="flex gap-0.5">
-                <div className="w-1 h-1 bg-white rounded-full" />
-                <div className="w-1 h-1 bg-white rounded-full" />
+                <div className="w-1 h-1 bg-slate-400 rounded-full" />
+                <div className="w-1 h-1 bg-slate-400 rounded-full" />
               </div>
             </div>
-            <div className="text-4xl font-black text-white">{goalStops.length - completedCount - 1}</div>
-            <div className="text-white/50 text-xs">remaining</div>
+            <div className="text-4xl font-black text-slate-900">{goalStops.length - completedCount - 1}</div>
+            <div className="text-slate-500 text-xs">remaining</div>
           </div>
           
           {/* Streak */}
-          <div className="bg-gradient-to-br from-[#1a2a3a] to-[#0f1a24] rounded-xl px-2 py-4 text-center relative overflow-hidden border border-[#FF6B35]/30 hover:border-[#FF6B35]/60 hover:shadow-lg hover:shadow-[#FF6B35]/20 transition-all duration-300 cursor-pointer">
-            <div className="text-4xl font-black text-white">7</div>
-            <div className="text-white/50 text-xs">day streak</div>
-            <div className="mt-1 bg-white/10 rounded px-1.5 py-0.5 text-[9px] text-white/70 font-medium uppercase tracking-wider inline-block">
+          <div className="bg-white rounded-xl px-2 py-4 text-center relative overflow-hidden border border-slate-200 hover:border-[#FF6B35]/40 hover:shadow-md transition-all duration-300 cursor-pointer">
+            <div className="text-4xl font-black text-slate-900">7</div>
+            <div className="text-slate-500 text-xs">day streak</div>
+            <div className="mt-1 bg-green-50 border border-green-200 rounded px-1.5 py-0.5 text-[9px] text-green-600 font-medium uppercase tracking-wider inline-block">
               On Track
             </div>
           </div>
@@ -560,8 +564,8 @@ export function GoalTransitMap({ playerCity, playerState, playerLat, playerLng }
       
       {/* Add Goal Modal */}
       {showAddGoal && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#1a1a1a] rounded-2xl border border-[#3a3a3a] w-full max-w-md overflow-hidden">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl w-full max-w-md overflow-hidden">
             <div className="bg-gradient-to-r from-[#FF6B35] to-[#FF8C5A] p-4 flex items-center justify-between">
               <h3 className="text-white font-bold text-lg">Add New Goal</h3>
               <button onClick={() => setShowAddGoal(false)} className="text-white/80 hover:text-white">
@@ -570,11 +574,11 @@ export function GoalTransitMap({ playerCity, playerState, playerLat, playerLng }
             </div>
             <div className="p-4 space-y-4">
               <div>
-                <label className="text-[#888] text-sm block mb-2">Goal Type</label>
+                <label className="text-slate-500 text-sm block mb-2">Goal Type</label>
                 <div className="grid grid-cols-2 gap-2">
                   {['Form', 'Consistency', 'Volume', 'Accuracy'].map(type => (
-                    <button key={type} className="bg-[#2a2a2a] hover:bg-[#3a3a3a] border border-[#3a3a3a] rounded-lg p-3 text-center transition-colors">
-                      <div className="text-white font-bold">{type}</div>
+                    <button key={type} className="bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg p-3 text-center transition-colors">
+                      <div className="text-slate-900 font-bold">{type}</div>
                     </button>
                   ))}
                 </div>

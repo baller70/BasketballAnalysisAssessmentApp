@@ -25,13 +25,13 @@ export default function ComparePage() {
   return (
     <div className="space-y-6">
       {/* View Mode Toggle */}
-      <div className="flex gap-2 p-1 bg-[#1a1a1a] rounded-xl border border-[#333]">
+      <div className="flex gap-2 p-1 bg-slate-50 rounded-xl border border-slate-200">
         <button
           onClick={() => setViewMode('photo')}
           className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-semibold transition-all ${
             viewMode === 'photo'
               ? 'bg-[#FF6B35] text-white'
-              : 'text-[#888] hover:text-white hover:bg-[#2a2a2a]'
+              : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
           <Camera className="w-4 h-4" />
@@ -42,7 +42,7 @@ export default function ComparePage() {
           className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-semibold transition-all ${
             viewMode === 'game'
               ? 'bg-[#FF6B35] text-white'
-              : 'text-[#888] hover:text-white hover:bg-[#2a2a2a]'
+              : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
           <Gamepad2 className="w-4 h-4" />
@@ -52,18 +52,18 @@ export default function ComparePage() {
 
       {/* Content */}
       {viewMode === 'photo' ? (
-        <div className="bg-[#1a1a1a] rounded-xl p-6 border border-[#333] text-center">
+        <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm text-center">
           <Camera className="w-12 h-12 text-[#FF6B35] mx-auto mb-4" />
-          <h3 className="text-white font-bold text-lg mb-2">Photo Comparison</h3>
-          <p className="text-[#888] text-sm mb-4">
+          <h3 className="text-slate-900 font-bold text-lg mb-2">Photo Comparison</h3>
+          <p className="text-slate-500 text-sm mb-4">
             Upload your shooting form image to compare with elite shooters
           </p>
           {uploadedImageBase64 ? (
-            <div className="bg-[#2a2a2a] rounded-lg p-4">
-              <p className="text-green-400 text-sm">✓ Image uploaded - comparison available</p>
+            <div className="bg-slate-50 rounded-lg p-4">
+              <p className="text-green-600 text-sm">✓ Image uploaded - comparison available</p>
             </div>
           ) : (
-            <p className="text-[#666] text-xs">No image uploaded yet</p>
+            <p className="text-slate-400 text-xs">No image uploaded yet</p>
           )}
         </div>
       ) : (

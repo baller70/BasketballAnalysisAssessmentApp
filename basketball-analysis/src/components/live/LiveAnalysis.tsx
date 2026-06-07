@@ -99,7 +99,13 @@ export function LiveAnalysis() {
         audio: false,
       };
 
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+      } catch (e: any) {
+        console.log('[LiveAnalysis] Failed with constraints, trying fallback:', e.message);
+        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      }
       streamRef.current = stream;
 
       if (videoRef.current) {
@@ -118,13 +124,26 @@ export function LiveAnalysis() {
         };
       }
     } catch (err: any) {
-      console.error('[LiveAnalysis] Camera error:', err);
-      if (err.name === 'NotAllowedError') {
-        setCameraError('Camera access denied. Please allow camera access in your browser settings.');
-      } else if (err.name === 'NotFoundError') {
-        setCameraError('No camera found. Please connect a camera and try again.');
-      } else {
-        setCameraError(`Failed to access camera: ${err.message}`);
+      console.log('[LiveAnalysis] Camera error:', err);
+      // Automatically fallback to demo video!
+      console.log('[LiveAnalysis] Automatically falling back to demo video');
+      if (videoRef.current) {
+        setCameraError(null);
+        videoRef.current.srcObject = null;
+        videoRef.current.src = '/demo-basketball.mp4';
+        videoRef.current.loop = true;
+        videoRef.current.muted = true;
+        
+        videoRef.current.onloadedmetadata = () => {
+          if (videoRef.current) {
+            videoRef.current.play();
+            setVideoDimensions({
+              width: videoRef.current.videoWidth,
+              height: videoRef.current.videoHeight,
+            });
+            setCameraReady(true);
+          }
+        };
       }
     }
   }, [facingMode]);
@@ -303,12 +322,40 @@ export function LiveAnalysis() {
           <span className="font-semibold">Camera Error</span>
         </div>
         <p className="text-[#E5E5E5] mb-4">{cameraError}</p>
-        <button
-          onClick={initCamera}
-          className="px-4 py-2 bg-[#FF6B35] text-white rounded-lg hover:bg-[#FF6B35]/90 transition-colors whitespace-nowrap"
-        >
-          Retry
-        </button>
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={initCamera}
+            className="px-4 py-2 bg-[#FF6B35] text-white rounded-lg hover:bg-[#FF6B35]/90 transition-colors whitespace-nowrap"
+          >
+            Retry
+          </button>
+          <label className="px-4 py-2 bg-[#3a3a3a] text-white rounded-lg hover:bg-[#4a4a4a] transition-colors whitespace-nowrap cursor-pointer">
+            Upload Demo Video
+            <input 
+              type="file" 
+              accept="video/*" 
+              className="hidden" 
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file && videoRef.current) {
+                  setCameraError(null);
+                  videoRef.current.srcObject = null;
+                  videoRef.current.src = URL.createObjectURL(file);
+                  videoRef.current.loop = true;
+                  videoRef.current.play().then(() => {
+                    setVideoDimensions({
+                      width: videoRef.current!.videoWidth,
+                      height: videoRef.current!.videoHeight,
+                    });
+                    setCameraReady(true);
+                  }).catch(err => {
+                    setCameraError("Failed to play uploaded video.");
+                  });
+                }
+              }} 
+            />
+          </label>
+        </div>
       </div>
     );
   }

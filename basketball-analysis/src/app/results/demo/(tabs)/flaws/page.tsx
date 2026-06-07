@@ -234,15 +234,15 @@ export default function FlawsPage() {
   const totalFlawsCurrentSession = allSessionsWithFlaws[0]?.flaws.length || 0
 
   const getDifficultyColor = (difficulty: string) => {
-    if (difficulty === "Hard") return "bg-red-500/20 text-red-400 border-red-500/30"
-    if (difficulty === "Medium") return "bg-orange-500/20 text-orange-400 border-orange-500/30"
-    return "bg-green-500/20 text-green-400 border-green-500/30"
+    if (difficulty === "Hard") return "bg-red-50 text-red-600 border-red-200"
+    if (difficulty === "Medium") return "bg-orange-50 text-orange-600 border-orange-200"
+    return "bg-green-50 text-green-600 border-green-200"
   }
 
   const getSeverityColor = (severity: string) => {
-    if (severity === "CRITICAL") return "bg-red-500/20 text-red-400 border-red-500/30"
-    if (severity === "MODERATE") return "bg-orange-500/20 text-orange-400 border-orange-500/30"
-    return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
+    if (severity === "CRITICAL") return "bg-red-50 text-red-600 border-red-200"
+    if (severity === "MODERATE") return "bg-orange-50 text-orange-600 border-orange-200"
+    return "bg-yellow-50 text-yellow-600 border-yellow-200"
   }
 
   return (
@@ -251,22 +251,23 @@ export default function FlawsPage() {
       <InlinePointsBurst points={1} show={showPointsBurst} label="IQ" />
       
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a] rounded-xl p-6 border border-[#3a3a3a]">
+      <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm overflow-hidden">
+        <div className="h-1 bg-gradient-to-r from-red-500 to-orange-500 -mx-6 -mt-6 mb-5" />
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-red-500/10 flex items-center justify-center border border-red-500/30">
-              <AlertTriangle className="w-7 h-7 text-red-400" />
+            <div className="w-14 h-14 rounded-xl bg-red-50 flex items-center justify-center border border-red-100">
+              <AlertTriangle className="w-7 h-7 text-red-500" />
             </div>
             <div>
-              <h2 className="text-2xl font-black text-red-400 uppercase tracking-wider" style={{ textShadow: '0 0 20px rgba(239, 68, 68, 0.3)' }}>
+              <h2 className="text-2xl font-black text-slate-900 uppercase tracking-wider">
                 Identified Flaws
               </h2>
-              <p className="text-[#888] text-sm">{allSessionsWithFlaws.length} session{allSessionsWithFlaws.length !== 1 ? 's' : ''} • Click to expand</p>
+              <p className="text-slate-500 text-sm">{allSessionsWithFlaws.length} session{allSessionsWithFlaws.length !== 1 ? 's' : ''} • Click to expand</p>
             </div>
           </div>
-          <div className="text-center px-4 py-2 bg-red-500/10 rounded-lg border border-red-500/30">
-            <p className="text-red-400 text-2xl font-black">{totalFlawsCurrentSession}</p>
-            <p className="text-red-400/70 text-xs uppercase">Current Issues</p>
+          <div className="text-center px-4 py-2 bg-red-50 rounded-lg border border-red-200">
+            <p className="text-red-600 text-2xl font-black">{totalFlawsCurrentSession}</p>
+            <p className="text-red-500 text-xs uppercase">Current Issues</p>
           </div>
         </div>
       </div>
@@ -281,40 +282,40 @@ export default function FlawsPage() {
               key={session.id}
               className={`rounded-xl overflow-hidden border transition-all duration-300 ${
                 session.isLive 
-                  ? 'border-green-500/50 bg-gradient-to-br from-green-500/10 to-green-600/5' 
-                  : 'border-[#3a3a3a] bg-[#2a2a2a]'
+                  ? 'border-green-200 bg-green-50/30' 
+                  : 'border-slate-200 bg-white'
               }`}
             >
               {/* Session Header */}
               <button
                 onClick={() => toggleSession(session.id)}
-                className="w-full p-4 flex items-center justify-between hover:bg-[#1a1a1a]/50 transition-colors"
+                className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-colors"
               >
                 <div className="flex items-center gap-4">
                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    session.isLive ? 'bg-green-500/20 border border-green-500/40' : 'bg-[#3a3a3a] border border-[#4a4a4a]'
+                    session.isLive ? 'bg-green-50 border border-green-200' : 'bg-slate-50 border border-slate-200'
                   }`}>
-                    <Calendar className={`w-5 h-5 ${session.isLive ? 'text-green-400' : 'text-[#888]'}`} />
+                    <Calendar className={`w-5 h-5 ${session.isLive ? 'text-green-500' : 'text-slate-400'}`} />
                   </div>
                   <div className="text-left">
                     <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-bold text-[#E5E5E5]">{session.displayDate}</h3>
+                      <h3 className="text-lg font-bold text-slate-900">{session.displayDate}</h3>
                       {session.isLive && (
                         <span className="px-2 py-0.5 bg-green-500 rounded text-[10px] font-bold text-white">LIVE</span>
                       )}
                     </div>
-                    <p className="text-[#888] text-sm">{session.flaws.length} flaw{session.flaws.length !== 1 ? 's' : ''} • Score: {session.score}%</p>
+                    <p className="text-slate-500 text-sm">{session.flaws.length} flaw{session.flaws.length !== 1 ? 's' : ''} • Score: {session.score}%</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className={`px-3 py-1.5 rounded-lg text-xs font-bold ${
-                    session.flaws.length === 0 ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
-                    session.flaws.length <= 2 ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' :
-                    'bg-red-500/20 text-red-400 border border-red-500/30'
+                    session.flaws.length === 0 ? 'bg-green-50 text-green-600 border border-green-200' :
+                    session.flaws.length <= 2 ? 'bg-orange-50 text-orange-600 border border-orange-200' :
+                    'bg-red-50 text-red-600 border border-red-200'
                   }`}>
                     {session.flaws.length === 0 ? 'EXCELLENT' : session.flaws.length <= 2 ? 'GOOD' : 'NEEDS WORK'}
                   </div>
-                  <div className={`w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center border border-[#4a4a4a] text-[#888] transition-transform duration-300 ${isSessionExpanded ? 'rotate-180' : ''}`}>
+                  <div className={`w-8 h-8 rounded-full bg-white flex items-center justify-center border border-slate-200 text-slate-400 transition-transform duration-300 ${isSessionExpanded ? 'rotate-180' : ''}`}>
                     <ChevronDown className="w-5 h-5" />
                   </div>
                 </div>
@@ -322,17 +323,17 @@ export default function FlawsPage() {
 
               {/* Session Content - Expandable */}
               {isSessionExpanded && (
-                <div className="border-t border-[#3a3a3a] p-4 space-y-4">
+                <div className="border-t border-slate-200 p-4 space-y-4">
                   {session.flaws.map((flaw: any, flawIdx: number) => {
                     const cardId = `${session.id}-${flawIdx}`
                     const isCardExpanded = expandedCards.includes(cardId)
                     
                     return (
-                      <div key={cardId} className="bg-[#1a1a1a] rounded-xl border border-[#3a3a3a] overflow-hidden">
+                      <div key={cardId} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                         {/* Flaw Header */}
                         <button
                           onClick={() => toggleCard(cardId)}
-                          className="w-full p-4 flex items-center justify-between hover:bg-[#2a2a2a]/50 transition-colors"
+                          className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-colors"
                         >
                           <div className="flex items-center gap-3">
                             <div className={`w-2 h-12 rounded-full ${
@@ -340,29 +341,29 @@ export default function FlawsPage() {
                               flaw.severity === 'MODERATE' ? 'bg-orange-500' : 'bg-yellow-500'
                             }`} />
                             <div className="text-left">
-                              <h4 className="text-white font-bold">{flaw.title}</h4>
+                              <h4 className="text-slate-900 font-bold">{flaw.title}</h4>
                               <div className="flex items-center gap-2 mt-1">
                                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${getSeverityColor(flaw.severity)}`}>
                                   {flaw.severity}
                                 </span>
-                                <span className="text-[#666] text-xs">{flaw.category}</span>
+                                <span className="text-slate-400 text-xs">{flaw.category}</span>
                               </div>
                             </div>
                           </div>
-                          <ChevronRight className={`w-5 h-5 text-[#666] transition-transform ${isCardExpanded ? 'rotate-90' : ''}`} />
+                          <ChevronRight className={`w-5 h-5 text-slate-400 transition-transform ${isCardExpanded ? 'rotate-90' : ''}`} />
                         </button>
 
                         {/* Flaw Details - Expandable */}
                         {isCardExpanded && (
-                          <div className="border-t border-[#2a2a2a] p-4 space-y-4">
+                          <div className="border-t border-slate-100 p-4 space-y-4">
                             <div>
-                              <p className="text-[#888] text-sm leading-relaxed">{flaw.description}</p>
+                              <p className="text-slate-600 text-sm leading-relaxed">{flaw.description}</p>
                             </div>
                             
                             {/* Cause Chain */}
                             {flaw.causeChain && flaw.causeChain.length > 0 && (
-                              <div className="bg-[#2a2a2a] rounded-lg p-3">
-                                <p className="text-orange-400 text-xs font-bold uppercase mb-2 flex items-center gap-2">
+                              <div className="bg-slate-50 border border-slate-100 rounded-lg p-3">
+                                <p className="text-[#FF6B35] text-xs font-bold uppercase mb-2 flex items-center gap-2">
                                   <Zap className="w-3 h-3" /> Cause Chain
                                 </p>
                                 <div className="space-y-2">
@@ -370,8 +371,8 @@ export default function FlawsPage() {
                                     <div key={i} className="flex items-start gap-2">
                                       <ChevronRight className="w-4 h-4 text-orange-400 flex-shrink-0 mt-0.5" />
                                       <div>
-                                        <span className="text-white text-sm font-medium">{cause.effect}</span>
-                                        <span className="text-[#666] text-xs ml-2">— {cause.explanation}</span>
+                                        <span className="text-slate-900 text-sm font-medium">{cause.effect}</span>
+                                        <span className="text-slate-500 text-xs ml-2">— {cause.explanation}</span>
                                       </div>
                                     </div>
                                   ))}
@@ -380,11 +381,11 @@ export default function FlawsPage() {
                             )}
 
                             {/* Correction */}
-                            <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
-                              <p className="text-green-400 text-xs font-bold uppercase mb-1 flex items-center gap-2">
+                            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                              <p className="text-green-700 text-xs font-bold uppercase mb-1 flex items-center gap-2">
                                 <Target className="w-3 h-3" /> How to Fix
                               </p>
-                              <p className="text-green-300/90 text-sm">{flaw.correction}</p>
+                              <p className="text-green-700 text-sm">{flaw.correction}</p>
                             </div>
 
                             {/* Drills */}
@@ -395,15 +396,15 @@ export default function FlawsPage() {
                                 </p>
                                 <div className="grid gap-2">
                                   {flaw.drills.map((drill: any, i: number) => (
-                                    <div key={i} className="flex items-center justify-between bg-[#2a2a2a] rounded-lg p-3">
+                                    <div key={i} className="flex items-center justify-between bg-slate-50 border border-slate-100 rounded-lg p-3">
                                       <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 rounded-lg bg-[#FF6B35]/10 flex items-center justify-center">
                                           <Play className="w-4 h-4 text-[#FF6B35]" />
                                         </div>
-                                        <span className="text-white text-sm font-medium">{drill.name}</span>
+                                        <span className="text-slate-900 text-sm font-medium">{drill.name}</span>
                                       </div>
                                       <div className="flex items-center gap-2">
-                                        <span className="text-[#888] text-xs flex items-center gap-1">
+                                        <span className="text-slate-500 text-xs flex items-center gap-1">
                                           <Clock className="w-3 h-3" /> {drill.reps}
                                         </span>
                                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${getDifficultyColor(drill.difficulty)}`}>
@@ -437,7 +438,7 @@ export default function FlawsPage() {
               className={`w-8 h-8 rounded-lg text-sm font-medium transition-all ${
                 currentPage === i + 1
                   ? 'bg-[#FF6B35] text-white'
-                  : 'bg-[#2a2a2a] text-[#888] hover:bg-[#3a3a3a]'
+                  : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50'
               }`}
             >
               {i + 1}

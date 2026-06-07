@@ -476,7 +476,7 @@ const SNEAKER_THEMES: Record<string, {
   },
   'Black Panther': {
     primaryColor: '#9333ea',
-    buttonGradient: 'from-gray-900 via-gray-800 to-purple-900',
+    buttonGradient: 'from-slate-100 via-gray-800 to-purple-900',
     borderColor: 'border-purple-600/80',
     glowColor: 'shadow-purple-600/50',
     titleGradient: 'from-gray-200 via-purple-300 to-gray-100',
@@ -619,8 +619,8 @@ function Level9SneakerCard({ sneaker, index, isUnlocked = false }: { sneaker: ty
       <div 
         className={`
           relative overflow-hidden rounded-2xl
-          border-2 ${showFullColor ? theme.borderColor : 'border-gray-700'}
-          bg-[#0d0d0d]
+          border-2 ${showFullColor ? theme.borderColor : 'border-slate-200'}
+          bg-white
           shadow-2xl ${isHovered ? `shadow-xl ${theme.glowColor}` : ''}
           transition-all duration-500
         `}
@@ -658,7 +658,7 @@ function Level9SneakerCard({ sneaker, index, isUnlocked = false }: { sneaker: ty
         {/* Level Badge */}
         <div className="absolute top-3 left-3 z-20">
           <div 
-            className="flex items-center gap-2 px-3 py-2 rounded-full text-white text-xs font-bold shadow-lg transition-all duration-500"
+            className="flex items-center gap-2 px-3 py-2 rounded-full text-slate-900 text-xs font-bold shadow-lg transition-all duration-500"
             style={{ background: showFullColor ? theme.primaryColor : '#555' }}
           >
             <Crown className="w-4 h-4" />
@@ -672,7 +672,7 @@ function Level9SneakerCard({ sneaker, index, isUnlocked = false }: { sneaker: ty
             className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-black/60 backdrop-blur-sm border text-sm font-semibold transition-all duration-500"
             style={{ 
               borderColor: showFullColor ? `${theme.primaryColor}60` : '#55555560', 
-              color: showFullColor ? theme.primaryColor : '#888' 
+              color: showFullColor ? theme.primaryColor : '#64748b' 
             }}
           >
             <Sparkles className="w-4 h-4" />
@@ -689,7 +689,7 @@ function Level9SneakerCard({ sneaker, index, isUnlocked = false }: { sneaker: ty
               color: 'white' 
             }}
           >
-            <span style={{ color: showFullColor ? theme.primaryColor : '#888' }}>#</span>{sneaker.id}
+            <span style={{ color: showFullColor ? theme.primaryColor : '#64748b' }}>#</span>{sneaker.id}
           </div>
         </div>
 
@@ -723,7 +723,7 @@ function Level9SneakerCard({ sneaker, index, isUnlocked = false }: { sneaker: ty
 
         {/* Content Section */}
         <div className="relative px-4 pb-4 space-y-2 z-10">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm -mx-4" />
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm -mx-4" />
           
           <div className="relative z-10 space-y-2 pt-2">
             {/* Sneaker Name */}
@@ -768,7 +768,7 @@ function Level9SneakerCard({ sneaker, index, isUnlocked = false }: { sneaker: ty
               <p 
                 className={`text-3xl font-black relative z-10 transition-all duration-500 ${showFullColor ? 'animate-pulse' : ''}`}
                 style={{ 
-                  color: showFullColor ? theme.primaryColor : '#666',
+                  color: showFullColor ? theme.primaryColor : '#94a3b8',
                   textShadow: showFullColor 
                     ? `0 0 20px ${theme.primaryColor}80, 0 0 40px ${theme.primaryColor}40`
                     : 'none'
@@ -783,7 +783,7 @@ function Level9SneakerCard({ sneaker, index, isUnlocked = false }: { sneaker: ty
             <button 
               className={`
                 w-full py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider
-                text-white shadow-lg whitespace-nowrap
+                text-slate-900 shadow-lg whitespace-nowrap
                 transform transition-all duration-500
                 ${showFullColor 
                   ? `bg-gradient-to-r ${theme.buttonGradient} hover:shadow-xl hover:scale-[1.02]`
@@ -1238,7 +1238,7 @@ function BadgeCard({ badge, onClick }: { badge: Badge; onClick: () => void }) {
           : 'hover:scale-105 active:scale-95'
       }`}
       style={{
-        background: isLocked ? '#1a1a1a' : '#0a0a0a',
+        background: isLocked ? '#f8fafc' : '#ffffff',
         border: `2px solid ${isLocked ? '#333' : tierConfig.borderColor}`,
         boxShadow: isLocked ? 'none' : tierConfig.glow,
       }}
@@ -1269,7 +1269,7 @@ function BadgeCard({ badge, onClick }: { badge: Badge; onClick: () => void }) {
         {/* Icon with Metallic Effect */}
         <div 
           className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center mb-1.5 ${
-            isLocked ? 'bg-[#2a2a2a]' : ''
+            isLocked ? 'bg-slate-50' : ''
           }`}
           style={!isLocked ? {
             background: tierConfig.gradient,
@@ -1277,7 +1277,7 @@ function BadgeCard({ badge, onClick }: { badge: Badge; onClick: () => void }) {
           } : undefined}
         >
           {isLocked ? (
-            <Lock className="w-7 h-7 sm:w-8 sm:h-8 text-[#555]" />
+            <Lock className="w-7 h-7 sm:w-8 sm:h-8 text-slate-400" />
           ) : (
             <badge.icon className="w-7 h-7 sm:w-8 sm:h-8 text-[#1a1a1a]" />
           )}
@@ -1291,7 +1291,7 @@ function BadgeCard({ badge, onClick }: { badge: Badge; onClick: () => void }) {
         {/* Badge Name */}
         <p 
           className={`text-[9px] sm:text-[11px] font-bold text-center leading-tight uppercase tracking-wide ${
-            isLocked ? 'text-[#555]' : ''
+            isLocked ? 'text-slate-400' : ''
           }`}
           style={!isLocked ? { color: tierConfig.textColor } : undefined}
         >
@@ -1300,7 +1300,7 @@ function BadgeCard({ badge, onClick }: { badge: Badge; onClick: () => void }) {
         
         {/* Tier Label */}
         <p className={`text-[7px] sm:text-[8px] font-medium mt-0.5 uppercase tracking-wider ${
-          isLocked ? 'text-[#444]' : 'text-[#888]'
+          isLocked ? 'text-slate-400' : 'text-slate-500'
         }`}>
           {tierConfig.name}
         </p>
@@ -1308,7 +1308,7 @@ function BadgeCard({ badge, onClick }: { badge: Badge; onClick: () => void }) {
         {/* Progress Bar */}
         {hasProgress && (
           <div className="absolute bottom-2 left-2 right-2">
-            <div className="h-1 bg-[#333] rounded-full overflow-hidden">
+            <div className="h-1 bg-slate-200 rounded-full overflow-hidden">
               <div 
                 className="h-full rounded-full transition-all duration-500"
                 style={{ 
@@ -1317,7 +1317,7 @@ function BadgeCard({ badge, onClick }: { badge: Badge; onClick: () => void }) {
                 }}
             />
           </div>
-            <p className="text-[8px] text-[#666] text-center mt-0.5">
+            <p className="text-[8px] text-slate-400 text-center mt-0.5">
               {badge.progress!.current}/{badge.progress!.total}
             </p>
         </div>
@@ -1369,13 +1369,13 @@ function BadgeDetailModal({ badge, onClose }: { badge: Badge | null; onClose: ()
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
         onClick={onClose}
       />
       
       {/* Modal */}
       <div 
-        className="relative w-full sm:max-w-sm bg-[#2a2a2a] rounded-t-3xl sm:rounded-2xl overflow-hidden"
+        className="relative w-full sm:max-w-sm bg-slate-50 rounded-t-3xl sm:rounded-2xl overflow-hidden"
         style={{
           border: `2px solid ${isLocked ? '#333' : tierConfig.borderColor}`,
           boxShadow: isLocked ? 'none' : tierConfig.glow,
@@ -1392,7 +1392,7 @@ function BadgeDetailModal({ badge, onClose }: { badge: Badge | null; onClose: ()
         {/* Close Button */}
         <button 
           onClick={onClose}
-          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#2a2a2a] flex items-center justify-center text-[#888] hover:text-white z-10"
+          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-500 hover:text-slate-900 z-10"
         >
           <X className="w-4 h-4" />
         </button>
@@ -1403,7 +1403,7 @@ function BadgeDetailModal({ badge, onClose }: { badge: Badge | null; onClose: ()
           <div className="flex justify-center mb-4">
             <div 
               className={`relative w-24 h-24 rounded-full flex items-center justify-center ${
-                isLocked ? 'bg-[#2a2a2a]' : ''
+                isLocked ? 'bg-slate-50' : ''
               }`}
               style={!isLocked ? {
                 background: tierConfig.gradient,
@@ -1411,7 +1411,7 @@ function BadgeDetailModal({ badge, onClose }: { badge: Badge | null; onClose: ()
               } : undefined}
             >
               {isLocked ? (
-                <Lock className="w-10 h-10 text-[#555]" />
+                <Lock className="w-10 h-10 text-slate-400" />
               ) : (
                 <badge.icon className="w-10 h-10 text-[#1a1a1a]" />
               )}
@@ -1426,7 +1426,7 @@ function BadgeDetailModal({ badge, onClose }: { badge: Badge | null; onClose: ()
           {/* Badge Info */}
           <div className="text-center mb-4">
             <h2 
-              className={`text-xl font-black mb-1 uppercase tracking-wide ${isLocked ? 'text-[#555]' : ''}`}
+              className={`text-xl font-black mb-1 uppercase tracking-wide ${isLocked ? 'text-slate-400' : ''}`}
               style={!isLocked ? { color: tierConfig.textColor } : undefined}
             >
               {badge.name}
@@ -1454,30 +1454,30 @@ function BadgeDetailModal({ badge, onClose }: { badge: Badge | null; onClose: ()
         </div>
           
           {/* Description Section */}
-          <div className="bg-[#2a2a2a] rounded-xl p-4 mb-3">
-            <p className="text-[10px] text-[#666] uppercase tracking-wider font-medium mb-1">Description</p>
-            <p className="text-[#ccc] text-sm leading-relaxed">{badge.longDescription}</p>
+          <div className="bg-slate-50 rounded-xl p-4 mb-3">
+            <p className="text-[10px] text-slate-400 uppercase tracking-wider font-medium mb-1">Description</p>
+            <p className="text-slate-700 text-sm leading-relaxed">{badge.longDescription}</p>
         </div>
           
           {/* How to Earn Section */}
-          <div className="bg-[#2a2a2a] rounded-xl p-4 mb-3">
-            <p className="text-[10px] text-[#666] uppercase tracking-wider font-medium mb-1">How to Earn</p>
-            <p className="text-white text-sm leading-relaxed">{badge.howToEarn}</p>
+          <div className="bg-slate-50 rounded-xl p-4 mb-3">
+            <p className="text-[10px] text-slate-400 uppercase tracking-wider font-medium mb-1">How to Earn</p>
+            <p className="text-slate-900 text-sm leading-relaxed">{badge.howToEarn}</p>
         </div>
           
           {/* Progress or Unlock Status */}
           {hasProgress ? (
-            <div className="bg-[#2a2a2a] rounded-xl p-4 mb-3">
-              <p className="text-[10px] text-[#666] uppercase tracking-wider font-medium mb-2">Your Progress</p>
+            <div className="bg-slate-50 rounded-xl p-4 mb-3">
+              <p className="text-[10px] text-slate-400 uppercase tracking-wider font-medium mb-2">Your Progress</p>
               <div className="flex justify-between text-sm mb-2">
-                <span className="text-[#888]">
+                <span className="text-slate-500">
                   {Math.round(progressPercent)}% Complete
                 </span>
                 <span style={{ color: tierConfig.textColor }} className="font-bold">
                   {badge.progress!.current}/{badge.progress!.total}
                 </span>
       </div>
-              <div className="h-3 bg-[#2a2a2a] rounded-full overflow-hidden">
+              <div className="h-3 bg-slate-50 rounded-full overflow-hidden">
                 <div 
                   className="h-full rounded-full transition-all duration-500"
                   style={{ 
@@ -1492,7 +1492,7 @@ function BadgeDetailModal({ badge, onClose }: { badge: Badge | null; onClose: ()
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded-full bg-[#22C55E] flex items-center justify-center">
-                    <Check className="w-4 h-4 text-white" />
+                    <Check className="w-4 h-4 text-slate-900" />
                   </div>
                   <span className="text-[#22C55E] font-bold uppercase text-sm">Unlocked</span>
                 </div>
@@ -1500,41 +1500,41 @@ function BadgeDetailModal({ badge, onClose }: { badge: Badge | null; onClose: ()
               </div>
             </div>
           ) : (
-            <div className="bg-[#2a2a2a] rounded-xl p-4 mb-3">
+            <div className="bg-slate-50 rounded-xl p-4 mb-3">
               <div className="flex items-center gap-2">
-                <Lock className="w-4 h-4 text-[#666]" />
-                <span className="text-[#666] text-sm">Not yet unlocked</span>
+                <Lock className="w-4 h-4 text-slate-400" />
+                <span className="text-slate-400 text-sm">Not yet unlocked</span>
               </div>
             </div>
           )}
           
           {/* Stats */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-[#2a2a2a] rounded-xl p-3 text-center">
-              <p className="text-[10px] text-[#666] uppercase tracking-wider font-medium mb-1">Rarity</p>
+            <div className="bg-slate-50 rounded-xl p-3 text-center">
+              <p className="text-[10px] text-slate-400 uppercase tracking-wider font-medium mb-1">Rarity</p>
               <p 
                 className="text-lg font-bold"
                 style={{ color: tierConfig.textColor }}
               >
                 {badge.rarity < 1 ? `<1%` : `${badge.rarity}%`}
               </p>
-              <p className="text-[#555] text-[10px]">of players have this</p>
+              <p className="text-slate-400 text-[10px]">of players have this</p>
             </div>
-            <div className="bg-[#2a2a2a] rounded-xl p-3 text-center">
-              <p className="text-[10px] text-[#666] uppercase tracking-wider font-medium mb-1">XP Reward</p>
+            <div className="bg-slate-50 rounded-xl p-3 text-center">
+              <p className="text-[10px] text-slate-400 uppercase tracking-wider font-medium mb-1">XP Reward</p>
               <p 
                 className="text-lg font-bold"
                 style={{ color: tierConfig.textColor }}
               >
                 +{badge.xpReward.toLocaleString()}
               </p>
-              <p className="text-[#555] text-[10px]">experience points</p>
+              <p className="text-slate-400 text-[10px]">experience points</p>
             </div>
         </div>
       </div>
 
         {/* Drag Handle (Mobile) */}
-        <div className="sm:hidden absolute top-2 left-1/2 -translate-x-1/2 w-12 h-1 bg-[#333] rounded-full" />
+        <div className="sm:hidden absolute top-2 left-1/2 -translate-x-1/2 w-12 h-1 bg-slate-200 rounded-full" />
               </div>
     </div>
   )
@@ -1593,7 +1593,7 @@ function FilterSection({
   return (
     <div className="mb-6">
       {/* Filter Summary Bar - Always Visible */}
-      <div className="bg-[#2a2a2a] rounded-xl border border-[#3a3a3a] overflow-hidden">
+      <div className="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
         {/* Clickable Header */}
         <button
           onClick={() => setIsExpanded(!isExpanded)}
@@ -1605,21 +1605,21 @@ function FilterSection({
                       </div>
             <div className="text-left">
               <div className="flex items-center gap-2">
-                <span className="text-white font-bold text-sm">Filters</span>
+                <span className="text-slate-900 font-bold text-sm">Filters</span>
                 {activeFilterCount > 0 && (
                   <span className="bg-[#FF6B35] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                     {activeFilterCount}
                   </span>
                 )}
                     </div>
-              <span className="text-[#888] text-xs">
+              <span className="text-slate-500 text-xs">
                 {badgeCount} badges
                 {activeFilterCount > 0 && ` • ${getActiveFilterLabels().join(', ')}`}
                     </span>
                   </div>
               </div>
           <ChevronDown 
-            className={`w-5 h-5 text-[#888] transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} 
+            className={`w-5 h-5 text-slate-500 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} 
           />
         </button>
         
@@ -1655,7 +1655,7 @@ function FilterSection({
             )}
             <button
               onClick={(e) => { e.stopPropagation(); clearAllFilters(); }}
-              className="text-[#888] text-xs underline hover:text-white"
+              className="text-slate-500 text-xs underline hover:text-slate-900"
             >
               Clear all
             </button>
@@ -1664,17 +1664,17 @@ function FilterSection({
         
         {/* Expanded Filter Options */}
         {isExpanded && (
-          <div className="px-4 pb-4 border-t border-[#3a3a3a]">
+          <div className="px-4 pb-4 border-t border-slate-200">
             {/* Tier Filter */}
             <div className="pt-4 pb-3">
-              <p className="text-[#888] text-xs font-medium mb-3 uppercase tracking-wider">Tier</p>
+              <p className="text-slate-500 text-xs font-medium mb-3 uppercase tracking-wider">Tier</p>
               <div className="grid grid-cols-3 gap-2">
                 <button
                   onClick={() => setSelectedTier('all')}
                   className={`px-3 py-2 rounded-lg text-xs font-bold transition-all ${
                     selectedTier === 'all'
-                      ? 'bg-[#FF6B35] text-white'
-                      : 'bg-[#3a3a3a] text-[#888] hover:bg-[#4a4a4a]'
+                      ? 'bg-[#FF6B35] text-white shadow-md shadow-[#FF6B35]/20'
+                      : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                   }`}
                 >
                   All
@@ -1687,8 +1687,8 @@ function FilterSection({
                       onClick={() => setSelectedTier(tier)}
                       className={`px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 ${
                         selectedTier === tier
-                          ? 'bg-[#FF6B35] text-white'
-                          : 'bg-[#3a3a3a] text-[#888] hover:bg-[#4a4a4a]'
+                          ? 'bg-[#FF6B35] text-white shadow-md shadow-[#FF6B35]/20'
+                          : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                       }`}
                     >
                       <config.icon className="w-3 h-3" />
@@ -1707,8 +1707,8 @@ function FilterSection({
                       onClick={() => setSelectedTier(tier)}
                       className={`px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 ${
                         selectedTier === tier
-                          ? 'bg-[#FF6B35] text-white'
-                          : 'bg-[#3a3a3a] text-[#888] hover:bg-[#4a4a4a]'
+                          ? 'bg-[#FF6B35] text-white shadow-md shadow-[#FF6B35]/20'
+                          : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                       }`}
                     >
                       <config.icon className="w-3 h-3" />
@@ -1720,15 +1720,15 @@ function FilterSection({
       </div>
 
             {/* Category Filter */}
-            <div className="pt-3 pb-3 border-t border-[#3a3a3a]">
-              <p className="text-[#888] text-xs font-medium mb-3 uppercase tracking-wider">Category</p>
+            <div className="pt-3 pb-3 border-t border-slate-200">
+              <p className="text-slate-500 text-xs font-medium mb-3 uppercase tracking-wider">Category</p>
               <div className="grid grid-cols-3 gap-2">
                 <button
                   onClick={() => setSelectedCategory('all')}
                   className={`px-3 py-2 rounded-lg text-xs font-bold transition-all ${
                     selectedCategory === 'all'
-                      ? 'bg-[#FF6B35] text-white'
-                      : 'bg-[#3a3a3a] text-[#888] hover:bg-[#4a4a4a]'
+                      ? 'bg-[#FF6B35] text-white shadow-md shadow-[#FF6B35]/20'
+                      : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                   }`}
                 >
                   All
@@ -1741,8 +1741,8 @@ function FilterSection({
                       onClick={() => setSelectedCategory(cat)}
                       className={`px-3 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 ${
                         selectedCategory === cat
-                          ? 'bg-[#FF6B35] text-white'
-                          : 'bg-[#3a3a3a] text-[#888] hover:bg-[#4a4a4a]'
+                          ? 'bg-[#FF6B35] text-white shadow-md shadow-[#FF6B35]/20'
+                          : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                       }`}
                     >
                       <config.icon className="w-3 h-3" />
@@ -1754,13 +1754,13 @@ function FilterSection({
           </div>
             
             {/* Unlocked Toggle */}
-            <div className="pt-3 border-t border-[#3a3a3a]">
+            <div className="pt-3 border-t border-slate-200">
               <button
                 onClick={() => setShowUnlockedOnly(!showUnlockedOnly)}
                 className={`w-full px-4 py-3 rounded-lg text-sm font-bold transition-all flex items-center justify-between ${
                   showUnlockedOnly
                     ? 'bg-[#22C55E]/20 text-[#22C55E] border border-[#22C55E]/30'
-                    : 'bg-[#3a3a3a] text-[#888] hover:bg-[#4a4a4a]'
+                    : 'bg-slate-200 text-slate-500 hover:bg-slate-300'
                 }`}
               >
                 <span className="flex items-center gap-2">
@@ -1814,17 +1814,17 @@ function TierPreviewModal({
   
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
       onClick={onClose}
     >
       <div 
-        className="relative w-full max-w-2xl max-h-[85vh] overflow-hidden rounded-3xl bg-[#1a1a1a] border-2"
+        className="relative w-full max-w-2xl max-h-[85vh] overflow-hidden rounded-3xl bg-slate-50 border-2"
         style={{ borderColor: config.borderColor }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div 
-          className="relative p-6 border-b border-[#3a3a3a]"
+          className="relative p-6 border-b border-slate-200"
           style={{ background: config.bgPattern }}
         >
           <div 
@@ -1834,7 +1834,7 @@ function TierPreviewModal({
           
           <button 
             onClick={onClose}
-            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 transition-colors z-10"
+            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center text-slate-900 hover:bg-black/40 transition-colors z-10"
           >
             <X className="w-5 h-5" />
           </button>
@@ -1858,7 +1858,7 @@ function TierPreviewModal({
                 >
                   {config.name}
                 </span>
-                <span className="px-2 py-0.5 rounded-full bg-black/30 text-xs font-bold text-white">
+                <span className="px-2 py-0.5 rounded-full bg-black/30 text-xs font-bold text-slate-900">
                   Level {config.level}
                 </span>
               </div>
@@ -1873,15 +1873,15 @@ function TierPreviewModal({
         {/* Content */}
         <div className="p-6 overflow-y-auto max-h-[60vh]">
           {/* Sneaker Name */}
-          <div className="mb-4 p-3 rounded-xl bg-[#2a2a2a] border border-[#3a3a3a]">
+          <div className="mb-4 p-3 rounded-xl bg-slate-50 border border-slate-200">
             <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Signature Sneaker</p>
-            <p className="text-white font-bold">{config.sneakerName}</p>
+            <p className="text-slate-900 font-bold">{config.sneakerName}</p>
           </div>
           
           {/* Hall of Fame - Show Full Sneaker Badge Cards */}
           {isHallOfFame && (
             <div className="mb-6">
-              <h4 className="text-white font-bold text-sm mb-4 flex items-center gap-2 uppercase tracking-wide">
+              <h4 className="text-slate-900 font-bold text-sm mb-4 flex items-center gap-2 uppercase tracking-wide">
                 <Crown className="w-4 h-4" style={{ color: config.textColor }} />
                 Air Jordan 1 Collection
                 <span className="ml-auto text-[10px] text-gray-500 font-normal normal-case">{LEVEL_9_SNEAKERS.length} exclusive</span>
@@ -1895,7 +1895,7 @@ function TierPreviewModal({
           )}
           
           {/* Regular Badges - Full Size Cards */}
-          <h4 className="text-white font-bold text-sm mb-4 flex items-center gap-2 uppercase tracking-wide">
+          <h4 className="text-slate-900 font-bold text-sm mb-4 flex items-center gap-2 uppercase tracking-wide">
             <Award className="w-4 h-4" style={{ color: config.textColor }} />
             {isHallOfFame ? 'Achievement Badges' : 'Available Badges'}
             <span className="ml-auto text-[10px] text-gray-500 font-normal normal-case">{tierBadges.length} badges</span>
@@ -1922,7 +1922,7 @@ function TierPreviewModal({
         </div>
         
         {/* Footer */}
-        <div className="p-4 border-t border-[#3a3a3a] bg-[#222]">
+        <div className="p-4 border-t border-slate-200 bg-slate-50">
           <p className="text-center text-gray-500 text-xs">
             Tap any badge to see details • Keep grinding to unlock more!
           </p>
@@ -1941,8 +1941,8 @@ function TierProgressSection({ onTierClick }: { onTierClick: (tier: BadgeTier) =
   }, {} as Record<BadgeTier, { unlocked: number; total: number }>)
   
   return (
-    <div className="bg-[#2a2a2a] rounded-2xl p-4 border border-[#3a3a3a]">
-      <h3 className="text-white font-bold text-sm mb-4 flex items-center gap-2 uppercase tracking-wide">
+    <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200">
+      <h3 className="text-slate-900 font-bold text-sm mb-4 flex items-center gap-2 uppercase tracking-wide">
         <Award className="w-4 h-4 text-[#FF6B35]" />
         Tier Progress
         <span className="ml-auto text-[10px] text-gray-500 font-normal normal-case">Tap to preview</span>
@@ -1961,7 +1961,7 @@ function TierProgressSection({ onTierClick }: { onTierClick: (tier: BadgeTier) =
             <button 
               key={tier} 
               onClick={() => onTierClick(tier)}
-              className="w-full flex items-center gap-3 p-2 -m-2 rounded-xl hover:bg-[#333] transition-colors group"
+              className="w-full flex items-center gap-3 p-2 -m-2 rounded-xl hover:bg-slate-200 transition-colors group"
             >
               <div 
                 className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110"
@@ -1984,12 +1984,12 @@ function TierProgressSection({ onTierClick }: { onTierClick: (tier: BadgeTier) =
                       <span className="ml-1 text-[10px] text-pink-400 font-normal">+{sneakerCount} sneakers</span>
                     )}
                   </span>
-                  <span className="text-[10px] text-[#666] flex items-center gap-1">
+                  <span className="text-[10px] text-slate-400 flex items-center gap-1">
                     {unlocked}/{total}
                     <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </span>
                 </div>
-                <div className="h-1.5 bg-[#222] rounded-full overflow-hidden">
+                <div className="h-1.5 bg-slate-50 rounded-full overflow-hidden">
                   <div 
                     className="h-full rounded-full transition-all duration-500"
                     style={{ 
@@ -2056,7 +2056,7 @@ export default function BadgesPage() {
   const unlockedCount = BADGES.filter(b => b.unlocked).length
   
   return (
-    <div className="min-h-screen bg-[#1a1a1a] relative">
+    <div className="min-h-screen bg-white relative">
       {/* GOLD Video Game Style Points Animation */}
       <InlinePointsBurst points={1} show={showPointsBurst} label="IQ" />
       
@@ -2079,7 +2079,7 @@ export default function BadgesPage() {
             <div className="flex items-center gap-3">
               <Link 
                 href="/results/demo"
-                className="w-10 h-10 rounded-xl bg-[#2a2a2a] border border-[#3a3a3a] flex items-center justify-center text-white hover:bg-[#3a3a3a] hover:border-[#FF6B35]/50 transition-all"
+                className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-900 hover:bg-slate-200 hover:border-[#FF6B35]/50 transition-all"
               >
                 <ArrowLeft className="w-5 h-5" />
               </Link>
@@ -2088,13 +2088,13 @@ export default function BadgesPage() {
                   <Trophy className="w-5 h-5 text-[#FF6B35]" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-black text-white tracking-tight uppercase">Achievements</h1>
-                  <p className="text-[#888] text-xs">{unlockedCount}/{BADGES.length} Unlocked</p>
+                  <h1 className="text-xl font-black text-slate-900 tracking-tight uppercase">Achievements</h1>
+                  <p className="text-slate-500 text-xs">{unlockedCount}/{BADGES.length} Unlocked</p>
                 </div>
               </div>
             </div>
-            <div className="bg-[#2a2a2a] rounded-xl px-3 py-2 border border-[#3a3a3a]">
-              <p className="text-[10px] text-[#888] uppercase">Total XP</p>
+            <div className="bg-slate-50 rounded-xl px-3 py-2 border border-slate-200">
+              <p className="text-[10px] text-slate-500 uppercase">Total XP</p>
               <p className="text-[#FF6B35] font-black text-sm">{totalXP.toLocaleString()}</p>
             </div>
           </div>
@@ -2103,7 +2103,7 @@ export default function BadgesPage() {
         {/* ===== SECTION 1: RECENT UNLOCKS (Top Highlight) ===== */}
         {BADGES.filter(b => b.unlocked).length > 0 && (
           <div className="mb-6">
-            <h2 className="text-white font-bold text-sm mb-3 flex items-center gap-2 uppercase tracking-wide">
+            <h2 className="text-slate-900 font-bold text-sm mb-3 flex items-center gap-2 uppercase tracking-wide">
               <Sparkles className="w-4 h-4 text-[#FF6B35]" />
               Recent Unlocks
             </h2>
@@ -2115,7 +2115,7 @@ export default function BadgesPage() {
                   <button
                     key={badge.id}
                     onClick={() => handleSelectBadge(badge)}
-                    className="bg-[#2a2a2a] rounded-xl p-3 border border-[#3a3a3a] hover:border-[#4a4a4a] transition-all text-center"
+                    className="bg-slate-50 rounded-xl p-3 border border-slate-200 hover:border-[#4a4a4a] transition-all text-center"
                   >
                     <div 
                       className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2"
@@ -2126,7 +2126,7 @@ export default function BadgesPage() {
                     >
                       <badge.icon className="w-6 h-6 text-[#1a1a1a]" />
                     </div>
-                    <p className="text-white font-bold text-xs truncate uppercase">{badge.name}</p>
+                    <p className="text-slate-900 font-bold text-xs truncate uppercase">{badge.name}</p>
                     <p style={{ color: tierConfig.textColor }} className="text-[10px] font-bold mt-1">
                       +{badge.xpReward} XP
                     </p>
@@ -2161,7 +2161,7 @@ export default function BadgesPage() {
         {(selectedTier === 'all' || selectedTier === 'hall_of_fame') && (
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-white font-bold text-sm flex items-center gap-2 uppercase tracking-wide">
+              <h2 className="text-slate-900 font-bold text-sm flex items-center gap-2 uppercase tracking-wide">
                 <Crown className="w-5 h-5 text-[#FF1493]" />
                 Hall of Fame - Air Jordan 1 Collection
               </h2>
@@ -2180,7 +2180,7 @@ export default function BadgesPage() {
 
         {/* ===== SECTION 5: BADGE GRID ===== */}
         <div className="mb-6">
-          <h2 className="text-white font-bold text-sm mb-3 flex items-center gap-2 uppercase tracking-wide">
+          <h2 className="text-slate-900 font-bold text-sm mb-3 flex items-center gap-2 uppercase tracking-wide">
             <Award className="w-4 h-4 text-[#FF6B35]" />
             All Badges
           </h2>
@@ -2196,16 +2196,16 @@ export default function BadgesPage() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 bg-[#2a2a2a] rounded-2xl border border-[#3a3a3a]">
-              <Lock className="w-12 h-12 text-[#333] mx-auto mb-4" />
-              <p className="text-[#888] text-sm">No badges match your filters</p>
+            <div className="text-center py-12 bg-slate-50 rounded-2xl border border-slate-200">
+              <Lock className="w-12 h-12 text-slate-500 mx-auto mb-4" />
+              <p className="text-slate-500 text-sm">No badges match your filters</p>
               <button
                 onClick={() => {
                   setSelectedTier('all')
                   setSelectedCategory('all')
                   setShowUnlockedOnly(false)
                 }}
-                className="mt-4 px-4 py-2 bg-[#FF6B35] text-white rounded-lg text-sm font-bold"
+                className="mt-4 px-4 py-2 bg-[#FF6B35] text-slate-900 rounded-lg text-sm font-bold"
               >
                 Clear Filters
               </button>

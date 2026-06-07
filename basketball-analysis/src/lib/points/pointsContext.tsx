@@ -134,11 +134,6 @@ const loadState = (): PointsState => {
       const parsed = JSON.parse(saved)
       // Merge with initial state to handle new fields
       const merged = { ...getInitialState(), ...parsed }
-      // TESTING: Force 98 points and free tier
-      merged.totalPoints = 98
-      merged.highestTierUnlocked = 'free'
-      // Clear proximity popup tracking
-      localStorage.removeItem('tier_proximity_shown')
       return merged
     }
   } catch (e) {

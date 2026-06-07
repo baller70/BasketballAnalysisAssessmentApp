@@ -2,14 +2,14 @@
 
 import React, { useState } from "react"
 import { 
-  Star, Flame, Trophy, Target, Zap, Heart, Crown,
-  ChevronRight, Lock, Check, Sparkles, TrendingUp,
+  Star, Flame, Trophy, Target, Zap, Crown,
+  Lock, Check, Sparkles, TrendingUp,
   X, Camera, Video, Image as ImageIcon,
-  Radio, Award, Users, BarChart3, Dumbbell,
+  Radio, Award, Users, Dumbbell,
   CircleDot, Eye, Hand, Scale, Rainbow, Rocket,
-  BookOpen, GraduationCap, Gem, Activity,
+  BookOpen, GraduationCap, Activity,
   ChevronDown, User, ClipboardList, Home, Upload, Repeat,
-  ThumbsUp, ThumbsDown, ChevronLeft, ChevronRightIcon,
+  ThumbsUp, ThumbsDown, ChevronLeft,
   TreePine, Leaf, TreeDeciduous, Mountain, Maximize2,
   Clock
 } from "lucide-react"
@@ -220,75 +220,6 @@ const TREE_TYPES = [
   { level: 10, name: 'World Tree', Icon: Crown, skillCount: 24, color: '#FFD700', description: 'MASTERY ACHIEVED! You are a Champion!' },
 ]
 
-// Skill branches for the tree (organized by category)
-const SKILL_BRANCHES = [
-  {
-    id: 'fundamentals',
-    name: 'Fundamentals',
-    color: '#FF6B35',
-    skills: [
-      { id: 1, name: 'Ready Position', Icon: CircleDot, completed: true },
-      { id: 2, name: 'Grip', Icon: Hand, completed: true },
-    ]
-  },
-  {
-    id: 'form',
-    name: 'Form',
-    color: '#22C55E',
-    skills: [
-      { id: 3, name: 'Elbow Straight', Icon: Activity, completed: true },
-      { id: 4, name: 'Shoulder Align', Icon: Target, completed: false, current: true },
-    ]
-  },
-  {
-    id: 'focus',
-    name: 'Focus',
-    color: '#3B82F6',
-    skills: [
-      { id: 5, name: 'Eyes on Target', Icon: Eye, completed: true },
-      { id: 6, name: 'Mental Focus', Icon: Target, completed: false, locked: true },
-    ]
-  },
-  {
-    id: 'release',
-    name: 'Release',
-    color: '#A855F7',
-    skills: [
-      { id: 7, name: 'Follow Through', Icon: Hand, completed: true },
-      { id: 8, name: 'Wrist Flick', Icon: Zap, completed: false, locked: true },
-    ]
-  },
-  {
-    id: 'balance',
-    name: 'Balance',
-    color: '#F59E0B',
-    skills: [
-      { id: 9, name: 'Stance', Icon: Scale, completed: false, locked: true },
-      { id: 10, name: 'Core Strength', Icon: Dumbbell, completed: false, locked: true },
-    ]
-  },
-  {
-    id: 'power',
-    name: 'Power',
-    color: '#EF4444',
-    skills: [
-      { id: 11, name: 'Leg Drive', Icon: Zap, completed: false, locked: true },
-      { id: 12, name: 'Arc Master', Icon: Rainbow, completed: false, locked: true },
-    ]
-  },
-]
-
-// Calculate current tree type based on completed skills
-function getCurrentTreeType(completedCount: number, totalSkills: number) {
-  const progress = completedCount / totalSkills
-  if (progress >= 0.9) return TREE_TYPES[5] // Redwood
-  if (progress >= 0.7) return TREE_TYPES[4] // Oak
-  if (progress >= 0.5) return TREE_TYPES[3] // Maple
-  if (progress >= 0.3) return TREE_TYPES[2] // Birch
-  if (progress >= 0.15) return TREE_TYPES[1] // Sapling
-  return TREE_TYPES[0] // Seedling
-}
-
 // Daily quests (Duolingo-style daily challenges)
 const DAILY_QUESTS = [
   { id: 1, name: 'Practice 1 time', Icon: Target, progress: 1, total: 1, xp: 10, completed: true },
@@ -316,11 +247,11 @@ function GradeCard({
   return (
     <button
       onClick={onClick}
-      className="text-center p-2 rounded-lg border border-white/5 bg-[#0a0a0a] transition-all hover:scale-105 hover:border-[#FF6B35]/50 active:scale-95"
+      className="text-center p-2 rounded-lg border-2 border-black bg-white transition-all hover:scale-105 hover:border-[#FF6B35]/50 active:scale-95"
     >
       <div className="flex items-center justify-center gap-1 mb-1">
         <Icon className="w-3 h-3 text-[#FF6B35]" />
-        <span className="text-[8px] text-[#888] uppercase">{info.name}</span>
+        <span className="text-[8px] text-slate-500 uppercase">{info.name}</span>
       </div>
       <div 
         className="text-2xl font-black"
@@ -328,7 +259,7 @@ function GradeCard({
       >
         {grade.letter}
       </div>
-      <div className="h-1 bg-[#222] rounded-full mt-1.5 overflow-hidden">
+      <div className="h-1 bg-slate-200 rounded-full mt-1.5 overflow-hidden">
         <div 
           className="h-full rounded-full" 
           style={{ width: `${value}%`, backgroundColor: grade.color }} 
@@ -357,19 +288,19 @@ function GradePopup({
   
   return (
     <div 
-      className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-slate-100/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       onClick={onClose}
     >
       <div 
-        className="w-full max-w-sm bg-[#0a0a0a] rounded-2xl overflow-hidden border border-white/5 relative"
+        className="w-full max-w-sm bg-white rounded-2xl overflow-hidden border-2 border-black relative"
         onClick={e => e.stopPropagation()}
       >
         {/* Header with Grade */}
-        <div className="p-6 text-center bg-[#161616] border-b border-white/5">
+        <div className="p-6 text-center bg-slate-50 border-b border-black">
           <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-[#FF6B35]/20 flex items-center justify-center">
             <Icon className="w-6 h-6 text-[#FF6B35]" />
           </div>
-          <div className="text-white font-bold text-lg mb-2">{info.name}</div>
+          <div className="text-slate-900 font-bold text-lg mb-2">{info.name}</div>
           <div 
             className="text-6xl font-black"
             style={{ color: grade.color }}
@@ -384,13 +315,13 @@ function GradePopup({
           </div>
           {/* Progress bar */}
           <div className="mt-3 px-8">
-            <div className="h-2 bg-[#222] rounded-full overflow-hidden">
+            <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
               <div 
                 className="h-full rounded-full transition-all" 
                 style={{ width: `${value}%`, backgroundColor: grade.color }} 
               />
             </div>
-            <div className="text-[#888] text-xs mt-1">{value}/100</div>
+            <div className="text-slate-500 text-xs mt-1">{value}/100</div>
           </div>
         </div>
         
@@ -402,7 +333,7 @@ function GradePopup({
               <BookOpen className="w-4 h-4 text-[#FF6B35]" />
               <span className="text-[#FF6B35] text-xs font-bold uppercase">What does this mean?</span>
             </div>
-            <p className="text-[#E5E5E5] text-sm leading-relaxed">
+            <p className="text-slate-800 text-sm leading-relaxed">
               {info.kidExplanation}
             </p>
           </div>
@@ -413,14 +344,14 @@ function GradePopup({
               <TrendingUp className="w-4 h-4 text-[#22C55E]" />
               <span className="text-[#22C55E] text-xs font-bold uppercase">How to get a better grade</span>
             </div>
-            <p className="text-[#E5E5E5] text-sm leading-relaxed">
+            <p className="text-slate-800 text-sm leading-relaxed">
               {info.howToImprove}
             </p>
           </div>
           
           {/* Practice Button */}
           <Link href="/?mode=image">
-            <button className="w-full py-3 rounded-xl font-bold text-white bg-gradient-to-r from-[#FF6B35] to-[#E55A2B] hover:from-[#E55A2B] hover:to-[#FF6B35] transition-all flex items-center justify-center gap-2">
+            <button className="w-full py-3 rounded-xl font-bold text-slate-900 bg-gradient-to-r from-[#FF6B35] to-[#E55A2B] hover:from-[#E55A2B] hover:to-[#FF6B35] transition-all flex items-center justify-center gap-2">
               <Rocket className="w-5 h-5" />
               Practice Now
             </button>
@@ -430,7 +361,7 @@ function GradePopup({
         {/* Close button */}
         <button 
           onClick={onClose}
-          className="absolute top-3 right-3 w-8 h-8 rounded-full bg-[#222] flex items-center justify-center text-[#888] hover:text-white hover:bg-[#4a4a4a] transition-colors"
+          className="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-[#4a4a4a] transition-colors"
         >
           <X className="w-4 h-4" />
         </button>
@@ -451,45 +382,15 @@ function ReportCard() {
   
   return (
     <>
-      <div className="p-4 grid grid-cols-2 gap-4">
-        {/* Report Card */}
-        <div>
-          <div className="flex items-center gap-2 mb-2">
+      <div className="p-4">
+        {/* Overall Grade - Top */}
+        <div className="text-center mb-4">
+          <div className="flex items-center justify-center gap-2 mb-2">
             <GraduationCap className="w-4 h-4 text-[#FF6B35]" />
             <span className="text-[#FF6B35] font-bold text-sm uppercase">My Report Card</span>
           </div>
-          <div className="text-[#888] text-[10px] mb-3">Tap a grade to learn more</div>
-          
-          {/* Grade Grid - First Row */}
-          <div className="grid grid-cols-4 gap-2 mb-2">
-            {SKILL_METRICS.slice(0, 4).map(metric => (
-              <GradeCard 
-                key={metric.key}
-                skillKey={metric.key}
-                value={metric.value}
-                onClick={() => setSelectedSkill(metric)}
-              />
-            ))}
-          </div>
-          
-          {/* Grade Grid - Second Row */}
-          <div className="grid grid-cols-4 gap-2">
-            {SKILL_METRICS.slice(4, 8).map(metric => (
-              <GradeCard 
-                key={metric.key}
-                skillKey={metric.key}
-                value={metric.value}
-                onClick={() => setSelectedSkill(metric)}
-              />
-            ))}
-          </div>
-        </div>
-        
-        {/* Overall Grade */}
-        <div className="text-center flex flex-col items-center justify-center">
-          <div className="text-[#FF6B35] text-xs uppercase tracking-wider mb-2">Overall Grade</div>
           <div 
-            className="w-20 h-20 rounded-2xl flex items-center justify-center border-2"
+            className="w-20 h-20 mx-auto rounded-2xl flex items-center justify-center border-2"
             style={{ backgroundColor: overallGrade.bgColor, borderColor: overallGrade.color }}
           >
             <span 
@@ -505,9 +406,21 @@ function ReportCard() {
           >
             {overallGrade.message}
           </div>
-          <div className="text-[#888] text-[10px] mt-1">
-            Keep practicing to get an A!
+          <div className="text-slate-500 text-[10px] mt-1">
+            Tap a grade to learn more
           </div>
+        </div>
+        
+        {/* Grade Grid - All 8 in responsive grid */}
+        <div className="grid grid-cols-4 gap-2">
+          {SKILL_METRICS.map(metric => (
+            <GradeCard 
+              key={metric.key}
+              skillKey={metric.key}
+              value={metric.value}
+              onClick={() => setSelectedSkill(metric)}
+            />
+          ))}
         </div>
       </div>
       
@@ -587,7 +500,7 @@ function ShooterHeroCard() {
     const isAlreadySaved = savedHero === selectedHero
     
     return (
-      <div className="bg-[#161616] rounded-lg border border-[#22C55E]/50 overflow-hidden">
+      <div className="bg-white rounded-lg border-2 border-black shadow-sm overflow-hidden">
         <div className="p-4 bg-[#22C55E]/10 border-b border-[#22C55E]/30">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -604,15 +517,15 @@ function ShooterHeroCard() {
         </div>
         
         <div className="p-5 text-center">
-          <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-[#FF6B35] to-[#E55A2B] flex items-center justify-center text-white font-bold text-2xl mb-3 ring-4 ring-[#22C55E]/30">
+          <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-[#FF6B35] to-[#E55A2B] flex items-center justify-center text-slate-900 font-bold text-2xl mb-3 ring-4 ring-[#22C55E]/30">
             {hero.avatar}
           </div>
           
-          <div className="text-white font-black text-xl mb-1">{hero.name}</div>
+          <div className="text-slate-900 font-black text-xl mb-1">{hero.name}</div>
           <div className="text-[#FF6B35] text-sm mb-3">{hero.team}</div>
           
-          <div className="inline-flex items-center gap-2 bg-[#0a0a0a] px-4 py-2 rounded-full mb-4">
-            <span className="text-[#888] text-sm">Your Match Grade:</span>
+          <div className="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-full mb-4">
+            <span className="text-slate-500 text-sm">Your Match Grade:</span>
             <span className="text-2xl font-black" style={{ color: heroGrade.color }}>{heroGrade.letter}</span>
           </div>
           
@@ -620,13 +533,13 @@ function ShooterHeroCard() {
             Great choice! Practice hard to shoot like {hero.name.split(' ')[0]}!
           </p>
           
-          <p className="text-[#888] text-xs mb-4">{hero.funFact}</p>
+          <p className="text-slate-500 text-xs mb-4">{hero.funFact}</p>
           
           {/* Save Button */}
           {!isAlreadySaved ? (
             <button
               onClick={handleSaveHero}
-              className="w-full py-3 mb-3 rounded-xl font-bold text-white bg-gradient-to-r from-[#FF6B35] to-[#E55A2B] hover:from-[#E55A2B] hover:to-[#FF6B35] transition-all flex items-center justify-center gap-2"
+              className="w-full py-3 mb-3 rounded-xl font-bold text-slate-900 bg-gradient-to-r from-[#FF6B35] to-[#E55A2B] hover:from-[#E55A2B] hover:to-[#FF6B35] transition-all flex items-center justify-center gap-2"
             >
               <Star className="w-5 h-5" />
               Save as My Hero
@@ -637,7 +550,7 @@ function ShooterHeroCard() {
               Saved!
             </div>
           ) : (
-            <div className="w-full py-3 mb-3 rounded-xl font-bold text-[#888] bg-[#0a0a0a] border border-white/5 flex items-center justify-center gap-2">
+            <div className="w-full py-3 mb-3 rounded-xl font-bold text-slate-500 bg-white border-2 border-black flex items-center justify-center gap-2">
               <Check className="w-5 h-5 text-[#22C55E]" />
               {hero.name.split(' ')[0]} is your hero!
             </div>
@@ -645,7 +558,7 @@ function ShooterHeroCard() {
           
           <button
             onClick={handleChangeHero}
-            className="text-[#888] text-xs underline hover:text-white transition-colors"
+            className="text-slate-500 text-xs underline hover:text-slate-900 transition-colors"
           >
             Choose a different hero
           </button>
@@ -655,31 +568,31 @@ function ShooterHeroCard() {
   }
   
   return (
-    <div className="bg-[#161616] rounded-lg border border-[#FF6B35]/30 overflow-hidden">
+    <div className="bg-white rounded-lg border-2 border-black shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b border-white/5">
+      <div className="p-4 border-b border-black">
         <div className="flex items-center gap-2">
           <Star className="w-4 h-4 text-[#FF6B35]" />
           <span className="text-[#FF6B35] font-bold text-sm uppercase">Strive To Be Like...</span>
         </div>
-        <div className="text-[#888] text-xs mt-1">Pick your shooting hero!</div>
+        <div className="text-slate-500 text-xs mt-1">Pick your shooting hero!</div>
       </div>
       
       {/* Current Shooter */}
-      <div className="p-5 bg-[#0a0a0a]">
+      <div className="p-5 bg-white">
         {/* Avatar and Name */}
         <div className="text-center mb-4">
-          <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-[#FF6B35] to-[#E55A2B] flex items-center justify-center text-white font-bold text-2xl mb-3">
+          <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-[#FF6B35] to-[#E55A2B] flex items-center justify-center text-slate-900 font-bold text-2xl mb-3">
             {currentShooter.avatar}
           </div>
-          <div className="text-white font-black text-xl">{currentShooter.name}</div>
+          <div className="text-slate-900 font-black text-xl">{currentShooter.name}</div>
           <div className="text-[#FF6B35] text-sm">{currentShooter.team}</div>
         </div>
         
         {/* Match Grade */}
         <div className="flex items-center justify-center gap-3 mb-4">
           <div className="text-center">
-            <div className="text-[#888] text-[10px] uppercase mb-1">Your Match Grade</div>
+            <div className="text-slate-500 text-[10px] uppercase mb-1">Your Match Grade</div>
             <div 
               className="w-14 h-14 rounded-xl flex items-center justify-center border-2"
               style={{ backgroundColor: shooterGrade.bgColor, borderColor: shooterGrade.color }}
@@ -695,20 +608,20 @@ function ShooterHeroCard() {
         </div>
         
         {/* Fun Fact */}
-        <div className="bg-[#161616] rounded-lg p-3 mb-4">
+        <div className="bg-slate-50 rounded-lg p-3 mb-4">
           <div className="flex items-center gap-2 mb-1">
             <Sparkles className="w-3 h-3 text-[#FF6B35]" />
             <span className="text-[#FF6B35] text-[10px] uppercase font-bold">Fun Fact</span>
           </div>
-          <p className="text-white text-sm">{currentShooter.funFact}</p>
+          <p className="text-slate-900 text-sm">{currentShooter.funFact}</p>
         </div>
         
         {/* Why You Match */}
         <div className="mb-4">
-          <div className="text-[#888] text-[10px] uppercase mb-2">Why You're Similar</div>
+          <div className="text-slate-500 text-[10px] uppercase mb-2">Why You&apos;re Similar</div>
           <div className="flex flex-wrap gap-2">
             {currentShooter.whyMatch.map((reason, i) => (
-              <span key={i} className="px-2 py-1 bg-[#161616] border border-[#FF6B35]/30 rounded text-[#FF6B35] text-[10px]">
+              <span key={i} className="px-2 py-1 bg-slate-50 border border-[#FF6B35]/30 rounded text-[#FF6B35] text-[10px]">
                 {reason}
               </span>
             ))}
@@ -717,7 +630,7 @@ function ShooterHeroCard() {
         
         {/* Question */}
         <div className="text-center mb-4">
-          <p className="text-white font-bold text-sm">
+          <p className="text-slate-900 font-bold text-sm">
             Do you want to shoot like {currentShooter.name.split(' ')[0]}?
           </p>
         </div>
@@ -726,10 +639,10 @@ function ShooterHeroCard() {
         <div className="flex items-center justify-center gap-6">
           <button
             onClick={handleThumbsDown}
-            className="flex flex-col items-center gap-1 p-3 rounded-xl bg-[#161616] border border-white/5 hover:border-[#EF4444]/50 hover:bg-[#EF4444]/10 transition-all group"
+            className="flex flex-col items-center gap-1 p-3 rounded-xl bg-slate-50 border-2 border-black hover:border-[#EF4444]/50 hover:bg-[#EF4444]/10 transition-all group"
           >
-            <ThumbsDown className="w-8 h-8 text-[#888] group-hover:text-[#EF4444] transition-colors" />
-            <span className="text-[10px] text-[#888] group-hover:text-[#EF4444] font-bold uppercase">No, Next</span>
+            <ThumbsDown className="w-8 h-8 text-slate-500 group-hover:text-[#EF4444] transition-colors" />
+            <span className="text-[10px] text-slate-500 group-hover:text-[#EF4444] font-bold uppercase">No, Next</span>
           </button>
           
           <button
@@ -748,7 +661,7 @@ function ShooterHeroCard() {
               key={i}
               onClick={() => setCurrentIndex(i)}
               className={`w-2 h-2 rounded-full transition-all ${
-                i === currentIndex ? 'bg-[#FF6B35] w-4' : 'bg-[#222] hover:bg-[#4a4a4a]'
+                i === currentIndex ? 'bg-[#FF6B35] w-4' : 'bg-slate-200 hover:bg-[#4a4a4a]'
               }`}
             />
           ))}
@@ -767,32 +680,32 @@ function CollapsibleStatsCard() {
   const progressPercent = (MOCK_USER.currentXp / MOCK_USER.maxXp) * 100
 
   return (
-    <div className="bg-[#161616] rounded-lg border border-white/5 overflow-hidden">
+    <div className="bg-[#FF6B35] rounded-lg shadow-sm border-2 border-black overflow-hidden">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full p-3 md:p-4 flex items-center gap-3 md:gap-4 hover:bg-[#333] transition-colors"
+        className="w-full p-3 md:p-4 flex items-center gap-3 md:gap-4 hover:bg-[#E55A2B] transition-colors"
       >
         {/* Level Badge */}
         <div className="flex items-center gap-2 md:gap-3">
-          <div className="w-10 h-10 md:w-12 md:h-12 bg-[#FF6B35]/20 rounded-lg flex items-center justify-center border border-[#FF6B35]/40 flex-shrink-0">
-            <Award className="w-5 h-5 md:w-6 md:h-6 text-[#FF6B35]" />
+          <div className="w-10 h-10 md:w-12 md:h-12 bg-white/20 rounded-lg flex items-center justify-center border border-white/40 flex-shrink-0">
+            <Award className="w-5 h-5 md:w-6 md:h-6 text-white" />
           </div>
           <div className="text-left">
-            <div className="text-[#FF6B35] text-[10px] md:text-xs uppercase tracking-wider font-semibold">Lv.{MOCK_USER.level}</div>
-            <div className="text-[#FF6B35] font-bold text-sm md:text-base whitespace-nowrap">{MOCK_USER.levelName}</div>
+            <div className="text-white/80 text-[10px] md:text-xs uppercase tracking-wider font-semibold">Lv.{MOCK_USER.level}</div>
+            <div className="text-white font-black text-sm md:text-base whitespace-nowrap">{MOCK_USER.levelName}</div>
           </div>
         </div>
         
         {/* XP Progress Bar */}
         <div className="hidden sm:flex flex-1 items-center gap-2 max-w-[200px]">
           <div className="flex-1">
-            <div className="h-2 bg-[#222] rounded-full overflow-hidden">
+            <div className="h-2 bg-slate-100 rounded-full overflow-hidden border-2 border-black">
               <div 
-                className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF4500] rounded-full transition-all duration-500"
+                className="h-full bg-white rounded-full transition-all duration-500"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
-            <div className="flex justify-between text-[10px] text-[#888] mt-0.5">
+            <div className="flex justify-between text-[10px] text-white/70 mt-0.5 font-bold">
               <span>{MOCK_USER.currentXp} XP</span>
               <span>{MOCK_USER.maxXp} XP</span>
             </div>
@@ -801,61 +714,61 @@ function CollapsibleStatsCard() {
         
         {/* Quick Stats */}
         <div className="flex items-center gap-2 md:gap-3 ml-auto">
-          <div className="flex items-center gap-1.5 px-2 py-1 bg-[#0a0a0a] rounded-lg">
-            <Flame className="w-4 h-4 text-orange-500" />
+          <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-50 border-2 border-black rounded-lg shadow-sm">
+            <Flame className="w-4 h-4 text-[#FF6B35]" />
             <span className="text-white font-bold text-sm">{MOCK_USER.streak}</span>
           </div>
-          <ChevronDown className={`w-5 h-5 text-[#888] transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`w-5 h-5 text-white/70 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
         </div>
       </button>
       
       {isExpanded && (
-        <div className="px-3 md:px-4 pb-3 md:pb-4 border-t border-white/5 bg-[#252525]">
+        <div className="px-3 md:px-4 pb-3 md:pb-4 border-t border-black bg-white">
           <div className="pt-3 md:pt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <Link href="/badges" className="bg-[#0a0a0a] rounded-lg p-3 hover:bg-[#222] transition-colors">
+            <Link href="/badges" className="bg-white rounded-lg p-3 hover:bg-slate-50 transition-colors border-2 border-black shadow-sm">
               <div className="flex items-center gap-2 mb-1">
                 <Star className="w-3 h-3 text-[#FF6B35]" />
-                <span className="text-[#888] text-xs uppercase">Latest Badge</span>
+                <span className="text-slate-500 text-xs font-bold uppercase tracking-wide">Latest Badge</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#FF4500] flex items-center justify-center">
-                  <TrendingUp className="w-4 h-4 text-[#1a1a1a]" />
+                <div className="w-8 h-8 rounded-full bg-[#FF6B35]/10 flex items-center justify-center border border-[#FF6B35]/20">
+                  <TrendingUp className="w-4 h-4 text-[#FF6B35]" />
                 </div>
                 <div>
-                  <div className="text-[#E5E5E5] text-sm font-medium">{MOCK_USER.latestBadge.name}</div>
-                  <div className="text-[#666] text-xs">{MOCK_USER.latestBadge.earnedDate}</div>
+                  <div className="text-slate-900 text-sm font-black">{MOCK_USER.latestBadge.name}</div>
+                  <div className="text-slate-500 text-xs font-medium">{MOCK_USER.latestBadge.earnedDate}</div>
                 </div>
               </div>
             </Link>
             
-            <div className="bg-[#0a0a0a] rounded-lg p-3">
+            <div className="bg-white rounded-lg p-3 border-2 border-black shadow-sm">
               <div className="flex items-center gap-2 mb-1">
-                <Flame className="w-3 h-3 text-orange-500" />
-                <span className="text-[#888] text-xs uppercase">Daily Streak</span>
+                <Flame className="w-3 h-3 text-[#FF6B35]" />
+                <span className="text-slate-500 text-xs font-bold uppercase tracking-wide">Daily Streak</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
-                  <Flame className="w-4 h-4 text-white" />
+                <div className="w-8 h-8 rounded-full bg-[#FF6B35]/10 flex items-center justify-center border border-[#FF6B35]/20">
+                  <Flame className="w-4 h-4 text-[#FF6B35]" />
                 </div>
                 <div>
-                  <div className="text-[#E5E5E5] text-sm font-bold">{MOCK_USER.streak} DAYS</div>
-                  <div className="text-[#666] text-xs">Keep it going!</div>
+                  <div className="text-slate-900 text-sm font-black">{MOCK_USER.streak} DAYS</div>
+                  <div className="text-slate-500 text-xs font-medium">Keep it going!</div>
                 </div>
               </div>
             </div>
             
-            <div className="bg-[#0a0a0a] rounded-lg p-3">
+            <div className="bg-white rounded-lg p-3 border-2 border-black shadow-sm">
               <div className="flex items-center gap-2 mb-1">
                 <Crown className="w-3 h-3 text-[#FF6B35]" />
-                <span className="text-[#888] text-xs uppercase">Leaderboard</span>
+                <span className="text-slate-500 text-xs font-bold uppercase tracking-wide">Leaderboard</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#FF4500] flex items-center justify-center">
-                  <Crown className="w-4 h-4 text-[#1a1a1a]" />
+                <div className="w-8 h-8 rounded-full bg-[#FF6B35]/10 flex items-center justify-center border border-[#FF6B35]/20">
+                  <Crown className="w-4 h-4 text-[#FF6B35]" />
                 </div>
                 <div>
-                  <div className="text-[#E5E5E5] text-sm font-bold">#{MOCK_USER.rank}</div>
-                  <div className="text-[#666] text-xs">of {MOCK_USER.totalUsers.toLocaleString()} players</div>
+                  <div className="text-slate-900 text-sm font-black">Top 5%</div>
+                  <div className="text-slate-500 text-xs font-medium">In your age group</div>
                 </div>
               </div>
             </div>
@@ -885,15 +798,15 @@ function QuestCard({ quest }: { quest: typeof DAILY_QUESTS[0] }) {
   const progress = (quest.progress / quest.total) * 100
   const Icon = quest.Icon
   return (
-    <div className={`p-3 rounded-xl border-2 transition-all ${quest.completed ? 'bg-[#22C55E]/10 border-[#22C55E]/50' : 'bg-[#0a0a0a] border-white/5'}`}>
+    <div className={`p-3 rounded-xl border-2 transition-all ${quest.completed ? 'bg-[#22C55E]/10 border-[#22C55E]/50' : 'bg-white border-slate-200'}`}>
       <div className="flex items-center gap-3">
-        <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${quest.completed ? 'bg-[#22C55E]/20' : 'bg-[#161616]'}`}>
+        <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${quest.completed ? 'bg-[#22C55E]/20' : 'bg-slate-50'}`}>
           {quest.completed ? <Check className="w-4 h-4 text-[#22C55E]" /> : <Icon className="w-4 h-4 text-[#FF6B35]" />}
         </div>
         <div className="flex-1">
-          <div className={`font-bold text-xs ${quest.completed ? 'text-[#22C55E]' : 'text-white'}`}>{quest.name}</div>
+          <div className={`font-bold text-xs ${quest.completed ? 'text-[#22C55E]' : 'text-slate-900'}`}>{quest.name}</div>
           <div className="flex items-center gap-2 mt-1">
-            <div className="flex-1 h-1 bg-[#161616] rounded-full overflow-hidden">
+            <div className="flex-1 h-1 bg-slate-50 rounded-full overflow-hidden">
               <div className={`h-full rounded-full ${quest.completed ? 'bg-[#22C55E]' : 'bg-[#FF6B35]'}`} style={{ width: `${progress}%` }} />
             </div>
             <span className="text-[9px] text-[#888888] font-bold">{quest.progress}/{quest.total}</span>
@@ -935,38 +848,38 @@ function LessonNode({ lesson, onClick }: { lesson: typeof LESSONS[0]; onClick: (
         {/* Outer ring */}
         <div className={`absolute inset-0 rounded-full ${
           isLocked 
-            ? 'bg-[#161616]' 
+            ? 'bg-slate-50' 
             : isCompleted 
               ? 'bg-gradient-to-br from-[#22C55E] via-[#16A34A] to-[#15803D] shadow-lg shadow-[#22C55E]/40'
               : isCurrent 
                 ? 'bg-gradient-to-br from-[#FF6B35] via-[#E55A2B] to-[#DC2626] shadow-lg shadow-[#FF6B35]/40'
-                : 'bg-gradient-to-br from-[#3a3a3a] to-[#2a2a2a]'
+                : 'bg-gradient-to-br from-slate-100 to-slate-50'
         }`} />
         
         {/* Inner circle (creates depth) */}
         <div className={`absolute inset-[3px] rounded-full ${
           isLocked 
-            ? 'bg-[#0a0a0a]' 
+            ? 'bg-white' 
             : isCompleted 
               ? 'bg-gradient-to-br from-[#22C55E]/90 to-[#16A34A]'
               : isCurrent 
                 ? 'bg-gradient-to-br from-[#FF6B35]/90 to-[#E55A2B]'
-                : 'bg-[#0a0a0a]'
+                : 'bg-white'
         }`} />
         
         {/* Icon container with highlight */}
         <div className={`absolute inset-[6px] rounded-full flex items-center justify-center ${
           isLocked 
-            ? 'bg-[#161616]' 
+            ? 'bg-slate-50' 
             : isCompleted 
               ? 'bg-gradient-to-br from-[#4ADE80] via-[#22C55E] to-[#16A34A]'
               : isCurrent 
                 ? 'bg-gradient-to-br from-[#FF8C5A] via-[#FF6B35] to-[#E55A2B]'
-                : 'bg-gradient-to-br from-[#3a3a3a] to-[#2a2a2a] border border-white/5'
+                : 'bg-gradient-to-br from-slate-100 to-slate-50 border border-[#4a4a4a]'
         }`}>
           {/* Top highlight shine effect */}
           {!isLocked && (
-            <div className="absolute top-1 left-1/2 -translate-x-1/2 w-6 h-2 bg-white/20 rounded-full blur-sm" />
+            <div className="absolute top-1 left-1/2 -translate-x-1/2 w-6 h-2 bg-black/20 rounded-full blur-sm" />
           )}
           
           {/* Icon */}
@@ -974,7 +887,7 @@ function LessonNode({ lesson, onClick }: { lesson: typeof LESSONS[0]; onClick: (
             <Lock className="w-5 h-5 lg:w-6 lg:h-6 text-[#555] relative z-10" strokeWidth={2.5} />
           ) : (
             <Icon className={`w-6 h-6 lg:w-7 lg:h-7 relative z-10 drop-shadow-lg ${
-              isCompleted || isCurrent ? 'text-white' : 'text-[#888]'
+              isCompleted || isCurrent ? 'text-slate-900' : 'text-slate-500'
             }`} strokeWidth={2} />
           )}
         </div>
@@ -982,14 +895,14 @@ function LessonNode({ lesson, onClick }: { lesson: typeof LESSONS[0]; onClick: (
         {/* Completed checkmark badge */}
         {isCompleted && (
           <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 lg:w-6 lg:h-6 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#E55A2B] flex items-center justify-center shadow-md border-2 border-[#1a1a1a]">
-            <Check className="w-3 h-3 lg:w-3.5 lg:h-3.5 text-white" strokeWidth={3} />
+            <Check className="w-3 h-3 lg:w-3.5 lg:h-3.5 text-slate-900" strokeWidth={3} />
           </div>
         )}
         
         {/* Current "GO!" badge */}
         {isCurrent && (
           <div className="absolute -top-2 left-1/2 -translate-x-1/2">
-            <div className="px-2 py-0.5 bg-gradient-to-r from-[#FF6B35] to-[#E55A2B] rounded-full text-[8px] font-black text-white shadow-lg border border-[#FF8C5A]/50 tracking-wide">
+            <div className="px-2 py-0.5 bg-gradient-to-r from-[#FF6B35] to-[#E55A2B] rounded-full text-[8px] font-black text-slate-900 shadow-lg border border-[#FF8C5A]/50 tracking-wide">
               GO!
             </div>
           </div>
@@ -1074,26 +987,12 @@ function getSkillsForTreeLevel(treeLevel: number, completedSkillIds: number[]) {
   })
 }
 
-// Helper to determine which tree level based on completed skills
-function getTreeLevelFromProgress(completedCount: number): number {
-  if (completedCount >= 24) return 10 // World Tree
-  if (completedCount >= 20) return 9  // Ancient Oak
-  if (completedCount >= 18) return 8  // Redwood
-  if (completedCount >= 16) return 7  // Sequoia
-  if (completedCount >= 14) return 6  // Oak
-  if (completedCount >= 12) return 5  // Maple
-  if (completedCount >= 10) return 4  // Birch
-  if (completedCount >= 8) return 3   // Sapling
-  if (completedCount >= 6) return 2   // Sprout
-  return 1 // Seedling
-}
-
 // Skill node component for the tree - using SVG native transform
 function TreeSkillNode({ 
   skill, 
   x, 
-  y, 
-  delay = 0,
+  y,
+  delay,
   onClick
 }: { 
   skill: { id: number; name: string; Icon: React.ElementType; completed?: boolean; current?: boolean; locked?: boolean }
@@ -1174,7 +1073,7 @@ function TreeSkillNode({
             <Lock className="w-5 h-5 text-[#4a5a4a]" />
           ) : (
             <SkillIcon className={`w-6 h-6 ${
-              isCompleted ? 'text-white' : isCurrent ? 'text-white' : 'text-[#6B8E6B]'
+              isCompleted ? 'text-slate-900' : isCurrent ? 'text-slate-900' : 'text-[#6B8E6B]'
             }`} />
           )}
         </div>
@@ -1186,7 +1085,7 @@ function TreeSkillNode({
           <circle cx="0" cy="0" r="10" fill="#FF6B35" stroke="#1a1a1a" strokeWidth="2" />
           <foreignObject x="-7" y="-7" width="14" height="14">
             <div className="w-full h-full flex items-center justify-center">
-              <Check className="w-4 h-4 text-white" strokeWidth={3} />
+              <Check className="w-4 h-4 text-slate-900" strokeWidth={3} />
             </div>
           </foreignObject>
         </g>
@@ -1263,7 +1162,7 @@ function SkillTreeModal({ isOpen, onClose, currentTreeLevel = 3, completedSkillI
   const centerX = treeWidth / 2
   
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-100/90 backdrop-blur-sm">
       {/* CSS Animations */}
       <style jsx>{`
         @keyframes drawBranch {
@@ -1291,7 +1190,7 @@ function SkillTreeModal({ isOpen, onClose, currentTreeLevel = 3, completedSkillI
         }
       `}</style>
       
-      <div className="w-full max-w-2xl max-h-[90vh] bg-gradient-to-b from-[#0a1a0a] to-[#050505] rounded-2xl overflow-hidden border border-[#2a3a2a] flex flex-col">
+      <div className="w-full max-w-2xl max-h-[90vh] bg-gradient-to-b from-slate-50 to-white rounded-2xl overflow-hidden border-2 border-black flex flex-col">
         
         {/* Header */}
         <div className="p-4 border-b border-[#2a3a2a] bg-gradient-to-r from-[#1a2a1a] to-[#0a1a0a]">
@@ -1302,15 +1201,15 @@ function SkillTreeModal({ isOpen, onClose, currentTreeLevel = 3, completedSkillI
                   ? 'bg-gradient-to-br from-[#FFD700] to-[#FFA500] shadow-[#FFD700]/30'
                   : 'bg-gradient-to-br from-[#22C55E] to-[#16A34A] shadow-[#22C55E]/30'
               }`}>
-                <currentTree.Icon className={`w-6 h-6 ${currentTree.level === 10 ? 'text-[#1a1a1a]' : 'text-white'}`} />
+                <currentTree.Icon className={`w-6 h-6 ${currentTree.level === 10 ? 'text-[#1a1a1a]' : 'text-slate-900'}`} />
               </div>
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className={`font-black text-lg uppercase tracking-wide ${
-                    currentTree.level === 10 ? 'text-[#FFD700]' : 'text-white'
+                    currentTree.level === 10 ? 'text-[#FFD700]' : 'text-slate-900'
                   }`}>{currentTree.name} Tree</h2>
                   {isPreviewMode && (
-                    <span className="text-[10px] bg-[#FF6B35] text-white px-2 py-0.5 rounded-full font-bold">PREVIEW</span>
+                    <span className="text-[10px] bg-[#FF6B35] text-slate-900 px-2 py-0.5 rounded-full font-bold">PREVIEW</span>
                   )}
                 </div>
                 <p className="text-[#6B8E6B] text-xs">{currentTree.description}</p>
@@ -1322,15 +1221,15 @@ function SkillTreeModal({ isOpen, onClose, currentTreeLevel = 3, completedSkillI
                 onClick={() => setIsPreviewMode(!isPreviewMode)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                   isPreviewMode 
-                    ? 'bg-[#FF6B35] text-white' 
-                    : 'bg-[#2a3a2a] text-[#6B8E6B] hover:text-white hover:bg-[#3a4a3a]'
+                    ? 'bg-[#FF6B35] text-slate-900' 
+                    : 'bg-[#2a3a2a] text-[#6B8E6B] hover:text-slate-900 hover:bg-[#3a4a3a]'
                 }`}
               >
                 {isPreviewMode ? 'Exit Preview' : 'Preview Trees'}
               </button>
               <button 
                 onClick={onClose}
-                className="w-10 h-10 rounded-full bg-[#2a3a2a] flex items-center justify-center text-[#6B8E6B] hover:text-white hover:bg-[#3a4a3a] transition-colors"
+                className="w-10 h-10 rounded-full bg-[#2a3a2a] flex items-center justify-center text-[#6B8E6B] hover:text-slate-900 hover:bg-[#3a4a3a] transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1339,7 +1238,7 @@ function SkillTreeModal({ isOpen, onClose, currentTreeLevel = 3, completedSkillI
           
           {/* Tree Level Selector (only in preview mode) */}
           {isPreviewMode && (
-            <div className="mt-4 p-3 bg-[#0a1a0a] rounded-xl border border-[#2a3a2a]">
+            <div className="mt-4 p-3 bg-white rounded-xl border-2 border-black shadow-sm">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[#6B8E6B] text-xs font-bold uppercase">Select Tree to Preview</span>
                 <span className="text-[#FF6B35] text-xs font-bold">Level {previewLevel}/10</span>
@@ -1370,7 +1269,7 @@ function SkillTreeModal({ isOpen, onClose, currentTreeLevel = 3, completedSkillI
                       }`}>
                         <TreeIcon className={`w-4 h-4 ${
                           isSelected 
-                            ? isWorldTree ? 'text-[#1a1a1a]' : 'text-white' 
+                            ? isWorldTree ? 'text-[#1a1a1a]' : 'text-slate-900' 
                             : 'text-[#6B8E6B]'
                         }`} />
                       </div>
@@ -1384,7 +1283,7 @@ function SkillTreeModal({ isOpen, onClose, currentTreeLevel = 3, completedSkillI
                 })}
               </div>
               <div className="mt-2 text-center">
-                <span className="text-[#888] text-[10px]">{currentTree.skillCount} skills in this tree</span>
+                <span className="text-slate-500 text-[10px]">{currentTree.skillCount} skills in this tree</span>
               </div>
             </div>
           )}
@@ -1634,8 +1533,8 @@ function SkillTreeModal({ isOpen, onClose, currentTreeLevel = 3, completedSkillI
         
         {/* Selected Skill Popup */}
         {selectedTreeSkill && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-10">
-            <div className="bg-[#1a2a1a] rounded-xl border border-[#3a4a3a] p-4 max-w-xs mx-4 shadow-xl">
+          <div className="absolute inset-0 flex items-center justify-center bg-slate-100/50 backdrop-blur-sm z-10">
+            <div className="bg-white rounded-xl border-2 border-black p-4 max-w-xs mx-4 shadow-xl">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
@@ -1644,11 +1543,11 @@ function SkillTreeModal({ isOpen, onClose, currentTreeLevel = 3, completedSkillI
                     : 'bg-[#2a3a2a]'
                   }`}>
                     <selectedTreeSkill.Icon className={`w-5 h-5 ${
-                      selectedTreeSkill.completed || selectedTreeSkill.current ? 'text-white' : 'text-[#6B8E6B]'
+                      selectedTreeSkill.completed || selectedTreeSkill.current ? 'text-slate-900' : 'text-[#6B8E6B]'
                     }`} />
                   </div>
                   <div>
-                    <h3 className="text-white font-bold text-sm">{selectedTreeSkill.name}</h3>
+                    <h3 className="text-slate-900 font-bold text-sm">{selectedTreeSkill.name}</h3>
                     <span className={`text-xs font-bold ${
                       selectedTreeSkill.completed ? 'text-[#22C55E]' 
                       : selectedTreeSkill.current ? 'text-[#FF6B35]' 
@@ -1660,7 +1559,7 @@ function SkillTreeModal({ isOpen, onClose, currentTreeLevel = 3, completedSkillI
                 </div>
                 <button 
                   onClick={() => setSelectedTreeSkill(null)}
-                  className="w-8 h-8 rounded-full bg-[#2a3a2a] flex items-center justify-center text-[#6B8E6B] hover:text-white"
+                  className="w-8 h-8 rounded-full bg-[#2a3a2a] flex items-center justify-center text-[#6B8E6B] hover:text-slate-900"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -1676,7 +1575,7 @@ function SkillTreeModal({ isOpen, onClose, currentTreeLevel = 3, completedSkillI
               </p>
               
               {selectedTreeSkill.current && (
-                <button className="w-full py-2 bg-gradient-to-r from-[#FF6B35] to-[#E55A2B] rounded-lg text-white font-bold text-sm">
+                <button className="w-full py-2 bg-gradient-to-r from-[#FF6B35] to-[#E55A2B] rounded-lg text-slate-900 font-bold text-sm">
                   Practice Now
                 </button>
               )}
@@ -1718,11 +1617,11 @@ function SkillTreeModal({ isOpen, onClose, currentTreeLevel = 3, completedSkillI
                           : 'bg-[#2a3a2a]'
                     }`}>
                       {isPast ? (
-                        <Check className="w-3 h-3 text-white" />
+                        <Check className="w-3 h-3 text-slate-900" />
                       ) : (
                         <TreeIcon className={`w-3 h-3 ${
                           isCurrent 
-                            ? isWorldTree ? 'text-[#1a1a1a]' : 'text-white' 
+                            ? isWorldTree ? 'text-[#1a1a1a]' : 'text-slate-900' 
                             : 'text-[#4a5a4a]'
                         }`} />
                       )}
@@ -1762,8 +1661,8 @@ export default function BasicDashboard() {
   const completedLessons = LESSONS.filter(l => l.completed).length
 
   return (
-    <div className="min-h-screen bg-[#050505] pb-24">
-      <main className="min-h-[calc(100vh-200px)] py-6 lg:py-8 px-4 bg-[#050505]">
+    <div className="min-h-screen bg-slate-50 pb-24">
+      <main className="min-h-[calc(100vh-200px)] py-6 lg:py-8 px-4 bg-transparent">
         <div className="container mx-auto max-w-5xl">
           
           {/* Collapsible Stats Card (Top Bar - Like Pro) */}
@@ -1771,12 +1670,12 @@ export default function BasicDashboard() {
           
           {/* Main Content Card (Like Pro Dashboard) */}
           <div className="mt-4">
-            <div className="bg-[#161616] rounded-lg overflow-hidden shadow-lg">
+            <div className="bg-white border-2 border-black rounded-lg overflow-hidden shadow-lg">
               
               {/* Tab Navigation - VIDEO | IMAGE | LIVE (Like Pro) */}
-              <div className="hidden md:block p-4 border-b border-white/5">
+              <div className="hidden md:block p-4 border-b border-black">
                 <div className="flex items-center justify-center">
-                  <div className="inline-flex rounded-lg bg-[#0a0a0a] p-1">
+                  <div className="inline-flex rounded-lg bg-white p-1">
                     {(['video', 'image', 'live'] as const).map((mode) => (
                       <button 
                         key={mode} 
@@ -1793,7 +1692,7 @@ export default function BasicDashboard() {
                         <span>{mode}</span>
                         {mode === "live" && (
                           <span className={`absolute -top-1 -right-1 px-1.5 py-0.5 text-[10px] font-bold rounded-full ${
-                            activeMode === "live" ? "bg-white text-[#FF6B35]" : "bg-[#FF6B35] text-white"
+                            activeMode === "live" ? "bg-white text-[#FF6B35]" : "bg-[#FF6B35] text-slate-900"
                           }`}>NEW</span>
                         )}
                       </button>
@@ -1803,15 +1702,15 @@ export default function BasicDashboard() {
               </div>
 
               {/* Two Column Layout (Tablet & Desktop) */}
-              <div className="grid grid-cols-1 md:grid-cols-[1fr_300px] lg:grid-cols-[1fr_350px] gap-6 p-4 md:p-6">
+              <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(280px,300px)] xl:grid-cols-[minmax(0,1fr)_minmax(300px,330px)] gap-6 p-4 md:p-6">
                 
                 {/* ============================================ */}
                 {/* LEFT COLUMN - Upload & Lessons */}
                 {/* ============================================ */}
-                <div className="space-y-6">
+                <div className="min-w-0 space-y-6">
                   
                   {/* Fun Kid-Friendly Upload Area */}
-                  <div className="relative bg-gradient-to-br from-[#1a2a1a] via-[#0a1a0a] to-[#1a1a2a] rounded-2xl border-2 border-dashed border-[#FF6B35]/50 p-6 lg:p-8 overflow-hidden group hover:border-[#FF6B35] transition-all duration-300">
+                  <div className="relative bg-white rounded-2xl border-2 border-dashed border-slate-300 shadow-sm p-6 lg:p-8 overflow-hidden group hover:border-[#FF6B35] transition-all duration-300">
                     {/* Animated background sparkles */}
                     <div className="absolute inset-0 overflow-hidden pointer-events-none">
                       <div className="absolute top-4 left-8 w-2 h-2 bg-[#FFD700] rounded-full animate-ping" style={{ animationDuration: '2s' }} />
@@ -1941,14 +1840,14 @@ export default function BasicDashboard() {
                         
                         {/* Camera badge */}
                         <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-gradient-to-br from-[#22C55E] to-[#16A34A] rounded-full flex items-center justify-center border-2 border-[#0a1a0a] shadow-lg z-10">
-                          <Camera className="w-5 h-5 text-white" />
+                          <Camera className="w-5 h-5 text-slate-900" />
                         </div>
                       </div>
                       
                       {/* Fun headline */}
                       <h3 className="text-2xl font-black mb-2">
                         <span className="text-[#FF6B35]">Show Me</span>{' '}
-                        <span className="text-white">Your Shot!</span>
+                        <span className="text-slate-900">Your Shot!</span>
                       </h3>
                       
                       {/* Encouraging message */}
@@ -1965,7 +1864,7 @@ export default function BasicDashboard() {
                       
                       {/* Big fun upload button */}
                       <Link href="/?mode=image">
-                        <button className="group/btn relative w-full max-w-xs mx-auto flex items-center justify-center gap-3 bg-gradient-to-r from-[#FF6B35] via-[#FF4500] to-[#FF6B35] hover:from-[#FF8C5A] hover:via-[#FF6B35] hover:to-[#FF8C5A] text-white font-black text-lg px-8 py-4 rounded-2xl transition-all duration-300 shadow-xl shadow-[#FF6B35]/30 hover:shadow-[#FF6B35]/50 hover:scale-105 overflow-hidden">
+                        <button className="group/btn relative w-full max-w-xs mx-auto flex items-center justify-center gap-3 bg-gradient-to-r from-[#FF6B35] via-[#FF4500] to-[#FF6B35] hover:from-[#FF8C5A] hover:via-[#FF6B35] hover:to-[#FF8C5A] text-slate-900 font-black text-lg px-8 py-4 rounded-2xl transition-all duration-300 shadow-xl shadow-[#FF6B35]/30 hover:shadow-[#FF6B35]/50 hover:scale-105 overflow-hidden">
                           {/* Shimmer effect */}
                           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700" />
                           <Upload className="w-6 h-6" />
@@ -1983,7 +1882,7 @@ export default function BasicDashboard() {
                   </div>
                   
                   {/* Skill Tree / Lessons Strip (Like Pro's Shot Breakdown) */}
-                  <div className="bg-[#161616] rounded-lg p-4 pt-3 border border-white/5">
+                  <div className="bg-white rounded-lg p-4 pt-3 border-2 border-black shadow-sm">
                     {/* Clickable Header to open full tree */}
                     <button 
                       onClick={() => setShowSkillTree(true)}
@@ -1994,8 +1893,8 @@ export default function BasicDashboard() {
                         Skill Tree
                       </h3>
                       <div className="flex items-center gap-2">
-                        <span className="text-[#888] text-xs">{completedLessons}/{LESSONS.length} Complete</span>
-                        <div className="flex items-center gap-1 text-[#FF6B35] text-[10px] font-bold uppercase group-hover:text-white transition-colors">
+                        <span className="text-slate-500 text-xs">{completedLessons}/{LESSONS.length} Complete</span>
+                        <div className="flex items-center gap-1 text-[#FF6B35] text-[10px] font-bold uppercase group-hover:text-slate-900 transition-colors">
                           <span>View Tree</span>
                           <Maximize2 className="w-3 h-3" />
                         </div>
@@ -2005,7 +1904,7 @@ export default function BasicDashboard() {
                       {LESSONS.map((lesson) => (
                         <div key={lesson.id} className="flex flex-col items-center flex-shrink-0">
                           <LessonNode lesson={lesson} onClick={() => !lesson.locked && setSelectedLesson(lesson)} />
-                          <div className={`mt-1.5 text-center ${lesson.locked ? 'text-[#666]' : 'text-white'}`}>
+                          <div className={`mt-1.5 text-center ${lesson.locked ? 'text-slate-400' : 'text-slate-900'}`}>
                             <div className="text-[8px] font-bold whitespace-nowrap">{lesson.name}</div>
                             {lesson.completed && <StarRating count={lesson.stars} max={3} size="sm" />}
                           </div>
@@ -2018,7 +1917,7 @@ export default function BasicDashboard() {
                   <SkillTreeModal isOpen={showSkillTree} onClose={() => setShowSkillTree(false)} />
                   
                   {/* Daily Quests */}
-                  <div className="bg-[#161616] rounded-lg p-4 border border-white/5">
+                  <div className="bg-white rounded-lg p-4 border-2 border-black shadow-sm">
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="text-[#FF6B35] font-bold text-sm uppercase tracking-wider flex items-center gap-2">
                         <Target className="w-4 h-4" />
@@ -2035,17 +1934,17 @@ export default function BasicDashboard() {
                 {/* ============================================ */}
                 {/* RIGHT COLUMN - Player Card & Comparisons */}
                 {/* ============================================ */}
-                <div className="space-y-6">
+                <div className="min-w-0 space-y-6">
                   
                   {/* Player Card (Like Pro's Madden-Style Card) */}
-                  <div className="bg-[#161616] rounded-lg overflow-hidden">
+                  <div className="bg-white rounded-lg overflow-hidden border-2 border-black">
                     {/* Banner Header with Score & Jersey Number */}
                     <div className="relative h-28 lg:h-32 overflow-hidden">
-                      <div className="absolute inset-0" style={{ background: 'linear-gradient(to right, #FF6B35 30%, #1a1a1a 70%)' }} />
+                      <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #FF6B35 0%, #FF4500 50%, #E55A2B 100%)' }} />
                       <div className="absolute inset-0 flex items-center justify-between px-5">
                         {/* Score Circle */}
                         <div className="relative">
-                          <div className="w-20 h-20 lg:w-24 lg:h-24 rounded-full border-4 border-[#22C55E] flex items-center justify-center bg-[#0a0a0a]">
+                          <div className="w-20 h-20 lg:w-24 lg:h-24 rounded-full border-4 border-[#22C55E] flex items-center justify-center bg-white">
                             <span className="text-3xl lg:text-4xl font-black text-[#22C55E]">{MOCK_USER.score}</span>
                           </div>
                           <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-[#22C55E] px-2 py-0.5 rounded text-[8px] font-bold text-[#1a1a1a]">OVR</div>
@@ -2053,42 +1952,42 @@ export default function BasicDashboard() {
                         
                         {/* Name & Jersey */}
                         <div className="text-right">
-                          <div className="text-white/60 text-xs uppercase tracking-wider">{MOCK_USER.name.toUpperCase()}</div>
+                          <div className="text-white/80 text-xs uppercase tracking-wider">{MOCK_USER.name.toUpperCase()}</div>
                           <div className="text-white font-black text-2xl lg:text-3xl tracking-tight">HOUSTON</div>
                           <div className="flex items-center justify-end gap-2 mt-1">
                             <div className="flex gap-0.5">
                               {[...Array(10)].map((_, i) => (
-                                <div key={i} className={`w-1 h-3 ${i < 7 ? 'bg-[#FF6B35]' : 'bg-[#222]'}`} />
+                                <div key={i} className={`w-1 h-3 ${i < 7 ? 'bg-white' : 'bg-white/30'}`} />
                               ))}
                             </div>
-                            <span className="text-[#888] text-xs">{MOCK_USER.height}, {MOCK_USER.weight}</span>
+                            <span className="text-white/70 text-xs">{MOCK_USER.height}, {MOCK_USER.weight}</span>
                           </div>
                         </div>
                         
                         {/* Jersey Number */}
-                        <div className="text-6xl lg:text-7xl font-black text-[#FF6B35]/30">{MOCK_USER.jerseyNumber}</div>
+                        <div className="text-6xl lg:text-7xl font-black text-white/20">{MOCK_USER.jerseyNumber}</div>
                       </div>
                     </div>
                     
                     {/* Progression History (Like Pro) */}
-                    <div className="p-4 border-b border-white/5">
-                      <div className="text-[#888] text-[10px] uppercase tracking-wider mb-2">Progression History</div>
+                    <div className="p-4 border-b border-black">
+                      <div className="text-slate-500 text-[10px] uppercase tracking-wider mb-2">Progression History</div>
                       <div className="grid grid-cols-4 gap-2 text-center">
-                        <div className="bg-[#0a0a0a] rounded p-2">
-                          <div className="text-white font-bold text-sm">{MOCK_USER.xp}</div>
-                          <div className="text-[#666] text-[9px] uppercase">XP</div>
+                        <div className="bg-white rounded-lg p-2 border-2 border-black shadow-sm">
+                          <div className="text-slate-900 font-black text-lg">{MOCK_USER.xp}</div>
+                          <div className="text-slate-500 text-[10px] uppercase font-bold tracking-widest">XP</div>
                         </div>
-                        <div className="bg-[#0a0a0a] rounded p-2">
-                          <div className="text-white font-bold text-sm">{MOCK_USER.level}</div>
-                          <div className="text-[#666] text-[9px] uppercase">LEVEL</div>
+                        <div className="bg-white rounded-lg p-2 border-2 border-black shadow-sm">
+                          <div className="text-slate-900 font-black text-lg">{MOCK_USER.level}</div>
+                          <div className="text-slate-500 text-[10px] uppercase font-bold tracking-widest">LEVEL</div>
                         </div>
-                        <div className="bg-[#0a0a0a] rounded p-2">
-                          <div className="text-white font-bold text-sm">{MOCK_USER.hearts}/{MOCK_USER.maxHearts}</div>
-                          <div className="text-[#666] text-[9px] uppercase">HEARTS</div>
+                        <div className="bg-white rounded-lg p-2 border-2 border-black shadow-sm">
+                          <div className="text-slate-900 font-black text-lg">{MOCK_USER.hearts}/{MOCK_USER.maxHearts}</div>
+                          <div className="text-slate-500 text-[10px] uppercase font-bold tracking-widest">HEARTS</div>
                         </div>
-                        <div className="bg-[#0a0a0a] rounded p-2">
-                          <div className="text-white font-bold text-sm">{MOCK_USER.gems}</div>
-                          <div className="text-[#666] text-[9px] uppercase">GEMS</div>
+                        <div className="bg-white rounded-lg p-2 border-2 border-black shadow-sm">
+                          <div className="text-slate-900 font-black text-lg">{MOCK_USER.gems}</div>
+                          <div className="text-slate-500 text-[10px] uppercase font-bold tracking-widest">GEMS</div>
                         </div>
                       </div>
                     </div>
@@ -2107,7 +2006,7 @@ export default function BasicDashboard() {
       </main>
 
       {/* Bottom Tab Navigation (Like Pro Dashboard - 6 tabs) */}
-      <div className="fixed bottom-0 left-0 right-0 bg-[#0a0a0a]/95 backdrop-blur-sm border-t border-white/5 z-50">
+      <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-black z-50">
         <div className="max-w-4xl mx-auto">
           <div className="grid grid-cols-6 h-16 md:h-[72px]">
             {[
@@ -2122,7 +2021,7 @@ export default function BasicDashboard() {
                 key={tab.id}
                 href={tab.href}
                 className={`relative flex flex-col items-center justify-center gap-1 transition-all ${
-                  tab.active ? "text-[#FF6B35]" : "text-[#888] hover:text-[#FF6B35]"
+                  tab.active ? "text-[#FF6B35]" : "text-slate-500 hover:text-[#FF6B35]"
                 }`}
               >
                 <tab.icon className={`w-5 h-5 md:w-6 md:h-6 ${tab.active ? 'scale-110' : ''}`} />
@@ -2136,22 +2035,22 @@ export default function BasicDashboard() {
 
       {/* Lesson Detail Modal */}
       {selectedLesson && !selectedLesson.locked && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setSelectedLesson(null)}>
-          <div className="w-full max-w-md bg-[#0a0a0a] rounded-2xl p-6 border border-white/5" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-slate-100/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setSelectedLesson(null)}>
+          <div className="w-full max-w-md bg-white rounded-2xl p-6 border-2 border-black" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
                   selectedLesson.completed ? 'bg-gradient-to-br from-[#22C55E] to-[#16A34A]' : 'bg-gradient-to-br from-[#FF6B35] to-[#E55A2B]'
                 }`}>
-                  <selectedLesson.Icon className="w-6 h-6 text-white" />
+                  <selectedLesson.Icon className="w-6 h-6 text-slate-900" />
                 </div>
                 <div>
-                  <h3 className="text-white font-black text-lg">{selectedLesson.name}</h3>
+                  <h3 className="text-slate-900 font-black text-lg">{selectedLesson.name}</h3>
                   <StarRating count={selectedLesson.stars} max={3} size="sm" />
                 </div>
               </div>
-              <button onClick={() => setSelectedLesson(null)} className="w-8 h-8 rounded-full bg-[#161616] flex items-center justify-center">
-                <X className="w-4 h-4 text-white" />
+              <button onClick={() => setSelectedLesson(null)} className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center">
+                <X className="w-4 h-4 text-slate-900" />
               </button>
             </div>
             
@@ -2161,18 +2060,18 @@ export default function BasicDashboard() {
                   <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#22C55E]/20 flex items-center justify-center">
                     <Check className="w-8 h-8 text-[#22C55E]" />
                   </div>
-                  <p className="text-white font-bold mb-2">Great job!</p>
-                  <p className="text-[#888] text-sm">You earned <span className="text-[#FF6B35] font-bold">{selectedLesson.xp} XP</span>!</p>
+                  <p className="text-slate-900 font-bold mb-2">Great job!</p>
+                  <p className="text-slate-500 text-sm">You earned <span className="text-[#FF6B35] font-bold">{selectedLesson.xp} XP</span>!</p>
                 </>
               ) : (
                 <>
                   <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#FF6B35]/20 flex items-center justify-center">
                     <Rocket className="w-8 h-8 text-[#FF6B35]" />
                   </div>
-                  <p className="text-white font-bold mb-2">Ready to learn?</p>
-                  <p className="text-[#888] text-sm mb-4">Practice to earn stars and XP!</p>
+                  <p className="text-slate-900 font-bold mb-2">Ready to learn?</p>
+                  <p className="text-slate-500 text-sm mb-4">Practice to earn stars and XP!</p>
                   <Link href="/?mode=image">
-                    <button className="w-full py-3 bg-gradient-to-b from-[#FF6B35] to-[#E55A2B] text-white font-black rounded-xl shadow-[0_4px_0_#C44A20]">
+                    <button className="w-full py-3 bg-gradient-to-b from-[#FF6B35] to-[#E55A2B] text-slate-900 font-black rounded-xl shadow-[0_4px_0_#C44A20]">
                       START LESSON
                     </button>
                   </Link>

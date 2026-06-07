@@ -1014,7 +1014,7 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
       
       {isProcessing && (
         <div className="flex items-center justify-center py-8">
-          <div className="flex items-center gap-3 text-[#888]">
+          <div className="flex items-center gap-3 text-slate-500">
             <div className="w-5 h-5 border-2 border-[#FF6B35] border-t-transparent rounded-full animate-spin" />
             <span>Generating screenshots...</span>
           </div>
@@ -1023,7 +1023,7 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
       
       {!isProcessing && screenshots.length === 0 && (
         <div className="text-center py-4">
-          <p className="text-[#888]">No screenshots available</p>
+          <p className="text-slate-500">No screenshots available</p>
           {errorMessage && (
             <p className="text-red-400 text-sm mt-2">{errorMessage}</p>
           )}
@@ -1065,7 +1065,7 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
 
                 <div className="p-3">
                   <h4 className={`font-bold text-sm ${medalStyles.text} mb-1`}>{screenshot.name}</h4>
-                  <p className="text-[#888] text-xs">{screenshot.analysis}</p>
+                  <p className="text-slate-500 text-xs">{screenshot.analysis}</p>
                 </div>
                 </div>
               </div>
@@ -1085,7 +1085,7 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
                   onClick={() => handleExpand(screenshot.id)}
                   className={`rounded-lg border-2 ${medalStyles.border} ${medalStyles.bg} overflow-hidden cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg`}
                 >
-                  <div className="relative aspect-[4/3] bg-[#1a1a1a]">
+                  <div className="relative aspect-[4/3] bg-slate-100">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={screenshot.dataUrl}
@@ -1106,7 +1106,7 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
 
                   <div className="p-3">
                     <h4 className={`font-bold text-sm ${medalStyles.text} mb-1`}>{screenshot.name}</h4>
-                    <p className="text-[#888] text-xs line-clamp-2">{screenshot.analysis}</p>
+                    <p className="text-slate-500 text-xs line-clamp-2">{screenshot.analysis}</p>
                   </div>
                 </div>
               )
@@ -1122,24 +1122,24 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
           onClick={() => setExpandedId(null)}
         >
           <div 
-            className="bg-[#2a2a2a] rounded-xl max-w-5xl w-full max-h-[95vh] overflow-auto"
+            className="bg-white rounded-xl max-w-5xl w-full max-h-[95vh] overflow-auto shadow-2xl border border-slate-200"
             onClick={e => e.stopPropagation()}
           >
-            <div className="p-4 border-b border-[#3a3a3a] flex items-center justify-between">
+            <div className="p-4 border-b border-slate-200 flex items-center justify-between">
               <h3 className="text-[#FF6B35] font-bold text-lg">{expandedScreenshot.name}</h3>
               <button
                 onClick={() => setExpandedId(null)}
-                className="text-[#888] hover:text-white p-1"
+                className="text-slate-400 hover:text-slate-900 p-1"
               >
                 <X className="w-6 h-6" />
               </button>
             </div>
             
             {/* Toggle Controls */}
-            <div className="p-4 border-b border-[#3a3a3a] flex items-center gap-4 flex-wrap">
+            <div className="p-4 border-b border-slate-200 flex items-center gap-4 flex-wrap">
               {/* Overlay toggles - only show when hybrid data available */}
               {isLoadingHybrid ? (
-                <div className="flex items-center gap-2 text-[#888]">
+                <div className="flex items-center gap-2 text-slate-500">
                   <div className="w-4 h-4 border-2 border-[#FF6B35] border-t-transparent rounded-full animate-spin" />
                   <span className="text-sm">Analyzing pose...</span>
                 </div>
@@ -1149,8 +1149,8 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
                     onClick={() => setShowSkeleton(!showSkeleton)}
                     className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                       showSkeleton 
-                        ? 'bg-[#FF6B35] text-[#1a1a1a]' 
-                        : 'bg-[#3a3a3a] text-[#888] hover:text-white'
+                        ? 'bg-[#FF6B35] text-white' 
+                        : 'bg-slate-100 text-slate-500 hover:text-slate-900'
                     }`}
                   >
                     {showSkeleton ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
@@ -1161,8 +1161,8 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
                     onClick={() => setShowLabels(!showLabels)}
                     className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                       showLabels 
-                        ? 'bg-[#FF6B35] text-[#1a1a1a]' 
-                        : 'bg-[#3a3a3a] text-[#888] hover:text-white'
+                        ? 'bg-[#FF6B35] text-white' 
+                        : 'bg-slate-100 text-slate-500 hover:text-slate-900'
                     }`}
                   >
                     {showLabels ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
@@ -1173,8 +1173,8 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
                     onClick={() => setShowKeypoints(!showKeypoints)}
                     className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                       showKeypoints 
-                        ? 'bg-[#FF6B35] text-[#1a1a1a]' 
-                        : 'bg-[#3a3a3a] text-[#888] hover:text-white'
+                        ? 'bg-[#FF6B35] text-white' 
+                        : 'bg-slate-100 text-slate-500 hover:text-slate-900'
                     }`}
                   >
                     {showKeypoints ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
@@ -1182,19 +1182,19 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
                   </button>
                 </>
               ) : (
-                <span className="text-[#888] text-sm">Overlay controls loading...</span>
+                <span className="text-slate-400 text-sm">Overlay controls loading...</span>
               )}
               
               {/* Enhancement & Download Options - ALWAYS VISIBLE */}
               <div className="flex items-center gap-2 ml-auto">
                 {/* Enhancement Tier Selector */}
-                <div className="flex items-center bg-[#1a1a1a] rounded-lg p-1">
+                <div className="flex items-center bg-slate-100 rounded-lg p-1">
                   <button
                     onClick={() => setEnhancementTier('basic')}
                     className={`flex items-center gap-1 px-2 py-1.5 rounded text-xs font-medium transition-colors ${
                       enhancementTier === 'basic'
-                        ? 'bg-[#3a3a3a] text-white'
-                        : 'text-[#888] hover:text-white'
+                        ? 'bg-white text-slate-900 shadow-sm'
+                        : 'text-slate-500 hover:text-slate-900'
                     }`}
                     title="Basic enhancement (instant)"
                   >
@@ -1205,8 +1205,8 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
                     onClick={() => setEnhancementTier('hd')}
                     className={`flex items-center gap-1 px-2 py-1.5 rounded text-xs font-medium transition-colors ${
                       enhancementTier === 'hd'
-                        ? 'bg-[#FF6B35] text-[#1a1a1a]'
-                        : 'text-[#888] hover:text-white'
+                        ? 'bg-[#FF6B35] text-white'
+                        : 'text-slate-500 hover:text-slate-900'
                     }`}
                     title="HD enhancement (30-60s, AI-powered)"
                   >
@@ -1217,8 +1217,8 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
                     onClick={() => setEnhancementTier('premium')}
                     className={`flex items-center gap-1 px-2 py-1.5 rounded text-xs font-medium transition-colors ${
                       enhancementTier === 'premium'
-                        ? 'bg-gradient-to-r from-[#FF6B35] to-[#f97316] text-[#1a1a1a]'
-                        : 'text-[#888] hover:text-white'
+                        ? 'bg-gradient-to-r from-[#FF6B35] to-[#f97316] text-white'
+                        : 'text-slate-500 hover:text-slate-900'
                     }`}
                     title="Premium enhancement (faster, best quality)"
                   >
@@ -1284,12 +1284,12 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
                   disabled={isEnhancing}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                     isEnhancing
-                      ? 'bg-[#3a3a3a] text-[#888] cursor-wait'
+                      ? 'bg-slate-100 text-slate-400 cursor-wait'
                       : enhancementTier === 'basic'
                       ? 'bg-[#22c55e] hover:bg-[#16a34a] text-white'
                       : enhancementTier === 'hd'
-                      ? 'bg-[#FF6B35] hover:bg-[#E55300] text-[#1a1a1a]'
-                      : 'bg-gradient-to-r from-[#FF6B35] to-[#f97316] hover:from-[#E55300] hover:to-[#ea580c] text-[#1a1a1a]'
+                      ? 'bg-[#FF6B35] hover:bg-[#E55300] text-white'
+                      : 'bg-gradient-to-r from-[#FF6B35] to-[#f97316] hover:from-[#E55300] hover:to-[#ea580c] text-white'
                   }`}
                 >
                   {isEnhancing ? (
@@ -1366,7 +1366,7 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
               </div>
             </div>
             
-            <div className="p-4 border-t border-[#3a3a3a] space-y-4">
+            <div className="p-4 border-t border-slate-200 space-y-4">
               {(() => {
                 // Determine medal tier - try to use angles if available, otherwise use status
                 const medalTier = expandedHybridData?.angles 
@@ -1392,17 +1392,17 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
                 )
               })()}
               
-              <p className="text-[#E5E5E5]">{expandedScreenshot.analysis}</p>
+              <p className="text-slate-700">{expandedScreenshot.analysis}</p>
               
               {/* Show angles from hybrid data if available */}
               {expandedHybridData && expandedHybridData.angles && Object.keys(expandedHybridData.angles).length > 0 && (
-                <div className="bg-[#1a1a1a] rounded-lg p-3">
+                <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
                   <h4 className="text-[#FF6B35] font-semibold text-sm mb-2">Detected Angles</h4>
                   <div className="grid grid-cols-2 gap-2">
                     {Object.entries(expandedHybridData.angles).map(([name, value]) => (
                       <div key={name} className="flex justify-between text-sm">
-                        <span className="text-[#888] capitalize">{name.replace(/_/g, ' ')}</span>
-                        <span className="text-white font-medium">{(value as number).toFixed(1)}°</span>
+                        <span className="text-slate-500 capitalize">{name.replace(/_/g, ' ')}</span>
+                        <span className="text-slate-900 font-medium">{(value as number).toFixed(1)}°</span>
                       </div>
                     ))}
                   </div>
@@ -1411,7 +1411,7 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
               
               <button
                 onClick={() => downloadScreenshot(expandedScreenshot)}
-                className="w-full bg-[#FF6B35] hover:bg-[#E55300] text-[#1a1a1a] font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-colors"
+                className="w-full bg-[#FF6B35] hover:bg-[#E55300] text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-colors"
               >
                 <Download className="w-5 h-5" />
                 Download Screenshot

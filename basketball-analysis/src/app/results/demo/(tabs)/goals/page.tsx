@@ -96,20 +96,20 @@ export default function GoalsPage() {
       <InlinePointsBurst points={5} show={showPointsBurst} label="IQ" />
       
       {/* Goals Card - Gold Theme */}
-      <Card className="bg-gradient-to-br from-[#1a1a1a] via-[#222222] to-[#1a1a1a] border-[#2a2a2a] shadow-2xl overflow-hidden">
+      <Card className="bg-white border-slate-200 shadow-sm overflow-hidden">
         <CardContent className="p-0">
           <div className="relative p-6 lg:p-8 overflow-hidden">
             {/* Background gradient mesh */}
             <div className="absolute inset-0 opacity-30">
-              <div className="absolute top-0 left-0 w-96 h-96 bg-[#FF6B35]/10 rounded-full blur-3xl"></div>
-              <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#B8860B]/10 rounded-full blur-3xl"></div>
+              <div className="absolute top-0 left-0 w-96 h-96 bg-[#FF6B35]/5 rounded-full blur-3xl"></div>
+              <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#B8860B]/5 rounded-full blur-3xl"></div>
             </div>
             
             {/* Goals Count Card */}
             <div className="relative grid grid-cols-1 gap-6 lg:gap-8">
               <div className="relative group max-w-md mx-auto w-full">
-                <div className="relative bg-gradient-to-br from-[#1a1a1a]/80 via-[#252525]/80 to-[#1a1a1a]/80 backdrop-blur-xl rounded-3xl p-8 lg:p-10 border border-[#3a3a3a]/30 hover:border-[#FF6B35]/40 transition-all duration-500 overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent"></div>
+                <div className="relative bg-white backdrop-blur-xl rounded-3xl p-8 lg:p-10 border border-slate-200 hover:border-[#FF6B35]/40 transition-all duration-500 overflow-hidden shadow-sm">
+                  <div className="absolute inset-0 bg-gradient-to-br from-slate-50/50 to-transparent"></div>
                   
                   {/* Create Goal Button */}
                   <button
@@ -133,17 +133,17 @@ export default function GoalsPage() {
                   </div>
                   
                   <div className="relative">
-                    <p className="text-sm font-bold text-[#888] uppercase tracking-[0.15em] mb-1">GOALS</p>
+                    <p className="text-sm font-bold text-slate-500 uppercase tracking-[0.15em] mb-1">GOALS</p>
                     <div className="h-0.5 w-16 bg-gradient-to-r from-[#FF6B35]/40 to-transparent"></div>
                   </div>
                   
                   {/* Progress indicator */}
-                  <div className="mt-6 pt-6 border-t border-[#3a3a3a]/30">
+                  <div className="mt-6 pt-6 border-t border-slate-200">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs text-[#888] uppercase tracking-wider">Progress</span>
+                      <span className="text-xs text-slate-500 uppercase tracking-wider">Progress</span>
                       <span className="text-xs text-[#FF6B35] font-bold">{completedCount}/{totalGoals} completed</span>
                     </div>
-                    <div className="h-2 bg-[#3a3a3a] rounded-full overflow-hidden">
+                    <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                       <div 
                         className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF4500] rounded-full transition-all duration-500"
                         style={{ width: `${totalGoals > 0 ? (completedCount / totalGoals) * 100 : 0}%` }}
@@ -159,26 +159,26 @@ export default function GoalsPage() {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-[#1a1a1a] rounded-xl p-4 border border-[#333]">
+        <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
-            <Calendar className="w-4 h-4 text-[#888]" />
-            <span className="text-[#888] text-xs uppercase">Sessions</span>
+            <Calendar className="w-4 h-4 text-slate-400" />
+            <span className="text-slate-500 text-xs uppercase">Sessions</span>
           </div>
-          <p className="text-white text-2xl font-black">{progressStats.sessionsCount}</p>
+          <p className="text-slate-900 text-2xl font-black">{progressStats.sessionsCount}</p>
         </div>
-        <div className="bg-[#1a1a1a] rounded-xl p-4 border border-[#333]">
+        <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
-            <Trophy className="w-4 h-4 text-[#888]" />
-            <span className="text-[#888] text-xs uppercase">Avg Score</span>
+            <Trophy className="w-4 h-4 text-slate-400" />
+            <span className="text-slate-500 text-xs uppercase">Avg Score</span>
           </div>
-          <p className="text-white text-2xl font-black">{progressStats.avgScore}%</p>
+          <p className="text-slate-900 text-2xl font-black">{progressStats.avgScore}%</p>
         </div>
-        <div className="bg-[#1a1a1a] rounded-xl p-4 border border-[#333]">
+        <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
-            <TrendingUp className="w-4 h-4 text-[#888]" />
-            <span className="text-[#888] text-xs uppercase">Change</span>
+            <TrendingUp className="w-4 h-4 text-slate-400" />
+            <span className="text-slate-500 text-xs uppercase">Change</span>
           </div>
-          <p className={`text-2xl font-black ${progressStats.scoreChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+          <p className={`text-2xl font-black ${progressStats.scoreChange >= 0 ? 'text-green-500' : 'text-red-500'}`}>
             {progressStats.scoreChange >= 0 ? '+' : ''}{progressStats.scoreChange}%
           </p>
         </div>

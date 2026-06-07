@@ -90,51 +90,51 @@ const TIER_ORDER: Record<ShooterTier, number> = { legendary: 1, elite: 2, great:
 
 // WSI Info Popup Component
 const WSIInfoPopup = ({ onClose }: { onClose: () => void }) => (
-  <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
-    <div className="bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a] rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-[#B8860B]/30 shadow-2xl" onClick={e => e.stopPropagation()}>
+  <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
+    <div className="bg-gradient-to-br from-white to-slate-50 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-[#B8860B]/30 shadow-2xl" onClick={e => e.stopPropagation()}>
       <div className="p-6 border-b border-[#B8860B]/30 flex items-center justify-between">
         <h2 className="text-2xl font-bold bg-gradient-to-r from-[#FFD700] to-[#B8860B] bg-clip-text text-transparent">Weighted Shooting Index (WSI)</h2>
         <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
-          <X className="w-5 h-5 text-white" />
+          <X className="w-5 h-5 text-slate-900" />
         </button>
       </div>
       <div className="p-6 space-y-6">
         {/* Formula */}
-        <div className="bg-[#1a1a1a] rounded-xl p-4 border border-[#B8860B]/20">
+        <div className="bg-slate-50 rounded-xl p-4 border border-[#B8860B]/20">
           <h3 className="bg-gradient-to-r from-[#FFD700] to-[#B8860B] bg-clip-text text-transparent font-semibold mb-2">The Formula</h3>
-          <p className="text-white font-mono text-lg">WSI = (0.45 × 3P%) + (0.35 × Mid-Range%) + (0.15 × FT%) + (0.05 × Rim%)</p>
+          <p className="text-slate-900 font-mono text-lg">WSI = (0.45 × 3P%) + (0.35 × Mid-Range%) + (0.15 × FT%) + (0.05 × Rim%)</p>
         </div>
         
         {/* Explanation */}
         <div className="space-y-4">
-          <h3 className="text-white font-semibold text-lg">What Each Component Means</h3>
+          <h3 className="text-slate-900 font-semibold text-lg">What Each Component Means</h3>
           <div className="grid gap-3">
             <div className="flex items-start gap-3 bg-green-500/10 rounded-lg p-3 border border-green-500/20">
-              <span className="bg-green-500 text-white font-bold text-xs px-2 py-1 rounded">45%</span>
+              <span className="bg-green-500 text-slate-900 font-bold text-xs px-2 py-1 rounded">45%</span>
               <div>
                 <p className="text-green-400 font-semibold">3-Point Percentage</p>
-                <p className="text-[#888] text-sm">The primary indicator of modern shooting skill. Heavily weighted because it&apos;s the most valuable shot in today&apos;s game.</p>
+                <p className="text-slate-500 text-sm">The primary indicator of modern shooting skill. Heavily weighted because it&apos;s the most valuable shot in today&apos;s game.</p>
               </div>
             </div>
             <div className="flex items-start gap-3 bg-orange-500/10 rounded-lg p-3 border border-orange-500/20">
-              <span className="bg-orange-500 text-white font-bold text-xs px-2 py-1 rounded">35%</span>
+              <span className="bg-orange-500 text-slate-900 font-bold text-xs px-2 py-1 rounded">35%</span>
               <div>
                 <p className="text-orange-400 font-semibold">Mid-Range Percentage</p>
-                <p className="text-[#888] text-sm">Captures &quot;touch&quot; and ability to hit pull-ups. Shows versatility and shot-making ability from different distances.</p>
+                <p className="text-slate-500 text-sm">Captures &quot;touch&quot; and ability to hit pull-ups. Shows versatility and shot-making ability from different distances.</p>
               </div>
             </div>
             <div className="flex items-start gap-3 bg-blue-500/10 rounded-lg p-3 border border-blue-500/20">
-              <span className="bg-blue-500 text-white font-bold text-xs px-2 py-1 rounded">15%</span>
+              <span className="bg-blue-500 text-slate-900 font-bold text-xs px-2 py-1 rounded">15%</span>
               <div>
                 <p className="text-blue-400 font-semibold">Free Throw Percentage</p>
-                <p className="text-[#888] text-sm">The purest measure of shooting mechanics. No defense, same distance every time - shows true form consistency.</p>
+                <p className="text-slate-500 text-sm">The purest measure of shooting mechanics. No defense, same distance every time - shows true form consistency.</p>
               </div>
             </div>
             <div className="flex items-start gap-3 bg-gray-500/10 rounded-lg p-3 border border-gray-500/20">
-              <span className="bg-gray-500 text-white font-bold text-xs px-2 py-1 rounded">5%</span>
+              <span className="bg-gray-500 text-slate-900 font-bold text-xs px-2 py-1 rounded">5%</span>
               <div>
                 <p className="text-gray-400 font-semibold">Rim Percentage</p>
-                <p className="text-[#888] text-sm">Minimized to just 5%. A player gets a small boost for finishing well, but rim-runners who can&apos;t shoot will still score low.</p>
+                <p className="text-slate-500 text-sm">Minimized to just 5%. A player gets a small boost for finishing well, but rim-runners who can&apos;t shoot will still score low.</p>
               </div>
             </div>
           </div>
@@ -142,36 +142,36 @@ const WSIInfoPopup = ({ onClose }: { onClose: () => void }) => (
 
         {/* Tier Thresholds */}
         <div className="space-y-4">
-          <h3 className="text-white font-semibold text-lg">WSI Tier Thresholds</h3>
+          <h3 className="text-slate-900 font-semibold text-lg">WSI Tier Thresholds</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             <div className="text-center p-3 rounded-lg" style={{ backgroundColor: '#FF6B3520', border: '1px solid #FF6B3560' }}>
               <p className="text-[#FF6B35] font-bold">LEGENDARY</p>
-              <p className="text-white text-lg font-mono">50+</p>
+              <p className="text-slate-900 text-lg font-mono">50+</p>
             </div>
             <div className="text-center p-3 rounded-lg" style={{ backgroundColor: '#C0C0C020', border: '1px solid #C0C0C060' }}>
               <p className="text-[#C0C0C0] font-bold">ELITE</p>
-              <p className="text-white text-lg font-mono">45-49</p>
+              <p className="text-slate-900 text-lg font-mono">45-49</p>
             </div>
             <div className="text-center p-3 rounded-lg" style={{ backgroundColor: '#CD7F3220', border: '1px solid #CD7F3260' }}>
               <p className="text-[#CD7F32] font-bold">GREAT</p>
-              <p className="text-white text-lg font-mono">40-44</p>
+              <p className="text-slate-900 text-lg font-mono">40-44</p>
             </div>
             <div className="text-center p-3 rounded-lg" style={{ backgroundColor: '#4A90D920', border: '1px solid #4A90D960' }}>
               <p className="text-[#4A90D9] font-bold">GOOD</p>
-              <p className="text-white text-lg font-mono">35-39</p>
+              <p className="text-slate-900 text-lg font-mono">35-39</p>
             </div>
             <div className="text-center p-3 rounded-lg" style={{ backgroundColor: '#80808020', border: '1px solid #80808060' }}>
               <p className="text-[#808080] font-bold">MID-LEVEL</p>
-              <p className="text-white text-lg font-mono">28-34</p>
+              <p className="text-slate-900 text-lg font-mono">28-34</p>
             </div>
             <div className="text-center p-3 rounded-lg" style={{ backgroundColor: '#8B000020', border: '1px solid #8B000060' }}>
               <p className="text-[#ff4444] font-bold">BAD</p>
-              <p className="text-white text-lg font-mono">&lt;28</p>
+              <p className="text-slate-900 text-lg font-mono">&lt;28</p>
             </div>
           </div>
         </div>
 
-        <p className="text-[#666] text-sm text-center">This formula ensures that true shooters are rated highly, while players who primarily score at the rim are rated appropriately for their shooting ability.</p>
+        <p className="text-slate-400 text-sm text-center">This formula ensures that true shooters are rated highly, while players who primarily score at the rim are rated appropriately for their shooting ability.</p>
       </div>
     </div>
   </div>
@@ -202,7 +202,7 @@ const FilterDropdown = ({
         className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-all ${
           selected.length > 0 
             ? 'bg-[#FF6B35]/20 border-[#FF6B35]/50 text-[#FF6B35]' 
-            : 'bg-[#1a1a1a] border-[#3a3a3a] text-white hover:border-[#FF6B35]/30'
+            : 'bg-slate-50 border-slate-200 text-slate-900 hover:border-[#FF6B35]/30'
         }`}
       >
         <span className="font-medium">{label}</span>
@@ -215,7 +215,7 @@ const FilterDropdown = ({
       {isOpen && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-          <div className="absolute top-full left-0 mt-2 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg shadow-xl z-50 min-w-[180px] py-2 max-h-[300px] overflow-y-auto">
+          <div className="absolute top-full left-0 mt-2 bg-slate-50 border border-slate-200 rounded-lg shadow-xl z-50 min-w-[180px] py-2 max-h-[300px] overflow-y-auto">
             {options.map(option => {
               const isSelected = selected.includes(option);
               const displayLabel = getLabel ? getLabel(option) : option;
@@ -225,24 +225,24 @@ const FilterDropdown = ({
                 <button
                   key={option}
                   onClick={() => { onSelect(option); }}
-                  className={`w-full px-4 py-2 text-left flex items-center gap-2 hover:bg-[#3a3a3a] transition-colors ${
+                  className={`w-full px-4 py-2 text-left flex items-center gap-2 hover:bg-slate-200 transition-colors ${
                     isSelected ? 'bg-[#FF6B35]/10' : ''
                   }`}
                 >
                   <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
-                    isSelected ? 'border-[#FF6B35] bg-[#FF6B35]' : 'border-[#666]'
+                    isSelected ? 'border-[#FF6B35] bg-[#FF6B35]' : 'border-slate-300'
                   }`}>
-                    {isSelected && <span className="text-white text-xs">✓</span>}
+                    {isSelected && <span className="text-slate-900 text-xs">✓</span>}
                   </div>
                   {color && <span className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />}
-                  <span className={isSelected ? 'text-[#FF6B35]' : 'text-white'}>{displayLabel}</span>
+                  <span className={isSelected ? 'text-[#FF6B35]' : 'text-slate-900'}>{displayLabel}</span>
                 </button>
               );
             })}
             {selected.length > 0 && (
               <button
                 onClick={() => { options.forEach(o => { if (selected.includes(o)) onSelect(o); }); }}
-                className="w-full px-4 py-2 text-left text-[#888] hover:text-white hover:bg-[#3a3a3a] border-t border-[#3a3a3a] mt-1"
+                className="w-full px-4 py-2 text-left text-slate-500 hover:text-slate-900 hover:bg-slate-200 border-t border-slate-200 mt-1"
               >
                 Clear all
               </button>
@@ -400,29 +400,29 @@ export default function EliteShootersPage() {
   const toggleEra = (era: string) => setSelectedEras(prev => prev.includes(era) ? prev.filter(e => e !== era) : [...prev, era]);
 
   return (
-    <main className="min-h-[calc(100vh-200px)] py-8 px-4 bg-[#050505] relative">
+    <main className="min-h-[calc(100vh-200px)] py-8 px-4 bg-slate-50 relative">
       {/* GOLD Video Game Style Points Animation */}
       <InlinePointsBurst points={1} show={showPointsBurst} label="IQ" />
       
       <div className="container mx-auto max-w-7xl">
-        <div className="bg-[#2C2C2C] rounded-lg overflow-hidden shadow-lg">
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden shadow-lg">
           {/* Header */}
-          <div className="p-6 border-b border-[#3a3a3a]">
+          <div className="p-6 border-b border-slate-200">
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-3 mb-2">
                   <Users className="w-7 h-7 text-[#FF6B35]" />
                   <h1 className="text-2xl font-bold text-[#FF6B35] uppercase tracking-wider">ELITE SHOOTERS DATABASE</h1>
                 </div>
-                <p className="text-[#E5E5E5]">Reference database of basketball players across all skill levels.</p>
-                <p className="text-[#888] text-sm mt-1">
+                <p className="text-slate-900">Reference database of basketball players across all skill levels.</p>
+                <p className="text-slate-500 text-sm mt-1">
                   Showing <span className="text-[#FF6B35] font-bold">{filteredShooters.length}</span> of {processedShooters.length} players
                   {hasActiveFilters && <span className="text-[#FF6B35]"> (filtered)</span>}
                 </p>
               </div>
               <Link 
                 href="/admin/shooting-forms"
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#FFD700] to-[#B8860B] hover:from-[#FFE44D] hover:to-[#D4AF37] rounded-lg transition-colors text-black font-semibold"
+                className="flex items-center gap-2 px-4 py-2 bg-black hover:bg-slate-800 rounded-lg transition-colors text-white font-semibold shadow-sm"
               >
                 <Settings size={18} />
                 <span>Manage</span>
@@ -431,37 +431,37 @@ export default function EliteShootersPage() {
           </div>
 
           {/* Filters Section - Clean Dropdowns */}
-          <div className="p-4 bg-[#252525] border-b border-[#3a3a3a]">
+          <div className="p-4 bg-slate-50 border-b border-slate-200">
             {/* Row 1: Search + Sort + Reset */}
             <div className="flex flex-col lg:flex-row gap-4 mb-4">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#888]" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
                 <input
                   type="text"
                   placeholder="Search by name or team..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-10 py-2.5 bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg text-white placeholder-[#666] focus:outline-none focus:border-[#FF6B35] transition-colors"
+                  className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#FF6B35] transition-colors"
                 />
                 {searchQuery && (
-                  <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#888] hover:text-white">
+                  <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-900">
                     <X className="w-4 h-4" />
                   </button>
                 )}
               </div>
               <div className="relative min-w-[200px]">
-                <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#888]" />
+                <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as SortOption)}
-                  className="w-full pl-9 pr-8 py-2.5 bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg text-white appearance-none cursor-pointer focus:outline-none focus:border-[#FF6B35]"
+                  className="w-full pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 appearance-none cursor-pointer focus:outline-none focus:border-[#FF6B35]"
                 >
                   {SORT_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
                 </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#888] pointer-events-none" />
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
               </div>
               {hasActiveFilters && (
-                <button onClick={resetFilters} className="flex items-center gap-2 px-4 py-2.5 bg-[#8B0000] hover:bg-[#a00000] rounded-lg text-white transition-colors">
+                <button onClick={resetFilters} className="flex items-center gap-2 px-4 py-2.5 bg-[#8B0000] hover:bg-[#a00000] rounded-lg text-slate-900 transition-colors">
                   <RotateCcw className="w-4 h-4" /> Reset
                 </button>
               )}
@@ -501,7 +501,7 @@ export default function EliteShootersPage() {
               {/* WSI Info Button */}
               <button
                 onClick={() => setShowWSIInfo(true)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#B8860B]/20 border border-[#B8860B]/30 text-[#FFD700] hover:bg-[#B8860B]/30 transition-colors"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#FF6B35] text-white hover:bg-[#E55A2B] shadow-sm transition-colors"
               >
                 <HelpCircle className="w-4 h-4" />
                 <span className="font-medium">What is WSI?</span>
@@ -509,35 +509,35 @@ export default function EliteShootersPage() {
             </div>
 
             {/* Row 3: Range Sliders */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4 pt-4 border-t border-[#3a3a3a]">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4 pt-4 border-t border-slate-200">
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-green-400 text-sm font-semibold">3PT%</span>
-                  <span className="text-white text-sm font-mono">{threePctRange[0]}% - {threePctRange[1]}%</span>
+                  <span className="text-slate-900 text-sm font-mono">{threePctRange[0]}% - {threePctRange[1]}%</span>
                 </div>
                 <div className="flex gap-2">
-                  <input type="range" min="0" max="50" value={threePctRange[0]} onChange={(e) => setThreePctRange([parseInt(e.target.value), threePctRange[1]])} className="flex-1 h-2 bg-[#3a3a3a] rounded-lg appearance-none cursor-pointer accent-green-500" />
-                  <input type="range" min="0" max="50" value={threePctRange[1]} onChange={(e) => setThreePctRange([threePctRange[0], parseInt(e.target.value)])} className="flex-1 h-2 bg-[#3a3a3a] rounded-lg appearance-none cursor-pointer accent-green-500" />
+                  <input type="range" min="0" max="50" value={threePctRange[0]} onChange={(e) => setThreePctRange([parseInt(e.target.value), threePctRange[1]])} className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-green-500" />
+                  <input type="range" min="0" max="50" value={threePctRange[1]} onChange={(e) => setThreePctRange([threePctRange[0], parseInt(e.target.value)])} className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-green-500" />
                 </div>
               </div>
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-blue-400 text-sm font-semibold">FT%</span>
-                  <span className="text-white text-sm font-mono">{ftPctRange[0]}% - {ftPctRange[1]}%</span>
+                  <span className="text-slate-900 text-sm font-mono">{ftPctRange[0]}% - {ftPctRange[1]}%</span>
                 </div>
                 <div className="flex gap-2">
-                  <input type="range" min="0" max="100" value={ftPctRange[0]} onChange={(e) => setFtPctRange([parseInt(e.target.value), ftPctRange[1]])} className="flex-1 h-2 bg-[#3a3a3a] rounded-lg appearance-none cursor-pointer accent-blue-500" />
-                  <input type="range" min="0" max="100" value={ftPctRange[1]} onChange={(e) => setFtPctRange([ftPctRange[0], parseInt(e.target.value)])} className="flex-1 h-2 bg-[#3a3a3a] rounded-lg appearance-none cursor-pointer accent-blue-500" />
+                  <input type="range" min="0" max="100" value={ftPctRange[0]} onChange={(e) => setFtPctRange([parseInt(e.target.value), ftPctRange[1]])} className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-500" />
+                  <input type="range" min="0" max="100" value={ftPctRange[1]} onChange={(e) => setFtPctRange([ftPctRange[0], parseInt(e.target.value)])} className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-500" />
                 </div>
               </div>
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <span className="bg-gradient-to-r from-[#FFD700] to-[#B8860B] bg-clip-text text-transparent text-sm font-semibold">WSI Score</span>
-                  <span className="text-white text-sm font-mono">{wsiRange[0]} - {wsiRange[1]}</span>
+                  <span className="text-slate-900 text-sm font-mono">{wsiRange[0]} - {wsiRange[1]}</span>
                 </div>
                 <div className="flex gap-2">
-                  <input type="range" min="0" max="60" value={wsiRange[0]} onChange={(e) => setWsiRange([parseInt(e.target.value), wsiRange[1]])} className="flex-1 h-2 bg-[#3a3a3a] rounded-lg appearance-none cursor-pointer accent-[#FFD700]" />
-                  <input type="range" min="0" max="60" value={wsiRange[1]} onChange={(e) => setWsiRange([wsiRange[0], parseInt(e.target.value)])} className="flex-1 h-2 bg-[#3a3a3a] rounded-lg appearance-none cursor-pointer accent-[#FFD700]" />
+                  <input type="range" min="0" max="60" value={wsiRange[0]} onChange={(e) => setWsiRange([parseInt(e.target.value), wsiRange[1]])} className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#FFD700]" />
+                  <input type="range" min="0" max="60" value={wsiRange[1]} onChange={(e) => setWsiRange([wsiRange[0], parseInt(e.target.value)])} className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#FFD700]" />
                 </div>
               </div>
             </div>
@@ -547,8 +547,8 @@ export default function EliteShootersPage() {
           <div className="p-6">
             {filteredShooters.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-[#888] text-lg">No players match your filters.</p>
-                <button onClick={resetFilters} className="mt-4 px-6 py-2 bg-[#FF6B35] text-white rounded-lg font-semibold hover:bg-[#e5c200] transition-colors">
+                <p className="text-slate-500 text-lg">No players match your filters.</p>
+                <button onClick={resetFilters} className="mt-4 px-6 py-2 bg-[#FF6B35] text-white rounded-lg font-semibold hover:bg-[#E55A2B] transition-colors shadow-md shadow-[#FF6B35]/20">
                   Reset Filters
                 </button>
               </div>
@@ -567,7 +567,7 @@ export default function EliteShootersPage() {
                   return (
                     <div 
                       key={shooter.id} 
-                      className="bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a] rounded-xl overflow-hidden border border-[#3a3a3a] hover:border-[#FF6B35]/60 transition-all shadow-lg hover:shadow-[0_0_20px_rgba(255,215,0,0.15)] group cursor-pointer"
+                      className="bg-gradient-to-br from-white to-slate-50 rounded-xl overflow-hidden border border-slate-200 hover:border-[#FF6B35]/60 transition-all shadow-lg hover:shadow-[0_0_20px_rgba(255,215,0,0.15)] group cursor-pointer"
                       onClick={() => handleSelectPlayer(shooter)}
                     >
                       {/* Player Header */}
@@ -579,7 +579,7 @@ export default function EliteShootersPage() {
                         
                         <div className="flex items-center gap-4">
                           {/* Photo with hover effect */}
-                          <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-[#FF6B35]/50 bg-[#3a3a3a] flex-shrink-0 group-hover:border-[#FF6B35] transition-colors">
+                          <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-[#FF6B35]/50 bg-slate-200 flex-shrink-0 group-hover:border-[#FF6B35] transition-colors">
                             {photoUrl ? (
                               <Image src={photoUrl} alt={shooter.name} fill className="object-cover object-top" unoptimized />
                             ) : (
@@ -589,18 +589,18 @@ export default function EliteShootersPage() {
                             )}
                             {/* Hover overlay for bio hint */}
                             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                              <span className="text-white text-xs font-semibold">View Bio</span>
+                              <span className="text-slate-900 text-xs font-semibold">View Bio</span>
                             </div>
                           </div>
 
                           <div className="flex-1 min-w-0">
-                            <h3 className="text-lg font-bold text-white uppercase tracking-wide truncate">{shooter.name}</h3>
-                            <p className="text-[#888] text-sm truncate">{shooter.team}</p>
+                            <h3 className="text-lg font-bold text-slate-900 uppercase tracking-wide truncate">{shooter.name}</h3>
+                            <p className="text-slate-500 text-sm truncate">{shooter.team}</p>
                             <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                              <span className="inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase bg-[#3a3a3a] text-[#E5E5E5]">
+                              <span className="inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase bg-slate-200 text-slate-900">
                                 {POSITION_LABELS[shooter.position]}
                               </span>
-                              <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase bg-gradient-to-r ${LEAGUE_COLORS[shooter.league]} text-white`}>
+                              <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase bg-gradient-to-r ${LEAGUE_COLORS[shooter.league]} text-slate-900`}>
                                 {LEAGUE_LABELS[shooter.league]}
                               </span>
                             </div>
@@ -608,7 +608,7 @@ export default function EliteShootersPage() {
                               <span className="px-2 py-0.5 rounded text-xs font-semibold uppercase" style={{ backgroundColor: `${tierColor}20`, border: `1px solid ${tierColor}60`, color: tierColor }}>
                                 {TIER_LABELS[shooter.tier]}
                               </span>
-                              <span className="text-[#888] text-xs">{shooter.era}</span>
+                              <span className="text-slate-500 text-xs">{shooter.era}</span>
                             </div>
                           </div>
 
@@ -616,7 +616,7 @@ export default function EliteShootersPage() {
                             <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: `${tierColor}20`, border: `2px solid ${tierColor}` }}>
                               <span className="text-lg font-bold" style={{ color: tierColor }}>{shooter.overallScore}</span>
                             </div>
-                            <span className="text-[10px] text-[#888] font-bold">OVR</span>
+                            <span className="text-[10px] text-slate-500 font-bold">OVR</span>
                           </div>
                         </div>
                       </div>
@@ -625,7 +625,7 @@ export default function EliteShootersPage() {
                       <div className="p-4 pt-0 space-y-4">
                         {/* Key Traits */}
                         <div>
-                          <p className="text-[#888] text-xs mb-2 uppercase tracking-wider flex items-center gap-1">
+                          <p className="text-slate-500 text-xs mb-2 uppercase tracking-wider flex items-center gap-1">
                             <Zap className="w-3 h-3 text-[#FF6B35]" /> Key Traits
                           </p>
                           <div className="flex flex-wrap gap-1.5">
@@ -638,31 +638,31 @@ export default function EliteShootersPage() {
                         </div>
 
                         {/* Shooting Stats - 3PT% and FT% (SPAR-style horizontal bars) */}
-                        <div className="bg-[#1a1a1a] rounded-lg p-3 border border-[#FF6B35]/20 space-y-3">
+                        <div className="bg-slate-50 rounded-lg p-3 border border-[#FF6B35]/20 space-y-3">
                           {/* 3PT% */}
                           <div>
                             <div className="flex items-center gap-2 mb-1">
                               <div className="flex gap-0.5">
-                                <span className="w-1 h-1 rounded-full bg-[#666]" />
-                                <span className="w-1 h-1 rounded-full bg-[#666]" />
-                                <span className="w-1 h-1 rounded-full bg-[#666]" />
+                                <span className="w-1 h-1 rounded-full bg-slate-300" />
+                                <span className="w-1 h-1 rounded-full bg-slate-300" />
+                                <span className="w-1 h-1 rounded-full bg-slate-300" />
                               </div>
                               <span className="text-green-400 text-xs font-semibold uppercase tracking-wider">Career 3PT%</span>
                               <div className="flex gap-0.5">
-                                <span className="w-1 h-1 rounded-full bg-[#666]" />
-                                <span className="w-1 h-1 rounded-full bg-[#666]" />
-                                <span className="w-1 h-1 rounded-full bg-[#666]" />
+                                <span className="w-1 h-1 rounded-full bg-slate-300" />
+                                <span className="w-1 h-1 rounded-full bg-slate-300" />
+                                <span className="w-1 h-1 rounded-full bg-slate-300" />
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className="text-lg font-bold text-white w-8 text-right">
+                              <span className="text-lg font-bold text-slate-900 w-8 text-right">
                                 {threePct != null ? Math.round(threePct) : "—"}
                               </span>
                               <div
                                 className="relative flex-1 h-5 overflow-hidden"
                                 style={{ borderLeft: "3px solid #22c55e", borderRight: "3px solid #22c55e" }}
                               >
-                                <div className="absolute inset-0 bg-[#1a1a1a]">
+                                <div className="absolute inset-0 bg-slate-50">
                                   <div
                                     className="absolute inset-0 opacity-40"
                                     style={{
@@ -682,12 +682,12 @@ export default function EliteShootersPage() {
                                   />
                                   <div className="absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-white/20 to-transparent" />
                                 </div>
-                                <div className="absolute inset-y-0 right-0 w-[14%] bg-[#0a0a0a]" />
+                                <div className="absolute inset-y-0 right-0 w-[14%] bg-white" />
                                 <div className="absolute top-0 bottom-0 w-0.5 bg-white/50" style={{ left: "86%" }} />
                               </div>
                               <div className="flex flex-col items-center w-8">
-                                <span className="text-sm font-bold text-[#888]">{threePtRank ?? "—"}</span>
-                                <span className="text-[8px] text-[#666] uppercase">Rank</span>
+                                <span className="text-sm font-bold text-slate-500">{threePtRank ?? "—"}</span>
+                                <span className="text-[8px] text-slate-400 uppercase">Rank</span>
                               </div>
                             </div>
                           </div>
@@ -696,26 +696,26 @@ export default function EliteShootersPage() {
                           <div>
                             <div className="flex items-center gap-2 mb-1">
                               <div className="flex gap-0.5">
-                                <span className="w-1 h-1 rounded-full bg-[#666]" />
-                                <span className="w-1 h-1 rounded-full bg-[#666]" />
-                                <span className="w-1 h-1 rounded-full bg-[#666]" />
+                                <span className="w-1 h-1 rounded-full bg-slate-300" />
+                                <span className="w-1 h-1 rounded-full bg-slate-300" />
+                                <span className="w-1 h-1 rounded-full bg-slate-300" />
                               </div>
                               <span className="text-blue-400 text-xs font-semibold uppercase tracking-wider">Career FT%</span>
                               <div className="flex gap-0.5">
-                                <span className="w-1 h-1 rounded-full bg-[#666]" />
-                                <span className="w-1 h-1 rounded-full bg-[#666]" />
-                                <span className="w-1 h-1 rounded-full bg-[#666]" />
+                                <span className="w-1 h-1 rounded-full bg-slate-300" />
+                                <span className="w-1 h-1 rounded-full bg-slate-300" />
+                                <span className="w-1 h-1 rounded-full bg-slate-300" />
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className="text-lg font-bold text-white w-8 text-right">
+                              <span className="text-lg font-bold text-slate-900 w-8 text-right">
                                 {Math.round(shooter.careerFreeThrowPct)}
                               </span>
                               <div
                                 className="relative flex-1 h-5 overflow-hidden"
                                 style={{ borderLeft: "3px solid #3b82f6", borderRight: "3px solid #3b82f6" }}
                               >
-                                <div className="absolute inset-0 bg-[#1a1a1a]">
+                                <div className="absolute inset-0 bg-slate-50">
                                   <div
                                     className="absolute inset-0 opacity-40"
                                     style={{
@@ -735,12 +735,12 @@ export default function EliteShootersPage() {
                                   />
                                   <div className="absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-white/20 to-transparent" />
                                 </div>
-                                <div className="absolute inset-y-0 right-0 w-[14%] bg-[#0a0a0a]" />
+                                <div className="absolute inset-y-0 right-0 w-[14%] bg-white" />
                                 <div className="absolute top-0 bottom-0 w-0.5 bg-white/50" style={{ left: "86%" }} />
                               </div>
                               <div className="flex flex-col items-center w-8">
-                                <span className="text-sm font-bold text-[#888]">{ftRank ?? "—"}</span>
-                                <span className="text-[8px] text-[#666] uppercase">Rank</span>
+                                <span className="text-sm font-bold text-slate-500">{ftRank ?? "—"}</span>
+                                <span className="text-[8px] text-slate-400 uppercase">Rank</span>
                               </div>
                             </div>
                           </div>
@@ -748,50 +748,50 @@ export default function EliteShootersPage() {
 
                         {/* Physical Stats */}
                         <div>
-                          <p className="text-[#888] text-xs mb-2 uppercase tracking-wider flex items-center gap-1">
+                          <p className="text-slate-500 text-xs mb-2 uppercase tracking-wider flex items-center gap-1">
                             <Ruler className="w-3 h-3" /> Physical Stats
                           </p>
                           <div className="grid grid-cols-3 gap-2 text-center">
-                            <div className="bg-[#2a2a2a] rounded-lg p-2">
+                            <div className="bg-slate-50 rounded-lg p-2">
                               <p className="text-[#FF6B35] font-bold text-sm">{formatHeight(shooter.height)}</p>
-                              <p className="text-[#888] text-[10px] uppercase">Height</p>
+                              <p className="text-slate-500 text-[10px] uppercase">Height</p>
                             </div>
-                            <div className="bg-[#2a2a2a] rounded-lg p-2">
+                            <div className="bg-slate-50 rounded-lg p-2">
                               <p className="text-[#FF6B35] font-bold text-sm">{formatHeight(shooter.wingspan)}</p>
-                              <p className="text-[#888] text-[10px] uppercase">Wingspan</p>
+                              <p className="text-slate-500 text-[10px] uppercase">Wingspan</p>
                             </div>
-                            <div className="bg-[#2a2a2a] rounded-lg p-2">
+                            <div className="bg-slate-50 rounded-lg p-2">
                               <p className="text-[#FF6B35] font-bold text-sm">{shooter.weight} lbs</p>
-                              <p className="text-[#888] text-[10px] uppercase">Weight</p>
+                              <p className="text-slate-500 text-[10px] uppercase">Weight</p>
                             </div>
                           </div>
                         </div>
 
                         {/* Biomechanics */}
-                        <div className="border-t border-[#3a3a3a] pt-3">
-                          <p className="text-[#888] text-xs mb-2 uppercase tracking-wider">Biomechanics</p>
+                        <div className="border-t border-slate-200 pt-3">
+                          <p className="text-slate-500 text-xs mb-2 uppercase tracking-wider">Biomechanics</p>
                           <div className="grid grid-cols-2 gap-2 text-xs">
-                            <div className="flex justify-between bg-[#2a2a2a] rounded px-2 py-1">
-                              <span className="text-[#888]">Elbow:</span>
+                            <div className="flex justify-between bg-slate-50 rounded px-2 py-1">
+                              <span className="text-slate-500">Elbow:</span>
                               <span className="text-[#FF6B35] font-semibold">{shooter.measurements.elbowAngle}°</span>
                             </div>
-                            <div className="flex justify-between bg-[#2a2a2a] rounded px-2 py-1">
-                              <span className="text-[#888]">Release:</span>
+                            <div className="flex justify-between bg-slate-50 rounded px-2 py-1">
+                              <span className="text-slate-500">Release:</span>
                               <span className="text-[#FF6B35] font-semibold">{shooter.measurements.releaseAngle}°</span>
                             </div>
-                            <div className="flex justify-between bg-[#2a2a2a] rounded px-2 py-1">
-                              <span className="text-[#888]">Knee:</span>
+                            <div className="flex justify-between bg-slate-50 rounded px-2 py-1">
+                              <span className="text-slate-500">Knee:</span>
                               <span className="text-[#FF6B35] font-semibold">{shooter.measurements.kneeAngle}°</span>
                             </div>
-                            <div className="flex justify-between bg-[#2a2a2a] rounded px-2 py-1">
-                              <span className="text-[#888]">Entry:</span>
+                            <div className="flex justify-between bg-slate-50 rounded px-2 py-1">
+                              <span className="text-slate-500">Entry:</span>
                               <span className="text-[#FF6B35] font-semibold">{shooter.measurements.entryAngle}°</span>
                             </div>
                           </div>
                         </div>
 
                         {/* Shooting Form Button */}
-                        <div className="border-t border-[#3a3a3a] pt-3 mt-auto">
+                        <div className="border-t border-slate-200 pt-3 mt-auto">
                           {(() => {
                             const imageCount = getShootingFormCount(shooter);
                             return (
@@ -802,8 +802,8 @@ export default function EliteShootersPage() {
                                 }}
                                 className={`w-full py-2.5 rounded-lg font-semibold text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
                                   imageCount > 0
-                                    ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-white hover:from-[#FFE44D] hover:to-[#FFB733] shadow-lg shadow-[#FF6B35]/20'
-                                    : 'bg-[#2a2a2a] text-[#888] border border-[#3a3a3a] hover:border-[#555] hover:text-white'
+                                    ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-slate-900 hover:from-[#FFE44D] hover:to-[#FFB733] shadow-lg shadow-[#FF6B35]/20'
+                                    : 'bg-slate-50 text-slate-500 border border-slate-200 hover:border-[#555] hover:text-slate-900'
                                 }`}
                               >
                                 {imageCount > 0 ? (
@@ -830,21 +830,21 @@ export default function EliteShootersPage() {
               {/* Pagination Controls */}
               {totalPages > 1 && (
                 <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <div className="text-[#888] text-sm">
+                  <div className="text-slate-500 text-sm">
                     Showing {startIndex + 1}-{Math.min(endIndex, filteredShooters.length)} of {filteredShooters.length} players
                   </div>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setCurrentPage(1)}
                       disabled={currentPage === 1}
-                      className="px-3 py-2 rounded-lg bg-[#2a2a2a] border border-[#3a3a3a] text-white disabled:opacity-40 disabled:cursor-not-allowed hover:border-[#FF6B35]/50 transition-colors"
+                      className="px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed hover:border-[#FF6B35]/50 transition-colors"
                     >
                       First
                     </button>
                     <button
                       onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                       disabled={currentPage === 1}
-                      className="px-3 py-2 rounded-lg bg-[#2a2a2a] border border-[#3a3a3a] text-white disabled:opacity-40 disabled:cursor-not-allowed hover:border-[#FF6B35]/50 transition-colors"
+                      className="px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed hover:border-[#FF6B35]/50 transition-colors"
                     >
                       Previous
                     </button>
@@ -862,13 +862,13 @@ export default function EliteShootersPage() {
                           const showEllipsisBefore = idx > 0 && page - arr[idx - 1] > 1;
                           return (
                             <React.Fragment key={page}>
-                              {showEllipsisBefore && <span className="px-2 text-[#666]">...</span>}
+                              {showEllipsisBefore && <span className="px-2 text-slate-400">...</span>}
                               <button
                                 onClick={() => setCurrentPage(page)}
                                 className={`w-10 h-10 rounded-lg font-semibold transition-colors ${
                                   currentPage === page
-                                    ? 'bg-[#FF6B35] text-white'
-                                    : 'bg-[#2a2a2a] border border-[#3a3a3a] text-white hover:border-[#FF6B35]/50'
+                                    ? 'bg-[#FF6B35] text-white shadow-md shadow-[#FF6B35]/20'
+                                    : 'bg-slate-50 border border-slate-200 text-slate-900 hover:border-[#FF6B35]/50'
                                 }`}
                               >
                                 {page}
@@ -881,14 +881,14 @@ export default function EliteShootersPage() {
                     <button
                       onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                       disabled={currentPage === totalPages}
-                      className="px-3 py-2 rounded-lg bg-[#2a2a2a] border border-[#3a3a3a] text-white disabled:opacity-40 disabled:cursor-not-allowed hover:border-[#FF6B35]/50 transition-colors"
+                      className="px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed hover:border-[#FF6B35]/50 transition-colors"
                     >
                       Next
                     </button>
                     <button
                       onClick={() => setCurrentPage(totalPages)}
                       disabled={currentPage === totalPages}
-                      className="px-3 py-2 rounded-lg bg-[#2a2a2a] border border-[#3a3a3a] text-white disabled:opacity-40 disabled:cursor-not-allowed hover:border-[#FF6B35]/50 transition-colors"
+                      className="px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed hover:border-[#FF6B35]/50 transition-colors"
                     >
                       Last
                     </button>

@@ -93,7 +93,7 @@ export function PointsDisplay({
         transition={{ duration: 0.3 }}
       >
         <Zap className="w-4 h-4 text-yellow-400" />
-        <span className="font-bold text-white">{displayPoints}</span>
+        <span className="font-bold text-slate-900">{displayPoints}</span>
       </motion.div>
     )
   }
@@ -102,7 +102,7 @@ export function PointsDisplay({
     return (
       <>
         <motion.div 
-          className={`relative flex items-center gap-3 px-4 py-2 rounded-full bg-black/30 backdrop-blur-sm border border-white/10 cursor-pointer hover:bg-black/40 transition-colors ${className}`}
+          className={`relative flex items-center gap-3 px-4 py-2 rounded-full bg-black/90 backdrop-blur-sm border border-white/10 shadow-sm cursor-pointer hover:bg-black transition-colors ${className}`}
           animate={isAnimating ? { 
             scale: [1, 1.05, 1],
             boxShadow: [
@@ -145,14 +145,14 @@ export function PointsDisplay({
             >
               {displayPoints.toLocaleString()}
             </motion.span>
-            <span className="text-[10px] text-white/60 uppercase tracking-wider font-semibold">IQ POINTS</span>
+            <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">IQ POINTS</span>
           </div>
           
           {/* Progress to next tier */}
           {showProgress && nextTier && (
             <div className="flex items-center gap-2 ml-1 pl-3 border-l border-white/20">
               <div className="flex flex-col items-center gap-0.5">
-                <div className="w-16 h-1.5 bg-white/20 rounded-full overflow-hidden">
+                <div className="w-16 h-1.5 bg-white/10 rounded-full overflow-hidden">
                   <motion.div
                     className="h-full rounded-full"
                     style={{ 
@@ -202,7 +202,7 @@ export function PointsDisplay({
   
   // Full variant - for profile or points page
   return (
-    <div className={`bg-gradient-to-br from-gray-900 to-black rounded-2xl p-6 border border-white/10 ${className}`}>
+    <div className={`bg-white rounded-2xl p-6 border border-slate-200 shadow-sm ${className}`}>
       {/* Current tier badge */}
       {showTier && (
         <div className="flex items-center gap-2 mb-4">
@@ -230,20 +230,20 @@ export function PointsDisplay({
         >
           {displayPoints.toLocaleString()}
         </motion.span>
-        <span className="text-white/60 text-lg">IQ points</span>
+        <span className="text-slate-500 text-lg">IQ points</span>
       </div>
       
       {/* Progress to next tier */}
       {nextTier && pointsToNext && (
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-white/60">Next: {nextTier.displayName}</span>
-            <span className="text-white/80 font-medium">
+            <span className="text-slate-500">Next: {nextTier.displayName}</span>
+            <span className="text-slate-700 font-medium">
               {pointsToNext.pointsNeeded.toLocaleString()} points to go
             </span>
           </div>
           
-          <div className="relative h-3 bg-white/10 rounded-full overflow-hidden">
+          <div className="relative h-3 bg-slate-100 rounded-full overflow-hidden">
             <motion.div
               className="absolute inset-y-0 left-0 rounded-full"
               style={{ 
@@ -279,7 +279,7 @@ export function PointsDisplay({
             >
               <TierIcon tier={currentTier.id} className="w-4 h-4" style={{ color: currentTier.color }} />
             </div>
-            <div className="flex-1 h-0.5 bg-white/10" />
+            <div className="flex-1 h-0.5 bg-slate-200" />
             <div 
               className="w-8 h-8 rounded-full flex items-center justify-center border-2"
               style={{ borderColor: nextTier.color, opacity: 0.5 }}
@@ -291,8 +291,8 @@ export function PointsDisplay({
       )}
       
       {/* Today's earnings */}
-      <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between text-sm">
-        <span className="text-white/60">Earned today</span>
+      <div className="mt-4 pt-4 border-t border-slate-200 flex items-center justify-between text-sm">
+        <span className="text-slate-500">Earned today</span>
         <span className="text-yellow-400 font-medium">+{state.pointsEarnedToday} pts</span>
       </div>
     </div>
@@ -316,13 +316,13 @@ export function TierUnlockNotification({
   
   return (
     <motion.div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
       <motion.div
-        className="relative bg-gradient-to-br from-gray-900 to-black rounded-3xl p-8 max-w-md w-full border border-white/20 overflow-hidden"
+        className="relative bg-white rounded-3xl p-8 max-w-md w-full border border-slate-200 shadow-xl overflow-hidden"
         initial={{ scale: 0.8, y: 50 }}
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.8, y: 50 }}
@@ -377,7 +377,7 @@ export function TierUnlockNotification({
             <TierIcon tier={tierConfig.id} className="w-10 h-10" style={{ color: tierConfig.color }} />
           </motion.div>
           
-          <h2 className="text-2xl font-bold text-white mb-2">
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">
             Tier Unlocked!
           </h2>
           
@@ -388,7 +388,7 @@ export function TierUnlockNotification({
             {tierConfig.displayName}
           </p>
           
-          <p className="text-white/70 mb-6">
+          <p className="text-slate-600 mb-6">
             You&apos;ve earned access to {tierConfig.name} features!
             Activate now or save it for later.
           </p>
@@ -396,13 +396,13 @@ export function TierUnlockNotification({
           <div className="flex gap-3">
             <button
               onClick={onDismiss}
-              className="flex-1 py-3 px-4 rounded-xl bg-white/10 text-white font-medium hover:bg-white/20 transition-colors"
+              className="flex-1 py-3 px-4 rounded-xl bg-slate-100 text-slate-700 font-medium hover:bg-slate-200 transition-colors"
             >
               Save for Later
             </button>
             <button
               onClick={onActivate}
-              className="flex-1 py-3 px-4 rounded-xl font-medium text-black transition-colors"
+              className="flex-1 py-3 px-4 rounded-xl font-medium text-white transition-colors"
               style={{ backgroundColor: tierConfig.color }}
             >
               Activate Now
@@ -424,7 +424,7 @@ export function NextUnlockProgress({ className = '' }: { className?: string }) {
   
   if (!pointsToNext || !nextTier) {
     return (
-      <div className={`text-center text-white/60 ${className}`}>
+      <div className={`text-center text-slate-500 ${className}`}>
         <Trophy className="w-6 h-6 mx-auto mb-1 text-yellow-400" />
         <span className="text-sm">Max tier reached!</span>
       </div>
@@ -435,7 +435,7 @@ export function NextUnlockProgress({ className = '' }: { className?: string }) {
     <div className={`flex items-center gap-3 ${className}`}>
       <div className="flex-1">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-xs text-white/60">Next unlock</span>
+          <span className="text-xs text-slate-500">Next unlock</span>
           <span 
             className="text-xs font-medium flex items-center gap-1"
             style={{ color: nextTier.color }}
@@ -444,7 +444,7 @@ export function NextUnlockProgress({ className = '' }: { className?: string }) {
             {nextTier.displayName}
           </span>
         </div>
-        <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
           <motion.div
             className="h-full rounded-full"
             style={{ backgroundColor: nextTier.color }}
@@ -465,8 +465,8 @@ export function NextUnlockProgress({ className = '' }: { className?: string }) {
         </div>
       </div>
       <div className="text-right">
-        <span className="text-lg font-bold text-white">{pointsToNext.pointsNeeded}</span>
-        <span className="text-xs text-white/60 block">pts away</span>
+        <span className="text-lg font-bold text-slate-900">{pointsToNext.pointsNeeded}</span>
+        <span className="text-xs text-slate-500 block">pts away</span>
       </div>
     </div>
   )

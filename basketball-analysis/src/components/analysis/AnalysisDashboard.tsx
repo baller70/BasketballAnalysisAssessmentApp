@@ -147,10 +147,10 @@ function getBarColors(score: number) {
     border: isGood ? "#22c55e" : "#ef4444",
     bg: isGood ? "from-green-500 to-green-600" : "from-red-500 to-red-600",
     glow: isGood ? "shadow-green-500/50" : "shadow-red-500/50",
-    text: isGood ? "text-green-400" : "text-red-400",
+    text: isGood ? "text-green-600" : "text-red-500",
     badge: isGood
-      ? <span className="bg-green-500/20 text-green-400 px-2 py-0.5 rounded text-xs">Good</span>
-      : <span className="bg-red-500/20 text-red-400 px-2 py-0.5 rounded text-xs">Needs Work</span>
+      ? <span className="bg-green-50 text-green-600 border border-green-200 px-2 py-0.5 rounded text-xs">Good</span>
+      : <span className="bg-red-50 text-red-500 border border-red-200 px-2 py-0.5 rounded text-xs">Needs Work</span>
   }
 }
 
@@ -179,7 +179,7 @@ function GameStyleProgressBar({
         style={{ borderLeft: `3px solid ${colors.border}`, borderRight: `3px solid ${colors.border}` }}
       >
         {/* Background (unfilled) with gray stripes */}
-        <div className="absolute inset-0 bg-[#1a1a1a]">
+        <div className="absolute inset-0 bg-slate-100">
           <div
             className="absolute inset-0 opacity-40"
             style={{
@@ -187,15 +187,15 @@ function GameStyleProgressBar({
                 -60deg,
                 transparent,
                 transparent 2px,
-                #333 2px,
-                #333 4px
+                #cbd5e1 2px,
+                #cbd5e1 4px
               )`
             }}
           />
           {/* Segment dividers */}
           <div className="absolute inset-0 flex">
             {Array.from({ length: segments }).map((_, i) => (
-              <div key={i} className="flex-1 border-r border-[#2a2a2a]/50 last:border-r-0" />
+              <div key={i} className="flex-1 border-r border-slate-200/50 last:border-r-0" />
             ))}
           </div>
         </div>
@@ -246,7 +246,7 @@ function GameStyleProgressBar({
       </div>
 
       {/* Optimal range text */}
-      <p className="text-[#888] text-xs flex items-center gap-1">
+      <p className="text-slate-400 text-xs flex items-center gap-1">
         <span className="w-2 h-0.5 bg-[#FF6B35]/60 inline-block" />
         Optimal: {optimalMin}{unit} - {optimalMax}{unit}
       </p>
@@ -285,7 +285,7 @@ function BenchmarkComparison({
   const currentPos = getPosition(currentValue);
 
   return (
-    <div className="mt-3 pt-3 border-t border-[#2a2a2a]">
+    <div className="mt-3 pt-3 border-t border-slate-200">
       {/* Simple title that kids can understand */}
       <div className="text-[#FF6B35] text-xs font-bold mb-2 flex items-center gap-1">
         <BarChart2 className="w-4 h-4 mr-1" />
@@ -300,7 +300,7 @@ function BenchmarkComparison({
           border: `1px solid ${closestBenchmark.color}40`
         }}
       >
-        <span className="text-white text-xs flex items-center gap-1"><CircleDot className="w-4 h-4 mr-1" /> Your Level:</span>
+        <span className="text-slate-700 text-xs flex items-center gap-1"><CircleDot className="w-4 h-4 mr-1" /> Your Level:</span>
         <div
           className="flex items-center gap-1.5 px-2 py-1 rounded font-bold text-sm"
           style={{
@@ -316,12 +316,12 @@ function BenchmarkComparison({
 
       {/* Scale labels: Beginner to Advanced */}
       <div className="flex justify-between items-center mb-1 px-1">
-        <span className="text-[10px] text-[#888]">← Beginner</span>
-        <span className="text-[10px] text-[#888]">Advanced →</span>
+        <span className="text-[10px] text-slate-400">← Beginner</span>
+        <span className="text-[10px] text-slate-400">Advanced →</span>
       </div>
 
       {/* Benchmark scale bar */}
-      <div className="relative h-8 bg-[#1a1a1a] rounded overflow-visible">
+      <div className="relative h-8 bg-slate-100 rounded overflow-visible">
         {/* Background gradient showing progression */}
         <div
           className="absolute inset-0 opacity-20 rounded"
@@ -382,7 +382,7 @@ function BenchmarkComparison({
           style={{ left: `${currentPos}%`, transform: 'translateX(-50%) translateY(-50%)' }}
         >
           <div
-            className="w-4 h-4 rotate-45 border-2 border-[#FF6B35] bg-[#050505]"
+            className="w-4 h-4 rotate-45 border-2 border-[#FF6B35] bg-white"
             style={{ boxShadow: '0 0 12px rgba(255,215,0,0.6)' }}
           />
         </div>
@@ -404,7 +404,7 @@ function BenchmarkComparison({
               >
                 {benchmark.label}
               </span>
-              <span className="text-[8px] text-[#666]">
+              <span className="text-[8px] text-slate-400">
                 {benchmark.data[measurementKey]}{unit}
               </span>
             </div>
@@ -413,14 +413,14 @@ function BenchmarkComparison({
       </div>
 
       {/* Simple legend explaining the markers */}
-      <div className="mt-3 pt-2 border-t border-[#2a2a2a]/50 flex flex-wrap gap-x-4 gap-y-1">
+      <div className="mt-3 pt-2 border-t border-slate-200/50 flex flex-wrap gap-x-4 gap-y-1">
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rotate-45 border border-[#FF6B35] bg-[#050505]" />
-          <span className="text-[9px] text-[#888]">= Your measurement</span>
+          <div className="w-3 h-3 rotate-45 border border-[#FF6B35] bg-white" />
+          <span className="text-[9px] text-slate-400">= Your measurement</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-0.5 h-3 bg-[#888]" />
-          <span className="text-[9px] text-[#888]">= Average for each level</span>
+          <div className="w-0.5 h-3 bg-slate-400" />
+          <span className="text-[9px] text-slate-400">= Average for each level</span>
         </div>
       </div>
     </div>
@@ -567,21 +567,21 @@ function EducationalGuide({ isOpen, onToggle }: { isOpen: boolean; onToggle: () 
   }
 
   return (
-    <div className="mt-6 border border-[#3a3a3a] rounded-xl overflow-hidden bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d]">
+    <div className="mt-6 border border-slate-200 rounded-xl overflow-hidden bg-white">
       {/* Header - Always Visible */}
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-[#2a2a2a] to-[#1a1a1a] hover:from-[#333] hover:to-[#222] transition-all duration-300 group"
+        className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-all duration-300 group"
       >
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-[#FF6B35]/10 flex items-center justify-center border border-[#FF6B35]/30 group-hover:border-[#FF6B35]/50 transition-all">
             <BookOpen className="w-5 h-5 text-[#FF6B35]" />
           </div>
           <div className="text-left">
-            <h3 className="font-russo text-lg text-[#FF6B35] uppercase tracking-wider" style={{ textShadow: '0 0 15px rgba(255, 215, 0, 0.25)' }}>
+            <h3 className="font-russo text-lg text-[#FF6B35] uppercase tracking-wider">
               Understanding Your Metrics
             </h3>
-            <p className="text-[#888] text-xs">Learn what each measurement means in simple terms</p>
+            <p className="text-slate-400 text-xs">Learn what each measurement means in simple terms</p>
           </div>
         </div>
         <ChevronDown className={`w-5 h-5 text-[#FF6B35] transition-transform duration-300 ${isOpen ? 'rotate-0' : '-rotate-90'}`} />
@@ -597,7 +597,7 @@ function EducationalGuide({ isOpen, onToggle }: { isOpen: boolean; onToggle: () 
               <Bone className="w-4 h-4 text-[#FF6B35]" />
               <h4 className="font-russo text-sm text-[#FF6B35] uppercase tracking-wider">Joint Angles Explained</h4>
             </div>
-            <p className="text-[#aaa] text-sm mb-4 leading-relaxed">
+            <p className="text-slate-500 text-sm mb-4 leading-relaxed">
               Your body is like a machine with many moving parts. Each joint angle affects how your shot travels to the basket.
               Click on any angle below to learn more!
             </p>
@@ -605,31 +605,31 @@ function EducationalGuide({ isOpen, onToggle }: { isOpen: boolean; onToggle: () 
             {/* Metric Cards Grid */}
             <div className="grid grid-cols-1 gap-3">
               {Object.entries(METRIC_GUIDES).map(([key, guide]) => (
-                <div key={key} className="border border-[#3a3a3a] rounded-lg overflow-hidden bg-[#1a1a1a]/50">
+                <div key={key} className="border border-slate-200 rounded-lg overflow-hidden bg-white">
                   {/* Metric Header */}
                   <button
                     onClick={() => setActiveMetric(activeMetric === key ? null : key)}
-                    className="w-full flex items-center justify-between p-3 hover:bg-[#2a2a2a]/50 transition-all"
+                    className="w-full flex items-center justify-between p-3 hover:bg-slate-50 transition-all"
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg bg-[#FF6B35]/10 flex items-center justify-center border border-[#FF6B35]/20">
                         {getMetricIcon(guide.icon)}
                       </div>
-                      <span className="text-[#E5E5E5] font-bold uppercase text-sm">{guide.name}</span>
+                      <span className="text-slate-900 font-bold uppercase text-sm">{guide.name}</span>
                     </div>
-                    <ChevronDown className={`w-4 h-4 text-[#888] transition-transform duration-300 ${activeMetric === key ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${activeMetric === key ? 'rotate-180' : ''}`} />
                   </button>
 
                   {/* Expanded Content */}
                   <div className={`overflow-hidden transition-all duration-300 ${activeMetric === key ? 'max-h-[1000px]' : 'max-h-0'}`}>
-                    <div className="p-4 pt-0 space-y-4 border-t border-[#2a2a2a]">
+                    <div className="p-4 pt-0 space-y-4 border-t border-slate-200">
                       {/* Why It Matters */}
                       <div>
                         <div className="flex items-center gap-2 mb-2">
                           <Lightbulb className="w-4 h-4 text-orange-400" />
                           <span className="text-orange-400 text-xs font-bold uppercase tracking-wider">Why It Matters</span>
                         </div>
-                        <p className="text-[#ccc] text-sm leading-relaxed">{guide.whyItMatters}</p>
+                        <p className="text-slate-600 text-sm leading-relaxed">{guide.whyItMatters}</p>
                       </div>
 
                       {/* Range Indicators */}
@@ -638,27 +638,27 @@ function EducationalGuide({ isOpen, onToggle }: { isOpen: boolean; onToggle: () 
                         <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
                           <div className="flex items-center gap-2 mb-1">
                             <div className="w-3 h-3 rounded-full bg-green-500" />
-                            <span className="text-green-400 text-xs font-bold uppercase">Optimal: {guide.optimal.min}° - {guide.optimal.max}°</span>
+                            <span className="text-green-600 text-xs font-bold uppercase">Optimal: {guide.optimal.min}° - {guide.optimal.max}°</span>
                           </div>
-                          <p className="text-green-400/80 text-xs leading-relaxed">{guide.optimal.description}</p>
+                          <p className="text-green-600/80 text-xs leading-relaxed">{guide.optimal.description}</p>
                         </div>
 
                         {/* Acceptable */}
                         <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3">
                           <div className="flex items-center gap-2 mb-1">
                             <div className="w-3 h-3 rounded-full bg-orange-500" />
-                            <span className="text-orange-400 text-xs font-bold uppercase">Acceptable: {guide.acceptable.min}° - {guide.acceptable.max}°</span>
+                            <span className="text-orange-500 text-xs font-bold uppercase">Acceptable: {guide.acceptable.min}° - {guide.acceptable.max}°</span>
                           </div>
-                          <p className="text-orange-400/80 text-xs leading-relaxed">{guide.acceptable.description}</p>
+                          <p className="text-orange-500/80 text-xs leading-relaxed">{guide.acceptable.description}</p>
                         </div>
 
                         {/* Poor */}
                         <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
                           <div className="flex items-center gap-2 mb-1">
                             <div className="w-3 h-3 rounded-full bg-red-500" />
-                            <span className="text-red-400 text-xs font-bold uppercase">Needs Work: Outside ranges above</span>
+                            <span className="text-red-500 text-xs font-bold uppercase">Needs Work: Outside ranges above</span>
                           </div>
-                          <p className="text-red-400/80 text-xs leading-relaxed">{guide.poor.description}</p>
+                          <p className="text-red-500/80 text-xs leading-relaxed">{guide.poor.description}</p>
                         </div>
                       </div>
 
@@ -678,7 +678,7 @@ function EducationalGuide({ isOpen, onToggle }: { isOpen: boolean; onToggle: () 
           </div>
 
           {/* Divider */}
-          <div className="border-t border-[#3a3a3a]" />
+          <div className="border-t border-slate-200" />
 
           {/* Skill Levels Section */}
           <div>
@@ -686,7 +686,7 @@ function EducationalGuide({ isOpen, onToggle }: { isOpen: boolean; onToggle: () 
               <GraduationCap className="w-4 h-4 text-[#FF6B35]" />
               <h4 className="font-russo text-sm text-[#FF6B35] uppercase tracking-wider">Skill Level Guide</h4>
             </div>
-            <p className="text-[#aaa] text-sm mb-4 leading-relaxed">
+            <p className="text-slate-500 text-sm mb-4 leading-relaxed">
               We compare your shooting form to players at different skill levels. Here&apos;s what each level means and what you can expect at each stage of your basketball journey!
             </p>
 
@@ -707,24 +707,24 @@ function EducationalGuide({ isOpen, onToggle }: { isOpen: boolean; onToggle: () 
                         {getLevelIcon(level.icon)}
                       </div>
                       <div className="text-left">
-                        <span className="text-[#E5E5E5] font-bold uppercase text-sm">{level.level}</span>
+                        <span className="text-slate-900 font-bold uppercase text-sm">{level.level}</span>
                         <p className="text-xs" style={{ color: level.color }}>{level.stage}</p>
                       </div>
                     </div>
-                    <ChevronDown className={`w-4 h-4 text-[#888] transition-transform duration-300 ${activeLevel === idx ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${activeLevel === idx ? 'rotate-180' : ''}`} />
                   </button>
 
                   {/* Expanded Content */}
                   <div className={`overflow-hidden transition-all duration-300 ${activeLevel === idx ? 'max-h-[500px]' : 'max-h-0'}`}>
-                    <div className="p-4 pt-0 space-y-3 border-t border-[#2a2a2a]/50">
-                      <p className="text-[#ccc] text-sm leading-relaxed">{level.description}</p>
+                    <div className="p-4 pt-0 space-y-3 border-t border-slate-200/50">
+                      <p className="text-slate-600 text-sm leading-relaxed">{level.description}</p>
 
                       {/* What to Expect */}
                       <div>
-                        <span className="text-[#888] text-xs font-bold uppercase tracking-wider">What to Expect:</span>
+                        <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">What to Expect:</span>
                         <ul className="mt-2 space-y-1">
                           {level.whatToExpect.map((item, i) => (
-                            <li key={i} className="flex items-start gap-2 text-[#aaa] text-xs">
+                            <li key={i} className="flex items-start gap-2 text-slate-500 text-xs">
                               <span className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: level.color }} />
                               {item}
                             </li>
@@ -733,7 +733,7 @@ function EducationalGuide({ isOpen, onToggle }: { isOpen: boolean; onToggle: () 
                       </div>
 
                       {/* Encouragement */}
-                      <div className="bg-black/20 rounded-lg p-3 border-l-2" style={{ borderColor: level.color }}>
+                      <div className="bg-slate-50 rounded-lg p-3 border-l-2" style={{ borderColor: level.color }}>
                         <p className="text-sm italic" style={{ color: level.color }}>&quot;{level.encouragement}&quot;</p>
                       </div>
                     </div>
@@ -750,19 +750,19 @@ function EducationalGuide({ isOpen, onToggle }: { isOpen: boolean; onToggle: () 
               <span className="font-russo text-sm text-[#FF6B35] uppercase tracking-wider">Remember!</span>
             </div>
             <ul className="space-y-2">
-              <li className="flex items-start gap-2 text-[#ccc] text-sm">
+              <li className="flex items-start gap-2 text-slate-600 text-sm">
                 <span className="text-[#FF6B35] mt-0.5">•</span>
                 <span>Everyone&apos;s body is different! These ranges are guidelines, not rules set in stone.</span>
               </li>
-              <li className="flex items-start gap-2 text-[#ccc] text-sm">
+              <li className="flex items-start gap-2 text-slate-600 text-sm">
                 <span className="text-[#FF6B35] mt-0.5">•</span>
                 <span>The best shooters focus on one thing at a time. Don&apos;t try to fix everything at once!</span>
               </li>
-              <li className="flex items-start gap-2 text-[#ccc] text-sm">
+              <li className="flex items-start gap-2 text-slate-600 text-sm">
                 <span className="text-[#FF6B35] mt-0.5">•</span>
                 <span>Consistent practice beats perfect practice. 50 okay shots beat 5 perfect shots.</span>
               </li>
-              <li className="flex items-start gap-2 text-[#ccc] text-sm">
+              <li className="flex items-start gap-2 text-slate-600 text-sm">
                 <span className="text-[#FF6B35] mt-0.5">•</span>
                 <span>Your shot will feel weird when you change it - that&apos;s normal! Give it time.</span>
               </li>
@@ -791,7 +791,7 @@ function CollapsibleSectionHeader({
   return (
     <button
       onClick={onToggle}
-      className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-[#2a2a2a] to-[#1a1a1a] rounded-t-lg border-b border-[#FF6B35]/30 hover:from-[#333] hover:to-[#222] transition-all duration-300 group"
+      className="w-full flex items-center justify-between p-4 bg-slate-50 rounded-t-lg border-b border-slate-200 hover:bg-slate-100 transition-all duration-300 group"
     >
       <div className="flex items-center gap-4">
         {/* Icon with glow */}
@@ -802,7 +802,7 @@ function CollapsibleSectionHeader({
           <h3 className="font-russo text-2xl text-[#FF6B35] uppercase tracking-wider" style={{ textShadow: '0 0 20px rgba(255, 215, 0, 0.3)' }}>
             {title}
           </h3>
-          {subtitle && <p className="text-[#888] text-xs uppercase tracking-wider">{subtitle}</p>}
+          {subtitle && <p className="text-slate-400 text-xs uppercase tracking-wider">{subtitle}</p>}
         </div>
       </div>
       {/* Animated Arrow */}
@@ -835,11 +835,11 @@ function CollapsibleMetricItem({
   const metricName = range.label.split(' (')[0]
 
   return (
-    <div className="border border-[#FF6B35]/30 rounded-lg overflow-hidden bg-[#1a1a1a]/50 hover:border-[#FF6B35]/50 transition-all">
+    <div className="border border-slate-200 rounded-lg overflow-hidden bg-white hover:border-slate-300 transition-all">
       {/* Metric Header - Clickable */}
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-[#1a1a1a] to-[#0a0a0a] hover:from-[#222] hover:to-[#111] transition-all duration-300 group"
+        className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-all duration-300 group"
       >
         <div className="flex items-center gap-3">
           {/* Animated Arrow */}
@@ -866,10 +866,10 @@ function CollapsibleMetricItem({
       <div
         className={`overflow-hidden transition-all duration-400 ease-in-out ${isOpen ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'}`}
       >
-        <div className="p-4 pt-2 space-y-3 border-t border-[#2a2a2a]">
+        <div className="p-4 pt-2 space-y-3 border-t border-slate-200">
           {/* Score Display */}
           <div className="flex items-center justify-between text-sm">
-            <span className="text-[#888]">Score:</span>
+            <span className="text-slate-400">Score:</span>
             <span className={`font-bold ${colors.text}`}>{Math.round(score)}%</span>
           </div>
 
@@ -944,32 +944,32 @@ export function AnalysisDashboard({ measurements }: AnalysisDashboardProps) {
   return (
     <div className="space-y-6">
       {/* Summary Stats Banner */}
-      <div className="bg-gradient-to-r from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a] rounded-xl p-6 border border-[#3a3a3a]">
+      <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-6">
             <div className="text-center">
               <p className="text-4xl font-black text-[#FF6B35]" style={{ textShadow: '0 0 20px rgba(255, 215, 0, 0.4)' }}>
                 {goodCount + needsWorkCount}
               </p>
-              <p className="text-[#888] text-xs uppercase tracking-wider">Total Metrics</p>
+              <p className="text-slate-400 text-xs uppercase tracking-wider">Total Metrics</p>
             </div>
-            <div className="w-px h-12 bg-[#3a3a3a]" />
+            <div className="w-px h-12 bg-slate-200" />
             <div className="flex gap-4">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-green-400 font-bold text-xl">{goodCount}</span>
-                <span className="text-[#888] text-sm">Good</span>
+                <span className="text-green-600 font-bold text-xl">{goodCount}</span>
+                <span className="text-slate-400 text-sm">Good</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
-                <span className="text-red-400 font-bold text-xl">{needsWorkCount}</span>
-                <span className="text-[#888] text-sm">Needs Work</span>
+                <span className="text-red-500 font-bold text-xl">{needsWorkCount}</span>
+                <span className="text-slate-400 text-sm">Needs Work</span>
               </div>
             </div>
           </div>
           <div className="text-right">
-            <p className="text-[#888] text-xs uppercase tracking-wider mb-1">Overall Score</p>
-            <p className={`text-3xl font-black ${Math.round((goodCount / (goodCount + needsWorkCount)) * 100) >= 65 ? 'text-green-400' : 'text-red-400'}`}>
+            <p className="text-slate-400 text-xs uppercase tracking-wider mb-1">Overall Score</p>
+            <p className={`text-3xl font-black ${Math.round((goodCount / (goodCount + needsWorkCount)) * 100) >= 65 ? 'text-green-600' : 'text-red-500'}`}>
               {Math.round((goodCount / (goodCount + needsWorkCount)) * 100)}%
             </p>
           </div>
@@ -978,7 +978,7 @@ export function AnalysisDashboard({ measurements }: AnalysisDashboardProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Joint Angles Section - Collapsible with nested metric dropdowns */}
-        <div className="bg-[#3a3a3a] rounded-xl overflow-hidden shadow-lg" style={{ boxShadow: '0 0 30px rgba(0, 0, 0, 0.5)' }}>
+        <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-slate-200">
           <CollapsibleSectionHeader
             title="Joint Angles"
             subtitle={`Average Score: ${jointAngleAvg}%`}
@@ -1018,7 +1018,7 @@ export function AnalysisDashboard({ measurements }: AnalysisDashboardProps) {
         </div>
 
         {/* Release Metrics Section - Collapsible with nested metric dropdowns */}
-        <div className="bg-[#3a3a3a] rounded-xl overflow-hidden shadow-lg" style={{ boxShadow: '0 0 30px rgba(0, 0, 0, 0.5)' }}>
+        <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-slate-200">
           <CollapsibleSectionHeader
             title="Release Metrics"
             subtitle={`Average Score: ${releaseMetricAvg}%`}
@@ -1055,19 +1055,19 @@ export function AnalysisDashboard({ measurements }: AnalysisDashboardProps) {
               })}
 
               {/* Summary Stats Panel */}
-              <div className="mt-4 pt-4 border-t border-[#4a4a4a]">
+              <div className="mt-4 pt-4 border-t border-slate-200">
                 <div className="flex items-center gap-2 mb-4">
                   <BarChart2 className="w-5 h-5 text-[#FF6B35]" />
                   <h4 className="font-russo text-[#FF6B35] text-sm uppercase tracking-wider">Quick Summary</h4>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-gradient-to-br from-green-500/20 to-green-600/10 rounded-lg p-4 border border-green-500/30 hover:border-green-400/50 transition-all">
-                    <p className="text-green-400 text-3xl font-black">{goodCount}</p>
-                    <p className="text-green-400/70 text-xs uppercase tracking-wider">Good (≥65)</p>
+                    <p className="text-green-600 text-3xl font-black">{goodCount}</p>
+                    <p className="text-green-600/70 text-xs uppercase tracking-wider">Good (≥65)</p>
                   </div>
                   <div className="bg-gradient-to-br from-red-500/20 to-red-600/10 rounded-lg p-4 border border-red-500/30 hover:border-red-400/50 transition-all">
-                    <p className="text-red-400 text-3xl font-black">{needsWorkCount}</p>
-                    <p className="text-red-400/70 text-xs uppercase tracking-wider">Needs Work (&lt;65)</p>
+                    <p className="text-red-500 text-3xl font-black">{needsWorkCount}</p>
+                    <p className="text-red-500/70 text-xs uppercase tracking-wider">Needs Work (&lt;65)</p>
                   </div>
                 </div>
               </div>

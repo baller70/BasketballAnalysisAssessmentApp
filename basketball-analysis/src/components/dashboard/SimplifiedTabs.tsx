@@ -58,10 +58,10 @@ const getBarColor = (score: number) => {
 }
 
 const getTextColor = (score: number) => {
-  if (score >= 80) return 'text-green-400'
+  if (score >= 80) return 'text-green-600'
   if (score >= 70) return 'text-[#FF6B35]'
-  if (score >= 60) return 'text-orange-400'
-  return 'text-orange-400'
+  if (score >= 60) return 'text-orange-500'
+  return 'text-orange-500'
 }
 
 const getKidStars = (score: number) => {
@@ -80,7 +80,7 @@ function StarRating({ count, max = 5, size = 'sm' }: { count: number, max?: numb
       {[...Array(max)].map((_, i) => (
         <Star 
           key={i} 
-          className={`${sizeClasses[size]} ${i < count ? 'text-[#FF6B35] fill-[#FF6B35]' : 'text-[#3a3a3a]'}`}
+          className={`${sizeClasses[size]} ${i < count ? 'text-[#FF6B35] fill-[#FF6B35]' : 'text-slate-200'}`}
         />
       ))}
     </div>
@@ -92,7 +92,7 @@ function HorizontalBar({ label, value, maxValue = 100, showGrade = false }: { la
   return (
     <div className="space-y-1">
       <div className="flex justify-between items-center">
-        <span className="text-[#888] text-xs uppercase tracking-wider">{label}</span>
+        <span className="text-slate-400 text-xs uppercase tracking-wider">{label}</span>
         <div className="flex items-center gap-2">
           <span className={`text-sm font-bold ${getTextColor(value)}`}>{value}</span>
           {showGrade && (
@@ -102,7 +102,7 @@ function HorizontalBar({ label, value, maxValue = 100, showGrade = false }: { la
           )}
         </div>
       </div>
-      <div className="h-2 bg-[#2a2a2a] rounded-full overflow-hidden">
+      <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
         <div 
           className={`h-full rounded-full ${getBarColor(value)} transition-all duration-500`} 
           style={{ width: `${(value / maxValue) * 100}%` }} 
@@ -145,35 +145,35 @@ export function StandardBiomechanicalAnalysis({ analysisData }: { analysisData: 
     <div className="space-y-6">
       {/* Summary Cards */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-[#2a2a2a] rounded-lg p-4 border border-[#3a3a3a]">
+        <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[#888] text-xs uppercase">Upper Body</span>
+            <span className="text-slate-400 text-xs uppercase">Upper Body</span>
             <span className={`text-lg font-black ${getTextColor(upperAvg)}`}>{getGrade(upperAvg)}</span>
           </div>
-          <div className="text-3xl font-black text-white mb-2">{upperAvg}</div>
-          <div className="h-1.5 bg-[#1a1a1a] rounded-full overflow-hidden">
+          <div className="text-3xl font-black text-slate-900 mb-2">{upperAvg}</div>
+          <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
             <div className={`h-full rounded-full ${getBarColor(upperAvg)}`} style={{ width: `${upperAvg}%` }} />
           </div>
         </div>
         
-        <div className="bg-[#2a2a2a] rounded-lg p-4 border border-[#3a3a3a]">
+        <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[#888] text-xs uppercase">Lower Body</span>
+            <span className="text-slate-400 text-xs uppercase">Lower Body</span>
             <span className={`text-lg font-black ${getTextColor(lowerAvg)}`}>{getGrade(lowerAvg)}</span>
           </div>
-          <div className="text-3xl font-black text-white mb-2">{lowerAvg}</div>
-          <div className="h-1.5 bg-[#1a1a1a] rounded-full overflow-hidden">
+          <div className="text-3xl font-black text-slate-900 mb-2">{lowerAvg}</div>
+          <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
             <div className={`h-full rounded-full ${getBarColor(lowerAvg)}`} style={{ width: `${lowerAvg}%` }} />
           </div>
         </div>
         
-        <div className="bg-[#2a2a2a] rounded-lg p-4 border border-[#3a3a3a]">
+        <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[#888] text-xs uppercase">Release</span>
+            <span className="text-slate-400 text-xs uppercase">Release</span>
             <span className={`text-lg font-black ${getTextColor(releaseAvg)}`}>{getGrade(releaseAvg)}</span>
           </div>
-          <div className="text-3xl font-black text-white mb-2">{releaseAvg}</div>
-          <div className="h-1.5 bg-[#1a1a1a] rounded-full overflow-hidden">
+          <div className="text-3xl font-black text-slate-900 mb-2">{releaseAvg}</div>
+          <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
             <div className={`h-full rounded-full ${getBarColor(releaseAvg)}`} style={{ width: `${releaseAvg}%` }} />
           </div>
         </div>
@@ -182,7 +182,7 @@ export function StandardBiomechanicalAnalysis({ analysisData }: { analysisData: 
       {/* Detailed Breakdown */}
       <div className="grid grid-cols-3 gap-4">
         {/* Upper Body Details */}
-        <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
+        <div className="bg-slate-50 rounded-lg p-4 border border-slate-100">
           <h4 className="text-[#FF6B35] text-xs font-bold uppercase tracking-wider mb-4">Upper Body</h4>
           <div className="space-y-4">
             {upperBody.map((stat) => (
@@ -192,7 +192,7 @@ export function StandardBiomechanicalAnalysis({ analysisData }: { analysisData: 
         </div>
         
         {/* Lower Body Details */}
-        <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
+        <div className="bg-slate-50 rounded-lg p-4 border border-slate-100">
           <h4 className="text-[#FF6B35] text-xs font-bold uppercase tracking-wider mb-4">Lower Body</h4>
           <div className="space-y-4">
             {lowerBody.map((stat) => (
@@ -202,7 +202,7 @@ export function StandardBiomechanicalAnalysis({ analysisData }: { analysisData: 
         </div>
         
         {/* Release Details */}
-        <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
+        <div className="bg-slate-50 rounded-lg p-4 border border-slate-100">
           <h4 className="text-[#FF6B35] text-xs font-bold uppercase tracking-wider mb-4">Release</h4>
           <div className="space-y-4">
             {release.map((stat) => (
@@ -218,7 +218,7 @@ export function StandardBiomechanicalAnalysis({ analysisData }: { analysisData: 
           <Lightbulb className="w-5 h-5 text-[#FF6B35] flex-shrink-0 mt-0.5" />
           <div>
             <p className="text-[#FF6B35] font-bold text-sm mb-1">Quick Tip</p>
-            <p className="text-[#E5E5E5] text-sm">
+            <p className="text-slate-600 text-sm">
               {upperAvg < lowerAvg && upperAvg < releaseAvg
                 ? "Focus on your upper body mechanics - keep your elbow tucked and aligned with the basket."
                 : lowerAvg < releaseAvg
@@ -265,7 +265,7 @@ export function StandardPlayerAssessment({ analysisData, playerName }: { analysi
   return (
     <div className="space-y-6">
       {/* Level Card */}
-      <div className="bg-[#2a2a2a] rounded-lg p-5 border border-[#3a3a3a]">
+      <div className="bg-white rounded-lg p-5 border border-slate-200 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div 
@@ -275,14 +275,14 @@ export function StandardPlayerAssessment({ analysisData, playerName }: { analysi
               <LevelIcon className="w-8 h-8" style={{ color: level.color }} />
             </div>
             <div>
-              <p className="text-[#888] text-xs uppercase tracking-wider">Current Level</p>
+              <p className="text-slate-400 text-xs uppercase tracking-wider">Current Level</p>
               <h3 className="text-2xl font-black uppercase" style={{ color: level.color }}>{level.name}</h3>
-              <p className="text-[#888] text-sm">{playerName}</p>
+              <p className="text-slate-500 text-sm">{playerName}</p>
             </div>
           </div>
           <div className="text-right">
             <div className="text-4xl font-black" style={{ color: level.color }}>{score}</div>
-            <p className="text-[#888] text-xs uppercase">Overall</p>
+            <p className="text-slate-400 text-xs uppercase">Overall</p>
           </div>
         </div>
       </div>
@@ -290,18 +290,18 @@ export function StandardPlayerAssessment({ analysisData, playerName }: { analysi
       {/* Strengths & Weaknesses */}
       <div className="grid grid-cols-2 gap-4">
         {/* Strengths */}
-        <div className="bg-[#1a1a1a] rounded-lg p-4 border border-green-500/30">
+        <div className="bg-green-50 rounded-lg p-4 border border-green-200">
           <div className="flex items-center gap-2 mb-4">
-            <CheckCircle2 className="w-5 h-5 text-green-400" />
-            <h4 className="text-green-400 font-bold text-sm uppercase">Strengths</h4>
+            <CheckCircle2 className="w-5 h-5 text-green-600" />
+            <h4 className="text-green-600 font-bold text-sm uppercase">Strengths</h4>
           </div>
           <div className="space-y-3">
             {strengths.map((stat) => (
-              <div key={stat.name} className="flex items-center justify-between bg-[#2a2a2a] rounded-lg p-3">
-                <span className="text-white font-medium">{stat.name}</span>
+              <div key={stat.name} className="flex items-center justify-between bg-white rounded-lg p-3 border border-green-100">
+                <span className="text-slate-900 font-medium">{stat.name}</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-green-400 font-bold">{stat.value}</span>
-                  <span className={`text-xs px-1.5 py-0.5 rounded bg-green-500/20 text-green-400`}>
+                  <span className="text-green-600 font-bold">{stat.value}</span>
+                  <span className={`text-xs px-1.5 py-0.5 rounded bg-green-100 text-green-600`}>
                     {getGrade(stat.value)}
                   </span>
                 </div>
@@ -311,18 +311,18 @@ export function StandardPlayerAssessment({ analysisData, playerName }: { analysi
         </div>
         
         {/* Areas to Improve */}
-        <div className="bg-[#1a1a1a] rounded-lg p-4 border border-orange-500/30">
+        <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
           <div className="flex items-center gap-2 mb-4">
-            <TrendingUp className="w-5 h-5 text-orange-400" />
-            <h4 className="text-orange-400 font-bold text-sm uppercase">Focus Areas</h4>
+            <TrendingUp className="w-5 h-5 text-orange-500" />
+            <h4 className="text-orange-500 font-bold text-sm uppercase">Focus Areas</h4>
           </div>
           <div className="space-y-3">
             {weaknesses.map((stat) => (
-              <div key={stat.name} className="flex items-center justify-between bg-[#2a2a2a] rounded-lg p-3">
-                <span className="text-white font-medium">{stat.name}</span>
+              <div key={stat.name} className="flex items-center justify-between bg-white rounded-lg p-3 border border-orange-100">
+                <span className="text-slate-900 font-medium">{stat.name}</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-orange-400 font-bold">{stat.value}</span>
-                  <span className={`text-xs px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400`}>
+                  <span className="text-orange-500 font-bold">{stat.value}</span>
+                  <span className={`text-xs px-1.5 py-0.5 rounded bg-orange-100 text-orange-500`}>
                     {getGrade(stat.value)}
                   </span>
                 </div>
@@ -333,17 +333,17 @@ export function StandardPlayerAssessment({ analysisData, playerName }: { analysi
       </div>
 
       {/* Progress to Next Level */}
-      <div className="bg-[#2a2a2a] rounded-lg p-4 border border-[#3a3a3a]">
+      <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Activity className="w-5 h-5 text-[#FF6B35]" />
             <span className="text-[#FF6B35] font-bold text-sm uppercase">Next Level Progress</span>
           </div>
-          <span className="text-[#888] text-sm">
+          <span className="text-slate-500 text-sm">
             {score >= 85 ? 'Max Level!' : `${(score >= 75 ? 85 : score >= 65 ? 75 : score >= 55 ? 65 : 55) - score} pts to go`}
           </span>
         </div>
-        <div className="h-3 bg-[#1a1a1a] rounded-full overflow-hidden">
+        <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
           <div 
             className="h-full rounded-full bg-gradient-to-r from-[#FF6B35] to-[#FF4500]" 
             style={{ width: `${Math.min(100, ((score % 10) / 10) * 100 + 50)}%` }} 
@@ -381,10 +381,10 @@ export function StandardTrainingPlan({ analysisData }: { analysisData: Simplifie
       {/* Weekly Schedule */}
       <div className="grid grid-cols-3 gap-4">
         {days.map((d, i) => (
-          <div key={i} className="bg-[#2a2a2a] rounded-lg overflow-hidden border border-[#3a3a3a]">
-            <div className="px-4 py-3 border-b border-[#3a3a3a]" style={{ backgroundColor: `${d.color}15` }}>
+          <div key={i} className="bg-white rounded-lg overflow-hidden border border-slate-200 shadow-sm">
+            <div className="px-4 py-3 border-b border-slate-200" style={{ backgroundColor: `${d.color}10` }}>
               <div className="flex items-center justify-between">
-                <span className="text-white font-bold">{d.day}</span>
+                <span className="text-slate-900 font-bold">{d.day}</span>
                 <span className="text-xs px-2 py-1 rounded" style={{ backgroundColor: `${d.color}30`, color: d.color }}>
                   {d.focus}
                 </span>
@@ -393,13 +393,13 @@ export function StandardTrainingPlan({ analysisData }: { analysisData: Simplifie
             <div className="p-4 space-y-2">
               {d.exercises.map((ex, j) => (
                 <div key={j} className="flex items-center gap-2 text-sm">
-                  <CheckCircle2 className="w-4 h-4 text-[#3a3a3a]" />
-                  <span className="text-[#E5E5E5]">{ex}</span>
+                  <CheckCircle2 className="w-4 h-4 text-slate-300" />
+                  <span className="text-slate-600">{ex}</span>
                 </div>
               ))}
             </div>
-            <div className="px-4 py-2 bg-[#1a1a1a] border-t border-[#3a3a3a]">
-              <div className="flex items-center gap-1 text-[#888] text-xs">
+            <div className="px-4 py-2 bg-slate-50 border-t border-slate-100">
+              <div className="flex items-center gap-1 text-slate-400 text-xs">
                 <Clock className="w-3 h-3" />
                 <span>~20 min</span>
               </div>
@@ -410,21 +410,21 @@ export function StandardTrainingPlan({ analysisData }: { analysisData: Simplifie
 
       {/* Focus Drills */}
       {allStats.length > 0 && (
-        <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
+        <div className="bg-slate-50 rounded-lg p-4 border border-slate-100">
           <div className="flex items-center gap-2 mb-4">
             <Target className="w-5 h-5 text-[#FF6B35]" />
             <h4 className="text-[#FF6B35] font-bold text-sm uppercase">Extra Focus Drills</h4>
           </div>
           <div className="grid grid-cols-3 gap-3">
             {allStats.map((stat) => (
-              <div key={stat.name} className="bg-[#2a2a2a] rounded-lg p-3">
+              <div key={stat.name} className="bg-white rounded-lg p-3 border border-slate-200">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-white font-medium text-sm">{stat.name}</span>
+                  <span className="text-slate-900 font-medium text-sm">{stat.name}</span>
                   <span className={`text-xs ${getTextColor(stat.value)}`}>{stat.value}</span>
                 </div>
                 <ul className="space-y-1">
                   {stat.drills.map((drill, i) => (
-                    <li key={i} className="text-[#888] text-xs flex items-center gap-1">
+                    <li key={i} className="text-slate-500 text-xs flex items-center gap-1">
                       <ChevronRight className="w-3 h-3 text-[#FF6B35]" />
                       {drill}
                     </li>
@@ -437,12 +437,12 @@ export function StandardTrainingPlan({ analysisData }: { analysisData: Simplifie
       )}
 
       {/* Motivation */}
-      <div className="bg-gradient-to-r from-green-500/10 to-blue-500/10 rounded-lg p-4 border border-green-500/20">
+      <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-4 border border-green-200">
         <div className="flex items-center gap-3">
-          <Zap className="w-6 h-6 text-green-400" />
+          <Zap className="w-6 h-6 text-green-600" />
           <div>
-            <p className="text-white font-semibold">Consistency is key!</p>
-            <p className="text-[#888] text-sm">Practice 3 days a week and you&apos;ll see improvement in 2-3 weeks.</p>
+            <p className="text-slate-900 font-semibold">Consistency is key!</p>
+            <p className="text-slate-500 text-sm">Practice 3 days a week and you&apos;ll see improvement in 2-3 weeks.</p>
           </div>
         </div>
       </div>
@@ -469,8 +469,8 @@ export function BasicBiomechanicalAnalysis({ analysisData, playerName }: { analy
   return (
     <div className="space-y-6">
       {/* Big Score Display */}
-      <div className="bg-[#2a2a2a] rounded-lg p-6 border border-[#3a3a3a] text-center">
-        <p className="text-[#888] text-sm mb-2">Your Score</p>
+      <div className="bg-white rounded-lg p-6 border border-slate-200 shadow-sm text-center">
+        <p className="text-slate-400 text-sm mb-2">Your Score</p>
         <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-[#FF6B35]/20 to-[#FF6B35]/5 border-4 border-[#FF6B35]/50 mb-3">
           <span className="text-4xl font-black text-[#FF6B35]">{score}</span>
         </div>
@@ -485,11 +485,11 @@ export function BasicBiomechanicalAnalysis({ analysisData, playerName }: { analy
       {/* Category Cards */}
       <div className="grid grid-cols-3 gap-4">
         {categories.map((cat) => (
-          <div key={cat.name} className="bg-[#2a2a2a] rounded-lg p-4 border border-[#3a3a3a] text-center">
-            <p className="text-white font-bold text-lg mb-2">{cat.name}</p>
+          <div key={cat.name} className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm text-center">
+            <p className="text-slate-900 font-bold text-lg mb-2">{cat.name}</p>
             <div className="text-3xl font-black mb-2" style={{ color: cat.color }}>{cat.value}</div>
             <StarRating count={getKidStars(cat.value)} />
-            <div className="h-2 bg-[#1a1a1a] rounded-full overflow-hidden mt-3">
+            <div className="h-2 bg-slate-100 rounded-full overflow-hidden mt-3">
               <div 
                 className="h-full rounded-full" 
                 style={{ width: `${cat.value}%`, backgroundColor: cat.color }} 
@@ -507,7 +507,7 @@ export function BasicBiomechanicalAnalysis({ analysisData, playerName }: { analy
           </div>
           <div>
             <p className="text-[#FF6B35] font-bold">Great job, {playerName.split(' ')[0]}!</p>
-            <p className="text-[#E5E5E5] text-sm">
+            <p className="text-slate-600 text-sm">
               {categories.sort((a, b) => b.value - a.value)[0].name} is your best skill!
             </p>
           </div>
@@ -534,47 +534,47 @@ export function BasicPlayerAssessment({ analysisData, playerName }: { analysisDa
   return (
     <div className="space-y-6">
       {/* Level Card */}
-      <div className="bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a] rounded-lg p-6 border border-[#FF6B35]/30 text-center">
+      <div className="bg-gradient-to-br from-white to-slate-50 rounded-lg p-6 border border-[#FF6B35]/20 shadow-sm text-center">
         <div className="w-20 h-20 mx-auto rounded-full bg-[#FF6B35]/20 flex items-center justify-center mb-4">
           <Trophy className="w-10 h-10 text-[#FF6B35]" />
         </div>
-        <h2 className="text-3xl font-black text-white mb-2">{playerName.split(' ')[0]}</h2>
+        <h2 className="text-3xl font-black text-slate-900 mb-2">{playerName.split(' ')[0]}</h2>
         <p className="text-[#FF6B35] text-2xl font-black mb-4">{level}</p>
         <div className="flex justify-center mb-2">
           <StarRating count={stars} size="lg" />
         </div>
-        <p className="text-[#888]">{stars} out of 5 stars!</p>
+        <p className="text-slate-500">{stars} out of 5 stars!</p>
       </div>
 
       {/* What You're Good At */}
-      <div className="bg-[#2a2a2a] rounded-lg p-4 border border-green-500/30">
+      <div className="bg-green-50 rounded-lg p-4 border border-green-200">
         <div className="flex items-center gap-2 mb-4">
-          <CheckCircle2 className="w-5 h-5 text-green-400" />
-          <h3 className="text-green-400 font-bold">What You&apos;re Good At!</h3>
+          <CheckCircle2 className="w-5 h-5 text-green-600" />
+          <h3 className="text-green-600 font-bold">What You&apos;re Good At!</h3>
         </div>
         <div className="flex flex-wrap gap-2">
           {analysisData.shootingStats.form >= 70 && (
-            <span className="px-3 py-2 bg-green-500/20 rounded-lg text-green-400 text-sm font-medium">Strong Arms</span>
+            <span className="px-3 py-2 bg-green-100 rounded-lg text-green-600 text-sm font-medium">Strong Arms</span>
           )}
           {analysisData.shootingStats.balance >= 70 && (
-            <span className="px-3 py-2 bg-green-500/20 rounded-lg text-green-400 text-sm font-medium">Good Balance</span>
+            <span className="px-3 py-2 bg-green-100 rounded-lg text-green-600 text-sm font-medium">Good Balance</span>
           )}
           {analysisData.shootingStats.followThrough >= 70 && (
-            <span className="px-3 py-2 bg-green-500/20 rounded-lg text-green-400 text-sm font-medium">Nice Follow Through</span>
+            <span className="px-3 py-2 bg-green-100 rounded-lg text-green-600 text-sm font-medium">Nice Follow Through</span>
           )}
           {analysisData.shootingStats.arc >= 70 && (
-            <span className="px-3 py-2 bg-green-500/20 rounded-lg text-green-400 text-sm font-medium">Great Arc</span>
+            <span className="px-3 py-2 bg-green-100 rounded-lg text-green-600 text-sm font-medium">Great Arc</span>
           )}
         </div>
       </div>
 
       {/* Fun Fact */}
-      <div className="bg-[#2a2a2a] rounded-lg p-4 border border-[#3a3a3a]">
+      <div className="bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
         <div className="flex items-center gap-3">
           <Lightbulb className="w-8 h-8 text-[#FF6B35]" />
           <div>
-            <p className="text-white font-bold">Fun Fact!</p>
-            <p className="text-[#888] text-sm">
+            <p className="text-slate-900 font-bold">Fun Fact!</p>
+            <p className="text-slate-500 text-sm">
               {score >= 80 
                 ? "You&apos;re shooting like an NBA player! Keep it up!" 
                 : score >= 65 
@@ -603,16 +603,16 @@ export function BasicTrainingPlan({ analysisData: _analysisData, playerName }: {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-[#2a2a2a] rounded-lg p-5 border border-[#3a3a3a] text-center">
+      <div className="bg-white rounded-lg p-5 border border-slate-200 shadow-sm text-center">
         <Calendar className="w-10 h-10 text-[#FF6B35] mx-auto mb-2" />
         <h2 className="text-xl font-black text-[#FF6B35]">Practice Time!</h2>
-        <p className="text-[#888]">Fun drills to get better</p>
+        <p className="text-slate-500">Fun drills to get better</p>
       </div>
 
       {/* Drills */}
       <div className="space-y-3">
         {drills.map((drill) => (
-          <div key={drill.num} className="bg-[#2a2a2a] rounded-lg overflow-hidden border border-[#3a3a3a]">
+          <div key={drill.num} className="bg-white rounded-lg overflow-hidden border border-slate-200 shadow-sm">
             <div className="flex items-center gap-4 p-4">
               <div 
                 className="w-12 h-12 rounded-lg flex items-center justify-center text-xl font-black"
@@ -621,8 +621,8 @@ export function BasicTrainingPlan({ analysisData: _analysisData, playerName }: {
                 {drill.num}
               </div>
               <div className="flex-1">
-                <p className="text-white font-bold">{drill.name}</p>
-                <p className="text-[#888] text-sm">{drill.desc}</p>
+                <p className="text-slate-900 font-bold">{drill.name}</p>
+                <p className="text-slate-500 text-sm">{drill.desc}</p>
               </div>
               <div className="text-right">
                 <p className="font-bold" style={{ color: drill.color }}>{drill.count}</p>
@@ -633,23 +633,23 @@ export function BasicTrainingPlan({ analysisData: _analysisData, playerName }: {
       </div>
 
       {/* Tips */}
-      <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
+      <div className="bg-slate-50 rounded-lg p-4 border border-slate-100">
         <div className="flex items-center gap-2 mb-3">
           <Lightbulb className="w-5 h-5 text-[#FF6B35]" />
           <h4 className="text-[#FF6B35] font-bold">Remember!</h4>
         </div>
         <div className="grid grid-cols-3 gap-2">
-          <div className="bg-[#2a2a2a] p-3 rounded-lg text-center">
+          <div className="bg-white p-3 rounded-lg text-center border border-slate-200">
             <Target className="w-6 h-6 text-[#FF6B35] mx-auto mb-1" />
-            <p className="text-[#E5E5E5] text-xs">Look at basket</p>
+            <p className="text-slate-600 text-xs">Look at basket</p>
           </div>
-          <div className="bg-[#2a2a2a] p-3 rounded-lg text-center">
+          <div className="bg-white p-3 rounded-lg text-center border border-slate-200">
             <Activity className="w-6 h-6 text-[#FF6B35] mx-auto mb-1" />
-            <p className="text-[#E5E5E5] text-xs">Bend knees</p>
+            <p className="text-slate-600 text-xs">Bend knees</p>
           </div>
-          <div className="bg-[#2a2a2a] p-3 rounded-lg text-center">
+          <div className="bg-white p-3 rounded-lg text-center border border-slate-200">
             <Zap className="w-6 h-6 text-[#FF6B35] mx-auto mb-1" />
-            <p className="text-[#E5E5E5] text-xs">Follow through</p>
+            <p className="text-slate-600 text-xs">Follow through</p>
           </div>
         </div>
       </div>
@@ -658,7 +658,7 @@ export function BasicTrainingPlan({ analysisData: _analysisData, playerName }: {
       <div className="bg-gradient-to-r from-[#FF6B35]/10 to-[#FF6B35]/5 rounded-lg p-5 border border-[#FF6B35]/20 text-center">
         <Star className="w-10 h-10 text-[#FF6B35] mx-auto mb-2" />
         <p className="text-[#FF6B35] font-bold text-lg">You&apos;ve got this, {playerName.split(' ')[0]}!</p>
-        <p className="text-[#888] text-sm">Practice makes perfect!</p>
+        <p className="text-slate-500 text-sm">Practice makes perfect!</p>
       </div>
     </div>
   )

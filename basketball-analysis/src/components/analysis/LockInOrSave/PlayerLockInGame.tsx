@@ -57,8 +57,8 @@ function SPARStatBar({ name, current, max, playerName, playerAge = 34, playerSta
   const maxPercent = (max / 99) * 100
   const isGood = current >= 65
   const barColor = isGood
-    ? { border: "#22c55e", bg: "from-green-500 to-green-600", text: "text-green-400" }
-    : { border: "#ef4444", bg: "from-red-500 to-red-600", text: "text-red-400" }
+    ? { border: "#22c55e", bg: "from-green-500 to-green-600", text: "text-green-600" }
+    : { border: "#ef4444", bg: "from-red-500 to-red-600", text: "text-red-600" }
   const statKey = name.toLowerCase()
 
   const handleClick = () => {
@@ -68,18 +68,18 @@ function SPARStatBar({ name, current, max, playerName, playerAge = 34, playerSta
 
   return (
     <>
-      <div className="relative cursor-pointer hover:bg-[#4a4a4a]/30 rounded-lg p-1 -m-1 transition-colors" onClick={handleClick}>
+      <div className="relative cursor-pointer hover:bg-slate-100 rounded-lg p-1 -m-1 transition-colors" onClick={handleClick}>
         {/* Stat name label */}
         <div className="flex items-center gap-2 mb-1">
           <span className={`text-xs font-semibold uppercase tracking-wide ${barColor.text}`}>{name}</span>
         </div>
         {/* Bar container */}
         <div className="flex items-center gap-2">
-          <span className="text-lg font-bold text-white w-8 text-right">{current}</span>
+          <span className="text-lg font-bold text-slate-900 w-8 text-right">{current}</span>
           <div className="flex-1 h-5 relative overflow-hidden" style={{ borderLeft: `3px solid ${barColor.border}`, borderRight: `3px solid ${barColor.border}` }}>
             {/* Background with gray stripes */}
-            <div className="absolute inset-0 bg-[#1a1a1a]">
-              <div className="absolute inset-0 opacity-40" style={{ backgroundImage: `repeating-linear-gradient(-60deg, transparent, transparent 2px, #333 2px, #333 4px)` }} />
+            <div className="absolute inset-0 bg-slate-100">
+              <div className="absolute inset-0 opacity-20" style={{ backgroundImage: `repeating-linear-gradient(-60deg, transparent, transparent 2px, #cbd5e1 2px, #cbd5e1 4px)` }} />
             </div>
             {/* Filled portion with colored stripes */}
             <div className={`absolute inset-y-0 left-0 bg-gradient-to-r ${barColor.bg}`} style={{ width: `${fillPercent}%` }}>
@@ -87,9 +87,9 @@ function SPARStatBar({ name, current, max, playerName, playerAge = 34, playerSta
               <div className="absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-white/20 to-transparent" />
             </div>
             {/* Max indicator line */}
-            <div className="absolute top-0 bottom-0 w-0.5 bg-white/50" style={{ left: `${maxPercent}%` }} />
+            <div className="absolute top-0 bottom-0 w-0.5 bg-slate-400/50" style={{ left: `${maxPercent}%` }} />
           </div>
-          <div className="flex flex-col items-center w-8"><span className="text-sm font-bold text-[#888]">{max}</span><span className="text-[8px] text-[#666] uppercase">Max</span></div>
+          <div className="flex flex-col items-center w-8"><span className="text-sm font-bold text-slate-500">{max}</span><span className="text-[8px] text-slate-400 uppercase">Max</span></div>
         </div>
       </div>
       <StatPopup statKey={statKey} value={current} playerAge={playerAge} playerState={playerState} isOpen={showPopup} onClose={() => setShowPopup(false)} />
@@ -256,10 +256,10 @@ export function PlayerLockInGame({
   ]
   const getRating = (score: number) => {
     if (score >= 90) return { label: "Elite", color: "text-[#FF6B35]" }
-    if (score >= 80) return { label: "Excellent", color: "text-green-400" }
-    if (score >= 70) return { label: "Good", color: "text-blue-400" }
-    if (score >= 60) return { label: "Average", color: "text-orange-400" }
-    return { label: "Needs Work", color: "text-red-400" }
+    if (score >= 80) return { label: "Excellent", color: "text-green-600" }
+    if (score >= 70) return { label: "Good", color: "text-blue-600" }
+    if (score >= 60) return { label: "Average", color: "text-orange-500" }
+    return { label: "Needs Work", color: "text-red-500" }
   }
   const overallRating = getRating(overallScore)
   const consistencyRating = getRating(consistencyScore)
@@ -295,8 +295,8 @@ export function PlayerLockInGame({
     }
   }, [overallScore])
   
-  const msgBgClass = motivationalMessage.color === 'gold' ? 'from-[#FF6B35]/20 to-[#FF6B35]/5 border-[#FF6B35]/40' : motivationalMessage.color === 'green' ? 'from-green-500/20 to-green-500/5 border-green-500/40' : 'from-blue-500/20 to-blue-500/5 border-blue-500/40'
-  const msgTextClass = motivationalMessage.color === 'gold' ? 'text-[#FF6B35]' : motivationalMessage.color === 'green' ? 'text-green-400' : 'text-blue-400'
+  const msgBgClass = motivationalMessage.color === 'gold' ? 'from-[#FF6B35]/10 to-[#FF6B35]/5 border-[#FF6B35]/30' : motivationalMessage.color === 'green' ? 'from-green-50 to-green-50/50 border-green-200' : 'from-blue-50 to-blue-50/50 border-blue-200'
+  const msgTextClass = motivationalMessage.color === 'gold' ? 'text-[#FF6B35]' : motivationalMessage.color === 'green' ? 'text-green-600' : 'text-blue-600'
 
   useEffect(() => {
     setIsHydrated(true)
@@ -312,19 +312,18 @@ export function PlayerLockInGame({
       id: 'key-skills',
       title: 'Key Skills',
       content: (
-        <div className="bg-[#1a1a1a] rounded-2xl overflow-hidden border-2 border-[#333] shadow-xl">
+        <div className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
           {/* Banner */}
-          <div className="relative h-24 bg-gradient-to-br from-[#1a1a1a] via-[#222] to-[#1a1a1a] border-b border-blue-500/30">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-transparent to-transparent" />
+          <div className="relative h-24 bg-white border-b border-slate-200">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-blue-400" />
             <div className="absolute inset-0 flex items-center px-6">
               <div>
-                <h3 className="text-white font-black text-xl uppercase tracking-wider">Key Skills</h3>
-                <p className="text-blue-400/70 text-xs uppercase tracking-widest mt-1">Performance Overview</p>
+                <h3 className="text-slate-900 font-black text-xl uppercase tracking-wider">Key Skills</h3>
+                <p className="text-blue-500 text-xs uppercase tracking-widest mt-1">Performance Overview</p>
               </div>
             </div>
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-40">
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-30">
               <div className="relative">
-                <div className="absolute inset-0 blur-xl bg-blue-500/20 scale-125" />
                 <svg viewBox="0 0 100 100" fill="none" className="w-16 h-16 relative z-10">
                   <circle cx="50" cy="50" r="42" stroke="#3b82f6" strokeWidth="6" fill="none" strokeLinecap="round" strokeDasharray="200 64" />
                   <circle cx="50" cy="50" r="32" stroke="#22d3ee" strokeWidth="5" fill="none" strokeLinecap="round" strokeDasharray="150 52" />
@@ -332,18 +331,17 @@ export function PlayerLockInGame({
                 </svg>
               </div>
             </div>
-            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-blue-500/50 via-blue-500/30 to-transparent" />
           </div>
 
           {/* Main Content */}
-          <div className="p-6 bg-[#1e1e1e]">
+          <div className="p-6 bg-white">
             {/* Title Section */}
-            <h2 className="text-white font-bold text-lg">Performance Analysis</h2>
-            <p className="text-[#888] text-sm mt-1 mb-3">Your shooting mechanics breakdown across key areas</p>
+            <h2 className="text-slate-900 font-bold text-lg">Performance Analysis</h2>
+            <p className="text-slate-500 text-sm mt-1 mb-3">Your shooting mechanics breakdown across key areas</p>
             
             {/* Performance Summary */}
-            <div className="bg-[#252525] rounded-xl p-4 border border-[#333] mb-4">
-              <p className="text-[#ccc] text-sm leading-relaxed">
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 mb-4">
+              <p className="text-slate-600 text-sm leading-relaxed">
                 {overallScore >= 85 
                   ? `Your overall score of ${overallScore}% places you at an elite level. Your shooting mechanics are well-refined with strong fundamentals across form, balance, and consistency. You demonstrate ${consistencyScore >= 80 ? 'excellent shot-to-shot consistency' : 'solid consistency with room for improvement'}. Focus on maintaining these mechanics under game pressure and fatigue.`
                   : overallScore >= 70 
@@ -354,35 +352,35 @@ export function PlayerLockInGame({
             </div>
 
             {/* Stats Row - Like drill card */}
-            <div className="flex justify-between mt-5 py-4 border-y border-[#333]">
+            <div className="flex justify-between mt-5 py-4 border-y border-slate-200">
               <div className="text-center flex-1">
                 <div className="flex justify-center mb-2">
-                  <Trophy className="w-5 h-5 text-[#888]" />
+                  <Trophy className="w-5 h-5 text-slate-400" />
                 </div>
-                <div className="text-2xl font-black text-white">{overallScore}</div>
-                <div className="text-[10px] text-[#666] uppercase tracking-wider">Overall</div>
+                <div className="text-2xl font-black text-slate-900">{overallScore}</div>
+                <div className="text-[10px] text-slate-400 uppercase tracking-wider">Overall</div>
               </div>
-              <div className="w-px bg-[#333]" />
+              <div className="w-px bg-slate-200" />
               <div className="text-center flex-1">
                 <div className="flex justify-center mb-2">
-                  <TrendingUp className="w-5 h-5 text-[#888]" />
+                  <TrendingUp className="w-5 h-5 text-slate-400" />
                 </div>
-                <div className="text-2xl font-black text-white">{consistencyScore}</div>
-                <div className="text-[10px] text-[#666] uppercase tracking-wider">Consistency</div>
+                <div className="text-2xl font-black text-slate-900">{consistencyScore}</div>
+                <div className="text-[10px] text-slate-400 uppercase tracking-wider">Consistency</div>
               </div>
-              <div className="w-px bg-[#333]" />
+              <div className="w-px bg-slate-200" />
               <div className="text-center flex-1">
                 <div className="flex justify-center mb-2">
                   <div className="w-5 h-5 flex items-center justify-center">
                     <div className="flex gap-0.5">
                       {[1,2,3,4,5].map(i => (
-                        <div key={i} className={`w-1 h-3 rounded-sm ${i <= Math.ceil(formScore/20) ? 'bg-[#888]' : 'bg-[#444]'}`} />
+                        <div key={i} className={`w-1 h-3 rounded-sm ${i <= Math.ceil(formScore/20) ? 'bg-slate-400' : 'bg-slate-200'}`} />
                       ))}
                     </div>
                   </div>
                 </div>
-                <div className="text-2xl font-black text-white">{formScore}</div>
-                <div className="text-[10px] text-[#666] uppercase tracking-wider">Form</div>
+                <div className="text-2xl font-black text-slate-900">{formScore}</div>
+                <div className="text-[10px] text-slate-400 uppercase tracking-wider">Form</div>
               </div>
             </div>
 
@@ -394,23 +392,23 @@ export function PlayerLockInGame({
                   {rings.map((ring, i) => (<linearGradient key={`grad-${i}`} id={`activity-ring-gradient-${i}`} x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor={ring.colors.primary} /><stop offset="100%" stopColor={ring.colors.secondary} /></linearGradient>))}
                   <filter id="activity-glow"><feGaussianBlur stdDeviation="2" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
                 </defs>
-                {rings.map((ring, i) => { const circ = 2 * Math.PI * ring.radius; const dash = `${(ring.score / 100) * circ} ${circ}`; return (<g key={i}><circle cx="50" cy="50" r={ring.radius} fill="none" stroke="#2a2a2a" strokeWidth={ring.strokeWidth} opacity="0.6" /><circle cx="50" cy="50" r={ring.radius} fill="none" stroke={`url(#activity-ring-gradient-${i})`} strokeWidth={ring.strokeWidth} strokeLinecap="round" strokeDasharray={dash} filter="url(#activity-glow)" className="transition-all duration-1000 ease-out" /></g>) })}
+                {rings.map((ring, i) => { const circ = 2 * Math.PI * ring.radius; const dash = `${(ring.score / 100) * circ} ${circ}`; return (<g key={i}><circle cx="50" cy="50" r={ring.radius} fill="none" stroke="#e2e8f0" strokeWidth={ring.strokeWidth} opacity="0.6" /><circle cx="50" cy="50" r={ring.radius} fill="none" stroke={`url(#activity-ring-gradient-${i})`} strokeWidth={ring.strokeWidth} strokeLinecap="round" strokeDasharray={dash} filter="url(#activity-glow)" className="transition-all duration-1000 ease-out" /></g>) })}
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-3xl font-black text-white drop-shadow-lg">{overallScore}%</span>
-                <span className="text-white/70 text-xs font-medium">Overall</span>
+                <span className="text-3xl font-black text-slate-900 drop-shadow-lg">{overallScore}%</span>
+                <span className="text-slate-500 text-xs font-medium">Overall</span>
               </div>
             </div>
 
             {/* Legend */}
             <div className="flex justify-center gap-5 mt-4 text-xs">
-              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ background: `linear-gradient(135deg, ${overallColors.primary}, ${overallColors.secondary})` }} /><span className="text-white/80">Overall</span></span>
-              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ background: `linear-gradient(135deg, ${consistencyColors.primary}, ${consistencyColors.secondary})` }} /><span className="text-white/80">Consistency</span></span>
-              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ background: `linear-gradient(135deg, ${formColors.primary}, ${formColors.secondary})` }} /><span className="text-white/80">Form</span></span>
+              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ background: `linear-gradient(135deg, ${overallColors.primary}, ${overallColors.secondary})` }} /><span className="text-slate-600">Overall</span></span>
+              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ background: `linear-gradient(135deg, ${consistencyColors.primary}, ${consistencyColors.secondary})` }} /><span className="text-slate-600">Consistency</span></span>
+              <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full" style={{ background: `linear-gradient(135deg, ${formColors.primary}, ${formColors.secondary})` }} /><span className="text-slate-600">Form</span></span>
             </div>
 
             {/* Tap hint */}
-            <div className="flex items-center justify-center gap-2 mt-5 text-[#666] text-xs">
+            <div className="flex items-center justify-center gap-2 mt-5 text-slate-400 text-xs">
               <Info className="w-3.5 h-3.5" />
               <span>Tap the rings for more details</span>
             </div>
@@ -423,19 +421,18 @@ export function PlayerLockInGame({
       id: 'shooting-form',
       title: 'Shooting Form',
       content: (
-        <div className="bg-[#1a1a1a] rounded-2xl overflow-hidden border-2 border-[#333] shadow-xl">
+        <div className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
           {/* Performance Banner */}
-          <div className="relative h-24 bg-gradient-to-br from-[#1a1a1a] via-[#222] to-[#1a1a1a] border-b border-orange-500/30">
-            <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 via-transparent to-transparent" />
+          <div className="relative h-24 bg-white border-b border-slate-200">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-500 to-orange-400" />
             <div className="absolute inset-0 flex items-center px-6">
               <div>
-                <h3 className="text-white font-black text-xl uppercase tracking-wider">Shooting Form</h3>
-                <p className="text-orange-400/70 text-xs uppercase tracking-widest mt-1">Performance Stats</p>
+                <h3 className="text-slate-900 font-black text-xl uppercase tracking-wider">Shooting Form</h3>
+                <p className="text-orange-500 text-xs uppercase tracking-widest mt-1">Performance Stats</p>
               </div>
             </div>
             <div className="absolute right-4 top-1/2 -translate-y-1/2">
-              <div className="relative opacity-40">
-                <div className="absolute inset-0 blur-xl bg-orange-500/20 scale-125" />
+              <div className="relative opacity-30">
                 <svg viewBox="0 0 100 100" fill="none" className="w-16 h-16 relative z-10">
                   <rect x="8" y="58" width="16" height="32" fill="#f97316" rx="3" />
                   <rect x="28" y="44" width="16" height="46" fill="#f97316" rx="3" />
@@ -446,15 +443,14 @@ export function PlayerLockInGame({
                 </svg>
               </div>
             </div>
-            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-orange-500/50 via-orange-500/30 to-transparent" />
           </div>
 
           {/* Content */}
-          <div className="p-6 bg-[#1e1e1e]">
+          <div className="p-6 bg-white">
             {/* Why It Matters - TOP */}
-            <div className="bg-[#252525] rounded-xl p-4 border border-[#333] mb-5">
-              <p className="text-orange-400 text-xs font-semibold uppercase tracking-wider mb-2">Why Form Matters</p>
-              <p className="text-[#999] text-xs leading-relaxed">
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 mb-5">
+              <p className="text-orange-500 text-xs font-semibold uppercase tracking-wider mb-2">Why Form Matters</p>
+              <p className="text-slate-500 text-xs leading-relaxed">
                 Proper shooting form is the foundation of accuracy. A clean release, good arc (45-52°), and consistent form allow you to shoot the same way every time—building muscle memory that translates to game situations.
               </p>
             </div>
@@ -467,7 +463,7 @@ export function PlayerLockInGame({
             </div>
 
             {/* Hint */}
-            <div className="mt-4 flex items-center justify-center gap-2 text-[#555] text-xs">
+            <div className="mt-4 flex items-center justify-center gap-2 text-slate-400 text-xs">
               <Info className="w-3.5 h-3.5" />
               <span>Tap any bar to see how you compare to your age group</span>
             </div>
@@ -480,19 +476,18 @@ export function PlayerLockInGame({
       id: 'physical',
       title: 'Physical',
       content: (
-        <div className="bg-[#1a1a1a] rounded-2xl overflow-hidden border-2 border-[#333] shadow-xl">
+        <div className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
           {/* Performance Banner */}
-          <div className="relative h-24 bg-gradient-to-br from-[#1a1a1a] via-[#222] to-[#1a1a1a] border-b border-violet-500/30">
-            <div className="absolute inset-0 bg-gradient-to-r from-violet-500/10 via-transparent to-transparent" />
+          <div className="relative h-24 bg-white border-b border-slate-200">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-violet-500 to-violet-400" />
             <div className="absolute inset-0 flex items-center px-6">
               <div>
-                <h3 className="text-white font-black text-xl uppercase tracking-wider">Physical</h3>
-                <p className="text-violet-400/70 text-xs uppercase tracking-widest mt-1">Performance Stats</p>
+                <h3 className="text-slate-900 font-black text-xl uppercase tracking-wider">Physical</h3>
+                <p className="text-violet-500 text-xs uppercase tracking-widest mt-1">Performance Stats</p>
               </div>
             </div>
             <div className="absolute right-4 top-1/2 -translate-y-1/2">
-              <div className="relative opacity-40">
-                <div className="absolute inset-0 blur-xl bg-violet-500/20 scale-125" />
+              <div className="relative opacity-30">
                 <svg viewBox="0 0 100 100" fill="none" className="w-16 h-16 relative z-10">
                   <rect x="8" y="58" width="16" height="32" fill="#8b5cf6" rx="3" />
                   <rect x="28" y="44" width="16" height="46" fill="#8b5cf6" rx="3" />
@@ -503,15 +498,14 @@ export function PlayerLockInGame({
                 </svg>
               </div>
             </div>
-            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-violet-500/50 via-violet-500/30 to-transparent" />
           </div>
 
           {/* Content */}
-          <div className="p-6 bg-[#1e1e1e]">
+          <div className="p-6 bg-white">
             {/* Why It Matters - TOP */}
-            <div className="bg-[#252525] rounded-xl p-4 border border-[#333] mb-5">
-              <p className="text-violet-400 text-xs font-semibold uppercase tracking-wider mb-2">Why Physical Matters</p>
-              <p className="text-[#999] text-xs leading-relaxed">
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 mb-5">
+              <p className="text-violet-500 text-xs font-semibold uppercase tracking-wider mb-2">Why Physical Matters</p>
+              <p className="text-slate-500 text-xs leading-relaxed">
                 Your legs generate 60-70% of your shooting power. Strong balance ensures consistent shot mechanics even when fatigued or contested. Elite shooters maintain perfect balance through their entire shooting motion.
               </p>
             </div>
@@ -534,7 +528,7 @@ export function PlayerLockInGame({
             </div>
 
             {/* Hint */}
-            <div className="mt-4 flex items-center justify-center gap-2 text-[#555] text-xs">
+            <div className="mt-4 flex items-center justify-center gap-2 text-slate-400 text-xs">
               <Info className="w-3.5 h-3.5" />
               <span>Tap any bar to see how you compare to your age group</span>
             </div>
@@ -547,19 +541,18 @@ export function PlayerLockInGame({
       id: 'mechanics',
       title: 'Mechanics',
       content: (
-        <div className="bg-[#1a1a1a] rounded-2xl overflow-hidden border-2 border-[#333] shadow-xl">
+        <div className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
           {/* Performance Banner */}
-          <div className="relative h-24 bg-gradient-to-br from-[#1a1a1a] via-[#222] to-[#1a1a1a] border-b border-cyan-500/30">
-            <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-transparent to-transparent" />
+          <div className="relative h-24 bg-white border-b border-slate-200">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-cyan-500 to-cyan-400" />
             <div className="absolute inset-0 flex items-center px-6">
               <div>
-                <h3 className="text-white font-black text-xl uppercase tracking-wider">Mechanics</h3>
-                <p className="text-cyan-400/70 text-xs uppercase tracking-widest mt-1">Performance Stats</p>
+                <h3 className="text-slate-900 font-black text-xl uppercase tracking-wider">Mechanics</h3>
+                <p className="text-cyan-500 text-xs uppercase tracking-widest mt-1">Performance Stats</p>
               </div>
             </div>
             <div className="absolute right-4 top-1/2 -translate-y-1/2">
-              <div className="relative opacity-40">
-                <div className="absolute inset-0 blur-xl bg-cyan-500/20 scale-125" />
+              <div className="relative opacity-30">
                 <svg viewBox="0 0 100 100" fill="none" className="w-16 h-16 relative z-10">
                   <rect x="8" y="58" width="16" height="32" fill="#06b6d4" rx="3" />
                   <rect x="28" y="44" width="16" height="46" fill="#06b6d4" rx="3" />
@@ -570,15 +563,14 @@ export function PlayerLockInGame({
                 </svg>
               </div>
             </div>
-            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-cyan-500/50 via-cyan-500/30 to-transparent" />
           </div>
 
           {/* Content */}
-          <div className="p-6 bg-[#1e1e1e]">
+          <div className="p-6 bg-white">
             {/* Why It Matters - TOP */}
-            <div className="bg-[#252525] rounded-xl p-4 border border-[#333] mb-5">
-              <p className="text-cyan-400 text-xs font-semibold uppercase tracking-wider mb-2">Why Mechanics Matter</p>
-              <p className="text-[#999] text-xs leading-relaxed">
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 mb-5">
+              <p className="text-cyan-500 text-xs font-semibold uppercase tracking-wider mb-2">Why Mechanics Matter</p>
+              <p className="text-slate-500 text-xs leading-relaxed">
                 Proper elbow alignment (tucked in) creates a straight ball flight. A complete follow-through ensures consistent backspin. Consistency across shots is what separates good shooters from elite ones.
               </p>
             </div>
@@ -601,7 +593,7 @@ export function PlayerLockInGame({
             </div>
 
             {/* Hint */}
-            <div className="mt-4 flex items-center justify-center gap-2 text-[#555] text-xs">
+            <div className="mt-4 flex items-center justify-center gap-2 text-slate-400 text-xs">
               <Info className="w-3.5 h-3.5" />
               <span>Tap any bar to see how you compare to your age group</span>
             </div>
@@ -614,26 +606,26 @@ export function PlayerLockInGame({
       id: 'motivational',
       title: 'Keep Going',
       content: (
-        <div className="bg-[#1a1a1a] rounded-2xl overflow-hidden border-2 border-[#333] shadow-xl">
+        <div className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
           {/* Header with Coach Icon */}
-          <div className={`relative h-20 bg-gradient-to-r ${msgBgClass}`}>
+          <div className={`relative h-20 bg-gradient-to-r ${msgBgClass} border-b border-slate-200`}>
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#FF6B35] to-[#ff8c5a]" />
             <div className="absolute inset-0 flex items-center px-6 gap-4">
               <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
-                <img src="/icons/coach-whistle.png" alt="Coach" className="w-full h-full object-cover invert" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                <img src="/icons/coach-whistle.png" alt="Coach" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
               </div>
               <div>
-                <h3 className="text-white font-black text-xl uppercase tracking-wider">{motivationalMessage.title}</h3>
+                <h3 className="text-slate-900 font-black text-xl uppercase tracking-wider">{motivationalMessage.title}</h3>
                 <p className={`${msgTextClass} text-xs uppercase tracking-widest mt-1`}>Coach&apos;s Message</p>
               </div>
             </div>
-            <div className={`absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r ${motivationalMessage.color === 'gold' ? 'from-[#FF6B35]/50 via-[#FF6B35]/30' : motivationalMessage.color === 'green' ? 'from-green-500/50 via-green-500/30' : 'from-blue-500/50 via-blue-500/30'} to-transparent`} />
           </div>
 
           {/* Content */}
-          <div className="p-6 bg-[#1e1e1e]">
+          <div className="p-6 bg-white">
             {/* Message Box */}
-            <div className="bg-[#252525] rounded-xl p-4 border border-[#333]">
-              <p className="text-[#E5E5E5] text-sm leading-relaxed">{motivationalMessage.message}</p>
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+              <p className="text-slate-700 text-sm leading-relaxed">{motivationalMessage.message}</p>
             </div>
 
             {/* Next Goals */}
@@ -654,10 +646,10 @@ export function PlayerLockInGame({
                     key={i} 
                     className={`px-3 py-1.5 rounded-full text-xs font-medium border ${
                       motivationalMessage.color === 'gold' 
-                        ? 'bg-[#FF6B35]/10 border-[#FF6B35]/30 text-[#FF6B35]' 
+                        ? 'bg-orange-50 border-orange-200 text-[#FF6B35]' 
                         : motivationalMessage.color === 'green' 
-                          ? 'bg-green-500/10 border-green-500/30 text-green-400' 
-                          : 'bg-blue-500/10 border-blue-500/30 text-blue-400'
+                          ? 'bg-green-50 border-green-200 text-green-600' 
+                          : 'bg-blue-50 border-blue-200 text-blue-600'
                     }`}
                   >
                     {goal}
@@ -674,49 +666,47 @@ export function PlayerLockInGame({
       id: 'assessment-results',
       title: 'Assessment Results',
       content: (
-        <div className="bg-[#1a1a1a] rounded-2xl overflow-hidden border-2 border-[#333] shadow-xl">
+        <div className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
           {/* Assessment Banner */}
-          <div className="relative h-24 bg-gradient-to-br from-[#1a1a1a] via-[#222] to-[#1a1a1a] border-b border-emerald-500/30">
-            <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 via-transparent to-transparent" />
+          <div className="relative h-24 bg-white border-b border-slate-200">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-emerald-400" />
             <div className="absolute inset-0 flex items-center px-6">
               <div>
-                <h3 className="text-white font-black text-xl uppercase tracking-wider">Assessment</h3>
-                <p className="text-emerald-400/70 text-xs uppercase tracking-widest mt-1">Results Summary</p>
+                <h3 className="text-slate-900 font-black text-xl uppercase tracking-wider">Assessment</h3>
+                <p className="text-emerald-500 text-xs uppercase tracking-widest mt-1">Results Summary</p>
               </div>
             </div>
             <div className="absolute right-4 top-1/2 -translate-y-1/2">
-              <div className="relative opacity-40">
-                <div className="absolute inset-0 blur-xl bg-emerald-500/20 scale-125" />
+              <div className="relative opacity-30">
                 <svg viewBox="0 0 100 100" fill="none" className="w-16 h-16 relative z-10">
                   <circle cx="50" cy="50" r="40" stroke="#10b981" strokeWidth="6" fill="none" />
                   <path d="M30 50 L45 65 L70 35" stroke="#34d399" strokeWidth="8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
             </div>
-            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-emerald-500/50 via-emerald-500/30 to-transparent" />
           </div>
 
           {/* Content */}
-          <div className="p-6 bg-[#1e1e1e]">
+          <div className="p-6 bg-white">
             <div className="mb-4">
-              <h4 className="text-emerald-400 font-semibold uppercase text-sm mb-2">Overall Performance Rating</h4>
-              <p className="text-[#888] text-sm mb-1">Basketball Shooting Mechanics Program</p>
-              <p className="text-[#888] text-sm mb-3">Assessment Date: {date}</p>
-              <ul className="space-y-2 text-sm text-[#E5E5E5]">
-                <li className="flex items-start gap-2"><span className="text-emerald-400">•</span>Achieved <span className="text-emerald-400 font-semibold">{overallScore}%</span> overall shooting form rating</li>
-                <li className="flex items-start gap-2"><span className="text-emerald-400">•</span>Demonstrated <span className="text-emerald-400 font-semibold">{skills.filter(s => s.score >= 80).length}</span> skills at advanced level</li>
-                <li className="flex items-start gap-2"><span className="text-emerald-400">•</span>Shooter Classification: <span className="text-emerald-400 font-semibold">{level.name}</span> ({level.scoreRange[0]}-{level.scoreRange[1]} range)</li>
-                <li className="flex items-start gap-2"><span className="text-emerald-400">•</span>{flaws.length === 0 ? 'No significant mechanical flaws detected' : `${flaws.length} mechanical issue${flaws.length > 1 ? 's' : ''} identified`}</li>
+              <h4 className="text-emerald-600 font-semibold uppercase text-sm mb-2">Overall Performance Rating</h4>
+              <p className="text-slate-500 text-sm mb-1">Basketball Shooting Mechanics Program</p>
+              <p className="text-slate-500 text-sm mb-3">Assessment Date: {date}</p>
+              <ul className="space-y-2 text-sm text-slate-700">
+                <li className="flex items-start gap-2"><span className="text-emerald-500">•</span>Achieved <span className="text-emerald-600 font-semibold">{overallScore}%</span> overall shooting form rating</li>
+                <li className="flex items-start gap-2"><span className="text-emerald-500">•</span>Demonstrated <span className="text-emerald-600 font-semibold">{skills.filter(s => s.score >= 80).length}</span> skills at advanced level</li>
+                <li className="flex items-start gap-2"><span className="text-emerald-500">•</span>Shooter Classification: <span className="text-emerald-600 font-semibold">{level.name}</span> ({level.scoreRange[0]}-{level.scoreRange[1]} range)</li>
+                <li className="flex items-start gap-2"><span className="text-emerald-500">•</span>{flaws.length === 0 ? 'No significant mechanical flaws detected' : `${flaws.length} mechanical issue${flaws.length > 1 ? 's' : ''} identified`}</li>
               </ul>
             </div>
             <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4">
-                <h4 className="text-green-400 font-semibold uppercase text-sm mb-3">Strengths</h4>
-                <ul className="space-y-2 text-sm text-[#E5E5E5]">{skills.filter(s => s.score >= 70).slice(0, 3).map((skill, idx) => <li key={idx} className="flex items-start gap-2"><span className="text-green-400">•</span><span>{skill.name} ({skill.score}%) - {skill.status}</span></li>)}</ul>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <h4 className="text-green-600 font-semibold uppercase text-sm mb-3">Strengths</h4>
+                <ul className="space-y-2 text-sm text-slate-700">{skills.filter(s => s.score >= 70).slice(0, 3).map((skill, idx) => <li key={idx} className="flex items-start gap-2"><span className="text-green-500">•</span><span>{skill.name} ({skill.score}%) - {skill.status}</span></li>)}</ul>
               </div>
-              <div className="bg-orange-900/20 border border-orange-500/30 rounded-lg p-4">
-                <h4 className="text-orange-400 font-semibold uppercase text-sm mb-3">Areas for Improvement</h4>
-                <ul className="space-y-2 text-sm text-[#E5E5E5]">{skills.filter(s => s.score < 70).slice(0, 3).map((skill, idx) => <li key={idx} className="flex items-start gap-2"><span className="text-orange-400">•</span><span>{skill.name} ({skill.score}%) - {skill.status}</span></li>)}</ul>
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                <h4 className="text-orange-500 font-semibold uppercase text-sm mb-3">Areas for Improvement</h4>
+                <ul className="space-y-2 text-sm text-slate-700">{skills.filter(s => s.score < 70).slice(0, 3).map((skill, idx) => <li key={idx} className="flex items-start gap-2"><span className="text-orange-500">•</span><span>{skill.name} ({skill.score}%) - {skill.status}</span></li>)}</ul>
               </div>
             </div>
           </div>
@@ -728,20 +718,20 @@ export function PlayerLockInGame({
       id: 'development',
       title: 'Development Recommendations',
       content: (
-        <div className="bg-[#2a2a2a] rounded-xl p-6 border border-[#3a3a3a] hover:border-[#FF6B35]/30 transition-colors">
-          <h3 className="text-xl font-bold text-[#E5E5E5] uppercase tracking-wider mb-4">Development Recommendations</h3>
+        <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm hover:border-[#FF6B35]/30 transition-colors">
+          <h3 className="text-xl font-bold text-slate-900 uppercase tracking-wider mb-4">Development Recommendations</h3>
           {flaws.length > 0 ? (
             <div className="space-y-4">{flaws.slice(0, 2).map((flaw, idx) => (
-              <div key={idx} className="bg-[#1a1a1a] rounded-lg p-4 border-l-4 border-[#FF6B35]">
-                <p className="text-[#E5E5E5] font-semibold mb-2">{flaw.name}</p>
-                <p className="text-[#888] text-sm mb-2">{flaw.description}</p>
-                <p className="text-green-400 text-sm"><span className="text-[#888]">Fix:</span> {flaw.fixes[0]}</p>
+              <div key={idx} className="bg-slate-50 rounded-lg p-4 border-l-4 border-[#FF6B35]">
+                <p className="text-slate-900 font-semibold mb-2">{flaw.name}</p>
+                <p className="text-slate-500 text-sm mb-2">{flaw.description}</p>
+                <p className="text-green-600 text-sm"><span className="text-slate-500">Fix:</span> {flaw.fixes[0]}</p>
               </div>
             ))}</div>
           ) : (
-            <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4">
-              <p className="text-green-400 font-semibold mb-2">Excellent Form Detected!</p>
-              <p className="text-[#E5E5E5] text-sm">Your shooting mechanics show strong fundamentals with no significant flaws detected. Continue practicing to maintain consistency and build muscle memory.</p>
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <p className="text-green-600 font-semibold mb-2">Excellent Form Detected!</p>
+              <p className="text-slate-700 text-sm">Your shooting mechanics show strong fundamentals with no significant flaws detected. Continue practicing to maintain consistency and build muscle memory.</p>
             </div>
           )}
         </div>
@@ -835,36 +825,36 @@ export function PlayerLockInGame({
       <div className="mb-6">
         {/* Title */}
         <div className="mb-4">
-          <h2 className="text-white font-black text-2xl uppercase tracking-wider">{playerName.toUpperCase()}</h2>
+          <h2 className="text-slate-900 font-black text-2xl uppercase tracking-wider">{playerName.toUpperCase()}</h2>
           <p className="text-[#FF6B35] text-sm font-bold uppercase tracking-widest mt-1">PLAYER ASSESSMENT</p>
         </div>
         
         {/* Stats Row */}
         <div className="flex items-center gap-3 mb-3">
-          <div className="flex items-center gap-2 bg-[#1a1a1a] px-3 py-1.5 rounded-lg border border-[#333]">
+          <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-slate-200">
             <Flame className="w-4 h-4 text-[#FF6B35]" />
-            <span className="text-white font-bold text-sm">{gameStats.currentStreak}</span>
-            <span className="text-[#666] text-xs">Streak</span>
+            <span className="text-slate-900 font-bold text-sm">{gameStats.currentStreak}</span>
+            <span className="text-slate-400 text-xs">Streak</span>
           </div>
-          <div className="flex items-center gap-2 bg-[#1a1a1a] px-3 py-1.5 rounded-lg border border-[#333]">
+          <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-slate-200">
             <Lock className="w-4 h-4 text-green-500" />
-            <span className="text-white font-bold text-sm">{gameStats.lockedIn}</span>
-            <span className="text-[#666] text-xs">Locked</span>
+            <span className="text-slate-900 font-bold text-sm">{gameStats.lockedIn}</span>
+            <span className="text-slate-400 text-xs">Locked</span>
           </div>
-          <div className="flex items-center gap-2 bg-[#1a1a1a] px-3 py-1.5 rounded-lg border border-[#333]">
+          <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-slate-200">
             <Trophy className="w-4 h-4 text-[#FFD700]" />
-            <span className="text-white font-bold text-sm">{gameStats.xp}</span>
-            <span className="text-[#666] text-xs">XP</span>
+            <span className="text-slate-900 font-bold text-sm">{gameStats.xp}</span>
+            <span className="text-slate-400 text-xs">XP</span>
           </div>
         </div>
         
         {/* Subtitle */}
-        <p className="text-[#555] text-xs uppercase tracking-wider">Swipe through your sections</p>
+        <p className="text-slate-400 text-xs uppercase tracking-wider">Swipe through your sections</p>
       </div>
       {/* Tabs */}
       <div className="flex gap-2 mb-4">
         {[{ id: 'play', label: 'Discover', icon: Play }, { id: 'locked', label: 'Locked In', icon: Lock }, { id: 'saved', label: 'Saved', icon: Bookmark }].map(tab => (
-          <button key={tab.id} type="button" onClick={() => { setActiveTab(tab.id as 'play' | 'locked' | 'saved'); setCurrentIndex(0) }} className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition-all ${activeTab === tab.id ? 'bg-[#FF6B35] text-white' : 'bg-[#2a2a2a] text-[#888] hover:bg-[#3a3a3a]'}`}>
+          <button key={tab.id} type="button" onClick={() => { setActiveTab(tab.id as 'play' | 'locked' | 'saved'); setCurrentIndex(0) }} className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-semibold transition-all ${activeTab === tab.id ? 'bg-[#FF6B35] text-white' : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50'}`}>
             <tab.icon className="w-3.5 h-3.5" />{tab.label}
           </button>
         ))}
@@ -886,15 +876,15 @@ export function PlayerLockInGame({
               }}
             >
               <svg width="70" height="70" viewBox="0 0 70 70">
-                <path d="M32 5 L5 35 L32 65" stroke={dragX < -20 ? "#3b82f6" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="1" className="transition-all duration-150" />
-                <path d="M50 5 L23 35 L50 65" stroke={dragX < -20 ? "#3b82f6" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="1" className="transition-all duration-150" />
-                <path d="M18 5 L-9 35 L18 65" stroke={dragX < -20 ? "#3b82f6" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" className="transition-all duration-150" />
-                <path d="M36 5 L9 35 L36 65" stroke={dragX < -20 ? "#3b82f6" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" className="transition-all duration-150" />
-                <path d="M46 5 L19 35 L46 65" stroke={dragX < -20 ? "#3b82f6" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.25" className="transition-all duration-150" />
-                <path d="M64 5 L37 35 L64 65" stroke={dragX < -20 ? "#3b82f6" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.25" className="transition-all duration-150" />
+                <path d="M32 5 L5 35 L32 65" stroke={dragX < -20 ? "#3b82f6" : "#94a3b8"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="1" className="transition-all duration-150" />
+                <path d="M50 5 L23 35 L50 65" stroke={dragX < -20 ? "#3b82f6" : "#94a3b8"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="1" className="transition-all duration-150" />
+                <path d="M18 5 L-9 35 L18 65" stroke={dragX < -20 ? "#3b82f6" : "#94a3b8"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" className="transition-all duration-150" />
+                <path d="M36 5 L9 35 L36 65" stroke={dragX < -20 ? "#3b82f6" : "#94a3b8"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" className="transition-all duration-150" />
+                <path d="M46 5 L19 35 L46 65" stroke={dragX < -20 ? "#3b82f6" : "#94a3b8"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.25" className="transition-all duration-150" />
+                <path d="M64 5 L37 35 L64 65" stroke={dragX < -20 ? "#3b82f6" : "#94a3b8"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.25" className="transition-all duration-150" />
               </svg>
               <svg width="100" height="40" viewBox="0 0 100 40" className="-ml-2">
-                <text x="50" y="30" textAnchor="middle" fontSize="24" fontWeight="900" fontFamily="Arial Black, sans-serif" fill="none" stroke={dragX < -20 ? "#3b82f6" : "white"} strokeWidth="1.5" letterSpacing="3" className="transition-all duration-150">SWIPE</text>
+                <text x="50" y="30" textAnchor="middle" fontSize="24" fontWeight="900" fontFamily="Arial Black, sans-serif" fill="none" stroke={dragX < -20 ? "#3b82f6" : "#94a3b8"} strokeWidth="1.5" letterSpacing="3" className="transition-all duration-150">SWIPE</text>
               </svg>
             </div>
             
@@ -911,15 +901,15 @@ export function PlayerLockInGame({
               }}
             >
               <svg width="100" height="40" viewBox="0 0 100 40" className="-mr-2">
-                <text x="50" y="30" textAnchor="middle" fontSize="24" fontWeight="900" fontFamily="Arial Black, sans-serif" fill="none" stroke={dragX > 20 ? "#FF6B35" : "white"} strokeWidth="1.5" letterSpacing="3" className="transition-all duration-150">SWIPE</text>
+                <text x="50" y="30" textAnchor="middle" fontSize="24" fontWeight="900" fontFamily="Arial Black, sans-serif" fill="none" stroke={dragX > 20 ? "#FF6B35" : "#94a3b8"} strokeWidth="1.5" letterSpacing="3" className="transition-all duration-150">SWIPE</text>
               </svg>
               <svg width="70" height="70" viewBox="0 0 70 70">
-                <path d="M38 5 L65 35 L38 65" stroke={dragX > 20 ? "#FF6B35" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="1" className="transition-all duration-150" />
-                <path d="M20 5 L47 35 L20 65" stroke={dragX > 20 ? "#FF6B35" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="1" className="transition-all duration-150" />
-                <path d="M52 5 L79 35 L52 65" stroke={dragX > 20 ? "#FF6B35" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" className="transition-all duration-150" />
-                <path d="M34 5 L61 35 L34 65" stroke={dragX > 20 ? "#FF6B35" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" className="transition-all duration-150" />
-                <path d="M24 5 L51 35 L24 65" stroke={dragX > 20 ? "#FF6B35" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.25" className="transition-all duration-150" />
-                <path d="M6 5 L33 35 L6 65" stroke={dragX > 20 ? "#FF6B35" : "white"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.25" className="transition-all duration-150" />
+                <path d="M38 5 L65 35 L38 65" stroke={dragX > 20 ? "#FF6B35" : "#94a3b8"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="1" className="transition-all duration-150" />
+                <path d="M20 5 L47 35 L20 65" stroke={dragX > 20 ? "#FF6B35" : "#94a3b8"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="1" className="transition-all duration-150" />
+                <path d="M52 5 L79 35 L52 65" stroke={dragX > 20 ? "#FF6B35" : "#94a3b8"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" className="transition-all duration-150" />
+                <path d="M34 5 L61 35 L34 65" stroke={dragX > 20 ? "#FF6B35" : "#94a3b8"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" className="transition-all duration-150" />
+                <path d="M24 5 L51 35 L24 65" stroke={dragX > 20 ? "#FF6B35" : "#94a3b8"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.25" className="transition-all duration-150" />
+                <path d="M6 5 L33 35 L6 65" stroke={dragX > 20 ? "#FF6B35" : "#94a3b8"} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.25" className="transition-all duration-150" />
               </svg>
             </div>
           
@@ -972,7 +962,7 @@ export function PlayerLockInGame({
             </div>
             {showVoteResult && (<div className="absolute inset-0 bg-black/80 rounded-lg flex items-center justify-center z-20"><div className="text-center">{lastAction === 'lockin' ? <Lock className="w-12 h-12 text-[#FF6B35] mx-auto mb-2" /> : <Bookmark className="w-12 h-12 text-blue-400 mx-auto mb-2" />}<p className={`font-bold ${lastAction === 'lockin' ? 'text-[#FF6B35]' : 'text-blue-400'}`}>{lastAction === 'lockin' ? 'LOCKED IN!' : 'SAVED!'}</p></div></div>)}
             {/* Swipe Hint */}
-            <div className="flex items-center justify-center gap-4 mt-4 text-[#666] text-sm">
+            <div className="flex items-center justify-center gap-4 mt-4 text-slate-400 text-sm">
               <span className="flex items-center gap-1">
                 <ChevronLeft className="w-4 h-4 text-blue-400" />
                 <span className="text-blue-400">Save</span>
@@ -988,7 +978,7 @@ export function PlayerLockInGame({
               <button 
                 type="button" 
                 onClick={() => handleVote('save')} 
-                className="flex-1 bg-transparent border-2 border-blue-500/30 text-blue-400 py-4 rounded-xl font-bold uppercase tracking-wider hover:bg-blue-500/10 transition-all flex items-center justify-center gap-2 whitespace-nowrap"
+                className="flex-1 bg-white border-2 border-blue-200 text-blue-500 py-4 rounded-xl font-bold uppercase tracking-wider hover:bg-blue-50 transition-all flex items-center justify-center gap-2 whitespace-nowrap"
               >
                 <Bookmark className="w-5 h-5" />
                 Save
@@ -996,18 +986,18 @@ export function PlayerLockInGame({
               <button 
                 type="button" 
                 onClick={() => handleVote('lockin')} 
-                className="flex-1 bg-transparent border-2 border-[#FF6B35]/30 text-[#FF6B35] py-4 rounded-xl font-bold uppercase tracking-wider hover:bg-[#FF6B35]/10 transition-all flex items-center justify-center gap-2 whitespace-nowrap"
+                className="flex-1 bg-white border-2 border-[#FF6B35]/30 text-[#FF6B35] py-4 rounded-xl font-bold uppercase tracking-wider hover:bg-orange-50 transition-all flex items-center justify-center gap-2 whitespace-nowrap"
               >
                 <Lock className="w-5 h-5" />
                 Lock
               </button>
             </div>
-            <p className="text-center text-[#666] text-xs mt-2">{currentIndex + 1} of {displayCards.length}</p>
+            <p className="text-center text-slate-400 text-xs mt-2">{currentIndex + 1} of {displayCards.length}</p>
           </div>
-        ) : (<div className="text-center py-12"><Check className="w-12 h-12 text-green-500 mx-auto mb-3" /><p className="text-white font-bold">All Done!</p><button type="button" onClick={resetGame} className="mt-3 px-4 py-2 bg-[#FF6B35] text-white text-sm rounded-lg whitespace-nowrap">Restart</button></div>)}
+        ) : (<div className="text-center py-12"><Check className="w-12 h-12 text-green-500 mx-auto mb-3" /><p className="text-slate-900 font-bold">All Done!</p><button type="button" onClick={resetGame} className="mt-3 px-4 py-2 bg-[#FF6B35] text-white text-sm rounded-lg whitespace-nowrap">Restart</button></div>)}
       </>)}
       {/* Locked/Saved tabs */}
-      {(activeTab === 'locked' || activeTab === 'saved') && (<div className="space-y-3">{displayCards.length === 0 ? (<div className="text-center py-12"><p className="text-[#888]">No sections {activeTab === 'locked' ? 'locked in' : 'saved'} yet.</p></div>) : displayCards.map(card => (<div key={card.id}>{card.content}</div>))}</div>)}
+      {(activeTab === 'locked' || activeTab === 'saved') && (<div className="space-y-3">{displayCards.length === 0 ? (<div className="text-center py-12"><p className="text-slate-500">No sections {activeTab === 'locked' ? 'locked in' : 'saved'} yet.</p></div>) : displayCards.map(card => (<div key={card.id}>{card.content}</div>))}</div>)}
       {/* Key Skills Popup - EXACT from page.tsx */}
       {showKeySkillsPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowKeySkillsPopup(false)}>
@@ -1074,17 +1064,17 @@ export function PlayerLockInGame({
               })}
             </div>
           )}
-          <div className="bg-gradient-to-b from-[#1a1a1a] to-[#0d0d0d] rounded-xl border border-[#3a3a3a] shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto relative" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 bg-gradient-to-r from-[#FF6B35]/20 to-transparent p-4 border-b border-[#3a3a3a] flex items-center justify-between"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-[#FF6B35]/10 flex items-center justify-center border border-[#FF6B35]/30"><Info className="w-5 h-5 text-[#FF6B35]" /></div><div><h2 className="text-[#FF6B35] font-bold text-lg uppercase tracking-wider">Key Skills</h2><p className="text-[#888] text-xs">Performance Overview</p></div></div><button onClick={() => setShowKeySkillsPopup(false)} className="w-8 h-8 rounded-full bg-[#3a3a3a] hover:bg-[#4a4a4a] flex items-center justify-center"><X className="w-4 h-4 text-[#888]" /></button></div>
-            <div className="p-4 border-b border-[#3a3a3a]"><div className="flex items-center justify-between mb-3"><span className="text-[#888] text-sm uppercase tracking-wider">Overall Score</span><div className="flex items-center gap-2"><span className="text-white font-black text-3xl">{overallScore}</span><span className="text-[#888] text-sm">/ 100</span></div></div><div className="h-3 bg-[#3a3a3a] rounded-full overflow-hidden"><div className="h-full rounded-full" style={{ width: `${overallScore}%`, background: `linear-gradient(90deg, ${overallColors.primary}, ${overallColors.secondary})` }} /></div><div className="flex justify-between mt-2"><span className="text-[10px] text-[#666]">0</span><span className={`text-sm font-bold ${overallRating.color}`}>{overallRating.label}</span><span className="text-[10px] text-[#666]">100</span></div></div>
-            <div className="p-4 border-b border-[#3a3a3a]"><h3 className="text-white font-semibold text-sm mb-2 flex items-center gap-2"><ChevronRight className="w-4 h-4 text-[#FF6B35]" />What This Means</h3><p className="text-[#E5E5E5] text-sm leading-relaxed">Your Key Skills score combines three critical aspects of shooting: Overall form quality, shot-to-shot Consistency, and technical Form mechanics.</p></div>
-            <div className="p-4 border-b border-[#3a3a3a]"><h3 className="text-white font-semibold text-sm mb-4 flex items-center gap-2"><Users className="w-4 h-4 text-[#FF6B35]" />Ring Breakdown</h3>
-              <div className="bg-[#2a2a2a] rounded-lg p-3 mb-3"><div className="flex items-center justify-between mb-2"><div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full" style={{ background: `linear-gradient(135deg, ${overallColors.primary}, ${overallColors.secondary})` }} /><span className="text-white font-semibold">Overall</span></div><span className="text-white font-bold">{overallScore}%</span></div><p className="text-[#888] text-xs">Combined shooting performance</p></div>
-              <div className="bg-[#2a2a2a] rounded-lg p-3 mb-3"><div className="flex items-center justify-between mb-2"><div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full" style={{ background: `linear-gradient(135deg, ${consistencyColors.primary}, ${consistencyColors.secondary})` }} /><span className="text-white font-semibold">Consistency</span></div><span className="text-white font-bold">{consistencyScore}%</span></div><p className="text-[#888] text-xs">Shot-to-shot repeatability</p></div>
-              <div className="bg-[#2a2a2a] rounded-lg p-3"><div className="flex items-center justify-between mb-2"><div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full" style={{ background: `linear-gradient(135deg, ${formColors.primary}, ${formColors.secondary})` }} /><span className="text-white font-semibold">Form</span></div><span className="text-white font-bold">{formScore}%</span></div><p className="text-[#888] text-xs">Technical quality of mechanics</p></div>
+          <div className="bg-white rounded-xl border border-slate-200 shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto relative" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white p-4 border-b border-slate-200 flex items-center justify-between"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center border border-orange-200"><Info className="w-5 h-5 text-[#FF6B35]" /></div><div><h2 className="text-[#FF6B35] font-bold text-lg uppercase tracking-wider">Key Skills</h2><p className="text-slate-500 text-xs">Performance Overview</p></div></div><button onClick={() => setShowKeySkillsPopup(false)} className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center"><X className="w-4 h-4 text-slate-500" /></button></div>
+            <div className="p-4 border-b border-slate-200"><div className="flex items-center justify-between mb-3"><span className="text-slate-500 text-sm uppercase tracking-wider">Overall Score</span><div className="flex items-center gap-2"><span className="text-slate-900 font-black text-3xl">{overallScore}</span><span className="text-slate-500 text-sm">/ 100</span></div></div><div className="h-3 bg-slate-100 rounded-full overflow-hidden"><div className="h-full rounded-full" style={{ width: `${overallScore}%`, background: `linear-gradient(90deg, ${overallColors.primary}, ${overallColors.secondary})` }} /></div><div className="flex justify-between mt-2"><span className="text-[10px] text-slate-400">0</span><span className={`text-sm font-bold ${overallRating.color}`}>{overallRating.label}</span><span className="text-[10px] text-slate-400">100</span></div></div>
+            <div className="p-4 border-b border-slate-200"><h3 className="text-slate-900 font-semibold text-sm mb-2 flex items-center gap-2"><ChevronRight className="w-4 h-4 text-[#FF6B35]" />What This Means</h3><p className="text-slate-600 text-sm leading-relaxed">Your Key Skills score combines three critical aspects of shooting: Overall form quality, shot-to-shot Consistency, and technical Form mechanics.</p></div>
+            <div className="p-4 border-b border-slate-200"><h3 className="text-slate-900 font-semibold text-sm mb-4 flex items-center gap-2"><Users className="w-4 h-4 text-[#FF6B35]" />Ring Breakdown</h3>
+              <div className="bg-slate-50 rounded-lg p-3 mb-3"><div className="flex items-center justify-between mb-2"><div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full" style={{ background: `linear-gradient(135deg, ${overallColors.primary}, ${overallColors.secondary})` }} /><span className="text-slate-900 font-semibold">Overall</span></div><span className="text-slate-900 font-bold">{overallScore}%</span></div><p className="text-slate-500 text-xs">Combined shooting performance</p></div>
+              <div className="bg-slate-50 rounded-lg p-3 mb-3"><div className="flex items-center justify-between mb-2"><div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full" style={{ background: `linear-gradient(135deg, ${consistencyColors.primary}, ${consistencyColors.secondary})` }} /><span className="text-slate-900 font-semibold">Consistency</span></div><span className="text-slate-900 font-bold">{consistencyScore}%</span></div><p className="text-slate-500 text-xs">Shot-to-shot repeatability</p></div>
+              <div className="bg-slate-50 rounded-lg p-3"><div className="flex items-center justify-between mb-2"><div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full" style={{ background: `linear-gradient(135deg, ${formColors.primary}, ${formColors.secondary})` }} /><span className="text-slate-900 font-semibold">Form</span></div><span className="text-slate-900 font-bold">{formScore}%</span></div><p className="text-slate-500 text-xs">Technical quality of mechanics</p></div>
             </div>
-            <div className="p-4 border-b border-[#3a3a3a]"><h3 className="text-white font-semibold text-sm mb-3 flex items-center gap-2"><TrendingUp className="w-4 h-4 text-[#FF6B35]" />Performance Benchmarks</h3><div className="grid grid-cols-2 gap-2 text-xs"><div className="bg-[#1a1a1a] rounded p-2 text-center"><p className="text-[#FF6B35] font-bold">90-100</p><p className="text-[#888]">Elite</p></div><div className="bg-[#1a1a1a] rounded p-2 text-center"><p className="text-green-400 font-bold">80-89</p><p className="text-[#888]">Excellent</p></div><div className="bg-[#1a1a1a] rounded p-2 text-center"><p className="text-blue-400 font-bold">70-79</p><p className="text-[#888]">Good</p></div><div className="bg-[#1a1a1a] rounded p-2 text-center"><p className="text-orange-400 font-bold">60-69</p><p className="text-[#888]">Average</p></div></div></div>
-            <div className="p-4 bg-[#1a1a1a]"><button onClick={() => setShowKeySkillsPopup(false)} className="w-full py-3 bg-[#FF6B35] text-[#1a1a1a] font-bold rounded-lg uppercase text-sm">Got It</button></div>
+            <div className="p-4 border-b border-slate-200"><h3 className="text-slate-900 font-semibold text-sm mb-3 flex items-center gap-2"><TrendingUp className="w-4 h-4 text-[#FF6B35]" />Performance Benchmarks</h3><div className="grid grid-cols-2 gap-2 text-xs"><div className="bg-slate-50 rounded p-2 text-center"><p className="text-[#FF6B35] font-bold">90-100</p><p className="text-slate-500">Elite</p></div><div className="bg-slate-50 rounded p-2 text-center"><p className="text-green-600 font-bold">80-89</p><p className="text-slate-500">Excellent</p></div><div className="bg-slate-50 rounded p-2 text-center"><p className="text-blue-600 font-bold">70-79</p><p className="text-slate-500">Good</p></div><div className="bg-slate-50 rounded p-2 text-center"><p className="text-orange-500 font-bold">60-69</p><p className="text-slate-500">Average</p></div></div></div>
+            <div className="p-4 bg-white"><button onClick={() => setShowKeySkillsPopup(false)} className="w-full py-3 bg-[#FF6B35] text-white font-bold rounded-lg uppercase text-sm">Got It</button></div>
           </div>
         </div>
       )}

@@ -15,21 +15,21 @@ const VIEW_OPTIONS: { value: DashboardView; label: string; description: string; 
     label: "Professional",
     description: "Full analytics & detailed metrics",
     icon: <Star className="w-4 h-4" />,
-    color: "from-purple-500 to-violet-600"
+    color: "from-[#FF6B35] to-[#E55A2B]"
   },
   {
     value: "standard",
     label: "Standard",
     description: "Balanced view for developing players",
     icon: <GraduationCap className="w-4 h-4" />,
-    color: "from-blue-500 to-cyan-600"
+    color: "from-slate-700 to-slate-900"
   },
   {
     value: "basic",
     label: "Basic",
     description: "Simple & fun for young players",
     icon: <Sparkles className="w-4 h-4" />,
-    color: "from-green-500 to-emerald-600"
+    color: "from-emerald-500 to-emerald-600"
   }
 ]
 
@@ -157,7 +157,7 @@ export function Header() {
   ]
 
   return (
-    <header className="bg-[#2C2C2C] sticky top-0 z-50">
+    <header className="bg-black sticky top-0 z-50">
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           <Link href={isAuthPage ? "/signin" : "/"} className="flex items-center">
@@ -198,16 +198,15 @@ export function Header() {
                     getUserInitials()
                   )}
                 </div>
-                <ChevronDown className={`w-4 h-4 text-[#888] group-hover:text-[#FF6B35] transition-all ${isProfileOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-4 h-4 text-slate-300 group-hover:text-[#FF6B35] transition-all ${isProfileOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {/* Dropdown Menu */}
               {isProfileOpen && (
-                <div className="absolute right-0 mt-3 w-64 bg-[#2C2C2C] border border-[#3a3a3a] rounded-xl shadow-xl overflow-hidden z-50 max-h-[80vh] overflow-y-auto">
+                <div className="absolute right-0 mt-4 w-80 bg-white/95 backdrop-blur-2xl border border-slate-100 rounded-[24px] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1),0_0_0_1px_rgba(0,0,0,0.05)] overflow-hidden z-50 max-h-[85vh] overflow-y-auto transform origin-top-right transition-all">
                   {/* User Info Header */}
-                  <div className="px-4 py-4 bg-gradient-to-r from-[#FF6B35]/10 to-transparent border-b border-[#3a3a3a]">
-                    <div className="flex items-center gap-3">
-                      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#FF4500] flex items-center justify-center text-white font-bold text-xl shadow-lg overflow-hidden flex-shrink-0">
+                  <div className="px-6 py-5 bg-gradient-to-b from-slate-50 to-white/0 border-b border-slate-100 flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#FF4500] flex items-center justify-center text-white font-bold text-xl shadow-md ring-4 ring-white overflow-hidden flex-shrink-0">
                         {avatarUrl ? (
                           <Image
                             src={avatarUrl}
@@ -221,122 +220,129 @@ export function Header() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-white font-semibold truncate">
+                        <p className="text-slate-900 font-bold text-lg leading-tight truncate">
                           {user?.displayName || user?.firstName || 'Player'}
                         </p>
-                        <p className="text-[#888] text-xs truncate">
+                        <p className="text-slate-500 text-sm font-medium truncate">
                           {user?.email || 'View your profile'}
                         </p>
                       </div>
                     </div>
-                  </div>
                   
                   {/* Dashboard View Selector */}
-                  <div className="px-3 py-3 border-b border-[#3a3a3a]">
-                    <p className="text-[#666] text-[10px] uppercase tracking-wider mb-2 px-1">Dashboard View</p>
-                    <div className="flex gap-1">
+                  <div className="px-4 py-5 border-b border-slate-100 bg-slate-50/50">
+                    <p className="text-slate-400 text-xs uppercase tracking-widest mb-3 px-2 font-bold">Dashboard Mode</p>
+                    <div className="flex bg-slate-200/50 p-1.5 rounded-2xl">
                       {VIEW_OPTIONS.map((option) => (
                         <button
                           key={option.value}
                           onClick={() => {
                             setDashboardView(option.value)
                             setIsProfileOpen(false)
-                            // Navigate to the appropriate dashboard
                             if (option.value === 'basic') {
                               router.push('/results/demo/basic')
                             } else {
                               router.push('/results/demo')
                             }
                           }}
-                          className={`flex-1 flex flex-col items-center gap-1 py-2.5 rounded-lg text-xs font-medium transition-all ${
+                          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all ${
                             dashboardView === option.value
-                              ? `bg-gradient-to-br ${option.color} text-white shadow-lg`
-                              : 'bg-[#2a2a2a] text-[#888] hover:bg-[#3a3a3a] hover:text-white'
+                              ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-900/5'
+                              : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'
                           }`}
                         >
-                          <span className="text-base">{option.icon}</span>
-                          <span className="text-[10px]">{option.label.substring(0, 3)}</span>
+                          {dashboardView === option.value && <span className="text-base">{option.icon}</span>}
+                          <span>{option.value === 'professional' ? 'Pro' : option.label}</span>
                         </button>
                       ))}
                     </div>
                   </div>
                   
-                  <div className="py-2">
-                    {profileMenuItems.map((item) => (
-                      <Link
-                        key={item.label}
-                        href={item.href}
-                        onClick={() => setIsProfileOpen(false)}
-                        className="flex items-center gap-3 px-4 py-3 text-[#E5E5E5] hover:bg-[#3a3a3a] hover:text-[#FF6B35] transition-colors"
-                      >
-                        <item.icon className="w-5 h-5" />
-                        <span className="font-medium">{item.label}</span>
-                      </Link>
-                    ))}
+                  <div className="p-3">
+                    {profileMenuItems.map((item) => {
+                      const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
+                      return (
+                        <Link
+                          key={item.label}
+                          href={item.href}
+                          onClick={() => setIsProfileOpen(false)}
+                          className={`flex items-center gap-3 px-4 py-3 mb-1 rounded-xl transition-all ${
+                            isActive 
+                              ? 'bg-[#FF6B35]/10 text-[#FF6B35] font-bold' 
+                              : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'
+                          }`}
+                        >
+                          <item.icon className={`w-5 h-5 ${isActive ? 'text-[#FF6B35]' : 'text-slate-400'}`} />
+                          <span>{item.label}</span>
+                        </Link>
+                      )
+                    })}
+                    
+                    <div className="h-px bg-slate-100 my-2 mx-2" />
                     
                     {/* Share Results Section */}
-                    <div className="border-t border-[#3a3a3a] mt-2 pt-2">
+                    <div>
                       <button
                         onClick={() => setIsShareOpen(!isShareOpen)}
-                        className="w-full flex items-center justify-between px-4 py-3 text-[#E5E5E5] hover:bg-[#3a3a3a] hover:text-[#FF6B35] transition-colors whitespace-nowrap"
+                        className="w-full flex items-center justify-between px-4 py-3 mb-1 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium transition-colors whitespace-nowrap"
                       >
                         <div className="flex items-center gap-3">
-                          <Share2 className="w-5 h-5" />
-                          <span className="font-medium">Share</span>
+                          <Share2 className="w-5 h-5 text-slate-400" />
+                          <span>Share</span>
                         </div>
-                        <ChevronDown className={`w-4 h-4 transition-transform ${isShareOpen ? 'rotate-180' : ''}`} />
+                        <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${isShareOpen ? 'rotate-180' : ''}`} />
                       </button>
                       
                       {/* Share Submenu */}
                       {isShareOpen && (
-                        <div className="bg-[#1a1a1a] mx-2 mb-2 rounded-lg overflow-hidden">
+                        <div className="bg-slate-50 mx-2 mb-2 rounded-lg overflow-hidden border border-slate-200">
                           {/* Social Share Buttons */}
                           <div className="grid grid-cols-3 gap-1 p-2">
                             <button
                               onClick={() => handleShare('twitter')}
-                              className="flex flex-col items-center gap-1 p-3 rounded-lg bg-[#2a2a2a] hover:bg-[#1DA1F2]/20 border border-[#3a3a3a] hover:border-[#1DA1F2]/50 transition-all group"
+                              className="flex flex-col items-center gap-1 p-3 rounded-lg bg-white hover:bg-[#1DA1F2]/10 border border-slate-200 hover:border-[#1DA1F2]/50 transition-all group"
                             >
                               <Twitter className="w-5 h-5 text-[#1DA1F2]" />
-                              <span className="text-[10px] text-[#888] group-hover:text-[#1DA1F2]">Twitter</span>
+                              <span className="text-[10px] text-slate-500 group-hover:text-[#1DA1F2]">Twitter</span>
                             </button>
                             <button
                               onClick={() => handleShare('facebook')}
-                              className="flex flex-col items-center gap-1 p-3 rounded-lg bg-[#2a2a2a] hover:bg-[#4267B2]/20 border border-[#3a3a3a] hover:border-[#4267B2]/50 transition-all group"
+                              className="flex flex-col items-center gap-1 p-3 rounded-lg bg-white hover:bg-[#4267B2]/10 border border-slate-200 hover:border-[#4267B2]/50 transition-all group"
                             >
                               <Facebook className="w-5 h-5 text-[#4267B2]" />
-                              <span className="text-[10px] text-[#888] group-hover:text-[#4267B2]">Facebook</span>
+                              <span className="text-[10px] text-slate-500 group-hover:text-[#4267B2]">Facebook</span>
                             </button>
                             <button
                               onClick={() => handleShare('linkedin')}
-                              className="flex flex-col items-center gap-1 p-3 rounded-lg bg-[#2a2a2a] hover:bg-[#0077B5]/20 border border-[#3a3a3a] hover:border-[#0077B5]/50 transition-all group"
+                              className="flex flex-col items-center gap-1 p-3 rounded-lg bg-white hover:bg-[#0077B5]/10 border border-slate-200 hover:border-[#0077B5]/50 transition-all group"
                             >
                               <Linkedin className="w-5 h-5 text-[#0077B5]" />
-                              <span className="text-[10px] text-[#888] group-hover:text-[#0077B5]">LinkedIn</span>
+                              <span className="text-[10px] text-slate-500 group-hover:text-[#0077B5]">LinkedIn</span>
                             </button>
                           </div>
                           
                           {/* Download & Copy Link */}
-                          <div className="border-t border-[#3a3a3a] p-2 space-y-1">
+                          <div className="border-t border-slate-100 p-2 space-y-1">
                             <button
                               onClick={handleDownload}
-                              className="w-full flex items-center gap-3 px-3 py-2 text-[#E5E5E5] hover:bg-[#2a2a2a] rounded-lg transition-colors text-sm whitespace-nowrap"
+                              className="w-full flex items-center gap-3 px-3 py-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900 rounded-lg transition-colors text-sm font-medium whitespace-nowrap"
                             >
-                              <Download className="w-4 h-4 text-[#888]" />
+                              <Download className="w-4 h-4 text-slate-400" />
                               <span>Download</span>
                             </button>
                             <button
                               onClick={handleCopyLink}
-                              className="w-full flex items-center gap-3 px-3 py-2 text-[#E5E5E5] hover:bg-[#2a2a2a] rounded-lg transition-colors text-sm"
+                              className="w-full flex items-center gap-3 px-3 py-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900 rounded-lg transition-colors text-sm font-medium"
                             >
                               {copied ? (
                                 <>
                                   <Check className="w-4 h-4 text-green-500" />
-                                  <span className="text-green-500">Copied!</span>
+                                  <span className="text-green-600">Copied!</span>
                                 </>
                               ) : (
                                 <>
-                                  <Link2 className="w-4 h-4 text-[#888]" />
-                                  <span>Copy</span>
+                                  <Link2 className="w-4 h-4 text-slate-400" />
+                                  <span>Copy Link</span>
                                 </>
                               )}
                             </button>
@@ -345,14 +351,16 @@ export function Header() {
                       )}
                     </div>
                     
+                    <div className="h-px bg-slate-100 my-2 mx-2" />
+                    
                     {/* Sign Out Button */}
-                    <div className="border-t border-[#3a3a3a] pt-2">
+                    <div>
                       <button
                         onClick={handleSignOut}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-[#E5E5E5] hover:bg-[#3a3a3a] hover:text-[#FF6B35] transition-colors whitespace-nowrap"
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-red-50 hover:text-red-600 font-medium transition-colors whitespace-nowrap"
                       >
-                        <LogOut className="w-5 h-5" />
-                        <span className="font-medium">Logout</span>
+                        <LogOut className="w-5 h-5 text-slate-400 group-hover:text-red-500" />
+                        <span>Logout</span>
                       </button>
                     </div>
                   </div>

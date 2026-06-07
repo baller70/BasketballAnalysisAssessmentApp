@@ -14,7 +14,8 @@ import { AnalysisProgressScreen, type InputType } from "@/components/analysis/An
 import { VideoPlayerSection } from "@/components/analysis/VideoPlayerSection"
 import { LiveAnalysis, FullscreenLiveCamera } from "@/components/live"
 import { GoalTransitMap } from "@/components/goals"
-import { User, Upload, Check, X, Image as ImageIcon, Video, BookOpen, Users, Search, BarChart3, Award, ArrowRight, Zap, Trophy, Target, ClipboardList, Flame, Dumbbell, CircleDot, Share2, Download, Copy, Twitter, Facebook, Linkedin, ChevronLeft, ChevronRight, Calendar, ChevronDown, ChevronUp, AlertTriangle, Lightbulb, Plus, Eye, EyeOff, Layers, GitBranch, Circle, Tag, Camera, Play, Info, TrendingUp, Shirt, Medal, Timer, Footprints, ArrowLeftRight, Move, Instagram, MessageCircle, Globe, Clock, PieChart, Grid3X3, Activity, MoreVertical, Radio, Star, Crown, MapPin, SlidersHorizontal, Filter, FolderOpen } from "lucide-react"
+import { User, Upload, Check, X, Image as ImageIcon, Video, BookOpen, Users, Search, BarChart3, Award, ArrowRight, Zap, Trophy, Target, ClipboardList, Flame, Dumbbell, CircleDot, Share2, Download, Copy, Twitter, Facebook, Linkedin, ChevronLeft, ChevronRight, Calendar, ChevronDown, ChevronUp, AlertTriangle, Lightbulb, Plus, Eye, EyeOff, Layers, GitBranch, Circle, Tag, Camera, Play, Info, TrendingUp, Shirt, Medal, Timer, Footprints, ArrowLeftRight, Move, Instagram, MessageCircle, Globe, Clock, PieChart, Grid3X3, Activity, MoreVertical, Radio, Star, Crown, MapPin, SlidersHorizontal, Filter, FolderOpen, Home } from "lucide-react"
+import { Basketball as PhBasketball, FireSimple as PhFire, Trophy as PhTrophy, Target as PhTarget, Medal as PhMedal, Crown as PhCrown, Lightning as PhLightning, ChartLineUp as PhChartUp, Crosshair as PhCrosshair, Star as PhStar, TrendUp as PhTrend } from "@phosphor-icons/react"
 import Link from "next/link"
 import Image from "next/image"
 import { useSearchParams } from "next/navigation"
@@ -130,17 +131,17 @@ function CollapsibleDropdown({ title, icon, defaultOpen = false, children }: Col
   const [isOpen, setIsOpen] = useState(defaultOpen)
 
   return (
-    <div className="bg-[#2a2a2a] rounded-lg border border-[#4a4a4a] overflow-hidden">
+    <div className="bg-white rounded-lg border-2 border-black overflow-hidden">
       {/* Header - Always visible, clickable */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-4 hover:bg-[#3a3a3a]/50 transition-colors"
+        className="w-full flex items-center justify-between p-4 hover:bg-slate-200/50 transition-colors"
       >
         <div className="flex items-center gap-3">
           {icon && <span className="text-[#FF6B35]">{icon}</span>}
           <h3 className="text-[#FF6B35] font-bold text-sm uppercase tracking-wider">{title}</h3>
         </div>
-        <div className={`text-[#888] transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
+        <div className={`text-slate-500 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
           <ChevronDown className="w-5 h-5" />
         </div>
       </button>
@@ -151,7 +152,7 @@ function CollapsibleDropdown({ title, icon, defaultOpen = false, children }: Col
           isOpen ? 'max-h-[3000px] opacity-100' : 'max-h-0 opacity-0'
         }`}
       >
-        <div className="p-4 pt-0 border-t border-[#3a3a3a]">
+        <div className="p-4 pt-0 border-t border-black">
           {children}
         </div>
       </div>
@@ -722,7 +723,7 @@ function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, ang
           ref={canvasRef}
           width={500}
           height={400}
-          className="rounded-lg border-2 border-[#3a3a3a] transition-transform duration-300 ease-out"
+          className="rounded-lg border-2 border-black transition-transform duration-300 ease-out"
           style={{
             transform: isZoomed ? 'scale(2.5)' : 'scale(1)',
             transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
@@ -734,24 +735,24 @@ function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, ang
       {showStats && (
         <>
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-[#1a1a1a] rounded-lg p-4 text-center">
-              <p className="text-[#888] text-sm uppercase">Confidence</p>
+            <div className="bg-white rounded-lg p-4 text-center">
+              <p className="text-slate-500 text-sm uppercase">Confidence</p>
               <p className="text-2xl font-bold text-[#FF6B35]">{confidence ? (confidence * 100).toFixed(0) : 0}%</p>
             </div>
-            <div className="bg-[#1a1a1a] rounded-lg p-4 text-center">
-              <p className="text-[#888] text-sm uppercase">Keypoints</p>
+            <div className="bg-white rounded-lg p-4 text-center">
+              <p className="text-slate-500 text-sm uppercase">Keypoints</p>
               <p className="text-2xl font-bold text-[#4ade80]">{keypoints ? Object.keys(keypoints).length : 0}</p>
             </div>
           </div>
 
           {/* Angles */}
           {angles && Object.keys(angles).length > 0 && (
-            <div className="bg-[#1a1a1a] rounded-lg p-4">
+            <div className="bg-white rounded-lg p-4">
               <h4 className="text-[#FF6B35] font-semibold text-sm uppercase tracking-wider mb-3">Joint Angles</h4>
               <div className="grid grid-cols-2 gap-2">
                 {Object.entries(angles).map(([name, value]) => (
-                  <div key={name} className="flex justify-between items-center bg-[#2a2a2a] rounded px-3 py-2">
-                    <span className="text-[#E5E5E5] text-sm">{formatAngleName(name)}</span>
+                  <div key={name} className="flex justify-between items-center bg-white rounded px-3 py-2">
+                    <span className="text-slate-900 text-sm">{formatAngleName(name)}</span>
                     <span className="text-[#FF6B35] font-bold">{(value as number).toFixed(1)}°</span>
                   </div>
                 ))}
@@ -763,19 +764,19 @@ function HybridSkeletonDisplay({ imageUrl, keypoints, basketball, imageSize, ang
           <div className="flex justify-center gap-4 text-xs">
             <div className="flex items-center gap-1">
               <div className="w-3 h-3 rounded-full bg-[#4ade80]" />
-              <span className="text-[#888]">YOLO</span>
+              <span className="text-slate-500">YOLO</span>
             </div>
             <div className="flex items-center gap-1">
               <div className="w-3 h-3 rounded-full bg-[#60a5fa]" />
-              <span className="text-[#888]">MediaPipe</span>
+              <span className="text-slate-500">MediaPipe</span>
             </div>
             <div className="flex items-center gap-1">
               <div className="w-3 h-3 rounded-full bg-[#facc15]" />
-              <span className="text-[#888]">Fused</span>
+              <span className="text-slate-500">Fused</span>
             </div>
             <div className="flex items-center gap-1">
               <div className="w-3 h-3 rounded-full bg-[#f97316]" />
-              <span className="text-[#888]">Basketball</span>
+              <span className="text-slate-500">Basketball</span>
             </div>
           </div>
         </>
@@ -800,7 +801,7 @@ function MainAnalysisImageSection({ mainImageUrl, visionAnalysis, analysisData, 
   const [downloadFn, setDownloadFn] = useState<(() => void) | null>(null)
   
   return (
-    <div className="bg-[#2a2a2a] rounded-lg border border-[#4a4a4a] p-6">
+    <div className="bg-white rounded-lg border-2 border-black p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-[#FF6B35] font-bold text-sm uppercase tracking-wider flex items-center gap-2">
           <Camera className="w-4 h-4" />
@@ -1308,7 +1309,7 @@ function AnimatedImageWalkthrough({ imageUrl, keypoints, angles, imageSize }: An
           <h3 className="text-[#FF6B35] font-bold text-sm uppercase tracking-wider mb-1">
             Animated Form Walkthrough
           </h3>
-          <p className="text-[#888] text-xs">Watch as we highlight each key point of your form</p>
+          <p className="text-slate-500 text-xs">Watch as we highlight each key point of your form</p>
         </div>
         <button
           onClick={downloadCanvas}
@@ -1325,7 +1326,7 @@ function AnimatedImageWalkthrough({ imageUrl, keypoints, angles, imageSize }: An
           ref={canvasRef}
           width={600}
           height={500}
-          className="rounded-lg border-2 border-[#3a3a3a]"
+          className="rounded-lg border-2 border-black"
         />
         
         {/* Play button overlay */}
@@ -1333,7 +1334,7 @@ function AnimatedImageWalkthrough({ imageUrl, keypoints, angles, imageSize }: An
           <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-lg">
             <button
               onClick={startAnimation}
-              className="p-4 rounded-full bg-[#FF6B35] hover:bg-[#E55300] text-white transition-all transform hover:scale-110 shadow-2xl"
+              className="p-4 rounded-full bg-[#FF6B35] hover:bg-[#E55300] text-slate-900 transition-all transform hover:scale-110 shadow-2xl"
             >
               <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M8 5v14l11-7z"/>
@@ -1354,7 +1355,7 @@ function AnimatedImageWalkthrough({ imageUrl, keypoints, angles, imageSize }: An
           <div className="absolute bottom-4 right-4">
             <button
               onClick={startAnimation}
-              className="px-4 py-2 rounded-lg bg-[#FF6B35] hover:bg-[#E55300] text-white font-bold text-sm transition-colors"
+              className="px-4 py-2 rounded-lg bg-[#FF6B35] hover:bg-[#E55300] text-slate-900 font-bold text-sm transition-colors"
             >
               Replay
             </button>
@@ -1364,7 +1365,7 @@ function AnimatedImageWalkthrough({ imageUrl, keypoints, angles, imageSize }: An
       
       {/* Progress bar */}
       {isPlaying && (
-        <div className="w-full bg-[#3a3a3a] rounded-full h-2">
+        <div className="w-full bg-slate-200 rounded-full h-2">
           <div
             className="bg-[#FF6B35] h-2 rounded-full transition-all duration-100"
             style={{ width: `${progress}%` }}
@@ -1509,7 +1510,7 @@ function ScoreRing({ score, size = 100, strokeWidth = 8, showLabel = true, label
           >
             {score}
           </span>
-          <span className="text-[#888] uppercase tracking-wider" style={{ fontSize: size * 0.1 }}>
+          <span className="text-slate-500 uppercase tracking-wider" style={{ fontSize: size * 0.1 }}>
             {label}
           </span>
         </div>
@@ -1816,7 +1817,7 @@ class ErrorBoundary extends React.Component<
       return this.props.fallback || (
         <div className="p-8 text-center">
           <AlertTriangle className="w-12 h-12 text-orange-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-white mb-2">Something went wrong</h3>
+          <h3 className="text-lg font-semibold text-slate-900 mb-2">Something went wrong</h3>
           <p className="text-gray-400 mb-4">Please try refreshing the page.</p>
           <button
             onClick={() => {
@@ -1982,19 +1983,19 @@ function DemoResultsPageContent() {
   const playerName = "KEVIN HOUSTON" // From profile or default
 
   return (
-    <main className="min-h-[calc(100vh-200px)] py-8 px-4 bg-[#050505]">
+    <main className="min-h-[calc(100vh-200px)] py-8 px-4 bg-slate-50">
         <div className="container mx-auto max-w-5xl">
           {/* Collapsible Stats Card - Shows on all devices */}
           <CollapsibleStatsCard />
           
           {/* Main Content - Full Width */}
           <div className="mt-4">
-            <div className="bg-[#2C2C2C] rounded-lg overflow-hidden shadow-lg">
+            <div className="bg-white rounded-lg overflow-hidden shadow-lg">
               {/* Tab Navigation - Hidden on mobile (FAB handles it) */}
-              <div className="hidden md:block p-4 border-b border-[#3a3a3a]">
+              <div className="py-5">
                 <div className="flex items-center justify-center">
-                  {/* Tab Navigation */}
-                  <div className="inline-flex rounded-lg bg-[#1a1a1a] p-1">
+                  {/* Modern Segmented Control */}
+                  <div className="inline-flex rounded-full bg-black p-1 gap-0.5 shadow-lg shadow-black/20">
                     {(["video", "image", "live"] as ResultsMode[]).map((mode) => (
                       <button 
                         key={mode} 
@@ -2005,23 +2006,20 @@ function DemoResultsPageContent() {
                             console.error('Error switching tab:', error)
                           }
                         }} 
-                        className={`relative px-6 py-2 rounded-md flex items-center justify-center gap-2 transition-colors uppercase font-bold text-sm tracking-wider ${resultsMode === mode ? "bg-[#FF6B35] text-[#111827]" : "text-[#9CA3AF] hover:text-[#F9FAFB] hover:bg-[#374151]"}`}
+                        className={`relative px-7 py-2.5 rounded-full flex items-center justify-center gap-2 transition-all duration-300 uppercase font-bold text-xs tracking-widest ${resultsMode === mode ? "bg-[#FF6B35] text-white shadow-lg shadow-[#FF6B35]/30" : "text-slate-400 hover:text-white"}`}
                       >
                         {mode === "video" && <Video className="w-4 h-4" />}
                         {mode === "image" && <ImageIcon className="w-4 h-4" />}
                         {mode === "live" && <Radio className="w-4 h-4" />}
                         <span>{mode}</span>
                         {mode === "live" && (
-                          <span className={`absolute -top-1 -right-1 px-1.5 py-0.5 text-[10px] font-bold rounded-full ${resultsMode === "live" ? "bg-white text-[#FF6B35]" : "bg-[#FF6B35] text-white"}`}>
+                          <span className={`absolute -top-1.5 -right-1 px-1.5 py-0.5 text-[9px] font-bold rounded-full ${resultsMode === "live" ? "bg-white text-[#FF6B35]" : "bg-[#FF6B35] text-white"}`}>
                             NEW
                           </span>
                         )}
                       </button>
                     ))}
                   </div>
-                  
-                  {/* Right: Spacer for balance */}
-                  <div className="w-[120px]"></div>
                 </div>
               </div>
               
@@ -2252,12 +2250,12 @@ function DemoResultsPageContent() {
                           setActiveTab('analysis')
                           setShowFabMenu(false)
                         }}
-                        className="group flex items-center gap-3 bg-zinc-900/90 backdrop-blur-xl border border-zinc-700/50 rounded-2xl pl-5 pr-3 py-2.5 shadow-2xl transition-all duration-200 hover:bg-zinc-800/90 hover:scale-[1.02] animate-in slide-in-from-bottom-2 fade-in duration-200"
-                        style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)' }}
+                        className="group flex items-center gap-3 bg-white/95 backdrop-blur-xl border border-slate-200 rounded-2xl pl-5 pr-3 py-2.5 shadow-xl transition-all duration-200 hover:bg-slate-50/95 hover:scale-[1.02] animate-in slide-in-from-bottom-2 fade-in duration-200"
+                        style={{ boxShadow: '0 8px 30px rgba(0,0,0,0.08)' }}
                       >
-                        <span className="text-zinc-100 text-sm font-medium whitespace-nowrap tracking-wide">Analyze Shot</span>
-                        <div className="w-9 h-9 bg-gradient-to-br from-orange-400 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/30">
-                          <Target className="w-4.5 h-4.5 text-white" />
+                        <span className="text-slate-700 text-sm font-bold whitespace-nowrap tracking-wide group-hover:text-slate-900">Analyze Shot</span>
+                        <div className="w-9 h-9 bg-[#FF6B35]/10 rounded-xl flex items-center justify-center border border-[#FF6B35]/20 group-hover:bg-[#FF6B35]/20 transition-colors">
+                          <Target className="w-4.5 h-4.5 text-[#FF6B35]" />
                         </div>
                       </button>
                       
@@ -2267,12 +2265,12 @@ function DemoResultsPageContent() {
                           setShowFabMenu(false)
                           ;(window as any).__imageUploadInput?.click()
                         }}
-                        className="group flex items-center gap-3 bg-zinc-900/90 backdrop-blur-xl border border-zinc-700/50 rounded-2xl pl-5 pr-3 py-2.5 shadow-2xl transition-all duration-200 hover:bg-zinc-800/90 hover:scale-[1.02] animate-in slide-in-from-bottom-2 fade-in duration-200 delay-75"
-                        style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)' }}
+                        className="group flex items-center gap-3 bg-white/95 backdrop-blur-xl border border-slate-200 rounded-2xl pl-5 pr-3 py-2.5 shadow-xl transition-all duration-200 hover:bg-slate-50/95 hover:scale-[1.02] animate-in slide-in-from-bottom-2 fade-in duration-200 delay-75"
+                        style={{ boxShadow: '0 8px 30px rgba(0,0,0,0.08)' }}
                       >
-                        <span className="text-zinc-100 text-sm font-medium whitespace-nowrap tracking-wide">Upload Image</span>
-                        <div className="w-9 h-9 bg-gradient-to-br from-sky-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-sky-500/30">
-                          <ImageIcon className="w-4.5 h-4.5 text-white" />
+                        <span className="text-slate-700 text-sm font-bold whitespace-nowrap tracking-wide group-hover:text-slate-900">Upload Image</span>
+                        <div className="w-9 h-9 bg-slate-100 rounded-xl flex items-center justify-center border border-slate-200 group-hover:bg-slate-200 transition-colors">
+                          <ImageIcon className="w-4.5 h-4.5 text-slate-700" />
                         </div>
                       </button>
                       
@@ -2282,12 +2280,12 @@ function DemoResultsPageContent() {
                           setShowFabMenu(false)
                           ;(window as any).__videoUploadInput?.click()
                         }}
-                        className="group flex items-center gap-3 bg-zinc-900/90 backdrop-blur-xl border border-zinc-700/50 rounded-2xl pl-5 pr-3 py-2.5 shadow-2xl transition-all duration-200 hover:bg-zinc-800/90 hover:scale-[1.02] animate-in slide-in-from-bottom-2 fade-in duration-200 delay-100"
-                        style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)' }}
+                        className="group flex items-center gap-3 bg-white/95 backdrop-blur-xl border border-slate-200 rounded-2xl pl-5 pr-3 py-2.5 shadow-xl transition-all duration-200 hover:bg-slate-50/95 hover:scale-[1.02] animate-in slide-in-from-bottom-2 fade-in duration-200 delay-100"
+                        style={{ boxShadow: '0 8px 30px rgba(0,0,0,0.08)' }}
                       >
-                        <span className="text-zinc-100 text-sm font-medium whitespace-nowrap tracking-wide">Upload Video</span>
-                        <div className="w-9 h-9 bg-gradient-to-br from-rose-400 to-red-600 rounded-xl flex items-center justify-center shadow-lg shadow-rose-500/30">
-                          <Video className="w-4.5 h-4.5 text-white" />
+                        <span className="text-slate-700 text-sm font-bold whitespace-nowrap tracking-wide group-hover:text-slate-900">Upload Video</span>
+                        <div className="w-9 h-9 bg-slate-100 rounded-xl flex items-center justify-center border border-slate-200 group-hover:bg-slate-200 transition-colors">
+                          <Video className="w-4.5 h-4.5 text-slate-700" />
                         </div>
                       </button>
                       
@@ -2297,12 +2295,12 @@ function DemoResultsPageContent() {
                           setResultsMode("live")
                           setShowFabMenu(false)
                         }}
-                        className="group flex items-center gap-3 bg-zinc-900/90 backdrop-blur-xl border border-zinc-700/50 rounded-2xl pl-5 pr-3 py-2.5 shadow-2xl transition-all duration-200 hover:bg-zinc-800/90 hover:scale-[1.02] animate-in slide-in-from-bottom-2 fade-in duration-200 delay-150"
-                        style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)' }}
+                        className="group flex items-center gap-3 bg-white/95 backdrop-blur-xl border border-slate-200 rounded-2xl pl-5 pr-3 py-2.5 shadow-xl transition-all duration-200 hover:bg-slate-50/95 hover:scale-[1.02] animate-in slide-in-from-bottom-2 fade-in duration-200 delay-150"
+                        style={{ boxShadow: '0 8px 30px rgba(0,0,0,0.08)' }}
                       >
-                        <span className="text-zinc-100 text-sm font-medium whitespace-nowrap tracking-wide">Live Camera</span>
-                        <div className="w-9 h-9 bg-gradient-to-br from-emerald-400 to-green-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/30">
-                          <Radio className="w-4.5 h-4.5 text-white" />
+                        <span className="text-slate-700 text-sm font-bold whitespace-nowrap tracking-wide group-hover:text-slate-900">Live Camera</span>
+                        <div className="w-9 h-9 bg-slate-100 rounded-xl flex items-center justify-center border border-slate-200 group-hover:bg-slate-200 transition-colors">
+                          <Radio className="w-4.5 h-4.5 text-slate-700" />
                         </div>
                       </button>
                     </div>
@@ -2316,17 +2314,17 @@ function DemoResultsPageContent() {
                   }}
                   className={`
                     group relative flex items-center justify-center w-14 h-14 rounded-2xl
-                    transition-all duration-300 ease-out
+                    transition-all duration-300 ease-out border
                     ${showFabMenu 
-                      ? 'bg-zinc-800 rotate-45 scale-95' 
-                      : 'bg-gradient-to-br from-orange-500 via-orange-600 to-amber-600 hover:scale-110 active:scale-95'
+                      ? 'bg-slate-100 border-slate-300 rotate-45 scale-95' 
+                      : 'bg-[#111827] border-[#111827] hover:scale-110 active:scale-95'
                     }
                   `}
                   aria-label="Quick actions"
                   style={{
                     boxShadow: showFabMenu 
-                      ? '0 4px 20px rgba(0,0,0,0.3)' 
-                      : '0 8px 32px rgba(249, 115, 22, 0.4), 0 4px 16px rgba(249, 115, 22, 0.3), inset 0 1px 0 rgba(255,255,255,0.2)'
+                      ? '0 4px 20px rgba(0,0,0,0.05)' 
+                      : '0 12px 30px rgba(0,0,0,0.15), 0 4px 12px rgba(0,0,0,0.1)'
                   }}
                 >
                   {/* Glow ring effect */}
@@ -2340,13 +2338,13 @@ function DemoResultsPageContent() {
                   
                   {/* Pulse animation ring */}
                   {!showFabMenu && (
-                    <div className="absolute inset-0 rounded-2xl animate-ping opacity-20 bg-orange-500" style={{ animationDuration: '2s' }} />
+                    <div className="absolute inset-0 rounded-2xl animate-ping opacity-[0.15] bg-[#111827]" style={{ animationDuration: '2s' }} />
                   )}
                   
                   {/* Icon */}
                   <Plus className={`
                     w-6 h-6 relative z-10 transition-all duration-300
-                    ${showFabMenu ? 'text-zinc-400' : 'text-white drop-shadow-sm'}
+                    ${showFabMenu ? 'text-slate-500' : 'text-white drop-shadow-sm group-hover:text-[#FF6B35]'}
                   `} strokeWidth={2.5} />
                 </button>
               </div>
@@ -2464,61 +2462,72 @@ function CollapsibleStatsCard() {
   const progressPercent = (userStats.xp / userStats.maxXp) * 100
 
   return (
-    <div className="bg-[#2C2C2C] rounded-lg border border-[#3a3a3a] overflow-hidden">
-      {/* Collapsed View - Always Visible */}
-      <div
-        className="w-full p-3 md:p-4 flex items-center gap-3 md:gap-4 hover:bg-[#333] transition-colors cursor-pointer"
-      >
-        {/* Level Badge - Opens Milestones Popup */}
+    <div className="bg-black rounded-2xl border-2 border-black overflow-hidden shadow-lg">
+      {/* Sports Card — Collapsed View */}
+      <div className="w-full flex items-stretch cursor-pointer" style={{ minHeight: '80px' }}>
+        
+        {/* Left Orange Panel — OVR Circle */}
         <button
           onClick={(e) => { e.stopPropagation(); setShowMilestonesPopup(true); }}
-          className="flex items-center gap-2 md:gap-3 hover:bg-[#FF6B35]/10 rounded-lg p-1 -m-1 transition-colors"
+          className="flex-shrink-0 w-[85px] md:w-[100px] bg-[#FF6B35] flex items-center justify-center hover:bg-[#FF5722] transition-colors"
         >
-          <div className="w-10 h-10 md:w-12 md:h-12 bg-[#FF6B35]/20 rounded-lg flex items-center justify-center border border-[#FF6B35]/40 flex-shrink-0">
-            <Award className="w-5 h-5 md:w-6 md:h-6 text-[#FF6B35]" />
-          </div>
-          <div className="text-left">
-            <div className="text-[#FF6B35] text-[10px] md:text-xs uppercase tracking-wider font-semibold">Lv.{userStats.level}</div>
-            <div className="text-[#FF6B35] font-bold text-sm md:text-base whitespace-nowrap">{userStats.levelName}</div>
+          <div className="relative w-14 h-14 md:w-16 md:h-16">
+            <svg viewBox="0 0 64 64" className="w-full h-full">
+              <circle cx="32" cy="32" r="28" fill="none" stroke="rgba(0,0,0,0.15)" strokeWidth="3" />
+              <circle 
+                cx="32" cy="32" r="28" fill="none" 
+                stroke="white" strokeWidth="3.5" strokeLinecap="round"
+                strokeDasharray={`${progressPercent * 1.76} 176`}
+                transform="rotate(-90 32 32)"
+                className="transition-all duration-700"
+              />
+              <circle cx="32" cy="32" r="23" fill="rgba(0,0,0,0.35)" />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-white font-black text-xl md:text-2xl leading-none">{userStats.level}</span>
+              <span className="text-white/60 text-[7px] font-bold uppercase tracking-widest">OVR</span>
+            </div>
           </div>
         </button>
-        
-        {/* XP Progress - Hidden on very small screens */}
-        <div className="hidden sm:flex flex-1 items-center gap-2 max-w-[200px]">
-          <div className="flex-1">
-            <div className="h-2 bg-[#3a3a3a] rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF4500] rounded-full transition-all duration-500"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-            <div className="flex justify-between text-[10px] text-[#888] mt-0.5">
-              <span>{userStats.xp} XP</span>
-              <span>{userStats.maxXp} XP</span>
-            </div>
+
+        {/* Center — Name + Hash Progress Bar */}
+        <div className="flex-1 bg-gradient-to-r from-[#1a1a1a] to-[#222] px-4 md:px-5 py-2.5 flex flex-col justify-center min-w-0">
+          <div className="flex items-baseline gap-2">
+            <span className="text-white/60 text-[10px] md:text-xs font-semibold uppercase tracking-wider">Lv.{userStats.level}</span>
+            <span className="text-white font-black text-sm md:text-lg uppercase tracking-tight truncate">{userStats.levelName}</span>
+          </div>
+          {/* Hash mark progress bar — full width */}
+          <div className="flex items-center gap-[2px] mt-2 w-full">
+            {Array.from({ length: 30 }).map((_, i) => {
+              const barPercent = (i + 1) * (100 / 30);
+              const isFilled = progressPercent >= barPercent;
+              return (
+                <div
+                  key={i}
+                  className={`flex-1 h-[10px] md:h-[12px] ${isFilled ? 'bg-[#FF6B35]' : 'bg-white/10'}`}
+                  style={{ borderRadius: '1px' }}
+                />
+              );
+            })}
+          </div>
+          <div className="text-white/50 text-[9px] md:text-[10px] font-medium mt-1 tracking-wide">
+            {userStats.xp.toLocaleString()} / {userStats.maxXp.toLocaleString()} XP
           </div>
         </div>
-        
-        {/* Quick Stats */}
-        <div className="flex items-center gap-2 md:gap-4 ml-auto">
-          {/* Streak */}
-          <div className="flex items-center gap-1.5 px-2 py-1 bg-[#1a1a1a] rounded-lg">
-            <Flame className="w-4 h-4 text-orange-500" />
-            <span className="text-white font-bold text-sm">{userStats.dailyStreak}</span>
+
+        {/* Right — Streak + Expand */}
+        <div className="flex-shrink-0 bg-white flex items-center gap-1 px-4 md:px-6 border-l border-slate-200">
+          <div className="flex flex-col items-center">
+            <Flame className="w-4 h-4 text-[#FF6B35] fill-white mb-0.5" />
+            <span className="text-[#FF6B35] font-black text-3xl md:text-4xl leading-none tracking-tighter">{userStats.dailyStreak}</span>
           </div>
-          
-          {/* Rank */}
-          <div className="hidden xs:flex items-center gap-1.5 px-2 py-1 bg-[#1a1a1a] rounded-lg">
-            <Crown className="w-4 h-4 text-[#FF6B35]" />
-            <span className="text-white font-bold text-sm">#{userStats.leaderboardRank}</span>
-          </div>
-          
-          {/* Expand Arrow */}
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="p-1 hover:bg-[#3a3a3a] rounded-lg transition-colors"
+            className="p-1 hover:bg-white/10 rounded-full transition-all ml-1"
           >
-            <ChevronDown className={`w-5 h-5 text-[#888] transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+            <svg viewBox="0 0 20 20" className={`w-4 h-4 text-white/30 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
+              <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+            </svg>
           </button>
         </div>
       </div>
@@ -2531,38 +2540,63 @@ function CollapsibleStatsCard() {
       
       {/* Expanded Content */}
       {isExpanded && (
-        <div className="px-3 md:px-4 pb-3 md:pb-4 border-t border-[#3a3a3a] bg-[#252525]">
+        <div className="px-3 md:px-4 pb-3 md:pb-4 border-t border-black bg-[#252525]">
           <div className="pt-3 md:pt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
             {/* XP Progress (Mobile) */}
             <div className="sm:hidden">
-              <div className="text-[#888] text-xs uppercase mb-1">Progress</div>
-              <div className="bg-[#1a1a1a] rounded-lg p-3">
-                <div className="flex justify-between text-xs text-[#888] mb-1">
-                  <span>{userStats.xp} XP</span>
-                  <span>{userStats.maxXp} XP</span>
+              <div className="text-slate-500 text-xs uppercase mb-1 font-bold tracking-wider">Progress</div>
+              <div className="bg-white rounded-xl p-3">
+                <div className="flex justify-between items-center text-xs mb-2">
+                  <span className="font-black text-[#FF6B35]">{userStats.xp} XP</span>
+                  <span className="text-slate-400 font-semibold">{userStats.maxXp} XP</span>
                 </div>
-                <div className="h-2 bg-[#3a3a3a] rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF4500] rounded-full"
-                    style={{ width: `${progressPercent}%` }}
-                  />
+                {/* Stepped XP blocks — Mobile */}
+                <div className="flex gap-[2px] h-5">
+                  {Array.from({ length: 20 }).map((_, i) => {
+                    const blockPercent = (i + 1) * 5;
+                    const isFilled = progressPercent >= blockPercent;
+                    const isActive = progressPercent >= blockPercent - 5 && progressPercent < blockPercent;
+                    return (
+                      <div
+                        key={i}
+                        className={`flex-1 rounded-sm transition-all duration-300 ${
+                          isFilled 
+                            ? 'bg-gradient-to-t from-[#FF4500] to-[#FF6B35] shadow-[0_0_4px_rgba(255,107,53,0.4)]' 
+                            : isActive 
+                              ? 'bg-gradient-to-t from-[#FF4500]/60 to-[#FF6B35]/60 animate-pulse shadow-[0_0_6px_rgba(255,107,53,0.5)]' 
+                              : 'bg-slate-200/60'
+                        }`}
+                        style={{
+                          borderRadius: i === 0 ? '4px 2px 2px 4px' : i === 19 ? '2px 4px 4px 2px' : '2px',
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+                {/* Level milestone markers */}
+                <div className="flex justify-between mt-1.5">
+                  {['Lv.3', '25%', '50%', '75%', 'Lv.4'].map((label, i) => (
+                    <span key={i} className={`text-[8px] font-bold uppercase tracking-wider ${
+                      i === 0 ? 'text-[#FF6B35]' : i === 4 ? 'text-slate-400' : 'text-slate-300'
+                    }`}>{label}</span>
+                  ))}
                 </div>
               </div>
             </div>
             
             {/* Latest Badge */}
-            <Link href="/badges" className="bg-[#1a1a1a] rounded-lg p-3 hover:bg-[#222] transition-colors">
+            <Link href="/badges" className="bg-white rounded-lg p-3 hover:bg-slate-100 transition-colors">
               <div className="flex items-center gap-2 mb-1">
-                <Star className="w-3 h-3 text-[#FF6B35]" />
-                <span className="text-[#888] text-xs uppercase">Latest Badge</span>
+                <PhStar size={14} weight="duotone" color="#FF6B35" />
+                <span className="text-slate-500 text-xs uppercase">Latest Badge</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#FF4500] flex items-center justify-center">
-                  <TrendingUp className="w-4 h-4 text-[#1a1a1a]" />
+                  <PhTrend size={18} weight="duotone" className="text-white" />
                 </div>
                 <div>
-                  <div className="text-[#E5E5E5] text-sm font-medium">{userStats.latestBadge.name}</div>
-                  <div className="text-[#666] text-xs">{userStats.latestBadge.earnedDate}</div>
+                  <div className="text-slate-900 text-sm font-medium">{userStats.latestBadge.name}</div>
+                  <div className="text-slate-500 text-xs">{userStats.latestBadge.earnedDate}</div>
                 </div>
               </div>
             </Link>
@@ -2570,19 +2604,19 @@ function CollapsibleStatsCard() {
             {/* Daily Streak */}
             <button 
               onClick={(e) => { e.stopPropagation(); setShowStreakPopup(true); }}
-              className="bg-[#1a1a1a] rounded-lg p-3 hover:bg-[#222] transition-colors text-left"
+              className="bg-white rounded-lg p-3 hover:bg-slate-100 transition-colors text-left"
             >
               <div className="flex items-center gap-2 mb-1">
-                <Flame className="w-3 h-3 text-orange-500" />
-                <span className="text-[#888] text-xs uppercase">Daily Streak</span>
+                <PhFire size={14} weight="duotone" color="#f97316" />
+                <span className="text-slate-500 text-xs uppercase">Daily Streak</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
-                  <Flame className="w-4 h-4 text-white" />
+                  <PhFire size={18} weight="duotone" className="text-white" />
                 </div>
                 <div>
-                  <div className="text-[#E5E5E5] text-sm font-bold">{userStats.dailyStreak} DAYS</div>
-                  <div className="text-[#666] text-xs">Keep it going!</div>
+                  <div className="text-slate-900 text-sm font-bold">{userStats.dailyStreak} DAYS</div>
+                  <div className="text-slate-500 text-xs">Keep it going!</div>
                 </div>
               </div>
             </button>
@@ -2590,19 +2624,19 @@ function CollapsibleStatsCard() {
             {/* Leaderboard */}
             <button 
               onClick={(e) => { e.stopPropagation(); setShowLeaderboardPopup(true); }}
-              className="bg-[#1a1a1a] rounded-lg p-3 hover:bg-[#222] transition-colors text-left"
+              className="bg-white rounded-lg p-3 hover:bg-slate-100 transition-colors text-left"
             >
               <div className="flex items-center gap-2 mb-1">
-                <Crown className="w-3 h-3 text-[#FF6B35]" />
-                <span className="text-[#888] text-xs uppercase">Leaderboard</span>
+                <PhCrown size={14} weight="duotone" color="#FF6B35" />
+                <span className="text-slate-500 text-xs uppercase">Leaderboard</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#FF4500] flex items-center justify-center">
-                  <Crown className="w-4 h-4 text-[#1a1a1a]" />
+                  <PhCrown size={18} weight="duotone" className="text-white" />
                 </div>
                 <div>
-                  <div className="text-[#E5E5E5] text-sm font-bold">#{userStats.leaderboardRank}</div>
-                  <div className="text-[#666] text-xs">of {userStats.totalUsers.toLocaleString()} users</div>
+                  <div className="text-slate-900 text-sm font-bold">#{userStats.leaderboardRank}</div>
+                  <div className="text-slate-500 text-xs">of {userStats.totalUsers.toLocaleString()} users</div>
                 </div>
               </div>
             </button>
@@ -2637,8 +2671,8 @@ function OverlayControls({ toggles, setToggles }: OverlayControlsProps) {
   ]
 
   return (
-    <div className="flex flex-wrap gap-2 p-3 bg-[#1a1a1a] rounded-lg border border-[#3a3a3a]">
-      <span className="text-[#888] text-xs uppercase tracking-wider mr-2 flex items-center">
+    <div className="flex flex-wrap gap-2 p-3 bg-white rounded-lg border-2 border-black">
+      <span className="text-slate-500 text-xs uppercase tracking-wider mr-2 flex items-center">
         <Layers className="w-3 h-3 mr-1" /> Overlays:
       </span>
       {toggleItems.map(({ key, label, icon: Icon }) => (
@@ -2648,7 +2682,7 @@ function OverlayControls({ toggles, setToggles }: OverlayControlsProps) {
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
             toggles[key]
               ? 'bg-[#FF6B35]/20 text-[#FF6B35] border border-[#FF6B35]/50'
-              : 'bg-[#2a2a2a] text-[#666] border border-[#3a3a3a] hover:border-[#4a4a4a]'
+              : 'bg-white text-slate-500 border-2 border-black hover:border-black'
           }`}
         >
           {toggles[key] ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
@@ -3205,7 +3239,7 @@ function AnnotationDropdownList({ fixes }: AnnotationDropdownListProps) {
 
   return (
     <div className="space-y-2 mt-4">
-      <h4 className="text-[#888] text-xs uppercase tracking-wider flex items-center gap-2 mb-3">
+      <h4 className="text-slate-500 text-xs uppercase tracking-wider flex items-center gap-2 mb-3">
         <ClipboardList className="w-3 h-3" />
         Form Analysis Breakdown
       </h4>
@@ -3228,10 +3262,10 @@ function AnnotationDropdownList({ fixes }: AnnotationDropdownListProps) {
                 <div className={`w-3 h-3 rounded-full ${colors.dot}`} />
                 
                 {/* Fix number */}
-                <span className="text-[#888] text-sm font-mono">#{index + 1}</span>
+                <span className="text-slate-500 text-sm font-mono">#{index + 1}</span>
                 
                 {/* Name */}
-                <span className="text-white font-medium">{fix.name}</span>
+                <span className="text-slate-900 font-medium">{fix.name}</span>
                 
                 {/* Status badge */}
                 <span className={`text-xs px-2 py-0.5 rounded ${colors.text} ${colors.bg} border ${colors.border}`}>
@@ -3242,28 +3276,28 @@ function AnnotationDropdownList({ fixes }: AnnotationDropdownListProps) {
               <div className="flex items-center gap-4">
                 {/* Quick values */}
                 <div className="text-right hidden sm:block">
-                  <span className="text-white font-mono">{fix.yourValue}°</span>
-                  <span className="text-[#666] mx-2">vs</span>
+                  <span className="text-slate-900 font-mono">{fix.yourValue}°</span>
+                  <span className="text-slate-500 mx-2">vs</span>
                   <span className="text-[#FF6B35] font-mono">{fix.eliteValue}°</span>
                 </div>
                 
                 {/* Expand icon */}
-                <ChevronDown className={`w-5 h-5 text-[#888] transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-5 h-5 text-slate-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
               </div>
             </button>
 
             {/* Expanded content */}
             {isExpanded && (
-              <div className="px-4 pb-4 border-t border-[#3a3a3a]/50">
+              <div className="px-4 pb-4 border-t border-black/50">
                 <div className="pt-4 space-y-4">
                   {/* Values comparison */}
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-[#1a1a1a] rounded-lg p-3">
-                      <p className="text-[#888] text-xs uppercase mb-1">Your Angle</p>
-                      <p className="text-2xl font-bold text-white">{fix.yourValue}°</p>
+                    <div className="bg-white rounded-lg p-3">
+                      <p className="text-slate-500 text-xs uppercase mb-1">Your Angle</p>
+                      <p className="text-2xl font-bold text-slate-900">{fix.yourValue}°</p>
                     </div>
-                    <div className="bg-[#1a1a1a] rounded-lg p-3">
-                      <p className="text-[#888] text-xs uppercase mb-1">Elite Target</p>
+                    <div className="bg-white rounded-lg p-3">
+                      <p className="text-slate-500 text-xs uppercase mb-1">Elite Target</p>
                       <p className="text-2xl font-bold text-[#FF6B35]">{fix.eliteValue}°</p>
                     </div>
                   </div>
@@ -3275,14 +3309,14 @@ function AnnotationDropdownList({ fixes }: AnnotationDropdownListProps) {
 
                   {/* Explanation */}
                   <div>
-                    <p className="text-[#888] text-xs uppercase mb-2">How to Fix</p>
-                    <p className="text-[#E5E5E5] text-sm leading-relaxed">{fix.explanation}</p>
+                    <p className="text-slate-500 text-xs uppercase mb-2">How to Fix</p>
+                    <p className="text-slate-900 text-sm leading-relaxed">{fix.explanation}</p>
                   </div>
 
                   {/* Elite example */}
                   <div className="flex items-start gap-2 text-sm">
                     <Trophy className="w-4 h-4 text-[#FF6B35] mt-0.5 flex-shrink-0" />
-                    <p className="text-[#888]">{fix.eliteExample}</p>
+                    <p className="text-slate-500">{fix.eliteExample}</p>
                   </div>
                 </div>
               </div>
@@ -3664,7 +3698,7 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
       {/* OVERLAY TOGGLE CONTROLS - Directly under video player */}
       {/* Shows for BOTH GSAP and Legacy players */}
       {/* ============================================ */}
-      <div className="px-6 py-4 border-b border-[#3a3a3a]">
+      <div className="px-6 py-4 border-b border-black">
         <div className="max-w-3xl mx-auto">
           <OverlayControls toggles={overlayToggles} setToggles={setOverlayToggles} />
         </div>
@@ -3674,7 +3708,7 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
       {/* ANNOTATION DROPDOWN LIST - Shows for BOTH GSAP and Legacy players */}
       {/* Cards with dropdowns that mirror the video labels */}
       {/* ============================================ */}
-      <div className="p-6 border-b border-[#3a3a3a]">
+      <div className="p-6 border-b border-black">
         <div className="max-w-3xl mx-auto">
           {(() => {
             // Get angles from multiple sources with fallback chain:
@@ -3741,7 +3775,7 @@ function VideoModeContent({ videoData, activeTab, setActiveTab, analysisData, pl
       {/* ============================================ */}
       {/* KEY POINT ANALYSIS SCREENSHOTS - Directly under cards */}
       {/* ============================================ */}
-      <div className="p-6 border-b border-[#3a3a3a]">
+      <div className="p-6 border-b border-black">
         <div className="max-w-3xl mx-auto">
           <CollapsibleDropdown
             title="Key Point Analysis Screenshots"
@@ -3791,8 +3825,8 @@ function EliteModeContent({ analysisData }: { analysisData: AnalysisData }) {
   return (
     <div className="p-8 text-center">
       <h2 className="text-3xl font-bold text-[#FF6B35] mb-4">Elite Shooters Database</h2>
-      <p className="text-[#E5E5E5] mb-8 max-w-2xl mx-auto">Compare your shooting form with NBA elite shooters and learn from the best in the game.</p>
-      <p className="text-[#888] mb-4">Your current score: <span className="text-[#FF6B35] font-bold">{analysisData.overallScore}</span>/100</p>
+      <p className="text-slate-900 mb-8 max-w-2xl mx-auto">Compare your shooting form with NBA elite shooters and learn from the best in the game.</p>
+      <p className="text-slate-500 mb-4">Your current score: <span className="text-[#FF6B35] font-bold">{analysisData.overallScore}</span>/100</p>
       <Link href="/elite-shooters" className="inline-block bg-[#FF6B35] hover:bg-[#E55300] text-[#111827] font-semibold px-8 py-3 rounded-lg transition-colors">View Elite Shooters Database</Link>
     </div>
   )
@@ -3822,7 +3856,7 @@ function GuideModeContent() {
     <div className="p-8">
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold text-[#FF6B35] mb-2">Shooting Form Reference</h2>
-        <p className="text-[#E5E5E5]">Learn the difference between proper and improper shooting mechanics</p>
+        <p className="text-slate-900">Learn the difference between proper and improper shooting mechanics</p>
       </div>
       <div className="grid grid-cols-2 gap-6 mb-6">
         <div className="text-center"><span className="inline-flex items-center gap-2 text-green-400 font-semibold text-lg"><Check className="w-5 h-5" /> Correct Form</span></div>
@@ -3843,10 +3877,10 @@ function GuideCard({ type, title, subtitle, points }: { type: "correct" | "incor
   return (
     <div className={`rounded-lg p-5 ${isCorrect ? "bg-green-900/20 border border-green-500/30" : "bg-red-900/20 border border-red-500/30"}`}>
       <h3 className={`font-semibold text-lg mb-1 ${isCorrect ? "text-green-400" : "text-red-400"}`}>{title}</h3>
-      <p className="text-[#888] text-sm mb-3">{subtitle}</p>
+      <p className="text-slate-500 text-sm mb-3">{subtitle}</p>
       <ul className="space-y-2">
         {points.map((point, i) => (
-          <li key={i} className="flex items-start gap-2 text-sm text-[#E5E5E5]">
+          <li key={i} className="flex items-start gap-2 text-sm text-slate-900">
             {isCorrect ? <Check className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" /> : <X className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />}
             {point}
           </li>
@@ -4017,18 +4051,18 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
       {/* Share Modal */}
       {showShareModal && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => setShowShareModal(false)}>
-          <div className="bg-[#1a1a1a] rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-[#3a3a3a]" onClick={e => e.stopPropagation()}>
+          <div className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto border-2 border-black" onClick={e => e.stopPropagation()}>
             {/* Modal Header */}
-            <div className="p-4 border-b border-[#3a3a3a] flex items-center justify-between">
+            <div className="p-4 border-b border-black flex items-center justify-between">
               <h3 className="text-[#FF6B35] font-bold text-lg uppercase tracking-wider">Share Your Results</h3>
-              <button onClick={() => setShowShareModal(false)} className="text-[#888] hover:text-white transition-colors">
+              <button onClick={() => setShowShareModal(false)} className="text-slate-500 hover:text-slate-900 transition-colors">
                 <X className="w-6 h-6" />
               </button>
             </div>
 
             {/* Shareable Card Preview */}
             <div className="p-4">
-              <div ref={shareCardRef} className="bg-gradient-to-br from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a] p-6 rounded-xl border border-[#FF6B35]/30">
+              <div ref={shareCardRef} className="bg-gradient-to-br from-white via-[#2a2a2a] to-white p-6 rounded-xl border border-[#FF6B35]/30">
                 {/* Logo/Brand */}
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-8 h-8 rounded-full bg-[#FF6B35]/20 flex items-center justify-center">
@@ -4042,7 +4076,7 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                   {/* Overall Score Ring */}
                   <ScoreRing score={analysisData.overallScore} size={80} strokeWidth={6} />
                   <div className="flex-1">
-                    <h4 className="text-xl font-black text-white uppercase">{playerName}</h4>
+                    <h4 className="text-xl font-black text-slate-900 uppercase">{playerName}</h4>
                     <div className="flex items-center gap-2 mt-1">
                       <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: `${archetype.color}20`, color: archetype.color }}>{archetype.title}</span>
                     </div>
@@ -4051,26 +4085,26 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
 
                 {/* Key Stats */}
                 <div className="grid grid-cols-4 gap-2 mb-4">
-                  <div className="bg-[#0a0a0a] rounded-lg p-2 text-center">
-                    <p className="text-lg font-black text-white">{analysisData.shootingStats.form}</p>
-                    <p className="text-[#888] text-[10px] uppercase">Form</p>
+                  <div className="bg-white rounded-lg p-2 text-center border-2 border-black">
+                    <p className="text-lg font-black text-slate-900">{analysisData.shootingStats.form}</p>
+                    <p className="text-slate-500 text-[10px] uppercase">Form</p>
                   </div>
-                  <div className="bg-[#0a0a0a] rounded-lg p-2 text-center">
-                    <p className="text-lg font-black text-white">{analysisData.shootingStats.balance}</p>
-                    <p className="text-[#888] text-[10px] uppercase">Balance</p>
+                  <div className="bg-white rounded-lg p-2 text-center border-2 border-black">
+                    <p className="text-lg font-black text-slate-900">{analysisData.shootingStats.balance}</p>
+                    <p className="text-slate-500 text-[10px] uppercase">Balance</p>
                   </div>
-                  <div className="bg-[#0a0a0a] rounded-lg p-2 text-center">
-                    <p className="text-lg font-black text-white">{analysisData.shootingStats.elbow}</p>
-                    <p className="text-[#888] text-[10px] uppercase">Elbow</p>
+                  <div className="bg-white rounded-lg p-2 text-center border-2 border-black">
+                    <p className="text-lg font-black text-slate-900">{analysisData.shootingStats.elbow}</p>
+                    <p className="text-slate-500 text-[10px] uppercase">Elbow</p>
                   </div>
-                  <div className="bg-[#0a0a0a] rounded-lg p-2 text-center">
-                    <p className="text-lg font-black text-white">{analysisData.shootingStats.consist}</p>
-                    <p className="text-[#888] text-[10px] uppercase">Consist</p>
+                  <div className="bg-white rounded-lg p-2 text-center border-2 border-black">
+                    <p className="text-lg font-black text-slate-900">{analysisData.shootingStats.consist}</p>
+                    <p className="text-slate-500 text-[10px] uppercase">Consist</p>
                   </div>
                 </div>
 
                 {/* Elite Match */}
-                <div className="bg-[#0a0a0a] rounded-lg p-3 flex items-center gap-3">
+                <div className="bg-white rounded-lg p-3 border-2 border-black flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#FF6B35]/50 relative">
                     <Image
                       src="https://cdn.nba.com/headshots/nba/latest/1040x760/201142.png"
@@ -4082,20 +4116,20 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                     />
                   </div>
                   <div className="flex-1">
-                    <p className="text-[#888] text-[10px] uppercase">Matched Elite Shooter</p>
-                    <p className="text-white font-bold text-sm">{analysisData.matchedShooter.name}</p>
+                    <p className="text-slate-500 text-[10px] uppercase">Matched Elite Shooter</p>
+                    <p className="text-slate-900 font-bold text-sm">{analysisData.matchedShooter.name}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-[#FF6B35] font-black text-lg">{analysisData.matchedShooter.similarityScore}%</p>
-                    <p className="text-[#888] text-[10px]">Similarity</p>
+                    <p className="text-slate-500 text-[10px]">Similarity</p>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Share Options */}
-            <div className="p-4 border-t border-[#3a3a3a]">
-              <p className="text-[#888] text-sm mb-3 uppercase tracking-wider">Share to</p>
+            <div className="p-4 border-t border-black">
+              <p className="text-slate-500 text-sm mb-3 uppercase tracking-wider">Share to</p>
               <div className="grid grid-cols-3 gap-3 mb-4">
                 <button onClick={() => handleShare("twitter")} className="bg-[#1DA1F2]/10 hover:bg-[#1DA1F2]/20 border border-[#1DA1F2]/30 rounded-lg p-3 flex flex-col items-center gap-2 transition-colors">
                   <Twitter className="w-6 h-6 text-[#1DA1F2]" />
@@ -4116,7 +4150,7 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                   <Download className="w-5 h-5" />
                   {isGeneratingImage ? "..." : "Download"}
                 </button>
-                <button onClick={handleCopyImage} disabled={isGeneratingImage} className="bg-[#3a3a3a] hover:bg-[#4a4a4a] disabled:bg-[#3a3a3a]/50 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors">
+                <button onClick={handleCopyImage} disabled={isGeneratingImage} className="bg-slate-200 hover:bg-slate-200 disabled:bg-slate-200/50 text-slate-900 font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors">
                   <Copy className="w-5 h-5" />
                 </button>
               </div>
@@ -4139,34 +4173,45 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
               setOverlayToggles={setOverlayToggles}
             />
           ) : !hideMainImage ? (
-            <div className="bg-gradient-to-br from-[#1a1a1a] via-[#252525] to-[#1a1a1a] rounded-lg border border-[#3a3a3a] p-12">
-              <div className="text-center py-8">
-                <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FF4500]/20 border border-[#FF6B35]/30 flex items-center justify-center">
-                  {isVideoMode ? <Video className="w-10 h-10 text-[#FF6B35]" /> : <ImageIcon className="w-10 h-10 text-[#FF6B35]" />}
+            <div className="relative rounded-2xl border-2 border-dashed border-black/20 bg-gradient-to-b from-white to-slate-50 overflow-hidden">
+              {/* Subtle grid pattern background */}
+              <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle, #000 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
+              
+              <div className="relative text-center py-16 px-8">
+                {/* Icon with glow ring */}
+                <div className="relative w-24 h-24 mx-auto mb-8">
+                  <div className="absolute inset-0 rounded-2xl bg-[#FF6B35]/10 animate-pulse" />
+                  <div className="relative w-full h-full rounded-2xl bg-gradient-to-br from-[#FF6B35]/15 to-[#FF4500]/10 border-2 border-[#FF6B35]/20 flex items-center justify-center backdrop-blur-sm">
+                    {isVideoMode ? <Video className="w-10 h-10 text-[#FF6B35]" /> : <ImageIcon className="w-10 h-10 text-[#FF6B35]" />}
+                  </div>
                 </div>
-                <h3 className="text-[#FF6B35] font-bold text-2xl mb-3 tracking-tight">
-                  {isVideoMode ? "No Video Uploaded" : "No Image Uploaded"}
+                
+                {/* Headline */}
+                <h3 className="text-slate-900 font-black text-2xl mb-2 tracking-tight">
+                  {isVideoMode ? "Upload Your Video" : "Upload Your Shot"}
                 </h3>
-                {/* Desktop: Show description and upload button */}
-                <p className="hidden md:block text-[#E5E5E5] text-sm mb-8 max-w-md mx-auto leading-relaxed">
+                <p className="text-slate-400 text-sm mb-8 max-w-sm mx-auto leading-relaxed">
                   {isVideoMode 
-                    ? "Upload a video to see your shooting form analysis with the 3-stage breakdown: Full Speed, Label Tutorial, and Slow Motion."
-                    : "Upload an image to see your shooting form analysis with detailed biomechanical measurements."
+                    ? "Get your 3-stage breakdown: Full Speed, Labels, and Slow Motion analysis."
+                    : "Get instant AI-powered shooting form analysis with detailed biomechanical measurements."
                   }
                 </p>
+                
+                {/* Upload button - visible on all devices */}
                 <button 
                   onClick={() => isVideoMode 
                     ? (window as any).__videoUploadInput?.click() 
                     : (window as any).__imageUploadInput?.click()
                   }
-                  className="hidden md:inline-flex items-center gap-2 bg-gradient-to-r from-[#FF6B35] to-[#FF4500] hover:from-[#E55300] hover:to-[#E5A000] text-[#1a1a1a] font-semibold px-8 py-3.5 rounded-xl transition-all duration-200 shadow-lg shadow-[#FF6B35]/20 hover:shadow-[#FF6B35]/40 hover:scale-105"
+                  className="inline-flex items-center gap-3 bg-black hover:bg-[#FF6B35] text-white font-bold px-10 py-4 rounded-full transition-all duration-300 shadow-xl hover:shadow-[#FF6B35]/30 hover:scale-105 group"
                 >
-                  <Upload className="w-5 h-5" />
-                  {isVideoMode ? "Upload Video" : "Upload Image"}
+                  <Upload className="w-5 h-5 group-hover:animate-bounce" />
+                  {isVideoMode ? "Choose Video" : "Choose Image"}
                 </button>
-                {/* Mobile: Just hint to use FAB */}
-                <p className="md:hidden text-[#666] text-sm mt-4">
-                  Tap the <span className="text-[#FF6B35] font-semibold">+</span> button to get started
+                
+                {/* Supported formats */}
+                <p className="text-slate-300 text-xs mt-5 tracking-wide uppercase">
+                  {isVideoMode ? "MP4, MOV • Max 100MB" : "JPG, PNG, HEIC • Max 25MB"}
                 </p>
               </div>
             </div>
@@ -4254,11 +4299,11 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
 
           {/* Media Thumbnails */}
           {allUploadedUrls.length > 0 && (
-            <div className="bg-[#2a2a2a] rounded-lg p-4 border border-[#4a4a4a]">
+            <div className="bg-white rounded-lg p-4 border-2 border-black">
               <h3 className="text-[#FF6B35] font-bold text-sm uppercase tracking-wider mb-3">Uploaded Media</h3>
               <div className="grid grid-cols-4 gap-2">
                 {allUploadedUrls.map((url, idx) => (
-                  <div key={idx} className="rounded-lg overflow-hidden bg-[#1a1a1a] border border-[#3a3a3a] cursor-pointer hover:border-[#FF6B35]/50 transition-colors">
+                  <div key={idx} className="rounded-lg overflow-hidden bg-white border-2 border-black cursor-pointer hover:border-[#FF6B35]/50 transition-colors">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={url} alt={`Upload ${idx + 1}`} className="w-full h-16 object-cover" />
                   </div>
@@ -4271,74 +4316,83 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
         {/* RIGHT COLUMN: Score + Metrics + Issues */}
         <div className="space-y-6">
           {/* Madden-Style Player Card */}
-          <div className="bg-[#2a2a2a] rounded-lg overflow-hidden lg:col-span-1">
-            {/* Sports Banner Header - Website colors with customization */}
-            <div className="relative overflow-hidden min-h-[110px]">
-              {/* RIGHT Section - Darker Background (website dark gray) */}
+          <div className="bg-white rounded-lg overflow-hidden lg:col-span-1">
+            {/* Nameplate-Style Player Card */}
+            <div className="relative overflow-hidden" style={{ minHeight: '120px' }}>
+              {/* White background with subtle dot pattern */}
               <div 
-                className="absolute inset-0"
+                className="absolute inset-0 bg-white"
                 style={{
-                  background: 'linear-gradient(to right, #2a2a2a, #1a1a1a, #151515)',
+                  backgroundImage: 'radial-gradient(circle, #ddd 1px, transparent 1px)',
+                  backgroundSize: '12px 12px',
                 }}
               />
               
-              {/* LEFT Section - Customizable color accent with diagonal cut */}
-              <div 
-                className="absolute left-0 top-0 bottom-0"
-                style={{
-                  width: '32%',
-                  background: `linear-gradient(to right, ${bannerColor}, ${bannerColor}dd)`,
-                  clipPath: 'polygon(0 0, 100% 0, 70% 100%, 0 100%)',
-                }}
-              />
+              {/* Orange border frame */}
+              <div className="absolute inset-0 border-4 border-[#FF6B35] rounded-lg" style={{ zIndex: 5 }} />
               
-              {/* Diagonal stripe pattern overlay on right section */}
-              <div 
-                className="absolute right-0 top-0 bottom-0 w-[70%] opacity-5"
-                style={{
-                  backgroundImage: 'repeating-linear-gradient(-60deg, transparent, transparent 8px, rgba(255,255,255,0.1) 8px, rgba(255,255,255,0.1) 16px)',
-                }}
-              />
-              
-              {/* Faded Player Background Image - positioned near the number on right side */}
-              {bannerBgImage && (
-                <div 
-                  className="absolute right-8 top-0 bottom-0 w-[35%] opacity-25"
-                  style={{
-                    backgroundImage: `url(${bannerBgImage})`,
-                    backgroundSize: 'contain',
-                    backgroundPosition: 'center right',
-                    backgroundRepeat: 'no-repeat',
-                    maskImage: 'linear-gradient(to left, black 50%, transparent 100%)',
-                    WebkitMaskImage: 'linear-gradient(to left, black 50%, transparent 100%)',
-                  }}
+              {/* Half basketball — user's exact image, transparent */}
+              <div className="absolute left-[-20px] top-1/2 -translate-y-1/2" style={{ zIndex: 2 }}>
+                <Image 
+                  src="/icons/basketball-outline.jpg" 
+                  alt="Basketball" 
+                  width={130} 
+                  height={130} 
+                  className="opacity-25"
+                  style={{ mixBlendMode: 'multiply' }}
                 />
-              )}
+              </div>
               
-              {/* Three-dot Menu for Customization - positioned outside banner overflow */}
+              {/* Jersey Number — overlapping inside basketball, positioned lower */}
+              <div className="absolute left-[12px] top-[55%] -translate-y-1/2" style={{ zIndex: 4 }}>
+                <span 
+                  className="text-5xl md:text-6xl font-black"
+                  style={{
+                    color: '#1a1a1a',
+                    fontStyle: 'italic',
+                    WebkitTextStroke: `2px ${bannerColor}`,
+                  }}
+                >
+                  {jerseyNumber}
+                </span>
+              </div>
+              
+              {/* Signature background — transparent */}
+              <div className="absolute inset-0 flex items-center justify-center overflow-hidden" style={{ zIndex: 1 }}>
+                <Image 
+                  src="/icons/signature.png" 
+                  alt="" 
+                  width={350} 
+                  height={150} 
+                  className="opacity-[0.06] select-none pointer-events-none"
+                  style={{ mixBlendMode: 'multiply', transform: 'rotate(-5deg) translateX(20px)' }}
+                />
+              </div>
+              
+              {/* Three-dot Menu */}
               <div className="absolute top-2 right-2 z-30">
                 <button 
-                  className="p-1.5 rounded-full hover:bg-white/10 transition-colors group"
+                  className="p-1.5 rounded-full hover:bg-black/5 transition-colors group"
                   onClick={() => setShowBannerMenu(!showBannerMenu)}
                 >
-                  <svg className="w-5 h-5 text-white/60 group-hover:text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-5 h-5 text-slate-400 group-hover:text-slate-900" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
                   </svg>
                 </button>
               </div>
               
-              {/* Customization Dropdown Menu - rendered outside the banner to avoid overflow clipping */}
+              {/* Customization Dropdown Menu */}
               {showBannerMenu && (
                 <div className="fixed inset-0 z-[100]" onClick={() => setShowBannerMenu(false)}>
                   <div 
-                    className="absolute bg-[#2a2a2a] rounded-lg shadow-2xl border border-[#3a3a3a] w-80"
+                    className="absolute bg-white rounded-lg shadow-2xl border-2 border-black w-80"
                     style={{ top: '280px', right: '100px' }}
                     onClick={(e) => e.stopPropagation()}
                   >
                     {/* Header */}
-                    <div className="bg-[#1a1a1a] px-4 py-3 border-b border-[#3a3a3a] flex items-center justify-between rounded-t-lg">
-                      <span className="text-white font-bold">Customize Banner</span>
-                      <button onClick={() => setShowBannerMenu(false)} className="text-[#888] hover:text-white">
+                    <div className="bg-white px-4 py-3 border-b border-black flex items-center justify-between rounded-t-lg">
+                      <span className="text-slate-900 font-bold">Customize Banner</span>
+                      <button onClick={() => setShowBannerMenu(false)} className="text-slate-500 hover:text-slate-900">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
@@ -4348,7 +4402,7 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                     <div className="p-4 space-y-5">
                       {/* Banner Color */}
                       <div>
-                        <label className="text-white text-sm font-semibold block mb-3">Banner Color</label>
+                        <label className="text-slate-700 text-sm font-semibold block mb-3">Banner Color</label>
                         <div className="flex gap-3 flex-wrap">
                           {['#FF6B35', '#ef4444', '#22c55e', '#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#14b8a6'].map((color) => (
                             <button
@@ -4359,7 +4413,6 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                             />
                           ))}
                         </div>
-                        {/* Custom Color Input */}
                         <div className="mt-3 flex items-center gap-2">
                           <input
                             type="color"
@@ -4367,176 +4420,148 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                             onChange={(e) => setBannerColor(e.target.value)}
                             className="w-10 h-10 rounded cursor-pointer border-0"
                           />
-                          <span className="text-[#888] text-sm">Custom Color</span>
+                          <span className="text-slate-500 text-sm">Custom Color</span>
                         </div>
                       </div>
                       
                       {/* Jersey Number */}
                       <div>
-                        <label className="text-white text-sm font-semibold block mb-2">Jersey Number</label>
+                        <label className="text-slate-700 text-sm font-semibold block mb-2">Jersey Number</label>
                         <input
                           type="text"
                           value={jerseyNumber}
                           onChange={(e) => setJerseyNumber(e.target.value.slice(0, 2))}
                           maxLength={2}
-                          className="w-24 bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-2 text-white text-center text-2xl font-bold focus:outline-none focus:border-[#FF6B35]"
+                          className="w-24 bg-white border-2 border-black rounded-lg px-4 py-2 text-slate-900 text-center text-2xl font-bold focus:outline-none focus:border-[#FF6B35]"
                           placeholder="23"
                         />
                       </div>
                       
-                      {/* Background Image */}
+                      {/* Player Name */}
                       <div>
-                        <label className="text-white text-sm font-semibold block mb-2">Background Image</label>
-                        <p className="text-[#888] text-xs mb-3">Add a faded player photo behind the number</p>
+                        <label className="text-slate-700 text-sm font-semibold block mb-2">First Name</label>
                         <input
-                          ref={bannerBgInputRef}
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0]
-                            if (file) {
-                              const reader = new FileReader()
-                              reader.onload = (event) => {
-                                setBannerBgImage(event.target?.result as string)
-                              }
-                              reader.readAsDataURL(file)
-                            }
-                          }}
-                          className="hidden"
+                          type="text"
+                          value={bannerFirstName}
+                          onChange={(e) => setBannerFirstName(e.target.value.toUpperCase())}
+                          className="w-full bg-white border-2 border-black rounded-lg px-4 py-2 text-slate-900 font-bold focus:outline-none focus:border-[#FF6B35]"
                         />
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => bannerBgInputRef.current?.click()}
-                            className="flex-1 bg-[#FF6B35] text-[#1a1a1a] font-semibold rounded-lg px-4 py-2 hover:bg-[#e6c200] transition-colors"
-                          >
-                            {bannerBgImage ? 'Change Image' : 'Upload Image'}
-                          </button>
-                          {bannerBgImage && (
-                            <button
-                              onClick={() => setBannerBgImage(null)}
-                              className="bg-red-500/20 border border-red-500/50 rounded-lg px-4 py-2 text-red-400 hover:bg-red-500/30 transition-colors"
-                            >
-                              Remove
-                            </button>
-                          )}
-                        </div>
-                        {bannerBgImage && (
-                          <div className="mt-3 h-16 rounded-lg overflow-hidden border border-[#3a3a3a]">
-                            <img src={bannerBgImage} alt="Preview" className="w-full h-full object-cover opacity-40" />
-                          </div>
-                        )}
+                        <label className="text-slate-700 text-sm font-semibold block mb-2 mt-3">Last Name</label>
+                        <input
+                          type="text"
+                          value={bannerLastName}
+                          onChange={(e) => setBannerLastName(e.target.value.toUpperCase())}
+                          className="w-full bg-white border-2 border-black rounded-lg px-4 py-2 text-slate-900 font-bold focus:outline-none focus:border-[#FF6B35]"
+                        />
                       </div>
                     </div>
                   </div>
                 </div>
               )}
               
-              {/* Content */}
-              <div className="relative flex items-center p-4 pr-12 min-h-[110px]">
-                {/* LEFT: Progress Ring - centered in the gold section with dark background for visibility */}
-                <div className="flex-shrink-0 w-[20%] flex justify-center items-center ml-4">
-                  <div className="relative">
-                    {/* Dark circle background so ring is visible against gold */}
-                    <div className="absolute inset-[-8px] rounded-full bg-[#1a1a1a]" />
-                    <ScoreRing score={analysisData.overallScore} size={80} strokeWidth={6} />
-                  </div>
-                </div>
+              {/* Content — Nameplate Layout */}
+              <div className="relative flex items-center py-5 min-h-[130px]" style={{ zIndex: 3 }}>
+                {/* Spacer — pushes name to center of card */}
+                <div className="flex-shrink-0 w-[120px]" />
                 
-                {/* CENTER-LEFT: Player Name & Location - in the darker section */}
-                <div className="flex-1 pl-16">
-                  {/* First Name - Italic, lighter */}
-                  <p 
-                    className="text-2xl font-bold uppercase tracking-wider leading-none"
-                    style={{
-                      color: 'white',
-                      fontStyle: 'italic',
-                    }}
-                  >
+                {/* Name — left-aligned text, centered in card */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-base md:text-lg font-bold uppercase tracking-wider text-black/70 leading-none">
                     {bannerFirstName}
                   </p>
-                  {/* Last Name - Bold, larger, with stroke */}
                   <h2 
-                    className="text-4xl font-black uppercase tracking-wide leading-none mt-0.5"
-                    style={{
-                      color: 'white',
-                      fontStyle: 'italic',
-                      textShadow: '2px 2px 0 #1a1a1a',
-                    }}
+                    className="text-4xl md:text-5xl font-black uppercase tracking-tight leading-none mt-1"
+                    style={{ color: bannerColor }}
                   >
                     {bannerLastName}
                   </h2>
-                  {/* Decorative slashes - matches banner color */}
-                  <div className="flex gap-0.5 mt-2">
-                    {[...Array(14)].map((_, i) => (
-                      <div key={i} className="w-1 h-4 transform -skew-x-12" style={{ backgroundColor: bannerColor }} />
-                    ))}
-                  </div>
-                  {/* Location */}
-                  <p 
-                    className="text-sm font-medium tracking-widest uppercase mt-1"
-                    style={{
-                      color: '#888',
-                      fontStyle: 'italic',
-                    }}
-                  >
-                    {playerProfile?.height || "6'2\""}, {playerProfile?.weight || '185'} LBS
-                  </p>
                 </div>
                 
-                {/* RIGHT: Jersey Number - Large outline style with customizable color */}
-                <div className="flex-shrink-0 ml-4">
-                  <span 
-                    className="text-7xl font-black"
-                    style={{
-                      color: '#1a1a1a',
-                      WebkitTextStroke: `3px ${bannerColor}`,
-                      textShadow: '4px 4px 8px rgba(0,0,0,0.6)',
-                      fontStyle: 'italic',
-                    }}
-                  >
-                    {jerseyNumber}
-                  </span>
+                {/* Right — Premium Rating Circle */}
+                <div className="flex-shrink-0 mr-6">
+                  <div className="relative w-[85px] h-[85px]">
+                    {/* Outer glow */}
+                    <div 
+                      className="absolute inset-0 rounded-full"
+                      style={{
+                        boxShadow: '0 0 20px rgba(255,107,53,0.3), 0 0 40px rgba(255,107,53,0.1)',
+                      }}
+                    />
+                    <svg viewBox="0 0 90 90" className="w-full h-full">
+                      {/* Solid dark background circle */}
+                      <circle cx="45" cy="45" r="40" fill="#1a1a1a" />
+                      {/* Track ring */}
+                      <circle cx="45" cy="45" r="36" fill="none" stroke="#333" strokeWidth="6" />
+                      {/* Progress ring — orange */}
+                      <circle 
+                        cx="45" cy="45" r="36" fill="none" 
+                        stroke="#FF6B35" strokeWidth="6" strokeLinecap="round"
+                        strokeDasharray={`${(analysisData.overallScore / 100) * 226} 226`}
+                        transform="rotate(-90 45 45)"
+                        style={{ filter: 'drop-shadow(0 0 4px rgba(255,107,53,0.6))' }}
+                      />
+                      {/* Inner accent ring */}
+                      <circle cx="45" cy="45" r="30" fill="none" stroke="#333" strokeWidth="0.5" />
+                    </svg>
+                    {/* Score text */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-white font-black text-3xl leading-none">{analysisData.overallScore}</span>
+                      <span className="text-[#FF6B35] text-[8px] font-bold uppercase tracking-widest mt-0.5">OVR</span>
+                    </div>
+                  </div>
                 </div>
+              </div>
+              
+              {/* Bottom Label Bar */}
+              <div 
+                className="relative px-6 py-1.5 flex items-center justify-center"
+                style={{ 
+                  backgroundColor: '#1a1a1a',
+                  zIndex: 5,
+                }}
+              >
+                <span className="text-white/80 text-[10px] md:text-xs font-bold uppercase tracking-[0.3em]">
+                  Shot Analysis
+                </span>
               </div>
             </div>
 
             {/* Progression History Bar */}
-            <div className="bg-[#1a1a1a] px-4 py-2 border-y border-[#3a3a3a]">
-              <span className="text-[#888] text-xs font-bold uppercase tracking-wider">Progression History</span>
+            <div className="bg-white px-4 py-2 border-y border-black">
+              <span className="text-slate-500 text-xs font-bold uppercase tracking-wider">Progression History</span>
             </div>
 
             {/* Dashboard Content - Same layout for all views */}
             <>
             {/* Bio Stats Row */}
-            <div className="bg-[#2a2a2a] px-1 py-2 border-b border-[#3a3a3a] prof-bio-stats">
-              <div className="grid grid-cols-5 divide-x divide-[#3a3a3a]">
+            <div className="bg-white px-1 py-2 border-b border-black prof-bio-stats">
+              <div className="grid grid-cols-5 divide-x divide-black">
                 <div className="px-2 text-center">
-                  <p className="text-[#888] text-[10px] uppercase">WT</p>
-                  <p className="text-white font-bold text-sm">185 LB</p>
+                  <p className="text-slate-500 text-[10px] uppercase">WT</p>
+                  <p className="text-slate-900 font-bold text-sm">185 LB</p>
                 </div>
                 <div className="px-2 text-center">
-                  <p className="text-[#888] text-[10px] uppercase">AGE</p>
-                  <p className="text-white font-bold text-sm">34</p>
+                  <p className="text-slate-500 text-[10px] uppercase">AGE</p>
+                  <p className="text-slate-900 font-bold text-sm">34</p>
                 </div>
                 <div className="px-2 text-center">
-                  <p className="text-[#888] text-[10px] uppercase">HT</p>
-                  <p className="text-white font-bold text-sm">6&apos;2&quot;</p>
+                  <p className="text-slate-500 text-[10px] uppercase">HT</p>
+                  <p className="text-slate-900 font-bold text-sm">6&apos;2&quot;</p>
                 </div>
                 <div className="px-2 text-center">
-                  <p className="text-[#888] text-[10px] uppercase">EXP</p>
-                  <p className="text-white font-bold text-sm">PRO</p>
+                  <p className="text-slate-500 text-[10px] uppercase">EXP</p>
+                  <p className="text-slate-900 font-bold text-sm">PRO</p>
                 </div>
                 <div className="px-2 text-center">
-                  <p className="text-[#888] text-[10px] uppercase">LEAGUE</p>
-                  <p className="text-white font-bold text-sm">REC</p>
+                  <p className="text-slate-500 text-[10px] uppercase">LEAGUE</p>
+                  <p className="text-slate-900 font-bold text-sm">REC</p>
                 </div>
               </div>
             </div>
 
-            {/* Main Content: Attributes + Development */}
-            <div className="grid grid-cols-3 bg-[#1a1a1a]">
-              {/* Left: Attributes */}
-              <div className="col-span-2 p-3 border-r border-[#3a3a3a]">
+            {/* Main Content: Attributes - Full Width */}
+            <div className="bg-white">
+              <div className="p-3">
                 {/* Dynamic Archetype Badge */}
                 <div className="flex items-center gap-2 mb-3">
                   <div
@@ -4547,102 +4572,75 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                   </div>
                   <div>
                     <h3 className="font-bold text-sm uppercase tracking-wider" style={{ color: archetype.color }}>{archetype.title}</h3>
-                    <p className="text-[#888] text-[9px]">{archetype.description}</p>
+                    <p className="text-slate-500 text-[9px]">{archetype.description}</p>
                   </div>
                 </div>
                 <ClickableStatsGrid stats={analysisData.shootingStats} playerAge={playerProfile?.age} playerState="CA" />
               </div>
-
-              {/* Right: Development Badge - Medal in Rounded Box */}
-              <div className="p-4 bg-gradient-to-b from-[#252525] to-[#1a1a1a]">
-                <h3 className="text-[#FF6B35] font-bold text-xs uppercase tracking-[0.2em] mb-3 text-center">RANK</h3>
-                <div className="flex flex-col items-center">
-                  {/* Level Badge Image Container with White Outline */}
-                  <div className="relative w-36 h-40 mb-2 flex items-center justify-center">
-                    {/* White outline effect using drop-shadow */}
-                    <div 
-                      className="relative w-[130px] h-[150px]"
-                      style={{
-                        filter: 'drop-shadow(0 0 1px white) drop-shadow(0 0 2px white) drop-shadow(0 0 3px rgba(255,255,255,0.8)) drop-shadow(0 0 4px rgba(255,255,255,0.5))',
-                      }}
-                    >
-                      <Image
-                        src="/images/ranks/pure-shooter.png"
-                        alt="Pure Shooter Rank Badge"
-                        fill
-                        sizes="130px"
-                        className="object-contain"
-                        priority
-                      />
-                    </div>
-                  </div>
-                  
-                  {/* Rank name - now shows "PURE SHOOTER" */}
-                  <p className="font-black text-sm uppercase tracking-wider text-[#FF6B35]">
-                    PURE SHOOTER
-                  </p>
-                  <p className="text-[#666] text-[10px] text-center uppercase tracking-wide mt-1">
-                    {analysisData.overallScore}% RATING
-                  </p>
-                </div>
-              </div>
             </div>
             </>
           </div>
-          {/* TOP 5 MATCHED ELITE SHOOTERS - Show for all views (kids love this!) */}
+          {/* TOP 5 MATCHED ELITE SHOOTERS */}
           <div className="space-y-3">
-            {/* #1 - Primary Match (Large Card) */}
-            <div className="bg-gradient-to-br from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a] rounded-lg overflow-hidden border border-[#FF6B35]/20 shadow-lg shadow-[#FF6B35]/5">
+            {/* #1 - Primary Match */}
+            <div className="bg-white rounded-lg overflow-hidden border border-slate-200 shadow-sm">
+              {/* Orange top accent bar */}
+              <div className="h-1 bg-gradient-to-r from-[#FF6B35] to-[#ff8c5a]" />
+              
               {/* Header */}
-              <div className="bg-gradient-to-r from-[#FF6B35]/10 to-transparent p-4 border-b border-[#FF6B35]/20">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-[#FF6B35]/10 flex items-center justify-center border border-[#FF6B35]/30">
-                    <Trophy className="w-5 h-5 text-[#FF6B35]" />
-                  </div>
-                  <div>
-                    <h2 className="text-[#FF6B35] font-bold uppercase tracking-wider text-lg">Matched Elite Shooter</h2>
-                    <p className="text-[#888] text-xs">Your form matches this NBA star</p>
-                  </div>
+              <div className="px-5 pt-4 pb-3 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-[#FF6B35]/10 flex items-center justify-center">
+                  <Trophy className="w-4 h-4 text-[#FF6B35]" />
+                </div>
+                <div>
+                  <h2 className="text-slate-900 font-bold uppercase tracking-wider text-sm">Matched Elite Shooter</h2>
+                  <p className="text-slate-400 text-[10px]">Your form matches this NBA star</p>
                 </div>
               </div>
 
               {/* Content */}
-              <div className="p-5">
+              <div className="px-5 pb-5">
                 <div className="flex items-center gap-5">
                   {/* Player Photo */}
                   <div className="relative">
-                    <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-[#FF6B35]/50 shadow-lg shadow-[#FF6B35]/20 relative">
+                    <div className="w-20 h-20 rounded-full overflow-hidden border-3 border-[#FF6B35] relative" style={{ boxShadow: '0 0 0 3px white, 0 0 0 5px #FF6B3530' }}>
                       <Image
                         src="https://cdn.nba.com/headshots/nba/latest/1040x760/201939.png"
                         alt={analysisData.matchedShooter.name}
                         fill
-                        sizes="96px"
+                        sizes="80px"
                         className="object-cover object-top scale-150 translate-y-2"
                         priority
                       />
                     </div>
                     {/* Similarity Badge */}
-                    <div className="absolute -bottom-2 -right-2 bg-[#FF6B35] text-[#1a1a1a] font-black text-sm px-2 py-1 rounded-full shadow-lg">
+                    <div className="absolute -bottom-1 -right-1 bg-white text-slate-900 font-black text-[11px] px-2 py-0.5 rounded-full border-2 border-white">
                       {analysisData.matchedShooter.similarityScore}%
                     </div>
                   </div>
 
                   {/* Player Info */}
                   <div className="flex-1">
-                    <p className="text-2xl font-black text-white uppercase tracking-wide">{analysisData.matchedShooter.name}</p>
-                    <p className="text-[#FF6B35] font-semibold">{analysisData.matchedShooter.team}</p>
-                    <p className="text-[#888] text-sm mt-1">Small Forward • 4x Scoring Champion</p>
+                    <p className="text-xl font-black text-slate-900 uppercase tracking-wide">{analysisData.matchedShooter.name}</p>
+                    <p className="text-[#FF6B35] font-semibold text-sm">{analysisData.matchedShooter.team}</p>
+                    <p className="text-slate-400 text-xs mt-0.5">Small Forward • 4x Scoring Champion</p>
 
                     {/* Similarity Bar */}
                     <div className="mt-3">
-                      <div className="flex items-center justify-between text-xs mb-1">
-                        <span className="text-[#888] uppercase tracking-wider">Form Similarity</span>
+                      <div className="flex items-center justify-between text-[10px] mb-1">
+                        <span className="text-slate-400 uppercase tracking-wider font-semibold">Form Similarity</span>
                         <span className="text-[#FF6B35] font-bold">{analysisData.matchedShooter.similarityScore}%</span>
                       </div>
-                      <div className="h-2 bg-[#3a3a3a] rounded-full overflow-hidden">
+                      <div className="relative h-2 bg-slate-100 rounded-full overflow-hidden" style={{ boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.06)' }}>
                         <div
-                          className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF4500] rounded-full transition-all duration-1000"
-                          style={{ width: `${analysisData.matchedShooter.similarityScore}%` }}
+                          className="h-full rounded-full transition-all duration-1000 relative"
+                          style={{ width: `${analysisData.matchedShooter.similarityScore}%`, background: 'linear-gradient(90deg, #FF6B35, #ff8c5a)' }}
+                        >
+                          <div className="absolute inset-0 rounded-full" style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,0.35) 0%, transparent 60%)' }} />
+                        </div>
+                        <div 
+                          className="absolute top-1/2 w-2.5 h-2.5 rounded-full border-2 border-white bg-[#FF6B35]"
+                          style={{ left: `${analysisData.matchedShooter.similarityScore}%`, transform: 'translate(-50%, -50%)', boxShadow: '0 0 6px rgba(255,107,53,0.5)' }}
                         />
                       </div>
                     </div>
@@ -4650,87 +4648,58 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                 </div>
 
                 {/* Match Insights */}
-                <div className="mt-4 pt-4 border-t border-[#3a3a3a]">
-                  <p className="text-xs text-[#888] uppercase tracking-wider mb-2">Why You Match</p>
+                <div className="mt-4 pt-3 border-t border-slate-100">
+                  <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-2">Why You Match</p>
                   <div className="flex flex-wrap gap-2">
-                    <span className="bg-[#FF6B35]/10 text-[#FF6B35] text-xs px-3 py-1 rounded-full border border-[#FF6B35]/30">Similar Release Height</span>
-                    <span className="bg-[#FF6B35]/10 text-[#FF6B35] text-xs px-3 py-1 rounded-full border border-[#FF6B35]/30">High Arc Shot</span>
-                    <span className="bg-[#FF6B35]/10 text-[#FF6B35] text-xs px-3 py-1 rounded-full border border-[#FF6B35]/30">Smooth Follow Through</span>
+                    <span className="bg-slate-50 text-slate-600 text-[11px] font-medium px-3 py-1 rounded-full border border-slate-200">Similar Release Height</span>
+                    <span className="bg-slate-50 text-slate-600 text-[11px] font-medium px-3 py-1 rounded-full border border-slate-200">High Arc Shot</span>
+                    <span className="bg-slate-50 text-slate-600 text-[11px] font-medium px-3 py-1 rounded-full border border-slate-200">Smooth Follow Through</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* #2-5 - Additional Matches (Compact Cards) */}
+            {/* #2-5 - Additional Matches */}
             {[
-              { rank: 2, name: "Kyle Korver", team: "Retired (Multiple Teams)", position: "SG", similarity: Math.max(50, analysisData.matchedShooter.similarityScore - 5), photoId: "2594", trait: "Textbook Form" },
-              { rank: 3, name: "Ray Allen", team: "Retired (Multiple Teams)", position: "SG", similarity: Math.max(45, analysisData.matchedShooter.similarityScore - 10), photoId: "951", trait: "Perfect Arc" },
-              { rank: 4, name: "Klay Thompson", team: "Dallas Mavericks", position: "SG", similarity: Math.max(40, analysisData.matchedShooter.similarityScore - 15), photoId: "202691", trait: "Quick Release" },
-              { rank: 5, name: "Devin Booker", team: "Phoenix Suns", position: "SG", similarity: Math.max(35, analysisData.matchedShooter.similarityScore - 20), photoId: "1626164", trait: "Smooth Stroke" },
+              { rank: 2, name: "Kyle Korver", team: "Retired (Multiple Teams)", position: "SG", similarity: Math.max(50, analysisData.matchedShooter.similarityScore - 5), photoId: "2594", trait: "Textbook Form", accentColor: "#C0C0C0" },
+              { rank: 3, name: "Ray Allen", team: "Retired (Multiple Teams)", position: "SG", similarity: Math.max(45, analysisData.matchedShooter.similarityScore - 10), photoId: "951", trait: "Perfect Arc", accentColor: "#CD7F32" },
+              { rank: 4, name: "Klay Thompson", team: "Dallas Mavericks", position: "SG", similarity: Math.max(40, analysisData.matchedShooter.similarityScore - 15), photoId: "202691", trait: "Quick Release", accentColor: "#FF6B35" },
+              { rank: 5, name: "Devin Booker", team: "Phoenix Suns", position: "SG", similarity: Math.max(35, analysisData.matchedShooter.similarityScore - 20), photoId: "1626164", trait: "Smooth Stroke", accentColor: "#FF6B35" },
             ].map((shooter) => (
-              <div key={shooter.rank} className={`relative rounded-lg p-3 border transition-all duration-300 hover:scale-[1.02] hover:shadow-lg overflow-hidden ${
-                shooter.rank === 2 
-                  ? 'bg-gradient-to-r from-[#2a2a2a] via-[#2a2a2a] to-[#C0C0C0]/10 border-[#C0C0C0]/40 hover:border-[#C0C0C0]/60 hover:shadow-[#C0C0C0]/20' 
-                  : shooter.rank === 3 
-                  ? 'bg-gradient-to-r from-[#2a2a2a] via-[#2a2a2a] to-[#CD7F32]/10 border-[#CD7F32]/40 hover:border-[#CD7F32]/60 hover:shadow-[#CD7F32]/20'
-                  : 'bg-gradient-to-r from-[#2a2a2a] via-[#2a2a2a] to-[#FF6B35]/5 border-[#3a3a3a] hover:border-[#FF6B35]/30'
-              }`}>
-                {/* Subtle accent line on left */}
-                <div className={`absolute left-0 top-0 bottom-0 w-1 ${
-                  shooter.rank === 2 ? 'bg-gradient-to-b from-[#C0C0C0] to-[#C0C0C0]/30' :
-                  shooter.rank === 3 ? 'bg-gradient-to-b from-[#CD7F32] to-[#CD7F32]/30' :
-                  'bg-gradient-to-b from-[#FF6B35]/50 to-[#FF6B35]/10'
-                }`} />
-                
-                <div className="flex items-center gap-3">
-                  {/* Rank Number - Large Russo One Font */}
-                  <div className={`w-12 h-14 flex items-center justify-center`}>
+              <div key={shooter.rank} className="bg-white rounded-lg border border-slate-200 overflow-hidden transition-all duration-200 hover:shadow-md hover:border-slate-300">
+                <div className="flex items-center gap-3 p-3 pl-0">
+                  {/* Left accent + rank */}
+                  <div className="flex items-center gap-2">
+                    <div className="w-1 h-14 rounded-r-full" style={{ backgroundColor: shooter.accentColor }} />
                     <span 
-                      className={`font-russo-one text-4xl font-bold opacity-50 ${
-                        shooter.rank === 2 ? 'text-[#C0C0C0]' :
-                        shooter.rank === 3 ? 'text-[#CD7F32]' :
-                        shooter.rank === 4 ? 'text-[#2E6DB4]' :
-                        'text-[#228B22]'
-                      }`}
-                      style={{ fontFamily: 'var(--font-russo-one), Russo One, sans-serif' }}
+                      className="text-3xl font-black opacity-30 w-8 text-center"
+                      style={{ color: shooter.accentColor, fontFamily: 'var(--font-russo-one), Russo One, sans-serif' }}
                     >
                       {shooter.rank}
                     </span>
                   </div>
                   
                   {/* Player Photo */}
-                  <div className={`w-12 h-12 rounded-full overflow-hidden relative flex-shrink-0 ${
-                    shooter.rank === 2 ? 'ring-2 ring-[#C0C0C0]/50 ring-offset-2 ring-offset-[#2a2a2a]' :
-                    shooter.rank === 3 ? 'ring-2 ring-[#CD7F32]/50 ring-offset-2 ring-offset-[#2a2a2a]' :
-                    'border-2 border-[#FF6B35]/20'
-                  }`}>
+                  <div className="w-11 h-11 rounded-full overflow-hidden relative flex-shrink-0 border-2" style={{ borderColor: `${shooter.accentColor}40` }}>
                     <Image
                       src={`https://cdn.nba.com/headshots/nba/latest/1040x760/${shooter.photoId}.png`}
                       alt={shooter.name}
                       fill
-                      sizes="48px"
+                      sizes="44px"
                       className="object-cover object-top scale-150 translate-y-1"
                     />
                   </div>
                   
                   {/* Player Info */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-white font-bold text-sm truncate">{shooter.name}</p>
-                    <p className={`text-xs truncate ${
-                      shooter.rank === 2 ? 'text-[#C0C0C0]' :
-                      shooter.rank === 3 ? 'text-[#CD7F32]' :
-                      'text-[#888]'
-                    }`}>{shooter.team}</p>
+                    <p className="text-slate-900 font-bold text-sm truncate">{shooter.name}</p>
+                    <p className="text-slate-400 text-xs truncate">{shooter.team}</p>
                   </div>
                   
                   {/* Similarity & Trait */}
-                  <div className="text-right flex-shrink-0">
-                    <p className={`font-black text-xl ${
-                      shooter.rank === 2 ? 'text-[#C0C0C0]' :
-                      shooter.rank === 3 ? 'text-[#CD7F32]' :
-                      'text-[#FF6B35]'
-                    }`}>{shooter.similarity}%</p>
-                    <p className="text-[#888] text-[10px] uppercase tracking-wide">{shooter.trait}</p>
+                  <div className="text-right flex-shrink-0 pr-3">
+                    <p className="font-black text-xl" style={{ color: shooter.accentColor }}>{shooter.similarity}%</p>
+                    <p className="text-slate-400 text-[9px] uppercase tracking-wider font-semibold">{shooter.trait}</p>
                   </div>
                 </div>
               </div>
@@ -4739,12 +4708,13 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
 
         </div>
       </div>
-      <div className="p-6 border-t border-[#3a3a3a] pb-24">
+      <div className="p-6 border-t border-black pb-24">
         {/* Bottom Tab Navigation - Fixed bottom bar with icons (all devices) */}
-        <div className="fixed bottom-0 left-0 right-0 bg-[#1a1a1a]/95 backdrop-blur-sm border-t border-[#3a3a3a] z-50 safe-area-bottom">
+        <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-black z-50 safe-area-bottom">
           <div className="max-w-4xl mx-auto">
-            <div className="grid grid-cols-6 h-16 md:h-[72px]">
+            <div className="grid grid-cols-7 h-16 md:h-[72px]">
               {[
+                { id: "home", icon: Home, label: "Home", href: "/results/demo" },
                 { id: "analysis", icon: Activity, label: "Analysis", href: "/results/demo/analysis" },
                 { id: "flaws", icon: AlertTriangle, label: "Flaws", href: "/results/demo/flaws" },
                 { id: "player", icon: User, label: "Player", href: "/results/demo/player" },
@@ -4756,7 +4726,7 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                   <Link
                     key={tab.id}
                     href={tab.href}
-                    className="relative flex flex-col items-center justify-center gap-1 transition-all text-[#888] hover:text-[#FF6B35]"
+                    className="relative flex flex-col items-center justify-center gap-1 transition-all text-slate-500 hover:text-[#FF6B35]"
                   >
                     <tab.icon className="w-5 h-5 md:w-6 md:h-6 transition-transform" />
                     <span className="text-[10px] md:text-xs font-medium">
@@ -4901,23 +4871,23 @@ function CoachingTipCard({ flawTitle, correction, drills }: CoachingTipCardProps
       {isExpanded && (
         <div className="p-4 pt-0 space-y-3">
           {/* What I Noticed */}
-          <div className="bg-[#1a1a1a]/50 rounded-lg p-3">
+          <div className="bg-white/50 rounded-lg p-3">
             <p className="text-xs font-bold text-purple-400 uppercase tracking-wider mb-1">What I Noticed</p>
-            <p className="text-[#E5E5E5] text-sm">{coachingMessage.whatINoticed}</p>
+            <p className="text-slate-900 text-sm">{coachingMessage.whatINoticed}</p>
           </div>
           
           {/* Why It Matters */}
-          <div className="bg-[#1a1a1a]/50 rounded-lg p-3">
+          <div className="bg-white/50 rounded-lg p-3">
             <p className="text-xs font-bold text-blue-400 uppercase tracking-wider mb-1">Why It Matters</p>
-            <p className="text-[#E5E5E5] text-sm">{coachingMessage.whyItMatters}</p>
+            <p className="text-slate-900 text-sm">{coachingMessage.whyItMatters}</p>
           </div>
           
           {/* What To Do */}
-          <div className="bg-[#1a1a1a]/50 rounded-lg p-3">
+          <div className="bg-white/50 rounded-lg p-3">
             <p className="text-xs font-bold text-green-400 uppercase tracking-wider mb-2">What To Do</p>
             <ol className="space-y-1">
               {coachingMessage.whatToDo.map((step, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-[#E5E5E5]">
+                <li key={i} className="flex items-start gap-2 text-sm text-slate-900">
                   <span className="flex-shrink-0 w-5 h-5 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center text-xs font-bold">
                     {i + 1}
                   </span>
@@ -4930,7 +4900,7 @@ function CoachingTipCard({ flawTitle, correction, drills }: CoachingTipCardProps
           {/* Expected Result */}
           <div className="bg-gradient-to-r from-[#FF6B35]/20 to-transparent rounded-lg p-3 border border-[#FF6B35]/30">
             <p className="text-xs font-bold text-[#FF6B35] uppercase tracking-wider mb-1">Expected Result</p>
-            <p className="text-[#E5E5E5] text-sm">{coachingMessage.expectedResult}</p>
+            <p className="text-slate-900 text-sm">{coachingMessage.expectedResult}</p>
           </div>
         </div>
       )}
@@ -5177,7 +5147,7 @@ function FlawsSection({ dashboardView = 'professional' }: { dashboardView?: Dash
   return (
     <div className="space-y-6">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a] rounded-xl p-6 border border-[#3a3a3a]">
+      <div className="bg-gradient-to-r from-white via-[#2a2a2a] to-white rounded-xl p-6 border-2 border-black">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-xl bg-red-500/10 flex items-center justify-center border border-red-500/30">
@@ -5187,7 +5157,7 @@ function FlawsSection({ dashboardView = 'professional' }: { dashboardView?: Dash
               <h2 className="text-2xl font-black text-red-400 uppercase tracking-wider" style={{ textShadow: '0 0 20px rgba(239, 68, 68, 0.3)' }}>
                 Identified Flaws History
               </h2>
-              <p className="text-[#888] text-sm">{allSessionsWithFlaws.length} session{allSessionsWithFlaws.length !== 1 ? 's' : ''} • Click to expand each session</p>
+              <p className="text-slate-500 text-sm">{allSessionsWithFlaws.length} session{allSessionsWithFlaws.length !== 1 ? 's' : ''} • Click to expand each session</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -5210,28 +5180,28 @@ function FlawsSection({ dashboardView = 'professional' }: { dashboardView?: Dash
               className={`rounded-xl overflow-hidden border transition-all duration-300 ${
                 session.isLive 
                   ? 'border-green-500/50 bg-gradient-to-br from-green-500/10 to-green-600/5' 
-                  : 'border-[#3a3a3a] bg-[#2a2a2a]'
+                  : 'border-black bg-white'
               }`}
             >
               {/* Session Header - Clickable */}
               <button
                 onClick={() => toggleSession(session.id)}
-                className="w-full p-4 flex items-center justify-between hover:bg-[#1a1a1a]/50 transition-colors"
+                className="w-full p-4 flex items-center justify-between hover:bg-white/50 transition-colors"
               >
                 <div className="flex items-center gap-4">
                   <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    session.isLive ? 'bg-green-500/20 border border-green-500/40' : 'bg-[#3a3a3a] border border-[#4a4a4a]'
+                    session.isLive ? 'bg-green-500/20 border border-green-500/40' : 'bg-slate-200 border-2 border-black'
                   }`}>
-                    <Calendar className={`w-5 h-5 ${session.isLive ? 'text-green-400' : 'text-[#888]'}`} />
+                    <Calendar className={`w-5 h-5 ${session.isLive ? 'text-green-400' : 'text-slate-500'}`} />
                   </div>
                   <div className="text-left">
                     <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-bold text-[#E5E5E5]">{session.displayDate}</h3>
+                      <h3 className="text-lg font-bold text-slate-900">{session.displayDate}</h3>
                       {session.isLive && (
-                        <span className="px-2 py-0.5 bg-green-500 rounded text-[10px] font-bold text-white">LIVE</span>
+                        <span className="px-2 py-0.5 bg-green-500 rounded text-[10px] font-bold text-slate-900">LIVE</span>
                       )}
                     </div>
-                    <p className="text-[#888] text-sm">{session.flaws.length} flaw{session.flaws.length !== 1 ? 's' : ''} detected • Score: {session.score}%</p>
+                    <p className="text-slate-500 text-sm">{session.flaws.length} flaw{session.flaws.length !== 1 ? 's' : ''} detected • Score: {session.score}%</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -5242,7 +5212,7 @@ function FlawsSection({ dashboardView = 'professional' }: { dashboardView?: Dash
                   }`}>
                     {session.flaws.length === 0 ? 'EXCELLENT' : session.flaws.length <= 2 ? 'GOOD' : 'NEEDS WORK'}
                   </div>
-                  <div className={`w-8 h-8 rounded-full bg-[#1a1a1a] flex items-center justify-center border border-[#4a4a4a] text-[#888] transition-transform duration-300 ${isSessionExpanded ? 'rotate-180' : ''}`}>
+                  <div className={`w-8 h-8 rounded-full bg-white flex items-center justify-center border-2 border-black text-slate-500 transition-transform duration-300 ${isSessionExpanded ? 'rotate-180' : ''}`}>
                     <ChevronDown className="w-5 h-5" />
                   </div>
                 </div>
@@ -5252,7 +5222,7 @@ function FlawsSection({ dashboardView = 'professional' }: { dashboardView?: Dash
               <div className={`overflow-hidden transition-all duration-300 ${isSessionExpanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
                 <div className="p-4 pt-0 space-y-3">
                   {session.flaws.length === 0 ? (
-                    <div className="text-center py-8 text-[#888]">
+                    <div className="text-center py-8 text-slate-500">
                       <Check className="w-12 h-12 mx-auto mb-2 text-green-400" />
                       <p>No flaws detected in this session!</p>
                     </div>
@@ -5269,7 +5239,7 @@ function FlawsSection({ dashboardView = 'professional' }: { dashboardView?: Dash
                           {/* Flaw Card Header */}
                           <button
                             onClick={() => toggleCard(cardId)}
-                            className="w-full bg-[#1a1a1a]/80 p-4 border-b border-red-500/30 hover:bg-[#1a1a1a]/90 transition-all cursor-pointer"
+                            className="w-full bg-white/80 p-4 border-b border-red-500/30 hover:bg-white/90 transition-all cursor-pointer"
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
@@ -5277,15 +5247,15 @@ function FlawsSection({ dashboardView = 'professional' }: { dashboardView?: Dash
                                   <X className="w-5 h-5" />
                                 </div>
                                 <div className="text-left">
-                                  <h3 className="text-base font-bold text-[#E5E5E5] uppercase tracking-wide">{flaw.title}</h3>
-                                  <span className="text-[#888] text-xs uppercase tracking-wider">{flaw.category}</span>
+                                  <h3 className="text-base font-bold text-slate-900 uppercase tracking-wide">{flaw.title}</h3>
+                                  <span className="text-slate-500 text-xs uppercase tracking-wider">{flaw.category}</span>
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
-                                <div className="px-2 py-1 rounded-lg text-xs font-bold uppercase tracking-wider text-red-400 bg-[#1a1a1a] border border-red-500/50">
+                                <div className="px-2 py-1 rounded-lg text-xs font-bold uppercase tracking-wider text-red-400 bg-white border border-red-500/50">
                                   {flaw.severity}
                                 </div>
-                                <div className={`w-6 h-6 rounded-full bg-[#2a2a2a] flex items-center justify-center border border-red-500/30 text-red-400 transition-transform duration-300 ${isCardExpanded ? 'rotate-180' : ''}`}>
+                                <div className={`w-6 h-6 rounded-full bg-white flex items-center justify-center border border-red-500/30 text-red-400 transition-transform duration-300 ${isCardExpanded ? 'rotate-180' : ''}`}>
                                   <ChevronDown className="w-4 h-4" />
                                 </div>
                               </div>
@@ -5298,17 +5268,17 @@ function FlawsSection({ dashboardView = 'professional' }: { dashboardView?: Dash
                           >
                             <div className="p-4 space-y-3">
                               {/* Description */}
-                              <div className="bg-[#1a1a1a]/50 rounded-lg p-3 border border-red-500/20">
+                              <div className="bg-white/50 rounded-lg p-3 border border-red-500/20">
                                 <div className="flex items-center gap-2 mb-2">
                                   <AlertTriangle className="w-4 h-4 text-red-400" />
                                   <span className="text-red-400 text-xs uppercase tracking-wider font-bold">Analysis</span>
                                 </div>
-                                <p className="text-[#E5E5E5] text-sm leading-relaxed">{flaw.description}</p>
+                                <p className="text-slate-900 text-sm leading-relaxed">{flaw.description}</p>
                               </div>
 
                               {/* Cause Chain */}
                               {flaw.causeChain && flaw.causeChain.length > 0 && (
-                                <div className="bg-[#1a1a1a]/50 rounded-lg p-3 border border-orange-500/20">
+                                <div className="bg-white/50 rounded-lg p-3 border border-orange-500/20">
                                   <div className="flex items-center gap-2 mb-2">
                                     <ArrowRight className="w-4 h-4 text-orange-400" />
                                     <span className="text-orange-400 text-xs uppercase tracking-wider font-bold">Cause → Effect</span>
@@ -5324,8 +5294,8 @@ function FlawsSection({ dashboardView = 'professional' }: { dashboardView?: Dash
                                           {effect.severity}
                                         </span>
                                         <div className="flex-1">
-                                          <p className="text-[#E5E5E5] font-medium">{effect.effect}</p>
-                                          <p className="text-[#888] text-xs mt-0.5">{effect.explanation}</p>
+                                          <p className="text-slate-900 font-medium">{effect.effect}</p>
+                                          <p className="text-slate-500 text-xs mt-0.5">{effect.explanation}</p>
                                         </div>
                                       </div>
                                     ))}
@@ -5339,29 +5309,29 @@ function FlawsSection({ dashboardView = 'professional' }: { dashboardView?: Dash
                                   <Check className="w-4 h-4 text-[#FF6B35]" />
                                   <span className="text-[#FF6B35] text-xs uppercase tracking-wider font-bold">Correction</span>
                                 </div>
-                                <p className="text-[#E5E5E5] text-sm leading-relaxed">{flaw.correction}</p>
+                                <p className="text-slate-900 text-sm leading-relaxed">{flaw.correction}</p>
                               </div>
 
                               {/* Drills */}
                               {flaw.drills && flaw.drills.length > 0 && (
                                 <div>
                                   <div className="flex items-center gap-2 mb-2">
-                                    <Dumbbell className="w-4 h-4 text-[#888]" />
-                                    <span className="text-[#888] text-xs uppercase tracking-wider font-bold">Drills</span>
+                                    <Dumbbell className="w-4 h-4 text-slate-500" />
+                                    <span className="text-slate-500 text-xs uppercase tracking-wider font-bold">Drills</span>
                                   </div>
                                   <div className="space-y-1">
                                     {flaw.drills.map((drill: { name: string; reps: string; difficulty: string }, i: number) => (
                                       <div
                                         key={i}
-                                        className="flex items-center justify-between bg-[#1a1a1a]/50 rounded-lg p-2 border border-[#2a2a2a]"
+                                        className="flex items-center justify-between bg-white/50 rounded-lg p-2 border-2 border-black"
                                       >
                                         <div className="flex items-center gap-2">
-                                          <div className="w-6 h-6 rounded-full bg-[#2a2a2a] flex items-center justify-center text-red-400 font-bold text-xs border border-red-500/30">
+                                          <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center text-red-400 font-bold text-xs border border-red-500/30">
                                             {i + 1}
                                           </div>
                                           <div>
-                                            <p className="text-[#E5E5E5] text-sm">{drill.name}</p>
-                                            <p className="text-[#888] text-xs">{drill.reps}</p>
+                                            <p className="text-slate-900 text-sm">{drill.name}</p>
+                                            <p className="text-slate-500 text-xs">{drill.reps}</p>
                                           </div>
                                         </div>
                                         <span className={`px-2 py-0.5 rounded text-xs font-bold border ${getDifficultyColor(drill.difficulty)}`}>
@@ -5375,7 +5345,7 @@ function FlawsSection({ dashboardView = 'professional' }: { dashboardView?: Dash
 
                               {/* Impact Badge */}
                               <div className="flex items-center justify-center pt-1">
-                                <span className="px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1 text-red-400 bg-[#1a1a1a] border border-red-500/50">
+                                <span className="px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1 text-red-400 bg-white border border-red-500/50">
                                   <Zap className="w-3 h-3" /> {flaw.impact}
                                 </span>
                               </div>
@@ -5401,7 +5371,7 @@ function FlawsSection({ dashboardView = 'professional' }: { dashboardView?: Dash
           <button
             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
             disabled={currentPage === 1}
-            className="px-4 py-2 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg text-[#E5E5E5] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#3a3a3a] transition-colors"
+            className="px-4 py-2 bg-white border-2 border-black rounded-lg text-slate-900 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-200 transition-colors"
           >
             Previous
           </button>
@@ -5412,8 +5382,8 @@ function FlawsSection({ dashboardView = 'professional' }: { dashboardView?: Dash
                 onClick={() => setCurrentPage(page)}
                 className={`w-8 h-8 rounded-lg font-bold text-sm transition-colors ${
                   currentPage === page
-                    ? 'bg-red-500 text-white'
-                    : 'bg-[#2a2a2a] text-[#888] hover:bg-[#3a3a3a]'
+                    ? 'bg-red-500 text-slate-900'
+                    : 'bg-white text-slate-500 hover:bg-slate-200'
                 }`}
               >
                 {page}
@@ -5423,7 +5393,7 @@ function FlawsSection({ dashboardView = 'professional' }: { dashboardView?: Dash
           <button
             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
             disabled={currentPage === totalPages}
-            className="px-4 py-2 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg text-[#E5E5E5] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#3a3a3a] transition-colors"
+            className="px-4 py-2 bg-white border-2 border-black rounded-lg text-slate-900 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-200 transition-colors"
           >
             Next
           </button>
@@ -5546,7 +5516,7 @@ function TrainingSection() {
   return (
     <div className="space-y-6">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a] rounded-xl p-6 border border-[#3a3a3a]">
+      <div className="bg-gradient-to-r from-white via-[#2a2a2a] to-white rounded-xl p-6 border-2 border-black">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-xl bg-[#FF6B35]/10 flex items-center justify-center border border-[#FF6B35]/30">
@@ -5556,24 +5526,24 @@ function TrainingSection() {
               <h2 className="text-2xl font-black text-[#FF6B35] uppercase tracking-wider" style={{ textShadow: '0 0 20px rgba(255, 215, 0, 0.3)' }}>
                 Weekly Training Plan
               </h2>
-              <p className="text-[#888] text-sm">Personalized shooting development program</p>
+              <p className="text-slate-500 text-sm">Personalized shooting development program</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="text-center px-4 py-2 bg-[#2a2a2a] rounded-lg border border-[#3a3a3a]">
+            <div className="text-center px-4 py-2 bg-white rounded-lg border-2 border-black">
               <p className="text-[#FF6B35] text-xl font-black">3</p>
-              <p className="text-[#888] text-xs uppercase">Training Days</p>
+              <p className="text-slate-500 text-xs uppercase">Training Days</p>
             </div>
-            <div className="text-center px-4 py-2 bg-[#2a2a2a] rounded-lg border border-[#3a3a3a]">
+            <div className="text-center px-4 py-2 bg-white rounded-lg border-2 border-black">
               <p className="text-[#FF6B35] text-xl font-black">2.5h</p>
-              <p className="text-[#888] text-xs uppercase">Total Time</p>
+              <p className="text-slate-500 text-xs uppercase">Total Time</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Week Calendar Strip */}
-      <div className="bg-[#2a2a2a] rounded-xl p-4 border border-[#3a3a3a]">
+      <div className="bg-white rounded-xl p-4 border-2 border-black">
         <div className="grid grid-cols-7 gap-2">
           {["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"].map((day) => {
             const isTrainingDay = ["MON", "WED", "FRI"].includes(day)
@@ -5584,17 +5554,17 @@ function TrainingSection() {
                 className={`text-center p-3 rounded-lg transition-all ${
                   isTrainingDay
                     ? `bg-gradient-to-br ${trainingData?.color.bg} border ${trainingData?.color.border}`
-                    : 'bg-[#1a1a1a] border border-[#2a2a2a]'
+                    : 'bg-white border-2 border-black'
                 }`}
               >
-                <p className={`text-xs font-bold uppercase tracking-wider ${isTrainingDay ? trainingData?.color.text : 'text-[#666]'}`}>
+                <p className={`text-xs font-bold uppercase tracking-wider ${isTrainingDay ? trainingData?.color.text : 'text-slate-500'}`}>
                   {day}
                 </p>
                 <div className="mt-2">
                   {isTrainingDay && trainingData ? (
                     <span className={trainingData.color.text}>{getPlanIcon(trainingData.iconType)}</span>
                   ) : (
-                    <span className="text-[#666]"><CircleDot className="w-5 h-5" /></span>
+                    <span className="text-slate-500"><CircleDot className="w-5 h-5" /></span>
                   )}
                 </div>
                 <p className={`text-[10px] mt-1 ${isTrainingDay ? trainingData?.color.text : 'text-[#555]'}`}>
@@ -5615,7 +5585,7 @@ function TrainingSection() {
             style={{ boxShadow: `0 0 30px rgba(0, 0, 0, 0.5)` }}
           >
             {/* Card Header */}
-            <div className="bg-[#1a1a1a]/80 p-5 border-b border-[#3a3a3a]">
+            <div className="bg-white/80 p-5 border-b border-black">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <div
@@ -5625,7 +5595,7 @@ function TrainingSection() {
                     {getPlanIcon(plan.iconType)}
                   </div>
                   <div>
-                    <h3 className="text-xl font-black text-[#E5E5E5] uppercase">{plan.day}</h3>
+                    <h3 className="text-xl font-black text-slate-900 uppercase">{plan.day}</h3>
                     <p className={`text-xs font-bold uppercase tracking-wider ${plan.color.text}`}>{plan.focus}</p>
                   </div>
                 </div>
@@ -5633,7 +5603,7 @@ function TrainingSection() {
 
               {/* Duration & Intensity */}
               <div className="flex items-center gap-2">
-                <span className="px-2 py-1 rounded text-xs font-bold bg-[#2a2a2a] text-[#888] border border-[#3a3a3a] flex items-center gap-1">
+                <span className="px-2 py-1 rounded text-xs font-bold bg-white text-slate-500 border-2 border-black flex items-center gap-1">
                   <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
                   {plan.duration}
                 </span>
@@ -5647,28 +5617,28 @@ function TrainingSection() {
             {/* Exercises List */}
             <div className="p-5">
               <div className="flex items-center gap-2 mb-4">
-                <ClipboardList className="w-4 h-4 text-[#888]" />
-                <span className="text-[#888] text-xs uppercase tracking-wider font-bold">Exercises</span>
+                <ClipboardList className="w-4 h-4 text-slate-500" />
+                <span className="text-slate-500 text-xs uppercase tracking-wider font-bold">Exercises</span>
               </div>
               <div className="space-y-3">
                 {plan.exercises.map((exercise, i) => (
                   <div
                     key={i}
-                    className="flex items-center gap-3 bg-[#1a1a1a]/50 rounded-lg p-3 border border-[#2a2a2a] hover:border-[#3a3a3a] transition-all group"
+                    className="flex items-center gap-3 bg-white/50 rounded-lg p-3 border-2 border-black hover:border-black transition-all group"
                   >
-                    <div className={`w-8 h-8 rounded-lg bg-[#2a2a2a] flex items-center justify-center border border-[#3a3a3a] group-hover:border-[#4a4a4a] transition-all ${plan.color.text}`}>
+                    <div className={`w-8 h-8 rounded-lg bg-white flex items-center justify-center border-2 border-black group-hover:border-black transition-all ${plan.color.text}`}>
                       <CircleDot className="w-4 h-4" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[#E5E5E5] text-sm font-medium truncate">{exercise.name}</p>
-                      <div className="flex items-center gap-2 text-[10px] text-[#888]">
+                      <p className="text-slate-900 text-sm font-medium truncate">{exercise.name}</p>
+                      <div className="flex items-center gap-2 text-[10px] text-slate-500">
                         <span>{exercise.reps}</span>
                         <span>•</span>
                         <span>{exercise.time}</span>
                       </div>
                     </div>
-                    <div className="w-5 h-5 rounded border border-[#3a3a3a] bg-[#2a2a2a] flex items-center justify-center opacity-50 group-hover:opacity-100 transition-all">
-                      <Check className="w-3 h-3 text-[#888] opacity-0 group-hover:opacity-100" />
+                    <div className="w-5 h-5 rounded border-2 border-black bg-white flex items-center justify-center opacity-50 group-hover:opacity-100 transition-all">
+                      <Check className="w-3 h-3 text-slate-500 opacity-0 group-hover:opacity-100" />
                     </div>
                   </div>
                 ))}
@@ -5686,27 +5656,27 @@ function TrainingSection() {
       </div>
 
       {/* Weekly Progress Summary */}
-      <div className="bg-[#2a2a2a] rounded-xl p-6 border border-[#3a3a3a]">
+      <div className="bg-white rounded-xl p-6 border-2 border-black">
         <div className="flex items-center gap-2 mb-4">
           <BarChart3 className="w-5 h-5 text-[#FF6B35]" />
           <h3 className="text-[#FF6B35] text-sm font-bold uppercase tracking-wider">Weekly Goals</h3>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a] text-center">
+          <div className="bg-white rounded-lg p-4 border-2 border-black text-center">
             <p className="text-2xl font-black text-[#FF6B35]">295</p>
-            <p className="text-[#888] text-xs uppercase tracking-wider">Total Shots</p>
+            <p className="text-slate-500 text-xs uppercase tracking-wider">Total Shots</p>
           </div>
-          <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a] text-center">
+          <div className="bg-white rounded-lg p-4 border-2 border-black text-center">
             <p className="text-2xl font-black text-blue-400">150</p>
-            <p className="text-[#888] text-xs uppercase tracking-wider">Form Shots</p>
+            <p className="text-slate-500 text-xs uppercase tracking-wider">Form Shots</p>
           </div>
-          <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a] text-center">
+          <div className="bg-white rounded-lg p-4 border-2 border-black text-center">
             <p className="text-2xl font-black text-orange-400">100</p>
-            <p className="text-[#888] text-xs uppercase tracking-wider">Game Shots</p>
+            <p className="text-slate-500 text-xs uppercase tracking-wider">Game Shots</p>
           </div>
-          <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a] text-center">
+          <div className="bg-white rounded-lg p-4 border-2 border-black text-center">
             <p className="text-2xl font-black text-green-400">45</p>
-            <p className="text-[#888] text-xs uppercase tracking-wider">Drills</p>
+            <p className="text-slate-500 text-xs uppercase tracking-wider">Drills</p>
           </div>
         </div>
       </div>
@@ -5891,10 +5861,10 @@ function ActivityRings({ overallScore, consistencyScore, formScore }: { overallS
 
         {/* Center text - white for visibility */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl font-bold text-white drop-shadow-lg">
+          <span className="text-2xl font-bold text-slate-900 drop-shadow-lg">
             {overallScore}%
           </span>
-          <span className="text-white text-xs">Overall</span>
+          <span className="text-slate-600 text-xs">Overall</span>
         </div>
 
         {/* Ring labels with dynamic colors */}
@@ -5918,38 +5888,38 @@ function ActivityRings({ overallScore, consistencyScore, formScore }: { overallS
       {showPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowPopup(false)}>
           <div 
-            className="bg-gradient-to-b from-[#1a1a1a] to-[#0d0d0d] rounded-xl border border-[#3a3a3a] shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto"
+            className="bg-gradient-to-b from-white to-[#0d0d0d] rounded-xl border-2 border-black shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="sticky top-0 bg-gradient-to-r from-[#FF6B35]/20 to-transparent p-4 border-b border-[#3a3a3a] flex items-center justify-between">
+            <div className="sticky top-0 bg-gradient-to-r from-[#FF6B35]/20 to-transparent p-4 border-b border-black flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-[#FF6B35]/10 flex items-center justify-center border border-[#FF6B35]/30">
                   <Info className="w-5 h-5 text-[#FF6B35]" />
                 </div>
                 <div>
                   <h2 className="text-[#FF6B35] font-bold text-lg uppercase tracking-wider">Key Skills</h2>
-                  <p className="text-[#888] text-xs">Performance Overview</p>
+                  <p className="text-slate-500 text-xs">Performance Overview</p>
                 </div>
               </div>
               <button 
                 onClick={() => setShowPopup(false)}
-                className="w-8 h-8 rounded-full bg-[#3a3a3a] hover:bg-[#4a4a4a] flex items-center justify-center transition-colors"
+                className="w-8 h-8 rounded-full bg-slate-200 hover:bg-slate-200 flex items-center justify-center transition-colors"
               >
-                <X className="w-4 h-4 text-[#888]" />
+                <X className="w-4 h-4 text-slate-500" />
               </button>
             </div>
 
             {/* Overall Score */}
-            <div className="p-4 border-b border-[#3a3a3a]">
+            <div className="p-4 border-b border-black">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-[#888] text-sm uppercase tracking-wider">Overall Score</span>
+                <span className="text-slate-500 text-sm uppercase tracking-wider">Overall Score</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-white font-black text-3xl">{overallScore}</span>
-                  <span className="text-[#888] text-sm">/ 100</span>
+                  <span className="text-slate-900 font-black text-3xl">{overallScore}</span>
+                  <span className="text-slate-500 text-sm">/ 100</span>
                 </div>
               </div>
-              <div className="h-3 bg-[#3a3a3a] rounded-full overflow-hidden">
+              <div className="h-3 bg-slate-200 rounded-full overflow-hidden">
                 <div 
                   className="h-full rounded-full transition-all duration-500"
                   style={{ 
@@ -5959,110 +5929,110 @@ function ActivityRings({ overallScore, consistencyScore, formScore }: { overallS
                 />
               </div>
               <div className="flex justify-between mt-2">
-                <span className="text-[10px] text-[#666]">0</span>
+                <span className="text-[10px] text-slate-500">0</span>
                 <span className={`text-sm font-bold ${overallRating.color}`}>{overallRating.label}</span>
-                <span className="text-[10px] text-[#666]">100</span>
+                <span className="text-[10px] text-slate-500">100</span>
               </div>
             </div>
 
             {/* What This Means */}
-            <div className="p-4 border-b border-[#3a3a3a]">
-              <h3 className="text-white font-semibold text-sm mb-2 flex items-center gap-2">
+            <div className="p-4 border-b border-black">
+              <h3 className="text-slate-900 font-semibold text-sm mb-2 flex items-center gap-2">
                 <ChevronRight className="w-4 h-4 text-[#FF6B35]" />
                 What This Means
               </h3>
-              <p className="text-[#E5E5E5] text-sm leading-relaxed">
+              <p className="text-slate-900 text-sm leading-relaxed">
                 Your Key Skills score combines three critical aspects of shooting: Overall form quality, shot-to-shot Consistency, and technical Form mechanics.
               </p>
-              <p className="text-[#888] text-sm mt-2 leading-relaxed">
+              <p className="text-slate-500 text-sm mt-2 leading-relaxed">
                 A balanced score across all three rings indicates well-rounded shooting ability. Focus on improving your lowest ring to see the biggest gains.
               </p>
             </div>
 
             {/* Individual Ring Breakdown */}
-            <div className="p-4 border-b border-[#3a3a3a]">
-              <h3 className="text-white font-semibold text-sm mb-4 flex items-center gap-2">
+            <div className="p-4 border-b border-black">
+              <h3 className="text-slate-900 font-semibold text-sm mb-4 flex items-center gap-2">
                 <Users className="w-4 h-4 text-[#FF6B35]" />
                 Ring Breakdown
               </h3>
               
               {/* Overall */}
-              <div className="bg-[#2a2a2a] rounded-lg p-3 mb-3">
+              <div className="bg-white rounded-lg p-3 mb-3">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <span className="w-3 h-3 rounded-full" style={{ background: `linear-gradient(135deg, ${overallColors.primary}, ${overallColors.secondary})` }} />
-                    <span className="text-white font-semibold">Overall</span>
+                    <span className="text-slate-900 font-semibold">Overall</span>
                   </div>
-                  <span className="text-white font-bold">{overallScore}%</span>
+                  <span className="text-slate-900 font-bold">{overallScore}%</span>
                 </div>
-                <p className="text-[#888] text-xs">Combined shooting performance across all metrics</p>
+                <p className="text-slate-500 text-xs">Combined shooting performance across all metrics</p>
                 <div className="flex items-center justify-between mt-2">
-                  <span className="text-[#666] text-xs">Rating</span>
+                  <span className="text-slate-500 text-xs">Rating</span>
                   <span className={`font-bold text-sm ${overallRating.color}`}>{overallRating.label}</span>
                 </div>
               </div>
 
               {/* Consistency */}
-              <div className="bg-[#2a2a2a] rounded-lg p-3 mb-3">
+              <div className="bg-white rounded-lg p-3 mb-3">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <span className="w-3 h-3 rounded-full" style={{ background: `linear-gradient(135deg, ${consistencyColors.primary}, ${consistencyColors.secondary})` }} />
-                    <span className="text-white font-semibold">Consistency</span>
+                    <span className="text-slate-900 font-semibold">Consistency</span>
                   </div>
-                  <span className="text-white font-bold">{consistencyScore}%</span>
+                  <span className="text-slate-900 font-bold">{consistencyScore}%</span>
                 </div>
-                <p className="text-[#888] text-xs">How repeatable your shooting motion is from shot to shot</p>
+                <p className="text-slate-500 text-xs">How repeatable your shooting motion is from shot to shot</p>
                 <div className="flex items-center justify-between mt-2">
-                  <span className="text-[#666] text-xs">Rating</span>
+                  <span className="text-slate-500 text-xs">Rating</span>
                   <span className={`font-bold text-sm ${consistencyRating.color}`}>{consistencyRating.label}</span>
                 </div>
               </div>
 
               {/* Form */}
-              <div className="bg-[#2a2a2a] rounded-lg p-3">
+              <div className="bg-white rounded-lg p-3">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <span className="w-3 h-3 rounded-full" style={{ background: `linear-gradient(135deg, ${formColors.primary}, ${formColors.secondary})` }} />
-                    <span className="text-white font-semibold">Form</span>
+                    <span className="text-slate-900 font-semibold">Form</span>
                   </div>
-                  <span className="text-white font-bold">{formScore}%</span>
+                  <span className="text-slate-900 font-bold">{formScore}%</span>
                 </div>
-                <p className="text-[#888] text-xs">Technical quality of your shooting mechanics</p>
+                <p className="text-slate-500 text-xs">Technical quality of your shooting mechanics</p>
                 <div className="flex items-center justify-between mt-2">
-                  <span className="text-[#666] text-xs">Rating</span>
+                  <span className="text-slate-500 text-xs">Rating</span>
                   <span className={`font-bold text-sm ${formRating.color}`}>{formRating.label}</span>
                 </div>
               </div>
             </div>
 
             {/* Benchmarks */}
-            <div className="p-4 border-b border-[#3a3a3a]">
-              <h3 className="text-white font-semibold text-sm mb-3 flex items-center gap-2">
+            <div className="p-4 border-b border-black">
+              <h3 className="text-slate-900 font-semibold text-sm mb-3 flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-[#FF6B35]" />
                 Performance Benchmarks
               </h3>
               <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="bg-[#1a1a1a] rounded p-2 text-center">
+                <div className="bg-white rounded p-2 text-center">
                   <p className="text-[#FF6B35] font-bold">90-100</p>
-                  <p className="text-[#888]">Elite</p>
+                  <p className="text-slate-500">Elite</p>
                 </div>
-                <div className="bg-[#1a1a1a] rounded p-2 text-center">
+                <div className="bg-white rounded p-2 text-center">
                   <p className="text-green-400 font-bold">80-89</p>
-                  <p className="text-[#888]">Excellent</p>
+                  <p className="text-slate-500">Excellent</p>
                 </div>
-                <div className="bg-[#1a1a1a] rounded p-2 text-center">
+                <div className="bg-white rounded p-2 text-center">
                   <p className="text-blue-400 font-bold">70-79</p>
-                  <p className="text-[#888]">Good</p>
+                  <p className="text-slate-500">Good</p>
                 </div>
-                <div className="bg-[#1a1a1a] rounded p-2 text-center">
+                <div className="bg-white rounded p-2 text-center">
                   <p className="text-orange-400 font-bold">60-69</p>
-                  <p className="text-[#888]">Average</p>
+                  <p className="text-slate-500">Average</p>
                 </div>
               </div>
             </div>
 
             {/* Footer */}
-            <div className="p-4 bg-[#1a1a1a] border-t border-[#3a3a3a]">
+            <div className="p-4 bg-white border-t border-black">
               <button 
                 onClick={() => setShowPopup(false)}
                 className="w-full py-3 bg-[#FF6B35] hover:bg-[#FFC000] text-[#1a1a1a] font-bold rounded-lg transition-colors uppercase tracking-wider text-sm"
@@ -6162,7 +6132,7 @@ function SPARStatBar({ name, current, max, playerName, playerAge = 34, playerSta
   return (
     <>
       <div 
-        className="relative cursor-pointer hover:bg-[#4a4a4a]/30 rounded-lg p-1 -m-1 transition-colors"
+        className="relative cursor-pointer hover:bg-slate-200/30 rounded-lg p-1 -m-1 transition-colors"
         onClick={() => setShowPopup(true)}
       >
         {/* Stat name label */}
@@ -6183,7 +6153,7 @@ function SPARStatBar({ name, current, max, playerName, playerAge = 34, playerSta
         {/* Bar container */}
         <div className="flex items-center gap-2">
           {/* Current value - upright text */}
-          <span className="text-lg font-bold text-white w-8 text-right">{current}</span>
+          <span className="text-lg font-bold text-slate-900 w-8 text-right">{current}</span>
 
           {/* Progress bar with stripes */}
           <div
@@ -6191,7 +6161,7 @@ function SPARStatBar({ name, current, max, playerName, playerAge = 34, playerSta
             style={{ borderLeft: `3px solid ${barColor.border}`, borderRight: `3px solid ${barColor.border}` }}
           >
             {/* Background (unfilled) with gray stripes */}
-            <div className="absolute inset-0 bg-[#1a1a1a]">
+            <div className="absolute inset-0 bg-white">
               <div
                 className="absolute inset-0 opacity-40"
                 style={{
@@ -6236,8 +6206,8 @@ function SPARStatBar({ name, current, max, playerName, playerAge = 34, playerSta
 
           {/* Max value - upright text */}
           <div className="flex flex-col items-center w-8">
-            <span className="text-sm font-bold text-[#888]">{max}</span>
-            <span className="text-[8px] text-[#666] uppercase">Max</span>
+            <span className="text-sm font-bold text-slate-500">{max}</span>
+            <span className="text-[8px] text-slate-500 uppercase">Max</span>
           </div>
         </div>
       </div>
@@ -6501,7 +6471,7 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
   return (
     <div className="space-y-6">
       {/* ==================== SESSION GALLERY CAROUSEL (TOP) ==================== */}
-      <div className="bg-gradient-to-r from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a] rounded-xl p-4 border border-[#3a3a3a]">
+      <div className="bg-gradient-to-r from-white via-[#2a2a2a] to-white rounded-xl p-4 border-2 border-black">
         {/* Header */}
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 rounded-lg bg-[#FF6B35]/10 flex items-center justify-center border border-[#FF6B35]/30 flex-shrink-0">
@@ -6509,7 +6479,7 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
           </div>
           <div className="min-w-0">
             <h2 className="text-base font-black text-[#FF6B35] uppercase tracking-wider">Sessions</h2>
-            <p className="text-[#888] text-xs truncate">
+            <p className="text-slate-500 text-xs truncate">
               {allSessions.length} total • {imageSessions.length} img, {videoSessions.length} vid
             </p>
           </div>
@@ -6517,13 +6487,13 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
         
         {/* Media Type Filter Buttons - Compact */}
         <div className="flex items-center gap-2 mb-4 overflow-x-auto">
-          <div className="flex rounded-lg bg-[#1a1a1a] p-0.5 flex-shrink-0">
+          <div className="flex rounded-lg bg-white p-0.5 flex-shrink-0">
             <button
               onClick={() => setMediaTypeFilter('all')}
               className={`px-2 py-1 rounded text-[10px] font-bold uppercase transition-colors ${
                 mediaTypeFilter === 'all' 
                   ? 'bg-[#FF6B35] text-[#1a1a1a]' 
-                  : 'text-[#888] hover:text-white'
+                  : 'text-slate-500 hover:text-slate-900'
               }`}
             >
               All
@@ -6532,8 +6502,8 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
               onClick={() => setMediaTypeFilter('image')}
               className={`px-2 py-1 rounded text-[10px] font-bold uppercase transition-colors flex items-center gap-0.5 ${
                 mediaTypeFilter === 'image' 
-                  ? 'bg-[#60a5fa] text-white' 
-                  : 'text-[#888] hover:text-white'
+                  ? 'bg-[#60a5fa] text-slate-900' 
+                  : 'text-slate-500 hover:text-slate-900'
               }`}
             >
               <ImageIcon className="w-2.5 h-2.5" />
@@ -6543,8 +6513,8 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
               onClick={() => setMediaTypeFilter('video')}
               className={`px-2 py-1 rounded text-[10px] font-bold uppercase transition-colors flex items-center gap-0.5 ${
                 mediaTypeFilter === 'video' 
-                  ? 'bg-[#ef4444] text-white' 
-                  : 'text-[#888] hover:text-white'
+                  ? 'bg-[#ef4444] text-slate-900' 
+                  : 'text-slate-500 hover:text-slate-900'
               }`}
             >
               <Video className="w-2.5 h-2.5" />
@@ -6554,8 +6524,8 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
               onClick={() => setMediaTypeFilter('drills')}
               className={`px-2 py-1 rounded text-[10px] font-bold uppercase transition-colors flex items-center gap-0.5 ${
                 mediaTypeFilter === 'drills' 
-                  ? 'bg-[#22c55e] text-white' 
-                  : 'text-[#888] hover:text-white'
+                  ? 'bg-[#22c55e] text-slate-900' 
+                  : 'text-slate-500 hover:text-slate-900'
               }`}
             >
               <Dumbbell className="w-2.5 h-2.5" />
@@ -6567,7 +6537,7 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
           <select
             value={selectedSessionId || allSessions[0]?.id || ''}
             onChange={(e) => setSelectedSessionId(e.target.value)}
-            className="bg-[#2a2a2a] border border-[#4a4a4a] rounded-lg px-2 py-1 text-[#E5E5E5] text-[10px] focus:outline-none focus:border-[#FF6B35] cursor-pointer flex-shrink-0"
+            className="bg-white border-2 border-black rounded-lg px-2 py-1 text-slate-900 text-[10px] focus:outline-none focus:border-[#FF6B35] cursor-pointer flex-shrink-0"
           >
             {allSessions.map((session) => (
               <option key={session.id} value={session.id}>
@@ -6583,20 +6553,20 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
             {isLoadingDrills ? (
               <div className="flex items-center justify-center py-12">
                 <div className="animate-spin w-8 h-8 border-2 border-[#FF6B35] border-t-transparent rounded-full" />
-                <span className="ml-3 text-[#888]">Loading drill feedback...</span>
+                <span className="ml-3 text-slate-500">Loading drill feedback...</span>
               </div>
             ) : drillFeedback.length === 0 ? (
-              <div className="text-center py-12 bg-[#2a2a2a] rounded-xl border border-[#3a3a3a]">
+              <div className="text-center py-12 bg-white rounded-xl border-2 border-black">
                 <Dumbbell className="w-12 h-12 text-[#4a4a4a] mx-auto mb-4" />
-                <h3 className="text-[#888] font-bold mb-2">No Drill Feedback Yet</h3>
-                <p className="text-[#666] text-sm">Complete workouts with video/image uploads to see coach feedback here.</p>
+                <h3 className="text-slate-500 font-bold mb-2">No Drill Feedback Yet</h3>
+                <p className="text-slate-500 text-sm">Complete workouts with video/image uploads to see coach feedback here.</p>
               </div>
             ) : (
               <div className="grid gap-4">
                 {drillFeedback.map((drill: any) => (
                   <div 
                     key={drill.id} 
-                    className="bg-[#2a2a2a] rounded-xl border border-[#3a3a3a] overflow-hidden"
+                    className="bg-white rounded-xl border-2 border-black overflow-hidden"
                   >
                     <div className="p-4 flex items-start gap-4">
                       {/* Grade Badge */}
@@ -6613,7 +6583,7 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
                       {/* Drill Info */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <h4 className="text-white font-bold uppercase truncate">{drill.drillName}</h4>
+                          <h4 className="text-slate-900 font-bold uppercase truncate">{drill.drillName}</h4>
                           <span className={`text-[10px] px-2 py-0.5 rounded ${
                             drill.mediaType === 'video' ? 'bg-red-500/20 text-red-400' : 'bg-blue-500/20 text-blue-400'
                           }`}>
@@ -6628,15 +6598,15 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
                           )}
                         </div>
                         
-                        <p className="text-[#888] text-xs mb-2">
+                        <p className="text-slate-500 text-xs mb-2">
                           {drill.workoutName && `${drill.workoutName} • `}
                           {new Date(drill.createdAt).toLocaleDateString()}
                         </p>
                         
                         {/* Coach Says */}
                         {drill.coachSays && (
-                          <div className="bg-[#1a1a1a] rounded-lg p-3 border-l-2 border-[#FF6B35]">
-                            <p className="text-[#E5E5E5] text-sm italic">&quot;{drill.coachSays}&quot;</p>
+                          <div className="bg-white rounded-lg p-3 border-l-2 border-[#FF6B35]">
+                            <p className="text-slate-900 text-sm italic">&quot;{drill.coachSays}&quot;</p>
                           </div>
                         )}
                         
@@ -6653,7 +6623,7 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
                       
                       {/* Focus Area Badge */}
                       {drill.focusArea && (
-                        <span className="text-[10px] px-2 py-1 rounded bg-[#3a3a3a] text-[#888] uppercase">
+                        <span className="text-[10px] px-2 py-1 rounded bg-slate-200 text-slate-500 uppercase">
                           {drill.focusArea}
                         </span>
                       )}
@@ -6661,32 +6631,32 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
                     
                     {/* Expandable Full Analysis */}
                     {drill.coachAnalysis && (
-                      <details className="border-t border-[#3a3a3a]">
-                        <summary className="px-4 py-2 text-[#FF6B35] text-xs font-bold uppercase cursor-pointer hover:bg-[#3a3a3a]/50">
+                      <details className="border-t border-black">
+                        <summary className="px-4 py-2 text-[#FF6B35] text-xs font-bold uppercase cursor-pointer hover:bg-slate-200/50">
                           View Full Analysis
                         </summary>
-                        <div className="p-4 space-y-3 bg-[#1a1a1a]">
+                        <div className="p-4 space-y-3 bg-white">
                           {/* Priority Focus */}
                           {drill.coachAnalysis.priorityFocus && (
                             <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
                               <p className="text-red-400 text-xs font-bold uppercase mb-1">Fix This First</p>
-                              <p className="text-white text-sm">{drill.coachAnalysis.priorityFocus.issue}</p>
-                              <p className="text-[#888] text-xs mt-1">{drill.coachAnalysis.priorityFocus.howToFix}</p>
+                              <p className="text-slate-700 text-sm">{drill.coachAnalysis.priorityFocus.issue}</p>
+                              <p className="text-slate-500 text-xs mt-1">{drill.coachAnalysis.priorityFocus.howToFix}</p>
                             </div>
                           )}
                           
                           {/* Coaching Points */}
                           {drill.coachAnalysis.coachingPointEvaluations?.length > 0 && (
                             <div className="space-y-2">
-                              <p className="text-[#888] text-xs font-bold uppercase">Coaching Points</p>
+                              <p className="text-slate-500 text-xs font-bold uppercase">Coaching Points</p>
                               {drill.coachAnalysis.coachingPointEvaluations.map((point: any, i: number) => (
                                 <div key={i} className={`p-2 rounded border ${
                                   point.status === 'executing' ? 'bg-green-500/10 border-green-500/30' :
                                   point.status === 'needs_work' ? 'bg-orange-500/10 border-orange-500/30' :
-                                  'bg-[#2a2a2a] border-[#3a3a3a]'
+                                  'bg-white border-black'
                                 }`}>
-                                  <p className="text-white text-xs font-bold">{point.coachingPoint}</p>
-                                  <p className="text-[#888] text-xs">{point.coachObservation}</p>
+                                  <p className="text-slate-600 text-xs font-bold">{point.coachingPoint}</p>
+                                  <p className="text-slate-500 text-xs">{point.coachObservation}</p>
                                 </div>
                               ))}
                             </div>
@@ -6697,7 +6667,7 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
                             <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
                               <p className="text-green-400 text-xs font-bold uppercase mb-1">Keep Doing This</p>
                               {drill.coachAnalysis.reinforcement.map((r: any, i: number) => (
-                                <p key={i} className="text-white text-sm">✓ {r.point}</p>
+                                <p key={i} className="text-slate-700 text-sm">✓ {r.point}</p>
                               ))}
                             </div>
                           )}
@@ -6722,7 +6692,7 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
                 disabled={currentIndex === 0}
                 className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all z-10 ${
                   currentIndex === 0
-                    ? 'bg-[#2a2a2a] text-[#4a4a4a] cursor-not-allowed'
+                    ? 'bg-white text-[#4a4a4a] cursor-not-allowed'
                     : 'bg-[#FF6B35] text-[#1a1a1a] hover:bg-[#E55300] shadow-lg'
                 }`}
               >
@@ -6740,7 +6710,7 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
                   style={{ transform: 'translateX(50%)' }}
                 >
                   {prevSession && (
-                    <div className="rounded-xl overflow-hidden border-2 border-[#4a4a4a] bg-[#1a1a1a]">
+                    <div className="rounded-xl overflow-hidden border-2 border-black bg-white">
                       {prevSession.mainImageBase64 ? (
                         <ZoomableImage
                           src={prevSession.mainImageBase64}
@@ -6750,12 +6720,12 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
                           zoomScale={2}
                         />
                       ) : (
-                        <div className="w-full h-[300px] flex items-center justify-center bg-[#2a2a2a]">
+                        <div className="w-full h-[300px] flex items-center justify-center bg-white">
                           <ImageIcon className="w-12 h-12 text-[#4a4a4a]" />
                         </div>
                       )}
-                      <div className="bg-[#2a2a2a] p-2 text-center">
-                        <p className="text-[#888] text-xs">{prevSession.displayDate}</p>
+                      <div className="bg-white p-2 text-center">
+                        <p className="text-slate-500 text-xs">{prevSession.displayDate}</p>
                       </div>
                     </div>
                   )}
@@ -6764,7 +6734,7 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
                 {/* MAIN/CURRENT SESSION (Full - Center) */}
                 <div className="flex-shrink-0 w-1/2 z-10">
                   {currentSession && (
-                    <div className="rounded-xl overflow-hidden border-2 border-[#FF6B35] shadow-[0_0_30px_rgba(255,215,0,0.3)] bg-[#1a1a1a]">
+                    <div className="rounded-xl overflow-hidden border-2 border-[#FF6B35] shadow-[0_0_30px_rgba(255,215,0,0.3)] bg-white">
                       {currentSession.mainImageBase64 ? (
                         <HybridSkeletonDisplay
                           imageUrl={currentSession.mainImageBase64}
@@ -6784,13 +6754,13 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
                       <div className="bg-gradient-to-r from-[#FF6B35]/20 to-[#2a2a2a] p-3 flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           {currentSession.id === 'current' && (
-                            <span className="px-2 py-0.5 bg-green-500 rounded text-[10px] font-bold text-white">LIVE</span>
+                            <span className="px-2 py-0.5 bg-green-500 rounded text-[10px] font-bold text-slate-900">LIVE</span>
                           )}
                           <span className="text-[#FF6B35] font-bold text-sm">{currentSession.displayDate}</span>
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className="text-[#E5E5E5] text-sm font-bold">{currentSession.analysisData.overallScore}%</span>
-                          <span className="text-[#888] text-xs">{currentSession.analysisData.shooterLevel}</span>
+                          <span className="text-slate-900 text-sm font-bold">{currentSession.analysisData.overallScore}%</span>
+                          <span className="text-slate-500 text-xs">{currentSession.analysisData.shooterLevel}</span>
                         </div>
                       </div>
                     </div>
@@ -6806,7 +6776,7 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
                   style={{ transform: 'translateX(-50%)' }}
                 >
                   {nextSession && (
-                    <div className="rounded-xl overflow-hidden border-2 border-[#4a4a4a] bg-[#1a1a1a]">
+                    <div className="rounded-xl overflow-hidden border-2 border-black bg-white">
                       {nextSession.mainImageBase64 ? (
                         <ZoomableImage
                           src={nextSession.mainImageBase64}
@@ -6816,12 +6786,12 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
                           zoomScale={2}
                         />
                       ) : (
-                        <div className="w-full h-[300px] flex items-center justify-center bg-[#2a2a2a]">
+                        <div className="w-full h-[300px] flex items-center justify-center bg-white">
                           <ImageIcon className="w-12 h-12 text-[#4a4a4a]" />
                         </div>
                       )}
-                      <div className="bg-[#2a2a2a] p-2 text-center">
-                        <p className="text-[#888] text-xs">{nextSession.displayDate}</p>
+                      <div className="bg-white p-2 text-center">
+                        <p className="text-slate-500 text-xs">{nextSession.displayDate}</p>
                       </div>
                     </div>
                   )}
@@ -6834,7 +6804,7 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
                 disabled={currentIndex >= allSessions.length - 1}
                 className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all z-10 ${
                   currentIndex >= allSessions.length - 1
-                    ? 'bg-[#2a2a2a] text-[#4a4a4a] cursor-not-allowed'
+                    ? 'bg-white text-[#4a4a4a] cursor-not-allowed'
                     : 'bg-[#FF6B35] text-[#1a1a1a] hover:bg-[#E55300] shadow-lg'
                 }`}
               >
@@ -6852,7 +6822,7 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
                     className={`w-2.5 h-2.5 rounded-full transition-all ${
                       idx === currentIndex
                         ? 'bg-[#FF6B35] w-6'
-                        : 'bg-[#4a4a4a] hover:bg-[#666]'
+                        : 'bg-slate-200 hover:bg-[#666]'
                     }`}
                   />
                 ))}
@@ -6865,14 +6835,14 @@ function AssessmentSection({ dashboardView = 'professional', playerNameProp }: {
         {allSessions.length === 0 && (
           <div className="py-12 text-center">
             <ImageIcon className="w-16 h-16 text-[#4a4a4a] mx-auto mb-4" />
-            <p className="text-[#888] text-sm">No sessions yet. Complete an analysis to see your first session.</p>
+            <p className="text-slate-500 text-sm">No sessions yet. Complete an analysis to see your first session.</p>
           </div>
         )}
 
         {/* THREE SCREENSHOTS - Below carousel, updates with selected session */}
         {currentSession && (
           <div className="mt-6">
-            <h4 className="text-[#888] text-xs uppercase tracking-wider font-bold mb-3">Analysis Snapshots</h4>
+            <h4 className="text-slate-500 text-xs uppercase tracking-wider font-bold mb-3">Analysis Snapshots</h4>
             <AutoScreenshots
               imageUrl={currentSession.mainImageBase64 || ''}
               keypoints={currentSession.analysisData?.keypoints || visionAnalysisResult?.keypoints}
@@ -7068,14 +7038,14 @@ function MotivationalMessageCard({ overallScore, sessionsCount, shooterLevel }: 
           <h3 className={`text-xl font-black uppercase tracking-wider mb-2 ${textColorClass}`}>
             {message.title}
           </h3>
-          <p className="text-[#E5E5E5] text-sm leading-relaxed">
+          <p className="text-slate-900 text-sm leading-relaxed">
             {message.message}
           </p>
           
           {/* Next Goal Hint */}
-          <div className="mt-4 pt-4 border-t border-[#3a3a3a]">
-            <p className="text-[#888] text-xs uppercase tracking-wider mb-1">Next Goal</p>
-            <p className="text-[#E5E5E5] text-sm">
+          <div className="mt-4 pt-4 border-t border-black">
+            <p className="text-slate-500 text-xs uppercase tracking-wider mb-1">Next Goal</p>
+            <p className="text-slate-900 text-sm">
               {shooterLevel.level > 1 
                 ? `Reach ${shooterLevel.name === 'Elite' ? 'Perfect' : SHOOTER_LEVELS[shooterLevel.level - 2]?.name || 'next'} level (${SHOOTER_LEVELS[shooterLevel.level - 2]?.scoreRange[0] || 95}%+)`
                 : `Maintain Elite status with consistent practice`
@@ -7204,26 +7174,26 @@ function LeaguePlayersPopup({ league, players, onClose }: { league: string; play
   
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a] rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden border border-[#3a3a3a] shadow-2xl" onClick={e => e.stopPropagation()}>
+      <div className="bg-gradient-to-br from-[#2a2a2a] to-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden border-2 border-black shadow-2xl" onClick={e => e.stopPropagation()}>
         <div className={`p-6 bg-gradient-to-r ${leagueColors[league] || 'from-gray-500 to-gray-700'}`}>
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-white uppercase">{league === 'TOP_COLLEGE' ? 'Top College' : league} Players</h2>
-              <p className="text-white/80 text-sm">{filteredPlayers.length} players in database</p>
+              <h2 className="text-2xl font-bold text-slate-900 uppercase">{league === 'TOP_COLLEGE' ? 'Top College' : league} Players</h2>
+              <p className="text-slate-900/80 text-sm">{filteredPlayers.length} players in database</p>
             </div>
             <button onClick={onClose} className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center">
-              <X className="w-5 h-5 text-white" />
+              <X className="w-5 h-5 text-slate-900" />
             </button>
           </div>
         </div>
         <div className="p-4 overflow-y-auto max-h-[60vh]">
           <div className="grid grid-cols-1 gap-2">
             {filteredPlayers.map((player, idx) => (
-              <div key={player.id} className="flex items-center gap-3 p-3 bg-[#1a1a1a] rounded-lg hover:bg-[#2a2a2a] transition-colors">
-                <div className="w-8 h-8 rounded-full bg-[#3a3a3a] flex items-center justify-center text-[#FF6B35] font-bold text-sm">
+              <div key={player.id} className="flex items-center gap-3 p-3 bg-white rounded-lg hover:bg-white transition-colors">
+                <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-[#FF6B35] font-bold text-sm">
                   {idx + 1}
                 </div>
-                <div className="w-10 h-10 rounded-full overflow-hidden bg-[#3a3a3a] flex-shrink-0">
+                <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-200 flex-shrink-0">
                   {player.photoUrl ? (
                     <Image src={player.photoUrl} alt={player.name} width={40} height={40} className="object-cover object-top" unoptimized />
                   ) : (
@@ -7233,12 +7203,12 @@ function LeaguePlayersPopup({ league, players, onClose }: { league: string; play
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-bold text-white truncate">{player.name}</p>
-                  <p className="text-xs text-[#888] truncate">{player.team}</p>
+                  <p className="font-bold text-slate-900 truncate">{player.name}</p>
+                  <p className="text-xs text-slate-500 truncate">{player.team}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-[#FF6B35] font-bold">{player.similarity}%</p>
-                  <p className="text-xs text-[#888]">Match</p>
+                  <p className="text-xs text-slate-500">Match</p>
                 </div>
               </div>
             ))}
@@ -7256,8 +7226,8 @@ function MeasurementPopup({ measurementKey, value, onClose }: { measurementKey: 
   
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a] rounded-2xl max-w-md w-full border border-[#FF6B35]/30 shadow-2xl" onClick={e => e.stopPropagation()}>
-        <div className="p-6 bg-gradient-to-r from-[#FF6B35]/20 to-transparent border-b border-[#3a3a3a]">
+      <div className="bg-gradient-to-br from-[#2a2a2a] to-white rounded-2xl max-w-md w-full border border-[#FF6B35]/30 shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="p-6 bg-gradient-to-r from-[#FF6B35]/20 to-transparent border-b border-black">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-lg bg-[#FF6B35]/20 flex items-center justify-center">
@@ -7265,30 +7235,30 @@ function MeasurementPopup({ measurementKey, value, onClose }: { measurementKey: 
               </div>
               <div>
                 <h2 className="text-xl font-bold text-[#FF6B35] uppercase">{info.title}</h2>
-                <p className="text-3xl font-black text-white">{value}{measurementKey.includes('Height') ? 'in' : '°'}</p>
+                <p className="text-3xl font-black text-slate-900">{value}{measurementKey.includes('Height') ? 'in' : '°'}</p>
               </div>
             </div>
-            <button onClick={onClose} className="w-10 h-10 rounded-full bg-[#3a3a3a] hover:bg-[#4a4a4a] flex items-center justify-center">
-              <X className="w-5 h-5 text-white" />
+            <button onClick={onClose} className="w-10 h-10 rounded-full bg-slate-200 hover:bg-slate-200 flex items-center justify-center">
+              <X className="w-5 h-5 text-slate-900" />
             </button>
           </div>
         </div>
         <div className="p-6 space-y-4">
           <div>
-            <h3 className="text-sm font-bold text-[#888] uppercase mb-2">What It Measures</h3>
-            <p className="text-[#E5E5E5]">{info.description}</p>
+            <h3 className="text-sm font-bold text-slate-500 uppercase mb-2">What It Measures</h3>
+            <p className="text-slate-900">{info.description}</p>
           </div>
           <div className="bg-green-500/10 rounded-lg p-4 border border-green-500/30">
             <h3 className="text-sm font-bold text-green-400 uppercase mb-1">Optimal Range</h3>
             <p className="text-green-300">{info.optimal}</p>
           </div>
           <div>
-            <h3 className="text-sm font-bold text-[#888] uppercase mb-2">Why It Matters</h3>
-            <p className="text-[#E5E5E5]">{info.importance}</p>
+            <h3 className="text-sm font-bold text-slate-500 uppercase mb-2">Why It Matters</h3>
+            <p className="text-slate-900">{info.importance}</p>
           </div>
         </div>
-        <div className="p-6 border-t border-[#3a3a3a]">
-          <button onClick={onClose} className="w-full py-3 bg-[#FF6B35] hover:bg-[#e5c200] text-white font-bold rounded-lg transition-colors uppercase">
+        <div className="p-6 border-t border-black">
+          <button onClick={onClose} className="w-full py-3 bg-[#FF6B35] hover:bg-[#e5c200] text-slate-900 font-bold rounded-lg transition-colors uppercase">
             Close
           </button>
         </div>
@@ -7356,28 +7326,28 @@ function ComparisonSection({ analysisData }: { analysisData: AnalysisData }) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#2a2a2a] to-[#1a1a1a] rounded-xl p-6 border border-[#3a3a3a]" style={{ boxShadow: '0 0 30px rgba(255, 215, 0, 0.1)' }}>
+      <div className="bg-gradient-to-r from-[#2a2a2a] to-white rounded-xl p-6 border-2 border-black" style={{ boxShadow: '0 0 30px rgba(255, 215, 0, 0.1)' }}>
         <div className="flex items-center gap-4 mb-4">
           <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#FF4500] flex items-center justify-center">
             <BarChart3 className="w-7 h-7 text-[#1a1a1a]" />
           </div>
           <div>
             <h2 className="text-2xl font-black text-[#FF6B35] uppercase tracking-wider" style={{ textShadow: '0 0 20px rgba(255, 215, 0, 0.3)' }}>Elite Shooter Comparison</h2>
-            <p className="text-[#888] text-sm">Compare your shooting form with 250 elite players across 5 categories</p>
+            <p className="text-slate-500 text-sm">Compare your shooting form with 250 elite players across 5 categories</p>
           </div>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-          <button onClick={() => setShowLeaguePopup('NBA')} className="bg-[#1a1a1a] rounded-lg p-3 text-center border border-[#3a3a3a] hover:border-blue-400 hover:bg-blue-400/10 transition-colors cursor-pointer">
-            <p className="text-2xl font-bold text-blue-400">50</p><p className="text-xs text-[#888] uppercase">NBA</p>
+          <button onClick={() => setShowLeaguePopup('NBA')} className="bg-white rounded-lg p-3 text-center border-2 border-black hover:border-blue-400 hover:bg-blue-400/10 transition-colors cursor-pointer">
+            <p className="text-2xl font-bold text-blue-400">50</p><p className="text-xs text-slate-500 uppercase">NBA</p>
           </button>
-          <button onClick={() => setShowLeaguePopup('WNBA')} className="bg-[#1a1a1a] rounded-lg p-3 text-center border border-[#3a3a3a] hover:border-orange-400 hover:bg-orange-400/10 transition-colors cursor-pointer">
-            <p className="text-2xl font-bold text-orange-400">50</p><p className="text-xs text-[#888] uppercase">WNBA</p>
+          <button onClick={() => setShowLeaguePopup('WNBA')} className="bg-white rounded-lg p-3 text-center border-2 border-black hover:border-orange-400 hover:bg-orange-400/10 transition-colors cursor-pointer">
+            <p className="text-2xl font-bold text-orange-400">50</p><p className="text-xs text-slate-500 uppercase">WNBA</p>
           </button>
-          <button onClick={() => setShowLeaguePopup('NCAA')} className="bg-[#1a1a1a] rounded-lg p-3 text-center border border-[#3a3a3a] hover:border-green-400 hover:bg-green-400/10 transition-colors cursor-pointer">
-            <p className="text-2xl font-bold text-green-400">100</p><p className="text-xs text-[#888] uppercase">NCAA</p>
+          <button onClick={() => setShowLeaguePopup('NCAA')} className="bg-white rounded-lg p-3 text-center border-2 border-black hover:border-green-400 hover:bg-green-400/10 transition-colors cursor-pointer">
+            <p className="text-2xl font-bold text-green-400">100</p><p className="text-xs text-slate-500 uppercase">NCAA</p>
           </button>
-          <button onClick={() => setShowLeaguePopup('TOP_COLLEGE')} className="bg-[#1a1a1a] rounded-lg p-3 text-center border border-[#3a3a3a] hover:border-amber-400 hover:bg-amber-400/10 transition-colors cursor-pointer">
-            <p className="text-2xl font-bold text-amber-400">50</p><p className="text-xs text-[#888] uppercase">Top College</p>
+          <button onClick={() => setShowLeaguePopup('TOP_COLLEGE')} className="bg-white rounded-lg p-3 text-center border-2 border-black hover:border-amber-400 hover:bg-amber-400/10 transition-colors cursor-pointer">
+            <p className="text-2xl font-bold text-amber-400">50</p><p className="text-xs text-slate-500 uppercase">Top College</p>
           </button>
         </div>
       </div>
@@ -7387,10 +7357,10 @@ function ComparisonSection({ analysisData }: { analysisData: AnalysisData }) {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-[#FF6B35] flex items-center justify-center"><User className="w-6 h-6 text-[#1a1a1a]" /></div>
-            <div><h3 className="text-xl font-bold text-[#FF6B35]">KEVIN HOUSTON</h3><p className="text-sm text-[#888]">Your Current Form</p></div>
+            <div><h3 className="text-xl font-bold text-[#FF6B35]">KEVIN HOUSTON</h3><p className="text-sm text-slate-500">Your Current Form</p></div>
           </div>
           <div className="text-right">
-            <p className="text-3xl font-black text-[#FF6B35]">{analysisData.overallScore}<span className="text-lg text-[#888]">/100</span></p>
+            <p className="text-3xl font-black text-[#FF6B35]">{analysisData.overallScore}<span className="text-lg text-slate-500">/100</span></p>
             <span className="bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full text-xs">{analysisData.formCategory}</span>
           </div>
         </div>
@@ -7399,17 +7369,17 @@ function ComparisonSection({ analysisData }: { analysisData: AnalysisData }) {
             <button 
               key={key} 
               onClick={() => setShowMeasurementPopup({ key, value })}
-              className="bg-[#1a1a1a] rounded-lg p-2 text-center hover:bg-[#2a2a2a] hover:border-[#FF6B35]/50 border border-transparent transition-colors cursor-pointer"
+              className="bg-white rounded-lg p-2 text-center hover:bg-white hover:border-[#FF6B35]/50 border border-transparent transition-colors cursor-pointer"
             >
-              <p className="text-xs text-[#888] uppercase">{key.replace(/([A-Z])/g, ' $1').trim().substring(0, 6)}</p>
-              <p className="text-lg font-bold text-[#E5E5E5]">{value}{key.includes('Height') ? 'in' : '°'}</p>
+              <p className="text-xs text-slate-500 uppercase">{key.replace(/([A-Z])/g, ' $1').trim().substring(0, 6)}</p>
+              <p className="text-lg font-bold text-slate-900">{value}{key.includes('Height') ? 'in' : '°'}</p>
             </button>
           ))}
         </div>
         {topMatch && (
-          <div className="mt-4 pt-4 border-t border-[#3a3a3a] flex items-center gap-3">
+          <div className="mt-4 pt-4 border-t border-black flex items-center gap-3">
             <Award className="w-5 h-5 text-[#FF6B35]" />
-            <p className="text-sm text-[#E5E5E5]">Your form is most similar to <span className="text-[#FF6B35] font-bold">{topMatch.name}</span> ({topMatch.similarity}% match)</p>
+            <p className="text-sm text-slate-900">Your form is most similar to <span className="text-[#FF6B35] font-bold">{topMatch.name}</span> ({topMatch.similarity}% match)</p>
           </div>
         )}
       </div>
@@ -7417,13 +7387,13 @@ function ComparisonSection({ analysisData }: { analysisData: AnalysisData }) {
       {/* Filters */}
       <div className="flex flex-wrap gap-3 items-center">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#888]" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
           <input type="text" placeholder="Search players..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg text-[#E5E5E5] text-sm focus:outline-none focus:border-[#FF6B35]" />
+            className="w-full pl-10 pr-4 py-2 bg-white border-2 border-black rounded-lg text-slate-900 text-sm focus:outline-none focus:border-[#FF6B35]" />
         </div>
         <div className="flex gap-2">
           <select value={selectedLeague} onChange={(e) => setSelectedLeague(e.target.value as typeof selectedLeague)}
-            className="px-4 py-2 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg text-[#E5E5E5] text-sm focus:outline-none focus:border-[#FF6B35]">
+            className="px-4 py-2 bg-white border-2 border-black rounded-lg text-slate-900 text-sm focus:outline-none focus:border-[#FF6B35]">
             <option value="ALL">All Categories</option>
             <option value="NBA">NBA</option>
             <option value="WNBA">WNBA</option>
@@ -7432,7 +7402,7 @@ function ComparisonSection({ analysisData }: { analysisData: AnalysisData }) {
             <option value="TOP_COLLEGE">Top College</option>
           </select>
           <select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-            className="px-4 py-2 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg text-[#E5E5E5] text-sm focus:outline-none focus:border-[#FF6B35]">
+            className="px-4 py-2 bg-white border-2 border-black rounded-lg text-slate-900 text-sm focus:outline-none focus:border-[#FF6B35]">
             <option value="similarity">Most Similar</option>
             <option value="score">Highest Score</option>
             <option value="name">Name A-Z</option>
@@ -7446,7 +7416,7 @@ function ComparisonSection({ analysisData }: { analysisData: AnalysisData }) {
       </div>
 
       {/* Results count */}
-      <p className="text-sm text-[#888]">Showing {filteredShooters.length} players</p>
+      <p className="text-sm text-slate-500">Showing {filteredShooters.length} players</p>
 
       {/* Shooters Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -7463,7 +7433,7 @@ function ComparisonSection({ analysisData }: { analysisData: AnalysisData }) {
           />
         ))}
       </div>
-      {filteredShooters.length > 30 && <p className="text-center text-[#888] text-sm">Showing top 30 results. Use filters to narrow down.</p>}
+      {filteredShooters.length > 30 && <p className="text-center text-slate-500 text-sm">Showing top 30 results. Use filters to narrow down.</p>}
 
       {/* Compare Modal */}
       {showCompareModal && <CompareModal shooters={filteredShooters.filter(s => selectedShooters.includes(s.id))} userMeasurements={userMeasurements} analysisData={analysisData} onClose={() => setShowCompareModal(false)} />}
@@ -7600,7 +7570,7 @@ function EliteShooterPhotoCompare({ shooter, userImage, onClose }: {
   return (
     <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div 
-        className="bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a] rounded-2xl max-w-6xl w-full max-h-[95vh] overflow-y-auto border border-[#FF6B35]/30 shadow-2xl" 
+        className="bg-gradient-to-br from-[#2a2a2a] to-white rounded-2xl max-w-6xl w-full max-h-[95vh] overflow-y-auto border border-[#FF6B35]/30 shadow-2xl" 
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -7611,23 +7581,23 @@ function EliteShooterPhotoCompare({ shooter, userImage, onClose }: {
             </div>
             <div>
               <h2 className="text-2xl font-black text-[#FF6B35] uppercase tracking-wider">Photo Comparison</h2>
-              <p className="text-[#888]">Compare your form with <span className="text-[#FF6B35] font-bold">{shooter.name}</span></p>
+              <p className="text-slate-500">Compare your form with <span className="text-[#FF6B35] font-bold">{shooter.name}</span></p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
-            <X className="w-6 h-6 text-white" />
+            <X className="w-6 h-6 text-slate-900" />
           </button>
         </div>
         
         {/* View Mode Toggle & Controls */}
-        <div className="p-4 border-b border-[#3a3a3a] flex flex-wrap items-center justify-between gap-4">
+        <div className="p-4 border-b border-black flex flex-wrap items-center justify-between gap-4">
           <div className="flex gap-2">
             <button
               onClick={() => setViewMode('sideBySide')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 viewMode === 'sideBySide'
                   ? 'bg-[#FF6B35] text-[#1a1a1a]'
-                  : 'bg-[#2a2a2a] text-[#888] hover:text-[#E5E5E5]'
+                  : 'bg-white text-slate-500 hover:text-slate-900'
               }`}
             >
               <Layers className="w-4 h-4 inline-block mr-2" />
@@ -7638,7 +7608,7 @@ function EliteShooterPhotoCompare({ shooter, userImage, onClose }: {
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 viewMode === 'slider'
                   ? 'bg-[#FF6B35] text-[#1a1a1a]'
-                  : 'bg-[#2a2a2a] text-[#888] hover:text-[#E5E5E5]'
+                  : 'bg-white text-slate-500 hover:text-slate-900'
               }`}
             >
               <GitBranch className="w-4 h-4 inline-block mr-2" />
@@ -7647,18 +7617,18 @@ function EliteShooterPhotoCompare({ shooter, userImage, onClose }: {
           </div>
           
           {/* Zoom Control */}
-          <div className="flex items-center gap-2 bg-[#1a1a1a] rounded-lg px-3 py-2 border border-[#3a3a3a]">
-            <span className="text-xs text-[#888] uppercase">Zoom:</span>
+          <div className="flex items-center gap-2 bg-white rounded-lg px-3 py-2 border-2 border-black">
+            <span className="text-xs text-slate-500 uppercase">Zoom:</span>
             <button
               onClick={() => setZoomLevel(Math.max(100, zoomLevel - 10))}
-              className="w-6 h-6 rounded bg-[#2a2a2a] text-[#888] hover:text-white flex items-center justify-center text-sm font-bold"
+              className="w-6 h-6 rounded bg-white text-slate-500 hover:text-slate-900 flex items-center justify-center text-sm font-bold"
             >
               −
             </button>
-            <span className="text-xs text-[#E5E5E5] w-10 text-center">{zoomLevel}%</span>
+            <span className="text-xs text-slate-900 w-10 text-center">{zoomLevel}%</span>
             <button
               onClick={() => setZoomLevel(Math.min(200, zoomLevel + 10))}
-              className="w-6 h-6 rounded bg-[#2a2a2a] text-[#888] hover:text-white flex items-center justify-center text-sm font-bold"
+              className="w-6 h-6 rounded bg-white text-slate-500 hover:text-slate-900 flex items-center justify-center text-sm font-bold"
             >
               +
             </button>
@@ -7667,8 +7637,8 @@ function EliteShooterPhotoCompare({ shooter, userImage, onClose }: {
         
         {/* Image Selection (if multiple shooting form images) */}
         {shootingFormImages.length > 1 && (
-          <div className="p-4 border-b border-[#3a3a3a]">
-            <p className="text-[#888] text-sm mb-2">{shooter.name}&apos;s Shooting Form Images:</p>
+          <div className="p-4 border-b border-black">
+            <p className="text-slate-500 text-sm mb-2">{shooter.name}&apos;s Shooting Form Images:</p>
             <div className="flex gap-2 overflow-x-auto pb-2">
               {shootingFormImages.map((img, idx) => (
                 <button
@@ -7677,7 +7647,7 @@ function EliteShooterPhotoCompare({ shooter, userImage, onClose }: {
                   className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
                     selectedImageIndex === idx 
                       ? 'border-[#FF6B35] shadow-[0_0_10px_rgba(255,215,0,0.3)]' 
-                      : 'border-[#3a3a3a] hover:border-[#4a4a4a]'
+                      : 'border-black hover:border-black'
                   }`}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -7689,30 +7659,30 @@ function EliteShooterPhotoCompare({ shooter, userImage, onClose }: {
         )}
         
         {/* Individual Image Controls */}
-        <div className="grid grid-cols-2 gap-4 p-4 border-b border-[#3a3a3a]">
+        <div className="grid grid-cols-2 gap-4 p-4 border-b border-black">
           {/* Your Image Controls */}
-          <div className="bg-[#1a1a1a] rounded-lg p-3 border border-red-500/30">
+          <div className="bg-white rounded-lg p-3 border border-red-500/30">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-bold text-red-400 uppercase tracking-wider">📍 Your Form</span>
             </div>
             <div className="flex items-center gap-3 flex-wrap">
               <div className="flex items-center gap-2">
-                <span className="text-xs text-[#888]">V:</span>
-                <button onClick={() => setUserFocusY(Math.max(0, userFocusY - 5))} className="w-6 h-6 rounded bg-[#2a2a2a] text-[#888] hover:text-white flex items-center justify-center">
+                <span className="text-xs text-slate-500">V:</span>
+                <button onClick={() => setUserFocusY(Math.max(0, userFocusY - 5))} className="w-6 h-6 rounded bg-white text-slate-500 hover:text-slate-900 flex items-center justify-center">
                   <ChevronUp className="w-3 h-3" />
                 </button>
-                <span className="text-xs text-[#E5E5E5] w-8 text-center">{userFocusY}%</span>
-                <button onClick={() => setUserFocusY(Math.min(100, userFocusY + 5))} className="w-6 h-6 rounded bg-[#2a2a2a] text-[#888] hover:text-white flex items-center justify-center">
+                <span className="text-xs text-slate-900 w-8 text-center">{userFocusY}%</span>
+                <button onClick={() => setUserFocusY(Math.min(100, userFocusY + 5))} className="w-6 h-6 rounded bg-white text-slate-500 hover:text-slate-900 flex items-center justify-center">
                   <ChevronDown className="w-3 h-3" />
                 </button>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-[#888]">H:</span>
-                <button onClick={() => setUserFocusX(Math.max(0, userFocusX - 5))} className="w-6 h-6 rounded bg-[#2a2a2a] text-[#888] hover:text-white flex items-center justify-center">
+                <span className="text-xs text-slate-500">H:</span>
+                <button onClick={() => setUserFocusX(Math.max(0, userFocusX - 5))} className="w-6 h-6 rounded bg-white text-slate-500 hover:text-slate-900 flex items-center justify-center">
                   <ChevronLeft className="w-3 h-3" />
                 </button>
-                <span className="text-xs text-[#E5E5E5] w-8 text-center">{userFocusX}%</span>
-                <button onClick={() => setUserFocusX(Math.min(100, userFocusX + 5))} className="w-6 h-6 rounded bg-[#2a2a2a] text-[#888] hover:text-white flex items-center justify-center">
+                <span className="text-xs text-slate-900 w-8 text-center">{userFocusX}%</span>
+                <button onClick={() => setUserFocusX(Math.min(100, userFocusX + 5))} className="w-6 h-6 rounded bg-white text-slate-500 hover:text-slate-900 flex items-center justify-center">
                   <ChevronRight className="w-3 h-3" />
                 </button>
               </div>
@@ -7720,28 +7690,28 @@ function EliteShooterPhotoCompare({ shooter, userImage, onClose }: {
           </div>
           
           {/* Shooter Image Controls */}
-          <div className="bg-[#1a1a1a] rounded-lg p-3 border border-green-500/30">
+          <div className="bg-white rounded-lg p-3 border border-green-500/30">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-bold text-green-400 uppercase tracking-wider">📍 {shooter.name}</span>
             </div>
             <div className="flex items-center gap-3 flex-wrap">
               <div className="flex items-center gap-2">
-                <span className="text-xs text-[#888]">V:</span>
-                <button onClick={() => setShooterFocusY(Math.max(0, shooterFocusY - 5))} className="w-6 h-6 rounded bg-[#2a2a2a] text-[#888] hover:text-white flex items-center justify-center">
+                <span className="text-xs text-slate-500">V:</span>
+                <button onClick={() => setShooterFocusY(Math.max(0, shooterFocusY - 5))} className="w-6 h-6 rounded bg-white text-slate-500 hover:text-slate-900 flex items-center justify-center">
                   <ChevronUp className="w-3 h-3" />
                 </button>
-                <span className="text-xs text-[#E5E5E5] w-8 text-center">{shooterFocusY}%</span>
-                <button onClick={() => setShooterFocusY(Math.min(100, shooterFocusY + 5))} className="w-6 h-6 rounded bg-[#2a2a2a] text-[#888] hover:text-white flex items-center justify-center">
+                <span className="text-xs text-slate-900 w-8 text-center">{shooterFocusY}%</span>
+                <button onClick={() => setShooterFocusY(Math.min(100, shooterFocusY + 5))} className="w-6 h-6 rounded bg-white text-slate-500 hover:text-slate-900 flex items-center justify-center">
                   <ChevronDown className="w-3 h-3" />
                 </button>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-[#888]">H:</span>
-                <button onClick={() => setShooterFocusX(Math.max(0, shooterFocusX - 5))} className="w-6 h-6 rounded bg-[#2a2a2a] text-[#888] hover:text-white flex items-center justify-center">
+                <span className="text-xs text-slate-500">H:</span>
+                <button onClick={() => setShooterFocusX(Math.max(0, shooterFocusX - 5))} className="w-6 h-6 rounded bg-white text-slate-500 hover:text-slate-900 flex items-center justify-center">
                   <ChevronLeft className="w-3 h-3" />
                 </button>
-                <span className="text-xs text-[#E5E5E5] w-8 text-center">{shooterFocusX}%</span>
-                <button onClick={() => setShooterFocusX(Math.min(100, shooterFocusX + 5))} className="w-6 h-6 rounded bg-[#2a2a2a] text-[#888] hover:text-white flex items-center justify-center">
+                <span className="text-xs text-slate-900 w-8 text-center">{shooterFocusX}%</span>
+                <button onClick={() => setShooterFocusX(Math.min(100, shooterFocusX + 5))} className="w-6 h-6 rounded bg-white text-slate-500 hover:text-slate-900 flex items-center justify-center">
                   <ChevronRight className="w-3 h-3" />
                 </button>
               </div>
@@ -7757,7 +7727,7 @@ function EliteShooterPhotoCompare({ shooter, userImage, onClose }: {
               <div className="grid grid-cols-2 gap-0 h-full">
                 {/* User Image - Draggable */}
                 <div 
-                  className={`relative bg-[#0a0a0a] overflow-hidden ${userImage ? (isDraggingUser ? 'cursor-grabbing' : 'cursor-grab') : ''}`}
+                  className={`relative bg-slate-100 overflow-hidden ${userImage ? (isDraggingUser ? 'cursor-grabbing' : 'cursor-grab') : ''}`}
                   onMouseDown={userImage ? handleUserDragStart : undefined}
                   onMouseMove={handleUserDragMove}
                   onMouseUp={handleUserDragEnd}
@@ -7778,17 +7748,17 @@ function EliteShooterPhotoCompare({ shooter, userImage, onClose }: {
                         draggable={false}
                       />
                       <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
-                      <div className="absolute top-4 left-4 px-4 py-2 rounded-full bg-red-500 text-white text-sm font-bold shadow-lg uppercase tracking-wider pointer-events-none">
+                      <div className="absolute top-4 left-4 px-4 py-2 rounded-full bg-red-500 text-slate-700 text-sm font-bold shadow-lg uppercase tracking-wider pointer-events-none">
                         YOUR FORM
                       </div>
                       {/* Drag hint */}
-                      <div className="absolute bottom-4 left-4 px-3 py-1.5 rounded-lg bg-black/60 text-white text-xs font-medium pointer-events-none flex items-center gap-2">
+                      <div className="absolute bottom-4 left-4 px-3 py-1.5 rounded-lg bg-black/60 text-slate-600 text-xs font-medium pointer-events-none flex items-center gap-2">
                         <Move className="w-3 h-3" />
                         Drag to pan • Scroll to zoom
                       </div>
                     </>
                   ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-[#888]">
+                    <div className="w-full h-full flex flex-col items-center justify-center text-slate-500">
                       <Camera className="w-12 h-12 mb-3 opacity-50" />
                       <p className="text-sm">No image uploaded</p>
                       <p className="text-xs mt-1">Upload an image to compare</p>
@@ -7798,7 +7768,7 @@ function EliteShooterPhotoCompare({ shooter, userImage, onClose }: {
                 
                 {/* Shooter Image - Draggable */}
                 <div 
-                  className={`relative bg-[#0a0a0a] overflow-hidden ${currentShooterImage ? (isDraggingShooter ? 'cursor-grabbing' : 'cursor-grab') : ''}`}
+                  className={`relative bg-slate-100 overflow-hidden ${currentShooterImage ? (isDraggingShooter ? 'cursor-grabbing' : 'cursor-grab') : ''}`}
                   onMouseDown={currentShooterImage ? handleShooterDragStart : undefined}
                   onMouseMove={handleShooterDragMove}
                   onMouseUp={handleShooterDragEnd}
@@ -7819,17 +7789,17 @@ function EliteShooterPhotoCompare({ shooter, userImage, onClose }: {
                         draggable={false}
                       />
                       <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
-                      <div className="absolute top-4 right-4 px-4 py-2 rounded-full bg-green-500 text-white text-sm font-bold shadow-lg uppercase tracking-wider pointer-events-none">
+                      <div className="absolute top-4 right-4 px-4 py-2 rounded-full bg-green-500 text-slate-700 text-sm font-bold shadow-lg uppercase tracking-wider pointer-events-none">
                         {shooter.name.split(' ').pop()}
                       </div>
                       {/* Drag hint */}
-                      <div className="absolute bottom-4 right-4 px-3 py-1.5 rounded-lg bg-black/60 text-white text-xs font-medium pointer-events-none flex items-center gap-2">
+                      <div className="absolute bottom-4 right-4 px-3 py-1.5 rounded-lg bg-black/60 text-slate-600 text-xs font-medium pointer-events-none flex items-center gap-2">
                         <Move className="w-3 h-3" />
                         Drag to pan • Scroll to zoom
                       </div>
                     </>
                   ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-[#888]">
+                    <div className="w-full h-full flex flex-col items-center justify-center text-slate-500">
                       <ImageIcon className="w-12 h-12 mb-3 opacity-50" />
                       <p className="text-sm">No shooting form image</p>
                     </div>
@@ -7860,12 +7830,12 @@ function EliteShooterPhotoCompare({ shooter, userImage, onClose }: {
                       style={getImageStyle(shooterFocusX, shooterFocusY)}
                       draggable={false}
                     />
-                    <div className="absolute top-4 right-4 px-4 py-2 rounded-full bg-green-500 text-white text-sm font-bold shadow-lg uppercase tracking-wider">
+                    <div className="absolute top-4 right-4 px-4 py-2 rounded-full bg-green-500 text-slate-700 text-sm font-bold shadow-lg uppercase tracking-wider">
                       {shooter.name.split(' ').pop()}
                     </div>
                   </>
                 ) : (
-                  <div className="w-full h-full bg-[#0a0a0a]" />
+                  <div className="w-full h-full bg-slate-100" />
                 )}
               </div>
               
@@ -7884,12 +7854,12 @@ function EliteShooterPhotoCompare({ shooter, userImage, onClose }: {
                       style={getImageStyle(userFocusX, userFocusY)}
                       draggable={false}
                     />
-                    <div className="absolute top-4 left-4 px-4 py-2 rounded-full bg-red-500 text-white text-sm font-bold shadow-lg uppercase tracking-wider">
+                    <div className="absolute top-4 left-4 px-4 py-2 rounded-full bg-red-500 text-slate-700 text-sm font-bold shadow-lg uppercase tracking-wider">
                       YOUR FORM
                     </div>
                   </>
                 ) : (
-                  <div className="w-full h-full bg-[#1a1a1a]" />
+                  <div className="w-full h-full bg-white" />
                 )}
               </div>
               
@@ -7906,28 +7876,28 @@ function EliteShooterPhotoCompare({ shooter, userImage, onClose }: {
           )}
           
           {/* Similarity Info */}
-          <div className="mt-6 bg-[#1a1a1a] rounded-xl p-4 border border-[#3a3a3a]">
+          <div className="mt-6 bg-white rounded-xl p-4 border-2 border-black">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full overflow-hidden bg-[#3a3a3a]" style={{ border: '2px solid #FF6B35' }}>
+                <div className="w-12 h-12 rounded-full overflow-hidden bg-slate-200" style={{ border: '2px solid #FF6B35' }}>
                   {shooter.photoUrl && (
                     <Image src={shooter.photoUrl} alt={shooter.name} width={48} height={48} className="object-cover object-top" />
                   )}
                 </div>
                 <div>
                   <h4 className="text-[#FF6B35] font-bold">{shooter.name}</h4>
-                  <p className="text-[#888] text-sm">{shooter.team} • {POSITION_LABELS[shooter.position]}</p>
+                  <p className="text-slate-500 text-sm">{shooter.team} • {POSITION_LABELS[shooter.position]}</p>
                 </div>
               </div>
               <div className="text-right">
                 <p className="text-3xl font-black text-[#FF6B35]">{shooter.similarity}%</p>
-                <p className="text-xs text-[#888] uppercase">Form Similarity</p>
+                <p className="text-xs text-slate-500 uppercase">Form Similarity</p>
               </div>
             </div>
             
             {/* Key Traits */}
-            <div className="mt-4 pt-4 border-t border-[#3a3a3a]">
-              <p className="text-xs text-[#888] uppercase mb-2">Key Traits to Study</p>
+            <div className="mt-4 pt-4 border-t border-black">
+              <p className="text-xs text-slate-500 uppercase mb-2">Key Traits to Study</p>
               <div className="flex flex-wrap gap-2">
                 {shooter.keyTraits?.map((trait, idx) => (
                   <span key={idx} className="px-3 py-1.5 rounded-full text-xs font-medium border border-[#FF6B35]/50 text-[#FF6B35] bg-[#FF6B35]/10">
@@ -7941,8 +7911,8 @@ function EliteShooterPhotoCompare({ shooter, userImage, onClose }: {
           {/* Instructions */}
           <div className="mt-4 flex items-start gap-3 bg-[#FF6B35]/5 rounded-lg p-4 border border-[#FF6B35]/20">
             <Info className="w-5 h-5 text-[#FF6B35] flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-[#888]">
-              <p className="font-medium text-[#E5E5E5] mb-1">How to Compare</p>
+            <div className="text-sm text-slate-500">
+              <p className="font-medium text-slate-900 mb-1">How to Compare</p>
               <p><strong className="text-[#FF6B35]">Drag</strong> each image to pan and reposition. <strong className="text-[#FF6B35]">Scroll</strong> to zoom in/out. You can also use the <strong className="text-[#FF6B35]">V</strong>/<strong className="text-[#FF6B35]">H</strong> buttons for precise adjustments. Study {shooter.name}&apos;s form and compare it to yours!</p>
             </div>
           </div>
@@ -7958,7 +7928,7 @@ function ShooterCard({ shooter, isSelected, onToggle, userMeasurements, onBioCli
   const hasShootingFormImages = shooter.shootingFormImages && shooter.shootingFormImages.length > 0;
 
   return (
-    <div className={`bg-[#2C2C2C] rounded-xl overflow-hidden transition-all duration-300 hover:shadow-[0_0_25px_rgba(255,215,0,0.2)] border-2 ${isSelected ? 'border-[#FF6B35] shadow-[0_0_20px_rgba(255,215,0,0.3)]' : 'border-[#3a3a3a] hover:border-[#4a4a4a]'}`}>
+    <div className={`bg-white rounded-xl overflow-hidden transition-all duration-300 hover:shadow-[0_0_25px_rgba(255,215,0,0.2)] border-2 ${isSelected ? 'border-[#FF6B35] shadow-[0_0_20px_rgba(255,215,0,0.3)]' : 'border-black hover:border-black'}`}>
       {/* Gold Header - "MATCHED ELITE SHOOTER" */}
       <div className="bg-gradient-to-r from-[#FF6B35]/20 to-[#FF6B35]/5 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -7967,11 +7937,11 @@ function ShooterCard({ shooter, isSelected, onToggle, userMeasurements, onBioCli
           </div>
           <div>
             <h3 className="text-[#FF6B35] font-bold uppercase tracking-wider text-sm">MATCHED ELITE SHOOTER</h3>
-            <p className="text-[#888] text-xs">Your form matches this {LEAGUE_LABELS[shooter.league]} star</p>
+            <p className="text-slate-500 text-xs">Your form matches this {LEAGUE_LABELS[shooter.league]} star</p>
           </div>
         </div>
         {/* Selection checkbox */}
-        <button onClick={onToggle} className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors flex-shrink-0 ${isSelected ? 'bg-[#FF6B35] border-[#FF6B35]' : 'border-[#4a4a4a] hover:border-[#FF6B35]'}`}>
+        <button onClick={onToggle} className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors flex-shrink-0 ${isSelected ? 'bg-[#FF6B35] border-[#FF6B35]' : 'border-black hover:border-[#FF6B35]'}`}>
           {isSelected && <Check className="w-4 h-4 text-[#1a1a1a]" />}
         </button>
       </div>
@@ -7982,7 +7952,7 @@ function ShooterCard({ shooter, isSelected, onToggle, userMeasurements, onBioCli
         <div className="flex items-start gap-4 mb-4">
           {/* Player Photo with Similarity Badge - Clickable for Bio */}
           <button onClick={onBioClick} className="relative flex-shrink-0 group cursor-pointer">
-            <div className="w-20 h-20 rounded-full overflow-hidden bg-[#3a3a3a] relative transition-transform group-hover:scale-105" style={{ border: '3px solid #FF6B35' }}>
+            <div className="w-20 h-20 rounded-full overflow-hidden bg-slate-200 relative transition-transform group-hover:scale-105" style={{ border: '3px solid #FF6B35' }}>
               {photoUrl ? (
                 <Image
                   src={photoUrl}
@@ -8000,20 +7970,20 @@ function ShooterCard({ shooter, isSelected, onToggle, userMeasurements, onBioCli
               )}
               {/* Hover overlay */}
               <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <span className="text-white text-xs font-semibold">View Bio</span>
+                <span className="text-slate-600 text-xs font-semibold">View Bio</span>
               </div>
             </div>
             {/* Similarity Badge */}
-            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-[#FF6B35] text-white font-bold text-sm px-3 py-0.5 rounded-full whitespace-nowrap">
+            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-[#FF6B35] text-slate-900 font-bold text-sm px-3 py-0.5 rounded-full whitespace-nowrap">
               {shooter.similarity}%
             </div>
           </button>
 
           {/* Player Details */}
           <div className="flex-1 min-w-0">
-            <h4 className="text-white font-bold text-lg uppercase tracking-wide truncate">{shooter.name}</h4>
+            <h4 className="text-slate-900 font-bold text-lg uppercase tracking-wide truncate">{shooter.name}</h4>
             <p className="text-[#FF6B35] text-sm font-medium">{shooter.team}</p>
-            <p className="text-[#888] text-xs mt-0.5">
+            <p className="text-slate-500 text-xs mt-0.5">
               {POSITION_LABELS[shooter.position]} • {shooter.achievements ? shooter.achievements.split(',')[0] : shooter.era}
             </p>
           </div>
@@ -8022,10 +7992,10 @@ function ShooterCard({ shooter, isSelected, onToggle, userMeasurements, onBioCli
         {/* Form Similarity Bar */}
         <div className="mb-4">
           <div className="flex justify-between items-center mb-1.5">
-            <span className="text-[#888] text-xs uppercase tracking-wider">Form Similarity</span>
+            <span className="text-slate-500 text-xs uppercase tracking-wider">Form Similarity</span>
             <span className="text-[#FF6B35] text-sm font-bold">{shooter.similarity}%</span>
           </div>
-          <div className="h-2.5 bg-[#3a3a3a] rounded-full overflow-hidden">
+          <div className="h-2.5 bg-slate-200 rounded-full overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF4500] rounded-full transition-all"
               style={{ width: `${shooter.similarity}%` }}
@@ -8035,7 +8005,7 @@ function ShooterCard({ shooter, isSelected, onToggle, userMeasurements, onBioCli
 
         {/* Why You Match Section */}
         <div>
-          <p className="text-[#888] text-xs uppercase tracking-wider mb-2">Why You Match</p>
+          <p className="text-slate-500 text-xs uppercase tracking-wider mb-2">Why You Match</p>
           <div className="flex flex-wrap gap-2">
             {matchingTraits.map((trait, idx) => (
               <span
@@ -8052,7 +8022,7 @@ function ShooterCard({ shooter, isSelected, onToggle, userMeasurements, onBioCli
         <div className="flex gap-2 mt-4">
           <button 
             onClick={onBioClick}
-            className="flex-1 py-2.5 bg-[#3a3a3a] hover:bg-[#4a4a4a] text-[#E5E5E5] rounded-lg font-medium text-sm transition-colors flex items-center justify-center gap-2 border border-[#4a4a4a] hover:border-[#FF6B35]/50"
+            className="flex-1 py-2.5 bg-slate-200 hover:bg-slate-200 text-slate-900 rounded-lg font-medium text-sm transition-colors flex items-center justify-center gap-2 border-2 border-black hover:border-[#FF6B35]/50"
           >
             <Info className="w-4 h-4" />
             BIO
@@ -8063,7 +8033,7 @@ function ShooterCard({ shooter, isSelected, onToggle, userMeasurements, onBioCli
               className={`flex-1 py-2.5 rounded-lg font-medium text-sm transition-colors flex items-center justify-center gap-2 border ${
                 hasUserImage 
                   ? 'bg-[#FF6B35]/20 hover:bg-[#FF6B35]/30 text-[#FF6B35] border-[#FF6B35]/50 hover:border-[#FF6B35]'
-                  : 'bg-[#3a3a3a] hover:bg-[#4a4a4a] text-[#888] border-[#4a4a4a]'
+                  : 'bg-slate-200 hover:bg-slate-200 text-slate-500 border-black'
               }`}
               title={hasUserImage ? 'Compare your form with this shooter' : 'Upload an image first to compare'}
             >
@@ -8084,10 +8054,10 @@ function CompareModal({ shooters, userMeasurements, analysisData, onClose }: { s
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-[#1a1a1a] rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-auto border border-[#3a3a3a]" onClick={e => e.stopPropagation()} style={{ boxShadow: '0 0 50px rgba(255, 215, 0, 0.2)' }}>
-        <div className="sticky top-0 bg-[#1a1a1a] p-6 border-b border-[#3a3a3a] flex items-center justify-between">
+      <div className="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-auto border-2 border-black" onClick={e => e.stopPropagation()} style={{ boxShadow: '0 0 50px rgba(255, 215, 0, 0.2)' }}>
+        <div className="sticky top-0 bg-white p-6 border-b border-black flex items-center justify-between">
           <h3 className="text-xl font-black text-[#FF6B35] uppercase tracking-wider">Detailed Comparison</h3>
-          <button onClick={onClose} className="w-8 h-8 rounded-lg bg-[#2a2a2a] flex items-center justify-center hover:bg-[#3a3a3a]"><X className="w-5 h-5 text-[#888]" /></button>
+          <button onClick={onClose} className="w-8 h-8 rounded-lg bg-white flex items-center justify-center hover:bg-slate-200"><X className="w-5 h-5 text-slate-500" /></button>
         </div>
         <div className="p-6">
           {/* Player Headers */}
@@ -8096,13 +8066,13 @@ function CompareModal({ shooters, userMeasurements, analysisData, onClose }: { s
             <div className="bg-gradient-to-br from-[#FF6B35]/20 to-transparent rounded-xl p-4 border border-[#FF6B35]/50 text-center">
               <div className="w-10 h-10 rounded-full bg-[#FF6B35] mx-auto mb-2 flex items-center justify-center"><User className="w-5 h-5 text-[#1a1a1a]" /></div>
               <p className="font-bold text-[#FF6B35]">You</p>
-              <p className="text-xs text-[#888]">{analysisData.overallScore}/100</p>
+              <p className="text-xs text-slate-500">{analysisData.overallScore}/100</p>
             </div>
             {shooters.map(s => (
-              <div key={s.id} className="bg-[#2a2a2a] rounded-xl p-4 text-center border border-[#3a3a3a]">
-                <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${LEAGUE_COLORS[s.league]} mx-auto mb-2 flex items-center justify-center text-white font-bold`}>{s.name.charAt(0)}</div>
-                <p className="font-bold text-[#E5E5E5] text-sm truncate">{s.name}</p>
-                <p className="text-xs text-[#888]">{s.overallScore}/100 • {s.similarity}%</p>
+              <div key={s.id} className="bg-white rounded-xl p-4 text-center border-2 border-black">
+                <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${LEAGUE_COLORS[s.league]} mx-auto mb-2 flex items-center justify-center text-slate-900 font-bold`}>{s.name.charAt(0)}</div>
+                <p className="font-bold text-slate-900 text-sm truncate">{s.name}</p>
+                <p className="text-xs text-slate-500">{s.overallScore}/100 • {s.similarity}%</p>
               </div>
             ))}
           </div>
@@ -8114,8 +8084,8 @@ function CompareModal({ shooters, userMeasurements, analysisData, onClose }: { s
             return (
               <div key={metric} className="mb-4">
                 <div className="grid gap-4 items-center" style={{ gridTemplateColumns: `200px repeat(${shooters.length + 1}, 1fr)` }}>
-                  <div className="text-sm font-medium text-[#E5E5E5]">{metricLabels[metric]} <span className="text-[#888]">({metric.includes('Height') ? 'in' : '°'})</span></div>
-                  <div className="relative h-8 bg-[#2a2a2a] rounded-lg">
+                  <div className="text-sm font-medium text-slate-900">{metricLabels[metric]} <span className="text-slate-500">({metric.includes('Height') ? 'in' : '°'})</span></div>
+                  <div className="relative h-8 bg-white rounded-lg">
                     <div className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-[#FF6B35] border-2 border-white z-10" style={{ left: `calc(${getPos(userVal)}% - 6px)` }} />
                     <span className="absolute -bottom-5 text-xs text-[#FF6B35] font-bold" style={{ left: `calc(${getPos(userVal)}% - 10px)` }}>{userVal}</span>
                   </div>
@@ -8124,9 +8094,9 @@ function CompareModal({ shooters, userMeasurements, analysisData, onClose }: { s
                     const diff = sVal - userVal;
                     const color = Math.abs(diff) <= 3 ? 'bg-green-500' : Math.abs(diff) <= 8 ? 'bg-orange-500' : 'bg-red-500';
                     return (
-                      <div key={s.id} className="relative h-8 bg-[#2a2a2a] rounded-lg">
+                      <div key={s.id} className="relative h-8 bg-white rounded-lg">
                         <div className={`absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full ${color} border-2 border-white z-10`} style={{ left: `calc(${getPos(sVal)}% - 6px)` }} />
-                        <span className="absolute -bottom-5 text-xs text-[#888]" style={{ left: `calc(${getPos(sVal)}% - 10px)` }}>{sVal}</span>
+                        <span className="absolute -bottom-5 text-xs text-slate-500" style={{ left: `calc(${getPos(sVal)}% - 10px)` }}>{sVal}</span>
                       </div>
                     );
                   })}
@@ -8135,13 +8105,13 @@ function CompareModal({ shooters, userMeasurements, analysisData, onClose }: { s
             );
           })}
           {/* Insights */}
-          <div className="mt-8 pt-6 border-t border-[#3a3a3a]">
+          <div className="mt-8 pt-6 border-t border-black">
             <h4 className="text-lg font-bold text-[#FF6B35] mb-4">💡 Key Insights</h4>
             <div className="grid md:grid-cols-2 gap-4">
               {shooters.map(s => (
-                <div key={s.id} className="bg-[#2a2a2a] rounded-xl p-4 border border-[#3a3a3a]">
-                  <p className="font-bold text-[#E5E5E5] mb-2">{s.name}</p>
-                  <p className="text-sm text-[#888]">
+                <div key={s.id} className="bg-white rounded-xl p-4 border-2 border-black">
+                  <p className="font-bold text-slate-900 mb-2">{s.name}</p>
+                  <p className="text-sm text-slate-500">
                     {s.similarity >= 80 ? `Your shooting form closely matches ${s.name}'s mechanics. Study their release point and follow-through for refinement tips.` :
                      s.similarity >= 60 ? `You share similar fundamentals with ${s.name}. Focus on ${s.measurements.releaseAngle > userMeasurements.releaseAngle ? 'increasing your release angle' : 'your lower body alignment'} to get closer.` :
                      `${s.name}'s form is quite different from yours. Their ${s.measurements.shoulderAngle > userMeasurements.shoulderAngle ? 'higher shoulder angle' : 'elbow positioning'} creates a unique release. Study their technique for new ideas.`}
@@ -8263,13 +8233,13 @@ function BiomechanicalAnalysisWithSessions({ dashboardView = 'professional' }: {
       <div className="space-y-6">
         {/* Simple Session Selector */}
         {sessionOptions.length > 1 && (
-          <div className="bg-[#2a2a2a] rounded-lg p-4 border border-[#3a3a3a]">
+          <div className="bg-white rounded-lg p-4 border-2 border-black">
             <div className="flex items-center justify-between flex-wrap gap-4">
               <span className="text-[#FF6B35] font-bold">Pick a Session:</span>
               <select
                 value={selectedSessionId}
                 onChange={(e) => setSelectedSessionId(e.target.value)}
-                className="bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-2 text-[#E5E5E5] focus:border-[#FF6B35] focus:outline-none"
+                className="bg-white border-2 border-black rounded-lg px-4 py-2 text-slate-900 focus:border-[#FF6B35] focus:outline-none"
               >
                 {sessionOptions.map(option => (
                   <option key={option.id} value={option.id}>
@@ -8292,16 +8262,16 @@ function BiomechanicalAnalysisWithSessions({ dashboardView = 'professional' }: {
     return (
       <div className="space-y-6">
         {/* Session Filter Dropdown */}
-        <div className="bg-[#2a2a2a] rounded-lg p-4 border border-[#3a3a3a]">
+        <div className="bg-white rounded-lg p-4 border-2 border-black">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-3">
               <Calendar className="w-5 h-5 text-[#FF6B35]" />
-              <span className="text-[#E5E5E5] font-semibold">Session:</span>
+              <span className="text-slate-900 font-semibold">Session:</span>
             </div>
             <select
               value={selectedSessionId}
               onChange={(e) => setSelectedSessionId(e.target.value)}
-              className="bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-2 text-[#E5E5E5] focus:border-[#FF6B35] focus:outline-none min-w-[200px]"
+              className="bg-white border-2 border-black rounded-lg px-4 py-2 text-slate-900 focus:border-[#FF6B35] focus:outline-none min-w-[200px]"
             >
               {sessionOptions.map(option => (
                 <option key={option.id} value={option.id}>
@@ -8311,7 +8281,7 @@ function BiomechanicalAnalysisWithSessions({ dashboardView = 'professional' }: {
             </select>
           </div>
           {sessionOptions.length === 0 && (
-            <p className="text-[#888] text-sm mt-2">No sessions yet. Upload an image to start!</p>
+            <p className="text-slate-500 text-sm mt-2">No sessions yet. Upload an image to start!</p>
           )}
         </div>
         
@@ -8474,17 +8444,17 @@ function ComparisonWithSessions({ dashboardView = 'professional' }: { dashboardV
   return (
     <div className="space-y-6">
       {/* Session Filter & View Mode Toggle */}
-      <div className="bg-gradient-to-r from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a] rounded-xl p-4 border border-[#3a3a3a]">
+      <div className="bg-gradient-to-r from-white via-[#2a2a2a] to-white rounded-xl p-4 border-2 border-black">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-3">
             <Calendar className="w-5 h-5 text-[#FF6B35]" />
-            <span className="text-[#E5E5E5] font-semibold">SELECT SESSION:</span>
+            <span className="text-slate-900 font-semibold">SELECT SESSION:</span>
           </div>
           <div className="flex items-center gap-3">
             <select
               value={selectedSessionId}
               onChange={(e) => setSelectedSessionId(e.target.value)}
-              className="bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-2 text-[#E5E5E5] focus:border-[#FF6B35] focus:outline-none min-w-[200px]"
+              className="bg-white border-2 border-black rounded-lg px-4 py-2 text-slate-900 focus:border-[#FF6B35] focus:outline-none min-w-[200px]"
             >
               {sessionOptions.map(option => (
                 <option key={option.id} value={option.id}>
@@ -8496,14 +8466,14 @@ function ComparisonWithSessions({ dashboardView = 'professional' }: { dashboardV
         </div>
         
         {/* View Mode Toggle - Photo Compare + Score or Pass */}
-        <div className="flex items-center gap-2 mt-4 pt-4 border-t border-[#3a3a3a] flex-wrap">
-          <span className="text-[#888] text-sm mr-2 uppercase">MODE:</span>
+        <div className="flex items-center gap-2 mt-4 pt-4 border-t border-black flex-wrap">
+          <span className="text-slate-500 text-sm mr-2 uppercase">MODE:</span>
           <button
             onClick={() => setViewMode('photo')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors uppercase ${
               viewMode === 'photo' 
                 ? 'bg-[#FF6B35] text-[#1a1a1a]' 
-                : 'bg-[#2a2a2a] text-[#888] hover:text-[#E5E5E5]'
+                : 'bg-white text-slate-500 hover:text-slate-900'
             }`}
           >
             <ImageIcon className="w-4 h-4 inline-block mr-1 md:mr-2" />
@@ -8515,7 +8485,7 @@ function ComparisonWithSessions({ dashboardView = 'professional' }: { dashboardV
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors uppercase ${
               viewMode === 'game' 
                 ? 'bg-gradient-to-r from-[#FF6B35] to-[#FFD700] text-[#1a1a1a]' 
-                : 'bg-[#2a2a2a] text-[#888] hover:text-[#E5E5E5]'
+                : 'bg-white text-slate-500 hover:text-slate-900'
             }`}
           >
             <Flame className="w-4 h-4 inline-block mr-1 md:mr-2" />
@@ -8525,7 +8495,7 @@ function ComparisonWithSessions({ dashboardView = 'professional' }: { dashboardV
         </div>
         
         {sessionOptions.length === 0 && (
-          <p className="text-[#888] text-sm mt-2">No sessions available. Upload an image to create your first session.</p>
+          <p className="text-slate-500 text-sm mt-2">No sessions available. Upload an image to create your first session.</p>
         )}
       </div>
       
@@ -8539,16 +8509,16 @@ function ComparisonWithSessions({ dashboardView = 'professional' }: { dashboardV
               className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all duration-300 ${
                 showEliteComparison 
                   ? 'bg-gradient-to-r from-[#FF6B35]/20 to-[#FFD700]/10 border-[#FF6B35] shadow-lg shadow-[#FF6B35]/20' 
-                  : 'bg-[#1a1a1a] border-[#3a3a3a] hover:border-[#FF6B35]/50'
+                  : 'bg-white border-black hover:border-[#FF6B35]/50'
               }`}
             >
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${showEliteComparison ? 'bg-[#FF6B35]' : 'bg-[#2a2a2a]'}`}>
-                  <Trophy className={`w-5 h-5 ${showEliteComparison ? 'text-white' : 'text-[#FF6B35]'}`} />
+                <div className={`p-2 rounded-lg ${showEliteComparison ? 'bg-[#FF6B35]' : 'bg-white'}`}>
+                  <Trophy className={`w-5 h-5 ${showEliteComparison ? 'text-slate-900' : 'text-[#FF6B35]'}`} />
                 </div>
                 <div className="text-left">
-                  <h4 className="text-white font-bold">Elite Shooter Comparison</h4>
-                  <p className="text-[#888] text-sm">Compare your form with NBA professionals</p>
+                  <h4 className="text-slate-900 font-bold">Elite Shooter Comparison</h4>
+                  <p className="text-slate-500 text-sm">Compare your form with NBA professionals</p>
                 </div>
               </div>
               <ChevronDown className={`w-5 h-5 text-[#FF6B35] transition-transform duration-300 ${showEliteComparison ? 'rotate-180' : ''}`} />
@@ -8569,7 +8539,7 @@ function ComparisonWithSessions({ dashboardView = 'professional' }: { dashboardV
       
       {/* Score or Pass: Basketball Elite Shooter Edition */}
       {viewMode === 'game' && (
-        <div className="bg-[#2C2C2C] rounded-xl border border-[#3a3a3a] p-4 md:p-6">
+        <div className="bg-white rounded-xl border-2 border-black p-4 md:p-6">
           <ScoreOrPassGame 
             userProfile={{
               height: userProfileForPhase6.height ? parseInt(userProfileForPhase6.height) : undefined,
@@ -8760,14 +8730,14 @@ function TrainingWithSessions({ dashboardView = 'professional' }: { dashboardVie
   return (
     <div className="space-y-4">
       {/* Tab Navigation */}
-      <div className="flex items-center gap-2 p-1 bg-[#1a1a1a] rounded-xl border border-[#333]">
+      <div className="flex items-center gap-2 p-1 bg-white rounded-xl border border-[#333]">
         <button
           type="button"
           onClick={() => setActiveTrainingTab('discover')}
           className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-sm transition-all ${
             activeTrainingTab === 'discover'
-              ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-white'
-              : 'text-[#888] hover:text-white'
+              ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-slate-900'
+              : 'text-slate-500 hover:text-slate-900'
           }`}
         >
           <Zap className="w-4 h-4" />
@@ -8778,8 +8748,8 @@ function TrainingWithSessions({ dashboardView = 'professional' }: { dashboardVie
           onClick={() => setActiveTrainingTab('calendar')}
           className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold text-sm transition-all ${
             activeTrainingTab === 'calendar'
-              ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-white'
-              : 'text-[#888] hover:text-white'
+              ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-slate-900'
+              : 'text-slate-500 hover:text-slate-900'
           }`}
         >
           <Calendar className="w-4 h-4" />
@@ -8794,23 +8764,23 @@ function TrainingWithSessions({ dashboardView = 'professional' }: { dashboardVie
           <button
             type="button"
             onClick={() => setShowFilterPanel(true)}
-            className="w-full flex items-center justify-between gap-2 px-4 py-3 mb-4 bg-[#1a1a1a] border border-[#333] rounded-xl text-white hover:border-[#FF6B35]/50 transition-colors"
+            className="w-full flex items-center justify-between gap-2 px-4 py-3 mb-4 bg-white border border-[#333] rounded-xl text-slate-900 hover:border-[#FF6B35]/50 transition-colors"
           >
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-[#FF6B35]/20 flex items-center justify-center relative">
                 <SlidersHorizontal className="w-4 h-4 text-[#FF6B35]" />
                 {activeFilterCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#FF6B35] text-white text-[10px] font-bold flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#FF6B35] text-slate-900 text-[10px] font-bold flex items-center justify-center">
                     {activeFilterCount}
                   </span>
                 )}
               </div>
               <div className="text-left flex-1 min-w-0">
-                <p className="text-xs text-[#888]">Filters</p>
-                <p className="text-sm font-semibold text-white truncate">{getFilterSummary()}</p>
+                <p className="text-xs text-slate-500">Filters</p>
+                <p className="text-sm font-semibold text-slate-900 truncate">{getFilterSummary()}</p>
               </div>
             </div>
-            <ChevronDown className="w-5 h-5 text-[#888] flex-shrink-0" />
+            <ChevronDown className="w-5 h-5 text-slate-500 flex-shrink-0" />
           </button>
           
           <WorkoutOrPassGame 
@@ -8844,10 +8814,10 @@ function TrainingWithSessions({ dashboardView = 'professional' }: { dashboardVie
       {/* Filter Panel Overlay */}
       {showFilterPanel && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center">
-          <div className="bg-[#1a1a1a] w-full max-w-md rounded-t-2xl sm:rounded-2xl max-h-[85vh] overflow-hidden flex flex-col">
+          <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl max-h-[85vh] overflow-hidden flex flex-col">
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-[#333]">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                 <Filter className="w-5 h-5 text-[#FF6B35]" />
                 Filter Drills
               </h2>
@@ -8864,7 +8834,7 @@ function TrainingWithSessions({ dashboardView = 'professional' }: { dashboardVie
                 <button
                   type="button"
                   onClick={() => setShowFilterPanel(false)}
-                  className="w-8 h-8 rounded-lg bg-[#252525] flex items-center justify-center text-[#888] hover:text-white transition-colors"
+                  className="w-8 h-8 rounded-lg bg-[#252525] flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -8875,7 +8845,7 @@ function TrainingWithSessions({ dashboardView = 'professional' }: { dashboardVie
             <div className="flex-1 overflow-y-auto p-4 space-y-6">
               {/* Skill Level */}
               <div>
-                <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
                   <Target className="w-4 h-4 text-[#FF6B35]" />
                   Skill Level
                 </h3>
@@ -8887,8 +8857,8 @@ function TrainingWithSessions({ dashboardView = 'professional' }: { dashboardVie
                       onClick={() => setDrillFilters(f => ({ ...f, skillLevel: option.value as SkillLevel | 'all' }))}
                       className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                         drillFilters.skillLevel === option.value
-                          ? 'bg-[#FF6B35] text-white'
-                          : 'bg-[#252525] text-[#888] hover:bg-[#333] hover:text-white'
+                          ? 'bg-[#FF6B35] text-slate-900'
+                          : 'bg-[#252525] text-slate-500 hover:bg-slate-50 hover:text-slate-900'
                       }`}
                     >
                       {option.label}
@@ -8899,7 +8869,7 @@ function TrainingWithSessions({ dashboardView = 'professional' }: { dashboardVie
               
               {/* Focus Area */}
               <div>
-                <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
                   <Target className="w-4 h-4 text-[#FF6B35]" />
                   Drill Type
                 </h3>
@@ -8911,8 +8881,8 @@ function TrainingWithSessions({ dashboardView = 'professional' }: { dashboardVie
                       onClick={() => setDrillFilters(f => ({ ...f, focusArea: option.value as DrillFocusArea | 'all' }))}
                       className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                         drillFilters.focusArea === option.value
-                          ? 'bg-[#FF6B35] text-white'
-                          : 'bg-[#252525] text-[#888] hover:bg-[#333] hover:text-white'
+                          ? 'bg-[#FF6B35] text-slate-900'
+                          : 'bg-[#252525] text-slate-500 hover:bg-slate-50 hover:text-slate-900'
                       }`}
                     >
                       {option.label}
@@ -8923,7 +8893,7 @@ function TrainingWithSessions({ dashboardView = 'professional' }: { dashboardVie
               
               {/* Difficulty */}
               <div>
-                <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
                   <Star className="w-4 h-4 text-[#FF6B35]" />
                   Difficulty
                 </h3>
@@ -8935,8 +8905,8 @@ function TrainingWithSessions({ dashboardView = 'professional' }: { dashboardVie
                       onClick={() => setDrillFilters(f => ({ ...f, difficulty: option.value }))}
                       className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                         drillFilters.difficulty === option.value
-                          ? 'bg-[#FF6B35] text-white'
-                          : 'bg-[#252525] text-[#888] hover:bg-[#333] hover:text-white'
+                          ? 'bg-[#FF6B35] text-slate-900'
+                          : 'bg-[#252525] text-slate-500 hover:bg-slate-50 hover:text-slate-900'
                       }`}
                     >
                       {option.label}
@@ -8947,7 +8917,7 @@ function TrainingWithSessions({ dashboardView = 'professional' }: { dashboardVie
               
               {/* Duration */}
               <div>
-                <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
                   <Clock className="w-4 h-4 text-[#FF6B35]" />
                   Duration
                 </h3>
@@ -8959,8 +8929,8 @@ function TrainingWithSessions({ dashboardView = 'professional' }: { dashboardVie
                       onClick={() => setDrillFilters(f => ({ ...f, duration: option.value }))}
                       className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                         drillFilters.duration === option.value
-                          ? 'bg-[#FF6B35] text-white'
-                          : 'bg-[#252525] text-[#888] hover:bg-[#333] hover:text-white'
+                          ? 'bg-[#FF6B35] text-slate-900'
+                          : 'bg-[#252525] text-slate-500 hover:bg-slate-50 hover:text-slate-900'
                       }`}
                     >
                       {option.label}
@@ -8975,7 +8945,7 @@ function TrainingWithSessions({ dashboardView = 'professional' }: { dashboardVie
               <button
                 type="button"
                 onClick={() => setShowFilterPanel(false)}
-                className="w-full py-3 bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-white font-bold rounded-xl hover:opacity-90 transition-opacity"
+                className="w-full py-3 bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-slate-900 font-bold rounded-xl hover:opacity-90 transition-opacity"
               >
                 Apply Filters
               </button>
@@ -9049,7 +9019,7 @@ function PersonalizedDrillRecommendations({ flaws }: PersonalizedDrillRecommenda
         {Array.from({ length: 5 }, (_, i) => (
           <div 
             key={i} 
-            className={`w-3 h-3 rounded-full ${i < difficulty ? 'bg-[#FF6B35]' : 'bg-[#3a3a3a]'}`}
+            className={`w-3 h-3 rounded-full ${i < difficulty ? 'bg-[#FF6B35]' : 'bg-slate-200'}`}
           />
         ))}
       </div>
@@ -9063,7 +9033,7 @@ function PersonalizedDrillRecommendations({ flaws }: PersonalizedDrillRecommenda
       case 'HIGH_SCHOOL': return 'bg-purple-500/20 text-purple-400 border-purple-500/30'
       case 'COLLEGE': return 'bg-orange-500/20 text-orange-400 border-orange-500/30'
       case 'PROFESSIONAL': return 'bg-[#FF6B35]/20 text-[#FF6B35] border-[#FF6B35]/30'
-      default: return 'bg-[#888]/20 text-[#888] border-[#888]/30'
+      default: return 'bg-[#888]/20 text-slate-500 border-[#888]/30'
     }
   }
   
@@ -9079,7 +9049,7 @@ function PersonalizedDrillRecommendations({ flaws }: PersonalizedDrillRecommenda
   }
   
   return (
-    <div className="bg-[#2C2C2C] rounded-xl p-6 border border-[#3a3a3a]">
+    <div className="bg-white rounded-xl p-6 border-2 border-black">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
@@ -9088,11 +9058,11 @@ function PersonalizedDrillRecommendations({ flaws }: PersonalizedDrillRecommenda
           </div>
           <div>
             <h3 className="text-xl font-black text-[#FF6B35] uppercase tracking-wider">Personalized Drills</h3>
-            <p className="text-[#888] text-sm">Level: <span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${getLevelBadgeColor(userLevel)}`}>{getLevelLabel(userLevel)}</span></p>
+            <p className="text-slate-500 text-sm">Level: <span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${getLevelBadgeColor(userLevel)}`}>{getLevelLabel(userLevel)}</span></p>
           </div>
         </div>
         <div className="text-right">
-          <p className="text-[#888] text-sm">Completed</p>
+          <p className="text-slate-500 text-sm">Completed</p>
           <p className="text-2xl font-black text-green-400">{completedDrills.length}/{recommendedDrills.length}</p>
         </div>
       </div>
@@ -9110,7 +9080,7 @@ function PersonalizedDrillRecommendations({ flaws }: PersonalizedDrillRecommenda
               className={`rounded-xl border transition-all duration-300 ${
                 isCompleted 
                   ? 'bg-green-900/20 border-green-500/40' 
-                  : 'bg-[#1a1a1a] border-[#3a3a3a] hover:border-[#4a4a4a]'
+                  : 'bg-white border-black hover:border-black'
               }`}
             >
               {/* Drill Header */}
@@ -9120,17 +9090,17 @@ function PersonalizedDrillRecommendations({ flaws }: PersonalizedDrillRecommenda
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-[#2a2a2a] flex items-center justify-center border border-[#3a3a3a]">
+                    <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center border-2 border-black">
                       <Target className="w-5 h-5 text-[#FF6B35]" />
                     </div>
                     <div>
-                      <h4 className={`font-bold uppercase ${isCompleted ? 'text-green-400' : 'text-[#E5E5E5]'}`}>
+                      <h4 className={`font-bold uppercase ${isCompleted ? 'text-green-400' : 'text-slate-900'}`}>
                         {drill.title.toUpperCase()}
                         {isCompleted && <Check className="w-4 h-4 inline-block ml-2 text-green-400" />}
                       </h4>
                       <div className="flex items-center gap-3 mt-1">
                         {getDifficultyStars(drill.difficulty)}
-                        <span className="text-xs text-[#888] flex items-center gap-1">
+                        <span className="text-xs text-slate-500 flex items-center gap-1">
                           <Clock className="w-3 h-3" /> {drill.duration} MIN
                         </span>
                         <span className={`text-xs px-2 py-0.5 rounded-full border uppercase ${getLevelBadgeColor(drill.level)}`}>
@@ -9139,31 +9109,31 @@ function PersonalizedDrillRecommendations({ flaws }: PersonalizedDrillRecommenda
                       </div>
                     </div>
                   </div>
-                  <ChevronDown className={`w-5 h-5 text-[#888] transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-5 h-5 text-slate-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                 </div>
               </div>
               
               {/* Expanded Content */}
               {isExpanded && (
-                <div className="px-4 pb-4 border-t border-[#3a3a3a]">
+                <div className="px-4 pb-4 border-t border-black">
                   <div className="pt-4 space-y-4">
                     {/* Description */}
                     <div>
-                      <p className="text-[#E5E5E5] text-sm">{drill.description}</p>
+                      <p className="text-slate-900 text-sm">{drill.description}</p>
                     </div>
                     
                     {/* Why It Matters */}
-                    <div className="bg-[#2a2a2a] rounded-lg p-3 border border-[#3a3a3a]">
+                    <div className="bg-white rounded-lg p-3 border-2 border-black">
                       <p className="text-xs font-bold text-[#FF6B35] uppercase tracking-wider mb-1">Why It Matters</p>
-                      <p className="text-[#E5E5E5] text-sm">{drill.whyItMatters}</p>
+                      <p className="text-slate-900 text-sm">{drill.whyItMatters}</p>
                     </div>
                     
                     {/* Step-by-Step Instructions */}
                     <div>
-                      <p className="text-xs font-bold text-[#888] uppercase tracking-wider mb-2">Step-by-Step Instructions</p>
+                      <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Step-by-Step Instructions</p>
                       <ol className="space-y-2">
                         {drill.steps.map((step, index) => (
-                          <li key={index} className="flex items-start gap-3 text-sm text-[#E5E5E5]">
+                          <li key={index} className="flex items-start gap-3 text-sm text-slate-900">
                             <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[#FF6B35]/20 text-[#FF6B35] flex items-center justify-center text-xs font-bold">
                               {index + 1}
                             </span>
@@ -9175,7 +9145,7 @@ function PersonalizedDrillRecommendations({ flaws }: PersonalizedDrillRecommenda
                     
                     {/* Expected Outcomes */}
                     <div>
-                      <p className="text-xs font-bold text-[#888] uppercase tracking-wider mb-2">Expected Outcomes</p>
+                      <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Expected Outcomes</p>
                       <div className="flex flex-wrap gap-2">
                         {drill.expectedOutcomes.map((outcome, index) => (
                           <span key={index} className="px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-xs border border-green-500/30">
@@ -9189,7 +9159,7 @@ function PersonalizedDrillRecommendations({ flaws }: PersonalizedDrillRecommenda
                     {drill.technicalNote && (
                       <div className="bg-blue-500/10 rounded-lg p-3 border border-blue-500/30">
                         <p className="text-xs font-bold text-blue-400 uppercase tracking-wider mb-1">Technical Note</p>
-                        <p className="text-[#E5E5E5] text-sm">{drill.technicalNote}</p>
+                        <p className="text-slate-900 text-sm">{drill.technicalNote}</p>
                       </div>
                     )}
                     
@@ -9199,8 +9169,8 @@ function PersonalizedDrillRecommendations({ flaws }: PersonalizedDrillRecommenda
                         onClick={(e) => { e.stopPropagation(); toggleDrillComplete(drill.id); }}
                         className={`flex-1 py-2 rounded-lg font-semibold text-sm transition-colors flex items-center justify-center gap-2 ${
                           isCompleted
-                            ? 'bg-green-500 text-white'
-                            : 'bg-[#2a2a2a] text-[#E5E5E5] hover:bg-[#3a3a3a] border border-[#3a3a3a]'
+                            ? 'bg-green-500 text-slate-900'
+                            : 'bg-white text-slate-900 hover:bg-slate-200 border-2 border-black'
                         }`}
                       >
                         {isCompleted ? <Check className="w-4 h-4" /> : <CircleDot className="w-4 h-4" />}
@@ -9397,16 +9367,16 @@ function WeeklyPerformanceSummaryCard({ sessions }: WeeklyPerformanceSummaryCard
   }
   
   return (
-    <div className="bg-gradient-to-br from-[#2C2C2C] via-[#252525] to-[#2C2C2C] rounded-xl p-6 border border-[#3a3a3a]">
+    <div className="bg-gradient-to-br from-[#2C2C2C] via-slate-50 to-[#2C2C2C] rounded-xl p-6 border-2 border-black">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
-            <BarChart3 className="w-6 h-6 text-white" />
+            <BarChart3 className="w-6 h-6 text-slate-900" />
           </div>
           <div>
-            <h3 className="text-xl font-black text-[#E5E5E5] uppercase tracking-wider">Your Week in Review</h3>
-            <p className="text-[#888] text-sm">
+            <h3 className="text-xl font-black text-slate-900 uppercase tracking-wider">Your Week in Review</h3>
+            <p className="text-slate-500 text-sm">
               {new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
             </p>
           </div>
@@ -9421,19 +9391,19 @@ function WeeklyPerformanceSummaryCard({ sessions }: WeeklyPerformanceSummaryCard
       
       {/* Stats Row */}
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-[#1a1a1a] rounded-lg p-4 text-center">
+        <div className="bg-white rounded-lg p-4 text-center">
           <p className="text-3xl font-black text-[#FF6B35]">{weeklyStats.totalAnalyses}</p>
-          <p className="text-[#888] text-xs uppercase tracking-wider">Total Analyses</p>
+          <p className="text-slate-500 text-xs uppercase tracking-wider">Total Analyses</p>
         </div>
-        <div className="bg-[#1a1a1a] rounded-lg p-4 text-center">
+        <div className="bg-white rounded-lg p-4 text-center">
           <p className="text-3xl font-black text-blue-400">{weeklyStats.averageScore}%</p>
-          <p className="text-[#888] text-xs uppercase tracking-wider">Average Score</p>
+          <p className="text-slate-500 text-xs uppercase tracking-wider">Average Score</p>
         </div>
-        <div className="bg-[#1a1a1a] rounded-lg p-4 text-center">
+        <div className="bg-white rounded-lg p-4 text-center">
           <p className={`text-3xl font-black ${weeklyStats.scoreChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
             {weeklyStats.scoreChange >= 0 ? '↑' : '↓'} {Math.abs(weeklyStats.scoreChange)}%
           </p>
-          <p className="text-[#888] text-xs uppercase tracking-wider">From Last Week</p>
+          <p className="text-slate-500 text-xs uppercase tracking-wider">From Last Week</p>
         </div>
       </div>
       
@@ -9447,13 +9417,13 @@ function WeeklyPerformanceSummaryCard({ sessions }: WeeklyPerformanceSummaryCard
           {weeklyStats.improvements.length > 0 ? (
             <ul className="space-y-2">
               {weeklyStats.improvements.map((item, i) => (
-                <li key={i} className="text-[#E5E5E5] text-sm flex items-center gap-2">
+                <li key={i} className="text-slate-900 text-sm flex items-center gap-2">
                   <span className="text-green-400">✓</span> {item}
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-[#888] text-sm">Keep practicing to see improvements!</p>
+            <p className="text-slate-500 text-sm">Keep practicing to see improvements!</p>
           )}
         </div>
         
@@ -9465,13 +9435,13 @@ function WeeklyPerformanceSummaryCard({ sessions }: WeeklyPerformanceSummaryCard
           {weeklyStats.needsWork.length > 0 ? (
             <ul className="space-y-2">
               {weeklyStats.needsWork.map((item, i) => (
-                <li key={i} className="text-[#E5E5E5] text-sm flex items-center gap-2">
+                <li key={i} className="text-slate-900 text-sm flex items-center gap-2">
                   <span className="text-orange-400">⚠</span> {item}
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-[#888] text-sm">Great work! Keep maintaining your form.</p>
+            <p className="text-slate-500 text-sm">Great work! Keep maintaining your form.</p>
           )}
         </div>
       </div>
@@ -9479,15 +9449,15 @@ function WeeklyPerformanceSummaryCard({ sessions }: WeeklyPerformanceSummaryCard
       {/* Coaching Insights */}
       <div className="space-y-4">
         {/* What's Working Message */}
-        <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
+        <div className="bg-white rounded-lg p-4 border-2 border-black">
           <h4 className="text-[#FF6B35] font-bold text-sm uppercase tracking-wider mb-2">What&apos;s Working</h4>
-          <p className="text-[#E5E5E5] text-sm">{messages.whatsWorking}</p>
+          <p className="text-slate-900 text-sm">{messages.whatsWorking}</p>
         </div>
         
         {/* Focus Area */}
-        <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
+        <div className="bg-white rounded-lg p-4 border-2 border-black">
           <h4 className="text-purple-400 font-bold text-sm uppercase tracking-wider mb-2">Focus Area</h4>
-          <p className="text-[#E5E5E5] text-sm">{messages.focusArea}</p>
+          <p className="text-slate-900 text-sm">{messages.focusArea}</p>
         </div>
         
         {/* Next Week Goal */}
@@ -9495,7 +9465,7 @@ function WeeklyPerformanceSummaryCard({ sessions }: WeeklyPerformanceSummaryCard
           <h4 className="text-[#FF6B35] font-bold text-sm uppercase tracking-wider mb-2 flex items-center gap-2">
             <Target className="w-4 h-4" /> Next Week&apos;s Goal
           </h4>
-          <p className="text-[#E5E5E5] text-sm">{messages.nextWeekGoal}</p>
+          <p className="text-slate-900 text-sm">{messages.nextWeekGoal}</p>
         </div>
       </div>
     </div>
@@ -9711,14 +9681,14 @@ function AnalyticsChartSection({ sessions, progressStats, playerName }: Analytic
   }
 
   return (
-    <Card className="bg-[#2C2C2C] border-[#3a3a3a]">
+    <Card className="bg-white border-black">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
-            <CardTitle className="text-xl text-[#E5E5E5] uppercase tracking-wider font-black">
+            <CardTitle className="text-xl text-slate-900 uppercase tracking-wider font-black">
               {playerName.toUpperCase()}&apos;S ANALYTICS CHART
             </CardTitle>
-            <CardDescription className="text-[#888]">
+            <CardDescription className="text-slate-500">
               {periodDescriptions[timePeriod]}
             </CardDescription>
           </div>
@@ -9729,8 +9699,8 @@ function AnalyticsChartSection({ sessions, progressStats, playerName }: Analytic
                 onClick={() => setTimePeriod(period)}
                 className={`px-4 py-2 rounded-lg text-sm font-bold uppercase transition-all ${
                   timePeriod === period
-                    ? 'bg-[#1a1a1a] text-[#E5E5E5] border-2 border-[#FF6B35] shadow-lg shadow-[#FF6B35]/20'
-                    : 'bg-transparent text-[#888] border border-[#3a3a3a] hover:text-[#E5E5E5] hover:border-[#FF6B35]/50'
+                    ? 'bg-white text-slate-900 border-2 border-[#FF6B35] shadow-lg shadow-[#FF6B35]/20'
+                    : 'bg-transparent text-slate-500 border-2 border-black hover:text-slate-900 hover:border-[#FF6B35]/50'
                 }`}
               >
                 {periodLabels[period]}
@@ -9744,15 +9714,15 @@ function AnalyticsChartSection({ sessions, progressStats, playerName }: Analytic
         {/* Summary Stats - Session Card Only */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Total Sessions Card */}
-          <Card className="bg-gradient-to-br from-[#1a1a1a] to-[#252525] border-[#3a3a3a] hover:border-[#FF6B35]/30 transition-all overflow-hidden relative">
+          <Card className="bg-gradient-to-br from-white to-[#252525] border-black hover:border-[#FF6B35]/30 transition-all overflow-hidden relative">
             <CardContent className="p-5">
               {/* Header */}
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h3 className="text-sm font-bold text-[#E5E5E5] mb-1">TOTAL SESSIONS</h3>
-                  <p className="text-xs text-[#888]">{periodLabels[timePeriod]}</p>
+                  <h3 className="text-sm font-bold text-slate-900 mb-1">TOTAL SESSIONS</h3>
+                  <p className="text-xs text-slate-500">{periodLabels[timePeriod]}</p>
                 </div>
-                <button className="text-[#888] hover:text-[#E5E5E5] transition-colors">
+                <button className="text-slate-500 hover:text-slate-900 transition-colors">
                   <MoreVertical className="w-4 h-4" />
                 </button>
               </div>
@@ -9800,13 +9770,13 @@ function AnalyticsChartSection({ sessions, progressStats, playerName }: Analytic
               {/* Progress Bar */}
               <div className="mb-4">
                 <div className="flex items-center justify-between mb-1">
-                  <div className="h-2 bg-[#3a3a3a] rounded-full flex-1 mr-2">
+                  <div className="h-2 bg-slate-200 rounded-full flex-1 mr-2">
                     <div 
                       className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF4500] rounded-full transition-all duration-500"
                       style={{ width: `${Math.min(100, (filteredSessions.length / 10) * 100)}%` }}
                     ></div>
                   </div>
-                  <span className="text-xs font-medium text-[#888]">{Math.min(100, Math.round((filteredSessions.length / 10) * 100))}%</span>
+                  <span className="text-xs font-medium text-slate-500">{Math.min(100, Math.round((filteredSessions.length / 10) * 100))}%</span>
                 </div>
               </div>
               
@@ -9815,7 +9785,7 @@ function AnalyticsChartSection({ sessions, progressStats, playerName }: Analytic
                 <div>
                   <span className="text-3xl font-black text-[#FF6B35] leading-none">{filteredSessions.length}</span>
                 </div>
-                <p className="text-xs text-[#888]">Compare to last period</p>
+                <p className="text-xs text-slate-500">Compare to last period</p>
               </div>
             </CardContent>
           </Card>
@@ -9825,39 +9795,39 @@ function AnalyticsChartSection({ sessions, progressStats, playerName }: Analytic
         {/* Chart Header with Metrics Selector */}
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-black text-[#E5E5E5] uppercase">ANALYTICS CHART</h3>
-            <p className="text-[#888] text-sm">Last {chartData.length} data points</p>
+            <h3 className="text-lg font-black text-slate-900 uppercase">ANALYTICS CHART</h3>
+            <p className="text-slate-500 text-sm">Last {chartData.length} data points</p>
           </div>
           
           {/* Metrics Dropdown */}
           <div className="relative">
             <button
               onClick={() => setMetricsDropdownOpen(!metricsDropdownOpen)}
-              className="flex items-center gap-2 px-4 py-2 bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg text-[#E5E5E5] hover:border-[#FF6B35]/50 transition-all"
+              className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-black rounded-lg text-slate-900 hover:border-[#FF6B35]/50 transition-all"
             >
               <span className="text-sm font-medium">Metrics ({selectedMetrics.length}/{allMetrics.length})</span>
               <ChevronDown className={`w-4 h-4 transition-transform ${metricsDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
             
             {metricsDropdownOpen && (
-              <div className="absolute right-0 top-full mt-2 w-64 bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg shadow-xl z-50 max-h-80 overflow-y-auto">
+              <div className="absolute right-0 top-full mt-2 w-64 bg-white border-2 border-black rounded-lg shadow-xl z-50 max-h-80 overflow-y-auto">
                 <div className="p-2">
-                  <p className="text-xs text-[#888] uppercase px-2 py-1 mb-2">SELECT METRICS TO DISPLAY</p>
+                  <p className="text-xs text-slate-500 uppercase px-2 py-1 mb-2">SELECT METRICS TO DISPLAY</p>
                   {allMetrics.map(metric => (
                     <button
                       key={metric.id}
                       onClick={() => toggleMetric(metric.id)}
                       className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${
                         selectedMetrics.includes(metric.id)
-                          ? 'bg-[#2C2C2C] text-[#E5E5E5]'
-                          : 'text-[#888] hover:bg-[#2C2C2C]/50'
+                          ? 'bg-white text-slate-900'
+                          : 'text-slate-500 hover:bg-white/50'
                       }`}
                     >
                       <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
-                        selectedMetrics.includes(metric.id) ? 'border-[#FF6B35] bg-[#FF6B35]' : 'border-[#3a3a3a]'
+                        selectedMetrics.includes(metric.id) ? 'border-[#FF6B35] bg-[#FF6B35]' : 'border-black'
                       }`}>
                         {selectedMetrics.includes(metric.id) && (
-                          <Check className="w-3 h-3 text-white" />
+                          <Check className="w-3 h-3 text-slate-900" />
                         )}
                       </div>
                       <div className={`w-3 h-3 rounded-full bg-gradient-to-r ${metric.color}`} />
@@ -9885,11 +9855,11 @@ function AnalyticsChartSection({ sessions, progressStats, playerName }: Analytic
         </div>
         
         {/* Chart Area - Segmented Bar Chart */}
-        <Card className="bg-gradient-to-br from-[#1a1a1a] to-[#252525] border-[#3a3a3a]">
+        <Card className="bg-gradient-to-br from-white to-[#252525] border-black">
           <CardContent className="p-6">
             {chartData.length === 0 ? (
               <div className="h-72 flex items-center justify-center">
-                <p className="text-[#888] text-center">
+                <p className="text-slate-500 text-center">
                   No data available for this time period.<br />
                   <span className="text-sm">Complete some shooting analyses to see your progress!</span>
                 </p>
@@ -9899,7 +9869,7 @@ function AnalyticsChartSection({ sessions, progressStats, playerName }: Analytic
                 {/* Title with Icon */}
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-4 h-4 bg-gradient-to-br from-teal-400 to-cyan-400 rounded"></div>
-                  <h3 className="text-sm font-bold text-[#E5E5E5] uppercase">
+                  <h3 className="text-sm font-bold text-slate-900 uppercase">
                     {selectedMetrics.length > 0 
                       ? allMetrics.find(m => m.id === selectedMetrics[0])?.label || 'PERFORMANCE'
                       : 'PERFORMANCE'
@@ -9910,7 +9880,7 @@ function AnalyticsChartSection({ sessions, progressStats, playerName }: Analytic
                 {/* Y-Axis Labels */}
                 <div className="absolute left-0 top-8 bottom-12 w-10 flex flex-col justify-between text-right pr-2">
                   {[100, 75, 50, 25, 0].map(v => (
-                    <span key={v} className="text-xs text-[#888] font-medium">{v}</span>
+                    <span key={v} className="text-xs text-slate-500 font-medium">{v}</span>
                   ))}
                 </div>
                 
@@ -9919,7 +9889,7 @@ function AnalyticsChartSection({ sessions, progressStats, playerName }: Analytic
                   {[0, 1, 2, 3, 4].map(i => (
                     <div 
                       key={i} 
-                      className="absolute w-full border-t border-[#3a3a3a]/30" 
+                      className="absolute w-full border-t border-black/30" 
                       style={{ top: `${i * 25}%` }}
                     />
                   ))}
@@ -9952,7 +9922,7 @@ function AnalyticsChartSection({ sessions, progressStats, playerName }: Analytic
                                 className={`w-full transition-all duration-300 ${
                                   isFilled 
                                     ? 'bg-gradient-to-b from-teal-600 via-cyan-500 to-emerald-400' 
-                                    : 'bg-[#2a2a2a]'
+                                    : 'bg-white'
                                 }`}
                                 style={{
                                   height: '10%',
@@ -9968,10 +9938,10 @@ function AnalyticsChartSection({ sessions, progressStats, playerName }: Analytic
                         {/* Tooltip */}
                         {hoveredBar?.index === i && (
                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 pointer-events-none">
-                            <div className="bg-[#050505] border border-teal-400/50 rounded-lg px-3 py-2 shadow-xl whitespace-nowrap">
+                            <div className="bg-slate-50 border border-teal-400/50 rounded-lg px-3 py-2 shadow-xl whitespace-nowrap">
                               <p className="text-teal-400 font-bold text-sm">{value}%</p>
-                              <p className="text-[#888] text-xs">{metric?.label}</p>
-                              <p className="text-[#666] text-xs">{point.dateLabel}</p>
+                              <p className="text-slate-500 text-xs">{metric?.label}</p>
+                              <p className="text-slate-500 text-xs">{point.dateLabel}</p>
                               <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-teal-400/50" />
                             </div>
                           </div>
@@ -9987,7 +9957,7 @@ function AnalyticsChartSection({ sessions, progressStats, playerName }: Analytic
                     // Get month abbreviation
                     const monthLabel = new Date(point.date).toLocaleDateString('en-US', { month: 'short' }).toUpperCase()
                     return (
-                      <span key={i} className="text-xs font-medium text-[#888] uppercase text-center flex-1">
+                      <span key={i} className="text-xs font-medium text-slate-500 uppercase text-center flex-1">
                         {monthLabel}
                       </span>
                     )
@@ -10079,7 +10049,7 @@ function GoalsSection({ dashboardView = 'professional' }: { dashboardView?: Dash
   return (
     <div className="space-y-8">
       {/* Goals Card - Gold Theme */}
-      <Card className="bg-gradient-to-br from-[#1a1a1a] via-[#222222] to-[#1a1a1a] border-[#2a2a2a] shadow-2xl overflow-hidden">
+      <Card className="bg-gradient-to-br from-white via-[#222222] to-white border-black shadow-2xl overflow-hidden">
         <CardContent className="p-0">
           {/* Goals Card Content */}
           <div className="relative p-6 lg:p-8 overflow-hidden">
@@ -10092,13 +10062,13 @@ function GoalsSection({ dashboardView = 'professional' }: { dashboardView?: Dash
             {/* Goals Count Card */}
             <div className="relative grid grid-cols-1 gap-6 lg:gap-8">
               <div className="relative group max-w-md mx-auto w-full">
-                <div className="relative bg-gradient-to-br from-[#1a1a1a]/80 via-[#252525]/80 to-[#1a1a1a]/80 backdrop-blur-xl rounded-3xl p-8 lg:p-10 border border-[#3a3a3a]/30 hover:border-[#FF6B35]/40 transition-all duration-500 overflow-hidden">
+                <div className="relative bg-gradient-to-br from-white/80 via-slate-50/80 to-white/80 backdrop-blur-xl rounded-3xl p-8 lg:p-10 border-2 border-black/30 hover:border-[#FF6B35]/40 transition-all duration-500 overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent"></div>
                   
                   {/* Create Goal Button - Top Right */}
                   <button
                     type="button"
-                    className="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1.5 bg-[#FF6B35] hover:bg-[#FF4500] text-white text-xs font-bold rounded-lg transition-all shadow-lg shadow-[#FF6B35]/20"
+                    className="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1.5 bg-[#FF6B35] hover:bg-[#FF4500] text-slate-600 text-xs font-bold rounded-lg transition-all shadow-lg shadow-[#FF6B35]/20"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     Create Goal
@@ -10116,17 +10086,17 @@ function GoalsSection({ dashboardView = 'professional' }: { dashboardView?: Dash
                   </div>
                   
                   <div className="relative">
-                    <p className="text-sm font-bold text-[#888] uppercase tracking-[0.15em] mb-1">GOALS</p>
+                    <p className="text-sm font-bold text-slate-500 uppercase tracking-[0.15em] mb-1">GOALS</p>
                     <div className="h-0.5 w-16 bg-gradient-to-r from-[#FF6B35]/40 to-transparent"></div>
                   </div>
                   
                   {/* Progress indicator */}
-                  <div className="mt-6 pt-6 border-t border-[#3a3a3a]/30">
+                  <div className="mt-6 pt-6 border-t border-black/30">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs text-[#888] uppercase tracking-wider">Progress</span>
+                      <span className="text-xs text-slate-500 uppercase tracking-wider">Progress</span>
                       <span className="text-xs text-[#FF6B35] font-bold">{completedGoals}/{goalsCount} completed</span>
                     </div>
-                    <div className="h-2 bg-[#3a3a3a] rounded-full overflow-hidden">
+                    <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                       <div 
                         className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF4500] rounded-full transition-all duration-500"
                         style={{ width: `${(completedGoals / goalsCount) * 100}%` }}
@@ -10248,25 +10218,25 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
       {/* ============================================ */}
       {/* SECTION 1: PROFESSIONAL HEADER & STATS */}
       {/* ============================================ */}
-      <Card className="bg-gradient-to-br from-[#1a1a1a] via-[#222222] to-[#1a1a1a] border-[#2a2a2a] shadow-2xl overflow-hidden">
+      <Card className="bg-gradient-to-br from-white via-[#222222] to-white border-black shadow-2xl overflow-hidden">
         <CardContent className="p-0">
           {/* Header Bar */}
-          <div className="bg-gradient-to-r from-[#FF6B35]/10 via-transparent to-[#FF6B35]/10 border-b border-[#2a2a2a] px-6 py-4">
+          <div className="bg-gradient-to-r from-[#FF6B35]/10 via-transparent to-[#FF6B35]/10 border-b border-black px-6 py-4">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex items-center gap-4">
                 <div className="relative">
                   <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#B8860B] flex items-center justify-center shadow-lg">
                     <BarChart3 className="w-7 h-7 text-[#1a1a1a]" />
                   </div>
-                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#1a1a1a] border-2 border-[#FF6B35] flex items-center justify-center">
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-white border-2 border-[#FF6B35] flex items-center justify-center">
                     <TrendingUp className="w-3 h-3 text-[#FF6B35]" />
                   </div>
             </div>
             <div>
-                  <h2 className="text-xl font-bold text-[#E5E5E5] tracking-tight">
+                  <h2 className="text-xl font-bold text-slate-900 tracking-tight">
                     Performance Analytics
                   </h2>
-                  <p className="text-[#666] text-sm font-medium">
+                  <p className="text-slate-500 text-sm font-medium">
                     {profileStore?.displayName || profileStore?.firstName || 'Player'} • Historical Data Dashboard
                   </p>
             </div>
@@ -10274,8 +10244,8 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
               
               {/* Date Range Indicator */}
               <div className="flex items-center gap-2 text-sm">
-                <Calendar className="w-4 h-4 text-[#666]" />
-                <span className="text-[#666]">Last 90 Days</span>
+                <Calendar className="w-4 h-4 text-slate-500" />
+                <span className="text-slate-500">Last 90 Days</span>
           </div>
         </div>
       </div>
@@ -10292,7 +10262,7 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
             <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
               {/* Sessions - Hero Number with Integrated Visualization */}
               <div className="lg:col-span-4 relative group">
-                <div className="relative bg-gradient-to-br from-[#1a1a1a]/80 via-[#252525]/80 to-[#1a1a1a]/80 backdrop-blur-xl rounded-3xl p-8 lg:p-10 border border-[#3a3a3a]/30 hover:border-[#FF6B35]/40 transition-all duration-500 overflow-hidden">
+                <div className="relative bg-gradient-to-br from-white/80 via-slate-50/80 to-white/80 backdrop-blur-xl rounded-3xl p-8 lg:p-10 border-2 border-black/30 hover:border-[#FF6B35]/40 transition-all duration-500 overflow-hidden">
                   {/* Glassmorphic effect */}
                   <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent"></div>
                   
@@ -10310,12 +10280,12 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
                   
                   {/* Label with subtle underline */}
                   <div className="relative">
-                    <p className="text-sm font-bold text-[#888] uppercase tracking-[0.15em] mb-1">SESSIONS</p>
+                    <p className="text-sm font-bold text-slate-500 uppercase tracking-[0.15em] mb-1">SESSIONS</p>
                     <div className="h-0.5 w-16 bg-gradient-to-r from-[#FF6B35]/40 to-transparent"></div>
                   </div>
                   
                   {/* Integrated mini chart visualization */}
-                  <div className="mt-6 pt-6 border-t border-[#3a3a3a]/30">
+                  <div className="mt-6 pt-6 border-t border-black/30">
                     <div className="flex items-end gap-1 h-12">
                       {[...Array(8)].map((_, i) => (
                         <div 
@@ -10331,7 +10301,7 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
               
               {/* Avg Score - Circular Progress Integrated */}
               <div className="lg:col-span-3 relative group">
-                <div className="relative bg-gradient-to-br from-[#1a1a1a]/80 via-[#252525]/80 to-[#1a1a1a]/80 backdrop-blur-xl rounded-3xl p-8 lg:p-10 border border-[#3a3a3a]/30 hover:border-blue-500/40 transition-all duration-500 overflow-hidden h-full flex flex-col justify-between">
+                <div className="relative bg-gradient-to-br from-white/80 via-slate-50/80 to-white/80 backdrop-blur-xl rounded-3xl p-8 lg:p-10 border-2 border-black/30 hover:border-blue-500/40 transition-all duration-500 overflow-hidden h-full flex flex-col justify-between">
                   <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent"></div>
                   
                   {/* Circular progress visualization */}
@@ -10363,7 +10333,7 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
                   </div>
                   
                   <div>
-                    <p className="text-sm font-bold text-[#888] uppercase tracking-[0.15em] mb-1">AVG SCORE</p>
+                    <p className="text-sm font-bold text-slate-500 uppercase tracking-[0.15em] mb-1">AVG SCORE</p>
                     <div className="h-0.5 w-16 bg-gradient-to-r from-blue-500/40 to-transparent"></div>
                   </div>
                 </div>
@@ -10371,7 +10341,7 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
               
               {/* Progress - Minimalist with Large Typography */}
               <div className="lg:col-span-3 relative group">
-                <div className="relative bg-gradient-to-br from-[#1a1a1a]/80 via-[#252525]/80 to-[#1a1a1a]/80 backdrop-blur-xl rounded-3xl p-8 lg:p-10 border border-[#3a3a3a]/30 hover:border-green-500/40 transition-all duration-500 overflow-hidden h-full flex flex-col justify-between">
+                <div className="relative bg-gradient-to-br from-white/80 via-slate-50/80 to-white/80 backdrop-blur-xl rounded-3xl p-8 lg:p-10 border-2 border-black/30 hover:border-green-500/40 transition-all duration-500 overflow-hidden h-full flex flex-col justify-between">
                   <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent"></div>
                   
                   {/* Large percentage */}
@@ -10392,7 +10362,7 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
                       <TrendingUp className={`w-5 h-5 ${
                         (progressStats?.scoreChange || 0) >= 0 ? 'text-green-400' : 'text-red-400 rotate-180'
                       }`} />
-                      <p className="text-sm font-bold text-[#888] uppercase tracking-[0.15em]">PROGRESS</p>
+                      <p className="text-sm font-bold text-slate-500 uppercase tracking-[0.15em]">PROGRESS</p>
                     </div>
                     <div className={`h-0.5 w-16 bg-gradient-to-r ${
                       (progressStats?.scoreChange || 0) >= 0 ? 'from-green-500/40' : 'from-red-500/40'
@@ -10403,7 +10373,7 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
               
               {/* Trend - Status Badge Style */}
               <div className="lg:col-span-2 relative group">
-                <div className={`relative bg-gradient-to-br from-[#1a1a1a]/80 via-[#252525]/80 to-[#1a1a1a]/80 backdrop-blur-xl rounded-3xl p-8 lg:p-10 border transition-all duration-500 overflow-hidden h-full flex flex-col justify-center items-center ${
+                <div className={`relative bg-gradient-to-br from-white/80 via-slate-50/80 to-white/80 backdrop-blur-xl rounded-3xl p-8 lg:p-10 border transition-all duration-500 overflow-hidden h-full flex flex-col justify-center items-center ${
                   progressStats?.trend === 'improving' 
                     ? 'border-green-500/30 hover:border-green-500/50' 
                     : progressStats?.trend === 'declining'
@@ -10434,7 +10404,7 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
         </div>
       </div>
       
-                  <p className="text-sm font-bold text-[#888] uppercase tracking-[0.15em]">TREND</p>
+                  <p className="text-sm font-bold text-slate-500 uppercase tracking-[0.15em]">TREND</p>
                 </div>
               </div>
             </div>
@@ -10454,7 +10424,7 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
           console.error('Error changing view mode:', error)
         }
       }} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-6 bg-[#1a1a1a] border border-[#2a2a2a]">
+        <TabsList className="grid w-full grid-cols-3 mb-6 bg-white border-2 border-black">
           <TabsTrigger value="sessions" className="data-[state=active]:bg-[#FF6B35] data-[state=active]:text-[#1a1a1a]">Timeline</TabsTrigger>
           <TabsTrigger value="analytics" className="data-[state=active]:bg-[#FF6B35] data-[state=active]:text-[#1a1a1a]">Analytics</TabsTrigger>
           <TabsTrigger value="heatmap" className="data-[state=active]:bg-[#FF6B35] data-[state=active]:text-[#1a1a1a]">Heatmap</TabsTrigger>
@@ -10464,8 +10434,8 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
         {/* TAB 1: SESSION TIMELINE */}
         {/* ============================================ */}
         <TabsContent value="sessions" className="mt-0">
-          <Card className="bg-[#1a1a1a] border-[#2a2a2a] shadow-xl overflow-hidden">
-            <CardHeader className="border-b border-[#2a2a2a]/50 bg-gradient-to-r from-[#1d1d1d] via-[#222] to-[#1d1d1d] pb-4">
+          <Card className="bg-white border-black shadow-xl overflow-hidden">
+            <CardHeader className="border-b border-black/50 bg-gradient-to-r from-[#1d1d1d] via-[#222] to-[#1d1d1d] pb-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="relative">
@@ -10475,13 +10445,13 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
                     <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-green-500 border-2 border-[#1d1d1d] animate-pulse"></div>
                   </div>
                   <div>
-                    <CardTitle className="text-lg font-bold text-[#E5E5E5] tracking-tight">SESSION TIMELINE</CardTitle>
-                    <CardDescription className="text-[#888] text-sm">Your training journey at a glance</CardDescription>
+                    <CardTitle className="text-lg font-bold text-slate-900 tracking-tight">SESSION TIMELINE</CardTitle>
+                    <CardDescription className="text-slate-500 text-sm">Your training journey at a glance</CardDescription>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#252525]/80 border border-[#3a3a3a]/50 backdrop-blur-sm">
+                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#252525]/80 border-2 border-black/50 backdrop-blur-sm">
                   <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                  <span className="text-xs font-medium text-[#888] uppercase tracking-wider">{(allSessionsData?.length || 0)} Sessions</span>
+                  <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">{(allSessionsData?.length || 0)} Sessions</span>
                 </div>
               </div>
             </CardHeader>
@@ -10491,7 +10461,7 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
                   <div className="w-20 h-20 rounded-full bg-[#252525] flex items-center justify-center mb-4">
                     <Clock className="w-10 h-10 text-[#555]" />
                   </div>
-                  <p className="text-[#888] text-base font-medium mb-2">No Sessions Yet</p>
+                  <p className="text-slate-500 text-base font-medium mb-2">No Sessions Yet</p>
                   <p className="text-[#555] text-sm">Complete your first analysis to start tracking progress</p>
           </div>
         ) : (
@@ -10665,21 +10635,21 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
         {/* TAB 3: PROFESSIONAL ACTIVITY HEATMAP */}
         {/* ============================================ */}
         <TabsContent value="heatmap" className="mt-0">
-          <Card className="bg-[#1a1a1a] border-[#2a2a2a] shadow-xl overflow-hidden">
-            <CardHeader className="border-b border-[#2a2a2a] bg-[#1d1d1d]">
+          <Card className="bg-white border-black shadow-xl overflow-hidden">
+            <CardHeader className="border-b border-black bg-[#1d1d1d]">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-2 h-8 rounded-full bg-gradient-to-b from-green-500 to-green-700"></div>
                   <div>
-                    <CardTitle className="text-base font-semibold text-[#E5E5E5]">Practice Activity</CardTitle>
-                    <CardDescription className="text-[#666]">18-week training consistency</CardDescription>
+                    <CardTitle className="text-base font-semibold text-slate-900">Practice Activity</CardTitle>
+                    <CardDescription className="text-slate-500">18-week training consistency</CardDescription>
                 </div>
                 </div>
                 {/* Professional Legend */}
-                <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[#252525] border border-[#3a3a3a]">
-                  <span className="text-[10px] font-medium text-[#666] uppercase tracking-wider">Activity Level</span>
+                <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-[#252525] border-2 border-black">
+                  <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Activity Level</span>
                   <div className="flex items-center gap-0.5">
-                    <div className="w-3 h-3 rounded-[3px] bg-[#1a1a1a] border border-[#2a2a2a]" title="No activity"></div>
+                    <div className="w-3 h-3 rounded-[3px] bg-white border-2 border-black" title="No activity"></div>
                     <div className="w-3 h-3 rounded-[3px] bg-green-900/50" title="1 session"></div>
                     <div className="w-3 h-3 rounded-[3px] bg-green-700/70" title="2 sessions"></div>
                     <div className="w-3 h-3 rounded-[3px] bg-green-500" title="3+ sessions"></div>
@@ -10691,15 +10661,15 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
               {/* Stats Cards - Premium Design with Integrated Visualizations */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 {/* Active Days Card */}
-                <Card className="bg-gradient-to-br from-[#1a1a1a] to-[#252525] border-[#3a3a3a] hover:border-green-500/30 transition-all overflow-hidden relative">
+                <Card className="bg-gradient-to-br from-white to-[#252525] border-black hover:border-green-500/30 transition-all overflow-hidden relative">
                   <CardContent className="p-5">
                     {/* Header */}
                     <div className="flex items-start justify-between mb-4">
                       <div>
-                        <h3 className="text-sm font-bold text-[#E5E5E5] mb-1">ACTIVE DAYS</h3>
-                        <p className="text-xs text-[#888]">Last 18 weeks</p>
+                        <h3 className="text-sm font-bold text-slate-900 mb-1">ACTIVE DAYS</h3>
+                        <p className="text-xs text-slate-500">Last 18 weeks</p>
                       </div>
-                      <button className="text-[#888] hover:text-[#E5E5E5] transition-colors">
+                      <button className="text-slate-500 hover:text-slate-900 transition-colors">
                         <MoreVertical className="w-4 h-4" />
                       </button>
               </div>
@@ -10741,13 +10711,13 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
                     {/* Progress Bar */}
                     <div className="mb-4">
                       <div className="flex items-center justify-between mb-1">
-                        <div className="h-2 bg-[#3a3a3a] rounded-full flex-1 mr-2">
+                        <div className="h-2 bg-slate-200 rounded-full flex-1 mr-2">
                           <div 
                             className="h-full bg-gradient-to-r from-green-500 to-green-400 rounded-full transition-all duration-500"
                             style={{ width: `${Math.min(100, (new Set(allSessionsData.map(s => new Date(s.date).toISOString().split('T')[0])).size / 10) * 100)}%` }}
                           ></div>
                         </div>
-                        <span className="text-xs font-medium text-[#888]">
+                        <span className="text-xs font-medium text-slate-500">
                           {Math.min(100, Math.round((new Set(allSessionsData.map(s => new Date(s.date).toISOString().split('T')[0])).size / 10) * 100))}%
                         </span>
                       </div>
@@ -10760,21 +10730,21 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
                           {new Set(allSessionsData.map(s => new Date(s.date).toISOString().split('T')[0])).size}
                         </span>
                       </div>
-                      <p className="text-xs text-[#888]">Compare to last week</p>
+                      <p className="text-xs text-slate-500">Compare to last week</p>
                     </div>
                   </CardContent>
                 </Card>
                 
                 {/* Current Streak Card */}
-                <Card className="bg-gradient-to-br from-[#1a1a1a] to-[#252525] border-[#3a3a3a] hover:border-orange-500/30 transition-all overflow-hidden relative">
+                <Card className="bg-gradient-to-br from-white to-[#252525] border-black hover:border-orange-500/30 transition-all overflow-hidden relative">
                   <CardContent className="p-5">
                     {/* Header */}
                     <div className="flex items-start justify-between mb-4">
                       <div>
-                        <h3 className="text-sm font-bold text-[#E5E5E5] mb-1">CURRENT STREAK</h3>
-                        <p className="text-xs text-[#888]">Last 18 weeks</p>
+                        <h3 className="text-sm font-bold text-slate-900 mb-1">CURRENT STREAK</h3>
+                        <p className="text-xs text-slate-500">Last 18 weeks</p>
                       </div>
-                      <button className="text-[#888] hover:text-[#E5E5E5] transition-colors">
+                      <button className="text-slate-500 hover:text-slate-900 transition-colors">
                         <MoreVertical className="w-4 h-4" />
                       </button>
                     </div>
@@ -10823,7 +10793,7 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
                     {/* Progress Bar */}
                     <div className="mb-4">
                       <div className="flex items-center justify-between mb-1">
-                        <div className="h-2 bg-[#3a3a3a] rounded-full flex-1 mr-2">
+                        <div className="h-2 bg-slate-200 rounded-full flex-1 mr-2">
                           <div 
                             className="h-full bg-gradient-to-r from-orange-500 to-orange-400 rounded-full transition-all duration-500"
                             style={{ width: `${Math.min(100, ((() => {
@@ -10843,7 +10813,7 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
                             })() / 10) * 100)}%` }}
                           ></div>
                 </div>
-                        <span className="text-xs font-medium text-[#888]">
+                        <span className="text-xs font-medium text-slate-500">
                           {Math.min(100, Math.round(((() => {
                             let streak = 0
                             const today = new Date()
@@ -10884,21 +10854,21 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
                           })()}
                           </span>
                       </div>
-                      <p className="text-xs text-[#888]">Compare to last week</p>
+                      <p className="text-xs text-slate-500">Compare to last week</p>
             </div>
                   </CardContent>
                 </Card>
                 
                 {/* Best Streak Card */}
-                <Card className="bg-gradient-to-br from-[#1a1a1a] to-[#252525] border-[#3a3a3a] hover:border-purple-500/30 transition-all overflow-hidden relative">
+                <Card className="bg-gradient-to-br from-white to-[#252525] border-black hover:border-purple-500/30 transition-all overflow-hidden relative">
                   <CardContent className="p-5">
                     {/* Header */}
                     <div className="flex items-start justify-between mb-4">
                       <div>
-                        <h3 className="text-sm font-bold text-[#E5E5E5] mb-1">BEST STREAK</h3>
-                        <p className="text-xs text-[#888]">Last 18 weeks</p>
+                        <h3 className="text-sm font-bold text-slate-900 mb-1">BEST STREAK</h3>
+                        <p className="text-xs text-slate-500">Last 18 weeks</p>
                       </div>
-                      <button className="text-[#888] hover:text-[#E5E5E5] transition-colors">
+                      <button className="text-slate-500 hover:text-slate-900 transition-colors">
                         <MoreVertical className="w-4 h-4" />
                       </button>
       </div>
@@ -10953,7 +10923,7 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
                     {/* Progress Bar */}
                     <div className="mb-4">
                       <div className="flex items-center justify-between mb-1">
-                        <div className="h-2 bg-[#3a3a3a] rounded-full flex-1 mr-2">
+                        <div className="h-2 bg-slate-200 rounded-full flex-1 mr-2">
                           <div 
                             className="h-full bg-gradient-to-r from-purple-500 to-purple-400 rounded-full transition-all duration-500"
                             style={{ width: `${Math.min(100, ((() => {
@@ -10979,7 +10949,7 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
                             })() / 10) * 100)}%` }}
                           ></div>
                   </div>
-                        <span className="text-xs font-medium text-[#888]">
+                        <span className="text-xs font-medium text-slate-500">
                           {Math.min(100, Math.round(((() => {
                             let maxStreak = 0
                             let currentStreak = 0
@@ -11032,21 +11002,21 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
                           })()}
                           </span>
                     </div>
-                      <p className="text-xs text-[#888]">Compare to last week</p>
+                      <p className="text-xs text-slate-500">Compare to last week</p>
                   </div>
                   </CardContent>
                 </Card>
                 
                 {/* Avg/Week Card */}
-                <Card className="bg-gradient-to-br from-[#1a1a1a] to-[#252525] border-[#3a3a3a] hover:border-[#FF6B35]/30 transition-all overflow-hidden relative">
+                <Card className="bg-gradient-to-br from-white to-[#252525] border-black hover:border-[#FF6B35]/30 transition-all overflow-hidden relative">
                   <CardContent className="p-5">
                     {/* Header */}
                     <div className="flex items-start justify-between mb-4">
                       <div>
-                        <h3 className="text-sm font-bold text-[#E5E5E5] mb-1">AVG/WEEK</h3>
-                        <p className="text-xs text-[#888]">Last 18 weeks</p>
+                        <h3 className="text-sm font-bold text-slate-900 mb-1">AVG/WEEK</h3>
+                        <p className="text-xs text-slate-500">Last 18 weeks</p>
                 </div>
-                      <button className="text-[#888] hover:text-[#E5E5E5] transition-colors">
+                      <button className="text-slate-500 hover:text-slate-900 transition-colors">
                         <MoreVertical className="w-4 h-4" />
                       </button>
                     </div>
@@ -11088,13 +11058,13 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
                     {/* Progress Bar */}
                     <div className="mb-4">
                       <div className="flex items-center justify-between mb-1">
-                        <div className="h-2 bg-[#3a3a3a] rounded-full flex-1 mr-2">
+                        <div className="h-2 bg-slate-200 rounded-full flex-1 mr-2">
                           <div 
                             className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF4500] rounded-full transition-all duration-500"
                             style={{ width: `${Math.min(100, ((allSessionsData.length > 0 ? (allSessionsData.length / 18) : 0) / 5) * 100)}%` }}
                           ></div>
           </div>
-                        <span className="text-xs font-medium text-[#888]">
+                        <span className="text-xs font-medium text-slate-500">
                           {Math.min(100, Math.round(((allSessionsData.length > 0 ? (allSessionsData.length / 18) : 0) / 5) * 100))}%
                       </span>
       </div>
@@ -11107,7 +11077,7 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
                           {allSessionsData.length > 0 ? (Math.round(allSessionsData.length / 18 * 10) / 10).toFixed(1) : '0.0'}
                         </span>
                     </div>
-                      <p className="text-xs text-[#888]">Compare to last week</p>
+                      <p className="text-xs text-slate-500">Compare to last week</p>
                   </div>
                   </CardContent>
                 </Card>
@@ -11156,7 +11126,7 @@ function HistoricalDataSection({ dashboardView = 'professional' }: { dashboardVi
                           const activityLevel = sessionsOnDay.length
                           
                           // Professional gradient colors
-                          let bgClass = 'bg-[#1a1a1a] border-[#252525]'
+                          let bgClass = 'bg-white border-[#252525]'
                           let shadowClass = ''
                           if (activityLevel === 1) {
                             bgClass = 'bg-green-900/40 border-green-800/30'
@@ -11201,30 +11171,30 @@ function Phase9CategoryComparison() {
   
   if (comparison.length === 0) {
     return (
-      <div className="bg-[#2C2C2C] rounded-xl p-8 border border-[#3a3a3a] text-center">
-        <Target className="w-12 h-12 text-[#888] mx-auto mb-4" />
-        <p className="text-[#888]">Complete at least one analysis to see category breakdown.</p>
+      <div className="bg-white rounded-xl p-8 border-2 border-black text-center">
+        <Target className="w-12 h-12 text-slate-500 mx-auto mb-4" />
+        <p className="text-slate-500">Complete at least one analysis to see category breakdown.</p>
       </div>
     )
   }
   
   return (
-    <div className="bg-[#2C2C2C] rounded-xl p-6 border border-[#3a3a3a]">
+    <div className="bg-white rounded-xl p-6 border-2 border-black">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
-          <Target className="w-5 h-5 text-white" />
+          <Target className="w-5 h-5 text-slate-900" />
         </div>
         <div>
-          <h3 className="text-lg font-bold text-[#E5E5E5]">Category Breakdown</h3>
-          <p className="text-sm text-[#888]">Compare your performance across different skill areas</p>
+          <h3 className="text-lg font-bold text-slate-900">Category Breakdown</h3>
+          <p className="text-sm text-slate-500">Compare your performance across different skill areas</p>
         </div>
       </div>
       
       <div className="space-y-4">
         {comparison.map((cat, index) => (
-          <div key={index} className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
+          <div key={index} className="bg-white rounded-lg p-4 border-2 border-black">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[#E5E5E5] font-medium">{cat.category}</span>
+              <span className="text-slate-900 font-medium">{cat.category}</span>
               <div className="flex items-center gap-3">
                 <span className={`text-sm font-bold ${
                   cat.color === 'green' ? 'text-green-400' :
@@ -11237,7 +11207,7 @@ function Phase9CategoryComparison() {
             </div>
             
             {/* Progress bar */}
-            <div className="relative h-3 bg-[#3a3a3a] rounded-full overflow-hidden">
+            <div className="relative h-3 bg-slate-200 rounded-full overflow-hidden">
               {/* Previous score (lighter) */}
               <div 
                 className="absolute top-0 left-0 h-full bg-[#555] rounded-full transition-all duration-500"
@@ -11254,7 +11224,7 @@ function Phase9CategoryComparison() {
               />
             </div>
             
-            <div className="flex justify-between mt-1 text-xs text-[#888]">
+            <div className="flex justify-between mt-1 text-xs text-slate-500">
               <span>Previous: {cat.previous}%</span>
               <span>Current: {cat.current}%</span>
             </div>
@@ -11263,18 +11233,18 @@ function Phase9CategoryComparison() {
       </div>
       
       {/* Legend */}
-      <div className="flex items-center justify-center gap-6 mt-6 pt-4 border-t border-[#3a3a3a]">
+      <div className="flex items-center justify-center gap-6 mt-6 pt-4 border-t border-black">
         <span className="flex items-center gap-2 text-sm">
           <div className="w-3 h-3 rounded-full bg-green-500"></div>
-          <span className="text-[#888]">Improved</span>
+          <span className="text-slate-500">Improved</span>
         </span>
         <span className="flex items-center gap-2 text-sm">
           <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-          <span className="text-[#888]">Stable</span>
+          <span className="text-slate-500">Stable</span>
         </span>
         <span className="flex items-center gap-2 text-sm">
           <div className="w-3 h-3 rounded-full bg-red-500"></div>
-          <span className="text-[#888]">Declined</span>
+          <span className="text-slate-500">Declined</span>
         </span>
       </div>
     </div>
@@ -11294,22 +11264,22 @@ function Phase9IssueHeatmap() {
   
   if (heatmap.length === 0) {
     return (
-      <div className="bg-[#2C2C2C] rounded-xl p-8 border border-[#3a3a3a] text-center">
-        <AlertTriangle className="w-12 h-12 text-[#888] mx-auto mb-4" />
-        <p className="text-[#888]">No issues detected yet. Keep analyzing to track patterns!</p>
+      <div className="bg-white rounded-xl p-8 border-2 border-black text-center">
+        <AlertTriangle className="w-12 h-12 text-slate-500 mx-auto mb-4" />
+        <p className="text-slate-500">No issues detected yet. Keep analyzing to track patterns!</p>
       </div>
     )
   }
   
   return (
-    <div className="bg-[#2C2C2C] rounded-xl p-6 border border-[#3a3a3a]">
+    <div className="bg-white rounded-xl p-6 border-2 border-black">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
-          <AlertTriangle className="w-5 h-5 text-white" />
+          <AlertTriangle className="w-5 h-5 text-slate-900" />
         </div>
         <div>
-          <h3 className="text-lg font-bold text-[#E5E5E5]">Issue Frequency Analysis</h3>
-          <p className="text-sm text-[#888]">Your most common form issues across all sessions</p>
+          <h3 className="text-lg font-bold text-slate-900">Issue Frequency Analysis</h3>
+          <p className="text-sm text-slate-500">Your most common form issues across all sessions</p>
         </div>
       </div>
       
@@ -11331,12 +11301,12 @@ function Phase9IssueHeatmap() {
                   issue.severity === 'high' ? 'bg-red-500' :
                   issue.severity === 'medium' ? 'bg-orange-500' : 'bg-orange-500'
                 }`}>
-                  <span className="text-white font-bold text-sm">{index + 1}</span>
+                  <span className="text-slate-900 font-bold text-sm">{index + 1}</span>
                 </div>
-                <span className="text-[#E5E5E5] font-medium">{issue.issue}</span>
+                <span className="text-slate-900 font-medium">{issue.issue}</span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-[#888] text-sm">{issue.count} occurrences</span>
+                <span className="text-slate-500 text-sm">{issue.count} occurrences</span>
                 <span className={`text-xl font-black ${
                   issue.severity === 'high' ? 'text-red-400' :
                   issue.severity === 'medium' ? 'text-orange-400' : 'text-orange-400'
@@ -11347,7 +11317,7 @@ function Phase9IssueHeatmap() {
             </div>
             
             {/* Heat bar */}
-            <div className="h-2 bg-[#1a1a1a] rounded-full overflow-hidden">
+            <div className="h-2 bg-white rounded-full overflow-hidden">
               <div 
                 className={`h-full rounded-full transition-all duration-500 ${
                   issue.severity === 'high' ? 'bg-gradient-to-r from-red-600 to-red-400' :
@@ -11362,18 +11332,18 @@ function Phase9IssueHeatmap() {
       </div>
       
       {/* Severity Legend */}
-      <div className="flex items-center justify-center gap-6 mt-6 pt-4 border-t border-[#3a3a3a]">
+      <div className="flex items-center justify-center gap-6 mt-6 pt-4 border-t border-black">
         <span className="flex items-center gap-2 text-sm">
           <div className="w-3 h-3 rounded-full bg-red-500"></div>
-          <span className="text-[#888]">High (60%+)</span>
+          <span className="text-slate-500">High (60%+)</span>
         </span>
         <span className="flex items-center gap-2 text-sm">
           <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-          <span className="text-[#888]">Medium (30-60%)</span>
+          <span className="text-slate-500">Medium (30-60%)</span>
         </span>
         <span className="flex items-center gap-2 text-sm">
           <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-          <span className="text-[#888]">Low (&lt;30%)</span>
+          <span className="text-slate-500">Low (&lt;30%)</span>
         </span>
       </div>
       
@@ -11404,28 +11374,28 @@ function Phase9MilestoneBadges() {
   return (
     <div className="space-y-6">
       {/* Achieved Milestones */}
-      <div className="bg-[#2C2C2C] rounded-xl p-6 border border-[#3a3a3a]">
+      <div className="bg-white rounded-xl p-6 border-2 border-black">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center">
-            <Trophy className="w-5 h-5 text-white" />
+            <Trophy className="w-5 h-5 text-slate-900" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-[#E5E5E5]">Achievements Unlocked</h3>
-            <p className="text-sm text-[#888]">{achievedMilestones.length} milestone{achievedMilestones.length !== 1 ? 's' : ''} achieved</p>
+            <h3 className="text-lg font-bold text-slate-900">Achievements Unlocked</h3>
+            <p className="text-sm text-slate-500">{achievedMilestones.length} milestone{achievedMilestones.length !== 1 ? 's' : ''} achieved</p>
           </div>
         </div>
         
         {achievedMilestones.length === 0 ? (
           <div className="text-center py-8">
             <Trophy className="w-16 h-16 text-[#3a3a3a] mx-auto mb-4" />
-            <p className="text-[#888]">Complete your first analysis to start earning achievements!</p>
+            <p className="text-slate-500">Complete your first analysis to start earning achievements!</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {achievedMilestones.map((milestone, index) => (
               <div 
                 key={milestone.id}
-                className="relative bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl p-4 border border-[#FF6B35]/30 overflow-hidden group hover:scale-105 transition-transform"
+                className="relative bg-gradient-to-br from-white to-[#2a2a2a] rounded-xl p-4 border border-[#FF6B35]/30 overflow-hidden group hover:scale-105 transition-transform"
               >
                 {/* Glow effect */}
                 <div className="absolute inset-0 bg-gradient-to-br from-[#FF6B35]/10 to-transparent opacity-50"></div>
@@ -11433,7 +11403,7 @@ function Phase9MilestoneBadges() {
                 <div className="relative text-center">
                   <div className="text-4xl mb-2">{milestone.icon}</div>
                   <h4 className="text-sm font-bold text-[#FF6B35] mb-1">{milestone.name}</h4>
-                  <p className="text-xs text-[#888] mb-2">{milestone.description}</p>
+                  <p className="text-xs text-slate-500 mb-2">{milestone.description}</p>
                   {milestone.achievedDate && (
                     <p className="text-xs text-green-400">
                       ✓ {new Date(milestone.achievedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
@@ -11448,14 +11418,14 @@ function Phase9MilestoneBadges() {
       
       {/* Unachieved Milestones */}
       {unachievedMilestones.length > 0 && (
-        <div className="bg-[#2C2C2C] rounded-xl p-6 border border-[#3a3a3a]">
+        <div className="bg-white rounded-xl p-6 border-2 border-black">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-lg bg-[#3a3a3a] flex items-center justify-center">
-              <Target className="w-5 h-5 text-[#888]" />
+            <div className="w-10 h-10 rounded-lg bg-slate-200 flex items-center justify-center">
+              <Target className="w-5 h-5 text-slate-500" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-[#888]">Locked Achievements</h3>
-              <p className="text-sm text-[#666]">{unachievedMilestones.length} more to unlock</p>
+              <h3 className="text-lg font-bold text-slate-500">Locked Achievements</h3>
+              <p className="text-sm text-slate-500">{unachievedMilestones.length} more to unlock</p>
             </div>
           </div>
           
@@ -11463,11 +11433,11 @@ function Phase9MilestoneBadges() {
             {unachievedMilestones.map((milestone) => (
               <div 
                 key={milestone.id}
-                className="bg-[#1a1a1a] rounded-xl p-4 border border-[#3a3a3a] opacity-60 grayscale"
+                className="bg-white rounded-xl p-4 border-2 border-black opacity-60 grayscale"
               >
                 <div className="text-center">
                   <div className="text-4xl mb-2 opacity-30">{milestone.icon}</div>
-                  <h4 className="text-sm font-bold text-[#666] mb-1">{milestone.name}</h4>
+                  <h4 className="text-sm font-bold text-slate-500 mb-1">{milestone.name}</h4>
                   <p className="text-xs text-[#555]">{milestone.description}</p>
                 </div>
               </div>
@@ -11484,8 +11454,8 @@ function Phase9MilestoneBadges() {
               <Zap className="w-8 h-8 text-purple-400" />
             </div>
             <div className="flex-1">
-              <h4 className="text-lg font-bold text-[#E5E5E5] mb-1">Next Achievement</h4>
-              <p className="text-[#888]">{unachievedMilestones[0].description}</p>
+              <h4 className="text-lg font-bold text-slate-900 mb-1">Next Achievement</h4>
+              <p className="text-slate-500">{unachievedMilestones[0].description}</p>
               <div className="flex items-center gap-2 mt-2">
                 <span className="text-2xl">{unachievedMilestones[0].icon}</span>
                 <span className="text-purple-400 font-bold">{unachievedMilestones[0].name}</span>
@@ -11847,7 +11817,7 @@ function PhotoComparisonSlider({
     return (
       <div className="space-y-2">
         {/* Compact Controls Bar */}
-        <div className="flex items-center justify-between gap-2 bg-[#1a1a1a]/80 rounded-lg px-2 py-1.5 border border-[#3a3a3a]">
+        <div className="flex items-center justify-between gap-2 bg-white/80 rounded-lg px-2 py-1.5 border-2 border-black">
           {/* View Mode Toggle */}
           <div className="flex items-center gap-1">
             <button
@@ -11855,7 +11825,7 @@ function PhotoComparisonSlider({
               className={`px-2 py-1 rounded text-[10px] font-bold transition-colors ${
                 viewMode === 'sideBySide'
                   ? 'bg-[#FF6B35] text-[#1a1a1a]'
-                  : 'bg-[#2a2a2a] text-[#666] hover:text-[#E5E5E5]'
+                  : 'bg-white text-slate-500 hover:text-slate-900'
               }`}
             >
               SIDE
@@ -11865,7 +11835,7 @@ function PhotoComparisonSlider({
               className={`px-2 py-1 rounded text-[10px] font-bold transition-colors ${
                 viewMode === 'slider'
                   ? 'bg-[#FF6B35] text-[#1a1a1a]'
-                  : 'bg-[#2a2a2a] text-[#666] hover:text-[#E5E5E5]'
+                  : 'bg-white text-slate-500 hover:text-slate-900'
               }`}
             >
               SLIDER
@@ -11873,7 +11843,7 @@ function PhotoComparisonSlider({
           </div>
           
           {/* Divider */}
-          <div className="w-px h-4 bg-[#3a3a3a]" />
+          <div className="w-px h-4 bg-slate-200" />
           
           {/* Independent Zoom Controls - Compact */}
           <div className="flex items-center gap-2">
@@ -11882,14 +11852,14 @@ function PhotoComparisonSlider({
               <span className="text-[10px] text-red-400 font-bold">L</span>
               <button
                 onClick={() => setBeforeZoomLevel(Math.max(100, beforeZoomLevel - 10))}
-                className="w-5 h-5 rounded bg-[#2a2a2a] text-[#888] hover:text-white flex items-center justify-center text-xs font-bold"
+                className="w-5 h-5 rounded bg-white text-slate-500 hover:text-slate-900 flex items-center justify-center text-xs font-bold"
               >
                 −
               </button>
-              <span className="text-[10px] text-[#E5E5E5] w-7 text-center">{beforeZoomLevel}%</span>
+              <span className="text-[10px] text-slate-900 w-7 text-center">{beforeZoomLevel}%</span>
               <button
                 onClick={() => setBeforeZoomLevel(Math.min(400, beforeZoomLevel + 10))}
-                className="w-5 h-5 rounded bg-[#2a2a2a] text-[#888] hover:text-white flex items-center justify-center text-xs font-bold"
+                className="w-5 h-5 rounded bg-white text-slate-500 hover:text-slate-900 flex items-center justify-center text-xs font-bold"
               >
                 +
               </button>
@@ -11900,14 +11870,14 @@ function PhotoComparisonSlider({
               <span className="text-[10px] text-green-400 font-bold">R</span>
               <button
                 onClick={() => setAfterZoomLevel(Math.max(100, afterZoomLevel - 10))}
-                className="w-5 h-5 rounded bg-[#2a2a2a] text-[#888] hover:text-white flex items-center justify-center text-xs font-bold"
+                className="w-5 h-5 rounded bg-white text-slate-500 hover:text-slate-900 flex items-center justify-center text-xs font-bold"
               >
                 −
               </button>
-              <span className="text-[10px] text-[#E5E5E5] w-7 text-center">{afterZoomLevel}%</span>
+              <span className="text-[10px] text-slate-900 w-7 text-center">{afterZoomLevel}%</span>
               <button
                 onClick={() => setAfterZoomLevel(Math.min(400, afterZoomLevel + 10))}
-                className="w-5 h-5 rounded bg-[#2a2a2a] text-[#888] hover:text-white flex items-center justify-center text-xs font-bold"
+                className="w-5 h-5 rounded bg-white text-slate-500 hover:text-slate-900 flex items-center justify-center text-xs font-bold"
               >
                 +
               </button>
@@ -11915,7 +11885,7 @@ function PhotoComparisonSlider({
           </div>
           
           {/* Divider */}
-          <div className="w-px h-4 bg-[#3a3a3a]" />
+          <div className="w-px h-4 bg-slate-200" />
           
           {/* Reset Button - Compact */}
           <button
@@ -11929,7 +11899,7 @@ function PhotoComparisonSlider({
               setAfterManualX(null)
               setAfterManualY(null)
             }}
-            className="px-2 py-1 rounded bg-[#2a2a2a] text-[#666] hover:text-white text-[10px] font-bold"
+            className="px-2 py-1 rounded bg-white text-slate-500 hover:text-slate-900 text-[10px] font-bold"
           >
             RESET
           </button>
@@ -11941,7 +11911,7 @@ function PhotoComparisonSlider({
           <div className="grid grid-cols-2 gap-0 h-full">
             {/* Before Image - Draggable with INDEPENDENT zoom */}
             <div 
-              className={`relative bg-[#0a0a0a] overflow-hidden ${isDraggingBefore ? 'cursor-grabbing' : 'cursor-grab'}`}
+              className={`relative bg-slate-100 overflow-hidden ${isDraggingBefore ? 'cursor-grabbing' : 'cursor-grab'}`}
               onMouseDown={handleBeforeDragStart}
               onMouseMove={handleBeforeDragMove}
               onMouseUp={handleBeforeDragEnd}
@@ -11964,23 +11934,23 @@ function PhotoComparisonSlider({
               <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
               
               {/* Drag hint with zoom level */}
-              <div className="absolute bottom-4 left-4 px-3 py-1.5 rounded-lg bg-black/60 text-white text-xs font-medium pointer-events-none flex items-center gap-2">
+              <div className="absolute bottom-4 left-4 px-3 py-1.5 rounded-lg bg-black/60 text-slate-600 text-xs font-medium pointer-events-none flex items-center gap-2">
                 <Move className="w-3 h-3" />
                 Drag to pan • Scroll to zoom ({beforeZoomLevel}%)
               </div>
               
-              <div className="absolute top-4 left-4 px-4 py-2 rounded-full bg-red-500 text-white text-sm font-bold shadow-lg uppercase tracking-wider pointer-events-none">
+              <div className="absolute top-4 left-4 px-4 py-2 rounded-full bg-red-500 text-slate-700 text-sm font-bold shadow-lg uppercase tracking-wider pointer-events-none">
                 {beforeLabel}
               </div>
               <div className="absolute bottom-20 left-4 right-4 text-center pointer-events-none">
-                <span className="px-4 py-2 rounded-full bg-black/80 text-white text-sm font-bold uppercase tracking-wider">
+                <span className="px-4 py-2 rounded-full bg-black/80 text-slate-700 text-sm font-bold uppercase tracking-wider">
                   OLDER SESSION
                 </span>
               </div>
               
               {/* Player Detection Indicator */}
               {beforePlayerPos && (
-                <div className="absolute top-4 right-4 px-2 py-1 rounded bg-green-500/80 text-white text-xs font-medium flex items-center gap-1">
+                <div className="absolute top-4 right-4 px-2 py-1 rounded bg-green-500/80 text-slate-600 text-xs font-medium flex items-center gap-1">
                   <Target className="w-3 h-3" />
                   Centered
                 </div>
@@ -11989,7 +11959,7 @@ function PhotoComparisonSlider({
             
             {/* After Image - Draggable with INDEPENDENT zoom */}
           <div 
-            className={`relative bg-[#0a0a0a] overflow-hidden ${isDraggingAfter ? 'cursor-grabbing' : 'cursor-grab'}`}
+            className={`relative bg-slate-100 overflow-hidden ${isDraggingAfter ? 'cursor-grabbing' : 'cursor-grab'}`}
             onMouseDown={handleAfterDragStart}
             onMouseMove={handleAfterDragMove}
             onMouseUp={handleAfterDragEnd}
@@ -12012,23 +11982,23 @@ function PhotoComparisonSlider({
             <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
             
             {/* Drag hint with zoom level */}
-            <div className="absolute bottom-4 right-4 px-3 py-1.5 rounded-lg bg-black/60 text-white text-xs font-medium pointer-events-none flex items-center gap-2">
+            <div className="absolute bottom-4 right-4 px-3 py-1.5 rounded-lg bg-black/60 text-slate-600 text-xs font-medium pointer-events-none flex items-center gap-2">
               <Move className="w-3 h-3" />
               Drag to pan • Scroll to zoom ({afterZoomLevel}%)
             </div>
             
-            <div className="absolute top-4 right-4 px-4 py-2 rounded-full bg-green-500 text-white text-sm font-bold shadow-lg uppercase tracking-wider pointer-events-none">
+            <div className="absolute top-4 right-4 px-4 py-2 rounded-full bg-green-500 text-slate-700 text-sm font-bold shadow-lg uppercase tracking-wider pointer-events-none">
               {afterLabel}
             </div>
             <div className="absolute bottom-20 left-4 right-4 text-center pointer-events-none">
-              <span className="px-4 py-2 rounded-full bg-black/80 text-white text-sm font-bold uppercase tracking-wider">
+              <span className="px-4 py-2 rounded-full bg-black/80 text-slate-700 text-sm font-bold uppercase tracking-wider">
                 NEWER SESSION
               </span>
             </div>
             
             {/* Player Detection Indicator */}
             {afterPlayerPos && (
-              <div className="absolute top-4 left-4 px-2 py-1 rounded bg-green-500/80 text-white text-xs font-medium flex items-center gap-1 pointer-events-none">
+              <div className="absolute top-4 left-4 px-2 py-1 rounded bg-green-500/80 text-slate-600 text-xs font-medium flex items-center gap-1 pointer-events-none">
                 <Target className="w-3 h-3" />
                 Centered
               </div>
@@ -12042,14 +12012,14 @@ function PhotoComparisonSlider({
         </div>
         
         {/* Instructions */}
-        <div className="bg-[#1a1a1a] rounded-xl p-4 border border-[#3a3a3a]">
+        <div className="bg-white rounded-xl p-4 border-2 border-black">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-lg bg-[#FF6B35]/10 flex items-center justify-center flex-shrink-0">
               <Info className="w-5 h-5 text-[#FF6B35]" />
             </div>
             <div>
-              <h4 className="font-bold text-[#E5E5E5] mb-1">How to Compare</h4>
-              <p className="text-sm text-[#888]">
+              <h4 className="font-bold text-slate-900 mb-1">How to Compare</h4>
+              <p className="text-sm text-slate-500">
                 Players are <strong className="text-green-400">automatically detected and centered</strong> for easy comparison. 
                 Use the <strong className="text-[#FF6B35]">Zoom</strong> control to zoom in on the shooting form, 
                 and <strong className="text-[#FF6B35]">V</strong> (vertical) / <strong className="text-[#FF6B35]">H</strong> (horizontal) 
@@ -12060,16 +12030,16 @@ function PhotoComparisonSlider({
         </div>
         
         {/* Share Component - Professional Design */}
-        <div className="bg-[#111] rounded-2xl overflow-hidden border border-[#222]">
+        <div className="bg-white rounded-2xl overflow-hidden border-2 border-black">
           {/* Header */}
-          <div className="px-6 py-4 border-b border-[#222] flex items-center justify-between">
+          <div className="px-6 py-4 border-b border-black flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Share2 className="w-5 h-5 text-[#666]" />
-              <span className="text-[#999] text-sm font-medium uppercase tracking-wider">Share</span>
+              <Share2 className="w-5 h-5 text-slate-500" />
+              <span className="text-slate-500 text-sm font-medium uppercase tracking-wider">Share</span>
             </div>
             <div className="flex items-center gap-1">
               <div className="w-2 h-2 rounded-full bg-green-500" />
-              <span className="text-[#666] text-xs">Ready to share</span>
+              <span className="text-slate-500 text-xs">Ready to share</span>
             </div>
           </div>
           
@@ -12077,14 +12047,14 @@ function PhotoComparisonSlider({
           <div className="p-6">
             {/* Primary Actions */}
             <div className="grid grid-cols-2 gap-3 mb-4">
-              <button className="group relative flex items-center justify-center gap-3 px-5 py-4 rounded-xl bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] border border-[#2a2a2a] hover:border-[#FF6B35]/50 transition-all duration-300 whitespace-nowrap">
+              <button className="group relative flex items-center justify-center gap-3 px-5 py-4 rounded-xl bg-gradient-to-br from-white to-[#0d0d0d] border-2 border-black hover:border-[#FF6B35]/50 transition-all duration-300 whitespace-nowrap">
                 <Download className="w-5 h-5 text-[#FF6B35]" />
-                <span className="text-white font-semibold">Download</span>
+                <span className="text-slate-900 font-semibold">Download</span>
                 <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[#FF6B35]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               </button>
-              <button className="group relative flex items-center justify-center gap-3 px-5 py-4 rounded-xl bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] border border-[#2a2a2a] hover:border-[#FF6B35]/50 transition-all duration-300 whitespace-nowrap">
+              <button className="group relative flex items-center justify-center gap-3 px-5 py-4 rounded-xl bg-gradient-to-br from-white to-[#0d0d0d] border-2 border-black hover:border-[#FF6B35]/50 transition-all duration-300 whitespace-nowrap">
                 <Copy className="w-5 h-5 text-[#FF6B35]" />
-                <span className="text-white font-semibold">Copy</span>
+                <span className="text-slate-900 font-semibold">Copy</span>
                 <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[#FF6B35]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               </button>
             </div>
@@ -12098,26 +12068,26 @@ function PhotoComparisonSlider({
             
             {/* Social Icons - Minimal Style */}
             <div className="flex items-center justify-center gap-2">
-              <button className="group w-11 h-11 rounded-full bg-[#1a1a1a] hover:bg-[#1DA1F2] border border-[#2a2a2a] hover:border-[#1DA1F2] flex items-center justify-center transition-all duration-300">
-                <Twitter className="w-4 h-4 text-[#666] group-hover:text-white transition-colors" />
+              <button className="group w-11 h-11 rounded-full bg-white hover:bg-[#1DA1F2] border-2 border-black hover:border-[#1DA1F2] flex items-center justify-center transition-all duration-300">
+                <Twitter className="w-4 h-4 text-slate-500 group-hover:text-slate-900 transition-colors" />
               </button>
-              <button className="group w-11 h-11 rounded-full bg-[#1a1a1a] hover:bg-[#4267B2] border border-[#2a2a2a] hover:border-[#4267B2] flex items-center justify-center transition-all duration-300">
-                <Facebook className="w-4 h-4 text-[#666] group-hover:text-white transition-colors" />
+              <button className="group w-11 h-11 rounded-full bg-white hover:bg-[#4267B2] border-2 border-black hover:border-[#4267B2] flex items-center justify-center transition-all duration-300">
+                <Facebook className="w-4 h-4 text-slate-500 group-hover:text-slate-900 transition-colors" />
               </button>
-              <button className="group w-11 h-11 rounded-full bg-[#1a1a1a] hover:bg-gradient-to-br hover:from-[#833AB4] hover:via-[#FD1D1D] hover:to-[#F77737] border border-[#2a2a2a] hover:border-transparent flex items-center justify-center transition-all duration-300">
-                <Instagram className="w-4 h-4 text-[#666] group-hover:text-white transition-colors" />
+              <button className="group w-11 h-11 rounded-full bg-white hover:bg-gradient-to-br hover:from-[#833AB4] hover:via-[#FD1D1D] hover:to-[#F77737] border-2 border-black hover:border-transparent flex items-center justify-center transition-all duration-300">
+                <Instagram className="w-4 h-4 text-slate-500 group-hover:text-slate-900 transition-colors" />
               </button>
-              <button className="group w-11 h-11 rounded-full bg-[#1a1a1a] hover:bg-[#0A66C2] border border-[#2a2a2a] hover:border-[#0A66C2] flex items-center justify-center transition-all duration-300">
-                <Linkedin className="w-4 h-4 text-[#666] group-hover:text-white transition-colors" />
+              <button className="group w-11 h-11 rounded-full bg-white hover:bg-[#0A66C2] border-2 border-black hover:border-[#0A66C2] flex items-center justify-center transition-all duration-300">
+                <Linkedin className="w-4 h-4 text-slate-500 group-hover:text-slate-900 transition-colors" />
               </button>
-              <button className="group w-11 h-11 rounded-full bg-[#1a1a1a] hover:bg-[#25D366] border border-[#2a2a2a] hover:border-[#25D366] flex items-center justify-center transition-all duration-300">
-                <MessageCircle className="w-4 h-4 text-[#666] group-hover:text-white transition-colors" />
+              <button className="group w-11 h-11 rounded-full bg-white hover:bg-[#25D366] border-2 border-black hover:border-[#25D366] flex items-center justify-center transition-all duration-300">
+                <MessageCircle className="w-4 h-4 text-slate-500 group-hover:text-slate-900 transition-colors" />
               </button>
-              <button className="group w-11 h-11 rounded-full bg-[#1a1a1a] hover:bg-[#FF4500] border border-[#2a2a2a] hover:border-[#FF4500] flex items-center justify-center transition-all duration-300">
-                <Globe className="w-4 h-4 text-[#666] group-hover:text-white transition-colors" />
+              <button className="group w-11 h-11 rounded-full bg-white hover:bg-[#FF4500] border-2 border-black hover:border-[#FF4500] flex items-center justify-center transition-all duration-300">
+                <Globe className="w-4 h-4 text-slate-500 group-hover:text-slate-900 transition-colors" />
               </button>
-              <button className="group w-11 h-11 rounded-full bg-[#1a1a1a] hover:bg-black border border-[#2a2a2a] hover:border-[#fe2c55] flex items-center justify-center transition-all duration-300">
-                <svg className="w-4 h-4 text-[#666] group-hover:text-white transition-colors" viewBox="0 0 24 24" fill="currentColor">
+              <button className="group w-11 h-11 rounded-full bg-white hover:bg-black border-2 border-black hover:border-[#fe2c55] flex items-center justify-center transition-all duration-300">
+                <svg className="w-4 h-4 text-slate-500 group-hover:text-slate-900 transition-colors" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
                 </svg>
               </button>
@@ -12132,7 +12102,7 @@ function PhotoComparisonSlider({
   return (
     <div className="space-y-2">
       {/* Compact Controls Bar for Slider Mode */}
-      <div className="flex items-center justify-between gap-2 bg-[#1a1a1a]/80 rounded-lg px-2 py-1.5 border border-[#3a3a3a]">
+      <div className="flex items-center justify-between gap-2 bg-white/80 rounded-lg px-2 py-1.5 border-2 border-black">
         {/* View Mode Toggle */}
         <div className="flex items-center gap-1">
           <button
@@ -12140,7 +12110,7 @@ function PhotoComparisonSlider({
             className={`px-2 py-1 rounded text-[10px] font-bold transition-colors ${
               viewMode === 'sideBySide'
                 ? 'bg-[#FF6B35] text-[#1a1a1a]'
-                : 'bg-[#2a2a2a] text-[#666] hover:text-[#E5E5E5]'
+                : 'bg-white text-slate-500 hover:text-slate-900'
             }`}
           >
             SIDE
@@ -12150,7 +12120,7 @@ function PhotoComparisonSlider({
             className={`px-2 py-1 rounded text-[10px] font-bold transition-colors ${
               viewMode === 'slider'
                 ? 'bg-[#FF6B35] text-[#1a1a1a]'
-                : 'bg-[#2a2a2a] text-[#666] hover:text-[#E5E5E5]'
+                : 'bg-white text-slate-500 hover:text-slate-900'
             }`}
           >
             SLIDER
@@ -12158,7 +12128,7 @@ function PhotoComparisonSlider({
         </div>
         
         {/* Divider */}
-        <div className="w-px h-4 bg-[#3a3a3a]" />
+        <div className="w-px h-4 bg-slate-200" />
         
         {/* Independent Zoom Controls - Compact */}
         <div className="flex items-center gap-2">
@@ -12167,14 +12137,14 @@ function PhotoComparisonSlider({
             <span className="text-[10px] text-red-400 font-bold">L</span>
             <button
               onClick={() => setBeforeZoomLevel(Math.max(100, beforeZoomLevel - 10))}
-              className="w-5 h-5 rounded bg-[#2a2a2a] text-[#888] hover:text-white flex items-center justify-center text-xs font-bold"
+              className="w-5 h-5 rounded bg-white text-slate-500 hover:text-slate-900 flex items-center justify-center text-xs font-bold"
             >
               −
             </button>
-            <span className="text-[10px] text-[#E5E5E5] w-7 text-center">{beforeZoomLevel}%</span>
+            <span className="text-[10px] text-slate-900 w-7 text-center">{beforeZoomLevel}%</span>
             <button
               onClick={() => setBeforeZoomLevel(Math.min(400, beforeZoomLevel + 10))}
-              className="w-5 h-5 rounded bg-[#2a2a2a] text-[#888] hover:text-white flex items-center justify-center text-xs font-bold"
+              className="w-5 h-5 rounded bg-white text-slate-500 hover:text-slate-900 flex items-center justify-center text-xs font-bold"
             >
               +
             </button>
@@ -12185,14 +12155,14 @@ function PhotoComparisonSlider({
             <span className="text-[10px] text-green-400 font-bold">R</span>
             <button
               onClick={() => setAfterZoomLevel(Math.max(100, afterZoomLevel - 10))}
-              className="w-5 h-5 rounded bg-[#2a2a2a] text-[#888] hover:text-white flex items-center justify-center text-xs font-bold"
+              className="w-5 h-5 rounded bg-white text-slate-500 hover:text-slate-900 flex items-center justify-center text-xs font-bold"
             >
               −
             </button>
-            <span className="text-[10px] text-[#E5E5E5] w-7 text-center">{afterZoomLevel}%</span>
+            <span className="text-[10px] text-slate-900 w-7 text-center">{afterZoomLevel}%</span>
             <button
               onClick={() => setAfterZoomLevel(Math.min(400, afterZoomLevel + 10))}
-              className="w-5 h-5 rounded bg-[#2a2a2a] text-[#888] hover:text-white flex items-center justify-center text-xs font-bold"
+              className="w-5 h-5 rounded bg-white text-slate-500 hover:text-slate-900 flex items-center justify-center text-xs font-bold"
             >
               +
             </button>
@@ -12200,7 +12170,7 @@ function PhotoComparisonSlider({
         </div>
         
         {/* Divider */}
-        <div className="w-px h-4 bg-[#3a3a3a]" />
+        <div className="w-px h-4 bg-slate-200" />
         
         {/* Reset Button - Compact */}
         <button
@@ -12214,7 +12184,7 @@ function PhotoComparisonSlider({
             setAfterManualX(null)
             setAfterManualY(null)
           }}
-          className="px-2 py-1 rounded bg-[#2a2a2a] text-[#666] hover:text-white text-[10px] font-bold"
+          className="px-2 py-1 rounded bg-white text-slate-500 hover:text-slate-900 text-[10px] font-bold"
         >
           RESET
         </button>
@@ -12230,7 +12200,7 @@ function PhotoComparisonSlider({
         onTouchMove={handleTouchMove}
       >
         {/* After Image (Full width, behind) - RIGHT SIDE */}
-        <div className="absolute inset-0 bg-[#0a0a0a] overflow-hidden">
+        <div className="absolute inset-0 bg-slate-100 overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img 
             src={afterImage} 
@@ -12241,11 +12211,11 @@ function PhotoComparisonSlider({
           />
           {/* Gradient overlay */}
           <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
-          <div className="absolute top-4 right-4 px-4 py-2 rounded-full bg-green-500 text-white text-sm font-bold shadow-lg uppercase tracking-wider">
+          <div className="absolute top-4 right-4 px-4 py-2 rounded-full bg-green-500 text-slate-700 text-sm font-bold shadow-lg uppercase tracking-wider">
             {afterLabel}
           </div>
           {afterPlayerPos && (
-            <div className="absolute top-4 left-4 px-2 py-1 rounded bg-green-500/80 text-white text-xs font-medium flex items-center gap-1">
+            <div className="absolute top-4 left-4 px-2 py-1 rounded bg-green-500/80 text-slate-600 text-xs font-medium flex items-center gap-1">
               <Target className="w-3 h-3" />
               Centered
             </div>
@@ -12257,7 +12227,7 @@ function PhotoComparisonSlider({
           className="absolute inset-0 overflow-hidden"
           style={{ width: `${sliderPosition}%` }}
         >
-          <div className="absolute inset-0 bg-[#0a0a0a] overflow-hidden" style={{ width: containerRef.current?.offsetWidth || '100%' }}>
+          <div className="absolute inset-0 bg-slate-100 overflow-hidden" style={{ width: containerRef.current?.offsetWidth || '100%' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
               src={beforeImage} 
@@ -12272,11 +12242,11 @@ function PhotoComparisonSlider({
           </div>
           {/* Gradient overlay */}
           <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
-          <div className="absolute top-4 left-4 px-4 py-2 rounded-full bg-red-500 text-white text-sm font-bold shadow-lg uppercase tracking-wider">
+          <div className="absolute top-4 left-4 px-4 py-2 rounded-full bg-red-500 text-slate-700 text-sm font-bold shadow-lg uppercase tracking-wider">
             {beforeLabel}
           </div>
           {beforePlayerPos && (
-            <div className="absolute top-4 right-4 px-2 py-1 rounded bg-green-500/80 text-white text-xs font-medium flex items-center gap-1">
+            <div className="absolute top-4 right-4 px-2 py-1 rounded bg-green-500/80 text-slate-600 text-xs font-medium flex items-center gap-1">
               <Target className="w-3 h-3" />
               Centered
             </div>
@@ -12300,20 +12270,20 @@ function PhotoComparisonSlider({
         </div>
         
         {/* Instructions */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full bg-black/90 text-white text-sm font-bold border-2 border-[#FF6B35]/50 shadow-lg">
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full bg-black/90 text-slate-700 text-sm font-bold border-2 border-[#FF6B35]/50 shadow-lg">
           ← Drag slider to compare →
         </div>
       </div>
       
       {/* Instructions */}
-      <div className="bg-[#1a1a1a] rounded-xl p-4 border border-[#3a3a3a]">
+      <div className="bg-white rounded-xl p-4 border-2 border-black">
         <div className="flex items-start gap-3">
           <div className="w-10 h-10 rounded-lg bg-[#FF6B35]/10 flex items-center justify-center flex-shrink-0">
             <Info className="w-5 h-5 text-[#FF6B35]" />
           </div>
           <div>
-            <h4 className="font-bold text-[#E5E5E5] mb-1">Overlay Comparison Mode</h4>
-            <p className="text-sm text-[#888]">
+            <h4 className="font-bold text-slate-900 mb-1">Overlay Comparison Mode</h4>
+            <p className="text-sm text-slate-500">
               Drag the <strong className="text-[#FF6B35]">golden slider</strong> left or right to reveal each image. 
               This mode is best for comparing specific body positions at the same angle.
             </p>
@@ -12579,20 +12549,20 @@ function PhotoComparisonSection() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a] rounded-xl p-6 border border-[#3a3a3a]">
+      <div className="bg-gradient-to-r from-white via-[#2a2a2a] to-white rounded-xl p-6 border-2 border-black">
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
-            <ImageIcon className="w-7 h-7 text-white" />
+            <ImageIcon className="w-7 h-7 text-slate-900" />
           </div>
           <div>
             <h2 className="text-2xl font-black text-blue-400 uppercase tracking-wider">Photo Comparison</h2>
-            <p className="text-[#888] text-sm">Compare your shooting form with elite shooters or your past sessions</p>
+            <p className="text-slate-500 text-sm">Compare your shooting form with elite shooters or your past sessions</p>
           </div>
         </div>
       </div>
       
       {/* MY SESSIONS - Session Selectors */}
-      <div className="bg-[#2C2C2C] rounded-xl p-4 border border-[#3a3a3a]">
+      <div className="bg-white rounded-xl p-4 border-2 border-black">
         <div className="flex items-center gap-2 mb-4">
           <Calendar className="w-5 h-5 text-blue-400" />
           <label className="text-sm font-bold text-blue-400 uppercase tracking-wider">
@@ -12609,7 +12579,7 @@ function PhotoComparisonSection() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold text-[#888] uppercase tracking-wider mb-2">
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
               Before (Older)
             </label>
             <select
@@ -12621,7 +12591,7 @@ function PhotoComparisonSection() {
                   setBeforeSessionId(e.target.value)
                 }
               }}
-              className="w-full bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-3 text-[#E5E5E5] focus:border-blue-500 focus:outline-none"
+              className="w-full bg-white border-2 border-black rounded-lg px-4 py-3 text-slate-900 focus:border-blue-500 focus:outline-none"
             >
               {!useDemoMode && <option value="">Select a session...</option>}
               {sessionOptions.map(option => (
@@ -12633,7 +12603,7 @@ function PhotoComparisonSection() {
           </div>
           
           <div>
-            <label className="block text-xs font-bold text-[#888] uppercase tracking-wider mb-2">
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
               After (Newer)
             </label>
             <select
@@ -12645,7 +12615,7 @@ function PhotoComparisonSection() {
                   setAfterSessionId(e.target.value)
                 }
               }}
-              className="w-full bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-4 py-3 text-[#E5E5E5] focus:border-blue-500 focus:outline-none"
+              className="w-full bg-white border-2 border-black rounded-lg px-4 py-3 text-slate-900 focus:border-blue-500 focus:outline-none"
             >
               {!useDemoMode && <option value="">Select a session...</option>}
               {sessionOptions.map(option => (
@@ -12658,7 +12628,7 @@ function PhotoComparisonSection() {
         </div>
         
         {/* ELITE SHOOTERS DATABASE - Right under session selectors */}
-        <div className="mt-4 pt-4 border-t border-[#3a3a3a]">
+        <div className="mt-4 pt-4 border-t border-black">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Trophy className="w-5 h-5 text-[#FF6B35]" />
@@ -12666,7 +12636,7 @@ function PhotoComparisonSection() {
                 Elite Shooters Database
               </label>
             </div>
-            <span className="text-xs text-[#888] bg-[#1a1a1a] px-2 py-1 rounded-full">
+            <span className="text-xs text-slate-500 bg-white px-2 py-1 rounded-full">
               {ALL_ELITE_SHOOTERS.length} players
             </span>
           </div>
@@ -12675,13 +12645,13 @@ function PhotoComparisonSection() {
           <div className="flex flex-col gap-3 mb-4">
             {/* Search */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#666]" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
               <input
                 type="text"
                 placeholder="Search by name, team, or position..."
                 value={eliteSearchQuery}
                 onChange={(e) => setEliteSearchQuery(e.target.value)}
-                className="w-full bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg pl-9 pr-4 py-2.5 text-sm text-[#E5E5E5] placeholder-[#666] focus:border-[#FF6B35] focus:outline-none"
+                className="w-full bg-white border-2 border-black rounded-lg pl-9 pr-4 py-2.5 text-sm text-slate-900 placeholder-[#666] focus:border-[#FF6B35] focus:outline-none"
               />
             </div>
             
@@ -12691,7 +12661,7 @@ function PhotoComparisonSection() {
               <select
                 value={selectedLeague}
                 onChange={(e) => setSelectedLeague(e.target.value)}
-                className="flex-1 bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-3 py-2 text-sm text-[#E5E5E5] focus:border-[#FF6B35] focus:outline-none cursor-pointer"
+                className="flex-1 bg-white border-2 border-black rounded-lg px-3 py-2 text-sm text-slate-900 focus:border-[#FF6B35] focus:outline-none cursor-pointer"
               >
                 {leagueOptions.map(option => (
                   <option key={option.value} value={option.value}>
@@ -12704,7 +12674,7 @@ function PhotoComparisonSection() {
               <select
                 value={selectedTier}
                 onChange={(e) => setSelectedTier(e.target.value)}
-                className="flex-1 bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg px-3 py-2 text-sm text-[#E5E5E5] focus:border-[#FF6B35] focus:outline-none cursor-pointer"
+                className="flex-1 bg-white border-2 border-black rounded-lg px-3 py-2 text-sm text-slate-900 focus:border-[#FF6B35] focus:outline-none cursor-pointer"
               >
                 {tierOptions.map(option => (
                   <option key={option.value} value={option.value}>
@@ -12717,7 +12687,7 @@ function PhotoComparisonSection() {
           
           {/* Results Count */}
           <div className="flex items-center justify-between mb-3">
-            <p className="text-xs text-[#888]">
+            <p className="text-xs text-slate-500">
               Showing {visibleShooters.length} of {filteredEliteShooters.length} players
             </p>
             {(selectedLeague !== 'ALL' || selectedTier !== 'ALL' || eliteSearchQuery) && (
@@ -12745,7 +12715,7 @@ function PhotoComparisonSection() {
                   className={`group relative p-3 rounded-xl border transition-all text-left overflow-hidden ${
                     selectedEliteShooter?.id === shooter.id
                       ? 'bg-gradient-to-br from-[#FF6B35]/20 to-[#FF4500]/10 border-[#FF6B35] ring-2 ring-[#FF6B35]/50 scale-[1.02]'
-                      : 'bg-[#1a1a1a] border-[#2a2a2a] hover:border-[#FF6B35]/50 hover:bg-[#222]'
+                      : 'bg-white border-black hover:border-[#FF6B35]/50 hover:bg-slate-100'
                   }`}
                 >
                   {/* Form Images Badge */}
@@ -12776,29 +12746,29 @@ function PhotoComparisonSection() {
                     </div>
                     
                     {/* Name */}
-                    <p className="text-[11px] font-bold text-[#E5E5E5] text-center truncate w-full group-hover:text-white transition-colors">
+                    <p className="text-[11px] font-bold text-slate-900 text-center truncate w-full group-hover:text-slate-900 transition-colors">
                       {shooter.name}
                     </p>
                     
                     {/* Tier Badge - Improved Design */}
                     <span className={`text-[9px] font-black px-2 py-0.5 rounded-full mt-1.5 uppercase tracking-wider ${
                       shooter.tier === 'legendary' 
-                        ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-white shadow-lg shadow-[#FF6B35]/30' 
+                        ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-slate-900 shadow-lg shadow-[#FF6B35]/30' 
                         : shooter.tier === 'elite' 
-                        ? 'bg-gradient-to-r from-purple-600 to-purple-500 text-white shadow-lg shadow-purple-500/30' 
+                        ? 'bg-gradient-to-r from-purple-600 to-purple-500 text-slate-900 shadow-lg shadow-purple-500/30' 
                         : shooter.tier === 'great'
-                        ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-white'
+                        ? 'bg-gradient-to-r from-amber-600 to-amber-500 text-slate-900'
                         : shooter.tier === 'good'
-                        ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white'
+                        ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-slate-900'
                         : shooter.tier === 'mid_level'
-                        ? 'bg-[#3a3a3a] text-[#999]'
-                        : 'bg-[#2a2a2a] text-[#666]'
+                        ? 'bg-slate-200 text-slate-500'
+                        : 'bg-white text-slate-500'
                     }`}>
                       {shooter.tier?.replace('_', ' ')}
                     </span>
                     
                     {/* Score - subtle */}
-                    <span className="text-[8px] text-[#666] mt-1">
+                    <span className="text-[8px] text-slate-500 mt-1">
                       {shooter.overallScore} pts
                     </span>
                   </div>
@@ -12811,7 +12781,7 @@ function PhotoComparisonSection() {
           {visibleShooters.length < filteredEliteShooters.length && (
             <button
               onClick={() => setVisibleCount(prev => prev + 20)}
-              className="w-full mt-3 py-2.5 bg-[#1a1a1a] hover:bg-[#252525] border border-[#3a3a3a] rounded-lg text-sm text-[#888] hover:text-[#FF6B35] transition-all whitespace-nowrap"
+              className="w-full mt-3 py-2.5 bg-white hover:bg-[#252525] border-2 border-black rounded-lg text-sm text-slate-500 hover:text-[#FF6B35] transition-all whitespace-nowrap"
             >
               More +{filteredEliteShooters.length - visibleShooters.length}
             </button>
@@ -12820,7 +12790,7 @@ function PhotoComparisonSection() {
           {filteredEliteShooters.length === 0 && (
             <div className="text-center py-8">
               <User className="w-10 h-10 text-[#444] mx-auto mb-2" />
-              <p className="text-[#888] text-sm">No players found matching your filters</p>
+              <p className="text-slate-500 text-sm">No players found matching your filters</p>
               <button
                 onClick={() => {
                   setSelectedLeague('ALL')
@@ -12849,7 +12819,7 @@ function PhotoComparisonSection() {
             )}
             <div className="flex-1">
               <h3 className="text-lg font-black text-[#FF6B35]">{selectedEliteShooter.name}</h3>
-              <p className="text-sm text-[#888]">{selectedEliteShooter.team} • {selectedEliteShooter.position?.replace('_', ' ')}</p>
+              <p className="text-sm text-slate-500">{selectedEliteShooter.team} • {selectedEliteShooter.position?.replace('_', ' ')}</p>
               {selectedEliteShooter.keyTraits && (
                 <div className="flex flex-wrap gap-1 mt-1">
                   {selectedEliteShooter.keyTraits.slice(0, 3).map((trait, i) => (
@@ -12862,7 +12832,7 @@ function PhotoComparisonSection() {
             </div>
             <div className="text-right">
               <p className="text-2xl font-black text-[#FF6B35]">{selectedEliteShooter.careerPct}%</p>
-              <p className="text-[10px] text-[#888]">Career 3PT%</p>
+              <p className="text-[10px] text-slate-500">Career 3PT%</p>
             </div>
           </div>
         </div>
@@ -12884,9 +12854,9 @@ function PhotoComparisonSection() {
             <AlertTriangle className="w-6 h-6 text-orange-400 flex-shrink-0" />
             <div>
               <p className="text-orange-400 font-bold">No Image Available</p>
-              <p className="text-sm text-[#888]">Upload a shooting image to compare your form with {selectedEliteShooter.name}</p>
+              <p className="text-sm text-slate-500">Upload a shooting image to compare your form with {selectedEliteShooter.name}</p>
             </div>
-            <Link href="/?mode=image" className="ml-auto px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-bold text-sm">
+            <Link href="/?mode=image" className="ml-auto px-4 py-2 bg-orange-500 hover:bg-orange-600 text-slate-900 rounded-lg font-bold text-sm">
               Upload
             </Link>
           </div>
@@ -12903,23 +12873,23 @@ function PhotoComparisonSection() {
       
       
       {/* Comparison Tips */}
-      <div className="bg-[#2C2C2C] rounded-xl p-6 border border-[#3a3a3a]">
+      <div className="bg-white rounded-xl p-6 border-2 border-black">
         <h3 className="text-lg font-bold text-[#FF6B35] mb-4 flex items-center gap-2">
           <Lightbulb className="w-5 h-5" />
           What to Look For
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
-            <h4 className="font-bold text-[#E5E5E5] mb-2">Elbow Position</h4>
-            <p className="text-sm text-[#888]">Compare how your elbow alignment has improved. Look for a more tucked position under the ball.</p>
+          <div className="bg-white rounded-lg p-4 border-2 border-black">
+            <h4 className="font-bold text-slate-900 mb-2">Elbow Position</h4>
+            <p className="text-sm text-slate-500">Compare how your elbow alignment has improved. Look for a more tucked position under the ball.</p>
           </div>
-          <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
-            <h4 className="font-bold text-[#E5E5E5] mb-2">Balance & Stance</h4>
-            <p className="text-sm text-[#888]">Check if your base is more stable. Feet should be shoulder-width apart with good knee bend.</p>
+          <div className="bg-white rounded-lg p-4 border-2 border-black">
+            <h4 className="font-bold text-slate-900 mb-2">Balance & Stance</h4>
+            <p className="text-sm text-slate-500">Check if your base is more stable. Feet should be shoulder-width apart with good knee bend.</p>
           </div>
-          <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a]">
-            <h4 className="font-bold text-[#E5E5E5] mb-2">Follow-Through</h4>
-            <p className="text-sm text-[#888]">Look at your release and follow-through. The arm should extend fully toward the basket.</p>
+          <div className="bg-white rounded-lg p-4 border-2 border-black">
+            <h4 className="font-bold text-slate-900 mb-2">Follow-Through</h4>
+            <p className="text-sm text-slate-500">Look at your release and follow-through. The arm should extend fully toward the basket.</p>
           </div>
         </div>
       </div>
@@ -12931,10 +12901,10 @@ function PhotoComparisonSection() {
 export default function DemoResultsPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-[#FF6B35] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-[#888]">Loading...</p>
+          <p className="text-slate-500">Loading...</p>
         </div>
       </div>
     }>

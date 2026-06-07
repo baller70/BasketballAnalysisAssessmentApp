@@ -66,9 +66,9 @@ export function ProfileCard({
       transition={{ duration: 0.3, ease: "easeInOut" }}
       className="w-full max-w-md mx-auto"
     >
-      <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl shadow-xl overflow-hidden">
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
         {/* Progress Bar */}
-        <div className="h-2 bg-[#2a2a2a]">
+        <div className="h-2 bg-slate-100">
           <motion.div
             className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF8C5A]"
             initial={{ width: 0 }}
@@ -101,13 +101,13 @@ export function ProfileCard({
                 {icon}
               </div>
             )}
-            <h2 className="text-2xl font-bold text-white">
+            <h2 className="text-2xl font-bold text-slate-900">
               {title}
             </h2>
           </div>
           
           {subtitle && (
-            <p className="text-gray-400 text-sm">
+            <p className="text-slate-500 text-sm">
               {subtitle}
             </p>
           )}
@@ -115,7 +115,7 @@ export function ProfileCard({
         
         {/* Educational Text */}
         <div className="px-6 pb-4">
-          <p className="text-gray-300 text-sm leading-relaxed bg-[#FF6B35]/10 rounded-lg p-3 border-l-4 border-[#FF6B35]">
+          <p className="text-slate-700 text-sm leading-relaxed bg-[#FF6B35]/10 rounded-lg p-3 border-l-4 border-[#FF6B35]">
             {educationalText}
           </p>
         </div>
@@ -149,8 +149,8 @@ export function ProfileCard({
             className={`
               flex items-center gap-2 px-4 py-3 rounded-xl font-medium transition-all
               ${currentStep === 1
-                ? "text-gray-600 cursor-not-allowed"
-                : "text-gray-300 hover:bg-[#2a2a2a]"
+                ? "text-slate-400 cursor-not-allowed"
+                : "text-slate-700 hover:bg-slate-50"
               }
             `}
             aria-label="Go back"
@@ -166,7 +166,7 @@ export function ProfileCard({
               flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all
               ${canProceed
                 ? "bg-[#FF6B35] text-white hover:bg-[#FF8C5A] shadow-lg shadow-[#FF6B35]/30"
-                : "bg-[#2a2a2a] text-gray-500 cursor-not-allowed"
+                : "bg-slate-100 text-slate-400 cursor-not-allowed"
               }
             `}
             aria-label={currentStep === totalSteps ? "Complete profile" : "Go to next step"}
@@ -178,7 +178,7 @@ export function ProfileCard({
       </div>
       
       {/* Swipe Hint (mobile) */}
-      <p className="text-center text-gray-500 text-xs mt-4 md:hidden">
+      <p className="text-center text-slate-500 text-xs mt-4 md:hidden">
         Swipe left or right to navigate
       </p>
     </motion.div>

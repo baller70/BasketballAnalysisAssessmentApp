@@ -87,7 +87,7 @@ export function AvatarCard({
       <div className="flex flex-col items-center space-y-6">
         {/* Avatar Preview */}
         <div className="relative">
-          <div className="w-36 h-36 rounded-full overflow-hidden bg-gradient-to-br from-[#FF6B35] to-[#FF4500] flex items-center justify-center shadow-xl shadow-[#FF6B35]/30 ring-4 ring-[#3a3a3a]">
+          <div className="w-36 h-36 rounded-full overflow-hidden bg-gradient-to-br from-[#FF6B35] to-[#FF4500] flex items-center justify-center shadow-xl shadow-[#FF6B35]/30 ring-4 ring-slate-200">
             {avatarPreview ? (
               <Image
                 src={avatarPreview}
@@ -131,7 +131,7 @@ export function AvatarCard({
           {avatarPreview && (
             <button
               onClick={handleRemoveAvatar}
-              className="flex items-center justify-center gap-2 px-5 py-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-xl font-semibold transition-all border border-red-500/30 whitespace-nowrap"
+              className="flex items-center justify-center gap-2 px-5 py-3 bg-red-50 hover:bg-red-100 text-red-500 rounded-xl font-semibold transition-all border border-red-200 whitespace-nowrap"
             >
               <Trash2 className="w-5 h-5" />
               Remove
@@ -140,12 +140,12 @@ export function AvatarCard({
         </div>
         
         {/* Skip hint */}
-        <p className="text-xs text-[#666] text-center">
+        <p className="text-xs text-slate-400 text-center">
           This step is optional. You can skip it and add a photo later in Settings.
         </p>
         
         {/* File info */}
-        <div className="text-xs text-[#888] text-center space-y-1">
+        <div className="text-xs text-slate-500 text-center space-y-1">
           <p>Supported formats: JPG, PNG, GIF, WebP</p>
           <p>Maximum file size: 5MB</p>
         </div>

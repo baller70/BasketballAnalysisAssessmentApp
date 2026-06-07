@@ -30,47 +30,48 @@ export function TierMilestonesPopup({ isOpen, onClose }: TierMilestonesPopupProp
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4"
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
       >
         <motion.div
-          className="relative w-full max-w-lg bg-gradient-to-b from-[#1a1a1a] to-[#0d0d0d] rounded-2xl border border-white/10 overflow-hidden max-h-[90vh] overflow-y-auto"
+          className="relative w-full max-w-lg bg-white rounded-2xl border border-slate-300 shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
+          style={{ boxShadow: '0 25px 50px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.04)' }}
           initial={{ scale: 0.9, y: 20 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.9, y: 20 }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="sticky top-0 z-10 bg-gradient-to-b from-[#1a1a1a] to-[#1a1a1a]/95 backdrop-blur-sm p-6 pb-4 border-b border-white/10">
+          <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm p-6 pb-4 border-b border-slate-300">
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-300 flex items-center justify-center transition-colors shadow-sm"
             >
-              <X className="w-4 h-4 text-white/60" />
+              <X className="w-4 h-4 text-slate-600" />
             </button>
             
-            <h2 className="text-2xl font-black text-white tracking-tight">
+            <h2 className="text-2xl font-black text-slate-900 tracking-tight">
               TIER MILESTONES
             </h2>
-            <p className="text-white/50 text-sm mt-1">
+            <p className="text-slate-600 text-sm mt-1 font-medium">
               Earn IQ Points to unlock higher tiers and exclusive features
             </p>
             
             {/* Current points display */}
-            <div className="mt-4 flex items-center gap-3 p-3 rounded-xl bg-[#FF6B35]/10 border border-[#FF6B35]/30">
-              <div className="w-10 h-10 rounded-full bg-[#FF6B35]/20 flex items-center justify-center">
-                <Zap className="w-5 h-5 text-[#FF6B35]" />
+            <div className="mt-4 flex items-center gap-3 p-3 rounded-xl bg-[#FF6B35]/5 border border-[#FF6B35]/25">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#E55A2B] flex items-center justify-center shadow-md shadow-[#FF6B35]/20">
+                <Zap className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="text-white/50 text-xs uppercase tracking-wider">Your IQ Points</p>
-                <p className="text-2xl font-black text-white">{state.totalPoints.toLocaleString()}</p>
+                <p className="text-slate-500 text-xs uppercase tracking-wider font-semibold">Your IQ Points</p>
+                <p className="text-2xl font-black text-slate-900">{state.totalPoints.toLocaleString()}</p>
               </div>
               <div className="ml-auto text-right">
-                <p className="text-white/50 text-xs uppercase tracking-wider">Current Tier</p>
-                <p className="font-bold" style={{ color: currentTier.color }}>{currentTier.displayName}</p>
+                <p className="text-slate-500 text-xs uppercase tracking-wider font-semibold">Current Tier</p>
+                <p className="font-bold text-base" style={{ color: currentTier.color }}>{currentTier.displayName}</p>
               </div>
             </div>
           </div>
@@ -90,15 +91,15 @@ export function TierMilestonesPopup({ isOpen, onClose }: TierMilestonesPopupProp
                   key={tierId}
                   className={`relative rounded-xl overflow-hidden transition-all ${
                     isCurrent 
-                      ? 'ring-2 ring-offset-2 ring-offset-[#0d0d0d]' 
+                      ? 'ring-2 ring-offset-2 ring-offset-white' 
                       : isNext
-                      ? 'ring-1 ring-white/20'
+                      ? 'ring-1 ring-slate-200'
                       : ''
                   }`}
                   style={{
                     background: isUnlocked 
                       ? `linear-gradient(135deg, ${tier.color}15 0%, ${tier.color}05 100%)`
-                      : 'rgba(255,255,255,0.02)',
+                      : 'rgba(241,245,249,0.5)',
                     ...(isCurrent ? { ringColor: tier.color } : {}),
                   }}
                   initial={{ opacity: 0, x: -20 }}
@@ -115,26 +116,26 @@ export function TierMilestonesPopup({ isOpen, onClose }: TierMilestonesPopupProp
                         style={{
                           background: isUnlocked 
                             ? `linear-gradient(135deg, ${tier.color}, ${tier.color}80)`
-                            : 'rgba(255,255,255,0.1)',
+                            : 'rgba(241,245,249,1)',
                           boxShadow: isUnlocked ? `0 0 20px ${tier.color}40` : 'none',
                         }}
                       >
-                        <div style={{ color: isUnlocked ? '#fff' : '#666' }}>
+                        <div style={{ color: isUnlocked ? '#fff' : '#94a3b8' }}>
                           {tierIcons[tierId]}
                         </div>
                       </div>
 
                       {/* Tier info */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex items-center gap-2 mb-1.5">
                           <h3 
-                            className={`font-bold text-lg ${isUnlocked ? '' : 'text-white/40'}`}
+                            className={`font-bold text-lg ${isUnlocked ? '' : 'text-slate-400'}`}
                             style={{ color: isUnlocked ? tier.color : undefined }}
                           >
                             {tier.displayName}
                           </h3>
                           {isCurrent && (
-                            <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-white/10 text-white/70">
+                            <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-slate-100 text-slate-600 border border-slate-200">
                               Current
                             </span>
                           )}
@@ -147,20 +148,20 @@ export function TierMilestonesPopup({ isOpen, onClose }: TierMilestonesPopupProp
 
                         {/* Points requirement */}
                         <div className="flex items-center gap-2 mb-2">
-                          <span className={`text-sm ${isUnlocked ? 'text-white/60' : 'text-white/30'}`}>
+                          <span className={`text-sm ${isUnlocked ? 'text-slate-600' : 'text-slate-400'}`}>
                             {tier.pointsRequired.toLocaleString()} points required
                           </span>
                           {isUnlocked ? (
                             <Check className="w-4 h-4 text-green-400" />
                           ) : (
-                            <Lock className="w-3 h-3 text-white/30" />
+                            <Lock className="w-3 h-3 text-slate-400" />
                           )}
                         </div>
 
                         {/* Progress bar for locked tiers */}
                         {!isUnlocked && (
                           <div className="mb-2">
-                            <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                            <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
                               <motion.div
                                 className="h-full rounded-full"
                                 style={{ background: tier.color }}
@@ -169,7 +170,7 @@ export function TierMilestonesPopup({ isOpen, onClose }: TierMilestonesPopupProp
                                 transition={{ duration: 0.8, delay: index * 0.1 }}
                               />
                             </div>
-                            <p className="text-xs text-white/40 mt-1">
+                            <p className="text-xs text-slate-400 mt-1">
                               {pointsNeeded > 0 ? `${pointsNeeded.toLocaleString()} more points needed` : 'Almost there!'}
                             </p>
                           </div>
@@ -180,14 +181,14 @@ export function TierMilestonesPopup({ isOpen, onClose }: TierMilestonesPopupProp
                           {tier.features.slice(0, 3).map((feature, fIndex) => (
                             <div 
                               key={fIndex}
-                              className={`flex items-center gap-2 text-xs ${isUnlocked ? 'text-white/60' : 'text-white/30'}`}
+                              className={`flex items-center gap-2 text-xs ${isUnlocked ? 'text-slate-600' : 'text-slate-400'}`}
                             >
                               <ChevronRight className="w-3 h-3 shrink-0" style={{ color: isUnlocked ? tier.color : undefined }} />
                               <span>{feature}</span>
                             </div>
                           ))}
                           {tier.features.length > 3 && (
-                            <p className={`text-xs ${isUnlocked ? 'text-white/40' : 'text-white/20'}`}>
+                            <p className={`text-xs ${isUnlocked ? 'text-slate-400' : 'text-slate-300'}`}>
                               +{tier.features.length - 3} more features
                             </p>
                           )}
@@ -195,7 +196,7 @@ export function TierMilestonesPopup({ isOpen, onClose }: TierMilestonesPopupProp
 
                         {/* Time reward info */}
                         {tier.initialTimeReward > 0 && (
-                          <div className={`mt-2 text-xs ${isUnlocked ? 'text-[#FF6B35]' : 'text-white/30'}`}>
+                          <div className={`mt-2 text-xs ${isUnlocked ? 'text-[#FF6B35]' : 'text-slate-400'}`}>
                             🎁 Unlock: +{tier.initialTimeReward} days access
                           </div>
                         )}
@@ -205,7 +206,7 @@ export function TierMilestonesPopup({ isOpen, onClose }: TierMilestonesPopupProp
 
                   {/* Connection line to next tier */}
                   {index < TIER_ORDER.length - 1 && (
-                    <div className="absolute -bottom-3 left-10 w-0.5 h-6 bg-white/10" />
+                    <div className="absolute -bottom-3 left-10 w-0.5 h-6 bg-slate-200" />
                   )}
                 </motion.div>
               )
@@ -213,10 +214,10 @@ export function TierMilestonesPopup({ isOpen, onClose }: TierMilestonesPopupProp
           </div>
 
           {/* Footer */}
-          <div className="sticky bottom-0 p-4 bg-gradient-to-t from-[#0d0d0d] to-transparent">
+          <div className="sticky bottom-0 p-4 bg-gradient-to-t from-white to-white/80 backdrop-blur-sm border-t border-slate-300">
             <button
               onClick={onClose}
-              className="w-full py-3 rounded-xl bg-[#FF6B35] text-white font-bold uppercase tracking-wider hover:bg-[#E55A2B] transition-colors"
+              className="w-full py-3 rounded-xl bg-[#FF6B35] text-white font-bold uppercase tracking-wider hover:bg-[#E55A2B] transition-colors shadow-lg shadow-[#FF6B35]/20"
             >
               Keep Earning Points
             </button>

@@ -1679,8 +1679,8 @@ function FrequencyInfoPopup({ frequency, onClose, onConfirm }: FrequencyPopupPro
   const data = FREQUENCY_RESEARCH[frequency]
   
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bg-[#1a1a1a] rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-[#3a3a3a] shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-200 shadow-lg">
         {/* Header */}
         <div className={`bg-gradient-to-r ${data.color} p-6 rounded-t-2xl`}>
           <div className="flex items-center justify-between">
@@ -1700,21 +1700,21 @@ function FrequencyInfoPopup({ frequency, onClose, onConfirm }: FrequencyPopupPro
         </div>
         
         {/* Stats */}
-        <div className="grid grid-cols-2 gap-4 p-6 border-b border-[#3a3a3a]">
-          <div className="bg-[#2a2a2a] rounded-xl p-4 text-center">
+        <div className="grid grid-cols-2 gap-4 p-6 border-b border-slate-200">
+          <div className="bg-slate-50 rounded-xl p-4 text-center">
             <TrendingUp className="w-8 h-8 text-green-400 mx-auto mb-2" />
             <p className="text-2xl font-black text-green-400">{data.improvement}</p>
-            <p className="text-[#888] text-sm">Expected Improvement</p>
+            <p className="text-slate-500 text-sm">Expected Improvement</p>
           </div>
-          <div className="bg-[#2a2a2a] rounded-xl p-4 text-center">
+          <div className="bg-slate-50 rounded-xl p-4 text-center">
             <Clock className="w-8 h-8 text-blue-400 mx-auto mb-2" />
             <p className="text-2xl font-black text-blue-400">{data.timeToResults}</p>
-            <p className="text-[#888] text-sm">Time to See Results</p>
+            <p className="text-slate-500 text-sm">Time to See Results</p>
           </div>
         </div>
         
         {/* Facts */}
-        <div className="p-6 border-b border-[#3a3a3a]">
+        <div className="p-6 border-b border-slate-200">
           <h3 className="text-[#FF6B35] font-bold mb-4 flex items-center gap-2">
             <Lightbulb className="w-5 h-5" />
             Research-Backed Facts
@@ -1723,30 +1723,30 @@ function FrequencyInfoPopup({ frequency, onClose, onConfirm }: FrequencyPopupPro
             {data.facts.map((fact, i) => (
               <li key={i} className="flex items-start gap-3">
                 <Check className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
-                <span className="text-[#E5E5E5]">{fact}</span>
+                <span className="text-slate-700">{fact}</span>
               </li>
             ))}
           </ul>
         </div>
         
         {/* Recommendation */}
-        <div className="p-6 border-b border-[#3a3a3a]">
+        <div className="p-6 border-b border-slate-200">
           <h3 className="text-[#FF6B35] font-bold mb-3 flex items-center gap-2">
             <Star className="w-5 h-5" />
             Our Recommendation
           </h3>
-          <p className="text-[#E5E5E5] bg-[#2a2a2a] rounded-xl p-4 border border-[#3a3a3a]">
+          <p className="text-slate-700 bg-slate-50 rounded-xl p-4 border border-slate-200">
             {data.recommendation}
           </p>
         </div>
         
         {/* Research Citation */}
-        <div className="p-6 border-b border-[#3a3a3a]">
-          <h3 className="text-[#888] font-bold mb-3 flex items-center gap-2">
+        <div className="p-6 border-b border-slate-200">
+          <h3 className="text-slate-500 font-bold mb-3 flex items-center gap-2">
             <BookOpen className="w-5 h-5" />
             Research Source
           </h3>
-          <p className="text-[#888] text-sm italic">
+          <p className="text-slate-500 text-sm italic">
             {data.research}
           </p>
         </div>
@@ -1755,7 +1755,7 @@ function FrequencyInfoPopup({ frequency, onClose, onConfirm }: FrequencyPopupPro
         <div className="p-6 flex gap-4">
           <button
             onClick={onClose}
-            className="flex-1 py-3 rounded-xl bg-[#2a2a2a] text-[#888] font-bold hover:bg-[#3a3a3a] transition-colors"
+            className="flex-1 py-3 rounded-xl bg-slate-50 text-slate-500 font-bold hover:bg-slate-100 transition-colors"
           >
             Choose Different Frequency
           </button>
@@ -1787,8 +1787,8 @@ function DrillCountInfoPopup({ drillCount, onClose, onConfirm }: DrillCountPopup
   const isWarning = drillCount >= 6
   
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bg-[#1a1a1a] rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-[#3a3a3a] shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-200 shadow-lg">
         {/* Header */}
         <div className={`bg-gradient-to-r ${data.color} p-6 rounded-t-2xl`}>
           <div className="flex items-center justify-between">
@@ -1830,18 +1830,18 @@ function DrillCountInfoPopup({ drillCount, onClose, onConfirm }: DrillCountPopup
         )}
         
         {/* Focus Level */}
-        <div className="grid grid-cols-1 gap-4 p-6 border-b border-[#3a3a3a]">
-          <div className="bg-[#2a2a2a] rounded-xl p-4 text-center">
+        <div className="grid grid-cols-1 gap-4 p-6 border-b border-slate-200">
+          <div className="bg-slate-50 rounded-xl p-4 text-center">
             <Target className={`w-8 h-8 mx-auto mb-2 ${isSweet ? 'text-green-400' : isWarning ? 'text-red-400' : 'text-blue-400'}`} />
             <p className={`text-2xl font-black ${isSweet ? 'text-green-400' : isWarning ? 'text-red-400' : 'text-blue-400'}`}>
               {data.focusLevel}
             </p>
-            <p className="text-[#888] text-sm">Focus Level</p>
+            <p className="text-slate-500 text-sm">Focus Level</p>
           </div>
         </div>
         
         {/* Facts */}
-        <div className="p-6 border-b border-[#3a3a3a]">
+        <div className="p-6 border-b border-slate-200">
           <h3 className="text-[#FF6B35] font-bold mb-4 flex items-center gap-2">
             <Lightbulb className="w-5 h-5" />
             Research-Backed Facts
@@ -1856,7 +1856,7 @@ function DrillCountInfoPopup({ drillCount, onClose, onConfirm }: DrillCountPopup
                 ) : (
                   <Check className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
                 )}
-                <span className={`${fact.includes('SWEET SPOT') ? 'text-green-400 font-bold' : 'text-[#E5E5E5]'}`}>
+                <span className={`${fact.includes('SWEET SPOT') ? 'text-green-400 font-bold' : 'text-slate-700'}`}>
                   {fact}
                 </span>
               </li>
@@ -1865,27 +1865,27 @@ function DrillCountInfoPopup({ drillCount, onClose, onConfirm }: DrillCountPopup
         </div>
         
         {/* Recommendation */}
-        <div className="p-6 border-b border-[#3a3a3a]">
+        <div className="p-6 border-b border-slate-200">
           <h3 className="text-[#FF6B35] font-bold mb-3 flex items-center gap-2">
             <Star className="w-5 h-5" />
             Our Recommendation
           </h3>
-          <p className={`bg-[#2a2a2a] rounded-xl p-4 border ${
+          <p className={`bg-slate-50 rounded-xl p-4 border ${
             isSweet ? 'border-green-500/50 text-green-400' : 
             isWarning ? 'border-red-500/50 text-red-400' : 
-            'border-[#3a3a3a] text-[#E5E5E5]'
+            'border-slate-200 text-slate-700'
           }`}>
             {data.recommendation}
           </p>
         </div>
         
         {/* Research Citation */}
-        <div className="p-6 border-b border-[#3a3a3a]">
-          <h3 className="text-[#888] font-bold mb-3 flex items-center gap-2">
+        <div className="p-6 border-b border-slate-200">
+          <h3 className="text-slate-500 font-bold mb-3 flex items-center gap-2">
             <BookOpen className="w-5 h-5" />
             Research Source
           </h3>
-          <p className="text-[#888] text-sm italic">
+          <p className="text-slate-500 text-sm italic">
             {data.research}
           </p>
         </div>
@@ -1894,7 +1894,7 @@ function DrillCountInfoPopup({ drillCount, onClose, onConfirm }: DrillCountPopup
         <div className="p-6 flex gap-4">
           <button
             onClick={onClose}
-            className="flex-1 py-3 rounded-xl bg-[#2a2a2a] text-[#888] font-bold hover:bg-[#3a3a3a] transition-colors"
+            className="flex-1 py-3 rounded-xl bg-slate-50 text-slate-500 font-bold hover:bg-slate-100 transition-colors"
           >
             CHOOSE DIFFERENT COUNT
           </button>
@@ -1934,8 +1934,8 @@ function DurationInfoPopup({ duration, frequency, onClose, onConfirm }: Duration
   }
   
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bg-[#1a1a1a] rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-[#3a3a3a] shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-200 shadow-lg">
         {/* Header */}
         <div className={`bg-gradient-to-r ${data.color} p-6 rounded-t-2xl`}>
           <div className="flex items-center justify-between">
@@ -1977,29 +1977,29 @@ function DurationInfoPopup({ duration, frequency, onClose, onConfirm }: Duration
         )}
         
         {/* Quality Level */}
-        <div className="grid grid-cols-1 gap-4 p-6 border-b border-[#3a3a3a]">
-          <div className="bg-[#2a2a2a] rounded-xl p-4 text-center">
+        <div className="grid grid-cols-1 gap-4 p-6 border-b border-slate-200">
+          <div className="bg-slate-50 rounded-xl p-4 text-center">
             <Timer className={`w-8 h-8 mx-auto mb-2 ${isSweet ? 'text-green-400' : isWarning ? 'text-amber-400' : 'text-blue-400'}`} />
             <p className={`text-2xl font-black ${isSweet ? 'text-green-400' : isWarning ? 'text-amber-400' : 'text-blue-400'}`}>
               {data.quality}
             </p>
-            <p className="text-[#888] text-sm">SESSION QUALITY</p>
+            <p className="text-slate-500 text-sm">SESSION QUALITY</p>
           </div>
         </div>
         
         {/* Frequency-Specific Note */}
-        <div className="p-6 border-b border-[#3a3a3a] bg-[#2a2a2a]/50">
+        <div className="p-6 border-b border-slate-200 bg-slate-50/50">
           <h3 className="text-[#FF6B35] font-bold mb-3 flex items-center gap-2">
             <Calendar className="w-5 h-5" />
             BASED ON YOUR {frequency}X/WEEK FREQUENCY
           </h3>
-          <p className="text-[#E5E5E5] bg-[#1a1a1a] rounded-xl p-4 border border-[#3a3a3a]">
+          <p className="text-slate-700 bg-white rounded-xl p-4 border border-slate-200">
             {getFrequencyNote()}
           </p>
         </div>
         
         {/* Facts */}
-        <div className="p-6 border-b border-[#3a3a3a]">
+        <div className="p-6 border-b border-slate-200">
           <h3 className="text-[#FF6B35] font-bold mb-4 flex items-center gap-2">
             <Lightbulb className="w-5 h-5" />
             RESEARCH-BACKED FACTS
@@ -2014,7 +2014,7 @@ function DurationInfoPopup({ duration, frequency, onClose, onConfirm }: Duration
                 ) : (
                   <Check className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
                 )}
-                <span className={`${fact.includes('SWEET SPOT') || fact.includes('OPTIMAL') ? 'text-green-400 font-bold' : 'text-[#E5E5E5]'}`}>
+                <span className={`${fact.includes('SWEET SPOT') || fact.includes('OPTIMAL') ? 'text-green-400 font-bold' : 'text-slate-700'}`}>
                   {fact}
                 </span>
               </li>
@@ -2023,27 +2023,27 @@ function DurationInfoPopup({ duration, frequency, onClose, onConfirm }: Duration
         </div>
         
         {/* Recommendation */}
-        <div className="p-6 border-b border-[#3a3a3a]">
+        <div className="p-6 border-b border-slate-200">
           <h3 className="text-[#FF6B35] font-bold mb-3 flex items-center gap-2">
             <Star className="w-5 h-5" />
             OUR RECOMMENDATION
           </h3>
-          <p className={`bg-[#2a2a2a] rounded-xl p-4 border ${
+          <p className={`bg-slate-50 rounded-xl p-4 border ${
             isSweet ? 'border-green-500/50 text-green-400' : 
             isWarning ? 'border-amber-500/50 text-amber-400' : 
-            'border-[#3a3a3a] text-[#E5E5E5]'
+            'border-slate-200 text-slate-700'
           }`}>
             {data.recommendation}
           </p>
         </div>
         
         {/* Research Citation */}
-        <div className="p-6 border-b border-[#3a3a3a]">
-          <h3 className="text-[#888] font-bold mb-3 flex items-center gap-2">
+        <div className="p-6 border-b border-slate-200">
+          <h3 className="text-slate-500 font-bold mb-3 flex items-center gap-2">
             <BookOpen className="w-5 h-5" />
             RESEARCH SOURCE
           </h3>
-          <p className="text-[#888] text-sm italic">
+          <p className="text-slate-500 text-sm italic">
             {data.research}
           </p>
         </div>
@@ -2052,7 +2052,7 @@ function DurationInfoPopup({ duration, frequency, onClose, onConfirm }: Duration
         <div className="p-6 flex gap-4">
           <button
             onClick={onClose}
-            className="flex-1 py-3 rounded-xl bg-[#2a2a2a] text-[#888] font-bold hover:bg-[#3a3a3a] transition-colors"
+            className="flex-1 py-3 rounded-xl bg-slate-50 text-slate-500 font-bold hover:bg-slate-100 transition-colors"
           >
             CHOOSE DIFFERENT DURATION
           </button>
@@ -2083,8 +2083,8 @@ function AgeLevelInfoPopup({ ageLevel, onClose, onConfirm }: AgeLevelPopupProps)
   const config = AGE_LEVEL_CONFIG[ageLevel]
   
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bg-[#1a1a1a] rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-[#3a3a3a] shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-200 shadow-lg">
         {/* Header */}
         <div className={`bg-gradient-to-r ${data.color} p-6 rounded-t-2xl`}>
           <div className="flex items-center justify-between">
@@ -2115,7 +2115,7 @@ function AgeLevelInfoPopup({ ageLevel, onClose, onConfirm }: AgeLevelPopupProps)
         </div>
         
         {/* Key Facts */}
-        <div className="p-6 border-b border-[#3a3a3a]">
+        <div className="p-6 border-b border-slate-200">
           <h3 className="text-[#FF6B35] font-bold mb-4 flex items-center gap-2">
             <Lightbulb className="w-5 h-5" />
             KEY FACTS FOR THIS LEVEL
@@ -2124,14 +2124,14 @@ function AgeLevelInfoPopup({ ageLevel, onClose, onConfirm }: AgeLevelPopupProps)
             {data.facts.map((fact, i) => (
               <li key={i} className="flex items-start gap-3">
                 <Check className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
-                <span className="text-[#E5E5E5]">{fact}</span>
+                <span className="text-slate-700">{fact}</span>
               </li>
             ))}
           </ul>
         </div>
         
         {/* Physical Considerations */}
-        <div className="p-6 border-b border-[#3a3a3a]">
+        <div className="p-6 border-b border-slate-200">
           <h3 className="text-blue-400 font-bold mb-4 flex items-center gap-2">
             <Dumbbell className="w-5 h-5" />
             PHYSICAL CONSIDERATIONS
@@ -2140,14 +2140,14 @@ function AgeLevelInfoPopup({ ageLevel, onClose, onConfirm }: AgeLevelPopupProps)
             {data.physicalConsiderations.map((item, i) => (
               <li key={i} className="flex items-start gap-3 bg-blue-500/10 rounded-lg p-3 border border-blue-500/20">
                 <CircleDot className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
-                <span className="text-[#E5E5E5] text-sm">{item}</span>
+                <span className="text-slate-700 text-sm">{item}</span>
               </li>
             ))}
           </ul>
         </div>
         
         {/* Mental Considerations */}
-        <div className="p-6 border-b border-[#3a3a3a]">
+        <div className="p-6 border-b border-slate-200">
           <h3 className="text-purple-400 font-bold mb-4 flex items-center gap-2">
             <Eye className="w-5 h-5" />
             MENTAL CONSIDERATIONS
@@ -2156,14 +2156,14 @@ function AgeLevelInfoPopup({ ageLevel, onClose, onConfirm }: AgeLevelPopupProps)
             {data.mentalConsiderations.map((item, i) => (
               <li key={i} className="flex items-start gap-3 bg-purple-500/10 rounded-lg p-3 border border-purple-500/20">
                 <CircleDot className="w-4 h-4 text-purple-400 flex-shrink-0 mt-0.5" />
-                <span className="text-[#E5E5E5] text-sm">{item}</span>
+                <span className="text-slate-700 text-sm">{item}</span>
               </li>
             ))}
           </ul>
         </div>
         
         {/* Recommendation */}
-        <div className="p-6 border-b border-[#3a3a3a]">
+        <div className="p-6 border-b border-slate-200">
           <h3 className="text-[#FF6B35] font-bold mb-3 flex items-center gap-2">
             <Star className="w-5 h-5" />
             OUR RECOMMENDATION
@@ -2174,18 +2174,18 @@ function AgeLevelInfoPopup({ ageLevel, onClose, onConfirm }: AgeLevelPopupProps)
         </div>
         
         {/* Research Citation */}
-        <div className="p-6 border-b border-[#3a3a3a]">
-          <h3 className="text-[#888] font-bold mb-3 flex items-center gap-2">
+        <div className="p-6 border-b border-slate-200">
+          <h3 className="text-slate-500 font-bold mb-3 flex items-center gap-2">
             <BookOpen className="w-5 h-5" />
             RESEARCH SOURCE
           </h3>
-          <p className="text-[#888] text-sm italic">
+          <p className="text-slate-500 text-sm italic">
             {data.research}
           </p>
         </div>
         
         {/* Tips for this level */}
-        <div className="p-6 border-b border-[#3a3a3a]">
+        <div className="p-6 border-b border-slate-200">
           <h3 className="text-green-400 font-bold mb-3 flex items-center gap-2">
             <Target className="w-5 h-5" />
             TIPS FOR {config.name.toUpperCase()} PLAYERS
@@ -2194,7 +2194,7 @@ function AgeLevelInfoPopup({ ageLevel, onClose, onConfirm }: AgeLevelPopupProps)
             {config.tips.map((tip, i) => (
               <div key={i} className="flex items-start gap-2 bg-green-500/10 rounded-lg p-3 border border-green-500/20">
                 <Check className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
-                <span className="text-[#E5E5E5] text-sm">{tip}</span>
+                <span className="text-slate-700 text-sm">{tip}</span>
               </div>
             ))}
           </div>
@@ -2204,7 +2204,7 @@ function AgeLevelInfoPopup({ ageLevel, onClose, onConfirm }: AgeLevelPopupProps)
         <div className="p-6 flex gap-4">
           <button
             onClick={onClose}
-            className="flex-1 py-3 rounded-xl bg-[#2a2a2a] text-[#888] font-bold hover:bg-[#3a3a3a] transition-colors"
+            className="flex-1 py-3 rounded-xl bg-slate-50 text-slate-500 font-bold hover:bg-slate-100 transition-colors"
           >
             CHOOSE DIFFERENT LEVEL
           </button>
@@ -2237,7 +2237,7 @@ function DrillExplanationPopup({ drill, onClose }: DrillExplanationPopupProps) {
     balance: { bg: 'bg-orange-500/20', text: 'text-orange-400', border: 'border-orange-500/30' },
     power: { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/30' },
     knee: { bg: 'bg-cyan-500/20', text: 'text-cyan-400', border: 'border-cyan-500/30' },
-    general: { bg: 'bg-[#3a3a3a]', text: 'text-[#888]', border: 'border-[#3a3a3a]' }
+    general: { bg: 'bg-slate-100', text: 'text-slate-500', border: 'border-slate-200' }
   }
   
   const colors = focusAreaColors[drill.focusArea] || focusAreaColors.general
@@ -2357,8 +2357,8 @@ function DrillExplanationPopup({ drill, onClose }: DrillExplanationPopupProps) {
   const keyPoints = getKeyPoints()
   
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="bg-[#1a1a1a] rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-[#3a3a3a] shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto border border-slate-200 shadow-lg">
         {/* Header */}
         <div className={`${colors.bg} p-6 rounded-t-2xl border-b ${colors.border}`}>
           <div className="flex items-center justify-between">
@@ -2367,12 +2367,12 @@ function DrillExplanationPopup({ drill, onClose }: DrillExplanationPopupProps) {
                 <Target className={`w-8 h-8 ${colors.text}`} />
               </div>
               <div>
-                <h2 className="text-xl font-black text-white uppercase">{drill.name}</h2>
+                <h2 className="text-xl font-black text-slate-900 uppercase">{drill.name}</h2>
                 <div className="flex items-center gap-2 mt-1">
                   <span className={`text-xs px-2 py-0.5 rounded-full uppercase ${colors.bg} ${colors.text} border ${colors.border}`}>
                     {drill.focusArea.replace('-', ' ')}
                   </span>
-                  <span className="text-[#888] text-sm flex items-center gap-1">
+                  <span className="text-slate-500 text-sm flex items-center gap-1">
                     <Clock className="w-3 h-3" />
                     {Math.ceil(drill.duration / 60)} MINUTES
                   </span>
@@ -2386,13 +2386,13 @@ function DrillExplanationPopup({ drill, onClose }: DrillExplanationPopupProps) {
         </div>
         
         {/* Focus Area Section */}
-        <div className="p-5 border-b border-[#3a3a3a] bg-[#2a2a2a]/50">
+        <div className="p-5 border-b border-slate-200 bg-slate-50/50">
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-lg ${colors.bg} border ${colors.border} flex items-center justify-center`}>
               <Target className={`w-5 h-5 ${colors.text}`} />
             </div>
             <div>
-              <p className="text-[#888] text-xs uppercase tracking-wider">FOCUS</p>
+              <p className="text-slate-500 text-xs uppercase tracking-wider">FOCUS</p>
               <p className={`${colors.text} font-bold uppercase`}>{drill.focusArea.replace('-', ' ')}</p>
             </div>
           </div>
@@ -2400,27 +2400,27 @@ function DrillExplanationPopup({ drill, onClose }: DrillExplanationPopupProps) {
         
         {/* How Many / Reps Section */}
         {drill.reps && (
-          <div className="p-5 border-b border-[#3a3a3a]">
+          <div className="p-5 border-b border-slate-200">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-[#FF6B35]/20 border border-[#FF6B35]/30 flex items-center justify-center">
                 <RotateCcw className="w-5 h-5 text-[#FF6B35]" />
               </div>
               <div>
-                <p className="text-[#888] text-xs uppercase tracking-wider">REPS / DURATION</p>
-                <p className="text-[#E5E5E5] font-bold">{drill.reps}</p>
+                <p className="text-slate-500 text-xs uppercase tracking-wider">REPS / DURATION</p>
+                <p className="text-slate-700 font-bold">{drill.reps}</p>
               </div>
             </div>
           </div>
         )}
         
         {/* Step-by-Step Instructions */}
-        <div className="p-6 border-b border-[#3a3a3a]">
+        <div className="p-6 border-b border-slate-200">
           <h3 className="text-[#FF6B35] font-bold mb-4 flex items-center gap-3 uppercase text-lg">
             <img 
               src="/icons/coach-feedback.png" 
               alt="Coach" 
               className="w-14 h-14"
-              style={{ filter: 'invert(1) brightness(2)' }}
+              style={{ filter: 'none' }}
             />
             COACH&apos;S INSTRUCTIONS
           </h3>
@@ -2443,7 +2443,7 @@ function DrillExplanationPopup({ drill, onClose }: DrillExplanationPopupProps) {
                   )}
                 </div>
                 <div className="flex-1 pt-2 border-l-2 border-[#FF6B35]/20 pl-4">
-                  <p className="text-[#E5E5E5] leading-relaxed">{step}</p>
+                  <p className="text-slate-700 leading-relaxed">{step}</p>
                 </div>
               </div>
             ))}
@@ -2451,25 +2451,25 @@ function DrillExplanationPopup({ drill, onClose }: DrillExplanationPopupProps) {
         </div>
         
         {/* Key Points - What Makes It Right */}
-        <div className="p-6 border-b border-[#3a3a3a]">
+        <div className="p-6 border-b border-slate-200">
           <h3 className="text-[#FF6B35] font-bold mb-4 flex items-center gap-2 uppercase">
             <CheckCircle className="w-5 h-5" />
             KEY POINTS - DO IT RIGHT
           </h3>
           <div className="space-y-3">
             {keyPoints.map((point, i) => (
-              <div key={i} className="flex items-center gap-3 bg-[#2a2a2a] rounded-lg p-3 border border-[#3a3a3a]">
+              <div key={i} className="flex items-center gap-3 bg-slate-50 rounded-lg p-3 border border-slate-200">
                 <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
                   <Check className="w-4 h-4 text-green-400" />
                 </div>
-                <span className="text-[#E5E5E5] text-sm">{point}</span>
+                <span className="text-slate-700 text-sm">{point}</span>
               </div>
             ))}
           </div>
         </div>
         
         {/* Original Tips Section - renamed to Pro Tips */}
-        <div className="p-6 border-b border-[#3a3a3a]">
+        <div className="p-6 border-b border-slate-200">
           <h3 className="text-[#FF6B35] font-bold mb-4 flex items-center gap-2 uppercase">
             <Star className="w-5 h-5" />
             PRO TIPS
@@ -2478,7 +2478,7 @@ function DrillExplanationPopup({ drill, onClose }: DrillExplanationPopupProps) {
             {drill.tips.map((tip, i) => (
               <li key={i} className="flex items-start gap-3">
                 <div className="w-2 h-2 rounded-full bg-[#FF6B35] flex-shrink-0 mt-2" />
-                <span className="text-[#888] text-sm">{tip}</span>
+                <span className="text-slate-500 text-sm">{tip}</span>
               </li>
             ))}
           </ul>
@@ -2488,7 +2488,7 @@ function DrillExplanationPopup({ drill, onClose }: DrillExplanationPopupProps) {
         <div className="p-6">
           <button
             onClick={onClose}
-            className="w-full py-4 rounded-xl bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-[#1a1a1a] font-bold text-lg hover:brightness-110 transition-all uppercase"
+            className="w-full py-4 rounded-xl bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-slate-900 font-bold text-lg hover:brightness-110 transition-all uppercase"
           >
             GOT IT - LET&apos;S GO!
           </button>
@@ -3486,30 +3486,30 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
   const isWorkoutComplete = completedExercises.length === workout.exercises.length
   
   return (
-    <div className="fixed inset-0 z-50 bg-[#0a0a0a] flex flex-col">
+    <div className="fixed inset-0 z-50 bg-slate-50 flex flex-col">
       {/* Header */}
-      <div className="bg-[#1a1a1a] border-b border-[#3a3a3a] p-4">
+      <div className="bg-white border-b border-slate-200 p-4">
         <div className="flex items-center justify-between max-w-4xl mx-auto">
           <div>
             <h2 className="text-xl font-black text-[#FF6B35] uppercase">{workout.name.toUpperCase()}</h2>
-            <p className="text-[#888] text-sm uppercase">{workout.exercises.length} EXERCISES • {workout.duration} MIN</p>
+            <p className="text-slate-500 text-sm uppercase">{workout.exercises.length} EXERCISES • {workout.duration} MIN</p>
           </div>
-          <button onClick={onCancel} className="text-[#888] hover:text-white">
+          <button onClick={onCancel} className="text-slate-500 hover:text-slate-900">
             <X className="w-6 h-6" />
           </button>
         </div>
       </div>
       
       {/* Progress Bar */}
-      <div className="bg-[#1a1a1a] px-4 py-2">
+      <div className="bg-white px-4 py-2">
         <div className="max-w-4xl mx-auto">
-          <div className="h-2 bg-[#2a2a2a] rounded-full overflow-hidden">
+          <div className="h-2 bg-slate-50 rounded-full overflow-hidden">
             <div 
               className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF4500] transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
-          <div className="flex justify-between text-xs text-[#888] mt-1">
+          <div className="flex justify-between text-xs text-slate-500 mt-1">
             <span>{formatTime(totalTimeElapsed)}</span>
             <span>{Math.round(progress)}% complete</span>
             <span>{formatTime(totalWorkoutTime - totalTimeElapsed)}</span>
@@ -3521,12 +3521,12 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
       <div className="flex-1 overflow-auto p-4">
         <div className="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Current Exercise */}
-          <div className="bg-[#1a1a1a] rounded-2xl p-6 border border-[#3a3a3a]">
+          <div className="bg-white rounded-2xl p-6 border border-slate-200">
             <div className="text-center">
-              <p className="text-[#888] text-sm uppercase tracking-wider mb-2">
+              <p className="text-slate-500 text-sm uppercase tracking-wider mb-2">
                 Exercise {currentExerciseIndex + 1} of {workout.exercises.length}
               </p>
-              <h3 className="text-2xl font-black text-[#E5E5E5] mb-4 uppercase">{currentExercise?.name?.toUpperCase()}</h3>
+              <h3 className="text-2xl font-black text-slate-700 mb-4 uppercase">{currentExercise?.name?.toUpperCase()}</h3>
               
               {/* Timer Display */}
               <div className="relative w-48 h-48 mx-auto mb-6">
@@ -3536,7 +3536,7 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                     cy="96"
                     r="88"
                     fill="none"
-                    stroke="#2a2a2a"
+                    stroke="#e2e8f0"
                     strokeWidth="8"
                   />
                   <circle
@@ -3554,7 +3554,7 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                   <span className="text-5xl font-black text-[#FF6B35]">{formatTime(exerciseTimeLeft)}</span>
-                  <span className="text-[#888] text-sm">{currentExercise?.reps || ''}</span>
+                  <span className="text-slate-500 text-sm">{currentExercise?.reps || ''}</span>
                 </div>
               </div>
               
@@ -3577,14 +3577,14 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                 )}
                 <button
                   onClick={completeExercise}
-                  className="w-12 h-12 rounded-full bg-[#FF6B35] text-[#1a1a1a] flex items-center justify-center hover:brightness-110 transition-colors"
+                  className="w-12 h-12 rounded-full bg-[#FF6B35] text-slate-900 flex items-center justify-center hover:brightness-110 transition-colors"
                   title="Complete drill"
                 >
                   <Check className="w-6 h-6" />
                 </button>
                 <button
                   onClick={skipExercise}
-                  className="w-12 h-12 rounded-full bg-[#2a2a2a] text-[#888] flex items-center justify-center hover:bg-[#3a3a3a] transition-colors"
+                  className="w-12 h-12 rounded-full bg-slate-50 text-slate-500 flex items-center justify-center hover:bg-slate-100 transition-colors"
                   title="Skip exercise"
                 >
                   <SkipForward className="w-6 h-6" />
@@ -3593,11 +3593,11 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
               
               {/* Button Labels */}
               <div className="flex items-center justify-center gap-4 mt-2">
-                <span className="text-[#888] text-xs w-16 text-center">
+                <span className="text-slate-500 text-xs w-16 text-center">
                   {!isRunning ? 'START' : (isPaused ? 'RESUME' : 'PAUSE')}
                 </span>
                 <span className="text-[#FF6B35] text-xs w-12 text-center font-bold">DONE</span>
-                <span className="text-[#888] text-xs w-12 text-center">SKIP</span>
+                <span className="text-slate-500 text-xs w-12 text-center">SKIP</span>
               </div>
               
               {/* Exercise Tips */}
@@ -3610,12 +3610,12 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
               </button>
               
               {showExerciseDetail === currentExercise?.id && currentExercise && (
-                <div className="mt-4 bg-[#2a2a2a] rounded-xl p-4 text-left">
-                  <p className="text-[#E5E5E5] text-sm mb-3">{currentExercise.description}</p>
+                <div className="mt-4 bg-slate-50 rounded-xl p-4 text-left">
+                  <p className="text-slate-700 text-sm mb-3">{currentExercise.description}</p>
                   <h4 className="text-[#FF6B35] text-xs font-bold uppercase mb-2">Tips:</h4>
                   <ul className="space-y-1">
                     {currentExercise.tips.map((tip, i) => (
-                      <li key={i} className="text-[#888] text-xs flex items-start gap-2">
+                      <li key={i} className="text-slate-500 text-xs flex items-start gap-2">
                         <Check className="w-3 h-3 text-green-400 flex-shrink-0 mt-0.5" />
                         {tip}
                       </li>
@@ -3629,7 +3629,7 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
           {/* Exercise List with Per-Drill Media Options */}
           <div className="space-y-4">
             {/* Exercise List - Each drill has its own media options */}
-            <div className="bg-[#1a1a1a] rounded-2xl p-4 border border-[#3a3a3a]">
+            <div className="bg-white rounded-2xl p-4 border border-slate-200">
               <h4 className="text-[#FF6B35] font-bold mb-3 flex items-center gap-2">
                 <Dumbbell className="w-4 h-4" />
                 WORKOUT DRILLS
@@ -3647,10 +3647,10 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                   const hasFeedback = mediaState?.hasCoachFeedback
                   
                   return (
-                    <div key={drillKey} className="bg-[#2a2a2a] rounded-xl border border-[#3a3a3a] overflow-hidden">
+                    <div key={drillKey} className="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
                       {/* Drill Header Row */}
                       <div 
-                        className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-[#3a3a3a]/50 transition-colors ${
+                        className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-slate-100/50 transition-colors ${
                           isCurrent ? 'bg-[#FF6B35]/10 border-l-4 border-l-[#FF6B35]' : ''
                         }`}
                         onClick={() => setSelectedDrillForExplanation(exercise)}
@@ -3658,18 +3658,18 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                         {/* Number/Check Badge */}
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                           isCompleted ? 'bg-green-500 text-white' : 
-                          isCurrent ? 'bg-[#FF6B35] text-[#1a1a1a]' : 
-                          'bg-[#3a3a3a] text-[#888]'
+                          isCurrent ? 'bg-[#FF6B35] text-slate-900' : 
+                          'bg-slate-100 text-slate-500'
                         }`}>
                           {isCompleted ? <Check className="w-4 h-4" /> : i + 1}
                         </div>
                         
                         {/* Drill Name & Info */}
                         <div className="flex-1 min-w-0">
-                          <p className={`font-bold text-sm truncate uppercase ${isCurrent ? 'text-[#FF6B35]' : 'text-[#E5E5E5]'}`}>
+                          <p className={`font-bold text-sm truncate uppercase ${isCurrent ? 'text-[#FF6B35]' : 'text-slate-700'}`}>
                             {exercise.name}
                           </p>
-                          <div className="flex items-center gap-2 text-xs text-[#888]">
+                          <div className="flex items-center gap-2 text-xs text-slate-500">
                             <span>{formatTime(exercise.duration)}</span>
                             {exercise.reps && <span>• {exercise.reps}</span>}
                           </div>
@@ -3682,7 +3682,7 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                           </span>
                         )}
                         {mediaState?.type === 'none' && (
-                          <span className="px-2 py-1 rounded text-xs bg-[#3a3a3a] text-[#666]">SKIPPED</span>
+                          <span className="px-2 py-1 rounded text-xs bg-slate-100 text-slate-400">SKIPPED</span>
                         )}
                         
                         {/* Coach Feedback Badge */}
@@ -3698,7 +3698,7 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                               src="/icons/coach-feedback.png" 
                               alt="Coach" 
                               className="w-4 h-4"
-                              style={{ filter: 'invert(1) brightness(2)' }}
+                              style={{ filter: 'none' }}
                             />
                             <span className="text-[#FF6B35] text-xs font-bold">
                               {mediaState?.coachFeedback?.overallGrade}
@@ -3713,7 +3713,7 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                             setDrillMediaExpanded(isExpanded ? null : drillKey)
                           }}
                           className={`p-2 rounded-lg transition-colors ${
-                            isExpanded ? 'bg-[#FF6B35] text-[#1a1a1a]' : 'bg-[#3a3a3a] text-[#888] hover:text-white'
+                            isExpanded ? 'bg-[#FF6B35] text-slate-900' : 'bg-slate-100 text-slate-500 hover:text-slate-900'
                           }`}
                         >
                           {isExpanded ? <ChevronUp className="w-4 h-4" /> : <Camera className="w-4 h-4" />}
@@ -3722,8 +3722,8 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                       
                       {/* Expanded Media Options */}
                       {isExpanded && (
-                        <div className="p-3 pt-0 border-t border-[#3a3a3a] bg-[#1a1a1a]">
-                          <p className="text-[#888] text-xs mb-3 uppercase">CAPTURE YOUR FORM FOR THIS DRILL:</p>
+                        <div className="p-3 pt-0 border-t border-slate-200 bg-white">
+                          <p className="text-slate-500 text-xs mb-3 uppercase">CAPTURE YOUR FORM FOR THIS DRILL:</p>
                           <div className="grid grid-cols-3 gap-2">
                             {/* Record with Camera */}
                             <button
@@ -3731,16 +3731,16 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                                 alert('Camera recording coming soon! For now, please upload a video file.')
                                 // TODO: Implement camera recording for specific drill
                               }}
-                              className="flex flex-col items-center gap-2 p-3 rounded-lg bg-[#2a2a2a] border border-[#3a3a3a] hover:border-red-500/50 hover:bg-red-500/10 transition-colors"
+                              className="flex flex-col items-center gap-2 p-3 rounded-lg bg-slate-50 border border-slate-200 hover:border-red-500/50 hover:bg-red-500/10 transition-colors"
                             >
                               <Video className="w-5 h-5 text-red-400" />
-                              <span className="text-[10px] text-[#888] uppercase">Record</span>
+                              <span className="text-[10px] text-slate-500 uppercase">Record</span>
                             </button>
                             
                             {/* Upload Video/Image - AUTO-ANALYZES with Vision AI */}
-                            <label className="flex flex-col items-center gap-2 p-3 rounded-lg bg-[#2a2a2a] border border-[#3a3a3a] hover:border-blue-500/50 hover:bg-blue-500/10 transition-colors cursor-pointer">
+                            <label className="flex flex-col items-center gap-2 p-3 rounded-lg bg-slate-50 border border-slate-200 hover:border-blue-500/50 hover:bg-blue-500/10 transition-colors cursor-pointer">
                               <Upload className="w-5 h-5 text-blue-400" />
-                              <span className="text-[10px] text-[#888] uppercase">Upload</span>
+                              <span className="text-[10px] text-slate-500 uppercase">Upload</span>
                               <input 
                                 type="file" 
                                 accept="video/*,image/*" 
@@ -3841,10 +3841,10 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                                 }))
                                 setDrillMediaExpanded(null)
                               }}
-                              className="flex flex-col items-center gap-2 p-3 rounded-lg bg-[#2a2a2a] border border-[#3a3a3a] hover:border-[#888]/50 hover:bg-[#3a3a3a] transition-colors"
+                              className="flex flex-col items-center gap-2 p-3 rounded-lg bg-slate-50 border border-slate-200 hover:border-slate-300/50 hover:bg-slate-100 transition-colors"
                             >
-                              <X className="w-5 h-5 text-[#666]" />
-                              <span className="text-[10px] text-[#888] uppercase">Skip</span>
+                              <X className="w-5 h-5 text-slate-400" />
+                              <span className="text-[10px] text-slate-500 uppercase">Skip</span>
                             </button>
                           </div>
                           
@@ -3953,7 +3953,7 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                                       }
                                     }}
                                     disabled={isAnalyzing}
-                                    className="w-full py-2.5 rounded-lg bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-[#1a1a1a] font-bold text-sm flex items-center justify-center gap-2 hover:brightness-110 disabled:opacity-50"
+                                    className="w-full py-2.5 rounded-lg bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-slate-900 font-bold text-sm flex items-center justify-center gap-2 hover:brightness-110 disabled:opacity-50"
                                   >
                                     {isAnalyzing ? (
                                       <>
@@ -3966,7 +3966,7 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                                           src="/icons/coach-feedback.png" 
                                           alt="Coach" 
                                           className="w-5 h-5"
-                                          style={{ filter: 'invert(1) brightness(2)' }}
+                                          style={{ filter: 'none' }}
                                         />
                                         GET COACH FEEDBACK
                                         <span className="text-[10px] bg-black/20 px-1.5 py-0.5 rounded">VISION AI</span>
@@ -4052,8 +4052,8 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                                     disabled={isAnalyzing || mediaState.type !== 'video'}
                                     className={`w-full py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2 transition-all ${
                                       mediaState.type === 'video' 
-                                        ? 'bg-[#2a2a2a] border border-blue-500/50 text-blue-400 hover:bg-blue-500/10 hover:border-blue-400' 
-                                        : 'bg-[#2a2a2a] border border-[#3a3a3a] text-[#666] cursor-not-allowed'
+                                        ? 'bg-slate-50 border border-blue-500/50 text-blue-400 hover:bg-blue-500/10 hover:border-blue-400' 
+                                        : 'bg-slate-50 border border-slate-200 text-slate-400 cursor-not-allowed'
                                     } disabled:opacity-50`}
                                   >
                                     {isAnalyzing ? (
@@ -4070,10 +4070,10 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                                     )}
                                   </button>
                                   {mediaState.type !== 'video' && (
-                                    <p className="text-[#666] text-[10px] text-center">Deep analysis requires video (not image)</p>
+                                    <p className="text-slate-400 text-[10px] text-center">Deep analysis requires video (not image)</p>
                                   )}
                                   
-                                  <p className="text-[#666] text-[10px] text-center mt-1">
+                                  <p className="text-slate-400 text-[10px] text-center mt-1">
                                     <span className="text-[#FF6B35]">Coach Feedback</span> = Vision AI review • <span className="text-blue-400">Deep Analysis</span> = Full biomechanical breakdown
                                   </p>
                                 </div>
@@ -4092,11 +4092,11 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
       </div>
       
       {/* Footer */}
-      <div className="bg-[#1a1a1a] border-t border-[#3a3a3a] p-4">
+      <div className="bg-white border-t border-slate-200 p-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <button
             onClick={onCancel}
-            className="px-6 py-3 rounded-xl bg-[#2a2a2a] text-[#888] font-bold hover:bg-[#3a3a3a] transition-colors"
+            className="px-6 py-3 rounded-xl bg-slate-50 text-slate-500 font-bold hover:bg-slate-100 transition-colors"
           >
             CANCEL WORKOUT
           </button>
@@ -4112,7 +4112,7 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
           
           <button
             onClick={() => preferences.soundEnabled}
-            className="p-3 rounded-xl bg-[#2a2a2a] text-[#888] hover:text-white transition-colors"
+            className="p-3 rounded-xl bg-slate-50 text-slate-500 hover:text-slate-900 transition-colors"
           >
             {preferences.soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
           </button>
@@ -4121,8 +4121,8 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
       
       {/* Drill Complete - Media Capture Popup */}
       {showDrillMediaCapture && currentDrillForMedia && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
-          <div className="bg-[#1a1a1a] rounded-2xl p-6 max-w-lg w-full border border-[#3a3a3a] max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-6 max-w-lg w-full border border-slate-200 max-h-[90vh] overflow-y-auto">
             {!isCapturingMedia && !capturedMediaBlob ? (
               // Initial state - choose media capture option
               <div className="text-center">
@@ -4131,13 +4131,13 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                     src="/icons/coach-feedback.png" 
                     alt="Coach" 
                     className="w-20 h-20 object-contain"
-                    style={{ filter: 'invert(1) brightness(2)' }}
+                    style={{ filter: 'none' }}
                   />
                 </div>
                 <h3 className="text-xl font-bold text-[#FF6B35] mb-2">
                   {currentDrillForMedia.name} Complete!
                 </h3>
-                <p className="text-[#888] mb-6">
+                <p className="text-slate-500 mb-6">
                   Want to get coach feedback on this drill? Record or upload a video/image.
                 </p>
                 
@@ -4207,7 +4207,7 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                       setCurrentDrillForMedia(null)
                       continueToNextExercise()
                     }}
-                    className="w-full py-4 rounded-xl bg-[#2a2a2a] border border-[#3a3a3a] text-[#888] font-bold flex items-center justify-center gap-3 hover:bg-[#3a3a3a] hover:text-white transition-all"
+                    className="w-full py-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 font-bold flex items-center justify-center gap-3 hover:bg-slate-100 hover:text-slate-900 transition-all"
                   >
                     <SkipForward className="w-6 h-6" />
                     NO INPUT - SKIP TO NEXT DRILL
@@ -4216,8 +4216,8 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                 
                 {/* Next Drill Preview */}
                 {workout.exercises[currentExerciseIndex + 1] && (
-                  <div className="bg-[#2a2a2a] rounded-xl p-4 border border-[#3a3a3a]">
-                    <p className="text-[#888] text-xs uppercase tracking-wider mb-1">Up Next:</p>
+                  <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                    <p className="text-slate-500 text-xs uppercase tracking-wider mb-1">Up Next:</p>
                     <p className="text-[#FF6B35] font-bold">
                       {workout.exercises[currentExerciseIndex + 1].name}
                     </p>
@@ -4241,7 +4241,7 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                   {isRecording && (
                     <div className="absolute top-4 left-4 flex items-center gap-2 bg-red-500 px-3 py-1 rounded-full">
                       <div className="w-3 h-3 rounded-full bg-white animate-pulse" />
-                      <span className="text-white text-sm font-bold">REC</span>
+                      <span className="text-slate-700 text-sm font-bold">REC</span>
                     </div>
                   )}
                 </div>
@@ -4296,7 +4296,7 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                       setCapturedMediaType(null)
                       setIsRecording(false)
                     }}
-                    className="px-6 py-3 rounded-xl bg-[#2a2a2a] text-[#888] font-bold hover:text-white"
+                    className="px-6 py-3 rounded-xl bg-slate-50 text-slate-500 font-bold hover:text-slate-900"
                   >
                     Cancel
                   </button>
@@ -4404,11 +4404,11 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                       continueToNextExercise()
                     }}
                     disabled={isAnalyzing}
-                    className="w-full py-4 rounded-xl bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-[#1a1a1a] font-bold flex items-center justify-center gap-2 hover:brightness-110 transition-all disabled:opacity-50"
+                    className="w-full py-4 rounded-xl bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-slate-900 font-bold flex items-center justify-center gap-2 hover:brightness-110 transition-all disabled:opacity-50"
                   >
                     {isAnalyzing ? (
                       <>
-                        <div className="w-5 h-5 border-2 border-[#1a1a1a] border-t-transparent rounded-full animate-spin" />
+                        <div className="w-5 h-5 border-2 border-slate-200 border-t-transparent rounded-full animate-spin" />
                         COACH IS REVIEWING...
                       </>
                     ) : (
@@ -4417,7 +4417,7 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                           src="/icons/coach-feedback.png" 
                           alt="Coach" 
                           className="w-6 h-6"
-                          style={{ filter: 'invert(1) brightness(2)' }}
+                          style={{ filter: 'none' }}
                         />
                         GET COACH FEEDBACK
                         <span className="text-[10px] bg-black/20 px-1.5 py-0.5 rounded">VISION AI</span>
@@ -4514,8 +4514,8 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                     disabled={isAnalyzing || capturedMediaType !== 'video'}
                     className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${
                       capturedMediaType === 'video'
-                        ? 'bg-[#2a2a2a] border border-blue-500/50 text-blue-400 hover:bg-blue-500/10 hover:border-blue-400'
-                        : 'bg-[#2a2a2a] border border-[#3a3a3a] text-[#666] cursor-not-allowed'
+                        ? 'bg-slate-50 border border-blue-500/50 text-blue-400 hover:bg-blue-500/10 hover:border-blue-400'
+                        : 'bg-slate-50 border border-slate-200 text-slate-400 cursor-not-allowed'
                     } disabled:opacity-50`}
                   >
                     {isAnalyzing ? (
@@ -4532,7 +4532,7 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                     )}
                   </button>
                   {capturedMediaType !== 'video' && (
-                    <p className="text-[#666] text-[10px] text-center -mt-1">Deep analysis requires video (not image)</p>
+                    <p className="text-slate-400 text-[10px] text-center -mt-1">Deep analysis requires video (not image)</p>
                   )}
                   
                   {/* Option 3: SKIP - No Analysis, Just Save Media */}
@@ -4555,7 +4555,7 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                       setCurrentDrillForMedia(null)
                       continueToNextExercise()
                     }}
-                    className="w-full py-2.5 rounded-xl bg-[#2a2a2a] border border-[#3a3a3a] text-[#888] font-bold flex items-center justify-center gap-2 hover:bg-[#3a3a3a] hover:text-white transition-all"
+                    className="w-full py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 font-bold flex items-center justify-center gap-2 hover:bg-slate-100 hover:text-slate-900 transition-all"
                   >
                     <SkipForward className="w-4 h-4" />
                     SKIP ANALYSIS - CONTINUE
@@ -4568,12 +4568,12 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                       setCapturedMediaType(null)
                       setIsCapturingMedia(false)
                     }}
-                    className="w-full py-2 rounded-xl text-[#666] font-bold hover:text-[#888] transition-all text-sm"
+                    className="w-full py-2 rounded-xl text-slate-400 font-bold hover:text-slate-500 transition-all text-sm"
                   >
                     ← Retake
                   </button>
                   
-                  <p className="text-[#666] text-[10px] text-center pt-2 border-t border-[#3a3a3a]">
+                  <p className="text-slate-400 text-[10px] text-center pt-2 border-t border-slate-200">
                     <span className="text-[#FF6B35]">Coach Feedback</span> = Vision AI review • <span className="text-blue-400">Deep Analysis</span> = Full biomechanical breakdown
                   </p>
                 </div>
@@ -4585,8 +4585,8 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
       
       {/* Drill Feedback Popup */}
       {showDrillFeedback && drillMediaMap[showDrillFeedback]?.coachFeedback && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
-          <div className="bg-[#1a1a1a] rounded-2xl p-6 max-w-lg w-full border border-[#3a3a3a] max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-6 max-w-lg w-full border border-slate-200 max-h-[90vh] overflow-y-auto">
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
@@ -4595,17 +4595,17 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                     src="/icons/coach-feedback.png" 
                     alt="Coach" 
                     className="w-16 h-16 object-contain"
-                    style={{ filter: 'invert(1) brightness(2)' }}
+                    style={{ filter: 'none' }}
                   />
                 </div>
                 <div>
                   <h3 className="text-[#FF6B35] font-bold text-lg">COACH FEEDBACK</h3>
-                  <p className="text-[#888] text-sm">Your form analysis</p>
+                  <p className="text-slate-500 text-sm">Your form analysis</p>
                 </div>
               </div>
               <button
                 onClick={() => setShowDrillFeedback(null)}
-                className="p-2 rounded-lg bg-[#2a2a2a] text-[#888] hover:text-white"
+                className="p-2 rounded-lg bg-slate-50 text-slate-500 hover:text-slate-900"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -4629,7 +4629,7 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                 }`}>
                   {drillMediaMap[showDrillFeedback].coachFeedback?.overallGrade}
                 </div>
-                <p className="text-[#888] text-sm mt-1">
+                <p className="text-slate-500 text-sm mt-1">
                   {drillMediaMap[showDrillFeedback].coachFeedback?.gradeDescription}
                 </p>
               </div>
@@ -4637,8 +4637,8 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
             
             {/* Coach Says */}
             {drillMediaMap[showDrillFeedback].coachFeedback?.coachSays && (
-              <div className="bg-[#2a2a2a] rounded-xl p-4 border-l-4 border-[#FF6B35] mb-4">
-                <p className="text-[#E5E5E5] text-sm italic">
+              <div className="bg-slate-50 rounded-xl p-4 border-l-4 border-[#FF6B35] mb-4">
+                <p className="text-slate-700 text-sm italic">
                   &quot;{drillMediaMap[showDrillFeedback].coachFeedback?.coachSays}&quot;
                 </p>
               </div>
@@ -4651,13 +4651,13 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                   <AlertTriangle className="w-4 h-4" />
                   FIX THIS FIRST
                 </h4>
-                <p className="text-white font-bold text-sm mb-2">
+                <p className="text-slate-900 font-bold text-sm mb-2">
                   {drillMediaMap[showDrillFeedback].coachFeedback?.priorityFocus.issue}
                 </p>
-                <p className="text-[#888] text-xs mb-2">
+                <p className="text-slate-500 text-xs mb-2">
                   <span className="text-red-400">Why:</span> {drillMediaMap[showDrillFeedback].coachFeedback?.priorityFocus.why}
                 </p>
-                <p className="text-[#E5E5E5] text-xs">
+                <p className="text-slate-700 text-xs">
                   <span className="text-[#FF6B35]">How to fix:</span> {drillMediaMap[showDrillFeedback].coachFeedback?.priorityFocus.howToFix}
                 </p>
               </div>
@@ -4672,7 +4672,7 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                 </h4>
                 <ul className="space-y-2">
                   {drillMediaMap[showDrillFeedback].coachFeedback?.reinforcement.map((item, i) => (
-                    <li key={i} className="text-[#E5E5E5] text-sm">
+                    <li key={i} className="text-slate-700 text-sm">
                       <span className="text-green-400">✓</span> {item.point}
                     </li>
                   ))}
@@ -4701,17 +4701,17 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
         const hasFeedback = drillMediaMap[exercise.id]?.coachFeedback
         
         return (
-          <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
-            <div className="bg-[#1a1a1a] rounded-2xl max-w-lg w-full border border-[#3a3a3a] max-h-[90vh] overflow-y-auto">
+          <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl max-w-lg w-full border border-slate-200 max-h-[90vh] overflow-y-auto">
               {/* Header */}
-              <div className="sticky top-0 bg-[#1a1a1a] p-6 pb-4 border-b border-[#3a3a3a]">
+              <div className="sticky top-0 bg-white p-6 pb-4 border-b border-slate-200">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${colors.bg} ${colors.text} border ${colors.border}`}>
                         {exercise.focusArea.replace('-', ' ')}
                       </span>
-                      <span className="text-[#888] text-xs">
+                      <span className="text-slate-500 text-xs">
                         {formatTime(exercise.duration)}
                       </span>
                     </div>
@@ -4719,12 +4719,12 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                       {exercise.name}
                     </h3>
                     {exercise.reps && (
-                      <p className="text-[#888] text-sm mt-1">{exercise.reps}</p>
+                      <p className="text-slate-500 text-sm mt-1">{exercise.reps}</p>
                     )}
                   </div>
                   <button
                     onClick={() => setShowExerciseDetail(null)}
-                    className="p-2 rounded-lg bg-[#2a2a2a] text-[#888] hover:text-white"
+                    className="p-2 rounded-lg bg-slate-50 text-slate-500 hover:text-slate-900"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -4735,18 +4735,18 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
               <div className="p-6 space-y-6">
                 {/* Description */}
                 <div>
-                  <h4 className="text-[#E5E5E5] font-bold text-sm uppercase mb-2 flex items-center gap-2">
+                  <h4 className="text-slate-700 font-bold text-sm uppercase mb-2 flex items-center gap-2">
                     <BookOpen className="w-4 h-4 text-[#FF6B35]" />
                     What is this drill?
                   </h4>
-                  <p className="text-[#888] text-sm leading-relaxed">
+                  <p className="text-slate-500 text-sm leading-relaxed">
                     {exercise.description}
                   </p>
                 </div>
                 
                 {/* Coaching Tips */}
                 <div>
-                  <h4 className="text-[#E5E5E5] font-bold text-sm uppercase mb-3 flex items-center gap-2">
+                  <h4 className="text-slate-700 font-bold text-sm uppercase mb-3 flex items-center gap-2">
                     <Lightbulb className="w-4 h-4 text-[#FF6B35]" />
                     Coaching Tips
                   </h4>
@@ -4754,12 +4754,12 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                     {exercise.tips.map((tip, i) => (
                       <div 
                         key={i} 
-                        className="flex items-start gap-3 p-3 bg-[#2a2a2a] rounded-lg border border-[#3a3a3a]"
+                        className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200"
                       >
                         <div className="w-6 h-6 rounded-full bg-[#FF6B35]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
                           <span className="text-[#FF6B35] text-xs font-bold">{i + 1}</span>
                         </div>
-                        <p className="text-[#E5E5E5] text-sm">{tip}</p>
+                        <p className="text-slate-700 text-sm">{tip}</p>
                       </div>
                     ))}
                   </div>
@@ -4770,7 +4770,7 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                   <h4 className={`font-bold text-sm uppercase mb-2 ${colors.text}`}>
                     Focus: {exercise.focusArea.replace('-', ' ')}
                   </h4>
-                  <p className="text-[#888] text-xs">
+                  <p className="text-slate-500 text-xs">
                     {exercise.focusArea === 'elbow' && 'This drill focuses on proper elbow alignment and positioning for a consistent, accurate shot.'}
                     {exercise.focusArea === 'knee' && 'This drill emphasizes proper knee bend and leg power generation for your shot.'}
                     {exercise.focusArea === 'balance' && 'This drill helps you maintain stability and body control throughout your shooting motion.'}
@@ -4788,7 +4788,7 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                       setShowExerciseDetail(null)
                       setShowDrillFeedback(exercise.id)
                     }}
-                    className="w-full py-3 rounded-xl bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-[#1a1a1a] font-bold flex items-center justify-center gap-2 hover:brightness-110 transition-all"
+                    className="w-full py-3 rounded-xl bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-slate-900 font-bold flex items-center justify-center gap-2 hover:brightness-110 transition-all"
                   >
                     <img 
                       src="/icons/coach-feedback.png" 
@@ -4827,10 +4827,10 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
           Feedback shown INLINE in dropdown format
           ============================================= */}
       {showWorkoutSummary && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/95 backdrop-blur-sm">
-          <div className="bg-[#1a1a1a] rounded-2xl max-w-2xl w-full border border-[#3a3a3a] max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl max-w-2xl w-full border border-slate-200 max-h-[90vh] overflow-hidden flex flex-col">
             {/* Header */}
-            <div className="p-6 border-b border-[#3a3a3a] bg-gradient-to-r from-[#FF6B35]/10 to-transparent">
+            <div className="p-6 border-b border-slate-200 bg-gradient-to-r from-[#FF6B35]/10 to-transparent">
               <div className="flex items-center gap-4">
                 <div className={`w-16 h-16 rounded-full flex items-center justify-center ${isAnalyzing ? 'bg-blue-500/20' : 'bg-green-500/20'}`}>
                   {isAnalyzing ? (
@@ -4843,7 +4843,7 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                   <h2 className="text-2xl font-black text-[#FF6B35] uppercase">
                     {isAnalyzing ? 'ANALYZING YOUR WORKOUT...' : 'WORKOUT COMPLETE!'}
                   </h2>
-                  <p className="text-[#888]">{workout.name} • {workout.exercises.length} drills</p>
+                  <p className="text-slate-500">{workout.name} • {workout.exercises.length} drills</p>
                   
                   {/* Progress indicator */}
                   {analysisProgress && (
@@ -4855,19 +4855,19 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                           analysisProgress.status === 'complete' ? 'bg-green-400' :
                           'bg-red-400'
                         }`} />
-                        <span className="text-white text-sm font-bold">
+                        <span className="text-slate-700 text-sm font-bold">
                           Drill {analysisProgress.current} of {analysisProgress.total}:
                         </span>
                         <span className="text-[#FF6B35] text-sm uppercase">{analysisProgress.drillName}</span>
                       </div>
-                      <p className="text-xs text-[#888]">
+                      <p className="text-xs text-slate-500">
                         {analysisProgress.status === 'extracting' && '📹 Extracting video frame...'}
                         {analysisProgress.status === 'analyzing' && '🧠 Vision AI analyzing your form...'}
                         {analysisProgress.status === 'complete' && '✅ Analysis complete!'}
                         {analysisProgress.status === 'error' && '⚠️ Analysis failed, moving to next...'}
                       </p>
                       {/* Progress bar */}
-                      <div className="w-full h-2 bg-[#2a2a2a] rounded-full overflow-hidden">
+                      <div className="w-full h-2 bg-slate-50 rounded-full overflow-hidden">
                         <div 
                           className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF4500] transition-all duration-500"
                           style={{ width: `${(analysisProgress.current / analysisProgress.total) * 100}%` }}
@@ -4890,11 +4890,11 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                 const isExpanded = expandedSummaryDrill === drillKey
                 
                 return (
-                  <div key={drillKey} className="bg-[#2a2a2a] rounded-xl border border-[#3a3a3a] overflow-hidden">
+                  <div key={drillKey} className="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
                     {/* Drill Header - Click to expand */}
                     <button
                       onClick={() => setExpandedSummaryDrill(isExpanded ? null : drillKey)}
-                      className="w-full p-4 flex items-center justify-between hover:bg-[#3a3a3a]/50 transition-colors"
+                      className="w-full p-4 flex items-center justify-between hover:bg-slate-100/50 transition-colors"
                     >
                       <div className="flex items-center gap-3">
                         {/* Number Badge */}
@@ -4905,21 +4905,21 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                               feedback?.overallGrade === 'C' ? 'bg-orange-500/20 text-orange-400' :
                               feedback?.overallGrade === 'D' ? 'bg-orange-500/20 text-orange-400' :
                               'bg-red-500/20 text-red-400'
-                            : hasMedia ? 'bg-[#FF6B35]/20 text-[#FF6B35]' : 'bg-[#3a3a3a] text-[#666]'
+                            : hasMedia ? 'bg-[#FF6B35]/20 text-[#FF6B35]' : 'bg-slate-100 text-slate-400'
                         }`}>
                           {hasFeedback ? feedback?.overallGrade : index + 1}
                         </div>
                         
                         {/* Drill Name */}
                         <div className="text-left">
-                          <h4 className="text-white font-bold uppercase">{exercise.name}</h4>
-                          <p className="text-[#888] text-xs">
+                          <h4 className="text-slate-900 font-bold uppercase">{exercise.name}</h4>
+                          <p className="text-slate-500 text-xs">
                             {hasMedia ? (
                               <span className="text-green-400">
                                 {mediaState.type === 'video' ? '📹 Video' : '📷 Image'} • {hasFeedback ? 'Feedback Ready' : 'Analyzing...'}
                               </span>
                             ) : (
-                              <span className="text-[#666]">No media</span>
+                              <span className="text-slate-400">No media</span>
                             )}
                           </p>
                         </div>
@@ -4927,13 +4927,13 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                       
                       {/* Expand Arrow */}
                       {hasFeedback && (
-                        <ChevronDown className={`w-5 h-5 text-[#888] transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                        <ChevronDown className={`w-5 h-5 text-slate-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                       )}
                     </button>
                     
                     {/* Expanded Feedback - THE FORMAT YOU HAD */}
                     {isExpanded && hasFeedback && feedback && (
-                      <div className="p-4 pt-0 border-t border-[#3a3a3a] space-y-4">
+                      <div className="p-4 pt-0 border-t border-slate-200 space-y-4">
                         {/* WRONG DRILL ALERT */}
                         {feedback.isCorrectDrill === false && (
                           <div className="bg-red-600/20 border-2 border-red-500 rounded-xl p-4 animate-pulse">
@@ -4941,11 +4941,11 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                               <AlertTriangle className="w-8 h-8 text-red-500" />
                               <span className="text-red-500 font-black text-lg uppercase">WRONG DRILL!</span>
                             </div>
-                            <p className="text-white font-bold mb-2">
+                            <p className="text-slate-900 font-bold mb-2">
                               {feedback.wrongDrillMessage || `This is not the ${exercise.name} drill.`}
                             </p>
                             {feedback.whatISee && (
-                              <p className="text-[#888] text-sm mb-2">
+                              <p className="text-slate-500 text-sm mb-2">
                                 <span className="text-red-400">What I see:</span> {feedback.whatISee}
                               </p>
                             )}
@@ -4956,17 +4956,17 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                         )}
                         
                         {/* Coach Says */}
-                        <div className="bg-[#1a1a1a] rounded-xl p-4 border-l-4 border-[#FF6B35]">
+                        <div className="bg-white rounded-xl p-4 border-l-4 border-[#FF6B35]">
                           <div className="flex items-center gap-3 mb-3">
                             <img 
                               src="/icons/coach-feedback.png" 
                               alt="Coach" 
                               className="w-12 h-12 object-contain"
-                              style={{ filter: 'invert(1) brightness(2)' }}
+                              style={{ filter: 'none' }}
                             />
                             <span className="text-[#FF6B35] font-bold text-lg uppercase">Coach Says</span>
                           </div>
-                          <p className="text-[#E5E5E5] text-sm italic">&quot;{feedback.coachSays}&quot;</p>
+                          <p className="text-slate-700 text-sm italic">&quot;{feedback.coachSays}&quot;</p>
                         </div>
                         
                         {/* Priority Focus - FIX THIS FIRST */}
@@ -4976,17 +4976,17 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                               <AlertTriangle className="w-4 h-4" />
                               FIX THIS FIRST
                             </h4>
-                            <p className="text-white font-bold text-sm mb-1">{feedback.priorityFocus.issue}</p>
-                            <p className="text-[#888] text-xs mb-2">
+                            <p className="text-slate-900 font-bold text-sm mb-1">{feedback.priorityFocus.issue}</p>
+                            <p className="text-slate-500 text-xs mb-2">
                               <span className="text-red-400">Why:</span> {feedback.priorityFocus.why}
                             </p>
                             <p className="text-green-400 text-xs">
-                              <span className="text-white">Fix:</span> {feedback.priorityFocus.howToFix}
+                              <span className="text-slate-700">Fix:</span> {feedback.priorityFocus.howToFix}
                             </p>
                             {feedback.priorityFocus.cue && (
                               <div className="mt-2 bg-[#FF6B35]/10 rounded-lg px-3 py-2">
                                 <span className="text-[#FF6B35] text-xs font-bold">💡 Quick Cue: </span>
-                                <span className="text-white text-xs">{feedback.priorityFocus.cue}</span>
+                                <span className="text-slate-500 text-xs">{feedback.priorityFocus.cue}</span>
                               </div>
                             )}
                           </div>
@@ -4995,7 +4995,7 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                         {/* Coaching Points Breakdown */}
                         {feedback.coachingPointEvaluations && feedback.coachingPointEvaluations.length > 0 && (
                           <div className="space-y-2">
-                            <h4 className="text-[#888] font-bold text-xs uppercase">Coaching Points</h4>
+                            <h4 className="text-slate-500 font-bold text-xs uppercase">Coaching Points</h4>
                             {feedback.coachingPointEvaluations.map((point: CoachingPointEvaluation, i: number) => (
                               <div key={i} className={`p-3 rounded-lg border ${
                                 point.status === 'executing' ? 'bg-green-500/10 border-green-500/30' :
@@ -5006,9 +5006,9 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                                   {point.status === 'executing' ? <Check className="w-4 h-4 text-green-400" /> :
                                    point.status === 'needs_work' ? <AlertTriangle className="w-4 h-4 text-orange-400" /> :
                                    <X className="w-4 h-4 text-red-400" />}
-                                  <span className="text-white text-sm font-bold">{point.coachingPoint}</span>
+                                  <span className="text-slate-700 text-sm font-bold">{point.coachingPoint}</span>
                                 </div>
-                                <p className="text-[#888] text-xs ml-6">{point.coachObservation}</p>
+                                <p className="text-slate-500 text-xs ml-6">{point.coachObservation}</p>
                                 {point.correction && point.status !== 'executing' && (
                                   <p className="text-green-400 text-xs ml-6 mt-1">→ {point.correction}</p>
                                 )}
@@ -5025,7 +5025,7 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                               KEEP DOING THIS
                             </h4>
                             {feedback.reinforcement.map((r: any, i: number) => (
-                              <p key={i} className="text-white text-sm">✓ {r.point}</p>
+                              <p key={i} className="text-slate-600 text-sm">✓ {r.point}</p>
                             ))}
                           </div>
                         )}
@@ -5100,7 +5100,7 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                               }
                             }}
                             disabled={isAnalyzing}
-                            className="w-full py-3 rounded-xl bg-[#2a2a2a] border border-blue-500/50 text-blue-400 font-bold flex items-center justify-center gap-2 hover:bg-blue-500/10 disabled:opacity-50"
+                            className="w-full py-3 rounded-xl bg-slate-50 border border-blue-500/50 text-blue-400 font-bold flex items-center justify-center gap-2 hover:bg-blue-500/10 disabled:opacity-50"
                           >
                             <Brain className="w-5 h-5" />
                             UPGRADE TO DEEP ANALYSIS
@@ -5122,11 +5122,11 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
             </div>
             
             {/* Footer */}
-            <div className="p-6 border-t border-[#3a3a3a] bg-[#1a1a1a]">
+            <div className="p-6 border-t border-slate-200 bg-white">
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowWorkoutSummary(false)}
-                  className="flex-1 py-3 rounded-xl bg-[#2a2a2a] text-[#888] font-bold hover:text-white transition-colors"
+                  className="flex-1 py-3 rounded-xl bg-slate-50 text-slate-500 font-bold hover:text-slate-900 transition-colors"
                 >
                   BACK TO WORKOUT
                 </button>
@@ -5969,7 +5969,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
               </div>
               <div>
                 <p className="text-[#FF6B35] font-bold text-sm uppercase tracking-wider">WORKOUT SCHEDULED TODAY</p>
-                <p className="text-[#E5E5E5] italic">{currentNotification}</p>
+                <p className="text-slate-700 italic">{currentNotification}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -5977,14 +5977,14 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                 onClick={() => {
                   setCurrentNotification(getInspirationalMessage())
                 }}
-                className="p-2 rounded-lg bg-[#2a2a2a] text-[#888] hover:text-[#FF6B35] transition-colors"
+                className="p-2 rounded-lg bg-slate-50 text-slate-500 hover:text-[#FF6B35] transition-colors"
                 title="New message"
               >
                 <RotateCcw className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setShowNotificationBanner(false)}
-                className="p-2 rounded-lg bg-[#2a2a2a] text-[#888] hover:text-white transition-colors"
+                className="p-2 rounded-lg bg-slate-50 text-slate-500 hover:text-slate-900 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -5994,7 +5994,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
       )}
       
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a] rounded-xl p-6 border border-[#3a3a3a]">
+      <div className="bg-gradient-to-r from-[#1a1a1a] via-[#2a2a2a] to-[#1a1a1a] rounded-xl p-6 border border-slate-200">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-xl bg-[#FF6B35]/10 flex items-center justify-center border border-[#FF6B35]/30">
@@ -6004,14 +6004,14 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
               <h2 className="text-2xl font-black text-[#FF6B35] uppercase tracking-wider">
                 TRAINING CALENDAR
               </h2>
-              <p className="text-[#888] text-sm">
+              <p className="text-slate-500 text-sm">
                 {preferences.frequency}x per week • {preferences.preferredDuration} min workouts
               </p>
             </div>
           </div>
           <button
             onClick={() => setShowSettings(!showSettings)}
-            className="p-3 rounded-xl bg-[#2a2a2a] border border-[#3a3a3a] text-[#888] hover:text-white hover:border-[#FF6B35] transition-all"
+            className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 hover:text-slate-900 hover:border-[#FF6B35] transition-all"
           >
             <Settings className="w-5 h-5" />
           </button>
@@ -6020,7 +6020,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
       
       {/* Settings Panel */}
       {showSettings && (
-        <div className="bg-[#1a1a1a] rounded-xl p-6 border border-[#3a3a3a] space-y-6">
+        <div className="bg-white rounded-xl p-6 border border-slate-200 space-y-6">
           <h3 className="text-[#FF6B35] font-bold text-lg flex items-center gap-2 uppercase">
             <Settings className="w-5 h-5" />
             TRAINING PREFERENCES
@@ -6028,7 +6028,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
           
           {/* Frequency Selector */}
           <div>
-            <label className="text-[#888] text-sm uppercase tracking-wider block mb-3">
+            <label className="text-slate-500 text-sm uppercase tracking-wider block mb-3">
               TRAINING FREQUENCY (DAYS PER WEEK)
             </label>
             <div className="grid grid-cols-7 gap-2">
@@ -6038,8 +6038,8 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                   onClick={() => handleFrequencySelect(freq)}
                   className={`p-3 rounded-xl text-center transition-all ${
                     preferences.frequency === freq
-                      ? 'bg-[#FF6B35] text-[#1a1a1a] font-bold'
-                      : 'bg-[#2a2a2a] text-[#888] hover:text-white hover:border-[#FF6B35] border border-[#3a3a3a]'
+                      ? 'bg-[#FF6B35] text-slate-900 font-bold'
+                      : 'bg-slate-50 text-slate-500 hover:text-slate-900 hover:border-[#FF6B35] border border-slate-200'
                   }`}
                 >
                   <span className="text-lg font-bold">{freq}</span>
@@ -6051,7 +6051,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
           
           {/* Duration Selector */}
           <div>
-            <label className="text-[#888] text-sm uppercase tracking-wider block mb-3">
+            <label className="text-slate-500 text-sm uppercase tracking-wider block mb-3">
               WORKOUT DURATION
             </label>
             <div className="grid grid-cols-6 gap-2">
@@ -6065,10 +6065,10 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                       preferences.preferredDuration === duration
                         ? isSweet 
                           ? 'bg-green-500 text-white font-bold ring-2 ring-green-400'
-                          : 'bg-[#FF6B35] text-[#1a1a1a] font-bold'
+                          : 'bg-[#FF6B35] text-slate-900 font-bold'
                         : isSweet
                           ? 'bg-green-500/20 text-green-400 border border-green-500/50 hover:bg-green-500/30'
-                          : 'bg-[#2a2a2a] text-[#888] hover:text-white border border-[#3a3a3a]'
+                          : 'bg-slate-50 text-slate-500 hover:text-slate-900 border border-slate-200'
                     }`}
                   >
                     {isSweet && (
@@ -6080,7 +6080,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                 )
               })}
             </div>
-            <p className="text-[#666] text-xs mt-2">
+            <p className="text-slate-400 text-xs mt-2">
               {(preferences.preferredDuration === 15 || preferences.preferredDuration === 20) && (
                 <span className="text-green-400 font-medium">RECOMMENDED: 15-20 minutes is optimal for skill development</span>
               )}
@@ -6092,7 +6092,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
           
           {/* Drill Count Selector */}
           <div>
-            <label className="text-[#888] text-sm uppercase tracking-wider block mb-3">
+            <label className="text-slate-500 text-sm uppercase tracking-wider block mb-3">
               DRILLS PER WORKOUT
             </label>
             <div className="grid grid-cols-7 gap-2">
@@ -6107,10 +6107,10 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                       preferences.drillCount === count
                         ? isSweet 
                           ? 'bg-green-500 text-white font-bold ring-2 ring-green-400'
-                          : 'bg-[#FF6B35] text-[#1a1a1a] font-bold'
+                          : 'bg-[#FF6B35] text-slate-900 font-bold'
                         : isSweet
                           ? 'bg-green-500/20 text-green-400 border border-green-500/50 hover:bg-green-500/30'
-                          : 'bg-[#2a2a2a] text-[#888] hover:text-white border border-[#3a3a3a]'
+                          : 'bg-slate-50 text-slate-500 hover:text-slate-900 border border-slate-200'
                     }`}
                   >
                     {isSweet && (
@@ -6122,7 +6122,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                 )
               })}
             </div>
-            <p className="text-[#666] text-xs mt-2">
+            <p className="text-slate-400 text-xs mt-2">
               {preferences.drillCount <= 2 && "Ultra-focused: Maximum concentration on specific skills"}
               {(preferences.drillCount === 3 || preferences.drillCount === 4) && (
                 <span className="text-green-400 font-medium">RECOMMENDED: 3-4 drills is the sweet spot for focused improvement</span>
@@ -6133,7 +6133,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
           
           {/* Workout Mode */}
           <div>
-            <label className="text-[#888] text-sm uppercase tracking-wider block mb-3">
+            <label className="text-slate-500 text-sm uppercase tracking-wider block mb-3">
               WORKOUT MODE
             </label>
             <div className="grid grid-cols-2 gap-4">
@@ -6142,14 +6142,14 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                 className={`p-4 rounded-xl text-left transition-all ${
                   preferences.workoutMode === 'continuous'
                     ? 'bg-[#FF6B35]/20 border-2 border-[#FF6B35]'
-                    : 'bg-[#2a2a2a] border border-[#3a3a3a] hover:border-[#FF6B35]'
+                    : 'bg-slate-50 border border-slate-200 hover:border-[#FF6B35]'
                 }`}
               >
-                <Play className={`w-6 h-6 mb-2 ${preferences.workoutMode === 'continuous' ? 'text-[#FF6B35]' : 'text-[#888]'}`} />
-                <h4 className={`font-bold uppercase ${preferences.workoutMode === 'continuous' ? 'text-[#FF6B35]' : 'text-[#E5E5E5]'}`}>
+                <Play className={`w-6 h-6 mb-2 ${preferences.workoutMode === 'continuous' ? 'text-[#FF6B35]' : 'text-slate-500'}`} />
+                <h4 className={`font-bold uppercase ${preferences.workoutMode === 'continuous' ? 'text-[#FF6B35]' : 'text-slate-700'}`}>
                   CONTINUOUS
                 </h4>
-                <p className="text-[#888] text-sm mt-1">
+                <p className="text-slate-500 text-sm mt-1">
                   Drills flow automatically without stopping. When one drill ends, the next begins immediately. Best for building endurance and maintaining workout intensity.
                 </p>
               </button>
@@ -6158,19 +6158,19 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                 className={`p-4 rounded-xl text-left transition-all ${
                   preferences.workoutMode === 'step-by-step'
                     ? 'bg-[#FF6B35]/20 border-2 border-[#FF6B35]'
-                    : 'bg-[#2a2a2a] border border-[#3a3a3a] hover:border-[#FF6B35]'
+                    : 'bg-slate-50 border border-slate-200 hover:border-[#FF6B35]'
                 }`}
               >
-                <Pause className={`w-6 h-6 mb-2 ${preferences.workoutMode === 'step-by-step' ? 'text-[#FF6B35]' : 'text-[#888]'}`} />
-                <h4 className={`font-bold uppercase ${preferences.workoutMode === 'step-by-step' ? 'text-[#FF6B35]' : 'text-[#E5E5E5]'}`}>
+                <Pause className={`w-6 h-6 mb-2 ${preferences.workoutMode === 'step-by-step' ? 'text-[#FF6B35]' : 'text-slate-500'}`} />
+                <h4 className={`font-bold uppercase ${preferences.workoutMode === 'step-by-step' ? 'text-[#FF6B35]' : 'text-slate-700'}`}>
                   STEP-BY-STEP
                 </h4>
-                <p className="text-[#888] text-sm mt-1">
+                <p className="text-slate-500 text-sm mt-1">
                   After each drill, the workout pauses with a popup explaining the next drill. Take time to rest, review technique, and ensure you are ready before pressing START.
                 </p>
               </button>
             </div>
-            <p className="text-[#666] text-xs mt-3 bg-[#2a2a2a] p-3 rounded-lg">
+            <p className="text-slate-400 text-xs mt-3 bg-slate-50 p-3 rounded-lg">
               <span className="text-[#FF6B35] font-bold">TIP:</span> {preferences.workoutMode === 'continuous' 
                 ? "Continuous mode is great for experienced players who know the drills. Keeps your heart rate up and simulates game conditions."
                 : "Step-by-step mode is ideal for beginners or when learning new drills. Focus on form over speed."}
@@ -6179,7 +6179,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
           
           {/* Workout Level / Age Level */}
           <div>
-            <label className="text-[#888] text-sm uppercase tracking-wider block mb-3">
+            <label className="text-slate-500 text-sm uppercase tracking-wider block mb-3">
               WORKOUT LEVEL
             </label>
             <div className="grid grid-cols-5 gap-2">
@@ -6193,7 +6193,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                     className={`p-3 rounded-xl text-center transition-all ${
                       isActive
                         ? `bg-gradient-to-r ${config.bgColor} ${config.color} border-2 ${config.borderColor}`
-                        : 'bg-[#2a2a2a] text-[#666] hover:text-white border border-[#3a3a3a]'
+                        : 'bg-slate-50 text-slate-400 hover:text-slate-900 border border-slate-200'
                     }`}
                     title={config.description}
                   >
@@ -6203,14 +6203,14 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                 )
               })}
             </div>
-            <p className="text-[#666] text-xs mt-2">
+            <p className="text-slate-400 text-xs mt-2">
               {currentAgeLevelConfig.description}
             </p>
             
             {/* Age Level Tips - Collapsible */}
             <button
               onClick={() => setShowAgeLevelInfo(!showAgeLevelInfo)}
-              className="flex items-center gap-2 text-xs text-[#888] hover:text-white transition-colors mt-3"
+              className="flex items-center gap-2 text-xs text-slate-500 hover:text-slate-900 transition-colors mt-3"
             >
               <Info className="w-3 h-3" />
               {showAgeLevelInfo ? 'Hide' : 'Show'} tips for {currentAgeLevelConfig.name} players
@@ -6220,9 +6220,9 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
             {showAgeLevelInfo && (
               <div className="mt-2 space-y-1">
                 {currentAgeLevelConfig.tips.map((tip, i) => (
-                  <div key={i} className="flex items-start gap-2 bg-[#2a2a2a] rounded-lg p-2">
+                  <div key={i} className="flex items-start gap-2 bg-slate-50 rounded-lg p-2">
                     <Check className="w-3 h-3 text-green-400 flex-shrink-0 mt-0.5" />
-                    <span className="text-[#E5E5E5] text-xs">{tip}</span>
+                    <span className="text-slate-700 text-xs">{tip}</span>
                   </div>
                 ))}
               </div>
@@ -6232,13 +6232,13 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
           {/* Sound Toggle */}
           <div className="flex items-center justify-between">
             <div>
-              <h4 className="text-[#E5E5E5] font-bold uppercase">SOUND EFFECTS</h4>
-              <p className="text-[#888] text-sm">Play chime when exercise completes</p>
+              <h4 className="text-slate-700 font-bold uppercase">SOUND EFFECTS</h4>
+              <p className="text-slate-500 text-sm">Play chime when exercise completes</p>
             </div>
             <button
               onClick={() => setPreferences(prev => ({ ...prev, soundEnabled: !prev.soundEnabled }))}
               className={`w-14 h-8 rounded-full transition-all ${
-                preferences.soundEnabled ? 'bg-[#FF6B35]' : 'bg-[#3a3a3a]'
+                preferences.soundEnabled ? 'bg-[#FF6B35]' : 'bg-slate-100'
               }`}
             >
               <div className={`w-6 h-6 rounded-full bg-white shadow-md transform transition-transform ${
@@ -6248,14 +6248,14 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
           </div>
           
           {/* Auto-Populate from Flaws Toggle */}
-          <div className="border-t border-[#3a3a3a] pt-6">
+          <div className="border-t border-slate-200 pt-6">
             <div className="flex items-center justify-between">
               <div className="flex-1 mr-4">
-                <h4 className="text-[#E5E5E5] font-bold uppercase flex items-center gap-2">
+                <h4 className="text-slate-700 font-bold uppercase flex items-center gap-2">
                   <Target className="w-4 h-4 text-[#FF6B35]" />
                   AUTO-POPULATE FROM FLAWS
                 </h4>
-                <p className="text-[#888] text-sm mt-1">
+                <p className="text-slate-500 text-sm mt-1">
                   Automatically generate workouts based on your identified shooting flaws
                 </p>
                 {detectedFlaws.length > 0 ? (
@@ -6264,7 +6264,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                     {detectedFlaws.length} flaw{detectedFlaws.length > 1 ? 's' : ''} detected - ready to create personalized workouts
                   </p>
                 ) : (
-                  <p className="text-[#666] text-xs mt-2 flex items-center gap-1">
+                  <p className="text-slate-400 text-xs mt-2 flex items-center gap-1">
                     <AlertTriangle className="w-3 h-3" />
                     No flaws detected yet. Upload a shooting image to identify areas for improvement.
                   </p>
@@ -6273,7 +6273,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
               <button
                 onClick={() => handleAutoPopulateToggle(!preferences.autoPopulateFromFlaws)}
                 className={`w-14 h-8 rounded-full transition-all ${
-                  preferences.autoPopulateFromFlaws ? 'bg-green-500' : 'bg-[#3a3a3a]'
+                  preferences.autoPopulateFromFlaws ? 'bg-green-500' : 'bg-slate-100'
                 }`}
               >
                 <div className={`w-6 h-6 rounded-full bg-white shadow-md transform transition-transform ${
@@ -6297,12 +6297,12 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                       </span>
                     ))}
                     {detectedFlaws.length > 5 && (
-                      <span className="px-2 py-1 bg-[#2a2a2a] text-[#888] text-xs rounded-full">
+                      <span className="px-2 py-1 bg-slate-50 text-slate-500 text-xs rounded-full">
                         +{detectedFlaws.length - 5} more
                       </span>
                     )}
                   </div>
-                  <p className="text-[#888] text-xs mt-3">
+                  <p className="text-slate-500 text-xs mt-3">
                     Workouts will focus on drills that address these specific issues.
                   </p>
                 </div>
@@ -6312,7 +6312,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                     <Clock className="w-4 h-4" />
                     READY & WAITING
                   </h5>
-                  <p className="text-[#888] text-sm">
+                  <p className="text-slate-500 text-sm">
                     Auto-populate is enabled. When you upload a shooting image and flaws are detected, 
                     personalized workouts will automatically be generated and added to your calendar.
                   </p>
@@ -6324,22 +6324,22 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
       )}
       
       {/* Calendar Navigation */}
-      <div className="bg-[#1a1a1a] rounded-xl p-4 border border-[#3a3a3a]">
+      <div className="bg-white rounded-xl p-4 border border-slate-200">
         <div className="flex items-center justify-between mb-4">
           <button
             onClick={() => navigateCalendar('prev')}
-            className="p-2 rounded-lg bg-[#2a2a2a] text-[#888] hover:text-white transition-colors"
+            className="p-2 rounded-lg bg-slate-50 text-slate-500 hover:text-slate-900 transition-colors"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
           
           <div className="flex items-center gap-4">
-            <h3 className="text-[#E5E5E5] font-bold text-lg">{formatDateHeader()}</h3>
-            <div className="flex items-center gap-1 bg-[#2a2a2a] rounded-lg p-1">
+            <h3 className="text-slate-700 font-bold text-lg">{formatDateHeader()}</h3>
+            <div className="flex items-center gap-1 bg-slate-50 rounded-lg p-1">
               <button
                 onClick={() => setViewMode('day')}
                 className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                  viewMode === 'day' ? 'bg-[#FF6B35] text-[#1a1a1a]' : 'text-[#888] hover:text-white'
+                  viewMode === 'day' ? 'bg-[#FF6B35] text-slate-900' : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
                 DAY
@@ -6347,7 +6347,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
               <button
                 onClick={() => setViewMode('week')}
                 className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                  viewMode === 'week' ? 'bg-[#FF6B35] text-[#1a1a1a]' : 'text-[#888] hover:text-white'
+                  viewMode === 'week' ? 'bg-[#FF6B35] text-slate-900' : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
                 WEEK
@@ -6355,7 +6355,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
               <button
                 onClick={() => setViewMode('month')}
                 className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                  viewMode === 'month' ? 'bg-[#FF6B35] text-[#1a1a1a]' : 'text-[#888] hover:text-white'
+                  viewMode === 'month' ? 'bg-[#FF6B35] text-slate-900' : 'text-slate-500 hover:text-slate-900'
                 }`}
               >
                 MONTH
@@ -6365,7 +6365,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
           
           <button
             onClick={() => navigateCalendar('next')}
-            className="p-2 rounded-lg bg-[#2a2a2a] text-[#888] hover:text-white transition-colors"
+            className="p-2 rounded-lg bg-slate-50 text-slate-500 hover:text-slate-900 transition-colors"
           >
             <ChevronRight className="w-5 h-5" />
           </button>
@@ -6375,7 +6375,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
         <div className={`grid ${viewMode === 'day' ? 'grid-cols-1' : 'grid-cols-7'} gap-2`}>
           {/* Day Headers - only show for week/month view */}
           {viewMode !== 'day' && ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map(day => (
-            <div key={day} className="text-center text-[#888] text-xs font-bold py-2">
+            <div key={day} className="text-center text-slate-500 text-xs font-bold py-2">
               {day}
             </div>
           ))}
@@ -6407,12 +6407,12 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                       ? 'bg-green-500/10 border border-green-500/30'
                       : workoutCount > 0
                         ? 'bg-green-500/10 border border-green-500/30 hover:border-green-500'
-                        : 'bg-[#2a2a2a] border border-[#3a3a3a] hover:border-[#4a4a4a]'
+                        : 'bg-slate-50 border border-slate-200 hover:border-slate-200'
                 } ${!isCurrentMonth && viewMode === 'month' ? 'opacity-40' : ''}`}
               >
                 <div className="flex items-center justify-between mb-1">
                   <span className={`text-sm font-bold ${
-                    isToday ? 'text-[#FF6B35]' : isCurrentMonth ? 'text-[#E5E5E5]' : 'text-[#666]'
+                    isToday ? 'text-[#FF6B35]' : isCurrentMonth ? 'text-slate-700' : 'text-slate-400'
                   }`}>
                     {date.getDate()}
                   </span>
@@ -6421,7 +6421,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                       <Check className="w-4 h-4 text-green-400" />
                     )}
                     {workoutCount > 0 && (
-                      <Edit3 className="w-3 h-3 text-[#666] hover:text-[#FF6B35]" />
+                      <Edit3 className="w-3 h-3 text-slate-400 hover:text-[#FF6B35]" />
                     )}
                   </div>
                 </div>
@@ -6452,7 +6452,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                 
                 {/* Missed workouts */}
                 {isPast && workoutCount > 0 && !allCompleted && (
-                  <div className="text-[#666] text-xs text-center mt-1 uppercase">
+                  <div className="text-slate-400 text-xs text-center mt-1 uppercase">
                     {completedCount > 0 ? `${completedCount}/${workoutCount} Done` : `${workoutCount} Missed`}
                   </div>
                 )}
@@ -6463,7 +6463,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
       </div>
       
       {/* Workout Mode Selection */}
-      <div className="bg-[#1a1a1a] rounded-xl p-6 border border-[#3a3a3a]">
+      <div className="bg-white rounded-xl p-6 border border-slate-200">
         <h3 className="text-[#FF6B35] font-bold text-lg mb-4 flex items-center gap-2 uppercase">
           <Dumbbell className="w-5 h-5" />
           START A WORKOUT
@@ -6475,8 +6475,8 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
             onClick={() => setWorkoutMode('auto')}
             className={`flex-1 py-3 rounded-lg font-bold transition-all flex items-center justify-center gap-2 ${
               workoutMode === 'auto'
-                ? 'bg-[#FF6B35] text-[#1a1a1a]'
-                : 'bg-[#2a2a2a] text-[#888] hover:text-white border border-[#3a3a3a]'
+                ? 'bg-[#FF6B35] text-slate-900'
+                : 'bg-slate-50 text-slate-500 hover:text-slate-900 border border-slate-200'
             }`}
           >
             <Zap className="w-4 h-4" />
@@ -6489,8 +6489,8 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
             }}
             className={`flex-1 py-3 rounded-lg font-bold transition-all flex items-center justify-center gap-2 ${
               workoutMode === 'custom'
-                ? 'bg-[#FF6B35] text-[#1a1a1a]'
-                : 'bg-[#2a2a2a] text-[#888] hover:text-white border border-[#3a3a3a]'
+                ? 'bg-[#FF6B35] text-slate-900'
+                : 'bg-slate-50 text-slate-500 hover:text-slate-900 border border-slate-200'
             }`}
           >
             <Target className="w-4 h-4" />
@@ -6498,7 +6498,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
           </button>
           <button
             onClick={() => setShowWorkoutBuilder(true)}
-            className="flex-1 py-3 rounded-lg font-bold transition-all flex items-center justify-center gap-2 bg-[#2a2a2a] text-[#888] hover:text-white border border-[#3a3a3a] hover:border-purple-500"
+            className="flex-1 py-3 rounded-lg font-bold transition-all flex items-center justify-center gap-2 bg-slate-50 text-slate-500 hover:text-slate-900 border border-slate-200 hover:border-purple-500"
           >
             <GripVertical className="w-4 h-4" />
             BUILD WORKOUT
@@ -6506,19 +6506,19 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
         </div>
         
         {/* Notification Settings */}
-        <div className="flex items-center justify-between mb-4 p-3 bg-[#2a2a2a] rounded-lg">
+        <div className="flex items-center justify-between mb-4 p-3 bg-slate-50 rounded-lg">
           <div className="flex items-center gap-2">
             {notificationsEnabled ? (
               <BellRing className="w-4 h-4 text-[#FF6B35]" />
             ) : (
-              <Bell className="w-4 h-4 text-[#888]" />
+              <Bell className="w-4 h-4 text-slate-500" />
             )}
-            <span className="text-sm text-[#888]">WORKOUT REMINDERS</span>
+            <span className="text-sm text-slate-500">WORKOUT REMINDERS</span>
           </div>
           <button
             onClick={() => setNotificationsEnabled(!notificationsEnabled)}
             className={`w-12 h-6 rounded-full transition-colors ${
-              notificationsEnabled ? 'bg-[#FF6B35]' : 'bg-[#3a3a3a]'
+              notificationsEnabled ? 'bg-[#FF6B35]' : 'bg-slate-100'
             }`}
           >
             <div className={`w-5 h-5 rounded-full bg-white transition-transform ${
@@ -6529,7 +6529,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
         
         {workoutMode === 'auto' ? (
           <div className="space-y-4">
-            <p className="text-[#888] text-sm">
+            <p className="text-slate-500 text-sm">
               Auto-generate a {preferences.preferredDuration}-minute {currentAgeLevelConfig.name}-level workout with{' '}
               <span className={preferences.drillCount >= 3 && preferences.drillCount <= 4 ? 'text-green-400 font-bold' : ''}>
                 {preferences.drillCount} focused drill{preferences.drillCount > 1 ? 's' : ''}
@@ -6538,7 +6538,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
             <div className="flex gap-2">
               <button
                 onClick={() => startWorkout(new Date())}
-                className="flex-1 py-3 rounded-xl bg-[#FF6B35] text-[#1a1a1a] font-bold hover:brightness-110 transition-all flex items-center justify-center gap-2 whitespace-nowrap"
+                className="flex-1 py-3 rounded-xl bg-[#FF6B35] text-slate-900 font-bold hover:brightness-110 transition-all flex items-center justify-center gap-2 whitespace-nowrap"
               >
                 <Play className="w-5 h-5" />
                 START
@@ -6561,7 +6561,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                   setShowDateDetailModal(true)
                   setSelectedDateForDetail(targetDate)
                 }}
-                className="flex-1 py-3 rounded-xl bg-[#2a2a2a] border border-[#3a3a3a] text-[#888] hover:text-white hover:border-[#FF6B35] transition-all flex items-center justify-center gap-2"
+                className="flex-1 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 hover:text-slate-900 hover:border-[#FF6B35] transition-all flex items-center justify-center gap-2"
               >
                 <Calendar className="w-5 h-5" />
                 SCHEDULE TO CALENDAR
@@ -6570,7 +6570,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
           </div>
         ) : (
           <div className="space-y-4">
-            <p className="text-[#888] text-sm">
+            <p className="text-slate-500 text-sm">
               {selectedDrills.length === 0 
                 ? 'Browse the drill pool and select the drills you want to work on.'
                 : `${selectedDrills.length} drill${selectedDrills.length > 1 ? 's' : ''} selected`
@@ -6579,7 +6579,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
             <div className="flex gap-2">
               <button
                 onClick={() => setShowDrillPool(true)}
-                className="flex-1 py-3 rounded-xl bg-[#2a2a2a] border border-[#3a3a3a] text-[#888] hover:text-white hover:border-[#FF6B35] transition-all flex items-center justify-center gap-2 whitespace-nowrap"
+                className="flex-1 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 hover:text-slate-900 hover:border-[#FF6B35] transition-all flex items-center justify-center gap-2 whitespace-nowrap"
               >
                 <BookOpen className="w-5 h-5" />
                 Drills
@@ -6588,7 +6588,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                 <>
                   <button
                     onClick={startCustomWorkout}
-                    className="flex-1 py-3 rounded-xl bg-[#FF6B35] text-[#1a1a1a] font-bold hover:brightness-110 transition-all flex items-center justify-center gap-2 whitespace-nowrap"
+                    className="flex-1 py-3 rounded-xl bg-[#FF6B35] text-slate-900 font-bold hover:brightness-110 transition-all flex items-center justify-center gap-2 whitespace-nowrap"
                   >
                     <Play className="w-5 h-5" />
                     START
@@ -6623,7 +6623,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                       setShowDateDetailModal(true)
                       setSelectedDateForDetail(targetDate)
                     }}
-                    className="flex-1 py-3 rounded-xl bg-[#2a2a2a] border border-[#3a3a3a] text-[#888] hover:text-white hover:border-[#FF6B35] transition-all flex items-center justify-center gap-2"
+                    className="flex-1 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 hover:text-slate-900 hover:border-[#FF6B35] transition-all flex items-center justify-center gap-2"
                   >
                     <Calendar className="w-5 h-5" />
                     SCHEDULE
@@ -6645,7 +6645,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                       saveWorkoutAsDraft(customWorkout)
                       setSelectedDrills([])
                     }}
-                    className="py-3 px-4 rounded-xl bg-[#2a2a2a] border border-[#3a3a3a] text-[#888] hover:text-[#FF6B35] hover:border-[#FF6B35]/50 transition-all flex items-center justify-center gap-2"
+                    className="py-3 px-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 hover:text-[#FF6B35] hover:border-[#FF6B35]/50 transition-all flex items-center justify-center gap-2"
                     title="Save as draft for later"
                   >
                     <Star className="w-5 h-5" />
@@ -6659,13 +6659,13 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
       
       {/* Drill Pool Browser Modal */}
       {showDrillPool && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="bg-[#1a1a1a] rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
             {/* Header */}
-            <div className="p-4 border-b border-[#3a3a3a] flex items-center justify-between">
+            <div className="p-4 border-b border-slate-200 flex items-center justify-between">
               <div>
                 <h3 className="text-xl font-black text-[#FF6B35] uppercase">DRILL POOL</h3>
-                <p className="text-[#888] text-sm">
+                <p className="text-slate-500 text-sm">
                   {currentAgeLevelConfig.name} Level - {availableDrills.filter(d => 
                     drillCategoryFilter === 'all' || d.focusArea === drillCategoryFilter
                   ).length} drills available
@@ -6673,14 +6673,14 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
               </div>
               <button
                 onClick={() => setShowDrillPool(false)}
-                className="text-[#888] hover:text-white p-2"
+                className="text-slate-500 hover:text-slate-900 p-2"
               >
                 <X className="w-6 h-6" />
               </button>
             </div>
             
             {/* Category Filter */}
-            <div className="px-4 py-3 border-b border-[#3a3a3a] overflow-x-auto">
+            <div className="px-4 py-3 border-b border-slate-200 overflow-x-auto">
               <div className="flex gap-2 min-w-max">
                 {DRILL_CATEGORIES.map(category => (
                   <button
@@ -6688,8 +6688,8 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                     onClick={() => setDrillCategoryFilter(category.id)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase flex items-center gap-1.5 transition-all whitespace-nowrap ${
                       drillCategoryFilter === category.id
-                        ? 'bg-[#FF6B35] text-[#1a1a1a]'
-                        : 'bg-[#2a2a2a] text-[#888] hover:text-white border border-[#3a3a3a]'
+                        ? 'bg-[#FF6B35] text-slate-900'
+                        : 'bg-slate-50 text-slate-500 hover:text-slate-900 border border-slate-200'
                     }`}
                   >
                     <CategoryIcon type={category.icon} className="w-3.5 h-3.5" />
@@ -6707,7 +6707,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                 </span>
                 <button
                   onClick={() => setSelectedDrills([])}
-                  className="text-[#888] hover:text-white text-sm uppercase"
+                  className="text-slate-500 hover:text-slate-900 text-sm uppercase"
                 >
                   Clear All
                 </button>
@@ -6727,7 +6727,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                       className={`p-4 rounded-xl border transition-all cursor-pointer ${
                         isSelected
                           ? 'bg-[#FF6B35]/10 border-[#FF6B35]/50'
-                          : 'bg-[#2a2a2a] border-[#3a3a3a] hover:border-[#4a4a4a]'
+                          : 'bg-slate-50 border-slate-200 hover:border-slate-200'
                       }`}
                       onClick={() => {
                         setSelectedDrills(prev => 
@@ -6741,13 +6741,13 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                         <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
                           isSelected
                             ? 'bg-[#FF6B35] border-[#FF6B35]'
-                            : 'border-[#4a4a4a]'
+                            : 'border-slate-200'
                         }`}>
-                          {isSelected && <Check className="w-4 h-4 text-[#1a1a1a]" />}
+                          {isSelected && <Check className="w-4 h-4 text-slate-900" />}
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <h4 className={`font-bold uppercase ${isSelected ? 'text-[#FF6B35]' : 'text-[#E5E5E5]'}`}>
+                            <h4 className={`font-bold uppercase ${isSelected ? 'text-[#FF6B35]' : 'text-slate-700'}`}>
                               {drill.name.toUpperCase()}
                             </h4>
                             <span className={`text-xs px-2 py-0.5 rounded-full uppercase ${
@@ -6755,7 +6755,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                               drill.focusArea === 'release' ? 'bg-green-500/20 text-green-400' :
                               drill.focusArea === 'follow-through' ? 'bg-purple-500/20 text-purple-400' :
                               drill.focusArea === 'balance' ? 'bg-orange-500/20 text-orange-400' :
-                              'bg-[#3a3a3a] text-[#888]'
+                              'bg-slate-100 text-slate-500'
                             }`}>
                               {drill.focusArea.toUpperCase()}
                             </span>
@@ -6764,14 +6764,14 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                                 e.stopPropagation()
                                 setSelectedDrillForExplanation(drill)
                               }}
-                              className="ml-auto p-1.5 rounded-lg bg-[#3a3a3a] hover:bg-[#FF6B35] text-[#888] hover:text-[#1a1a1a] transition-all"
+                              className="ml-auto p-1.5 rounded-lg bg-slate-100 hover:bg-[#FF6B35] text-slate-500 hover:text-slate-900 transition-all"
                               title="Learn how to do this drill"
                             >
                               <Info className="w-4 h-4" />
                             </button>
                           </div>
-                          <p className="text-[#888] text-sm mb-2 line-clamp-2">{drill.description}</p>
-                          <div className="flex items-center gap-4 text-xs text-[#666]">
+                          <p className="text-slate-500 text-sm mb-2 line-clamp-2">{drill.description}</p>
+                          <div className="flex items-center gap-4 text-xs text-slate-400">
                             <span className="flex items-center gap-1">
                               <Clock className="w-3 h-3" />
                               {Math.ceil(drill.duration / 60)} min
@@ -6792,10 +6792,10 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
             </div>
             
             {/* Footer */}
-            <div className="p-4 border-t border-[#3a3a3a] flex items-center justify-between">
+            <div className="p-4 border-t border-slate-200 flex items-center justify-between">
               <button
                 onClick={() => setShowDrillPool(false)}
-                className="px-6 py-3 rounded-xl bg-[#2a2a2a] text-[#888] font-bold hover:bg-[#3a3a3a] transition-colors"
+                className="px-6 py-3 rounded-xl bg-slate-50 text-slate-500 font-bold hover:bg-slate-100 transition-colors"
               >
                 CANCEL
               </button>
@@ -6809,8 +6809,8 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                 disabled={selectedDrills.length === 0}
                 className={`px-6 py-3 rounded-xl font-bold transition-all flex items-center gap-2 ${
                   selectedDrills.length > 0
-                    ? 'bg-[#FF6B35] text-[#1a1a1a] hover:brightness-110'
-                    : 'bg-[#2a2a2a] text-[#666] cursor-not-allowed'
+                    ? 'bg-[#FF6B35] text-slate-900 hover:brightness-110'
+                    : 'bg-slate-50 text-slate-400 cursor-not-allowed'
                 }`}
               >
                 <Play className="w-5 h-5" />
@@ -6826,22 +6826,22 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
       
       {/* Workout Builder Modal - Drag and Drop */}
       {showWorkoutBuilder && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="bg-[#1a1a1a] rounded-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
             {/* Header */}
-            <div className="p-4 border-b border-[#3a3a3a] flex items-center justify-between">
+            <div className="p-4 border-b border-slate-200 flex items-center justify-between">
               <div>
                 <h3 className="text-xl font-black text-[#FF6B35] flex items-center gap-2">
                   <GripVertical className="w-5 h-5" />
                   Build Your Workout
                 </h3>
-                <p className="text-[#888] text-sm">
+                <p className="text-slate-500 text-sm">
                   Drag and drop drills to create your custom workout
                 </p>
               </div>
               <button
                 onClick={() => setShowWorkoutBuilder(false)}
-                className="text-[#888] hover:text-white p-2"
+                className="text-slate-500 hover:text-slate-900 p-2"
               >
                 <X className="w-6 h-6" />
               </button>
@@ -6850,9 +6850,9 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
             {/* Main Content - Two Columns */}
             <div className="flex-1 overflow-hidden flex">
               {/* Left Column - Drill Pool */}
-              <div className="w-1/2 border-r border-[#3a3a3a] flex flex-col">
-                <div className="p-3 bg-[#2a2a2a] border-b border-[#3a3a3a]">
-                  <h4 className="text-[#888] font-bold text-sm uppercase tracking-wider flex items-center gap-2">
+              <div className="w-1/2 border-r border-slate-200 flex flex-col">
+                <div className="p-3 bg-slate-50 border-b border-slate-200">
+                  <h4 className="text-slate-500 font-bold text-sm uppercase tracking-wider flex items-center gap-2">
                     <BookOpen className="w-4 h-4" />
                     Available Drills - Drag to Add
                   </h4>
@@ -6863,19 +6863,19 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                       key={drill.id}
                       draggable
                       onDragStart={(e) => handleDragStart(e, drill)}
-                      className="p-3 rounded-lg bg-[#2a2a2a] border border-[#3a3a3a] cursor-grab active:cursor-grabbing hover:border-[#FF6B35]/50 transition-all group"
+                      className="p-3 rounded-lg bg-slate-50 border border-slate-200 cursor-grab active:cursor-grabbing hover:border-[#FF6B35]/50 transition-all group"
                     >
                       <div className="flex items-start gap-2">
-                        <GripVertical className="w-4 h-4 text-[#666] mt-1 group-hover:text-[#FF6B35]" />
+                        <GripVertical className="w-4 h-4 text-slate-400 mt-1 group-hover:text-[#FF6B35]" />
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <h5 className="font-bold text-[#E5E5E5] text-sm uppercase">{drill.name.toUpperCase()}</h5>
+                            <h5 className="font-bold text-slate-700 text-sm uppercase">{drill.name.toUpperCase()}</h5>
                             <span className={`text-[10px] px-1.5 py-0.5 rounded uppercase ${
                               drill.focusArea === 'elbow' ? 'bg-blue-500/20 text-blue-400' :
                               drill.focusArea === 'release' ? 'bg-green-500/20 text-green-400' :
                               drill.focusArea === 'follow-through' ? 'bg-purple-500/20 text-purple-400' :
                               drill.focusArea === 'balance' ? 'bg-orange-500/20 text-orange-400' :
-                              'bg-[#3a3a3a] text-[#888]'
+                              'bg-slate-100 text-slate-500'
                             }`}>
                               {drill.focusArea.toUpperCase()}
                             </span>
@@ -6885,14 +6885,14 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                                 e.preventDefault()
                                 setSelectedDrillForExplanation(drill)
                               }}
-                              className="ml-auto p-1 rounded bg-[#3a3a3a] hover:bg-[#FF6B35] text-[#888] hover:text-[#1a1a1a] transition-all"
+                              className="ml-auto p-1 rounded bg-slate-100 hover:bg-[#FF6B35] text-slate-500 hover:text-slate-900 transition-all"
                               title="Learn how to do this drill"
                             >
                               <Info className="w-3 h-3" />
                             </button>
                           </div>
-                          <p className="text-[#888] text-xs line-clamp-1">{drill.description}</p>
-                          <div className="flex items-center gap-3 mt-1 text-[10px] text-[#666]">
+                          <p className="text-slate-500 text-xs line-clamp-1">{drill.description}</p>
+                          <div className="flex items-center gap-3 mt-1 text-[10px] text-slate-400">
                             <span className="flex items-center gap-1">
                               <Clock className="w-3 h-3" />
                               {Math.ceil(drill.duration / 60)} min
@@ -6902,7 +6902,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                             )}
                           </div>
                         </div>
-                        <Plus className="w-4 h-4 text-[#666] group-hover:text-[#FF6B35]" />
+                        <Plus className="w-4 h-4 text-slate-400 group-hover:text-[#FF6B35]" />
                       </div>
                     </div>
                   ))}
@@ -6911,13 +6911,13 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
               
               {/* Right Column - Workout Builder */}
               <div className="w-1/2 flex flex-col">
-                <div className="p-3 bg-[#2a2a2a] border-b border-[#3a3a3a] flex items-center justify-between">
+                <div className="p-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
                   <div>
                     <h4 className="text-[#FF6B35] font-bold text-sm uppercase tracking-wider flex items-center gap-2">
                       <Dumbbell className="w-4 h-4" />
                       Your Workout
                     </h4>
-                    <p className="text-[#888] text-xs">
+                    <p className="text-slate-500 text-xs">
                       {customWorkoutDrills.length} drills - {customWorkoutTotalDuration} min total
                     </p>
                   </div>
@@ -6926,7 +6926,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                     value={customWorkoutName}
                     onChange={(e) => setCustomWorkoutName(e.target.value)}
                     placeholder="Workout name..."
-                    className="px-3 py-1 rounded-lg bg-[#1a1a1a] border border-[#3a3a3a] text-[#E5E5E5] text-sm focus:border-[#FF6B35] focus:outline-none"
+                    className="px-3 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 text-sm focus:border-[#FF6B35] focus:outline-none"
                   />
                 </div>
                 
@@ -6941,11 +6941,11 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                 >
                   {customWorkoutDrills.length === 0 ? (
                     <div className={`text-center p-8 border-2 border-dashed rounded-xl transition-colors ${
-                      draggedDrill ? 'border-[#FF6B35] bg-[#FF6B35]/10' : 'border-[#3a3a3a]'
+                      draggedDrill ? 'border-[#FF6B35] bg-[#FF6B35]/10' : 'border-slate-200'
                     }`}>
-                      <GripVertical className="w-12 h-12 text-[#666] mx-auto mb-3" />
-                      <p className="text-[#888] font-medium">Drop drills here</p>
-                      <p className="text-[#666] text-sm">Drag drills from the left panel to build your workout</p>
+                      <GripVertical className="w-12 h-12 text-slate-400 mx-auto mb-3" />
+                      <p className="text-slate-500 font-medium">Drop drills here</p>
+                      <p className="text-slate-400 text-sm">Drag drills from the left panel to build your workout</p>
                     </div>
                   ) : (
                     <div className="space-y-2">
@@ -6956,22 +6956,22 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                           onDragStart={(e) => handleReorderDragStart(e, drill)}
                           onDragOver={(e) => handleDragOver(e, index)}
                           onDrop={(e) => handleDrop(e, index)}
-                          className={`p-3 rounded-lg bg-[#2a2a2a] border transition-all cursor-grab active:cursor-grabbing ${
+                          className={`p-3 rounded-lg bg-slate-50 border transition-all cursor-grab active:cursor-grabbing ${
                             dragOverIndex === index 
                               ? 'border-[#FF6B35] bg-[#FF6B35]/10' 
-                              : 'border-[#3a3a3a] hover:border-[#4a4a4a]'
+                              : 'border-slate-200 hover:border-slate-200'
                           }`}
                         >
                           <div className="flex items-center gap-3">
                             <div className="flex items-center gap-2">
-                              <GripVertical className="w-4 h-4 text-[#666]" />
-                              <span className="w-6 h-6 rounded-full bg-[#FF6B35] text-[#1a1a1a] flex items-center justify-center text-xs font-bold">
+                              <GripVertical className="w-4 h-4 text-slate-400" />
+                              <span className="w-6 h-6 rounded-full bg-[#FF6B35] text-slate-900 flex items-center justify-center text-xs font-bold">
                                 {index + 1}
                               </span>
                             </div>
                             <div className="flex-1">
-                              <h5 className="font-bold text-[#E5E5E5] text-sm uppercase">{drill.exercise.name.toUpperCase()}</h5>
-                              <div className="flex items-center gap-3 text-[10px] text-[#666]">
+                              <h5 className="font-bold text-slate-700 text-sm uppercase">{drill.exercise.name.toUpperCase()}</h5>
+                              <div className="flex items-center gap-3 text-[10px] text-slate-400">
                                 <span className="flex items-center gap-1">
                                   <Clock className="w-3 h-3" />
                                   {Math.ceil(drill.exercise.duration / 60)} min
@@ -6981,7 +6981,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                                   drill.exercise.focusArea === 'release' ? 'bg-green-500/20 text-green-400' :
                                   drill.exercise.focusArea === 'follow-through' ? 'bg-purple-500/20 text-purple-400' :
                                   drill.exercise.focusArea === 'balance' ? 'bg-orange-500/20 text-orange-400' :
-                                  'bg-[#3a3a3a] text-[#888]'
+                                  'bg-slate-100 text-slate-500'
                                 }`}>
                                   {drill.exercise.focusArea.toUpperCase()}
                                 </span>
@@ -6989,7 +6989,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                             </div>
                             <button
                               onClick={() => removeDrillFromWorkout(drill.id)}
-                              className="p-1 rounded text-[#666] hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                              className="p-1 rounded text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -7004,11 +7004,11 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                         className={`p-4 border-2 border-dashed rounded-lg text-center transition-colors ${
                           dragOverIndex === customWorkoutDrills.length 
                             ? 'border-[#FF6B35] bg-[#FF6B35]/10' 
-                            : 'border-[#3a3a3a] hover:border-[#4a4a4a]'
+                            : 'border-slate-200 hover:border-slate-200'
                         }`}
                       >
-                        <Plus className="w-5 h-5 text-[#666] mx-auto" />
-                        <p className="text-[#666] text-xs mt-1">Drop to add more</p>
+                        <Plus className="w-5 h-5 text-slate-400 mx-auto" />
+                        <p className="text-slate-400 text-xs mt-1">Drop to add more</p>
                       </div>
                     </div>
                   )}
@@ -7017,11 +7017,11 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
             </div>
             
             {/* Footer */}
-            <div className="p-4 border-t border-[#3a3a3a] flex items-center justify-between">
+            <div className="p-4 border-t border-slate-200 flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => setShowWorkoutBuilder(false)}
-                  className="px-6 py-3 rounded-xl bg-[#2a2a2a] text-[#888] font-bold hover:bg-[#3a3a3a] transition-colors"
+                  className="px-6 py-3 rounded-xl bg-slate-50 text-slate-500 font-bold hover:bg-slate-100 transition-colors"
                 >
                   CANCEL
                 </button>
@@ -7031,7 +7031,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                       setCustomWorkoutDrills([])
                       setCustomWorkoutName('')
                     }}
-                    className="px-4 py-3 rounded-xl bg-[#2a2a2a] text-red-400 font-bold hover:bg-red-500/10 transition-colors flex items-center gap-2"
+                    className="px-4 py-3 rounded-xl bg-slate-50 text-red-400 font-bold hover:bg-red-500/10 transition-colors flex items-center gap-2"
                   >
                     <Trash2 className="w-4 h-4" />
                     Clear All
@@ -7073,7 +7073,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                         setShowDateDetailModal(true)
                         setSelectedDateForDetail(scheduleDate)
                       }}
-                      className="px-6 py-3 rounded-xl bg-[#2a2a2a] border border-[#3a3a3a] text-[#888] font-bold hover:text-white hover:border-[#FF6B35] transition-all flex items-center gap-2"
+                      className="px-6 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 font-bold hover:text-slate-900 hover:border-[#FF6B35] transition-all flex items-center gap-2"
                     >
                       <Calendar className="w-5 h-5" />
                       SCHEDULE
@@ -7094,7 +7094,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                         setCustomWorkoutDrills([])
                         setCustomWorkoutName('')
                       }}
-                      className="px-6 py-3 rounded-xl bg-[#2a2a2a] border border-[#3a3a3a] text-[#888] font-bold hover:text-[#FF6B35] hover:border-[#FF6B35]/50 transition-all flex items-center gap-2"
+                      className="px-6 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 font-bold hover:text-[#FF6B35] hover:border-[#FF6B35]/50 transition-all flex items-center gap-2"
                       title="Save this workout as a template for later use"
                     >
                       <Star className="w-5 h-5" />
@@ -7107,8 +7107,8 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                   disabled={customWorkoutDrills.length === 0}
                   className={`px-8 py-3 rounded-xl font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
                     customWorkoutDrills.length > 0
-                      ? 'bg-[#FF6B35] text-[#1a1a1a] hover:brightness-110'
-                      : 'bg-[#2a2a2a] text-[#666] cursor-not-allowed'
+                      ? 'bg-[#FF6B35] text-slate-900 hover:brightness-110'
+                      : 'bg-slate-50 text-slate-400 cursor-not-allowed'
                   }`}
                 >
                   <Play className="w-5 h-5" />
@@ -7125,10 +7125,10 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
       
       {/* Date Detail Modal - Full Workout Management */}
       {showDateDetailModal && selectedDateForDetail && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="bg-[#1a1a1a] rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
             {/* Header */}
-            <div className="p-4 border-b border-[#3a3a3a] flex items-center justify-between flex-shrink-0">
+            <div className="p-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-[#FF6B35]/10 flex items-center justify-center border border-[#FF6B35]/30">
                   <CalendarDays className="w-5 h-5 text-[#FF6B35]" />
@@ -7137,14 +7137,14 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                   <h3 className="text-lg font-black text-[#FF6B35] uppercase">
                     {selectedDateForDetail.toLocaleDateString('en-US', { weekday: 'long' })}
                   </h3>
-                  <p className="text-[#888] text-sm">
+                  <p className="text-slate-500 text-sm">
                     {selectedDateForDetail.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setShowDateDetailModal(false)}
-                className="text-[#888] hover:text-white p-2"
+                className="text-slate-500 hover:text-slate-900 p-2"
               >
                 <X className="w-6 h-6" />
               </button>
@@ -7176,7 +7176,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                               </>
                             )}
                           </div>
-                          <span className="text-xs text-[#888]">{completedCount}/{workouts.length} DONE</span>
+                          <span className="text-xs text-slate-500">{completedCount}/{workouts.length} DONE</span>
                         </div>
                       </div>
                     )}
@@ -7184,7 +7184,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                     {/* Scheduled Workouts */}
                     {workouts.length > 0 && (
                       <div className="space-y-3">
-                        <h4 className="text-[#E5E5E5] font-bold uppercase text-sm flex items-center gap-2">
+                        <h4 className="text-slate-700 font-bold uppercase text-sm flex items-center gap-2">
                           <Dumbbell className="w-4 h-4" />
                           SCHEDULED WORKOUTS
                         </h4>
@@ -7195,7 +7195,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                             className={`rounded-xl overflow-hidden ${
                               scheduledWorkout.completed 
                                 ? 'border-2 border-green-500/50 bg-green-500/5' 
-                                : 'border-2 border-[#FF6B35] bg-[#1a1a1a]'
+                                : 'border-2 border-[#FF6B35] bg-white'
                             }`}
                           >
                             {/* Workout Header - Yellow/Gold header bar to distinguish */}
@@ -7208,7 +7208,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                                 <span className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-black shadow-lg ${
                                   scheduledWorkout.completed 
                                     ? 'bg-green-500 text-white' 
-                                    : 'bg-[#FF6B35] text-[#1a1a1a]'
+                                    : 'bg-[#FF6B35] text-slate-900'
                                 }`}>
                                   {workoutIndex + 1}
                                 </span>
@@ -7218,7 +7218,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                                   }`}>
                                     WORKOUT {workoutIndex + 1}: {scheduledWorkout.workout.name.toUpperCase()}
                                   </h5>
-                                  <div className="flex items-center gap-2 text-xs text-[#888]">
+                                  <div className="flex items-center gap-2 text-xs text-slate-500">
                                     <span className="flex items-center gap-1">
                                       <Clock className="w-3 h-3" />
                                       {scheduledWorkout.workout.duration} MIN
@@ -7243,7 +7243,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                                       setShowDateDetailModal(false)
                                       startScheduledWorkout(scheduledWorkout)
                                     }}
-                                    className="p-2 rounded-lg bg-[#FF6B35] text-[#1a1a1a] hover:brightness-110"
+                                    className="p-2 rounded-lg bg-[#FF6B35] text-slate-900 hover:brightness-110"
                                     title="Start Workout"
                                   >
                                     <Play className="w-4 h-4" />
@@ -7261,7 +7261,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                             
                             {/* Exercise List */}
                             <div className="p-3 space-y-2">
-                              <p className="text-xs text-[#888] uppercase tracking-wider mb-2">DRILLS IN THIS WORKOUT: <span className="text-[#FF6B35]">(Click drill name for instructions)</span></p>
+                              <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">DRILLS IN THIS WORKOUT: <span className="text-[#FF6B35]">(Click drill name for instructions)</span></p>
                               {scheduledWorkout.workout.exercises.map((exercise, exerciseIndex) => {
                                 const drillKey = `${scheduledWorkout.id}-${exerciseIndex}`
                                 const drillMedia = drillMediaMap[drillKey]
@@ -7270,7 +7270,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                                 return (
                                   <div 
                                     key={drillKey}
-                                    className="bg-[#1a1a1a] rounded-lg border border-[#3a3a3a] overflow-hidden"
+                                    className="bg-white rounded-lg border border-slate-200 overflow-hidden"
                                   >
                                     {/* Drill Header Row */}
                                     <div className="flex items-center justify-between p-2 group">
@@ -7278,21 +7278,21 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                                         className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer hover:opacity-80"
                                         onClick={() => setSelectedDrillForExplanation(exercise)}
                                       >
-                                        <span className="w-5 h-5 rounded-full bg-[#3a3a3a] text-[#888] flex items-center justify-center text-[10px] font-bold flex-shrink-0">
+                                        <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-[10px] font-bold flex-shrink-0">
                                           {exerciseIndex + 1}
                                         </span>
                                         <div className="min-w-0">
                                           <div className="flex items-center gap-2">
-                                            <p className="text-[#E5E5E5] text-sm font-medium truncate uppercase hover:text-[#FF6B35] transition-colors">{exercise.name.toUpperCase()}</p>
+                                            <p className="text-slate-700 text-sm font-medium truncate uppercase hover:text-[#FF6B35] transition-colors">{exercise.name.toUpperCase()}</p>
                                             {/* Media indicator */}
                                             {drillMedia?.type === 'video' && <Video className="w-3 h-3 text-green-400" />}
                                             {drillMedia?.type === 'image' && <Camera className="w-3 h-3 text-blue-400" />}
-                                            {drillMedia?.type === 'none' && <span className="text-[10px] text-[#666]">NO INPUT</span>}
+                                            {drillMedia?.type === 'none' && <span className="text-[10px] text-slate-400">NO INPUT</span>}
                                             {drillMedia?.hasCoachFeedback && (
-                                              <img src="/icons/coach-feedback.png" alt="Coach" className="w-4 h-4" style={{ filter: 'invert(1) brightness(2)' }} />
+                                              <img src="/icons/coach-feedback.png" alt="Coach" className="w-4 h-4" style={{ filter: 'none' }} />
                                             )}
                                           </div>
-                                          <p className="text-[#666] text-xs flex items-center gap-2">
+                                          <p className="text-slate-400 text-xs flex items-center gap-2">
                                             <span className="flex items-center gap-1">
                                               <Clock className="w-3 h-3" />
                                               {Math.ceil(exercise.duration / 60)} MIN
@@ -7302,7 +7302,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                                               exercise.focusArea === 'release' ? 'bg-green-500/20 text-green-400' :
                                               exercise.focusArea === 'follow-through' ? 'bg-purple-500/20 text-purple-400' :
                                               exercise.focusArea === 'balance' ? 'bg-orange-500/20 text-orange-400' :
-                                              'bg-[#3a3a3a] text-[#888]'
+                                              'bg-slate-100 text-slate-500'
                                             }`}>
                                               {exercise.focusArea.toUpperCase()}
                                             </span>
@@ -7318,8 +7318,8 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                                           }}
                                           className={`p-1.5 rounded transition-colors ${
                                             isExpanded 
-                                              ? 'bg-[#FF6B35] text-[#1a1a1a]' 
-                                              : 'bg-[#2a2a2a] text-[#888] hover:text-[#FF6B35] hover:bg-[#3a3a3a]'
+                                              ? 'bg-[#FF6B35] text-slate-900' 
+                                              : 'bg-slate-50 text-slate-500 hover:text-[#FF6B35] hover:bg-slate-100'
                                           }`}
                                           title="Media Options"
                                         >
@@ -7331,7 +7331,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                                               e.stopPropagation()
                                               deleteExerciseFromWorkout(scheduledWorkout.id, exerciseIndex)
                                             }}
-                                            className="p-1.5 rounded text-[#666] hover:text-red-400 hover:bg-red-500/10 transition-colors flex-shrink-0"
+                                            className="p-1.5 rounded text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors flex-shrink-0"
                                             title="Remove Drill"
                                           >
                                             <X className="w-3 h-3" />
@@ -7342,8 +7342,8 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                                     
                                     {/* Per-Drill Media Options Dropdown */}
                                     {isExpanded && (
-                                      <div className="border-t border-[#3a3a3a] p-3 bg-[#2a2a2a]/50 space-y-2">
-                                        <p className="text-xs text-[#888] uppercase tracking-wider mb-2">ADD MEDIA FOR THIS DRILL:</p>
+                                      <div className="border-t border-slate-200 p-3 bg-slate-50/50 space-y-2">
+                                        <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">ADD MEDIA FOR THIS DRILL:</p>
                                         
                                         {/* Option 1: Record from Camera */}
                                         <button
@@ -7351,14 +7351,14 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                                             // TODO: Implement camera recording for this drill
                                             alert('Camera recording coming soon! For now, please upload a video.')
                                           }}
-                                          className="w-full flex items-center gap-3 p-3 rounded-lg bg-[#1a1a1a] border border-[#3a3a3a] hover:border-[#FF6B35]/50 hover:bg-[#2a2a2a] transition-all text-left"
+                                          className="w-full flex items-center gap-3 p-3 rounded-lg bg-white border border-slate-200 hover:border-[#FF6B35]/50 hover:bg-slate-50 transition-all text-left"
                                         >
                                           <div className="w-10 h-10 rounded-lg bg-red-500/20 flex items-center justify-center">
                                             <Camera className="w-5 h-5 text-red-400" />
                                           </div>
                                           <div>
-                                            <p className="text-[#E5E5E5] font-medium text-sm">RECORD FROM CAMERA</p>
-                                            <p className="text-[#666] text-xs">Record yourself doing this drill</p>
+                                            <p className="text-slate-700 font-medium text-sm">RECORD FROM CAMERA</p>
+                                            <p className="text-slate-400 text-xs">Record yourself doing this drill</p>
                                           </div>
                                         </button>
                                         
@@ -7368,14 +7368,14 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                                             setCurrentDrillForUpload(drillKey)
                                             drillFileInputRef.current?.click()
                                           }}
-                                          className="w-full flex items-center gap-3 p-3 rounded-lg bg-[#1a1a1a] border border-[#3a3a3a] hover:border-[#FF6B35]/50 hover:bg-[#2a2a2a] transition-all text-left"
+                                          className="w-full flex items-center gap-3 p-3 rounded-lg bg-white border border-slate-200 hover:border-[#FF6B35]/50 hover:bg-slate-50 transition-all text-left"
                                         >
                                           <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
                                             <Upload className="w-5 h-5 text-blue-400" />
                                           </div>
                                           <div>
-                                            <p className="text-[#E5E5E5] font-medium text-sm">UPLOAD VIDEO OR IMAGE</p>
-                                            <p className="text-[#666] text-xs">Upload a file from your device</p>
+                                            <p className="text-slate-700 font-medium text-sm">UPLOAD VIDEO OR IMAGE</p>
+                                            <p className="text-slate-400 text-xs">Upload a file from your device</p>
                                           </div>
                                         </button>
                                         
@@ -7388,14 +7388,14 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                                             }))
                                             setDrillMediaExpanded(null)
                                           }}
-                                          className="w-full flex items-center gap-3 p-3 rounded-lg bg-[#1a1a1a] border border-[#3a3a3a] hover:border-[#666] hover:bg-[#2a2a2a] transition-all text-left"
+                                          className="w-full flex items-center gap-3 p-3 rounded-lg bg-white border border-slate-200 hover:border-slate-200 hover:bg-slate-50 transition-all text-left"
                                         >
-                                          <div className="w-10 h-10 rounded-lg bg-[#3a3a3a] flex items-center justify-center">
-                                            <X className="w-5 h-5 text-[#666]" />
+                                          <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center">
+                                            <X className="w-5 h-5 text-slate-400" />
                                           </div>
                                           <div>
-                                            <p className="text-[#888] font-medium text-sm">NO INPUT - SKIP</p>
-                                            <p className="text-[#666] text-xs">No coach feedback for this drill</p>
+                                            <p className="text-slate-500 font-medium text-sm">NO INPUT - SKIP</p>
+                                            <p className="text-slate-400 text-xs">No coach feedback for this drill</p>
                                           </div>
                                         </button>
                                         
@@ -7445,7 +7445,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                                       addExerciseToWorkout(scheduledWorkout.id, newDrill)
                                     }
                                   }}
-                                  className="w-full py-2 rounded-lg border border-dashed border-[#3a3a3a] text-[#888] hover:text-[#FF6B35] hover:border-[#FF6B35] transition-colors flex items-center justify-center gap-2 text-xs"
+                                  className="w-full py-2 rounded-lg border border-dashed border-slate-200 text-slate-500 hover:text-[#FF6B35] hover:border-[#FF6B35] transition-colors flex items-center justify-center gap-2 text-xs"
                                 >
                                   <Plus className="w-3 h-3" />
                                   ADD DRILL
@@ -7460,9 +7460,9 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                     {/* No Workouts Message */}
                     {workouts.length === 0 && (
                       <div className="text-center py-8">
-                        <Dumbbell className="w-12 h-12 text-[#3a3a3a] mx-auto mb-3" />
-                        <p className="text-[#888] text-sm">NO WORKOUTS SCHEDULED</p>
-                        <p className="text-[#666] text-xs mt-1">Add a workout to this day to get started</p>
+                        <Dumbbell className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                        <p className="text-slate-500 text-sm">NO WORKOUTS SCHEDULED</p>
+                        <p className="text-slate-400 text-xs mt-1">Add a workout to this day to get started</p>
                       </div>
                     )}
                     
@@ -7533,13 +7533,13 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
       
       {/* Add Workout Picker Modal */}
       {showAddWorkoutPicker && addWorkoutTargetDate && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-[#1a1a1a] rounded-2xl border border-[#3a3a3a] w-full max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl border border-slate-200 w-full max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
             {/* Header */}
-            <div className="p-4 border-b border-[#3a3a3a] flex items-center justify-between">
+            <div className="p-4 border-b border-slate-200 flex items-center justify-between">
               <div>
-                <h3 className="text-white font-bold text-lg">ADD WORKOUT</h3>
-                <p className="text-[#888] text-sm">
+                <h3 className="text-slate-900 font-bold text-lg">ADD WORKOUT</h3>
+                <p className="text-slate-500 text-sm">
                   {addWorkoutTargetDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
                 </p>
               </div>
@@ -7548,7 +7548,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                   setShowAddWorkoutPicker(false)
                   setAddWorkoutTargetDate(null)
                 }}
-                className="p-2 rounded-full hover:bg-[#3a3a3a] text-[#888] hover:text-white transition-colors"
+                className="p-2 rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -7567,15 +7567,15 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                     {savedWorkouts.map((workout) => (
                       <div
                         key={workout.id}
-                        className="bg-[#2a2a2a] rounded-xl p-4 border border-[#3a3a3a] hover:border-[#FF6B35]/50 transition-all cursor-pointer group"
+                        className="bg-slate-50 rounded-xl p-4 border border-slate-200 hover:border-[#FF6B35]/50 transition-all cursor-pointer group"
                         onClick={() => addSavedWorkoutToDate(workout)}
                       >
                         <div className="flex items-center justify-between mb-2">
-                          <h5 className="text-white font-bold group-hover:text-[#FF6B35] transition-colors">
+                          <h5 className="text-slate-900 font-bold group-hover:text-[#FF6B35] transition-colors">
                             {workout.name}
                           </h5>
                           <div className="flex items-center gap-2">
-                            <span className="text-[#888] text-xs bg-[#3a3a3a] px-2 py-1 rounded">
+                            <span className="text-slate-500 text-xs bg-slate-100 px-2 py-1 rounded">
                               {workout.duration} min
                             </span>
                             <button
@@ -7583,7 +7583,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                                 e.stopPropagation()
                                 deleteSavedWorkout(workout.id)
                               }}
-                              className="p-1 rounded-full hover:bg-red-500/20 text-[#666] hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                              className="p-1 rounded-full hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
                               title="Delete saved workout"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -7592,17 +7592,17 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                         </div>
                         <div className="flex flex-wrap gap-1">
                           {workout.exercises.slice(0, 4).map((ex, i) => (
-                            <span key={i} className="text-[#888] text-xs bg-[#1a1a1a] px-2 py-0.5 rounded">
+                            <span key={i} className="text-slate-500 text-xs bg-white px-2 py-0.5 rounded">
                               {ex.name}
                             </span>
                           ))}
                           {workout.exercises.length > 4 && (
-                            <span className="text-[#666] text-xs px-2 py-0.5">
+                            <span className="text-slate-400 text-xs px-2 py-0.5">
                               +{workout.exercises.length - 4} more
                             </span>
                           )}
                         </div>
-                        <div className="mt-2 flex items-center gap-2 text-xs text-[#666]">
+                        <div className="mt-2 flex items-center gap-2 text-xs text-slate-400">
                           <Dumbbell className="w-3 h-3" />
                           {workout.exercises.length} drills
                           <span className="mx-1">•</span>
@@ -7617,7 +7617,7 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
               
               {/* Create New Workout Section */}
               <div>
-                <h4 className="text-[#888] font-bold text-xs uppercase tracking-wider mb-3 flex items-center gap-2">
+                <h4 className="text-slate-500 font-bold text-xs uppercase tracking-wider mb-3 flex items-center gap-2">
                   <Plus className="w-4 h-4" />
                   CREATE NEW WORKOUT
                 </h4>
@@ -7625,42 +7625,42 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                   {/* Auto-Generate Option */}
                   <button
                     onClick={addNewGeneratedWorkout}
-                    className="w-full bg-[#2a2a2a] rounded-xl p-4 border border-[#3a3a3a] hover:border-[#FF6B35]/50 transition-all text-left group"
+                    className="w-full bg-slate-50 rounded-xl p-4 border border-slate-200 hover:border-[#FF6B35]/50 transition-all text-left group"
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6B35]/20 to-[#FF4500]/20 flex items-center justify-center">
                         <Sparkles className="w-5 h-5 text-[#FF6B35]" />
                       </div>
                       <div className="flex-1">
-                        <h5 className="text-white font-bold group-hover:text-[#FF6B35] transition-colors">
+                        <h5 className="text-slate-900 font-bold group-hover:text-[#FF6B35] transition-colors">
                           AUTO-GENERATE WORKOUT
                         </h5>
-                        <p className="text-[#888] text-xs">
+                        <p className="text-slate-500 text-xs">
                           Create a {preferences.preferredDuration}-min workout with {preferences.drillCount} drills based on your settings
                         </p>
                       </div>
-                      <ChevronRight className="w-5 h-5 text-[#888] group-hover:text-[#FF6B35] transition-colors" />
+                      <ChevronRight className="w-5 h-5 text-slate-500 group-hover:text-[#FF6B35] transition-colors" />
                     </div>
                   </button>
                   
                   {/* Custom Build Option */}
                   <button
                     onClick={openWorkoutBuilderForDate}
-                    className="w-full bg-[#2a2a2a] rounded-xl p-4 border border-[#3a3a3a] hover:border-[#FF6B35]/50 transition-all text-left group"
+                    className="w-full bg-slate-50 rounded-xl p-4 border border-slate-200 hover:border-[#FF6B35]/50 transition-all text-left group"
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
                         <Layers className="w-5 h-5 text-blue-400" />
                       </div>
                       <div className="flex-1">
-                        <h5 className="text-white font-bold group-hover:text-[#FF6B35] transition-colors">
+                        <h5 className="text-slate-900 font-bold group-hover:text-[#FF6B35] transition-colors">
                           BUILD CUSTOM WORKOUT
                         </h5>
-                        <p className="text-[#888] text-xs">
+                        <p className="text-slate-500 text-xs">
                           Pick your own drills and create a personalized workout
                         </p>
                       </div>
-                      <ChevronRight className="w-5 h-5 text-[#888] group-hover:text-[#FF6B35] transition-colors" />
+                      <ChevronRight className="w-5 h-5 text-slate-500 group-hover:text-[#FF6B35] transition-colors" />
                     </div>
                   </button>
                   
@@ -7671,21 +7671,21 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                       setShowDateDetailModal(false) // Close the date detail modal
                       setShowWorkoutBuilder(true) // Open the workout builder with drill pool
                     }}
-                    className="w-full bg-[#2a2a2a] rounded-xl p-4 border border-[#3a3a3a] hover:border-[#FF6B35]/50 transition-all text-left group"
+                    className="w-full bg-slate-50 rounded-xl p-4 border border-slate-200 hover:border-[#FF6B35]/50 transition-all text-left group"
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center">
                         <Target className="w-5 h-5 text-green-400" />
                       </div>
                       <div className="flex-1">
-                        <h5 className="text-white font-bold group-hover:text-[#FF6B35] transition-colors">
+                        <h5 className="text-slate-900 font-bold group-hover:text-[#FF6B35] transition-colors">
                           QUICK PICK DRILLS
                         </h5>
-                        <p className="text-[#888] text-xs">
+                        <p className="text-slate-500 text-xs">
                           Browse and select individual drills to add
                         </p>
                       </div>
-                      <ChevronRight className="w-5 h-5 text-[#888] group-hover:text-[#FF6B35] transition-colors" />
+                      <ChevronRight className="w-5 h-5 text-slate-500 group-hover:text-[#FF6B35] transition-colors" />
                     </div>
                   </button>
                 </div>
@@ -7693,11 +7693,11 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
               
               {/* No Saved Workouts Message */}
               {savedWorkouts.length === 0 && (
-                <div className="bg-[#2a2a2a]/50 rounded-xl p-4 border border-dashed border-[#3a3a3a]">
+                <div className="bg-slate-50/50 rounded-xl p-4 border border-dashed border-slate-200">
                   <div className="text-center">
-                    <Star className="w-8 h-8 text-[#3a3a3a] mx-auto mb-2" />
-                    <p className="text-[#888] text-sm font-medium">No Saved Workouts Yet</p>
-                    <p className="text-[#666] text-xs mt-1">
+                    <Star className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                    <p className="text-slate-500 text-sm font-medium">No Saved Workouts Yet</p>
+                    <p className="text-slate-400 text-xs mt-1">
                       Create a workout and save it as a template for quick reuse
                     </p>
                   </div>
@@ -7706,13 +7706,13 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
             </div>
             
             {/* Footer */}
-            <div className="p-4 border-t border-[#3a3a3a] bg-[#1a1a1a]">
+            <div className="p-4 border-t border-slate-200 bg-white">
               <button
                 onClick={() => {
                   setShowAddWorkoutPicker(false)
                   setAddWorkoutTargetDate(null)
                 }}
-                className="w-full py-3 rounded-xl text-[#888] hover:text-white transition-colors"
+                className="w-full py-3 rounded-xl text-slate-500 hover:text-slate-900 transition-colors"
               >
                 Cancel
               </button>

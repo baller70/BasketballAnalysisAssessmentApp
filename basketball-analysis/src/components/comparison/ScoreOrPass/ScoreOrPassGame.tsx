@@ -288,13 +288,13 @@ function PlayerCard({ shooter, onVote, isRevealing, voteResult, userVote, onDrag
     >
       {/* Card Content */}
       <div 
-        className="bg-gradient-to-b from-[#1a1a1a] to-[#0a0a0a] rounded-3xl overflow-hidden border-2 shadow-2xl transition-all duration-150"
+        className="bg-white rounded-3xl overflow-hidden border-2 shadow-sm transition-all duration-150"
         style={{
           borderColor: dragX > 30 
             ? `rgba(255, 107, 53, ${Math.min(1, dragX / 100)})` 
             : dragX < -30 
               ? `rgba(239, 68, 68, ${Math.min(1, Math.abs(dragX) / 100)})` 
-              : '#3a3a3a',
+              : '#e2e8f0',
           boxShadow: dragX > 30 
             ? `0 0 30px rgba(255, 107, 53, ${Math.min(0.5, dragX / 150)})` 
             : dragX < -30 
@@ -303,26 +303,26 @@ function PlayerCard({ shooter, onVote, isRevealing, voteResult, userVote, onDrag
         }}
       >
         {/* Player Image Section */}
-        <div className="relative h-[300px] bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a] overflow-hidden">
+        <div className="relative h-[220px] sm:h-[260px] bg-gradient-to-br from-slate-100 to-slate-50 overflow-hidden flex items-end justify-center">
           {shooter.photoUrl ? (
             <img 
               src={shooter.photoUrl} 
               alt={shooter.name}
-              className="w-full h-full object-cover object-top"
+              className="w-full h-full object-contain object-bottom"
               onError={(e) => {
                 (e.target as HTMLImageElement).style.display = 'none'
               }}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <Users className="w-24 h-24 text-[#3a3a3a]" />
+              <Users className="w-24 h-24 text-slate-300" />
             </div>
           )}
           
           {/* Tier Badge */}
           <div 
             className="absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-black uppercase"
-            style={{ backgroundColor: tierColor, color: shooter.tier === 'elite' ? '#1a1a1a' : '#fff' }}
+            style={{ backgroundColor: tierColor, color: shooter.tier === 'elite' ? '#0f172a' : '#fff' }}
           >
             {TIER_LABELS[shooter.tier]}
           </div>
@@ -369,7 +369,7 @@ function PlayerCard({ shooter, onVote, isRevealing, voteResult, userVote, onDrag
                     className="text-3xl font-black tracking-tight"
                     style={{
                       color: shooter.overallScore >= 95 ? '#FFD700' : shooter.overallScore >= 85 ? '#FF6B35' : '#999',
-                      textShadow: '0 2px 4px rgba(0,0,0,0.5)'
+                      textShadow: '0 1px 2px rgba(0,0,0,0.15)'
                     }}
                   >
                     {shooter.overallScore}
@@ -386,28 +386,28 @@ function PlayerCard({ shooter, onVote, isRevealing, voteResult, userVote, onDrag
           </div>
           
           {/* Gradient Overlay */}
-          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#0a0a0a] to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-white to-transparent" />
         </div>
         
         {/* Player Info */}
         <div className="p-5 space-y-4">
           <div>
-            <h3 className="text-2xl font-black text-white tracking-tight">{shooter.name}</h3>
-            <p className="text-[#888] text-sm">{shooter.team} • {POSITION_LABELS[shooter.position]}</p>
+            <h3 className="text-2xl font-black text-slate-900 tracking-tight">{shooter.name}</h3>
+            <p className="text-slate-500 text-sm">{shooter.team} • {POSITION_LABELS[shooter.position]}</p>
           </div>
           
           {/* Stats Grid */}
           <div className="grid grid-cols-3 gap-2">
-            <div className="bg-[#1a1a1a] rounded-xl p-3 text-center">
-              <p className="text-xs text-[#888] uppercase">Height</p>
-              <p className="text-lg font-bold text-white">{formatHeight(shooter.height)}</p>
+            <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
+              <p className="text-xs text-slate-400 uppercase">Height</p>
+              <p className="text-lg font-bold text-slate-900">{formatHeight(shooter.height)}</p>
             </div>
-            <div className="bg-[#1a1a1a] rounded-xl p-3 text-center">
-              <p className="text-xs text-[#888] uppercase">Weight</p>
-              <p className="text-lg font-bold text-white">{shooter.weight} lbs</p>
+            <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
+              <p className="text-xs text-slate-400 uppercase">Weight</p>
+              <p className="text-lg font-bold text-slate-900">{shooter.weight} lbs</p>
             </div>
-            <div className="bg-[#1a1a1a] rounded-xl p-3 text-center">
-              <p className="text-xs text-[#888] uppercase">3PT%</p>
+            <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
+              <p className="text-xs text-slate-400 uppercase">3PT%</p>
               <p className="text-lg font-bold text-[#FF6B35]">{shooter.careerPct || '—'}%</p>
             </div>
           </div>
@@ -417,7 +417,7 @@ function PlayerCard({ shooter, onVote, isRevealing, voteResult, userVote, onDrag
             <span className="px-3 py-1 bg-[#FF6B35]/20 text-[#FF6B35] rounded-full text-xs font-bold uppercase">
               {shooter.bodyType.replace('_', ' ')}
             </span>
-            <span className="px-3 py-1 bg-[#2a2a2a] text-[#888] rounded-full text-xs">
+            <span className="px-3 py-1 bg-slate-100 text-slate-500 rounded-full text-xs border border-slate-200">
               {shooter.shootingStyle.split(' ').slice(0, 3).join(' ')}...
             </span>
           </div>
@@ -425,7 +425,7 @@ function PlayerCard({ shooter, onVote, isRevealing, voteResult, userVote, onDrag
           {/* Key Traits */}
           <div className="flex flex-wrap gap-1.5">
             {shooter.keyTraits.slice(0, 3).map((trait, i) => (
-              <span key={i} className="px-2 py-1 bg-[#2a2a2a] text-[#E5E5E5] rounded-lg text-xs">
+              <span key={i} className="px-2 py-1 bg-slate-50 text-slate-700 rounded-lg text-xs border border-slate-200">
                 {trait}
               </span>
             ))}
@@ -434,12 +434,12 @@ function PlayerCard({ shooter, onVote, isRevealing, voteResult, userVote, onDrag
         
         {/* Vote Reveal Overlay - Enhanced Analytics Card */}
         {isRevealing && voteResult && (
-          <div className="absolute inset-0 bg-gradient-to-b from-black/95 via-black/90 to-black/95 backdrop-blur-lg flex flex-col items-center justify-center p-4 animate-fadeIn rounded-3xl overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-b from-white/98 via-white/95 to-white/98 backdrop-blur-lg flex flex-col items-center justify-center p-4 animate-fadeIn rounded-3xl overflow-hidden">
             {/* Animated Background Glow */}
             <div className={`absolute inset-0 opacity-30 ${
               userVote === 'score' 
-                ? 'bg-gradient-to-br from-[#FF6B35]/40 via-transparent to-[#FF4500]/20' 
-                : 'bg-gradient-to-br from-[#666]/40 via-transparent to-[#444]/20'
+                ? 'bg-gradient-to-br from-[#FF6B35]/20 via-transparent to-[#FF4500]/10' 
+                : 'bg-gradient-to-br from-slate-200/40 via-transparent to-slate-100/20'
             }`} />
             
             {/* Floating Particles Effect */}
@@ -465,9 +465,9 @@ function PlayerCard({ shooter, onVote, isRevealing, voteResult, userVote, onDrag
                 />
               )}
               <div className="text-center">
-                <p className="text-white font-bold text-sm">{shooter.name}</p>
+                <p className="text-slate-900 font-bold text-sm">{shooter.name}</p>
                 <p className={`text-xs font-bold uppercase tracking-wider ${
-                  userVote === 'score' ? 'text-[#FF6B35]' : 'text-[#888]'
+                  userVote === 'score' ? 'text-[#FF6B35]' : 'text-slate-500'
                 }`}>
                   {userVote === 'score' ? '🔥 SCORED!' : '✕ PASSED'}
                 </p>
@@ -477,12 +477,12 @@ function PlayerCard({ shooter, onVote, isRevealing, voteResult, userVote, onDrag
             {/* Main Icon with Glow */}
             <div className="relative z-10 mb-3">
               <div className={`absolute inset-0 blur-xl ${
-                userVote === 'score' ? 'bg-[#FF6B35]/50' : 'bg-[#666]/30'
+                userVote === 'score' ? 'bg-[#FF6B35]/30' : 'bg-slate-300/30'
               } rounded-full scale-150`} />
               <div className={`relative p-4 rounded-full ${
                 userVote === 'score' 
                   ? 'bg-gradient-to-br from-[#FF6B35] to-[#FF4500] shadow-[0_0_30px_rgba(255,107,53,0.5)]' 
-                  : 'bg-gradient-to-br from-[#555] to-[#333] shadow-[0_0_20px_rgba(100,100,100,0.3)]'
+                  : 'bg-gradient-to-br from-slate-400 to-slate-500 shadow-[0_0_20px_rgba(100,100,100,0.2)]'
               }`}>
                 {userVote === 'score' ? (
                   <Flame className="w-10 h-10 text-white animate-pulse" />
@@ -493,16 +493,16 @@ function PlayerCard({ shooter, onVote, isRevealing, voteResult, userVote, onDrag
             </div>
             
             {/* Analytics Card */}
-            <div className="relative z-10 w-full max-w-[300px] bg-gradient-to-br from-[#1a1a1a] to-[#0f0f0f] rounded-2xl p-4 border border-[#333] shadow-2xl">
+            <div className="relative z-10 w-full max-w-[300px] bg-white rounded-2xl p-4 border border-slate-200 shadow-lg">
               {/* Card Header */}
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-[#888]" />
-                  <span className="text-[#888] text-xs font-medium uppercase tracking-wider">Community Stats</span>
+                  <Users className="w-4 h-4 text-slate-400" />
+                  <span className="text-slate-400 text-xs font-medium uppercase tracking-wider">Community Stats</span>
                 </div>
-                <div className="flex items-center gap-1 px-2 py-0.5 bg-[#2a2a2a] rounded-full">
+                <div className="flex items-center gap-1 px-2 py-0.5 bg-slate-50 rounded-full border border-slate-200">
                   <TrendingUp className="w-3 h-3 text-[#FF6B35]" />
-                  <span className="text-[10px] text-[#888] font-medium">LIVE</span>
+                  <span className="text-[10px] text-slate-500 font-medium">LIVE</span>
                 </div>
               </div>
               
@@ -513,13 +513,13 @@ function PlayerCard({ shooter, onVote, isRevealing, voteResult, userVote, onDrag
                     <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#FF4500] flex items-center justify-center">
                       <Flame className="w-3.5 h-3.5 text-white" />
                     </div>
-                    <span className="text-white font-bold text-sm">Score</span>
+                    <span className="text-slate-900 font-bold text-sm">Score</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-[#FF6B35] font-black text-xl">{voteResult.score}%</span>
                   </div>
                 </div>
-                <div className="relative h-4 bg-[#2a2a2a] rounded-full overflow-hidden">
+                <div className="relative h-4 bg-slate-100 rounded-full overflow-hidden" style={{ boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.06)' }}>
                   <div 
                     className="absolute inset-y-0 left-0 bg-gradient-to-r from-[#FF6B35] via-[#FF5722] to-[#FF4500] transition-all duration-1000 ease-out rounded-full"
                     style={{ width: `${voteResult.score}%` }}
@@ -539,18 +539,18 @@ function PlayerCard({ shooter, onVote, isRevealing, voteResult, userVote, onDrag
               <div className="mb-4">
                 <div className="flex justify-between items-center mb-1.5">
                   <div className="flex items-center gap-1.5">
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#666] to-[#444] flex items-center justify-center">
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-slate-400 to-slate-500 flex items-center justify-center">
                       <X className="w-3.5 h-3.5 text-white" />
                     </div>
-                    <span className="text-[#999] font-bold text-sm">Pass</span>
+                    <span className="text-slate-500 font-bold text-sm">Pass</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[#888] font-black text-xl">{voteResult.pass}%</span>
+                    <span className="text-slate-400 font-black text-xl">{voteResult.pass}%</span>
                   </div>
                 </div>
-                <div className="relative h-4 bg-[#2a2a2a] rounded-full overflow-hidden">
+                <div className="relative h-4 bg-slate-100 rounded-full overflow-hidden" style={{ boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.06)' }}>
                   <div 
-                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-[#666] to-[#555] transition-all duration-1000 delay-200 ease-out rounded-full"
+                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-slate-400 to-slate-300 transition-all duration-1000 delay-200 ease-out rounded-full"
                     style={{ width: `${voteResult.pass}%` }}
                   >
                     <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent" />
@@ -561,8 +561,8 @@ function PlayerCard({ shooter, onVote, isRevealing, voteResult, userVote, onDrag
               {/* Fun Message Based on Vote */}
               <div className={`text-center p-2 rounded-xl ${
                 userVote === 'score' 
-                  ? 'bg-gradient-to-r from-[#FF6B35]/20 to-[#FF4500]/10 border border-[#FF6B35]/30' 
-                  : 'bg-[#2a2a2a] border border-[#333]'
+                  ? 'bg-gradient-to-r from-[#FF6B35]/10 to-[#FF4500]/5 border border-[#FF6B35]/20' 
+                  : 'bg-slate-50 border border-slate-200'
               }`}>
                 {userVote === 'score' ? (
                   <p className="text-[#FF6B35] font-bold text-xs flex items-center justify-center gap-1.5">
@@ -572,7 +572,7 @@ function PlayerCard({ shooter, onVote, isRevealing, voteResult, userVote, onDrag
                      "Unique choice! Added!"}
                   </p>
                 ) : (
-                  <p className="text-[#888] text-xs">
+                  <p className="text-slate-500 text-xs">
                     {voteResult.pass >= 40 ? "Many agree with you!" : "Bold decision!"}
                   </p>
                 )}
@@ -585,7 +585,7 @@ function PlayerCard({ shooter, onVote, isRevealing, voteResult, userVote, onDrag
                 ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-white shadow-[0_0_15px_rgba(255,107,53,0.4)]' 
                 : shooter.tier === 'elite'
                 ? 'bg-gradient-to-r from-purple-600 to-purple-500 text-white shadow-[0_0_15px_rgba(147,51,234,0.3)]'
-                : 'bg-[#333] text-[#888]'
+                : 'bg-slate-200 text-slate-500'
             }`}>
               {TIER_LABELS[shooter.tier] || shooter.tier?.toUpperCase()}
             </div>
@@ -629,19 +629,19 @@ function Leaderboard({ shooters, voteStats }: LeaderboardProps) {
       {rankedShooters.map((item, index) => (
         <div
           key={item.shooter.id}
-          className="flex items-center gap-3 bg-[#1a1a1a] rounded-xl p-3"
+          className="flex items-center gap-3 bg-white rounded-xl p-3 border border-slate-200 shadow-sm"
           style={{ animationDelay: `${index * 50}ms` }}
         >
           <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-sm ${
             index === 0 ? 'bg-[#FFD700] text-black' :
             index === 1 ? 'bg-[#C0C0C0] text-black' :
             index === 2 ? 'bg-[#CD7F32] text-white' :
-            'bg-[#2a2a2a] text-[#888]'
+            'bg-slate-100 text-slate-500'
           }`}>
             {index + 1}
           </div>
           
-          <div className="w-10 h-10 rounded-full bg-[#2a2a2a] overflow-hidden">
+          <div className="w-10 h-10 rounded-full bg-slate-100 overflow-hidden border border-slate-200">
             {item.shooter.photoUrl ? (
               <img 
                 src={item.shooter.photoUrl} 
@@ -649,13 +649,13 @@ function Leaderboard({ shooters, voteStats }: LeaderboardProps) {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <Users className="w-full h-full p-2 text-[#3a3a3a]" />
+              <Users className="w-full h-full p-2 text-slate-300" />
             )}
           </div>
           
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-white truncate">{item.shooter.name}</p>
-            <p className="text-xs text-[#888]">{item.shooter.team}</p>
+            <p className="font-bold text-slate-900 truncate">{item.shooter.name}</p>
+            <p className="text-xs text-slate-500">{item.shooter.team}</p>
           </div>
           
           <div className="flex items-center gap-1 text-[#FF6B35] font-bold">
@@ -680,7 +680,7 @@ function SavedMatches({ matches, onCompare, userAnalysis }: SavedMatchesProps) {
   
   if (matches.length === 0) {
     return (
-      <div className="text-center py-8 text-[#888]">
+      <div className="text-center py-8 text-slate-500">
         <Heart className="w-12 h-12 mx-auto mb-3 opacity-30" />
         <p>No saved matches yet</p>
         <p className="text-sm">Swipe right on shooters to save them!</p>
@@ -697,10 +697,10 @@ function SavedMatches({ matches, onCompare, userAnalysis }: SavedMatchesProps) {
       {matches.map((match, index) => (
         <div
           key={match.shooter.id}
-          className="flex items-center gap-3 bg-[#1a1a1a] rounded-xl p-3"
+          className="flex items-center gap-3 bg-white rounded-xl p-3 border border-slate-200 shadow-sm"
           style={{ animationDelay: `${index * 50}ms` }}
         >
-          <div className="w-12 h-12 rounded-xl bg-[#2a2a2a] overflow-hidden">
+          <div className="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden border border-slate-200">
             {match.shooter.photoUrl ? (
               <img 
                 src={match.shooter.photoUrl} 
@@ -708,12 +708,12 @@ function SavedMatches({ matches, onCompare, userAnalysis }: SavedMatchesProps) {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <Users className="w-full h-full p-2 text-[#3a3a3a]" />
+              <Users className="w-full h-full p-2 text-slate-300" />
             )}
           </div>
           
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-white truncate">{match.shooter.name}</p>
+            <p className="font-bold text-slate-900 truncate">{match.shooter.name}</p>
             <div className="flex items-center gap-2">
               <span 
                 className="text-xs px-2 py-0.5 rounded-full"
@@ -724,7 +724,7 @@ function SavedMatches({ matches, onCompare, userAnalysis }: SavedMatchesProps) {
               >
                 {TIER_LABELS[match.shooter.tier]}
               </span>
-              <span className="text-xs text-[#888]">{match.shooter.bodyType}</span>
+              <span className="text-xs text-slate-500">{match.shooter.bodyType}</span>
             </div>
           </div>
           
@@ -745,23 +745,23 @@ function SavedMatches({ matches, onCompare, userAnalysis }: SavedMatchesProps) {
           onClick={() => setSelectedShooter(null)}
         >
           <div 
-            className="bg-[#1a1a1a] rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto border border-[#3a3a3a]"
+            className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto border border-slate-200 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header Image */}
-            <div className="relative h-48 bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a]">
+            <div className="relative h-48 bg-gradient-to-br from-slate-100 to-slate-50 flex items-end justify-center">
               {selectedShooter.photoUrl ? (
                 <img 
                   src={selectedShooter.photoUrl} 
                   alt={selectedShooter.name}
-                  className="w-full h-full object-cover object-top"
+                  className="w-full h-full object-contain object-bottom"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <Users className="w-20 h-20 text-[#3a3a3a]" />
+                  <Users className="w-20 h-20 text-slate-300" />
                 </div>
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a] to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-white to-transparent" />
               
               {/* Close Button */}
               <button
@@ -783,45 +783,45 @@ function SavedMatches({ matches, onCompare, userAnalysis }: SavedMatchesProps) {
             {/* Content */}
             <div className="p-5 space-y-4">
               <div>
-                <h3 className="text-2xl font-black text-white">{selectedShooter.name}</h3>
-                <p className="text-[#888]">{selectedShooter.team}</p>
+                <h3 className="text-2xl font-black text-slate-900">{selectedShooter.name}</h3>
+                <p className="text-slate-500">{selectedShooter.team}</p>
               </div>
               
               {/* Stats */}
               <div className="grid grid-cols-3 gap-2">
-                <div className="bg-[#2a2a2a] rounded-xl p-3 text-center">
-                  <p className="text-xs text-[#888] uppercase">Height</p>
-                  <p className="text-lg font-bold text-white">{Math.floor(selectedShooter.height/12)}'{selectedShooter.height%12}"</p>
+                <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
+                  <p className="text-xs text-slate-400 uppercase">Height</p>
+                  <p className="text-lg font-bold text-slate-900">{Math.floor(selectedShooter.height/12)}'{selectedShooter.height%12}"</p>
                 </div>
-                <div className="bg-[#2a2a2a] rounded-xl p-3 text-center">
-                  <p className="text-xs text-[#888] uppercase">Weight</p>
-                  <p className="text-lg font-bold text-white">{selectedShooter.weight} lbs</p>
+                <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
+                  <p className="text-xs text-slate-400 uppercase">Weight</p>
+                  <p className="text-lg font-bold text-slate-900">{selectedShooter.weight} lbs</p>
                 </div>
-                <div className="bg-[#2a2a2a] rounded-xl p-3 text-center">
-                  <p className="text-xs text-[#888] uppercase">3PT%</p>
+                <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
+                  <p className="text-xs text-slate-400 uppercase">3PT%</p>
                   <p className="text-lg font-bold text-[#FF6B35]">{selectedShooter.careerPct || '—'}%</p>
                 </div>
               </div>
               
               {/* Biomechanics */}
-              <div className="bg-[#2a2a2a] rounded-xl p-4">
+              <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
                 <h4 className="text-sm font-bold text-[#FF6B35] mb-3 uppercase">Shooting Form Metrics</h4>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-[#888]">Elbow Angle</span>
-                    <span className="text-white font-bold">{selectedShooter.measurements.elbowAngle}°</span>
+                    <span className="text-slate-500">Elbow Angle</span>
+                    <span className="text-slate-900 font-bold">{selectedShooter.measurements.elbowAngle}°</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-[#888]">Knee Angle</span>
-                    <span className="text-white font-bold">{selectedShooter.measurements.kneeAngle}°</span>
+                    <span className="text-slate-500">Knee Angle</span>
+                    <span className="text-slate-900 font-bold">{selectedShooter.measurements.kneeAngle}°</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-[#888]">Release Angle</span>
-                    <span className="text-white font-bold">{selectedShooter.measurements.releaseAngle}°</span>
+                    <span className="text-slate-500">Release Angle</span>
+                    <span className="text-slate-900 font-bold">{selectedShooter.measurements.releaseAngle}°</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-[#888]">Release Height</span>
-                    <span className="text-white font-bold">{selectedShooter.measurements.releaseHeight}"</span>
+                    <span className="text-slate-500">Release Height</span>
+                    <span className="text-slate-900 font-bold">{selectedShooter.measurements.releaseHeight}"</span>
                   </div>
                 </div>
               </div>
@@ -829,7 +829,7 @@ function SavedMatches({ matches, onCompare, userAnalysis }: SavedMatchesProps) {
               {/* Shooting Style */}
               <div>
                 <h4 className="text-sm font-bold text-[#FF6B35] mb-2 uppercase">Shooting Style</h4>
-                <p className="text-[#E5E5E5] text-sm">{selectedShooter.shootingStyle}</p>
+                <p className="text-slate-700 text-sm">{selectedShooter.shootingStyle}</p>
               </div>
               
               {/* Key Traits */}
@@ -867,15 +867,15 @@ function SavedMatches({ matches, onCompare, userAnalysis }: SavedMatchesProps) {
           onClick={() => setShowComparison(false)}
         >
           <div 
-            className="bg-[#1a1a1a] rounded-2xl max-w-4xl w-full max-h-[95vh] overflow-y-auto border border-[#3a3a3a]"
+            className="bg-white rounded-2xl max-w-4xl w-full max-h-[95vh] overflow-y-auto border border-slate-200 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="sticky top-0 bg-[#1a1a1a] border-b border-[#3a3a3a] p-4 flex items-center justify-between z-10">
+            <div className="sticky top-0 bg-white border-b border-slate-200 p-4 flex items-center justify-between z-10">
               <h3 className="text-xl font-black text-[#FF6B35]">FORM COMPARISON</h3>
               <button
                 onClick={() => setShowComparison(false)}
-                className="w-8 h-8 bg-[#2a2a2a] rounded-full flex items-center justify-center text-white hover:bg-[#3a3a3a]"
+                className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 hover:bg-slate-200"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -886,9 +886,9 @@ function SavedMatches({ matches, onCompare, userAnalysis }: SavedMatchesProps) {
               {/* Side by Side Images */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 {/* Your Form */}
-                <div className="bg-[#2a2a2a] rounded-xl p-4">
+                <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
                   <h4 className="text-center text-sm font-bold text-[#4A90D9] mb-3 uppercase">Your Form</h4>
-                  <div className="relative aspect-[3/4] bg-[#1a1a1a] rounded-lg overflow-hidden">
+                  <div className="relative aspect-[3/4] bg-white rounded-lg overflow-hidden border border-slate-200">
                     {userAnalysis?.imageUrl ? (
                       <img 
                         src={userAnalysis.imageUrl} 
@@ -896,7 +896,7 @@ function SavedMatches({ matches, onCompare, userAnalysis }: SavedMatchesProps) {
                         className="w-full h-full object-contain"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-[#888]">
+                      <div className="w-full h-full flex items-center justify-center text-slate-400">
                         <div className="text-center">
                           <Users className="w-16 h-16 mx-auto mb-2 opacity-50" />
                           <p className="text-sm">Upload an image to compare</p>
@@ -907,15 +907,15 @@ function SavedMatches({ matches, onCompare, userAnalysis }: SavedMatchesProps) {
                   {userAnalysis?.overallScore && (
                     <div className="mt-3 text-center">
                       <span className="text-2xl font-black text-[#4A90D9]">{userAnalysis.overallScore}</span>
-                      <span className="text-[#888] text-sm ml-1">/ 100</span>
+                      <span className="text-slate-500 text-sm ml-1">/ 100</span>
                     </div>
                   )}
                 </div>
                 
                 {/* Pro Form */}
-                <div className="bg-[#2a2a2a] rounded-xl p-4">
+                <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
                   <h4 className="text-center text-sm font-bold text-[#FF6B35] mb-3 uppercase">{selectedShooter.name}</h4>
-                  <div className="relative aspect-[3/4] bg-[#1a1a1a] rounded-lg overflow-hidden">
+                  <div className="relative aspect-[3/4] bg-white rounded-lg overflow-hidden border border-slate-200">
                     {selectedShooter.photoUrl ? (
                       <img 
                         src={selectedShooter.photoUrl} 
@@ -924,20 +924,20 @@ function SavedMatches({ matches, onCompare, userAnalysis }: SavedMatchesProps) {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <Users className="w-16 h-16 text-[#3a3a3a]" />
+                        <Users className="w-16 h-16 text-slate-300" />
                       </div>
                     )}
                   </div>
                   <div className="mt-3 text-center">
                     <span className="text-2xl font-black text-[#FF6B35]">{selectedShooter.overallScore}</span>
-                    <span className="text-[#888] text-sm ml-1">/ 100</span>
+                    <span className="text-slate-500 text-sm ml-1">/ 100</span>
                   </div>
                 </div>
               </div>
               
               {/* Angle Comparison Table */}
-              <div className="bg-[#2a2a2a] rounded-xl p-4">
-                <h4 className="text-sm font-bold text-white mb-4 uppercase flex items-center gap-2">
+              <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                <h4 className="text-sm font-bold text-slate-900 mb-4 uppercase flex items-center gap-2">
                   <Target className="w-4 h-4 text-[#FF6B35]" />
                   Shooting Form Metrics Comparison
                 </h4>
@@ -954,20 +954,20 @@ function SavedMatches({ matches, onCompare, userAnalysis }: SavedMatchesProps) {
                     const diff = userValue && proValue ? Math.abs(userValue - proValue) : null
                     
                     return (
-                      <div key={metric.label} className="flex items-center gap-3 bg-[#1a1a1a] rounded-lg p-3">
+                      <div key={metric.label} className="flex items-center gap-3 bg-white rounded-lg p-3 border border-slate-200">
                         <div className="flex-1">
-                          <p className="text-[#888] text-xs uppercase">{metric.label}</p>
-                          <p className="text-[#666] text-xs">Ideal: {metric.ideal}</p>
+                          <p className="text-slate-500 text-xs uppercase">{metric.label}</p>
+                          <p className="text-slate-400 text-xs">Ideal: {metric.ideal}</p>
                         </div>
                         <div className="text-center px-3">
                           <p className="text-xs text-[#4A90D9] uppercase">You</p>
-                          <p className="text-lg font-bold text-white">
+                          <p className="text-lg font-bold text-slate-900">
                             {userValue ? `${userValue}°` : '—'}
                           </p>
                         </div>
                         <div className="text-center px-3">
                           <p className="text-xs text-[#FF6B35] uppercase">Pro</p>
-                          <p className="text-lg font-bold text-white">
+                          <p className="text-lg font-bold text-slate-900">
                             {proValue ? `${proValue}°` : '—'}
                           </p>
                         </div>
@@ -981,7 +981,7 @@ function SavedMatches({ matches, onCompare, userAnalysis }: SavedMatchesProps) {
                               {diff <= 5 ? '✓ Close' : diff <= 10 ? `${diff}° off` : `${diff}° off`}
                             </span>
                           ) : (
-                            <span className="text-[#666] text-xs">—</span>
+                            <span className="text-slate-400 text-xs">—</span>
                           )}
                         </div>
                       </div>
@@ -996,7 +996,7 @@ function SavedMatches({ matches, onCompare, userAnalysis }: SavedMatchesProps) {
                   <Sparkles className="w-4 h-4" />
                   Learn from {selectedShooter.name}
                 </h4>
-                <p className="text-[#E5E5E5] text-sm mb-3">{selectedShooter.shootingStyle}</p>
+                <p className="text-slate-700 text-sm mb-3">{selectedShooter.shootingStyle}</p>
                 <div className="flex flex-wrap gap-2">
                   {selectedShooter.keyTraits.map((trait, i) => (
                     <span key={i} className="px-3 py-1 bg-[#FF6B35]/20 text-[#FF6B35] rounded-full text-xs">
@@ -1010,7 +1010,7 @@ function SavedMatches({ matches, onCompare, userAnalysis }: SavedMatchesProps) {
               <div className="mt-6 flex justify-center">
                 <button
                   onClick={() => setShowComparison(false)}
-                  className="px-8 py-3 bg-[#2a2a2a] hover:bg-[#3a3a3a] text-white rounded-xl font-russo transition-colors"
+                  className="px-8 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-russo transition-colors border border-slate-200"
                 >
                   Close Comparison
                 </button>
@@ -1033,16 +1033,16 @@ function GameStatsDisplay({ stats }: GameStatsDisplayProps) {
   const xpProgress = ((stats.xp % XP_PER_LEVEL) / XP_PER_LEVEL) * 100
   
   return (
-    <div className="bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] rounded-2xl p-4 border border-[#3a3a3a]">
+    <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
       {/* Level & XP */}
       <div className="flex items-center gap-3 mb-4">
         <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#FF4500] flex items-center justify-center">
           <span className="text-2xl font-black text-white">{stats.level}</span>
         </div>
         <div className="flex-1">
-          <p className="font-bold text-white">{levelTitle}</p>
-          <p className="text-xs text-[#888]">{xpToNextLevel} XP to next level</p>
-          <div className="h-2 bg-[#2a2a2a] rounded-full mt-1 overflow-hidden">
+          <p className="font-bold text-slate-900">{levelTitle}</p>
+          <p className="text-xs text-slate-500">{xpToNextLevel} XP to next level</p>
+          <div className="h-2 bg-slate-100 rounded-full mt-1 overflow-hidden" style={{ boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.06)' }}>
             <div 
               className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF4500] transition-all duration-300"
               style={{ width: `${xpProgress}%` }}
@@ -1053,25 +1053,25 @@ function GameStatsDisplay({ stats }: GameStatsDisplayProps) {
       
       {/* Stats Grid */}
       <div className="grid grid-cols-4 gap-2">
-        <div className="bg-[#2a2a2a] rounded-xl p-2 text-center">
+        <div className="bg-slate-50 rounded-xl p-2 text-center border border-slate-100">
           <Zap className="w-5 h-5 text-[#FFD700] mx-auto mb-1" />
-          <p className="text-lg font-bold text-white">{stats.currentStreak}</p>
-          <p className="text-[10px] text-[#888] uppercase">Streak</p>
+          <p className="text-lg font-bold text-slate-900">{stats.currentStreak}</p>
+          <p className="text-[10px] text-slate-400 uppercase">Streak</p>
         </div>
-        <div className="bg-[#2a2a2a] rounded-xl p-2 text-center">
+        <div className="bg-slate-50 rounded-xl p-2 text-center border border-slate-100">
           <Trophy className="w-5 h-5 text-[#FF6B35] mx-auto mb-1" />
-          <p className="text-lg font-bold text-white">{stats.bestStreak}</p>
-          <p className="text-[10px] text-[#888] uppercase">Best</p>
+          <p className="text-lg font-bold text-slate-900">{stats.bestStreak}</p>
+          <p className="text-[10px] text-slate-400 uppercase">Best</p>
         </div>
-        <div className="bg-[#2a2a2a] rounded-xl p-2 text-center">
+        <div className="bg-slate-50 rounded-xl p-2 text-center border border-slate-100">
           <Flame className="w-5 h-5 text-[#FF6B35] mx-auto mb-1" />
-          <p className="text-lg font-bold text-white">{stats.scoreCount}</p>
-          <p className="text-[10px] text-[#888] uppercase">Scores</p>
+          <p className="text-lg font-bold text-slate-900">{stats.scoreCount}</p>
+          <p className="text-[10px] text-slate-400 uppercase">Scores</p>
         </div>
-        <div className="bg-[#2a2a2a] rounded-xl p-2 text-center">
-          <Target className="w-5 h-5 text-[#888] mx-auto mb-1" />
-          <p className="text-lg font-bold text-white">{stats.totalVotes}</p>
-          <p className="text-[10px] text-[#888] uppercase">Total</p>
+        <div className="bg-slate-50 rounded-xl p-2 text-center border border-slate-100">
+          <Target className="w-5 h-5 text-slate-400 mx-auto mb-1" />
+          <p className="text-lg font-bold text-slate-900">{stats.totalVotes}</p>
+          <p className="text-[10px] text-slate-400 uppercase">Total</p>
         </div>
       </div>
     </div>
@@ -1397,7 +1397,7 @@ export function ScoreOrPassGame({ userProfile = {}, userAnalysis, onSelectShoote
     return (
       <div className="min-h-[600px] flex flex-col items-center justify-center">
         <div className="w-12 h-12 border-4 border-[#FF6B35] border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-[#888] text-sm">Loading game...</p>
+        <p className="text-slate-500 text-sm">Loading game...</p>
       </div>
     )
   }
@@ -1408,16 +1408,16 @@ export function ScoreOrPassGame({ userProfile = {}, userAnalysis, onSelectShoote
       <div className="mb-4">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-white font-bold text-xl tracking-tight">Discover Shooters</h2>
-            <p className="text-[#666] text-sm">Swipe to find your perfect match</p>
+            <h2 className="text-slate-900 font-bold text-xl tracking-tight">Discover Shooters</h2>
+            <p className="text-slate-400 text-sm">Swipe to find your perfect match</p>
           </div>
           
           {/* Level Badge */}
           <div className="flex items-center gap-2">
             <div className="relative">
               <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#FF6B35] to-[#FF4500] p-[2px]">
-                <div className="w-full h-full rounded-full bg-[#0a0a0a] flex items-center justify-center">
-                  <span className="text-white font-black text-lg">{gameStats.level}</span>
+                <div className="w-full h-full rounded-full bg-white flex items-center justify-center border border-slate-200">
+                  <span className="text-slate-900 font-black text-lg">{gameStats.level}</span>
                 </div>
               </div>
               <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-[#FF6B35] rounded-full">
@@ -1428,14 +1428,14 @@ export function ScoreOrPassGame({ userProfile = {}, userAnalysis, onSelectShoote
         </div>
         
         {/* Stats Bar */}
-        <div className="flex items-center gap-3 p-3 bg-[#111] rounded-2xl border border-[#1a1a1a]">
+        <div className="flex items-center gap-3 p-3 bg-white rounded-2xl border border-slate-200 shadow-sm">
           {/* XP Progress */}
           <div className="flex-1">
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[#888] text-xs font-medium">Progress</span>
+              <span className="text-slate-500 text-xs font-medium">Progress</span>
               <span className="text-[#FF6B35] text-xs font-bold">{gameStats.xp} XP</span>
             </div>
-            <div className="h-1.5 bg-[#1a1a1a] rounded-full overflow-hidden">
+            <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden" style={{ boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.06)' }}>
               <div 
                 className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF8555] rounded-full transition-all duration-500"
                 style={{ width: `${Math.min(100, (gameStats.xp % 500) / 5)}%` }}
@@ -1444,37 +1444,37 @@ export function ScoreOrPassGame({ userProfile = {}, userAnalysis, onSelectShoote
           </div>
           
           {/* Divider */}
-          <div className="w-px h-8 bg-[#222]" />
+          <div className="w-px h-8 bg-slate-200" />
           
           {/* Quick Stats */}
           <div className="flex items-center gap-4">
             <div className="text-center">
               <div className="flex items-center justify-center gap-1">
                 <Flame className="w-3.5 h-3.5 text-[#FF6B35]" />
-                <span className="text-white font-bold text-sm">{gameStats.currentStreak}</span>
+                <span className="text-slate-900 font-bold text-sm">{gameStats.currentStreak}</span>
               </div>
-              <span className="text-[#555] text-[10px]">Streak</span>
+              <span className="text-slate-400 text-[10px]">Streak</span>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center gap-1">
                 <Flame className="w-3.5 h-3.5 text-green-500" />
-                <span className="text-white font-bold text-sm">{gameStats.scoreCount}</span>
+                <span className="text-slate-900 font-bold text-sm">{gameStats.scoreCount}</span>
               </div>
-              <span className="text-[#555] text-[10px]">Scores</span>
+              <span className="text-slate-400 text-[10px]">Scores</span>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center gap-1">
                 <Trophy className="w-3.5 h-3.5 text-[#FFD700]" />
-                <span className="text-white font-bold text-sm">{gameStats.bestStreak}</span>
+                <span className="text-slate-900 font-bold text-sm">{gameStats.bestStreak}</span>
               </div>
-              <span className="text-[#555] text-[10px]">Best</span>
+              <span className="text-slate-400 text-[10px]">Best</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Tab Navigation - Matching WorkoutOrPass Design */}
-      <div className="relative flex p-1 mb-4 bg-[#111] rounded-2xl border border-[#222]">
+      <div className="relative flex p-1 mb-4 bg-white rounded-2xl border border-slate-200 shadow-sm">
         {/* Active Tab Indicator */}
         <div 
           className="absolute top-1 bottom-1 bg-gradient-to-r from-[#FF6B35] to-[#FF8555] rounded-xl transition-all duration-300 ease-out shadow-lg shadow-[#FF6B35]/20"
@@ -1495,7 +1495,7 @@ export function ScoreOrPassGame({ userProfile = {}, userAnalysis, onSelectShoote
             className={`relative z-10 flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300 ${
               activeTab === tab.id
                 ? 'text-white'
-                : 'text-[#666] hover:text-[#999]'
+                : 'text-slate-400 hover:text-slate-600'
             }`}
           >
             <tab.icon className={`w-4 h-4 transition-transform duration-300 ${activeTab === tab.id ? 'scale-110' : ''}`} />
@@ -1511,7 +1511,7 @@ export function ScoreOrPassGame({ userProfile = {}, userAnalysis, onSelectShoote
       <button
         type="button"
         onClick={() => setShowFilterPanel(true)}
-        className="w-full flex items-center justify-between gap-2 px-4 py-3 mb-4 bg-[#1a1a1a] border border-[#333] rounded-xl text-white hover:border-[#FF6B35]/50 transition-colors"
+        className="w-full flex items-center justify-between gap-2 px-4 py-3 mb-4 bg-white border border-slate-200 rounded-xl text-slate-900 hover:border-[#FF6B35]/50 transition-colors shadow-sm"
       >
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-[#FF6B35]/20 flex items-center justify-center relative">
@@ -1523,11 +1523,11 @@ export function ScoreOrPassGame({ userProfile = {}, userAnalysis, onSelectShoote
             )}
           </div>
           <div className="text-left flex-1 min-w-0">
-            <p className="text-xs text-[#888]">Filters</p>
-            <p className="text-sm font-semibold text-white truncate">{getFilterSummary()}</p>
+            <p className="text-xs text-slate-400">Filters</p>
+            <p className="text-sm font-semibold text-slate-900 truncate">{getFilterSummary()}</p>
           </div>
         </div>
-        <ChevronDown className="w-5 h-5 text-[#888] flex-shrink-0" />
+        <ChevronDown className="w-5 h-5 text-slate-400 flex-shrink-0" />
       </button>
       
       {/* Content */}
@@ -1642,16 +1642,16 @@ export function ScoreOrPassGame({ userProfile = {}, userAnalysis, onSelectShoote
                 
                 {/* Swipe Hint - Animated */}
                 <div className="flex items-center justify-center gap-3 mt-4 mb-2">
-                  <svg className="w-4 h-4 text-[#555] animate-[bounce-left_1.5s_ease-in-out_infinite]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg className="w-4 h-4 text-slate-300 animate-[bounce-left_1.5s_ease-in-out_infinite]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <polyline points="15,18 9,12 15,6" />
                   </svg>
                   <div className="flex items-center gap-1.5">
-                    <svg className="w-3.5 h-3.5 text-[#555] animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg className="w-3.5 h-3.5 text-slate-300 animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M7 16V4M7 4L3 8M7 4L11 8M17 8v12M17 20l4-4M17 20l-4-4" />
                     </svg>
-                    <span className="text-[#555] text-[10px] font-medium uppercase tracking-widest">Swipe or Tap</span>
+                    <span className="text-slate-400 text-[10px] font-medium uppercase tracking-widest">Swipe or Tap</span>
                   </div>
-                  <svg className="w-4 h-4 text-[#555] animate-[bounce-right_1.5s_ease-in-out_infinite]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg className="w-4 h-4 text-slate-300 animate-[bounce-right_1.5s_ease-in-out_infinite]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <polyline points="9,18 15,12 9,6" />
                   </svg>
                 </div>
@@ -1732,7 +1732,7 @@ export function ScoreOrPassGame({ userProfile = {}, userAnalysis, onSelectShoote
                 
                 {/* Progress */}
                 <div className="text-center mt-4">
-                  <p className="text-[#666] text-sm">
+                  <p className="text-slate-400 text-sm">
                     {currentIndex + 1} of {matchedShooters.length} shooters
                   </p>
                 </div>
@@ -1740,8 +1740,8 @@ export function ScoreOrPassGame({ userProfile = {}, userAnalysis, onSelectShoote
             ) : (
               <div className="text-center py-12">
                 <Medal className="w-16 h-16 text-[#FF6B35] mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-white mb-2">All Caught Up!</h3>
-                <p className="text-[#888] mb-4">You&apos;ve rated all matching shooters</p>
+                <h3 className="text-xl font-bold text-slate-900 mb-2">All Caught Up!</h3>
+                <p className="text-slate-500 mb-4">You&apos;ve rated all matching shooters</p>
                 <button
                   type="button"
                   onClick={handleReset}
@@ -1767,10 +1767,10 @@ export function ScoreOrPassGame({ userProfile = {}, userAnalysis, onSelectShoote
       {/* Filter Panel Overlay */}
       {showFilterPanel && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center">
-          <div className="bg-[#1a1a1a] w-full max-w-md rounded-t-2xl sm:rounded-2xl max-h-[85vh] overflow-hidden flex flex-col">
+          <div className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl max-h-[85vh] overflow-hidden flex flex-col border border-slate-200 shadow-xl">
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-[#333]">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            <div className="flex items-center justify-between p-4 border-b border-slate-200">
+              <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                 <Filter className="w-5 h-5 text-[#FF6B35]" />
                 Filter Shooters
               </h2>
@@ -1787,7 +1787,7 @@ export function ScoreOrPassGame({ userProfile = {}, userAnalysis, onSelectShoote
                 <button
                   type="button"
                   onClick={() => setShowFilterPanel(false)}
-                  className="w-8 h-8 rounded-lg bg-[#252525] flex items-center justify-center text-[#888] hover:text-white transition-colors"
+                  className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-700 transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -1798,7 +1798,7 @@ export function ScoreOrPassGame({ userProfile = {}, userAnalysis, onSelectShoote
             <div className="flex-1 overflow-y-auto p-4 space-y-6">
               {/* League */}
               <div>
-                <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
                   <Trophy className="w-4 h-4 text-[#FF6B35]" />
                   League
                 </h3>
@@ -1814,7 +1814,7 @@ export function ScoreOrPassGame({ userProfile = {}, userAnalysis, onSelectShoote
                       className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                         filters.league === option.value
                           ? 'bg-[#FF6B35] text-white'
-                          : 'bg-[#252525] text-[#888] hover:bg-[#333] hover:text-white'
+                          : 'bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-700'
                       }`}
                     >
                       {option.label}
@@ -1825,7 +1825,7 @@ export function ScoreOrPassGame({ userProfile = {}, userAnalysis, onSelectShoote
               
               {/* Tier */}
               <div>
-                <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
                   <Crown className="w-4 h-4 text-[#FF6B35]" />
                   Tier
                 </h3>
@@ -1841,7 +1841,7 @@ export function ScoreOrPassGame({ userProfile = {}, userAnalysis, onSelectShoote
                       className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                         filters.tier === option.value
                           ? 'bg-[#FF6B35] text-white'
-                          : 'bg-[#252525] text-[#888] hover:bg-[#333] hover:text-white'
+                          : 'bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-700'
                       }`}
                     >
                       {option.label}
@@ -1852,7 +1852,7 @@ export function ScoreOrPassGame({ userProfile = {}, userAnalysis, onSelectShoote
               
               {/* Position */}
               <div>
-                <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
                   <Target className="w-4 h-4 text-[#FF6B35]" />
                   Position
                 </h3>
@@ -1868,7 +1868,7 @@ export function ScoreOrPassGame({ userProfile = {}, userAnalysis, onSelectShoote
                       className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                         filters.position === option.value
                           ? 'bg-[#FF6B35] text-white'
-                          : 'bg-[#252525] text-[#888] hover:bg-[#333] hover:text-white'
+                          : 'bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-700'
                       }`}
                     >
                       {option.label}
@@ -1879,9 +1879,9 @@ export function ScoreOrPassGame({ userProfile = {}, userAnalysis, onSelectShoote
             </div>
             
             {/* Footer */}
-            <div className="p-4 border-t border-[#333] bg-[#151515]">
+            <div className="p-4 border-t border-slate-200 bg-slate-50">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm text-[#888]">Matching Shooters</span>
+                <span className="text-sm text-slate-500">Matching Shooters</span>
                 <span className="text-sm font-bold text-[#FF6B35]">{matchedShooters.length}</span>
               </div>
               <button

@@ -180,23 +180,23 @@ export default function PlayerBioPopup({ shooter, onClose }: PlayerBioPopupProps
   
   return (
     <div 
-      className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       onClick={handleBackdropClick}
     >
-      <div className="bg-gradient-to-br from-[#2a2a2a] to-[#1a1a1a] rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-[#FF6B35]/30 shadow-2xl">
+      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-200 shadow-xl">
         {/* Header with photo */}
-        <div className="relative bg-gradient-to-r from-[#FF6B35]/20 to-transparent p-6">
+        <div className="relative bg-gradient-to-r from-[#FF6B35]/10 to-white p-6 border-b border-slate-200">
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-[#3a3a3a] hover:bg-[#4a4a4a] flex items-center justify-center text-white transition-colors z-10"
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition-colors z-10"
           >
             <X className="w-5 h-5" />
           </button>
           
           <div className="flex items-start gap-6">
             {/* Player Photo */}
-            <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-[#FF6B35]/50 bg-[#3a3a3a] flex-shrink-0">
+            <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-[#FF6B35]/30 bg-slate-100 flex-shrink-0">
               {shooter.photoUrl ? (
                 <Image
                   src={shooter.photoUrl}
@@ -216,12 +216,12 @@ export default function PlayerBioPopup({ shooter, onClose }: PlayerBioPopupProps
             
             {/* Player Info */}
             <div className="flex-1 pt-2">
-              <h2 className="text-3xl font-bold text-white uppercase tracking-wide">{shooter.name}</h2>
-              <p className="text-[#888] text-lg mt-1">{shooter.team}</p>
+              <h2 className="text-3xl font-bold text-slate-900 uppercase tracking-wide">{shooter.name}</h2>
+              <p className="text-slate-500 text-lg mt-1">{shooter.team}</p>
               
               {/* Badges */}
               <div className="flex flex-wrap items-center gap-2 mt-3">
-                <span className="inline-block px-3 py-1 rounded text-xs font-semibold uppercase bg-[#3a3a3a] text-[#E5E5E5] border border-[#4a4a4a]">
+                <span className="inline-block px-3 py-1 rounded text-xs font-semibold uppercase bg-slate-100 text-slate-600 border border-slate-200">
                   {POSITION_LABELS[shooter.position]}
                 </span>
                 <span className={`inline-block px-3 py-1 rounded text-xs font-semibold uppercase bg-gradient-to-r ${LEAGUE_COLORS[shooter.league]} text-white`}>
@@ -239,7 +239,7 @@ export default function PlayerBioPopup({ shooter, onClose }: PlayerBioPopupProps
                 </span>
               </div>
               
-              <p className="text-[#888] text-sm mt-2 flex items-center gap-1">
+              <p className="text-slate-500 text-sm mt-2 flex items-center gap-1">
                 <Calendar className="w-4 h-4" />
                 {shooter.era}
               </p>
@@ -254,68 +254,68 @@ export default function PlayerBioPopup({ shooter, onClose }: PlayerBioPopupProps
               >
                 <span className="text-2xl font-bold" style={{ color: tierColor }}>{shooter.overallScore}</span>
               </div>
-              <span className="text-xs text-[#888] font-bold">OVR</span>
+              <span className="text-xs text-slate-500 font-bold">OVR</span>
             </div>
           </div>
         </div>
         
         {/* Bio Section */}
-        <div className="p-6 border-t border-[#3a3a3a]">
+        <div className="p-6 border-t border-slate-200">
           <div className="flex items-center gap-2 mb-3">
             <Info className="w-5 h-5 text-[#FF6B35]" />
             <h3 className="text-lg font-bold text-[#FF6B35] uppercase tracking-wider">About {shooter.name.split(" ")[0]}</h3>
           </div>
-          <p className="text-[#E5E5E5] leading-relaxed text-base">{bio}</p>
+          <p className="text-slate-700 leading-relaxed text-base">{bio}</p>
         </div>
         
         {/* Stats Grid */}
-        <div className="p-6 border-t border-[#3a3a3a]">
+        <div className="p-6 border-t border-slate-200">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {/* 3PT% */}
-            <div className="bg-[#1a1a1a] rounded-lg p-4 text-center border border-green-500/30">
+            <div className="bg-slate-50 rounded-lg p-4 text-center border border-green-200">
               <Target className="w-5 h-5 text-green-400 mx-auto mb-2" />
               <p className="text-2xl font-bold text-green-400">{shooter.careerPct ? `${shooter.careerPct}%` : "—"}</p>
-              <p className="text-xs text-[#888] uppercase">Career 3PT%</p>
+              <p className="text-xs text-slate-500 uppercase">Career 3PT%</p>
             </div>
             
             {/* FT% */}
-            <div className="bg-[#1a1a1a] rounded-lg p-4 text-center border border-blue-500/30">
+            <div className="bg-slate-50 rounded-lg p-4 text-center border border-blue-200">
               <Target className="w-5 h-5 text-blue-400 mx-auto mb-2" />
               <p className="text-2xl font-bold text-blue-400">{Math.round(shooter.careerFreeThrowPct)}%</p>
-              <p className="text-xs text-[#888] uppercase">Career FT%</p>
+              <p className="text-xs text-slate-500 uppercase">Career FT%</p>
             </div>
             
             {/* WSI */}
             {shooter.wsi && (
-              <div className="bg-[#1a1a1a] rounded-lg p-4 text-center border border-purple-500/30">
+              <div className="bg-slate-50 rounded-lg p-4 text-center border border-purple-200">
                 <Award className="w-5 h-5 text-purple-400 mx-auto mb-2" />
                 <p className="text-2xl font-bold text-purple-400">{shooter.wsi}</p>
-                <p className="text-xs text-[#888] uppercase">WSI Score</p>
+                <p className="text-xs text-slate-500 uppercase">WSI Score</p>
               </div>
             )}
             
             {/* Height */}
-            <div className="bg-[#1a1a1a] rounded-lg p-4 text-center border border-[#FF6B35]/30">
+            <div className="bg-slate-50 rounded-lg p-4 text-center border border-[#FF6B35]/20">
               <Ruler className="w-5 h-5 text-[#FF6B35] mx-auto mb-2" />
               <p className="text-2xl font-bold text-[#FF6B35]">{formatHeight(shooter.height)}</p>
-              <p className="text-xs text-[#888] uppercase">Height</p>
+              <p className="text-xs text-slate-500 uppercase">Height</p>
             </div>
           </div>
         </div>
         
         {/* Achievements */}
         {shooter.achievements && (
-          <div className="p-6 border-t border-[#3a3a3a]">
+          <div className="p-6 border-t border-slate-200">
             <div className="flex items-center gap-2 mb-3">
               <Trophy className="w-5 h-5 text-[#FF6B35]" />
               <h3 className="text-lg font-bold text-[#FF6B35] uppercase tracking-wider">Achievements</h3>
             </div>
-            <p className="text-[#E5E5E5]">{shooter.achievements}</p>
+            <p className="text-slate-700">{shooter.achievements}</p>
           </div>
         )}
         
         {/* Key Traits */}
-        <div className="p-6 border-t border-[#3a3a3a]">
+        <div className="p-6 border-t border-slate-200">
           <h3 className="text-lg font-bold text-[#FF6B35] uppercase tracking-wider mb-3">Key Traits</h3>
           <div className="flex flex-wrap gap-2">
             {shooter.keyTraits.map((trait, idx) => (
@@ -330,35 +330,35 @@ export default function PlayerBioPopup({ shooter, onClose }: PlayerBioPopupProps
         </div>
         
         {/* Shooting Style */}
-        <div className="p-6 border-t border-[#3a3a3a]">
+        <div className="p-6 border-t border-slate-200">
           <h3 className="text-lg font-bold text-[#FF6B35] uppercase tracking-wider mb-3">Shooting Style</h3>
-          <p className="text-[#E5E5E5] italic">&ldquo;{shooter.shootingStyle}&rdquo;</p>
+          <p className="text-slate-700 italic">&ldquo;{shooter.shootingStyle}&rdquo;</p>
         </div>
         
         {/* Physical Stats */}
-        <div className="p-6 border-t border-[#3a3a3a]">
+        <div className="p-6 border-t border-slate-200">
           <h3 className="text-lg font-bold text-[#FF6B35] uppercase tracking-wider mb-3">Physical Profile</h3>
           <div className="grid grid-cols-3 gap-4 text-center">
-            <div className="bg-[#2a2a2a] rounded-lg p-3">
+            <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
               <p className="text-xl font-bold text-[#FF6B35]">{formatHeight(shooter.height)}</p>
-              <p className="text-xs text-[#888] uppercase">Height</p>
+              <p className="text-xs text-slate-500 uppercase">Height</p>
             </div>
-            <div className="bg-[#2a2a2a] rounded-lg p-3">
+            <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
               <p className="text-xl font-bold text-[#FF6B35]">{formatHeight(shooter.wingspan)}</p>
-              <p className="text-xs text-[#888] uppercase">Wingspan</p>
+              <p className="text-xs text-slate-500 uppercase">Wingspan</p>
             </div>
-            <div className="bg-[#2a2a2a] rounded-lg p-3">
+            <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
               <p className="text-xl font-bold text-[#FF6B35]">{shooter.weight} lbs</p>
-              <p className="text-xs text-[#888] uppercase">Weight</p>
+              <p className="text-xs text-slate-500 uppercase">Weight</p>
             </div>
           </div>
         </div>
         
         {/* Close Button */}
-        <div className="p-6 border-t border-[#3a3a3a]">
+        <div className="p-6 border-t border-slate-200">
           <button
             onClick={onClose}
-            className="w-full py-3 bg-[#FF6B35] hover:bg-[#e5c200] text-white font-bold rounded-lg transition-colors uppercase tracking-wider"
+            className="w-full py-3 bg-[#FF6B35] hover:bg-[#E55A2B] text-white font-bold rounded-lg transition-colors uppercase tracking-wider"
           >
             Close
           </button>

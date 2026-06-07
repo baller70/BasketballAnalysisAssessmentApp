@@ -58,10 +58,10 @@ const getBarColor = (score: number) => {
 
 // Helper to get score text color
 const getScoreTextColor = (score: number) => {
-  if (score >= 80) return 'text-green-400'
+  if (score >= 80) return 'text-green-600'
   if (score >= 70) return 'text-[#FF6B35]'
-  if (score >= 60) return 'text-orange-400'
-  return 'text-orange-400'
+  if (score >= 60) return 'text-orange-500'
+  return 'text-orange-500'
 }
 
 // Helper to get grade letter
@@ -110,33 +110,33 @@ export function StandardPlayerCard({ analysisData, archetype, playerName: _playe
   return (
     <>
       {/* Bio Stats Row - Simplified for Standard */}
-      <div className="bg-[#2a2a2a] px-1 py-2 border-b border-[#3a3a3a]">
-        <div className="grid grid-cols-4 divide-x divide-[#3a3a3a]">
+      <div className="bg-white px-1 py-2 border-b border-slate-200">
+        <div className="grid grid-cols-4 divide-x divide-slate-200">
           <div className="px-2 text-center">
-            <p className="text-[#888] text-[10px] uppercase">Level</p>
-            <p className="text-white font-bold text-sm">{level}</p>
+            <p className="text-slate-400 text-[10px] uppercase">Level</p>
+            <p className="text-slate-900 font-bold text-sm">{level}</p>
           </div>
           <div className="px-2 text-center">
-            <p className="text-[#888] text-[10px] uppercase">Grade</p>
+            <p className="text-slate-400 text-[10px] uppercase">Grade</p>
             <p className={`font-bold text-sm ${getScoreTextColor(analysisData.overallScore)}`}>
               {getGrade(analysisData.overallScore)}
             </p>
           </div>
           <div className="px-2 text-center">
-            <p className="text-[#888] text-[10px] uppercase">Rank</p>
-            <p className="text-white font-bold text-sm">#{Math.floor(100 - analysisData.overallScore + 10)}</p>
+            <p className="text-slate-400 text-[10px] uppercase">Rank</p>
+            <p className="text-slate-900 font-bold text-sm">#{Math.floor(100 - analysisData.overallScore + 10)}</p>
           </div>
           <div className="px-2 text-center">
-            <p className="text-[#888] text-[10px] uppercase">Match</p>
+            <p className="text-slate-400 text-[10px] uppercase">Match</p>
             <p className="text-[#FF6B35] font-bold text-sm">{analysisData.matchedShooter.similarityScore}%</p>
           </div>
         </div>
       </div>
 
       {/* Main Content: 4-Stat Grid + Progress Ring */}
-      <div className="grid grid-cols-3 bg-[#1a1a1a]">
+      <div className="grid grid-cols-3 bg-slate-50">
         {/* Left: Key Stats with Grades */}
-        <div className="col-span-2 p-3 border-r border-[#3a3a3a]">
+        <div className="col-span-2 p-3 border-r border-slate-200">
           {/* Archetype Badge */}
           <div className="flex items-center gap-2 mb-3">
             <div
@@ -149,7 +149,7 @@ export function StandardPlayerCard({ analysisData, archetype, playerName: _playe
               <h3 className="font-bold text-sm uppercase tracking-wider" style={{ color: archetype.color }}>
                 {archetype.title}
               </h3>
-              <p className="text-[#888] text-[9px]">{archetype.description}</p>
+              <p className="text-slate-400 text-[9px]">{archetype.description}</p>
             </div>
           </div>
           
@@ -158,13 +158,13 @@ export function StandardPlayerCard({ analysisData, archetype, playerName: _playe
             {keyStats.map((stat) => (
               <div key={stat.label}>
                 <div className="flex items-center justify-between mb-1">
-                  <p className="text-[#888] text-[9px] uppercase">{stat.label}</p>
+                  <p className="text-slate-400 text-[9px] uppercase">{stat.label}</p>
                   <span className={`text-xs font-bold ${getScoreTextColor(stat.value)}`}>
                     {getGrade(stat.value)}
                   </span>
                 </div>
-                <p className="text-white font-black text-2xl">{stat.value}</p>
-                <div className="h-1.5 bg-[#3a3a3a] rounded-full overflow-hidden mt-1">
+                <p className="text-slate-900 font-black text-2xl">{stat.value}</p>
+                <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden mt-1">
                   <div 
                     className={`h-full rounded-full ${getBarColor(stat.value)}`} 
                     style={{ width: `${stat.value}%` }} 
@@ -176,7 +176,7 @@ export function StandardPlayerCard({ analysisData, archetype, playerName: _playe
         </div>
 
         {/* Right: Overall Progress Ring */}
-        <div className="p-4 bg-gradient-to-b from-[#252525] to-[#1a1a1a] flex flex-col items-center justify-center">
+        <div className="p-4 bg-gradient-to-b from-white to-slate-50 flex flex-col items-center justify-center">
           <h3 className="text-[#FF6B35] font-bold text-xs uppercase tracking-[0.15em] mb-3 text-center">OVERALL</h3>
           
           {/* Large Progress Ring */}
@@ -185,7 +185,7 @@ export function StandardPlayerCard({ analysisData, archetype, playerName: _playe
               <circle
                 cx="40" cy="40" r="34"
                 fill="none"
-                stroke="#3a3a3a"
+                stroke="#e2e8f0"
                 strokeWidth="6"
               />
               <circle
@@ -211,7 +211,7 @@ export function StandardPlayerCard({ analysisData, archetype, playerName: _playe
       </div>
 
       {/* Matched Shooter Bar */}
-      <div className="bg-[#2a2a2a] px-4 py-3 border-t border-[#3a3a3a]">
+      <div className="bg-white px-4 py-3 border-t border-slate-200">
         <div className="flex items-center gap-3">
           <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-[#FF6B35]/50">
             <Image
@@ -223,12 +223,12 @@ export function StandardPlayerCard({ analysisData, archetype, playerName: _playe
             />
           </div>
           <div className="flex-1">
-            <p className="text-[#888] text-[10px] uppercase tracking-wider">Matched Shooter</p>
-            <p className="text-white font-bold text-sm">{analysisData.matchedShooter.name}</p>
+            <p className="text-slate-400 text-[10px] uppercase tracking-wider">Matched Shooter</p>
+            <p className="text-slate-900 font-bold text-sm">{analysisData.matchedShooter.name}</p>
           </div>
           <div className="text-right">
             <p className="text-[#FF6B35] font-black text-xl">{analysisData.matchedShooter.similarityScore}%</p>
-            <p className="text-[#888] text-[10px] uppercase">Match</p>
+            <p className="text-slate-400 text-[10px] uppercase">Match</p>
           </div>
         </div>
       </div>
@@ -258,7 +258,7 @@ export function BasicPlayerCard({ analysisData, archetype, playerName: _playerNa
       {[...Array(max)].map((_, i) => (
         <Star 
           key={i} 
-          className={`w-4 h-4 ${i < count ? 'text-[#FF6B35] fill-[#FF6B35]' : 'text-[#3a3a3a]'}`}
+          className={`w-4 h-4 ${i < count ? 'text-[#FF6B35] fill-[#FF6B35]' : 'text-slate-200'}`}
         />
       ))}
     </div>
@@ -267,27 +267,27 @@ export function BasicPlayerCard({ analysisData, archetype, playerName: _playerNa
   return (
     <>
       {/* Fun Stats Row */}
-      <div className="bg-[#2a2a2a] px-1 py-3 border-b border-[#3a3a3a]">
-        <div className="grid grid-cols-3 divide-x divide-[#3a3a3a]">
+      <div className="bg-white px-1 py-3 border-b border-slate-200">
+        <div className="grid grid-cols-3 divide-x divide-slate-200">
           <div className="px-3 text-center">
-            <p className="text-[#888] text-[10px] uppercase mb-1">Your Stars</p>
+            <p className="text-slate-400 text-[10px] uppercase mb-1">Your Stars</p>
             <StarRating count={overallRating.stars} />
           </div>
           <div className="px-3 text-center">
-            <p className="text-[#888] text-[10px] uppercase mb-1">Rating</p>
+            <p className="text-slate-400 text-[10px] uppercase mb-1">Rating</p>
             <p className="text-[#FF6B35] font-black text-lg">{overallRating.label}</p>
           </div>
           <div className="px-3 text-center">
-            <p className="text-[#888] text-[10px] uppercase mb-1">Like Pro</p>
-            <p className="text-white font-bold text-sm">{analysisData.matchedShooter.name.split(' ')[1]}</p>
+            <p className="text-slate-400 text-[10px] uppercase mb-1">Like Pro</p>
+            <p className="text-slate-900 font-bold text-sm">{analysisData.matchedShooter.name.split(' ')[1]}</p>
           </div>
         </div>
       </div>
 
       {/* Main Content: 3 Stats + Big Score */}
-      <div className="grid grid-cols-3 bg-[#1a1a1a]">
+      <div className="grid grid-cols-3 bg-slate-50">
         {/* Left: Simple 3-Stat Display */}
-        <div className="col-span-2 p-3 border-r border-[#3a3a3a]">
+        <div className="col-span-2 p-3 border-r border-slate-200">
           {/* Archetype Badge - Kid Friendly */}
           <div className="flex items-center gap-2 mb-4">
             <div
@@ -308,12 +308,12 @@ export function BasicPlayerCard({ analysisData, archetype, playerName: _playerNa
             {simpleStats.map((stat) => {
               const rating = getKidRating(stat.value)
               return (
-                <div key={stat.label} className="bg-[#2a2a2a] rounded-lg p-3">
+                <div key={stat.label} className="bg-white rounded-lg p-3 border border-slate-200">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-white font-bold text-sm">{stat.label}</span>
+                    <span className="text-slate-900 font-bold text-sm">{stat.label}</span>
                     <StarRating count={rating.stars} />
                   </div>
-                  <div className="h-2 bg-[#1a1a1a] rounded-full overflow-hidden">
+                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                     <div 
                       className={`h-full rounded-full ${getBarColor(stat.value)}`} 
                       style={{ width: `${stat.value}%` }} 
@@ -326,7 +326,7 @@ export function BasicPlayerCard({ analysisData, archetype, playerName: _playerNa
         </div>
 
         {/* Right: Big Fun Score */}
-        <div className="p-4 bg-gradient-to-b from-[#252525] to-[#1a1a1a] flex flex-col items-center justify-center">
+        <div className="p-4 bg-gradient-to-b from-white to-slate-50 flex flex-col items-center justify-center">
           <h3 className="text-[#FF6B35] font-bold text-xs uppercase tracking-[0.1em] mb-2 text-center">SCORE</h3>
           
           {/* Big Score Circle */}
@@ -344,7 +344,7 @@ export function BasicPlayerCard({ analysisData, archetype, playerName: _playerNa
       </div>
 
       {/* NBA Player Match - Fun Style */}
-      <div className="bg-[#2a2a2a] px-4 py-3 border-t border-[#3a3a3a]">
+      <div className="bg-white px-4 py-3 border-t border-slate-200">
         <div className="flex items-center gap-3">
           <div className="relative w-14 h-14 rounded-full overflow-hidden border-3 border-[#FF6B35] shadow-lg shadow-[#FF6B35]/20">
             <Image
@@ -356,7 +356,7 @@ export function BasicPlayerCard({ analysisData, archetype, playerName: _playerNa
             />
           </div>
           <div className="flex-1">
-            <p className="text-[#888] text-[10px] uppercase tracking-wider">You shoot like</p>
+            <p className="text-slate-400 text-[10px] uppercase tracking-wider">You shoot like</p>
             <p className="text-[#FF6B35] font-black text-lg">{analysisData.matchedShooter.name}</p>
           </div>
           <Trophy className="w-8 h-8 text-[#FF6B35]" />

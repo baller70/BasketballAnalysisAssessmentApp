@@ -111,7 +111,7 @@ export function DominantHandCard({
                 w-full p-4 rounded-xl border-2 transition-all flex items-center gap-4
                 ${isSelected
                   ? "border-[#FF6B35] bg-[#FF6B35]/10"
-                  : "border-[#3a3a3a] bg-[#2a2a2a] hover:border-[#4a4a4a]"
+                  : "border-slate-200 bg-slate-50 hover:border-slate-300"
                 }
               `}
             >
@@ -125,7 +125,7 @@ export function DominantHandCard({
                 <div className="flex items-center gap-2">
                   <h3
                     className={`font-semibold ${
-                      isSelected ? "text-[#FF6B35]" : "text-white"
+                      isSelected ? "text-[#FF6B35]" : "text-slate-900"
                     }`}
                   >
                     {option.label}
@@ -140,7 +140,7 @@ export function DominantHandCard({
                     </motion.span>
                   )}
                 </div>
-                <p className="text-sm text-gray-400 mt-0.5">
+                <p className="text-sm text-slate-500 mt-0.5">
                   {option.description}
                 </p>
               </div>
@@ -177,7 +177,7 @@ export function DominantHandCard({
       
       {/* Selected Summary */}
       {value && (
-        <div className="mt-4 text-center text-sm text-gray-400">
+        <div className="mt-4 text-center text-sm text-slate-500">
           Analysis will be oriented for{" "}
           <span className="font-semibold text-[#FF6B35]">
             {value === "ambidextrous" ? "both hands" : `${value}-hand`}

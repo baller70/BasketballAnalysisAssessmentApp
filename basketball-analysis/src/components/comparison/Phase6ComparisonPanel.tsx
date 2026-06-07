@@ -89,18 +89,18 @@ const AGE_GROUP_LABELS: Record<AgeGroup, string> = {
 }
 
 const AGE_GROUP_COLORS: Record<AgeGroup, { bg: string; text: string; border: string }> = {
-  ELEMENTARY: { bg: "bg-green-500/20", text: "text-green-400", border: "border-green-500/40" },
-  MIDDLE_SCHOOL: { bg: "bg-blue-500/20", text: "text-blue-400", border: "border-blue-500/40" },
-  HIGH_SCHOOL: { bg: "bg-purple-500/20", text: "text-purple-400", border: "border-purple-500/40" },
-  COLLEGE: { bg: "bg-orange-500/20", text: "text-orange-400", border: "border-orange-500/40" },
-  PROFESSIONAL: { bg: "bg-red-500/20", text: "text-red-400", border: "border-red-500/40" }
+  ELEMENTARY: { bg: "bg-green-50", text: "text-green-600", border: "border-green-200" },
+  MIDDLE_SCHOOL: { bg: "bg-blue-50", text: "text-blue-600", border: "border-blue-200" },
+  HIGH_SCHOOL: { bg: "bg-purple-50", text: "text-purple-600", border: "border-purple-200" },
+  COLLEGE: { bg: "bg-orange-50", text: "text-orange-600", border: "border-orange-200" },
+  PROFESSIONAL: { bg: "bg-red-50", text: "text-red-600", border: "border-red-200" }
 }
 
 const FEEDBACK_ICONS: Record<FeedbackItem["icon"], React.ReactNode> = {
-  CHECK: <CheckCircle className="w-5 h-5 text-green-400" />,
-  TARGET: <Target className="w-5 h-5 text-orange-400" />,
-  LIGHTBULB: <Lightbulb className="w-5 h-5 text-blue-400" />,
-  WARNING: <AlertTriangle className="w-5 h-5 text-red-400" />,
+  CHECK: <CheckCircle className="w-5 h-5 text-green-600" />,
+  TARGET: <Target className="w-5 h-5 text-orange-600" />,
+  LIGHTBULB: <Lightbulb className="w-5 h-5 text-blue-600" />,
+  WARNING: <AlertTriangle className="w-5 h-5 text-red-600" />,
   STAR: <Star className="w-5 h-5 text-[#FF6B35]" />
 }
 
@@ -154,16 +154,16 @@ export function Phase6ComparisonPanel({
   return (
     <div className="space-y-6">
       {/* Header - Personalized Analysis Banner */}
-      <div className="bg-gradient-to-r from-[#2a2a2a] via-[#1a1a1a] to-[#2a2a2a] rounded-xl p-6 border border-[#3a3a3a]">
+      <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
         <div className="flex items-center gap-4 mb-4">
           <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#FF4500] flex items-center justify-center">
-            <Users className="w-7 h-7 text-[#1a1a1a]" />
+            <Users className="w-7 h-7 text-white" />
           </div>
           <div className="flex-1">
-            <h2 className="text-2xl font-black text-[#FF6B35] uppercase tracking-wider">
+            <h2 className="text-2xl font-black text-slate-900 uppercase tracking-wider">
               Match
             </h2>
-            <p className="text-[#888] text-sm">
+            <p className="text-slate-500 text-sm">
               Matched to shooters with YOUR body type • {AGE_GROUP_LABELS[coachingFeedback.tier]}
             </p>
           </div>
@@ -176,26 +176,26 @@ export function Phase6ComparisonPanel({
         
         {/* User Profile Summary */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-4">
-          <div className="bg-[#1a1a1a] rounded-lg p-3 text-center border border-[#3a3a3a]">
-            <p className="text-xs text-[#888] uppercase">Height</p>
-            <p className="text-lg font-bold text-[#E5E5E5]">{formatHeight(physicalProfile.heightInches)}</p>
+          <div className="bg-slate-50 rounded-lg p-3 text-center border border-slate-100">
+            <p className="text-xs text-slate-400 uppercase">Height</p>
+            <p className="text-lg font-bold text-slate-900">{formatHeight(physicalProfile.heightInches)}</p>
           </div>
-          <div className="bg-[#1a1a1a] rounded-lg p-3 text-center border border-[#3a3a3a]">
-            <p className="text-xs text-[#888] uppercase">Weight</p>
-            <p className="text-lg font-bold text-[#E5E5E5]">{physicalProfile.weightLbs || "N/A"} lbs</p>
+          <div className="bg-slate-50 rounded-lg p-3 text-center border border-slate-100">
+            <p className="text-xs text-slate-400 uppercase">Weight</p>
+            <p className="text-lg font-bold text-slate-900">{physicalProfile.weightLbs || "N/A"} lbs</p>
           </div>
-          <div className="bg-[#1a1a1a] rounded-lg p-3 text-center border border-[#3a3a3a]">
-            <p className="text-xs text-[#888] uppercase">Wingspan</p>
-            <p className="text-lg font-bold text-[#E5E5E5]">
+          <div className="bg-slate-50 rounded-lg p-3 text-center border border-slate-100">
+            <p className="text-xs text-slate-400 uppercase">Wingspan</p>
+            <p className="text-lg font-bold text-slate-900">
               {physicalProfile.wingspanInches ? formatHeight(physicalProfile.wingspanInches) : "N/A"}
             </p>
           </div>
-          <div className="bg-[#1a1a1a] rounded-lg p-3 text-center border border-[#3a3a3a]">
-            <p className="text-xs text-[#888] uppercase">Age</p>
-            <p className="text-lg font-bold text-[#E5E5E5]">{physicalProfile.age}</p>
+          <div className="bg-slate-50 rounded-lg p-3 text-center border border-slate-100">
+            <p className="text-xs text-slate-400 uppercase">Age</p>
+            <p className="text-lg font-bold text-slate-900">{physicalProfile.age}</p>
           </div>
-          <div className="bg-[#1a1a1a] rounded-lg p-3 text-center border border-[#3a3a3a]">
-            <p className="text-xs text-[#888] uppercase">Skill Level</p>
+          <div className="bg-slate-50 rounded-lg p-3 text-center border border-slate-100">
+            <p className="text-xs text-slate-400 uppercase">Skill Level</p>
             <p className="text-lg font-bold text-[#FF6B35]">{physicalProfile.skillLevel}</p>
           </div>
         </div>
@@ -209,31 +209,31 @@ export function Phase6ComparisonPanel({
           </div>
           <div className="flex-1">
             <h3 className={`font-bold text-lg ${ageGroupColors.text} mb-2`}>YOUR ASSESSMENT</h3>
-            <p className="text-[#E5E5E5] leading-relaxed">{coachingFeedback.overallAssessment}</p>
+            <p className="text-slate-700 leading-relaxed">{coachingFeedback.overallAssessment}</p>
           </div>
         </div>
       </div>
       
       {/* Optimal Mechanics for Your Body Type */}
-      <div className="bg-[#2C2C2C] rounded-xl border border-[#3a3a3a] overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <button
           onClick={() => toggleSection("optimal")}
-          className="w-full p-5 flex items-center justify-between hover:bg-[#3a3a3a]/30 transition-colors"
+          className="w-full p-5 flex items-center justify-between hover:bg-slate-50 transition-colors"
         >
           <div className="flex items-center gap-3">
             <Target className="w-6 h-6 text-green-400" />
             <h3 className="text-xl font-bold text-green-400">OPTIMAL MECHANICS FOR YOUR BODY TYPE</h3>
           </div>
           {expandedSections.includes("optimal") ? (
-            <ChevronUp className="w-5 h-5 text-[#888]" />
+            <ChevronUp className="w-5 h-5 text-slate-400" />
           ) : (
-            <ChevronDown className="w-5 h-5 text-[#888]" />
+            <ChevronDown className="w-5 h-5 text-slate-400" />
           )}
         </button>
         
         {expandedSections.includes("optimal") && (
           <div className="p-5 pt-0">
-            <p className="text-[#888] text-sm mb-4">
+            <p className="text-slate-500 text-sm mb-4">
               Based on the top 3 shooters with similar body type, these are your optimal shooting angles:
             </p>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -279,20 +279,20 @@ export function Phase6ComparisonPanel({
       </div>
       
       {/* Top 5 Matched Shooters */}
-      <div className="bg-[#2C2C2C] rounded-xl border border-[#3a3a3a] overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         <button
           onClick={() => toggleSection("matches")}
-          className="w-full p-5 flex items-center justify-between hover:bg-[#3a3a3a]/30 transition-colors"
+          className="w-full p-5 flex items-center justify-between hover:bg-slate-50 transition-colors"
         >
           <div className="flex items-center gap-3">
             <Trophy className="w-6 h-6 text-[#FF6B35]" />
             <h3 className="text-xl font-bold text-[#FF6B35]">TOP 5 SIMILAR SHOOTERS</h3>
-            <span className="text-[#888] text-sm">(Based on your body type)</span>
+            <span className="text-slate-500 text-sm">(Based on your body type)</span>
           </div>
           {expandedSections.includes("matches") ? (
-            <ChevronUp className="w-5 h-5 text-[#888]" />
+            <ChevronUp className="w-5 h-5 text-slate-400" />
           ) : (
-            <ChevronDown className="w-5 h-5 text-[#888]" />
+            <ChevronDown className="w-5 h-5 text-slate-400" />
           )}
         </button>
         
@@ -315,7 +315,7 @@ export function Phase6ComparisonPanel({
           </h3>
           <ul className="space-y-2">
             {personalizedRecommendations.map((rec, index) => (
-              <li key={index} className="flex items-start gap-3 text-[#E5E5E5]">
+              <li key={index} className="flex items-start gap-3 text-slate-700">
                 <ArrowRight className="w-5 h-5 text-[#FF6B35] flex-shrink-0 mt-0.5" />
                 <span>{rec}</span>
               </li>
@@ -351,7 +351,7 @@ function MatchedShooterCard({ match, rank }: { match: MatchedShooter; rank: numb
   }
   
   return (
-    <div className="bg-[#1a1a1a] rounded-xl p-4 border border-[#3a3a3a] hover:border-[#FF6B35]/50 transition-colors relative overflow-hidden">
+    <div className="bg-white rounded-xl p-4 border border-slate-200 hover:border-[#FF6B35]/50 hover:shadow-md transition-all relative overflow-hidden">
       {/* Player Image Background - Right Side, Faded */}
       {shooter.imageUrl && (
         <div 
@@ -379,23 +379,23 @@ function MatchedShooterCard({ match, rank }: { match: MatchedShooter; rank: numb
         {/* Shooter Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h4 className="text-lg font-bold text-[#E5E5E5] truncate uppercase">{shooter.name}</h4>
+            <h4 className="text-lg font-bold text-slate-900 truncate uppercase">{shooter.name}</h4>
             <span className="px-2 py-0.5 rounded text-xs font-bold bg-[#FF6B35]/20 text-[#FF6B35]">
               {similarityScore.overall}% Match
             </span>
           </div>
-          <p className="text-[#888] text-sm">{shooter.team} • {shooter.position}</p>
+          <p className="text-slate-500 text-sm">{shooter.team} • {shooter.position}</p>
           
           {/* Physical Stats */}
           <div className="flex flex-wrap gap-3 mt-2 text-xs">
-            <span className="text-[#888]">
-              <span className="text-[#E5E5E5] font-medium">{heightFt}&apos;{heightIn}&quot;</span> Height
+            <span className="text-slate-500">
+              <span className="text-slate-900 font-medium">{heightFt}&apos;{heightIn}&quot;</span> Height
             </span>
-            <span className="text-[#888]">
-              <span className="text-[#E5E5E5] font-medium">{wingspanFt}&apos;{wingspanIn}&quot;</span> Wingspan
+            <span className="text-slate-500">
+              <span className="text-slate-900 font-medium">{wingspanFt}&apos;{wingspanIn}&quot;</span> Wingspan
             </span>
-            <span className="text-[#888]">
-              <span className="text-[#E5E5E5] font-medium">{shooter.weightLbs}</span> lbs
+            <span className="text-slate-500">
+              <span className="text-slate-900 font-medium">{shooter.weightLbs}</span> lbs
             </span>
           </div>
           
@@ -404,7 +404,7 @@ function MatchedShooterCard({ match, rank }: { match: MatchedShooter; rank: numb
             {matchReasons.slice(0, 3).map((reason, idx) => (
               <span 
                 key={idx}
-                className="px-2 py-1 rounded-full text-xs bg-green-500/20 text-green-400 border border-green-500/30"
+                className="px-2 py-1 rounded-full text-xs bg-green-50 text-green-600 border border-green-200"
               >
                 {reason}
               </span>
@@ -417,7 +417,7 @@ function MatchedShooterCard({ match, rank }: { match: MatchedShooter; rank: numb
               {shooter.traits.slice(0, 2).map((trait, idx) => (
                 <span 
                   key={idx}
-                  className="px-2 py-1 rounded text-xs bg-[#2a2a2a] text-[#888]"
+                  className="px-2 py-1 rounded text-xs bg-slate-100 text-slate-500"
                 >
                   {trait}
                 </span>
@@ -428,9 +428,9 @@ function MatchedShooterCard({ match, rank }: { match: MatchedShooter; rank: numb
         
         {/* Similarity Breakdown */}
         <div className="hidden md:flex flex-col gap-1 text-right flex-shrink-0">
-          <div className="text-xs text-[#888]">Physical: <span className="text-[#E5E5E5] font-medium">{similarityScore.physical}%</span></div>
-          <div className="text-xs text-[#888]">Skill: <span className="text-[#E5E5E5] font-medium">{similarityScore.skill}%</span></div>
-          <div className="text-xs text-[#888]">Mechanics: <span className="text-[#E5E5E5] font-medium">{similarityScore.mechanics}%</span></div>
+          <div className="text-xs text-slate-500">Physical: <span className="text-slate-900 font-medium">{similarityScore.physical}%</span></div>
+          <div className="text-xs text-slate-500">Skill: <span className="text-slate-900 font-medium">{similarityScore.skill}%</span></div>
+          <div className="text-xs text-slate-500">Mechanics: <span className="text-slate-900 font-medium">{similarityScore.mechanics}%</span></div>
         </div>
       </div>
     </div>
@@ -449,10 +449,10 @@ function OptimalMetricCard({
   unit: string
 }) {
   return (
-    <div className="bg-[#1a1a1a] rounded-lg p-4 border border-[#3a3a3a] text-center">
-      <p className="text-xs text-[#888] uppercase tracking-wider mb-1">{label}</p>
-      <p className="text-2xl font-bold text-green-400">{value}{unit}</p>
-      <p className="text-xs text-[#888]">±{stdDev}{unit} variance</p>
+    <div className="bg-slate-50 rounded-lg p-4 border border-slate-100 text-center">
+      <p className="text-xs text-slate-400 uppercase tracking-wider mb-1">{label}</p>
+      <p className="text-2xl font-bold text-green-600">{value}{unit}</p>
+      <p className="text-xs text-slate-500">±{stdDev}{unit} variance</p>
     </div>
   )
 }
@@ -460,9 +460,9 @@ function OptimalMetricCard({
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function MechanicComparisonRow({ comparison }: { comparison: MechanicComparison }) {
   const statusColors = {
-    GOOD: { bg: "bg-green-500/20", text: "text-green-400", border: "border-green-500/40" },
-    NEEDS_WORK: { bg: "bg-orange-500/20", text: "text-orange-400", border: "border-orange-500/40" },
-    CRITICAL: { bg: "bg-red-500/20", text: "text-red-400", border: "border-red-500/40" }
+    GOOD: { bg: "bg-green-50", text: "text-green-600", border: "border-green-200" },
+    NEEDS_WORK: { bg: "bg-orange-50", text: "text-orange-600", border: "border-orange-200" },
+    CRITICAL: { bg: "bg-red-50", text: "text-red-600", border: "border-red-200" }
   }
   
   const colors = statusColors[comparison.status]
@@ -471,7 +471,7 @@ function MechanicComparisonRow({ comparison }: { comparison: MechanicComparison 
   return (
     <div className={`rounded-lg p-4 border ${colors.bg} ${colors.border}`}>
       <div className="flex items-center justify-between mb-2">
-        <span className="font-bold text-[#E5E5E5]">{comparison.metric}</span>
+        <span className="font-bold text-slate-900">{comparison.metric}</span>
         <span className={`px-2 py-0.5 rounded text-xs font-bold ${colors.bg} ${colors.text} border ${colors.border}`}>
           {comparison.status.replace("_", " ")}
         </span>
@@ -479,10 +479,10 @@ function MechanicComparisonRow({ comparison }: { comparison: MechanicComparison 
       <div className="flex items-center gap-4 mb-2">
         <div className="flex-1">
           <div className="flex justify-between text-sm mb-1">
-            <span className="text-[#888]">You: {comparison.userValue}°</span>
-            <span className="text-[#888]">Optimal: {comparison.optimalValue}°</span>
+            <span className="text-slate-500">You: {comparison.userValue}°</span>
+            <span className="text-slate-500">Optimal: {comparison.optimalValue}°</span>
           </div>
-          <div className="h-2 bg-[#1a1a1a] rounded-full overflow-hidden relative">
+          <div className="h-2 bg-slate-100 rounded-full overflow-hidden relative">
             {/* Optimal marker */}
             <div 
               className="absolute top-0 bottom-0 w-1 bg-green-400 z-10"
@@ -497,7 +497,7 @@ function MechanicComparisonRow({ comparison }: { comparison: MechanicComparison 
         </div>
         <span className={`font-bold ${colors.text} min-w-[60px] text-right`}>{diffText}</span>
       </div>
-      <p className="text-sm text-[#E5E5E5]">{comparison.recommendation}</p>
+      <p className="text-sm text-slate-700">{comparison.recommendation}</p>
     </div>
   )
 }
@@ -514,8 +514,8 @@ function FeedbackCard({ item, type }: { item: FeedbackItem; type: "strength" | "
           {FEEDBACK_ICONS[item.icon]}
         </div>
         <div>
-          <h5 className="font-bold text-[#E5E5E5] mb-1">{item.title}</h5>
-          <p className="text-sm text-[#888]">{item.description}</p>
+          <h5 className="font-bold text-slate-900 mb-1">{item.title}</h5>
+          <p className="text-sm text-slate-500">{item.description}</p>
         </div>
       </div>
     </div>
@@ -531,7 +531,7 @@ function DrillCard({ drill, index }: { drill: DrillRecommendation; index: number
   }
   
   return (
-    <div className="bg-[#1a1a1a] rounded-xl p-4 border border-[#3a3a3a]">
+    <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
       <div className="flex items-center justify-between mb-2">
         <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center">
           <span className="text-orange-400 font-bold">{index}</span>
@@ -540,11 +540,11 @@ function DrillCard({ drill, index }: { drill: DrillRecommendation; index: number
           {drill.difficulty}
         </span>
       </div>
-      <h4 className="font-bold text-[#E5E5E5] mb-1">{drill.name}</h4>
-      <p className="text-sm text-[#888] mb-3">{drill.description}</p>
+      <h4 className="font-bold text-slate-900 mb-1">{drill.name}</h4>
+      <p className="text-sm text-slate-500 mb-3">{drill.description}</p>
       <div className="flex items-center justify-between text-xs">
-        <span className="text-[#888]">Duration: <span className="text-[#E5E5E5]">{drill.duration}</span></span>
-        <span className="px-2 py-0.5 rounded bg-[#2a2a2a] text-[#888]">{drill.focusArea}</span>
+        <span className="text-slate-500">Duration: <span className="text-slate-900">{drill.duration}</span></span>
+        <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-500">{drill.focusArea}</span>
       </div>
     </div>
   )

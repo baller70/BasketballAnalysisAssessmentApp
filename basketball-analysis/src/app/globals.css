@@ -68,11 +68,11 @@
     overflow-x: hidden;
     /* Prevent overscroll bounce showing white/black gaps */
     overscroll-behavior: none;
-    background: #050505;
+    background: #f8fafc;
   }
 
   body {
-    background: #050505;
+    background: #ffffff;
     color: hsl(var(--foreground));
     font-family: 'Saira', system-ui, sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
@@ -85,7 +85,7 @@
   /* Ensure no black gaps when scrolling */
   #__next,
   main {
-    background: #050505;
+    background: #f8fafc;
     min-height: 100%;
   }
 }
@@ -97,16 +97,16 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #1a1a1a;
+  background: #f1f5f9;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #333;
+  background: #cbd5e1;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #444;
+  background: #94a3b8;
 }
 
 /* Skeleton overlay styling */
@@ -144,6 +144,11 @@
   50% {
     box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
   }
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 /* Good area highlight */

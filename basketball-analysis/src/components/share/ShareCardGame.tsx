@@ -1133,7 +1133,7 @@ function ShareCard({ card, userData, dragX }: ShareCardProps) {
       )}
       
       {/* Card with scroll-following swipe indicators */}
-      <div ref={cardRef} className="bg-[#0d0d0d] rounded-3xl border-2 border-[#FF6B35]/50 overflow-hidden shadow-2xl relative">
+      <div ref={cardRef} className="bg-white rounded-3xl border-2 border-[#FF6B35]/30 overflow-hidden shadow-lg relative">
         {/* Left Swipe Indicator */}
         <div 
           className="z-10 flex items-center gap-0 pointer-events-none transition-all duration-150"
@@ -1213,7 +1213,7 @@ function ShareCard({ card, userData, dragX }: ShareCardProps) {
         </div>
         
         {/* Premium Banner */}
-        <div className="relative h-24 overflow-hidden" style={{ background: `linear-gradient(135deg, ${card.color}20, #1a1a1a, #1a1a1a)` }}>
+        <div className="relative h-24 overflow-hidden" style={{ background: `linear-gradient(135deg, ${card.color}20, #f8fafc, #f1f5f9)` }}>
           {/* Glowing Orbs Background - using radial gradients instead of blur for html2canvas compatibility */}
           <div className="absolute inset-0 opacity-40 pointer-events-none">
             <div 
@@ -1241,7 +1241,7 @@ function ShareCard({ card, userData, dragX }: ShareCardProps) {
           
           {/* Title and Subtitle */}
           <div className="absolute inset-0 flex flex-col justify-center pl-5">
-            <h3 className="text-white font-black text-lg uppercase tracking-wider">{card.title}</h3>
+            <h3 className="text-slate-900 font-black text-lg uppercase tracking-wider">{card.title}</h3>
             <p className="text-xs font-semibold uppercase tracking-wider mt-0.5" style={{ color: card.color }}>{card.subtitle}</p>
           </div>
         </div>
@@ -1252,11 +1252,11 @@ function ShareCard({ card, userData, dragX }: ShareCardProps) {
         </div>
         
         {/* Share Info Footer */}
-        <div className="p-3 border-t border-[#2a2a2a] bg-[#0a0a0a]">
+        <div className="p-3 border-t border-slate-200 bg-slate-50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Share2 className="w-3.5 h-3.5 text-[#888]" />
-              <span className="text-[#888] text-[10px]">Swipe right to share</span>
+              <Share2 className="w-3.5 h-3.5 text-slate-400" />
+              <span className="text-slate-400 text-[10px]">Swipe right to share</span>
             </div>
             <div className="flex items-center gap-2">
               <Award className="w-3.5 h-3.5 text-[#FF6B35]" />
@@ -1503,24 +1503,24 @@ function ShareModal({
       />
       
       {/* Modal */}
-      <div className="relative bg-gradient-to-b from-[#1a1a1a] to-[#0d0d0d] rounded-t-3xl sm:rounded-3xl w-full max-w-lg mx-4 mb-0 sm:mb-4 border border-[#2a2a2a] shadow-2xl overflow-hidden">
+      <div className="relative bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-lg mx-4 mb-0 sm:mb-4 border border-slate-200 shadow-xl overflow-hidden">
         {/* Decorative top gradient line */}
         <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#FF6B35] to-transparent" />
         
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-[#2a2a2a]">
+        <div className="flex items-center justify-between p-5 border-b border-slate-200">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#FF4500] flex items-center justify-center">
               <Share2 className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h3 className="text-white font-bold text-lg">Share Your Results</h3>
-              <p className="text-[#666] text-xs">Choose a platform to share</p>
+              <h3 className="text-slate-900 font-bold text-lg">Share Your Results</h3>
+              <p className="text-slate-500 text-xs">Choose a platform to share</p>
             </div>
           </div>
           <button 
             onClick={onClose}
-            className="w-9 h-9 rounded-xl bg-[#2a2a2a] flex items-center justify-center text-[#888] hover:text-white hover:bg-[#333] transition-all"
+            className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-all"
           >
             <X className="w-4 h-4" />
           </button>
@@ -1528,7 +1528,7 @@ function ShareModal({
         
         {/* Social Platforms Section */}
         <div className="p-5">
-          <p className="text-[#666] text-[10px] uppercase tracking-wider font-semibold mb-3">Social Media</p>
+          <p className="text-slate-400 text-[10px] uppercase tracking-wider font-semibold mb-3">Social Media</p>
           <div className="grid grid-cols-6 gap-2">
             {socialPlatforms.map((platform) => {
               const IconComponent = platform.icon
@@ -1536,7 +1536,7 @@ function ShareModal({
                 <button
                   key={platform.name}
                   onClick={() => handleShare(platform)}
-                  className="flex flex-col items-center gap-1.5 p-2 rounded-xl hover:bg-white/5 transition-all group"
+                  className="flex flex-col items-center gap-1.5 p-2 rounded-xl hover:bg-slate-50 transition-all group"
                 >
                   <div 
                     className="w-11 h-11 rounded-xl flex items-center justify-center transition-all group-hover:scale-105 group-hover:shadow-lg"
@@ -1548,7 +1548,7 @@ function ShareModal({
                   >
                     <IconComponent />
                   </div>
-                  <span className="text-[#888] text-[9px] font-medium text-center leading-tight group-hover:text-white transition-colors">
+                  <span className="text-slate-500 text-[9px] font-medium text-center leading-tight group-hover:text-slate-900 transition-colors">
                     {platform.name}
                   </span>
                 </button>
@@ -1559,7 +1559,7 @@ function ShareModal({
         
         {/* Professional Platforms Section */}
         <div className="px-5 pb-4">
-          <p className="text-[#666] text-[10px] uppercase tracking-wider font-semibold mb-3">Professional</p>
+          <p className="text-slate-400 text-[10px] uppercase tracking-wider font-semibold mb-3">Professional</p>
           <div className="grid grid-cols-6 gap-2">
             {professionalPlatforms.map((platform) => {
               const IconComponent = platform.icon
@@ -1567,7 +1567,7 @@ function ShareModal({
                 <button
                   key={platform.name}
                   onClick={() => handleShare(platform)}
-                  className="flex flex-col items-center gap-1.5 p-2 rounded-xl hover:bg-white/5 transition-all group"
+                  className="flex flex-col items-center gap-1.5 p-2 rounded-xl hover:bg-slate-50 transition-all group"
                 >
                   <div 
                     className="w-11 h-11 rounded-xl flex items-center justify-center transition-all group-hover:scale-105 group-hover:shadow-lg"
@@ -1579,7 +1579,7 @@ function ShareModal({
                   >
                     <IconComponent />
                   </div>
-                  <span className="text-[#888] text-[9px] font-medium text-center leading-tight group-hover:text-white transition-colors">
+                  <span className="text-slate-500 text-[9px] font-medium text-center leading-tight group-hover:text-slate-900 transition-colors">
                     {platform.name}
                   </span>
                 </button>
@@ -1589,8 +1589,8 @@ function ShareModal({
         </div>
         
         {/* Messaging Section */}
-        <div className="px-5 pb-5 border-t border-[#2a2a2a] pt-4">
-          <p className="text-[#666] text-[10px] uppercase tracking-wider font-semibold mb-3">Direct Share</p>
+        <div className="px-5 pb-5 border-t border-slate-200 pt-4">
+          <p className="text-slate-400 text-[10px] uppercase tracking-wider font-semibold mb-3">Direct Share</p>
           <div className="grid grid-cols-4 gap-2">
             {messagingPlatforms.map((platform) => {
               const IconComponent = platform.icon
@@ -1600,7 +1600,7 @@ function ShareModal({
                   key={platform.name}
                   onClick={() => handleShare(platform)}
                   className={`flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all group ${
-                    isCopy && copied ? 'bg-[#22C55E]/20' : 'hover:bg-white/5'
+                    isCopy && copied ? 'bg-green-50' : 'hover:bg-slate-50'
                   }`}
                 >
                   <div 
@@ -1614,7 +1614,7 @@ function ShareModal({
                     {isCopy && copied ? <Check className="w-5 h-5" /> : <IconComponent />}
                   </div>
                   <span className={`text-[9px] font-medium text-center leading-tight transition-colors ${
-                    isCopy && copied ? 'text-[#22C55E]' : 'text-[#888] group-hover:text-white'
+                    isCopy && copied ? 'text-green-600' : 'text-slate-500 group-hover:text-slate-900'
                   }`}>
                     {isCopy && copied ? 'Copied!' : platform.name}
                   </span>
@@ -1626,9 +1626,9 @@ function ShareModal({
         
         {/* Message Preview */}
         <div className="px-5 pb-5">
-          <div className="bg-[#0a0a0a] rounded-xl border border-[#2a2a2a] overflow-hidden">
-            <div className="flex items-center justify-between px-3 py-2 border-b border-[#2a2a2a]">
-              <span className="text-[#666] text-[10px] uppercase tracking-wider font-semibold">Message Preview</span>
+          <div className="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
+            <div className="flex items-center justify-between px-3 py-2 border-b border-slate-200">
+              <span className="text-slate-400 text-[10px] uppercase tracking-wider font-semibold">Message Preview</span>
               <button 
                 onClick={() => {
                   if (typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -1644,7 +1644,7 @@ function ShareModal({
               </button>
             </div>
             <div className="p-3 max-h-28 overflow-y-auto">
-              <p className="text-[#888] text-xs leading-relaxed whitespace-pre-wrap">{defaultShareText}</p>
+              <p className="text-slate-600 text-xs leading-relaxed whitespace-pre-wrap">{defaultShareText}</p>
             </div>
           </div>
         </div>
@@ -1906,29 +1906,29 @@ function DownloadModal({
       />
       
       {/* Modal */}
-      <div className="relative bg-[#1a1a1a] rounded-t-3xl sm:rounded-3xl w-full max-w-2xl mx-4 mb-0 sm:mb-4 border border-[#333] shadow-2xl max-h-[90vh] flex flex-col">
+      <div className="relative bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-2xl mx-4 mb-0 sm:mb-4 border border-slate-200 shadow-xl max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-[#333]">
+        <div className="flex items-center justify-between p-4 border-b border-slate-200">
           <div>
-            <h3 className="text-white font-bold text-lg">Download Card</h3>
-            <p className="text-[#888] text-xs">Preview your card and choose a size</p>
+            <h3 className="text-slate-900 font-bold text-lg">Download Card</h3>
+            <p className="text-slate-500 text-xs">Preview your card and choose a size</p>
           </div>
           <button 
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-[#333] flex items-center justify-center text-white hover:bg-[#444] transition-colors"
+            className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
         
         {/* Toggle Preview/Sizes */}
-        <div className="flex gap-2 p-4 border-b border-[#333]">
+        <div className="flex gap-2 p-4 border-b border-slate-200">
           <button
             onClick={() => setShowPreview(true)}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
               showPreview
                 ? 'bg-[#FF6B35] text-white'
-                : 'bg-[#2a2a2a] text-[#888] hover:text-white'
+                : 'bg-slate-100 text-slate-500 hover:text-slate-900'
             }`}
           >
             Preview
@@ -1938,7 +1938,7 @@ function DownloadModal({
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
               !showPreview
                 ? 'bg-[#FF6B35] text-white'
-                : 'bg-[#2a2a2a] text-[#888] hover:text-white'
+                : 'bg-slate-100 text-slate-500 hover:text-slate-900'
             }`}
           >
             Download Sizes
@@ -1960,7 +1960,7 @@ function DownloadModal({
           <div className="flex-1 overflow-y-auto p-4">
             <div className="flex flex-col items-center">
               {/* Preview Label */}
-              <div className="text-[#888] text-xs uppercase tracking-wider mb-3">Card Preview</div>
+              <div className="text-slate-400 text-xs uppercase tracking-wider mb-3">Card Preview</div>
               
               {/* Card Preview - visible preview */}
               <div 
@@ -1973,7 +1973,7 @@ function DownloadModal({
               {/* Preview Info */}
               <div className="mt-4 text-center">
                 <p className="text-[#22c55e] text-sm font-semibold">✓ This is what will be downloaded</p>
-                <p className="text-[#888] text-xs mt-1">Click &quot;Download Sizes&quot; to choose your format</p>
+                <p className="text-slate-500 text-xs mt-1">Click &quot;Download Sizes&quot; to choose your format</p>
               </div>
               
               {/* Quick Download Button */}
@@ -1989,7 +1989,7 @@ function DownloadModal({
           /* Size Options Section */
           <>
             {/* Category Filter */}
-            <div className="flex gap-2 p-4 border-b border-[#333]">
+            <div className="flex gap-2 p-4 border-b border-slate-200">
               {(['all', 'vertical', 'square', 'landscape'] as const).map((cat) => (
                 <button
                   key={cat}
@@ -1997,7 +1997,7 @@ function DownloadModal({
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
                     selectedCategory === cat
                       ? 'bg-[#FF6B35] text-white'
-                      : 'bg-[#2a2a2a] text-[#888] hover:text-white'
+                      : 'bg-slate-100 text-slate-500 hover:text-slate-900'
                   }`}
                 >
                   {cat === 'all' ? 'All' : cat === 'vertical' ? '9:16' : cat === 'square' ? '1:1' : '16:9'}
@@ -2019,20 +2019,20 @@ function DownloadModal({
                       disabled={isDownloading}
                       className={`flex flex-col items-start p-3 rounded-xl border transition-all text-left ${
                         isDownloading
-                          ? 'bg-green-500/20 border-green-500/50'
-                          : 'bg-[#0d0d0d] border-[#333] hover:border-[#FF6B35]/50'
+                          ? 'bg-green-50 border-green-200'
+                          : 'bg-white border-slate-200 hover:border-[#FF6B35]/50 hover:shadow-sm'
                       }`}
                     >
                       <div className="flex items-center gap-2 mb-2 w-full">
                         <Icon className={`w-4 h-4 ${isDownloading ? 'text-green-500' : 'text-[#FF6B35]'}`} />
-                        <span className="text-white text-sm font-semibold truncate flex-1">{size.name}</span>
+                        <span className="text-slate-900 text-sm font-semibold truncate flex-1">{size.name}</span>
                         {isDownloading && <Check className="w-4 h-4 text-green-500" />}
                       </div>
-                      <div className="flex items-center gap-2 text-[10px] text-[#666]">
-                        <span className="bg-[#2a2a2a] px-1.5 py-0.5 rounded">{size.aspectRatio}</span>
+                      <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                        <span className="bg-slate-100 px-1.5 py-0.5 rounded">{size.aspectRatio}</span>
                         <span>{size.width}×{size.height}</span>
                       </div>
-                      <p className="text-[#888] text-[10px] mt-1">{size.description}</p>
+                      <p className="text-slate-500 text-[10px] mt-1">{size.description}</p>
                     </button>
                   )
                 })}
@@ -2610,9 +2610,9 @@ ${fullHashtags}`
     
     // Return the full card structure matching ShareCard component
     return (
-      <div className="bg-[#0d0d0d] rounded-3xl border-2 border-[#FF6B35]/50 overflow-hidden shadow-2xl">
+      <div className="bg-white rounded-3xl border-2 border-[#FF6B35]/30 overflow-hidden shadow-lg">
         {/* Premium Banner - matches the app card exactly */}
-        <div className="relative h-24 overflow-hidden" style={{ background: `linear-gradient(135deg, ${card.color}20, #1a1a1a, #1a1a1a)` }}>
+        <div className="relative h-24 overflow-hidden" style={{ background: `linear-gradient(135deg, ${card.color}20, #f8fafc, #f1f5f9)` }}>
           {/* Glowing Orbs Background - using radial gradients instead of blur for html2canvas compatibility */}
           <div className="absolute inset-0 opacity-40 pointer-events-none">
             <div 
@@ -2640,7 +2640,7 @@ ${fullHashtags}`
           
           {/* Title and Subtitle */}
           <div className="absolute inset-0 flex flex-col justify-center pl-5">
-            <h3 className="text-white font-black text-lg uppercase tracking-wider">{card.title}</h3>
+            <h3 className="text-slate-900 font-black text-lg uppercase tracking-wider">{card.title}</h3>
             <p className="text-xs font-semibold uppercase tracking-wider mt-0.5" style={{ color: card.color }}>{card.subtitle}</p>
           </div>
         </div>
@@ -2651,7 +2651,7 @@ ${fullHashtags}`
         </div>
         
         {/* Download Footer - Different from swipe footer */}
-        <div className="p-3 border-t border-[#2a2a2a] bg-[#0a0a0a]">
+        <div className="p-3 border-t border-slate-200 bg-slate-50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 flex items-center justify-center">
@@ -2664,7 +2664,7 @@ ${fullHashtags}`
               <span className="text-[#FF6B35] text-[10px] font-bold">SHOTIQ AI</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[#888] text-[10px]">shotiqai.com</span>
+              <span className="text-slate-400 text-[10px]">shotiqai.com</span>
             </div>
           </div>
         </div>
@@ -2718,14 +2718,14 @@ ${fullHashtags}`
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-white font-black text-xl uppercase tracking-wider">Share</h2>
+            <h2 className="text-slate-900 font-black text-xl uppercase tracking-wider">Share</h2>
             <p className="text-[#FF6B35] text-sm font-semibold uppercase tracking-wider mt-1">Choose What to Share</p>
           </div>
           
           {(currentIndex > 0 || sharedCards.length > 0) && (
             <button
               onClick={handleStartOver}
-              className="flex items-center gap-2 px-4 py-2 bg-[#1a1a1a] border border-[#333] rounded-xl text-[#888] hover:text-white hover:border-[#FF6B35]/50 transition-all whitespace-nowrap"
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-500 hover:text-slate-900 hover:border-[#FF6B35]/50 transition-all whitespace-nowrap"
             >
               <RotateCcw className="w-4 h-4" />
               <span className="text-sm font-semibold">Reset</span>
@@ -2745,7 +2745,7 @@ ${fullHashtags}`
                   ? sharedCards.includes(card.type)
                     ? 'bg-green-500'
                     : 'bg-blue-500'
-                  : 'bg-[#333]'
+                  : 'bg-slate-200'
             }`}
           />
         ))}
@@ -2777,27 +2777,27 @@ ${fullHashtags}`
         </div>
       ) : (
         // Completion Screen
-        <div className="bg-[#0d0d0d] rounded-3xl border-2 border-[#FF6B35]/50 p-6 text-center">
+        <div className="bg-white rounded-3xl border-2 border-[#FF6B35]/30 p-6 text-center shadow-lg">
           <Sparkles className="w-12 h-12 text-[#FF6B35] mx-auto mb-3" />
-          <h3 className="text-white text-xl font-black mb-1 uppercase tracking-wide">All Done!</h3>
-          <p className="text-[#888] text-sm mb-4">You&apos;ve selected {sharedCards.length} card{sharedCards.length !== 1 ? 's' : ''} to share</p>
+          <h3 className="text-slate-900 text-xl font-black mb-1 uppercase tracking-wide">All Done!</h3>
+          <p className="text-slate-500 text-sm mb-4">You&apos;ve selected {sharedCards.length} card{sharedCards.length !== 1 ? 's' : ''} to share</p>
           
           {/* Stats */}
           <div className="grid grid-cols-2 gap-3 mb-4">
-            <div className="bg-[#1a1a1a] rounded-xl p-3 border border-green-500/30">
-              <div className="text-2xl font-black text-green-500">{sharedCards.length}</div>
-              <p className="text-[#888] text-[10px] uppercase">Selected</p>
+            <div className="bg-green-50 rounded-xl p-3 border border-green-200">
+              <div className="text-2xl font-black text-green-600">{sharedCards.length}</div>
+              <p className="text-slate-500 text-[10px] uppercase">Selected</p>
             </div>
-            <div className="bg-[#1a1a1a] rounded-xl p-3 border border-blue-500/30">
-              <div className="text-2xl font-black text-blue-500">{skippedCards.length}</div>
-              <p className="text-[#888] text-[10px] uppercase">Skipped</p>
+            <div className="bg-blue-50 rounded-xl p-3 border border-blue-200">
+              <div className="text-2xl font-black text-blue-600">{skippedCards.length}</div>
+              <p className="text-slate-500 text-[10px] uppercase">Skipped</p>
             </div>
           </div>
           
           {/* Selected Cards Preview - Click to Download */}
           {sharedCards.length > 0 && (
             <div className="mb-4">
-              <p className="text-[#666] text-xs uppercase tracking-wider mb-2">Tap a card to download as image</p>
+              <p className="text-slate-400 text-xs uppercase tracking-wider mb-2">Tap a card to download as image</p>
               <div className="flex flex-wrap justify-center gap-2">
                 {sharedCards.map((cardType) => {
                   const card = shareableCards.find(c => c.type === cardType)
@@ -2811,11 +2811,11 @@ ${fullHashtags}`
                         // Small delay to ensure the hidden card renders
                         setTimeout(() => setShowDownloadModal(true), 100)
                       }}
-                      className="flex items-center gap-1.5 bg-[#1a1a1a] border border-[#333] rounded-lg px-2 py-1.5 hover:border-[#FF6B35]/50 transition-all group"
+                      className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-2 py-1.5 hover:border-[#FF6B35]/50 transition-all group"
                     >
                       <Icon className="w-3 h-3" style={{ color: card.color }} />
-                      <span className="text-white text-[10px] font-medium">{card.title}</span>
-                      <Download className="w-3 h-3 text-[#666] group-hover:text-[#FF6B35] transition-colors" />
+                      <span className="text-slate-700 text-[10px] font-medium">{card.title}</span>
+                      <Download className="w-3 h-3 text-slate-400 group-hover:text-[#FF6B35] transition-colors" />
                     </button>
                   )
                 })}
@@ -2826,7 +2826,7 @@ ${fullHashtags}`
           {/* Share Actions */}
           {sharedCards.length > 0 ? (
             <div className="space-y-3">
-              <p className="text-[#888] text-xs">How would you like to share?</p>
+              <p className="text-slate-500 text-xs">How would you like to share?</p>
               
               {/* Primary Share Button - Opens Social Media Modal */}
               <button
@@ -2867,8 +2867,8 @@ ${fullHashtags}`
                   }}
                   className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-semibold text-sm transition-all whitespace-nowrap ${
                     copySuccess 
-                      ? 'bg-green-500/20 border border-green-500/50 text-green-500'
-                      : 'bg-[#1a1a1a] border border-[#333] text-white hover:border-[#FF6B35]/50'
+                      ? 'bg-green-50 border border-green-200 text-green-600'
+                      : 'bg-white border border-slate-200 text-slate-700 hover:border-[#FF6B35]/50'
                   }`}
                 >
                   {copySuccess ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
@@ -2879,8 +2879,8 @@ ${fullHashtags}`
                   disabled={isDownloadingAll}
                   className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-semibold text-sm transition-all whitespace-nowrap ${
                     isDownloadingAll 
-                      ? 'bg-[#FF6B35]/20 border border-[#FF6B35]/50 text-[#FF6B35]'
-                      : 'bg-[#1a1a1a] border border-[#333] text-white hover:border-[#FF6B35]/50'
+                      ? 'bg-orange-50 border border-[#FF6B35]/30 text-[#FF6B35]'
+                      : 'bg-white border border-slate-200 text-slate-700 hover:border-[#FF6B35]/50'
                   }`}
                 >
                   <Download className="w-4 h-4" />
@@ -2889,13 +2889,13 @@ ${fullHashtags}`
               </div>
             </div>
           ) : (
-            <p className="text-[#666] text-sm mb-4">No cards selected to share. Swipe right on cards you want to share!</p>
+            <p className="text-slate-400 text-sm mb-4">No cards selected to share. Swipe right on cards you want to share!</p>
           )}
           
           {/* Restart Button */}
           <button
             onClick={handleStartOver}
-            className="mt-4 flex items-center gap-2 text-[#888] hover:text-white py-2 font-medium transition-all mx-auto whitespace-nowrap"
+            className="mt-4 flex items-center gap-2 text-slate-500 hover:text-slate-900 py-2 font-medium transition-all mx-auto whitespace-nowrap"
           >
             <RotateCcw className="w-4 h-4" />
             Start Over
@@ -2905,7 +2905,7 @@ ${fullHashtags}`
       
       {/* Swipe Hint */}
       {!isComplete && (
-        <div className="flex items-center justify-center gap-4 text-[#666] text-sm">
+        <div className="flex items-center justify-center gap-4 text-slate-400 text-sm">
           <span className="flex items-center gap-1">
             <ArrowLeft className="w-4 h-4 text-blue-400" />
             <span className="text-blue-400">Skip</span>
@@ -2944,18 +2944,18 @@ ${fullHashtags}`
           <button
             onClick={goToPrevious}
             disabled={currentIndex === 0}
-            className="text-[#888] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1 whitespace-nowrap"
+            className="text-slate-500 hover:text-slate-900 disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1 whitespace-nowrap"
           >
             <ArrowLeft className="w-4 h-4" />
             Prev
           </button>
-          <span className="text-[#666] text-sm">
+          <span className="text-slate-400 text-sm">
             {currentIndex + 1} of {shareableCards.length}
           </span>
           <button
             onClick={goToNext}
             disabled={currentIndex >= shareableCards.length - 1}
-            className="text-[#888] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1 whitespace-nowrap"
+            className="text-slate-500 hover:text-slate-900 disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1 whitespace-nowrap"
           >
             Next
             <ArrowRight className="w-4 h-4" />

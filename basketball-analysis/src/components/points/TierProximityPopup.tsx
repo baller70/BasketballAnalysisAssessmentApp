@@ -96,7 +96,7 @@ export function TierProximityPopup() {
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-md"
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -129,10 +129,10 @@ export function TierProximityPopup() {
         
         {/* Popup card */}
         <motion.div
-          className="relative max-w-md w-full mx-4 rounded-2xl overflow-hidden"
+          className="relative max-w-md w-full mx-4 rounded-2xl overflow-hidden border border-slate-300"
           style={{
-            background: 'linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%)',
-            boxShadow: `0 0 60px ${nextTier.color}40, 0 0 100px ${nextTier.color}20`,
+            background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
+            boxShadow: `0 25px 60px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.04), 0 0 40px ${nextTier.color}15`,
           }}
           initial={{ scale: 0.8, y: 50, opacity: 0 }}
           animate={{ scale: 1, y: 0, opacity: 1 }}
@@ -143,12 +143,12 @@ export function TierProximityPopup() {
           {/* Glowing border */}
           <motion.div
             className="absolute inset-0 rounded-2xl pointer-events-none"
-            style={{ border: `2px solid ${nextTier.color}` }}
+            style={{ border: `2px solid ${nextTier.color}40` }}
             animate={{
               boxShadow: [
-                `0 0 15px ${nextTier.color}40`,
-                `0 0 30px ${nextTier.color}60`,
-                `0 0 15px ${nextTier.color}40`,
+                `0 0 10px ${nextTier.color}15`,
+                `0 0 20px ${nextTier.color}25`,
+                `0 0 10px ${nextTier.color}15`,
               ],
             }}
             transition={{ duration: 1.5, repeat: Infinity }}
@@ -157,9 +157,9 @@ export function TierProximityPopup() {
           {/* Close button */}
           <button
             onClick={handleDismiss}
-            className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+            className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-300 flex items-center justify-center transition-colors shadow-sm"
           >
-            <X className="w-4 h-4 text-white/60" />
+            <X className="w-4 h-4 text-slate-600" />
           </button>
           
           {/* Header */}
@@ -185,14 +185,14 @@ export function TierProximityPopup() {
             >
               {title}
             </motion.h2>
-            <p className="text-white/60 mt-2 text-sm">{subtitle}</p>
+            <p className="text-slate-600 mt-2 text-sm font-medium">{subtitle}</p>
           </div>
           
           {/* Progress ring */}
           <div className="flex justify-center py-4">
             <div className="relative w-28 h-28">
               <svg className="w-full h-full transform -rotate-90">
-                <circle cx="56" cy="56" r="48" fill="none" stroke="#333" strokeWidth="6" />
+                <circle cx="56" cy="56" r="48" fill="none" stroke="#e2e8f0" strokeWidth="6" />
                 <motion.circle
                   cx="56" cy="56" r="48"
                   fill="none"
@@ -207,8 +207,8 @@ export function TierProximityPopup() {
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-2xl font-black text-white">{Math.round(progressPercent)}%</span>
-                <span className="text-[10px] text-white/50 uppercase">{pointsText}</span>
+                <span className="text-2xl font-black text-slate-900">{Math.round(progressPercent)}%</span>
+                <span className="text-[10px] text-slate-500 uppercase font-semibold tracking-wide">{pointsText}</span>
               </div>
             </div>
           </div>
@@ -218,8 +218,8 @@ export function TierProximityPopup() {
             <div 
               className="rounded-xl p-4"
               style={{ 
-                background: `linear-gradient(135deg, ${nextTier.color}15 0%, transparent 100%)`,
-                border: `1px solid ${nextTier.color}30`,
+                background: `linear-gradient(135deg, ${nextTier.color}12 0%, transparent 100%)`,
+                border: `1.5px solid ${nextTier.color}30`,
               }}
             >
               <div className="flex items-center gap-3 mb-3">
@@ -233,8 +233,8 @@ export function TierProximityPopup() {
                   <Trophy className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <p className="text-white/40 text-[10px] uppercase tracking-wider">Unlocking</p>
-                  <p className="text-white font-bold">{nextTier.displayName}</p>
+                  <p className="text-slate-500 text-[10px] uppercase tracking-wider font-semibold">Unlocking</p>
+                  <p className="text-slate-900 font-bold text-base">{nextTier.displayName}</p>
                 </div>
               </div>
               
@@ -249,7 +249,7 @@ export function TierProximityPopup() {
                     transition={{ delay: 0.4 + index * 0.1 }}
                   >
                     <Star className="w-3.5 h-3.5" style={{ color: nextTier.color }} />
-                    <span className="text-white/70 text-sm">{reward}</span>
+                    <span className="text-slate-700 text-sm font-medium">{reward}</span>
                   </motion.div>
                 ))}
               </div>
@@ -275,7 +275,7 @@ export function TierProximityPopup() {
           </div>
           
           {/* Bottom progress bar */}
-          <div className="h-1 bg-[#222]">
+          <div className="h-1.5 bg-slate-200 rounded-b-2xl">
             <motion.div
               className="h-full"
               style={{ background: nextTier.color }}

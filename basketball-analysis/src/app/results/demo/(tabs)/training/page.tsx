@@ -144,73 +144,73 @@ export default function TrainingPage() {
           {/* My Drills */}
           <button
             onClick={() => setViewMode('mydrills')}
-            className="relative bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-4 text-left overflow-hidden group hover:border-[#3a3a3a] transition-colors"
+            className="relative bg-white border border-slate-200 rounded-2xl p-4 text-left overflow-hidden group hover:border-slate-300 shadow-sm transition-colors"
           >
             <div className="absolute top-0 right-0 w-24 h-24 bg-[#FF6B35]/5 rounded-full -translate-y-8 translate-x-8" />
             <div className="relative z-10">
-              <div className="w-12 h-12 bg-[#2a2a2a] rounded-xl flex items-center justify-center mb-3">
+              <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center mb-3">
                 <BookOpen className="w-6 h-6 text-[#FF6B35]" />
               </div>
-              <h3 className="text-white font-bold text-lg">My Drills</h3>
-              <p className="text-[#888] text-xs mt-1">{savedWorkouts.length} saved</p>
+              <h3 className="text-slate-900 font-bold text-lg">My Drills</h3>
+              <p className="text-slate-500 text-xs mt-1">{savedWorkouts.length} saved</p>
             </div>
-            <ChevronRight className="absolute bottom-4 right-4 w-5 h-5 text-[#555] group-hover:translate-x-1 transition-transform" />
+            <ChevronRight className="absolute bottom-4 right-4 w-5 h-5 text-slate-400 group-hover:translate-x-1 transition-transform" />
           </button>
 
           {/* Discover Drills */}
           <button
             onClick={() => setViewMode('discover')}
-            className="relative bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-4 text-left overflow-hidden group hover:border-[#3a3a3a] transition-colors"
+            className="relative bg-white border border-slate-200 rounded-2xl p-4 text-left overflow-hidden group hover:border-slate-300 shadow-sm transition-colors"
           >
             <div className="absolute top-0 right-0 w-24 h-24 bg-[#22c55e]/5 rounded-full -translate-y-8 translate-x-8" />
             <div className="relative z-10">
-              <div className="w-12 h-12 bg-[#2a2a2a] rounded-xl flex items-center justify-center mb-3">
+              <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center mb-3">
                 <Flame className="w-6 h-6 text-[#22c55e]" />
               </div>
-              <h3 className="text-white font-bold text-lg">Discover</h3>
-              <p className="text-[#888] text-xs mt-1">Browse new drills</p>
+              <h3 className="text-slate-900 font-bold text-lg">Discover</h3>
+              <p className="text-slate-500 text-xs mt-1">Browse new drills</p>
             </div>
-            <ChevronRight className="absolute bottom-4 right-4 w-5 h-5 text-[#555] group-hover:translate-x-1 transition-transform" />
+            <ChevronRight className="absolute bottom-4 right-4 w-5 h-5 text-slate-400 group-hover:translate-x-1 transition-transform" />
           </button>
 
           {/* Calendar */}
           <button
             onClick={() => setViewMode('calendar')}
-            className="relative bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-4 text-left overflow-hidden group hover:border-[#3a3a3a] transition-colors"
+            className="relative bg-white border border-slate-200 rounded-2xl p-4 text-left overflow-hidden group hover:border-slate-300 shadow-sm transition-colors"
           >
             <div className="absolute top-0 right-0 w-24 h-24 bg-[#3b82f6]/5 rounded-full -translate-y-8 translate-x-8" />
             <div className="relative z-10">
-              <div className="w-12 h-12 bg-[#2a2a2a] rounded-xl flex items-center justify-center mb-3">
+              <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center mb-3">
                 <Calendar className="w-6 h-6 text-[#3b82f6]" />
               </div>
-              <h3 className="text-white font-bold text-lg">Calendar</h3>
-              <p className="text-[#888] text-xs mt-1">Schedule workouts</p>
+              <h3 className="text-slate-900 font-bold text-lg">Calendar</h3>
+              <p className="text-slate-500 text-xs mt-1">Schedule workouts</p>
             </div>
-            <ChevronRight className="absolute bottom-4 right-4 w-5 h-5 text-[#555] group-hover:translate-x-1 transition-transform" />
+            <ChevronRight className="absolute bottom-4 right-4 w-5 h-5 text-slate-400 group-hover:translate-x-1 transition-transform" />
           </button>
         </div>
 
         {/* Recent Workouts Section */}
-        <div className="bg-[#1a1a1a] rounded-2xl border border-[#2a2a2a] overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#2a2a2a]">
-            <h2 className="text-white font-bold flex items-center gap-2">
-              <Clock className="w-4 h-4 text-[#888]" />
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
+            <h2 className="text-slate-900 font-bold flex items-center gap-2">
+              <Clock className="w-4 h-4 text-slate-400" />
               Recent Workouts
             </h2>
             <button className="text-[#FF6B35] text-sm font-medium">View All</button>
           </div>
           
           {recentWorkouts.length > 0 ? (
-            <div className="divide-y divide-[#2a2a2a]">
+            <div className="divide-y divide-slate-100">
               {recentWorkouts.slice(0, 5).map((workout) => (
-                <div key={workout.id} className="px-4 py-3 flex items-center justify-between hover:bg-[#2a2a2a]/50 transition-colors">
+                <div key={workout.id} className="px-4 py-3 flex items-center justify-between hover:bg-slate-50 transition-colors">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-[#2a2a2a] rounded-xl flex items-center justify-center">
+                    <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center">
                       <Target className="w-5 h-5 text-[#FF6B35]" />
                     </div>
                     <div>
-                      <p className="text-white font-medium text-sm">{workout.name}</p>
-                      <p className="text-[#666] text-xs">{formatTimeAgo(workout.date)}</p>
+                      <p className="text-slate-900 font-medium text-sm">{workout.name}</p>
+                      <p className="text-slate-400 text-xs">{formatTimeAgo(workout.date)}</p>
                     </div>
                   </div>
                   
@@ -234,38 +234,38 @@ export default function TrainingPage() {
             </div>
           ) : (
             <div className="px-4 py-8 text-center">
-              <div className="w-16 h-16 bg-[#2a2a2a] rounded-full flex items-center justify-center mx-auto mb-3">
-                <Dumbbell className="w-8 h-8 text-[#555]" />
+              <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Dumbbell className="w-8 h-8 text-slate-400" />
               </div>
-              <p className="text-[#888] text-sm">No recent workouts</p>
-              <p className="text-[#555] text-xs mt-1">Start a drill to track your progress</p>
+              <p className="text-slate-500 text-sm">No recent workouts</p>
+              <p className="text-slate-400 text-xs mt-1">Start a drill to track your progress</p>
             </div>
           )}
         </div>
 
         {/* Stats Summary */}
         {recentWorkouts.length > 0 && (
-          <div className="bg-[#1a1a1a] rounded-2xl border border-[#2a2a2a] p-4">
-            <h3 className="text-[#888] text-xs uppercase tracking-wider mb-3 flex items-center gap-2">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+            <h3 className="text-slate-500 text-xs uppercase tracking-wider mb-3 flex items-center gap-2">
               <TrendingUp className="w-3 h-3" />
               This Week
             </h3>
             <div className="grid grid-cols-3 gap-4">
               <div className="text-center">
-                <p className="text-2xl font-black text-white">
+                <p className="text-2xl font-black text-slate-900">
                   {recentWorkouts.reduce((sum, w) => sum + w.made + w.missed, 0)}
                 </p>
-                <p className="text-[#666] text-xs">Total Shots</p>
+                <p className="text-slate-400 text-xs">Total Shots</p>
               </div>
-              <div className="text-center border-x border-[#2a2a2a]">
+              <div className="text-center border-x border-slate-200">
                 <p className="text-2xl font-black text-[#22c55e]">
                   {Math.round(recentWorkouts.reduce((sum, w) => sum + w.accuracy, 0) / recentWorkouts.length)}%
                 </p>
-                <p className="text-[#666] text-xs">Avg Accuracy</p>
+                <p className="text-slate-400 text-xs">Avg Accuracy</p>
               </div>
               <div className="text-center">
                 <p className="text-2xl font-black text-[#FF6B35]">{recentWorkouts.length}</p>
-                <p className="text-[#666] text-xs">Workouts</p>
+                <p className="text-slate-400 text-xs">Workouts</p>
               </div>
             </div>
           </div>
@@ -281,22 +281,22 @@ export default function TrainingPage() {
         {/* Back Button */}
         <button
           onClick={() => setViewMode('home')}
-          className="flex items-center gap-2 text-[#888] hover:text-white transition-colors"
+          className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors"
         >
           <ChevronRight className="w-4 h-4 rotate-180" />
           <span className="text-sm font-medium">Back to Training</span>
         </button>
 
-        <h1 className="text-white text-2xl font-black">My Drills</h1>
+        <h1 className="text-slate-900 text-2xl font-black">My Drills</h1>
 
         {savedWorkouts.length > 0 ? (
           <div className="space-y-3">
             {savedWorkouts.map((workout) => (
-              <div key={workout.id} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-4">
+              <div key={workout.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-white font-bold">{workout.name}</h3>
-                    <p className="text-[#666] text-sm">{workout.drillCount} drills</p>
+                    <h3 className="text-slate-900 font-bold">{workout.name}</h3>
+                    <p className="text-slate-500 text-sm">{workout.drillCount} drills</p>
                   </div>
                   <button className="px-4 py-2 bg-[#FF6B35] text-white rounded-lg font-semibold text-sm">
                     Start
@@ -306,12 +306,12 @@ export default function TrainingPage() {
             ))}
           </div>
         ) : (
-          <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-8 text-center">
-            <div className="w-16 h-16 bg-[#2a2a2a] rounded-full flex items-center justify-center mx-auto mb-4">
-              <BookOpen className="w-8 h-8 text-[#555]" />
+          <div className="bg-white border border-slate-200 rounded-xl p-8 text-center shadow-sm">
+            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <BookOpen className="w-8 h-8 text-slate-400" />
             </div>
-            <h3 className="text-white font-bold mb-2">No Saved Drills</h3>
-            <p className="text-[#666] text-sm mb-4">Discover and save drills to build your personal library</p>
+            <h3 className="text-slate-900 font-bold mb-2">No Saved Drills</h3>
+            <p className="text-slate-500 text-sm mb-4">Discover and save drills to build your personal library</p>
             <button
               onClick={() => setViewMode('discover')}
               className="px-6 py-3 bg-[#FF6B35] text-white rounded-xl font-semibold"
@@ -330,20 +330,20 @@ export default function TrainingPage() {
       {/* Back Button */}
       <button
         onClick={() => setViewMode('home')}
-        className="flex items-center gap-2 text-[#888] hover:text-white transition-colors"
+        className="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors"
       >
         <ChevronRight className="w-4 h-4 rotate-180" />
         <span className="text-sm font-medium">Back to Training</span>
       </button>
 
       {/* View Mode Toggle */}
-      <div className="flex gap-2 p-1 bg-[#1a1a1a] rounded-xl border border-[#333]">
+      <div className="flex gap-2 p-1 bg-slate-100 rounded-xl border border-slate-200">
         <button
           onClick={() => setViewMode('discover')}
           className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-semibold transition-all ${
             viewMode === 'discover'
               ? 'bg-[#FF6B35] text-white'
-              : 'text-[#888] hover:text-white hover:bg-[#2a2a2a]'
+              : 'text-slate-500 hover:text-slate-900 hover:bg-white'
           }`}
         >
           <Dumbbell className="w-4 h-4" />
@@ -354,7 +354,7 @@ export default function TrainingPage() {
           className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-semibold transition-all ${
             viewMode === 'calendar'
               ? 'bg-[#FF6B35] text-white'
-              : 'text-[#888] hover:text-white hover:bg-[#2a2a2a]'
+              : 'text-slate-500 hover:text-slate-900 hover:bg-white'
           }`}
         >
           <Calendar className="w-4 h-4" />
