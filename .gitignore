@@ -96,3 +96,4 @@ __pycache__/
 *.pdf
 *.pt
 yolov8*.pt
+*.tar.gz
