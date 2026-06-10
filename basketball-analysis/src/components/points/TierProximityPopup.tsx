@@ -4,8 +4,10 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Zap, Trophy, Star, ChevronRight, Sparkles } from 'lucide-react'
 import { usePoints } from '@/lib/points/pointsContext'
+import { useAuthStore } from '@/stores/authStore'
 
 export function TierProximityPopup() {
+  const { isAuthenticated } = useAuthStore()
   const { state, getCurrentTierConfig, getNextTierConfig, getPointsToNext } = usePoints()
   const [isVisible, setIsVisible] = useState(false)
   const [popupType, setPopupType] = useState<'halfway' | 'almost' | null>(null)
@@ -31,7 +33,7 @@ export function TierProximityPopup() {
   }, [points, currentTier, nextTier])
   
   useEffect(() => {
-    if (!nextTier || !currentTier) return
+    if (!isAuthenticated || !nextTier || !currentTier) return
     
     const shownPopups = JSON.parse(localStorage.getItem('tier_proximity_shown') || '{}')
     const tierKey = nextTier.id
@@ -63,7 +65,7 @@ export function TierProximityPopup() {
   
   const handleDismiss = () => setIsVisible(false)
   
-  if (!isVisible || !nextTier || !popupType) return null
+  if (!isAuthenticated || !isVisible || !nextTier || !popupType) return null
   
   const content = {
     halfway: {

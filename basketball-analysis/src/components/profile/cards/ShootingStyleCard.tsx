@@ -266,8 +266,8 @@ export function ShootingStyleCard({
               className={`
                 p-3 rounded-xl border-2 transition-all flex flex-col items-center
                 ${isSelected
-                  ? "border-[#FF6B35] bg-[#FF6B35]/10"
-                  : "border-[#3a3a3a] bg-[#2a2a2a] hover:border-[#4a4a4a]"
+                  ? "border-[#FF6B35] bg-[#FF6B35]/5"
+                  : "border-slate-200 bg-white hover:border-[#FF6B35]/30 hover:bg-slate-50/50"
                 }
               `}
             >
@@ -279,7 +279,7 @@ export function ShootingStyleCard({
               {/* Label */}
               <h3
                 className={`font-semibold text-xs text-center ${
-                  isSelected ? "text-[#FF6B35]" : "text-white"
+                  isSelected ? "text-[#FF6B35]" : "text-slate-900"
                 }`}
               >
                 {style.label}
@@ -312,8 +312,8 @@ export function ShootingStyleCard({
             className={`
               w-full p-3 rounded-xl border-2 transition-all flex items-center gap-3 mb-4
               ${isSelected
-                ? "border-[#FF6B35] bg-[#FF6B35]/10"
-                : "border-[#3a3a3a] bg-[#2a2a2a] hover:border-[#4a4a4a]"
+                ? "border-[#FF6B35] bg-[#FF6B35]/5"
+                : "border-slate-200 bg-white hover:border-[#FF6B35]/30 hover:bg-slate-50/50"
               }
             `}
           >
@@ -321,10 +321,10 @@ export function ShootingStyleCard({
               {notSureStyle.diagram(isSelected)}
             </div>
             <div className="flex-1 text-left">
-              <h3 className={`font-semibold text-sm ${isSelected ? "text-[#FF6B35]" : "text-white"}`}>
+              <h3 className={`font-semibold text-sm ${isSelected ? "text-[#FF6B35]" : "text-slate-900"}`}>
                 {notSureStyle.label}
               </h3>
-              <p className="text-xs text-gray-400">{notSureStyle.shortDescription}</p>
+              <p className="text-xs text-slate-500">{notSureStyle.shortDescription}</p>
             </div>
             {isSelected && (
               <motion.div
@@ -345,7 +345,7 @@ export function ShootingStyleCard({
           <div key={style.id}>
             <button
               onClick={() => setExpandedStyle(expandedStyle === style.id ? null : style.id)}
-              className="w-full flex items-center justify-between p-2 text-xs text-gray-400 hover:bg-[#2a2a2a] rounded-lg transition-colors"
+              className="w-full flex items-center justify-between p-2 text-xs text-slate-500 hover:bg-slate-50 rounded-lg transition-colors"
             >
               <span>Learn about {style.label}</span>
               <ChevronDown
@@ -363,9 +363,9 @@ export function ShootingStyleCard({
                   exit={{ height: 0, opacity: 0 }}
                   className="overflow-hidden"
                 >
-                  <div className="p-3 bg-[#2a2a2a] rounded-lg mt-1 text-xs">
-                    <p className="text-gray-300 mb-2">{style.fullDescription}</p>
-                    <ul className="text-gray-400 space-y-1">
+                  <div className="p-3 bg-slate-50 border border-slate-100 rounded-lg mt-1 text-xs">
+                    <p className="text-slate-700 mb-2">{style.fullDescription}</p>
+                    <ul className="text-slate-500 space-y-1">
                       {style.characteristics.map((char, i) => (
                         <li key={i} className="flex items-start gap-1">
                           <span className="text-[#FF6B35]">•</span>
@@ -383,8 +383,8 @@ export function ShootingStyleCard({
       
       {/* Selected Summary */}
       {selectedStyle && (
-        <div className="mt-4 p-3 bg-[#FF6B35]/10 rounded-lg border border-[#FF6B35]/30">
-          <p className="text-sm text-[#FF8C5A]">
+        <div className="mt-4 p-3 bg-[#FF6B35]/5 rounded-lg border border-[#FF6B35]/15">
+          <p className="text-sm text-slate-700">
             <span className="font-semibold">Selected:</span> {selectedStyle.label}
           </p>
           <p className="text-xs text-[#FF6B35] mt-1">

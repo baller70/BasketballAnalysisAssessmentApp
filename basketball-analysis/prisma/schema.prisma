@@ -61,6 +61,9 @@ model UserProfile {
   bio                   String?   @db.Text
   enhancedBio           String?   @map("enhanced_bio") @db.Text
   
+  // Points & Gamification (Synced JSON state)
+  pointsState           Json?     @map("points_state")
+  
   // Derived Values
   coachingTier          String?   @map("coaching_tier") @db.VarChar(50)    // elementary/middle_school/high_school/college/professional
   wingspanToHeightRatio Decimal?  @map("wingspan_to_height_ratio") @db.Decimal(5, 2)

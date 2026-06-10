@@ -107,8 +107,8 @@ export function ExperienceCard({
               className={`
                 w-full p-4 rounded-xl border-2 transition-all text-left
                 ${isSelected
-                  ? "border-[#FF6B35] bg-[#FF6B35]/10"
-                  : "border-[#3a3a3a] bg-[#2a2a2a] hover:border-[#4a4a4a]"
+                  ? "border-[#FF6B35] bg-[#FF6B35]/5"
+                  : "border-slate-200 bg-white hover:border-[#FF6B35]/30 hover:bg-slate-50/50"
                 }
               `}
             >
@@ -119,7 +119,7 @@ export function ExperienceCard({
                     flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center
                     ${isSelected
                       ? "bg-[#FF6B35] text-white"
-                      : "bg-[#3a3a3a] text-gray-400"
+                      : "bg-slate-100 text-slate-500"
                     }
                   `}
                 >
@@ -131,7 +131,7 @@ export function ExperienceCard({
                   <div className="flex items-center gap-2">
                     <h3
                       className={`font-semibold ${
-                        isSelected ? "text-[#FF6B35]" : "text-white"
+                        isSelected ? "text-[#FF6B35]" : "text-slate-900"
                       }`}
                     >
                       {level.label}
@@ -146,14 +146,14 @@ export function ExperienceCard({
                       </motion.span>
                     )}
                   </div>
-                  <p className="text-sm text-gray-400 mt-0.5">
+                  <p className="text-sm text-slate-500 mt-0.5">
                     {level.description}
                   </p>
                   {isSelected && (
                     <motion.p
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
-                      className="text-xs text-gray-500 mt-1"
+                      className="text-xs text-slate-400 mt-1"
                     >
                       {level.details}
                     </motion.p>

@@ -26,12 +26,14 @@ export default function ProfilePage() {
   const { user, isAuthenticated } = useAuthStore()
   const profile = useProfileStore()
 
-  // Redirect to sign in if not authenticated
+  // Redirect to sign in if not authenticated, otherwise fetch profile
   React.useEffect(() => {
     if (!isAuthenticated) {
       router.push("/signin")
+    } else if (user?.id) {
+      profile.fetchProfile(user.id)
     }
-  }, [isAuthenticated, router])
+  }, [isAuthenticated, user?.id, router, profile])
 
   if (!isAuthenticated) {
     return null

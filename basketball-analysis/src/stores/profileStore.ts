@@ -73,6 +73,7 @@ export interface ProfileState extends UserProfile {
   completeProfile: () => void
   resetProfile: () => void
   isStepComplete: (step: number) => boolean
+  fetchProfile: (userId: string) => Promise<boolean>
 }
 
 // ==========================================
@@ -108,6 +109,7 @@ const initialState: Omit<ProfileState,
   | "setBio" | "setEnhancedBio"
   | "nextStep" | "prevStep" | "goToStep"
   | "completeProfile" | "resetProfile" | "isStepComplete"
+  | "fetchProfile"
 > = {
   // Physical Measurements
   heightInches: null,
@@ -315,6 +317,42 @@ export const useProfileStore = create<ProfileState>()(
           // Bio card (10) is optional, always complete
           case 10: return true
           default: return false
+        }
+      },
+      
+      fetchProfile: async (userId: string): Promise<boolean> => {
+        try {
+          const response = await fetch(`/api/profile?userId=${userId}`)
+          if (!response.ok) return false
+          
+          const data = await response.json()
+          if (data.success && data.profile) {
+            const p = data.profile
+            set({
+              heightInches: p.heightInches,
+              weightLbs: p.weightLbs,
+              wingspanInches: p.wingspanInches,
+              age: p.age,
+              experienceLevel: p.experienceLevel,
+              bodyType: p.bodyType,
+              athleticAbility: p.athleticAbility,
+              dominantHand: p.dominantHand,
+              shootingStyle: p.shootingStyle,
+              bio: p.bio,
+              enhancedBio: p.enhancedBio,
+              coachingTier: p.coachingTier,
+              wingspanToHeightRatio: p.wingspanToHeightRatio ? parseFloat(p.wingspanToHeightRatio.toString()) : null,
+              bmi: p.bmi ? parseFloat(p.bmi.toString()) : null,
+              profileComplete: p.profileComplete,
+              createdAt: p.createdAt,
+              updatedAt: p.updatedAt,
+            })
+            return true
+          }
+          return false
+        } catch (error) {
+          console.error("Error fetching profile:", error)
+          return false
         }
       },
     }),

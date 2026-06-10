@@ -1,6 +1,7 @@
 "use client"
 
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react'
+import { useAuthStore } from '@/stores/authStore'
 import { 
   POINT_ACTIONS, 
   TIERS, 
@@ -177,6 +178,100 @@ export function PointsProvider({ children }: { children: ReactNode }) {
       saveState(state)
     }
   }, [state, isLoaded])
+
+  const { isAuthenticated, user } = useAuthStore()
+
+  // Sync points with database when user logs in or is authenticated
+  useEffect(() => {
+    if (!isLoaded) return
+    if (!isAuthenticated || !user?.id) return
+    
+    let active = true
+    
+    async function syncWithServer() {
+      try {
+        const response = await fetch(`/api/profile?userId=${user?.id}`)
+        if (!response.ok) return
+        const data = await response.json()
+        
+        if (!active) return
+        
+        if (data.success && data.profile) {
+          const serverPointsState = data.profile.pointsState
+          
+          if (serverPointsState) {
+            // Merge local and server points state
+            // Criteria: pick whichever has more totalPoints, or newer lastUpdated
+            const localPoints = state.totalPoints
+            const serverPoints = serverPointsState.totalPoints || 0
+            
+            const localUpdated = state.lastUpdated || 0
+            const serverUpdated = serverPointsState.lastUpdated || 0
+            
+            if (serverPoints > localPoints || (serverPoints === localPoints && serverUpdated > localUpdated)) {
+              console.log("Syncing points: Server state wins. Updating client state.")
+              setState(prev => ({
+                ...prev,
+                ...serverPointsState,
+                currentTier: getTierByPoints(serverPointsState.totalPoints),
+                highestTierUnlocked: getTierByPoints(serverPointsState.lifetimePoints || serverPointsState.totalPoints),
+              }))
+            } else if (localPoints > serverPoints || (localPoints === serverPoints && localUpdated > serverUpdated)) {
+              console.log("Syncing points: Client state wins. Pushing to server.")
+              await fetch('/api/profile', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  userId: user?.id,
+                  pointsState: state
+                })
+              })
+            }
+          } else {
+            console.log("Syncing points: Server empty. Pushing client state.")
+            await fetch('/api/profile', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                userId: user?.id,
+                pointsState: state
+              })
+            })
+          }
+        }
+      } catch (error) {
+        console.error("Failed to sync points state with server:", error)
+      }
+    }
+    
+    syncWithServer()
+    
+    return () => {
+      active = false
+    }
+  }, [isAuthenticated, user?.id, isLoaded])
+
+  // Save state to server when it changes locally
+  useEffect(() => {
+    if (!isLoaded || !isAuthenticated || !user?.id) return
+    
+    const timer = setTimeout(async () => {
+      try {
+        await fetch('/api/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user?.id,
+            pointsState: state
+          })
+        })
+      } catch (e) {
+        console.error("Failed to save points change to server:", e)
+      }
+    }, 1000) // 1 second debounce
+    
+    return () => clearTimeout(timer)
+  }, [state, isLoaded, isAuthenticated, user?.id])
   
   // Check and update streak on mount and date change
   useEffect(() => {

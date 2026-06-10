@@ -19,6 +19,20 @@ interface ProfileData {
   wingspanToHeightRatio: number | null
   bmi: number | null
   profileComplete: boolean
+  pointsState?: any
+}
+
+// Helper to sync user profile completion to User model
+async function syncUserProfileComplete(userId: string | undefined, profileComplete: boolean) {
+  if (!userId) return
+  try {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { profileComplete }
+    })
+  } catch (error) {
+    console.error("Failed to sync User profileComplete status:", error)
+  }
 }
 
 // POST - Create or update profile
@@ -52,8 +66,12 @@ export async function POST(request: NextRequest) {
             wingspanToHeightRatio: data.wingspanToHeightRatio,
             bmi: data.bmi,
             profileComplete: data.profileComplete ?? false,
+            pointsState: data.pointsState || undefined,
           },
         })
+        
+        // Sync User complete status
+        await syncUserProfileComplete(data.userId, data.profileComplete ?? false)
         
         return NextResponse.json({
           success: true,
@@ -81,8 +99,14 @@ export async function POST(request: NextRequest) {
         wingspanToHeightRatio: data.wingspanToHeightRatio,
         bmi: data.bmi,
         profileComplete: data.profileComplete ?? false,
+        pointsState: data.pointsState || undefined,
       },
     })
+    
+    // Sync User complete status
+    if (data.userId) {
+      await syncUserProfileComplete(data.userId, data.profileComplete ?? false)
+    }
     
     return NextResponse.json({
       success: true,
@@ -119,12 +143,23 @@ export async function PUT(request: NextRequest) {
         age: data.age,
         experienceLevel: data.experienceLevel,
         bodyType: data.bodyType,
+        athleticAbility: data.athleticAbility,
+        dominantHand: data.dominantHand,
+        shootingStyle: data.shootingStyle,
+        bio: data.bio,
+        enhancedBio: data.enhancedBio,
         coachingTier: data.coachingTier,
         wingspanToHeightRatio: data.wingspanToHeightRatio,
         bmi: data.bmi,
         profileComplete: data.profileComplete ?? false,
+        pointsState: data.pointsState || undefined,
       },
     })
+    
+    // Sync User complete status if linked to a user
+    if (profile.userId) {
+      await syncUserProfileComplete(profile.userId, data.profileComplete ?? false)
+    }
     
     return NextResponse.json({
       success: true,
@@ -139,34 +174,49 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-// GET - Retrieve profile by ID
+// GET - Retrieve profile by ID or User ID
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const id = searchParams.get("id")
+    const userId = searchParams.get("userId")
     
-    if (!id) {
+    if (!id && !userId) {
       return NextResponse.json(
-        { success: false, error: "Profile ID is required" },
+        { success: false, error: "Profile ID or User ID is required" },
         { status: 400 }
       )
     }
     
-    const profile = await prisma.userProfile.findUnique({
-      where: { id },
-      include: {
-        analyses: {
-          orderBy: { createdAt: "desc" },
-          take: 10,
+    let profile = null
+    
+    if (id) {
+      profile = await prisma.userProfile.findUnique({
+        where: { id },
+        include: {
+          analyses: {
+            orderBy: { createdAt: "desc" },
+            take: 10,
+          },
         },
-      },
-    })
+      })
+    } else if (userId) {
+      profile = await prisma.userProfile.findUnique({
+        where: { userId },
+        include: {
+          analyses: {
+            orderBy: { createdAt: "desc" },
+            take: 10,
+          },
+        },
+      })
+    }
     
     if (!profile) {
-      return NextResponse.json(
-        { success: false, error: "Profile not found" },
-        { status: 404 }
-      )
+      return NextResponse.json({
+        success: true,
+        profile: null,
+      })
     }
     
     return NextResponse.json({
@@ -181,10 +231,3 @@ export async function GET(request: NextRequest) {
     )
   }
 }
-
-
-
-
-
-
-

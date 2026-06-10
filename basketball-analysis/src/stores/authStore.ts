@@ -2,6 +2,7 @@
 
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
+import { useProfileStore } from "./profileStore"
 
 // ==========================================
 // HELPER FUNCTIONS
@@ -242,6 +243,13 @@ export const useAuthStore = create<AuthState>()(
       },
       
       signOut: () => {
+        // Reset profile store
+        try {
+          useProfileStore.getState().resetProfile()
+        } catch (e) {
+          console.error("Failed to reset profile store on sign out:", e)
+        }
+        
         setAuthCookie(false)
         set({
           user: null,

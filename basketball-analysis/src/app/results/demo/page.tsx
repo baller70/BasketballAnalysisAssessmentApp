@@ -86,6 +86,7 @@ import {
   generateDetailedAnalysisReport
 } from "@/services/coachingInsights"
 import { useProfileStore } from "@/stores/profileStore"
+import { useAuthStore } from "@/stores/authStore"
 import {
   BadgesShowcase,
   LevelProgressCard,
@@ -1838,6 +1839,52 @@ class ErrorBoundary extends React.Component<
 
 function DemoResultsPageContent() {
   const searchParams = useSearchParams()
+  const { isAuthenticated, user } = useAuthStore()
+  const profileStore = useProfileStore()
+
+  // Load profile from database on mount if authenticated
+  useEffect(() => {
+    if (isAuthenticated && user?.id) {
+      profileStore.fetchProfile(user.id)
+    }
+  }, [isAuthenticated, user?.id])
+
+  const displayHeight = useMemo(() => {
+    if (!profileStore.heightInches) return "6'2\"";
+    const feet = Math.floor(profileStore.heightInches / 12);
+    const inches = profileStore.heightInches % 12;
+    return `${feet}'${inches}"`;
+  }, [profileStore.heightInches]);
+
+  const displayWeight = useMemo(() => {
+    return profileStore.weightLbs ? `${profileStore.weightLbs} LB` : "185 LB";
+  }, [profileStore.weightLbs]);
+
+  const displayAge = useMemo(() => {
+    return profileStore.age ? String(profileStore.age) : "34";
+  }, [profileStore.age]);
+
+  const displayExperience = useMemo(() => {
+    const level = profileStore.experienceLevel;
+    if (!level) return "PRO";
+    if (level === "beginner") return "BEG";
+    if (level === "intermediate") return "INT";
+    if (level === "advanced") return "ADV";
+    if (level === "professional") return "PRO";
+    return level.substring(0, 3).toUpperCase();
+  }, [profileStore.experienceLevel]);
+
+  const displayLeague = useMemo(() => {
+    const tier = profileStore.coachingTier;
+    if (!tier) return "REC";
+    if (tier === "elementary") return "ELEM";
+    if (tier === "middle_school") return "MID";
+    if (tier === "high_school") return "HS";
+    if (tier === "college") return "COL";
+    if (tier === "professional") return "PRO";
+    return tier.replace('_', ' ').toUpperCase();
+  }, [profileStore.coachingTier]);
+
   const [activeTab, setActiveTab] = useState("analysis")
   const [resultsMode, setResultsMode] = useState<ResultsMode>("image")
   const [isLoading, setIsLoading] = useState(false)
@@ -1980,7 +2027,13 @@ function DemoResultsPageContent() {
   }, [resultsMode, imageVisionAnalysis, videoVisionAnalysis, formAnalysisResult])
 
   // Get player name from profile or use default
-  const playerName = "KEVIN HOUSTON" // From profile or default
+  const playerName = useMemo(() => {
+    if (user?.displayName) return user.displayName.toUpperCase()
+    if (user?.firstName || user?.lastName) {
+      return `${user.firstName || ''} ${user.lastName || ''}`.trim().toUpperCase()
+    }
+    return "KEVIN HOUSTON" // Fallback
+  }, [user])
 
   return (
     <main className="min-h-[calc(100vh-200px)] py-8 px-4 bg-slate-50">
@@ -3931,6 +3984,44 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
   // Dashboard view state (Professional, Standard, Basic) from global store
   const { view: dashboardView } = useDashboardViewStore()
   
+  const profileStore = useProfileStore()
+
+  const displayHeight = useMemo(() => {
+    if (!profileStore.heightInches) return "6'2\"";
+    const feet = Math.floor(profileStore.heightInches / 12);
+    const inches = profileStore.heightInches % 12;
+    return `${feet}'${inches}"`;
+  }, [profileStore.heightInches]);
+
+  const displayWeight = useMemo(() => {
+    return profileStore.weightLbs ? `${profileStore.weightLbs} LB` : "185 LB";
+  }, [profileStore.weightLbs]);
+
+  const displayAge = useMemo(() => {
+    return profileStore.age ? String(profileStore.age) : "34";
+  }, [profileStore.age]);
+
+  const displayExperience = useMemo(() => {
+    const level = profileStore.experienceLevel;
+    if (!level) return "PRO";
+    if (level === "beginner") return "BEG";
+    if (level === "intermediate") return "INT";
+    if (level === "advanced") return "ADV";
+    if (level === "professional") return "PRO";
+    return level.substring(0, 3).toUpperCase();
+  }, [profileStore.experienceLevel]);
+
+  const displayLeague = useMemo(() => {
+    const tier = profileStore.coachingTier;
+    if (!tier) return "REC";
+    if (tier === "elementary") return "ELEM";
+    if (tier === "middle_school") return "MID";
+    if (tier === "high_school") return "HS";
+    if (tier === "college") return "COL";
+    if (tier === "professional") return "PRO";
+    return tier.replace('_', ' ').toUpperCase();
+  }, [profileStore.coachingTier]);
+  
   // Overlay toggle state for image
   const [overlayToggles, setOverlayToggles] = useState<OverlayToggles>({
     skeleton: true,
@@ -4538,23 +4629,23 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
               <div className="grid grid-cols-5 divide-x divide-black">
                 <div className="px-2 text-center">
                   <p className="text-slate-500 text-[10px] uppercase">WT</p>
-                  <p className="text-slate-900 font-bold text-sm">185 LB</p>
+                  <p className="text-slate-900 font-bold text-sm">{displayWeight}</p>
                 </div>
                 <div className="px-2 text-center">
                   <p className="text-slate-500 text-[10px] uppercase">AGE</p>
-                  <p className="text-slate-900 font-bold text-sm">34</p>
+                  <p className="text-slate-900 font-bold text-sm">{displayAge}</p>
                 </div>
                 <div className="px-2 text-center">
                   <p className="text-slate-500 text-[10px] uppercase">HT</p>
-                  <p className="text-slate-900 font-bold text-sm">6&apos;2&quot;</p>
+                  <p className="text-slate-900 font-bold text-sm">{displayHeight}</p>
                 </div>
                 <div className="px-2 text-center">
                   <p className="text-slate-500 text-[10px] uppercase">EXP</p>
-                  <p className="text-slate-900 font-bold text-sm">PRO</p>
+                  <p className="text-slate-900 font-bold text-sm">{displayExperience}</p>
                 </div>
                 <div className="px-2 text-center">
                   <p className="text-slate-500 text-[10px] uppercase">LEAGUE</p>
-                  <p className="text-slate-900 font-bold text-sm">REC</p>
+                  <p className="text-slate-900 font-bold text-sm">{displayLeague}</p>
                 </div>
               </div>
             </div>
@@ -7357,7 +7448,7 @@ function ComparisonSection({ analysisData }: { analysisData: AnalysisData }) {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-[#FF6B35] flex items-center justify-center"><User className="w-6 h-6 text-[#1a1a1a]" /></div>
-            <div><h3 className="text-xl font-bold text-[#FF6B35]">KEVIN HOUSTON</h3><p className="text-sm text-slate-500">Your Current Form</p></div>
+            <div><h3 className="text-xl font-bold text-[#FF6B35]">{playerName}</h3><p className="text-sm text-slate-500">Your Current Form</p></div>
           </div>
           <div className="text-right">
             <p className="text-3xl font-black text-[#FF6B35]">{analysisData.overallScore}<span className="text-lg text-slate-500">/100</span></p>
@@ -8212,7 +8303,8 @@ function BiomechanicalAnalysisWithSessions({ dashboardView = 'professional' }: {
   
   // Get profile data for player name
   const profileStore = useProfileStore()
-  const playerName = profileStore.firstName || profileStore.displayName || 'Player'
+  const { user } = useAuthStore()
+  const playerName = user?.firstName || user?.displayName || 'Player'
   
   // Build analysis data for simplified views
   const analysisData = {
@@ -8693,7 +8785,8 @@ function TrainingWithSessions({ dashboardView = 'professional' }: { dashboardVie
     return flaws
   }, [detectedFlaws])
   
-  const playerName = profileStore.firstName || profileStore.displayName || 'Player'
+  const { user: authUser } = useAuthStore()
+  const playerName = authUser?.firstName || authUser?.displayName || 'Player'
   
   // Build analysis data for simplified views
   const simplifiedAnalysisData = {
@@ -8785,7 +8878,7 @@ function TrainingWithSessions({ dashboardView = 'professional' }: { dashboardVie
           
           <WorkoutOrPassGame 
             userProfile={{
-              skillLevel: drillFilters.skillLevel === 'all' ? (profileStore.skillLevel || undefined) : drillFilters.skillLevel,
+              skillLevel: drillFilters.skillLevel === 'all' ? (profileStore.experienceLevel || undefined) : drillFilters.skillLevel,
               flaws: userFlaws
             }}
             filters={drillFilters}
