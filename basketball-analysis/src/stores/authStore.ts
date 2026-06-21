@@ -85,6 +85,7 @@ export const useAuthStore = create<AuthState>()(
           const response = await fetch(`${apiBase}/api/auth/signup`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include', // store the httpOnly auth-token cookie issued by the API
             body: JSON.stringify({ email, password, firstName, lastName }),
           })
           
@@ -170,6 +171,7 @@ export const useAuthStore = create<AuthState>()(
           const response = await fetch(`${apiBase}/api/auth/signin`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include', // store the httpOnly auth-token cookie issued by the API
             body: JSON.stringify({ email, password }),
           })
           
@@ -249,7 +251,18 @@ export const useAuthStore = create<AuthState>()(
         } catch (e) {
           console.error("Failed to reset profile store on sign out:", e)
         }
-        
+
+        // Clear the httpOnly auth-token cookie server-side (cannot be cleared from JS).
+        // Fire-and-forget so signOut stays synchronous for existing callers.
+        try {
+          fetch(`${getApiBaseUrl()}/api/auth/signout`, {
+            method: 'POST',
+            credentials: 'include',
+          }).catch(() => {})
+        } catch (e) {
+          // ignore network/runtime errors on sign out
+        }
+
         setAuthCookie(false)
         set({
           user: null,

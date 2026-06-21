@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { verifySessionToken, AUTH_COOKIE_NAME } from '@/lib/authToken'
 
 // Public routes that don't require authentication
 const PUBLIC_ROUTES = [
@@ -39,7 +40,7 @@ const PROTECTED_ROUTES = [
   '/admin'
 ]
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   
   // Allow API routes and static files
@@ -54,10 +55,14 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Check if user is authenticated by looking for auth data in localStorage
-  // Since middleware runs on server, we'll check cookies or use a different approach
-  // For now, we'll redirect all protected routes to signin if no session cookie exists
-  const isAuthenticated = request.cookies.get('user-session')?.value
+  // Authentication is established by a signed, httpOnly session JWT
+  // (auth-token). We verify its signature + expiry here. A legacy
+  // non-httpOnly `user-session` cookie is still accepted as a fallback for
+  // backward compatibility (e.g. the offline/dev local-storage flow).
+  const sessionToken = request.cookies.get(AUTH_COOKIE_NAME)?.value
+  const verified = await verifySessionToken(sessionToken)
+  const legacySession = request.cookies.get('user-session')?.value
+  const isAuthenticated = Boolean(verified) || Boolean(legacySession)
   
   // Check if this is a public route (including nested routes)
   const isPublicRoute = PUBLIC_ROUTES.some(route => 

@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import * as bcrypt from "bcryptjs"
+import { checkRateLimit } from "@/lib/rateLimit"
+import {
+  createSessionToken,
+  authCookieOptions,
+  AUTH_COOKIE_NAME,
+} from "@/lib/authToken"
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const MIN_PASSWORD_LENGTH = 6
 
 export async function OPTIONS() {
   return new NextResponse(null, {
@@ -13,9 +22,21 @@ export async function OPTIONS() {
 }
 
 export async function POST(request: NextRequest) {
+  // Rate limit: 5 signups per minute per IP.
+  const { response: limited } = checkRateLimit(request, {
+    bucket: 'auth-signup',
+    limit: 5,
+    windowMs: 60_000,
+  })
+  if (limited) return limited
+
   try {
-    const { email, password, firstName, lastName } = await request.json()
-    
+    const body = await request.json().catch(() => null)
+    const email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : ''
+    const password = typeof body?.password === 'string' ? body.password : ''
+    const firstName = typeof body?.firstName === 'string' ? body.firstName : undefined
+    const lastName = typeof body?.lastName === 'string' ? body.lastName : undefined
+
     // Validate input
     if (!email || !password) {
       return NextResponse.json(
@@ -23,14 +44,21 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-    
-    if (password.length < 6) {
+
+    if (!EMAIL_REGEX.test(email)) {
       return NextResponse.json(
-        { error: "Password must be at least 6 characters" },
+        { error: "Please enter a valid email address" },
         { status: 400 }
       )
     }
-    
+
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      return NextResponse.json(
+        { error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters` },
+        { status: 400 }
+      )
+    }
+
     // Check if user already exists
     let existingUser
     try {
@@ -44,17 +72,17 @@ export async function POST(request: NextRequest) {
         { status: 503 }
       )
     }
-    
+
     if (existingUser) {
       return NextResponse.json(
         { error: "User with this email already exists" },
         { status: 400 }
       )
     }
-    
+
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10)
-    
+
     // Create user
     const user = await prisma.user.create({
       data: {
@@ -62,8 +90,8 @@ export async function POST(request: NextRequest) {
         password: hashedPassword,
         firstName: firstName || null,
         lastName: lastName || null,
-        displayName: firstName && lastName 
-          ? `${firstName} ${lastName}` 
+        displayName: firstName && lastName
+          ? `${firstName} ${lastName}`
           : firstName || lastName || email.split('@')[0],
       },
       select: {
@@ -76,12 +104,22 @@ export async function POST(request: NextRequest) {
         profileComplete: true,
       },
     })
-    
-    return NextResponse.json({ user }, { status: 201 })
+
+    const res = NextResponse.json({ user }, { status: 201 })
+
+    // Issue a signed, httpOnly session token.
+    try {
+      const token = await createSessionToken({ sub: user.id, email: user.email })
+      res.cookies.set(AUTH_COOKIE_NAME, token, authCookieOptions())
+    } catch (tokenError) {
+      console.error("Failed to issue session token:", tokenError)
+    }
+
+    return res
   } catch (error) {
     console.error("Sign up error:", error)
     const errorMessage = error instanceof Error ? error.message : String(error)
-    
+
     // Check if it's a Prisma/database error
     if (errorMessage.includes("P1001") || errorMessage.includes("P1002") || errorMessage.includes("Can't reach database") || errorMessage.includes("ECONNREFUSED") || errorMessage.includes("Connection refused") || errorMessage.includes("timed out")) {
       return NextResponse.json(
@@ -89,11 +127,10 @@ export async function POST(request: NextRequest) {
         { status: 503 }
       )
     }
-    
+
     return NextResponse.json(
       { error: `Internal server error: ${errorMessage}` },
       { status: 500 }
     )
   }
 }
-

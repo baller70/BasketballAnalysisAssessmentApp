@@ -112,6 +112,36 @@ const LEVEL_TONES: Record<SkillLevel, {
 }
 
 // ============================================
+// STREAK CALCULATION (Real, consecutive-day)
+// ============================================
+
+/**
+ * Current streak = number of consecutive calendar days, counting back from the
+ * most recent session date, that each have at least one session. Returns 0 when
+ * there are no sessions. Uses local calendar days.
+ */
+function calculateConsecutiveDayStreak(dates: Date[]): number {
+  if (dates.length === 0) return 0
+
+  const DAY_MS = 24 * 60 * 60 * 1000
+  const toDayKey = (d: Date) =>
+    new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+
+  // Unique session days, sorted ascending.
+  const dayKeys = Array.from(new Set(dates.map(toDayKey))).sort((a, b) => a - b)
+
+  let streak = 1
+  for (let i = dayKeys.length - 1; i > 0; i--) {
+    if (dayKeys[i] - dayKeys[i - 1] === DAY_MS) {
+      streak += 1
+    } else {
+      break
+    }
+  }
+  return streak
+}
+
+// ============================================
 // WEEKLY PERFORMANCE SUMMARY GENERATOR
 // ============================================
 
@@ -134,7 +164,18 @@ export function generateWeeklyPerformanceSummary(
   // Collect all improvements and flaws
   const allImprovements = [...new Set(sessions.flatMap(s => s.improvements))]
   const allFlaws = [...new Set(sessions.flatMap(s => s.flaws))]
-  
+
+  // Real consistency metric: standard deviation of this week's session scores.
+  // Higher spread => less consistent. Rounded to a whole percentage-point of
+  // variance. Null when there aren't enough sessions to measure spread.
+  const scoreStdDev = sessions.length > 1
+    ? Math.sqrt(
+        sessions.reduce((sum, s) => sum + Math.pow(s.score - averageScore, 2), 0) /
+          sessions.length
+      )
+    : null
+  const scoreVariancePct = scoreStdDev !== null ? Math.round(scoreStdDev) : null
+
   // Generate level-appropriate messages
   const _tone = LEVEL_TONES[level] // eslint-disable-line @typescript-eslint/no-unused-vars
   
@@ -165,10 +206,14 @@ export function generateWeeklyPerformanceSummary(
       
     case 'HIGH_SCHOOL':
       whatsWorking = allImprovements.length > 0
-        ? `Your ${allImprovements[0]} consistency has improved ${scoreChange > 0 ? scoreChange : 3}% this week. This is translating to better game performance.`
+        ? scoreChange > 0
+          ? `Your ${allImprovements[0]} consistency has improved ${scoreChange}% this week. This is translating to better game performance.`
+          : `Your ${allImprovements[0]} is trending in the right direction. Keep building on it.`
         : `Your form is maintaining consistency across sessions.`
       focusArea = allFlaws.length > 0
-        ? `Your ${allFlaws[0]} is causing a ${Math.floor(Math.random() * 5) + 3}% accuracy variance. Address this with targeted drills.`
+        ? scoreVariancePct !== null
+          ? `Your ${allFlaws[0]} is contributing to a ${scoreVariancePct}-point swing in your scores. Address this with targeted drills.`
+          : `Your ${allFlaws[0]} needs attention. Address it with targeted drills.`
         : `Focus on maintaining form under fatigue conditions.`
       nextWeekGoal = `Target ${Math.round(averageScore * 1.05)} average score with 15+ practice sessions.`
       break
@@ -178,25 +223,30 @@ export function generateWeeklyPerformanceSummary(
         ? `Your ${allImprovements[0]} metrics are approaching NCAA standards. Continue this trajectory.`
         : `Your biomechanical consistency is within acceptable ranges.`
       focusArea = allFlaws.length > 0
-        ? `${allFlaws[0]} variance of ${(Math.random() * 3 + 2).toFixed(1)}° is affecting your efficiency. Implement the micro-adjustment protocol.`
+        ? scoreVariancePct !== null
+          ? `${allFlaws[0]} variance (a ${scoreVariancePct}-point spread across sessions) is affecting your efficiency. Implement the micro-adjustment protocol.`
+          : `${allFlaws[0]} is affecting your efficiency. Implement the micro-adjustment protocol.`
         : `Focus on shot selection and game-situation performance.`
       nextWeekGoal = `Achieve ${Math.round(averageScore + 3)}/100 with NCAA-standard consistency.`
       break
       
     case 'PROFESSIONAL':
       whatsWorking = allImprovements.length > 0
-        ? `${allImprovements[0]} efficiency has improved. Your defender-proximity variance decreased ${(Math.random() * 2 + 1).toFixed(1)}%.`
-        : `Form consistency maintained across fatigue conditions.`
+        ? `${allImprovements[0]} efficiency has improved. Continue reinforcing this in your mechanics.`
+        : `Form consistency maintained across sessions.`
       focusArea = allFlaws.length > 0
-        ? `${allFlaws[0]} shows ${(Math.random() * 5 + 3).toFixed(1)}% degradation in 4th quarter simulations. Implement fatigue-specific mechanics.`
+        ? scoreVariancePct !== null
+          ? `${allFlaws[0]} accounts for a ${scoreVariancePct}-point spread across this week's sessions. Implement targeted mechanics work to tighten it.`
+          : `${allFlaws[0]} is your priority. Implement targeted mechanics work to tighten it.`
         : `Focus on micro-adjustments for situational shooting.`
-      nextWeekGoal = `Reduce form degradation to <5% and maintain ${averageScore}+ efficiency.`
+      nextWeekGoal = `Tighten your session-to-session consistency and maintain ${averageScore}+ efficiency.`
       break
   }
   
-  // Calculate streak (mock for now)
-  const streakDays = Math.min(sessions.length, 7)
-  
+  // Calculate the real current streak: number of consecutive calendar days,
+  // ending at the most recent session, that have at least one session.
+  const streakDays = calculateConsecutiveDayStreak(sessions.map(s => s.date))
+
   return {
     totalAnalyses,
     averageScore,
