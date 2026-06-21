@@ -4,21 +4,12 @@ import { verifySessionToken, AUTH_COOKIE_NAME } from '@/lib/authToken'
 
 // Public routes that don't require authentication
 const PUBLIC_ROUTES = [
-  '/signin', 
-  '/signup', 
+  '/signin',
+  '/signup',
+  '/auth',
   '/results/demo',
-  '/test-player',
-  '/test-analysis',
-  '/test-score-or-pass',
-  '/test-workout',
   '/settings',
   '/badges',
-  '/test-share',
-  '/test-achievements',
-  '/test-basic-dashboard',
-  '/test-sneakers',
-  '/test-llm',
-  '/test-sneaker-badges',
   '/elite-shooters',
   '/guide',
   '/points'

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import * as bcrypt from "bcryptjs"
 import { checkRateLimit } from "@/lib/rateLimit"
+import { validateCsrf } from "@/lib/csrf"
 import {
   createSessionToken,
   authCookieOptions,
@@ -29,6 +30,10 @@ export async function POST(request: NextRequest) {
     windowMs: 60_000,
   })
   if (limited) return limited
+
+  // CSRF: reject requests that don't echo the double-submit token.
+  const csrfError = validateCsrf(request)
+  if (csrfError) return csrfError
 
   try {
     const body = await request.json().catch(() => null)

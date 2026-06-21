@@ -70,21 +70,37 @@ Once deployed, check the critical path yourself before inviting testers:
 
 ---
 
+## Optional: enable social login (Google / GitHub)
+
+Email/password works out of the box. To also offer "Continue with Google/GitHub":
+
+1. **Google**: create an OAuth client at
+   https://console.cloud.google.com/apis/credentials → "OAuth client ID" → Web
+   application. Add the redirect URI:
+   `https://YOUR-DOMAIN/api/auth/oauth/google/callback`
+2. **GitHub**: create an OAuth app at
+   https://github.com/settings/developers → "New OAuth App". Set the callback URL:
+   `https://YOUR-DOMAIN/api/auth/oauth/github/callback`
+3. Add the resulting IDs/secrets to your env: `GOOGLE_CLIENT_ID`,
+   `GOOGLE_CLIENT_SECRET`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`.
+
+If you skip a provider, its button simply shows a friendly "not configured"
+message — nothing breaks.
+
+> **Database note:** social login added new columns to the `users` table. Make
+> sure you run the migration (Step 1's `prisma migrate deploy`) so production has
+> them. A fresh DB picks this up automatically.
+
 ## Known follow-ups (not blockers, but worth doing soon)
 
 These are tracked so nothing is hidden from you:
 
-1. **Two `next.config` files** (`next.config.js` and `next.config.mjs`) exist in
-   the app folder. The build works today, but having both is confusing and they
-   should be merged into one. Low risk, do when convenient.
-2. **CSRF enforcement**: the server now issues CSRF tokens, but the frontend
-   doesn't yet echo them back on form submissions. Fine for a closed beta;
-   wire up before a fully public launch.
-3. **OAuth login** (Google/GitHub sign-in) is not implemented — only
-   email/password. Add later if testers want social login.
-4. **Rate limiting is in-memory** (per server instance). It protects against
+1. **Rate limiting is in-memory** (per server instance). It protects against
    basic abuse but resets on redeploy and isn't shared across multiple
    instances. For scale, move to a Redis-backed limiter.
+2. **Account linking by email**: if someone signs up with a password and later
+   uses Google with the same email, the accounts are merged by email. That's
+   usually desired, but review it against your security expectations.
 
 ---
 

@@ -14,6 +14,22 @@ function getApiBaseUrl(): string {
   return ''
 }
 
+// Fetch a CSRF token (double-submit pattern). Returns '' on failure so callers
+// can still attempt the request; the server will reject if the token is invalid.
+async function getCsrfToken(): Promise<string> {
+  try {
+    const res = await fetch(`${getApiBaseUrl()}/api/auth/csrf`, {
+      method: 'GET',
+      credentials: 'include',
+    })
+    if (!res.ok) return ''
+    const data = await res.json()
+    return typeof data?.csrfToken === 'string' ? data.csrfToken : ''
+  } catch {
+    return ''
+  }
+}
+
 // Set authentication cookie for middleware
 function setAuthCookie(authenticated: boolean) {
   if (typeof document !== 'undefined') {
@@ -49,6 +65,7 @@ export interface AuthState {
   signUp: (email: string, password: string, firstName?: string, lastName?: string) => Promise<{ success: boolean; error?: string; warning?: string }>
   signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string; warning?: string }>
   signOut: () => void
+  hydrateFromSession: () => Promise<{ success: boolean; profileComplete: boolean }>
   updateUser: (updates: Partial<User>) => void
   setProfileComplete: (complete: boolean) => void
 }
@@ -57,8 +74,8 @@ export interface AuthState {
 // INITIAL STATE
 // ==========================================
 
-const initialState: Omit<AuthState, 
-  | "signUp" | "signIn" | "signOut" | "updateUser" | "setProfileComplete"
+const initialState: Omit<AuthState,
+  | "signUp" | "signIn" | "signOut" | "hydrateFromSession" | "updateUser" | "setProfileComplete"
 > = {
   user: null,
   isAuthenticated: false,
@@ -82,9 +99,10 @@ export const useAuthStore = create<AuthState>()(
           const apiBase = getApiBaseUrl()
           
           // Call API to create user
+          const csrfToken = await getCsrfToken()
           const response = await fetch(`${apiBase}/api/auth/signup`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken },
             credentials: 'include', // store the httpOnly auth-token cookie issued by the API
             body: JSON.stringify({ email, password, firstName, lastName }),
           })
@@ -168,9 +186,10 @@ export const useAuthStore = create<AuthState>()(
           const apiBase = getApiBaseUrl()
           
           // Call API to authenticate
+          const csrfToken = await getCsrfToken()
           const response = await fetch(`${apiBase}/api/auth/signin`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken },
             credentials: 'include', // store the httpOnly auth-token cookie issued by the API
             body: JSON.stringify({ email, password }),
           })
@@ -255,10 +274,15 @@ export const useAuthStore = create<AuthState>()(
         // Clear the httpOnly auth-token cookie server-side (cannot be cleared from JS).
         // Fire-and-forget so signOut stays synchronous for existing callers.
         try {
-          fetch(`${getApiBaseUrl()}/api/auth/signout`, {
-            method: 'POST',
-            credentials: 'include',
-          }).catch(() => {})
+          getCsrfToken()
+            .then((csrfToken) =>
+              fetch(`${getApiBaseUrl()}/api/auth/signout`, {
+                method: 'POST',
+                headers: { 'x-csrf-token': csrfToken },
+                credentials: 'include',
+              })
+            )
+            .catch(() => {})
         } catch (e) {
           // ignore network/runtime errors on sign out
         }
@@ -271,6 +295,46 @@ export const useAuthStore = create<AuthState>()(
         })
       },
       
+      // Populate the store from the server session cookie (used after an OAuth
+      // redirect, where the httpOnly auth-token cookie exists but the client
+      // store is empty).
+      hydrateFromSession: async () => {
+        try {
+          const res = await fetch(`${getApiBaseUrl()}/api/auth/me`, {
+            method: 'GET',
+            credentials: 'include',
+          })
+
+          if (!res.ok) {
+            return { success: false, profileComplete: false }
+          }
+
+          const data = await res.json()
+          if (!data?.user) {
+            return { success: false, profileComplete: false }
+          }
+
+          const user: User = {
+            id: data.user.id,
+            email: data.user.email,
+            firstName: data.user.firstName || undefined,
+            lastName: data.user.lastName || undefined,
+            displayName: data.user.displayName || undefined,
+            avatarUrl: data.user.avatarUrl || undefined,
+            createdAt: data.user.createdAt,
+            profileComplete: data.user.profileComplete || false,
+          }
+
+          set({ user, isAuthenticated: true, isLoading: false })
+          setAuthCookie(true)
+
+          return { success: true, profileComplete: user.profileComplete }
+        } catch (error) {
+          console.error('Session hydration error:', error)
+          return { success: false, profileComplete: false }
+        }
+      },
+
       updateUser: (updates: Partial<User>) => {
         const { user } = get()
         if (user) {
