@@ -4,7 +4,6 @@ import React, { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useAuthStore } from "@/stores/authStore"
-import { SocialAuthButtons } from "@/components/auth/SocialAuthButtons"
 import { BasketballIcon } from "@/components/icons"
 import { Loader2, Mail, Lock, User } from "lucide-react"
 
@@ -188,8 +187,6 @@ export default function SignUpPage() {
               )}
             </button>
           </form>
-
-          <SocialAuthButtons label="or sign up with" />
 
           {/* Sign In Link */}
           <div className="mt-6 text-center">

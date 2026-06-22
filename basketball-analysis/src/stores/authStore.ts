@@ -65,7 +65,6 @@ export interface AuthState {
   signUp: (email: string, password: string, firstName?: string, lastName?: string) => Promise<{ success: boolean; error?: string; warning?: string }>
   signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string; warning?: string }>
   signOut: () => void
-  hydrateFromSession: () => Promise<{ success: boolean; profileComplete: boolean }>
   updateUser: (updates: Partial<User>) => void
   setProfileComplete: (complete: boolean) => void
 }
@@ -75,7 +74,7 @@ export interface AuthState {
 // ==========================================
 
 const initialState: Omit<AuthState,
-  | "signUp" | "signIn" | "signOut" | "hydrateFromSession" | "updateUser" | "setProfileComplete"
+  | "signUp" | "signIn" | "signOut" | "updateUser" | "setProfileComplete"
 > = {
   user: null,
   isAuthenticated: false,
@@ -293,46 +292,6 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: false,
           isLoading: false,
         })
-      },
-      
-      // Populate the store from the server session cookie (used after an OAuth
-      // redirect, where the httpOnly auth-token cookie exists but the client
-      // store is empty).
-      hydrateFromSession: async () => {
-        try {
-          const res = await fetch(`${getApiBaseUrl()}/api/auth/me`, {
-            method: 'GET',
-            credentials: 'include',
-          })
-
-          if (!res.ok) {
-            return { success: false, profileComplete: false }
-          }
-
-          const data = await res.json()
-          if (!data?.user) {
-            return { success: false, profileComplete: false }
-          }
-
-          const user: User = {
-            id: data.user.id,
-            email: data.user.email,
-            firstName: data.user.firstName || undefined,
-            lastName: data.user.lastName || undefined,
-            displayName: data.user.displayName || undefined,
-            avatarUrl: data.user.avatarUrl || undefined,
-            createdAt: data.user.createdAt,
-            profileComplete: data.user.profileComplete || false,
-          }
-
-          set({ user, isAuthenticated: true, isLoading: false })
-          setAuthCookie(true)
-
-          return { success: true, profileComplete: user.profileComplete }
-        } catch (error) {
-          console.error('Session hydration error:', error)
-          return { success: false, profileComplete: false }
-        }
       },
 
       updateUser: (updates: Partial<User>) => {

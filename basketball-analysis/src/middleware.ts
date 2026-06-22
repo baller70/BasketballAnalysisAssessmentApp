@@ -6,7 +6,6 @@ import { verifySessionToken, AUTH_COOKIE_NAME } from '@/lib/authToken'
 const PUBLIC_ROUTES = [
   '/signin',
   '/signup',
-  '/auth',
   '/results/demo',
   '/settings',
   '/badges',
