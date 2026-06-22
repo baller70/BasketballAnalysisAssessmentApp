@@ -9,16 +9,40 @@ import { S3Client } from "@aws-sdk/client-s3"
 export const S3_CONFIG = {
   bucket: process.env.S3_BUCKET_NAME || "basketball-shooters-db",
   region: process.env.AWS_REGION || "us-east-1",
+  // Custom S3-compatible endpoint (e.g. Cloudflare R2 / MinIO). Empty = real AWS S3.
+  endpoint: process.env.S3_ENDPOINT || "",
+  // Optional key prefix so this app's objects are namespaced inside a shared bucket.
+  keyPrefix: process.env.S3_KEY_PREFIX || "",
 }
 
-// Create S3 Client
+// Create S3 Client. When S3_ENDPOINT is set (R2/MinIO/etc.) switch to that
+// endpoint with path-style addressing, which those providers require.
 export const s3Client = new S3Client({
   region: S3_CONFIG.region,
+  ...(S3_CONFIG.endpoint
+    ? { endpoint: S3_CONFIG.endpoint, forcePathStyle: true }
+    : {}),
   credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
   },
 })
+
+/**
+ * Prepend the configured key prefix (S3_KEY_PREFIX) to a logical object key.
+ * No-op when unset. Applied at the storage boundary so the rest of the app
+ * always works with un-prefixed (logical) paths.
+ */
+export function withKeyPrefix(path: string): string {
+  const pre = S3_CONFIG.keyPrefix.replace(/\/+$/, "")
+  return pre ? `${pre}/${path}` : path
+}
+
+/** Inverse of withKeyPrefix: strip the prefix off a key returned by S3. */
+export function stripKeyPrefix(key: string): string {
+  const pre = S3_CONFIG.keyPrefix.replace(/\/+$/, "")
+  return pre && key.startsWith(`${pre}/`) ? key.slice(pre.length + 1) : key
+}
 
 // Folder structure constants
 export const S3_FOLDERS = {
@@ -104,6 +128,11 @@ export function generateUserUploadPath(
  * Get the full S3 URL for an object
  */
 export function getS3Url(path: string): string {
+  // Path-style URL for custom endpoints (R2/MinIO); virtual-hosted for AWS.
+  if (S3_CONFIG.endpoint) {
+    const base = S3_CONFIG.endpoint.replace(/\/+$/, "")
+    return `${base}/${S3_CONFIG.bucket}/${path}`
+  }
   return `https://${S3_CONFIG.bucket}.s3.${S3_CONFIG.region}.amazonaws.com/${path}`
 }
 

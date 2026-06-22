@@ -17,6 +17,8 @@ import {
   generateShooterImagePath,
   generateUserUploadPath,
   getS3Url,
+  withKeyPrefix,
+  stripKeyPrefix,
 } from "./s3Client"
 
 export interface UploadResult {
@@ -55,7 +57,7 @@ export async function uploadImage(
 
     const command = new PutObjectCommand({
       Bucket: S3_CONFIG.bucket,
-      Key: path,
+      Key: withKeyPrefix(path),
       Body: body,
       ContentType: contentType,
       Metadata: metadata
@@ -74,7 +76,7 @@ export async function uploadImage(
     return {
       success: true,
       path,
-      url: getS3Url(path),
+      url: getS3Url(withKeyPrefix(path)),
     }
   } catch (error) {
     console.error("S3 upload error:", error)
@@ -126,7 +128,7 @@ export async function getSignedImageUrl(
   try {
     const command = new GetObjectCommand({
       Bucket: S3_CONFIG.bucket,
-      Key: path,
+      Key: withKeyPrefix(path),
     })
 
     const signedUrl = await getSignedUrl(s3Client, command, {
@@ -147,7 +149,7 @@ export async function deleteImage(path: string): Promise<boolean> {
   try {
     const command = new DeleteObjectCommand({
       Bucket: S3_CONFIG.bucket,
-      Key: path,
+      Key: withKeyPrefix(path),
     })
 
     await s3Client.send(command)
@@ -175,11 +177,11 @@ export async function listShooterImages(
 
     const command = new ListObjectsV2Command({
       Bucket: S3_CONFIG.bucket,
-      Prefix: prefix,
+      Prefix: withKeyPrefix(prefix),
     })
 
     const response = await s3Client.send(command)
-    return response.Contents?.map((item) => item.Key || "") || []
+    return response.Contents?.map((item) => stripKeyPrefix(item.Key || "")) || []
   } catch (error) {
     console.error("S3 list error:", error)
     return []
@@ -198,11 +200,11 @@ export async function listUserSessionImages(
 
     const command = new ListObjectsV2Command({
       Bucket: S3_CONFIG.bucket,
-      Prefix: prefix,
+      Prefix: withKeyPrefix(prefix),
     })
 
     const response = await s3Client.send(command)
-    return response.Contents?.map((item) => item.Key || "") || []
+    return response.Contents?.map((item) => stripKeyPrefix(item.Key || "")) || []
   } catch (error) {
     console.error("S3 list error:", error)
     return []
@@ -216,7 +218,7 @@ export async function imageExists(path: string): Promise<boolean> {
   try {
     const command = new HeadObjectCommand({
       Bucket: S3_CONFIG.bucket,
-      Key: path,
+      Key: withKeyPrefix(path),
     })
 
     await s3Client.send(command)
@@ -235,7 +237,7 @@ export async function getImageMetadata(
   try {
     const command = new HeadObjectCommand({
       Bucket: S3_CONFIG.bucket,
-      Key: path,
+      Key: withKeyPrefix(path),
     })
 
     const response = await s3Client.send(command)
