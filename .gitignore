@@ -19,6 +19,16 @@ out
 .logs
 *.tsbuildinfo
 
+# Failed/backup build snapshots
+_failed-builds/
+**/.next.bad-*
+
+# macOS junk
+.DS_Store
+**/.DS_Store
+._*
+**/._*
+
 # =============================================
 # Not part of the web app build (data, mockups, backends)
 # =============================================
@@ -97,3 +107,6 @@ __pycache__/
 *.pt
 yolov8*.pt
 *.tar.gz
+
+# Local-only ship helper (server/SSH details)
+ship-shotiq.sh
