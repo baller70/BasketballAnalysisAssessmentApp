@@ -152,6 +152,49 @@ export const LLM_PROVIDERS: Record<string, LLMProvider> = {
     },
     apiKeyEnvVar: 'OPENAI_API_KEY',
   },
+  // Tier-two test providers (added 2026-06-22). MiniMax is enabled in the
+  // routing chain; Codex is CLI-backed and slow, so it's left disabled and
+  // reachable only via an explicit forceProvider request (for testing).
+  minimax: {
+    name: 'minimax',
+    displayName: 'MiniMax M3',
+    priority: 7,
+    enabled: true,
+    rateLimit: {
+      requestsPerMinute: 60,
+      requestsPerDay: 10000,
+    },
+    models: ['MiniMax-M3'],
+    costPerRequest: 0.001,
+    qualityScore: 9,
+    capabilities: {
+      coaching: true,
+      creative: true,
+      analysis: true,
+      general: true,
+    },
+    apiKeyEnvVar: 'MINIMAX_API_KEY',
+  },
+  codex: {
+    name: 'codex',
+    displayName: 'Codex CLI',
+    priority: 8,
+    enabled: false, // CLI-backed agent; test-only via forceProvider
+    rateLimit: {
+      requestsPerMinute: 20,
+      requestsPerDay: 1000,
+    },
+    models: ['codex'],
+    costPerRequest: 0.002,
+    qualityScore: 9,
+    capabilities: {
+      coaching: true,
+      creative: true,
+      analysis: true,
+      general: true,
+    },
+    apiKeyEnvVar: 'OPENAI_API_KEY', // Codex CLI uses ~/.codex auth on the server
+  },
 };
 
 export type TaskType = 'coaching' | 'creative' | 'analysis' | 'general';

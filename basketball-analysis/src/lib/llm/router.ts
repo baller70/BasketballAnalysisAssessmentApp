@@ -40,6 +40,7 @@ export interface LLMRequest {
   taskType?: TaskType; // For smart routing
   priority?: 'high' | 'normal' | 'low'; // For queue priority
   skipCache?: boolean; // Force fresh response
+  forceProvider?: string; // Bypass routing and call this provider directly (testing)
 }
 
 export interface LLMResponse {
@@ -269,6 +270,88 @@ async function callOpenAI(request: LLMRequest): Promise<LLMResponse> {
   };
 }
 
+// MiniMax M3 — OpenAI-compatible chat completions endpoint.
+async function callMiniMax(request: LLMRequest): Promise<LLMResponse> {
+  const apiKey = process.env.MINIMAX_API_KEY;
+  if (!apiKey) throw new Error('MINIMAX_API_KEY not configured');
+  const base = (process.env.MINIMAX_BASE_URL || 'https://api.minimax.io/v1').replace(/\/+$/, '');
+  const model = process.env.MINIMAX_MODEL || 'MiniMax-M3';
+
+  const response = await fetch(`${base}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model,
+      messages: request.messages,
+      max_tokens: request.maxTokens || 1024,
+      temperature: request.temperature ?? 0.7,
+    }),
+  });
+
+  if (!response.ok) throw new Error(`MiniMax error: ${await response.text()}`);
+
+  const data = await response.json();
+  const content = data.choices?.[0]?.message?.content;
+  if (!content) throw new Error('No content in MiniMax response');
+
+  return {
+    content,
+    provider: 'minimax',
+    model,
+    usage: {
+      promptTokens: data.usage?.prompt_tokens || 0,
+      completionTokens: data.usage?.completion_tokens || 0,
+      totalTokens: data.usage?.total_tokens || 0,
+    },
+  };
+}
+
+// Codex CLI — shells out to the `codex exec` agent on the server (uses the
+// machine's ~/.codex auth). Heavyweight; intended for testing via forceProvider.
+async function callCodex(request: LLMRequest): Promise<LLMResponse> {
+  const { execFile } = await import('child_process');
+  const { promisify } = await import('util');
+  const fs = await import('fs/promises');
+  const os = await import('os');
+  const path = await import('path');
+  const execFileP = promisify(execFile);
+
+  const prompt = request.messages
+    .map((m) => `${m.role.toUpperCase()}: ${m.content}`)
+    .join('\n\n');
+
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'codex-llm-'));
+  const outFile = path.join(dir, 'last.txt');
+  const model = process.env.CODEX_MODEL || 'codex';
+
+  try {
+    const args = ['exec', '--skip-git-repo-check', '-C', dir, '-s', 'read-only', '-o', outFile];
+    if (process.env.CODEX_MODEL) args.push('-m', process.env.CODEX_MODEL);
+    args.push(prompt);
+
+    await execFileP('codex', args, {
+      timeout: 120000,
+      maxBuffer: 10 * 1024 * 1024,
+      env: { ...process.env, HOME: process.env.CODEX_HOME_DIR || '/root' },
+    });
+
+    const content = (await fs.readFile(outFile, 'utf8')).trim();
+    if (!content) throw new Error('No content from codex CLI');
+
+    return {
+      content,
+      provider: 'codex',
+      model,
+      usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+    };
+  } finally {
+    await fs.rm(dir, { recursive: true, force: true }).catch(() => {});
+  }
+}
+
 // Provider call map
 const providerCalls: Record<string, (request: LLMRequest) => Promise<LLMResponse>> = {
   google: callGoogleAI,
@@ -277,6 +360,8 @@ const providerCalls: Record<string, (request: LLMRequest) => Promise<LLMResponse
   huggingface: callHuggingFace,
   cloudflare: callCloudflare,
   openai: callOpenAI,
+  minimax: callMiniMax,
+  codex: callCodex,
 };
 
 /**
@@ -333,6 +418,14 @@ async function callProviderWithRetry(
  * Internal routing logic (used by queue processor)
  */
 async function routeLLMRequestInternal(request: LLMRequest): Promise<LLMResponse> {
+  // Forced provider (testing): bypass health/rate-limit/priority and call directly.
+  if (request.forceProvider) {
+    if (!providerCalls[request.forceProvider]) {
+      throw new Error(`Unknown forceProvider: ${request.forceProvider}`);
+    }
+    return await callProviderWithRetry(request.forceProvider, request);
+  }
+
   // Get providers based on task type if specified
   const providers = request.taskType
     ? getProvidersForTask(request.taskType)

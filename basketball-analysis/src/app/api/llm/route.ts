@@ -89,13 +89,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Optional: force a specific provider for testing (e.g. "minimax", "codex").
+    // Forcing also skips the cache so the targeted provider actually runs.
+    const forceProvider = typeof body.provider === 'string' ? body.provider : undefined;
+
     const llmRequest: LLMRequest = {
       messages: body.messages,
       maxTokens: body.maxTokens || 1024,
       temperature: body.temperature ?? 0.7,
       taskType: body.taskType,
       priority: body.priority,
-      skipCache: body.skipCache || false,
+      skipCache: body.skipCache || !!forceProvider,
+      forceProvider,
     };
 
     const response = await routeLLMRequest(llmRequest);
