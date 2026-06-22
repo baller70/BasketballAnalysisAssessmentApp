@@ -1,9 +1,18 @@
 # 🚀 Going Live — Production Deployment Guide (SHOTIQ AI)
 
 This guide is written for a **non-developer**. It walks you through putting the
-web app online so beta testers can use it. The recommended host is **Vercel**
-(it's the company behind Next.js, free tier available, and this repo is already
-configured for it via `vercel.json`).
+web app online so beta testers can use it.
+
+SHOTIQ AI is a standard **Next.js (Node.js)** app, so it runs on any host that
+can run a Node web app — e.g. **Railway, Render, Fly.io, DigitalOcean App
+Platform**, or your own server. The steps below are written generically; your
+host's dashboard will have the same concepts (connect repo, set root directory,
+add environment variables, deploy) even if the buttons are named slightly
+differently.
+
+> The app lives in the **`basketball-analysis`** subfolder of the repo, not the
+> repo root. Wherever a host asks for a "Root Directory" or "Working Directory",
+> set it to `basketball-analysis`.
 
 ---
 
@@ -36,28 +45,29 @@ for the complete annotated list.
    ```
    *(If there are no migration files yet, use `npx prisma db push` instead.)*
 
-## Step 2 — Deploy to Vercel
+## Step 2 — Connect the repo to your host
 
-1. Go to **https://vercel.com** and sign in with your GitHub account.
-2. Click **Add New → Project** and import the
-   `baller70/BasketballAnalysisAssessmentApp` repository.
-3. **Important:** set the **Root Directory** to `basketball-analysis`
+1. In your host's dashboard, create a **new project / web service** from a Git repo
+   and pick `baller70/BasketballAnalysisAssessmentApp`.
+2. **Important:** set the **Root Directory** to `basketball-analysis`
    (the app lives in that subfolder, not the repo root).
-4. Vercel auto-detects Next.js. Leave the build settings as-is
-   (they match the included `vercel.json`).
+3. Most hosts auto-detect Next.js. If asked for commands, use:
+   - **Install:** `npm install`
+   - **Build:** `npm run build`
+   - **Start:** `npm start`
 
 ## Step 3 — Add your environment variables
 
-In the Vercel project: **Settings → Environment Variables**. Add every
+In your host's **Environment Variables / Secrets** section, add every
 **Required** key from `.env.example` (and any Recommended ones you have):
 
 - `DATABASE_URL`
 - `GOOGLE_AI_API_KEY`
 - `NEXTAUTH_SECRET`  ← generate with `openssl rand -base64 32`
-- `NEXTAUTH_URL`  ← set this to your live Vercel URL (e.g. `https://shotiq.vercel.app`)
+- `NEXTAUTH_URL`  ← set this to your live site URL (e.g. `https://your-app.com`)
 - `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `S3_BUCKET_NAME`
 
-Then click **Deploy**. After ~2 minutes you'll get a live URL to share with testers.
+Then deploy. After a couple of minutes you'll get a live URL to share with testers.
 
 ## Step 4 — Smoke-test the live site
 
@@ -70,27 +80,6 @@ Once deployed, check the critical path yourself before inviting testers:
 
 ---
 
-## Optional: enable social login (Google / GitHub)
-
-Email/password works out of the box. To also offer "Continue with Google/GitHub":
-
-1. **Google**: create an OAuth client at
-   https://console.cloud.google.com/apis/credentials → "OAuth client ID" → Web
-   application. Add the redirect URI:
-   `https://YOUR-DOMAIN/api/auth/oauth/google/callback`
-2. **GitHub**: create an OAuth app at
-   https://github.com/settings/developers → "New OAuth App". Set the callback URL:
-   `https://YOUR-DOMAIN/api/auth/oauth/github/callback`
-3. Add the resulting IDs/secrets to your env: `GOOGLE_CLIENT_ID`,
-   `GOOGLE_CLIENT_SECRET`, `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`.
-
-If you skip a provider, its button simply shows a friendly "not configured"
-message — nothing breaks.
-
-> **Database note:** social login added new columns to the `users` table. Make
-> sure you run the migration (Step 1's `prisma migrate deploy`) so production has
-> them. A fresh DB picks this up automatically.
-
 ## Known follow-ups (not blockers, but worth doing soon)
 
 These are tracked so nothing is hidden from you:
@@ -98,9 +87,6 @@ These are tracked so nothing is hidden from you:
 1. **Rate limiting is in-memory** (per server instance). It protects against
    basic abuse but resets on redeploy and isn't shared across multiple
    instances. For scale, move to a Redis-backed limiter.
-2. **Account linking by email**: if someone signs up with a password and later
-   uses Google with the same email, the accounts are merged by email. That's
-   usually desired, but review it against your security expectations.
 
 ---
 
@@ -114,6 +100,7 @@ npm run dev            # http://localhost:3000
 # Run the test suite
 npm test
 
-# Production build (what Vercel runs)
+# Production build + start (what your host runs)
 npm run build
+npm start
 ```

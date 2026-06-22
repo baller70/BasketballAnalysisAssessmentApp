@@ -36,9 +36,8 @@ const nextConfig = {
     ],
   },
 
-  // Cache-control headers to prevent stale content (mirrors vercel.json so the
-  // same behavior applies on non-Vercel hosts). Custom headers are skipped for
-  // static-export builds, so this is a no-op for Tauri/Capacitor.
+  // Cache-control headers to prevent stale content. Custom headers are skipped
+  // for static-export builds, so this is a no-op for Tauri/Capacitor.
   headers: async () => [
     {
       source: '/api/:path*',

@@ -142,8 +142,7 @@ basketball-analysis/
     ├── package.json
     ├── tsconfig.json
     ├── tailwind.config.ts
-    ├── next.config.mjs
-    └── vercel.json
+    └── next.config.js
 ```
 
 ---

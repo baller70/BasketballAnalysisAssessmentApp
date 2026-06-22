@@ -17,13 +17,10 @@ datasource db {
 model User {
   id              String    @id @default(cuid())
   email           String    @unique @db.VarChar(255)
-  password        String?   @db.VarChar(255)  // Hashed password (null for OAuth-only accounts)
+  password        String    @db.VarChar(255)  // Hashed password
   firstName       String?   @map("first_name") @db.VarChar(100)
   lastName        String?   @map("last_name") @db.VarChar(100)
   displayName     String?   @map("display_name") @db.VarChar(255)
-  avatarUrl       String?   @map("avatar_url") @db.VarChar(512)
-  provider        String?   @db.VarChar(32)   // "credentials" | "google" | "github"
-  providerId      String?   @map("provider_id") @db.VarChar(255)
   profileComplete Boolean   @default(false) @map("profile_complete")
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")

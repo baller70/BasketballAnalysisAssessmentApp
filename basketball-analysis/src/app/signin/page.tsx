@@ -5,22 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
 import { useAuthStore } from "@/stores/authStore"
-import { SocialAuthButtons } from "@/components/auth/SocialAuthButtons"
 import { Loader2, ArrowRight, Eye, EyeOff } from "lucide-react"
-
-// Human-readable messages for OAuth error codes passed back via ?error=...
-const OAUTH_ERROR_MESSAGES: Record<string, string> = {
-  google_not_configured: "Google sign-in isn't configured yet.",
-  github_not_configured: "GitHub sign-in isn't configured yet.",
-  unsupported_provider: "That sign-in provider isn't supported.",
-  oauth_denied: "Sign-in was cancelled.",
-  oauth_missing_code: "Sign-in failed. Please try again.",
-  oauth_state_mismatch: "Sign-in session expired. Please try again.",
-  oauth_exchange_failed: "Couldn't complete sign-in with that provider.",
-  oauth_db_error: "Something went wrong creating your account.",
-  oauth_token_error: "Couldn't start your session. Please try again.",
-  session_expired: "Your session expired. Please sign in again.",
-}
 
 export default function SignInPage() {
   const router = useRouter()
@@ -34,13 +19,6 @@ export default function SignInPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [focusedField, setFocusedField] = useState<string | null>(null)
-
-  // Surface OAuth errors handed back via the ?error= query param.
-  React.useEffect(() => {
-    if (typeof window === "undefined") return
-    const code = new URLSearchParams(window.location.search).get("error")
-    if (code) setError(OAUTH_ERROR_MESSAGES[code] || "Sign in failed. Please try again.")
-  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -278,8 +256,6 @@ export default function SignInPage() {
                   </span>
                 </button>
               </form>
-
-              <SocialAuthButtons />
 
               {/* Divider */}
               <div className="relative my-8">
