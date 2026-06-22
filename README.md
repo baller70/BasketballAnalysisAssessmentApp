@@ -203,7 +203,7 @@ For more detailed documentation, see:
 - `basketball-analysis/README.md` - Detailed app documentation
 - `basketball-analysis/DEVELOPER_GUIDE.md` - Developer guide
 - `basketball-analysis/ARCHITECTURE.md` - Architecture overview
-- `DEPLOYMENT_ANALYSIS.md` - Deployment information
+- `basketball-analysis/PRODUCTION_DEPLOYMENT.md` - Going-live deployment guide
 
 ---
 
