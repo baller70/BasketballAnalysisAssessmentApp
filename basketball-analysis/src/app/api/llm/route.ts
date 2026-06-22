@@ -26,15 +26,24 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { 
-  routeLLMRequest, 
-  getRouterStatus, 
+import {
+  routeLLMRequest,
+  getRouterStatus,
   getTotalDailyCapacity,
   type LLMRequest,
-  type TaskType 
+  type TaskType
 } from '@/lib/llm';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 export async function POST(request: NextRequest) {
+  // Rate limit: 30 LLM requests per minute per IP.
+  const { response: limited } = checkRateLimit(request, {
+    bucket: 'llm',
+    limit: 30,
+    windowMs: 60_000,
+  });
+  if (limited) return limited;
+
   try {
     const body = await request.json();
     

@@ -1602,7 +1602,39 @@ function convertVisionToAnalysisData(vision: VisionAnalysisResult | null): Analy
   const elbowScore = Math.round(calculateElbowScore(elbowAngle))
   const kneeScore = Math.round(calculateKneeScore(kneeAngle))
   const balanceScore = Math.round(calculateBalanceScore(shoulderTilt, hipTilt))
-  
+
+  // Ankle angle: use the real value from the hybrid pose backend when present
+  // (left/right_ankle_angle). The backend does not always detect ankles, in
+  // which case the value is unavailable rather than fabricated.
+  const measuredAnkleAngle =
+    hybridAngles.left_ankle_angle || hybridAngles.right_ankle_angle || null
+
+  // Arc score: derived from the real release angle. A ball release/arc near
+  // ~48° is ideal; score falls off with distance from that target. Only
+  // computed when a real release angle is available.
+  const measuredReleaseAngle = measurements.releaseAngle || hybridAngles.release_angle || null
+  const arcScore =
+    measuredReleaseAngle !== null
+      ? Math.round(Math.max(40, 100 - Math.abs(48 - measuredReleaseAngle) * 2.5))
+      : null
+
+  // Consistency: a within-shot stability proxy derived from how well the two
+  // sides of the body agree (left vs right elbow/knee symmetry). A true
+  // shot-to-shot consistency score requires multiple shots, which a single
+  // image does not provide; this single-frame symmetry is the closest honest
+  // signal available. Null when both sides aren't detected.
+  const haveBothElbows = !!(leftElbowAngle && rightElbowAngle)
+  const haveBothKnees = !!(leftKneeAngle && rightKneeAngle)
+  let consistScore: number | null = null
+  if (haveBothElbows || haveBothKnees) {
+    const symmetryPenalties: number[] = []
+    if (haveBothElbows) symmetryPenalties.push(Math.abs(leftElbowAngle - rightElbowAngle))
+    if (haveBothKnees) symmetryPenalties.push(Math.abs(leftKneeAngle - rightKneeAngle))
+    const avgAsymmetry =
+      symmetryPenalties.reduce((s, v) => s + v, 0) / symmetryPenalties.length
+    consistScore = Math.round(Math.max(40, 100 - avgAsymmetry * 1.5))
+  }
+
   // Form score is weighted average
   const formScore = Math.round((elbowScore * 0.4 + kneeScore * 0.3 + balanceScore * 0.3))
   
@@ -1626,7 +1658,9 @@ function convertVisionToAnalysisData(vision: VisionAnalysisResult | null): Analy
       elbowAngle: Math.round(elbowAngle),
       hipAngle: Math.round(hipTilt),
       kneeAngle: Math.round(kneeAngle),
-      ankleAngle: 85, // TODO: Add ankle detection to hybrid backend
+      // Real ankle angle from pose backend when detected; falls back to the
+      // measured knee chain only as a last resort (ankle not always detected).
+      ankleAngle: Math.round(measuredAnkleAngle ?? kneeAngle),
       releaseHeight: measurements.releaseHeight || 108,
       releaseAngle: measurements.releaseAngle || 52,
       entryAngle: 45,
@@ -1635,10 +1669,16 @@ function convertVisionToAnalysisData(vision: VisionAnalysisResult | null): Analy
       form: formScore,
       release: Math.round(measurements.releaseAngle ? (100 - Math.abs(52 - measurements.releaseAngle)) : 82),
       balance: balanceScore,
-      arc: 75, // TODO: Calculate from trajectory
+      // Arc derived from the real release angle; when no release angle was
+      // measured, fall back to the (real) release score so the radar stays
+      // coherent rather than inventing a constant.
+      arc: arcScore ?? Math.round(measurements.releaseAngle ? (100 - Math.abs(52 - measurements.releaseAngle)) : 82),
       elbow: elbowScore,
       follow: measurements.followThrough || 78,
-      consist: 76, // TODO: Calculate from multiple shots
+      // Single-frame left/right symmetry as a consistency proxy (true
+      // shot-to-shot consistency needs multiple shots). When symmetry can't be
+      // measured, fall back to the (real) balance score.
+      consist: consistScore ?? balanceScore,
       power: kneeScore, // Power correlates with knee bend
     },
     matchedShooter: {

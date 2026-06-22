@@ -18,6 +18,7 @@ import { HYBRID_API_URL } from "@/lib/constants"
 import { useProfileStore, type CoachingTier } from "@/stores/profileStore"
 import { getDrillCriteria, generateDrillAnalysisPrompt, formatAnalysisResult, type DrillAnalysisResult } from "@/services/drillAnalysis"
 import { addWatermarkToCanvas } from "@/lib/watermark"
+import DrillCameraRecorder from "./DrillCameraRecorder"
 
 // =============================================
 // TYPES & INTERFACES
@@ -2606,7 +2607,89 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
   const [capturedMediaType, setCapturedMediaType] = useState<'video' | 'image' | null>(null)
   const [isCapturingMedia, setIsCapturingMedia] = useState(false)
   const [showDrillFeedback, setShowDrillFeedback] = useState<string | null>(null) // drill ID to show feedback for
-  
+
+  // In-app camera recording target for a specific drill (WorkoutTimer flow).
+  const [cameraRecordTarget, setCameraRecordTarget] = useState<{
+    drillKey: string
+    exercise: Exercise
+  } | null>(null)
+
+  // Shared handler: attach a drill media File and auto-analyze via Vision AI.
+  // Used by BOTH the file-upload input and the in-app camera recorder so a
+  // recorded clip is processed identically to an uploaded one.
+  const processDrillMediaFile = async (file: File, drillKey: string, exercise: Exercise) => {
+    const isVideo = file.type.startsWith('video/')
+    const url = URL.createObjectURL(file)
+
+    setDrillMediaMap(prev => ({
+      ...prev,
+      [drillKey]: {
+        type: isVideo ? 'video' : 'image',
+        blob: file,
+        url,
+        hasCoachFeedback: false
+      }
+    }))
+    setDrillMediaExpanded(null)
+
+    setIsAnalyzing(true)
+    try {
+      let frameBase64: string
+
+      if (isVideo) {
+        const video = document.createElement('video')
+        video.src = url
+        await new Promise(resolve => { video.onloadeddata = resolve; video.load() })
+        video.currentTime = 0.5
+        await new Promise(resolve => setTimeout(resolve, 500))
+
+        const canvas = document.createElement('canvas')
+        canvas.width = video.videoWidth || 640
+        canvas.height = video.videoHeight || 480
+        canvas.getContext('2d')?.drawImage(video, 0, 0)
+        addWatermarkToCanvas(canvas)
+        frameBase64 = canvas.toDataURL('image/jpeg', 0.8)
+      } else {
+        frameBase64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader()
+          reader.onload = () => resolve(reader.result as string)
+          reader.readAsDataURL(file)
+        })
+      }
+
+      const response = await fetch('/api/vision-analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image: frameBase64,
+          drillId: exercise.id,
+          drillName: exercise.name,
+          drillDescription: exercise.description,
+          coachingPoints: exercise.tips,
+          focusArea: exercise.focusArea
+        })
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        const analysis = result.analysis || result
+        setDrillMediaMap(prev => ({
+          ...prev,
+          [drillKey]: {
+            ...prev[drillKey],
+            hasCoachFeedback: true,
+            coachFeedback: analysis,
+            analysisType: 'quick'
+          }
+        }))
+      }
+    } catch (err) {
+      console.error('Auto-analysis failed:', err)
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }
+
   // Video upload state (legacy - keeping for compatibility)
   const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string | null>(null)
   const [uploadedVideoBlob, setUploadedVideoBlob] = useState<Blob | null>(null)
@@ -3487,6 +3570,18 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
   
   return (
     <div className="fixed inset-0 z-50 bg-slate-50 flex flex-col">
+      {/* In-app camera recorder modal */}
+      <DrillCameraRecorder
+        open={!!cameraRecordTarget}
+        drillName={cameraRecordTarget?.exercise.name}
+        onRecorded={(file) => {
+          const target = cameraRecordTarget
+          setCameraRecordTarget(null)
+          if (target) void processDrillMediaFile(file, target.drillKey, target.exercise)
+        }}
+        onClose={() => setCameraRecordTarget(null)}
+      />
+
       {/* Header */}
       <div className="bg-white border-b border-slate-200 p-4">
         <div className="flex items-center justify-between max-w-4xl mx-auto">
@@ -3728,102 +3823,26 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
                             {/* Record with Camera */}
                             <button
                               onClick={() => {
-                                alert('Camera recording coming soon! For now, please upload a video file.')
-                                // TODO: Implement camera recording for specific drill
+                                setCameraRecordTarget({ drillKey, exercise })
                               }}
                               className="flex flex-col items-center gap-2 p-3 rounded-lg bg-slate-50 border border-slate-200 hover:border-red-500/50 hover:bg-red-500/10 transition-colors"
                             >
                               <Video className="w-5 h-5 text-red-400" />
                               <span className="text-[10px] text-slate-500 uppercase">Record</span>
                             </button>
-                            
+
                             {/* Upload Video/Image - AUTO-ANALYZES with Vision AI */}
                             <label className="flex flex-col items-center gap-2 p-3 rounded-lg bg-slate-50 border border-slate-200 hover:border-blue-500/50 hover:bg-blue-500/10 transition-colors cursor-pointer">
                               <Upload className="w-5 h-5 text-blue-400" />
                               <span className="text-[10px] text-slate-500 uppercase">Upload</span>
-                              <input 
-                                type="file" 
-                                accept="video/*,image/*" 
+                              <input
+                                type="file"
+                                accept="video/*,image/*"
                                 className="hidden"
                                 onChange={async (e) => {
                                   const file = e.target.files?.[0]
                                   if (file) {
-                                    const isVideo = file.type.startsWith('video/')
-                                    const url = URL.createObjectURL(file)
-                                    
-                                    // Save media first
-                                    setDrillMediaMap(prev => ({
-                                      ...prev,
-                                      [drillKey]: {
-                                        type: isVideo ? 'video' : 'image',
-                                        blob: file,
-                                        url: url,
-                                        hasCoachFeedback: false
-                                      }
-                                    }))
-                                    setDrillMediaExpanded(null)
-                                    
-                                    // AUTO-ANALYZE with Vision AI
-                                    setIsAnalyzing(true)
-                                    try {
-                                      let frameBase64: string
-                                      
-                                      if (isVideo) {
-                                        // Extract frame from video
-                                        const video = document.createElement('video')
-                                        video.src = url
-                                        await new Promise(resolve => { video.onloadeddata = resolve; video.load() })
-                                        video.currentTime = 0.5
-                                        await new Promise(resolve => setTimeout(resolve, 500))
-                                        
-                                        const canvas = document.createElement('canvas')
-                                        canvas.width = video.videoWidth || 640
-                                        canvas.height = video.videoHeight || 480
-                                        canvas.getContext('2d')?.drawImage(video, 0, 0)
-                                        // Add SHOTIQ watermark before export
-                                        addWatermarkToCanvas(canvas)
-                                        frameBase64 = canvas.toDataURL('image/jpeg', 0.8)
-                                      } else {
-                                        // Convert image to base64
-                                        frameBase64 = await new Promise<string>((resolve) => {
-                                          const reader = new FileReader()
-                                          reader.onload = () => resolve(reader.result as string)
-                                          reader.readAsDataURL(file)
-                                        })
-                                      }
-                                      
-                                      // Call Vision AI
-                                      const response = await fetch('/api/vision-analyze', {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({
-                                          image: frameBase64,
-                                          drillId: exercise.id,
-                                          drillName: exercise.name,
-                                          drillDescription: exercise.description,
-                                          coachingPoints: exercise.tips,
-                                          focusArea: exercise.focusArea
-                                        })
-                                      })
-                                      
-                                      if (response.ok) {
-                                        const result = await response.json()
-                                        const analysis = result.analysis || result
-                                        setDrillMediaMap(prev => ({
-                                          ...prev,
-                                          [drillKey]: {
-                                            ...prev[drillKey],
-                                            hasCoachFeedback: true,
-                                            coachFeedback: analysis,
-                                            analysisType: 'quick'
-                                          }
-                                        }))
-                                      }
-                                    } catch (err) {
-                                      console.error('Auto-analysis failed:', err)
-                                    } finally {
-                                      setIsAnalyzing(false)
-                                    }
+                                    await processDrillMediaFile(file, drillKey, exercise)
                                   }
                                 }}
                               />
@@ -5294,7 +5313,14 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
   // File input refs for per-drill uploads
   const drillFileInputRef = useRef<HTMLInputElement>(null)
   const [currentDrillForUpload, setCurrentDrillForUpload] = useState<string | null>(null)
-  
+
+  // In-app camera recording target. `exercise` is set when the recording should
+  // auto-analyze (first capture flow); when null we only attach the media.
+  const [cameraRecordTarget, setCameraRecordTarget] = useState<{
+    drillKey: string
+    drillName?: string
+  } | null>(null)
+
   // Add workout picker modal state
   const [showAddWorkoutPicker, setShowAddWorkoutPicker] = useState(false)
   const [addWorkoutTargetDate, setAddWorkoutTargetDate] = useState<Date | null>(null)
@@ -5913,6 +5939,27 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
     )
   }
   
+  // Called by the camera recorder when the user confirms a clip. Mirrors the
+  // existing handleDrillFileUpload attach flow so a recorded File is handled
+  // identically to an uploaded one.
+  const handleDrillCameraRecorded = (file: File) => {
+    const target = cameraRecordTarget
+    if (!target) return
+    const isVideo = file.type.startsWith('video/')
+    const url = URL.createObjectURL(file)
+    setDrillMediaMap(prev => ({
+      ...prev,
+      [target.drillKey]: {
+        type: isVideo ? 'video' : 'image',
+        blob: file,
+        url,
+        hasCoachFeedback: false
+      }
+    }))
+    setDrillMediaExpanded(null)
+    setCameraRecordTarget(null)
+  }
+
   // Handle per-drill file upload
   const handleDrillFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -5958,7 +6005,24 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
         className="hidden"
         onChange={handleDrillFileUpload}
       />
-      
+
+      {/* In-app camera recorder modal */}
+      <DrillCameraRecorder
+        open={!!cameraRecordTarget}
+        drillName={cameraRecordTarget?.drillName}
+        onRecorded={handleDrillCameraRecorded}
+        onClose={() => setCameraRecordTarget(null)}
+        onPermissionDenied={() => {
+          const target = cameraRecordTarget
+          setCameraRecordTarget(null)
+          // Graceful fallback to the existing file-upload prompt.
+          if (target) {
+            setCurrentDrillForUpload(target.drillKey)
+            drillFileInputRef.current?.click()
+          }
+        }}
+      />
+
       {/* Inspirational Notification Banner - Only shows when there's a workout scheduled for today */}
       {showNotificationBanner && currentNotification && (
         <div className="bg-gradient-to-r from-[#FF6B35]/20 via-[#FF4500]/20 to-[#FF6B35]/20 rounded-xl p-4 border border-[#FF6B35]/30 animate-pulse">
@@ -7348,8 +7412,10 @@ export default function TrainingPlanCalendar({ focusAreas = [], detectedFlaws = 
                                         {/* Option 1: Record from Camera */}
                                         <button
                                           onClick={() => {
-                                            // TODO: Implement camera recording for this drill
-                                            alert('Camera recording coming soon! For now, please upload a video.')
+                                            setCameraRecordTarget({
+                                              drillKey,
+                                              drillName: exercise.name,
+                                            })
                                           }}
                                           className="w-full flex items-center gap-3 p-3 rounded-lg bg-white border border-slate-200 hover:border-[#FF6B35]/50 hover:bg-slate-50 transition-all text-left"
                                         >

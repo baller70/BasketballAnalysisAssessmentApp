@@ -11,12 +11,13 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { 
-  generateCoachingPrompt, 
+import {
+  generateCoachingPrompt,
   processCoachingResponse,
   generateFallbackAnalysis,
-  type CoachAnalysis 
+  type CoachAnalysis
 } from '@/services/coachingAnalysis'
+import { checkRateLimit } from '@/lib/rateLimit'
 
 interface VisionAnalysisRequest {
   image: string                  // Base64 encoded image
@@ -90,6 +91,14 @@ async function analyzeWithGeminiVision(
 }
 
 export async function POST(request: NextRequest) {
+  // Rate limit: 30 vision analyses per minute per IP.
+  const { response: limited } = checkRateLimit(request, {
+    bucket: 'vision-analyze',
+    limit: 30,
+    windowMs: 60_000,
+  })
+  if (limited) return limited
+
   try {
     const body: VisionAnalysisRequest = await request.json()
     

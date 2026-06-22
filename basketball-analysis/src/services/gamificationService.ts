@@ -791,78 +791,122 @@ export function updateChallengeProgress(challengeId: string, progress: number): 
 }
 
 // ============================================
-// LEADERBOARD FUNCTIONS (Mock Data)
+// LEADERBOARD FUNCTIONS (Real Data)
 // ============================================
+//
+// The leaderboard is sourced from real stored analysis data via the
+// /api/leaderboard route (Prisma aggregation). Because the existing UI calls
+// getLeaderboard() synchronously, we keep a synchronous signature backed by a
+// small in-memory cache: each call kicks off a background refresh and returns
+// the most recently fetched real data. Until real data has loaded (or if there
+// is genuinely no stored data), an honest empty "no rankings yet" state is
+// returned. Entries are NEVER fabricated.
 
+const STORAGE_KEY_LEADERBOARD_USER = 'bball_leaderboard_user_profile_id'
+
+// Cache keyed by leaderboard type so switching tabs reuses fetched data.
+const leaderboardCache = new Map<LeaderboardData['type'], LeaderboardData>()
+const leaderboardInFlight = new Set<LeaderboardData['type']>()
+
+function getCurrentUserProfileId(): string | null {
+  if (typeof window === 'undefined') return null
+  try {
+    return localStorage.getItem(STORAGE_KEY_LEADERBOARD_USER)
+  } catch {
+    return null
+  }
+}
+
+function emptyLeaderboard(
+  type: LeaderboardData['type'],
+  ageGroup: string,
+  skillLevel: string
+): LeaderboardData {
+  return {
+    type,
+    ageGroup,
+    skillLevel,
+    entries: [],
+    userRank: 0,
+    totalParticipants: 0
+  }
+}
+
+/**
+ * Fetch real leaderboard data from the API and update the cache.
+ * Safe to call repeatedly; de-dupes concurrent requests per type.
+ */
+async function refreshLeaderboard(
+  type: LeaderboardData['type'],
+  ageGroup: string,
+  skillLevel: string
+): Promise<void> {
+  if (typeof window === 'undefined' || leaderboardInFlight.has(type)) return
+  leaderboardInFlight.add(type)
+  try {
+    const userProfileId = getCurrentUserProfileId()
+    const params = new URLSearchParams({ type, limit: '10' })
+    if (userProfileId) params.set('userProfileId', userProfileId)
+
+    const res = await fetch(`/api/leaderboard?${params.toString()}`)
+    if (!res.ok) return
+    const data = await res.json()
+    if (!data || data.success === false) return
+
+    leaderboardCache.set(type, {
+      type,
+      ageGroup,
+      skillLevel,
+      entries: Array.isArray(data.entries) ? data.entries : [],
+      userRank: typeof data.userRank === 'number' ? data.userRank : 0,
+      totalParticipants:
+        typeof data.totalParticipants === 'number' ? data.totalParticipants : 0
+    })
+  } catch (e) {
+    console.error('Error loading leaderboard:', e)
+  } finally {
+    leaderboardInFlight.delete(type)
+  }
+}
+
+/**
+ * Returns the leaderboard for the given type. Backed by real stored data.
+ *
+ * Synchronous to preserve the existing call site; triggers a background refresh
+ * and returns cached real data when available, otherwise an empty
+ * "no rankings yet" state. Never returns fabricated entries.
+ */
 export function getLeaderboard(
   type: LeaderboardData['type'],
   ageGroup: string,
   skillLevel: string
 ): LeaderboardData {
-  // Generate mock leaderboard data
-  const userProgress = getUserProgress()
-  const userScore = type === 'form_score' ? 78 : 
-                    type === 'improvement' ? 15 :
-                    type === 'streak' ? userProgress.currentStreak :
-                    userProgress.totalAnalyses
-  
-  // Generate mock entries
-  const mockEntries: LeaderboardEntry[] = []
-  const scores = [95, 92, 89, 87, 85, 83, 81, 79, 77, 75, 73, 71, 69, 67, 65]
-  
-  let userInserted = false
-  let userRank = 0
-  
-  for (let i = 0; i < 15; i++) {
-    const score = type === 'streak' ? Math.floor(Math.random() * 30) + 1 :
-                  type === 'engagement' ? Math.floor(Math.random() * 50) + 10 :
-                  scores[i]
-    
-    // Insert user at appropriate position
-    if (!userInserted && userScore >= score) {
-      userRank = i + 1
-      mockEntries.push({
-        rank: userRank,
-        identifier: 'You',
-        score: userScore,
-        level: userProgress.currentLevel,
-        isCurrentUser: true,
-        change: Math.floor(Math.random() * 5) - 2
-      })
-      userInserted = true
-    }
-    
-    mockEntries.push({
-      rank: userInserted ? i + 2 : i + 1,
-      identifier: `Player_${String.fromCharCode(65 + i)}`,
-      score,
-      level: Math.ceil(score / 20),
-      isCurrentUser: false,
-      change: Math.floor(Math.random() * 5) - 2
-    })
+  // Kick off a background refresh so subsequent renders/tab switches show
+  // up-to-date real data.
+  void refreshLeaderboard(type, ageGroup, skillLevel)
+
+  const cached = leaderboardCache.get(type)
+  if (cached) {
+    return { ...cached, ageGroup, skillLevel }
   }
-  
-  // If user wasn't inserted, add at end
-  if (!userInserted) {
-    userRank = mockEntries.length + 1
-    mockEntries.push({
-      rank: userRank,
-      identifier: 'You',
-      score: userScore,
-      level: userProgress.currentLevel,
-      isCurrentUser: true,
-      change: Math.floor(Math.random() * 5) - 2
-    })
-  }
-  
-  return {
-    type,
-    ageGroup,
-    skillLevel,
-    entries: mockEntries.slice(0, 10),
-    userRank,
-    totalParticipants: 150
-  }
+
+  return emptyLeaderboard(type, ageGroup, skillLevel)
+}
+
+/**
+ * Async variant that always reflects the latest real data from the API.
+ * Preferred for new call sites that can await.
+ */
+export async function getLeaderboardAsync(
+  type: LeaderboardData['type'],
+  ageGroup: string,
+  skillLevel: string
+): Promise<LeaderboardData> {
+  await refreshLeaderboard(type, ageGroup, skillLevel)
+  const cached = leaderboardCache.get(type)
+  return cached
+    ? { ...cached, ageGroup, skillLevel }
+    : emptyLeaderboard(type, ageGroup, skillLevel)
 }
 
 // ============================================

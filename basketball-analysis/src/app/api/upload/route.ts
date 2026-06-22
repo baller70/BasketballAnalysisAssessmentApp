@@ -10,8 +10,17 @@ import {
   base64ToBuffer,
   generateUniqueFilename,
 } from "@/lib/storage"
+import { checkRateLimit } from "@/lib/rateLimit"
 
 export async function POST(request: NextRequest) {
+  // Rate limit: 20 uploads per minute per IP.
+  const { response: limited } = checkRateLimit(request, {
+    bucket: 'upload',
+    limit: 20,
+    windowMs: 60_000,
+  })
+  if (limited) return limited
+
   try {
     const formData = await request.formData()
     

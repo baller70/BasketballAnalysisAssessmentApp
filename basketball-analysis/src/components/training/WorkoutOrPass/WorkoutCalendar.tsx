@@ -454,6 +454,7 @@ const AGE_LEVEL_CONFIG: Record<AgeLevel, {
 }
 
 const STORAGE_KEY = 'workout-calendar-data'
+const CUSTOM_DRILLS_KEY = 'workout-calendar-custom-drills'
 
 // =============================================
 // HELPER ICON COMPONENTS
@@ -841,6 +842,8 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
   const [showBuildWorkoutPopup, setShowBuildWorkoutPopup] = useState(false)
   const [showDrillPickerPopup, setShowDrillPickerPopup] = useState(false)
   const [showAutoGeneratePopup, setShowAutoGeneratePopup] = useState(false)
+  const [showCustomDrillCreator, setShowCustomDrillCreator] = useState(false)
+  const [customDrills, setCustomDrills] = useState<Drill[]>([])
   const [addMode, setAddMode] = useState<'workout' | 'drill'>('workout')
   const [scheduleSuccessInfo, setScheduleSuccessInfo] = useState<{
     show: boolean
@@ -885,6 +888,15 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
           console.error('Failed to load calendar data:', e)
         }
       }
+      const savedCustom = localStorage.getItem(CUSTOM_DRILLS_KEY)
+      if (savedCustom) {
+        try {
+          const parsed = JSON.parse(savedCustom)
+          if (Array.isArray(parsed)) setCustomDrills(parsed)
+        } catch (e) {
+          console.error('Failed to load custom drills:', e)
+        }
+      }
       setIsHydrated(true)
     }
   }, [])
@@ -910,6 +922,16 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
     }
   }, [preferences, scheduledWorkouts, notificationsEnabled, isHydrated])
 
+  // Persist custom drills separately
+  useEffect(() => {
+    if (isHydrated && typeof window !== 'undefined') {
+      localStorage.setItem(CUSTOM_DRILLS_KEY, JSON.stringify(customDrills))
+    }
+  }, [customDrills, isHydrated])
+
+  // Full drill pool = built-in drills + user-created custom drills
+  const allDrills = useMemo(() => [...ALL_DRILLS, ...customDrills], [customDrills])
+
   const currentAgeLevelConfig = AGE_LEVEL_CONFIG[preferences.ageLevel]
   const ageLevels: AgeLevel[] = ['elementary', 'middle_school', 'high_school', 'college', 'professional']
   const durationOptions: (5 | 10 | 15 | 20 | 30 | 45)[] = [5, 10, 15, 20, 30, 45]
@@ -924,8 +946,8 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
       'professional': 'PROFESSIONAL'
     }
     const skillLevel = levelMap[preferences.ageLevel]
-    return ALL_DRILLS.filter(d => d.level === skillLevel || d.level === 'ELEMENTARY')
-  }, [preferences.ageLevel])
+    return allDrills.filter(d => d.level === skillLevel || d.level === 'ELEMENTARY')
+  }, [preferences.ageLevel, allDrills])
 
   // Generate AI workout
   const generateWorkout = useCallback(() => {
@@ -1607,7 +1629,7 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
       {/* Build Workout Popup */}
       {showBuildWorkoutPopup && (
         <BuildWorkoutPopup
-          availableDrills={ALL_DRILLS}
+          availableDrills={allDrills}
           onClose={() => {
             setShowBuildWorkoutPopup(false)
             if (!selectedDayForPopup) setSelectedDayForPopup(null)
@@ -1637,7 +1659,7 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
       {/* Drill Picker Popup */}
       {showDrillPickerPopup && (
         <DrillPickerPopup
-          availableDrills={ALL_DRILLS}
+          availableDrills={allDrills}
           onClose={() => {
             setShowDrillPickerPopup(false)
             if (!selectedDayForPopup) setSelectedDayForPopup(null)
@@ -1666,12 +1688,16 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
       {/* Auto-Generate Popup */}
       {showAutoGeneratePopup && (
         <AutoGeneratePopup
-          availableDrills={ALL_DRILLS}
+          availableDrills={allDrills}
           currentPreferences={preferences}
           onClose={() => setShowAutoGeneratePopup(false)}
+          onCreateCustomDrill={() => {
+            setShowAutoGeneratePopup(false)
+            setShowCustomDrillCreator(true)
+          }}
           onGenerate={(config) => {
             // Generate based on config with all filters
-            const filteredDrills = ALL_DRILLS.filter(d => {
+            const filteredDrills = allDrills.filter(d => {
               const matchesFocus = config.focusAreas.length === 0 || config.focusAreas.includes(d.focusArea)
               const matchesSkill = config.skillLevels.length === 0 || config.skillLevels.includes(d.level)
               const matchesDiff = config.difficulties.length === 0 || config.difficulties.includes(d.difficulty)
@@ -1778,7 +1804,25 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
           }}
         />
       )}
-      
+
+      {/* Custom Drill Creator Popup */}
+      {showCustomDrillCreator && (
+        <CustomDrillCreator
+          defaultLevel={({
+            'elementary': 'ELEMENTARY',
+            'middle_school': 'MIDDLE_SCHOOL',
+            'high_school': 'HIGH_SCHOOL',
+            'college': 'COLLEGE',
+            'professional': 'PROFESSIONAL',
+          } as Record<AgeLevel, SkillLevel>)[preferences.ageLevel]}
+          onClose={() => setShowCustomDrillCreator(false)}
+          onCreate={(drill) => {
+            setCustomDrills(prev => [...prev, drill])
+            setShowCustomDrillCreator(false)
+          }}
+        />
+      )}
+
       {/* Schedule Success Toast */}
       {scheduleSuccessInfo?.show && (
         <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[250] animate-in slide-in-from-bottom-4 fade-in duration-300">
@@ -2769,9 +2813,10 @@ interface AutoGeneratePopupProps {
   currentPreferences: TrainingPreferences
   onClose: () => void
   onGenerate: (config: AutoGenerateConfig) => void
+  onCreateCustomDrill: () => void
 }
 
-function AutoGeneratePopup({ availableDrills, currentPreferences, onClose, onGenerate }: AutoGeneratePopupProps) {
+function AutoGeneratePopup({ availableDrills, currentPreferences, onClose, onGenerate, onCreateCustomDrill }: AutoGeneratePopupProps) {
   const [config, setConfig] = useState<AutoGenerateConfig>({
     type: 'workout',
     frequency: 'one-off',
@@ -3192,9 +3237,7 @@ function AutoGeneratePopup({ availableDrills, currentPreferences, onClose, onGen
             <p className="text-slate-500 text-xs text-center mb-2">Can't find what you're looking for?</p>
             <button
               onClick={() => {
-                onClose()
-                // This will be handled by a separate popup
-                alert('Custom Drill Creator coming soon! This feature will allow you to create your own drills with custom instructions, duration, and focus areas.')
+                onCreateCustomDrill()
               }}
               className="w-full py-3 rounded-xl bg-white border border-dashed border-slate-200 text-slate-500 font-bold hover:border-[#FF6B35]/50 hover:text-slate-900 transition-all flex items-center justify-center gap-2"
             >
@@ -3202,6 +3245,197 @@ function AutoGeneratePopup({ availableDrills, currentPreferences, onClose, onGen
               CREATE CUSTOM DRILL
             </button>
           </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// =============================================
+// CUSTOM DRILL CREATOR POPUP COMPONENT
+// =============================================
+
+interface CustomDrillCreatorProps {
+  defaultLevel: SkillLevel
+  onClose: () => void
+  onCreate: (drill: Drill) => void
+}
+
+function CustomDrillCreator({ defaultLevel, onClose, onCreate }: CustomDrillCreatorProps) {
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [focusArea, setFocusArea] = useState<FocusArea>('CONSISTENCY')
+  const [level, setLevel] = useState<SkillLevel>(defaultLevel)
+  const [duration, setDuration] = useState<number>(10)
+  const [reps, setReps] = useState('')
+  const [difficulty, setDifficulty] = useState<1 | 2 | 3 | 4 | 5>(2)
+  const [error, setError] = useState<string | null>(null)
+
+  const focusAreaOptions = Object.keys(FOCUS_AREA_LABELS) as FocusArea[]
+  const levelOptions: SkillLevel[] = ['ELEMENTARY', 'MIDDLE_SCHOOL', 'HIGH_SCHOOL', 'COLLEGE', 'PROFESSIONAL']
+
+  const handleSubmit = () => {
+    if (!title.trim()) {
+      setError('Please enter a drill name.')
+      return
+    }
+    const safeDuration = Number.isFinite(duration) && duration > 0 ? Math.round(duration) : 10
+    const steps: string[] = []
+    if (reps.trim()) steps.push(`Target: ${reps.trim()}`)
+    steps.push(description.trim() || 'Perform the drill focusing on good form.')
+
+    const drill: Drill = {
+      id: `custom-${Date.now()}`,
+      title: title.trim(),
+      level,
+      focusArea,
+      difficulty,
+      duration: safeDuration,
+      description: description.trim() || 'Custom drill created by you.',
+      whyItMatters: 'A custom drill you created to target a specific part of your game.',
+      steps,
+      expectedOutcomes: ['Improved ' + FOCUS_AREA_LABELS[focusArea].toLowerCase()],
+      icon: '⭐',
+      color: 'orange',
+    }
+    onCreate(drill)
+  }
+
+  return (
+    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 p-4">
+      <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
+          <div className="flex items-center gap-2">
+            <Plus className="w-5 h-5 text-[#FF6B35]" />
+            <h3 className="font-bold text-slate-900 text-sm uppercase tracking-wide">Create Custom Drill</h3>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="p-5 space-y-4 overflow-y-auto">
+          {/* Name */}
+          <div>
+            <label className="block text-xs font-bold text-slate-600 uppercase mb-1.5">Drill Name *</label>
+            <input
+              value={title}
+              onChange={(e) => { setTitle(e.target.value); setError(null) }}
+              placeholder="e.g. One-Hand Form Shooting"
+              className="w-full h-10 rounded-lg border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/40"
+            />
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block text-xs font-bold text-slate-600 uppercase mb-1.5">Description</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="What does this drill involve?"
+              rows={3}
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/40 resize-none"
+            />
+          </div>
+
+          {/* Category / Focus Area */}
+          <div>
+            <label className="block text-xs font-bold text-slate-600 uppercase mb-1.5">Category</label>
+            <select
+              value={focusArea}
+              onChange={(e) => setFocusArea(e.target.value as FocusArea)}
+              className="w-full h-10 rounded-lg border border-slate-200 px-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/40"
+            >
+              {focusAreaOptions.map((fa) => (
+                <option key={fa} value={fa}>{FOCUS_AREA_LABELS[fa]}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Skill level */}
+          <div>
+            <label className="block text-xs font-bold text-slate-600 uppercase mb-1.5">Skill Level</label>
+            <select
+              value={level}
+              onChange={(e) => setLevel(e.target.value as SkillLevel)}
+              className="w-full h-10 rounded-lg border border-slate-200 px-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/40"
+            >
+              {levelOptions.map((lv) => (
+                <option key={lv} value={lv}>{lv.replace('_', ' ')}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Duration + Reps */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-600 uppercase mb-1.5">Duration (min)</label>
+              <input
+                type="number"
+                min={1}
+                value={duration}
+                onChange={(e) => setDuration(parseInt(e.target.value, 10))}
+                className="w-full h-10 rounded-lg border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/40"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-600 uppercase mb-1.5">Target Reps</label>
+              <input
+                value={reps}
+                onChange={(e) => setReps(e.target.value)}
+                placeholder="e.g. 50 shots"
+                className="w-full h-10 rounded-lg border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/40"
+              />
+            </div>
+          </div>
+
+          {/* Difficulty */}
+          <div>
+            <label className="block text-xs font-bold text-slate-600 uppercase mb-1.5">Difficulty</label>
+            <div className="flex gap-2">
+              {[1, 2, 3, 4, 5].map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => setDifficulty(d as 1 | 2 | 3 | 4 | 5)}
+                  className={`flex-1 h-9 rounded-lg text-sm font-bold transition-colors ${
+                    difficulty >= d
+                      ? 'bg-[#FF6B35] text-white'
+                      : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
+                  }`}
+                >
+                  ★
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {error && (
+            <p className="text-sm text-red-500">{error}</p>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="p-5 border-t border-slate-200 flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 py-3 rounded-xl bg-white border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-all"
+          >
+            CANCEL
+          </button>
+          <button
+            onClick={handleSubmit}
+            className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-white font-bold hover:brightness-110 transition-all flex items-center justify-center gap-2"
+          >
+            <Check className="w-5 h-5" />
+            CREATE DRILL
+          </button>
         </div>
       </div>
     </div>

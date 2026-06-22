@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { Target, Plus, TrendingUp, Calendar, Trophy } from "lucide-react"
+import { Target, Plus, TrendingUp, Calendar, Trophy, X, Check } from "lucide-react"
 import { GoalTransitMap } from "@/components/goals"
 import { useAnalysisStore } from "@/stores/analysisStore"
 import { getAllSessions, AnalysisSession } from "@/services/sessionStorage"
@@ -17,7 +17,10 @@ export default function GoalsPage() {
   const [sessions, setSessions] = useState<AnalysisSession[]>([])
   
   // Get goals from context (dynamic, not hardcoded)
-  const { goals, totalGoals, completedCount } = useGoals()
+  const { goals, totalGoals, completedCount, addGoal } = useGoals()
+
+  // Goal creation modal state
+  const [showGoalModal, setShowGoalModal] = useState(false)
   
   useEffect(() => {
     try {
@@ -87,7 +90,7 @@ export default function GoalsPage() {
       setShowPointsBurst(true)
       setTimeout(() => setShowPointsBurst(false), 1500)
     }
-    // TODO: Open goal creation modal
+    setShowGoalModal(true)
   }
   
   return (
@@ -186,6 +189,193 @@ export default function GoalsPage() {
       
       {/* Goal Transit Map - Journey */}
       <GoalTransitMap />
+
+      {/* Goal Creation Modal */}
+      {showGoalModal && (
+        <GoalCreationModal
+          onClose={() => setShowGoalModal(false)}
+          onCreate={(goal) => {
+            addGoal(goal)
+            setShowGoalModal(false)
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+// ============================================
+// GOAL CREATION MODAL
+// ============================================
+
+type NewGoalCategory = 'form' | 'consistency' | 'volume' | 'accuracy' | 'streak' | 'custom'
+
+interface GoalCreationModalProps {
+  onClose: () => void
+  onCreate: (goal: {
+    name: string
+    description: string
+    targetValue: number
+    currentValue: number
+    unit: string
+    category: NewGoalCategory
+    xpReward: number
+  }) => void
+}
+
+const CATEGORY_OPTIONS: { value: NewGoalCategory; label: string; defaultUnit: string }[] = [
+  { value: 'form', label: 'Form', defaultUnit: 'score' },
+  { value: 'consistency', label: 'Consistency', defaultUnit: 'sessions' },
+  { value: 'volume', label: 'Volume', defaultUnit: 'shots' },
+  { value: 'accuracy', label: 'Accuracy', defaultUnit: 'makes' },
+  { value: 'streak', label: 'Streak', defaultUnit: 'days' },
+  { value: 'custom', label: 'Custom', defaultUnit: 'reps' },
+]
+
+function GoalCreationModal({ onClose, onCreate }: GoalCreationModalProps) {
+  const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
+  const [category, setCategory] = useState<NewGoalCategory>('volume')
+  const [targetValue, setTargetValue] = useState<number>(50)
+  const [unit, setUnit] = useState('shots')
+  const [xpReward, setXpReward] = useState<number>(100)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleCategoryChange = (value: NewGoalCategory) => {
+    setCategory(value)
+    const opt = CATEGORY_OPTIONS.find((o) => o.value === value)
+    if (opt) setUnit(opt.defaultUnit)
+  }
+
+  const handleSubmit = () => {
+    if (!name.trim()) {
+      setError('Please enter a goal name.')
+      return
+    }
+    const safeTarget = Number.isFinite(targetValue) && targetValue > 0 ? Math.round(targetValue) : 1
+    onCreate({
+      name: name.trim().toUpperCase(),
+      description: description.trim() || `Reach ${safeTarget} ${unit.trim() || 'units'}`,
+      targetValue: safeTarget,
+      currentValue: 0,
+      unit: unit.trim() || 'units',
+      category,
+      xpReward: Number.isFinite(xpReward) && xpReward > 0 ? Math.round(xpReward) : 100,
+    })
+  }
+
+  return (
+    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 p-4">
+      <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
+          <div className="flex items-center gap-2">
+            <Target className="w-5 h-5 text-[#FF6B35]" />
+            <h3 className="font-bold text-slate-900 text-sm uppercase tracking-wide">Create Goal</h3>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="p-5 space-y-4 overflow-y-auto">
+          {/* Name */}
+          <div>
+            <label className="block text-xs font-bold text-slate-600 uppercase mb-1.5">Goal Name *</label>
+            <input
+              value={name}
+              onChange={(e) => { setName(e.target.value); setError(null) }}
+              placeholder="e.g. 200 Makes"
+              className="w-full h-10 rounded-lg border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/40"
+            />
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block text-xs font-bold text-slate-600 uppercase mb-1.5">Description</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="What do you want to achieve?"
+              rows={2}
+              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/40 resize-none"
+            />
+          </div>
+
+          {/* Category */}
+          <div>
+            <label className="block text-xs font-bold text-slate-600 uppercase mb-1.5">Category</label>
+            <select
+              value={category}
+              onChange={(e) => handleCategoryChange(e.target.value as NewGoalCategory)}
+              className="w-full h-10 rounded-lg border border-slate-200 px-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/40"
+            >
+              {CATEGORY_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Target + Unit */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-600 uppercase mb-1.5">Target</label>
+              <input
+                type="number"
+                min={1}
+                value={targetValue}
+                onChange={(e) => setTargetValue(parseInt(e.target.value, 10))}
+                className="w-full h-10 rounded-lg border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/40"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-600 uppercase mb-1.5">Unit</label>
+              <input
+                value={unit}
+                onChange={(e) => setUnit(e.target.value)}
+                placeholder="shots"
+                className="w-full h-10 rounded-lg border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/40"
+              />
+            </div>
+          </div>
+
+          {/* XP Reward */}
+          <div>
+            <label className="block text-xs font-bold text-slate-600 uppercase mb-1.5">XP Reward</label>
+            <input
+              type="number"
+              min={0}
+              value={xpReward}
+              onChange={(e) => setXpReward(parseInt(e.target.value, 10))}
+              className="w-full h-10 rounded-lg border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/40"
+            />
+          </div>
+
+          {error && <p className="text-sm text-red-500">{error}</p>}
+        </div>
+
+        {/* Footer */}
+        <div className="p-5 border-t border-slate-200 flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 py-3 rounded-xl bg-white border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-all"
+          >
+            CANCEL
+          </button>
+          <button
+            onClick={handleSubmit}
+            className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-white font-bold hover:brightness-110 transition-all flex items-center justify-center gap-2"
+          >
+            <Check className="w-5 h-5" />
+            CREATE GOAL
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
