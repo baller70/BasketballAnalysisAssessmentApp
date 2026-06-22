@@ -20,7 +20,7 @@ out
 *.tsbuildinfo
 
 # =============================================
-# EXCLUDE FROM VERCEL - Not needed for web app
+# Not part of the web app build (data, mockups, backends)
 # =============================================
 training_data/
 template_mockups/
