@@ -10,12 +10,10 @@
  * - Comprehensive status API
  * 
  * Note: This uses in-memory storage which resets on server restart.
- * For production with multiple instances, upgrade to Vercel KV:
- * 
- * 1. Install: npm install @vercel/kv
- * 2. Link KV database in Vercel dashboard
- * 3. Replace Map operations with kv.get/kv.set
- * 
+ * For production with multiple instances, move to a shared store
+ * (e.g. Redis / Upstash) by replacing the Map operations with
+ * get/set calls against that store.
+ *
  * Current implementation is suitable for:
  * - Single instance deployments
  * - Serverless with short-lived functions
