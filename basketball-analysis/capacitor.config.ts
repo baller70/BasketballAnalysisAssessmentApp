@@ -14,15 +14,17 @@ const config: CapacitorConfig = {
     // Icons are copied from src-tauri/icons/ios/ during build
   },
   
-  // Server configuration for development
+  // Server configuration.
+  // The app is server-backed (auth/DB/API), so the native iOS shell loads the
+  // live web app directly; on-device MoveNet analysis runs inside the webview.
+  // For local dev, override url with http://localhost:3000 + cleartext: true.
   server: {
-    // For development, you can point to the dev server
-    // Uncomment the line below during development:
-    // url: 'http://localhost:3000',
-    // cleartext: true,
-    
-    // Allow navigation to external URLs (for API calls)
+    url: 'https://shotiq.194-146-12-139.sslip.io',
+
+    // Allow navigation to the live host + external API/CDN calls.
     allowNavigation: [
+      'shotiq.194-146-12-139.sslip.io',
+      '*.sslip.io',
       'api.shotiqai.com',
       '*.shotiqai.com',
       'localhost:*',
