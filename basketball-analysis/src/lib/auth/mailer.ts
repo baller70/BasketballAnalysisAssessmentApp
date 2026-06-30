@@ -45,6 +45,15 @@ function getTransport(): Transporter {
   const user = process.env.SMTP_USER
   const pass = process.env.SMTP_PASS
 
+  // Local MTAs (e.g. Postfix on the box) often present a self-signed cert for
+  // opportunistic STARTTLS. Accept it for localhost; validate for external
+  // relays. Override explicitly with SMTP_TLS_REJECT_UNAUTHORIZED=true/false.
+  const isLocal = host === "127.0.0.1" || host === "localhost"
+  const rejectUnauthorized =
+    process.env.SMTP_TLS_REJECT_UNAUTHORIZED != null
+      ? process.env.SMTP_TLS_REJECT_UNAUTHORIZED === "true"
+      : !isLocal
+
   transporter = nodemailer.createTransport({
     host,
     port,
@@ -52,6 +61,7 @@ function getTransport(): Transporter {
     // Only authenticate when both credentials are supplied; the local MTA
     // accepts unauthenticated mail from localhost.
     ...(user && pass ? { auth: { user, pass } } : {}),
+    tls: { rejectUnauthorized },
   })
 
   return transporter
