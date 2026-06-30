@@ -8,13 +8,17 @@
 # Usage (on the box):  cd /opt/shotiq && ./deploy.sh
 set -euo pipefail
 
-APP_DIR="/opt/shotiq"
+REPO_DIR="/opt/shotiq"                          # git repo root
+APP_DIR="/opt/shotiq/basketball-analysis"        # the Next.js app lives here
 APP_NAME="shotiq"
 # Cap build memory so `next build` (+ TF.js) doesn't OOM a small VPS.
 export NODE_OPTIONS="--max-old-space-size=2048"
 
-cd "$APP_DIR"
+echo "==> [1/6] Pulling latest code"
+cd "$REPO_DIR"
+git pull --ff-only
 
+cd "$APP_DIR"
 # Load production env so prisma/build/seed see DATABASE_URL etc.
 if [ -f .env.production ]; then
   set -a
@@ -22,9 +26,6 @@ if [ -f .env.production ]; then
   . ./.env.production
   set +a
 fi
-
-echo "==> [1/6] Pulling latest code"
-git pull --ff-only
 
 echo "==> [2/6] Installing dependencies (npm ci)"
 npm ci

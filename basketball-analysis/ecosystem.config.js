@@ -11,7 +11,7 @@ module.exports = {
       // `next start` from the local install — no global next required.
       script: "node_modules/.bin/next",
       args: "start --port 3060",
-      cwd: "/opt/shotiq",
+      cwd: "/opt/shotiq/basketball-analysis",
       instances: 1,
       exec_mode: "fork",
       // Restart if the process leaks past this — Next + TF.js can grow over time.
