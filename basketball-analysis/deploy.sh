@@ -27,8 +27,11 @@ if [ -f .env.production ]; then
   set +a
 fi
 
-echo "==> [2/6] Installing dependencies (npm ci)"
-npm ci
+echo "==> [2/6] Installing dependencies (npm ci, incl. dev for the build)"
+# --include=dev is REQUIRED: .env.production sets NODE_ENV=production, under which
+# npm omits devDependencies — but tailwindcss/postcss/typescript are needed by
+# `next build`. Without this the build fails with "Cannot find module 'tailwindcss'".
+npm ci --include=dev
 
 echo "==> [3/6] Applying database migrations"
 npx prisma migrate deploy
