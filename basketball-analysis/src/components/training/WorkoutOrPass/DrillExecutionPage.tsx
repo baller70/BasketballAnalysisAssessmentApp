@@ -12,12 +12,12 @@
  */
 
 import React, { useState, useRef, useCallback, useEffect } from "react"
-import { 
-  ArrowLeft, MoreVertical, ChevronRight, ChevronDown, Plus, Minus, 
-  RotateCcw, Play, Pause, Clock, X, Target, Check,
+import {
+  ArrowLeft, MoreVertical, ChevronDown, Plus, Minus,
+  RotateCcw, Play, Pause, X, Target, Check,
   Trash2, Star, Sparkles, Timer, Crosshair, Flame, Camera, Hand,
-  Zap, Trophy, TrendingUp, CircleDot, CheckCircle, XCircle, Eye,
-  Circle, Type, Move, Grip, MapPin, Edit2, ArrowRight
+  Zap, Trophy, CircleDot, CheckCircle, XCircle,
+  Type, Move, Grip, MapPin, Edit2, ArrowRight
 } from "lucide-react"
 import { Drill, DrillFocusArea } from "@/data/drillDatabase"
 import { createWorkout } from "@/lib/api/workoutsClient"
@@ -82,15 +82,6 @@ interface CourtText {
   x: number
   y: number
   label: string
-}
-
-// Tool colors configuration
-const TOOL_COLORS = {
-  shot: '#FF6B35',   // Orange - main shooting spots
-  pass: '#6B7280',   // Gray - subtle
-  dribble: '#6B7280', // Gray - subtle  
-  cone: '#6B7280',   // Gray - subtle
-  text: '#6B7280'    // Gray - subtle
 }
 
 interface DrillExecutionPageProps {
@@ -202,7 +193,7 @@ export function DrillExecutionPage({ drill, onClose, onStartDrill }: DrillExecut
   // Shot tracking state
   const [currentSpotIndex, setCurrentSpotIndex] = useState(0)
   const [currentStreak, setCurrentStreak] = useState(0)
-  const [shotHistory, setShotHistory] = useState<ShotHistoryEntry[]>([])
+  const [, setShotHistory] = useState<ShotHistoryEntry[]>([])
   const [drillComplete, setDrillComplete] = useState(false)
   const [showCompletionModal, setShowCompletionModal] = useState(false)
   // Ensures we persist exactly one completed Workout per drill run.
@@ -256,28 +247,6 @@ export function DrillExecutionPage({ drill, onClose, onStartDrill }: DrillExecut
     const secs = seconds % 60
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
   }
-  
-  // Calculate total shots based on mode and settings
-  const totalShotsTarget = useCallback(() => {
-    switch (drillMode) {
-      case 'attempts':
-        return shotsToTake
-      case 'made':
-        return shotsToTake // Target number of makes
-      case 'streak':
-        return spots.length * streakTarget // Make streakTarget in a row at each spot
-      case 'time':
-        return Infinity // No shot limit for time mode
-      default:
-        return shotsToTake
-    }
-  }, [drillMode, shotsToTake, spots.length, streakTarget])
-  
-  // Calculate shots per spot based on settings
-  const shotsPerSpotTarget = useCallback(() => {
-    if (spots.length === 0) return 0
-    return ballsPerSpot
-  }, [spots.length, ballsPerSpot])
   
   // Get current spot
   const currentSpot = spots[currentSpotIndex] || null
@@ -1017,7 +986,7 @@ export function DrillExecutionPage({ drill, onClose, onStartDrill }: DrillExecut
               Drill Complete!
             </h2>
             <p className="text-slate-500 text-center mb-6">
-              Great work! Here's your performance summary.
+              Great work! Here&apos;s your performance summary.
             </p>
             
             {/* Stats Grid */}
@@ -1206,7 +1175,7 @@ function TimeLimitInput({ timeLimitSeconds, setTimeLimitSeconds, formatTime }: T
           {/* Minus button - decrements by 1 second */}
           <button
             onClick={() => setTimeLimitSeconds(Math.max(1, timeLimitSeconds - 1))}
-            onMouseDown={(e) => {
+            onMouseDown={() => {
               // Hold to decrement faster
               const interval = setInterval(() => {
                 setTimeLimitSeconds((prev: number) => Math.max(1, prev - 1))
@@ -1238,7 +1207,7 @@ function TimeLimitInput({ timeLimitSeconds, setTimeLimitSeconds, formatTime }: T
           {/* Plus button - increments by 1 second */}
           <button
             onClick={() => setTimeLimitSeconds(Math.min(3600, timeLimitSeconds + 1))}
-            onMouseDown={(e) => {
+            onMouseDown={() => {
               // Hold to increment faster
               const interval = setInterval(() => {
                 setTimeLimitSeconds((prev: number) => Math.min(3600, prev + 1))
@@ -1380,7 +1349,6 @@ interface BuildDrillTabProps {
 }
 
 function BuildDrillTab({
-  drill,
   spots,
   selectedSpot,
   setSelectedSpot,
@@ -1397,11 +1365,8 @@ function BuildDrillTab({
   setSpots,
   // Lines for pass/dribble
   lines,
-  setLines,
   isDrawingLine,
-  setIsDrawingLine,
   lineStartPos,
-  setLineStartPos,
   linePreviewEnd,
   deleteLine,
   // Cones
@@ -1446,9 +1411,6 @@ function BuildDrillTab({
   elapsedTime,
   formatTime,
   togglePause,
-  setIsDrillActive,
-  setIsPaused,
-  setElapsedTime,
   endDrill,
   // Tracking mode props
   trackingMode,

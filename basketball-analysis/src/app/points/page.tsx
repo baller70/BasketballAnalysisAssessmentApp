@@ -2,16 +2,14 @@
 
 import React, { useState } from 'react'
 import { usePoints } from '@/lib/points/pointsContext'
-import { POINT_ACTIONS, TIERS, TIER_ORDER, type TierLevel } from '@/lib/points/pointsConfig'
-import { PointsDisplay, NextUnlockProgress } from '@/components/points/PointsDisplay'
-import { 
-  Zap, 
-  Trophy, 
-  Star, 
-  Clock, 
-  TrendingUp, 
+import { POINT_ACTIONS, TIERS, TIER_ORDER } from '@/lib/points/pointsConfig'
+import { NextUnlockProgress } from '@/components/points/PointsDisplay'
+import {
+  Zap,
+  Trophy,
+  Clock,
+  TrendingUp,
   Gift,
-  ChevronRight,
   Check,
   Lock,
   Unlock,
@@ -20,7 +18,6 @@ import {
   Share2,
   Dumbbell,
   Award,
-  Users,
   Info,
   Sparkles
 } from 'lucide-react'
@@ -38,8 +35,7 @@ const CATEGORY_CONFIG: Record<string, { icon: React.ReactNode; color: string; la
 export default function PointsPage() {
   const { 
     state, 
-    getPointsToNext, 
-    getActiveTier,
+    getPointsToNext,
     activateTier,
     getCurrentTierConfig,
     getNextTierConfig,
@@ -50,8 +46,7 @@ export default function PointsPage() {
   const currentTier = getCurrentTierConfig()
   const nextTier = getNextTierConfig()
   const pointsToNext = getPointsToNext()
-  const activeTier = getActiveTier()
-  
+
   // Group actions by category
   const actionsByCategory = Object.values(POINT_ACTIONS).reduce((acc, action) => {
     if (!acc[action.category]) acc[action.category] = []
@@ -287,7 +282,7 @@ export default function PointsPage() {
         
         {activeTab === 'tiers' && (
           <div className="space-y-4">
-            {TIER_ORDER.map((tierId, index) => {
+            {TIER_ORDER.map((tierId) => {
               const tier = TIERS[tierId]
               const isUnlocked = state.totalPoints >= tier.pointsRequired
               const isCurrent = tierId === state.currentTier

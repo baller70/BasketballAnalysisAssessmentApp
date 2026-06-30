@@ -15,7 +15,7 @@ export default function GoalsPage() {
   const [sessions, setSessions] = useState<AnalysisSession[]>([])
   
   // Get goals from context (dynamic, not hardcoded)
-  const { goals, totalGoals, completedCount, addGoal } = useGoals()
+  const { totalGoals, completedCount, addGoal } = useGoals()
 
   // Goal creation modal state
   const [showGoalModal, setShowGoalModal] = useState(false)

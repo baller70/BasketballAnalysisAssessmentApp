@@ -74,9 +74,8 @@ interface AnalysisLockInGameProps {
 // MAIN COMPONENT
 // ============================================
 
-export function AnalysisLockInGame({ 
+export function AnalysisLockInGame({
   shootingStats,
-  overallScore = 78,
 }: AnalysisLockInGameProps) {
   const [isHydrated, setIsHydrated] = useState(false)
   const [currentIndex, setCurrentIndex] = useState(0)

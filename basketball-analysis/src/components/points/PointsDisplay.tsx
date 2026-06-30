@@ -302,16 +302,15 @@ export function PointsDisplay({
 /**
  * Tier unlock notification
  */
-export function TierUnlockNotification({ 
-  tier, 
+export function TierUnlockNotification({
   onDismiss,
   onActivate,
-}: { 
+}: {
   tier: string
   onDismiss: () => void
   onActivate: () => void
 }) {
-  const { getCurrentTierConfig, getNextTierConfig } = usePoints()
+  const { getCurrentTierConfig } = usePoints()
   const tierConfig = getCurrentTierConfig()
   
   return (

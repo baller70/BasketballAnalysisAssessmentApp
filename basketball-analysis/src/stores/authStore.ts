@@ -195,7 +195,7 @@ export const useAuthStore = create<AuthState>()(
               })
             )
             .catch(() => {})
-        } catch (e) {
+        } catch {
           // ignore network/runtime errors on sign out
         }
 

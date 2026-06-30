@@ -75,6 +75,7 @@ export function FullScreenShotTracker({
   const [detectionStatus, setDetectionStatus] = useState<'idle' | 'detecting' | 'made' | 'missed'>('idle')
   
   // Models
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- holds a dynamically-loaded coco-ssd model instance
   const cocoModelRef = useRef<any>(null)
   
   // Audio refs
@@ -158,8 +159,8 @@ export function FullScreenShotTracker({
             height: { ideal: 1080 }
           }
         })
-      } catch (e: any) {
-        console.log('[FullScreenShotTracker] Failed with constraints, trying fallback:', e.message)
+      } catch (e) {
+        console.log('[FullScreenShotTracker] Failed with constraints, trying fallback:', (e as { message?: string }).message)
         stream = await navigator.mediaDevices.getUserMedia({ video: true })
       }
       
@@ -221,8 +222,8 @@ export function FullScreenShotTracker({
     try {
       const predictions = await cocoModelRef.current.detect(videoRef.current)
       return predictions
-        .filter((pred: any) => pred.class === 'sports ball' && pred.score >= DETECTION_CONFIG.ballConfidenceThreshold)
-        .map((pred: any) => ({
+        .filter((pred: { class: string; score: number; bbox: number[] }) => pred.class === 'sports ball' && pred.score >= DETECTION_CONFIG.ballConfidenceThreshold)
+        .map((pred: { class: string; score: number; bbox: number[] }) => ({
           type: 'ball',
           confidence: pred.score,
           bbox: {
@@ -282,7 +283,7 @@ export function FullScreenShotTracker({
     }]
   }, [])
   
-  const analyzeTrajectory = useCallback((ballDetection: any): boolean => {
+  const analyzeTrajectory = useCallback((ballDetection: { bbox: { x: number; y: number; width: number; height: number } } | null): boolean => {
     if (!ballDetection) return false
     
     const now = Date.now()
@@ -364,7 +365,7 @@ export function FullScreenShotTracker({
     setDetectionStatus('detecting')
     
     const cocoDetections = await detectWithCOCO()
-    let ballDetection = cocoDetections.find((d: any) => d.type === 'ball') || null
+    let ballDetection = cocoDetections.find((d: { type: string }) => d.type === 'ball') || null
     
     if (!ballDetection) {
       const colorDetections = detectWithColor()

@@ -14,7 +14,6 @@ import {
   BasketballIcon,
   InfoIcon,
   GoodFormIcon,
-  PlayIcon,
 } from "@/components/icons"
 import { Video, Radio, Image as ImageIcon } from "lucide-react"
 import {

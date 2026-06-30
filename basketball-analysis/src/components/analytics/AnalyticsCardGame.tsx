@@ -11,15 +11,12 @@ import {
   Trophy,
   TrendingUp,
   TrendingDown,
-  Calendar,
   BarChart3,
-  Clock,
   Activity,
   Zap,
   Star,
   Lightbulb,
   RotateCcw,
-  Bell,
   Sparkles
 } from "lucide-react"
 import { usePoints } from "@/lib/points/pointsContext"
@@ -317,7 +314,7 @@ function AnalyticsCard({ metricKey, data, dragX }: AnalyticsCardProps) {
                 />
                 
                 {/* Tick marks */}
-                {[0, 25, 50, 75, 100].map((tick, i) => {
+                {[0, 25, 50, 75, 100].map((tick) => {
                   const angle = (tick / 100) * 270 - 225
                   const radian = (angle * Math.PI) / 180
                   const x1 = 100 + 70 * Math.cos(radian)
@@ -1020,8 +1017,7 @@ export function AnalyticsCardGame({ data: dataProp }: AnalyticsCardGameProps) {
     xp: 0
   })
   const [hasNewAnalytics, setHasNewAnalytics] = useState(true) // Show notification for new analytics
-  const [lastReviewedCount, setLastReviewedCount] = useState(0)
-  
+
   const [dragX, setDragX] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
   const startX = useRef(0)

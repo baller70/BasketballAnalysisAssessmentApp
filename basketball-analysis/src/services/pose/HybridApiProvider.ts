@@ -56,6 +56,7 @@ export class HybridApiProvider implements PoseProvider {
     return Boolean(this.baseUrl)
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- param documents the interface contract for this intentional stub
   async detectPose(_input: PoseInput): Promise<ProviderKeypoint[] | null> {
     // Stub: a real implementation would POST the frame to `${baseUrl}/api/detect-pose`.
     // Left unimplemented on purpose so this provider can never silently become
@@ -71,6 +72,7 @@ export class HybridApiProvider implements PoseProvider {
    * server provider would still route angles through biomechanicalScoring. This
    * helper makes that contract explicit for whoever wires the backend.
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- param documents the interface contract for this intentional stub
   analyzeForm(_keypoints: ProviderKeypoint[]): FormAnalysis {
     const angles: CanonicalAngles = {
       elbow: null,

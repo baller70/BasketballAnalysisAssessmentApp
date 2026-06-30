@@ -267,11 +267,6 @@ class PoseDetectionService {
     const knee = this.getKeypoint(pose, `${side}_knee` as keyof typeof KEYPOINT_INDICES);
     const ankle = this.getKeypoint(pose, `${side}_ankle` as keyof typeof KEYPOINT_INDICES);
     
-    // Get opposite side for balance calculations
-    const oppositeSide = side === 'right' ? 'left' : 'right';
-    const oppositeHip = this.getKeypoint(pose, `${oppositeSide}_hip` as keyof typeof KEYPOINT_INDICES);
-    const oppositeShoulder = this.getKeypoint(pose, `${oppositeSide}_shoulder` as keyof typeof KEYPOINT_INDICES);
-    
     // Calculate elbow angle (shoulder-elbow-wrist)
     // Ideal: 85-95° at set point, extends to ~170° at release
     if (shoulder && elbow && wrist) {

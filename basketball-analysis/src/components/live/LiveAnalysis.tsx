@@ -28,7 +28,9 @@ interface CapturedFrame {
   id: string;
   dataUrl: string;
   timestamp: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- loosely-typed runtime angles/feedback from the live pose pipeline
   angles: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- loosely-typed runtime angles/feedback from the live pose pipeline
   feedback: any;
 }
 
@@ -38,7 +40,7 @@ interface CapturedFrame {
 
 export function LiveAnalysis() {
   const router = useRouter();
-  const { setUploadedFile, setUploadedImageBase64, setVideoAnalysisData } = useAnalysisStore();
+  const { setUploadedImageBase64, setVideoAnalysisData } = useAnalysisStore();
 
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -73,7 +75,7 @@ export function LiveAnalysis() {
   } = usePoseDetection({
     modelType: 'lightning',
     targetFps: 30,
-    onShootingDetected: (detectedPose) => {
+    onShootingDetected: () => {
       console.log('[LiveAnalysis] Shooting motion detected!');
       // Could auto-capture frame here
     },
@@ -122,8 +124,8 @@ export function LiveAnalysis() {
       let stream: MediaStream;
       try {
         stream = await navigator.mediaDevices.getUserMedia(constraints);
-      } catch (e: any) {
-        console.log('[LiveAnalysis] Failed with constraints, trying fallback:', e.message);
+      } catch (e) {
+        console.log('[LiveAnalysis] Failed with constraints, trying fallback:', (e as { message?: string }).message);
         stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
       }
       streamRef.current = stream;
@@ -143,7 +145,7 @@ export function LiveAnalysis() {
           }
         };
       }
-    } catch (err: any) {
+    } catch (err) {
       console.log('[LiveAnalysis] Camera error:', err);
       // No silent demo fallback — surface a clear "no camera" state. The demo
       // path is only reachable behind the explicit affordance in the error view
@@ -153,7 +155,7 @@ export function LiveAnalysis() {
         streamRef.current = null;
       }
       setCameraReady(false);
-      const name = err?.name || '';
+      const name = (err as { name?: string })?.name || '';
       let message = 'We could not access a camera on this device.';
       if (name === 'NotAllowedError' || name === 'SecurityError' || name === 'PermissionDeniedError') {
         message = 'Camera access was blocked. Please allow camera permissions and try again.';
@@ -366,7 +368,7 @@ export function LiveAnalysis() {
                       height: videoRef.current!.videoHeight,
                     });
                     setCameraReady(true);
-                  }).catch(err => {
+                  }).catch(() => {
                     setCameraError("Failed to play uploaded video.");
                   });
                 }

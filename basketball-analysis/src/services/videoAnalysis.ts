@@ -193,15 +193,7 @@ function findReleaseFrame(frames: SampledFrame[]): number {
 // ----------------------------------------------------------------------------
 
 export async function analyzeVideoShooting(
-  videoFile: File,
-  _profileData?: {
-    heightInches?: number | null
-    weightLbs?: number | null
-    age?: number | null
-    experienceLevel?: string | null
-    dominantHand?: string | null
-    shootingStyle?: string | null
-  }
+  videoFile: File
 ): Promise<VideoAnalysisResult> {
   // Validate file size.
   if (videoFile.size > FILE_LIMITS.MAX_VIDEO_SIZE_BYTES) {

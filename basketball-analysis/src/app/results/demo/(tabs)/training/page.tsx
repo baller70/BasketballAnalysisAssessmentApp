@@ -8,10 +8,9 @@ import { ALL_DRILLS, type Drill } from "@/data/drillDatabase"
 import { fetchSavedWorkouts, fetchWorkouts, resolveDrillIds } from "@/lib/api/workoutsClient"
 import {
   Dumbbell, Calendar, Zap, BookOpen, Target,
-  ChevronRight, Clock, TrendingUp, Trophy,
-  Play, Star, Flame
+  ChevronRight, Clock, TrendingUp,
+  Flame
 } from "lucide-react"
-import Link from "next/link"
 
 // Types for saved workouts
 interface SavedWorkout {

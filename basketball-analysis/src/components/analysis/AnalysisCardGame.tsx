@@ -518,7 +518,7 @@ interface AnalysisCardGameProps {
   sessionId?: string
 }
 
-export function AnalysisCardGame({ measurements, sessionId }: AnalysisCardGameProps) {
+export function AnalysisCardGame({ measurements }: AnalysisCardGameProps) {
   const metricKeys = Object.keys(measurements) as (keyof BiomechanicalMeasurements)[]
   
   const { earnPoints } = usePoints()
@@ -530,7 +530,7 @@ export function AnalysisCardGame({ measurements, sessionId }: AnalysisCardGamePr
     currentStreak: 0,
     xp: 0
   })
-  const [seenCards, setSeenCards] = useState<string[]>([])
+  const [, setSeenCards] = useState<string[]>([])
   const [showPointsBurst, setShowPointsBurst] = useState(false)
   
   const [dragX, setDragX] = useState(0)

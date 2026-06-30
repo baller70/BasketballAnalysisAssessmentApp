@@ -17,7 +17,7 @@ export function getPlatform(): Platform {
   
   // Check if running in Capacitor (mobile)
   if (typeof window !== 'undefined' && 'Capacitor' in window) {
-    const Capacitor = (window as any).Capacitor
+    const Capacitor = (window as unknown as { Capacitor: { getPlatform: () => string } }).Capacitor
     const platform = Capacitor.getPlatform()
     
     if (platform === 'ios') return 'ios'
@@ -94,7 +94,7 @@ export function isTouchDevice(): boolean {
   return (
     'ontouchstart' in window ||
     navigator.maxTouchPoints > 0 ||
-    (navigator as any).msMaxTouchPoints > 0
+    (navigator as Navigator & { msMaxTouchPoints?: number }).msMaxTouchPoints! > 0
   )
 }
 
@@ -178,7 +178,7 @@ export function handlePlatformError(error: Error, context: string): void {
   if (platform === 'web') {
     // Web: Could send to analytics service
     if (typeof window !== 'undefined' && 'gtag' in window) {
-      (window as any).gtag('event', 'exception', {
+      (window as unknown as { gtag: (...args: unknown[]) => void }).gtag('event', 'exception', {
         description: error.message,
         fatal: false,
       })
@@ -186,7 +186,7 @@ export function handlePlatformError(error: Error, context: string): void {
   } else if (platform === 'desktop') {
     // Desktop: Could use Tauri's logging
     if (typeof window !== 'undefined' && '__TAURI__' in window) {
-      const { error: tauriError } = (window as any).__TAURI__.log
+      const { error: tauriError } = (window as unknown as { __TAURI__: { log: { error: (msg: string) => void } } }).__TAURI__.log
       tauriError(`${context}: ${error.message}`)
     }
   } else if (isMobile()) {

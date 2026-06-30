@@ -91,7 +91,7 @@ export default function DashboardPage() {
   const authUser = useAuthStore((s) => s.user)
 
   const [stats, setStats] = useState<HistoryStats | null>(null)
-  const [profile, setProfile] = useState<ProfileSummary | null>(null)
+  const [, setProfile] = useState<ProfileSummary | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {

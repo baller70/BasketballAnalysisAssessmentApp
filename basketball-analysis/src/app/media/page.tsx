@@ -16,15 +16,12 @@ import {
   ArrowLeft, 
   Image as ImageIcon, 
   Video, 
-  Calendar, 
-  Clock, 
+  Calendar,
   ChevronRight,
   X,
   Play,
-  Pause,
   Maximize2,
   Minimize2,
-  Download,
   Trash2,
   Filter,
   Grid,
@@ -114,20 +111,6 @@ function formatTime(dateStr: string): string {
   })
 }
 
-function getMediaTypeIcon(session: AnalysisSession) {
-  if (session.mediaType === 'video' || session.videoData) {
-    return <Video className="w-4 h-4" />
-  }
-  return <ImageIcon className="w-4 h-4" />
-}
-
-function getMediaTypeLabel(session: AnalysisSession): string {
-  if (session.videoData) {
-    return session.id.startsWith('live-') ? 'Live' : 'Video'
-  }
-  return 'Image'
-}
-
 function getScoreColor(score: number): string {
   if (score >= 80) return 'text-green-400'
   if (score >= 60) return 'text-yellow-400'
@@ -212,12 +195,11 @@ function mapServerEntry(entry: ServerHistoryEntry): GallerySession {
 // COMPONENTS
 // ============================================
 
-function MediaCard({ 
-  session, 
-  viewMode, 
-  onSelect, 
-  onDelete 
-}: { 
+function MediaCard({
+  session,
+  viewMode,
+  onSelect,
+}: {
   session: AnalysisSession
   viewMode: ViewMode
   onSelect: () => void

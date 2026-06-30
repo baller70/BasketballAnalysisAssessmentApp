@@ -150,7 +150,9 @@ function convertKeypointsToBodyPositions(
  */
 export async function analyzeShootingForm(
   imageFile: File,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept in signature for callers and a future Pro provider
   _ballPosition?: { x: number; y: number; confidence: number } | null,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- reserved for personalized coaching
   _profileData?: {
     heightInches?: number | null
     weightLbs?: number | null

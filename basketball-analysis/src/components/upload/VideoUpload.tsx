@@ -22,7 +22,7 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [analysisProgress, setAnalysisProgress] = useState<string>("")
+  const [, setAnalysisProgress] = useState<string>("")
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<VideoAnalysisResult | null>(null)
   

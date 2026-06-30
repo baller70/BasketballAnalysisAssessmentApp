@@ -2,16 +2,14 @@
 
 import React, { useState, useMemo, useEffect } from "react"
 import { useAnalysisStore } from "@/stores/analysisStore"
-import { useProfileStore } from "@/stores/profileStore"
 import { getAllSessions, AnalysisSession } from "@/services/sessionStorage"
 import { fetchServerHistory, serverHistoryToSessions } from "@/components/analytics/serverHistory"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { 
-  Calendar, 
-  TrendingUp, 
-  BarChart3, 
-  Clock, 
+  Calendar,
+  TrendingUp,
+  Clock,
   Activity,
   ChevronDown,
   Check,
@@ -197,16 +195,8 @@ interface AnalyticsChartSectionProps {
   playerName: string
 }
 
-function AnalyticsChartSection({ sessions, progressStats, playerName }: AnalyticsChartSectionProps) {
+function AnalyticsChartSection({ sessions, playerName }: AnalyticsChartSectionProps) {
   const safeSessions = sessions || []
-  const safeProgressStats = progressStats || { 
-    sessionsCount: 0, 
-    avgScore: 0, 
-    scoreChange: 0, 
-    bestScore: 0,
-    trend: 'stable' as const
-  }
-  
   const [timePeriod, setTimePeriod] = useState<'3months' | '30days' | '7days'>('3months')
   const [selectedMetrics, setSelectedMetrics] = useState<string[]>(['score', 'elbowAngle'])
   const [hoveredBar, setHoveredBar] = useState<{ index: number; metric: string; value: number; date: string } | null>(null)
@@ -262,7 +252,7 @@ function AnalyticsChartSection({ sessions, progressStats, playerName }: Analytic
       grouped[dateKey].sessions.push(session)
     })
     
-    const realData = Object.entries(grouped).map(([_, data]) => {
+    const realData = Object.entries(grouped).map(([, data]) => {
       if (!data.sessions || data.sessions.length === 0) {
         return {
           date: data.date,
@@ -642,8 +632,7 @@ function AnalyticsChartSection({ sessions, progressStats, playerName }: Analytic
 // Main Historical Data Section Component
 export default function HistoricalDataSection() {
   const store = useAnalysisStore()
-  const profileStore = useProfileStore()
-  
+
   const visionAnalysisResult = store?.visionAnalysisResult || null
   
   const [sessions, setSessions] = useState<AnalysisSession[]>([])
@@ -702,8 +691,9 @@ export default function HistoricalDataSection() {
   
   // Combine current session with historical sessions
   const allSessionsData = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- aggregates heterogeneous session/metric rows
     const data: any[] = []
-    
+
     if (visionAnalysisResult?.success) {
       const angles = visionAnalysisResult.angles || {}
       const score = visionAnalysisResult.overall_score || 70

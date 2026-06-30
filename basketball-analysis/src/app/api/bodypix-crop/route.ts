@@ -238,8 +238,8 @@ export async function POST(request: NextRequest) {
 
     for (const region of regions) {
       // Clamp to image bounds
-      let cropX = Math.max(0, Math.round(region.minX))
-      let cropY = Math.max(0, Math.round(region.minY))
+      const cropX = Math.max(0, Math.round(region.minX))
+      const cropY = Math.max(0, Math.round(region.minY))
       let cropW = Math.round(region.maxX - region.minX)
       let cropH = Math.round(region.maxY - region.minY)
 

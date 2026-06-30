@@ -3,14 +3,14 @@
 import React, { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { 
-  Trophy, Star, Target, Flame, Zap, Medal, Crown, Lock, 
-  Users, TrendingUp, Timer, Check, ChevronRight, ChevronDown,
-  Sparkles, Award, Shield, Gem, Swords, Circle, X,
-  Eye, Hand, Scale, Activity, Crosshair, Rocket, 
-  Mountain, TreePine, Sun, Moon, Sunrise, CloudLightning,
-  Dribbble, CircleDot, Focus, Gauge, Repeat, Calendar,
-  Share2, Download, Volume2, VolumeX, ArrowLeft
+import {
+  Trophy, Star, Target, Flame, Crown, Lock,
+  Users, TrendingUp, Check, ChevronRight, ChevronDown,
+  Sparkles, Award, Shield, X,
+  Eye, Hand, Activity, Crosshair,
+  Mountain, Sun, Moon, Sunrise,
+  Calendar,
+  Share2, ArrowLeft
 } from "lucide-react"
 import { usePoints } from "@/lib/points/pointsContext"
 import { InlinePointsBurst } from "@/components/points/PointsBurst"
@@ -1207,22 +1207,6 @@ const BADGES: Badge[] = [
     secret: true
   },
 ]
-
-// ============================================
-// PLAYER STATS
-// ============================================
-
-const PLAYER_STATS = {
-  totalXP: 2875,
-  level: 12,
-  currentLevelXP: 875,
-  nextLevelXP: 1500,
-  unlockedBadges: 8,
-  totalBadges: BADGES.length,
-  rarest: "Comeback Kid",
-  currentStreak: 5,
-  longestStreak: 12,
-}
 
 // ============================================
 // BADGE CARD COMPONENT - PREMIUM DESIGN

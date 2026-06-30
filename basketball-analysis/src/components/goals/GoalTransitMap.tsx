@@ -26,8 +26,9 @@ interface GoalTransitMapProps {
   playerLng?: number
 }
 
-export function GoalTransitMap({ playerCity, playerState, playerLat, playerLng }: GoalTransitMapProps) {
+export function GoalTransitMap({ playerCity, playerLat, playerLng }: GoalTransitMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- holds a runtime mapbox-gl Map instance loaded dynamically
   const map = useRef<any>(null)
   const [mapLoaded, setMapLoaded] = useState(false)
   const [showAddGoal, setShowAddGoal] = useState(false)
@@ -93,8 +94,7 @@ export function GoalTransitMap({ playerCity, playerState, playerLat, playerLng }
   }, [goals, getCurrentGoal, cityName])
   
   const currentGoal = goalStops.find(s => s.current)
-  const totalGoals = goalStops.length - 1 // Exclude START
-  
+
   // Function to view full route
   const viewFullRoute = useCallback(async () => {
     if (!map.current) return

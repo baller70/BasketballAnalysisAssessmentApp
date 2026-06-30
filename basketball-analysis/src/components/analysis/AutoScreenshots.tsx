@@ -397,18 +397,7 @@ export function AutoScreenshots({ imageUrl, keypoints: passedKeypoints, basketba
       // Note: leftWrist is calculated in bodypix-crop API for bounding box
       const rightShoulder = getKeypointPos('right_shoulder', personCenterX + personWidth * 0.2, personMinY + personHeight * 0.2)
       const leftShoulder = getKeypointPos('left_shoulder', personCenterX - personWidth * 0.2, personMinY + personHeight * 0.2)
-      const rightHip = getKeypointPos('right_hip', personCenterX + personWidth * 0.15, personMinY + personHeight * 0.5)
-      const leftHip = getKeypointPos('left_hip', personCenterX - personWidth * 0.15, personMinY + personHeight * 0.5)
-      const rightAnkle = getKeypointPos('right_ankle', personCenterX + personWidth * 0.1, personMinY + personHeight * 0.9)
-      const leftAnkle = getKeypointPos('left_ankle', personCenterX - personWidth * 0.1, personMinY + personHeight * 0.9)
 
-      const handsKeypoint = rightWrist
-      const feetCropHeight = 350
-      const anklesKeypoint = {
-        x: imgW / 2,
-        y: imgH - (feetCropHeight / 2)
-      }
-      
       const cropSize = Math.max(personHeight * 0.6, 600)
       
       // Get additional keypoints for release analysis

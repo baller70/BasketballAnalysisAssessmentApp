@@ -132,7 +132,7 @@ const generateCommunityVotes = (shooterId: number, tier: string): { score: numbe
 // HELPER FUNCTIONS
 // ============================================
 
-const filterShootersByBodyType = (shooters: EliteShooter[], userProfile: UserProfile): EliteShooter[] => {
+const filterShootersByBodyType = (shooters: EliteShooter[]): EliteShooter[] => {
   // Sort all shooters by tier then score - show best shooters first
   return [...shooters].sort((a, b) => {
     const tierOrder: Record<string, number> = { legendary: 0, elite: 1, great: 2, good: 3, mid_level: 4, bad: 5 }
@@ -674,7 +674,7 @@ interface SavedMatchesProps {
   userAnalysis?: UserAnalysisData
 }
 
-function SavedMatches({ matches, onCompare, userAnalysis }: SavedMatchesProps) {
+function SavedMatches({ matches, userAnalysis }: SavedMatchesProps) {
   const [selectedShooter, setSelectedShooter] = useState<EliteShooter | null>(null)
   const [showComparison, setShowComparison] = useState(false)
   
@@ -791,7 +791,7 @@ function SavedMatches({ matches, onCompare, userAnalysis }: SavedMatchesProps) {
               <div className="grid grid-cols-3 gap-2">
                 <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
                   <p className="text-xs text-slate-400 uppercase">Height</p>
-                  <p className="text-lg font-bold text-slate-900">{Math.floor(selectedShooter.height/12)}'{selectedShooter.height%12}"</p>
+                  <p className="text-lg font-bold text-slate-900">{Math.floor(selectedShooter.height/12)}&apos;{selectedShooter.height%12}&quot;</p>
                 </div>
                 <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
                   <p className="text-xs text-slate-400 uppercase">Weight</p>
@@ -821,7 +821,7 @@ function SavedMatches({ matches, onCompare, userAnalysis }: SavedMatchesProps) {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-500">Release Height</span>
-                    <span className="text-slate-900 font-bold">{selectedShooter.measurements.releaseHeight}"</span>
+                    <span className="text-slate-900 font-bold">{selectedShooter.measurements.releaseHeight}&quot;</span>
                   </div>
                 </div>
               </div>
@@ -1027,6 +1027,7 @@ interface GameStatsDisplayProps {
   stats: GameStats
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- retained stats display component kept for upcoming UI reuse
 function GameStatsDisplay({ stats }: GameStatsDisplayProps) {
   const levelTitle = LEVEL_TITLES[Math.min(stats.level, LEVEL_TITLES.length - 1)]
   const xpToNextLevel = XP_PER_LEVEL - (stats.xp % XP_PER_LEVEL)
@@ -1229,7 +1230,7 @@ export function ScoreOrPassGame({ userProfile = {}, userAnalysis, onSelectShoote
   // Filter shooters based on user profile AND filters
   const matchedShooters = useMemo(() => {
     if (!isHydrated) return []
-    let filtered = filterShootersByBodyType(ALL_ELITE_SHOOTERS, userProfile)
+    let filtered = filterShootersByBodyType(ALL_ELITE_SHOOTERS)
     
     // Apply league filter
     if (filters.league !== 'all') {

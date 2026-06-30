@@ -9,7 +9,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
 import { usePoints } from '@/lib/points/pointsContext'
-import { TIERS, TierLevel } from '@/lib/points/pointsConfig'
+import { TierLevel } from '@/lib/points/pointsConfig'
 
 // ============================================
 // TYPES

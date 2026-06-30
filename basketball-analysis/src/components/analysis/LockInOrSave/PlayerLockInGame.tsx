@@ -27,14 +27,6 @@ const XP_PER_REVIEW = 15, XP_PER_LOCKIN = 30
 const DEFAULT_GAME_STATS: GameStats = { totalReviewed: 0, lockedIn: 0, saved: 0, currentStreak: 0, bestStreak: 0, xp: 0, level: 1 }
 function getLevelFromXP(xp: number): number { return Math.floor(xp / 500) + 1 }
 
-// Score ring colors - EXACT from page.tsx
-function getScoreRingColors(score: number) {
-  if (score >= 90) return { primary: "#FF6B35", secondary: "#FFA500", glow: "rgba(255,107,53,0.3)" }
-  if (score >= 80) return { primary: "#22c55e", secondary: "#4ade80", glow: "rgba(34,197,94,0.3)" }
-  if (score >= 70) return { primary: "#3b82f6", secondary: "#60a5fa", glow: "rgba(59,130,246,0.3)" }
-  if (score >= 60) return { primary: "#f97316", secondary: "#fb923c", glow: "rgba(249,115,22,0.3)" }
-  return { primary: "#ef4444", secondary: "#f87171", glow: "rgba(239,68,68,0.3)" }
-}
 
 // SHOOTER_LEVELS - EXACT from page.tsx
 const SHOOTER_LEVELS = [
@@ -51,7 +43,7 @@ const SHOOTER_LEVELS = [
 // ============================================
 // SPARStatBar - EXACT from page.tsx lines 5714-5821
 // ============================================
-function SPARStatBar({ name, current, max, playerName, playerAge = 34, playerState = "CA", onStatClick }: { name: string; current: number; max: number; playerName?: string; playerAge?: number; playerState?: string; onStatClick?: () => void }) {
+function SPARStatBar({ name, current, max, playerAge = 34, playerState = "CA", onStatClick }: { name: string; current: number; max: number; playerName?: string; playerAge?: number; playerState?: string; onStatClick?: () => void }) {
   const [showPopup, setShowPopup] = useState(false)
   const fillPercent = (current / 99) * 100
   const maxPercent = (max / 99) * 100
@@ -129,7 +121,6 @@ export function PlayerLockInGame({
   shooterLevel,
   assessmentDate,
   playerName: playerNameProp,
-  sessionsCount = 5,
 }: PlayerLockInGameProps) {
   const profileStore = useProfileStore()
   const [isHydrated, setIsHydrated] = useState(false)
@@ -152,16 +143,6 @@ export function PlayerLockInGame({
   const dragStartX = useRef(0)
   const dragStartY = useRef(0)
   const hasDecidedDirection = useRef(false)
-  
-  // Handler for opening analytics popups - awards points
-  const handleOpenAnalyticsPopup = useCallback((openPopupFn: () => void) => {
-    openPopupFn()
-    const result = earnPoints('stat_popup_view')
-    if (result.earned) {
-      setShowPointsBurst(true)
-      setTimeout(() => setShowPointsBurst(false), 1500)
-    }
-  }, [earnPoints])
   
   // Handler for Key Skills popup
   const handleOpenKeySkillsPopup = useCallback(() => {
@@ -262,9 +243,7 @@ export function PlayerLockInGame({
     return { label: "Needs Work", color: "text-red-500" }
   }
   const overallRating = getRating(overallScore)
-  const consistencyRating = getRating(consistencyScore)
-  const formRating = getRating(formScore)
-  
+
   // SPAR Categories - EXACT from page.tsx
   const getMax = useCallback((current: number) => {
     if (typeof current !== 'number' || isNaN(current)) return 99

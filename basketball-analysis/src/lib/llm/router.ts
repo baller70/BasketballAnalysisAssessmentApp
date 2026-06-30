@@ -24,7 +24,7 @@
  * 6. OpenAI (fallback) - Paid, but reliable
  */
 
-import { LLM_PROVIDERS, getEnabledProviders, getProvidersForTask, TaskType } from './providers';
+import { getEnabledProviders, getProvidersForTask, TaskType } from './providers';
 import { checkRateLimit, incrementRateLimit, getAllRateLimitStatus } from './rate-limiter';
 import { generateCacheKey, getCachedResponse, setCachedResponse, determineTTL, getCacheStats } from './cache';
 import { recordSuccess, recordFailure, isProviderHealthy, getAllProviderHealth, getSystemHealthSummary } from './health';

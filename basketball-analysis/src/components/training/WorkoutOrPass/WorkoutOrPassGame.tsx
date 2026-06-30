@@ -8,24 +8,21 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react"
-import Image from "next/image"
-import { 
-  Dumbbell, SkipForward, Trophy, Zap, Target, 
-  Crown, TrendingUp, Users, Clock, Star,
+import {
+  Dumbbell, SkipForward, Trophy, Zap, Target,
+  Crown, TrendingUp, Clock, Star,
   Sparkles, Medal, RotateCcw, Play,
-  ChevronRight, ChevronLeft, Flame, Check, X, Timer,
-  Award, BarChart3, Calendar, ArrowRight,
+  ChevronRight, ChevronLeft, Flame, Check, X,
+  Award, BarChart3, Calendar,
   Activity, Focus, Hand, Footprints, Move,
   CircleDot, Crosshair, Gauge, ListChecks,
   ArrowLeftRight, CheckCircle
 } from "lucide-react"
-import { 
-  ALL_DRILLS, 
-  Drill, 
+import {
+  ALL_DRILLS,
+  Drill,
   SkillLevel,
-  DrillFocusArea,
-  getDrillsByLevel,
-  getDrillsByFocusArea 
+  DrillFocusArea
 } from "@/data/drillDatabase"
 import { DrillExecutionPage } from "./DrillExecutionPage"
 import { usePoints } from "@/lib/points/pointsContext"
@@ -149,7 +146,6 @@ const saveToStorage = <T,>(key: string, value: T): void => {
 
 const XP_PER_VOTE = 10
 const XP_PER_TRAIN = 25
-const XP_PER_COMPLETE = 100
 const XP_PER_LEVEL = 500
 const STREAK_BONUS_MULTIPLIER = 1.5
 
@@ -1504,6 +1500,7 @@ interface DrillDetailModalProps {
   onStartDrill?: (drill: Drill) => void
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- retained drill detail modal kept for upcoming UI reuse
 function DrillDetailModal({ drill, voteStats, onClose, onStartDrill }: DrillDetailModalProps) {
   const FocusIcon = FOCUS_AREA_ICONS[drill.focusArea]
   

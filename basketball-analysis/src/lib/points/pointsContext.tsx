@@ -10,8 +10,7 @@ import {
   getTierByPoints,
   getPointsToNextTier,
   calculateBonusTime,
-  type TierLevel,
-  type PointAction
+  type TierLevel
 } from './pointsConfig'
 
 // ============================================
@@ -384,7 +383,7 @@ export function PointsProvider({ children }: { children: ReactNode }) {
       
       // Check for new tier unlocks
       let newHighestTier = prev.highestTierUnlocked
-      let newAccessBank = { ...prev.accessBank }
+      const newAccessBank = { ...prev.accessBank }
       
       // If we've unlocked a new tier, add time to access bank
       const currentTierIndex = TIER_ORDER.indexOf(prev.highestTierUnlocked)

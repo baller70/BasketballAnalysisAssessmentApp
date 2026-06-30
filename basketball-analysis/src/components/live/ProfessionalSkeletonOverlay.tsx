@@ -141,8 +141,6 @@ function getKeypointStatusColor(
 export function ProfessionalSkeletonOverlay({
   width: videoWidth,
   height: videoHeight,
-  displayWidth,
-  displayHeight,
   pose,
   angles,
   feedback,
@@ -150,7 +148,6 @@ export function ProfessionalSkeletonOverlay({
   showKeypoints = true,
   showSkeleton = true,
   minConfidence = 0.2,
-  isMirrored = false,
 }: ProfessionalSkeletonOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -249,13 +246,11 @@ export function ProfessionalSkeletonOverlay({
       y: kp.y * scale + offsetY,
     }))
     
-    drawSkeletonWithKeypoints(ctx, transformedKeypoints, canvasW, canvasH)
-    
+    drawSkeletonWithKeypoints(ctx, transformedKeypoints)
+
     function drawSkeletonWithKeypoints(
-      ctx: CanvasRenderingContext2D, 
-      keypoints: Array<{ x: number; y: number; score?: number; name?: string }>,
-      canvasW: number,
-      canvasH: number
+      ctx: CanvasRenderingContext2D,
+      keypoints: Array<{ x: number; y: number; score?: number; name?: string }>
     ) {
       // ===== DRAW SKELETON CONNECTIONS =====
       if (showSkeleton) {

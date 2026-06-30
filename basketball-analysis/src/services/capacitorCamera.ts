@@ -11,7 +11,7 @@
  * - Handle permissions
  */
 
-import { isMobile, isIOS, isAndroid } from '@/utils/platform';
+import { isMobile } from '@/utils/platform';
 
 // Types
 export interface CameraPhoto {
@@ -82,7 +82,6 @@ export function isCameraAvailable(): boolean {
 export async function requestCameraPermissions(): Promise<CameraPermissionStatus> {
   if (isMobile()) {
     try {
-      // @ts-ignore - Capacitor may not be installed
       const { Camera } = await import('@capacitor/camera');
       const permissions = await Camera.requestPermissions();
       return {
@@ -100,7 +99,7 @@ export async function requestCameraPermissions(): Promise<CameraPermissionStatus
     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
     stream.getTracks().forEach(track => track.stop());
     return { camera: 'granted', photos: 'granted' };
-  } catch (error) {
+  } catch {
     return { camera: 'denied', photos: 'denied' };
   }
 }
@@ -111,7 +110,6 @@ export async function requestCameraPermissions(): Promise<CameraPermissionStatus
 export async function checkCameraPermissions(): Promise<CameraPermissionStatus> {
   if (isMobile()) {
     try {
-      // @ts-ignore - Capacitor may not be installed
       const { Camera } = await import('@capacitor/camera');
       const permissions = await Camera.checkPermissions();
       return {
@@ -158,9 +156,8 @@ export async function takePhoto(options: CameraOptions = {}): Promise<CameraPhot
  */
 async function takePhotoCapacitor(options: CameraOptions): Promise<CameraPhoto | null> {
   try {
-    // @ts-ignore - Capacitor may not be installed
     const { Camera, CameraResultType, CameraSource, CameraDirection } = await import('@capacitor/camera');
-    
+
     const resultTypeMap = {
       'uri': CameraResultType.Uri,
       'base64': CameraResultType.Base64,
@@ -203,9 +200,9 @@ async function takePhotoCapacitor(options: CameraOptions): Promise<CameraPhoto |
       saved: image.saved || false,
     };
     
-  } catch (error: any) {
+  } catch (error) {
     // User cancelled
-    if (error.message?.includes('User cancelled')) {
+    if ((error as { message?: string }).message?.includes('User cancelled')) {
       return null;
     }
     console.error('Capacitor camera error:', error);
@@ -217,7 +214,7 @@ async function takePhotoCapacitor(options: CameraOptions): Promise<CameraPhoto |
  * Take photo using web camera API
  */
 async function takePhotoWeb(options: CameraOptions): Promise<CameraPhoto | null> {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     // Create file input for photo selection
     if (options.source === 'photos') {
       const input = document.createElement('input');
@@ -304,15 +301,14 @@ async function takePhotoWeb(options: CameraOptions): Promise<CameraPhoto | null>
 export async function pickPhotos(limit: number = 7): Promise<CameraPhoto[]> {
   if (isMobile()) {
     try {
-      // @ts-ignore - Capacitor may not be installed
-      const { Camera, CameraResultType } = await import('@capacitor/camera');
-      
+      const { Camera } = await import('@capacitor/camera');
+
       const result = await Camera.pickImages({
         quality: 90,
         limit,
       });
-      
-      return result.photos.map((photo: any) => ({
+
+      return result.photos.map((photo: { base64String?: string; dataUrl?: string; path?: string; webPath?: string; format?: string }) => ({
         base64String: photo.base64String,
         dataUrl: photo.dataUrl,
         path: photo.path,
@@ -320,9 +316,9 @@ export async function pickPhotos(limit: number = 7): Promise<CameraPhoto[]> {
         format: photo.format as 'jpeg' | 'png' | 'gif',
         saved: false,
       }));
-      
-    } catch (error: any) {
-      if (error.message?.includes('User cancelled')) {
+
+    } catch (error) {
+      if ((error as { message?: string }).message?.includes('User cancelled')) {
         return [];
       }
       throw error;

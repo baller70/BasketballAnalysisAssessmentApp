@@ -873,7 +873,6 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
   const [showAgeLevelInfo, setShowAgeLevelInfo] = useState(false)
   const [calendarView, setCalendarView] = useState<'day' | 'week' | 'month'>('week')
   const [currentDate, setCurrentDate] = useState(new Date())
-  const [workoutMode, setWorkoutMode] = useState<'auto' | 'custom'>('auto')
   const [notificationsEnabled, setNotificationsEnabled] = useState(true)
   const [scheduledWorkouts, setScheduledWorkouts] = useState<ScheduledWorkout[]>([])
   const [isHydrated, setIsHydrated] = useState(false)
@@ -883,7 +882,7 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
   const [showAutoGeneratePopup, setShowAutoGeneratePopup] = useState(false)
   const [showCustomDrillCreator, setShowCustomDrillCreator] = useState(false)
   const [customDrills, setCustomDrills] = useState<Drill[]>([])
-  const [addMode, setAddMode] = useState<'workout' | 'drill'>('workout')
+  const [, setAddMode] = useState<'workout' | 'drill'>('workout')
   const [scheduleSuccessInfo, setScheduleSuccessInfo] = useState<{
     show: boolean
     workoutName: string
@@ -1123,20 +1122,6 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
     )
   }
 
-  // Add workout to date
-  const addWorkoutToDate = (date: Date) => {
-    const drills = generateWorkout()
-    const workout: ScheduledWorkout = {
-      id: `workout-${Date.now()}`,
-      date: new Date(date),
-      drills,
-      completed: false,
-      duration: preferences.preferredDuration,
-      focusAreas: [...new Set(drills.map(d => d.focusArea))]
-    }
-    void persistNewWorkout(workout)
-  }
-
   // Start workout
   const startWorkout = () => {
     const drills = generateWorkout()
@@ -1144,41 +1129,6 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
       onStartWorkout(drills)
     }
   }
-
-  // Auto-populate calendar
-  const autoPopulateCalendar = useCallback(() => {
-    const today = new Date()
-    const newWorkouts: ScheduledWorkout[] = []
-    
-    // Schedule workouts for the next 4 weeks based on frequency
-    for (let week = 0; week < 4; week++) {
-      let workoutsThisWeek = 0
-      for (let day = 0; day < 7 && workoutsThisWeek < preferences.frequency; day++) {
-        const targetDate = new Date(today)
-        targetDate.setDate(today.getDate() + (week * 7) + day)
-        
-        // Skip if already has workout
-        if (getWorkoutsForDate(targetDate).length > 0) continue
-        
-        // Distribute evenly through the week
-        const daySpacing = Math.floor(7 / preferences.frequency)
-        if (day % daySpacing === 0 || workoutsThisWeek === 0) {
-          const drills = generateWorkout()
-          newWorkouts.push({
-            id: `auto-${Date.now()}-${week}-${day}`,
-            date: targetDate,
-            drills,
-            completed: false,
-            duration: preferences.preferredDuration,
-            focusAreas: [...new Set(drills.map(d => d.focusArea))]
-          })
-          workoutsThisWeek++
-        }
-      }
-    }
-    
-    newWorkouts.forEach(w => { void persistNewWorkout(w) })
-  }, [preferences.frequency, preferences.preferredDuration, generateWorkout, getWorkoutsForDate, persistNewWorkout])
 
   if (!isHydrated) {
     return (
@@ -2152,7 +2102,7 @@ interface BuildWorkoutPopupProps {
   onStartWorkout: (drills: Drill[]) => void
 }
 
-function BuildWorkoutPopup({ availableDrills, onClose, onSaveWorkout, onStartWorkout }: BuildWorkoutPopupProps) {
+function BuildWorkoutPopup({ availableDrills, onClose, onStartWorkout }: BuildWorkoutPopupProps) {
   const [workoutName, setWorkoutName] = useState('')
   const [selectedDrills, setSelectedDrills] = useState<Drill[]>([])
   const [draggedDrill, setDraggedDrill] = useState<Drill | null>(null)
@@ -2528,7 +2478,7 @@ function BuildWorkoutPopup({ availableDrills, onClose, onSaveWorkout, onStartWor
               <div className="p-4 border-b border-slate-200">
                 <div className="flex items-center gap-2 mb-3">
                   <BookOpen className="w-4 h-4 text-[#FF6B35]" />
-                  <h4 className="text-slate-900 font-bold text-xs">COACH'S INSTRUCTIONS</h4>
+                  <h4 className="text-slate-900 font-bold text-xs">COACH&apos;S INSTRUCTIONS</h4>
                 </div>
                 <div className="space-y-2">
                   {previewDrill.steps.map((step, idx) => (
@@ -2791,7 +2741,7 @@ function DrillPickerPopup({ availableDrills, onClose, onSelectDrill, onStartDril
                     <div className="w-8 h-8 rounded-full bg-[#FF6B35]/20 flex items-center justify-center">
                       <BookOpen className="w-4 h-4 text-[#FF6B35]" />
                     </div>
-                    <h4 className="text-slate-900 font-bold text-sm">COACH'S INSTRUCTIONS</h4>
+                    <h4 className="text-slate-900 font-bold text-sm">COACH&apos;S INSTRUCTIONS</h4>
                   </div>
                   <div className="space-y-3">
                     {selectedDrill.steps.map((step, idx) => (
@@ -2867,7 +2817,7 @@ function DrillPickerPopup({ availableDrills, onClose, onSelectDrill, onStartDril
                     className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-white font-bold text-sm hover:brightness-110 transition-all flex items-center justify-center gap-2"
                   >
                     <Play className="w-4 h-4" />
-                    GOT IT - LET'S GO!
+                    GOT IT - LET&apos;S GO!
                   </button>
                 </div>
               </div>
@@ -3320,7 +3270,7 @@ function AutoGeneratePopup({ availableDrills, currentPreferences, onClose, onGen
           
           {/* Create Custom Drill Option */}
           <div className="pt-2 border-t border-slate-200">
-            <p className="text-slate-500 text-xs text-center mb-2">Can't find what you're looking for?</p>
+            <p className="text-slate-500 text-xs text-center mb-2">Can&apos;t find what you&apos;re looking for?</p>
             <button
               onClick={() => {
                 onCreateCustomDrill()

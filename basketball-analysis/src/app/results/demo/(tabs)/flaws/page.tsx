@@ -14,7 +14,6 @@ export default function FlawsPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const sessionsPerPage = 10
   const [showPointsBurst, setShowPointsBurst] = useState(false)
-  const [pointsBurstPosition, setPointsBurstPosition] = useState({ x: 0, y: 0 })
   const viewedFlaws = useRef<Set<string>>(new Set())
   
   const { earnPoints } = usePoints()
@@ -188,6 +187,7 @@ export default function FlawsPage() {
   ]
 
   const allSessionsWithFlaws = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- flaw objects have a dynamic shape from vision analysis
     const result: { id: string; date: string; displayDate: string; flaws: any[]; score: number; isLive: boolean }[] = []
     
     if (visionAnalysisResult?.success && uploadedImageBase64) {
@@ -324,6 +324,7 @@ export default function FlawsPage() {
               {/* Session Content - Expandable */}
               {isSessionExpanded && (
                 <div className="border-t border-slate-200 p-4 space-y-4">
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic flaw shape from vision analysis */}
                   {session.flaws.map((flaw: any, flawIdx: number) => {
                     const cardId = `${session.id}-${flawIdx}`
                     const isCardExpanded = expandedCards.includes(cardId)
@@ -367,6 +368,7 @@ export default function FlawsPage() {
                                   <Zap className="w-3 h-3" /> Cause Chain
                                 </p>
                                 <div className="space-y-2">
+                                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic cause shape from vision analysis */}
                                   {flaw.causeChain.map((cause: any, i: number) => (
                                     <div key={i} className="flex items-start gap-2">
                                       <ChevronRight className="w-4 h-4 text-orange-400 flex-shrink-0 mt-0.5" />
@@ -395,6 +397,7 @@ export default function FlawsPage() {
                                   <Play className="w-3 h-3" /> Recommended Drills
                                 </p>
                                 <div className="grid gap-2">
+                                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic drill shape from vision analysis */}
                                   {flaw.drills.map((drill: any, i: number) => (
                                     <div key={i} className="flex items-center justify-between bg-slate-50 border border-slate-100 rounded-lg p-3">
                                       <div className="flex items-center gap-3">

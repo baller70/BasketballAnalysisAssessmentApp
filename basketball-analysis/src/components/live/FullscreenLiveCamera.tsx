@@ -21,8 +21,6 @@ import {
   Pause,
   Play,
   X,
-  ChevronUp,
-  ChevronDown,
   Target,
   User,
   Eye,
@@ -52,7 +50,9 @@ interface CapturedFrame {
   id: string
   dataUrl: string
   timestamp: number
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- loosely-typed runtime angles/feedback from the live pose pipeline
   angles: any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- loosely-typed runtime angles/feedback from the live pose pipeline
   feedback: any
 }
 
@@ -68,6 +68,7 @@ export interface MetricConfig {
   shortLabel: string
   unit: string
   description: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- feedback status fields are plain runtime strings
   getStatus: (feedback: any) => 'good' | 'warning' | 'critical' | 'unknown'
 }
 
@@ -222,20 +223,13 @@ const SKELETON_CONNECTIONS: [number, number][] = [
   [11, 13], [13, 15], [12, 14], [14, 16], // Legs
 ]
 
-const STATUS_COLORS = {
-  good: '#22c55e',
-  warning: '#eab308',
-  critical: '#ef4444',
-  unknown: '#3b82f6',
-}
-
 // ============================================
 // COMPONENT
 // ============================================
 
 export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   const router = useRouter()
-  const { setUploadedImageBase64, setVideoAnalysisData, addToHistory } = useAnalysisStore()
+  const { setUploadedImageBase64, setVideoAnalysisData } = useAnalysisStore()
   const { canAnalyze, remainingToday, dailyLimit, incrementUsage } = useUsage()
   const { earnPoints } = usePoints()
 
@@ -325,12 +319,15 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   const [shotCount, setShotCount] = useState(0)
   
   // Throttled pose state to reduce glitching
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- runtime pose object from the live detection hook
   const [throttledPose, setThrottledPose] = useState<any>(null)
   const lastPoseUpdateRef = useRef<number>(0)
   const POSE_UPDATE_INTERVAL = 200 // Update skeleton every 200ms (5fps) for much smoother visuals
 
   // Stabilized metrics - hold values for longer so users can read them
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- loosely-typed runtime angles from the pose pipeline
   const [stableAngles, setStableAngles] = useState<any>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- loosely-typed runtime feedback from the pose pipeline
   const [stableFeedback, setStableFeedback] = useState<any>(null)
   const lastMetricUpdateRef = useRef<number>(0)
   const METRIC_UPDATE_INTERVAL = 2500 // Only update metrics every 2.5 seconds so users can read them
@@ -339,7 +336,6 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   const {
     isLoading,
     isDetecting,
-    error: poseError,
     pose,
     angles,
     feedback,
@@ -350,7 +346,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   } = usePoseDetection({
     modelType: 'lightning',
     targetFps: 10, // Reduced to 10fps for smoother skeleton rendering
-    onShootingDetected: (detectedPose) => {
+    onShootingDetected: () => {
       console.log('[FullscreenLive] Shooting motion detected!')
       // Show shot flash and increment counter
       if (feedback?.overallScore) {
@@ -362,7 +358,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
         if (audioFeedbackEnabled) {
           try {
             // Create a simple beep sound
-            const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+            const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
             const oscillator = audioContext.createOscillator()
             const gainNode = audioContext.createGain()
             
@@ -378,7 +374,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
             
             oscillator.start(audioContext.currentTime)
             oscillator.stop(audioContext.currentTime + 0.3)
-          } catch (e) {
+          } catch {
             console.log('[FullscreenLive] Audio feedback not available')
           }
         }
@@ -396,9 +392,9 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
         // Apply heavy smoothing by interpolating between old and new pose
         if (throttledPose && throttledPose.keypoints) {
           const smoothingFactor = 0.6 // Higher = smoother but slower to respond
-          const smoothedKeypoints = pose.keypoints.map((kp: any, i: number) => {
+          const smoothedKeypoints = pose.keypoints.map((kp: { x: number; y: number; score?: number; name?: string }, i: number) => {
             const oldKp = throttledPose.keypoints[i]
-            if (oldKp && kp.score > 0.2) {
+            if (oldKp && (kp.score ?? 0) > 0.2) {
               return {
                 ...kp,
                 x: oldKp.x + (kp.x - oldKp.x) * (1 - smoothingFactor),
@@ -477,7 +473,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       try {
         mediaRecorderRef.current.stop()
-      } catch (e) {
+      } catch {
         console.log('[FullscreenLive] MediaRecorder already stopped')
       }
       mediaRecorderRef.current = null
@@ -545,8 +541,8 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       let stream: MediaStream;
       try {
         stream = await navigator.mediaDevices.getUserMedia(constraints)
-      } catch (e: any) {
-        console.log('[FullscreenLive] Failed with constraints, trying fallback without constraints:', e.message)
+      } catch (e) {
+        console.log('[FullscreenLive] Failed with constraints, trying fallback without constraints:', (e as { message?: string }).message)
         // Fallback for desktops without 'environment' facing mode
         stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
       }
@@ -607,13 +603,13 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
         
         await playPromise
       }
-    } catch (err: any) {
+    } catch (err) {
       console.log('[FullscreenLive] Camera error:', err)
       // No silent demo fallback — surface a clear "no camera" state instead.
       // The demo path is only reachable behind the explicit affordance in the
       // error view below (user-supplied video file).
       cleanupCamera()
-      const name = err?.name || ''
+      const name = (err as { name?: string })?.name || ''
       let message = 'We could not access a camera on this device.'
       if (name === 'NotAllowedError' || name === 'SecurityError' || name === 'PermissionDeniedError') {
         message = 'Camera access was blocked. Please allow camera permissions and try again.'
@@ -713,8 +709,8 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       let stream: MediaStream;
       try {
         stream = await navigator.mediaDevices.getUserMedia(constraints)
-      } catch (e: any) {
-        console.log('[FullscreenLive] Flip camera failed with constraints, trying fallback:', e.message)
+      } catch (e) {
+        console.log('[FullscreenLive] Flip camera failed with constraints, trying fallback:', (e as { message?: string }).message)
         stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
       }
       streamRef.current = stream
@@ -754,11 +750,14 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
 
   // Start recording
   // Refs for composite recording state (to avoid stale closures)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- runtime pose object from the live detection hook
   const currentPoseRef = useRef<any>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- loosely-typed runtime feedback from the pose pipeline
   const currentFeedbackRef = useRef<any>(null)
   const currentTipRef = useRef<string | null>(null)
   const showSkeletonRef = useRef<boolean>(true)
   const selectedMetricsRef = useRef<MetricId[]>(DEFAULT_SELECTED_METRICS)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- loosely-typed runtime angles from the pose pipeline
   const stableAnglesRef = useRef<any>(null)
   const showShotFlashRef = useRef<boolean>(false)
   const lastShotScoreRef = useRef<number | null>(null)
@@ -855,7 +854,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       // Draw skeleton overlay if enabled and pose exists
       // Transform keypoints from video coordinates to display coordinates
       if (skeletonEnabled && poseData && poseData.keypoints) {
-        const keypoints = poseData.keypoints.map((kp: any) => ({
+        const keypoints = poseData.keypoints.map((kp: { x: number; y: number; score?: number; name?: string }) => ({
           ...kp,
           x: kp.x * videoScale + videoOffsetX,
           y: kp.y * videoScale + videoOffsetY,
@@ -1219,7 +1218,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     const playCountdownBeep = (isLast: boolean) => {
       if (audioFeedbackEnabled) {
         try {
-          const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+          const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
           const oscillator = audioContext.createOscillator()
           const gainNode = audioContext.createGain()
           
@@ -1234,7 +1233,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
           
           oscillator.start(audioContext.currentTime)
           oscillator.stop(audioContext.currentTime + 0.2)
-        } catch (e) {
+        } catch {
           // Audio not available
         }
       }
@@ -1878,7 +1877,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
               )}
             </div>
             <div className="mt-4 pt-4 border-t border-white/10 w-full">
-              <p className="text-white/60 mb-3 text-sm">Don't have a camera? Test with a video file:</p>
+              <p className="text-white/60 mb-3 text-sm">Don&apos;t have a camera? Test with a video file:</p>
               <label className="px-6 py-3 bg-[#2a2a2a] hover:bg-[#3a3a3a] text-white font-bold rounded-xl cursor-pointer block text-center transition-colors">
                 Upload Demo Video
                 <input 
@@ -1898,7 +1897,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
                           height: videoRef.current!.videoHeight,
                         });
                         setCameraReady(true);
-                      }).catch(err => {
+                      }).catch(() => {
                         setCameraError("Failed to play uploaded video.");
                       });
                     }
@@ -2186,7 +2185,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
                 </div>
                 <div className="text-left flex-1">
                   <p className="text-white font-medium">Just View Analysis</p>
-                  <p className="text-white/50 text-xs">For analyzing others • Won't save</p>
+                  <p className="text-white/50 text-xs">For analyzing others • Won&apos;t save</p>
                 </div>
               </button>
               
@@ -2238,7 +2237,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
               </div>
               <h2 className="text-xl font-bold text-white text-center mb-2">Daily Limit Reached</h2>
               <p className="text-white/60 text-center text-sm mb-4">
-                You've used all {dailyLimit} analyses for today. Upgrade your tier for more!
+                You&apos;ve used all {dailyLimit} analyses for today. Upgrade your tier for more!
               </p>
               
               <button
@@ -2417,7 +2416,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
                   <p className="text-white/40 text-[10px] uppercase tracking-wider mb-2">Metrics to Display</p>
                 </div>
 
-                {AVAILABLE_METRICS.map((metric, index) => {
+                {AVAILABLE_METRICS.map((metric) => {
                   const isSelected = selectedMetrics.includes(metric.id)
                   const isOnlyOne = selectedMetrics.length === 1 && isSelected
                   const displayIndex = selectedMetrics.indexOf(metric.id)
@@ -2478,7 +2477,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
                     Preview ({Math.min(selectedMetrics.length, 6)} of {selectedMetrics.length} shown)
                   </p>
                   <div className="flex items-center justify-around flex-wrap gap-2">
-                    {selectedMetrics.slice(0, 6).map((metricId, idx) => {
+                    {selectedMetrics.slice(0, 6).map((metricId) => {
                       const metric = AVAILABLE_METRICS.find(m => m.id === metricId)
                       if (!metric) return null
                       const previewSize = selectedMetrics.length <= 2 ? 'text-xl' : 
@@ -2505,59 +2504,6 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
-  )
-}
-
-// ============================================
-// SUB-COMPONENTS
-// ============================================
-
-function MetricBox({ 
-  label, 
-  value, 
-  status,
-  isScore = false
-}: { 
-  label: string
-  value: number | null
-  status?: 'good' | 'warning' | 'critical' | 'unknown'
-  isScore?: boolean
-}) {
-  const getStatusColor = (s?: string) => {
-    switch (s) {
-      case 'good': return 'border-green-500/50 bg-green-500/10'
-      case 'warning': return 'border-yellow-500/50 bg-yellow-500/10'
-      case 'critical': return 'border-red-500/50 bg-red-500/10'
-      default: return 'border-white/20 bg-white/5'
-    }
-  }
-
-  const getStatusIcon = (s?: string) => {
-    switch (s) {
-      case 'good': return '✓'
-      case 'warning': return '⚠'
-      case 'critical': return '✗'
-      default: return ''
-    }
-  }
-  
-  const getValueColor = (s?: string) => {
-    switch (s) {
-      case 'good': return 'text-green-400'
-      case 'warning': return 'text-yellow-400'
-      case 'critical': return 'text-red-400'
-      default: return 'text-white'
-    }
-  }
-
-  return (
-    <div className={`p-2 rounded-lg border ${getStatusColor(status)} text-center`}>
-      <div className="text-[10px] text-white/60 uppercase">{label}</div>
-      <div className={`text-lg font-bold flex items-center justify-center gap-1 ${getValueColor(status)}`}>
-        {value !== null ? (isScore ? value : `${value}°`) : '--'}
-        {status && status !== 'unknown' && <span className="text-xs">{getStatusIcon(status)}</span>}
-      </div>
     </div>
   )
 }

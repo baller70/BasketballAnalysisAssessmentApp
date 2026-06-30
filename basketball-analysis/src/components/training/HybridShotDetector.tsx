@@ -17,10 +17,10 @@
  */
 
 import React, { useState, useRef, useEffect, useCallback } from "react"
-import { 
-  Camera, CameraOff, Circle, Crosshair, Target, 
-  Eye, EyeOff, Settings, ChevronDown, AlertCircle, 
-  CheckCircle, X, Zap, Activity, Volume2, VolumeX
+import {
+  Camera, CameraOff, Circle,
+  Settings, AlertCircle,
+  CheckCircle, X, Activity, Volume2, VolumeX
 } from "lucide-react"
 
 // ============================================
@@ -108,6 +108,7 @@ export function HybridShotDetector({
   const [soundEnabled, setSoundEnabled] = useState(enableSound)
   
   // Models
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- holds a dynamically-loaded coco-ssd model instance
   const cocoModelRef = useRef<any>(null)
   
   // Audio refs for sounds
@@ -167,8 +168,8 @@ export function HybridShotDetector({
             height: { ideal: 720 }
           }
         })
-      } catch (e: any) {
-        console.log('[HybridShotDetector] Failed with constraints, trying fallback:', e.message)
+      } catch (e) {
+        console.log('[HybridShotDetector] Failed with constraints, trying fallback:', (e as { message?: string }).message)
         stream = await navigator.mediaDevices.getUserMedia({ video: true })
       }
       
@@ -235,8 +236,8 @@ export function HybridShotDetector({
       const predictions = await cocoModelRef.current.detect(videoRef.current)
       
       return predictions
-        .filter((pred: any) => pred.class === 'sports ball' && pred.score >= DETECTION_CONFIG.ballConfidenceThreshold)
-        .map((pred: any) => ({
+        .filter((pred: { class: string; score: number; bbox: number[] }) => pred.class === 'sports ball' && pred.score >= DETECTION_CONFIG.ballConfidenceThreshold)
+        .map((pred: { class: string; score: number; bbox: number[] }) => ({
           type: 'ball' as const,
           confidence: pred.score,
           bbox: {

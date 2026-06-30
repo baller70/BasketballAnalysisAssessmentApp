@@ -37,7 +37,7 @@ export function LiveFeedback({
     return null;
   }
 
-  const { elbowStatus, kneeStatus, shoulderStatus, hipStatus, tips, overallScore } = feedback;
+  const { elbowStatus, kneeStatus, shoulderStatus, hipStatus, tips } = feedback;
 
   // Count statuses
   const goodCount = [elbowStatus, kneeStatus, shoulderStatus, hipStatus].filter(
