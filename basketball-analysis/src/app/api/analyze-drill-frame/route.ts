@@ -4,18 +4,19 @@
  *
  * POST /api/analyze-drill-frame
  *
- * Analyzes a single frame from a drill video using Google Gemini Vision to
- * provide quick coaching feedback.
+ * Analyzes a single frame from a drill video using a vision provider chain
+ * (Anthropic Claude vision first, then OpenAI vision) to provide quick coaching
+ * feedback.
  *
  * Auth: requires a signed-in caller (resolveProfileId) and a valid CSRF token —
  * this endpoint relays an authenticated user's frame to a paid/quota'd external
  * model, so it must not be callable cross-site or anonymously.
  *
- * Honest scoring: GOOGLE_AI_API_KEY may be unset, or Gemini may return a
- * non-numeric / unparseable response. In every such case the route returns
+ * Honest scoring: no vision provider may be configured, or the model may return
+ * a non-numeric / unparseable response. In every such case the route returns
  * `{ scored: false, formScore: null }` and a drill checklist — it NEVER fabricates
- * a number. A numeric `formScore` (with `scored: true`) is returned ONLY when
- * Gemini produced a real 0-100 score.
+ * a number. A numeric `formScore` (with `scored: true`) is returned ONLY when a
+ * vision model produced a real 0-100 score.
  *
  * Response shape (stable contract for the live Workouts UI — see below):
  *   {
@@ -26,16 +27,14 @@
  *     improvements: string[],
  *     coachingTips: string[],
  *     detailedFeedback: string,
- *     analysisType: 'gemini-vision' | 'rule-based'
+ *     analysisType: 'claude-vision' | 'openai-vision' | 'rule-based'
  *   }
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { resolveProfileId, isError } from '@/lib/auth/currentUser'
 import { validateCsrf } from '@/lib/csrf'
-
-// Google AI API key for Gemini Vision
-const GOOGLE_AI_API_KEY = process.env.GOOGLE_AI_API_KEY
+import { visionAnalyze } from '@/lib/ai/visionAnalyze'
 
 interface DrillAnalysisRequest {
   image: string // Base64 encoded image
@@ -94,26 +93,29 @@ export async function POST(request: NextRequest) {
     const criteria = Array.isArray(correctFormCriteria) ? correctFormCriteria : []
     const mistakes = Array.isArray(commonMistakes) ? commonMistakes : []
 
-    // If Google AI API key is available, use Gemini Vision
-    if (GOOGLE_AI_API_KEY) {
-      try {
-        const visionAnalysis = await analyzeWithGeminiVision(
-          image,
-          drillName,
-          drillDescription || '',
-          focusArea || 'general',
-          criteria,
-          mistakes
-        )
+    // Try the vision provider chain (Anthropic → OpenAI). Returns null when no
+    // provider is configured or all providers fail.
+    try {
+      const prompt = buildDrillPrompt(
+        drillName,
+        drillDescription || '',
+        focusArea || 'general',
+        criteria,
+        mistakes
+      )
+
+      const result = await visionAnalyze(image, undefined, prompt)
+      if (result) {
+        const visionAnalysis = parseVisionResponse(result.text)
 
         return NextResponse.json({
           success: true,
           ...visionAnalysis,
-          analysisType: 'gemini-vision',
+          analysisType: result.provider,
         })
-      } catch (visionError) {
-        console.error('Gemini Vision API error, falling back to rule-based:', visionError)
       }
+    } catch (visionError) {
+      console.error('Vision provider chain error, falling back to rule-based:', visionError)
     }
 
     // Fallback: honest, non-scored rule-based checklist (never a fake number)
@@ -141,16 +143,15 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Analyze image using Google Gemini Vision, returning the normalized shape.
-async function analyzeWithGeminiVision(
-  imageBase64: string,
+// Build the coaching prompt for a single drill frame.
+function buildDrillPrompt(
   drillName: string,
   drillDescription: string,
   focusArea: string,
   correctFormCriteria: string[],
   commonMistakes: string[]
-): Promise<DrillFrameAnalysis> {
-  const prompt = `You are an expert basketball shooting coach analyzing a frame from a "${drillName}" drill video.
+): string {
+  return `You are an expert basketball shooting coach analyzing a frame from a "${drillName}" drill video.
 
 DRILL DESCRIPTION: ${drillDescription}
 
@@ -176,58 +177,11 @@ Respond in JSON format:
   "coachingTips": ["string", "string"],
   "detailedFeedback": "A brief paragraph summarizing the analysis"
 }`
+}
 
-  // Prepare the image data - remove data URL prefix if present
-  let imageData = imageBase64
-  let mimeType = 'image/jpeg'
-
-  if (imageBase64.startsWith('data:')) {
-    const matches = imageBase64.match(/^data:([^;]+);base64,(.+)$/)
-    if (matches) {
-      mimeType = matches[1]
-      imageData = matches[2]
-    }
-  }
-
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GOOGLE_AI_API_KEY}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              { text: prompt },
-              {
-                inline_data: {
-                  mime_type: mimeType,
-                  data: imageData,
-                },
-              },
-            ],
-          },
-        ],
-        generationConfig: {
-          maxOutputTokens: 1000,
-          temperature: 0.7,
-        },
-      }),
-    }
-  )
-
-  if (!response.ok) {
-    const error = await response.text()
-    throw new Error(`Gemini Vision API error: ${error}`)
-  }
-
-  const data = await response.json()
-  const content = data.candidates?.[0]?.content?.parts?.[0]?.text
-
-  if (!content) {
-    throw new Error('No response from Gemini Vision API')
-  }
-
+// Parse a vision model's raw text response into the normalized shape. Honest
+// scoring: only returns a real number when the model produced one.
+function parseVisionResponse(content: string): DrillFrameAnalysis {
   // Parse JSON from the response (it might be wrapped in markdown code blocks)
   const jsonMatch = content.match(/\{[\s\S]*\}/)
   if (!jsonMatch) {

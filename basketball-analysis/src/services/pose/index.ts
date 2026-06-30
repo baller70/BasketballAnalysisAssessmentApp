@@ -110,7 +110,11 @@ export function keypointsToRecord(
  * flaw engine (detectFlawsFromAngles) and screenshot overlays read. Emits both
  * generic (`elbow_angle`) and right-side-prefixed (`right_elbow_angle`) keys so
  * downstream consumers resolve a value regardless of which convention they use.
- * Only measured joints are emitted — nothing is fabricated.
+ *
+ * Also emits the keypoint-derived pose signals carried on the form (shoulder /
+ * hip tilt and a true ball-launch arc) under the snake_case keys the flaw engine
+ * expects, so balance/alignment and arc flaws can fire. Only measured joints and
+ * confidently-detected signals are emitted — nothing is fabricated.
  */
 export function formAnglesToRecord(form: FormAnalysis): Record<string, number> {
   const a = form.angles
@@ -124,7 +128,26 @@ export function formAnglesToRecord(form: FormAnalysis): Record<string, number> {
   put('knee', a.knee)
   put('shoulder', a.shoulder)
   put('hip', a.hip)
+  // `release` is the canonical vertical-deviation follow-through angle (ideal 0).
+  // It is intentionally NOT the ball-launch arc emitted below — different metric.
   if (a.release !== null) out['release_angle'] = a.release
   if (a.wrist !== null) out['wrist_angle'] = a.wrist
+
+  const signals = form.poseSignals
+  if (signals) {
+    const emit = (value: number | null | undefined, ...keys: string[]) => {
+      if (typeof value !== 'number' || Number.isNaN(value)) return
+      for (const key of keys) out[key] = value
+    }
+    // Shoulder/hip tilt: deviation from level (0 = square), what SHOULDER_TILT
+    // and HIP_ROTATION read. hip_tilt is a frontal-alignment proxy for rotation.
+    emit(signals.shoulderTilt, 'shoulder_tilt')
+    emit(signals.hipTilt, 'hip_tilt')
+    // Ball-launch arc (forearm elevation above horizontal). Distinct from
+    // `release_angle` above; emitted under several aliases so the flaw engine's
+    // arc rules (FLAT_SHOT / HIGH_ARC) resolve regardless of the key they probe.
+    emit(signals.launchArc, 'launch_angle', 'ball_arc', 'release_arc', 'arc')
+  }
+
   return out
 }

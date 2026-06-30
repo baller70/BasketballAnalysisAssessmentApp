@@ -31,12 +31,112 @@ const KEYPOINT_NAMES: string[] = Object.keys(
   KEYPOINT_INDICES
 ) as (keyof typeof KEYPOINT_INDICES)[]
 
+/**
+ * Minimum keypoint confidence for a derived signal to be trusted. Mirrors the
+ * default in poseDetection.getKeypoint so the pose-level signals here agree with
+ * the joint-angle math. Below this we omit the signal entirely — never fake it.
+ */
+const MIN_SIGNAL_SCORE = 0.3
+
+/**
+ * Extra, keypoint-derived pose signals that aren't joint angles: frontal
+ * shoulder/hip tilt (deviation from level) and a true ball-launch arc. These are
+ * carried on FormAnalysis so the canonical record (formAnglesToRecord) can emit
+ * them for the flaw engine without every caller having to re-pass keypoints.
+ * Each is null when its underlying keypoints aren't confident enough to measure.
+ */
+export interface PoseSignals {
+  /** Shoulder-line deviation from horizontal, degrees, 0 = perfectly level. */
+  shoulderTilt: number | null
+  /** Hip-line deviation from horizontal, degrees, 0 = perfectly level. */
+  hipTilt: number | null
+  /**
+   * Ball-launch arc: elevation of the shooting forearm above horizontal at
+   * release, degrees (0 = flat/horizontal, ~50° = a healthy arc). A genuine
+   * launch angle, distinct from the canonical `release` (deviation from vertical).
+   */
+  launchArc: number | null
+}
+
+declare module './types' {
+  interface FormAnalysis {
+    /** Keypoint-derived non-joint signals; see PoseSignals. */
+    poseSignals?: PoseSignals
+  }
+}
+
 /** Map a deterministic biomechanical joint score to a display status. */
 function statusFromScore(score: number | undefined): JointStatus {
   if (score === undefined) return 'unknown'
   if (score >= 85) return 'good'
   if (score >= 60) return 'warning'
   return 'critical'
+}
+
+/** A keypoint looked up by name, or null when missing / below confidence. */
+function confidentKeypoint(
+  keypoints: ProviderKeypoint[],
+  name: string
+): ProviderKeypoint | null {
+  const kp = keypoints.find((k) => k.name === name)
+  return kp && kp.score >= MIN_SIGNAL_SCORE ? kp : null
+}
+
+/**
+ * Deviation-from-level of the line through a left/right keypoint pair, in
+ * degrees folded to 0–90 (0 = level). Sign/ordering independent, so it reads the
+ * same whether the shooter faces left or right. Null if either point is missing.
+ */
+function levelTilt(
+  a: ProviderKeypoint | null,
+  b: ProviderKeypoint | null
+): number | null {
+  if (!a || !b) return null
+  const angleFromHorizontal = (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI
+  let deviation = Math.abs(angleFromHorizontal)
+  if (deviation > 90) deviation = 180 - deviation
+  return Math.round(deviation)
+}
+
+/**
+ * True ball-launch arc from the shooting-side forearm: the angle of the
+ * elbow→wrist vector above horizontal at release. Shooting side is auto-detected
+ * as the higher wrist (same convention as calculateShootingAngles). Null unless
+ * both that elbow and wrist are confidently detected.
+ */
+function launchArcAngle(keypoints: ProviderKeypoint[]): number | null {
+  const rightWrist = confidentKeypoint(keypoints, 'right_wrist')
+  const leftWrist = confidentKeypoint(keypoints, 'left_wrist')
+
+  let side: 'right' | 'left' = 'right'
+  if (rightWrist && leftWrist) {
+    side = rightWrist.y < leftWrist.y ? 'right' : 'left'
+  } else if (leftWrist && !rightWrist) {
+    side = 'left'
+  }
+
+  const elbow = confidentKeypoint(keypoints, `${side}_elbow`)
+  const wrist = confidentKeypoint(keypoints, `${side}_wrist`)
+  if (!elbow || !wrist) return null
+
+  const rise = elbow.y - wrist.y // +ve when the wrist is above the elbow (y grows downward)
+  const run = Math.abs(wrist.x - elbow.x)
+  return Math.round((Math.atan2(rise, run) * 180) / Math.PI)
+}
+
+/** Compute the keypoint-derived pose signals (tilts + launch arc). */
+function computePoseSignals(keypoints: ProviderKeypoint[]): PoseSignals {
+  return {
+    shoulderTilt: levelTilt(
+      confidentKeypoint(keypoints, 'left_shoulder'),
+      confidentKeypoint(keypoints, 'right_shoulder')
+    ),
+    hipTilt: levelTilt(
+      confidentKeypoint(keypoints, 'left_hip'),
+      confidentKeypoint(keypoints, 'right_hip')
+    ),
+    launchArc: launchArcAngle(keypoints),
+  }
 }
 
 export class MoveNetProvider implements PoseProvider {
@@ -115,6 +215,10 @@ export class MoveNetProvider implements PoseProvider {
       overallScore: scores.overallScore,
       tips,
       measuredCount: scores.measuredCount,
+      // Non-joint signals (shoulder/hip tilt, ball-launch arc) for the flaw
+      // engine. Computed from the raw keypoints + confidences, omitted when not
+      // measurable — never defaulted.
+      poseSignals: computePoseSignals(keypoints),
     }
   }
 }

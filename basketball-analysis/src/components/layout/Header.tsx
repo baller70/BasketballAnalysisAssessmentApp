@@ -140,7 +140,8 @@ export function Header() {
   }, [])
 
   const profileMenuItems = [
-    { label: "Dashboard", href: "/results/demo", icon: BarChart3 },
+    { label: "My Dashboard", href: "/dashboard", icon: Star },
+    { label: "Analyze", href: "/results/demo", icon: BarChart3 },
     { label: "Settings", href: "/settings", icon: Settings },
     { label: "Analytics", href: "/results/demo/history", icon: BarChart3 },
     { label: "Elite Shooter", href: "/elite-shooters", icon: Users },

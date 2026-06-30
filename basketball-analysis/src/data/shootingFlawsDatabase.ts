@@ -1713,11 +1713,15 @@ function resolveFlawSignal(
       // No transverse hip-rotation signal is produced from a single pose; the
       // frontal hip_tilt is the closest available alignment proxy.
       return tiltDeviation(angles, ['hip_tilt'])
+    case 'release_angle':
+      // Ball-launch arc (forearm elevation at release) emitted by the pose
+      // layer. The canonical `release` key is a vertical-deviation angle (a
+      // different convention) and is intentionally NOT used here, so FLAT_SHOT
+      // (<42°) and HIGH_ARC_EXCESSIVE (>62°) read the dedicated arc signal.
+      return firstAngle(angles, ['launch_angle', 'ball_arc', 'release_arc', 'arc'])
     // --- Signals the pipeline does not produce yet -> skip cleanly. ---
     // elbow_angle_horizontal (ELBOW_FLARE), elbow_height_relative (ELBOW_TOO_LOW),
     // guide_hand_* , landing_position, foot_stability, stance_width,
-    // release_angle (FLAT_SHOT/HIGH_ARC need a ball-launch arc, but the canonical
-    // `release` is a vertical-deviation angle — different convention),
     // wrist not-applicable, release_timing, release_height, torso_angle,
     // head_stability, miss_direction/miss_distance/miss_pattern (need shot
     // outcomes, not pose).

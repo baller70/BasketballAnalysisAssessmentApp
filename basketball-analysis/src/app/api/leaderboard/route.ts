@@ -1,5 +1,31 @@
 import { NextRequest, NextResponse } from "next/server"
+import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/prisma"
+
+// Map an age-group bucket to an inclusive [min, max] age range.
+function ageGroupToRange(group: string): [number, number] | null {
+  switch (group.toLowerCase()) {
+    case "youth":
+    case "u13":
+    case "under-13":
+      return [0, 12]
+    case "middle":
+    case "13-15":
+      return [13, 15]
+    case "high":
+    case "highschool":
+    case "16-18":
+      return [16, 18]
+    case "college":
+    case "19-22":
+      return [19, 22]
+    case "adult":
+    case "23+":
+      return [23, 120]
+    default:
+      return null
+  }
+}
 
 /**
  * GET /api/leaderboard
@@ -97,6 +123,8 @@ export async function GET(request: NextRequest) {
     ? typeParam
     : "form_score"
   const currentUserProfileId = request.nextUrl.searchParams.get("userProfileId")
+  const ageGroup = request.nextUrl.searchParams.get("ageGroup")
+  const skillLevel = request.nextUrl.searchParams.get("skillLevel")
   const limit = Math.min(Math.max(parseInt(request.nextUrl.searchParams.get("limit") || "10"), 1), 50)
 
   try {
@@ -146,6 +174,28 @@ export async function GET(request: NextRequest) {
       }
       for (const [userId, dates] of datesByUser) {
         scoreByUser.set(userId, longestConsecutiveDayStreak(dates))
+      }
+    }
+
+    // Optional cohort filtering by age group and/or skill (experience) level.
+    if ((ageGroup && ageGroup !== "all") || (skillLevel && skillLevel !== "all")) {
+      const profileWhere: Prisma.UserProfileWhereInput = {}
+      if (skillLevel && skillLevel !== "all") {
+        profileWhere.experienceLevel = { equals: skillLevel, mode: "insensitive" }
+      }
+      if (ageGroup && ageGroup !== "all") {
+        const range = ageGroupToRange(ageGroup)
+        if (range) profileWhere.age = { gte: range[0], lte: range[1] }
+      }
+      if (Object.keys(profileWhere).length > 0) {
+        const allowed = await prisma.userProfile.findMany({
+          where: profileWhere,
+          select: { id: true },
+        })
+        const allowedSet = new Set(allowed.map((p) => p.id))
+        for (const id of Array.from(scoreByUser.keys())) {
+          if (!allowedSet.has(id)) scoreByUser.delete(id)
+        }
       }
     }
 

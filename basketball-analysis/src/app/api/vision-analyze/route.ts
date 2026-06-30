@@ -1,13 +1,14 @@
 /**
  * Coach-Centric Vision Analysis API
- * 
+ *
  * POST /api/vision-analyze
- * 
- * This API uses Google Gemini Vision (FREE) to analyze drill execution
- * through the lens of a basketball coach. Every piece of feedback
- * is built around the drill's coaching points (tips).
- * 
- * Updated to use Gemini Vision instead of OpenAI GPT-4 Vision for cost savings.
+ *
+ * This API analyzes drill execution through the lens of a basketball coach,
+ * with every piece of feedback built around the drill's coaching points (tips).
+ *
+ * Vision runs through a provider chain — Anthropic Claude vision first, then
+ * OpenAI vision — and falls back to an honest rule-based analysis when no
+ * provider is configured or all providers fail.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -18,6 +19,7 @@ import {
   type CoachAnalysis
 } from '@/services/coachingAnalysis'
 import { checkRateLimit } from '@/lib/rateLimit'
+import { visionAnalyze } from '@/lib/ai/visionAnalyze'
 
 interface VisionAnalysisRequest {
   image: string                  // Base64 encoded image
@@ -26,68 +28,6 @@ interface VisionAnalysisRequest {
   drillDescription: string
   coachingPoints: string[]       // The tips array - THE KEY TO COACH-CENTRIC ANALYSIS
   focusArea: string
-}
-
-/**
- * Analyze image using Google Gemini Vision (FREE)
- */
-async function analyzeWithGeminiVision(
-  imageBase64: string,
-  prompt: string
-): Promise<string> {
-  const apiKey = process.env.GOOGLE_AI_API_KEY;
-  if (!apiKey) throw new Error('GOOGLE_AI_API_KEY not configured');
-
-  // Prepare the image data - remove data URL prefix if present
-  let imageData = imageBase64;
-  let mimeType = 'image/jpeg';
-  
-  if (imageBase64.startsWith('data:')) {
-    const matches = imageBase64.match(/^data:([^;]+);base64,(.+)$/);
-    if (matches) {
-      mimeType = matches[1];
-      imageData = matches[2];
-    }
-  }
-
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              { text: prompt },
-              {
-                inline_data: {
-                  mime_type: mimeType,
-                  data: imageData,
-                },
-              },
-            ],
-          },
-        ],
-        generationConfig: {
-          maxOutputTokens: 2000,
-          temperature: 0.7,
-        },
-      }),
-    }
-  );
-
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Gemini Vision error: ${error}`);
-  }
-
-  const data = await response.json();
-  const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-  if (!content) throw new Error('No content in Gemini Vision response');
-
-  return content;
 }
 
 export async function POST(request: NextRequest) {
@@ -125,16 +65,6 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    if (!process.env.GOOGLE_AI_API_KEY) {
-      // Return fallback analysis if no API key
-      const fallback = generateFallbackAnalysis(drillId, drillName, coachingPoints, focusArea)
-      return NextResponse.json({
-        success: true,
-        analysis: fallback,
-        fallback: true
-      })
-    }
-    
     // Generate the coach-centric prompt
     const prompt = generateCoachingPrompt(
       drillName,
@@ -142,10 +72,25 @@ export async function POST(request: NextRequest) {
       coachingPoints,
       focusArea
     )
-    
+
     try {
-      const content = await analyzeWithGeminiVision(image, prompt);
-      
+      // Run the vision provider chain (Anthropic → OpenAI). Returns null when
+      // no provider is configured or all providers fail.
+      const result = await visionAnalyze(image, undefined, prompt)
+
+      if (!result) {
+        // No vision provider available — honest rule-based fallback.
+        const fallback = generateFallbackAnalysis(drillId, drillName, coachingPoints, focusArea)
+        return NextResponse.json({
+          success: true,
+          analysis: fallback,
+          fallback: true,
+          provider: 'rule-based'
+        })
+      }
+
+      const content = result.text
+
       // Parse JSON from response
       let rawAnalysis
       try {
@@ -163,10 +108,11 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
           success: true,
           analysis: fallback,
-          fallback: true
+          fallback: true,
+          provider: 'rule-based'
         })
       }
-      
+
       // Process the response into our CoachAnalysis format
       const analysis: CoachAnalysis = processCoachingResponse(
         rawAnalysis,
@@ -175,25 +121,26 @@ export async function POST(request: NextRequest) {
         coachingPoints,
         focusArea
       )
-      
+
       return NextResponse.json({
         success: true,
         analysis,
-        provider: 'gemini-vision' // Track which provider was used
+        provider: result.provider // 'claude-vision' | 'openai-vision'
       })
-      
+
     } catch (apiError) {
-      console.error('Gemini Vision API error:', apiError)
-      // Return fallback analysis on API error
+      console.error('Vision provider chain error:', apiError)
+      // Return fallback analysis on error
       const fallback = generateFallbackAnalysis(drillId, drillName, coachingPoints, focusArea)
       return NextResponse.json({
         success: true,
         analysis: fallback,
         fallback: true,
+        provider: 'rule-based',
         error: apiError instanceof Error ? apiError.message : 'API error'
       })
     }
-    
+
   } catch (error) {
     console.error('Vision analysis error:', error)
     return NextResponse.json(
