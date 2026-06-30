@@ -6,9 +6,7 @@ import { GoalTransitMap } from "@/components/goals"
 import { useAnalysisStore } from "@/stores/analysisStore"
 import { getAllSessions, AnalysisSession } from "@/services/sessionStorage"
 import { Card, CardContent } from "@/components/ui/card"
-import { usePoints } from "@/lib/points/pointsContext"
 import { useGoals } from "@/lib/goals"
-import { InlinePointsBurst } from "@/components/points/PointsBurst"
 
 export default function GoalsPage() {
   const store = useAnalysisStore()
@@ -80,24 +78,14 @@ export default function GoalsPage() {
     return { scoreChange, sessionsCount: allSessionsData.length, avgScore: Math.round(avgScore), trend }
   }, [allSessionsData])
 
-  const [showPointsBurst, setShowPointsBurst] = useState(false)
-  
-  const { earnPoints } = usePoints()
-  
+  // Points are awarded by real activity (e.g. completing a goal), never for
+  // merely opening the create-goal modal — so this just opens the modal.
   const handleCreateGoal = () => {
-    const result = earnPoints('goal_create')
-    if (result.earned) {
-      setShowPointsBurst(true)
-      setTimeout(() => setShowPointsBurst(false), 1500)
-    }
     setShowGoalModal(true)
   }
-  
+
   return (
     <div className="space-y-8 relative">
-      {/* GOLD Video Game Style Points Animation */}
-      <InlinePointsBurst points={5} show={showPointsBurst} label="IQ" />
-      
       {/* Goals Card - Gold Theme */}
       <Card className="bg-white border-slate-200 shadow-sm overflow-hidden">
         <CardContent className="p-0">

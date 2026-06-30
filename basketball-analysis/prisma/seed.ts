@@ -1,412 +1,161 @@
 import { PrismaClient } from "@prisma/client"
+import { ALL_ELITE_SHOOTERS, type EliteShooter } from "../src/data/eliteShooters"
 
 const prisma = new PrismaClient()
 
 /**
- * Professional Shooter Database Seed
- * 
- * Seeds the database with professional shooter biomechanics data
- * for form comparison features.
+ * Reference Shooter Database Seed
+ * -------------------------------
+ * Seeds the `Shooter` (+ `ShootingBiomechanics`, `ShootingStrength`,
+ * `ShooterImage`) tables from the consolidated elite-shooter catalog
+ * (src/data/eliteShooters.ts) — the single source of truth that /api/shooters
+ * serves. This replaces the previous 12-row hand-written seed; the catalog now
+ * carries the full roster (NBA / WNBA / NCAA / Top College).
+ *
+ * HONESTY: the catalog `measurements` are tier-derived ESTIMATES (genBio), not
+ * frame-measured per shooter. They are seeded as reference values; /api/shooters
+ * labels them biomechanicsEstimated=true. The schema has no per-row "estimated"
+ * column (it is frozen), so the labeling lives in the API/UI, not the table.
+ *
+ * Admin-managed image rows (imageCategory "approved_form"/"excluded_form",
+ * written by POST /api/shooters) are PRESERVED across re-seeds — only the
+ * catalog-sourced "shooting_form" images are replaced.
  */
 
-// Professional shooter data
-const PROFESSIONAL_SHOOTERS = [
-  {
-    name: "Stephen Curry",
-    position: "Guard",
-    heightInches: 74,
-    weightLbs: 185,
-    wingspanInches: 78,
-    bodyType: "ectomorph",
-    dominantHand: "Right",
-    shootingStyle: "One-motion",
-    era: "Modern",
-    skillLevel: "Professional",
-    careerFgPercentage: 47.3,
-    career3ptPercentage: 42.8,
-    careerFtPercentage: 91.1,
-    biomechanics: {
-      elbowAngle: 92,
-      kneeAngle: 125,
-      shoulderAngle: 3,
-      hipAngle: 168,
-      releaseHeight: 122, // 10'2" in inches
-      shotArc: 48,
-      setPoint: "Above forehead",
-      releaseTime: 0.3,
+// Catalog Position enum -> schema position bucket (Guard/Forward/Center).
+function mapPosition(position: EliteShooter["position"]): string {
+  switch (position) {
+    case "CENTER":
+      return "Center"
+    case "SMALL_FORWARD":
+    case "POWER_FORWARD":
+    case "FORWARD":
+      return "Forward"
+    default:
+      return "Guard"
+  }
+}
+
+// League -> coarse skill level the schema understands.
+function mapSkillLevel(league: EliteShooter["league"]): string {
+  if (league === "NBA" || league === "WNBA") return "Professional"
+  return "College"
+}
+
+const clamp = (s: string | undefined, max: number): string | undefined =>
+  s == null ? undefined : s.length > max ? s.slice(0, max) : s
+
+async function seedShooter(cat: EliteShooter) {
+  const m = cat.measurements
+
+  const shooter = await prisma.shooter.upsert({
+    where: { name: cat.name },
+    update: {
+      position: mapPosition(cat.position),
+      heightInches: cat.height,
+      weightLbs: cat.weight,
+      wingspanInches: cat.wingspan,
+      bodyType: clamp(cat.bodyType, 100),
+      dominantHand: "Right",
+      shootingStyle: clamp(cat.shootingStyle, 100),
+      era: clamp(cat.era, 50),
+      skillLevel: mapSkillLevel(cat.league),
+      career3ptPercentage: cat.careerPct ?? null,
+      careerFtPercentage: cat.careerFreeThrowPct ?? null,
+      profileImageUrl: clamp(cat.photoUrl, 500),
+      team: clamp(cat.team, 255),
+      signature: cat.bio ?? cat.achievements ?? null,
     },
-    strengths: [
-      "Quickest release in NBA history",
-      "Deep three-point range (logo distance)",
-      "Elite off-dribble shooting",
-    ],
-  },
-  {
-    name: "Klay Thompson",
-    position: "Guard",
-    heightInches: 78,
-    weightLbs: 220,
-    wingspanInches: 81,
-    bodyType: "mesomorph",
-    dominantHand: "Right",
-    shootingStyle: "Two-motion",
-    era: "Modern",
-    skillLevel: "Professional",
-    careerFgPercentage: 45.4,
-    career3ptPercentage: 41.7,
-    careerFtPercentage: 85.3,
-    biomechanics: {
-      elbowAngle: 90,
-      kneeAngle: 120,
-      shoulderAngle: 2,
-      hipAngle: 165,
-      releaseHeight: 130,
-      shotArc: 46,
-      setPoint: "Forehead level",
-      releaseTime: 0.38,
+    create: {
+      name: cat.name,
+      position: mapPosition(cat.position),
+      heightInches: cat.height,
+      weightLbs: cat.weight,
+      wingspanInches: cat.wingspan,
+      bodyType: clamp(cat.bodyType, 100),
+      dominantHand: "Right",
+      shootingStyle: clamp(cat.shootingStyle, 100),
+      era: clamp(cat.era, 50),
+      skillLevel: mapSkillLevel(cat.league),
+      career3ptPercentage: cat.careerPct ?? null,
+      careerFtPercentage: cat.careerFreeThrowPct ?? null,
+      profileImageUrl: clamp(cat.photoUrl, 500),
+      team: clamp(cat.team, 255),
+      signature: cat.bio ?? cat.achievements ?? null,
     },
-    strengths: [
-      "Textbook shooting form",
-      "Exceptional catch-and-shoot",
-      "Masters off-screen movement",
-    ],
-  },
-  {
-    name: "Ray Allen",
-    position: "Guard",
-    heightInches: 77,
-    weightLbs: 205,
-    wingspanInches: 81,
-    bodyType: "mesomorph",
-    dominantHand: "Right",
-    shootingStyle: "Two-motion",
-    era: "Modern",
-    skillLevel: "Professional",
-    careerFgPercentage: 45.2,
-    career3ptPercentage: 40.0,
-    careerFtPercentage: 89.4,
-    biomechanics: {
-      elbowAngle: 91,
-      kneeAngle: 118,
-      shoulderAngle: 2,
-      hipAngle: 170,
-      releaseHeight: 126,
-      shotArc: 47,
-      setPoint: "High forehead",
-      releaseTime: 0.42,
+  })
+
+  // Biomechanics (tier-estimated reference values).
+  await prisma.shootingBiomechanics.upsert({
+    where: { shooterId: shooter.id },
+    update: {
+      elbowAngle: m.elbowAngle,
+      shoulderAngle: m.shoulderAngle,
+      hipAngle: m.hipAngle,
+      kneeAngle: m.kneeAngle,
+      ankleAngle: m.ankleAngle,
+      releaseHeight: m.releaseHeight,
+      releaseAngle: m.releaseAngle,
+      entryAngle: m.entryAngle,
     },
-    strengths: [
-      "All-time greatest corner three shooter",
-      "Elite footwork into shot",
-      "Perfect mechanics",
-    ],
-  },
-  {
-    name: "Kevin Durant",
-    position: "Forward",
-    heightInches: 83,
-    weightLbs: 240,
-    wingspanInches: 89,
-    bodyType: "ectomorph",
-    dominantHand: "Right",
-    shootingStyle: "One-motion",
-    era: "Modern",
-    skillLevel: "Professional",
-    careerFgPercentage: 50.0,
-    career3ptPercentage: 38.6,
-    careerFtPercentage: 88.4,
-    biomechanics: {
-      elbowAngle: 88,
-      kneeAngle: 130,
-      shoulderAngle: 5,
-      hipAngle: 172,
-      releaseHeight: 138,
-      shotArc: 50,
-      setPoint: "Above head due to height",
-      releaseTime: 0.45,
+    create: {
+      shooterId: shooter.id,
+      elbowAngle: m.elbowAngle,
+      shoulderAngle: m.shoulderAngle,
+      hipAngle: m.hipAngle,
+      kneeAngle: m.kneeAngle,
+      ankleAngle: m.ankleAngle,
+      releaseHeight: m.releaseHeight,
+      releaseAngle: m.releaseAngle,
+      entryAngle: m.entryAngle,
     },
-    strengths: [
-      "Unblockable release point",
-      "Elite mid-range scorer",
-      "Versatile from all levels",
-    ],
-  },
-  {
-    name: "Damian Lillard",
-    position: "Guard",
-    heightInches: 74,
-    weightLbs: 195,
-    wingspanInches: 78,
-    bodyType: "mesomorph",
-    dominantHand: "Right",
-    shootingStyle: "One-motion",
-    era: "Modern",
-    skillLevel: "Professional",
-    careerFgPercentage: 44.0,
-    career3ptPercentage: 37.2,
-    careerFtPercentage: 89.5,
-    biomechanics: {
-      elbowAngle: 93,
-      kneeAngle: 122,
-      shoulderAngle: 4,
-      hipAngle: 166,
-      releaseHeight: 120,
-      shotArc: 49,
-      setPoint: "Above forehead",
-      releaseTime: 0.35,
-    },
-    strengths: [
-      "Logo-range three-pointer",
-      "Clutch playoff performer",
-      "Elite pull-up shooter",
-    ],
-  },
-  {
-    name: "Diana Taurasi",
-    position: "Guard",
-    heightInches: 72,
-    weightLbs: 163,
-    wingspanInches: 74,
-    bodyType: "mesomorph",
-    dominantHand: "Right",
-    shootingStyle: "One-motion",
-    era: "Modern",
-    skillLevel: "Professional",
-    careerFgPercentage: 43.0,
-    career3ptPercentage: 36.2,
-    careerFtPercentage: 87.5,
-    biomechanics: {
-      elbowAngle: 91,
-      kneeAngle: 120,
-      shoulderAngle: 3,
-      hipAngle: 165,
-      releaseHeight: 114,
-      shotArc: 46,
-      setPoint: "Forehead level",
-      releaseTime: 0.38,
-    },
-    strengths: [
-      "WNBA all-time leading scorer",
-      "Elite shot creation",
-      "Clutch performer",
-    ],
-  },
-  {
-    name: "Sabrina Ionescu",
-    position: "Guard",
-    heightInches: 71,
-    weightLbs: 165,
-    wingspanInches: 73,
-    bodyType: "mesomorph",
-    dominantHand: "Right",
-    shootingStyle: "One-motion",
-    era: "Modern",
-    skillLevel: "Professional",
-    careerFgPercentage: 43.5,
-    career3ptPercentage: 38.0,
-    careerFtPercentage: 89.0,
-    biomechanics: {
-      elbowAngle: 92,
-      kneeAngle: 118,
-      shoulderAngle: 2,
-      hipAngle: 164,
-      releaseHeight: 112,
-      shotArc: 48,
-      setPoint: "High forehead",
-      releaseTime: 0.36,
-    },
-    strengths: [
-      "Complete offensive player",
-      "Deep shooting range",
-      "High basketball IQ",
-    ],
-  },
-  {
-    name: "Dirk Nowitzki",
-    position: "Forward",
-    heightInches: 84,
-    weightLbs: 245,
-    wingspanInches: 90,
-    bodyType: "ectomorph",
-    dominantHand: "Right",
-    shootingStyle: "One-motion",
-    era: "Modern",
-    skillLevel: "Professional",
-    careerFgPercentage: 47.1,
-    career3ptPercentage: 38.0,
-    careerFtPercentage: 87.9,
-    biomechanics: {
-      elbowAngle: 85,
-      kneeAngle: 135,
-      shoulderAngle: 8,
-      hipAngle: 160,
-      releaseHeight: 144,
-      shotArc: 52,
-      setPoint: "One-leg fadeaway",
-      releaseTime: 0.5,
-    },
-    strengths: [
-      "Invented the one-leg fadeaway",
-      "Unguardable due to height",
-      "Revolutionary big man shooting",
-    ],
-  },
-  {
-    name: "Reggie Miller",
-    position: "Guard",
-    heightInches: 79,
-    weightLbs: 195,
-    wingspanInches: 82,
-    bodyType: "ectomorph",
-    dominantHand: "Right",
-    shootingStyle: "Two-motion",
-    era: "Classic",
-    skillLevel: "Professional",
-    careerFgPercentage: 47.1,
-    career3ptPercentage: 39.5,
-    careerFtPercentage: 88.8,
-    biomechanics: {
-      elbowAngle: 90,
-      kneeAngle: 122,
-      shoulderAngle: 3,
-      hipAngle: 168,
-      releaseHeight: 130,
-      shotArc: 47,
-      setPoint: "Forehead level",
-      releaseTime: 0.4,
-    },
-    strengths: [
-      "Master of off-screen movement",
-      "Clutch playoff performer",
-      "Elite mental toughness",
-    ],
-  },
-  {
-    name: "Devin Booker",
-    position: "Guard",
-    heightInches: 77,
-    weightLbs: 206,
-    wingspanInches: 80,
-    bodyType: "mesomorph",
-    dominantHand: "Right",
-    shootingStyle: "Two-motion",
-    era: "Modern",
-    skillLevel: "Professional",
-    careerFgPercentage: 46.0,
-    career3ptPercentage: 36.0,
-    careerFtPercentage: 86.8,
-    biomechanics: {
-      elbowAngle: 90,
-      kneeAngle: 124,
-      shoulderAngle: 2,
-      hipAngle: 167,
-      releaseHeight: 126,
-      shotArc: 46,
-      setPoint: "Forehead level",
-      releaseTime: 0.4,
-    },
-    strengths: [
-      "Elite mid-range scorer",
-      "Smooth shooting stroke",
-      "Great footwork",
-    ],
-  },
-]
+  })
+
+  // Strengths from key traits (replace catalog-sourced set each run).
+  await prisma.shootingStrength.deleteMany({ where: { shooterId: shooter.id } })
+  for (const trait of cat.keyTraits ?? []) {
+    await prisma.shootingStrength.create({
+      data: { shooterId: shooter.id, strengthCategory: "form", description: trait },
+    })
+  }
+
+  // Catalog form images — replace only the "shooting_form" rows so admin
+  // approve/exclude rows survive re-seeds.
+  await prisma.shooterImage.deleteMany({
+    where: { shooterId: shooter.id, imageCategory: "shooting_form" },
+  })
+  const forms = cat.shootingFormImages ?? []
+  for (let i = 0; i < forms.length; i++) {
+    await prisma.shooterImage.create({
+      data: {
+        shooterId: shooter.id,
+        imageUrl: clamp(forms[i], 500),
+        imageCategory: "shooting_form",
+        isPrimary: i === 0,
+      },
+    })
+  }
+}
 
 async function seed() {
-  console.log("🏀 Seeding professional shooter database...")
+  console.log(`🏀 Seeding ${ALL_ELITE_SHOOTERS.length} reference shooters...`)
 
-  for (const shooter of PROFESSIONAL_SHOOTERS) {
+  let ok = 0
+  for (const cat of ALL_ELITE_SHOOTERS) {
     try {
-      // Create or update shooter
-      const createdShooter = await prisma.shooter.upsert({
-        where: { name: shooter.name },
-        update: {
-          position: shooter.position,
-          heightInches: shooter.heightInches,
-          weightLbs: shooter.weightLbs,
-          wingspanInches: shooter.wingspanInches,
-          bodyType: shooter.bodyType,
-          dominantHand: shooter.dominantHand,
-          shootingStyle: shooter.shootingStyle,
-          era: shooter.era,
-          skillLevel: shooter.skillLevel,
-          careerFgPercentage: shooter.careerFgPercentage,
-          career3ptPercentage: shooter.career3ptPercentage,
-          careerFtPercentage: shooter.careerFtPercentage,
-        },
-        create: {
-          name: shooter.name,
-          position: shooter.position,
-          heightInches: shooter.heightInches,
-          weightLbs: shooter.weightLbs,
-          wingspanInches: shooter.wingspanInches,
-          bodyType: shooter.bodyType,
-          dominantHand: shooter.dominantHand,
-          shootingStyle: shooter.shootingStyle,
-          era: shooter.era,
-          skillLevel: shooter.skillLevel,
-          careerFgPercentage: shooter.careerFgPercentage,
-          career3ptPercentage: shooter.career3ptPercentage,
-          careerFtPercentage: shooter.careerFtPercentage,
-        },
-      })
-
-      // Create or update biomechanics.
-      // The source data carries domain concepts (shotArc/setPoint/releaseTime)
-      // that don't all map 1:1 to schema columns: shotArc -> releaseAngle (ball
-      // trajectory angle); setPoint/releaseTime have no column and are omitted.
-      await prisma.shootingBiomechanics.upsert({
-        where: { shooterId: createdShooter.id },
-        update: {
-          elbowAngle: shooter.biomechanics.elbowAngle,
-          kneeAngle: shooter.biomechanics.kneeAngle,
-          shoulderAngle: shooter.biomechanics.shoulderAngle,
-          hipAngle: shooter.biomechanics.hipAngle,
-          releaseHeight: shooter.biomechanics.releaseHeight,
-          releaseAngle: shooter.biomechanics.shotArc,
-        },
-        create: {
-          shooterId: createdShooter.id,
-          elbowAngle: shooter.biomechanics.elbowAngle,
-          kneeAngle: shooter.biomechanics.kneeAngle,
-          shoulderAngle: shooter.biomechanics.shoulderAngle,
-          hipAngle: shooter.biomechanics.hipAngle,
-          releaseHeight: shooter.biomechanics.releaseHeight,
-          releaseAngle: shooter.biomechanics.shotArc,
-        },
-      })
-
-      // Replace strengths. There's no unique constraint on (shooterId,
-      // description) to upsert against, so reset this shooter's strengths and
-      // re-insert. `category` is not a column — the field is `strengthCategory`.
-      await prisma.shootingStrength.deleteMany({
-        where: { shooterId: createdShooter.id },
-      })
-      for (const strengthDesc of shooter.strengths) {
-        await prisma.shootingStrength.create({
-          data: {
-            shooterId: createdShooter.id,
-            strengthCategory: "form",
-            description: strengthDesc,
-          },
-        })
-      }
-
-      console.log(`  ✅ ${shooter.name}`)
+      await seedShooter(cat)
+      ok++
     } catch (error) {
-      console.log(`  ⚠️ ${shooter.name} - Error: ${error instanceof Error ? error.message : "Unknown"}`)
+      console.log(
+        `  ⚠️ ${cat.name} - ${error instanceof Error ? error.message : "Unknown error"}`
+      )
     }
   }
 
-  console.log("\n✨ Seeding complete!")
-  
-  // Print summary
   const shooterCount = await prisma.shooter.count()
   const biomechCount = await prisma.shootingBiomechanics.count()
-  console.log(`\n📊 Database Summary:`)
-  console.log(`   - Shooters: ${shooterCount}`)
-  console.log(`   - Biomechanics records: ${biomechCount}`)
+  console.log(`\n✨ Seeding complete (${ok}/${ALL_ELITE_SHOOTERS.length} ok)`)
+  console.log(`📊 Shooters: ${shooterCount} | Biomechanics: ${biomechCount}`)
 }
 
 seed()
@@ -417,8 +166,3 @@ seed()
   .finally(async () => {
     await prisma.$disconnect()
   })
-
-
-
-
-

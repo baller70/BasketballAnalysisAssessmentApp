@@ -13,46 +13,10 @@ interface ShootingFormGalleryProps {
 export default function ShootingFormGallery({ shooter, onClose }: ShootingFormGalleryProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isZoomed, setIsZoomed] = useState(false);
-  const [approvedImages, setApprovedImages] = useState<string[]>([]);
-  const [excludedImages, setExcludedImages] = useState<string[]>([]);
-  
-  // Load approved and excluded images from localStorage on mount
-  useEffect(() => {
-    // Load approved images
-    const approvedKey = 'approved_shooting_forms';
-    const storedApproved = localStorage.getItem(approvedKey);
-    if (storedApproved) {
-      try {
-        const parsed = JSON.parse(storedApproved);
-        if (parsed[shooter.id]) {
-          setApprovedImages(parsed[shooter.id]);
-        }
-      } catch (e) {
-        console.error('Failed to load approved images:', e);
-      }
-    }
-    
-    // Load excluded images (original URLs that have been cropped/replaced)
-    const excludedKey = 'excluded_shooting_forms';
-    const storedExcluded = localStorage.getItem(excludedKey);
-    if (storedExcluded) {
-      try {
-        const parsed = JSON.parse(storedExcluded);
-        if (parsed[shooter.id]) {
-          setExcludedImages(parsed[shooter.id]);
-        }
-      } catch (e) {
-        console.error('Failed to load excluded images:', e);
-      }
-    }
-  }, [shooter.id]);
-  
-  // Combine database images with approved images, filtering out excluded ones
-  const databaseImages = (shooter.shootingFormImages || []).filter(
-    url => !excludedImages.includes(url)
-  );
-  const allImages = [...new Set([...databaseImages, ...approvedImages])];
-  const images = allImages;
+
+  // shooter.shootingFormImages already reflects server-side admin approvals and
+  // exclusions (applied by GET /api/shooters) — no localStorage merge needed.
+  const images = [...new Set(shooter.shootingFormImages || [])];
   const hasImages = images.length > 0;
   const tierColor = TIER_COLORS[shooter.tier];
 
@@ -222,6 +186,9 @@ export default function ShootingFormGallery({ shooter, onClose }: ShootingFormGa
                   <Camera className="w-4 h-4" />
                   Study Points
                 </h3>
+                {shooter.biomechanicsEstimated !== false && (
+                  <p className="text-[#888] text-xs mb-2 italic">Estimated reference angles (tier-based), not measured from video.</p>
+                )}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                   <div className="bg-[#252525] rounded-lg p-3 text-center">
                     <p className="text-[#888]">Elbow Angle</p>

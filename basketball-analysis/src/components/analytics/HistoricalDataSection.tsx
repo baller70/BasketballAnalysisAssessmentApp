@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect } from "react"
 import { useAnalysisStore } from "@/stores/analysisStore"
 import { useProfileStore } from "@/stores/profileStore"
 import { getAllSessions, AnalysisSession } from "@/services/sessionStorage"
+import { fetchServerHistory, serverHistoryToSessions } from "@/components/analytics/serverHistory"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { 
@@ -651,17 +652,51 @@ export default function HistoricalDataSection() {
   const safeViewMode = viewMode || 'sessions'
   
   useEffect(() => {
-    try {
-      const loadedSessions = getAllSessions()
-      // If no real sessions, use demo data
-      if (!loadedSessions || loadedSessions.length === 0) {
-        setSessions(generateDemoSessions())
-      } else {
-        setSessions(Array.isArray(loadedSessions) ? loadedSessions : [])
+    let cancelled = false
+    const load = async () => {
+      // 1) Local (offline) cache.
+      let localSessions: AnalysisSession[] = []
+      try {
+        const loaded = getAllSessions()
+        localSessions = Array.isArray(loaded) ? loaded : []
+      } catch (error) {
+        console.error('Error loading sessions:', error)
       }
-    } catch (error) {
-      console.error('Error loading sessions:', error)
-      setSessions(generateDemoSessions())
+
+      // 2) Server-side history (source of truth) — so progress survives across
+      //    devices, not just on the device that produced the analysis.
+      let serverSessions: AnalysisSession[] = []
+      try {
+        const { history } = await fetchServerHistory(100)
+        serverSessions = serverHistoryToSessions(history)
+      } catch {
+        /* offline / unauthenticated — fall back to local only */
+      }
+
+      // Merge, de-duping server rows already represented locally (same day + score).
+      const localKeys = new Set(
+        localSessions.map((s) => {
+          const d = new Date(s.date)
+          d.setHours(0, 0, 0, 0)
+          return `${d.getTime()}:${Math.round(s.analysisData?.overallScore ?? 0)}`
+        })
+      )
+      const merged = [
+        ...localSessions,
+        ...serverSessions.filter((s) => {
+          const d = new Date(s.date)
+          d.setHours(0, 0, 0, 0)
+          return !localKeys.has(`${d.getTime()}:${Math.round(s.analysisData?.overallScore ?? 0)}`)
+        }),
+      ]
+
+      if (cancelled) return
+      // Only fall back to demo data when there is genuinely nothing to show.
+      setSessions(merged.length > 0 ? merged : generateDemoSessions())
+    }
+    load()
+    return () => {
+      cancelled = true
     }
   }, [])
   

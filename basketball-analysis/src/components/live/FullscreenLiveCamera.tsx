@@ -41,6 +41,8 @@ import { isMobile } from '@/utils/platform'
 import { useUsage } from '@/lib/usage'
 import { usePoints } from '@/lib/points/pointsContext'
 import { saveSession, createSessionFromAnalysis } from '@/services/sessionStorage'
+import { addWatermarkToImage } from '@/lib/watermark'
+import { isCameraAvailable, requestCameraPermissions } from '@/services/capacitorCamera'
 
 // ============================================
 // TYPES
@@ -506,9 +508,28 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
 
       // Clean up any existing stream first
       cleanupCamera()
-      
+
       // Small delay to ensure cleanup is complete
       await new Promise(resolve => setTimeout(resolve, 100))
+
+      // Capacitor/iOS path: confirm a camera exists and (on mobile) that the
+      // native camera permission is granted before requesting getUserMedia.
+      // On the web this resolves immediately; getUserMedia is the fallback.
+      if (!isCameraAvailable()) {
+        setCameraError('No camera is available on this device.')
+        return
+      }
+      if (isMobile()) {
+        try {
+          const perms = await requestCameraPermissions()
+          if (perms.camera === 'denied') {
+            setCameraError('Camera access was denied. Enable camera permissions in Settings and try again.')
+            return
+          }
+        } catch (permErr) {
+          console.log('[FullscreenLive] Permission request failed:', permErr)
+        }
+      }
 
       // Request camera access - prefer higher resolution for fullscreen
       const constraints: MediaStreamConstraints = {
@@ -588,24 +609,20 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       }
     } catch (err: any) {
       console.log('[FullscreenLive] Camera error:', err)
-      // Automatically fallback to demo video!
-      console.log('[FullscreenLive] Automatically falling back to demo video')
-      if (videoRef.current) {
-        setCameraError(null)
-        videoRef.current.srcObject = null
-        videoRef.current.src = '/demo-basketball.mp4'
-        videoRef.current.loop = true
-        videoRef.current.muted = true
-        
-        videoRef.current.onloadedmetadata = () => {
-          setVideoDimensions({
-            width: videoRef.current!.videoWidth,
-            height: videoRef.current!.videoHeight,
-          })
-          setCameraReady(true)
-          videoRef.current!.play()
-        }
+      // No silent demo fallback — surface a clear "no camera" state instead.
+      // The demo path is only reachable behind the explicit affordance in the
+      // error view below (user-supplied video file).
+      cleanupCamera()
+      const name = err?.name || ''
+      let message = 'We could not access a camera on this device.'
+      if (name === 'NotAllowedError' || name === 'SecurityError' || name === 'PermissionDeniedError') {
+        message = 'Camera access was blocked. Please allow camera permissions and try again.'
+      } else if (name === 'NotFoundError' || name === 'OverconstrainedError' || name === 'DevicesNotFoundError') {
+        message = 'No camera was found on this device.'
+      } else if (name === 'NotReadableError' || name === 'TrackStartError') {
+        message = 'Your camera is in use by another app. Close it and try again.'
       }
+      setCameraError(message)
     }
   }, [facingMode, cleanupCamera])
 
@@ -1462,12 +1479,45 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       
       if (navigator.share && /mobile|android|iphone/i.test(navigator.userAgent)) {
         try {
-          const file = new File([recordingBlobRef.current], filename, { type: 'video/webm' })
-          await navigator.share({
-            files: [file],
+          const files: File[] = []
+
+          // Include a watermarked still frame so shared media is branded
+          // (audit: Web Share must carry the watermarked image).
+          try {
+            const frameDataUrl = capturedFrames[0]?.dataUrl
+            if (frameDataUrl) {
+              const watermarked = await addWatermarkToImage(frameDataUrl)
+              const imgBlob = await (await fetch(watermarked)).blob()
+              files.push(new File([imgBlob], `shotiq-frame-${timestamp}.png`, { type: 'image/png' }))
+            }
+          } catch (wmErr) {
+            console.log('[FullscreenLive] Could not build watermarked image:', wmErr)
+          }
+
+          files.push(new File([recordingBlobRef.current], filename, { type: 'video/webm' }))
+
+          const shareData: ShareData = {
+            files,
             title: 'ShotIQ Recording',
-            text: 'My basketball shooting analysis'
-          })
+            text: 'My basketball shooting analysis',
+          }
+
+          // Some targets reject mixed image+video payloads; if so, share the
+          // watermarked image only (still branded), then fall back to download.
+          if (navigator.canShare && !navigator.canShare(shareData) && files.length > 1) {
+            const imageOnly: ShareData = {
+              files: [files[0]],
+              title: shareData.title,
+              text: shareData.text,
+            }
+            if (navigator.canShare(imageOnly)) {
+              await navigator.share(imageOnly)
+            } else {
+              throw new Error('canShare rejected payload')
+            }
+          } else {
+            await navigator.share(shareData)
+          }
         } catch (shareErr) {
           console.log('[FullscreenLive] Share failed, falling back to download:', shareErr)
           document.body.appendChild(downloadLink)
@@ -1808,7 +1858,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/20 flex items-center justify-center">
             <X className="w-8 h-8 text-red-400" />
           </div>
-          <h2 className="text-xl font-bold text-white mb-2">Camera Error</h2>
+          <h2 className="text-xl font-bold text-white mb-2">No Camera Available</h2>
           <p className="text-white/60 mb-6">{cameraError}</p>
           <div className="flex flex-col gap-3 justify-center items-center">
             <div className="flex gap-3">

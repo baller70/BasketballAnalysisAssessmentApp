@@ -1633,55 +1633,149 @@ export function prioritizeFlaws(flawIds: string[]): ShootingFlaw[] {
     .sort((a, b) => b.priority - a.priority)
 }
 
+// ============================================
+// GENERIC FLAW RULE EVALUATOR
+// ============================================
+//
+// Every flaw in SHOOTING_FLAWS declares its detection as DATA
+// ({ metric, condition, threshold }). Historically only ~4 of those rules were
+// ever evaluated because detectFlawsFromAngles hard-coded a handful of checks
+// and ignored the rest. The evaluator below reads each flaw's detection block
+// generically so the WHOLE library is reachable:
+//
+//   1. resolve the rule's `metric` to a real numeric signal computed from the
+//      canonical angle record (formAnglesToRecord — right_elbow_angle,
+//      knee_angle, wrist_angle, shoulder_tilt, hip_tilt, release_angle, ...).
+//   2. resolve the rule's `threshold` (numeric, or a sentinel that we can map to
+//      a computed value).
+//   3. apply the rule's `condition` operator.
+//
+// When a metric has no signal the current pose pipeline actually produces
+// (guide-hand motion, jump timing, landing position, stance width, miss
+// patterns, ball launch arc, ...) the flaw is SKIPPED cleanly — never crashed,
+// never fabricated. As soon as those signals start flowing into the record the
+// matching flaws light up automatically with no code change.
+
+/** Numeric comparison operators a detection rule can declare. */
+const FLAW_COMPARATORS: Record<string, (signal: number, threshold: number) => boolean> = {
+  greater_than: (s, t) => s > t,
+  less_than: (s, t) => s < t,
+  greater_than_or_equal: (s, t) => s >= t,
+  less_than_or_equal: (s, t) => s <= t,
+  equals: (s, t) => s === t,
+}
+
+/** First finite number found across a list of candidate record keys, else null. */
+function firstAngle(angles: Record<string, number>, keys: string[]): number | null {
+  for (const key of keys) {
+    const v = angles[key]
+    if (typeof v === 'number' && Number.isFinite(v)) return v
+  }
+  return null
+}
+
 /**
- * Detect flaws from angle measurements
+ * Magnitude of a "level/square" deviation, tolerant of both encoding
+ * conventions seen in the codebase: 0 = level (ideal 0, e.g. shoulder_tilt) and
+ * 180 = level (joint-style readings). Values near 180 are folded back to a
+ * deviation-from-level so a threshold like "> 8°" means the same thing either way.
+ */
+function tiltDeviation(angles: Record<string, number>, keys: string[]): number | null {
+  const v = firstAngle(angles, keys)
+  if (v === null) return null
+  return v > 90 ? Math.abs(180 - v) : Math.abs(v)
+}
+
+/**
+ * Resolve a flaw's `metric` string to a real signal from the angle record.
+ * Returns null when the pose pipeline does not (yet) produce that signal, which
+ * tells the evaluator to skip the flaw rather than invent a value.
+ */
+function resolveFlawSignal(
+  metric: string,
+  angles: Record<string, number>
+): number | null {
+  switch (metric) {
+    case 'elbow_angle':
+      return firstAngle(angles, ['right_elbow_angle', 'left_elbow_angle', 'elbow_angle'])
+    case 'knee_angle':
+      return firstAngle(angles, ['right_knee_angle', 'left_knee_angle', 'knee_angle'])
+    case 'wrist_extension':
+      // Follow-through / wrist-snap angle. Canonical record emits wrist_angle.
+      return firstAngle(angles, ['wrist_angle', 'right_wrist_angle', 'left_wrist_angle'])
+    case 'shoulder_angle':
+      // SHOULDER_TILT measures how UN-level the shoulders are, not the
+      // elbow-shoulder-hip joint angle. Only a true tilt signal qualifies; the
+      // joint-angle `shoulder_angle` from the canonical record is intentionally
+      // NOT used here (it would fire on every shot).
+      return tiltDeviation(angles, ['shoulder_tilt'])
+    case 'hip_angle_to_basket':
+      // No transverse hip-rotation signal is produced from a single pose; the
+      // frontal hip_tilt is the closest available alignment proxy.
+      return tiltDeviation(angles, ['hip_tilt'])
+    // --- Signals the pipeline does not produce yet -> skip cleanly. ---
+    // elbow_angle_horizontal (ELBOW_FLARE), elbow_height_relative (ELBOW_TOO_LOW),
+    // guide_hand_* , landing_position, foot_stability, stance_width,
+    // release_angle (FLAT_SHOT/HIGH_ARC need a ball-launch arc, but the canonical
+    // `release` is a vertical-deviation angle — different convention),
+    // wrist not-applicable, release_timing, release_height, torso_angle,
+    // head_stability, miss_direction/miss_distance/miss_pattern (need shot
+    // outcomes, not pose).
+    default:
+      return null
+  }
+}
+
+/**
+ * Resolve a flaw's `threshold` to a number. Plain numbers pass through; string
+ * sentinels ('shoulder_level', 'forehead', 'jump_peak', 'any', ...) currently
+ * have no computed mapping, so they return null and the flaw is skipped.
+ */
+function resolveFlawThreshold(threshold: number | string): number | null {
+  return typeof threshold === 'number' && Number.isFinite(threshold) ? threshold : null
+}
+
+/**
+ * Evaluate a single flaw's data-driven detection rule against an angle record.
+ * Returns false (skip) for any rule whose signal, threshold or operator can't be
+ * resolved — guaranteeing the function never throws and never fakes a detection.
+ */
+export function evaluateFlawRule(
+  flaw: ShootingFlaw,
+  angles: Record<string, number>
+): boolean {
+  const { metric, condition, threshold } = flaw.detection
+
+  const comparator = FLAW_COMPARATORS[condition]
+  if (!comparator) return false // non-numeric condition (timing/pattern/position)
+
+  const signal = resolveFlawSignal(metric, angles)
+  if (signal === null) return false // signal not produced yet
+
+  const thresholdValue = resolveFlawThreshold(threshold)
+  if (thresholdValue === null) return false // sentinel threshold not mapped
+
+  return comparator(signal, thresholdValue)
+}
+
+/**
+ * Detect flaws from angle measurements.
+ *
+ * Now data-driven: every flaw in SHOOTING_FLAWS is evaluated through its own
+ * detection block via evaluateFlawRule, so the full library is reachable instead
+ * of the old hard-coded four. Flaws whose signals the pose pipeline does not
+ * produce yet are skipped silently.
  */
 export function detectFlawsFromAngles(angles: Record<string, number>): ShootingFlaw[] {
-  const detectedFlaws: ShootingFlaw[] = []
-  
-  // Check elbow angle
-  if (angles.right_elbow_angle !== undefined || angles.left_elbow_angle !== undefined) {
-    const elbowAngle = angles.right_elbow_angle || angles.left_elbow_angle
-    
-    if (elbowAngle < 70) {
-      const flaw = SHOOTING_FLAWS.find(f => f.id === "ELBOW_ANGLE_ACUTE")
-      if (flaw) detectedFlaws.push(flaw)
-    } else if (elbowAngle > 110) {
-      const flaw = SHOOTING_FLAWS.find(f => f.id === "ELBOW_ANGLE_OBTUSE")
-      if (flaw) detectedFlaws.push(flaw)
+  if (!angles || typeof angles !== 'object') return []
+
+  return SHOOTING_FLAWS.filter(flaw => {
+    try {
+      return evaluateFlawRule(flaw, angles)
+    } catch {
+      return false
     }
-  }
-  
-  // Check knee angle
-  if (angles.right_knee_angle !== undefined || angles.left_knee_angle !== undefined) {
-    const kneeAngle = angles.right_knee_angle || angles.left_knee_angle
-    
-    if (kneeAngle > 160) {
-      const flaw = SHOOTING_FLAWS.find(f => f.id === "INSUFFICIENT_KNEE_BEND")
-      if (flaw) detectedFlaws.push(flaw)
-    } else if (kneeAngle < 100) {
-      const flaw = SHOOTING_FLAWS.find(f => f.id === "EXCESSIVE_KNEE_BEND")
-      if (flaw) detectedFlaws.push(flaw)
-    }
-  }
-  
-  // Check shoulder tilt
-  if (angles.shoulder_tilt !== undefined) {
-    if (Math.abs(angles.shoulder_tilt - 180) > 8) {
-      const flaw = SHOOTING_FLAWS.find(f => f.id === "SHOULDER_TILT")
-      if (flaw) detectedFlaws.push(flaw)
-    }
-  }
-  
-  // Check hip tilt
-  if (angles.hip_tilt !== undefined) {
-    if (Math.abs(angles.hip_tilt - 180) > 10) {
-      const flaw = SHOOTING_FLAWS.find(f => f.id === "HIP_ROTATION")
-      if (flaw) detectedFlaws.push(flaw)
-    }
-  }
-  
-  return detectedFlaws
+  })
 }
 
 /**

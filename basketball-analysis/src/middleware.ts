@@ -12,7 +12,6 @@ const PUBLIC_ROUTES = [
   '/forgot-password',
   '/reset-password',
   '/results/demo',
-  '/settings',
   '/badges',
   '/elite-shooters',
   '/guide',

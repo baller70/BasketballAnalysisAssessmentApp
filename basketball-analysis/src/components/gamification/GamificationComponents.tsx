@@ -21,15 +21,18 @@ import {
   getLevelProgress,
   getEarnedBadges,
   getUnearnedBadges,
-  getActiveChallenges,
-  getLeaderboard,
+  getActiveChallengesAsync,
+  getLeaderboardAsync,
+  fetchGamificationState,
+  ensureLeaderboardIdentity,
   checkStreakStatus,
   getRarityColor,
   getDifficultyColor,
   ALL_BADGES,
   type Badge,
   type Challenge,
-  type LeaderboardData
+  type LeaderboardData,
+  type GamificationState
 } from "@/services/gamificationService"
 
 // ============================================
@@ -265,10 +268,22 @@ export function LevelProgressCard() {
 // ============================================
 
 export function StreakTracker() {
-  const progress = getUserProgress()
   const streakStatus = checkStreakStatus()
-  
-  // Generate last 7 days
+  const [state, setState] = useState<GamificationState | null>(null)
+
+  // Load REAL streak data (active analysis dates + streak counts) from the server.
+  useEffect(() => {
+    let active = true
+    fetchGamificationState().then(s => { if (active) setState(s) })
+    return () => { active = false }
+  }, [])
+
+  const currentStreak = state?.stats.currentStreak ?? 0
+  const longestStreak = state?.stats.longestStreak ?? 0
+  const activeDates = useMemo(() => new Set(state?.stats.activeDates ?? []), [state])
+
+  // Generate last 7 days — each marked active ONLY if a real analysis exists
+  // on that calendar day (no more "simplified" faked grid).
   const last7Days = useMemo(() => {
     const days = []
     for (let i = 6; i >= 0; i--) {
@@ -276,16 +291,15 @@ export function StreakTracker() {
       date.setDate(date.getDate() - i)
       const dateStr = date.toISOString().split('T')[0]
       const dayName = date.toLocaleDateString('en', { weekday: 'short' })
-      
-      // Check if this day was active (simplified - in real app would check actual analysis dates)
-      const isActive = i < progress.currentStreak
+
+      const isActive = activeDates.has(dateStr)
       const isToday = i === 0
-      
+
       days.push({ date: dateStr, dayName, isActive, isToday })
     }
     return days
-  }, [progress.currentStreak])
-  
+  }, [activeDates])
+
   return (
     <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
       <div className="flex items-center justify-between mb-4">
@@ -300,7 +314,7 @@ export function StreakTracker() {
         </div>
         
         <div className="text-right">
-          <p className="text-3xl font-black text-[#FF6B35]">{progress.currentStreak}</p>
+          <p className="text-3xl font-black text-[#FF6B35]">{currentStreak}</p>
           <p className="text-xs text-slate-400">days</p>
         </div>
       </div>
@@ -330,7 +344,7 @@ export function StreakTracker() {
       <div className="flex justify-between text-sm">
         <div>
           <p className="text-slate-400">Longest Streak</p>
-          <p className="text-slate-900 font-bold">{progress.longestStreak} days</p>
+          <p className="text-slate-900 font-bold">{longestStreak} days</p>
         </div>
         <div className="text-right">
           <p className="text-slate-400">Status</p>
@@ -341,11 +355,11 @@ export function StreakTracker() {
       </div>
       
       {/* Warning if streak at risk */}
-      {!streakStatus.isActive && progress.currentStreak > 0 && (
+      {!streakStatus.isActive && currentStreak > 0 && (
         <div className="mt-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
           <p className="text-red-500 text-sm flex items-center gap-2">
             <Zap className="w-4 h-4" />
-            Analyze today to keep your {progress.currentStreak}-day streak!
+            Analyze today to keep your {currentStreak}-day streak!
           </p>
         </div>
       )}
@@ -360,9 +374,13 @@ export function StreakTracker() {
 export function WeeklyChallenges() {
   const [challenges, setChallenges] = useState<Challenge[]>([])
   const [expanded, setExpanded] = useState<string | null>(null)
-  
+
+  // Load DB-backed weekly challenges whose progress advances from real
+  // analysis events (UserChallenge), not a localStorage stub stuck at 0.
   useEffect(() => {
-    setChallenges(getActiveChallenges())
+    let active = true
+    getActiveChallengesAsync().then(c => { if (active) setChallenges(c) })
+    return () => { active = false }
   }, [])
   
   // Calculate time remaining
@@ -496,9 +514,20 @@ interface LeaderboardProps {
 export function Leaderboard({ ageGroup = '15-18', skillLevel = 'Intermediate' }: LeaderboardProps) {
   const [activeType, setActiveType] = useState<LeaderboardData['type']>('form_score')
   const [leaderboard, setLeaderboard] = useState<LeaderboardData | null>(null)
-  
+
+  // Make sure we know who the current user is so their row is flagged "You".
   useEffect(() => {
-    setLeaderboard(getLeaderboard(activeType, ageGroup, skillLevel))
+    void ensureLeaderboardIdentity()
+  }, [])
+
+  // Pull REAL leaderboard data (Prisma aggregation) via the async API, scoped
+  // by the current cohort (ageGroup / skillLevel).
+  useEffect(() => {
+    let active = true
+    getLeaderboardAsync(activeType, ageGroup, skillLevel).then(d => {
+      if (active) setLeaderboard(d)
+    })
+    return () => { active = false }
   }, [activeType, ageGroup, skillLevel])
   
   const typeLabels: Record<LeaderboardData['type'], string> = {

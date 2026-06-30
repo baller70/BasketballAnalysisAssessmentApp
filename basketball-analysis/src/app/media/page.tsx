@@ -37,6 +37,7 @@ import {
 import Link from 'next/link'
 import Image from 'next/image'
 import { getAllSessions, deleteSession, type AnalysisSession } from '@/services/sessionStorage'
+import { csrfFetch } from '@/lib/api/csrfFetch'
 
 // ============================================
 // TYPES
@@ -46,10 +47,48 @@ type MediaType = 'all' | 'image' | 'video' | 'live' | 'workout'
 type ViewMode = 'grid' | 'list'
 type SortOrder = 'newest' | 'oldest' | 'score'
 
+/**
+ * The gallery renders `AnalysisSession`-shaped items but they can come from two
+ * sources: the server (Postgres, the source of truth) and the read-only local
+ * sessionStorage cache (offline fallback). These markers tell delete which path
+ * to take without leaking into the shared `AnalysisSession` type.
+ */
+type GallerySession = AnalysisSession & {
+  _source: 'server' | 'local'
+  _analysisId?: string // UserAnalysis id — used for the scoped server delete
+}
+
 interface GroupedSessions {
   date: string
   displayDate: string
-  sessions: AnalysisSession[]
+  sessions: GallerySession[]
+}
+
+// Shape of an entry returned by GET /api/analysis-history?includeAnalysis=true
+interface ServerHistoryEntry {
+  id: string
+  analysisId: string
+  recordedAt: string
+  scores: {
+    overall: number | null
+    form: number | null
+    balance: number | null
+    release: number | null
+    consistency: number | null
+  }
+  angles: { elbow: number | null; knee: number | null; release: number | null }
+  scoreChange: number | null
+  improvementAreas?: unknown
+  regressionAreas?: unknown
+  analysis?: {
+    id: string
+    imageUrl: string | null
+    annotatedImageUrl: string | null
+    shootingPhase: string | null
+    strengths: unknown
+    improvements: unknown
+    coachingNotes: string | null
+  }
 }
 
 // ============================================
@@ -95,9 +134,9 @@ function getScoreColor(score: number): string {
   return 'text-red-400'
 }
 
-function groupSessionsByDate(sessions: AnalysisSession[]): GroupedSessions[] {
-  const groups: Record<string, AnalysisSession[]> = {}
-  
+function groupSessionsByDate(sessions: GallerySession[]): GroupedSessions[] {
+  const groups: Record<string, GallerySession[]> = {}
+
   sessions.forEach(session => {
     const dateKey = new Date(session.date).toISOString().split('T')[0]
     if (!groups[dateKey]) {
@@ -105,7 +144,7 @@ function groupSessionsByDate(sessions: AnalysisSession[]): GroupedSessions[] {
     }
     groups[dateKey].push(session)
   })
-  
+
   return Object.entries(groups)
     .map(([date, sessions]) => ({
       date,
@@ -113,6 +152,60 @@ function groupSessionsByDate(sessions: AnalysisSession[]): GroupedSessions[] {
       sessions: sessions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     }))
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+}
+
+/** Coerce an unknown JSON value (string[] | object[]) into display strings. */
+function toStringList(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  return value
+    .map(v => {
+      if (typeof v === 'string') return v
+      if (v && typeof v === 'object') {
+        const o = v as Record<string, unknown>
+        return String(o.area ?? o.name ?? o.title ?? o.description ?? '')
+      }
+      return String(v ?? '')
+    })
+    .filter(Boolean)
+}
+
+/**
+ * Map a server analysis-history entry (Postgres, source of truth) into the
+ * `AnalysisSession` shape the gallery UI already knows how to render. Images
+ * here are object-storage URLs (next/image is configured `unoptimized`, so
+ * remote URLs render fine) instead of base64 trapped in localStorage.
+ */
+function mapServerEntry(entry: ServerHistoryEntry): GallerySession {
+  const overall = entry.scores?.overall
+  const angles: Record<string, number> = {}
+  if (typeof entry.angles?.elbow === 'number') angles.elbow = entry.angles.elbow
+  if (typeof entry.angles?.knee === 'number') angles.knee = entry.angles.knee
+  if (typeof entry.angles?.release === 'number') angles.release = entry.angles.release
+
+  const image =
+    entry.analysis?.annotatedImageUrl || entry.analysis?.imageUrl || ''
+
+  return {
+    id: `server-${entry.id}`,
+    date: entry.recordedAt,
+    displayDate: formatDate(entry.recordedAt),
+    timestamp: new Date(entry.recordedAt).getTime(),
+    mainImageBase64: image,
+    skeletonImageBase64: entry.analysis?.annotatedImageUrl || undefined,
+    screenshots: [],
+    analysisData: {
+      // overall can legitimately be null — render an empty/`--` state rather
+      // than a fabricated number (see getScoreColor / score guards in the UI).
+      overallScore: typeof overall === 'number' ? overall : 0,
+      shooterLevel: entry.analysis?.shootingPhase || 'Analysis',
+      angles,
+      detectedFlaws: toStringList(entry.analysis?.improvements ?? entry.improvementAreas),
+      measurements: {},
+    },
+    mediaType: 'image',
+    _source: 'server',
+    _analysisId: entry.analysisId,
+  }
 }
 
 // ============================================
@@ -402,22 +495,65 @@ function FullscreenViewer({
 // ============================================
 
 export default function MediaGalleryPage() {
-  const [sessions, setSessions] = useState<AnalysisSession[]>([])
+  const [sessions, setSessions] = useState<GallerySession[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<MediaType>('all')
   const [viewMode, setViewMode] = useState<ViewMode>('grid')
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest')
-  const [selectedSession, setSelectedSession] = useState<AnalysisSession | null>(null)
+  const [selectedSession, setSelectedSession] = useState<GallerySession | null>(null)
   const [showFilters, setShowFilters] = useState(false)
-  
-  // Load sessions
+
+  // Load the gallery: server (Postgres, source of truth) merged with the
+  // read-only local sessionStorage cache for offline. The old code only ever
+  // read localStorage (base64, device-local, 20-cap) — server is now primary.
   useEffect(() => {
-    const loadSessions = () => {
-      const allSessions = getAllSessions()
-      setSessions(allSessions)
+    let cancelled = false
+
+    const loadSessions = async () => {
+      // Local cache first (instant render + offline fallback). Read-only.
+      const localSessions: GallerySession[] = getAllSessions().map(s => ({
+        ...s,
+        _source: 'local' as const,
+      }))
+
+      let serverSessions: GallerySession[] = []
+      try {
+        const res = await fetch(
+          '/api/analysis-history?limit=100&includeAnalysis=true',
+          { credentials: 'include' }
+        )
+        if (res.ok) {
+          const data = await res.json()
+          if (data?.success && Array.isArray(data.history)) {
+            serverSessions = (data.history as ServerHistoryEntry[]).map(mapServerEntry)
+          }
+        }
+      } catch {
+        // Offline / network error — fall back to the local cache only.
+      }
+
+      if (cancelled) return
+
+      // Merge: server entries are authoritative. Drop any local cache item that
+      // is the same analysis already returned by the server (matched on a
+      // ~5s timestamp window) so a just-saved shot doesn't appear twice.
+      const serverTimestamps = serverSessions.map(s => s.timestamp)
+      const dedupedLocal = localSessions.filter(
+        local => !serverTimestamps.some(ts => Math.abs(ts - local.timestamp) < 5000)
+      )
+
+      const merged = [...serverSessions, ...dedupedLocal].sort(
+        (a, b) => b.timestamp - a.timestamp
+      )
+
+      setSessions(merged)
       setLoading(false)
     }
+
     loadSessions()
+    return () => {
+      cancelled = true
+    }
   }, [])
   
   // Filter and sort sessions
@@ -452,13 +588,32 @@ export default function MediaGalleryPage() {
     return groupSessionsByDate(filteredSessions)
   }, [filteredSessions])
   
-  // Handle delete
-  const handleDelete = useCallback((sessionId: string) => {
-    if (confirm('Are you sure you want to delete this session?')) {
-      deleteSession(sessionId)
-      setSessions(prev => prev.filter(s => s.id !== sessionId))
-      setSelectedSession(null)
+  // Handle delete — server-backed items hit the scoped DELETE endpoint (CSRF +
+  // session-derived profile), local-only cache items use the read-only helper.
+  const handleDelete = useCallback(async (session: GallerySession) => {
+    if (!confirm('Are you sure you want to delete this session?')) return
+
+    if (session._source === 'server' && session._analysisId) {
+      try {
+        const res = await csrfFetch(
+          `/api/media?analysisId=${encodeURIComponent(session._analysisId)}`,
+          { method: 'DELETE' }
+        )
+        if (!res.ok) {
+          alert('Failed to delete this session. Please try again.')
+          return
+        }
+      } catch {
+        alert('Failed to delete this session. Please try again.')
+        return
+      }
+    } else {
+      // Local-only (offline cache) item — remove from localStorage.
+      deleteSession(session.id)
     }
+
+    setSessions(prev => prev.filter(s => s.id !== session.id))
+    setSelectedSession(null)
   }, [])
   
   // Stats
@@ -642,7 +797,7 @@ export default function MediaGalleryPage() {
                         session={session}
                         viewMode={viewMode}
                         onSelect={() => setSelectedSession(session)}
-                        onDelete={() => handleDelete(session.id)}
+                        onDelete={() => handleDelete(session)}
                       />
                     ))}
                   </AnimatePresence>
@@ -659,7 +814,7 @@ export default function MediaGalleryPage() {
           <FullscreenViewer
             session={selectedSession}
             onClose={() => setSelectedSession(null)}
-            onDelete={() => handleDelete(selectedSession.id)}
+            onDelete={() => handleDelete(selectedSession)}
           />
         )}
       </AnimatePresence>

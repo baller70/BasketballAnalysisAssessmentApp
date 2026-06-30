@@ -24,6 +24,12 @@ import {
 } from "lucide-react"
 import { usePoints } from "@/lib/points/pointsContext"
 import { InlinePointsBurst } from "@/components/points/PointsBurst"
+import { getAllSessions } from "@/services/sessionStorage"
+import {
+  fetchServerHistory,
+  computeCardAnalytics,
+  type ScoredRecord,
+} from "@/components/analytics/serverHistory"
 
 // ============================================
 // TYPES & DATA
@@ -931,11 +937,82 @@ const DEFAULT_DATA: AnalyticsData = {
   activeDays: [1, 2, 5, 6, 8, 9, 12, 13, 15, 16, 19, 20, 22, 23, 26, 27, 29, 30]
 }
 
-export function AnalyticsCardGame({ data = DEFAULT_DATA }: AnalyticsCardGameProps) {
+export function AnalyticsCardGame({ data: dataProp }: AnalyticsCardGameProps) {
   // Points system
   const { earnPoints } = usePoints()
   const [showPointsBurst, setShowPointsBurst] = useState(false)
-  
+
+  // Real analytics: when no explicit `data` prop is supplied we derive the
+  // aggregate from the user's actual sessions — the on-device localStorage cache
+  // MERGED with the server-side analysis history (GET /api/analysis-history) so
+  // progress survives across devices. `null` means "still loading"; an empty
+  // result renders an honest empty state instead of a fabricated demo number
+  // (audit: dashboard/analytics were fed mock data).
+  const [loadedData, setLoadedData] = useState<AnalyticsData | null>(
+    dataProp ?? null
+  )
+  const [isLoading, setIsLoading] = useState(!dataProp)
+
+  useEffect(() => {
+    if (dataProp) {
+      setLoadedData(dataProp)
+      setIsLoading(false)
+      return
+    }
+    let cancelled = false
+    const load = async () => {
+      setIsLoading(true)
+      const records: ScoredRecord[] = []
+      // Local (offline) cache first.
+      try {
+        const local = getAllSessions()
+        if (Array.isArray(local)) {
+          local.forEach((s) => {
+            const score = s.analysisData?.overallScore
+            if (typeof score === "number" && Number.isFinite(score)) {
+              records.push({ timestamp: s.timestamp ?? new Date(s.date).getTime(), score })
+            }
+          })
+        }
+      } catch {
+        /* ignore local cache errors */
+      }
+      // Server history (source of truth, cross-device).
+      const seenDays = new Set(
+        records.map((r) => {
+          const d = new Date(r.timestamp)
+          d.setHours(0, 0, 0, 0)
+          return `${d.getTime()}:${Math.round(r.score)}`
+        })
+      )
+      const { history } = await fetchServerHistory(100)
+      history.forEach((h) => {
+        const score = h.scores.overall
+        if (typeof score === "number" && Number.isFinite(score)) {
+          const ts = new Date(h.recordedAt).getTime()
+          const d = new Date(ts)
+          d.setHours(0, 0, 0, 0)
+          const key = `${d.getTime()}:${Math.round(score)}`
+          // De-dupe entries already present in the local cache.
+          if (!seenDays.has(key)) {
+            records.push({ timestamp: ts, score })
+            seenDays.add(key)
+          }
+        }
+      })
+
+      if (cancelled) return
+      setLoadedData(computeCardAnalytics(records))
+      setIsLoading(false)
+    }
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [dataProp])
+
+  const data: AnalyticsData = loadedData ?? DEFAULT_DATA
+
   const [currentIndex, setCurrentIndex] = useState(0)
   const [gameStats, setGameStats] = useState({
     keepItUp: 0,
@@ -1032,6 +1109,30 @@ export function AnalyticsCardGame({ data = DEFAULT_DATA }: AnalyticsCardGameProp
   }
 
   const isComplete = currentIndex >= METRIC_KEYS.length
+
+  // Loading / empty states — only when we're deriving real data (no `data` prop).
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <div className="w-12 h-12 rounded-full border-4 border-slate-200 border-t-[#FF6B35] animate-spin mb-4" />
+        <p className="text-slate-500 text-sm uppercase tracking-wider">Loading your analytics…</p>
+      </div>
+    )
+  }
+
+  if (!loadedData || loadedData.totalSessions === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-[#FF6B35]/10 border border-[#FF6B35]/30 flex items-center justify-center mb-4">
+          <BarChart3 className="w-8 h-8 text-[#FF6B35]" />
+        </div>
+        <h3 className="text-slate-900 font-bold text-lg uppercase tracking-wider mb-1">No analytics yet</h3>
+        <p className="text-slate-500 text-sm max-w-xs">
+          Complete a shot analysis to start tracking your progress. Your stats will appear here and sync across devices.
+        </p>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">

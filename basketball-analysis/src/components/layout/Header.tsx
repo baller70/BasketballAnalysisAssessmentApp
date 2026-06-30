@@ -23,13 +23,6 @@ const VIEW_OPTIONS: { value: DashboardView; label: string; description: string; 
     description: "Balanced view for developing players",
     icon: <GraduationCap className="w-4 h-4" />,
     color: "from-slate-700 to-slate-900"
-  },
-  {
-    value: "basic",
-    label: "Basic",
-    description: "Simple & fun for young players",
-    icon: <Sparkles className="w-4 h-4" />,
-    color: "from-emerald-500 to-emerald-600"
   }
 ]
 
@@ -239,11 +232,7 @@ export function Header() {
                           onClick={() => {
                             setDashboardView(option.value)
                             setIsProfileOpen(false)
-                            if (option.value === 'basic') {
-                              router.push('/results/demo/basic')
-                            } else {
-                              router.push('/results/demo')
-                            }
+                            router.push('/results/demo')
                           }}
                           className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all ${
                             dashboardView === option.value

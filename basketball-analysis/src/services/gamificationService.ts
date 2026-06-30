@@ -608,15 +608,39 @@ export function checkStreakStatus(): { isActive: boolean; daysRemaining: number 
 // BADGE FUNCTIONS
 // ============================================
 
+/**
+ * Optional real-activity context for badge evaluation. Defaults keep older
+ * call sites working while enabling the previously-missing badge cases
+ * (perfect_shot, video_analyst, social_butterfly, leaderboard_legend,
+ * comeback_kid, consistency_king) to actually unlock from real events.
+ */
+export interface BadgeUnlockContext {
+  qualityScore?: number // upload quality (0-100) for perfect_shot
+  videoAnalyzed?: boolean // a video was successfully analyzed
+  shares?: number // number of result shares
+  leaderboardRank?: number // best leaderboard rank (1 = top)
+  isComeback?: boolean // improved after a decline
+  weeklyAnalyses?: number // analyses completed in the current week
+}
+
 export function checkBadgeUnlock(
   formScore: number,
   flawsCount: number,
   anglesUploaded: number,
-  improvementPercentage: number
+  improvementPercentage: number,
+  context: BadgeUnlockContext = {}
 ): Badge[] {
   const progress = getUserProgress()
   const newBadges: Badge[] = []
   const hour = new Date().getHours()
+  const {
+    qualityScore = 0,
+    videoAnalyzed = false,
+    shares = 0,
+    leaderboardRank = 0,
+    isComeback = false,
+    weeklyAnalyses = 0,
+  } = context
   
   for (const badge of ALL_BADGES) {
     // Skip if already earned
@@ -670,6 +694,25 @@ export function checkBadgeUnlock(
         break
       case 'challenge_champion':
         shouldUnlock = progress.challengesCompleted.length >= 5
+        break
+      // --- Previously-missing cases, now driven by real activity context ---
+      case 'perfect_shot':
+        shouldUnlock = qualityScore >= 95
+        break
+      case 'video_analyst':
+        shouldUnlock = videoAnalyzed === true
+        break
+      case 'social_butterfly':
+        shouldUnlock = shares >= 5
+        break
+      case 'leaderboard_legend':
+        shouldUnlock = leaderboardRank > 0 && leaderboardRank <= 10
+        break
+      case 'comeback_kid':
+        shouldUnlock = isComeback === true
+        break
+      case 'consistency_king':
+        shouldUnlock = weeklyAnalyses >= 5
         break
     }
     
@@ -733,20 +776,42 @@ export function getActiveChallenges(): Challenge[] {
   return generateWeeklyChallenges()
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000
+
+/** Monday 00:00 UTC of the week containing `now`. Matches the server. */
+function getWeekStartUTC(now = new Date()): Date {
+  const day = now.getUTCDay() // 0 = Sun
+  const diff = (day + 6) % 7 // days since Monday
+  const monday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+  monday.setUTCDate(monday.getUTCDate() - diff)
+  return monday
+}
+
+/**
+ * Deterministic 3-challenge selection for a given week. MUST match the server
+ * (src/app/api/badges/route.ts) so persisted UserChallenge rows line up.
+ * Never Math.random — that reshuffled the set on every reload and broke
+ * persistence.
+ */
+function selectWeeklyChallengeDefs(weekStart: Date): typeof WEEKLY_CHALLENGES {
+  const seed = Math.floor(weekStart.getTime() / DAY_MS)
+  const idx = [seed % 8, (seed + 3) % 8, (seed + 6) % 8]
+  const distinct: number[] = []
+  for (let i = 0; distinct.length < 3 && i < 8; i++) {
+    const candidate = (idx[distinct.length] + i) % 8
+    if (!distinct.includes(candidate)) distinct.push(candidate)
+  }
+  return distinct.map((i) => WEEKLY_CHALLENGES[i]) as typeof WEEKLY_CHALLENGES
+}
+
 export function generateWeeklyChallenges(): Challenge[] {
-  const now = new Date()
-  const startOfWeek = new Date(now)
-  startOfWeek.setDate(now.getDate() - now.getDay() + 1) // Monday
-  startOfWeek.setHours(0, 0, 0, 0)
-  
+  const startOfWeek = getWeekStartUTC()
   const endOfWeek = new Date(startOfWeek)
-  endOfWeek.setDate(startOfWeek.getDate() + 6) // Sunday
-  endOfWeek.setHours(23, 59, 59, 999)
-  
-  // Select 3 random challenges for this week
-  const shuffled = [...WEEKLY_CHALLENGES].sort(() => Math.random() - 0.5)
-  const selected = shuffled.slice(0, 3)
-  
+  endOfWeek.setUTCDate(startOfWeek.getUTCDate() + 6)
+  endOfWeek.setUTCHours(23, 59, 59, 999)
+
+  const selected = selectWeeklyChallengeDefs(startOfWeek)
+
   const challenges: Challenge[] = selected.map(c => ({
     ...c,
     currentProgress: 0,
@@ -755,12 +820,128 @@ export function generateWeeklyChallenges(): Challenge[] {
     startDate: startOfWeek.toISOString(),
     endDate: endOfWeek.toISOString()
   }))
-  
+
   if (typeof window !== 'undefined') {
     localStorage.setItem(STORAGE_KEY_CHALLENGES, JSON.stringify(challenges))
   }
-  
+
   return challenges
+}
+
+// ============================================
+// DB-BACKED GAMIFICATION SYNC (Postgres source of truth)
+// ============================================
+
+export interface ServerBadgeState {
+  unlocked: boolean
+  progress: { current: number; total: number } | null
+  earnedDate: string | null
+}
+
+export interface GamificationState {
+  profileId: string | null
+  stats: {
+    totalPoints: number
+    totalAnalyses: number
+    currentStreak: number
+    longestStreak: number
+    activeDates: string[]
+  }
+  badges: Record<string, ServerBadgeState>
+  challenges: Challenge[]
+}
+
+const EMPTY_STATE: GamificationState = {
+  profileId: null,
+  stats: { totalPoints: 0, totalAnalyses: 0, currentStreak: 0, longestStreak: 0, activeDates: [] },
+  badges: {},
+  challenges: [],
+}
+
+// Map a server challenge row onto the rich Challenge shape (name/icon/etc.)
+function hydrateServerChallenge(row: {
+  key: string
+  target: number
+  current: number
+  completed: boolean
+  weekStart: string
+}): Challenge | null {
+  const def = WEEKLY_CHALLENGES.find(c => c.id === row.key)
+  if (!def) return null
+  const start = new Date(row.weekStart)
+  const end = new Date(start)
+  end.setUTCDate(start.getUTCDate() + 6)
+  end.setUTCHours(23, 59, 59, 999)
+  return {
+    ...def,
+    goalValue: row.target,
+    currentProgress: row.current,
+    isCompleted: row.completed,
+    isActive: true,
+    startDate: start.toISOString(),
+    endDate: end.toISOString(),
+  }
+}
+
+function hydrateState(data: {
+  profileId?: string | null
+  stats?: GamificationState['stats']
+  badges?: Record<string, ServerBadgeState>
+  challenges?: Array<{ key: string; target: number; current: number; completed: boolean; weekStart: string }>
+}): GamificationState {
+  return {
+    profileId: data.profileId ?? null,
+    stats: data.stats ?? EMPTY_STATE.stats,
+    badges: data.badges ?? {},
+    challenges: (data.challenges ?? [])
+      .map(hydrateServerChallenge)
+      .filter((c): c is Challenge => c != null),
+  }
+}
+
+/**
+ * Read the user's real gamification state (badges + challenges + streak stats)
+ * from the server. Read-only; safe to call on render.
+ */
+export async function fetchGamificationState(): Promise<GamificationState> {
+  if (typeof window === 'undefined') return EMPTY_STATE
+  try {
+    const res = await fetch('/api/badges', { credentials: 'include' })
+    if (!res.ok) return EMPTY_STATE
+    const data = await res.json()
+    if (!data?.success) return EMPTY_STATE
+    if (data.profileId) setLeaderboardUserProfileId(data.profileId)
+    return hydrateState(data)
+  } catch (e) {
+    console.error('Error loading gamification state:', e)
+    return EMPTY_STATE
+  }
+}
+
+/**
+ * Persist newly-earned badges and advance weekly challenge progress on the
+ * server (auth + CSRF). Returns the fresh authoritative state.
+ */
+export async function syncGamificationState(): Promise<GamificationState> {
+  if (typeof window === 'undefined') return EMPTY_STATE
+  try {
+    const { csrfFetch } = await import('@/lib/api/csrfFetch')
+    const res = await csrfFetch('/api/badges', { method: 'POST', body: '{}' })
+    if (!res.ok) return fetchGamificationState()
+    const data = await res.json()
+    if (!data?.success) return fetchGamificationState()
+    if (data.profileId) setLeaderboardUserProfileId(data.profileId)
+    return hydrateState(data)
+  } catch (e) {
+    console.error('Error syncing gamification state:', e)
+    return fetchGamificationState()
+  }
+}
+
+/** Async, DB-backed weekly challenges (advances from real analysis events). */
+export async function getActiveChallengesAsync(): Promise<Challenge[]> {
+  const state = await fetchGamificationState()
+  return state.challenges.length > 0 ? state.challenges : getActiveChallenges()
 }
 
 export function updateChallengeProgress(challengeId: string, progress: number): Challenge | null {
@@ -817,6 +998,53 @@ function getCurrentUserProfileId(): string | null {
   }
 }
 
+/**
+ * Persist the signed-in user's real UserProfile id so the leaderboard can flag
+ * their row ("You") and report their rank. The id is derived server-side and
+ * provided by GET /api/badges (or any caller that knows it) — never guessed.
+ */
+export function setLeaderboardUserProfileId(profileId: string | null): void {
+  if (typeof window === 'undefined' || !profileId) return
+  try {
+    localStorage.setItem(STORAGE_KEY_LEADERBOARD_USER, profileId)
+  } catch {
+    /* ignore quota/availability errors */
+  }
+}
+
+let identityPromise: Promise<string | null> | null = null
+
+/**
+ * Ensure the leaderboard user-profile id is populated. If we don't yet have it
+ * cached, fetch it once from GET /api/badges (which derives it from the session)
+ * and store it. De-duped across concurrent callers.
+ */
+export async function ensureLeaderboardIdentity(): Promise<string | null> {
+  if (typeof window === 'undefined') return null
+  const existing = getCurrentUserProfileId()
+  if (existing) return existing
+  if (identityPromise) return identityPromise
+
+  identityPromise = (async () => {
+    try {
+      const res = await fetch('/api/badges', { credentials: 'include' })
+      if (!res.ok) return null
+      const data = await res.json()
+      if (data?.profileId) {
+        setLeaderboardUserProfileId(data.profileId)
+        return data.profileId as string
+      }
+    } catch {
+      /* ignore */
+    } finally {
+      identityPromise = null
+    }
+    return null
+  })()
+
+  return identityPromise
+}
+
 function emptyLeaderboard(
   type: LeaderboardData['type'],
   ageGroup: string,
@@ -844,11 +1072,16 @@ async function refreshLeaderboard(
   if (typeof window === 'undefined' || leaderboardInFlight.has(type)) return
   leaderboardInFlight.add(type)
   try {
-    const userProfileId = getCurrentUserProfileId()
+    // Make sure we know who "You" are before requesting, so the user's row is
+    // flagged and their rank is reported.
+    const userProfileId = getCurrentUserProfileId() || (await ensureLeaderboardIdentity())
     const params = new URLSearchParams({ type, limit: '10' })
     if (userProfileId) params.set('userProfileId', userProfileId)
+    // Forward the cohort filters so the API can scope rankings by cohort.
+    if (ageGroup) params.set('ageGroup', ageGroup)
+    if (skillLevel) params.set('skillLevel', skillLevel)
 
-    const res = await fetch(`/api/leaderboard?${params.toString()}`)
+    const res = await fetch(`/api/leaderboard?${params.toString()}`, { credentials: 'include' })
     if (!res.ok) return
     const data = await res.json()
     if (!data || data.success === false) return

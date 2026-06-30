@@ -1,9 +1,8 @@
 /**
  * @file index.ts (Analysis Components)
  * @description Barrel exports for all analysis-related components
- * 
+ *
  * DISPLAY COMPONENTS:
- * - AnalysisDashboard - Main analysis results dashboard
  * - AutoScreenshots - Auto-generated analysis screenshots
  * - FormScoreCard - Overall form score display
  * 
@@ -39,7 +38,7 @@ export {
 export type { AngleData } from "./AngleIndicators"
 
 // Main display components
-export { AnalysisDashboard } from "./AnalysisDashboard"
+// AnalysisDashboard removed — it had zero render sites (dead code).
 // AnnotatedImageDisplay removed — it had zero render sites (dead code).
 export { AutoScreenshots } from "./AutoScreenshots"
 export { FormScoreCard } from "./FormScoreCard"

@@ -4,7 +4,6 @@
 
 // API Endpoints
 export const API_ENDPOINTS = {
-  DETECT_BASKETBALL: "/api/detect-basketball",
   DETECT_POSE: "/api/detect-pose",
   ANALYZE_FORM: "/api/analyze-form",
   UPLOAD: "/api/upload",

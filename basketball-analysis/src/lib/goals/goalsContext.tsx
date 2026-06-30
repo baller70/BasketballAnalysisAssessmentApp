@@ -1,6 +1,7 @@
 "use client"
 
 import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react'
+import { csrfFetch } from '@/lib/api/csrfFetch'
 
 // ============================================
 // TYPES & INTERFACES
@@ -34,151 +35,51 @@ export interface GoalsState {
 type GoalsAction =
   | { type: 'SET_GOALS'; payload: Goal[] }
   | { type: 'ADD_GOAL'; payload: Goal }
+  | { type: 'REPLACE_GOAL'; payload: { tempId: string; goal: Goal } }
   | { type: 'UPDATE_GOAL'; payload: { id: string; updates: Partial<Goal> } }
   | { type: 'DELETE_GOAL'; payload: string }
   | { type: 'COMPLETE_GOAL'; payload: string }
   | { type: 'INCREMENT_GOAL_PROGRESS'; payload: { id: string; amount: number } }
 
 // ============================================
-// STORAGE KEY
+// API HELPERS
 // ============================================
 
-const GOALS_STORAGE_KEY = 'shotiq_goals'
+/** Optimistic goals (POST in flight) get a temp id until the server replies. */
+const isTempId = (id: string) => id.startsWith('temp_')
 
-// ============================================
-// DEFAULT GOALS (Initial goals for new users)
-// ============================================
-
-const getDefaultGoals = (): Goal[] => [
-  {
-    id: 'goal_1',
-    name: 'FORM CHECK',
-    description: 'Complete your first form analysis',
-    targetValue: 1,
-    currentValue: 0,
-    unit: 'analysis',
-    category: 'form',
-    createdAt: new Date(),
-    xpReward: 50,
-    landmark: 'Exchange Place',
-    coordinates: [-74.0328, 40.7162],
-  },
-  {
-    id: 'goal_2',
-    name: '50 SHOTS',
-    description: 'Analyze 50 practice shots',
-    targetValue: 50,
-    currentValue: 0,
-    unit: 'shots',
-    category: 'volume',
-    createdAt: new Date(),
-    xpReward: 100,
-    landmark: 'Hoboken Waterfront',
-    coordinates: [-74.0280, 40.7370],
-  },
-  {
-    id: 'goal_3',
-    name: '90° ELBOW',
-    description: 'Achieve perfect elbow angle score',
-    targetValue: 90,
-    currentValue: 0,
-    unit: 'score',
-    category: 'form',
-    createdAt: new Date(),
-    xpReward: 150,
-    landmark: 'Recreation Center',
-    coordinates: [-74.0630, 40.7580],
-  },
-  {
-    id: 'goal_4',
-    name: '100 MAKES',
-    description: 'Complete 100 successful shots',
-    targetValue: 100,
-    currentValue: 0,
-    unit: 'makes',
-    category: 'accuracy',
-    createdAt: new Date(),
-    xpReward: 200,
-    landmark: 'North Bergen High School',
-    coordinates: [-74.0200, 40.7850],
-  },
-  {
-    id: 'goal_5',
-    name: 'STREAK MASTER',
-    description: 'Maintain a 7-day practice streak',
-    targetValue: 7,
-    currentValue: 0,
-    unit: 'days',
-    category: 'streak',
-    createdAt: new Date(),
-    xpReward: 300,
-    landmark: 'Overpeck County Park',
-    coordinates: [-74.0450, 40.8150],
-  },
-  {
-    id: 'goal_6',
-    name: 'FORM PERFECT',
-    description: 'Achieve 95%+ overall form score',
-    targetValue: 95,
-    currentValue: 0,
-    unit: 'score',
-    category: 'form',
-    createdAt: new Date(),
-    xpReward: 400,
-    landmark: 'Meadowlands Sports Complex',
-    coordinates: [-74.0740, 40.8120],
-  },
-  {
-    id: 'goal_7',
-    name: 'ELITE BADGE',
-    description: 'Earn the Elite Shooter badge',
-    targetValue: 1,
-    currentValue: 0,
-    unit: 'badge',
-    category: 'custom',
-    createdAt: new Date(),
-    xpReward: 500,
-    landmark: 'MetLife Stadium',
-    coordinates: [-74.0744, 40.8135],
-  },
-]
+/** Map a serialized API goal (ISO date strings) back to the client `Goal`. */
+function deserializeGoal(raw: Record<string, unknown>): Goal {
+  return {
+    id: String(raw.id),
+    name: String(raw.name ?? ''),
+    description: String(raw.description ?? ''),
+    targetValue: Number(raw.targetValue ?? 0),
+    currentValue: Number(raw.currentValue ?? 0),
+    unit: String(raw.unit ?? ''),
+    category: (raw.category as Goal['category']) || 'custom',
+    createdAt: raw.createdAt ? new Date(raw.createdAt as string) : new Date(),
+    deadline: raw.deadline ? new Date(raw.deadline as string) : undefined,
+    completedAt: raw.completedAt ? new Date(raw.completedAt as string) : undefined,
+    xpReward: Number(raw.xpReward ?? 0),
+    landmark: raw.landmark ? String(raw.landmark) : undefined,
+    coordinates: Array.isArray(raw.coordinates)
+      ? (raw.coordinates as [number, number])
+      : undefined,
+  }
+}
 
 // ============================================
 // INITIAL STATE
 // ============================================
+//
+// Postgres is the source of truth — goals load from `/api/goals` on mount.
+// New users start with a real empty state (no hardcoded seed goals).
 
-const getInitialState = (): GoalsState => {
-  if (typeof window === 'undefined') {
-    return {
-      goals: [],
-      lastUpdated: null,
-    }
-  }
-
-  try {
-    const stored = localStorage.getItem(GOALS_STORAGE_KEY)
-    if (stored) {
-      const parsed = JSON.parse(stored)
-      return {
-        goals: parsed.goals.map((g: Goal) => ({
-          ...g,
-          createdAt: new Date(g.createdAt),
-          deadline: g.deadline ? new Date(g.deadline) : undefined,
-          completedAt: g.completedAt ? new Date(g.completedAt) : undefined,
-        })),
-        lastUpdated: parsed.lastUpdated ? new Date(parsed.lastUpdated) : null,
-      }
-    }
-  } catch (error) {
-    console.error('Error loading goals from localStorage:', error)
-  }
-
-  // Return default goals for new users
-  return {
-    goals: getDefaultGoals(),
-    lastUpdated: new Date(),
-  }
-}
+const getInitialState = (): GoalsState => ({
+  goals: [],
+  lastUpdated: null,
+})
 
 // ============================================
 // REDUCER
@@ -197,6 +98,15 @@ function goalsReducer(state: GoalsState, action: GoalsAction): GoalsState {
       return {
         ...state,
         goals: [...state.goals, action.payload],
+        lastUpdated: new Date(),
+      }
+
+    case 'REPLACE_GOAL':
+      return {
+        ...state,
+        goals: state.goals.map((goal) =>
+          goal.id === action.payload.tempId ? action.payload.goal : goal
+        ),
         lastUpdated: new Date(),
       }
 
@@ -280,12 +190,40 @@ const GoalsContext = createContext<GoalsContextValue | null>(null)
 export function GoalsProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(goalsReducer, undefined, getInitialState)
 
-  // Persist to localStorage
+  // Load the signed-in user's goals from Postgres (source of truth) on mount.
+  // Unauthenticated visitors simply get an empty list (the API 401s, ignored).
   useEffect(() => {
-    if (typeof window !== 'undefined' && state.goals.length > 0) {
-      localStorage.setItem(GOALS_STORAGE_KEY, JSON.stringify(state))
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch('/api/goals', { credentials: 'include' })
+        if (!res.ok) return
+        const data = await res.json()
+        if (!cancelled && Array.isArray(data?.goals)) {
+          dispatch({ type: 'SET_GOALS', payload: data.goals.map(deserializeGoal) })
+        }
+      } catch {
+        // Offline / network error — keep the empty state.
+      }
+    })()
+    return () => {
+      cancelled = true
     }
-  }, [state])
+  }, [])
+
+  // Refetch from the server to reconcile after a failed optimistic write.
+  const refresh = useCallback(async () => {
+    try {
+      const res = await fetch('/api/goals', { credentials: 'include' })
+      if (!res.ok) return
+      const data = await res.json()
+      if (Array.isArray(data?.goals)) {
+        dispatch({ type: 'SET_GOALS', payload: data.goals.map(deserializeGoal) })
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [])
 
   // Computed values
   const completedGoals = state.goals.filter((g) => g.completedAt)
@@ -293,32 +231,136 @@ export function GoalsProvider({ children }: { children: React.ReactNode }) {
   const totalGoals = state.goals.length
   const completedCount = completedGoals.length
 
-  // Actions
+  // Actions — every mutation is persisted to Postgres via the CSRF-guarded API.
+  // We update optimistically for snappy UX, then reconcile with the server.
   const addGoal = useCallback((goalData: Omit<Goal, 'id' | 'createdAt'>): Goal => {
-    const newGoal: Goal = {
-      ...goalData,
-      id: `goal_${Date.now()}`,
-      createdAt: new Date(),
-    }
-    dispatch({ type: 'ADD_GOAL', payload: newGoal })
-    return newGoal
+    const tempId = `temp_${Date.now()}`
+    const optimistic: Goal = { ...goalData, id: tempId, createdAt: new Date() }
+    dispatch({ type: 'ADD_GOAL', payload: optimistic })
+    ;(async () => {
+      try {
+        const res = await csrfFetch('/api/goals', {
+          method: 'POST',
+          body: JSON.stringify({
+            name: goalData.name,
+            description: goalData.description,
+            category: goalData.category,
+            targetValue: goalData.targetValue,
+            currentValue: goalData.currentValue,
+            unit: goalData.unit,
+            xpReward: goalData.xpReward,
+            deadline: goalData.deadline ?? null,
+            landmark: goalData.landmark ?? null,
+            coordinates: goalData.coordinates ?? null,
+          }),
+        })
+        if (res.ok) {
+          const data = await res.json()
+          if (data?.goal) {
+            dispatch({
+              type: 'REPLACE_GOAL',
+              payload: { tempId, goal: deserializeGoal(data.goal) },
+            })
+            return
+          }
+        }
+        // Persist failed — roll the optimistic goal back out.
+        dispatch({ type: 'DELETE_GOAL', payload: tempId })
+      } catch {
+        dispatch({ type: 'DELETE_GOAL', payload: tempId })
+      }
+    })()
+    return optimistic
   }, [])
 
-  const updateGoal = useCallback((id: string, updates: Partial<Goal>) => {
-    dispatch({ type: 'UPDATE_GOAL', payload: { id, updates } })
-  }, [])
+  const updateGoal = useCallback(
+    (id: string, updates: Partial<Goal>) => {
+      dispatch({ type: 'UPDATE_GOAL', payload: { id, updates } })
+      if (isTempId(id)) return // POST still in flight; nothing to PATCH yet.
+      ;(async () => {
+        try {
+          const res = await csrfFetch(`/api/goals/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({
+              ...updates,
+              deadline: updates.deadline ?? undefined,
+              completedAt: updates.completedAt ?? undefined,
+            }),
+          })
+          if (!res.ok) await refresh()
+        } catch {
+          await refresh()
+        }
+      })()
+    },
+    [refresh]
+  )
 
-  const deleteGoal = useCallback((id: string) => {
-    dispatch({ type: 'DELETE_GOAL', payload: id })
-  }, [])
+  const deleteGoal = useCallback(
+    (id: string) => {
+      dispatch({ type: 'DELETE_GOAL', payload: id })
+      if (isTempId(id)) return
+      ;(async () => {
+        try {
+          const res = await csrfFetch(`/api/goals/${id}`, { method: 'DELETE' })
+          if (!res.ok) await refresh()
+        } catch {
+          await refresh()
+        }
+      })()
+    },
+    [refresh]
+  )
 
-  const completeGoal = useCallback((id: string) => {
-    dispatch({ type: 'COMPLETE_GOAL', payload: id })
-  }, [])
+  const completeGoal = useCallback(
+    (id: string) => {
+      const target = state.goals.find((g) => g.id === id)?.targetValue ?? 0
+      dispatch({ type: 'COMPLETE_GOAL', payload: id })
+      if (isTempId(id)) return
+      ;(async () => {
+        try {
+          const res = await csrfFetch(`/api/goals/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({
+              completedAt: new Date().toISOString(),
+              currentValue: target,
+            }),
+          })
+          if (!res.ok) await refresh()
+        } catch {
+          await refresh()
+        }
+      })()
+    },
+    [state.goals, refresh]
+  )
 
-  const incrementProgress = useCallback((id: string, amount: number) => {
-    dispatch({ type: 'INCREMENT_GOAL_PROGRESS', payload: { id, amount } })
-  }, [])
+  const incrementProgress = useCallback(
+    (id: string, amount: number) => {
+      const goal = state.goals.find((g) => g.id === id)
+      dispatch({ type: 'INCREMENT_GOAL_PROGRESS', payload: { id, amount } })
+      if (!goal || isTempId(id)) return
+      const newValue = Math.min(goal.currentValue + amount, goal.targetValue)
+      const reached = newValue >= goal.targetValue
+      ;(async () => {
+        try {
+          const res = await csrfFetch(`/api/goals/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify({
+              currentValue: newValue,
+              ...(reached && !goal.completedAt
+                ? { completedAt: new Date().toISOString() }
+                : {}),
+            }),
+          })
+          if (!res.ok) await refresh()
+        } catch {
+          await refresh()
+        }
+      })()
+    },
+    [state.goals, refresh]
+  )
 
   const getGoalById = useCallback(
     (id: string) => state.goals.find((g) => g.id === id),

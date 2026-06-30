@@ -9,14 +9,15 @@
  * 3. Generates age-appropriate coaching feedback
  */
 
-import React, { useMemo, useState } from "react"
-import { 
-  Target, AlertTriangle, CheckCircle, 
+import React, { useEffect, useMemo, useState } from "react"
+import {
+  Target, AlertTriangle, CheckCircle,
   Lightbulb, ChevronDown, ChevronUp,
   Users, Star, ArrowRight, Info, Trophy
 } from "lucide-react"
 import {
   runFullComparison,
+  fetchShooterDataset,
   UserPhysicalProfile,
   UserShootingMetrics,
   ComparisonResult,
@@ -26,6 +27,7 @@ import {
   FeedbackItem,
   DrillRecommendation
 } from "@/services/comparisonAlgorithm"
+import type { ShooterProfile } from "@/data/shooterDatabase"
 
 // ============================================
 // TYPES
@@ -50,6 +52,12 @@ interface Phase6ComparisonPanelProps {
     followThroughAngle?: number
   }
   overallScore?: number // eslint-disable-line @typescript-eslint/no-unused-vars
+  /**
+   * Live reference-shooter dataset (normalized from GET /api/shooters). When
+   * omitted, the panel loads it itself. Lets a parent that has already fetched
+   * the dataset (e.g. the compare tab) pass it in to avoid a duplicate request.
+   */
+  shooters?: ShooterProfile[]
 }
 
 // ============================================
@@ -112,10 +120,32 @@ export function Phase6ComparisonPanel({
   userProfile,
   userMetrics,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  overallScore = 70
+  overallScore = 70,
+  shooters
 }: Phase6ComparisonPanelProps) {
   const [expandedSections, setExpandedSections] = useState<string[]>(["matches", "feedback"])
-  
+
+  // Live reference dataset from GET /api/shooters. If the parent supplied one,
+  // use it; otherwise load it here (with a built-in fallback to the bundled
+  // catalog inside fetchShooterDataset). Never block on a hardcoded list.
+  const [loadedShooters, setLoadedShooters] = useState<ShooterProfile[] | null>(
+    shooters ?? null
+  )
+
+  useEffect(() => {
+    if (shooters) {
+      setLoadedShooters(shooters)
+      return
+    }
+    let cancelled = false
+    fetchShooterDataset().then((data) => {
+      if (!cancelled) setLoadedShooters(data)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [shooters])
+
   // Convert user profile to the format expected by the algorithm
   const physicalProfile: UserPhysicalProfile = useMemo(() => ({
     heightInches: parseHeight(userProfile.height),
@@ -125,7 +155,7 @@ export function Phase6ComparisonPanel({
     skillLevel: userProfile.skillLevel || "INTERMEDIATE",
     athleticAbility: userProfile.athleticAbility
   }), [userProfile])
-  
+
   const shootingMetrics: UserShootingMetrics = useMemo(() => ({
     elbowAngle: userMetrics.elbowAngle,
     kneeAngle: userMetrics.kneeAngle,
@@ -134,12 +164,21 @@ export function Phase6ComparisonPanel({
     hipTilt: userMetrics.hipTilt,
     followThroughAngle: userMetrics.followThroughAngle
   }), [userMetrics])
-  
-  // Run the full comparison algorithm
-  const comparisonResult: ComparisonResult = useMemo(() => {
-    return runFullComparison(physicalProfile, shootingMetrics)
-  }, [physicalProfile, shootingMetrics])
-  
+
+  // The algorithm must run on the user's REAL measured metrics — never on
+  // fabricated constants. If no joint angle has actually been measured yet,
+  // show an empty state instead of inventing a comparison.
+  const hasMeasuredMetrics = useMemo(
+    () => Object.values(shootingMetrics).some((v) => typeof v === "number" && !isNaN(v)),
+    [shootingMetrics]
+  )
+
+  // Run the full comparison algorithm against the live dataset.
+  const comparisonResult: ComparisonResult | null = useMemo(() => {
+    if (!loadedShooters || !hasMeasuredMetrics) return null
+    return runFullComparison(physicalProfile, shootingMetrics, loadedShooters)
+  }, [physicalProfile, shootingMetrics, loadedShooters, hasMeasuredMetrics])
+
   const toggleSection = (section: string) => {
     setExpandedSections(prev => 
       prev.includes(section) 
@@ -148,6 +187,30 @@ export function Phase6ComparisonPanel({
     )
   }
   
+  // Empty state: no real measured metrics yet — do NOT fabricate a comparison.
+  if (!hasMeasuredMetrics) {
+    return (
+      <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm text-center">
+        <Users className="w-12 h-12 text-[#FF6B35] mx-auto mb-4" />
+        <h3 className="text-slate-900 font-bold text-lg mb-2">No Analysis Yet</h3>
+        <p className="text-slate-500 text-sm">
+          Analyze one of your shots first. We&apos;ll match your measured shooting
+          mechanics to similar real shooters.
+        </p>
+      </div>
+    )
+  }
+
+  // Loading state while the live /api/shooters dataset is fetched.
+  if (!comparisonResult) {
+    return (
+      <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm text-center">
+        <div className="w-10 h-10 border-2 border-[#FF6B35] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-slate-500 text-sm">Matching you to similar shooters…</p>
+      </div>
+    )
+  }
+
   const { topMatches, optimalMechanics, coachingFeedback, personalizedRecommendations } = comparisonResult
   const ageGroupColors = AGE_GROUP_COLORS[coachingFeedback.tier]
   

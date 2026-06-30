@@ -1,11 +1,13 @@
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
-import { WorkoutOrPassGame, WorkoutCalendar } from "@/components/training/WorkoutOrPass"
+import { WorkoutOrPassGame, WorkoutCalendar, DrillExecutionPage } from "@/components/training/WorkoutOrPass"
 import { useAnalysisStore } from "@/stores/analysisStore"
 import { useProfileStore } from "@/stores/profileStore"
-import { 
-  Dumbbell, Calendar, Zap, BookOpen, Target, 
+import { ALL_DRILLS, type Drill } from "@/data/drillDatabase"
+import { fetchSavedWorkouts, fetchWorkouts, resolveDrillIds } from "@/lib/api/workoutsClient"
+import {
+  Dumbbell, Calendar, Zap, BookOpen, Target,
   ChevronRight, Clock, TrendingUp, Trophy,
   Play, Star, Flame
 } from "lucide-react"
@@ -16,6 +18,7 @@ interface SavedWorkout {
   id: string
   name: string
   drillCount: number
+  drillIds: string[]
   lastPlayed?: Date
   totalMade: number
   totalMissed: number
@@ -35,70 +38,114 @@ export default function TrainingPage() {
   const [viewMode, setViewMode] = useState<'home' | 'discover' | 'mydrills' | 'calendar'>('home')
   const [savedWorkouts, setSavedWorkouts] = useState<SavedWorkout[]>([])
   const [recentWorkouts, setRecentWorkouts] = useState<RecentWorkout[]>([])
+  const [showAllRecent, setShowAllRecent] = useState(false)
+  const [launchDrills, setLaunchDrills] = useState<Drill[] | null>(null)
   const { visionAnalysisResult } = useAnalysisStore()
   const profileStore = useProfileStore()
 
-  // Load saved workouts from localStorage
+  // Load saved + recent workouts from the server (Postgres is the source of
+  // truth). Recent workouts are simply the user's completed Workout rows; there
+  // is no demo fallback — an empty history renders the empty state.
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('shotiq_saved_workouts')
-      if (saved) {
-        try {
-          setSavedWorkouts(JSON.parse(saved))
-        } catch (e) {
-          console.error('Failed to load saved workouts:', e)
-        }
-      }
-      
-      const recent = localStorage.getItem('shotiq_recent_workouts')
-      if (recent) {
-        try {
-          const parsed = JSON.parse(recent)
-          setRecentWorkouts(parsed.map((w: any) => ({
-            ...w,
-            date: new Date(w.date)
-          })))
-        } catch (e) {
-          console.error('Failed to load recent workouts:', e)
-        }
-      } else {
-        // Demo data for recent workouts
-        setRecentWorkouts([
-          { id: '1', name: 'Free Throw Practice', date: new Date(Date.now() - 86400000), made: 45, missed: 13, accuracy: 78 },
-          { id: '2', name: 'Corner 3s', date: new Date(Date.now() - 172800000), made: 31, missed: 19, accuracy: 62 },
-          { id: '3', name: 'Elbow Jumpers', date: new Date(Date.now() - 259200000), made: 25, missed: 10, accuracy: 71 },
-        ])
-      }
-    }
+    let cancelled = false
+    void (async () => {
+      const [saved, workouts] = await Promise.all([
+        fetchSavedWorkouts(),
+        fetchWorkouts(),
+      ])
+      if (cancelled) return
+
+      setSavedWorkouts(
+        saved.map((s) => ({
+          id: s.id,
+          name: s.name,
+          drillCount: s.drillCount,
+          drillIds: Array.isArray(s.drillIds) ? (s.drillIds as string[]) : [],
+          lastPlayed: s.lastPlayed ? new Date(s.lastPlayed) : undefined,
+          totalMade: s.totalMade,
+          totalMissed: s.totalMissed,
+        }))
+      )
+
+      const recent: RecentWorkout[] = workouts
+        .filter((w) => w.completed)
+        .map((w) => {
+          const made = w.totalMade ?? 0
+          const missed = w.totalMissed ?? 0
+          const total = made + missed
+          return {
+            id: w.id,
+            name: w.name || 'Workout',
+            date: new Date(w.completedAt || w.scheduledDate),
+            made,
+            missed,
+            accuracy: typeof w.accuracy === 'number'
+              ? Math.round(w.accuracy)
+              : total > 0 ? Math.round((made / total) * 100) : 0,
+          }
+        })
+        .sort((a, b) => b.date.getTime() - a.date.getTime())
+      setRecentWorkouts(recent)
+    })()
+    return () => { cancelled = true }
   }, [])
+
+  // Launch a workout's drills in the full-screen drill executor.
+  const startSavedWorkout = (workout: SavedWorkout) => {
+    const drills = resolveDrillIds(workout.drillIds, ALL_DRILLS)
+    if (drills.length > 0) setLaunchDrills(drills)
+  }
 
   // Map detected flaws to user flaws for drill recommendations
   const userFlaws = useMemo(() => {
     const flaws: Record<string, boolean> = {}
-    
+
     if (visionAnalysisResult?.angles) {
       const angles = visionAnalysisResult.angles
-      
+
       if (angles.right_elbow_angle && (angles.right_elbow_angle < 80 || angles.right_elbow_angle > 100)) {
         flaws.elbowAlignment = true
       }
-      
+
       if (angles.right_knee_angle && angles.right_knee_angle < 120) {
         flaws.kneeBend = true
       }
-      
+
       if (angles.hip_tilt && angles.hip_tilt < 160) {
         flaws.hipPosition = true
       }
     }
-    
+
     if (Object.keys(flaws).length === 0) {
       flaws.elbowAlignment = true
       flaws.releasePoint = true
       flaws.followThrough = true
     }
-    
+
     return flaws
+  }, [visionAnalysisResult])
+
+  // Flaw IDs (as understood by mapFlawToFocusArea in the drill database) so the
+  // calendar's "auto-populate from flaws" can target the right focus areas.
+  const flawIds = useMemo(() => {
+    const ids: string[] = []
+    const angles = visionAnalysisResult?.angles
+    if (angles) {
+      if (angles.right_elbow_angle && (angles.right_elbow_angle < 80 || angles.right_elbow_angle > 100)) {
+        ids.push('elbow_flare')
+      }
+      if (angles.right_knee_angle && angles.right_knee_angle < 120) {
+        ids.push('insufficient_knee_bend')
+      }
+      if (angles.hip_tilt && angles.hip_tilt < 160) {
+        ids.push('poor_balance')
+      }
+    }
+    if (ids.length === 0) {
+      // No analysis yet — default to the most common shooting-form flaws.
+      ids.push('elbow_flare', 'inconsistent_release', 'poor_follow_through')
+    }
+    return ids
   }, [visionAnalysisResult])
 
   const userSkillLevel = useMemo(() => {
@@ -197,12 +244,19 @@ export default function TrainingPage() {
               <Clock className="w-4 h-4 text-slate-400" />
               Recent Workouts
             </h2>
-            <button className="text-[#FF6B35] text-sm font-medium">View All</button>
+            {recentWorkouts.length > 5 && (
+              <button
+                onClick={() => setShowAllRecent((v) => !v)}
+                className="text-[#FF6B35] text-sm font-medium"
+              >
+                {showAllRecent ? 'Show Less' : 'View All'}
+              </button>
+            )}
           </div>
-          
+
           {recentWorkouts.length > 0 ? (
             <div className="divide-y divide-slate-100">
-              {recentWorkouts.slice(0, 5).map((workout) => (
+              {(showAllRecent ? recentWorkouts : recentWorkouts.slice(0, 5)).map((workout) => (
                 <div key={workout.id} className="px-4 py-3 flex items-center justify-between hover:bg-slate-50 transition-colors">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center">
@@ -298,7 +352,11 @@ export default function TrainingPage() {
                     <h3 className="text-slate-900 font-bold">{workout.name}</h3>
                     <p className="text-slate-500 text-sm">{workout.drillCount} drills</p>
                   </div>
-                  <button className="px-4 py-2 bg-[#FF6B35] text-white rounded-lg font-semibold text-sm">
+                  <button
+                    onClick={() => startSavedWorkout(workout)}
+                    disabled={workout.drillIds.length === 0}
+                    className="px-4 py-2 bg-[#FF6B35] text-white rounded-lg font-semibold text-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
                     Start
                   </button>
                 </div>
@@ -319,6 +377,15 @@ export default function TrainingPage() {
               Discover Drills
             </button>
           </div>
+        )}
+
+        {/* Full-screen drill executor (launched from a saved workout) */}
+        {launchDrills && launchDrills[0] && (
+          <DrillExecutionPage
+            drill={launchDrills[0]}
+            onClose={() => setLaunchDrills(null)}
+            onStartDrill={() => {}}
+          />
         )}
       </div>
     )
@@ -371,7 +438,19 @@ export default function TrainingPage() {
           }}
         />
       ) : (
-        <WorkoutCalendar />
+        <WorkoutCalendar
+          userFlaws={flawIds}
+          onStartWorkout={(drills) => { if (drills.length > 0) setLaunchDrills(drills) }}
+        />
+      )}
+
+      {/* Full-screen drill executor (launched from My Drills / Calendar) */}
+      {launchDrills && launchDrills[0] && (
+        <DrillExecutionPage
+          drill={launchDrills[0]}
+          onClose={() => setLaunchDrills(null)}
+          onStartDrill={() => {}}
+        />
       )}
     </div>
   )

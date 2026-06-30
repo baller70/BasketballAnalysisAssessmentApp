@@ -1,21 +1,40 @@
 /**
  * API Routes for Drill Video Submissions
- * 
+ *
  * POST /api/drill-videos - Save a new drill video submission
- * GET /api/drill-videos - Get all drill video submissions (with optional filters)
- * 
- * These videos are saved to the database and can later be selected
- * by the user to send to the Hybrid System for analysis.
+ * GET  /api/drill-videos - Get the caller's drill video submissions (with filters)
+ *
+ * These videos are persisted to Postgres (source of truth) and can later be
+ * selected by the user to send to the Hybrid System for analysis.
+ *
+ * Auth: the owning profile is ALWAYS derived from the session token via
+ * resolveProfileId — never from the request body — so a user can only read or
+ * write their own submissions. Writes are CSRF-protected (double-submit cookie).
+ *
+ * Media: when the client sends raw `videoBase64` (the legacy format that was
+ * previously dropped on the floor), the server now uploads the bytes to object
+ * storage via uploadMedia and persists the resulting URL. Previously only a
+ * pre-existing `videoUrl` survived and base64 uploads were silently lost.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { resolveProfileId, isError } from '@/lib/auth/currentUser'
+import { validateCsrf } from '@/lib/csrf'
+import { uploadMedia } from '@/lib/storage'
 
 // POST - Save a new drill video submission
 export async function POST(request: NextRequest) {
+  const csrfError = validateCsrf(request)
+  if (csrfError) return csrfError
+
+  const resolved = await resolveProfileId(request)
+  if (isError(resolved)) return resolved.error
+  const userProfileId = resolved.profileId
+
   try {
     const body = await request.json()
-    
+
     const {
       drillId,
       drillName,
@@ -23,9 +42,8 @@ export async function POST(request: NextRequest) {
       videoUrl,
       videoBase64,
       videoDuration,
-      userProfileId,
     } = body
-    
+
     // Validate required fields
     if (!drillId || !drillName) {
       return NextResponse.json(
@@ -33,7 +51,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-    
+
     // At least one video source is required
     if (!videoUrl && !videoBase64) {
       return NextResponse.json(
@@ -41,21 +59,44 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-    
+
+    // Persist the uploaded video bytes to object storage. Previously the base64
+    // payload was accepted by the API but never stored — only a pre-supplied
+    // videoUrl was saved — so client-recorded drills vanished. Upload first,
+    // fall back to any provided videoUrl if upload fails.
+    let mediaUrl: string | null = videoUrl || null
+    if (videoBase64) {
+      try {
+        mediaUrl = await uploadMedia(
+          videoBase64,
+          `user-uploads/${userProfileId}/drills/${Date.now()}-${drillId}.mp4`,
+          'video/mp4'
+        )
+      } catch (e) {
+        console.error('drill-videos: video upload failed, keeping videoUrl', e)
+        if (!mediaUrl) {
+          return NextResponse.json(
+            { error: 'Failed to store drill video' },
+            { status: 502 }
+          )
+        }
+      }
+    }
+
     // Create the drill video submission
     const drillVideo = await prisma.drillVideoSubmission.create({
       data: {
         drillId,
         drillName,
         focusArea: focusArea || 'general',
-        mediaUrl: videoUrl,
+        mediaUrl,
         mediaType: 'video',
         videoDuration: videoDuration ? parseFloat(videoDuration) : null,
-        userProfileId: userProfileId || null,
+        userProfileId,
         analyzed: false,
       },
     })
-    
+
     return NextResponse.json({
       success: true,
       drillVideo: {
@@ -63,12 +104,13 @@ export async function POST(request: NextRequest) {
         drillId: drillVideo.drillId,
         drillName: drillVideo.drillName,
         focusArea: drillVideo.focusArea,
+        mediaUrl: drillVideo.mediaUrl,
         videoDuration: drillVideo.videoDuration,
         analyzed: drillVideo.analyzed,
         createdAt: drillVideo.createdAt,
       },
     })
-    
+
   } catch (error) {
     console.error('Error saving drill video:', error)
     return NextResponse.json(
@@ -78,32 +120,30 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET - Fetch drill video submissions
+// GET - Fetch the caller's drill video submissions
 export async function GET(request: NextRequest) {
+  const resolved = await resolveProfileId(request)
+  if (isError(resolved)) return resolved.error
+  const userProfileId = resolved.profileId
+
   try {
     const { searchParams } = new URL(request.url)
-    
-    // Optional filters
+
+    // Optional filters (always scoped to the caller — never trust a userId param)
     const analyzed = searchParams.get('analyzed')
     const focusArea = searchParams.get('focusArea')
-    const userProfileId = searchParams.get('userProfileId')
     const limit = searchParams.get('limit')
-    
-    // Build where clause
-    const where: Record<string, unknown> = {}
-    
+
+    const where: Record<string, unknown> = { userProfileId }
+
     if (analyzed !== null) {
       where.analyzed = analyzed === 'true'
     }
-    
+
     if (focusArea) {
       where.focusArea = focusArea
     }
-    
-    if (userProfileId) {
-      where.userProfileId = userProfileId
-    }
-    
+
     // Fetch drill videos
     const drillVideos = await prisma.drillVideoSubmission.findMany({
       where,
@@ -135,13 +175,13 @@ export async function GET(request: NextRequest) {
         updatedAt: true,
       },
     })
-    
+
     return NextResponse.json({
       success: true,
       drillVideos,
       count: drillVideos.length,
     })
-    
+
   } catch (error) {
     console.error('Error fetching drill videos:', error)
     return NextResponse.json(
@@ -150,7 +190,3 @@ export async function GET(request: NextRequest) {
     )
   }
 }
-
-
-
-

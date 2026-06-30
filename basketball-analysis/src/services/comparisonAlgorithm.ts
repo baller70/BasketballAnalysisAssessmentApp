@@ -153,11 +153,137 @@ function calculateStandardDeviation(values: number[]): number {
 }
 
 // ============================================
+// LIVE DATASET: GET /api/shooters (single source of truth)
+// ============================================
+//
+// The comparison feature used to run on the 30-entry bundled SHOOTER_DATABASE.
+// It now consumes the consolidated, DB-backed reference dataset served by the
+// Elite-Shooters endpoint GET /api/shooters (apiVersion "1.0"). The functions
+// below accept a `dataset` argument (defaulting to SHOOTER_DATABASE) so the
+// algorithm stays pure/testable, and `fetchShooterDataset()` loads + normalizes
+// the live data on the client with a graceful fallback to the bundled catalog.
+
+/** Loose shape of one record from GET /api/shooters (apiVersion "1.0"). */
+export interface ApiShooterRecord {
+  id: number | string
+  name?: string
+  team?: string
+  position?: string
+  height?: number // inches
+  weight?: number // lbs
+  wingspan?: number // inches
+  tier?: string
+  overallScore?: number
+  photoUrl?: string | null
+  keyTraits?: string[]
+  measurements?: {
+    shoulderAngle?: number
+    elbowAngle?: number
+    hipAngle?: number
+    kneeAngle?: number
+    releaseAngle?: number
+    releaseHeight?: number
+    entryAngle?: number
+    ankleAngle?: number
+  }
+}
+
+// Map the catalog tier vocabulary onto the algorithm's skill levels.
+const TIER_TO_SKILL: Record<string, ShooterSkillLevel> = {
+  legendary: "ELITE",
+  elite: "ELITE",
+  great: "PRO",
+  good: "ADVANCED",
+  mid_level: "INTERMEDIATE",
+  bad: "NEEDS_WORK",
+}
+
+function prettyPosition(pos?: string): string {
+  if (!pos) return "Guard"
+  return pos
+    .toLowerCase()
+    .split("_")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ")
+}
+
+const clampAngle = (v: number) => Math.max(0, Math.min(180, v))
+
+/**
+ * Normalize the /api/shooters response into the algorithm's ShooterProfile shape.
+ *
+ * Convention note: the catalog stores shoulderAngle / hipAngle as near-vertical
+ * angles (~170°), whereas ShooterProfile (and the user's MEASURED pose metrics —
+ * `shoulder_tilt` / `hip_tilt`) express these AS TILT FROM VERTICAL (~0-15°).
+ * We convert (180 - angle) so the user's real measurements and the reference
+ * shooters live in the same units. There is no dedicated follow-through angle in
+ * the catalog, so the shoulder/arm extension angle (~170°) is used as the closest
+ * analogue (matches the 160-180° follow-through convention of ShooterProfile).
+ */
+export function normalizeApiShooters(raw: unknown): ShooterProfile[] {
+  const list: ApiShooterRecord[] = Array.isArray(raw)
+    ? (raw as ApiShooterRecord[])
+    : Array.isArray((raw as { shooters?: unknown } | null)?.shooters)
+    ? (raw as { shooters: ApiShooterRecord[] }).shooters
+    : []
+
+  return list
+    .filter((s) => s && Number(s.height) > 0)
+    .map((s) => {
+      const m = s.measurements || {}
+      const heightInches = Number(s.height) || 75
+      const shoulderAngle = m.shoulderAngle ?? 170
+      const hipAngle = m.hipAngle ?? 172
+      const profile: ShooterProfile = {
+        id: String(s.id),
+        name: s.name || "Unknown Shooter",
+        team: s.team || "",
+        position: prettyPosition(s.position),
+        heightInches,
+        weightLbs: Number(s.weight) || 190,
+        wingspanInches: Number(s.wingspan) || heightInches + 3,
+        bodyBuild: determineBodyBuild(heightInches),
+        skillLevel: TIER_TO_SKILL[(s.tier || "good").toLowerCase()] || "ADVANCED",
+        overallScore: Number(s.overallScore) || 80,
+        shootingMetrics: {
+          elbowAngle: m.elbowAngle ?? 90,
+          kneeAngle: m.kneeAngle ?? 140,
+          releaseAngle: m.releaseAngle ?? 50,
+          shoulderTilt: clampAngle(180 - shoulderAngle),
+          hipTilt: clampAngle(180 - hipAngle),
+          followThroughAngle: clampAngle(shoulderAngle),
+        },
+        imageUrl: s.photoUrl || undefined,
+        traits: Array.isArray(s.keyTraits) ? s.keyTraits : [],
+      }
+      return profile
+    })
+}
+
+/**
+ * Load the consolidated reference-shooter dataset from GET /api/shooters.
+ * Falls back to the bundled SHOOTER_DATABASE if the request fails or is empty,
+ * so the comparison always has data. Client-side use only.
+ */
+export async function fetchShooterDataset(): Promise<ShooterProfile[]> {
+  try {
+    const res = await fetch("/api/shooters", { method: "GET", credentials: "include" })
+    if (!res.ok) return SHOOTER_DATABASE
+    const data = await res.json()
+    const normalized = normalizeApiShooters(data)
+    return normalized.length > 0 ? normalized : SHOOTER_DATABASE
+  } catch {
+    return SHOOTER_DATABASE
+  }
+}
+
+// ============================================
 // STEP 1: SEARCH DATABASE
 // ============================================
 
 function filterShootersByPhysicalProfile(
-  profile: UserPhysicalProfile
+  profile: UserPhysicalProfile,
+  dataset: ShooterProfile[] = SHOOTER_DATABASE
 ): ShooterProfile[] {
   const heightMin = profile.heightInches - HEIGHT_TOLERANCE
   const heightMax = profile.heightInches + HEIGHT_TOLERANCE
@@ -169,8 +295,8 @@ function filterShootersByPhysicalProfile(
   
   // Get acceptable skill levels based on user's skill
   const acceptableSkillLevels = SKILL_LEVEL_MAP[profile.skillLevel] || ["INTERMEDIATE", "ADVANCED"]
-  
-  return SHOOTER_DATABASE.filter(shooter => {
+
+  return dataset.filter(shooter => {
     // Height filter (±2 inches)
     const heightMatch = shooter.heightInches >= heightMin && shooter.heightInches <= heightMax
     
@@ -343,14 +469,15 @@ function calculateMechanicsMatchScore(
 export function findTopMatches(
   profile: UserPhysicalProfile,
   userMetrics?: UserShootingMetrics,
-  limit: number = 5
+  limit: number = 5,
+  dataset: ShooterProfile[] = SHOOTER_DATABASE
 ): MatchedShooter[] {
   // First, filter by physical profile
-  let candidates = filterShootersByPhysicalProfile(profile)
-  
+  let candidates = filterShootersByPhysicalProfile(profile, dataset)
+
   // If not enough matches, expand search
   if (candidates.length < limit) {
-    candidates = SHOOTER_DATABASE
+    candidates = dataset
   }
   
   // Calculate similarity scores for each candidate
@@ -917,10 +1044,11 @@ export interface ComparisonResult {
 
 export function runFullComparison(
   profile: UserPhysicalProfile,
-  userMetrics: UserShootingMetrics
+  userMetrics: UserShootingMetrics,
+  dataset: ShooterProfile[] = SHOOTER_DATABASE
 ): ComparisonResult {
   // Step 1-3: Find top matches
-  const topMatches = findTopMatches(profile, userMetrics, 5)
+  const topMatches = findTopMatches(profile, userMetrics, 5, dataset)
   
   // Step 4: Extract optimal mechanics from top 3
   const optimalMechanics = extractOptimalMechanics(topMatches, 3)

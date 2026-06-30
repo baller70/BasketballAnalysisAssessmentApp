@@ -50,30 +50,40 @@ function deriveMetrics(input: ProfileInput) {
   return { bmi, wingspanToHeightRatio }
 }
 
+const has = (input: ProfileInput, key: string) =>
+  Object.prototype.hasOwnProperty.call(input, key)
+
 /**
- * Build the Prisma data payload from a request body, applying server-side
- * derivation. Only whitelisted fields are written.
+ * Build a PARTIAL Prisma data payload: only fields actually present in the
+ * request body are written, so a `{pointsState}`-only update (e.g. from the
+ * points context) never clobbers measurements or resets profileComplete.
+ * Derived metrics are recomputed server-side and only when their inputs are
+ * supplied together.
  */
 function buildProfileData(input: ProfileInput) {
+  const data: Record<string, unknown> = {}
+  if (has(input, "heightInches")) data.heightInches = num(input.heightInches)
+  if (has(input, "weightLbs")) data.weightLbs = num(input.weightLbs)
+  if (has(input, "wingspanInches")) data.wingspanInches = num(input.wingspanInches)
+  if (has(input, "age")) data.age = num(input.age)
+  if (has(input, "experienceLevel")) data.experienceLevel = str(input.experienceLevel)
+  if (has(input, "bodyType")) data.bodyType = str(input.bodyType)
+  if (has(input, "athleticAbility")) data.athleticAbility = num(input.athleticAbility)
+  if (has(input, "dominantHand")) data.dominantHand = str(input.dominantHand)
+  if (has(input, "shootingStyle")) data.shootingStyle = str(input.shootingStyle)
+  if (has(input, "bio")) data.bio = str(input.bio)
+  if (has(input, "enhancedBio")) data.enhancedBio = str(input.enhancedBio)
+  if (has(input, "coachingTier")) data.coachingTier = str(input.coachingTier)
+  if (has(input, "profileComplete")) data.profileComplete = !!input.profileComplete
+  if (has(input, "pointsState")) data.pointsState = (input.pointsState as object) || undefined
+
+  // Recompute derived metrics only when both inputs are present in this body.
   const { bmi, wingspanToHeightRatio } = deriveMetrics(input)
-  return {
-    heightInches: num(input.heightInches),
-    weightLbs: num(input.weightLbs),
-    wingspanInches: num(input.wingspanInches),
-    age: num(input.age),
-    experienceLevel: str(input.experienceLevel),
-    bodyType: str(input.bodyType),
-    athleticAbility: num(input.athleticAbility),
-    dominantHand: str(input.dominantHand),
-    shootingStyle: str(input.shootingStyle),
-    bio: str(input.bio),
-    enhancedBio: str(input.enhancedBio),
-    coachingTier: str(input.coachingTier),
-    wingspanToHeightRatio,
-    bmi,
-    profileComplete: input.profileComplete ?? false,
-    pointsState: (input.pointsState as object) || undefined,
-  }
+  if (has(input, "heightInches") && has(input, "weightLbs")) data.bmi = bmi
+  if (has(input, "heightInches") && has(input, "wingspanInches"))
+    data.wingspanToHeightRatio = wingspanToHeightRatio
+
+  return data
 }
 
 // POST / PUT — Create or update the authenticated caller's own profile.
@@ -100,7 +110,6 @@ async function upsertOwnProfile(request: NextRequest) {
   }
 
   const data = buildProfileData(input)
-  const profileComplete = input.profileComplete ?? false
 
   try {
     // Scope strictly to the session user's id — never a body/query value.
@@ -110,10 +119,12 @@ async function upsertOwnProfile(request: NextRequest) {
       create: { userId: user.userId, ...data },
     })
 
-    // Keep the User.profileComplete flag in sync.
-    await prisma.user
-      .update({ where: { id: user.userId }, data: { profileComplete } })
-      .catch((e) => console.error("Failed to sync User.profileComplete:", e))
+    // Keep the User.profileComplete flag in sync — only when explicitly provided.
+    if (has(input, "profileComplete")) {
+      await prisma.user
+        .update({ where: { id: user.userId }, data: { profileComplete: !!input.profileComplete } })
+        .catch((e) => console.error("Failed to sync User.profileComplete:", e))
+    }
 
     return NextResponse.json({ success: true, profile })
   } catch (error) {

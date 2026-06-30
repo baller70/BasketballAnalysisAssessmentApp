@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { resolveProfileId, isError } from "@/lib/auth/currentUser"
 import { serializeGoal } from "@/lib/api/serializers"
+import { validateCsrf } from "@/lib/csrf"
 
 /**
  * GET  /api/goals  — list the signed-in user's goals
@@ -23,6 +24,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const csrfError = validateCsrf(request)
+  if (csrfError) return csrfError
+
   const resolved = await resolveProfileId(request)
   if (isError(resolved)) return resolved.error
 

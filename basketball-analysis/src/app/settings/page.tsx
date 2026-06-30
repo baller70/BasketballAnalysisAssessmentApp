@@ -27,6 +27,7 @@ import {
   Trash2
 } from "lucide-react"
 import { useAuthStore } from "@/stores/authStore"
+import { csrfFetch } from "@/lib/api/csrfFetch"
 
 // ============================================
 // PHASE 10: SETTINGS & NOTIFICATION PREFERENCES
@@ -77,6 +78,18 @@ interface AutomationSettings {
   milestoneNotificationsEnabled: boolean
 }
 
+interface PrivacySettings {
+  allowAnonymousAnalytics: boolean
+  includeInPeerComparisons: boolean
+  shareProgressWithCoach: boolean
+}
+
+const DEFAULT_PRIVACY_SETTINGS: PrivacySettings = {
+  allowAnonymousAnalytics: true,
+  includeInPeerComparisons: true,
+  shareProgressWithCoach: true,
+}
+
 const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
   weeklyReportEmail: true,
   monthlyReportEmail: true,
@@ -110,32 +123,68 @@ const DEFAULT_AUTOMATION_SETTINGS: AutomationSettings = {
   milestoneNotificationsEnabled: true
 }
 
-const STORAGE_KEY_NOTIFICATIONS = 'basketball_notification_settings'
-const STORAGE_KEY_AUTOMATION = 'basketball_automation_settings'
-
 export default function SettingsPage() {
   const [activeSection, setActiveSection] = useState<'profile' | 'notifications' | 'automation' | 'account'>('profile')
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(DEFAULT_NOTIFICATION_SETTINGS)
   const [automationSettings, setAutomationSettings] = useState<AutomationSettings>(DEFAULT_AUTOMATION_SETTINGS)
+  const [privacySettings, setPrivacySettings] = useState<PrivacySettings>(DEFAULT_PRIVACY_SETTINGS)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [hasChanges, setHasChanges] = useState(false)
-  
+
+  // Data & privacy action states
+  const [exportStatus, setExportStatus] = useState<'idle' | 'working' | 'error'>('idle')
+  const [clearStatus, setClearStatus] = useState<'idle' | 'working' | 'cleared' | 'error'>('idle')
+
   // Avatar state
   const { user, updateUser } = useAuthStore()
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  // Data-URL of a freshly-selected avatar awaiting upload; null when unchanged.
+  const [pendingAvatarData, setPendingAvatarData] = useState<string | null>(null)
+  const [pendingAvatarRemove, setPendingAvatarRemove] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  
-  // Load avatar from localStorage on mount
+
+  // Load all settings (notifications/privacy/automation/avatar) from the server.
+  // Postgres is the source of truth; there is no localStorage fallback so the
+  // same settings follow the user across devices.
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedAvatar = localStorage.getItem('user_avatar')
-      if (storedAvatar) {
-        setAvatarPreview(storedAvatar)
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch('/api/settings', { credentials: 'include' })
+        if (!res.ok) return
+        const data = await res.json()
+        if (cancelled || !data?.success || !data.settings) return
+        const s = data.settings
+        if (s.notifications) {
+          setNotificationSettings(prev => ({ ...prev, ...s.notifications }))
+        }
+        if (s.automation) {
+          setAutomationSettings(prev => ({ ...prev, ...s.automation }))
+        }
+        if (s.privacy) {
+          setPrivacySettings(prev => ({ ...prev, ...s.privacy }))
+        }
+        if (s.avatarUrl) {
+          setAvatarPreview(s.avatarUrl)
+          updateUser({ avatarUrl: s.avatarUrl })
+          // Mirror the uploaded URL (NOT base64) into the legacy display cache
+          // key the Header/nav still reads, so the avatar shows everywhere.
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('user_avatar', s.avatarUrl)
+          }
+        }
+      } catch (e) {
+        console.error('Error loading settings:', e)
       }
+    })()
+    return () => {
+      cancelled = true
     }
-  }, [])
-  
-  // Handle avatar file selection
+  }, [updateUser])
+
+  // Handle avatar file selection — converts to a data URL for preview and
+  // queues it for upload on save (uploaded via the server, never persisted as
+  // base64 in localStorage).
   const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
@@ -144,33 +193,37 @@ export default function SettingsPage() {
         alert('Please select an image file')
         return
       }
-      
+
       // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         alert('Image must be less than 5MB')
         return
       }
-      
-      // Read and convert to base64
+
+      // Read and convert to base64 (data URL) for preview + upload payload.
       const reader = new FileReader()
       reader.onload = (e) => {
         const base64 = e.target?.result as string
         setAvatarPreview(base64)
+        setPendingAvatarData(base64)
+        setPendingAvatarRemove(false)
         setHasChanges(true)
       }
       reader.readAsDataURL(file)
     }
   }
-  
+
   // Remove avatar
   const handleRemoveAvatar = () => {
     setAvatarPreview(null)
+    setPendingAvatarData(null)
+    setPendingAvatarRemove(true)
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
     setHasChanges(true)
   }
-  
+
   // Get user initials for fallback avatar
   const getUserInitials = () => {
     if (user?.firstName && user?.lastName) {
@@ -189,50 +242,71 @@ export default function SettingsPage() {
     return 'U'
   }
 
-  // Load settings from localStorage
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedNotifications = localStorage.getItem(STORAGE_KEY_NOTIFICATIONS)
-      const storedAutomation = localStorage.getItem(STORAGE_KEY_AUTOMATION)
-      
-      if (storedNotifications) {
-        try {
-          setNotificationSettings(JSON.parse(storedNotifications))
-        } catch (e) {
-          console.error('Error loading notification settings:', e)
-        }
-      }
-      
-      if (storedAutomation) {
-        try {
-          setAutomationSettings(JSON.parse(storedAutomation))
-        } catch (e) {
-          console.error('Error loading automation settings:', e)
-        }
-      }
-    }
-  }, [])
+  // Real counts of the user's enabled automation preferences (replaces the
+  // former hardcoded 3/2/2 mock).
+  const dailyTasksEnabled = [
+    automationSettings.analyticsRefreshEnabled,
+    automationSettings.dataBackupEnabled,
+    automationSettings.modelUpdateEnabled,
+  ].filter(Boolean).length
+  const weeklyTasksEnabled = [
+    automationSettings.weeklyReportEnabled,
+    automationSettings.coachAlertsEnabled,
+  ].filter(Boolean).length
+  const monthlyTasksEnabled = [
+    automationSettings.monthlyAnalysisEnabled,
+    automationSettings.milestoneNotificationsEnabled,
+  ].filter(Boolean).length
 
-  // Save settings to localStorage
-  const saveSettings = () => {
+  // Persist settings to the server (Postgres via /api/settings). Includes the
+  // pending avatar, which the server uploads to object storage and returns the
+  // URL for — no base64 is ever stored client-side.
+  const saveSettings = async () => {
     setSaveStatus('saving')
-    
+
     try {
-      localStorage.setItem(STORAGE_KEY_NOTIFICATIONS, JSON.stringify(notificationSettings))
-      localStorage.setItem(STORAGE_KEY_AUTOMATION, JSON.stringify(automationSettings))
-      
-      // Save avatar
-      if (avatarPreview) {
-        localStorage.setItem('user_avatar', avatarPreview)
-        updateUser({ avatarUrl: avatarPreview })
-      } else {
-        localStorage.removeItem('user_avatar')
-        updateUser({ avatarUrl: undefined })
+      const payload: Record<string, unknown> = {
+        notifications: notificationSettings,
+        automation: automationSettings,
+        privacy: privacySettings,
       }
-      
+      if (pendingAvatarData) {
+        payload.avatarData = pendingAvatarData
+      } else if (pendingAvatarRemove) {
+        payload.removeAvatar = true
+      }
+
+      const res = await csrfFetch('/api/settings', {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      })
+      const data = await res.json()
+
+      if (!res.ok || !data?.success) {
+        throw new Error(data?.error || 'Failed to save settings')
+      }
+
+      // Reflect the canonical server state (notably the uploaded avatar URL).
+      if (data.settings) {
+        if (data.settings.avatarUrl) {
+          setAvatarPreview(data.settings.avatarUrl)
+          updateUser({ avatarUrl: data.settings.avatarUrl })
+          // Update the legacy display-cache key the Header/nav reads (URL only).
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('user_avatar', data.settings.avatarUrl)
+          }
+        } else {
+          updateUser({ avatarUrl: undefined })
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('user_avatar')
+          }
+        }
+      }
+
+      setPendingAvatarData(null)
+      setPendingAvatarRemove(false)
       setSaveStatus('saved')
       setHasChanges(false)
-      
       setTimeout(() => setSaveStatus('idle'), 2000)
     } catch (e) {
       console.error('Error saving settings:', e)
@@ -251,6 +325,96 @@ export default function SettingsPage() {
   const updateAutomation = <K extends keyof AutomationSettings>(key: K, value: AutomationSettings[K]) => {
     setAutomationSettings(prev => ({ ...prev, [key]: value }))
     setHasChanges(true)
+  }
+
+  // Update privacy setting
+  const updatePrivacy = <K extends keyof PrivacySettings>(key: K, value: PrivacySettings[K]) => {
+    setPrivacySettings(prev => ({ ...prev, [key]: value }))
+    setHasChanges(true)
+  }
+
+  // Export all of the user's data (settings + full analysis history) as a JSON
+  // download. Pulls from the server, never from localStorage.
+  const handleExportData = async () => {
+    setExportStatus('working')
+    try {
+      const [settingsRes, historyRes] = await Promise.all([
+        fetch('/api/settings', { credentials: 'include' }),
+        fetch('/api/analysis-history?includeAnalysis=true&limit=1000', {
+          credentials: 'include',
+        }),
+      ])
+      const settingsData = settingsRes.ok ? await settingsRes.json() : null
+      const historyData = historyRes.ok ? await historyRes.json() : null
+
+      const exportPayload = {
+        exportedAt: new Date().toISOString(),
+        profile: {
+          email: user?.email ?? null,
+          displayName: user?.displayName ?? null,
+          memberSince: user?.createdAt ?? null,
+        },
+        settings: settingsData?.settings ?? null,
+        analysisHistory: historyData?.history ?? [],
+        stats: historyData?.stats ?? null,
+      }
+
+      const blob = new Blob([JSON.stringify(exportPayload, null, 2)], {
+        type: 'application/json',
+      })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `basketball-analysis-export-${new Date()
+        .toISOString()
+        .slice(0, 10)}.json`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+
+      setExportStatus('idle')
+    } catch (e) {
+      console.error('Error exporting data:', e)
+      setExportStatus('error')
+      setTimeout(() => setExportStatus('idle'), 3000)
+    }
+  }
+
+  // Clear all of the user's analysis history from the server. Deletes each
+  // caller-owned history row (the DELETE endpoint is scoped per-id).
+  const handleClearHistory = async () => {
+    if (
+      typeof window !== 'undefined' &&
+      !window.confirm(
+        'Delete ALL of your analysis history? This cannot be undone.'
+      )
+    ) {
+      return
+    }
+    setClearStatus('working')
+    try {
+      const res = await fetch('/api/analysis-history?limit=1000', {
+        credentials: 'include',
+      })
+      const data = res.ok ? await res.json() : null
+      const ids: string[] = Array.isArray(data?.history)
+        ? data.history.map((h: { id: string }) => h.id).filter(Boolean)
+        : []
+
+      for (const id of ids) {
+        await csrfFetch(`/api/analysis-history?id=${encodeURIComponent(id)}`, {
+          method: 'DELETE',
+        })
+      }
+
+      setClearStatus('cleared')
+      setTimeout(() => setClearStatus('idle'), 2500)
+    } catch (e) {
+      console.error('Error clearing history:', e)
+      setClearStatus('error')
+      setTimeout(() => setClearStatus('idle'), 3000)
+    }
   }
 
     return (
@@ -893,32 +1057,33 @@ export default function SettingsPage() {
               </div>
                 </div>
 
-                {/* Automation Status */}
-                <div className="bg-gradient-to-r from-green-500/10 via-white to-green-500/10 rounded-xl p-6 border border-green-500/30">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
-                      <Check className="w-6 h-6 text-green-400" />
-                </div>
-                <div>
-                      <h3 className="text-lg font-bold text-slate-900">Automation Status: Active</h3>
-                      <p className="text-slate-500 text-sm">All enabled tasks are running on schedule</p>
-                </div>
-              </div>
-                  
-                  <div className="mt-4 grid grid-cols-3 gap-4">
+                {/* Enabled-task summary — reflects the user's actual saved
+                    preferences (no fake "running on schedule" claim). */}
+                <div className="bg-white shadow-sm rounded-xl p-6 border border-slate-200">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Clock className="w-5 h-5 text-[#FF6B35]" />
+                    <h3 className="font-bold text-slate-900">Your Automation Preferences</h3>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
                     <div className="text-center">
-                      <p className="text-2xl font-bold text-green-400">3</p>
-                      <p className="text-xs text-slate-500">Daily Tasks</p>
-          </div>
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-blue-400">2</p>
-                      <p className="text-xs text-slate-500">Weekly Tasks</p>
+                      <p className="text-2xl font-bold text-[#FF6B35]">{dailyTasksEnabled}</p>
+                      <p className="text-xs text-slate-500">Daily Enabled</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-2xl font-bold text-purple-400">2</p>
-                      <p className="text-xs text-slate-500">Monthly Tasks</p>
+                      <p className="text-2xl font-bold text-[#FF6B35]">{weeklyTasksEnabled}</p>
+                      <p className="text-xs text-slate-500">Weekly Enabled</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-[#FF6B35]">{monthlyTasksEnabled}</p>
+                      <p className="text-xs text-slate-500">Monthly Enabled</p>
                     </div>
                   </div>
+
+                  <p className="mt-4 text-xs text-slate-400">
+                    These preferences are saved to your account and applied to the
+                    reports and notifications you receive.
+                  </p>
                 </div>
               </>
             )}
@@ -944,20 +1109,38 @@ export default function SettingsPage() {
                           <h3 className="font-medium text-slate-900">Export All Data</h3>
                           <p className="text-xs text-slate-500">Download all your analysis data as JSON</p>
                         </div>
-                        <button className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-900 rounded-lg text-sm font-medium transition-colors">
-                          Export
+                        <button
+                          onClick={handleExportData}
+                          disabled={exportStatus === 'working'}
+                          className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-900 rounded-lg text-sm font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                          {exportStatus === 'working'
+                            ? 'Exporting…'
+                            : exportStatus === 'error'
+                            ? 'Failed'
+                            : 'Export'}
                         </button>
                   </div>
                 </div>
-                
+
                     <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
                       <div className="flex items-center justify-between">
                 <div>
                           <h3 className="font-medium text-slate-900">Clear Analysis History</h3>
                           <p className="text-xs text-slate-500">Remove all past analysis sessions</p>
                         </div>
-                        <button className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-sm font-medium transition-colors border border-red-500/30 whitespace-nowrap">
-                          Clear
+                        <button
+                          onClick={handleClearHistory}
+                          disabled={clearStatus === 'working'}
+                          className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-sm font-medium transition-colors border border-red-500/30 whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                          {clearStatus === 'working'
+                            ? 'Clearing…'
+                            : clearStatus === 'cleared'
+                            ? 'Cleared'
+                            : clearStatus === 'error'
+                            ? 'Failed'
+                            : 'Clear'}
                     </button>
                   </div>
                 </div>
@@ -999,51 +1182,41 @@ export default function SettingsPage() {
                       label="Allow Anonymous Analytics"
                       description="Help improve the app by sharing anonymous usage data"
                       icon={<TrendingUp className="w-5 h-5" />}
-                      enabled={true}
-                      onChange={() => {}}
+                      enabled={privacySettings.allowAnonymousAnalytics}
+                      onChange={(v) => updatePrivacy('allowAnonymousAnalytics', v)}
                     />
-                    
+
                     <ToggleSetting
                       label="Include in Peer Comparisons"
                       description="Allow your scores to be used in anonymous comparisons"
                       icon={<Users className="w-5 h-5" />}
-                      enabled={true}
-                      onChange={() => {}}
+                      enabled={privacySettings.includeInPeerComparisons}
+                      onChange={(v) => updatePrivacy('includeInPeerComparisons', v)}
                     />
-                    
+
                     <ToggleSetting
                       label="Share Progress with Coach"
                       description="Allow assigned coaches to view your analysis data"
                       icon={<Users className="w-5 h-5" />}
-                      enabled={true}
-                      onChange={() => {}}
+                      enabled={privacySettings.shareProgressWithCoach}
+                      onChange={(v) => updatePrivacy('shareProgressWithCoach', v)}
                 />
               </div>
           </div>
 
-                {/* Storage Info */}
+                {/* Storage info — settings and analysis data are stored on your
+                    account in the cloud, synced across devices. */}
                 <div className="bg-white shadow-sm rounded-xl p-6 border border-slate-200">
-                  <div className="flex items-center gap-3 mb-4">
+                  <div className="flex items-center gap-3 mb-2">
                     <Database className="w-5 h-5 text-[#FF6B35]" />
-                    <h3 className="font-bold text-slate-900">Storage Usage</h3>
-                    </div>
-                  
-                  <div className="space-y-3">
-                    <div>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="text-slate-500">Local Storage</span>
-                        <span className="text-slate-900">2.4 MB / 5 MB</span>
-                    </div>
-                      <div className="h-2 bg-slate-50 rounded-full overflow-hidden">
-                        <div className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF4500] rounded-full" style={{ width: '48%' }}></div>
-                    </div>
+                    <h3 className="font-bold text-slate-900">Data Storage</h3>
                   </div>
-                    
-                    <p className="text-xs text-slate-400">
-                      Analysis sessions and settings are stored locally on your device.
-                    </p>
-                    </div>
-                    </div>
+                  <p className="text-sm text-slate-500">
+                    Your settings, profile, and analysis history are securely
+                    stored on your account and synced across your devices. Use
+                    Export above to download a copy of your data at any time.
+                  </p>
+                </div>
               </>
             )}
                   </div>

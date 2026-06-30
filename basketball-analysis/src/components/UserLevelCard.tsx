@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react"
 import Link from "next/link"
 import { Trophy, Flame, Crown, Star, Zap, Target, Medal, TrendingUp, X, Calendar, Award, Users } from "lucide-react"
+import { usePoints } from "@/lib/points/pointsContext"
 
 // User level definitions - All names uppercase, gold/dark color scheme for header
 const USER_LEVELS = [
@@ -293,60 +294,152 @@ function LeaderboardPopup({
   )
 }
 
+// Format a badge id (e.g. "rising_star") into a display name ("RISING STAR").
+function formatBadgeName(id: string): string {
+  return id.replace(/[_-]+/g, " ").trim().toUpperCase()
+}
+
 export function UserLevelCard() {
+  // Real points balance + streak come from the canonical points ledger via the
+  // PointsProvider (GET /api/points), NOT a hardcoded mock (audit fix:
+  // UserLevelCard previously seeded xp/streak/leaderboard with fake numbers).
+  const points = usePoints()
+  const xp = points.getTotalPoints()
+  const streak = points.state?.streak ?? 0
+
   const [userStats, setUserStats] = useState<UserStats>({
-    xp: 1250,
-    dailyStreak: 5,
-    longestStreak: 12,
-    lastActiveDate: new Date().toISOString(),
-    streakHistory: [
-      { date: new Date(Date.now() - 0 * 24 * 60 * 60 * 1000).toISOString(), completed: true },
-      { date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(), completed: true },
-      { date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), completed: true },
-      { date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), completed: true },
-      { date: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(), completed: true },
-      { date: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(), completed: true },
-    ],
-    leaderboardRank: 127,
-    totalUsers: 2453,
-    topUsers: [
-      { rank: 1, name: "SharpShooter99", xp: 15420, level: "Legend" },
-      { rank: 2, name: "BucketMaster", xp: 12850, level: "All-Star" },
-      { rank: 3, name: "SplashKing", xp: 11200, level: "All-Star" },
-      { rank: 4, name: "DrainGame", xp: 9800, level: "Elite Shooter" },
-      { rank: 5, name: "NetRipper", xp: 8950, level: "Elite Shooter" },
-      { rank: 6, name: "CashMoney3", xp: 7600, level: "Veteran" },
-      { rank: 7, name: "RangeKing", xp: 7200, level: "Veteran" },
-      { rank: 8, name: "StrokeGod", xp: 6800, level: "Elite Shooter" },
-      { rank: 9, name: "WetJumper", xp: 6400, level: "Veteran" },
-      { rank: 10, name: "PureButter", xp: 5900, level: "Veteran" },
-    ],
-    latestBadge: {
-      name: "RISING STAR",
-      icon: TrendingUp,
-      color: "from-[#FF6B35] to-[#FF4500]",
-      earnedDate: "DEC 20, 2024"
-    }
+    xp: 0,
+    dailyStreak: 0,
+    longestStreak: 0,
+    lastActiveDate: points.state?.lastActiveDate ?? new Date().toISOString(),
+    streakHistory: [],
+    leaderboardRank: 0,
+    totalUsers: 0,
+    topUsers: [],
+    latestBadge: null,
   })
 
   const [showStreakPopup, setShowStreakPopup] = useState(false)
   const [showLeaderboardPopup, setShowLeaderboardPopup] = useState(false)
 
-  // Load user stats from localStorage on mount (for persistence)
+  // Keep XP / streak in sync with the live points ledger.
   useEffect(() => {
-    const savedStats = localStorage.getItem('user_stats')
-    if (savedStats) {
+    setUserStats(prev => ({
+      ...prev,
+      xp,
+      dailyStreak: streak,
+      longestStreak: Math.max(prev.longestStreak, streak),
+    }))
+  }, [xp, streak])
+
+  // Load real profile-scoped data: leaderboard rank/top users, latest earned
+  // badge, and active-day history (for the streak calendar). All caller-scoped
+  // and server-derived — no fabricated values.
+  useEffect(() => {
+    let cancelled = false
+    const load = async () => {
       try {
-        const parsed = JSON.parse(savedStats)
-        setUserStats(prev => ({
-          ...prev,
-          xp: parsed.xp || prev.xp,
-          dailyStreak: parsed.dailyStreak || prev.dailyStreak,
-          leaderboardRank: parsed.leaderboardRank || prev.leaderboardRank,
-        }))
+        // Resolve the caller's profile id (needed to flag their leaderboard row).
+        let profileId: string | null = null
+        try {
+          const pRes = await fetch("/api/profile", { credentials: "include" })
+          if (pRes.ok) {
+            const pData = await pRes.json()
+            profileId = pData?.profile?.id ?? null
+          }
+        } catch {
+          /* ignore */
+        }
+
+        // Leaderboard (real, anonymized).
+        try {
+          const lbUrl = profileId
+            ? `/api/leaderboard?type=form_score&limit=10&userProfileId=${encodeURIComponent(profileId)}`
+            : `/api/leaderboard?type=form_score&limit=10`
+          const lbRes = await fetch(lbUrl, { credentials: "include" })
+          if (lbRes.ok) {
+            const lb = await lbRes.json()
+            if (!cancelled && lb?.success) {
+              const topUsers = (Array.isArray(lb.entries) ? lb.entries : []).map(
+                (e: { rank: number; identifier: string; score: number; level: number }) => ({
+                  rank: e.rank,
+                  name: e.identifier,
+                  xp: e.score,
+                  level: `Level ${e.level}`,
+                })
+              )
+              setUserStats(prev => ({
+                ...prev,
+                leaderboardRank: lb.userRank ?? 0,
+                totalUsers: lb.totalParticipants ?? 0,
+                topUsers,
+              }))
+            }
+          }
+        } catch {
+          /* ignore */
+        }
+
+        // Latest earned badge (real, persisted earnedAt dates).
+        try {
+          const bRes = await fetch("/api/badges", { credentials: "include" })
+          if (bRes.ok) {
+            const bData = await bRes.json()
+            if (!cancelled && bData?.success && bData.badges) {
+              const earned = Object.entries(
+                bData.badges as Record<string, { unlocked: boolean; earnedDate: string | null }>
+              )
+                .filter(([, b]) => b.unlocked && b.earnedDate)
+                .sort(
+                  (a, b) =>
+                    new Date(b[1].earnedDate as string).getTime() -
+                    new Date(a[1].earnedDate as string).getTime()
+                )
+              if (earned.length > 0) {
+                const [id, b] = earned[0]
+                setUserStats(prev => ({
+                  ...prev,
+                  latestBadge: {
+                    name: formatBadgeName(id),
+                    icon: Award,
+                    color: "from-[#FF6B35] to-[#FF4500]",
+                    earnedDate: new Date(b.earnedDate as string)
+                      .toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                      .toUpperCase(),
+                  },
+                }))
+              }
+            }
+          }
+        } catch {
+          /* ignore */
+        }
+
+        // Streak calendar from real analysis activity dates.
+        try {
+          const hRes = await fetch(
+            "/api/analysis-history?limit=60",
+            { credentials: "include" }
+          )
+          if (hRes.ok) {
+            const hData = await hRes.json()
+            if (!cancelled && hData?.success && Array.isArray(hData.history)) {
+              const streakHistory = hData.history.map(
+                (h: { recordedAt: string }) => ({ date: h.recordedAt, completed: true })
+              )
+              setUserStats(prev => ({ ...prev, streakHistory }))
+            }
+          }
+        } catch {
+          /* ignore */
+        }
       } catch (e) {
-        console.error('Failed to parse user stats:', e)
+        console.error("Failed to load user level data:", e)
       }
+    }
+    load()
+    return () => {
+      cancelled = true
     }
   }, [])
 

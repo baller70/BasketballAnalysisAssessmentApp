@@ -22,6 +22,31 @@ import {
   Download
 } from "lucide-react";
 import { ALL_ELITE_SHOOTERS, EliteShooter } from "@/data/eliteShooters";
+import { csrfFetch } from "@/lib/api/csrfFetch";
+
+// Persist a shooting-form approval/exclusion to the server (replaces the old
+// localStorage-only store). Keyed by the shooter's NAME — the stable join key
+// between the static catalog and the DB. Best-effort: logs on failure.
+async function persistApproval(
+  name: string,
+  imageUrl: string,
+  action: 'approve' | 'exclude' | 'unapprove' | 'include'
+): Promise<boolean> {
+  try {
+    const res = await csrfFetch('/api/shooters', {
+      method: 'POST',
+      body: JSON.stringify({ name, imageUrl, action }),
+    });
+    if (!res.ok) {
+      console.error(`persistApproval(${action}) failed:`, res.status);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error(`persistApproval(${action}) error:`, e);
+    return false;
+  }
+}
 
 // Types for image management
 interface ShootingFormImage {
@@ -222,10 +247,16 @@ export default function ShootingFormsAdminPage() {
     }
     
     localStorage.setItem(approvedKey, JSON.stringify(existingApproved));
-    
+
+    // Persist server-side (source of truth read back by /api/shooters).
+    void persistApproval(imageToApprove.playerName, imageToApprove.url, 'approve');
+    if (wasCropped && imageToApprove.originalUrl) {
+      void persistApproval(imageToApprove.playerName, imageToApprove.originalUrl, 'exclude');
+    }
+
     // Close the modal and show success
     setSelectedImage(null);
-    
+
     // Show success alert
     alert(`✅ ${wasCropped ? 'Cropped image' : 'Image'} approved and added to ${imageToApprove.playerName}'s shooting form gallery!`);
   }, [images]);
@@ -253,8 +284,15 @@ export default function ShootingFormsAdminPage() {
         );
         localStorage.setItem(approvedKey, JSON.stringify(existingApproved));
       }
+
+      // Persist server-side: drop any approval, and hide database-sourced images
+      // by recording an exclusion so /api/shooters stops serving them.
+      void persistApproval(imageToReject.playerName, imageToReject.url, 'unapprove');
+      if (imageToReject.isFromDatabase) {
+        void persistApproval(imageToReject.playerName, imageToReject.url, 'exclude');
+      }
     }
-    
+
     alert('🗑️ Image rejected and removed from the system.');
   }, [images, selectedImage]);
   

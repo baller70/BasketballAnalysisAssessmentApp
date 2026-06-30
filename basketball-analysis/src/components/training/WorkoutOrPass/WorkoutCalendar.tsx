@@ -11,13 +11,18 @@
  * - Auto-populate from identified flaws
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from "react"
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import {
   Calendar, Settings, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Star, Play, Pause,
   Bell, BellRing, Target, Clock, Check, X, Zap, BookOpen, GripVertical,
   Info, AlertTriangle, Dumbbell, CircleDot, TrendingUp, Lightbulb, Plus, BarChart3
 } from "lucide-react"
-import { ALL_DRILLS, Drill, DrillFocusArea, SkillLevel } from "@/data/drillDatabase"
+import { ALL_DRILLS, Drill, DrillFocusArea, SkillLevel, getRecommendedDrills, mapFlawToFocusArea } from "@/data/drillDatabase"
+import {
+  fetchWorkouts, createWorkout, updateWorkout, deleteWorkout,
+  fetchPreferences, savePreferences, resolveDrillIds, asFocusAreas,
+  type ServerWorkout, type WorkoutPayload,
+} from "@/lib/api/workoutsClient"
 
 type FocusArea = DrillFocusArea
 
@@ -42,6 +47,14 @@ const FOCUS_AREA_LABELS: Record<FocusArea, string> = {
 
 type AgeLevel = 'elementary' | 'middle_school' | 'high_school' | 'college' | 'professional'
 
+const AGE_TO_SKILL: Record<AgeLevel, SkillLevel> = {
+  elementary: 'ELEMENTARY',
+  middle_school: 'MIDDLE_SCHOOL',
+  high_school: 'HIGH_SCHOOL',
+  college: 'COLLEGE',
+  professional: 'PROFESSIONAL',
+}
+
 interface TrainingPreferences {
   frequency: 1 | 2 | 3 | 4 | 5 | 6 | 7
   preferredDuration: 5 | 10 | 15 | 20 | 30 | 45
@@ -65,6 +78,32 @@ interface ScheduledWorkout {
 interface WorkoutCalendarProps {
   userFlaws?: string[]
   onStartWorkout?: (drills: Drill[]) => void
+}
+
+// Map a server Workout row → the in-memory ScheduledWorkout (resolving drillIds
+// back to full Drill objects via the provided pool).
+function mapServerWorkout(w: ServerWorkout, pool: Drill[]): ScheduledWorkout {
+  return {
+    id: w.id,
+    date: new Date(w.scheduledDate),
+    drills: resolveDrillIds(w.drillIds, pool),
+    completed: w.completed,
+    duration: w.duration,
+    focusAreas: asFocusAreas(w.focusAreas),
+    name: w.name,
+  }
+}
+
+// In-memory ScheduledWorkout → the payload the workouts API expects.
+function scheduledToPayload(w: ScheduledWorkout): WorkoutPayload {
+  return {
+    name: w.name ?? null,
+    scheduledDate: w.date,
+    drillIds: w.drills.map((d) => d.id),
+    focusAreas: w.focusAreas,
+    duration: w.duration,
+    completed: w.completed,
+  }
 }
 
 // =============================================
@@ -453,7 +492,7 @@ const AGE_LEVEL_CONFIG: Record<AgeLevel, {
   }
 }
 
-const STORAGE_KEY = 'workout-calendar-data'
+// Custom drills have no server model yet; cached locally only.
 const CUSTOM_DRILLS_KEY = 'workout-calendar-custom-drills'
 
 // =============================================
@@ -869,39 +908,61 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
     autoPopulateFromFlaws: false
   })
 
-  // Load from localStorage
+  // Gate for the preferences-sync effect so it doesn't PUT during initial load.
+  const loadedRef = useRef(false)
+
+  // Load preferences + scheduled workouts from the server (source of truth).
+  // Custom drills have no server model yet, so they stay in localStorage as an
+  // offline cache.
   useEffect(() => {
+    let cancelled = false
+
+    let localCustom: Drill[] = []
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(STORAGE_KEY)
-      if (saved) {
-        try {
-          const data = JSON.parse(saved)
-          if (data.preferences) setPreferences(data.preferences)
-          if (data.scheduledWorkouts) {
-            setScheduledWorkouts(data.scheduledWorkouts.map((w: ScheduledWorkout) => ({
-              ...w,
-              date: new Date(w.date)
-            })))
-          }
-          if (data.notificationsEnabled !== undefined) setNotificationsEnabled(data.notificationsEnabled)
-        } catch (e) {
-          console.error('Failed to load calendar data:', e)
-        }
-      }
       const savedCustom = localStorage.getItem(CUSTOM_DRILLS_KEY)
       if (savedCustom) {
         try {
           const parsed = JSON.parse(savedCustom)
-          if (Array.isArray(parsed)) setCustomDrills(parsed)
+          if (Array.isArray(parsed)) localCustom = parsed
         } catch (e) {
           console.error('Failed to load custom drills:', e)
         }
       }
-      setIsHydrated(true)
     }
+    if (localCustom.length) setCustomDrills(localCustom)
+
+    const pool = [...ALL_DRILLS, ...localCustom]
+
+    void (async () => {
+      const [prefs, workouts] = await Promise.all([
+        fetchPreferences(),
+        fetchWorkouts(),
+      ])
+      if (cancelled) return
+
+      if (prefs) {
+        const validLevels: AgeLevel[] = ['elementary', 'middle_school', 'high_school', 'college', 'professional']
+        setPreferences({
+          frequency: prefs.frequency as TrainingPreferences['frequency'],
+          preferredDuration: prefs.preferredDuration as TrainingPreferences['preferredDuration'],
+          drillCount: prefs.drillCount as TrainingPreferences['drillCount'],
+          workoutMode: prefs.workoutMode === 'step-by-step' ? 'step-by-step' : 'continuous',
+          soundEnabled: prefs.soundEnabled,
+          ageLevel: (validLevels.includes(prefs.ageLevel as AgeLevel) ? prefs.ageLevel : 'college') as AgeLevel,
+          autoPopulateFromFlaws: prefs.autoPopulateFromFlaws,
+        })
+        setNotificationsEnabled(prefs.notificationsEnabled)
+      }
+
+      setScheduledWorkouts(workouts.map((w) => mapServerWorkout(w, pool)))
+
+      loadedRef.current = true
+      setIsHydrated(true)
+    })()
+
+    return () => { cancelled = true }
   }, [])
 
-  // Save to localStorage
   // Auto-dismiss success toast after 8 seconds
   useEffect(() => {
     if (scheduleSuccessInfo?.show) {
@@ -912,15 +973,24 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
     }
   }, [scheduleSuccessInfo])
   
+  // Persist preferences (incl. notifications) to the server, debounced. Scheduled
+  // workouts are persisted individually by the mutation helpers below, not in bulk.
   useEffect(() => {
-    if (isHydrated && typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        preferences,
-        scheduledWorkouts,
-        notificationsEnabled
-      }))
-    }
-  }, [preferences, scheduledWorkouts, notificationsEnabled, isHydrated])
+    if (!loadedRef.current) return
+    const t = setTimeout(() => {
+      void savePreferences({
+        frequency: preferences.frequency,
+        preferredDuration: preferences.preferredDuration,
+        drillCount: preferences.drillCount,
+        workoutMode: preferences.workoutMode,
+        soundEnabled: preferences.soundEnabled,
+        ageLevel: preferences.ageLevel,
+        autoPopulateFromFlaws: preferences.autoPopulateFromFlaws,
+        notificationsEnabled,
+      })
+    }, 600)
+    return () => clearTimeout(t)
+  }, [preferences, notificationsEnabled])
 
   // Persist custom drills separately
   useEffect(() => {
@@ -936,25 +1006,43 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
   const ageLevels: AgeLevel[] = ['elementary', 'middle_school', 'high_school', 'college', 'professional']
   const durationOptions: (5 | 10 | 15 | 20 | 30 | 45)[] = [5, 10, 15, 20, 30, 45]
 
-  // Get drills for the user's skill level
-  const availableDrills = useMemo(() => {
-    const levelMap: Record<AgeLevel, SkillLevel> = {
-      'elementary': 'ELEMENTARY',
-      'middle_school': 'MIDDLE_SCHOOL',
-      'high_school': 'HIGH_SCHOOL',
-      'college': 'COLLEGE',
-      'professional': 'PROFESSIONAL'
-    }
-    const skillLevel = levelMap[preferences.ageLevel]
-    return allDrills.filter(d => d.level === skillLevel || d.level === 'ELEMENTARY')
-  }, [preferences.ageLevel, allDrills])
-
-  // Generate AI workout
+  // Generate an AI workout from the real recommender. When "auto-populate from
+  // flaws" is enabled, the user's detected flaws are mapped to focus areas and
+  // become the weak areas the recommender prioritizes; otherwise it returns the
+  // best level-appropriate drills. (Replaces the old Math.random shuffle.)
   const generateWorkout = useCallback(() => {
-    const shuffled = [...availableDrills].sort(() => Math.random() - 0.5)
-    const selected = shuffled.slice(0, preferences.drillCount)
-    return selected
-  }, [availableDrills, preferences.drillCount])
+    const skillLevel = AGE_TO_SKILL[preferences.ageLevel]
+    const weakAreas: DrillFocusArea[] = preferences.autoPopulateFromFlaws
+      ? Array.from(new Set(userFlaws.map(mapFlawToFocusArea)))
+      : []
+    return getRecommendedDrills(skillLevel, weakAreas, preferences.drillCount)
+  }, [preferences.ageLevel, preferences.drillCount, preferences.autoPopulateFromFlaws, userFlaws])
+
+  // --- Server-backed scheduled-workout mutations --------------------------
+  // Each optimistically updates local state, then reconciles with the server
+  // (Postgres is the source of truth; the UI degrades gracefully if offline).
+
+  const persistNewWorkout = useCallback(async (workout: ScheduledWorkout) => {
+    setScheduledWorkouts(prev => [...prev, workout])
+    const saved = await createWorkout(scheduledToPayload(workout))
+    if (saved) {
+      const mapped = mapServerWorkout(saved, [...ALL_DRILLS, ...customDrills])
+      setScheduledWorkouts(prev => prev.map(w => (w.id === workout.id ? mapped : w)))
+    }
+  }, [customDrills])
+
+  const removeScheduledWorkout = useCallback((workoutId: string) => {
+    setScheduledWorkouts(prev => prev.filter(w => w.id !== workoutId))
+    void deleteWorkout(workoutId)
+  }, [])
+
+  const toggleScheduledComplete = useCallback((workoutId: string) => {
+    const target = scheduledWorkouts.find(w => w.id === workoutId)
+    if (!target) return
+    const completed = !target.completed
+    setScheduledWorkouts(prev => prev.map(w => (w.id === workoutId ? { ...w, completed } : w)))
+    void updateWorkout(workoutId, { completed, completedAt: completed ? new Date() : null })
+  }, [scheduledWorkouts])
 
   // Calendar navigation
   const navigateCalendar = (direction: 'prev' | 'next') => {
@@ -1046,7 +1134,7 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
       duration: preferences.preferredDuration,
       focusAreas: [...new Set(drills.map(d => d.focusArea))]
     }
-    setScheduledWorkouts(prev => [...prev, workout])
+    void persistNewWorkout(workout)
   }
 
   // Start workout
@@ -1089,8 +1177,8 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
       }
     }
     
-    setScheduledWorkouts(prev => [...prev, ...newWorkouts])
-  }, [preferences.frequency, preferences.preferredDuration, generateWorkout, getWorkoutsForDate])
+    newWorkouts.forEach(w => { void persistNewWorkout(w) })
+  }, [preferences.frequency, preferences.preferredDuration, generateWorkout, getWorkoutsForDate, persistNewWorkout])
 
   if (!isHydrated) {
     return (
@@ -1616,12 +1704,10 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
             setSelectedDayForPopup(null)
           }}
           onRemoveWorkout={(workoutId) => {
-            setScheduledWorkouts(prev => prev.filter(w => w.id !== workoutId))
+            removeScheduledWorkout(workoutId)
           }}
           onToggleComplete={(workoutId) => {
-            setScheduledWorkouts(prev => prev.map(w => 
-              w.id === workoutId ? { ...w, completed: !w.completed } : w
-            ))
+            toggleScheduledComplete(workoutId)
           }}
         />
       )}
@@ -1644,7 +1730,7 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
               completed: false,
               name: workoutName
             }
-            setScheduledWorkouts(prev => [...prev, workout])
+            void persistNewWorkout(workout)
             setShowBuildWorkoutPopup(false)
             setSelectedDayForPopup(null)
           }}
@@ -1673,7 +1759,7 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
               completed: false,
               name: drill.title
             }
-            setScheduledWorkouts(prev => [...prev, workout])
+            void persistNewWorkout(workout)
             setShowDrillPickerPopup(false)
             setSelectedDayForPopup(null)
           }}
@@ -1731,7 +1817,7 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
                     completed: false,
                     name: workoutName
                   }
-                  setScheduledWorkouts(prev => [...prev, workout])
+                  void persistNewWorkout(workout)
                   firstScheduledDate = new Date()
                 }
               } else {
@@ -1760,7 +1846,7 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
                         completed: false,
                         name: workoutName
                       }
-                      setScheduledWorkouts(prev => [...prev, workout])
+                      void persistNewWorkout(workout)
                     }
                   }
                 }
@@ -1782,7 +1868,7 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
                     completed: false,
                     name: drill.title
                   }
-                  setScheduledWorkouts(prev => [...prev, workout])
+                  void persistNewWorkout(workout)
                   firstScheduledDate = new Date()
                 }
               }

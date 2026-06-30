@@ -41,26 +41,37 @@ const getEraCategory = (era: string): string => {
   return 'Classic';
 };
 
-// Mock user profile for similarity comparison
-const USER_PROFILE = {
-  height: 75, weight: 195, wingspan: 79,
-  measurements: { shoulderAngle: 170, elbowAngle: 90, hipAngle: 172, kneeAngle: 145, ankleAngle: 88, releaseHeight: 108, releaseAngle: 52, entryAngle: 46 }
-};
+// Real signed-in user's shooting profile, derived from their latest saved
+// analysis (NO hardcoded mock). Any subset of fields may be present.
+type UserMeasurements = Partial<{
+  height: number; weight: number; wingspan: number;
+  elbowAngle: number; releaseAngle: number; kneeAngle: number;
+  releaseHeight: number; shoulderAngle: number; entryAngle: number; hipAngle: number;
+}>;
 
-// Calculate similarity score
-const calculateSimilarity = (shooter: EliteShooter): number => {
-  const weights = { height: 0.15, wingspan: 0.15, weight: 0.10, elbowAngle: 0.15, releaseAngle: 0.12, kneeAngle: 0.10, releaseHeight: 0.10, shoulderAngle: 0.08, entryAngle: 0.05 };
-  const heightDiff = Math.abs(shooter.height - USER_PROFILE.height) / 20;
-  const wingspanDiff = Math.abs(shooter.wingspan - USER_PROFILE.wingspan) / 20;
-  const weightDiff = Math.abs(shooter.weight - USER_PROFILE.weight) / 100;
-  const elbowDiff = Math.abs(shooter.measurements.elbowAngle - USER_PROFILE.measurements.elbowAngle) / 30;
-  const releaseDiff = Math.abs(shooter.measurements.releaseAngle - USER_PROFILE.measurements.releaseAngle) / 20;
-  const kneeDiff = Math.abs(shooter.measurements.kneeAngle - USER_PROFILE.measurements.kneeAngle) / 30;
-  const releaseHeightDiff = Math.abs(shooter.measurements.releaseHeight - USER_PROFILE.measurements.releaseHeight) / 20;
-  const shoulderDiff = Math.abs(shooter.measurements.shoulderAngle - USER_PROFILE.measurements.shoulderAngle) / 20;
-  const entryDiff = Math.abs(shooter.measurements.entryAngle - USER_PROFILE.measurements.entryAngle) / 15;
-  const similarity = 1 - (heightDiff * weights.height + wingspanDiff * weights.wingspan + weightDiff * weights.weight + elbowDiff * weights.elbowAngle + releaseDiff * weights.releaseAngle + kneeDiff * weights.kneeAngle + releaseHeightDiff * weights.releaseHeight + shoulderDiff * weights.shoulderAngle + entryDiff * weights.entryAngle);
-  return Math.max(0, Math.min(100, Math.round(similarity * 100)));
+// Calculate similarity score against the user's real measurements. Returns null
+// when there's nothing to compare against (no signed-in user / no analysis yet),
+// so the UI can fall back to a neutral sort instead of inventing a number.
+const calculateSimilarity = (shooter: EliteShooter, user: UserMeasurements | null): number | null => {
+  if (!user) return null;
+  const terms: { w: number; diff: number }[] = [];
+  const push = (val: number | undefined, target: number, scale: number, w: number) => {
+    if (val == null || Number.isNaN(val)) return;
+    terms.push({ w, diff: Math.min(1, Math.abs(target - val) / scale) });
+  };
+  push(user.height, shooter.height, 20, 0.15);
+  push(user.wingspan, shooter.wingspan, 20, 0.15);
+  push(user.weight, shooter.weight, 100, 0.10);
+  push(user.elbowAngle, shooter.measurements.elbowAngle, 30, 0.15);
+  push(user.releaseAngle, shooter.measurements.releaseAngle, 20, 0.12);
+  push(user.kneeAngle, shooter.measurements.kneeAngle, 30, 0.10);
+  push(user.releaseHeight, shooter.measurements.releaseHeight, 20, 0.10);
+  push(user.shoulderAngle, shooter.measurements.shoulderAngle, 20, 0.08);
+  push(user.entryAngle, shooter.measurements.entryAngle, 15, 0.05);
+  if (terms.length === 0) return null;
+  const totalW = terms.reduce((s, t) => s + t.w, 0);
+  const weighted = terms.reduce((s, t) => s + t.diff * t.w, 0) / totalW;
+  return Math.max(0, Math.min(100, Math.round((1 - weighted) * 100)));
 };
 
 // Filter options
@@ -271,6 +282,11 @@ export default function EliteShootersPage() {
   const [shootingFormPlayer, setShootingFormPlayer] = useState<(EliteShooter & { wsi: number; similarity: number; eraCategory: string }) | null>(null);
   const [approvedImages, setApprovedImages] = useState<Record<number, string[]>>({});
   const [excludedImages, setExcludedImages] = useState<Record<number, string[]>>({});
+  // Shooter roster — loaded from the DB-backed /api/shooters endpoint, with the
+  // static catalog as an offline fallback so the page is never blank.
+  const [shooters, setShooters] = useState<EliteShooter[]>(ALL_ELITE_SHOOTERS);
+  // The signed-in user's real measurements (latest analysis). null => none yet.
+  const [userMeasurements, setUserMeasurements] = useState<UserMeasurements | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [showPointsBurst, setShowPointsBurst] = useState(false);
   
@@ -286,28 +302,78 @@ export default function EliteShootersPage() {
     }
   };
 
-  // Load approved and excluded images from localStorage on mount
+  // Load the consolidated, DB-backed shooter roster (single source of truth)
+  // plus server-persisted admin approvals. Falls back to the static catalog if
+  // the request fails so the browser still renders.
   useEffect(() => {
-    const approvedKey = 'approved_shooting_forms';
-    const stored = localStorage.getItem(approvedKey);
-    if (stored) {
+    let cancelled = false;
+    (async () => {
       try {
-        setApprovedImages(JSON.parse(stored));
+        const res = await fetch('/api/shooters', { credentials: 'include' });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (cancelled || !data?.success || !Array.isArray(data.shooters)) return;
+        const list: (EliteShooter & { approvedFormImages?: string[]; excludedFormImages?: string[] })[] = data.shooters;
+        setShooters(list);
+        const approved: Record<number, string[]> = {};
+        const excluded: Record<number, string[]> = {};
+        for (const s of list) {
+          if (s.approvedFormImages?.length) approved[s.id] = s.approvedFormImages;
+          if (s.excludedFormImages?.length) excluded[s.id] = s.excludedFormImages;
+        }
+        setApprovedImages(approved);
+        setExcludedImages(excluded);
       } catch (e) {
-        console.error('Failed to load approved images:', e);
+        console.error('Failed to load shooters from /api/shooters:', e);
       }
-    }
-    
-    const excludedKey = 'excluded_shooting_forms';
-    const storedExcluded = localStorage.getItem(excludedKey);
-    if (storedExcluded) {
-      try {
-        setExcludedImages(JSON.parse(storedExcluded));
-      } catch (e) {
-        console.error('Failed to load excluded images:', e);
-      }
-    }
+    })();
+    return () => { cancelled = true; };
   }, []);
+
+  // Derive the user's real shooting measurements from their latest saved
+  // analysis. Replaces the old hardcoded mock USER_PROFILE. When the user is not
+  // signed in or has no analysis yet, userMeasurements stays null and the
+  // "Form Similarity" sort gracefully degrades to a neutral (overall-score) sort.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/analysis-history?limit=1&includeAnalysis=true', { credentials: 'include' });
+        if (!res.ok) return; // 401 (signed out) etc. -> leave measurements null
+        const data = await res.json();
+        if (cancelled || !data?.success || !Array.isArray(data.history) || data.history.length === 0) return;
+        const latest = data.history[0];
+        const a = latest?.angles ?? {};
+        const detail = latest?.analysis ?? {};
+        const pick = (...vals: unknown[]): number | undefined => {
+          for (const v of vals) {
+            const n = typeof v === 'string' ? parseFloat(v) : (v as number);
+            if (typeof n === 'number' && !Number.isNaN(n)) return n;
+          }
+          return undefined;
+        };
+        const m: UserMeasurements = {
+          elbowAngle: pick(a.elbow, detail.elbowAngle, detail.elbow_angle),
+          kneeAngle: pick(a.knee, detail.kneeAngle, detail.knee_angle),
+          releaseAngle: pick(a.release, detail.releaseAngle, detail.release_angle),
+          shoulderAngle: pick(detail.shoulderAngle, detail.shoulder_angle),
+          hipAngle: pick(detail.hipAngle, detail.hip_angle),
+          releaseHeight: pick(detail.releaseHeight, detail.release_height),
+          entryAngle: pick(detail.entryAngle, detail.entry_angle),
+          height: pick(detail.heightInches, detail.height),
+          weight: pick(detail.weightLbs, detail.weight),
+          wingspan: pick(detail.wingspanInches, detail.wingspan),
+        };
+        // Only adopt if at least one usable field was found.
+        if (Object.values(m).some((v) => v != null)) setUserMeasurements(m);
+      } catch (e) {
+        console.error('Failed to load user analysis for similarity:', e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const hasUserData = userMeasurements != null;
   
   // Helper to get total shooting form images count (database + approved - excluded)
   const getShootingFormCount = (shooter: EliteShooter): number => {
@@ -321,13 +387,15 @@ export default function EliteShootersPage() {
   };
 
   const processedShooters = useMemo(() => {
-    return ALL_ELITE_SHOOTERS.map(shooter => ({
+    return shooters.map(shooter => ({
       ...shooter,
-      similarity: calculateSimilarity(shooter),
+      // null (no user data) collapses to 0 for the field; the sort below uses
+      // hasUserData to decide whether similarity is meaningful.
+      similarity: calculateSimilarity(shooter, userMeasurements) ?? 0,
       wsi: calculateWSI(shooter),
       eraCategory: getEraCategory(shooter.era),
     }));
-  }, []);
+  }, [shooters, userMeasurements]);
 
   const filteredShooters = useMemo(() => {
     let result = processedShooters;
@@ -344,7 +412,9 @@ export default function EliteShootersPage() {
     result = result.filter(s => s.wsi >= wsiRange[0] && s.wsi <= wsiRange[1]);
 
     switch (sortBy) {
-      case 'similarity': result.sort((a, b) => b.similarity - a.similarity); break;
+      // With no signed-in user / analysis, "Form Similarity" has nothing to
+      // compare to — degrade to a neutral best-shooters-first ordering.
+      case 'similarity': result.sort((a, b) => hasUserData ? b.similarity - a.similarity : b.overallScore - a.overallScore); break;
       case 'name_asc': result.sort((a, b) => a.name.localeCompare(b.name)); break;
       case 'name_desc': result.sort((a, b) => b.name.localeCompare(a.name)); break;
       case 'threePct_desc': result.sort((a, b) => (b.careerPct || 0) - (a.careerPct || 0)); break;
@@ -358,7 +428,7 @@ export default function EliteShootersPage() {
       case 'tier_worst': result.sort((a, b) => TIER_ORDER[b.tier] - TIER_ORDER[a.tier]); break;
     }
     return result;
-  }, [processedShooters, searchQuery, selectedTiers, selectedLeagues, selectedPositions, selectedEras, threePctRange, ftPctRange, wsiRange, sortBy]);
+  }, [processedShooters, searchQuery, selectedTiers, selectedLeagues, selectedPositions, selectedEras, threePctRange, ftPctRange, wsiRange, sortBy, hasUserData]);
 
   const threePtRanks = useMemo(() => {
     const ranks = new Map<number, number>();
@@ -419,6 +489,11 @@ export default function EliteShootersPage() {
                   Showing <span className="text-[#FF6B35] font-bold">{filteredShooters.length}</span> of {processedShooters.length} players
                   {hasActiveFilters && <span className="text-[#FF6B35]"> (filtered)</span>}
                 </p>
+                {sortBy === 'similarity' && !hasUserData && (
+                  <p className="text-slate-500 text-xs mt-1 italic">
+                    Sign in and analyze a shot to rank these by similarity to your form. Showing best shooters first for now.
+                  </p>
+                )}
               </div>
               <Link 
                 href="/admin/shooting-forms"
@@ -769,7 +844,12 @@ export default function EliteShootersPage() {
 
                         {/* Biomechanics */}
                         <div className="border-t border-slate-200 pt-3">
-                          <p className="text-slate-500 text-xs mb-2 uppercase tracking-wider">Biomechanics</p>
+                          <p className="text-slate-500 text-xs mb-2 uppercase tracking-wider">
+                            Biomechanics
+                            {shooter.biomechanicsEstimated !== false && (
+                              <span className="ml-1 normal-case tracking-normal text-slate-400 italic">(estimated)</span>
+                            )}
+                          </p>
                           <div className="grid grid-cols-2 gap-2 text-xs">
                             <div className="flex justify-between bg-slate-50 rounded px-2 py-1">
                               <span className="text-slate-500">Elbow:</span>

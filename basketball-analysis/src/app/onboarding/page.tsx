@@ -8,7 +8,7 @@ import { ProfileWizard } from "@/components/profile/ProfileWizard"
 
 export default function OnboardingPage() {
   const router = useRouter()
-  const { isAuthenticated, user } = useAuthStore()
+  const { isAuthenticated } = useAuthStore()
   const { completeProfile } = useProfileStore()
 
   useEffect(() => {
@@ -19,25 +19,18 @@ export default function OnboardingPage() {
   }, [isAuthenticated, router])
 
   const handleComplete = async () => {
-    // Mark profile as complete in both stores
+    // Mark profile as complete in the client cache first so saveProfile sends
+    // profileComplete: true to the server (the source of truth).
     completeProfile()
     useAuthStore.getState().setProfileComplete(true)
-    
-    // Save profile to database via API
-    try {
-      const profileData = useProfileStore.getState()
-      await fetch('/api/profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: user?.id,
-          ...profileData,
-        }),
-      })
-    } catch (error) {
-      console.error('Failed to save profile:', error)
+
+    // Persist to Postgres via the CSRF-protected POST /api/profile. The owning
+    // user is derived from the session cookie server-side — no userId is sent.
+    const saved = await useProfileStore.getState().saveProfile()
+    if (!saved) {
+      console.error("Failed to save profile to server")
     }
-    
+
     // Redirect to home page
     router.push("/")
   }

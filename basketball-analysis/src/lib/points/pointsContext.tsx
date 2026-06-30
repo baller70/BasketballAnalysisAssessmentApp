@@ -2,11 +2,12 @@
 
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react'
 import { useAuthStore } from '@/stores/authStore'
-import { 
-  POINT_ACTIONS, 
-  TIERS, 
+import { csrfFetch } from '@/lib/api/csrfFetch'
+import {
+  POINT_ACTIONS,
+  TIERS,
   TIER_ORDER,
-  getTierByPoints, 
+  getTierByPoints,
   getPointsToNextTier,
   calculateBonusTime,
   type TierLevel,
@@ -60,6 +61,10 @@ interface PointsContextValue {
   // Points
   earnPoints: (actionId: string, metadata?: Record<string, unknown>) => { earned: boolean; points: number; reason?: string }
   getPointsToNext: () => { tier: TierLevel; pointsNeeded: number } | null
+  // Single canonical total reader (reconciled against the PointEvent ledger).
+  // Other systems (e.g. the Gamification agent) MUST read points from here
+  // rather than keeping a parallel tally.
+  getTotalPoints: () => number
   
   // Tiers
   getCurrentTierConfig: () => typeof TIERS[TierLevel]
@@ -106,7 +111,10 @@ const getInitialAccessBank = (): AccessBank => {
 }
 
 const getInitialState = (): PointsState => ({
-  totalPoints: 98,
+  // Canonical balance lives in the PointEvent ledger (GET /api/points). A fresh
+  // client starts at 0 and reconciles up from the server — never a fabricated
+  // seed value.
+  totalPoints: 0,
   lifetimePoints: 0,
   currentTier: 'free',
   highestTierUnlocked: 'free',
@@ -154,6 +162,57 @@ const saveState = (state: PointsState) => {
 }
 
 // ============================================
+// LEDGER RECONCILIATION
+// ============================================
+
+/**
+ * Rebuild the tier + access-bank fields from canonical ledger totals.
+ *
+ * totalPoints/lifetimePoints are owned by the server (GET /api/points / the
+ * POST response). The tier a user sits in and the access-bank time rewards are
+ * pure functions of those totals, so we recompute them here whenever the server
+ * total changes. User-managed fields on the bank (daysUsed / isActive / active
+ * timestamps) are preserved.
+ */
+function recomputeDerived(
+  prev: PointsState,
+  totalPoints: number,
+  lifetimePoints: number
+): Pick<PointsState, 'currentTier' | 'highestTierUnlocked' | 'accessBank'> {
+  const peak = Math.max(totalPoints, lifetimePoints)
+  const currentTier = getTierByPoints(totalPoints)
+  const highestTierUnlocked = getTierByPoints(peak)
+
+  const newBank: AccessBank = { ...prev.accessBank }
+  TIER_ORDER.forEach(tier => {
+    if (tier === 'free') return
+    const entry = newBank[tier] || {
+      totalDaysEarned: 0,
+      daysUsed: 0,
+      daysRemaining: 0,
+      isActive: false,
+      activatedAt: null,
+      expiresAt: null,
+    }
+    if (peak >= TIERS[tier].pointsRequired) {
+      const earnedDays = calculateBonusTime(tier, peak)
+      if (earnedDays > entry.totalDaysEarned) {
+        const additional = earnedDays - entry.totalDaysEarned
+        newBank[tier] = {
+          ...entry,
+          totalDaysEarned: earnedDays,
+          daysRemaining: entry.daysRemaining + additional,
+        }
+        return
+      }
+    }
+    newBank[tier] = entry
+  })
+
+  return { currentTier, highestTierUnlocked, accessBank: newBank }
+}
+
+// ============================================
 // CONTEXT
 // ============================================
 
@@ -181,95 +240,64 @@ export function PointsProvider({ children }: { children: ReactNode }) {
 
   const { isAuthenticated, user } = useAuthStore()
 
-  // Sync points with database when user logs in or is authenticated
+  // Reconcile against the canonical PointEvent ledger when the user is
+  // authenticated. GET /api/points returns SUM(PointEvent.points) — the single
+  // source of truth. The server total always wins over the localStorage cache;
+  // tier + access-bank are recomputed from it. (No client-asserted total is
+  // ever pushed as authoritative — earns go through POST /api/points.)
   useEffect(() => {
     if (!isLoaded) return
     if (!isAuthenticated || !user?.id) return
-    
+
     let active = true
-    
-    async function syncWithServer() {
+
+    async function syncWithLedger() {
       try {
-        const response = await fetch(`/api/profile?userId=${user?.id}`)
+        const response = await fetch('/api/points', { credentials: 'include' })
         if (!response.ok) return
         const data = await response.json()
-        
-        if (!active) return
-        
-        if (data.success && data.profile) {
-          const serverPointsState = data.profile.pointsState
-          
-          if (serverPointsState) {
-            // Merge local and server points state
-            // Criteria: pick whichever has more totalPoints, or newer lastUpdated
-            const localPoints = state.totalPoints
-            const serverPoints = serverPointsState.totalPoints || 0
-            
-            const localUpdated = state.lastUpdated || 0
-            const serverUpdated = serverPointsState.lastUpdated || 0
-            
-            if (serverPoints > localPoints || (serverPoints === localPoints && serverUpdated > localUpdated)) {
-              console.log("Syncing points: Server state wins. Updating client state.")
-              setState(prev => ({
-                ...prev,
-                ...serverPointsState,
-                currentTier: getTierByPoints(serverPointsState.totalPoints),
-                highestTierUnlocked: getTierByPoints(serverPointsState.lifetimePoints || serverPointsState.totalPoints),
-              }))
-            } else if (localPoints > serverPoints || (localPoints === serverPoints && localUpdated > serverUpdated)) {
-              console.log("Syncing points: Client state wins. Pushing to server.")
-              await fetch('/api/profile', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  userId: user?.id,
-                  pointsState: state
-                })
-              })
-            }
-          } else {
-            console.log("Syncing points: Server empty. Pushing client state.")
-            await fetch('/api/profile', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                userId: user?.id,
-                pointsState: state
-              })
-            })
-          }
-        }
+        if (!active || !data?.success) return
+
+        const serverTotal = typeof data.totalPoints === 'number' ? data.totalPoints : 0
+        const serverLifetime = typeof data.lifetimePoints === 'number' ? data.lifetimePoints : serverTotal
+
+        setState(prev => ({
+          ...prev,
+          totalPoints: serverTotal,
+          lifetimePoints: serverLifetime,
+          ...recomputeDerived(prev, serverTotal, serverLifetime),
+          lastUpdated: Date.now(),
+        }))
       } catch (error) {
-        console.error("Failed to sync points state with server:", error)
+        console.error('Failed to sync points from ledger:', error)
       }
     }
-    
-    syncWithServer()
-    
+
+    syncWithLedger()
+
     return () => {
       active = false
     }
   }, [isAuthenticated, user?.id, isLoaded])
 
-  // Save state to server when it changes locally
+  // Persist the derived/offline cache (tier, access bank, streak, viewed cards)
+  // to the profile so it survives across devices. The canonical totals always
+  // come from the ledger above; this is a secondary cache only. Routed through
+  // csrfFetch because /api/profile is a mutating, CSRF-protected endpoint.
   useEffect(() => {
     if (!isLoaded || !isAuthenticated || !user?.id) return
-    
+
     const timer = setTimeout(async () => {
       try {
-        await fetch('/api/profile', {
+        await csrfFetch('/api/profile', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: user?.id,
-            pointsState: state
-          })
+          body: JSON.stringify({ pointsState: state }),
         })
       } catch (e) {
         console.error("Failed to save points change to server:", e)
       }
     }, 1000) // 1 second debounce
-    
+
     return () => clearTimeout(timer)
   }, [state, isLoaded, isAuthenticated, user?.id])
   
@@ -415,11 +443,57 @@ export function PointsProvider({ children }: { children: ReactNode }) {
       }
     })
     
-    // Trigger animation
+    // Trigger animation immediately (optimistic). The localStorage cache holds
+    // this value for offline use; the DB ledger is authoritative.
     setLastEarnedPoints({ points, actionId, timestamp: now })
-    
+
+    // Write through to the canonical ledger. The server re-validates the earn
+    // type, applies its own cooldown / per-day cap / idempotency, and returns
+    // the authoritative total — which we reconcile back into local state. If we
+    // are offline / unauthenticated the optimistic value simply stays cached.
+    if (isAuthenticated && user?.id) {
+      const idempotencyKey = `${actionId}_${now}`
+      void (async () => {
+        try {
+          const res = await csrfFetch('/api/points', {
+            method: 'POST',
+            body: JSON.stringify({ type: actionId, metadata, idempotencyKey }),
+          })
+          if (!res.ok) return
+          const data = await res.json()
+          if (!data?.success) return
+
+          const serverTotal = typeof data.totalPoints === 'number' ? data.totalPoints : null
+          if (serverTotal === null) return
+          const serverLifetime = typeof data.lifetimePoints === 'number' ? data.lifetimePoints : serverTotal
+
+          setState(prev => {
+            const prevHighest = prev.highestTierUnlocked
+            const derived = recomputeDerived(prev, serverTotal, serverLifetime)
+            // Surface a tier-unlock animation if the ledger pushed us into a
+            // newly unlocked tier that the optimistic path hadn't reached.
+            if (
+              TIER_ORDER.indexOf(derived.highestTierUnlocked) >
+              TIER_ORDER.indexOf(prevHighest)
+            ) {
+              setTimeout(() => setLastUnlockedTier(derived.highestTierUnlocked), 100)
+            }
+            return {
+              ...prev,
+              totalPoints: serverTotal,
+              lifetimePoints: serverLifetime,
+              ...derived,
+              lastUpdated: Date.now(),
+            }
+          })
+        } catch (e) {
+          console.error('Failed to record point event to ledger:', e)
+        }
+      })()
+    }
+
     return { earned: true, points }
-  }, [])
+  }, [isAuthenticated, user?.id])
   
   const clearLastEarned = useCallback(() => {
     setLastEarnedPoints(null)
@@ -432,6 +506,10 @@ export function PointsProvider({ children }: { children: ReactNode }) {
   const getPointsToNext = useCallback(() => {
     return getPointsToNextTier(state.totalPoints)
   }, [state.totalPoints])
+
+  // Single canonical total reader. Mirrors the ledger sum that the sync effect
+  // reconciles into state — the one number every consumer should agree on.
+  const getTotalPoints = useCallback(() => state.totalPoints, [state.totalPoints])
   
   const getCurrentTierConfig = useCallback(() => {
     return TIERS[state.currentTier]
@@ -550,6 +628,7 @@ export function PointsProvider({ children }: { children: ReactNode }) {
     state,
     earnPoints,
     getPointsToNext,
+    getTotalPoints,
     getCurrentTierConfig,
     getNextTierConfig,
     canUnlockTier,

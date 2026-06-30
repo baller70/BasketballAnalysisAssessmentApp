@@ -18,6 +18,7 @@ import { RecordingControls } from './RecordingControls';
 import { useAnalysisStore } from '@/stores/analysisStore';
 import { useRouter } from 'next/navigation';
 import { isMobile } from '@/utils/platform';
+import { isCameraAvailable, requestCameraPermissions } from '@/services/capacitorCamera';
 
 // ============================================
 // TYPES
@@ -89,6 +90,25 @@ export function LiveAnalysis() {
         streamRef.current.getTracks().forEach(track => track.stop());
       }
 
+      // Capacitor/iOS path: confirm a camera exists and (on mobile) that the
+      // native permission is granted before requesting getUserMedia. On the
+      // web this resolves immediately; getUserMedia remains the fallback.
+      if (!isCameraAvailable()) {
+        setCameraError('No camera is available on this device.');
+        return;
+      }
+      if (isMobile()) {
+        try {
+          const perms = await requestCameraPermissions();
+          if (perms.camera === 'denied') {
+            setCameraError('Camera access was denied. Enable camera permissions in Settings and try again.');
+            return;
+          }
+        } catch (permErr) {
+          console.log('[LiveAnalysis] Permission request failed:', permErr);
+        }
+      }
+
       // Request camera access
       const constraints: MediaStreamConstraints = {
         video: {
@@ -125,26 +145,24 @@ export function LiveAnalysis() {
       }
     } catch (err: any) {
       console.log('[LiveAnalysis] Camera error:', err);
-      // Automatically fallback to demo video!
-      console.log('[LiveAnalysis] Automatically falling back to demo video');
-      if (videoRef.current) {
-        setCameraError(null);
-        videoRef.current.srcObject = null;
-        videoRef.current.src = '/demo-basketball.mp4';
-        videoRef.current.loop = true;
-        videoRef.current.muted = true;
-        
-        videoRef.current.onloadedmetadata = () => {
-          if (videoRef.current) {
-            videoRef.current.play();
-            setVideoDimensions({
-              width: videoRef.current.videoWidth,
-              height: videoRef.current.videoHeight,
-            });
-            setCameraReady(true);
-          }
-        };
+      // No silent demo fallback — surface a clear "no camera" state. The demo
+      // path is only reachable behind the explicit affordance in the error view
+      // below (user-supplied video file).
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
       }
+      setCameraReady(false);
+      const name = err?.name || '';
+      let message = 'We could not access a camera on this device.';
+      if (name === 'NotAllowedError' || name === 'SecurityError' || name === 'PermissionDeniedError') {
+        message = 'Camera access was blocked. Please allow camera permissions and try again.';
+      } else if (name === 'NotFoundError' || name === 'OverconstrainedError' || name === 'DevicesNotFoundError') {
+        message = 'No camera was found on this device.';
+      } else if (name === 'NotReadableError' || name === 'TrackStartError') {
+        message = 'Your camera is in use by another app. Close it and try again.';
+      }
+      setCameraError(message);
     }
   }, [facingMode]);
 
@@ -319,7 +337,7 @@ export function LiveAnalysis() {
       <div className="p-6 bg-[#2a2a2a] rounded-lg border border-red-500/50">
         <div className="flex items-center gap-3 text-red-400 mb-4">
           <AlertCircle className="w-6 h-6" />
-          <span className="font-semibold">Camera Error</span>
+          <span className="font-semibold">No Camera Available</span>
         </div>
         <p className="text-[#E5E5E5] mb-4">{cameraError}</p>
         <div className="flex flex-wrap gap-3">

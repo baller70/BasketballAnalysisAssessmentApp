@@ -2,6 +2,7 @@
 
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
+import { csrfFetch } from "@/lib/api/csrfFetch"
 
 // ==========================================
 // TYPES
@@ -73,7 +74,11 @@ export interface ProfileState extends UserProfile {
   completeProfile: () => void
   resetProfile: () => void
   isStepComplete: (step: number) => boolean
-  fetchProfile: (userId: string) => Promise<boolean>
+  // Server-backed actions. The owning user is ALWAYS derived from the signed
+  // session server-side — the optional userId arg is accepted for backward
+  // compatibility but ignored (the GET/POST routes ignore any client id).
+  fetchProfile: (userId?: string) => Promise<boolean>
+  saveProfile: () => Promise<boolean>
 }
 
 // ==========================================
@@ -109,7 +114,7 @@ const initialState: Omit<ProfileState,
   | "setBio" | "setEnhancedBio"
   | "nextStep" | "prevStep" | "goToStep"
   | "completeProfile" | "resetProfile" | "isStepComplete"
-  | "fetchProfile"
+  | "fetchProfile" | "saveProfile"
 > = {
   // Physical Measurements
   heightInches: null,
@@ -320,11 +325,16 @@ export const useProfileStore = create<ProfileState>()(
         }
       },
       
-      fetchProfile: async (userId: string): Promise<boolean> => {
+      // Load the signed-in user's profile from the server (source of truth).
+      // The caller identity is derived from the session cookie; any userId arg
+      // is ignored by the server, so we no longer send it.
+      fetchProfile: async (): Promise<boolean> => {
         try {
-          const response = await fetch(`/api/profile?userId=${userId}`)
+          const response = await fetch(`/api/profile`, {
+            credentials: "include",
+          })
           if (!response.ok) return false
-          
+
           const data = await response.json()
           if (data.success && data.profile) {
             const p = data.profile
@@ -352,6 +362,39 @@ export const useProfileStore = create<ProfileState>()(
           return false
         } catch (error) {
           console.error("Error fetching profile:", error)
+          return false
+        }
+      },
+
+      // Persist the current profile to the server (the source of truth) via the
+      // CSRF-protected POST /api/profile. The owning user is derived from the
+      // session — we send no userId. zustand/localStorage is just a cache.
+      saveProfile: async (): Promise<boolean> => {
+        const s = get()
+        try {
+          const response = await csrfFetch(`/api/profile`, {
+            method: "POST",
+            body: JSON.stringify({
+              heightInches: s.heightInches,
+              weightLbs: s.weightLbs,
+              wingspanInches: s.wingspanInches,
+              age: s.age,
+              experienceLevel: s.experienceLevel,
+              bodyType: s.bodyType,
+              athleticAbility: s.athleticAbility,
+              dominantHand: s.dominantHand,
+              shootingStyle: s.shootingStyle,
+              bio: s.bio,
+              enhancedBio: s.enhancedBio,
+              coachingTier: s.coachingTier,
+              profileComplete: s.profileComplete,
+            }),
+          })
+          if (!response.ok) return false
+          const data = await response.json()
+          return data?.success === true
+        } catch (error) {
+          console.error("Error saving profile:", error)
           return false
         }
       },

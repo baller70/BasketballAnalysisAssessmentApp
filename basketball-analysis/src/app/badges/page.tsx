@@ -14,6 +14,11 @@ import {
 } from "lucide-react"
 import { usePoints } from "@/lib/points/pointsContext"
 import { InlinePointsBurst } from "@/components/points/PointsBurst"
+import {
+  fetchGamificationState,
+  syncGamificationState,
+  type ServerBadgeState,
+} from "@/services/gamificationService"
 
 // ============================================
 // CUSTOM SNEAKER ICONS - Basketball Themed
@@ -1794,19 +1799,21 @@ function FilterSection({
 // ============================================
 
 // Tier Preview Modal - Shows what badges are available at each tier
-function TierPreviewModal({ 
-  tier, 
+function TierPreviewModal({
+  tier,
+  badges,
   onClose,
-  onSelectBadge 
-}: { 
-  tier: BadgeTier | null; 
+  onSelectBadge
+}: {
+  tier: BadgeTier | null;
+  badges: Badge[];
   onClose: () => void;
   onSelectBadge: (badge: Badge) => void;
 }) {
   if (!tier) return null;
-  
+
   const config = TIER_CONFIG[tier];
-  const tierBadges = BADGES.filter(b => b.tier === tier);
+  const tierBadges = badges.filter(b => b.tier === tier);
   const unlockedCount = tierBadges.filter(b => b.unlocked).length;
   
   // Check if this is Hall of Fame (Level 9) to show sneaker badges
@@ -1932,9 +1939,9 @@ function TierPreviewModal({
   );
 }
 
-function TierProgressSection({ onTierClick }: { onTierClick: (tier: BadgeTier) => void }) {
+function TierProgressSection({ badges, onTierClick }: { badges: Badge[]; onTierClick: (tier: BadgeTier) => void }) {
   const tierCounts = Object.keys(TIER_CONFIG).reduce((acc, tier) => {
-    const tierBadges = BADGES.filter(b => b.tier === tier as BadgeTier)
+    const tierBadges = badges.filter(b => b.tier === tier as BadgeTier)
     const unlocked = tierBadges.filter(b => b.unlocked).length
     acc[tier as BadgeTier] = { unlocked, total: tierBadges.length }
     return acc
@@ -2012,6 +2019,43 @@ function TierProgressSection({ onTierClick }: { onTierClick: (tier: BadgeTier) =
 // MAIN PAGE COMPONENT
 // ============================================
 
+// Catalog with every badge reset to a locked/empty state — used as the initial
+// render so NOTHING shows as unlocked (or with fake progress/dates) until the
+// user's real activity loads from /api/badges.
+const INITIAL_BADGES: Badge[] = BADGES.map(b => ({
+  ...b,
+  unlocked: false,
+  unlockedDate: undefined,
+  progress: undefined,
+}))
+
+// Overlay the catalog with real per-badge state from the server.
+function applyLiveBadgeState(
+  catalog: Badge[],
+  liveMap: Record<string, ServerBadgeState>
+): Badge[] {
+  return catalog.map(b => {
+    const live = liveMap[b.id]
+    if (!live) {
+      return { ...b, unlocked: false, unlockedDate: undefined, progress: undefined }
+    }
+    return {
+      ...b,
+      unlocked: live.unlocked,
+      unlockedDate:
+        live.unlocked && live.earnedDate
+          ? new Date(live.earnedDate).toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+            })
+          : undefined,
+      // Only show a progress bar for still-locked badges that have real progress.
+      progress: !live.unlocked && live.progress ? live.progress : undefined,
+    }
+  })
+}
+
 export default function BadgesPage() {
   const [selectedBadge, setSelectedBadge] = useState<Badge | null>(null)
   const [selectedTier, setSelectedTier] = useState<BadgeTier | 'all'>('all')
@@ -2022,7 +2066,29 @@ export default function BadgesPage() {
   const viewedBadges = useRef<Set<string>>(new Set())
   
   const { earnPoints } = usePoints()
-  
+
+  // Live badge state driven by REAL activity (analysis history + points +
+  // streaks), fetched from /api/badges. Starts fully locked (no fake data).
+  const [liveBadges, setLiveBadges] = useState<Badge[]>(INITIAL_BADGES)
+
+  useEffect(() => {
+    let active = true
+    ;(async () => {
+      // 1) Read current computed state (read-only).
+      const state = await fetchGamificationState()
+      if (active && state.badges) {
+        setLiveBadges(applyLiveBadgeState(BADGES, state.badges))
+      }
+      // 2) Persist any newly-earned badges to the EarnedBadge model (auth+CSRF)
+      //    and reflect the authoritative result (earnedAt dates, etc.).
+      const synced = await syncGamificationState()
+      if (active && synced.badges) {
+        setLiveBadges(applyLiveBadgeState(BADGES, synced.badges))
+      }
+    })()
+    return () => { active = false }
+  }, [])
+
   const handleSelectBadge = (badge: Badge) => {
     setSelectedBadge(badge)
     
@@ -2037,23 +2103,24 @@ export default function BadgesPage() {
     }
   }
   
-  // Filter badges
-  const filteredBadges = BADGES.filter(badge => {
+  // Filter badges (from live, real-activity-driven state)
+  const filteredBadges = liveBadges.filter(badge => {
     if (selectedTier !== 'all' && badge.tier !== selectedTier) return false
     if (selectedCategory !== 'all' && badge.category !== selectedCategory) return false
     if (showUnlockedOnly && !badge.unlocked) return false
     return true
   })
-  
+
   // Sort badges: unlocked first, then by tier level
   const sortedBadges = [...filteredBadges].sort((a, b) => {
     if (a.unlocked !== b.unlocked) return a.unlocked ? -1 : 1
     return TIER_CONFIG[a.tier].level - TIER_CONFIG[b.tier].level
   })
-  
-  // Calculate total XP from unlocked badges
-  const totalXP = BADGES.filter(b => b.unlocked).reduce((sum, b) => sum + b.xpReward, 0)
-  const unlockedCount = BADGES.filter(b => b.unlocked).length
+
+  // Calculate total XP from REAL unlocked badges
+  const unlockedBadges = liveBadges.filter(b => b.unlocked)
+  const totalXP = unlockedBadges.reduce((sum, b) => sum + b.xpReward, 0)
+  const unlockedCount = unlockedBadges.length
   
   return (
     <div className="min-h-screen bg-white relative">
@@ -2101,7 +2168,7 @@ export default function BadgesPage() {
         </div>
         
         {/* ===== SECTION 1: RECENT UNLOCKS (Top Highlight) ===== */}
-        {BADGES.filter(b => b.unlocked).length > 0 && (
+        {unlockedBadges.length > 0 && (
           <div className="mb-6">
             <h2 className="text-slate-900 font-bold text-sm mb-3 flex items-center gap-2 uppercase tracking-wide">
               <Sparkles className="w-4 h-4 text-[#FF6B35]" />
@@ -2109,7 +2176,7 @@ export default function BadgesPage() {
             </h2>
             {/* Mobile: 2x2 Grid, Desktop: 4 columns */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {BADGES.filter(b => b.unlocked).slice(0, 4).map((badge) => {
+              {unlockedBadges.slice(0, 4).map((badge) => {
                 const tierConfig = TIER_CONFIG[badge.tier]
                 return (
                   <button
@@ -2139,7 +2206,7 @@ export default function BadgesPage() {
         
         {/* ===== SECTION 2: TIER PROGRESS ===== */}
         <div className="mb-6">
-          <TierProgressSection onTierClick={(tier) => {
+          <TierProgressSection badges={liveBadges} onTierClick={(tier) => {
             setPreviewTier(tier);
             setSelectedTier(tier); // Also filter the badges below to this tier
           }} />
@@ -2224,8 +2291,9 @@ export default function BadgesPage() {
       />
       
       {/* Tier Preview Modal */}
-      <TierPreviewModal 
+      <TierPreviewModal
         tier={previewTier}
+        badges={liveBadges}
         onClose={() => setPreviewTier(null)}
         onSelectBadge={(badge) => setSelectedBadge(badge)}
       />

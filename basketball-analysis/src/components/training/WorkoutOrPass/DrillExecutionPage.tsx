@@ -20,6 +20,7 @@ import {
   Circle, Type, Move, Grip, MapPin, Edit2, ArrowRight
 } from "lucide-react"
 import { Drill, DrillFocusArea } from "@/data/drillDatabase"
+import { createWorkout } from "@/lib/api/workoutsClient"
 import { HybridShotDetector } from "../HybridShotDetector"
 import { FullScreenShotTracker } from "../FullScreenShotTracker"
 
@@ -204,7 +205,32 @@ export function DrillExecutionPage({ drill, onClose, onStartDrill }: DrillExecut
   const [shotHistory, setShotHistory] = useState<ShotHistoryEntry[]>([])
   const [drillComplete, setDrillComplete] = useState(false)
   const [showCompletionModal, setShowCompletionModal] = useState(false)
-  
+  // Ensures we persist exactly one completed Workout per drill run.
+  const persistedRef = useRef(false)
+
+  // When a drill finishes, persist the make/miss result as a completed Workout
+  // (Workout.totalMade / totalMissed) so it shows up in the user's history.
+  useEffect(() => {
+    if (!drillComplete || persistedRef.current) return
+    persistedRef.current = true
+    const made = madeShots
+    const missed = Math.max(attempts - madeShots, 0)
+    const total = made + missed
+    void createWorkout({
+      name: drill.title,
+      scheduledDate: new Date(),
+      drillIds: [drill.id],
+      focusAreas: [drill.focusArea],
+      duration: Math.round(elapsedTime / 60) || undefined,
+      completed: true,
+      completedAt: new Date(),
+      totalShots: total,
+      totalMade: made,
+      totalMissed: missed,
+      accuracy: total > 0 ? Math.round((made / total) * 100) : 0,
+    })
+  }, [drillComplete, madeShots, attempts, elapsedTime, drill])
+
   // Timer effect
   useEffect(() => {
     if (isDrillActive && !isPaused) {
@@ -268,6 +294,7 @@ export function DrillExecutionPage({ drill, onClose, onStartDrill }: DrillExecut
     setShotHistory([])
     setDrillComplete(false)
     setShowCompletionModal(false)
+    persistedRef.current = false
     // Reset spot stats
     setSpots(prev => prev.map(spot => ({ ...spot, madeShots: 0, missedShots: 0 })))
     onStartDrill()

@@ -77,6 +77,15 @@ export interface EliteShooter {
   };
   overallScore: number;
   formCategory: 'EXCELLENT' | 'GOOD' | 'NEEDS WORK';
+  /**
+   * HONESTY FLAG. When true (the default for every shooter in this catalog),
+   * the `measurements` block is a tier-derived ESTIMATE produced by genBio()
+   * — it is NOT frame-measured from video of that specific shooter. The UI and
+   * the /api/shooters endpoint must label these as estimates and never present
+   * them as measured biomechanics. Set to false only if a record is ever
+   * populated from a real per-shooter pose analysis.
+   */
+  biomechanicsEstimated?: boolean;
 }
 
 // CDN helpers
@@ -267,6 +276,9 @@ const createShooter = (partial: PartialShooter): EliteShooter => {
     careerFreeThrowPct: partial.careerFreeThrowPct ?? genFtPct(partial.careerPct, partial.tier),
     keyTraits: partial.keyTraits ?? getTraits(partial.tier),
     shootingStyle: partial.shootingStyle ?? getStyle(partial.tier),
+    // Measurements come from genMeasurements()/genBio() — tier constants, not
+    // frame-measured. Flag them as estimates unless a record explicitly opts out.
+    biomechanicsEstimated: partial.biomechanicsEstimated ?? true,
   };
 };
 

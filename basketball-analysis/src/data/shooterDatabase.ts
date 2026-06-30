@@ -1,5 +1,13 @@
 // Shooter Database for Basketball Analysis Tool
 // Contains shooters across different skill levels with body type and shooting metrics
+//
+// ⚠️ DEPRECATED AS A DATA SOURCE.
+// The single source of truth for reference shooters is now the DB-backed
+// endpoint GET /api/shooters (seeded from src/data/eliteShooters.ts via
+// prisma/seed.ts). This file is retained ONLY because src/services/
+// comparisonAlgorithm.ts still imports its types/helpers. New code must read
+// /api/shooters; do not add shooters here. The Comparison feature should be
+// migrated off this file and off the embedded list in /api/compare-shooters.
 
 export type ShooterSkillLevel = 
   | "ELITE"           // 95-100 - Hall of Fame level

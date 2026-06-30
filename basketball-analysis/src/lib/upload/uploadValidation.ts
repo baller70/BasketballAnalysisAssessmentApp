@@ -63,7 +63,7 @@ export const UPLOAD_CONSTANTS = {
   MAX_IMAGE_SIZE: 10 * 1024 * 1024, // 10MB
   
   // Duration limits (in seconds)
-  MAX_VIDEO_DURATION: 10,
+  MAX_VIDEO_DURATION: 90,
   MIN_VIDEO_DURATION: 2,
   
   // Image count requirements
