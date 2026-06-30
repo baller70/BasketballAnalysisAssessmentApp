@@ -12,10 +12,13 @@ export const API_ENDPOINTS = {
   PROFILE: "/api/profile",
 } as const
 
-// External API URLs
-// Local development: http://localhost:5001
-// Production (Hugging Face): https://baller70-basketball-analysis-api.hf.space
-export const HYBRID_API_URL = process.env.NEXT_PUBLIC_HYBRID_API_URL || "https://baller70-basketball-analysis-api.hf.space"
+// External API URL — OPTIONAL server "Pro" pose backend only.
+// The canonical analysis engine is on-device TF.js MoveNet (see
+// src/services/pose). This URL is NOT used by the default path and has NO
+// default value: the previous Hugging Face Space default is offline and must
+// never be the primary engine. Set NEXT_PUBLIC_HYBRID_API_URL to opt into a
+// configured server provider (HybridApiProvider) explicitly.
+export const HYBRID_API_URL = process.env.NEXT_PUBLIC_HYBRID_API_URL || ""
 
 // File size limits
 export const FILE_LIMITS = {
@@ -27,7 +30,7 @@ export const FILE_LIMITS = {
 
 // Video constraints
 export const VIDEO_CONSTRAINTS = {
-  MAX_DURATION_SECONDS: 10,
+  MAX_DURATION_SECONDS: 90, // matches the advertised 90s limit across upload UIs
   TARGET_FPS: 10,
   SUPPORTED_FORMATS: ["video/mp4", "video/mov", "video/webm"],
 } as const

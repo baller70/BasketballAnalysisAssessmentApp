@@ -17,6 +17,7 @@ export {
 
 // Storage Service Functions
 export {
+  uploadMedia,
   uploadImage,
   uploadShooterImage,
   uploadUserImage,

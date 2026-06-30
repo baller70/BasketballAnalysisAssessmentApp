@@ -35,13 +35,13 @@ export default function SignInPage() {
       const result = await signIn(formData.email, formData.password)
 
       if (result.success) {
-        setTimeout(() => {
-          const { user } = useAuthStore.getState()
-          // Returning users (profile complete) go directly to dashboard
-          // New users go to onboarding to set up their profile
-          const targetUrl = user?.profileComplete ? "/results/demo" : "/onboarding"
-          router.push(targetUrl)
-        }, 200)
+        // signIn already awaited the API response, so the httpOnly session
+        // cookie is set by the time we get here — navigate immediately, no race.
+        const { user } = useAuthStore.getState()
+        // Returning users (profile complete) go directly to dashboard;
+        // new users go to onboarding to set up their profile.
+        const targetUrl = user?.profileComplete ? "/results/demo" : "/onboarding"
+        router.push(targetUrl)
       } else {
         setError(result.error || "Sign in failed")
         setIsSubmitting(false)

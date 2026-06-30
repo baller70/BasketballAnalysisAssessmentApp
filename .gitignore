@@ -29,6 +29,11 @@ _failed-builds/
 ._*
 **/._*
 
+# Env files — NEVER commit real secrets (API keys, DB URLs). Only *.example is tracked.
+**/.env
+**/.env.*
+!**/.env.example
+
 # =============================================
 # Not part of the web app build (data, mockups, backends)
 # =============================================

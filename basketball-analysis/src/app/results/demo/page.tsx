@@ -1568,10 +1568,10 @@ function convertVisionToAnalysisData(vision: VisionAnalysisResult | null): Analy
   // Calculate scores based on optimal ranges from shootingFlawsDatabase
   // Elbow: optimal 85-95°, acceptable 75-105°
   const calculateElbowScore = (angle: number): number => {
-    if (angle >= 85 && angle <= 95) return 95 + Math.random() * 5 // Elite: 95-100
-    if (angle >= 80 && angle <= 100) return 85 + Math.random() * 10 // Pro: 85-95
-    if (angle >= 75 && angle <= 105) return 75 + Math.random() * 10 // Advanced: 75-85
-    if (angle >= 70 && angle <= 110) return 65 + Math.random() * 10 // Proficient: 65-75
+    if (angle >= 85 && angle <= 95) return 95 // Elite: 95-100
+    if (angle >= 80 && angle <= 100) return 85 // Pro: 85-95
+    if (angle >= 75 && angle <= 105) return 75 // Advanced: 75-85
+    if (angle >= 70 && angle <= 110) return 65 // Proficient: 65-75
     return Math.max(30, 60 - Math.abs(90 - angle)) // Below proficient
   }
 
@@ -1579,10 +1579,10 @@ function convertVisionToAnalysisData(vision: VisionAnalysisResult | null): Analy
   const calculateKneeScore = (angle: number): number => {
     // Convert to bend angle (180 - measured angle)
     const bendAngle = 180 - angle
-    if (bendAngle >= 45 && bendAngle <= 55) return 95 + Math.random() * 5
-    if (bendAngle >= 40 && bendAngle <= 60) return 85 + Math.random() * 10
-    if (bendAngle >= 35 && bendAngle <= 65) return 75 + Math.random() * 10
-    if (bendAngle >= 30 && bendAngle <= 70) return 65 + Math.random() * 10
+    if (bendAngle >= 45 && bendAngle <= 55) return 95
+    if (bendAngle >= 40 && bendAngle <= 60) return 85
+    if (bendAngle >= 35 && bendAngle <= 65) return 75
+    if (bendAngle >= 30 && bendAngle <= 70) return 65
     if (bendAngle < 20) return 40 // Too straight - insufficient knee bend
     return Math.max(30, 60 - Math.abs(50 - bendAngle))
   }
@@ -1592,10 +1592,10 @@ function convertVisionToAnalysisData(vision: VisionAnalysisResult | null): Analy
     const shoulderDeviation = Math.abs(180 - shoulderTilt)
     const hipDeviation = Math.abs(180 - hipTilt)
     const totalDeviation = shoulderDeviation + hipDeviation
-    if (totalDeviation <= 5) return 95 + Math.random() * 5 // Near perfect
-    if (totalDeviation <= 10) return 85 + Math.random() * 10
-    if (totalDeviation <= 15) return 75 + Math.random() * 10
-    if (totalDeviation <= 20) return 65 + Math.random() * 10
+    if (totalDeviation <= 5) return 95 // Near perfect
+    if (totalDeviation <= 10) return 85
+    if (totalDeviation <= 15) return 75
+    if (totalDeviation <= 20) return 65
     return Math.max(40, 80 - totalDeviation * 2)
   }
 
@@ -1683,7 +1683,7 @@ function convertVisionToAnalysisData(vision: VisionAnalysisResult | null): Analy
     },
     matchedShooter: {
       name: a.similarProPlayer || "Stephen Curry",
-      similarityScore: Math.min(95, Math.round(overallScore * 0.9 + Math.random() * 10)),
+      similarityScore: Math.min(95, Math.round(overallScore * 0.9)),
       team: "Golden State Warriors",
       position: "PG",
     },
@@ -1714,7 +1714,7 @@ function convertFormAnalysisToAnalysisData(formAnalysis: FormAnalysisResult | nu
 
   // Calculate scores based on how close metrics are to optimal ranges
   const calculateScore = (value: number, optMin: number, optMax: number, maxDeviation: number = 30): number => {
-    if (value >= optMin && value <= optMax) return Math.min(100, 85 + Math.random() * 15)
+    if (value >= optMin && value <= optMax) return 85
     const mid = (optMin + optMax) / 2
     const deviation = Math.abs(value - mid)
     return Math.max(0, Math.min(100, 100 - (deviation / maxDeviation) * 50))
@@ -1749,17 +1749,17 @@ function convertFormAnalysisToAnalysisData(formAnalysis: FormAnalysisResult | nu
     matchedShooter: {
       name: "Kevin Durant",
       team: "Phoenix Suns",
-      similarityScore: Math.min(95, Math.max(60, formAnalysis.overallScore + Math.round(Math.random() * 10 - 5))),
+      similarityScore: Math.min(95, Math.max(60, Math.round(formAnalysis.overallScore))),
       position: "SMALL_FORWARD"
     },
     shootingStats: {
       release: releaseScore,
       form: formScore,
       balance: balanceScore,
-      arc: Math.round(70 + Math.random() * 15),
+      arc: 70,
       elbow: elbowScore,
-      follow: Math.round(70 + Math.random() * 15),
-      consist: Math.round(65 + Math.random() * 20),
+      follow: 70,
+      consist: 65,
       power: Math.round(calculateScore(kneeAngle, 130, 160, 30))
     },
     // Convert formAnalysis angles to the format expected by generateFixesFromAngles
@@ -4401,8 +4401,8 @@ function ImageModeContent({ activeTab, setActiveTab, analysisData, playerName, p
                   frameNumber: idx + 1,
                   metrics: {
                     wristAngle: frame.wristAngle,
-                    elbowAngle: 85 + Math.floor(Math.random() * 20),
-                    kneeAngle: 140 + Math.floor(Math.random() * 20),
+                    elbowAngle: 90,
+                    kneeAngle: 145,
                   },
                   observations: idx === 0 
                     ? ["Good athletic stance", "Feet shoulder-width apart"]
@@ -6182,7 +6182,7 @@ function ActivityRings({ overallScore, consistencyScore, formScore }: { overallS
 // Uses the same stat names and values as the profile card: release, form, balance, arc, elbow, follow, consist, power
 function generateSPARCategories(shootingStats: { release: number; form: number; balance: number; arc: number; elbow: number; follow: number; consist: number; power: number }) {
   // Calculate max potential (current + improvement room)
-  const getMax = (current: number) => Math.min(99, current + Math.floor(Math.random() * 5) + 8)
+  const getMax = (current: number) => Math.min(99, current + 10)
 
   return [
     {
@@ -9724,12 +9724,12 @@ function AnalyticsChartSection({ sessions, progressStats, playerName }: Analytic
       const avgRelease = Math.round(data.sessions.reduce((sum, s) => sum + (s.releaseAngle || 0), 0) / data.sessions.length)
       
       // Simulated additional metrics based on existing data
-      const consistency = Math.min(100, Math.max(0, avgScore + Math.floor(Math.random() * 20) - 10))
+      const consistency = Math.min(100, Math.max(0, avgScore))
       const formScore = Math.min(100, Math.max(0, Math.round((avgElbow + avgKnee) / 2)))
-      const balanceScore = Math.min(100, Math.max(0, avgScore - 5 + Math.floor(Math.random() * 10)))
-      const followThrough = Math.min(100, Math.max(0, avgRelease + Math.floor(Math.random() * 15) - 5))
-      const arcScore = Math.min(100, Math.max(0, avgRelease - 10 + Math.floor(Math.random() * 20)))
-      const powerScore = Math.min(100, Math.max(0, avgScore + Math.floor(Math.random() * 15) - 7))
+      const balanceScore = Math.min(100, Math.max(0, avgScore - 5))
+      const followThrough = Math.min(100, Math.max(0, avgRelease))
+      const arcScore = Math.min(100, Math.max(0, avgRelease - 10))
+      const powerScore = Math.min(100, Math.max(0, avgScore))
       
       return {
         date: data.date,

@@ -8,6 +8,9 @@ import {
   authCookieOptions,
   AUTH_COOKIE_NAME,
 } from "@/lib/authToken"
+import { ensureUserProfile } from "@/lib/data/ensureProfile"
+import { issueToken } from "@/lib/auth/verification"
+import { sendEmail, getAppBaseUrl } from "@/lib/auth/mailer"
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MIN_PASSWORD_LENGTH = 6
@@ -23,6 +26,16 @@ export async function OPTIONS() {
 }
 
 export async function POST(request: NextRequest) {
+  // Session security is non-negotiable: refuse to register/authenticate if the
+  // signing secret is missing rather than downgrading to an insecure session.
+  if (!process.env.NEXTAUTH_SECRET) {
+    console.error("NEXTAUTH_SECRET is not configured; refusing to issue a session")
+    return NextResponse.json(
+      { error: "Server auth is misconfigured. Please contact support." },
+      { status: 500 }
+    )
+  }
+
   // Rate limit: 5 signups per minute per IP.
   const { response: limited } = checkRateLimit(request, {
     bucket: 'auth-signup',
@@ -110,15 +123,33 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    // Auto-create the linked UserProfile so every profile-scoped feature
+    // (save-analysis, goals, settings, points, …) works immediately and
+    // resolveProfileId never 404s for a brand-new account.
+    await ensureUserProfile(user.id)
+
+    // Kick off email verification: issue a single-use token and (stub) email
+    // the confirmation link. Non-fatal — the account is usable while unverified;
+    // emailVerified stays null until they click the link.
+    try {
+      const { token: verifyToken } = await issueToken(user.id, "email_verify")
+      const verifyUrl = `${getAppBaseUrl()}/api/auth/verify-email?token=${verifyToken}`
+      await sendEmail({
+        to: user.email,
+        subject: "Verify your SHOTIQ email",
+        text: `Welcome to SHOTIQ! Confirm your email to finish setting up your account:\n\n${verifyUrl}\n\nThis link expires in 24 hours.`,
+        actionUrl: verifyUrl,
+      })
+    } catch (verifyError) {
+      console.error("Failed to issue email verification token:", verifyError)
+    }
+
     const res = NextResponse.json({ user }, { status: 201 })
 
-    // Issue a signed, httpOnly session token.
-    try {
-      const token = await createSessionToken({ sub: user.id, email: user.email })
-      res.cookies.set(AUTH_COOKIE_NAME, token, authCookieOptions())
-    } catch (tokenError) {
-      console.error("Failed to issue session token:", tokenError)
-    }
+    // Issue a signed, httpOnly session token. If this fails we must NOT log the
+    // user in via any insecure fallback — let it throw to the 500 handler.
+    const token = await createSessionToken({ sub: user.id, email: user.email })
+    res.cookies.set(AUTH_COOKIE_NAME, token, authCookieOptions())
 
     return res
   } catch (error) {

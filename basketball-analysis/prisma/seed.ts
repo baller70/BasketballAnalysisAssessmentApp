@@ -352,7 +352,10 @@ async function seed() {
         },
       })
 
-      // Create or update biomechanics
+      // Create or update biomechanics.
+      // The source data carries domain concepts (shotArc/setPoint/releaseTime)
+      // that don't all map 1:1 to schema columns: shotArc -> releaseAngle (ball
+      // trajectory angle); setPoint/releaseTime have no column and are omitted.
       await prisma.shootingBiomechanics.upsert({
         where: { shooterId: createdShooter.id },
         update: {
@@ -361,9 +364,7 @@ async function seed() {
           shoulderAngle: shooter.biomechanics.shoulderAngle,
           hipAngle: shooter.biomechanics.hipAngle,
           releaseHeight: shooter.biomechanics.releaseHeight,
-          shotArc: shooter.biomechanics.shotArc,
-          setPoint: shooter.biomechanics.setPoint,
-          releaseTime: shooter.biomechanics.releaseTime,
+          releaseAngle: shooter.biomechanics.shotArc,
         },
         create: {
           shooterId: createdShooter.id,
@@ -372,25 +373,21 @@ async function seed() {
           shoulderAngle: shooter.biomechanics.shoulderAngle,
           hipAngle: shooter.biomechanics.hipAngle,
           releaseHeight: shooter.biomechanics.releaseHeight,
-          shotArc: shooter.biomechanics.shotArc,
-          setPoint: shooter.biomechanics.setPoint,
-          releaseTime: shooter.biomechanics.releaseTime,
+          releaseAngle: shooter.biomechanics.shotArc,
         },
       })
 
-      // Add strengths
+      // Replace strengths. There's no unique constraint on (shooterId,
+      // description) to upsert against, so reset this shooter's strengths and
+      // re-insert. `category` is not a column — the field is `strengthCategory`.
+      await prisma.shootingStrength.deleteMany({
+        where: { shooterId: createdShooter.id },
+      })
       for (const strengthDesc of shooter.strengths) {
-        await prisma.shootingStrength.upsert({
-          where: {
-            shooterId_description: {
-              shooterId: createdShooter.id,
-              description: strengthDesc,
-            },
-          },
-          update: {},
-          create: {
+        await prisma.shootingStrength.create({
+          data: {
             shooterId: createdShooter.id,
-            category: "form",
+            strengthCategory: "form",
             description: strengthDesc,
           },
         })

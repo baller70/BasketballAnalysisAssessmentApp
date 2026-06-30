@@ -7,8 +7,12 @@ import { getMedalTierFromStatus, getMedalTierFromAngles } from "@/lib/medalRanki
 import { enhanceImage, type EnhancementTier } from "@/services/imageEnhancement"
 import { addWatermarkToImage } from "@/lib/watermark"
 import { ZoomableImage } from "@/components/ui/effects/image-zoom"
-
-const HYBRID_API_URL = process.env.NEXT_PUBLIC_HYBRID_API_URL || 'http://localhost:5001'
+import {
+  loadImageElement,
+  analyzeImageElement,
+  keypointsToRecord,
+  formAnglesToRecord,
+} from "@/services/pose"
 
 interface Keypoint {
   x: number
@@ -140,38 +144,30 @@ function applyContrastEnhancement(ctx: CanvasRenderingContext2D, width: number, 
   ctx.putImageData(imageData, 0, 0)
 }
 
-// Call hybrid API to get accurate keypoints from an image
+// Get accurate keypoints from an image using the on-device MoveNet provider.
+// (Replaces the old offline Hugging Face "hybrid" call — same return shape.)
 async function getKeypointsFromHybrid(imageBase64: string): Promise<HybridData | null> {
   try {
-    console.log("[AutoScreenshots] Calling hybrid API for accurate keypoints...")
-    const response = await fetch(`${HYBRID_API_URL}/api/detect-pose`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: imageBase64 })
-    })
-    
-    if (!response.ok) {
-      console.error("[AutoScreenshots] Hybrid API error:", response.status)
+    const src = imageBase64.startsWith('data:')
+      ? imageBase64
+      : `data:image/jpeg;base64,${imageBase64}`
+    const img = await loadImageElement(src)
+    const { keypoints, form, imageSize } = await analyzeImageElement(img)
+
+    if (!keypoints || !form) {
+      console.warn("[AutoScreenshots] No pose detected by on-device engine")
       return null
     }
-    
-    const result = await response.json()
-    
-    if (!result.success || !result.keypoints) {
-      console.error("[AutoScreenshots] Hybrid API returned no keypoints:", result)
-      return null
-    }
-    
-    console.log("[AutoScreenshots] Got keypoints from hybrid:", Object.keys(result.keypoints))
+
     return {
-      keypoints: result.keypoints,
-      angles: result.angles || {},
-      basketball: result.basketball || null,
-      imageWidth: result.image_width || 0,
-      imageHeight: result.image_height || 0
+      keypoints: keypointsToRecord(keypoints),
+      angles: formAnglesToRecord(form),
+      basketball: null,
+      imageWidth: imageSize.width,
+      imageHeight: imageSize.height,
     }
   } catch (error) {
-    console.error("[AutoScreenshots] Failed to call hybrid API:", error)
+    console.error("[AutoScreenshots] On-device pose detection failed:", error)
     return null
   }
 }

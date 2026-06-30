@@ -5,6 +5,7 @@
 
 import { SkillLevel } from '@/data/drillDatabase'
 import { ShootingFlaw } from '@/data/shootingFlawsDatabase'
+import { scoreJoint, normalizeAngles } from '@/lib/scoring/biomechanicalScoring'
 
 // ============================================
 // TYPES
@@ -539,12 +540,13 @@ export function generateDetailedAnalysisReport(
   flaws: ShootingFlaw[]
 ): DetailedAnalysisReport {
   const scoreChange = overallScore - previousScore
-  
+  const a = normalizeAngles(angles)
+
   // Generate sections based on angles
   const sections = [
     {
       title: 'Stance & Balance',
-      score: Math.min(100, Math.max(60, overallScore + Math.random() * 10 - 5)),
+      score: a.hip != null ? scoreJoint('hip', a.hip) : Math.round(overallScore),
       status: overallScore >= 80 ? 'excellent' as const : overallScore >= 65 ? 'good' as const : 'needs_work' as const,
       details: [
         angles.hip_tilt ? `Hip alignment: ${angles.hip_tilt}°` : 'Hip alignment: Good',
@@ -555,7 +557,7 @@ export function generateDetailedAnalysisReport(
     },
     {
       title: 'Knee Bend',
-      score: Math.min(100, Math.max(60, overallScore + Math.random() * 15 - 7)),
+      score: a.knee != null ? scoreJoint('knee', a.knee) : Math.round(overallScore),
       status: (angles.right_knee_angle || 140) >= 135 && (angles.right_knee_angle || 140) <= 150 ? 'good' as const : 'needs_work' as const,
       details: [
         `Current depth: ${angles.right_knee_angle || angles.left_knee_angle || 140}°`,
@@ -566,7 +568,7 @@ export function generateDetailedAnalysisReport(
     },
     {
       title: 'Elbow Position',
-      score: Math.min(100, Math.max(60, overallScore + Math.random() * 12 - 6)),
+      score: a.elbow != null ? scoreJoint('elbow', a.elbow) : Math.round(overallScore),
       status: (angles.right_elbow_angle || 90) >= 85 && (angles.right_elbow_angle || 90) <= 95 ? 'excellent' as const : 'good' as const,
       details: [
         `Elbow angle: ${angles.right_elbow_angle || angles.left_elbow_angle || 90}°`,
@@ -577,7 +579,7 @@ export function generateDetailedAnalysisReport(
     },
     {
       title: 'Release Mechanics',
-      score: Math.min(100, Math.max(60, overallScore + Math.random() * 10 - 5)),
+      score: Math.round(overallScore),
       status: overallScore >= 75 ? 'good' as const : 'needs_work' as const,
       details: [
         `Release point: Consistent`,
@@ -588,7 +590,7 @@ export function generateDetailedAnalysisReport(
     },
     {
       title: 'Arc & Trajectory',
-      score: Math.min(100, Math.max(60, overallScore + Math.random() * 15 - 10)),
+      score: Math.round(overallScore),
       status: 'good' as const,
       details: [
         `Shot arc: ${angles.release_angle || 48}°`,
@@ -626,7 +628,7 @@ export function generateDetailedAnalysisReport(
     week: index + 1,
     focus: flaw.name,
     drill: flaw.drills[0] || 'Form Practice',
-    expectedImprovement: `+${Math.round(Math.random() * 3 + 2)} points`
+    expectedImprovement: '+3 points'
   }))
   
   // If no flaws, add generic priorities

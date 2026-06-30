@@ -22,6 +22,7 @@ model User {
   lastName        String?   @map("last_name") @db.VarChar(100)
   displayName     String?   @map("display_name") @db.VarChar(255)
   profileComplete Boolean   @default(false) @map("profile_complete")
+  emailVerified   DateTime? @map("email_verified")  // null until the user confirms their email
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
   
@@ -77,7 +78,16 @@ model UserProfile {
   // Relations
   user                  User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
   analyses              UserAnalysis[]
+  analysisHistory       AnalysisHistory[]
   drillVideos           DrillVideoSubmission[]
+  goals                 Goal[]
+  workouts              Workout[]
+  trainingPreference    TrainingPreference?
+  savedWorkouts         SavedWorkout[]
+  settings              UserSettings?
+  pointEvents           PointEvent[]
+  earnedBadges          EarnedBadge[]
+  challenges            UserChallenge[]
   
   // Indexes
   @@index([experienceLevel], name: "idx_user_experience")
@@ -149,8 +159,9 @@ model UserAnalysis {
   
   // Relations
   userProfile           UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  matchedShooter        Shooter?    @relation("MatchedShooter", fields: [matchedShooterId], references: [id], onDelete: SetNull)
   historyEntries        AnalysisHistory[]
-  
+
   // Indexes
   @@index([userProfileId], name: "idx_analysis_user")
   @@index([createdAt], name: "idx_analysis_date")
@@ -196,7 +207,8 @@ model AnalysisHistory {
   
   // Relations
   analysis              UserAnalysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
-  
+  userProfile           UserProfile  @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+
   // Indexes
   @@index([userProfileId], name: "idx_history_user")
   @@index([analysisDate], name: "idx_history_date")
@@ -226,6 +238,8 @@ model Shooter {
   era                   String?   @db.VarChar(50)       // Modern/Classic/Historical
   skillLevel            String?   @map("skill_level") @db.VarChar(50) // Professional/College/High School/Amateur
   profileImageUrl       String?   @map("profile_image_url") @db.VarChar(500)
+  team                  String?   @db.VarChar(255)      // Current/last team (display)
+  signature             String?   @db.Text              // One-line signature-form description
   createdAt             DateTime  @default(now()) @map("created_at")
   updatedAt             DateTime  @default(now()) @updatedAt @map("updated_at")
 
@@ -236,6 +250,7 @@ model Shooter {
   strengths             ShootingStrength[]
   weaknesses            ShootingWeakness[]
   habitualMechanics     HabitualMechanics[]
+  matchedAnalyses       UserAnalysis[]    @relation("MatchedShooter")
 
   // ==========================================
   // INDEXES FOR FAST RETRIEVAL
@@ -288,6 +303,7 @@ model ShootingBiomechanics {
   releaseAngle            Decimal?  @map("release_angle") @db.Decimal(5, 2)      // Ball trajectory angle
   entryAngle              Decimal?  @map("entry_angle") @db.Decimal(5, 2)        // Ball entry angle to hoop
   followThroughExtension  Decimal?  @map("follow_through_extension") @db.Decimal(5, 2)
+  wristAngle              Decimal?  @map("wrist_angle") @db.Decimal(5, 2)        // Forearm/wrist angle for arc
   balanceScore            Decimal?  @map("balance_score") @db.Decimal(3, 2)      // 0-1 scale
   arcConsistency          Decimal?  @map("arc_consistency") @db.Decimal(3, 2)    // 0-1 scale
   createdAt               DateTime  @default(now()) @map("created_at")
@@ -525,6 +541,211 @@ model DrillVideoSubmission {
   @@index([workoutId], name: "idx_drill_video_workout")
   @@index([overallGrade], name: "idx_drill_video_grade")
   @@index([mediaType], name: "idx_drill_video_media_type")
-  
+
   @@map("drill_video_submissions")
+}
+
+// ============================================
+// GOALS (User shooting goals — was localStorage `shotiq_goals`)
+// ============================================
+model Goal {
+  id                String    @id @default(cuid())
+  userProfileId     String    @map("user_profile_id")
+
+  name              String    @db.VarChar(255)
+  description       String?   @db.Text
+  category          String    @db.VarChar(50)   // form|consistency|volume|accuracy|streak|custom
+
+  targetValue       Int       @map("target_value")
+  currentValue      Int       @default(0) @map("current_value")
+  unit              String    @db.VarChar(100)  // e.g. "shots", "score", "days", "makes"
+  xpReward          Int       @map("xp_reward")
+
+  deadline          DateTime?
+  landmark          String?   @db.VarChar(255)
+  coordinates       Json?                       // [lng, lat] for the goal transit map
+
+  completedAt       DateTime? @map("completed_at")
+
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  userProfile       UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+
+  @@index([userProfileId], name: "idx_goal_user")
+  @@index([category], name: "idx_goal_category")
+  @@index([userProfileId, completedAt], name: "idx_goal_user_completed")
+  @@map("goals")
+}
+
+// ============================================
+// WORKOUTS (Scheduled training sessions — was localStorage `workout-calendar-data`)
+// ============================================
+model Workout {
+  id                String    @id @default(cuid())
+  userProfileId     String    @map("user_profile_id")
+
+  name              String?   @db.VarChar(255)
+  scheduledDate     DateTime  @map("scheduled_date")
+
+  drillIds          Json      @map("drill_ids")    // Array of drill IDs from drillDatabase
+  focusAreas        Json?     @map("focus_areas")  // Array of focus-area strings
+  duration          Int?                           // minutes
+
+  completed         Boolean   @default(false)
+  completedAt       DateTime? @map("completed_at")
+
+  totalShots        Int?      @default(0) @map("total_shots")
+  totalMade         Int?      @default(0) @map("total_made")
+  totalMissed       Int?      @default(0) @map("total_missed")
+  accuracy          Decimal?  @db.Decimal(5, 2)
+
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  userProfile       UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+
+  @@index([userProfileId], name: "idx_workout_user")
+  @@index([userProfileId, scheduledDate], name: "idx_workout_user_date")
+  @@map("workouts")
+}
+
+// ============================================
+// TRAINING PREFERENCES (Per-user — was localStorage in WorkoutCalendar)
+// ============================================
+model TrainingPreference {
+  id                    String    @id @default(cuid())
+  userProfileId         String    @unique @map("user_profile_id")
+
+  frequency             Int                              // 1-7 days/week
+  preferredDuration     Int       @map("preferred_duration") // minutes
+  drillCount            Int       @map("drill_count")    // 1-7 drills/workout
+  workoutMode           String    @map("workout_mode") @db.VarChar(50) // continuous|step-by-step
+  soundEnabled          Boolean   @default(true) @map("sound_enabled")
+  ageLevel              String    @map("age_level") @db.VarChar(50)
+  autoPopulateFromFlaws Boolean   @default(false) @map("auto_populate_from_flaws")
+  notificationsEnabled  Boolean   @default(true) @map("notifications_enabled")
+
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  userProfile           UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+
+  @@map("training_preferences")
+}
+
+// ============================================
+// SAVED WORKOUTS (Reusable templates — was localStorage `shotiq_saved_workouts`)
+// ============================================
+model SavedWorkout {
+  id                String    @id @default(cuid())
+  userProfileId     String    @map("user_profile_id")
+
+  name              String    @db.VarChar(255)
+  drillCount        Int       @map("drill_count")
+  drillIds          Json      @map("drill_ids")
+
+  totalMade         Int       @default(0) @map("total_made")
+  totalMissed       Int       @default(0) @map("total_missed")
+  lastPlayed        DateTime? @map("last_played")
+
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  userProfile       UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+
+  @@index([userProfileId], name: "idx_saved_workout_user")
+  @@map("saved_workouts")
+}
+
+// ============================================
+// VERIFICATION TOKENS (email verify + password reset)
+// ============================================
+model VerificationToken {
+  id                String    @id @default(cuid())
+  userId            String    @map("user_id")
+  token             String    @unique
+  type              String    @db.VarChar(50)   // "email_verify" | "password_reset"
+  expiresAt         DateTime  @map("expires_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+
+  @@index([userId], name: "idx_verification_token_user")
+  @@map("verification_tokens")
+}
+
+// ============================================
+// USER SETTINGS (per-profile preferences — JSON-shaped)
+// ============================================
+model UserSettings {
+  id                String    @id @default(cuid())
+  userProfileId     String    @unique @map("user_profile_id")
+
+  notifications     Json?
+  privacy           Json?
+  automation        Json?
+  avatarUrl         String?   @map("avatar_url") @db.VarChar(500)
+
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  userProfile       UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
+}
+
+// ============================================
+// POINT EVENTS (server-validated points ledger)
+// ============================================
+model PointEvent {
+  id                String    @id @default(cuid())
+  userProfileId     String    @map("user_profile_id")
+
+  type              String    @db.VarChar(100)
+  points            Int
+  metadata          Json?
+
+  createdAt         DateTime  @default(now()) @map("created_at")
+
+  userProfile       UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+
+  @@index([userProfileId], name: "idx_point_event_user")
+  @@map("point_events")
+}
+
+// ============================================
+// EARNED BADGES (achievement state)
+// ============================================
+model EarnedBadge {
+  id                String    @id @default(cuid())
+  userProfileId     String    @map("user_profile_id")
+
+  badgeId           String    @map("badge_id") @db.VarChar(100)
+  progress          Json?
+
+  earnedAt          DateTime  @default(now()) @map("earned_at")
+
+  userProfile       UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([userProfileId, badgeId], name: "uniq_earned_badge")
+  @@map("earned_badges")
+}
+
+// ============================================
+// USER CHALLENGES (weekly challenge progress)
+// ============================================
+model UserChallenge {
+  id                String    @id @default(cuid())
+  userProfileId     String    @map("user_profile_id")
+
+  challengeKey      String    @map("challenge_key") @db.VarChar(100)
+  target            Int
+  current           Int       @default(0)
+  weekStart         DateTime  @map("week_start")
+  completed         Boolean   @default(false)
+
+  createdAt         DateTime  @default(now()) @map("created_at")
+
+  userProfile       UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+
+  @@index([userProfileId], name: "idx_user_challenge_user")
+  @@map("user_challenges")
 }

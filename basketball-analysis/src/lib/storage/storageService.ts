@@ -21,6 +21,65 @@ import {
   stripKeyPrefix,
 } from "./s3Client"
 
+/**
+ * Normalize an incoming media payload into a Buffer + content type.
+ * Accepts a raw Buffer, a data-URL string ("data:image/png;base64,...."), or a
+ * bare base64 string. This is the single boundary where base64 (the legacy
+ * client format that previously lived only in localStorage) becomes bytes.
+ */
+function normalizeMedia(
+  input: Buffer | string,
+  fallbackContentType: string
+): { body: Buffer; contentType: string } {
+  if (Buffer.isBuffer(input)) {
+    return { body: input, contentType: fallbackContentType }
+  }
+  const match = /^data:([^;]+);base64,([\s\S]*)$/.exec(input)
+  if (match) {
+    return { body: Buffer.from(match[2], "base64"), contentType: match[1] }
+  }
+  // Bare base64 (no data-URL header).
+  return { body: Buffer.from(input, "base64"), contentType: fallbackContentType }
+}
+
+/**
+ * uploadMedia — the canonical server-side media upload used by Wave-1 features
+ * (analysis images, settings avatars, drill videos). Stores `input` at `key`
+ * in the configured object store (S3 / R2) and returns its public URL.
+ *
+ * @param input  A Buffer, a data-URL string, or a bare base64 string.
+ * @param key    Logical (un-prefixed) object key, e.g.
+ *               "user-uploads/<profileId>/<file>.jpg". The configured
+ *               S3_KEY_PREFIX is applied automatically.
+ * @param contentType  Optional MIME type. Inferred from a data-URL when
+ *               present; otherwise defaults to "application/octet-stream".
+ * @returns      The public URL of the stored object.
+ * @throws       On upload failure (callers should handle/fallback).
+ */
+export async function uploadMedia(
+  input: Buffer | string,
+  key: string,
+  contentType?: string
+): Promise<string> {
+  if (!key) throw new Error("uploadMedia: key is required")
+
+  const { body, contentType: resolved } = normalizeMedia(
+    input,
+    contentType || "application/octet-stream"
+  )
+
+  const command = new PutObjectCommand({
+    Bucket: S3_CONFIG.bucket,
+    Key: withKeyPrefix(key),
+    Body: body,
+    ContentType: contentType || resolved,
+  })
+
+  await s3Client.send(command)
+
+  return getS3Url(withKeyPrefix(key))
+}
+
 export interface UploadResult {
   success: boolean
   path?: string

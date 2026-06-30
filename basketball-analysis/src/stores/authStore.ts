@@ -30,17 +30,6 @@ async function getCsrfToken(): Promise<string> {
   }
 }
 
-// Set authentication cookie for middleware
-function setAuthCookie(authenticated: boolean) {
-  if (typeof document !== 'undefined') {
-    if (authenticated) {
-      document.cookie = `user-session=authenticated; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax` // 7 days
-    } else {
-      document.cookie = 'user-session=; path=/; max-age=0; SameSite=Lax' // Delete cookie
-    }
-  }
-}
-
 // ==========================================
 // TYPES
 // ==========================================
@@ -107,49 +96,12 @@ export const useAuthStore = create<AuthState>()(
           })
           
           const data = await response.json()
-          
-          // If database connection fails, use local storage fallback for development
-          if (!response.ok && (data.error?.includes('Database connection') || data.error?.includes('503'))) {
-            console.warn('Database unavailable, using local storage fallback for development')
-            
-            // Create user in local storage
-            const userId = `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-            const user: User = {
-              id: userId,
-              email,
-              firstName: firstName || undefined,
-              lastName: lastName || undefined,
-              displayName: firstName && lastName 
-                ? `${firstName} ${lastName}` 
-                : firstName || lastName || email.split('@')[0],
-              createdAt: new Date().toISOString(),
-              profileComplete: false,
-            }
-            
-            // Store in localStorage for persistence
-            if (typeof localStorage !== 'undefined') {
-              localStorage.setItem('dev_users', JSON.stringify({
-                ...JSON.parse(localStorage.getItem('dev_users') || '{}'),
-                [email]: { ...user, password: btoa(password) } // Simple encoding, not secure but for dev only
-              }))
-            }
-            
-            set({
-              user,
-              isAuthenticated: true,
-              isLoading: false,
-            })
-            
-            setAuthCookie(true)
-            
-            return { success: true, warning: 'Using local storage (database unavailable)' }
-          }
-          
+
           if (!response.ok) {
             set({ isLoading: false })
             return { success: false, error: data.error || 'Sign up failed' }
           }
-          
+
           // Set user in store
           const user: User = {
             id: data.user.id,
@@ -160,15 +112,13 @@ export const useAuthStore = create<AuthState>()(
             createdAt: data.user.createdAt,
             profileComplete: false,
           }
-          
+
           set({
             user,
             isAuthenticated: true,
             isLoading: false,
           })
-          
-          setAuthCookie(true)
-          
+
           return { success: true }
         } catch (error) {
           console.error('Sign up error:', error)
@@ -194,47 +144,12 @@ export const useAuthStore = create<AuthState>()(
           })
           
           const data = await response.json()
-          
-          // If database connection fails, check local storage fallback
-          if (!response.ok && (data.error?.includes('Database connection') || data.error?.includes('503'))) {
-            console.warn('Database unavailable, checking local storage fallback')
-            
-            if (typeof localStorage !== 'undefined') {
-              const devUsers = JSON.parse(localStorage.getItem('dev_users') || '{}')
-              const devUser = devUsers[email]
-              
-              if (devUser && atob(devUser.password) === password) {
-                const user: User = {
-                  id: devUser.id,
-                  email: devUser.email,
-                  firstName: devUser.firstName,
-                  lastName: devUser.lastName,
-                  displayName: devUser.displayName,
-                  createdAt: devUser.createdAt,
-                  profileComplete: devUser.profileComplete || false,
-                }
-                
-                set({
-                  user,
-                  isAuthenticated: true,
-                  isLoading: false,
-                })
-                
-                setAuthCookie(true)
-                
-                return { success: true, warning: 'Using local storage (database unavailable)' }
-              }
-            }
-            
-            set({ isLoading: false })
-            return { success: false, error: 'Invalid email or password' }
-          }
-          
+
           if (!response.ok) {
             set({ isLoading: false })
             return { success: false, error: data.error || 'Sign in failed' }
           }
-          
+
           // Set user in store
           const user: User = {
             id: data.user.id,
@@ -245,15 +160,13 @@ export const useAuthStore = create<AuthState>()(
             createdAt: data.user.createdAt,
             profileComplete: data.user.profileComplete || false,
           }
-          
+
           set({
             user,
             isAuthenticated: true,
             isLoading: false,
           })
-          
-          setAuthCookie(true)
-          
+
           return { success: true }
         } catch (error) {
           console.error('Sign in error:', error)
@@ -286,7 +199,6 @@ export const useAuthStore = create<AuthState>()(
           // ignore network/runtime errors on sign out
         }
 
-        setAuthCookie(false)
         set({
           user: null,
           isAuthenticated: false,

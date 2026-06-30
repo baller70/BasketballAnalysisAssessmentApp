@@ -1,30 +1,28 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { resolveProfileId, isError } from "@/lib/auth/currentUser"
 
 /**
  * GET /api/analysis-history
- * 
- * Retrieve user's analysis history for progress tracking.
- * Shows improvement trends over time.
+ *
+ * Retrieve the signed-in user's analysis history for progress tracking.
+ * Auth: the owning profile is derived from the session token, never from the
+ * request, so a user can only ever read their own history (prevents IDOR).
  */
 
 export async function GET(request: NextRequest) {
-  const userProfileId = request.nextUrl.searchParams.get("userProfileId")
+  const resolved = await resolveProfileId(request)
+  if (isError(resolved)) return resolved.error
+  const userProfileId = resolved.profileId
+
   const limit = parseInt(request.nextUrl.searchParams.get("limit") || "20")
   const includeAnalysis = request.nextUrl.searchParams.get("includeAnalysis") === "true"
 
-  if (!userProfileId) {
-    return NextResponse.json(
-      { success: false, error: "userProfileId parameter required" },
-      { status: 400 }
-    )
-  }
-
   try {
-    // Get history entries
+    // Get history entries (newest first)
     const history = await prisma.analysisHistory.findMany({
       where: { userProfileId },
-      orderBy: { createdAt: "desc" },
+      orderBy: { analysisDate: "desc" },
       take: limit,
       include: includeAnalysis ? {
         analysis: {
@@ -55,8 +53,8 @@ export async function GET(request: NextRequest) {
     const scores = history.map((h: any) => Number(h.overallScore)).filter((s: number) => !isNaN(s))
     const stats = {
       totalAnalyses: history.length,
-      averageScore: scores.length > 0 
-        ? Math.round(scores.reduce((a: number, b: number) => a + b, 0) / scores.length) 
+      averageScore: scores.length > 0
+        ? Math.round(scores.reduce((a: number, b: number) => a + b, 0) / scores.length)
         : null,
       highestScore: scores.length > 0 ? Math.max(...scores) : null,
       lowestScore: scores.length > 0 ? Math.min(...scores) : null,
@@ -70,7 +68,7 @@ export async function GET(request: NextRequest) {
     const formattedHistory = history.map((entry: any) => ({
       id: entry.id,
       analysisId: entry.analysisId,
-      recordedAt: entry.recordedAt,
+      recordedAt: entry.analysisDate,
       scores: {
         overall: entry.overallScore ? Number(entry.overallScore) : null,
         form: entry.formScore ? Number(entry.formScore) : null,
@@ -139,23 +137,42 @@ function calculateImprovementRate(history: { scoreChange: unknown }[]): number |
 
 /**
  * POST /api/analysis-history
- * 
- * Manually add a history entry (for batch imports or corrections)
+ *
+ * Manually add a history entry (for batch imports or corrections). The owning
+ * profile is taken from the session, and the referenced analysis must belong to
+ * the caller — a user can never write history against another user's analysis.
  */
 export async function POST(request: NextRequest) {
+  const resolved = await resolveProfileId(request)
+  if (isError(resolved)) return resolved.error
+  const userProfileId = resolved.profileId
+
   try {
     const body = await request.json()
-    
-    const { userProfileId, analysisId, overallScore, ...optionalFields } = body
 
-    if (!userProfileId || !analysisId || overallScore === undefined) {
+    // userProfileId from the body is intentionally ignored; we trust the session.
+    const { analysisId, overallScore, ...optionalFields } = body
+    delete optionalFields.userProfileId
+
+    if (!analysisId || overallScore === undefined) {
       return NextResponse.json(
-        { success: false, error: "userProfileId, analysisId, and overallScore are required" },
+        { success: false, error: "analysisId and overallScore are required" },
         { status: 400 }
       )
     }
 
-    // Create history entry
+    // Verify the referenced analysis belongs to the caller (prevents IDOR).
+    const owned = await prisma.userAnalysis.findFirst({
+      where: { id: analysisId, userProfileId },
+      select: { id: true },
+    })
+    if (!owned) {
+      return NextResponse.json(
+        { success: false, error: "Analysis not found" },
+        { status: 404 }
+      )
+    }
+
     const historyEntry = await prisma.analysisHistory.create({
       data: {
         userProfileId,
@@ -180,10 +197,14 @@ export async function POST(request: NextRequest) {
 
 /**
  * DELETE /api/analysis-history?id=xxx
- * 
- * Delete a history entry
+ *
+ * Delete one of the caller's own history entries.
  */
 export async function DELETE(request: NextRequest) {
+  const resolved = await resolveProfileId(request)
+  if (isError(resolved)) return resolved.error
+  const userProfileId = resolved.profileId
+
   const historyId = request.nextUrl.searchParams.get("id")
 
   if (!historyId) {
@@ -194,9 +215,17 @@ export async function DELETE(request: NextRequest) {
   }
 
   try {
-    await prisma.analysisHistory.delete({
-      where: { id: historyId },
+    // Scope the delete to the caller so they can't delete another user's row.
+    const result = await prisma.analysisHistory.deleteMany({
+      where: { id: historyId, userProfileId },
     })
+
+    if (result.count === 0) {
+      return NextResponse.json(
+        { success: false, error: "History entry not found" },
+        { status: 404 }
+      )
+    }
 
     return NextResponse.json({
       success: true,
@@ -210,7 +239,3 @@ export async function DELETE(request: NextRequest) {
     )
   }
 }
-
-
-
-

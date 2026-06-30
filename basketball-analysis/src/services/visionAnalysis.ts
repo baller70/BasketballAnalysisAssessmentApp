@@ -1,35 +1,35 @@
 /**
  * @file visionAnalysis.ts
- * @description Vision AI service for basketball shooting pose detection and analysis
- * 
+ * @description Image shooting-form analysis — CANONICAL on-device path.
+ *
  * PURPOSE:
- * - Connects to the Python hybrid pose detection backend
- * - Sends images for pose detection (YOLOv8-pose + MediaPipe + OpenCV)
- * - Converts raw pose data to analysis results
- * - Provides health check for backend connectivity
- * 
+ * - Runs the on-device TF.js MoveNet provider (services/pose) on an uploaded
+ *   image entirely in the browser. No server round-trip.
+ * - Converts canonical keypoints/angles into the result shape the results page,
+ *   AutoScreenshots, and the flaw engine consume.
+ * - All scoring comes from lib/scoring/biomechanicalScoring.ts via the provider.
+ *
+ * HISTORY:
+ * - This used to POST to an external "hybrid" Hugging Face Space
+ *   (NEXT_PUBLIC_HYBRID_API_URL) which is offline, and silently defaulted the
+ *   score to 75 on failure. That fake-score behaviour is removed: when no pose
+ *   can be detected we return success:false with a real error so the UI shows an
+ *   empty/error state instead of an invented grade.
+ *
  * MAIN FUNCTIONS:
- * - analyzeShootingForm(imageFile, ballPosition?) - Main analysis function
- * - checkHybridServerHealth() - Check if Python backend is running
- * 
- * BACKEND ENDPOINTS CALLED:
- * - POST {HYBRID_API_URL}/api/detect-pose - Pose detection
- * - POST {HYBRID_API_URL}/api/analyze-form - Form analysis
- * - GET {HYBRID_API_URL}/health - Health check
- * 
+ * - analyzeShootingForm(imageFile, ballPosition?, profileData?)
+ * - checkHybridServerHealth() - now reports on-device engine readiness
+ *
  * USED BY:
- * - src/app/page.tsx (handleImageAnalysis)
- * 
- * RETURNS:
- * - VisionAnalysisResult with keypoints, angles, score, and feedback
- * 
- * ENVIRONMENT:
- * - NEXT_PUBLIC_HYBRID_API_URL - Python backend URL (default: http://localhost:5001)
+ * - src/app/results/demo/page.tsx (image upload handler)
  */
 
-import { fileToBase64 } from "@/lib/utils"
-
-const HYBRID_API_URL = process.env.NEXT_PUBLIC_HYBRID_API_URL || 'http://localhost:5001'
+import {
+  analyzeImageElement,
+  fileToImageElement,
+  keypointsToRecord,
+  formAnglesToRecord,
+} from '@/services/pose'
 
 interface BodyPosition {
   x: number  // 0-100 percentage
@@ -55,7 +55,7 @@ export interface VisionAnalysisResult {
     improvements?: string[]
     measurements?: Record<string, number>
   }
-  // Raw hybrid data
+  // Raw provider data
   keypoints?: Record<string, { x: number; y: number; confidence: number; source?: string }>
   angles?: Record<string, number>
   basketball?: { x: number; y: number; radius: number }
@@ -66,7 +66,7 @@ export interface VisionAnalysisResult {
 }
 
 /**
- * Convert hybrid keypoints to bodyPositions format for the results page
+ * Convert keypoints to bodyPositions format for the results page.
  */
 function convertKeypointsToBodyPositions(
   keypoints: Record<string, { x: number; y: number; confidence: number; source?: string }>,
@@ -75,22 +75,19 @@ function convertKeypointsToBodyPositions(
   basketball?: { x: number; y: number; radius: number } | null
 ): Record<string, BodyPosition> {
   const positions: Record<string, BodyPosition> = {}
-  
-  // Convert each keypoint to percentage-based position
+
   Object.entries(keypoints).forEach(([name, kp]) => {
     if (kp.confidence < 0.3) return // Skip low confidence
-    
+
     const xPercent = (kp.x / imageSize.width) * 100
     const yPercent = (kp.y / imageSize.height) * 100
-    
-    // Determine status based on angles
+
     let status: "good" | "warning" | "critical" = "good"
     let angle: number | null = null
     let note = ""
-    
-    // Map angle data to relevant keypoints
+
     if (name === 'left_elbow' || name === 'right_elbow') {
-      const elbowAngle = angles[`${name.split('_')[0]}_elbow_angle`]
+      const elbowAngle = angles[`${name.split('_')[0]}_elbow_angle`] ?? angles['elbow_angle']
       if (elbowAngle) {
         angle = Math.round(elbowAngle)
         if (elbowAngle >= 80 && elbowAngle <= 100) {
@@ -105,9 +102,9 @@ function convertKeypointsToBodyPositions(
         }
       }
     }
-    
+
     if (name === 'left_knee' || name === 'right_knee') {
-      const kneeAngle = angles[`${name.split('_')[0]}_knee_angle`]
+      const kneeAngle = angles[`${name.split('_')[0]}_knee_angle`] ?? angles['knee_angle']
       if (kneeAngle) {
         angle = Math.round(kneeAngle)
         if (kneeAngle < 150) {
@@ -119,10 +116,9 @@ function convertKeypointsToBodyPositions(
         }
       }
     }
-    
-    // Format label
+
     const label = name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-    
+
     positions[name] = {
       x: xPercent,
       y: yPercent,
@@ -132,8 +128,7 @@ function convertKeypointsToBodyPositions(
       note: note || undefined
     }
   })
-  
-  // Add basketball position if detected
+
   if (basketball) {
     positions['ball'] = {
       x: (basketball.x / imageSize.width) * 100,
@@ -142,17 +137,21 @@ function convertKeypointsToBodyPositions(
       status: 'good'
     }
   }
-  
+
   return positions
 }
 
 /**
- * Analyze shooting form using the hybrid backend
+ * Analyze shooting form on-device using the canonical MoveNet provider.
+ *
+ * `ballPosition` is currently unused by the on-device engine (MoveNet does not
+ * detect the ball) but is kept in the signature for callers and a future Pro
+ * provider. `profileData` is reserved for personalized coaching.
  */
 export async function analyzeShootingForm(
   imageFile: File,
-  ballPosition?: { x: number; y: number; confidence: number } | null,
-  profileData?: {
+  _ballPosition?: { x: number; y: number; confidence: number } | null,
+  _profileData?: {
     heightInches?: number | null
     weightLbs?: number | null
     age?: number | null
@@ -162,101 +161,56 @@ export async function analyzeShootingForm(
   }
 ): Promise<VisionAnalysisResult> {
   try {
-    const base64Image = await fileToBase64(imageFile)
+    const img = await fileToImageElement(imageFile)
 
-    console.log('🎯 Calling hybrid pose detection...')
-    const poseResponse = await fetch(`${HYBRID_API_URL}/api/detect-pose`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        image: base64Image,
-        ball_hint: ballPosition
-      })
-    })
+    const { keypoints, form, imageSize } = await analyzeImageElement(img)
 
-    if (!poseResponse.ok) {
-      const errorText = await poseResponse.text()
-      throw new Error(`Pose detection failed: ${errorText}`)
-    }
-
-    const poseResult = await poseResponse.json()
-
-    if (!poseResult.success) {
+    // No person detected — surface a REAL empty state, never a fake score.
+    if (!keypoints || !form || form.overallScore === null) {
       return {
         success: false,
-        error: poseResult.error || 'Pose detection failed'
+        error:
+          'No shooter detected in the image. Use a clear, full-body photo of the shooting motion and try again.'
       }
     }
 
-    console.log('✅ Pose detection complete:', {
-      keypoints: Object.keys(poseResult.keypoints || {}).length,
-      confidence: poseResult.confidence,
-      basketball: poseResult.basketball ? 'detected' : 'not found'
-    })
+    const keypointRecord = keypointsToRecord(keypoints)
+    const angles = formAnglesToRecord(form)
+    const score = form.overallScore
 
-    // Call form analysis
-    console.log('📊 Analyzing shooting form...')
-    let analysisResult = { overall_score: 75, feedback: [] }
-    
-    try {
-      const analysisResponse = await fetch(`${HYBRID_API_URL}/api/analyze-form`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          keypoints: poseResult.keypoints,
-          angles: poseResult.angles,
-          profile: profileData || null  // Include profile data for personalized analysis
-        })
-      })
-      
-      if (analysisResponse.ok) {
-        analysisResult = await analysisResponse.json()
-      }
-    } catch (e) {
-      console.warn('Form analysis failed, using defaults:', e)
-    }
-
-    console.log('✅ Form analysis complete:', {
-      score: analysisResult.overall_score,
-      feedback: analysisResult.feedback?.length || 0
-    })
-
-    // Convert keypoints to bodyPositions format for the results page
-    const bodyPositions = convertKeypointsToBodyPositions(
-      poseResult.keypoints,
-      poseResult.angles || {},
-      poseResult.image_size,
-      poseResult.basketball
-    )
-
-    // Determine form category
-    const score = analysisResult.overall_score || 75
     let category = "GOOD"
     if (score >= 85) category = "EXCELLENT"
     else if (score >= 65) category = "GOOD"
     else if (score >= 50) category = "NEEDS_IMPROVEMENT"
     else category = "CRITICAL"
 
-    // Extract strengths and improvements from feedback
-    const strengths: string[] = []
-    const improvements: string[] = []
-    
-    analysisResult.feedback?.forEach((fb: { type: string; message: string }) => {
-      if (fb.type === 'success') {
-        strengths.push(fb.message)
-      } else {
-        improvements.push(fb.message)
-      }
+    const bodyPositions = convertKeypointsToBodyPositions(
+      keypointRecord,
+      angles,
+      imageSize,
+      null
+    )
+
+    // Build measurements (clean keys) from canonical angles.
+    const measurements: Record<string, number> = {}
+    const measurementMap: Record<string, number | null> = {
+      elbowAngle: form.angles.elbow,
+      kneeAngle: form.angles.knee,
+      shoulderAngle: form.angles.shoulder,
+      hipAngle: form.angles.hip,
+      releaseAngle: form.angles.release,
+      wristAngle: form.angles.wrist,
+    }
+    Object.entries(measurementMap).forEach(([key, value]) => {
+      if (value !== null && !Number.isNaN(value)) measurements[key] = Math.round(value)
     })
 
-    // Build measurements from angles
-    const measurements: Record<string, number> = {}
-    if (poseResult.angles) {
-      Object.entries(poseResult.angles).forEach(([key, value]) => {
-        const cleanKey = key.replace(/_angle$/, '').replace(/^(left|right)_/, '')
-        measurements[cleanKey + 'Angle'] = Math.round(value as number)
-      })
-    }
+    // Real feedback derived from measured form.
+    const feedback: Array<{ type: string; area: string; message: string }> = form.tips.map(
+      (message) => ({ type: 'improvement', area: 'form', message })
+    )
+    const strengths: string[] = []
+    const improvements: string[] = [...form.tips]
 
     return {
       success: true,
@@ -264,32 +218,21 @@ export async function analyzeShootingForm(
         overallScore: score,
         category,
         bodyPositions,
-        centerLine: poseResult.basketball ? { x: (poseResult.basketball.x / poseResult.image_size.width) * 100 } : undefined,
         phaseDetection: { currentPhase: 'RELEASE' },
-        coachingTip: improvements[0] || 'Keep practicing your form!',
+        coachingTip: improvements[0] || 'Great form — keep it consistent!',
         strengths,
         improvements,
         measurements
       },
-      keypoints: poseResult.keypoints,
-      angles: poseResult.angles,
-      basketball: poseResult.basketball,
-      confidence: poseResult.confidence,
-      image_size: poseResult.image_size,
-      feedback: analysisResult.feedback,
+      keypoints: keypointRecord,
+      angles,
+      confidence: Math.round((form.measuredCount / 6) * 100) / 100,
+      image_size: imageSize,
+      feedback,
       overall_score: score
     }
-
   } catch (error) {
     console.error('Vision analysis error:', error)
-    
-    if (error instanceof TypeError && error.message.includes('fetch')) {
-      return {
-        success: false,
-        error: 'Cannot connect to image analysis server (port 5001). Run: python3 python-scraper/hybrid_pose_detection.py'
-      }
-    }
-
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Analysis failed'
@@ -298,16 +241,16 @@ export async function analyzeShootingForm(
 }
 
 /**
- * Check if the hybrid server is online
+ * Report whether the on-device analysis engine is available. The canonical
+ * engine runs in the browser, so this initializes MoveNet and returns true once
+ * it is ready. (Name kept for backwards compatibility with existing callers.)
  */
 export async function checkHybridServerHealth(): Promise<boolean> {
   try {
-    const response = await fetch(`${HYBRID_API_URL}/health`, {
-      method: 'GET',
-      signal: AbortSignal.timeout(3000)
-    })
-    const data = await response.json()
-    return data.status === 'ok'
+    const { getPoseProvider } = await import('@/services/pose')
+    const provider = getPoseProvider()
+    await provider.init()
+    return provider.isReady()
   } catch {
     return false
   }

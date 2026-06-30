@@ -3098,7 +3098,7 @@ function WorkoutTimer({ workout, preferences, onComplete, onCancel }: WorkoutTim
   
   // Generate quick analysis based on drill criteria (fallback when vision API unavailable)
   const generateQuickAnalysis = (exercise: Exercise, criteria: ReturnType<typeof getDrillCriteria>) => {
-    const baseScore = 65 + Math.floor(Math.random() * 20) // 65-85 range
+    const baseScore = 75 // neutral placeholder: vision API unavailable, no measured score
     
     const positives = criteria?.correctFormCriteria.slice(0, 2).map(c => 
       `Good attempt at: ${c.toLowerCase()}`

@@ -23,6 +23,17 @@ export async function OPTIONS() {
 }
 
 export async function POST(request: NextRequest) {
+  // Session security is non-negotiable: refuse to authenticate at all if the
+  // signing secret is missing, rather than silently downgrading to an
+  // unsigned/insecure session.
+  if (!process.env.NEXTAUTH_SECRET) {
+    console.error("NEXTAUTH_SECRET is not configured; refusing to issue a session")
+    return NextResponse.json(
+      { error: "Server auth is misconfigured. Please contact support." },
+      { status: 500 }
+    )
+  }
+
   // Rate limit: 10 signin attempts per minute per IP.
   const { response: limited } = checkRateLimit(request, {
     bucket: 'auth-signin',
@@ -89,13 +100,10 @@ export async function POST(request: NextRequest) {
 
     const res = NextResponse.json({ user: userWithoutPassword }, { status: 200 })
 
-    // Issue a signed, httpOnly session token.
-    try {
-      const token = await createSessionToken({ sub: user.id, email: user.email })
-      res.cookies.set(AUTH_COOKIE_NAME, token, authCookieOptions())
-    } catch (tokenError) {
-      console.error("Failed to issue session token:", tokenError)
-    }
+    // Issue a signed, httpOnly session token. If this fails we must NOT log the
+    // user in via any insecure fallback — fail the request instead.
+    const token = await createSessionToken({ sub: user.id, email: user.email })
+    res.cookies.set(AUTH_COOKIE_NAME, token, authCookieOptions())
 
     return res
   } catch (error) {
@@ -110,8 +118,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Don't leak internal error details to the client (already logged above).
     return NextResponse.json(
-      { error: `Internal server error: ${errorMessage}` },
+      { error: "Something went wrong. Please try again." },
       { status: 500 }
     )
   }

@@ -2,33 +2,28 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { verifySessionToken, AUTH_COOKIE_NAME } from '@/lib/authToken'
 
-// Public routes that don't require authentication
+// Pages reachable WITHOUT signing in. Everything else the matcher forwards here
+// is protected by default ("default-deny"), so a newly added page can't
+// accidentally ship without auth. This also closes a prior gap where routes in
+// neither list (e.g. /media, the user's gallery) fell through as public.
 const PUBLIC_ROUTES = [
   '/signin',
   '/signup',
+  '/forgot-password',
+  '/reset-password',
   '/results/demo',
   '/settings',
   '/badges',
   '/elite-shooters',
   '/guide',
-  '/points'
+  '/points',
 ]
 
-// Routes that require authentication
-const PROTECTED_ROUTES = [
-  '/',
-  '/profile',
-  '/onboarding',
-  '/upload',
-  '/analyze',
-  '/video-analysis',
-  '/results',
-  '/elite-shooters',
-  '/badges',
-  '/guide',
-  '/settings',
-  '/admin'
-]
+// Auth pages a signed-in user should be redirected away from.
+const AUTH_PAGES = ['/signin', '/signup']
+
+const matchesRoute = (pathname: string, routes: string[]) =>
+  routes.some((route) => pathname === route || pathname.startsWith(route + '/'))
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -45,41 +40,32 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Authentication is established by a signed, httpOnly session JWT
-  // (auth-token). We verify its signature + expiry here. A legacy
-  // non-httpOnly `user-session` cookie is still accepted as a fallback for
-  // backward compatibility (e.g. the offline/dev local-storage flow).
+  // Authentication is established SOLELY by a signed, httpOnly session JWT
+  // (auth-token). We verify its signature + expiry here. There is no other
+  // accepted source of authentication — a previous non-httpOnly `user-session`
+  // cookie fallback was removed because it could be forged client-side
+  // (anyone could set `user-session=authenticated` in devtools).
   const sessionToken = request.cookies.get(AUTH_COOKIE_NAME)?.value
   const verified = await verifySessionToken(sessionToken)
-  const legacySession = request.cookies.get('user-session')?.value
-  const isAuthenticated = Boolean(verified) || Boolean(legacySession)
+  const isAuthenticated = Boolean(verified)
   
-  // Check if this is a public route (including nested routes)
-  const isPublicRoute = PUBLIC_ROUTES.some(route => 
-    pathname === route || pathname.startsWith(route + '/')
-  )
-  
-  // If it's a public route, allow access
-  if (isPublicRoute) {
+  // Signed-in users shouldn't sit on signin/signup — send them home.
+  if (isAuthenticated && AUTH_PAGES.includes(pathname)) {
+    return NextResponse.redirect(new URL('/', request.url))
+  }
+
+  // Public routes (and their nested paths) are always allowed.
+  if (matchesRoute(pathname, PUBLIC_ROUTES)) {
     return NextResponse.next()
   }
-  
-  // If trying to access a protected route without authentication
-  const isProtectedRoute = PROTECTED_ROUTES.some(route => 
-    pathname === route || pathname.startsWith(route + '/')
-  )
-  
-  if (isProtectedRoute && !isAuthenticated) {
+
+  // Default-deny: everything else requires authentication.
+  if (!isAuthenticated) {
     const signinUrl = new URL('/signin', request.url)
     signinUrl.searchParams.set('from', pathname)
     return NextResponse.redirect(signinUrl)
   }
-  
-  // If authenticated and trying to access signin/signup, redirect to home
-  if (PUBLIC_ROUTES.includes(pathname) && isAuthenticated) {
-    return NextResponse.redirect(new URL('/', request.url))
-  }
-  
+
   return NextResponse.next()
 }
 

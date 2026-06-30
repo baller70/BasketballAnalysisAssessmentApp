@@ -3,8 +3,9 @@
  * @description Barrel exports for all business logic services
  * 
  * ANALYSIS SERVICES:
- * - visionAnalysis - Image pose detection via Python backend
- * - videoAnalysis - Video analysis and frame extraction
+ * - visionAnalysis - Image pose detection via on-device MoveNet (services/pose)
+ * - videoAnalysis - Client-side frame extraction + on-device MoveNet per frame
+ * - pose/ - Pluggable PoseProvider (canonical: MoveNetProvider; optional: HybridApiProvider)
  * 
  * DATA SERVICES:
  * - sessionStorage - localStorage session management

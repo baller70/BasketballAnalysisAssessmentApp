@@ -4,7 +4,6 @@
  * 
  * DISPLAY COMPONENTS:
  * - AnalysisDashboard - Main analysis results dashboard
- * - AnnotatedImageDisplay - Image with pose annotations
  * - AutoScreenshots - Auto-generated analysis screenshots
  * - FormScoreCard - Overall form score display
  * 
@@ -41,7 +40,7 @@ export type { AngleData } from "./AngleIndicators"
 
 // Main display components
 export { AnalysisDashboard } from "./AnalysisDashboard"
-export { AnnotatedImageDisplay } from "./AnnotatedImageDisplay"
+// AnnotatedImageDisplay removed — it had zero render sites (dead code).
 export { AutoScreenshots } from "./AutoScreenshots"
 export { FormScoreCard } from "./FormScoreCard"
 export { PoseAnalysis } from "./PoseAnalysis"

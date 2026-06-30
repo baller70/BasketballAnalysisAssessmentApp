@@ -193,7 +193,8 @@ Respond in JSON format:
   } catch {
     // If JSON parsing fails, create structured response from text
     return {
-      formScore: 70,
+      formScore: null,
+      scored: false,
       positives: ['Good effort on the drill', 'Showing proper dedication'],
       improvements: ['Continue focusing on form', 'Practice consistency'],
       coachingTips: ['Watch tutorial videos for reference', 'Practice in front of a mirror'],
@@ -211,9 +212,6 @@ function generateRuleBasedAnalysis(
   correctFormCriteria: string[],
   commonMistakes: string[]
 ) {
-  // Generate a reasonable score
-  const baseScore = 65 + Math.floor(Math.random() * 20) // 65-85 range
-  
   // Select positives from correct form criteria
   const positives = correctFormCriteria.length > 0
     ? correctFormCriteria.slice(0, 2).map(c => `Working on: ${c}`)
@@ -240,11 +238,12 @@ function generateRuleBasedAnalysis(
       ]
   
   return {
-    formScore: baseScore,
+    formScore: null,
+    scored: false,
     positives,
     improvements,
     coachingTips,
     feedback: positives,
-    detailedFeedback: `Analysis of your ${drillName} drill (Focus: ${focusArea}). ${drillDescription.slice(0, 150)}... Keep practicing and focus on the coaching tips provided.`
+    detailedFeedback: `AI scoring was unavailable, so this is a drill checklist rather than a graded analysis of your ${drillName} drill (Focus: ${focusArea}). ${drillDescription.slice(0, 150)}... Keep practicing and focus on the coaching tips provided.`
   }
 }

@@ -52,11 +52,9 @@ export default function SignUpPage() {
       )
 
       if (result.success) {
-        // Wait a moment for cookie to be set, then redirect to onboarding quiz
-        setTimeout(() => {
-          // Use Next.js router for navigation
-          router.push("/onboarding")
-        }, 200)
+        // signUp already awaited the API response, so the httpOnly session
+        // cookie is set by the time we get here — navigate immediately, no race.
+        router.push("/onboarding")
       } else {
         setError(result.error || "Sign up failed")
         setIsSubmitting(false)

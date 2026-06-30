@@ -1,6 +1,13 @@
 "use client"
 
 import React, { useState, useRef, useEffect, useCallback } from "react"
+import {
+  getPoseProvider,
+  loadImageElement,
+  analyzeImageElement,
+  keypointsToRecord,
+  formAnglesToRecord,
+} from "@/services/pose"
 
 // Types
 interface Keypoint {
@@ -50,9 +57,6 @@ const SOURCE_COLORS: Record<string, string> = {
   'detected': '#22c55e',
 }
 
-// Hybrid API URL - Use environment variable for production (Hugging Face)
-const HYBRID_API_URL = process.env.NEXT_PUBLIC_HYBRID_API_URL || 'http://localhost:5001'
-
 export function PoseAnalysis({ imageFile, imageBase64 }: PoseAnalysisProps) {
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [result, setResult] = useState<AnalysisResult | null>(null)
@@ -68,24 +72,23 @@ export function PoseAnalysis({ imageFile, imageBase64 }: PoseAnalysisProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const imageRef = useRef<HTMLImageElement>(null)
 
-  // Check server status
+  // Initialize the on-device pose engine (MoveNet). No server required.
   const checkServer = useCallback(async () => {
     try {
-      const response = await fetch(`${HYBRID_API_URL}/health`)
-      const data = await response.json()
-      setServerOnline(data.status === 'ok')
-      return data.status === 'ok'
+      const provider = getPoseProvider()
+      await provider.init()
+      const ready = provider.isReady()
+      setServerOnline(ready)
+      return ready
     } catch {
       setServerOnline(false)
       return false
     }
   }, [])
 
-  // Check server on mount
+  // Warm up the engine on mount
   useEffect(() => {
     checkServer()
-    const interval = setInterval(checkServer, 10000)
-    return () => clearInterval(interval)
   }, [checkServer])
 
   // Load image
@@ -107,75 +110,52 @@ export function PoseAnalysis({ imageFile, imageBase64 }: PoseAnalysisProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [result, showSkeleton, showKeypoints, showBall])
 
-  // Convert file to base64
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => {
-        const result = reader.result as string
-        resolve(result.split(',')[1])
-      }
-      reader.onerror = reject
-      reader.readAsDataURL(file)
-    })
-  }
-
-  // Analyze image using hybrid system
+  // Analyze image using the on-device MoveNet provider
   const analyzeImage = async () => {
     if (!imageUrl && !imageFile && !imageBase64) return
-
-    const online = await checkServer()
-    if (!online) {
-      setError('Hybrid server offline. Start hybrid_pose_detection.py first.')
-      return
-    }
 
     setLoading(true)
     setError(null)
 
     try {
-      // Get base64 image
-      let base64: string
+      // Resolve a loadable source for the image element.
+      let src: string
       if (imageFile) {
-        base64 = await fileToBase64(imageFile)
+        src = URL.createObjectURL(imageFile)
       } else if (imageBase64) {
-        base64 = imageBase64.includes(',') ? imageBase64.split(',')[1] : imageBase64
+        src = imageBase64.startsWith('data:') ? imageBase64 : `data:image/jpeg;base64,${imageBase64}`
+      } else if (imageUrl) {
+        src = imageUrl
       } else {
         throw new Error('No image provided')
       }
 
-      // Call hybrid pose detection
-      const poseResponse = await fetch(`${HYBRID_API_URL}/api/detect-pose`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: base64 })
-      })
+      const img = await loadImageElement(src)
+      if (imageFile) URL.revokeObjectURL(src)
 
-      const poseResult = await poseResponse.json()
+      const { keypoints, form, imageSize } = await analyzeImageElement(img)
 
-      if (!poseResult.success) {
-        throw new Error(poseResult.error || 'Pose detection failed')
+      if (!keypoints || !form || form.overallScore === null) {
+        throw new Error('No shooter detected. Use a clear, full-body image of the shooting motion.')
       }
 
-      // Call form analysis
-      const analysisResponse = await fetch(`${HYBRID_API_URL}/api/analyze-form`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          keypoints: poseResult.keypoints,
-          angles: poseResult.angles
-        })
-      })
+      const feedback = form.tips.map((message) => ({
+        type: 'improvement',
+        area: 'form',
+        message,
+      }))
 
-      const analysisResult = await analysisResponse.json()
-
-      // Combine results
       setResult({
-        ...poseResult,
-        feedback: analysisResult.feedback,
-        overall_score: analysisResult.overall_score
+        success: true,
+        keypoints: keypointsToRecord(keypoints),
+        confidence: form.measuredCount / 6,
+        angles: formAnglesToRecord(form),
+        basketball: null,
+        image_size: imageSize,
+        method: 'movenet',
+        feedback,
+        overall_score: form.overallScore,
       })
-
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Analysis failed')
     } finally {
@@ -291,8 +271,8 @@ export function PoseAnalysis({ imageFile, imageBase64 }: PoseAnalysisProps) {
           serverOnline ? 'bg-green-400' : 'bg-red-400'
         }`} />
         <span className="text-gray-300">
-          {serverOnline === null ? 'Checking server...' :
-           serverOnline ? 'Hybrid server online' : 'Server offline - Start hybrid_pose_detection.py'}
+          {serverOnline === null ? 'Loading analysis engine...' :
+           serverOnline ? 'On-device engine ready' : 'Engine failed to load — refresh and try again'}
         </span>
       </div>
 

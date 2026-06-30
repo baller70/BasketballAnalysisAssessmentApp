@@ -285,12 +285,12 @@ function AnalyticsChartSection({ sessions, progressStats, playerName }: Analytic
       const avgKnee = Math.round(data.sessions.reduce((sum, s) => sum + (s.kneeAngle || 0), 0) / data.sessions.length)
       const avgRelease = Math.round(data.sessions.reduce((sum, s) => sum + (s.releaseAngle || 0), 0) / data.sessions.length)
       
-      const consistency = Math.min(100, Math.max(0, avgScore + Math.floor(Math.random() * 20) - 10))
+      const consistency = Math.min(100, Math.max(0, avgScore))
       const formScore = Math.min(100, Math.max(0, Math.round((avgElbow + avgKnee) / 2)))
-      const balanceScore = Math.min(100, Math.max(0, avgScore - 5 + Math.floor(Math.random() * 10)))
-      const followThrough = Math.min(100, Math.max(0, avgRelease + Math.floor(Math.random() * 15) - 5))
-      const arcScore = Math.min(100, Math.max(0, avgRelease - 10 + Math.floor(Math.random() * 20)))
-      const powerScore = Math.min(100, Math.max(0, avgScore + Math.floor(Math.random() * 15) - 7))
+      const balanceScore = Math.min(100, Math.max(0, avgScore - 5))
+      const followThrough = Math.min(100, Math.max(0, avgRelease))
+      const arcScore = Math.min(100, Math.max(0, avgRelease - 10))
+      const powerScore = Math.min(100, Math.max(0, avgScore))
       
       return {
         date: data.date,
