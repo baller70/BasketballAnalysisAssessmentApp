@@ -22,9 +22,12 @@ export const HYBRID_API_URL = process.env.NEXT_PUBLIC_HYBRID_API_URL || ""
 // File size limits
 export const FILE_LIMITS = {
   MAX_IMAGE_SIZE_MB: 10,
-  MAX_VIDEO_SIZE_MB: 50,
+  // The canonical video analyzer reads a local object URL and samples at most
+  // 90 downscaled frames; it does not upload the original file. Modern iPhone
+  // 4K clips routinely exceed 50MB even when well under the duration limit.
+  MAX_VIDEO_SIZE_MB: 500,
   MAX_IMAGE_SIZE_BYTES: 10 * 1024 * 1024,
-  MAX_VIDEO_SIZE_BYTES: 50 * 1024 * 1024,
+  MAX_VIDEO_SIZE_BYTES: 500 * 1024 * 1024,
 } as const
 
 // Video constraints
@@ -100,7 +103,6 @@ export const BREAKPOINTS = {
   XL: 1280,
   "2XL": 1536,
 } as const
-
 
 
 

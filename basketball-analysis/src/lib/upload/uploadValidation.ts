@@ -5,6 +5,8 @@
  * Ensures quality before expensive AI processing.
  */
 
+import { FILE_LIMITS } from '@/lib/constants'
+
 // ==========================================
 // TYPES
 // ==========================================
@@ -59,7 +61,7 @@ export const UPLOAD_CONSTANTS = {
   IMAGE_FORMATS: ["image/jpeg", "image/png", "image/heic", "image/webp"],
   
   // File size limits (in bytes)
-  MAX_VIDEO_SIZE: 50 * 1024 * 1024, // 50MB
+  MAX_VIDEO_SIZE: FILE_LIMITS.MAX_VIDEO_SIZE_BYTES,
   MAX_IMAGE_SIZE: 10 * 1024 * 1024, // 10MB
   
   // Duration limits (in seconds)
@@ -684,7 +686,6 @@ export function isValidFileType(file: File): boolean {
   return (UPLOAD_CONSTANTS.VIDEO_FORMATS as readonly string[]).includes(file.type) || 
          (UPLOAD_CONSTANTS.IMAGE_FORMATS as readonly string[]).includes(file.type)
 }
-
 
 
 

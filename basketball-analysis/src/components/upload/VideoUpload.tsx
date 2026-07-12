@@ -12,6 +12,7 @@ import {
   type SessionScreenshot 
 } from "@/services/sessionStorage"
 import { detectFlawsFromAngles, getShooterLevel } from "@/data/shootingFlawsDatabase"
+import { FILE_LIMITS } from "@/lib/constants"
 
 interface VideoUploadProps {
   onAnalysisComplete?: (result: VideoAnalysisResult) => void
@@ -75,9 +76,9 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
       return
     }
 
-    // Validate file size (max 50MB)
-    if (file.size > 50 * 1024 * 1024) {
-      setError('Video must be under 50MB')
+    // The original file stays local; allow modern iPhone 4K clip sizes.
+    if (file.size > FILE_LIMITS.MAX_VIDEO_SIZE_BYTES) {
+      setError(`Video must be under ${FILE_LIMITS.MAX_VIDEO_SIZE_MB}MB`)
       return
     }
 
@@ -231,7 +232,7 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
             Video Requirements
           </h5>
           <ul className="text-[#888] text-xs space-y-1">
-            <li>• <strong className="text-[#FF6B35]">Maximum 90 seconds</strong>, under 50MB</li>
+            <li>• <strong className="text-[#FF6B35]">Maximum 90 seconds</strong>, under {FILE_LIMITS.MAX_VIDEO_SIZE_MB}MB</li>
             <li>• Full body visible throughout</li>
             <li>• Single shooter, clear view</li>
             <li>• Good lighting, minimal camera shake</li>
@@ -245,7 +246,7 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
           <label className="border-2 border-dashed border-[#4a4a4a] rounded-lg p-8 flex flex-col items-center justify-center cursor-pointer hover:border-[#FF6B35]/60 transition-colors">
             <Upload className="w-12 h-12 text-[#666] mb-3" />
             <span className="text-[#888] text-sm">Click to upload video</span>
-            <span className="text-[#666] text-xs mt-1">MP4, MOV, WebM (max 90 sec, 50MB)</span>
+            <span className="text-[#666] text-xs mt-1">MP4, MOV, WebM (max 90 sec, {FILE_LIMITS.MAX_VIDEO_SIZE_MB}MB)</span>
             <input
               ref={fileInputRef}
               type="file"

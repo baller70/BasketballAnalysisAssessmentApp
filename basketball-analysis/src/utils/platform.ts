@@ -38,9 +38,16 @@ export function getPlatformOS(): PlatformOS {
   
   if (platform === 'ios') return 'ios'
   if (platform === 'android') return 'android'
+
+  // Browser visits do not have Capacitor's native platform marker. Detect the
+  // device OS separately so iPhone/iPad Safari can receive web-specific media
+  // handling without being mistaken for a native mobile app.
+  const userAgent = navigator.userAgent.toLowerCase()
+  const isIPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1
+  if (/iphone|ipad|ipod/.test(userAgent) || isIPadOS) return 'ios'
+  if (userAgent.includes('android')) return 'android'
   
   if (platform === 'desktop' && '__TAURI__' in window) {
-    const userAgent = navigator.userAgent.toLowerCase()
     if (userAgent.includes('mac')) return 'macos'
     if (userAgent.includes('win')) return 'windows'
     if (userAgent.includes('linux')) return 'linux'

@@ -28,6 +28,7 @@ export interface Keypoint {
 export interface Pose {
   keypoints: Keypoint[];
   score?: number;
+  id?: number;
 }
 
 export interface ShootingAngles {
@@ -56,7 +57,7 @@ export interface ShootingFormFeedback {
   tips: string[];
 }
 
-export type ModelType = 'lightning' | 'thunder';
+export type ModelType = 'lightning' | 'thunder' | 'multipose';
 
 // ============================================
 // KEYPOINT INDICES (MoveNet)
@@ -114,12 +115,13 @@ class PoseDetectionService {
   private detector: poseDetection.PoseDetector | null = null;
   private isInitializing = false;
   private modelType: ModelType = 'lightning';
+  private activePoseId: number | null = null;
   
   /**
    * Initialize the MoveNet pose detector
    */
   async initialize(modelType: ModelType = 'lightning'): Promise<void> {
-    if (this.detector) {
+    if (this.detector && this.modelType === modelType) {
       console.log('[PoseDetection] Already initialized');
       return;
     }
@@ -129,7 +131,15 @@ class PoseDetectionService {
       while (this.isInitializing) {
         await new Promise(resolve => setTimeout(resolve, 100));
       }
-      return;
+      if (this.detector && this.modelType === modelType) return;
+    }
+
+    // Image mode can initialize a single-person detector before the user opens
+    // Live mode. Replace it so Live mode actually receives tracked pose IDs.
+    if (this.detector) {
+      this.detector.dispose();
+      this.detector = null;
+      this.activePoseId = null;
     }
     
     this.isInitializing = true;
@@ -143,17 +153,30 @@ class PoseDetectionService {
       console.log('[PoseDetection] TensorFlow.js ready, backend:', tf.getBackend());
       
       // Create detector with MoveNet
-      const model = modelType === 'lightning' 
-        ? poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING
-        : poseDetection.movenet.modelType.SINGLEPOSE_THUNDER;
+      const model = modelType === 'multipose'
+        ? poseDetection.movenet.modelType.MULTIPOSE_LIGHTNING
+        : modelType === 'lightning'
+          ? poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING
+          : poseDetection.movenet.modelType.SINGLEPOSE_THUNDER;
+
+      const modelConfig = modelType === 'multipose'
+        ? {
+            modelType: model,
+            enableSmoothing: true,
+            minPoseScore: 0.3,
+            multiPoseMaxDimension: 384,
+            enableTracking: true,
+            trackerType: poseDetection.TrackerType.Keypoint,
+          }
+        : {
+            modelType: model,
+            enableSmoothing: true,
+            minPoseScore: 0.25,
+          };
       
       this.detector = await poseDetection.createDetector(
         poseDetection.SupportedModels.MoveNet,
-        {
-          modelType: model,
-          enableSmoothing: true,
-          minPoseScore: 0.25,
-        }
+        modelConfig
       );
       
       console.log('[PoseDetection] MoveNet initialized successfully');
@@ -169,7 +192,8 @@ class PoseDetectionService {
    * Detect pose from video element or image
    */
   async detectPose(
-    input: HTMLVideoElement | HTMLImageElement | HTMLCanvasElement
+    input: HTMLVideoElement | HTMLImageElement | HTMLCanvasElement,
+    timestampMs?: number
   ): Promise<Pose | null> {
     if (!this.detector) {
       console.warn('[PoseDetection] Detector not initialized');
@@ -177,26 +201,71 @@ class PoseDetectionService {
     }
     
     try {
-      const poses = await this.detector.estimatePoses(input);
+      const poses = await this.detector.estimatePoses(input, undefined, timestampMs);
       
       if (poses.length === 0) {
         return null;
       }
       
-      // Return the first (and likely only) pose
+      const selectedPose = this.selectPose(poses);
+
       return {
-        keypoints: poses[0].keypoints.map(kp => ({
+        keypoints: selectedPose.keypoints.map(kp => ({
           x: kp.x,
           y: kp.y,
           score: kp.score,
           name: kp.name,
         })),
-        score: poses[0].score,
+        score: selectedPose.score,
+        id: selectedPose.id,
       };
     } catch (error) {
       console.error('[PoseDetection] Detection error:', error);
       return null;
     }
+  }
+
+  /**
+   * Lock Live mode onto one person. MoveNet's tracked multi-pose model gives
+   * each person a stable ID; when acquiring a target, prefer the largest,
+   * most complete body so a foreground shooter wins over background crowds.
+   */
+  private selectPose(poses: poseDetection.Pose[]): poseDetection.Pose {
+    if (this.modelType !== 'multipose') return poses[0];
+
+    if (this.activePoseId !== null) {
+      const lockedPose = poses.find(pose => pose.id === this.activePoseId);
+      if (lockedPose) return lockedPose;
+    }
+
+    const selectedPose = poses.reduce((best, candidate) =>
+      this.poseTargetScore(candidate) > this.poseTargetScore(best) ? candidate : best
+    );
+    this.activePoseId = selectedPose.id ?? null;
+    return selectedPose;
+  }
+
+  private poseTargetScore(pose: poseDetection.Pose): number {
+    const confidentBodyPoints = pose.keypoints
+      .slice(KEYPOINT_INDICES.left_shoulder)
+      .filter(keypoint => (keypoint.score ?? 0) >= 0.3);
+
+    if (confidentBodyPoints.length < 4) return 0;
+
+    const area = pose.box
+      ? pose.box.width * pose.box.height
+      : (() => {
+          const xs = confidentBodyPoints.map(keypoint => keypoint.x);
+          const ys = confidentBodyPoints.map(keypoint => keypoint.y);
+          return (Math.max(...xs) - Math.min(...xs)) * (Math.max(...ys) - Math.min(...ys));
+        })();
+    const averageConfidence = confidentBodyPoints.reduce(
+      (total, keypoint) => total + (keypoint.score ?? 0),
+      0
+    ) / confidentBodyPoints.length;
+    const completeness = confidentBodyPoints.length / 12;
+
+    return area * averageConfidence * completeness;
   }
   
   /**
@@ -527,6 +596,7 @@ class PoseDetectionService {
     if (this.detector) {
       this.detector.dispose();
       this.detector = null;
+      this.activePoseId = null;
       console.log('[PoseDetection] Detector disposed');
     }
   }
@@ -544,9 +614,6 @@ export const poseDetectionService = new PoseDetectionService();
 
 // Export class for testing
 export { PoseDetectionService };
-
-
-
 
 
 

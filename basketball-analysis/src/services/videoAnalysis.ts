@@ -18,8 +18,8 @@
  *   measured angles, and on failure we surface a real error.
  *
  * LIMITS:
- * - Max 50MB (unchanged) AND max 90s duration (now enforced; previously only
- *   the file size was checked).
+ * - Max 500MB and max 90s duration. The generous file cap accommodates local
+ *   iPhone 4K clips; processing remains bounded to 90 downscaled frames.
  *
  * USED BY:
  * - src/app/results/demo/page.tsx (video upload handler)

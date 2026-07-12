@@ -443,7 +443,7 @@ const CARD_CONTENT: Record<string, GuideCardData> = {
       'Maximum 90 seconds',
       '1-2 complete shot attempts',
       'MP4, MOV, or WebM format',
-      'Maximum 50MB file size'
+      'Maximum 500MB file size'
     ],
     tip: 'Video captures the full motion for detailed analysis.',
     imagePlaceholder: true,

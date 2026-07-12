@@ -4,7 +4,7 @@
  * 
  * PURPOSE:
  * - Provides UI for uploading shooting form videos
- * - Validates video requirements (max 10 seconds, under 50MB)
+ * - Validates video requirements (max 90 seconds, under 500MB)
  * - Shows video preview before analysis
  * - Stores video file for analysis
  * 
@@ -30,10 +30,11 @@
 import React, { useRef, useState, useEffect, useCallback } from "react"
 import { AlertTriangle, X, Video } from "lucide-react"
 import { useAnalysisStore } from "@/stores/analysisStore"
+import { FILE_LIMITS } from "@/lib/constants"
 
 // Constants for validation
-const MAX_FILE_SIZE_MB = 50
-const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
+const MAX_FILE_SIZE_MB = FILE_LIMITS.MAX_VIDEO_SIZE_MB
+const MAX_FILE_SIZE_BYTES = FILE_LIMITS.MAX_VIDEO_SIZE_BYTES
 
 interface VideoUploadInlineProps {
   videoFile: File | null
@@ -113,7 +114,7 @@ export function VideoUploadInline({ videoFile, onVideoFileChange }: VideoUploadI
           Video Requirements
         </h5>
         <ul className="text-[#888] text-xs space-y-1">
-          <li>• <strong className="text-[#FF6B35]">Maximum 90 seconds</strong>, under 50MB</li>
+          <li>• <strong className="text-[#FF6B35]">Maximum 90 seconds</strong>, under {MAX_FILE_SIZE_MB}MB</li>
           <li>• Full body visible throughout the shot</li>
           <li>• Single shooter, clear view</li>
           <li>• Good lighting, minimal camera shake</li>
@@ -136,7 +137,7 @@ export function VideoUploadInline({ videoFile, onVideoFileChange }: VideoUploadI
             <Video className="w-8 h-8 text-orange-400" />
           </div>
           <span className="text-[#E5E5E5] font-medium">Click to upload video</span>
-          <span className="text-[#666] text-sm mt-1">MP4, MOV, WebM (max 90 sec, 50MB)</span>
+          <span className="text-[#666] text-sm mt-1">MP4, MOV, WebM (max 90 sec, {MAX_FILE_SIZE_MB}MB)</span>
           <input
             ref={fileInputRef}
             type="file"

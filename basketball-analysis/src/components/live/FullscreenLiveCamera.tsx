@@ -35,7 +35,7 @@ import { usePoseDetection } from '@/hooks/usePoseDetection'
 import { ProfessionalSkeletonOverlay } from './ProfessionalSkeletonOverlay'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import { useRouter } from 'next/navigation'
-import { isMobile } from '@/utils/platform'
+import { getPlatformOS, isMobile } from '@/utils/platform'
 import { useUsage } from '@/lib/usage'
 import { usePoints } from '@/lib/points/pointsContext'
 import { saveSession, createSessionFromAnalysis } from '@/services/sessionStorage'
@@ -57,6 +57,41 @@ interface CapturedFrame {
 }
 
 type Orientation = 'portrait' | 'landscape'
+type PoseInputRotation = 'none' | 'clockwise' | 'counterclockwise'
+
+function getTorsoOrientation(pose: {
+  keypoints: Array<{ x: number; y: number; score?: number }>
+}): { alignment: 'vertical' | 'horizontal' | 'unknown'; rotation: PoseInputRotation } {
+  const leftShoulder = pose.keypoints[5]
+  const rightShoulder = pose.keypoints[6]
+  const leftHip = pose.keypoints[11]
+  const rightHip = pose.keypoints[12]
+  const points = [leftShoulder, rightShoulder, leftHip, rightHip]
+
+  if (points.some(point => !point || (point.score ?? 0) < 0.25)) {
+    return { alignment: 'unknown', rotation: 'none' }
+  }
+
+  const shoulderX = (leftShoulder.x + rightShoulder.x) / 2
+  const shoulderY = (leftShoulder.y + rightShoulder.y) / 2
+  const hipX = (leftHip.x + rightHip.x) / 2
+  const hipY = (leftHip.y + rightHip.y) / 2
+  const deltaX = hipX - shoulderX
+  const deltaY = hipY - shoulderY
+
+  if (Math.abs(deltaX) > Math.abs(deltaY) * 1.35) {
+    return {
+      alignment: 'horizontal',
+      rotation: deltaX > 0 ? 'clockwise' : 'counterclockwise',
+    }
+  }
+
+  if (Math.abs(deltaY) > Math.abs(deltaX) * 1.1) {
+    return { alignment: 'vertical', rotation: 'none' }
+  }
+
+  return { alignment: 'unknown', rotation: 'none' }
+}
 
 // Available metrics that users can select
 // All metrics are fully functional with MoveNet pose detection
@@ -236,6 +271,11 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const poseFrameCanvasRef = useRef<HTMLCanvasElement | null>(null)
+  const poseInputRotationRef = useRef<PoseInputRotation>('none')
+  const poseOrientationAttemptRef = useRef(0)
+  const poseOrientationLockedRef = useRef(false)
+  const isIOSWebPortraitRef = useRef(false)
   const containerRef = useRef<HTMLDivElement>(null) // Main container for display size
   const compositeCanvasRef = useRef<HTMLCanvasElement | null>(null) // For recording with overlay
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -255,6 +295,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   const [capturedFrames, setCapturedFrames] = useState<CapturedFrame[]>([])
   const [videoDimensions, setVideoDimensions] = useState({ width: 640, height: 480 })
   const [orientation, setOrientation] = useState<Orientation>('portrait')
+  const [poseInputRotation, setPoseInputRotation] = useState<PoseInputRotation>('none')
   const [showControls, setShowControls] = useState(true)
   const [showShotFlash, setShowShotFlash] = useState(false)
   const [lastShotScore, setLastShotScore] = useState<number | null>(null)
@@ -318,12 +359,6 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   // Shot counter
   const [shotCount, setShotCount] = useState(0)
   
-  // Throttled pose state to reduce glitching
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- runtime pose object from the live detection hook
-  const [throttledPose, setThrottledPose] = useState<any>(null)
-  const lastPoseUpdateRef = useRef<number>(0)
-  const POSE_UPDATE_INTERVAL = 200 // Update skeleton every 200ms (5fps) for much smoother visuals
-
   // Stabilized metrics - hold values for longer so users can read them
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- loosely-typed runtime angles from the pose pipeline
   const [stableAngles, setStableAngles] = useState<any>(null)
@@ -331,8 +366,44 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   const [stableFeedback, setStableFeedback] = useState<any>(null)
   const lastMetricUpdateRef = useRef<number>(0)
   const METRIC_UPDATE_INTERVAL = 2500 // Only update metrics every 2.5 seconds so users can read them
+
+  const isIOSWebPortrait = getPlatformOS() === 'ios'
+    && !isMobile()
+    && orientation === 'portrait'
+  isIOSWebPortraitRef.current = isIOSWebPortrait
+
+  // Start with Safari's browser-decoded video frame. If the first reliable
+  // torso is actually horizontal, calibration selects the required direction
+  // from the detected shoulder-to-hip axis instead of assuming one.
+  const prepareVideoFrame = useCallback((video: HTMLVideoElement) => {
+    const rotation = poseInputRotationRef.current
+    if (!isIOSWebPortraitRef.current && rotation === 'none') return video
+
+    const sourceWidth = video.videoWidth
+    const sourceHeight = video.videoHeight
+    if (sourceWidth <= 0 || sourceHeight <= 0) return video
+
+    const canvas = poseFrameCanvasRef.current ?? document.createElement('canvas')
+    poseFrameCanvasRef.current = canvas
+    canvas.width = rotation === 'none' ? sourceWidth : sourceHeight
+    canvas.height = rotation === 'none' ? sourceHeight : sourceWidth
+
+    const context = canvas.getContext('2d')
+    if (!context) return video
+
+    if (rotation === 'none') {
+      context.setTransform(1, 0, 0, 1, 0, 0)
+    } else if (rotation === 'clockwise') {
+      context.setTransform(0, 1, -1, 0, sourceHeight, 0)
+    } else {
+      context.setTransform(0, -1, 1, 0, 0, sourceWidth)
+    }
+    context.drawImage(video, 0, 0, sourceWidth, sourceHeight)
+    return canvas
+  }, [])
   
-  // Pose detection hook - reduced FPS to prevent glitching
+  // MoveNet already applies temporal smoothing. Keep detection responsive and
+  // render every result instead of adding a second delayed smoothing layer.
   const {
     isLoading,
     isDetecting,
@@ -344,8 +415,9 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     startDetection,
     stopDetection,
   } = usePoseDetection({
-    modelType: 'lightning',
-    targetFps: 10, // Reduced to 10fps for smoother skeleton rendering
+    modelType: 'multipose',
+    targetFps: 20,
+    prepareVideoFrame,
     onShootingDetected: () => {
       console.log('[FullscreenLive] Shooting motion detected!')
       // Show shot flash and increment counter
@@ -384,34 +456,45 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     },
   })
 
-  // Throttle and smooth pose updates to reduce visual glitching
+  const poseDisplayDimensions = poseInputRotation === 'none'
+    ? videoDimensions
+    : { width: videoDimensions.height, height: videoDimensions.width }
+
   useEffect(() => {
-    if (pose) {
-      const now = Date.now()
-      if (now - lastPoseUpdateRef.current >= POSE_UPDATE_INTERVAL) {
-        // Apply heavy smoothing by interpolating between old and new pose
-        if (throttledPose && throttledPose.keypoints) {
-          const smoothingFactor = 0.6 // Higher = smoother but slower to respond
-          const smoothedKeypoints = pose.keypoints.map((kp: { x: number; y: number; score?: number; name?: string }, i: number) => {
-            const oldKp = throttledPose.keypoints[i]
-            if (oldKp && (kp.score ?? 0) > 0.2) {
-              return {
-                ...kp,
-                x: oldKp.x + (kp.x - oldKp.x) * (1 - smoothingFactor),
-                y: oldKp.y + (kp.y - oldKp.y) * (1 - smoothingFactor),
-              }
-            }
-            return kp
-          })
-          setThrottledPose({ ...pose, keypoints: smoothedKeypoints })
-        } else {
-          setThrottledPose(pose)
-        }
-        lastPoseUpdateRef.current = now
-      }
+    poseInputRotationRef.current = 'none'
+    poseOrientationAttemptRef.current = 0
+    poseOrientationLockedRef.current = false
+    setPoseInputRotation('none')
+  }, [isIOSWebPortrait, facingMode])
+
+  // Calibrate from pose geometry once per phone orientation/camera. An upright
+  // torso locks the current choice; a horizontal torso tries the measured
+  // direction and, at most once, its opposite direction.
+  useEffect(() => {
+    if (!isIOSWebPortrait || !pose || poseOrientationLockedRef.current) return
+
+    const torso = getTorsoOrientation(pose)
+    if (torso.alignment === 'vertical') {
+      poseOrientationLockedRef.current = true
+      return
     }
-  }, [pose, throttledPose])
-  
+    if (torso.alignment !== 'horizontal') return
+
+    const currentRotation = poseInputRotationRef.current
+    let nextRotation = torso.rotation
+
+    if (currentRotation !== 'none') {
+      if (poseOrientationAttemptRef.current >= 1) {
+        nextRotation = currentRotation === 'clockwise' ? 'counterclockwise' : 'clockwise'
+      }
+      if (poseOrientationAttemptRef.current >= 2) return
+    }
+
+    poseOrientationAttemptRef.current += 1
+    poseInputRotationRef.current = nextRotation
+    setPoseInputRotation(nextRotation)
+  }, [isIOSWebPortrait, pose])
+
   // Stabilize metrics - only update every 2.5 seconds so users can actually read them
   useEffect(() => {
     if (angles || feedback) {
@@ -575,9 +658,11 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
               .then(() => {
                 console.log('[FullscreenLive] Video playing')
                 
-                // Use track settings if available, otherwise fall back to video element dimensions
-                const actualWidth = settings?.width || video.videoWidth
-                const actualHeight = settings?.height || video.videoHeight
+                // MoveNet returns keypoints in the intrinsic HTMLVideoElement
+                // coordinate space. iPhone Safari can report different track
+                // settings, so the overlay must use videoWidth/videoHeight too.
+                const actualWidth = video.videoWidth || settings?.width || 640
+                const actualHeight = video.videoHeight || settings?.height || 480
                 
                 console.log('[FullscreenLive] Using dimensions:', actualWidth, 'x', actualHeight)
                 console.log('[FullscreenLive] Display orientation:', window.innerWidth > window.innerHeight ? 'landscape' : 'portrait')
@@ -719,11 +804,11 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
         videoRef.current.srcObject = stream
         await videoRef.current.play()
         
-        // Get actual track settings for more accurate dimensions
+        // Keep the overlay in MoveNet's intrinsic video coordinate space.
         const videoTrack = stream.getVideoTracks()[0]
         const settings = videoTrack?.getSettings()
-        const actualWidth = settings?.width || videoRef.current.videoWidth
-        const actualHeight = settings?.height || videoRef.current.videoHeight
+        const actualWidth = videoRef.current.videoWidth || settings?.width || 640
+        const actualHeight = videoRef.current.videoHeight || settings?.height || 480
         
         console.log('[FullscreenLive] Flip camera - dimensions:', actualWidth, 'x', actualHeight)
         
@@ -765,7 +850,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   
   // Keep refs updated
   useEffect(() => {
-    currentPoseRef.current = throttledPose
+    currentPoseRef.current = pose
     currentFeedbackRef.current = stableFeedback
     currentTipRef.current = stableFeedback?.tips?.[0] || null
     showSkeletonRef.current = showSkeleton
@@ -774,7 +859,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     showShotFlashRef.current = showShotFlash
     lastShotScoreRef.current = lastShotScore
     shotCountRef.current = shotCount
-  }, [throttledPose, stableFeedback, showSkeleton, selectedMetrics, stableAngles, showShotFlash, lastShotScore, shotCount])
+  }, [pose, stableFeedback, showSkeleton, selectedMetrics, stableAngles, showShotFlash, lastShotScore, shotCount])
   
   // Actual recording start (after countdown)
   const startActualRecording = useCallback(() => {
@@ -1565,7 +1650,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   // Get metric value by ID
   const getMetricValue = (metricId: MetricId): number | null => {
     switch (metricId) {
-      case 'form': return throttledPose ? formScore : null
+      case 'form': return pose ? formScore : null
       case 'elbow': return elbowAngle
       case 'knee': return kneeAngle
       case 'shoulder': return shoulderAngle
@@ -1623,9 +1708,11 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   // Render metrics bar (portrait - bottom) - DYNAMIC based on selection
   const renderMetricsBar = () => (
     <motion.div
+      role="region"
+      aria-label="Live shot metrics"
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="absolute bottom-0 left-0 right-0 bg-black/40 backdrop-blur-sm"
+      className="absolute bottom-0 left-0 right-0 z-20 bg-black/40 backdrop-blur-sm"
     >
       {/* AI Feedback - PROMINENT display */}
       <AnimatePresence>
@@ -1764,10 +1851,12 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   // Render controls
   const renderControls = () => (
     <motion.div
+      role="group"
+      aria-label="Live recording controls"
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       exit={{ y: 100, opacity: 0 }}
-      className={`absolute ${orientation === 'portrait' ? 'bottom-20' : 'bottom-0'} left-0 right-0 bg-black/60 backdrop-blur-sm`}
+      className={`absolute ${orientation === 'portrait' ? 'bottom-20' : 'bottom-0'} left-0 right-0 z-20 bg-black/60 backdrop-blur-sm`}
     >
       <div className="flex items-center justify-center gap-6 py-4 px-4">
         {/* Flip Camera */}
@@ -2030,12 +2119,21 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
         autoPlay
         playsInline
         muted
-        className={`w-full h-full object-cover ${facingMode === 'user' ? 'scale-x-[-1]' : ''}`}
+        className={`absolute inset-0 w-full h-full object-cover ${isIOSWebPortrait ? 'opacity-[0.001]' : ''} ${facingMode === 'user' ? 'scale-x-[-1]' : ''}`}
       />
 
-      {/* Skeleton Overlay - uses throttled pose to reduce glitching */}
+      {/* iPhone Safari: display the exact same normalized pixels MoveNet sees. */}
+      {isIOSWebPortrait && (
+        <canvas
+          ref={poseFrameCanvasRef}
+          data-camera-preview="normalized"
+          className={`absolute inset-0 z-[1] w-full h-full object-cover ${facingMode === 'user' ? 'scale-x-[-1]' : ''}`}
+        />
+      )}
+
+      {/* Skeleton Overlay - MoveNet supplies the temporally smoothed live pose */}
       <AnimatePresence>
-        {showSkeleton && throttledPose && (
+        {showSkeleton && pose && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -2045,9 +2143,9 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
             style={{ transform: facingMode === 'user' ? 'scaleX(-1)' : 'none' }}
           >
             <ProfessionalSkeletonOverlay
-              width={videoDimensions.width}
-              height={videoDimensions.height}
-              pose={throttledPose}
+              width={poseDisplayDimensions.width}
+              height={poseDisplayDimensions.height}
+              pose={pose}
               angles={angles}
               feedback={feedback}
               showAngles={true}
@@ -2118,7 +2216,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
 
       {/* Tap to show controls hint (when recording and controls hidden) */}
       {isRecording && !showControls && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/40 text-xs">
+        <div className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2 text-white/40 text-xs">
           Tap to show controls
         </div>
       )}

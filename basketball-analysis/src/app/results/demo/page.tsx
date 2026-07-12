@@ -1935,6 +1935,18 @@ function DemoResultsPageContent() {
   const [resultsMode, setResultsMode] = useState<ResultsMode>("image")
   const [isLoading, setIsLoading] = useState(false)
   const [showFabMenu, setShowFabMenu] = useState(false)
+  const videoUploadInputRef = useRef<HTMLInputElement>(null)
+
+  // iPhone Safari is unreliable when a floating label targets an off-screen
+  // file input. Keep the native input and open it synchronously from the user's
+  // actual tap so the browser recognizes the required user gesture.
+  const openVideoPicker = useCallback(() => {
+    const input = videoUploadInputRef.current
+    if (!input) return
+    input.value = ''
+    input.click()
+    setShowFabMenu(false)
+  }, [])
 
   // Processing screen state for 7-stage popup
   const [showProcessingScreen, setShowProcessingScreen] = useState(false)
@@ -2117,10 +2129,12 @@ function DemoResultsPageContent() {
               {/* Hidden file inputs for uploads */}
               <input
                 type="file"
-                accept="image/*"
+                id="shotiq-image-upload-input"
+                accept="image/*,.heic,.heif"
                 ref={(el) => { if (el) (window as any).__imageUploadInput = el }}
-                className="hidden"
+                className="sr-only"
                 onChange={async (e) => {
+                  setShowFabMenu(false)
                   const file = e.target.files?.[0]
                   console.log('📸 Image file selected:', file?.name, file?.size)
                   if (file) {
@@ -2206,10 +2220,12 @@ function DemoResultsPageContent() {
               />
               <input
                 type="file"
-                accept="video/*"
-                ref={(el) => { if (el) (window as any).__videoUploadInput = el }}
-                className="hidden"
+                id="shotiq-video-upload-input"
+                accept="video/*,.mov,.mp4"
+                ref={videoUploadInputRef}
+                className="sr-only"
                 onChange={async (e) => {
+                  setShowFabMenu(false)
                   const file = e.target.files?.[0]
                   console.log('📹 Video file selected:', file?.name, file?.size)
                   if (file) {
@@ -2351,27 +2367,22 @@ function DemoResultsPageContent() {
                       </button>
                       
                       {/* Upload Image */}
-                      <button
-                        onClick={() => {
-                          setShowFabMenu(false)
-                          ;(window as any).__imageUploadInput?.click()
-                        }}
-                        className="group flex items-center gap-3 bg-white/95 backdrop-blur-xl border border-slate-200 rounded-2xl pl-5 pr-3 py-2.5 shadow-xl transition-all duration-200 hover:bg-slate-50/95 hover:scale-[1.02] animate-in slide-in-from-bottom-2 fade-in duration-200 delay-75"
+                      <label
+                        htmlFor="shotiq-image-upload-input"
+                        className="group flex cursor-pointer items-center gap-3 bg-white/95 backdrop-blur-xl border border-slate-200 rounded-2xl pl-5 pr-3 py-2.5 shadow-xl transition-all duration-200 hover:bg-slate-50/95 hover:scale-[1.02] animate-in slide-in-from-bottom-2 fade-in duration-200 delay-75"
                         style={{ boxShadow: '0 8px 30px rgba(0,0,0,0.08)' }}
                       >
                         <span className="text-slate-700 text-sm font-bold whitespace-nowrap tracking-wide group-hover:text-slate-900">Upload Image</span>
                         <div className="w-9 h-9 bg-slate-100 rounded-xl flex items-center justify-center border border-slate-200 group-hover:bg-slate-200 transition-colors">
                           <ImageIcon className="w-4.5 h-4.5 text-slate-700" />
                         </div>
-                      </button>
+                      </label>
                       
                       {/* Upload Video */}
                       <button
-                        onClick={() => {
-                          setShowFabMenu(false)
-                          ;(window as any).__videoUploadInput?.click()
-                        }}
-                        className="group flex items-center gap-3 bg-white/95 backdrop-blur-xl border border-slate-200 rounded-2xl pl-5 pr-3 py-2.5 shadow-xl transition-all duration-200 hover:bg-slate-50/95 hover:scale-[1.02] animate-in slide-in-from-bottom-2 fade-in duration-200 delay-100"
+                        type="button"
+                        onClick={openVideoPicker}
+                        className="group flex cursor-pointer items-center gap-3 bg-white/95 backdrop-blur-xl border border-slate-200 rounded-2xl pl-5 pr-3 py-2.5 shadow-xl transition-all duration-200 hover:bg-slate-50/95 hover:scale-[1.02] animate-in slide-in-from-bottom-2 fade-in duration-200 delay-100"
                         style={{ boxShadow: '0 8px 30px rgba(0,0,0,0.08)' }}
                       >
                         <span className="text-slate-700 text-sm font-bold whitespace-nowrap tracking-wide group-hover:text-slate-900">Upload Video</span>
@@ -4315,20 +4326,17 @@ function ImageModeContent({ analysisData, playerName, poseConfidence, teaserFram
                 </p>
                 
                 {/* Upload button - visible on all devices */}
-                <button 
-                  onClick={() => isVideoMode 
-                    ? (window as any).__videoUploadInput?.click() 
-                    : (window as any).__imageUploadInput?.click()
-                  }
-                  className="inline-flex items-center gap-3 bg-black hover:bg-[#FF6B35] text-white font-bold px-10 py-4 rounded-full transition-all duration-300 shadow-xl hover:shadow-[#FF6B35]/30 hover:scale-105 group"
+                <label
+                  htmlFor={isVideoMode ? "shotiq-video-upload-input" : "shotiq-image-upload-input"}
+                  className="inline-flex cursor-pointer items-center gap-3 bg-black hover:bg-[#FF6B35] text-white font-bold px-10 py-4 rounded-full transition-all duration-300 shadow-xl hover:shadow-[#FF6B35]/30 hover:scale-105 group"
                 >
                   <Upload className="w-5 h-5 group-hover:animate-bounce" />
                   {isVideoMode ? "Choose Video" : "Choose Image"}
-                </button>
+                </label>
                 
                 {/* Supported formats */}
                 <p className="text-slate-300 text-xs mt-5 tracking-wide uppercase">
-                  {isVideoMode ? "MP4, MOV • Max 100MB" : "JPG, PNG, HEIC • Max 25MB"}
+                  {isVideoMode ? "MP4, MOV • Max 500MB" : "JPG, PNG, HEIC • Max 25MB"}
                 </p>
               </div>
             </div>

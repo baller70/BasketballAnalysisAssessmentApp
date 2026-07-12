@@ -25,6 +25,8 @@ export interface UsePoseDetectionOptions {
   autoStart?: boolean;
   /** Target FPS for detection loop */
   targetFps?: number;
+  /** Prepare a live video frame before it is passed to the pose model */
+  prepareVideoFrame?: (video: HTMLVideoElement) => HTMLVideoElement | HTMLCanvasElement;
   /** Callback when pose is detected */
   onPoseDetected?: (pose: Pose, angles: ShootingAngles, feedback: ShootingFormFeedback) => void;
   /** Callback when shooting motion is detected */
@@ -71,6 +73,7 @@ export function usePoseDetection(
     modelType = 'lightning',
     autoStart = false,
     targetFps = 30,
+    prepareVideoFrame,
     onPoseDetected,
     onShootingDetected,
   } = options;
@@ -149,8 +152,16 @@ export function usePoseDetection(
     frameCountRef.current++;
 
     try {
-      // Detect pose
-      const detectedPose = await poseDetectionService.detectPose(video);
+      // Normalize browser-specific camera pixels before model inference when
+      // requested. Images and ordinary video elements continue through as-is.
+      const detectionInput = prepareVideoFrame ? prepareVideoFrame(video) : video;
+      // Canvas-prepared iPhone frames do not carry HTMLVideoElement.currentTime.
+      // Pass the source timestamp explicitly so MoveNet's temporal filter keeps
+      // smoothing across calibrated frames.
+      const detectedPose = await poseDetectionService.detectPose(
+        detectionInput,
+        video.currentTime * 1000
+      );
 
       if (detectedPose) {
         setPose(detectedPose);
@@ -190,7 +201,7 @@ export function usePoseDetection(
     if (isDetectingRef.current) {
       animationFrameRef.current = requestAnimationFrame(runDetection);
     }
-  }, [targetFps, onPoseDetected, onShootingDetected]);
+  }, [targetFps, prepareVideoFrame, onPoseDetected, onShootingDetected]);
 
   // Start detection
   const startDetection = useCallback((videoElement: HTMLVideoElement) => {
@@ -288,8 +299,6 @@ export function usePoseDetection(
 }
 
 export default usePoseDetection;
-
-
 
 
 
