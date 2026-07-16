@@ -49,4 +49,3 @@ describe('updateSessionVideoCaptureIdentity', () => {
     expect(session.videoData).not.toHaveProperty('shotEvents')
   })
 })
-
