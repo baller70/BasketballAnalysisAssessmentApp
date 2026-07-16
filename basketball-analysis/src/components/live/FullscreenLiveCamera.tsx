@@ -10,7 +10,7 @@
 
 "use client"
 
-import React, { useState, useRef, useCallback, useEffect } from 'react'
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Circle, 
@@ -33,6 +33,7 @@ import {
 } from 'lucide-react'
 import { usePoseDetection } from '@/hooks/usePoseDetection'
 import { ProfessionalSkeletonOverlay } from './ProfessionalSkeletonOverlay'
+import { GuidedCaptureStatus } from './GuidedCaptureStatus'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import { useRouter } from 'next/navigation'
 import { getPlatformOS, isMobile } from '@/utils/platform'
@@ -41,6 +42,10 @@ import { usePoints } from '@/lib/points/pointsContext'
 import { saveSession, createSessionFromAnalysis } from '@/services/sessionStorage'
 import { addWatermarkToImage } from '@/lib/watermark'
 import { isCameraAvailable, requestCameraPermissions } from '@/services/capacitorCamera'
+import {
+  derivePoseCaptureObservation,
+  evaluateCaptureReadiness,
+} from '@/lib/capture/guidedCapture'
 
 // ============================================
 // TYPES
@@ -459,6 +464,26 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   const poseDisplayDimensions = poseInputRotation === 'none'
     ? videoDimensions
     : { width: videoDimensions.height, height: videoDimensions.width }
+
+  const captureReadiness = useMemo(() => {
+    const alignment = pose ? getTorsoOrientation(pose).alignment : 'unknown'
+    const captureOrientation = alignment === 'vertical'
+      ? 'upright'
+      : alignment === 'horizontal'
+        ? 'sideways'
+        : 'unknown'
+
+    return evaluateCaptureReadiness({
+      mode: 'form',
+      observation: derivePoseCaptureObservation({
+        cameraReady,
+        modelReady: !isLoading,
+        orientation: captureOrientation,
+        pose,
+        frameHeight: poseDisplayDimensions.height,
+      }),
+    })
+  }, [cameraReady, isLoading, pose, poseDisplayDimensions.height])
 
   useEffect(() => {
     poseInputRotationRef.current = 'none'
@@ -1291,8 +1316,10 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     setIsRecording(true)
   }, [capturedFrames, setVideoAnalysisData, videoDimensions])
 
-  // Start recording with countdown
-  const handleStartRecording = useCallback(() => {
+  // Start recording with countdown. This remains available as an explicit
+  // override so the existing record capability is never removed when the
+  // shooter needs to set the phone down and then step into frame.
+  const startRecordingCountdown = useCallback(() => {
     if (!streamRef.current || !videoRef.current) return
     
     // Start countdown
@@ -1343,6 +1370,11 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       startActualRecording()
     }, 3000)
   }, [audioFeedbackEnabled, startActualRecording])
+
+  const handleStartRecording = useCallback(() => {
+    if (!captureReadiness.ready) return
+    startRecordingCountdown()
+  }, [captureReadiness.ready, startRecordingCountdown])
 
   // Stop recording
   const handleStopRecording = useCallback(() => {
@@ -1891,9 +1923,10 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={isRecording ? handleStopRecording : handleStartRecording}
-          disabled={isLoading}
+          disabled={isLoading || (!isRecording && !captureReadiness.ready)}
+          aria-label={isRecording ? 'Stop recording' : captureReadiness.ready ? 'Start recording' : 'Recording unavailable until camera is ready'}
           className={`p-5 rounded-full transition-all ${
-            isLoading
+            isLoading || (!isRecording && !captureReadiness.ready)
               ? 'bg-white/10'
               : isRecording
               ? 'bg-red-500 hover:bg-red-600'
@@ -2060,6 +2093,15 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Guided Capture extends the existing Live screen without moving its controls. */}
+      {!isRecording && !showCountdown && (
+        <GuidedCaptureStatus
+          readiness={captureReadiness}
+          onRecordAnyway={startRecordingCountdown}
+          className="absolute left-1/2 top-16 z-40 w-[min(92vw,420px)] -translate-x-1/2"
+        />
+      )}
 
       {/* Recording indicator with time limit and shot counter */}
       {isRecording && (

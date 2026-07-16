@@ -83,7 +83,7 @@ export interface PoseProvider {
   /** Idempotent; safe to await repeatedly. */
   init(): Promise<void>
   isReady(): boolean
-  detectPose(input: PoseInput): Promise<ProviderKeypoint[] | null>
+  detectPose(input: PoseInput, timestampMs?: number): Promise<ProviderKeypoint[] | null>
   analyzeForm(keypoints: ProviderKeypoint[]): FormAnalysis
 }
 

@@ -155,14 +155,14 @@ export class MoveNetProvider implements PoseProvider {
   }
 
   isReady(): boolean {
-    return poseDetectionService.isReady()
+    return poseDetectionService.isReady(this.modelType)
   }
 
-  async detectPose(input: PoseInput): Promise<ProviderKeypoint[] | null> {
-    if (!poseDetectionService.isReady()) {
+  async detectPose(input: PoseInput, timestampMs?: number): Promise<ProviderKeypoint[] | null> {
+    if (!this.isReady()) {
       await this.init()
     }
-    const pose = await poseDetectionService.detectPose(input)
+    const pose = await poseDetectionService.detectPose(input, timestampMs)
     if (!pose) return null
 
     return pose.keypoints.map((kp, i) => ({

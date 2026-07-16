@@ -63,6 +63,13 @@ tests/
 scripts/
 config/
 
+# ShotIQ product specifications and automated tests are source-controlled.
+!basketball-analysis/docs/
+!basketball-analysis/docs/superpowers/
+!basketball-analysis/docs/superpowers/**
+!basketball-analysis/tests/
+!basketball-analysis/tests/**
+
 # Large files
 *.mp4
 *.mov

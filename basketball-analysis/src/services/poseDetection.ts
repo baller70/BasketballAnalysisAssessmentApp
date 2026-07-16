@@ -604,8 +604,8 @@ class PoseDetectionService {
   /**
    * Check if detector is ready
    */
-  isReady(): boolean {
-    return this.detector !== null;
+  isReady(modelType?: ModelType): boolean {
+    return this.detector !== null && (!modelType || this.modelType === modelType);
   }
 }
 
@@ -614,6 +614,5 @@ export const poseDetectionService = new PoseDetectionService();
 
 // Export class for testing
 export { PoseDetectionService };
-
 
 

@@ -10,28 +10,35 @@
 import { MoveNetProvider } from './MoveNetProvider'
 import { HybridApiProvider } from './HybridApiProvider'
 import type { PoseProvider, FormAnalysis, ProviderKeypoint } from './types'
+import type { ModelType } from '@/services/poseDetection'
 
 export * from './types'
 export { MoveNetProvider } from './MoveNetProvider'
 export { HybridApiProvider } from './HybridApiProvider'
+export { providerKeypointsToPose } from './conversions'
 
 export type PoseProviderId = 'movenet' | 'hybrid-api'
 
-let defaultProvider: PoseProvider | null = null
+const moveNetProviders = new Map<ModelType, PoseProvider>()
 
 /**
  * Returns a pose provider. With no argument (or 'movenet') you get the shared,
  * memoized on-device MoveNet provider — the canonical engine. Pass 'hybrid-api'
  * only if a server backend has been explicitly configured (experimental).
  */
-export function getPoseProvider(id: PoseProviderId = 'movenet'): PoseProvider {
+export function getPoseProvider(
+  id: PoseProviderId = 'movenet',
+  modelType: ModelType = 'lightning'
+): PoseProvider {
   if (id === 'hybrid-api') {
     return new HybridApiProvider()
   }
-  if (!defaultProvider) {
-    defaultProvider = new MoveNetProvider('lightning')
+  let provider = moveNetProviders.get(modelType)
+  if (!provider) {
+    provider = new MoveNetProvider(modelType)
+    moveNetProviders.set(modelType, provider)
   }
-  return defaultProvider
+  return provider
 }
 
 /** Load an image source (data URL, object URL, or http URL) into an element. */

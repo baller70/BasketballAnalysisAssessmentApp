@@ -5,7 +5,7 @@
  * Handles initialization, cleanup, and continuous detection loop.
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   poseDetectionService,
   type Pose,
@@ -13,6 +13,10 @@ import {
   type ShootingFormFeedback,
   type ModelType,
 } from '@/services/poseDetection';
+import {
+  getPoseProvider,
+  providerKeypointsToPose,
+} from '@/services/pose';
 
 // ============================================
 // TYPES
@@ -88,6 +92,14 @@ export function usePoseDetection(
   const [fps, setFps] = useState(0);
   const [isShootingDetected, setIsShootingDetected] = useState(false);
 
+  // All live frames use the same provider seam as image and uploaded-video
+  // analysis. The model selection remains configurable for multi-person live
+  // tracking, but callers no longer bypass the canonical adapter.
+  const poseProvider = useMemo(
+    () => getPoseProvider('movenet', modelType),
+    [modelType]
+  );
+
   // Refs
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const animationFrameRef = useRef<number | null>(null);
@@ -105,7 +117,7 @@ export function usePoseDetection(
       try {
         setIsLoading(true);
         setError(null);
-        await poseDetectionService.initialize(modelType);
+        await poseProvider.init();
         if (mounted) {
           setIsLoading(false);
         }
@@ -122,7 +134,7 @@ export function usePoseDetection(
     return () => {
       mounted = false;
     };
-  }, [modelType]);
+  }, [poseProvider]);
 
   // Detection loop
   const runDetection = useCallback(async () => {
@@ -158,10 +170,13 @@ export function usePoseDetection(
       // Canvas-prepared iPhone frames do not carry HTMLVideoElement.currentTime.
       // Pass the source timestamp explicitly so MoveNet's temporal filter keeps
       // smoothing across calibrated frames.
-      const detectedPose = await poseDetectionService.detectPose(
+      const detectedKeypoints = await poseProvider.detectPose(
         detectionInput,
         video.currentTime * 1000
       );
+      const detectedPose = detectedKeypoints
+        ? providerKeypointsToPose(detectedKeypoints)
+        : null;
 
       if (detectedPose) {
         setPose(detectedPose);
@@ -201,11 +216,11 @@ export function usePoseDetection(
     if (isDetectingRef.current) {
       animationFrameRef.current = requestAnimationFrame(runDetection);
     }
-  }, [targetFps, prepareVideoFrame, onPoseDetected, onShootingDetected]);
+  }, [targetFps, prepareVideoFrame, onPoseDetected, onShootingDetected, poseProvider]);
 
   // Start detection
   const startDetection = useCallback((videoElement: HTMLVideoElement) => {
-    if (isLoading || !poseDetectionService.isReady()) {
+    if (isLoading || !poseProvider.isReady()) {
       console.warn('[usePoseDetection] Model not ready');
       return;
     }
@@ -224,7 +239,7 @@ export function usePoseDetection(
 
     // Start detection loop
     runDetection();
-  }, [isLoading, runDetection]);
+  }, [isLoading, poseProvider, runDetection]);
 
   // Stop detection
   const stopDetection = useCallback(() => {
@@ -249,11 +264,14 @@ export function usePoseDetection(
   const detectSingleFrame = useCallback(async (
     input: HTMLImageElement | HTMLCanvasElement
   ) => {
-    if (!poseDetectionService.isReady()) {
+    if (!poseProvider.isReady()) {
       return { pose: null, angles: null, feedback: null };
     }
 
-    const detectedPose = await poseDetectionService.detectPose(input);
+    const detectedKeypoints = await poseProvider.detectPose(input);
+    const detectedPose = detectedKeypoints
+      ? providerKeypointsToPose(detectedKeypoints)
+      : null;
 
     if (!detectedPose) {
       return { pose: null, angles: null, feedback: null };
@@ -267,7 +285,7 @@ export function usePoseDetection(
       angles: calculatedAngles,
       feedback: formFeedback,
     };
-  }, []);
+  }, [poseProvider]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -299,7 +317,6 @@ export function usePoseDetection(
 }
 
 export default usePoseDetection;
-
 
 
 

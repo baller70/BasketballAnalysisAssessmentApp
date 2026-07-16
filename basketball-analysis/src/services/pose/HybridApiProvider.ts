@@ -57,7 +57,7 @@ export class HybridApiProvider implements PoseProvider {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- param documents the interface contract for this intentional stub
-  async detectPose(_input: PoseInput): Promise<ProviderKeypoint[] | null> {
+  async detectPose(_input: PoseInput, _timestampMs?: number): Promise<ProviderKeypoint[] | null> {
     // Stub: a real implementation would POST the frame to `${baseUrl}/api/detect-pose`.
     // Left unimplemented on purpose so this provider can never silently become
     // the active engine.
