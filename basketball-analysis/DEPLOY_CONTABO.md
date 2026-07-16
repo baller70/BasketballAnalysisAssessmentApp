@@ -17,6 +17,28 @@ standalone apps on this box (each app: own `/opt/<app>`, own `ecosystem.config.j
 - Node 20 + npm, PM2 (`npm i -g pm2`), Docker, and Caddy installed and running.
 - SSH access: `ssh contabo` (or `ssh root@194.146.12.139`).
 
+### Release validation matrix
+
+Before deploying a vision change, run the public benchmark fixture and the
+full release gates from `basketball-analysis/`:
+
+```bash
+npx vitest run tests/lib/vision/benchmark.test.ts
+npx tsc --noEmit
+npm run lint
+npm test
+npm run build
+```
+
+Validate the live capture path on both Safari web and the native iPhone shell.
+The minimum device matrix is iPhone 11 and iPhone 12, each tested in portrait
+and landscape with the front and rear cameras. Record the capture source,
+orientation, pose model, observed FPS, pose completeness, shot precision and
+recall, make/miss accuracy, and phase error for every run. Use consented or
+synthetic public fixtures only; private player footage must stay out of the
+repository. Do not deploy until the benchmark, type-check, lint, test, and
+production-build gates all pass.
+
 ---
 
 ## 1. Get the code into `/opt/shotiq`

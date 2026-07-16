@@ -50,7 +50,9 @@ jobs:
 
       - name: Lint
         run: npm run lint
-        continue-on-error: true
+
+      - name: Public benchmark fixtures
+        run: npx vitest run tests/lib/vision/benchmark.test.ts
 
       - name: Test
         run: npx vitest run
