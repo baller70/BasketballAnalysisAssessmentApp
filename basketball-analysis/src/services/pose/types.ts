@@ -59,7 +59,17 @@ export interface CanonicalAngles {
  * empty/error state rather than a number.
  */
 export interface FormAnalysis {
+  /**
+   * Confidence-gated angles exposed to scoring and UI. A missing/low-confidence
+   * landmark is represented as null and must not be treated as a measurement.
+   */
   angles: CanonicalAngles
+  /**
+   * Raw angle derivations retained only for diagnostics/provenance. Consumers
+   * must never render or score these values directly; use `angles` or the
+   * confidence gate's `mechanics.trusted` map instead.
+   */
+  untrustedAngles?: CanonicalAngles
   scores: BiomechanicalScores
   status: Record<JointName, JointStatus>
   /** Alias of scores.overallScore; null when no joints were measured. */

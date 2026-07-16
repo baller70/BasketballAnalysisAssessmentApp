@@ -27,6 +27,7 @@ const provider = {
 vi.mock('@/services/pose', () => ({
   getPoseProvider: vi.fn(() => provider),
   providerKeypointsToPose: (keypoints: typeof points) => ({ keypoints }),
+  trustedAnglesFromForm: (form: typeof canonicalForm) => form.angles,
 }))
 vi.mock('@/services/poseDetection', () => ({
   poseDetectionService: {

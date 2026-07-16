@@ -206,10 +206,16 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
 
   const getPhaseColor = (phase: string) => {
     switch (phase) {
-      case 'SETUP': return 'bg-blue-500'
-      case 'RISE': return 'bg-orange-500'
-      case 'RELEASE': return 'bg-green-500'
-      case 'FOLLOW_THROUGH': return 'bg-purple-500'
+      case 'SETUP':
+      case 'gather':
+      case 'set': return 'bg-blue-500'
+      case 'RISE':
+      case 'rise': return 'bg-orange-500'
+      case 'RELEASE':
+      case 'release': return 'bg-green-500'
+      case 'FOLLOW_THROUGH':
+      case 'follow-through':
+      case 'flight': return 'bg-purple-500'
       default: return 'bg-gray-500'
     }
   }

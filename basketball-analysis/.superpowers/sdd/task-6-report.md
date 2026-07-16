@@ -34,3 +34,34 @@
 - `npm test -- --run`: **39 tests passed across 12 files**.
 - `npx tsc --noEmit --pretty false`: **passed**.
 - `npx eslint src/services/pose/types.ts src/services/pose/MoveNetProvider.ts src/lib/vision/confidenceGate.ts src/services/vision/NativeVisionAdapter.ts src/services/pose/index.ts src/services/videoAnalysis.ts src/hooks/usePoseDetection.ts`: **passed**.
+
+## Confidence/phase consumer hardening
+
+- MoveNet now exposes confidence-gated canonical angles to scoring and UI. Raw
+  angle derivations are retained only in the explicit `untrustedAngles` field;
+  omitted mechanics remain null and contribute no score or legacy feedback.
+- `usePoseDetection` and `formAnglesToRecord` consume the gate's trusted map,
+  preventing a low-confidence numeric angle from reaching live overlays, flaw
+  records, or coaching feedback.
+- Uploaded-video frame records, key screenshots, phase summaries, and session
+  conversion now propagate `canonicalObservation.phase` plus the mechanics
+  sidecar. The previous `phaseForIndex` label is retained as `legacy_phase` for
+  compatibility, never as the canonical phase. Raw release/frame derivations
+  are available only as explicit untrusted metadata.
+- Added focused omission and phase-propagation tests for MoveNet, the canonical
+  angle record helper, and uploaded-video frame serialization.
+
+## Consumer hardening verification
+
+- Focused confidence/phase/video/live tests: **9 passed across 5 files**.
+- Full Vitest suite: **42 tests passed across 14 files**.
+- `npx tsc --noEmit --pretty false`: **passed**.
+
+## Remaining concerns
+
+- Session storage still uses a numeric overall-score field for legacy
+  compatibility. A video with no trusted release mechanics yields a null
+  `metrics.release_score` and therefore a zero compatibility score in the
+  session adapter; the trusted angle/score records themselves remain omitted.
+- Canonical phases are lower-case domain states; the upload preview maps both
+  canonical and legacy labels to the existing colors.

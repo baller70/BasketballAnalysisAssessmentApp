@@ -16,6 +16,7 @@ import {
 import {
   getPoseProvider,
   providerKeypointsToPose,
+  trustedAnglesFromForm,
   type FormAnalysis,
 } from '@/services/pose';
 import { selectRuntimePoseProviderId } from '@/services/pose/runtime';
@@ -196,13 +197,14 @@ export function usePoseDetection(
         // full gated mechanics + shot phase metadata to newer consumers.
         const canonicalAnalysis = poseProvider.analyzeForm(detectedKeypoints!, timestampMs);
         setAnalysis(canonicalAnalysis);
+        const trustedAngles = trustedAnglesFromForm(canonicalAnalysis);
         const calculatedAngles: ShootingAngles = {
-          elbowAngle: canonicalAnalysis.angles.elbow,
-          kneeAngle: canonicalAnalysis.angles.knee,
-          shoulderAngle: canonicalAnalysis.angles.shoulder,
-          hipAngle: canonicalAnalysis.angles.hip,
-          releaseAngle: canonicalAnalysis.angles.release,
-          wristAngle: canonicalAnalysis.angles.wrist,
+          elbowAngle: trustedAngles.elbow,
+          kneeAngle: trustedAngles.knee,
+          shoulderAngle: trustedAngles.shoulder,
+          hipAngle: trustedAngles.hip,
+          releaseAngle: trustedAngles.release,
+          wristAngle: trustedAngles.wrist,
         };
         setAngles(calculatedAngles);
 
@@ -305,13 +307,14 @@ export function usePoseDetection(
     }
 
     const canonicalAnalysis = poseProvider.analyzeForm(detectedKeypoints!);
+    const trustedAngles = trustedAnglesFromForm(canonicalAnalysis);
     const calculatedAngles: ShootingAngles = {
-      elbowAngle: canonicalAnalysis.angles.elbow,
-      kneeAngle: canonicalAnalysis.angles.knee,
-      shoulderAngle: canonicalAnalysis.angles.shoulder,
-      hipAngle: canonicalAnalysis.angles.hip,
-      releaseAngle: canonicalAnalysis.angles.release,
-      wristAngle: canonicalAnalysis.angles.wrist,
+      elbowAngle: trustedAngles.elbow,
+      kneeAngle: trustedAngles.knee,
+      shoulderAngle: trustedAngles.shoulder,
+      hipAngle: trustedAngles.hip,
+      releaseAngle: trustedAngles.release,
+      wristAngle: trustedAngles.wrist,
     };
     const formFeedback = poseDetectionService.analyzeShootingForm(calculatedAngles);
 

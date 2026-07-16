@@ -89,4 +89,16 @@ describe('MoveNetProvider canonical live seam', () => {
     expect(form.mechanics?.omitted.elbow.reasonCode).toBe('missing-landmarks')
     expect(form.mechanics?.trusted.elbow).toBeUndefined()
   })
+
+  it('omits low-confidence mechanics from canonical angles and scoring', () => {
+    const provider = new MoveNetProvider()
+    const lowConfidence = keypoints.map(point => ({ ...point, score: 0.1 }))
+    const form = provider.analyzeForm(lowConfidence)
+
+    expect(form.untrustedAngles?.elbow).toBe(160)
+    expect(form.mechanics?.omitted.elbow.reasonCode).toBe('low-confidence')
+    expect(form.angles.elbow).toBeNull()
+    expect(form.scores.perJoint.elbow).toBeUndefined()
+    expect(form.scores.overallScore).toBeNull()
+  })
 })

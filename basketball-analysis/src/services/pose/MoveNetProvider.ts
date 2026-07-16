@@ -225,7 +225,7 @@ export class MoveNetProvider implements PoseProvider {
     const pose: Pose = { keypoints: ordered }
 
     const measured = poseDetectionService.calculateShootingAngles(pose)
-    const angles: CanonicalAngles = {
+    const untrustedAngles: CanonicalAngles = {
       elbow: measured.elbowAngle,
       knee: measured.kneeAngle,
       shoulder: measured.shoulderAngle,
@@ -234,20 +234,33 @@ export class MoveNetProvider implements PoseProvider {
       wrist: measured.wristAngle,
     }
 
-    // Deterministic scoring — the single source of truth for the numbers shown.
-    const scores = scoreShootingForm(angles)
-
     // Every adapter frame now carries one canonical, confidence-aware mechanics
-    // record. The angle scorer remains unchanged; this sidecar determines which
-    // values may be shown as trusted feedback and why others were omitted.
+    // record. The gate determines which values may be shown as trusted
+    // feedback and why others were omitted.
     const mechanics: MechanicsGateResult = gateMechanicsMeasurements({
-      angles,
+      angles: untrustedAngles,
       keypoints,
       minConfidence: MIN_SIGNAL_SCORE,
       // Keep every derived metric on the side selected by the angle engine.
       // The gate intentionally does not guess a different side per landmark.
       requiredLandmarks: sideSpecificMechanicsLandmarks(shootingSide(keypoints)),
     })
+
+    // Only confidence-gated measurements may flow into scoring or legacy UI
+    // adapters. Keep the model's raw derivation in explicit provenance metadata
+    // so diagnostics can explain an omission without accidentally displaying it
+    // as a trusted mechanic.
+    const angles: CanonicalAngles = {
+      elbow: mechanics.trusted.elbow ?? null,
+      knee: mechanics.trusted.knee ?? null,
+      shoulder: mechanics.trusted.shoulder ?? null,
+      hip: mechanics.trusted.hip ?? null,
+      release: mechanics.trusted.release ?? null,
+      wrist: mechanics.trusted.wrist ?? null,
+    }
+
+    // Deterministic scoring — the single source of truth for the numbers shown.
+    const scores = scoreShootingForm(angles)
 
     const phaseObservation = observationFromKeypoints(
       keypoints,
@@ -270,10 +283,19 @@ export class MoveNetProvider implements PoseProvider {
     // Reuse the existing coaching-tip generation for the human-readable advice
     // (the numeric overallScore there is intentionally ignored in favour of the
     // biomechanical score above).
-    const tips = poseDetectionService.analyzeShootingForm(measured).tips
+    const trustedLegacyAngles = {
+      elbowAngle: angles.elbow,
+      kneeAngle: angles.knee,
+      shoulderAngle: angles.shoulder,
+      hipAngle: angles.hip,
+      releaseAngle: angles.release,
+      wristAngle: angles.wrist,
+    }
+    const tips = poseDetectionService.analyzeShootingForm(trustedLegacyAngles).tips
 
     return {
       angles,
+      untrustedAngles,
       scores,
       status,
       overallScore: scores.overallScore,

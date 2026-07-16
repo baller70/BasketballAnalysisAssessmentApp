@@ -29,8 +29,11 @@
 import {
   getPoseProvider,
   keypointsToRecord,
+  trustedAnglesFromForm,
   type ProviderKeypoint,
   type FormAnalysis,
+  type CanonicalAngles,
+  type CanonicalVisionObservation,
 } from '@/services/pose'
 import type { MechanicsGateResult } from '@/lib/vision/confidenceGate'
 import {
@@ -49,6 +52,9 @@ export interface KeyScreenshot {
   label: string  // SETUP, RELEASE, FOLLOW_THROUGH
   frame_index: number
   phase: string
+  /** Legacy uppercase phase label retained for old result cards. */
+  legacy_phase?: string
+  canonicalObservation?: CanonicalVisionObservation
   metrics: Record<string, number>
   keypoints: Record<string, { x: number; y: number; confidence: number }>
   image_base64: string
@@ -74,7 +80,12 @@ export interface VideoAnalysisResult {
     phase: string
     frame: number
     timestamp: number
+    legacy_phase?: string
+    canonicalObservation?: CanonicalVisionObservation
   }>
+
+  /** Canonical sidecar for the selected release frame, when available. */
+  canonicalObservation?: CanonicalVisionObservation
 
   metrics?: {
     elbow_angle_range: {
@@ -92,20 +103,15 @@ export interface VideoAnalysisResult {
     release_score: number | null
     /** Loosely-keyed canonical angles for the release frame (for the flaw engine). */
     release_angles: Record<string, number>
+    /** Raw derivations are retained only as explicit untrusted provenance. */
+    release_untrusted_angles?: CanonicalAngles
     /** Optional confidence-gated mechanics for consumers that need provenance. */
     release_mechanics?: MechanicsGateResult
+    /** Canonical phase/mechanics sidecar for the release frame. */
+    canonicalObservation?: CanonicalVisionObservation
   }
 
-  frame_data?: Array<{
-    frame: number
-    timestamp: number
-    phase: string
-    metrics: Record<string, number>
-    keypoint_count: number
-    ball_detected: boolean
-    keypoints?: Record<string, { x: number; y: number; confidence: number }>
-    mechanics?: MechanicsGateResult
-  }>
+  frame_data?: VideoFrameRecord[]
 
   all_keypoints?: Array<Record<string, { x: number; y: number; confidence: number }>>
 
@@ -158,6 +164,50 @@ interface SampledFrame {
   keypoints: ProviderKeypoint[] | null
   form: FormAnalysis | null
   imageBase64: string
+}
+
+export interface VideoFrameRecord {
+  frame: number
+  timestamp: number
+  /** Canonical provider phase; legacy phase labels live in `legacy_phase`. */
+  phase: string
+  legacy_phase?: string
+  metrics: Record<string, number>
+  keypoint_count: number
+  ball_detected: boolean
+  keypoints?: Record<string, { x: number; y: number; confidence: number }>
+  mechanics?: MechanicsGateResult
+  canonicalObservation?: CanonicalVisionObservation
+  untrustedAngles?: CanonicalAngles
+}
+
+/**
+ * Serialize one sampled frame without promoting raw, low-confidence angles to
+ * the numeric metrics consumed by uploaded-video UI. The canonical provider's
+ * phase and mechanics sidecar are carried through unchanged.
+ */
+export function buildVideoFrameRecord(
+  frame: SampledFrame,
+  legacyPhase: string,
+): VideoFrameRecord {
+  const trusted = frame.form ? trustedAnglesFromForm(frame.form) : null
+  const metrics: Record<string, number> = {}
+  if (trusted?.elbow != null) metrics.elbow_angle = Math.round(trusted.elbow)
+  if (trusted?.knee != null) metrics.knee_angle = Math.round(trusted.knee)
+
+  return {
+    frame: frame.index,
+    timestamp: frame.timestamp,
+    phase: frame.form?.canonicalObservation?.phase ?? legacyPhase,
+    legacy_phase: legacyPhase,
+    metrics,
+    keypoint_count: frame.keypoints?.length ?? 0,
+    ball_detected: false,
+    keypoints: frame.keypoints ? keypointsToRecord(frame.keypoints) : undefined,
+    mechanics: frame.form?.mechanics,
+    canonicalObservation: frame.form?.canonicalObservation,
+    untrustedAngles: frame.form?.untrustedAngles,
+  }
 }
 
 /**
@@ -283,23 +333,7 @@ export async function analyzeVideoShooting(
     }
 
     // Per-frame metric/keypoint records.
-    const frame_data = frames.map((f) => {
-      const elbow = f.form?.angles.elbow
-      const knee = f.form?.angles.knee
-      const metrics: Record<string, number> = {}
-      if (elbow != null) metrics.elbow_angle = Math.round(elbow)
-      if (knee != null) metrics.knee_angle = Math.round(knee)
-      return {
-        frame: f.index,
-        timestamp: f.timestamp,
-        phase: phaseForIndex(f.index),
-        metrics,
-        keypoint_count: f.keypoints?.length ?? 0,
-        ball_detected: false,
-        keypoints: f.keypoints ? keypointsToRecord(f.keypoints) : undefined,
-        mechanics: f.form?.mechanics,
-      }
-    })
+    const frame_data = frames.map((f) => buildVideoFrameRecord(f, phaseForIndex(f.index)))
 
     const all_keypoints = frames.map((f) =>
       f.keypoints ? keypointsToRecord(f.keypoints) : {}
@@ -307,23 +341,24 @@ export async function analyzeVideoShooting(
 
     // Aggregate elbow/knee ranges across detected frames.
     const elbowValues = detected
-      .map((f) => f.form!.angles.elbow)
+      .map((f) => trustedAnglesFromForm(f.form!).elbow)
       .filter((v): v is number => v != null)
     const kneeValues = detected
-      .map((f) => f.form!.angles.knee)
+      .map((f) => trustedAnglesFromForm(f.form!).knee)
       .filter((v): v is number => v != null)
 
     const releaseFrame = frames[releaseIdx] ?? detected[0]
     const releaseForm = releaseFrame.form ?? detected[0].form!
+    const releaseTrustedAngles = trustedAnglesFromForm(releaseForm)
 
     // Real, deterministic release-frame score + angle record (no base 75).
     const releaseAnglesInput: ShootingAnglesInput = {
-      elbow: releaseForm.angles.elbow,
-      knee: releaseForm.angles.knee,
-      shoulder: releaseForm.angles.shoulder,
-      hip: releaseForm.angles.hip,
-      release: releaseForm.angles.release,
-      wrist: releaseForm.angles.wrist,
+      elbow: releaseTrustedAngles.elbow,
+      knee: releaseTrustedAngles.knee,
+      shoulder: releaseTrustedAngles.shoulder,
+      hip: releaseTrustedAngles.hip,
+      release: releaseTrustedAngles.release,
+      wrist: releaseTrustedAngles.wrist,
     }
     const releaseScores = scoreShootingForm(releaseAnglesInput)
 
@@ -333,24 +368,30 @@ export async function analyzeVideoShooting(
       release_angles[`${joint}_angle`] = Math.round(v)
       release_angles[`right_${joint}_angle`] = Math.round(v)
     }
-    putAngle('elbow', releaseForm.angles.elbow)
-    putAngle('knee', releaseForm.angles.knee)
-    putAngle('shoulder', releaseForm.angles.shoulder)
-    putAngle('hip', releaseForm.angles.hip)
-    if (releaseForm.angles.release != null) release_angles['release_angle'] = Math.round(releaseForm.angles.release)
-    if (releaseForm.angles.wrist != null) release_angles['wrist_angle'] = Math.round(releaseForm.angles.wrist)
+    putAngle('elbow', releaseTrustedAngles.elbow)
+    putAngle('knee', releaseTrustedAngles.knee)
+    putAngle('shoulder', releaseTrustedAngles.shoulder)
+    putAngle('hip', releaseTrustedAngles.hip)
+    if (releaseTrustedAngles.release != null) release_angles['release_angle'] = Math.round(releaseTrustedAngles.release)
+    if (releaseTrustedAngles.wrist != null) release_angles['wrist_angle'] = Math.round(releaseTrustedAngles.wrist)
+
+    const release_untrusted_angles = releaseForm.untrustedAngles
 
     const buildScreenshot = (label: string, idx: number): KeyScreenshot => {
       const f = frames[idx] ?? detected[0]
-      const elbow = f.form?.angles.elbow
-      const knee = f.form?.angles.knee
+      const trusted = f.form ? trustedAnglesFromForm(f.form) : null
+      const elbow = trusted?.elbow
+      const knee = trusted?.knee
+      const canonicalObservation = f.form?.canonicalObservation
       const metrics: Record<string, number> = {}
       if (elbow != null) metrics.elbow_angle = Math.round(elbow)
       if (knee != null) metrics.knee_angle = Math.round(knee)
       return {
         label,
         frame_index: f.index,
-        phase: label,
+        phase: canonicalObservation?.phase ?? label,
+        legacy_phase: label,
+        canonicalObservation,
         metrics,
         keypoints: f.keypoints ? keypointsToRecord(f.keypoints) : {},
         image_base64: f.imageBase64,
@@ -363,10 +404,17 @@ export async function analyzeVideoShooting(
       buildScreenshot('FOLLOW_THROUGH', followIdx),
     ]
 
+    const phaseRecord = (legacyPhase: string, idx: number) => ({
+      phase: frames[idx]?.form?.canonicalObservation?.phase ?? legacyPhase,
+      frame: idx,
+      timestamp: frames[idx]?.timestamp ?? 0,
+      legacy_phase: legacyPhase,
+      canonicalObservation: frames[idx]?.form?.canonicalObservation,
+    })
     const phases = [
-      { phase: 'SETUP', frame: setupIdx, timestamp: frames[setupIdx]?.timestamp ?? 0 },
-      { phase: 'RELEASE', frame: releaseIdx, timestamp: frames[releaseIdx]?.timestamp ?? 0 },
-      { phase: 'FOLLOW_THROUGH', frame: followIdx, timestamp: frames[followIdx]?.timestamp ?? 0 },
+      phaseRecord('SETUP', setupIdx),
+      phaseRecord('RELEASE', releaseIdx),
+      phaseRecord('FOLLOW_THROUGH', followIdx),
     ]
 
     return {
@@ -387,7 +435,7 @@ export async function analyzeVideoShooting(
         elbow_angle_range: {
           min: elbowValues.length ? Math.round(Math.min(...elbowValues)) : null,
           max: elbowValues.length ? Math.round(Math.max(...elbowValues)) : null,
-          at_release: releaseForm.angles.elbow != null ? Math.round(releaseForm.angles.elbow) : null,
+          at_release: releaseTrustedAngles.elbow != null ? Math.round(releaseTrustedAngles.elbow) : null,
         },
         knee_angle_range: {
           min: kneeValues.length ? Math.round(Math.min(...kneeValues)) : null,
@@ -397,12 +445,15 @@ export async function analyzeVideoShooting(
         release_timestamp: frames[releaseIdx]?.timestamp ?? 0,
         release_score: releaseScores.overallScore,
         release_angles,
+        release_untrusted_angles,
         release_mechanics: releaseForm.mechanics,
+        canonicalObservation: releaseForm.canonicalObservation,
       },
       frame_data,
       all_keypoints,
       key_screenshots,
       shot_range: { start: setupIdx, end: followIdx, phases: ['SETUP', 'RELEASE', 'FOLLOW_THROUGH'] },
+      canonicalObservation: releaseForm.canonicalObservation,
     }
   } catch (error) {
     console.error('Video analysis error:', error)
@@ -433,6 +484,8 @@ export function convertVideoToSessionFormat(
   strengths: string[]
   improvements: string[]
   mechanics?: MechanicsGateResult
+  canonicalObservation?: CanonicalVisionObservation
+  untrustedAngles?: CanonicalAngles
 } {
   const metrics = videoResult.metrics
 
@@ -501,6 +554,8 @@ export function convertVideoToSessionFormat(
     strengths,
     improvements,
     mechanics: metrics?.release_mechanics,
+    canonicalObservation: metrics?.canonicalObservation ?? videoResult.canonicalObservation,
+    untrustedAngles: metrics?.release_untrusted_angles,
   }
 }
 

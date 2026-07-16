@@ -10,7 +10,12 @@
 import { MoveNetProvider } from './MoveNetProvider'
 import { HybridApiProvider } from './HybridApiProvider'
 import { NativeVisionAdapter } from '@/services/vision/NativeVisionAdapter'
-import type { PoseProvider, FormAnalysis, ProviderKeypoint } from './types'
+import type {
+  PoseProvider,
+  FormAnalysis,
+  ProviderKeypoint,
+  CanonicalAngles,
+} from './types'
 import type { ModelType } from '@/services/poseDetection'
 
 export * from './types'
@@ -129,6 +134,25 @@ export function keypointsToRecord(
 }
 
 /**
+ * Return only confidence-gated mechanics for legacy consumers. When a form
+ * carries a gate, omitted values are deliberately null even if the provider
+ * retained a raw derivation in `untrustedAngles`. Forms produced by older
+ * providers without a gate are treated as already trusted for compatibility.
+ */
+export function trustedAnglesFromForm(form: FormAnalysis): CanonicalAngles {
+  if (!form.mechanics) return { ...form.angles }
+  const trusted = form.mechanics.trusted
+  return {
+    elbow: trusted.elbow ?? null,
+    knee: trusted.knee ?? null,
+    shoulder: trusted.shoulder ?? null,
+    hip: trusted.hip ?? null,
+    release: trusted.release ?? null,
+    wrist: trusted.wrist ?? null,
+  }
+}
+
+/**
  * Convert canonical angles into the loosely-keyed `Record<string,number>` the
  * flaw engine (detectFlawsFromAngles) and screenshot overlays read. Emits both
  * generic (`elbow_angle`) and right-side-prefixed (`right_elbow_angle`) keys so
@@ -140,7 +164,7 @@ export function keypointsToRecord(
  * confidently-detected signals are emitted — nothing is fabricated.
  */
 export function formAnglesToRecord(form: FormAnalysis): Record<string, number> {
-  const a = form.angles
+  const a = trustedAnglesFromForm(form)
   const out: Record<string, number> = {}
   const put = (joint: string, value: number | null) => {
     if (value === null || Number.isNaN(value)) return
