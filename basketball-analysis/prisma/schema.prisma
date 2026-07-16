@@ -89,6 +89,8 @@ model UserProfile {
   earnedBadges          EarnedBadge[]
   challenges            UserChallenge[]
   captureSessions       CaptureSession[]
+  shotEvents            ShotEvent[]
+  shotCorrections       ShotEventCorrection[]
   
   // Indexes
   @@index([experienceLevel], name: "idx_user_experience")
@@ -126,6 +128,7 @@ model CaptureSession {
 
   userProfile       UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
   observations      CaptureSessionObservation[]
+  shotEvents        ShotEvent[]
 
   @@index([userProfileId], name: "idx_capture_session_user")
   @@index([createdAt], name: "idx_capture_session_created")
@@ -152,6 +155,65 @@ model CaptureSessionObservation {
 
   @@index([captureSessionId, timestampMs], name: "idx_capture_observation_time")
   @@map("capture_session_observations")
+}
+
+// ============================================
+// SHOT EVENTS (Detected attempts in a reviewable capture)
+// ============================================
+// A shot event is the immutable detector output for one attempt. Corrections
+// are appended to this row rather than mutating the detector output, so model
+// quality and human review can be compared later.
+model ShotEvent {
+  id                String    @id @default(cuid())
+  userProfileId     String    @map("user_profile_id")
+  captureSessionId  String?   @map("capture_session_id")
+
+  sequence          Int?
+  timestampMs       Int?      @map("timestamp_ms")
+  startFrame        Int?      @map("start_frame")
+  endFrame          Int?      @map("end_frame")
+  thumbnailUrl      String?   @map("thumbnail_url") @db.Text
+  detected          Boolean   @default(true)
+  detectedResult    String?   @map("detected_result") @db.VarChar(10) // make|miss|unknown
+  detectedShooter   String?   @map("detected_shooter") @db.VarChar(255)
+  detectedPhase     String?   @map("detected_phase") @db.VarChar(50)
+  phaseMarkers      Json?     @map("phase_markers")
+  metadata          Json?
+
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  userProfile       UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  captureSession    CaptureSession? @relation(fields: [captureSessionId], references: [id], onDelete: Cascade)
+  corrections       ShotEventCorrection[]
+
+  @@index([userProfileId, createdAt], name: "idx_shot_event_user_created")
+  @@index([captureSessionId, timestampMs], name: "idx_shot_event_session_time")
+  @@map("shot_events")
+}
+
+// ============================================
+// SHOT EVENT CORRECTIONS (Append-only human review)
+// ============================================
+model ShotEventCorrection {
+  id                String    @id @default(cuid())
+  shotEventId       String    @map("shot_event_id")
+  userProfileId     String    @map("user_profile_id")
+
+  // Canonical kinds: false_shot, make_miss, shooter, phase.
+  kind              String    @db.VarChar(30)
+  value             Json
+  timestampMs       Int?      @map("timestamp_ms")
+  frameIndex        Int?      @map("frame_index")
+  reason            String?   @db.Text
+  createdAt         DateTime  @default(now()) @map("created_at")
+
+  shotEvent         ShotEvent @relation(fields: [shotEventId], references: [id], onDelete: Cascade)
+  userProfile       UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+
+  @@index([shotEventId, createdAt], name: "idx_shot_correction_event_created")
+  @@index([userProfileId, createdAt], name: "idx_shot_correction_user_created")
+  @@map("shot_event_corrections")
 }
 
 // ============================================

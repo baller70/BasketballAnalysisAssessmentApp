@@ -12,6 +12,7 @@ import { EnhancedShotStrip } from "@/components/analysis/EnhancedShotStrip"
 import { AutoScreenshots } from "@/components/analysis/AutoScreenshots"
 import { AnalysisProgressScreen, type InputType } from "@/components/analysis/AnalysisProgressScreen"
 import { VideoPlayerSection } from "@/components/analysis/VideoPlayerSection"
+import { ShotReviewTimeline, type ShotReviewEvent } from "@/components/analysis/ShotReviewTimeline"
 import { LiveAnalysis, FullscreenLiveCamera } from "@/components/live"
 import { GoalTransitMap } from "@/components/goals"
 import { User, Upload, Check, X, Image as ImageIcon, Video, BookOpen, Users, Search, BarChart3, Award, ArrowRight, Zap, Trophy, Target, ClipboardList, Flame, Dumbbell, CircleDot, Share2, Download, Copy, Twitter, Facebook, Linkedin, ChevronLeft, ChevronRight, Calendar, ChevronDown, ChevronUp, AlertTriangle, Lightbulb, Plus, Eye, EyeOff, Layers, GitBranch, Circle, Tag, Camera, Play, Info, TrendingUp, Shirt, Medal, Timer, Footprints, ArrowLeftRight, Move, Instagram, MessageCircle, Globe, Clock, PieChart, Grid3X3, Activity, MoreVertical, Radio, Star, Crown, MapPin, SlidersHorizontal, Filter, FolderOpen, Home } from "lucide-react"
@@ -3827,6 +3828,39 @@ function VideoModeContent({ videoData, analysisData, playerName, poseConfidence,
     // Fall back to passed visionAnalysis if available
     return visionAnalysis
   }, [releaseKeypoints, releaseBall, releaseMetrics, visionAnalysis])
+
+  // Normalize detector phase output into the review timeline's small, stable
+  // event shape. Persisted shot events (when supplied by the API) are used as
+  // is; older video analyses continue to get a useful local review timeline.
+  const reviewEvents = useMemo<ShotReviewEvent[]>(() => {
+    const persisted = (videoData as any)?.shotEvents
+    if (Array.isArray(persisted) && persisted.length > 0) return persisted
+
+    const phases = Array.isArray((videoData as any)?.phases) ? (videoData as any).phases : []
+    const frames = Array.isArray((videoData as any)?.frameData) ? (videoData as any).frameData : []
+    const source = phases.length > 0
+      ? phases
+      : frames.reduce((events: any[], frame: any, frameIndex: number) => {
+          const phase = frame?.phase
+          if (!phase || events[events.length - 1]?.phase === phase) return events
+          events.push({ phase, frame: frameIndex })
+          return events
+        }, [])
+
+    return source.map((phase: any, index: number) => {
+      const frameIndex = Number.isFinite(Number(phase?.frame)) ? Number(phase.frame) : index
+      const frame = frames[frameIndex] ?? {}
+      return {
+        id: `review-${frameIndex}-${index}`,
+        timestampMs: Math.round(Number(frame?.timestamp ?? frameIndex / ((videoData as any)?.fps || 10)) * 1000),
+        frameIndex,
+        label: phase?.phase ? String(phase.phase) : `Shot ${index + 1}`,
+        phase: phase?.phase ? String(phase.phase) : undefined,
+        confidence: typeof frame?.confidence === "number" ? frame.confidence : undefined,
+        detectedResult: frame?.result ?? frame?.makeMiss ?? undefined,
+      }
+    })
+  }, [videoData])
   
   // Check if we have video data
   const hasVideoData = videoData && videoData.annotatedFramesBase64 && videoData.annotatedFramesBase64.length > 0
@@ -3856,6 +3890,21 @@ function VideoModeContent({ videoData, analysisData, playerName, poseConfidence,
       {/* VIDEO PLAYER SECTION - GSAP Player Only */}
       {/* ============================================ */}
       <VideoPlayerSection videoData={videoData} overlayToggles={overlayToggles} />
+
+      {/* ============================================ */}
+      {/* HUMAN REVIEW - append-only detector corrections */}
+      {/* ============================================ */}
+      <div className="border-b border-black p-6">
+        <div className="mx-auto max-w-3xl">
+          <ShotReviewTimeline
+            events={reviewEvents}
+            persist={Array.isArray((videoData as any)?.shotEvents) && (videoData as any).shotEvents.length > 0}
+            onSelect={(event) => {
+              if (typeof event.frameIndex === "number") setCurrentFrame(Math.max(0, Math.min(totalFrames - 1, event.frameIndex)))
+            }}
+          />
+        </div>
+      </div>
       
       {/* ============================================ */}
       {/* OVERLAY TOGGLE CONTROLS - Directly under video player */}
