@@ -35,6 +35,16 @@ describe("coaching target selection", () => {
     expect(target.targetValue).toBe(48)
     expect(target.direction).toBe("increase")
   })
+
+  it("uses the latest measured angle instead of a synthetic baseline", () => {
+    const target = selectCoachingTarget({
+      flaws: ["elbow_flare"],
+      metrics: { right_elbow_angle: 84 },
+    })
+
+    expect(target.metric).toBe("elbowAngle")
+    expect(target.baseline).toBe(84)
+  })
 })
 
 describe("coaching target retests", () => {

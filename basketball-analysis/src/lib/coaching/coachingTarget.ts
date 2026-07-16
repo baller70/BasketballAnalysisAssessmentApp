@@ -45,6 +45,14 @@ export interface CoachingTargetInput {
   /** A profile skill level is deliberately not required; a target always has a drill. */
 }
 
+/** Raised when a recommendation cannot be executed by the Training drill pool. */
+export class CoachingTargetUnavailableError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = "CoachingTargetUnavailableError"
+  }
+}
+
 interface TargetRule {
   flaw: string
   aliases: string[]
@@ -180,20 +188,21 @@ function metricValue(rule: TargetRule, signal: CoachingFlawSignal | string, metr
 
 function chooseDrill(rule: TargetRule, preferredId?: string): Drill {
   const drills = getDrillsByFocusArea(rule.focusArea)
-  return (preferredId && drills.find((drill) => drill.id === preferredId)) || drills[0] || {
-    id: `coaching-${rule.focusArea.toLowerCase()}`,
-    title: `${rule.flaw} Fundamentals`,
-    focusArea: rule.focusArea,
-    level: "HIGH_SCHOOL",
-    difficulty: 2,
-    duration: 10,
-    description: `Focused practice for ${rule.flaw.toLowerCase()}.`,
-    whyItMatters: rule.cue,
-    steps: [rule.cue, "Complete 10 controlled repetitions", "Retest your form"],
-    expectedOutcomes: ["More repeatable mechanics"],
-    icon: "🎯",
-    color: "orange",
+  const drill = (preferredId && drills.find((candidate) => candidate.id === preferredId)) || drills[0]
+  if (!drill) {
+    // A synthetic ID would render a target that Training cannot start. Fail
+    // explicitly so the caller can show a useful recovery message instead.
+    throw new CoachingTargetUnavailableError(
+      `No executable drill is available for ${rule.focusArea.toLowerCase().replace(/_/g, " ")}.`
+    )
   }
+  return drill
+}
+
+/** Display units for measurements stored by the analysis pipeline. */
+export function coachingMetricUnit(metric: string): "°" | "%" {
+  const normalized = metric.replace(/[^a-zA-Z]/g, "").toLowerCase()
+  return normalized.includes("score") || normalized === "followthrough" ? "%" : "°"
 }
 
 /**

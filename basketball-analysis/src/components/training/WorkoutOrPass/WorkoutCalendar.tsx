@@ -78,6 +78,8 @@ interface ScheduledWorkout {
 
 interface WorkoutCalendarProps {
   userFlaws?: string[]
+  /** Latest measured angles/scores from the active analysis session. */
+  latestMetrics?: Record<string, number | null | undefined>
   onStartWorkout?: (drills: Drill[]) => void
 }
 
@@ -883,7 +885,7 @@ function AgeLevelInfoPopup({ ageLevel, onClose, onConfirm }: AgeLevelPopupProps)
 // MAIN COMPONENT
 // =============================================
 
-export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalendarProps) {
+export function WorkoutCalendar({ userFlaws = [], latestMetrics, onStartWorkout }: WorkoutCalendarProps) {
   // State
   const [showSettings, setShowSettings] = useState(false)
   const [showAgeLevelInfo, setShowAgeLevelInfo] = useState(false)
@@ -900,6 +902,7 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
   const [customDrills, setCustomDrills] = useState<Drill[]>([])
   const [coachingTarget, setCoachingTarget] = useState<ClientCoachingTarget | null>(null)
   const [coachingTargetLoading, setCoachingTargetLoading] = useState(false)
+  const [coachingTargetError, setCoachingTargetError] = useState<string | null>(null)
   const [, setAddMode] = useState<'workout' | 'drill'>('workout')
   const [scheduleSuccessInfo, setScheduleSuccessInfo] = useState<{
     show: boolean
@@ -1023,6 +1026,7 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
     if (!isHydrated) return
     let cancelled = false
     setCoachingTargetLoading(true)
+    setCoachingTargetError(null)
     void (async () => {
       try {
         const response = await fetch('/api/coaching-targets', { credentials: 'include' })
@@ -1035,10 +1039,14 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
         if (userFlaws.length > 0) {
           const createResponse = await csrfFetch('/api/coaching-targets', {
             method: 'POST',
-            body: JSON.stringify({ flaws: userFlaws }),
+            body: JSON.stringify({ flaws: userFlaws, metrics: latestMetrics }),
           })
           const created = await createResponse.json().catch(() => null)
-          if (!cancelled && created?.target) setCoachingTarget(created.target as ClientCoachingTarget)
+          if (!cancelled && created?.target) {
+            setCoachingTarget(created.target as ClientCoachingTarget)
+          } else if (!cancelled && created?.error) {
+            setCoachingTargetError(String(created.error))
+          }
         }
       } catch {
         // A signed-out/offline Training tab still works with its regular drills.
@@ -1047,7 +1055,7 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
       }
     })()
     return () => { cancelled = true }
-  }, [isHydrated, userFlaws])
+  }, [isHydrated, userFlaws, latestMetrics])
 
   // Full drill pool = built-in drills + user-created custom drills
   const allDrills = useMemo(() => [...ALL_DRILLS, ...customDrills], [customDrills])
@@ -1245,6 +1253,10 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
         <div className="rounded-xl border border-[#FF6B35]/20 bg-[#FF6B35]/5 px-4 py-3 text-sm text-slate-500">
           Preparing your coaching target…
         </div>
+      ) : coachingTargetError ? (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          Coaching target unavailable: {coachingTargetError}
+        </div>
       ) : coachingTarget ? (
         <div className="rounded-xl border border-[#FF6B35]/30 bg-gradient-to-r from-[#FF6B35]/10 to-amber-50 p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -1253,9 +1265,9 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
               <h3 className="mt-1 text-lg font-black text-slate-900">{coachingTarget.flaw}</h3>
               <p className="mt-1 max-w-2xl text-sm text-slate-600">{coachingTarget.cue}</p>
               <p className="mt-2 text-xs font-semibold text-slate-500">
-                Baseline {coachingTarget.baseline}{coachingTarget.metric.toLowerCase().includes('score') ? '%' : '°'}
+                Baseline {coachingTarget.baseline}{['balancescore', 'consistencyscore', 'formscore', 'followthrough'].includes(coachingTarget.metric.toLowerCase()) ? '%' : '°'}
                 <span className="mx-2">→</span>
-                Target {coachingTarget.targetValue}{coachingTarget.metric.toLowerCase().includes('score') ? '%' : '°'}
+                Target {coachingTarget.targetValue}{['balancescore', 'consistencyscore', 'formscore', 'followthrough'].includes(coachingTarget.metric.toLowerCase()) ? '%' : '°'}
                 <span className="mx-2">•</span>
                 Prescribed drill: {coachingTarget.drillName}
               </p>

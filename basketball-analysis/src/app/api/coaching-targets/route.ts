@@ -5,6 +5,7 @@ import {
   evaluateRetest,
   selectCoachingTarget,
   serializeCoachingTarget,
+  CoachingTargetUnavailableError,
   type CoachingFlawSignal,
   type CoachingTargetInput,
 } from "@/lib/coaching/coachingTarget"
@@ -36,7 +37,26 @@ interface CoachingTargetDelegate {
   updateMany(args: unknown): Promise<{ count: number }>
   create(args: unknown): Promise<CoachingTargetRow>
 }
-const coachingTargetDb = (prisma as unknown as { coachingTarget: CoachingTargetDelegate }).coachingTarget
+interface AnalysisHistoryDelegate {
+  findFirst(args: unknown): Promise<{
+    elbowAngle?: unknown
+    kneeAngle?: unknown
+    releaseAngle?: unknown
+    balanceScore?: unknown
+    formScore?: unknown
+    consistencyScore?: unknown
+  } | null>
+}
+interface CoachingTargetTransaction {
+  coachingTarget: CoachingTargetDelegate
+}
+interface CoachingTargetClient {
+  coachingTarget: CoachingTargetDelegate
+  analysisHistory: AnalysisHistoryDelegate
+  $transaction<T>(callback: (tx: CoachingTargetTransaction) => Promise<T>): Promise<T>
+}
+const coachingTargetClient = prisma as unknown as CoachingTargetClient
+const coachingTargetDb = coachingTargetClient.coachingTarget
 
 function toFlaws(value: unknown): CoachingTargetInput["flaws"] {
   if (Array.isArray(value)) {
@@ -57,6 +77,35 @@ function toFlaws(value: unknown): CoachingTargetInput["flaws"] {
 
 function serializeRow(row: Parameters<typeof serializeCoachingTarget>[0]) {
   return serializeCoachingTarget(row)
+}
+
+function hasMeasuredMetricValues(metrics: CoachingTargetInput["metrics"]): boolean {
+  return !!metrics && Object.values(metrics).some((value) => typeof value === "number" && Number.isFinite(value))
+}
+
+/** Use the most recent persisted analysis when a client did not send its live angles. */
+async function latestMeasuredMetrics(profileId: string): Promise<CoachingTargetInput["metrics"]> {
+  const row = await coachingTargetClient.analysisHistory.findFirst({
+    where: { userProfileId: profileId },
+    orderBy: { analysisDate: "desc" },
+    select: {
+      elbowAngle: true,
+      kneeAngle: true,
+      releaseAngle: true,
+      balanceScore: true,
+      formScore: true,
+      consistencyScore: true,
+    },
+  })
+  if (!row) return undefined
+  return {
+    elbowAngle: row.elbowAngle == null ? undefined : Number(row.elbowAngle),
+    kneeAngle: row.kneeAngle == null ? undefined : Number(row.kneeAngle),
+    releaseAngle: row.releaseAngle == null ? undefined : Number(row.releaseAngle),
+    balanceScore: row.balanceScore == null ? undefined : Number(row.balanceScore),
+    formScore: row.formScore == null ? undefined : Number(row.formScore),
+    consistencyScore: row.consistencyScore == null ? undefined : Number(row.consistencyScore),
+  }
 }
 
 /** GET /api/coaching-targets — latest active target (or latest retest). */
@@ -126,41 +175,55 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, target: serializeRow(updated), result })
     }
 
+    let metrics: CoachingTargetInput["metrics"] = body.metrics && typeof body.metrics === "object"
+      ? body.metrics as Record<string, number | null | undefined>
+      : body.angles && typeof body.angles === "object"
+        ? body.angles as Record<string, number | null | undefined>
+        : undefined
+    // Training sends the latest on-device angles. For older clients, derive
+    // them from the latest persisted history before selecting a target.
+    if (!hasMeasuredMetricValues(metrics)) {
+      metrics = await latestMeasuredMetrics(resolved.profileId)
+    }
     const input: CoachingTargetInput = {
       flaws: toFlaws(body.flaws ?? body.detectedFlaws),
       candidates: Array.isArray(body.candidates) ? body.candidates as CoachingFlawSignal[] : undefined,
-      metrics: body.metrics && typeof body.metrics === "object"
-        ? body.metrics as Record<string, number | null | undefined>
-        : body.angles && typeof body.angles === "object"
-          ? body.angles as Record<string, number | null | undefined>
-          : undefined,
+      metrics,
     }
     const selected = selectCoachingTarget(input)
 
     // Keep one active target per player. Prior retests remain available in the
     // database as a timeline, but cannot compete with the new recommendation.
-    await coachingTargetDb.updateMany({
-      where: { userProfileId: resolved.profileId, status: "active" },
-      data: { status: "superseded" },
-    })
-    const created = await coachingTargetDb.create({
-      data: {
-        userProfileId: resolved.profileId,
-        flaw: selected.flaw,
-        cue: selected.cue,
-        drillId: selected.drillId,
-        drillName: selected.drillName,
-        metric: selected.metric,
-        baseline: selected.baseline,
-        targetValue: selected.targetValue,
-        direction: selected.direction,
-        confidence: selected.confidence,
-        status: "active",
-      },
+    // Superseding and creating are one transaction so a failed create cannot
+    // leave the player without an active target. The migration also installs a
+    // partial unique index as a final guard against concurrent requests.
+    const created = await coachingTargetClient.$transaction(async (tx) => {
+      await tx.coachingTarget.updateMany({
+        where: { userProfileId: resolved.profileId, status: "active" },
+        data: { status: "superseded" },
+      })
+      return tx.coachingTarget.create({
+        data: {
+          userProfileId: resolved.profileId,
+          flaw: selected.flaw,
+          cue: selected.cue,
+          drillId: selected.drillId,
+          drillName: selected.drillName,
+          metric: selected.metric,
+          baseline: selected.baseline,
+          targetValue: selected.targetValue,
+          direction: selected.direction,
+          confidence: selected.confidence,
+          status: "active",
+        },
+      })
     })
     return NextResponse.json({ success: true, target: serializeRow(created) }, { status: 201 })
   } catch (error) {
     console.error("Coaching target mutation error:", error)
+    if (error instanceof CoachingTargetUnavailableError) {
+      return NextResponse.json({ success: false, error: error.message }, { status: 422 })
+    }
     return NextResponse.json({ success: false, error: "Failed to save coaching target" }, { status: 500 })
   }
 }

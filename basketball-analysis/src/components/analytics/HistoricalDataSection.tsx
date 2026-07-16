@@ -5,6 +5,7 @@ import { useAnalysisStore } from "@/stores/analysisStore"
 import { getAllSessions, AnalysisSession } from "@/services/sessionStorage"
 import { fetchServerHistory, serverHistoryToSessions } from "@/components/analytics/serverHistory"
 import { csrfFetch } from "@/lib/api/csrfFetch"
+import { coachingMetricUnit } from "@/lib/coaching/coachingTarget"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { 
@@ -822,7 +823,7 @@ export default function HistoricalDataSection() {
                 <h2 className="mt-1 text-xl font-black text-slate-900">{coachingTarget.flaw}</h2>
                 <p className="mt-1 max-w-2xl text-sm text-slate-600">{coachingTarget.cue}</p>
                 <p className="mt-2 text-xs font-semibold text-slate-500">
-                  {coachingTarget.drillName} · baseline {coachingTarget.baseline} → target {coachingTarget.targetValue}
+                  {coachingTarget.drillName} · baseline {coachingTarget.baseline}{coachingMetricUnit(coachingTarget.metric)} → target {coachingTarget.targetValue}{coachingMetricUnit(coachingTarget.metric)}
                 </p>
               </div>
               <div className="min-w-[16rem] rounded-xl bg-white/80 p-3 ring-1 ring-[#FF6B35]/20">

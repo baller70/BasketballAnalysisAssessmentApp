@@ -439,6 +439,7 @@ export default function TrainingPage() {
       ) : (
         <WorkoutCalendar
           userFlaws={flawIds}
+          latestMetrics={visionAnalysisResult?.angles}
           onStartWorkout={(drills) => { if (drills.length > 0) setLaunchDrills(drills) }}
         />
       )}
