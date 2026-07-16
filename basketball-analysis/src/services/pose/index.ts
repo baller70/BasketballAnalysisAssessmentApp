@@ -91,6 +91,10 @@ export async function analyzeImageElement(
   providerId: PoseProviderId = 'movenet'
 ): Promise<ImageAnalysis> {
   const provider = getPoseProvider(providerId)
+  // Providers are memoized so model initialization is cheap, but their phase
+  // tracker is intentionally session-scoped. A still image must never inherit
+  // the previous live/video shot state.
+  provider.reset?.()
   await provider.init()
 
   const width =

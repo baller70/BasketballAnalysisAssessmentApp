@@ -32,6 +32,7 @@ import {
   type ProviderKeypoint,
   type FormAnalysis,
 } from '@/services/pose'
+import type { MechanicsGateResult } from '@/lib/vision/confidenceGate'
 import {
   scoreShootingForm,
   type ShootingAnglesInput,
@@ -91,6 +92,8 @@ export interface VideoAnalysisResult {
     release_score: number | null
     /** Loosely-keyed canonical angles for the release frame (for the flaw engine). */
     release_angles: Record<string, number>
+    /** Optional confidence-gated mechanics for consumers that need provenance. */
+    release_mechanics?: MechanicsGateResult
   }
 
   frame_data?: Array<{
@@ -101,6 +104,7 @@ export interface VideoAnalysisResult {
     keypoint_count: number
     ball_detected: boolean
     keypoints?: Record<string, { x: number; y: number; confidence: number }>
+    mechanics?: MechanicsGateResult
   }>
 
   all_keypoints?: Array<Record<string, { x: number; y: number; confidence: number }>>
@@ -237,6 +241,9 @@ export async function analyzeVideoShooting(
     const step = duration / frameCount
 
     const provider = getPoseProvider()
+    // The registry shares the model between uploads; clear only temporal shot
+    // state so this video starts at gather and cannot inherit a prior capture.
+    provider.reset?.()
     await provider.init()
 
     const frames: SampledFrame[] = []
@@ -246,8 +253,9 @@ export async function analyzeVideoShooting(
       ctx.drawImage(video, 0, 0, cw, ch)
       const imageBase64 = canvas.toDataURL('image/jpeg', 0.7).split(',')[1] || ''
 
-      const keypoints = await provider.detectPose(canvas)
-      const form = keypoints ? provider.analyzeForm(keypoints) : null
+      const timestampMs = t * 1000
+      const keypoints = await provider.detectPose(canvas, timestampMs)
+      const form = keypoints ? provider.analyzeForm(keypoints, timestampMs) : null
 
       frames.push({ index: i, timestamp: t, keypoints, form, imageBase64 })
     }
@@ -289,6 +297,7 @@ export async function analyzeVideoShooting(
         keypoint_count: f.keypoints?.length ?? 0,
         ball_detected: false,
         keypoints: f.keypoints ? keypointsToRecord(f.keypoints) : undefined,
+        mechanics: f.form?.mechanics,
       }
     })
 
@@ -388,6 +397,7 @@ export async function analyzeVideoShooting(
         release_timestamp: frames[releaseIdx]?.timestamp ?? 0,
         release_score: releaseScores.overallScore,
         release_angles,
+        release_mechanics: releaseForm.mechanics,
       },
       frame_data,
       all_keypoints,
@@ -422,6 +432,7 @@ export function convertVideoToSessionFormat(
   feedback: string[]
   strengths: string[]
   improvements: string[]
+  mechanics?: MechanicsGateResult
 } {
   const metrics = videoResult.metrics
 
@@ -488,7 +499,8 @@ export function convertVideoToSessionFormat(
     skeletonImageBase64: mainImageBase64,
     feedback,
     strengths,
-    improvements
+    improvements,
+    mechanics: metrics?.release_mechanics,
   }
 }
 

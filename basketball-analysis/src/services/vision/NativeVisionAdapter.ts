@@ -33,6 +33,7 @@ export class NativeVisionAdapter implements PoseProvider {
   private readonly fallback: PoseProvider
   private readonly encodeFrame: (input: PoseInput) => Promise<EncodedVisionFrame>
   private mode: NativeVisionMode = 'uninitialized'
+  private latestTimestampMs: number | null = null
 
   constructor(options: NativeVisionAdapterOptions) {
     this.plugin = options.plugin ?? ShotIQVision
@@ -64,22 +65,37 @@ export class NativeVisionAdapter implements PoseProvider {
 
   async detectPose(input: PoseInput, timestampMs?: number): Promise<ProviderKeypoint[] | null> {
     if (this.mode === 'uninitialized') await this.init()
-    if (this.mode === 'fallback') return this.fallback.detectPose(input, timestampMs)
+    const frameTimestampMs = typeof timestampMs === 'number' && Number.isFinite(timestampMs)
+      ? timestampMs
+      : typeof HTMLVideoElement !== 'undefined' && input instanceof HTMLVideoElement && Number.isFinite(input.currentTime) && input.currentTime > 0
+        ? input.currentTime * 1000
+        : undefined
+    this.latestTimestampMs = frameTimestampMs ?? null
+    if (this.mode === 'fallback') return this.fallback.detectPose(input, frameTimestampMs)
 
     try {
       const frame = await this.encodeFrame(input)
-      const result = await this.plugin.detectPose({ ...frame, timestampMs })
+      const result = await this.plugin.detectPose({ ...frame, timestampMs: frameTimestampMs })
       return result.keypoints.length > 0 ? result.keypoints : null
     } catch {
       await this.activateFallback()
-      return this.fallback.detectPose(input, timestampMs)
+      return this.fallback.detectPose(input, frameTimestampMs)
     }
   }
 
-  analyzeForm(keypoints: ProviderKeypoint[]): FormAnalysis {
+  analyzeForm(keypoints: ProviderKeypoint[], timestampMs?: number): FormAnalysis {
     // Native and web landmarks intentionally share ShotIQ's deterministic
     // scoring path, so the same body produces the same coaching result.
-    return this.fallback.analyzeForm(keypoints)
+    const frameTimestampMs = typeof timestampMs === 'number' && Number.isFinite(timestampMs)
+      ? timestampMs
+      : this.latestTimestampMs ?? undefined
+    return this.fallback.analyzeForm(keypoints, frameTimestampMs)
+  }
+
+  /** Clear temporal state before a new native/live/image session. */
+  reset(): void {
+    this.latestTimestampMs = null
+    this.fallback.reset?.()
   }
 
   private async activateFallback(): Promise<void> {

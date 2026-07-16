@@ -147,6 +147,30 @@ function computePoseSignals(keypoints: ProviderKeypoint[]): PoseSignals {
   }
 }
 
+/**
+ * Match the side selection used by `calculateShootingAngles`.  Confidence
+ * gating must use the exact same arm/leg chain; mixing a right shoulder with a
+ * left elbow can produce a perfectly plausible number for the wrong body.
+ */
+function shootingSide(keypoints: ProviderKeypoint[]): 'left' | 'right' {
+  const rightWrist = confidentKeypoint(keypoints, 'right_wrist')
+  const leftWrist = confidentKeypoint(keypoints, 'left_wrist')
+  if (rightWrist && leftWrist) return rightWrist.y < leftWrist.y ? 'right' : 'left'
+  if (leftWrist && !rightWrist) return 'left'
+  return 'right'
+}
+
+function sideSpecificMechanicsLandmarks(side: 'left' | 'right'): Record<string, string[]> {
+  return {
+    elbow: [`${side}_shoulder`, `${side}_elbow`, `${side}_wrist`],
+    knee: [`${side}_hip`, `${side}_knee`, `${side}_ankle`],
+    shoulder: [`${side}_elbow`, `${side}_shoulder`, `${side}_hip`],
+    hip: [`${side}_shoulder`, `${side}_hip`, `${side}_knee`],
+    release: [`${side}_elbow`, `${side}_wrist`],
+    wrist: [`${side}_elbow`, `${side}_wrist`],
+  }
+}
+
 export class MoveNetProvider implements PoseProvider {
   readonly id = 'movenet'
   readonly label = 'On-device MoveNet'
@@ -186,7 +210,10 @@ export class MoveNetProvider implements PoseProvider {
     }))
   }
 
-  analyzeForm(keypoints: ProviderKeypoint[]): FormAnalysis {
+  analyzeForm(keypoints: ProviderKeypoint[], timestampMs?: number): FormAnalysis {
+    if (typeof timestampMs === 'number' && Number.isFinite(timestampMs)) {
+      this.latestTimestampMs = timestampMs
+    }
     // Reconstruct a Pose in MoveNet index order so the existing angle math
     // (which indexes by KEYPOINT_INDICES) keeps working.
     const ordered: Pose['keypoints'] = KEYPOINT_NAMES.map((name) => {
@@ -217,11 +244,16 @@ export class MoveNetProvider implements PoseProvider {
       angles,
       keypoints,
       minConfidence: MIN_SIGNAL_SCORE,
+      // Keep every derived metric on the side selected by the angle engine.
+      // The gate intentionally does not guess a different side per landmark.
+      requiredLandmarks: sideSpecificMechanicsLandmarks(shootingSide(keypoints)),
     })
 
     const phaseObservation = observationFromKeypoints(
       keypoints,
-      this.latestTimestampMs ?? 0,
+      typeof timestampMs === 'number' && Number.isFinite(timestampMs)
+        ? timestampMs
+        : this.latestTimestampMs ?? 0,
       {
         elbowAngle: angles.elbow,
         kneeAngle: angles.knee,
@@ -249,7 +281,10 @@ export class MoveNetProvider implements PoseProvider {
       measuredCount: scores.measuredCount,
       mechanics,
       canonicalObservation: {
-        timestampMs: this.latestTimestampMs,
+        timestampMs:
+          typeof timestampMs === 'number' && Number.isFinite(timestampMs)
+            ? timestampMs
+            : this.latestTimestampMs,
         keypoints: [...keypoints],
         poseConfidence: phaseObservation.poseConfidence ?? null,
         phase: phaseEvent.phase,
@@ -266,5 +301,10 @@ export class MoveNetProvider implements PoseProvider {
   resetShotPhase(): void {
     this.phaseTracker.reset()
     this.latestTimestampMs = null
+  }
+
+  /** PoseProvider session reset seam used by image/video/live adapters. */
+  reset(): void {
+    this.resetShotPhase()
   }
 }

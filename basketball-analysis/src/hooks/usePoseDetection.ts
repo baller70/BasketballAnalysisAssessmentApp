@@ -16,6 +16,7 @@ import {
 import {
   getPoseProvider,
   providerKeypointsToPose,
+  type FormAnalysis,
 } from '@/services/pose';
 import { selectRuntimePoseProviderId } from '@/services/pose/runtime';
 import { getPlatform } from '@/utils/platform';
@@ -52,6 +53,8 @@ export interface UsePoseDetectionReturn {
   angles: ShootingAngles | null;
   /** Current form feedback */
   feedback: ShootingFormFeedback | null;
+  /** Canonical provider analysis, including mechanics/phase sidecars. */
+  analysis: FormAnalysis | null;
   /** Current FPS */
   fps: number;
   /** Whether shooting motion is detected */
@@ -65,6 +68,7 @@ export interface UsePoseDetectionReturn {
     pose: Pose | null;
     angles: ShootingAngles | null;
     feedback: ShootingFormFeedback | null;
+    analysis: FormAnalysis | null;
   }>;
 }
 
@@ -91,6 +95,7 @@ export function usePoseDetection(
   const [pose, setPose] = useState<Pose | null>(null);
   const [angles, setAngles] = useState<ShootingAngles | null>(null);
   const [feedback, setFeedback] = useState<ShootingFormFeedback | null>(null);
+  const [analysis, setAnalysis] = useState<FormAnalysis | null>(null);
   const [fps, setFps] = useState(0);
   const [isShootingDetected, setIsShootingDetected] = useState(false);
 
@@ -172,10 +177,13 @@ export function usePoseDetection(
       // Canvas-prepared iPhone frames do not carry HTMLVideoElement.currentTime.
       // Pass the source timestamp explicitly so MoveNet's temporal filter keeps
       // smoothing across calibrated frames.
-      const detectedKeypoints = await poseProvider.detectPose(
-        detectionInput,
-        video.currentTime * 1000
-      );
+      // MediaStream-backed video elements may report currentTime as zero. Use
+      // the rAF clock in that case so the canonical phase sidecar still gets a
+      // real monotonic timestamp for every live frame.
+      const timestampMs = Number.isFinite(video.currentTime) && video.currentTime > 0
+        ? video.currentTime * 1000
+        : now;
+      const detectedKeypoints = await poseProvider.detectPose(detectionInput, timestampMs);
       const detectedPose = detectedKeypoints
         ? providerKeypointsToPose(detectedKeypoints)
         : null;
@@ -183,8 +191,19 @@ export function usePoseDetection(
       if (detectedPose) {
         setPose(detectedPose);
 
-        // Calculate angles
-        const calculatedAngles = poseDetectionService.calculateShootingAngles(detectedPose);
+        // All live frames go through the canonical provider analysis. Keep the
+        // legacy angle/feedback shape for existing overlays while exposing the
+        // full gated mechanics + shot phase metadata to newer consumers.
+        const canonicalAnalysis = poseProvider.analyzeForm(detectedKeypoints!, timestampMs);
+        setAnalysis(canonicalAnalysis);
+        const calculatedAngles: ShootingAngles = {
+          elbowAngle: canonicalAnalysis.angles.elbow,
+          kneeAngle: canonicalAnalysis.angles.knee,
+          shoulderAngle: canonicalAnalysis.angles.shoulder,
+          hipAngle: canonicalAnalysis.angles.hip,
+          releaseAngle: canonicalAnalysis.angles.release,
+          wristAngle: canonicalAnalysis.angles.wrist,
+        };
         setAngles(calculatedAngles);
 
         // Get feedback
@@ -228,6 +247,7 @@ export function usePoseDetection(
     }
 
     videoRef.current = videoElement;
+    poseProvider.reset?.();
     isDetectingRef.current = true;
     setIsDetecting(true);
     lastFrameTimeRef.current = performance.now();
@@ -260,32 +280,46 @@ export function usePoseDetection(
 
     setFps(0);
     previousPoseRef.current = null;
-  }, []);
+    setAnalysis(null);
+    poseProvider.reset?.();
+  }, [poseProvider]);
 
   // Detect single frame
   const detectSingleFrame = useCallback(async (
     input: HTMLImageElement | HTMLCanvasElement
   ) => {
     if (!poseProvider.isReady()) {
-      return { pose: null, angles: null, feedback: null };
+      return { pose: null, angles: null, feedback: null, analysis: null };
     }
 
+    // A single image is its own session; do not carry a prior live phase into
+    // the image's canonical sidecar.
+    poseProvider.reset?.();
     const detectedKeypoints = await poseProvider.detectPose(input);
     const detectedPose = detectedKeypoints
       ? providerKeypointsToPose(detectedKeypoints)
       : null;
 
     if (!detectedPose) {
-      return { pose: null, angles: null, feedback: null };
+      return { pose: null, angles: null, feedback: null, analysis: null };
     }
 
-    const calculatedAngles = poseDetectionService.calculateShootingAngles(detectedPose);
+    const canonicalAnalysis = poseProvider.analyzeForm(detectedKeypoints!);
+    const calculatedAngles: ShootingAngles = {
+      elbowAngle: canonicalAnalysis.angles.elbow,
+      kneeAngle: canonicalAnalysis.angles.knee,
+      shoulderAngle: canonicalAnalysis.angles.shoulder,
+      hipAngle: canonicalAnalysis.angles.hip,
+      releaseAngle: canonicalAnalysis.angles.release,
+      wristAngle: canonicalAnalysis.angles.wrist,
+    };
     const formFeedback = poseDetectionService.analyzeShootingForm(calculatedAngles);
 
     return {
       pose: detectedPose,
       angles: calculatedAngles,
       feedback: formFeedback,
+      analysis: canonicalAnalysis,
     };
   }, [poseProvider]);
 
@@ -310,6 +344,7 @@ export function usePoseDetection(
     pose,
     angles,
     feedback,
+    analysis,
     fps,
     isShootingDetected,
     startDetection,
@@ -319,5 +354,3 @@ export function usePoseDetection(
 }
 
 export default usePoseDetection;
-
-

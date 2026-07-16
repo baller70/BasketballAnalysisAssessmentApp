@@ -140,18 +140,39 @@ function keypointConfidence(
   if (!keypoints) return { confidence: null, missing: false }
 
   const byName = new Map(keypoints.map((point) => [point.name, normalizeConfidence(point.score)]))
+  const sideHints = new Set(
+    required
+      .map((name) => name.match(/^(left|right)_(.+)$/)?.[1])
+      .filter((side): side is 'left' | 'right' => side === 'left' || side === 'right')
+  )
+  const unsided = required.filter((name) => !/^(left|right)_/.test(name))
+
+  // If callers give unsided dependencies, select one side once for the whole
+  // measurement. Never take the strongest landmark independently: that can
+  // combine the right shoulder with the left elbow and produce a false pass.
+  let inferredSide: 'left' | 'right' | null = null
+  if (unsided.length && sideHints.size === 1) {
+    inferredSide = [...sideHints][0]
+  } else if (unsided.length && sideHints.size === 0) {
+    const sideScore = (side: 'left' | 'right') => {
+      const scores = unsided.map((name) => byName.get(`${side}_${name}`))
+      const present = scores.filter((score): score is number => score !== undefined && score !== null)
+      return { count: present.length, confidence: present.reduce((sum, score) => sum + score, 0) }
+    }
+    const left = sideScore('left')
+    const right = sideScore('right')
+    inferredSide = left.count > right.count || (left.count === right.count && left.confidence > right.confidence)
+      ? 'left'
+      : 'right'
+  }
+
   const scores = required.map((name) => {
     const exact = byName.get(name)
     if (exact !== undefined) return exact
-    // Canonical requirements may use an unsided landmark (`elbow`) while
-    // MoveNet names it `left_elbow`/`right_elbow`. Use the visible side with
-    // the stronger confidence in that case.
-    const suffix = `_${name}`
-    const sided = [...byName.entries()]
-      .filter(([key]) => key.endsWith(suffix))
-      .map(([, score]) => score)
-      .filter((score): score is number => score !== null)
-    return sided.length ? Math.max(...sided) : null
+    if (/^(left|right)_/.test(name)) return null
+    // Use the one selected side for all unsided dependencies. A missing point
+    // remains missing instead of silently borrowing the opposite side.
+    return inferredSide ? (byName.get(`${inferredSide}_${name}`) ?? null) : null
   })
   if (scores.some((score) => score === null)) return { confidence: null, missing: true }
   return { confidence: Math.min(...(scores as number[])), missing: false }

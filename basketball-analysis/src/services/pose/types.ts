@@ -102,7 +102,14 @@ export interface PoseProvider {
   init(): Promise<void>
   isReady(): boolean
   detectPose(input: PoseInput, timestampMs?: number): Promise<ProviderKeypoint[] | null>
-  analyzeForm(keypoints: ProviderKeypoint[]): FormAnalysis
+  /**
+   * Score a keypoint frame.  A frame timestamp may be supplied by adapters
+   * that do not run MoveNet themselves (for example Apple Vision); providers
+   * that own temporal state use it when emitting their canonical sidecar.
+   */
+  analyzeForm(keypoints: ProviderKeypoint[], timestampMs?: number): FormAnalysis
+  /** Clear temporal state before a new image/capture/video session. */
+  reset?: () => void
 }
 
 export type { JointName, BiomechanicalScores }

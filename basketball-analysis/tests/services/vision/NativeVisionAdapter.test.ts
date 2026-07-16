@@ -20,6 +20,8 @@ class FakeFallbackProvider implements PoseProvider {
   initCalls = 0
   detectCalls = 0
   ready = false
+  analyzeCalls: Array<{ timestampMs?: number }> = []
+  resetCalls = 0
   result: ProviderKeypoint[] | null = [
     { name: 'nose', x: 10, y: 20, score: 0.8 },
   ]
@@ -38,7 +40,8 @@ class FakeFallbackProvider implements PoseProvider {
     return this.result
   }
 
-  analyzeForm(): FormAnalysis {
+  analyzeForm(_keypoints: ProviderKeypoint[], timestampMs?: number): FormAnalysis {
+    this.analyzeCalls.push({ timestampMs })
     return {
       angles: {
         elbow: null,
@@ -61,6 +64,10 @@ class FakeFallbackProvider implements PoseProvider {
       tips: [],
       measuredCount: 0,
     }
+  }
+
+  reset() {
+    this.resetCalls += 1
   }
 }
 
@@ -139,5 +146,19 @@ describe('NativeVisionAdapter', () => {
     expect(plugin.detectCalls).toHaveLength(1)
     expect(fallback.initCalls).toBe(1)
     expect(fallback.detectCalls).toBe(2)
+  })
+
+  it('keeps the native frame timestamp for canonical fallback analysis and reset', async () => {
+    const plugin = new FakeNativePlugin()
+    const fallback = new FakeFallbackProvider()
+    const adapter = new NativeVisionAdapter({ plugin, fallback, encodeFrame })
+
+    await adapter.init()
+    const keypoints = await adapter.detectPose(document.createElement('canvas'), 4321)
+    adapter.analyzeForm(keypoints ?? [])
+
+    expect(fallback.analyzeCalls.at(-1)?.timestampMs).toBe(4321)
+    adapter.reset()
+    expect(fallback.resetCalls).toBe(1)
   })
 })
