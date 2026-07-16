@@ -4,6 +4,7 @@
 
 import type { CanonicalAngles, CanonicalVisionObservation } from '@/services/pose'
 import type { MechanicsGateResult } from '@/lib/vision/confidenceGate'
+import type { PersistedShotEvent } from '@/lib/api/shotEvents'
 
 export interface SessionScreenshot {
   id: string
@@ -38,6 +39,8 @@ export interface AnalysisSession {
   // Video session data
   mediaType?: 'image' | 'video' // Type of media analyzed
   videoData?: {
+    captureSessionId?: string | null
+    shotEvents?: Array<PersistedShotEvent & { reviewOnly?: boolean }>
     annotatedFramesBase64: string[] // All frames with skeleton overlay
     frameCount: number
     duration: number

@@ -116,6 +116,7 @@ import {
   buildCaptureSessionMetadata,
   normalizeCaptureOrientation,
   normalizeCapturePlatform,
+  updateSessionVideoCaptureIdentity,
 } from "@/lib/capture/captureSession"
 import { createLocalReviewShotEvents } from "@/lib/live/liveReviewData"
 import { getPlatformOS } from "@/utils/platform"
@@ -1946,6 +1947,7 @@ function DemoResultsPageContent() {
   const [isLoading, setIsLoading] = useState(false)
   const [showFabMenu, setShowFabMenu] = useState(false)
   const videoUploadInputRef = useRef<HTMLInputElement>(null)
+  const videoUploadGenerationRef = useRef(0)
 
   // iPhone Safari is unreliable when a floating label targets an off-screen
   // file input. Keep the native input and open it synchronously from the user's
@@ -2239,6 +2241,8 @@ function DemoResultsPageContent() {
                   const file = e.target.files?.[0]
                   console.log('📹 Video file selected:', file?.name, file?.size)
                   if (file) {
+                    const uploadGeneration = videoUploadGenerationRef.current + 1
+                    videoUploadGenerationRef.current = uploadGeneration
                     const captureSessionPromise = createCaptureSession(buildCaptureSessionMetadata({
                       mode: 'form',
                       source: 'uploaded_video',
@@ -2261,20 +2265,22 @@ function DemoResultsPageContent() {
                       readinessStatus: 'completed' | 'failed',
                       error?: unknown,
                     ) => {
+                      const updateStatus = (id: string) => updateCaptureSession(id, {
+                        readinessStatus,
+                        endedAt: new Date(),
+                        readinessChecks: {
+                          source: 'results_video_upload',
+                          error: error instanceof Error ? error.message : undefined,
+                        },
+                      }, { timeoutMs: 2_000 }).catch(() => undefined)
                       const id = captureSessionId ?? await resolveCaptureSessionId()
-                      if (!id) return
-                      try {
-                        await updateCaptureSession(id, {
-                          readinessStatus,
-                          endedAt: new Date(),
-                          readinessChecks: {
-                            source: 'results_video_upload',
-                            error: error instanceof Error ? error.message : undefined,
-                          },
-                        })
-                      } catch {
-                        // Session telemetry is best-effort; local Results must remain usable.
+                      if (!id) {
+                        void captureSessionPromise.then((lateId) => {
+                          if (lateId) return updateStatus(lateId)
+                        }).catch(() => undefined)
+                        return
                       }
+                      await updateStatus(id)
                     }
                     try {
                       console.log('📹 Starting video analysis...')
@@ -2450,52 +2456,64 @@ function DemoResultsPageContent() {
                       } else {
                         void captureSessionPromise.then(async (lateSessionId) => {
                           if (!lateSessionId) return
-                          const lateShotEvents = await persistShotEvents(detectorEvents, lateSessionId)
-                          if (lateShotEvents === null) return
-                          storeData?.setVideoAnalysisData?.({
-                            videoUrl: URL.createObjectURL(file),
-                            captureSessionId: lateSessionId,
-                            frames: analysisResult.frame_data || [],
-                            annotatedFramesBase64: analysisResult.annotated_frames_base64,
-                            fps: analysisResult.fps || 10,
-                            frameData: analysisResult.frame_data,
-                            keyScreenshots: analysisResult.key_screenshots,
-                            allKeypoints: analysisResult.all_keypoints,
-                            phases: analysisResult.phases,
-                            metrics: analysisResult.metrics,
-                            shotEvents: lateShotEvents,
-                            canonicalObservation: analysisResult.canonicalObservation,
-                          })
-                          await updateCaptureSession(lateSessionId, {
-                            readinessStatus: 'completed',
-                            endedAt: new Date(),
-                            ...(analysisResult.video_info?.width && analysisResult.video_info?.height
-                              ? {
-                                  orientation: normalizeCaptureOrientation(
-                                    analysisResult.video_info.width >= analysisResult.video_info.height
-                                      ? 'landscape'
-                                      : 'portrait',
-                                  ),
-                                  frameWidth: analysisResult.video_info.width,
-                                  frameHeight: analysisResult.video_info.height,
-                                }
-                              : {}),
-                            observation: {
-                              timestampMs: Math.max(0, Math.round((analysisResult.video_info?.duration ?? 0) * 1000)),
-                              orientation: 'unknown',
-                              poseConfidence: (analysisResult.frame_data?.reduce((sum: number, frame: any) =>
-                                sum + (frame?.canonicalObservation?.poseConfidence ?? 0), 0
-                              ) ?? 0) / Math.max(1, analysisResult.frame_data?.length ?? 0),
-                              fullBodyVisible: (analysisResult.frame_data?.at(-1)?.keypoint_count ?? 0) >= 12,
-                              stable: true,
-                              lighting: 'unknown',
-                            },
-                            readinessChecks: {
-                              source: 'results_video_upload',
-                              analyzedFrames: analysisResult.frame_count ?? analysisResult.video_info?.extracted_frames ?? 0,
-                              trustedScore: sessionData.overallScore,
-                            },
-                          }).catch(() => undefined)
+                          let lateShotEvents = null
+                          try {
+                            lateShotEvents = await persistShotEvents(detectorEvents, lateSessionId)
+                          } finally {
+                            const reconciledShotEvents = lateShotEvents ?? shotEvents
+                            const updatedSession = updateSessionVideoCaptureIdentity(
+                              session,
+                              lateSessionId,
+                              reconciledShotEvents,
+                            )
+                            saveSession(updatedSession)
+                            if (videoUploadGenerationRef.current === uploadGeneration) {
+                              storeData?.setVideoAnalysisData?.({
+                                videoUrl: URL.createObjectURL(file),
+                                captureSessionId: lateSessionId,
+                                frames: analysisResult.frame_data || [],
+                                annotatedFramesBase64: analysisResult.annotated_frames_base64,
+                                fps: analysisResult.fps || 10,
+                                frameData: analysisResult.frame_data,
+                                keyScreenshots: analysisResult.key_screenshots,
+                                allKeypoints: analysisResult.all_keypoints,
+                                phases: analysisResult.phases,
+                                metrics: analysisResult.metrics,
+                                shotEvents: reconciledShotEvents,
+                                canonicalObservation: analysisResult.canonicalObservation,
+                              })
+                            }
+                            await updateCaptureSession(lateSessionId, {
+                              readinessStatus: 'completed',
+                              endedAt: new Date(),
+                              ...(analysisResult.video_info?.width && analysisResult.video_info?.height
+                                ? {
+                                    orientation: normalizeCaptureOrientation(
+                                      analysisResult.video_info.width >= analysisResult.video_info.height
+                                        ? 'landscape'
+                                        : 'portrait',
+                                    ),
+                                    frameWidth: analysisResult.video_info.width,
+                                    frameHeight: analysisResult.video_info.height,
+                                  }
+                                : {}),
+                              observation: {
+                                timestampMs: Math.max(0, Math.round((analysisResult.video_info?.duration ?? 0) * 1000)),
+                                orientation: 'unknown',
+                                poseConfidence: (analysisResult.frame_data?.reduce((sum: number, frame: any) =>
+                                  sum + (frame?.canonicalObservation?.poseConfidence ?? 0), 0
+                                ) ?? 0) / Math.max(1, analysisResult.frame_data?.length ?? 0),
+                                fullBodyVisible: (analysisResult.frame_data?.at(-1)?.keypoint_count ?? 0) >= 12,
+                                stable: true,
+                                lighting: 'unknown',
+                              },
+                              readinessChecks: {
+                                source: 'results_video_upload',
+                                analyzedFrames: analysisResult.frame_count ?? analysisResult.video_info?.extracted_frames ?? 0,
+                                trustedScore: sessionData.overallScore,
+                              },
+                            }, { timeoutMs: 2_000 }).catch(() => undefined)
+                          }
                         }).catch(() => undefined)
                       }
                       

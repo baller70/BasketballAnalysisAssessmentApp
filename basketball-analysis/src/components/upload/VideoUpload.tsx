@@ -6,7 +6,7 @@ import { AlertTriangle, Loader2, Play, Upload, X, Video, ChevronLeft, ChevronRig
 import { cn } from "@/lib/utils"
 import { analyzeVideoShooting, convertVideoToSessionFormat, type VideoAnalysisResult } from "@/services/videoAnalysis"
 import { useAnalysisStore } from "@/stores/analysisStore"
-import { 
+import {
   saveSession, 
   createSessionFromAnalysis,
   type SessionScreenshot 
@@ -19,6 +19,7 @@ import {
   buildCaptureSessionMetadata,
   normalizeCaptureOrientation,
   normalizeCapturePlatform,
+  updateSessionVideoCaptureIdentity,
 } from "@/lib/capture/captureSession"
 import { createLocalReviewShotEvents } from "@/lib/live/liveReviewData"
 import { getPlatformOS } from "@/utils/platform"
@@ -42,7 +43,7 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
   const playIntervalRef = useRef<NodeJS.Timeout | null>(null)
   
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const captureSessionPromiseRef = useRef<Promise<string | null> | null>(null)
+  const uploadGenerationRef = useRef(0)
 
   const {
     setVisionAnalysisResult,
@@ -123,7 +124,10 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
     setError(null)
     setAnalysisProgress("Uploading video...")
 
-    captureSessionPromiseRef.current = createCaptureSession(buildCaptureSessionMetadata({
+    const uploadGeneration = uploadGenerationRef.current + 1
+    uploadGenerationRef.current = uploadGeneration
+
+    const captureSessionPromise = createCaptureSession(buildCaptureSessionMetadata({
       mode: 'form',
       source: 'uploaded_video',
       platform: normalizeCapturePlatform(getPlatformOS()),
@@ -132,12 +136,10 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
     })).then((session) => session.id).catch(() => null)
 
     const resolveCaptureSessionId = async (): Promise<string | null> => {
-      const pending = captureSessionPromiseRef.current
-      if (!pending) return null
       try {
         // A slow/offline API must not hold local analysis or review.
         return await Promise.race([
-          pending,
+          captureSessionPromise,
           new Promise<null>((resolve) => setTimeout(() => resolve(null), 1500)),
         ])
       } catch {
@@ -303,47 +305,61 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
             trustedScore: sessionData.overallScore,
           },
         }, { timeoutMs: 2_000 }).catch(() => undefined)
-      } else if (captureSessionPromiseRef.current) {
-        void captureSessionPromiseRef.current.then(async (lateSessionId) => {
+      } else {
+        void captureSessionPromise.then(async (lateSessionId) => {
           if (!lateSessionId) return
-          const lateShotEvents = await persistShotEvents(detectorEvents, lateSessionId)
-          if (lateShotEvents === null) return
-          setVideoAnalysisData({
-            videoUrl: videoPreviewUrl || undefined,
-            ...sessionData.videoData,
-            captureSessionId: lateSessionId,
-            shotEvents: lateShotEvents,
-          })
-          await updateCaptureSession(lateSessionId, {
-            readinessStatus: 'completed',
-            endedAt: new Date(),
-            ...(analysisResult.video_info?.width && analysisResult.video_info?.height
-              ? {
-                  orientation: normalizeCaptureOrientation(
-                    analysisResult.video_info.width >= analysisResult.video_info.height
-                      ? 'landscape'
-                      : 'portrait',
-                  ),
-                frameWidth: analysisResult.video_info.width,
-                frameHeight: analysisResult.video_info.height,
-              }
-            : {}),
-          observation: {
-            timestampMs: Math.max(0, Math.round((analysisResult.video_info?.duration ?? 0) * 1000)),
-            orientation: 'unknown',
-            poseConfidence: (analysisResult.frame_data?.reduce((sum, frame) =>
-              sum + (frame.canonicalObservation?.poseConfidence ?? 0), 0
-            ) ?? 0) / Math.max(1, analysisResult.frame_data?.length ?? 0),
-            fullBodyVisible: (analysisResult.frame_data?.at(-1)?.keypoint_count ?? 0) >= 12,
-            stable: true,
-            lighting: 'unknown',
-          },
-          readinessChecks: {
-            source: 'video_upload',
-            analyzedFrames: analysisResult.frame_count ?? analysisResult.video_info?.extracted_frames ?? 0,
-            trustedScore: sessionData.overallScore,
-          },
-        }).catch(() => undefined)
+          let lateShotEvents = null
+          try {
+            lateShotEvents = await persistShotEvents(detectorEvents, lateSessionId)
+          } finally {
+            const reconciledShotEvents = lateShotEvents ?? shotEvents
+            const updatedSession = updateSessionVideoCaptureIdentity(
+              session,
+              lateSessionId,
+              reconciledShotEvents,
+            )
+            // The saved local session belongs to this upload even if a newer
+            // upload is now active; saving by ID cannot overwrite that newer row.
+            saveSession(updatedSession)
+            if (uploadGenerationRef.current === uploadGeneration) {
+              setVideoAnalysisData({
+                videoUrl: videoPreviewUrl || undefined,
+                ...sessionData.videoData,
+                captureSessionId: lateSessionId,
+                shotEvents: reconciledShotEvents,
+              })
+            }
+            await updateCaptureSession(lateSessionId, {
+              readinessStatus: 'completed',
+              endedAt: new Date(),
+              ...(analysisResult.video_info?.width && analysisResult.video_info?.height
+                ? {
+                    orientation: normalizeCaptureOrientation(
+                      analysisResult.video_info.width >= analysisResult.video_info.height
+                        ? 'landscape'
+                        : 'portrait',
+                    ),
+                    frameWidth: analysisResult.video_info.width,
+                    frameHeight: analysisResult.video_info.height,
+                  }
+                : {}),
+              observation: {
+                timestampMs: Math.max(0, Math.round((analysisResult.video_info?.duration ?? 0) * 1000)),
+                orientation: 'unknown',
+                poseConfidence: (analysisResult.frame_data?.reduce((sum, frame) =>
+                  sum + (frame.canonicalObservation?.poseConfidence ?? 0), 0
+                ) ?? 0) / Math.max(1, analysisResult.frame_data?.length ?? 0),
+                fullBodyVisible: (analysisResult.frame_data?.at(-1)?.keypoint_count ?? 0) >= 12,
+                stable: true,
+                lighting: 'unknown',
+              },
+              readinessChecks: {
+                source: 'video_upload',
+                analyzedFrames: analysisResult.frame_count ?? analysisResult.video_info?.extracted_frames ?? 0,
+                trustedScore: sessionData.overallScore,
+              },
+            }, { timeoutMs: 2_000 }).catch(() => undefined)
+          }
         }).catch(() => undefined)
       }
 
@@ -357,13 +373,25 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
 
       const failedSessionId = captureSessionId ?? await resolveCaptureSessionId()
       if (failedSessionId) {
-        await updateCaptureSession(failedSessionId, {
+        void updateCaptureSession(failedSessionId, {
           readinessStatus: 'failed',
           endedAt: new Date(),
           readinessChecks: {
             source: 'video_upload',
             error: err instanceof Error ? err.message : 'Failed to analyze video',
           },
+        }, { timeoutMs: 2_000 }).catch(() => undefined)
+      } else {
+        void captureSessionPromise.then((lateSessionId) => {
+          if (!lateSessionId) return
+          return updateCaptureSession(lateSessionId, {
+            readinessStatus: 'failed',
+            endedAt: new Date(),
+            readinessChecks: {
+              source: 'video_upload',
+              error: err instanceof Error ? err.message : 'Failed to analyze video',
+            },
+          }, { timeoutMs: 2_000 }).catch(() => undefined)
         }).catch(() => undefined)
       }
     } finally {

@@ -1006,6 +1006,31 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       // Capture-session telemetry is best-effort; local recording/review wins.
     }
   }, [buildLiveCaptureObservation, resolveCaptureSessionId])
+
+  const reconcileLateCaptureSessionStatus = useCallback((
+    pending: Promise<string | null> | null,
+    readinessStatus: 'completed' | 'failed',
+    error?: unknown,
+    observation = buildLiveCaptureObservation(),
+  ) => {
+    if (!pending) return
+    void pending.then((lateSessionId) => {
+      if (!lateSessionId) return
+      return updateCaptureSession(lateSessionId, {
+        readinessStatus,
+        endedAt: new Date(),
+        orientation: normalizeCaptureOrientation(orientationRef.current),
+        frameWidth: videoDimensionsRef.current.width,
+        frameHeight: videoDimensionsRef.current.height,
+        observation,
+        readinessChecks: {
+          status: readinessStatus,
+          checks: captureReadinessRef.current.checks,
+          error: error instanceof Error ? error.message : undefined,
+        },
+      }, { timeoutMs: 2_000 }).catch(() => undefined)
+    }).catch(() => undefined)
+  }, [buildLiveCaptureObservation])
   
   // Keep refs updated
   useEffect(() => {
@@ -1064,7 +1089,9 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       frameHeight: videoDimensions.height,
       observation: buildLiveCaptureObservation(),
     })).then((session) => {
-      captureSessionIdRef.current = session.id
+      if (recordingGenerationRef.current === recordingGeneration) {
+        captureSessionIdRef.current = session.id
+      }
       return session.id
     }).catch(() => null)
     setShowControls(false) // Hide controls when recording starts
@@ -1451,7 +1478,9 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
         mimeType: 'video/webm;codecs=vp9',
       })
     } catch (error) {
+      const pendingCaptureSession = captureSessionPromiseRef.current
       void markCaptureSession('failed', error)
+      reconcileLateCaptureSessionStatus(pendingCaptureSession, 'failed', error)
       compositeStream.getTracks().forEach((track) => track.stop())
       setCameraError('This browser cannot record the camera preview. Try uploading the video instead.')
       return
@@ -1530,6 +1559,15 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       if (!captureSessionId && sessionPromise) {
         void sessionPromise.then(async (lateSessionId) => {
           if (!lateSessionId) return
+          await updateCaptureSession(lateSessionId, {
+            readinessStatus: 'completed',
+            endedAt: new Date(),
+            orientation: normalizeCaptureOrientation(finalOrientation),
+            frameWidth: finalDimensions.width,
+            frameHeight: finalDimensions.height,
+            observation: finalObservation,
+            readinessChecks: { status: 'completed', checks: captureReadinessRef.current.checks },
+          }, { timeoutMs: 2_000 }).catch(() => undefined)
           const lateShotEvents = await persistShotEvents(shotEventsSnapshot, lateSessionId)
           if (lateShotEvents === null) return
           if (recordingGenerationRef.current === recordingGeneration) {
@@ -1542,15 +1580,6 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
               captureSessionId: lateSessionId,
             }))
           }
-          await updateCaptureSession(lateSessionId, {
-            readinessStatus: 'completed',
-            endedAt: new Date(),
-            orientation: normalizeCaptureOrientation(finalOrientation),
-            frameWidth: finalDimensions.width,
-            frameHeight: finalDimensions.height,
-            observation: finalObservation,
-            readinessChecks: { status: 'completed', checks: captureReadinessRef.current.checks },
-          }).catch(() => undefined)
         }).catch(() => undefined)
       }
 
@@ -1563,16 +1592,18 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       mediaRecorderRef.current = mediaRecorder
       mediaRecorder.start(1000)
     } catch (error) {
+      const pendingCaptureSession = captureSessionPromiseRef.current
       mediaRecorderRef.current = null
       compositeStream.getTracks().forEach((track) => track.stop())
       void markCaptureSession('failed', error)
+      reconcileLateCaptureSessionStatus(pendingCaptureSession, 'failed', error)
       setCameraError('Recording could not start on this device. Try uploading the video instead.')
       return
     }
     isRecordingRef.current = true
     recordingDurationRef.current = 0
     setIsRecording(true)
-  }, [buildLiveCaptureObservation, captureReadiness.checks, facingMode, markCaptureSession, orientation, resolveCaptureSessionIdFromPromise, setMediaType, setVideoAnalysisData, videoDimensions])
+  }, [buildLiveCaptureObservation, captureReadiness.checks, facingMode, markCaptureSession, orientation, reconcileLateCaptureSessionStatus, resolveCaptureSessionIdFromPromise, setMediaType, setVideoAnalysisData, videoDimensions])
 
   // Start recording with countdown. This remains available as an explicit
   // override so the existing record capability is never removed when the

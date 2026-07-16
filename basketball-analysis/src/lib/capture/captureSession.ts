@@ -1,4 +1,8 @@
 import type { CreateCaptureSessionInput } from '@/lib/api/captureSessions'
+import type { PersistedShotEvent } from '@/lib/api/shotEvents'
+import type { AnalysisSession } from '@/services/sessionStorage'
+
+export type CaptureSessionShotEvent = PersistedShotEvent & { reviewOnly?: boolean }
 
 /**
  * Browser/native capture details that can be converted into the API contract.
@@ -92,4 +96,25 @@ export function normalizeCapturePlatform(
   if (platform === 'android') return 'android'
   if (platform === 'desktop') return 'desktop'
   return 'web'
+}
+
+/**
+ * Purely attach late capture identity/event rows to an existing local session.
+ * The original object and nested video payload are never mutated.
+ */
+export function updateSessionVideoCaptureIdentity(
+  session: AnalysisSession,
+  captureSessionId: string,
+  shotEvents: CaptureSessionShotEvent[],
+): AnalysisSession {
+  if (!session.videoData) return session
+
+  return {
+    ...session,
+    videoData: {
+      ...session.videoData,
+      captureSessionId,
+      shotEvents,
+    },
+  }
 }
