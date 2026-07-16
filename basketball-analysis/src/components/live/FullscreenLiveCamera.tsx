@@ -46,6 +46,7 @@ import {
   derivePoseCaptureObservation,
   evaluateCaptureReadiness,
 } from '@/lib/capture/guidedCapture'
+import { persistShotEvents, type ShotEventInput } from '@/lib/api/shotEvents'
 
 // ============================================
 // TYPES
@@ -363,6 +364,9 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   
   // Shot counter
   const [shotCount, setShotCount] = useState(0)
+  // Detector outputs are kept separately from captured thumbnails so a live
+  // session can be written as durable ShotEvent rows when recording stops.
+  const detectedShotEventsRef = useRef<ShotEventInput[]>([])
   
   // Stabilized metrics - hold values for longer so users can read them
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- loosely-typed runtime angles from the pose pipeline
@@ -425,6 +429,23 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     prepareVideoFrame,
     onShootingDetected: () => {
       console.log('[FullscreenLive] Shooting motion detected!')
+      const scores = pose?.keypoints
+        ?.map((point: { score?: number }) => point.score)
+        .filter((score): score is number => typeof score === 'number' && Number.isFinite(score)) ?? []
+      const confidence = scores.length
+        ? Math.max(0, Math.min(1, scores.reduce((sum, score) => sum + score, 0) / scores.length))
+        : undefined
+      if (isRecording) {
+        detectedShotEventsRef.current.push({
+          sequence: detectedShotEventsRef.current.length,
+          timestampMs: Math.max(0, Math.round(recordingDuration * 1000)),
+          detected: true,
+          detectedResult: 'unknown',
+          detectedPhase: 'RELEASE',
+          confidence,
+          metadata: { source: 'live_camera', shotScore: feedback?.overallScore ?? null },
+        })
+      }
       // Show shot flash and increment counter
       if (feedback?.overallScore) {
         setLastShotScore(feedback.overallScore)
@@ -893,6 +914,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     recordedChunksRef.current = []
     setRecordingDuration(0)
     setShotCount(0) // Reset shot counter
+    detectedShotEventsRef.current = []
     setShowControls(false) // Hide controls when recording starts
 
     // Get the DISPLAY dimensions (what user sees on screen)
@@ -1296,6 +1318,8 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       
       // Store URL for display
       setSavedVideoUrl(url)
+
+      const persistedShotEvents = await persistShotEvents(detectedShotEventsRef.current)
       
       // Store in analysis store for viewing
       setVideoAnalysisData({
@@ -1305,6 +1329,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
           timestamp: f.timestamp,
           angles: f.angles,
         })),
+        ...(persistedShotEvents ? { shotEvents: persistedShotEvents } : {}),
       })
 
       // Show save choice dialog

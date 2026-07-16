@@ -110,6 +110,7 @@ import {
 } from "@/services/gamificationService"
 import { usePoints } from "@/lib/points/pointsContext"
 import { TIER_ORDER } from "@/lib/points/pointsConfig"
+import { persistShotEvents } from "@/lib/api/shotEvents"
 import { useDashboardViewStore, type DashboardView } from "@/stores/dashboardViewStore"
 import { 
   StandardBiomechanicalAnalysis, 
@@ -2257,6 +2258,28 @@ function DemoResultsPageContent() {
                       
                       // Convert to session format
                       const sessionData = convertVideoToSessionFormat(analysisResult)
+
+                      // Persist the actual detector phases before rendering
+                      // Results. Signed-in users receive server IDs and the
+                      // review timeline hydrates corrections for those rows;
+                      // signed-out/offline viewers retain an explicitly local,
+                      // review-only timeline instead of pretending it saved.
+                      const detectorEvents = (analysisResult.phases || []).map((phase: any, index: number) => {
+                        const frame = analysisResult.frame_data?.[phase.frame]
+                        return {
+                          sequence: index,
+                          timestampMs: Math.max(0, Math.round(Number(phase.timestamp || 0) * 1000)),
+                          startFrame: Number.isFinite(Number(phase.frame)) ? Number(phase.frame) : undefined,
+                          endFrame: Number.isFinite(Number(phase.frame)) ? Number(phase.frame) : undefined,
+                          detected: true,
+                          detectedResult: "unknown" as const,
+                          detectedPhase: String(phase.phase || "unknown"),
+                          confidence: typeof frame?.confidence === "number" ? frame.confidence : undefined,
+                          phaseMarkers: { phase: String(phase.phase || "unknown") },
+                          metadata: { source: "results_video_upload", frameIndex: phase.frame },
+                        }
+                      })
+                      const persistedShotEvents = await persistShotEvents(detectorEvents)
                       
                       // Store main image in analysis store
                       storeData?.setUploadedImageBase64?.(sessionData.mainImageBase64)
@@ -2276,6 +2299,7 @@ function DemoResultsPageContent() {
                         allKeypoints: analysisResult.all_keypoints,
                         phases: analysisResult.phases,
                         metrics: analysisResult.metrics,
+                        ...(persistedShotEvents ? { shotEvents: persistedShotEvents } : {}),
                       })
                       console.log('📹 Video analysis data set in store')
                       
@@ -3834,7 +3858,26 @@ function VideoModeContent({ videoData, analysisData, playerName, poseConfidence,
   // is; older video analyses continue to get a useful local review timeline.
   const reviewEvents = useMemo<ShotReviewEvent[]>(() => {
     const persisted = (videoData as any)?.shotEvents
-    if (Array.isArray(persisted) && persisted.length > 0) return persisted
+    if (Array.isArray(persisted) && persisted.length > 0) {
+      return persisted.map((event: any) => {
+        const metadata = event?.metadata && typeof event.metadata === "object" ? event.metadata : undefined
+        const confidence = typeof event?.confidence === "number"
+          ? event.confidence
+          : typeof event?.confidence === "string" && Number.isFinite(Number(event.confidence))
+            ? Number(event.confidence)
+            : undefined
+        return {
+          ...event,
+          confidence,
+          trusted: typeof event?.trusted === "boolean"
+            ? event.trusted
+            : typeof metadata?.trusted === "boolean"
+              ? metadata.trusted
+              : undefined,
+          timestampMs: typeof event?.timestampMs === "number" ? event.timestampMs : undefined,
+        }
+      })
+    }
 
     const phases = Array.isArray((videoData as any)?.phases) ? (videoData as any).phases : []
     const frames = Array.isArray((videoData as any)?.frameData) ? (videoData as any).frameData : []

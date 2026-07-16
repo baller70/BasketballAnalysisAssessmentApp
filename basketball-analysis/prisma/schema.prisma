@@ -177,6 +177,9 @@ model ShotEvent {
   detectedResult    String?   @map("detected_result") @db.VarChar(10) // make|miss|unknown
   detectedShooter   String?   @map("detected_shooter") @db.VarChar(255)
   detectedPhase     String?   @map("detected_phase") @db.VarChar(50)
+  // Detector confidence is retained with the immutable output. Consumers must
+  // treat rows below the review threshold as review-only/untrusted.
+  confidence        Decimal?  @db.Decimal(5, 4)
   phaseMarkers      Json?     @map("phase_markers")
   metadata          Json?
 

@@ -334,6 +334,8 @@ export async function analyzeVideoShooting(
 
     // Per-frame metric/keypoint records.
     const frame_data = frames.map((f) => buildVideoFrameRecord(f, phaseForIndex(f.index)))
+    // Keep canonical sidecars from the provider; UI can derive mean pose
+    // confidence from the returned keypoint records when needed.
 
     const all_keypoints = frames.map((f) =>
       f.keypoints ? keypointsToRecord(f.keypoints) : {}

@@ -126,9 +126,31 @@ export interface VideoAnalysisData {
     timestamp: number
     phase: string
     metrics: Record<string, number>
+    confidence?: number
     ball?: { x: number; y: number; radius: number }
   }>
   allKeypoints?: Array<Record<string, { x: number; y: number; confidence: number }>>
+  /** Server-created detector rows used by the persisted review timeline. */
+  shotEvents?: Array<{
+    id: string
+    userProfileId?: string
+    captureSessionId?: string | null
+    sequence?: number
+    timestampMs?: number
+    startFrame?: number
+    endFrame?: number
+    thumbnailUrl?: string | null
+    detected?: boolean
+    detectedResult?: string | null
+    detectedShooter?: string | null
+    detectedPhase?: string | null
+    confidence?: number
+    phaseMarkers?: unknown
+    metadata?: unknown
+    corrections?: unknown[]
+    createdAt?: string
+    updatedAt?: string
+  }>
 }
 
 interface AnalysisState {

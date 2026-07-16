@@ -21,3 +21,16 @@ Status: complete
 - The task brief called for a schema change but no migration file. Production rollout must run the normal Prisma migration workflow (or `prisma db push` in the configured environment) before enabling persisted shot-event review.
 - Legacy/demo Results events use local IDs and pass `persist={false}` until a capture pipeline supplies persisted `shotEvents`; the correction API is ready for those persisted IDs.
 - Build/lint output includes pre-existing warnings (image optimization and hook dependency warnings); none were introduced as errors by Task 7.
+
+## Persistence and review hardening follow-up
+
+- Added forward migration `20260716150000_shot_events` for both detector rows and append-only corrections, including ownership/session foreign keys, confidence storage, and review indexes.
+- Added authenticated `POST/GET /api/shot-events`. Results video uploads and live camera recordings now attempt to persist real detector output and retain the returned server IDs; offline or signed-out sessions remain explicitly local rather than claiming persistence.
+- `ShotReviewTimeline` hydrates corrections from the correction `GET` endpoint whenever persisted IDs are supplied, merging server and optimistic corrections without duplicates.
+- Detector confidence is carried from sampled video frames, and events below the 0.60 trust threshold (or with no confidence) are marked review-only/untrusted. Their detector result and confidence are withheld from trusted numeric feedback until a human correction is made.
+
+## Follow-up verification
+
+- `npm test` — 11 files, 40 tests passed (including persistence API, correction hydration, and low-confidence review tests).
+- `npx tsc --noEmit` — passed.
+- `npm run build` — passed; Prisma generation, type checking, static page generation, and route collection completed.

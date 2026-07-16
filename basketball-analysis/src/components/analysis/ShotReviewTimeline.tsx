@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Check, Circle, Flag, UserRound, X } from "lucide-react"
 import { csrfFetch } from "@/lib/api/csrfFetch"
 
@@ -24,6 +24,8 @@ export interface ShotReviewEvent {
   label?: string
   phase?: string
   confidence?: number
+  /** Server marks detector rows below its confidence threshold as untrusted. */
+  trusted?: boolean
   detected?: boolean
   detectedResult?: "make" | "miss" | "unknown" | string | null
   detectedShooter?: string | null
@@ -43,6 +45,7 @@ export interface ShotReviewTimelineProps {
 }
 
 const PHASES = ["gather", "rise", "set", "release", "follow-through"]
+export const TRUSTED_CONFIDENCE_THRESHOLD = 0.6
 
 function eventTime(event: ShotReviewEvent): number {
   if (typeof event.timestampMs === "number") return event.timestampMs
@@ -72,21 +75,55 @@ export function ShotReviewTimeline({
   const reviewEvents = useMemo(() => events ?? shotEvents ?? [], [events, shotEvents])
   const [selectedId, setSelectedId] = useState<string | null>(reviewEvents[0]?.id ?? null)
   const [localCorrections, setLocalCorrections] = useState<Record<string, ShotReviewCorrection[]>>({})
+  const [persistedCorrections, setPersistedCorrections] = useState<Record<string, ShotReviewCorrection[]>>({})
   const [shooterLabels, setShooterLabels] = useState<Record<string, string>>({})
   const [phaseLabels, setPhaseLabels] = useState<Record<string, string>>({})
   const [pending, setPending] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  // Persisted detector rows are immutable, but their corrections are loaded
+  // on every Results mount so a review made on another device is visible here.
+  useEffect(() => {
+    if (!persist || reviewEvents.length === 0) {
+      setPersistedCorrections({})
+      return
+    }
+    let cancelled = false
+    const hydrate = async () => {
+      const entries = await Promise.all(reviewEvents.map(async (event) => {
+        try {
+          const response = await csrfFetch(`/api/shot-events/${encodeURIComponent(event.id)}/corrections`, {
+            method: "GET",
+          })
+          if (!response.ok) return [event.id, []] as const
+          const body = await response.json().catch(() => null)
+          const corrections = Array.isArray(body?.corrections) ? body.corrections as ShotReviewCorrection[] : []
+          return [event.id, corrections] as const
+        } catch {
+          return [event.id, []] as const
+        }
+      }))
+      if (!cancelled) {
+        setPersistedCorrections(Object.fromEntries(entries))
+      }
+    }
+    void hydrate()
+    return () => {
+      cancelled = true
+    }
+  }, [persist, reviewEvents])
 
   const correctionsFor = useMemo(() => {
     const result: Record<string, ShotReviewCorrection[]> = {}
     for (const event of reviewEvents) {
       result[event.id] = [
         ...(event.corrections ?? []),
+        ...(persistedCorrections[event.id] ?? []),
         ...(localCorrections[event.id] ?? []),
-      ]
+      ].filter((correction, index, all) => !correction.id || all.findIndex((candidate) => candidate.id === correction.id) === index)
     }
     return result
-  }, [localCorrections, reviewEvents])
+  }, [localCorrections, persistedCorrections, reviewEvents])
 
   const chooseEvent = (event: ShotReviewEvent) => {
     setSelectedId(event.id)
@@ -161,6 +198,11 @@ export function ShotReviewTimeline({
             const shooter = shooterLabels[event.id] ?? ""
             const phase = phaseLabels[event.id] ?? event.phase ?? ""
             const result = event.detectedResult
+            const trusted = event.trusted ?? (
+              typeof event.confidence === "number"
+              && event.confidence >= TRUSTED_CONFIDENCE_THRESHOLD
+              && event.detected !== false
+            )
             return (
               <li key={event.id} className="relative">
                 <div className="flex gap-3">
@@ -182,8 +224,9 @@ export function ShotReviewTimeline({
                     </div>
                     <div className="mt-1 flex flex-wrap gap-2 text-[10px] uppercase tracking-wide text-slate-500">
                       {event.phase && <span>{event.phase}</span>}
-                      {typeof event.confidence === "number" && <span>{Math.round(event.confidence * 100)}% confidence</span>}
-                      {result && <span>{result}</span>}
+                      {trusted && typeof event.confidence === "number" && <span>{Math.round(event.confidence * 100)}% confidence</span>}
+                      {trusted && result && <span>{result}</span>}
+                      {!trusted && <span className="font-bold text-amber-700">review only · untrusted detection</span>}
                       {event.detected === false && <span>not detected</span>}
                     </div>
 

@@ -48,5 +48,37 @@ describe("ShotReviewTimeline", () => {
     render(<ShotReviewTimeline events={[]} persist={false} />)
     expect(screen.getByText(/no detected shots to review/i)).toBeTruthy()
   })
-})
 
+  it("hydrates corrections for persisted events", async () => {
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url.endsWith("/api/auth/csrf")) {
+        return new Response(JSON.stringify({ csrfToken: "test-token" }), { status: 200 })
+      }
+      return new Response(JSON.stringify({
+        success: true,
+        corrections: [{ id: "server-correction", kind: "phase", value: "release" }],
+      }), { status: 200 })
+    }) as typeof fetch
+
+    try {
+      render(<ShotReviewTimeline events={[{ ...events[0], id: "persisted-shot" }]} persist />)
+      expect(await screen.findByText("1 correction recorded")).toBeTruthy()
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  it("labels low-confidence detector output as review-only and hides its numeric result", () => {
+    render(<ShotReviewTimeline events={[{
+      id: "low-confidence",
+      timestampMs: 1000,
+      confidence: 0.35,
+      detectedResult: "make",
+    }]} persist={false} />)
+
+    expect(screen.getByText(/review only · untrusted detection/i)).toBeTruthy()
+    expect(screen.queryByText("make")).toBeNull()
+  })
+})
