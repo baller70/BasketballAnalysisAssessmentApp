@@ -53,3 +53,15 @@ Status: complete
 - `npm test` — 12 files, 42 tests passed.
 - `npx tsc --noEmit` — passed after regenerating the Prisma client.
 - `npm test -- --run tests/lib/live/shotDetection.test.ts` — 2 tests passed.
+
+## Results/live recording follow-up
+
+- Fullscreen live recording now marks the analysis store as `VIDEO` before handing the recording to Results, so the video tab and effective-video gate are selected for live sessions.
+- Live stop adapts captured data URLs to the Results contract (`annotatedFramesBase64`, frame metadata, duration, and FPS) and keeps the latest captured frame list in a ref so the MediaRecorder callback cannot close over an empty initial state.
+- If shot-event persistence returns `null`, detector rows remain in Results with stable local IDs and an explicit `reviewOnly` marker. The Results timeline renders and allows on-device corrections without attempting to call the server correction API for those rows; persisted rows retain normal hydration behavior.
+
+## Follow-up verification
+
+- `npm test` — 13 files, 45 tests passed (including 3 live Results adaptation regressions).
+- `npx tsc --noEmit` — passed.
+- `npm run build` — passed; Prisma generation, Next compilation/type checking, static generation, and route collection completed.

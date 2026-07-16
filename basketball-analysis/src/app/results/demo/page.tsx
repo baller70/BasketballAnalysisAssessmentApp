@@ -3904,6 +3904,14 @@ function VideoModeContent({ videoData, analysisData, playerName, poseConfidence,
       }
     })
   }, [videoData])
+
+  // Server detector rows can hydrate append-only corrections. Local live
+  // fallback rows are explicitly review-only and must never be sent to that
+  // API, even though they still render the same correction controls.
+  const hasPersistedShotEvents = useMemo(() => {
+    const events = (videoData as any)?.shotEvents
+    return Array.isArray(events) && events.some((event: any) => event?.reviewOnly !== true)
+  }, [videoData])
   
   // Check if we have video data
   const hasVideoData = videoData && videoData.annotatedFramesBase64 && videoData.annotatedFramesBase64.length > 0
@@ -3941,7 +3949,7 @@ function VideoModeContent({ videoData, analysisData, playerName, poseConfidence,
         <div className="mx-auto max-w-3xl">
           <ShotReviewTimeline
             events={reviewEvents}
-            persist={Array.isArray((videoData as any)?.shotEvents) && (videoData as any).shotEvents.length > 0}
+            persist={hasPersistedShotEvents}
             onSelect={(event) => {
               if (typeof event.frameIndex === "number") setCurrentFrame(Math.max(0, Math.min(totalFrames - 1, event.frameIndex)))
             }}

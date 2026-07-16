@@ -49,6 +49,7 @@ import {
 } from '@/lib/capture/guidedCapture'
 import { persistShotEvents, type ShotEventInput } from '@/lib/api/shotEvents'
 import { recordLiveShotDetection } from '@/lib/live/shotDetection'
+import { buildLiveVideoAnalysisData } from '@/lib/live/liveReviewData'
 
 // ============================================
 // TYPES
@@ -272,7 +273,7 @@ const SKELETON_CONNECTIONS: [number, number][] = [
 
 export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   const router = useRouter()
-  const { setUploadedImageBase64, setVideoAnalysisData } = useAnalysisStore()
+  const { setUploadedImageBase64, setVideoAnalysisData, setMediaType } = useAnalysisStore()
   const { canAnalyze, remainingToday, dailyLimit, incrementUsage } = useUsage()
   const { earnPoints } = usePoints()
 
@@ -301,6 +302,10 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   const [recordingDuration, setRecordingDuration] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
   const [capturedFrames, setCapturedFrames] = useState<CapturedFrame[]>([])
+  // MediaRecorder callbacks are created when recording starts. Keep the
+  // latest frame list in a ref so onstop cannot close over the empty list from
+  // that initial render.
+  const capturedFramesRef = useRef<CapturedFrame[]>([])
   const [videoDimensions, setVideoDimensions] = useState({ width: 640, height: 480 })
   const [orientation, setOrientation] = useState<Orientation>('portrait')
   const [poseInputRotation, setPoseInputRotation] = useState<PoseInputRotation>('none')
@@ -1335,17 +1340,19 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       setSavedVideoUrl(url)
 
       const persistedShotEvents = await persistShotEvents(detectedShotEventsRef.current)
-      
-      // Store in analysis store for viewing
-      setVideoAnalysisData({
+
+      // Live recordings are video results even when the user is signed out.
+      // Keep local detector rows as an explicit review-only fallback when the
+      // server persistence call is unavailable, and provide the annotated
+      // frame contract required by the Results video player.
+      setMediaType('VIDEO')
+      setVideoAnalysisData(buildLiveVideoAnalysisData({
         videoUrl: url,
-        frames: capturedFrames.map(f => ({
-          url: f.dataUrl,
-          timestamp: f.timestamp,
-          angles: f.angles,
-        })),
-        ...(persistedShotEvents ? { shotEvents: persistedShotEvents } : {}),
-      })
+        frames: capturedFramesRef.current,
+        duration: recordingDurationRef.current,
+        detectedShotEvents: detectedShotEventsRef.current,
+        persistedShotEvents,
+      }))
 
       // Show save choice dialog
       setShowSaveChoice(true)
@@ -1356,7 +1363,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     isRecordingRef.current = true
     recordingDurationRef.current = 0
     setIsRecording(true)
-  }, [capturedFrames, setVideoAnalysisData, videoDimensions])
+  }, [setMediaType, setVideoAnalysisData, videoDimensions])
 
   // Start recording with countdown. This remains available as an explicit
   // override so the existing record capability is never removed when the
@@ -1505,7 +1512,8 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       feedback,
     }
 
-    setCapturedFrames(prev => [...prev, frame])
+    capturedFramesRef.current = [...capturedFramesRef.current, frame]
+    setCapturedFrames(capturedFramesRef.current)
     setUploadedImageBase64(dataUrl)
   }, [angles, feedback, recordingDuration, setUploadedImageBase64])
 
@@ -1524,6 +1532,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
 
   // Reset
   const handleReset = useCallback(() => {
+    capturedFramesRef.current = []
     setCapturedFrames([])
     setRecordingDuration(0)
     setIsPaused(false)

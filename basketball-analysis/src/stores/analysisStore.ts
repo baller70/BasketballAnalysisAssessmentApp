@@ -133,6 +133,8 @@ export interface VideoAnalysisData {
   /** Server-created detector rows used by the persisted review timeline. */
   shotEvents?: Array<{
     id: string
+    /** Local live fallback rows are review-only and must not call correction API. */
+    reviewOnly?: boolean
     userProfileId?: string
     captureSessionId?: string | null
     sequence?: number

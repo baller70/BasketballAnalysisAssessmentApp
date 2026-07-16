@@ -17,6 +17,8 @@ export interface ShotReviewCorrection {
 
 export interface ShotReviewEvent {
   id: string
+  /** Local live fallback rows stay on-device and must not call the API. */
+  reviewOnly?: boolean
   timestampMs?: number
   /** Accept seconds as well for results produced by the video analyzer. */
   timestamp?: number
