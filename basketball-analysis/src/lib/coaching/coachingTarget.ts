@@ -8,6 +8,22 @@ import {
 export type CoachingTargetStatus = "active" | "improved" | "no_change" | "regression" | "superseded"
 export type CoachingTargetDirection = "increase" | "decrease"
 
+/**
+ * Normalize direction values arriving from JSON/Prisma before they reach the
+ * comparison logic.  A fallback is intentionally optional: selectors can
+ * recover to the rule's direction, while retests must reject corrupt rows.
+ */
+export function normalizeCoachingTargetDirection(
+  value: unknown,
+  fallback?: CoachingTargetDirection,
+): CoachingTargetDirection | undefined {
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase()
+    if (normalized === "increase" || normalized === "decrease") return normalized
+  }
+  return fallback
+}
+
 export interface CoachingTarget {
   id?: string
   flaw: string
@@ -153,6 +169,29 @@ const TARGET_RULES: TargetRule[] = [
 
 const normalizeKey = (value: string) => value.trim().toLowerCase().replace(/\s+/g, "_")
 
+const METRIC_ALIASES: Record<string, string[]> = {
+  elbowAngle: ["elbowAngle", "right_elbow_angle", "left_elbow_angle", "elbow_angle"],
+  kneeAngle: ["kneeAngle", "right_knee_angle", "left_knee_angle", "knee_angle"],
+  releaseAngle: ["releaseAngle", "release_angle", "arc", "shotArc"],
+  balanceScore: ["balanceScore", "balance_score", "balance"],
+  followThrough: ["followThrough", "follow_through", "followThroughScore"],
+  footworkScore: ["footworkScore", "footwork_score", "footwork"],
+  consistencyScore: ["consistencyScore", "consistency_score", "consistency"],
+  overallScore: ["overallScore", "overall_score", "score"],
+}
+
+/** Return whether a metric's own aliases contain a finite measured value. */
+export function hasCoachingMetricValue(
+  metric: string,
+  metrics?: CoachingTargetInput["metrics"],
+): boolean {
+  const keys = METRIC_ALIASES[metric] || [metric]
+  return keys.some((key) => {
+    const value = metrics?.[key]
+    return typeof value === "number" && Number.isFinite(value)
+  })
+}
+
 function ruleFor(signal: CoachingFlawSignal | string): TargetRule {
   const key = normalizeKey(typeof signal === "string" ? signal : signal.id || signal.name || "")
   return TARGET_RULES.find((rule) => rule.aliases.includes(key)) || {
@@ -169,17 +208,7 @@ function ruleFor(signal: CoachingFlawSignal | string): TargetRule {
 
 function metricValue(rule: TargetRule, signal: CoachingFlawSignal | string, metrics?: CoachingTargetInput["metrics"]): number {
   if (typeof signal !== "string" && Number.isFinite(signal.baseline)) return Number(signal.baseline)
-  const metricAliases: Record<string, string[]> = {
-    elbowAngle: ["elbowAngle", "right_elbow_angle", "left_elbow_angle", "elbow_angle"],
-    kneeAngle: ["kneeAngle", "right_knee_angle", "left_knee_angle", "knee_angle"],
-    releaseAngle: ["releaseAngle", "release_angle", "arc", "shotArc"],
-    balanceScore: ["balanceScore", "balance_score", "balance"],
-    followThrough: ["followThrough", "follow_through", "followThroughScore"],
-    footworkScore: ["footworkScore", "footwork_score", "footwork"],
-    consistencyScore: ["consistencyScore", "consistency_score", "consistency"],
-    overallScore: ["overallScore", "overall_score", "score"],
-  }
-  for (const key of metricAliases[rule.metric] || [rule.metric]) {
+  for (const key of METRIC_ALIASES[rule.metric] || [rule.metric]) {
     const value = metrics?.[key]
     if (typeof value === "number" && Number.isFinite(value)) return value
   }
@@ -221,7 +250,9 @@ export function selectCoachingTarget(input: CoachingTargetInput = {}): CoachingT
   }).sort((a, b) => b.confidence - a.confidence || a.index - b.index)[0]
 
   const baseline = metricValue(ranked.rule, ranked.signal, input.metrics)
-  const direction = typeof ranked.signal !== "string" && ranked.signal.direction ? ranked.signal.direction : ranked.rule.direction
+  const direction = typeof ranked.signal !== "string"
+    ? normalizeCoachingTargetDirection(ranked.signal.direction, ranked.rule.direction)!
+    : ranked.rule.direction
   const explicitTarget = typeof ranked.signal !== "string" && Number.isFinite(ranked.signal.targetValue)
     ? Number(ranked.signal.targetValue)
     : ranked.rule.targetValue
@@ -258,13 +289,15 @@ export interface RetestResult {
 /** Compare a fresh measurement with the normalized baseline and target. */
 export function evaluateRetest(target: Pick<CoachingTarget, "baseline" | "targetValue" | "direction">, retestValue: number): RetestResult {
   if (!Number.isFinite(retestValue)) throw new Error("Retest value must be a finite number")
+  const direction = normalizeCoachingTargetDirection(target.direction)
+  if (!direction) throw new Error("Invalid coaching target direction")
   const value = Number(retestValue)
   const delta = Number((value - target.baseline).toFixed(2))
   const tolerance = Math.max(0.5, Math.abs(target.targetValue - target.baseline) * 0.1)
-  const reached = target.direction === "increase"
+  const reached = direction === "increase"
     ? value >= target.targetValue
     : value <= target.targetValue
-  const regressed = target.direction === "increase"
+  const regressed = direction === "increase"
     ? value < target.baseline - tolerance
     : value > target.baseline + tolerance
 
@@ -295,6 +328,9 @@ export function serializeCoachingTarget(target: {
   createdAt?: Date
   updatedAt?: Date
 }) {
+  const direction = normalizeCoachingTargetDirection(target.direction)
+  if (!direction) throw new Error("Invalid coaching target direction")
+
   return {
     id: target.id,
     flaw: target.flaw,
@@ -304,7 +340,7 @@ export function serializeCoachingTarget(target: {
     metric: target.metric,
     baseline: Number(target.baseline),
     targetValue: Number(target.targetValue),
-    direction: target.direction,
+    direction,
     confidence: Number(target.confidence),
     status: target.status,
     retestValue: target.retestValue == null ? null : Number(target.retestValue),

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest"
 import {
   evaluateRetest,
+  hasCoachingMetricValue,
+  normalizeCoachingTargetDirection,
   selectCoachingTarget,
   type CoachingTargetInput,
 } from "@/lib/coaching/coachingTarget"
@@ -45,6 +47,27 @@ describe("coaching target selection", () => {
     expect(target.metric).toBe("elbowAngle")
     expect(target.baseline).toBe(84)
   })
+
+  it("normalizes an invalid candidate direction to the rule direction", () => {
+    const target = selectCoachingTarget({
+      flaws: [{ id: "elbow_flare", direction: "sideways" as never, baseline: 18 }],
+    })
+
+    expect(target.direction).toBe("decrease")
+    expect(normalizeCoachingTargetDirection(" DECREASE ")).toBe("decrease")
+    expect(normalizeCoachingTargetDirection("sideways")).toBeUndefined()
+  })
+
+  it("does not treat an unrelated numeric metric as the selected baseline", () => {
+    expect(hasCoachingMetricValue("elbowAngle", { formScore: 96 })).toBe(false)
+    expect(hasCoachingMetricValue("elbowAngle", { right_elbow_angle: 84 })).toBe(true)
+
+    const target = selectCoachingTarget({
+      flaws: ["elbow_flare"],
+      metrics: { formScore: 96 },
+    })
+    expect(target.baseline).toBe(18)
+  })
 })
 
 describe("coaching target retests", () => {
@@ -67,5 +90,13 @@ describe("coaching target retests", () => {
   it("reports no change inside the baseline/target band", () => {
     const result = evaluateRetest(target, 118)
     expect(result.status).toBe("no_change")
+  })
+
+  it("rejects an invalid persisted direction instead of treating it as decrease", () => {
+    expect(() => evaluateRetest({
+      baseline: 18,
+      targetValue: 10,
+      direction: "sideways" as never,
+    }, 12)).toThrow("Invalid coaching target direction")
   })
 })

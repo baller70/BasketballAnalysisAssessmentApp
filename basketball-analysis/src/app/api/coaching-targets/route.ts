@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { resolveProfileId, isError } from "@/lib/auth/currentUser"
+import { validateCsrf } from "@/lib/csrf"
 import {
   evaluateRetest,
+  hasCoachingMetricValue,
+  normalizeCoachingTargetDirection,
   selectCoachingTarget,
   serializeCoachingTarget,
   CoachingTargetUnavailableError,
@@ -79,8 +82,10 @@ function serializeRow(row: Parameters<typeof serializeCoachingTarget>[0]) {
   return serializeCoachingTarget(row)
 }
 
-function hasMeasuredMetricValues(metrics: CoachingTargetInput["metrics"]): boolean {
-  return !!metrics && Object.values(metrics).some((value) => typeof value === "number" && Number.isFinite(value))
+function hasMeasuredMetricValues(metrics: CoachingTargetInput["metrics"], metric?: string): boolean {
+  if (!metrics) return false
+  if (metric) return hasCoachingMetricValue(metric, metrics)
+  return Object.values(metrics).some((value) => typeof value === "number" && Number.isFinite(value))
 }
 
 /** Use the most recent persisted analysis when a client did not send its live angles. */
@@ -136,7 +141,7 @@ export async function GET(request: NextRequest) {
  * latest analysis signals. With targetId + retestValue it records the retest
  * and returns an improvement/no-change/regression result.
  */
-export async function POST(request: NextRequest) {
+async function handleMutation(request: NextRequest) {
   const resolved = await resolveProfileId(request)
   if (isError(resolved)) return resolved.error
 
@@ -159,10 +164,14 @@ export async function POST(request: NextRequest) {
       })
       if (!current) return NextResponse.json({ success: false, error: "Coaching target not found" }, { status: 404 })
 
+      const direction = normalizeCoachingTargetDirection(current.direction)
+      if (!direction) {
+        return NextResponse.json({ success: false, error: "Stored coaching target has an invalid direction" }, { status: 422 })
+      }
       const result = evaluateRetest({
         baseline: Number(current.baseline),
         targetValue: Number(current.targetValue),
-        direction: current.direction === "decrease" ? "decrease" : "increase",
+        direction,
       }, numericRetest)
       const updated = await coachingTargetDb.update({
         where: { id: current.id },
@@ -175,19 +184,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, target: serializeRow(updated), result })
     }
 
-    let metrics: CoachingTargetInput["metrics"] = body.metrics && typeof body.metrics === "object"
+    const suppliedMetrics: CoachingTargetInput["metrics"] = body.metrics && typeof body.metrics === "object"
       ? body.metrics as Record<string, number | null | undefined>
       : body.angles && typeof body.angles === "object"
         ? body.angles as Record<string, number | null | undefined>
         : undefined
-    // Training sends the latest on-device angles. For older clients, derive
-    // them from the latest persisted history before selecting a target.
-    if (!hasMeasuredMetricValues(metrics)) {
-      metrics = await latestMeasuredMetrics(resolved.profileId)
-    }
-    const input: CoachingTargetInput = {
+
+    const baseInput: Omit<CoachingTargetInput, "metrics"> = {
       flaws: toFlaws(body.flaws ?? body.detectedFlaws),
       candidates: Array.isArray(body.candidates) ? body.candidates as CoachingFlawSignal[] : undefined,
+    }
+    // Select once without measurements to identify the selected rule's metric.
+    // Persisted history is only a valid fallback when that metric itself is
+    // present; an unrelated score must never become the baseline source.
+    const preview = selectCoachingTarget(baseInput)
+    let metrics = suppliedMetrics
+    if (!hasMeasuredMetricValues(suppliedMetrics, preview.metric)) {
+      const persistedMetrics = await latestMeasuredMetrics(resolved.profileId)
+      if (hasMeasuredMetricValues(persistedMetrics, preview.metric)) {
+        metrics = { ...suppliedMetrics, ...persistedMetrics }
+      }
+    }
+
+    // Training sends the latest on-device angles. For older clients, derive
+    // them from the latest persisted history before selecting a target.
+    const input: CoachingTargetInput = {
+      ...baseInput,
       metrics,
     }
     const selected = selectCoachingTarget(input)
@@ -228,7 +250,15 @@ export async function POST(request: NextRequest) {
   }
 }
 
+export async function POST(request: NextRequest) {
+  const csrfError = validateCsrf(request)
+  if (csrfError) return csrfError
+  return handleMutation(request)
+}
+
 /** PATCH is a convenient alias for recording a retest from mobile clients. */
 export async function PATCH(request: NextRequest) {
-  return POST(request)
+  const csrfError = validateCsrf(request)
+  if (csrfError) return csrfError
+  return handleMutation(request)
 }

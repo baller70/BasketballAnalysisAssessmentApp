@@ -31,3 +31,15 @@
 
 - `npm test -- --run tests/lib/coaching/coachingTarget.test.ts` — 6 tests passed.
 - `npx tsc --noEmit` — passed.
+
+## Re-review fixes
+
+- Added the shared CSRF double-submit check at the start of both POST and PATCH mutations. PATCH now invokes the mutation handler directly after its own guard instead of relying on POST's guard implicitly.
+- Normalized case/whitespace around `increase`/`decrease`; selectors fall back to the rule direction for invalid candidate input, while retest evaluation and row serialization reject corrupt directions rather than interpreting them inconsistently.
+- History fallback now identifies the selected rule metric first and only uses persisted analysis values when that metric (or one of its aliases) is finite. An unrelated numeric score cannot become the target baseline.
+- Added focused API and selector tests covering CSRF ordering, invalid directions, and metric-specific baseline fallback.
+
+### Re-review verification
+
+- `npm test -- --run tests/lib/coaching/coachingTarget.test.ts tests/api/coachingTargets.test.ts` — 13 tests passed.
+- `npx tsc --noEmit` — passed.
