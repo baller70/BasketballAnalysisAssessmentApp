@@ -194,8 +194,8 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
       setMediaType('VIDEO')
       setVideoAnalysisData({
         videoUrl: videoPreviewUrl || undefined,
-        captureSessionId,
         ...sessionData.videoData,
+        captureSessionId,
         shotEvents,
       })
       

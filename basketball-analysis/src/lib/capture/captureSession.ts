@@ -93,4 +93,3 @@ export function normalizeCapturePlatform(
   if (platform === 'desktop') return 'desktop'
   return 'web'
 }
-

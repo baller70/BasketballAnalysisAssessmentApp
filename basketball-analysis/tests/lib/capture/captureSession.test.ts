@@ -69,4 +69,3 @@ describe('capture session metadata builder', () => {
     expect(normalizeCapturePlatform('macos')).toBe('web')
   })
 })
-
