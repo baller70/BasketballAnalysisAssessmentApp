@@ -1947,7 +1947,6 @@ function DemoResultsPageContent() {
   const [isLoading, setIsLoading] = useState(false)
   const [showFabMenu, setShowFabMenu] = useState(false)
   const videoUploadInputRef = useRef<HTMLInputElement>(null)
-  const videoUploadGenerationRef = useRef(0)
 
   // iPhone Safari is unreliable when a floating label targets an off-screen
   // file input. Keep the native input and open it synchronously from the user's
@@ -2241,8 +2240,6 @@ function DemoResultsPageContent() {
                   const file = e.target.files?.[0]
                   console.log('📹 Video file selected:', file?.name, file?.size)
                   if (file) {
-                    const uploadGeneration = videoUploadGenerationRef.current + 1
-                    videoUploadGenerationRef.current = uploadGeneration
                     const captureSessionPromise = createCaptureSession(buildCaptureSessionMetadata({
                       mode: 'form',
                       source: 'uploaded_video',
@@ -2467,22 +2464,6 @@ function DemoResultsPageContent() {
                               reconciledShotEvents,
                             )
                             saveSession(updatedSession)
-                            if (videoUploadGenerationRef.current === uploadGeneration) {
-                              storeData?.setVideoAnalysisData?.({
-                                videoUrl: URL.createObjectURL(file),
-                                captureSessionId: lateSessionId,
-                                frames: analysisResult.frame_data || [],
-                                annotatedFramesBase64: analysisResult.annotated_frames_base64,
-                                fps: analysisResult.fps || 10,
-                                frameData: analysisResult.frame_data,
-                                keyScreenshots: analysisResult.key_screenshots,
-                                allKeypoints: analysisResult.all_keypoints,
-                                phases: analysisResult.phases,
-                                metrics: analysisResult.metrics,
-                                shotEvents: reconciledShotEvents,
-                                canonicalObservation: analysisResult.canonicalObservation,
-                              })
-                            }
                             await updateCaptureSession(lateSessionId, {
                               readinessStatus: 'completed',
                               endedAt: new Date(),

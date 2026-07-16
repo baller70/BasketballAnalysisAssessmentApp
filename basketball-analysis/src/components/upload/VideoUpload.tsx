@@ -43,7 +43,6 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
   const playIntervalRef = useRef<NodeJS.Timeout | null>(null)
   
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const uploadGenerationRef = useRef(0)
 
   const {
     setVisionAnalysisResult,
@@ -123,9 +122,6 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
     setIsAnalyzing(true)
     setError(null)
     setAnalysisProgress("Uploading video...")
-
-    const uploadGeneration = uploadGenerationRef.current + 1
-    uploadGenerationRef.current = uploadGeneration
 
     const captureSessionPromise = createCaptureSession(buildCaptureSessionMetadata({
       mode: 'form',
@@ -321,14 +317,6 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
             // The saved local session belongs to this upload even if a newer
             // upload is now active; saving by ID cannot overwrite that newer row.
             saveSession(updatedSession)
-            if (uploadGenerationRef.current === uploadGeneration) {
-              setVideoAnalysisData({
-                videoUrl: videoPreviewUrl || undefined,
-                ...sessionData.videoData,
-                captureSessionId: lateSessionId,
-                shotEvents: reconciledShotEvents,
-              })
-            }
             await updateCaptureSession(lateSessionId, {
               readinessStatus: 'completed',
               endedAt: new Date(),

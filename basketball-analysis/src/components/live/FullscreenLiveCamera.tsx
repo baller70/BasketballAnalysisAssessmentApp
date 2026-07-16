@@ -970,7 +970,6 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
         pending,
         new Promise<null>((resolve) => setTimeout(() => resolve(null), 1500)),
       ])
-      if (id) captureSessionIdRef.current = id
       return id
     } catch {
       return null
