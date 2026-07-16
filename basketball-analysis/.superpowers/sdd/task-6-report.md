@@ -59,9 +59,28 @@
 
 ## Remaining concerns
 
-- Session storage still uses a numeric overall-score field for legacy
-  compatibility. A video with no trusted release mechanics yields a null
-  `metrics.release_score` and therefore a zero compatibility score in the
-  session adapter; the trusted angle/score records themselves remain omitted.
 - Canonical phases are lower-case domain states; the upload preview maps both
   canonical and legacy labels to the existing colors.
+
+## Final integration fixes
+
+- Uploaded-video navigation now marks the media as `VIDEO`, persists the full
+  frame/phase/mechanics payload in the analysis store, and saves `videoData`
+  with the session instead of silently defaulting to an image session.
+- `convertVideoToSessionFormat` preserves a null release score. Callers surface
+  a no-trusted-mechanics error rather than converting omission into a numeric
+  zero/category.
+- Body-only phase tracking now filters weak wrist candidates, requires the
+  configured stationary-frame count for `set`, advances release into a body
+  follow-through, and completes after the configured follow-through frames
+  when no ball detector is present. Detector hints still take precedence for
+  flight/rim-event/complete transitions.
+- Added regressions for low-confidence wrist selection, stationary set timing,
+  body-only phase progression, null release-score conversion, and persisted
+  canonical video sidecars.
+
+## Final verification
+
+- Focused phase/video/live tests: **11 passed across 4 files**.
+- Full Vitest suite: **45 tests passed across 14 files**.
+- `npx tsc --noEmit --pretty false`: **passed**.

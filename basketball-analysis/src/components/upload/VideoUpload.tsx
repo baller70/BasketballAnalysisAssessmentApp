@@ -37,6 +37,8 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
   const {
     setVisionAnalysisResult,
     setUploadedImageBase64,
+    setMediaType,
+    setVideoAnalysisData,
   } = useAnalysisStore()
 
   // Auto-play frames
@@ -127,9 +129,17 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
 
       // Convert to session format
       const sessionData = convertVideoToSessionFormat(analysisResult)
+      if (sessionData.overallScore === null) {
+        throw new Error('No trusted shooting mechanics were detected in this video. Try a clearer full-body capture.')
+      }
       
       // Store in analysis store for results page
       setUploadedImageBase64(sessionData.mainImageBase64)
+      setMediaType('VIDEO')
+      setVideoAnalysisData({
+        videoUrl: videoPreviewUrl || undefined,
+        ...sessionData.videoData,
+      })
       
       // Create vision analysis result format for compatibility
       const visionResult = {
@@ -179,7 +189,9 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
         useAnalysisStore.getState().playerProfile.name || 'Player',
         undefined, // coachingLevelUsed
         undefined, // profileSnapshot
-        analysisResult.key_screenshots?.length || 3 // imagesAnalyzed
+        analysisResult.key_screenshots?.length || 3, // imagesAnalyzed
+        'video',
+        sessionData.videoData,
       )
       
       const saved = saveSession(session)

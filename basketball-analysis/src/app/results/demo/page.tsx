@@ -2258,6 +2258,10 @@ function DemoResultsPageContent() {
                       
                       // Convert to session format
                       const sessionData = convertVideoToSessionFormat(analysisResult)
+                      if (sessionData.overallScore === null) {
+                        setProcessingError('No trusted shooting mechanics were detected in this video. Try a clearer full-body capture.')
+                        return
+                      }
 
                       // Persist the actual detector phases before rendering
                       // Results. Signed-in users receive server IDs and the
@@ -2300,6 +2304,7 @@ function DemoResultsPageContent() {
                         phases: analysisResult.phases,
                         metrics: analysisResult.metrics,
                         ...(persistedShotEvents ? { shotEvents: persistedShotEvents } : {}),
+                        canonicalObservation: analysisResult.canonicalObservation,
                       })
                       console.log('📹 Video analysis data set in store')
                       
@@ -2345,7 +2350,9 @@ function DemoResultsPageContent() {
                         storeData?.playerProfile?.name || 'Player',
                         undefined,
                         undefined,
-                        analysisResult.key_screenshots?.length || 3
+                        analysisResult.key_screenshots?.length || 3,
+                        'video',
+                        sessionData.videoData,
                       )
                       
                       saveSession(session)

@@ -2,6 +2,9 @@
 // Handles localStorage operations for saving and loading analysis sessions
 // Phase 9: Enhanced with historical data management, analytics, and progress tracking
 
+import type { CanonicalAngles, CanonicalVisionObservation } from '@/services/pose'
+import type { MechanicsGateResult } from '@/lib/vision/confidenceGate'
+
 export interface SessionScreenshot {
   id: string
   label: string
@@ -39,19 +42,49 @@ export interface AnalysisSession {
     frameCount: number
     duration: number
     fps: number
-    phases: Array<{ phase: string; frame: number; timestamp: number }>
+    phases: Array<{
+      phase: string
+      frame: number
+      timestamp: number
+      legacy_phase?: string
+      canonicalObservation?: CanonicalVisionObservation
+    }>
     metrics: {
       elbow_angle_range: { min: number | null; max: number | null; at_release: number | null }
       knee_angle_range: { min: number | null; max: number | null }
       release_frame: number
       release_timestamp: number
+      release_score?: number | null
+      release_angles?: Record<string, number>
+      release_untrusted_angles?: CanonicalAngles
+      release_mechanics?: MechanicsGateResult
+      canonicalObservation?: CanonicalVisionObservation
     }
     frameData: Array<{
       frame: number
       timestamp: number
       phase: string
+      legacy_phase?: string
       metrics: Record<string, number>
+      keypoint_count?: number
+      ball_detected?: boolean
+      keypoints?: Record<string, { x: number; y: number; confidence: number }>
+      mechanics?: MechanicsGateResult
+      canonicalObservation?: CanonicalVisionObservation
+      untrustedAngles?: CanonicalAngles
     }>
+    allKeypoints?: Array<Record<string, { x: number; y: number; confidence: number }>>
+    keyScreenshots?: Array<{
+      label: string
+      frame_index: number
+      phase: string
+      legacy_phase?: string
+      canonicalObservation?: CanonicalVisionObservation
+      metrics: Record<string, number>
+      keypoints: Record<string, { x: number; y: number; confidence: number }>
+      image_base64: string
+    }>
+    canonicalObservation?: CanonicalVisionObservation
   }
 }
 

@@ -57,12 +57,32 @@ describe('shot phase tracker', () => {
 
   it('derives the higher active wrist and pose confidence from adapter keypoints', () => {
     const observation = observationFromKeypoints([
+      // A weak, higher wrist must not steal side/phase movement from the
+      // confident opposite wrist.
       { name: 'left_wrist', x: 5, y: 300, score: 0.7 },
-      { name: 'right_wrist', x: 8, y: 220, score: 0.95 },
+      { name: 'right_wrist', x: 8, y: 220, score: 0.2 },
     ], 100)
 
-    expect(observation.wristY).toBe(220)
-    expect(observation.wristConfidence).toBe(0.95)
-    expect(observation.poseConfidence).toBeCloseTo(0.825)
+    expect(observation.wristY).toBe(300)
+    expect(observation.wristConfidence).toBe(0.7)
+    expect(observation.poseConfidence).toBeCloseTo(0.45)
+  })
+
+  it('advances body-only release into follow-through and completes without ball hints', () => {
+    const tracker = createShotPhaseTracker({ followThroughFrames: 2 })
+    expect(tracker.update(frame(0, 500)).phase).toBe('gather')
+    expect(tracker.update(frame(33, 480)).phase).toBe('rise')
+    expect(tracker.update(frame(66, 480, { isSet: true, elbowAngle: 95 })).phase).toBe('set')
+    expect(tracker.update(frame(99, 460, { elbowAngle: 160 })).phase).toBe('release')
+    expect(tracker.update(frame(132, 455, { elbowAngle: 160 })).phase).toBe('follow-through')
+    expect(tracker.update(frame(165, 454, { elbowAngle: 150 })).phase).toBe('complete')
+  })
+
+  it('requires the configured number of stationary frames before body-only set', () => {
+    const tracker = createShotPhaseTracker({ setStableFrames: 2 })
+    expect(tracker.update(frame(0, 500)).phase).toBe('gather')
+    expect(tracker.update(frame(33, 480)).phase).toBe('rise')
+    expect(tracker.update(frame(66, 480)).phase).toBe('rise')
+    expect(tracker.update(frame(99, 480)).phase).toBe('set')
   })
 })

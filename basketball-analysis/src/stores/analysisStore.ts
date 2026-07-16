@@ -41,6 +41,8 @@ import type {
   ReportTier,
   AnalysisResult,
 } from "@/types"
+import type { CanonicalAngles, CanonicalVisionObservation } from "@/services/pose"
+import type { MechanicsGateResult } from "@/lib/vision/confidenceGate"
 
 // Form analysis result type (previously from formAnalysis.ts)
 export interface FormAnalysisResult {
@@ -114,20 +116,38 @@ export interface VideoAnalysisData {
   frameCount?: number
   duration?: number
   fps?: number
-  phases?: Array<{ phase: string; frame: number; timestamp: number }>
+  phases?: Array<{
+    phase: string
+    frame: number
+    timestamp: number
+    legacy_phase?: string
+    canonicalObservation?: CanonicalVisionObservation
+  }>
   metrics?: {
     elbow_angle_range: { min: number | null; max: number | null; at_release: number | null }
     knee_angle_range: { min: number | null; max: number | null }
     release_frame: number
     release_timestamp: number
+    release_score?: number | null
+    release_angles?: Record<string, number>
+    release_untrusted_angles?: CanonicalAngles
+    release_mechanics?: MechanicsGateResult
+    canonicalObservation?: CanonicalVisionObservation
   }
   frameData?: Array<{
     frame: number
     timestamp: number
     phase: string
+    legacy_phase?: string
     metrics: Record<string, number>
     confidence?: number
     ball?: { x: number; y: number; radius: number }
+    keypoint_count?: number
+    ball_detected?: boolean
+    keypoints?: Record<string, { x: number; y: number; confidence: number }>
+    mechanics?: MechanicsGateResult
+    canonicalObservation?: CanonicalVisionObservation
+    untrustedAngles?: CanonicalAngles
   }>
   allKeypoints?: Array<Record<string, { x: number; y: number; confidence: number }>>
   /** Server-created detector rows used by the persisted review timeline. */
@@ -153,6 +173,17 @@ export interface VideoAnalysisData {
     createdAt?: string
     updatedAt?: string
   }>
+  keyScreenshots?: Array<{
+    label: string
+    frame_index: number
+    phase: string
+    legacy_phase?: string
+    canonicalObservation?: CanonicalVisionObservation
+    metrics: Record<string, number>
+    keypoints: Record<string, { x: number; y: number; confidence: number }>
+    image_base64: string
+  }>
+  canonicalObservation?: CanonicalVisionObservation
 }
 
 interface AnalysisState {

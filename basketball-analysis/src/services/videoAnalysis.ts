@@ -182,6 +182,53 @@ export interface VideoFrameRecord {
 }
 
 /**
+ * Complete video payload retained by the session/store seams.  The legacy
+ * frame and metric fields remain intact, while canonical phases and mechanics
+ * sidecars stay available after navigation or a later session reload.
+ */
+export interface VideoSessionData {
+  annotatedFramesBase64: string[]
+  frameCount: number
+  duration: number
+  fps: number
+  phases: NonNullable<VideoAnalysisResult['phases']>
+  metrics: NonNullable<VideoAnalysisResult['metrics']>
+  frameData: VideoFrameRecord[]
+  allKeypoints: Array<Record<string, { x: number; y: number; confidence: number }>>
+  keyScreenshots?: KeyScreenshot[]
+  canonicalObservation?: CanonicalVisionObservation
+}
+
+/** Build a persistence-safe video payload without fabricating metrics. */
+export function toVideoSessionData(videoResult: VideoAnalysisResult): VideoSessionData {
+  const sourceMetrics = videoResult.metrics
+  const metrics: NonNullable<VideoAnalysisResult['metrics']> = {
+    elbow_angle_range: sourceMetrics?.elbow_angle_range ?? { min: null, max: null, at_release: null },
+    knee_angle_range: sourceMetrics?.knee_angle_range ?? { min: null, max: null },
+    release_frame: sourceMetrics?.release_frame ?? -1,
+    release_timestamp: sourceMetrics?.release_timestamp ?? 0,
+    release_score: sourceMetrics?.release_score ?? null,
+    release_angles: sourceMetrics?.release_angles ?? {},
+    release_untrusted_angles: sourceMetrics?.release_untrusted_angles,
+    release_mechanics: sourceMetrics?.release_mechanics,
+    canonicalObservation: sourceMetrics?.canonicalObservation ?? videoResult.canonicalObservation,
+  }
+
+  return {
+    annotatedFramesBase64: videoResult.annotated_frames_base64 ?? [],
+    frameCount: videoResult.frame_count ?? videoResult.video_info?.extracted_frames ?? 0,
+    duration: videoResult.video_info?.duration ?? 0,
+    fps: videoResult.fps ?? videoResult.video_info?.target_fps ?? 0,
+    phases: videoResult.phases ?? [],
+    metrics,
+    frameData: videoResult.frame_data ?? [],
+    allKeypoints: videoResult.all_keypoints ?? [],
+    keyScreenshots: videoResult.key_screenshots,
+    canonicalObservation: videoResult.canonicalObservation,
+  }
+}
+
+/**
  * Serialize one sampled frame without promoting raw, low-confidence angles to
  * the numeric metrics consumed by uploaded-video UI. The canonical provider's
  * phase and mechanics sidecar are carried through unchanged.
@@ -476,7 +523,7 @@ export async function analyzeVideoShooting(
 export function convertVideoToSessionFormat(
   videoResult: VideoAnalysisResult
 ): {
-  overallScore: number
+  overallScore: number | null
   angles: Record<string, number>
   keypoints: Record<string, { x: number; y: number; confidence: number }> | null
   screenshots: Array<{ label: string; imageBase64: string; analysis?: string }>
@@ -488,12 +535,15 @@ export function convertVideoToSessionFormat(
   mechanics?: MechanicsGateResult
   canonicalObservation?: CanonicalVisionObservation
   untrustedAngles?: CanonicalAngles
+  videoData: VideoSessionData
 } {
   const metrics = videoResult.metrics
 
-  // Real release-frame score. (analyzeVideoShooting only returns success when at
-  // least one frame was scored, so this is always a genuine number here.)
-  const overallScore = Math.min(100, Math.max(0, Math.round(metrics?.release_score ?? 0)))
+  // Real release-frame score. A detected frame can still have no trusted
+  // mechanics, in which case the score stays null instead of becoming zero.
+  const overallScore = metrics?.release_score == null
+    ? null
+    : Math.min(100, Math.max(0, Math.round(metrics.release_score)))
 
   // Canonical angle record for the flaw engine (right_elbow_angle, etc.).
   const angles: Record<string, number> = { ...(metrics?.release_angles ?? {}) }
@@ -558,6 +608,7 @@ export function convertVideoToSessionFormat(
     mechanics: metrics?.release_mechanics,
     canonicalObservation: metrics?.canonicalObservation ?? videoResult.canonicalObservation,
     untrustedAngles: metrics?.release_untrusted_angles,
+    videoData: toVideoSessionData(videoResult),
   }
 }
 

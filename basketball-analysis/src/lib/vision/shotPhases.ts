@@ -77,6 +77,8 @@ export interface ShotPhaseTrackerOptions {
   risePixels?: number
   /** Number of near-stationary frames required before body-only set. */
   setStableFrames?: number
+  /** Body-only follow-through frames before a shot is complete. */
+  followThroughFrames?: number
   /** Distance from the rim center considered a rim event, in pixels. */
   rimDistancePixels?: number
 }
@@ -102,6 +104,7 @@ const DEFAULT_OPTIONS: Required<ShotPhaseTrackerOptions> = {
   minConfidence: 0.35,
   risePixels: 2,
   setStableFrames: 2,
+  followThroughFrames: 3,
   rimDistancePixels: 42,
 }
 
@@ -116,9 +119,19 @@ function pointConfidence(point: ShotLandmark | null | undefined): number | null 
   return confidenceOf(point?.confidence)
 }
 
-function activeWrist(keypoints: readonly ShotKeypoint[] | null | undefined): ShotKeypoint | null {
+function activeWrist(
+  keypoints: readonly ShotKeypoint[] | null | undefined,
+  minimumConfidence = DEFAULT_OPTIONS.minConfidence,
+): ShotKeypoint | null {
   if (!keypoints?.length) return null
-  const wrists = keypoints.filter((point) => /(?:^|_)(left|right)_wrist$/.test(point.name))
+  const wrists = keypoints
+    .filter((point) => /(?:^|_)(left|right)_wrist$/.test(point.name))
+    .filter((point) => {
+      const confidence = confidenceOf(point.score)
+      // Unknown confidence is allowed for already-gated server observations;
+      // a known weak wrist must not win side selection for phase movement.
+      return confidence === null || confidence >= minimumConfidence
+    })
   if (!wrists.length) return null
   // In a shooting motion the active wrist is normally the higher wrist.
   return wrists.reduce((higher, point) => point.y < higher.y ? point : higher)
@@ -187,7 +200,8 @@ function nextPhase(
   current: ShotFrameObservation,
   previous: ShotFrameObservation | null,
   stableFrames: number,
-  options: Required<ShotPhaseTrackerOptions>
+  options: Required<ShotPhaseTrackerOptions>,
+  phaseFrames = 0,
 ): { phase: ShotPhase; reason: string } {
   const observation = normalizedObservation(current)
   const hasPose = validPose(observation, options.minConfidence)
@@ -206,7 +220,7 @@ function nextPhase(
       if (upward >= options.risePixels || releaseHint) return { phase: 'rise', reason: 'Upward motion detected' }
       return { phase, reason: 'Waiting for upward motion' }
     case 'rise':
-      if (observation.isSet || (stationary && stableFrames + 1 >= options.setStableFrames)) {
+      if (observation.isSet || (stationary && stableFrames >= options.setStableFrames)) {
         return { phase: 'set', reason: 'Body reached a stable set position' }
       }
       if (releaseHint) return { phase: 'set', reason: 'Release signal received; recording set before release' }
@@ -222,10 +236,23 @@ function nextPhase(
       if (ballInFlight || validBall(observation, options.minConfidence)) {
         return { phase: 'follow-through', reason: 'Ball separated from the shooting hand' }
       }
+      // MoveNet does not currently include a ball detector. Once the arm has
+      // extended (or one valid body frame has elapsed after release), advance
+      // to the body follow-through phase instead of getting stuck in release.
+      const extendedArm = finite(observation.elbowAngle) && observation.elbowAngle >= 145
+      const previouslyExtended = Boolean(
+        previous && finite(previous.elbowAngle) && previous.elbowAngle >= 145
+      )
+      if (hasPose && (extendedArm || previouslyExtended || phaseFrames >= 2)) {
+        return { phase: 'follow-through', reason: 'Body follow-through frame captured' }
+      }
       return { phase, reason: 'Release captured' }
     case 'follow-through':
       if (rimHint) return { phase: 'flight', reason: 'Ball flight toward the rim detected' }
       if (ballInFlight) return { phase: 'flight', reason: 'Ball is in flight' }
+      if (hasPose && phaseFrames >= options.followThroughFrames) {
+        return { phase: 'complete', reason: 'Body follow-through completed' }
+      }
       // A single follow-through frame is still meaningful when no ball model is
       // available. Keep it until the adapter reports a flight signal.
       return { phase, reason: 'Holding follow-through' }
@@ -271,6 +298,7 @@ export class ShotPhaseTracker {
   private currentPhase: ShotPhase = 'gather'
   private previousObservation: ShotFrameObservation | null = null
   private stableFrames = 0
+  private phaseFrames = 0
 
   constructor(options: ShotPhaseTrackerOptions = {}) {
     this.options = { ...DEFAULT_OPTIONS, ...options }
@@ -291,10 +319,12 @@ export class ShotPhaseTracker {
       normalized,
       this.previousObservation,
       this.stableFrames,
-      this.options
+      this.options,
+      this.phaseFrames + 1,
     )
     const previousPhase = this.currentPhase
     this.currentPhase = transition.phase
+    this.phaseFrames = transition.phase === previousPhase ? this.phaseFrames + 1 : 1
     this.previousObservation = normalized
     return {
       phase: transition.phase,
@@ -311,6 +341,7 @@ export class ShotPhaseTracker {
     this.currentPhase = 'gather'
     this.previousObservation = null
     this.stableFrames = 0
+    this.phaseFrames = 0
   }
 }
 
