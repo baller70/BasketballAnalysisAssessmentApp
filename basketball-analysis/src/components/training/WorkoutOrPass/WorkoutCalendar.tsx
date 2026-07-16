@@ -18,6 +18,7 @@ import {
   Info, AlertTriangle, Dumbbell, CircleDot, TrendingUp, Lightbulb, Plus, BarChart3
 } from "lucide-react"
 import { ALL_DRILLS, Drill, DrillFocusArea, SkillLevel, getRecommendedDrills, mapFlawToFocusArea } from "@/data/drillDatabase"
+import { csrfFetch } from "@/lib/api/csrfFetch"
 import {
   fetchWorkouts, createWorkout, updateWorkout, deleteWorkout,
   fetchPreferences, savePreferences, resolveDrillIds, asFocusAreas,
@@ -78,6 +79,21 @@ interface ScheduledWorkout {
 interface WorkoutCalendarProps {
   userFlaws?: string[]
   onStartWorkout?: (drills: Drill[]) => void
+}
+
+interface ClientCoachingTarget {
+  id: string
+  flaw: string
+  cue: string
+  drillId: string
+  drillName: string
+  metric: string
+  baseline: number
+  targetValue: number
+  direction: 'increase' | 'decrease'
+  confidence: number
+  status: 'active' | 'improved' | 'no_change' | 'regression' | 'superseded'
+  retestValue?: number | null
 }
 
 // Map a server Workout row → the in-memory ScheduledWorkout (resolving drillIds
@@ -882,6 +898,8 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
   const [showAutoGeneratePopup, setShowAutoGeneratePopup] = useState(false)
   const [showCustomDrillCreator, setShowCustomDrillCreator] = useState(false)
   const [customDrills, setCustomDrills] = useState<Drill[]>([])
+  const [coachingTarget, setCoachingTarget] = useState<ClientCoachingTarget | null>(null)
+  const [coachingTargetLoading, setCoachingTargetLoading] = useState(false)
   const [, setAddMode] = useState<'workout' | 'drill'>('workout')
   const [scheduleSuccessInfo, setScheduleSuccessInfo] = useState<{
     show: boolean
@@ -998,6 +1016,39 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
     }
   }, [customDrills, isHydrated])
 
+  // Load the single persisted coaching target. If this is a new player and the
+  // analysis supplied flaws, normalize and persist one target so the same
+  // prescription follows them across Training and History on every device.
+  useEffect(() => {
+    if (!isHydrated) return
+    let cancelled = false
+    setCoachingTargetLoading(true)
+    void (async () => {
+      try {
+        const response = await fetch('/api/coaching-targets', { credentials: 'include' })
+        const payload = await response.json().catch(() => null)
+        if (cancelled) return
+        if (payload?.target) {
+          setCoachingTarget(payload.target as ClientCoachingTarget)
+          return
+        }
+        if (userFlaws.length > 0) {
+          const createResponse = await csrfFetch('/api/coaching-targets', {
+            method: 'POST',
+            body: JSON.stringify({ flaws: userFlaws }),
+          })
+          const created = await createResponse.json().catch(() => null)
+          if (!cancelled && created?.target) setCoachingTarget(created.target as ClientCoachingTarget)
+        }
+      } catch {
+        // A signed-out/offline Training tab still works with its regular drills.
+      } finally {
+        if (!cancelled) setCoachingTargetLoading(false)
+      }
+    })()
+    return () => { cancelled = true }
+  }, [isHydrated, userFlaws])
+
   // Full drill pool = built-in drills + user-created custom drills
   const allDrills = useMemo(() => [...ALL_DRILLS, ...customDrills], [customDrills])
 
@@ -1029,6 +1080,31 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
       setScheduledWorkouts(prev => prev.map(w => (w.id === workout.id ? mapped : w)))
     }
   }, [customDrills])
+
+  const scheduleCoachingDrill = useCallback(() => {
+    if (!coachingTarget) return
+    const drill = allDrills.find((candidate) => candidate.id === coachingTarget.drillId)
+    if (!drill) return
+    const date = new Date()
+    const workout: ScheduledWorkout = {
+      id: `coaching-${Date.now()}`,
+      date,
+      drills: [drill],
+      completed: false,
+      duration: drill.duration,
+      focusAreas: [drill.focusArea],
+      name: `Coaching target: ${coachingTarget.flaw}`,
+    }
+    void persistNewWorkout(workout)
+    setCurrentDate(date)
+    setScheduleSuccessInfo({ show: true, workoutName: workout.name || drill.title, date, isRecurring: false })
+  }, [allDrills, coachingTarget, persistNewWorkout])
+
+  const startCoachingDrill = useCallback(() => {
+    if (!coachingTarget || !onStartWorkout) return
+    const drill = allDrills.find((candidate) => candidate.id === coachingTarget.drillId)
+    if (drill) onStartWorkout([drill])
+  }, [allDrills, coachingTarget, onStartWorkout])
 
   const removeScheduledWorkout = useCallback((workoutId: string) => {
     setScheduledWorkouts(prev => prev.filter(w => w.id !== workoutId))
@@ -1162,6 +1238,52 @@ export function WorkoutCalendar({ userFlaws = [], onStartWorkout }: WorkoutCalen
           </button>
         </div>
       </div>
+
+      {/* One focused target keeps the analysis → drill → retest loop visible
+          without changing the existing calendar controls. */}
+      {coachingTargetLoading ? (
+        <div className="rounded-xl border border-[#FF6B35]/20 bg-[#FF6B35]/5 px-4 py-3 text-sm text-slate-500">
+          Preparing your coaching target…
+        </div>
+      ) : coachingTarget ? (
+        <div className="rounded-xl border border-[#FF6B35]/30 bg-gradient-to-r from-[#FF6B35]/10 to-amber-50 p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-black uppercase tracking-widest text-[#E55300]">COACHING TARGET</p>
+              <h3 className="mt-1 text-lg font-black text-slate-900">{coachingTarget.flaw}</h3>
+              <p className="mt-1 max-w-2xl text-sm text-slate-600">{coachingTarget.cue}</p>
+              <p className="mt-2 text-xs font-semibold text-slate-500">
+                Baseline {coachingTarget.baseline}{coachingTarget.metric.toLowerCase().includes('score') ? '%' : '°'}
+                <span className="mx-2">→</span>
+                Target {coachingTarget.targetValue}{coachingTarget.metric.toLowerCase().includes('score') ? '%' : '°'}
+                <span className="mx-2">•</span>
+                Prescribed drill: {coachingTarget.drillName}
+              </p>
+            </div>
+            <div className="flex shrink-0 gap-2">
+              <button
+                type="button"
+                onClick={scheduleCoachingDrill}
+                className="rounded-lg bg-white px-3 py-2 text-xs font-bold text-[#E55300] shadow-sm ring-1 ring-[#FF6B35]/30 hover:bg-[#FF6B35]/10"
+              >
+                ADD TO TODAY
+              </button>
+              <button
+                type="button"
+                onClick={startCoachingDrill}
+                className="rounded-lg bg-[#FF6B35] px-3 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#E55300]"
+              >
+                START DRILL
+              </button>
+            </div>
+          </div>
+          {coachingTarget.status !== 'active' && (
+            <p className={`mt-3 text-sm font-bold ${coachingTarget.status === 'improved' ? 'text-green-700' : coachingTarget.status === 'regression' ? 'text-red-700' : 'text-slate-600'}`}>
+              {coachingTarget.status === 'improved' ? 'Improvement recorded — great work.' : coachingTarget.status === 'regression' ? 'Regression recorded — return to the cue above.' : 'No change recorded — keep the drill in your next session.'}
+            </p>
+          )}
+        </div>
+      ) : null}
 
       {/* Settings Panel */}
       {showSettings && (
@@ -3479,4 +3601,3 @@ function CustomDrillCreator({ defaultLevel, onClose, onCreate }: CustomDrillCrea
 }
 
 export default WorkoutCalendar
-

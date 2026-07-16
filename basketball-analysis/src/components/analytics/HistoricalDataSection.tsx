@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect } from "react"
 import { useAnalysisStore } from "@/stores/analysisStore"
 import { getAllSessions, AnalysisSession } from "@/services/sessionStorage"
 import { fetchServerHistory, serverHistoryToSessions } from "@/components/analytics/serverHistory"
+import { csrfFetch } from "@/lib/api/csrfFetch"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { 
@@ -15,6 +16,19 @@ import {
   Check,
   MoreVertical,
 } from "lucide-react"
+
+interface HistoricalCoachingTarget {
+  id: string
+  flaw: string
+  cue: string
+  drillName: string
+  metric: string
+  baseline: number
+  targetValue: number
+  direction: 'increase' | 'decrease'
+  status: 'active' | 'improved' | 'no_change' | 'regression' | 'superseded'
+  retestValue?: number | null
+}
 
 // Helper function to get shooter level
 function getShooterLevel(score: number) {
@@ -637,6 +651,10 @@ export default function HistoricalDataSection() {
   
   const [sessions, setSessions] = useState<AnalysisSession[]>([])
   const [viewMode, setViewMode] = useState<'sessions' | 'analytics' | 'heatmap'>('sessions')
+  const [coachingTarget, setCoachingTarget] = useState<HistoricalCoachingTarget | null>(null)
+  const [retestValue, setRetestValue] = useState('')
+  const [retestPending, setRetestPending] = useState(false)
+  const [retestMessage, setRetestMessage] = useState<string | null>(null)
   
   const safeViewMode = viewMode || 'sessions'
   
@@ -688,6 +706,49 @@ export default function HistoricalDataSection() {
       cancelled = true
     }
   }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    void fetch('/api/coaching-targets', { credentials: 'include' })
+      .then((response) => response.ok ? response.json() : null)
+      .then((payload) => {
+        if (!cancelled && payload?.target) {
+          const target = payload.target as HistoricalCoachingTarget
+          setCoachingTarget(target)
+          if (target.retestValue != null) setRetestValue(String(target.retestValue))
+        }
+      })
+      .catch(() => { /* signed-out history still renders local analytics */ })
+    return () => { cancelled = true }
+  }, [])
+
+  const submitRetest = async () => {
+    if (!coachingTarget) return
+    const value = Number(retestValue)
+    if (!Number.isFinite(value)) {
+      setRetestMessage('Enter the latest measured value before retesting.')
+      return
+    }
+    setRetestPending(true)
+    setRetestMessage(null)
+    try {
+      const response = await csrfFetch('/api/coaching-targets', {
+        method: 'POST',
+        body: JSON.stringify({ targetId: coachingTarget.id, retestValue: value }),
+      })
+      const payload = await response.json().catch(() => null)
+      if (!response.ok || !payload?.target) {
+        setRetestMessage(payload?.error || 'Unable to save the retest.')
+        return
+      }
+      setCoachingTarget(payload.target as HistoricalCoachingTarget)
+      setRetestMessage(payload.result?.message || 'Retest saved.')
+    } catch {
+      setRetestMessage('Unable to save the retest while offline.')
+    } finally {
+      setRetestPending(false)
+    }
+  }
   
   // Combine current session with historical sessions
   const allSessionsData = useMemo(() => {
@@ -752,6 +813,50 @@ export default function HistoricalDataSection() {
   
   return (
     <div className="space-y-6">
+      {coachingTarget && (
+        <Card className="border-[#FF6B35]/30 bg-gradient-to-r from-[#FF6B35]/10 to-amber-50 shadow-sm">
+          <CardContent className="p-4 md:p-5">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-black uppercase tracking-widest text-[#E55300]">ACTIVE COACHING TARGET</p>
+                <h2 className="mt-1 text-xl font-black text-slate-900">{coachingTarget.flaw}</h2>
+                <p className="mt-1 max-w-2xl text-sm text-slate-600">{coachingTarget.cue}</p>
+                <p className="mt-2 text-xs font-semibold text-slate-500">
+                  {coachingTarget.drillName} · baseline {coachingTarget.baseline} → target {coachingTarget.targetValue}
+                </p>
+              </div>
+              <div className="min-w-[16rem] rounded-xl bg-white/80 p-3 ring-1 ring-[#FF6B35]/20">
+                <label htmlFor="coaching-retest" className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Retest {coachingTarget.metric}
+                </label>
+                <div className="mt-2 flex gap-2">
+                  <input
+                    id="coaching-retest"
+                    type="number"
+                    value={retestValue}
+                    onChange={(event) => setRetestValue(event.target.value)}
+                    placeholder={`e.g. ${coachingTarget.targetValue}`}
+                    className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900"
+                  />
+                  <button
+                    type="button"
+                    onClick={submitRetest}
+                    disabled={retestPending}
+                    className="rounded-lg bg-[#FF6B35] px-3 py-2 text-xs font-bold text-white hover:bg-[#E55300] disabled:opacity-60"
+                  >
+                    {retestPending ? 'SAVING…' : 'RETEST'}
+                  </button>
+                </div>
+                {(retestMessage || coachingTarget.status !== 'active') && (
+                  <p className={`mt-2 text-xs font-bold ${coachingTarget.status === 'improved' ? 'text-green-700' : coachingTarget.status === 'regression' ? 'text-red-700' : 'text-slate-600'}`}>
+                    {retestMessage || (coachingTarget.status === 'improved' ? 'Improvement recorded.' : coachingTarget.status === 'regression' ? 'Regression recorded.' : 'No change recorded.')}
+                  </p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       {/* ================================================================ */}
       {/* OVERVIEW SECTION - Key Performance Indicators */}
       {/* ================================================================ */}
@@ -1412,4 +1517,3 @@ export default function HistoricalDataSection() {
     </div>
   )
 }
-

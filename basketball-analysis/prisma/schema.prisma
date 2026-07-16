@@ -91,6 +91,7 @@ model UserProfile {
   captureSessions       CaptureSession[]
   shotEvents            ShotEvent[]
   shotCorrections       ShotEventCorrection[]
+  coachingTargets       CoachingTarget[]
   
   // Indexes
   @@index([experienceLevel], name: "idx_user_experience")
@@ -337,6 +338,36 @@ model AnalysisHistory {
   @@index([userProfileId, analysisDate], name: "idx_history_user_date")
   
   @@map("analysis_history")
+}
+
+// ============================================
+// COACHING TARGETS (one focused flaw -> drill -> retest loop)
+// ============================================
+model CoachingTarget {
+  id            String    @id @default(cuid())
+  userProfileId String    @map("user_profile_id")
+
+  flaw          String    @db.VarChar(255)
+  cue           String    @db.Text
+  drillId       String    @map("drill_id") @db.VarChar(100)
+  drillName     String    @map("drill_name") @db.VarChar(255)
+  metric        String    @db.VarChar(100)
+  baseline      Decimal   @db.Decimal(10, 2)
+  targetValue   Decimal   @map("target_value") @db.Decimal(10, 2)
+  direction     String    @db.VarChar(20) // increase | decrease
+  confidence    Decimal   @db.Decimal(4, 3)
+  status        String    @default("active") @db.VarChar(20) // active | improved | no_change | regression
+  retestValue   Decimal?  @map("retest_value") @db.Decimal(10, 2)
+  retestedAt    DateTime? @map("retested_at")
+
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  userProfile   UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+
+  @@index([userProfileId, status], name: "idx_coaching_target_user_status")
+  @@index([userProfileId, createdAt], name: "idx_coaching_target_user_created")
+  @@map("coaching_targets")
 }
 
 // ============================================
