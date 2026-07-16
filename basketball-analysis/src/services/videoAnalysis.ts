@@ -187,6 +187,8 @@ export interface VideoFrameRecord {
  * sidecars stay available after navigation or a later session reload.
  */
 export interface VideoSessionData {
+  /** Durable identity shared with capture-session and shot-event records. */
+  captureSessionId?: string | null
   annotatedFramesBase64: string[]
   frameCount: number
   duration: number

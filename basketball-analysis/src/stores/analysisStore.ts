@@ -103,6 +103,8 @@ export interface ShotBreakdownFrame {
 
 // Video analysis data for frame-by-frame playback
 export interface VideoAnalysisData {
+  /** Durable identity shared by capture metadata and persisted shot events. */
+  captureSessionId?: string | null
   // Live capture data
   videoUrl?: string
   frames?: Array<{

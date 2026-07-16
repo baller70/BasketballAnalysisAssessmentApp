@@ -13,6 +13,15 @@ import {
 } from "@/services/sessionStorage"
 import { detectFlawsFromAngles, getShooterLevel } from "@/data/shootingFlawsDatabase"
 import { FILE_LIMITS } from "@/lib/constants"
+import { persistShotEvents, type ShotEventInput } from "@/lib/api/shotEvents"
+import { createCaptureSession, updateCaptureSession } from "@/lib/api/captureSessionsClient"
+import {
+  buildCaptureSessionMetadata,
+  normalizeCaptureOrientation,
+  normalizeCapturePlatform,
+} from "@/lib/capture/captureSession"
+import { createLocalReviewShotEvents } from "@/lib/live/liveReviewData"
+import { getPlatform } from "@/utils/platform"
 
 interface VideoUploadProps {
   onAnalysisComplete?: (result: VideoAnalysisResult) => void
@@ -33,6 +42,7 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
   const playIntervalRef = useRef<NodeJS.Timeout | null>(null)
   
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const captureSessionPromiseRef = useRef<Promise<string | null> | null>(null)
 
   const {
     setVisionAnalysisResult,
@@ -113,6 +123,30 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
     setError(null)
     setAnalysisProgress("Uploading video...")
 
+    captureSessionPromiseRef.current = createCaptureSession(buildCaptureSessionMetadata({
+      mode: 'form',
+      source: 'uploaded_video',
+      platform: normalizeCapturePlatform(getPlatform()),
+      deviceModel: typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 255) : undefined,
+      readinessStatus: 'recording',
+    })).then((session) => session.id).catch(() => null)
+
+    const resolveCaptureSessionId = async (): Promise<string | null> => {
+      const pending = captureSessionPromiseRef.current
+      if (!pending) return null
+      try {
+        // A slow/offline API must not hold local analysis or review.
+        return await Promise.race([
+          pending,
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 1500)),
+        ])
+      } catch {
+        return null
+      }
+    }
+
+    let captureSessionId: string | null = null
+
     try {
       setAnalysisProgress("Analyzing frames...")
       
@@ -127,6 +161,28 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
       setResult(analysisResult)
       setCurrentFrameIndex(0)
 
+      captureSessionId = await resolveCaptureSessionId()
+
+      const detectorEvents: ShotEventInput[] = (analysisResult.phases || []).map((phase, index) => {
+        const frame = analysisResult.frame_data?.[phase.frame]
+        return {
+          sequence: index,
+          timestampMs: Math.max(0, Math.round(Number(phase.timestamp || 0) * 1000)),
+          startFrame: Number.isFinite(Number(phase.frame)) ? Number(phase.frame) : undefined,
+          endFrame: Number.isFinite(Number(phase.frame)) ? Number(phase.frame) : undefined,
+          detected: true,
+          detectedResult: 'unknown',
+          detectedPhase: String(phase.phase || 'unknown'),
+          confidence: typeof frame?.canonicalObservation?.poseConfidence === 'number'
+            ? frame.canonicalObservation.poseConfidence
+            : undefined,
+          phaseMarkers: { phase: String(phase.phase || 'unknown') },
+          metadata: { source: 'video_upload', frameIndex: phase.frame },
+        }
+      })
+      const persistedShotEvents = await persistShotEvents(detectorEvents, captureSessionId ?? undefined)
+      const shotEvents = persistedShotEvents ?? createLocalReviewShotEvents(detectorEvents)
+
       // Convert to session format
       const sessionData = convertVideoToSessionFormat(analysisResult)
       if (sessionData.overallScore === null) {
@@ -138,7 +194,9 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
       setMediaType('VIDEO')
       setVideoAnalysisData({
         videoUrl: videoPreviewUrl || undefined,
+        captureSessionId,
         ...sessionData.videoData,
+        shotEvents,
       })
       
       // Create vision analysis result format for compatibility
@@ -174,6 +232,12 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
         imageBase64: ss.imageBase64,
         analysis: ss.analysis
       }))
+
+      const videoData = {
+        ...sessionData.videoData,
+        captureSessionId,
+        shotEvents,
+      }
       
       const session = createSessionFromAnalysis(
         sessionData.mainImageBase64,
@@ -191,7 +255,7 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
         undefined, // profileSnapshot
         analysisResult.key_screenshots?.length || 3, // imagesAnalyzed
         'video',
-        sessionData.videoData,
+        videoData,
       )
       
       const saved = saveSession(session)
@@ -203,6 +267,35 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
         onAnalysisComplete(analysisResult)
       }
 
+      if (captureSessionId) {
+        await updateCaptureSession(captureSessionId, {
+          readinessStatus: 'completed',
+          endedAt: new Date(),
+          orientation: normalizeCaptureOrientation(
+            (analysisResult.video_info?.width ?? 0) >= (analysisResult.video_info?.height ?? 0)
+              ? 'landscape'
+              : 'portrait',
+          ),
+          frameWidth: analysisResult.video_info?.width,
+          frameHeight: analysisResult.video_info?.height,
+          observation: {
+            timestampMs: Math.max(0, Math.round((analysisResult.video_info?.duration ?? 0) * 1000)),
+            orientation: 'unknown',
+            poseConfidence: (analysisResult.frame_data?.reduce((sum, frame) =>
+              sum + (frame.canonicalObservation?.poseConfidence ?? 0), 0
+            ) ?? 0) / Math.max(1, analysisResult.frame_data?.length ?? 0),
+            fullBodyVisible: (analysisResult.frame_data?.at(-1)?.keypoint_count ?? 0) >= 12,
+            stable: true,
+            lighting: 'unknown',
+          },
+          readinessChecks: {
+            source: 'video_upload',
+            analyzedFrames: analysisResult.frame_count ?? analysisResult.video_info?.extracted_frames ?? 0,
+            trustedScore: sessionData.overallScore,
+          },
+        }).catch(() => undefined)
+      }
+
       // Navigate to results page
       setAnalysisProgress("Loading results...")
       router.push("/results/demo")
@@ -210,6 +303,18 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
     } catch (err) {
       console.error('Video analysis error:', err)
       setError(err instanceof Error ? err.message : 'Failed to analyze video')
+
+      const failedSessionId = captureSessionId ?? await resolveCaptureSessionId()
+      if (failedSessionId) {
+        await updateCaptureSession(failedSessionId, {
+          readinessStatus: 'failed',
+          endedAt: new Date(),
+          readinessChecks: {
+            source: 'video_upload',
+            error: err instanceof Error ? err.message : 'Failed to analyze video',
+          },
+        }).catch(() => undefined)
+      }
     } finally {
       setIsAnalyzing(false)
       setAnalysisProgress("")

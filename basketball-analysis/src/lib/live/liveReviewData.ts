@@ -37,6 +37,7 @@ export function createLocalReviewShotEvents(events: ShotEventInput[]): LocalRevi
 
 interface BuildLiveVideoAnalysisDataArgs {
   videoUrl: string
+  captureSessionId?: string | null
   frames: LiveCapturedFrame[]
   duration: number
   detectedShotEvents: ShotEventInput[]
@@ -51,6 +52,7 @@ interface BuildLiveVideoAnalysisDataArgs {
  */
 export function buildLiveVideoAnalysisData({
   videoUrl,
+  captureSessionId,
   frames,
   duration,
   detectedShotEvents,
@@ -62,6 +64,7 @@ export function buildLiveVideoAnalysisData({
 
   return {
     videoUrl,
+    captureSessionId,
     frames: frames.map((frame) => ({
       url: frame.dataUrl,
       timestamp: frame.timestamp,

@@ -111,6 +111,14 @@ import {
 import { usePoints } from "@/lib/points/pointsContext"
 import { TIER_ORDER } from "@/lib/points/pointsConfig"
 import { persistShotEvents } from "@/lib/api/shotEvents"
+import { createCaptureSession, updateCaptureSession } from "@/lib/api/captureSessionsClient"
+import {
+  buildCaptureSessionMetadata,
+  normalizeCaptureOrientation,
+  normalizeCapturePlatform,
+} from "@/lib/capture/captureSession"
+import { createLocalReviewShotEvents } from "@/lib/live/liveReviewData"
+import { getPlatform } from "@/utils/platform"
 import { useDashboardViewStore, type DashboardView } from "@/stores/dashboardViewStore"
 import { 
   StandardBiomechanicalAnalysis, 
@@ -2231,6 +2239,43 @@ function DemoResultsPageContent() {
                   const file = e.target.files?.[0]
                   console.log('📹 Video file selected:', file?.name, file?.size)
                   if (file) {
+                    const captureSessionPromise = createCaptureSession(buildCaptureSessionMetadata({
+                      mode: 'form',
+                      source: 'uploaded_video',
+                      platform: normalizeCapturePlatform(getPlatform()),
+                      deviceModel: typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 255) : undefined,
+                      readinessStatus: 'recording',
+                    })).then((session) => session.id).catch(() => null)
+                    const resolveCaptureSessionId = async (): Promise<string | null> => {
+                      try {
+                        return await Promise.race([
+                          captureSessionPromise,
+                          new Promise<null>((resolve) => setTimeout(() => resolve(null), 1500)),
+                        ])
+                      } catch {
+                        return null
+                      }
+                    }
+                    let captureSessionId: string | null = null
+                    const markCaptureSession = async (
+                      readinessStatus: 'completed' | 'failed',
+                      error?: unknown,
+                    ) => {
+                      const id = captureSessionId ?? await resolveCaptureSessionId()
+                      if (!id) return
+                      try {
+                        await updateCaptureSession(id, {
+                          readinessStatus,
+                          endedAt: new Date(),
+                          readinessChecks: {
+                            source: 'results_video_upload',
+                            error: error instanceof Error ? error.message : undefined,
+                          },
+                        })
+                      } catch {
+                        // Session telemetry is best-effort; local Results must remain usable.
+                      }
+                    }
                     try {
                       console.log('📹 Starting video analysis...')
                       // Import video analysis service
@@ -2252,6 +2297,7 @@ function DemoResultsPageContent() {
                       
                       if (!analysisResult.success) {
                         console.error('Video analysis failed:', analysisResult.error)
+                        await markCaptureSession('failed', new Error(analysisResult.error || 'Video analysis failed'))
                         setProcessingError(analysisResult.error || 'Video analysis failed')
                         return
                       }
@@ -2259,9 +2305,12 @@ function DemoResultsPageContent() {
                       // Convert to session format
                       const sessionData = convertVideoToSessionFormat(analysisResult)
                       if (sessionData.overallScore === null) {
+                        await markCaptureSession('failed', new Error('No trusted shooting mechanics were detected'))
                         setProcessingError('No trusted shooting mechanics were detected in this video. Try a clearer full-body capture.')
                         return
                       }
+
+                      captureSessionId = await resolveCaptureSessionId()
 
                       // Persist the actual detector phases before rendering
                       // Results. Signed-in users receive server IDs and the
@@ -2283,7 +2332,8 @@ function DemoResultsPageContent() {
                           metadata: { source: "results_video_upload", frameIndex: phase.frame },
                         }
                       })
-                      const persistedShotEvents = await persistShotEvents(detectorEvents)
+                      const persistedShotEvents = await persistShotEvents(detectorEvents, captureSessionId ?? undefined)
+                      const shotEvents = persistedShotEvents ?? createLocalReviewShotEvents(detectorEvents)
                       
                       // Store main image in analysis store
                       storeData?.setUploadedImageBase64?.(sessionData.mainImageBase64)
@@ -2295,6 +2345,7 @@ function DemoResultsPageContent() {
                       console.log('📹 Setting video analysis data with', analysisResult.annotated_frames_base64?.length, 'frames')
                       storeData?.setVideoAnalysisData?.({
                         videoUrl: URL.createObjectURL(file),
+                        captureSessionId,
                         frames: analysisResult.frame_data || [],
                         annotatedFramesBase64: analysisResult.annotated_frames_base64,
                         fps: analysisResult.fps || 10,
@@ -2303,7 +2354,7 @@ function DemoResultsPageContent() {
                         allKeypoints: analysisResult.all_keypoints,
                         phases: analysisResult.phases,
                         metrics: analysisResult.metrics,
-                        ...(persistedShotEvents ? { shotEvents: persistedShotEvents } : {}),
+                        shotEvents,
                         canonicalObservation: analysisResult.canonicalObservation,
                       })
                       console.log('📹 Video analysis data set in store')
@@ -2330,6 +2381,11 @@ function DemoResultsPageContent() {
                       // Save session
                       const detectedFlaws = detectFlawsFromAngles(sessionData.angles).map((f: any) => f.name)
                       const shooterLevel = getShooterLevel(sessionData.overallScore)
+                      const videoData = {
+                        ...sessionData.videoData,
+                        captureSessionId,
+                        shotEvents,
+                      }
                       
                       const session = createSessionFromAnalysis(
                         sessionData.mainImageBase64,
@@ -2352,17 +2408,47 @@ function DemoResultsPageContent() {
                         undefined,
                         analysisResult.key_screenshots?.length || 3,
                         'video',
-                        sessionData.videoData,
+                        videoData,
                       )
                       
                       saveSession(session)
                       console.log("✅ Video session saved:", session.id)
+
+                      if (captureSessionId) {
+                        await updateCaptureSession(captureSessionId, {
+                          readinessStatus: 'completed',
+                          endedAt: new Date(),
+                          orientation: normalizeCaptureOrientation(
+                            (analysisResult.video_info?.width ?? 0) >= (analysisResult.video_info?.height ?? 0)
+                              ? 'landscape'
+                              : 'portrait',
+                          ),
+                          frameWidth: analysisResult.video_info?.width,
+                          frameHeight: analysisResult.video_info?.height,
+                          observation: {
+                            timestampMs: Math.max(0, Math.round((analysisResult.video_info?.duration ?? 0) * 1000)),
+                            orientation: 'unknown',
+                            poseConfidence: analysisResult.frame_data?.reduce((sum: number, frame: any) =>
+                              sum + (frame?.canonicalObservation?.poseConfidence ?? 0), 0
+                            ) / Math.max(1, analysisResult.frame_data?.length ?? 0),
+                            fullBodyVisible: (analysisResult.frame_data?.at(-1)?.keypoint_count ?? 0) >= 12,
+                            stable: true,
+                            lighting: 'unknown',
+                          },
+                          readinessChecks: {
+                            source: 'results_video_upload',
+                            analyzedFrames: analysisResult.frame_count ?? analysisResult.video_info?.extracted_frames ?? 0,
+                            trustedScore: sessionData.overallScore,
+                          },
+                        }).catch(() => undefined)
+                      }
                       
                       // Signal processing complete - the popup will close after animations finish
                       setProcessingComplete(true)
                       
                     } catch (err) {
                       console.error('Video upload error:', err)
+                      await markCaptureSession('failed', err)
                       setProcessingError(err instanceof Error ? err.message : 'Failed to process video')
                     }
                   }

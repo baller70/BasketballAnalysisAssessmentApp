@@ -37,7 +37,7 @@ import { ProfessionalSkeletonOverlay } from './ProfessionalSkeletonOverlay'
 import { GuidedCaptureStatus } from './GuidedCaptureStatus'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import { useRouter } from 'next/navigation'
-import { getPlatformOS, isMobile } from '@/utils/platform'
+import { getPlatform, getPlatformOS, isMobile } from '@/utils/platform'
 import { useUsage } from '@/lib/usage'
 import { usePoints } from '@/lib/points/pointsContext'
 import { saveSession, createSessionFromAnalysis } from '@/services/sessionStorage'
@@ -48,6 +48,13 @@ import {
   evaluateCaptureReadiness,
 } from '@/lib/capture/guidedCapture'
 import { persistShotEvents, type ShotEventInput } from '@/lib/api/shotEvents'
+import { createCaptureSession, updateCaptureSession } from '@/lib/api/captureSessionsClient'
+import {
+  buildCaptureSessionMetadata,
+  normalizeCameraFacing,
+  normalizeCaptureOrientation,
+  normalizeCapturePlatform,
+} from '@/lib/capture/captureSession'
 import { recordLiveShotDetection } from '@/lib/live/shotDetection'
 import { buildLiveVideoAnalysisData } from '@/lib/live/liveReviewData'
 
@@ -374,6 +381,8 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   // Detector outputs are kept separately from captured thumbnails so a live
   // session can be written as durable ShotEvent rows when recording stops.
   const detectedShotEventsRef = useRef<ShotEventInput[]>([])
+  const captureSessionIdRef = useRef<string | null>(null)
+  const captureSessionPromiseRef = useRef<Promise<string | null> | null>(null)
   const isRecordingRef = useRef(false)
   const recordingDurationRef = useRef(0)
   const audioFeedbackEnabledRef = useRef(false)
@@ -907,6 +916,77 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   const showShotFlashRef = useRef<boolean>(false)
   const lastShotScoreRef = useRef<number | null>(null)
   const shotCountRef = useRef<number>(0)
+
+  const buildLiveCaptureObservation = useCallback(() => {
+    const captureObservation = derivePoseCaptureObservation({
+      cameraReady,
+      modelReady: !isLoading,
+      orientation: pose ? getTorsoOrientation(pose).alignment === 'vertical'
+        ? 'upright'
+        : getTorsoOrientation(pose).alignment === 'horizontal'
+          ? 'sideways'
+          : 'unknown' : 'unknown',
+      pose,
+      frameHeight: poseDisplayDimensions.height,
+    })
+
+    return {
+      timestampMs: Math.max(0, Math.round(recordingDurationRef.current * 1000)),
+      orientation: captureObservation.orientation,
+      poseConfidence: captureObservation.poseConfidence ?? undefined,
+      fullBodyVisible: captureObservation.fullBodyVisible ?? undefined,
+      subjectFrameRatio: captureObservation.subjectFrameRatio ?? undefined,
+      stable: captureObservation.stable ?? undefined,
+      lighting: captureObservation.lighting,
+      hoopVisible: captureObservation.hoopVisible ?? undefined,
+      ballVisible: captureObservation.ballVisible ?? undefined,
+      keypoints: pose?.keypoints,
+    }
+  }, [cameraReady, isLoading, pose, poseDisplayDimensions.height])
+
+  const resolveCaptureSessionId = useCallback(async (): Promise<string | null> => {
+    if (captureSessionIdRef.current) return captureSessionIdRef.current
+    const pending = captureSessionPromiseRef.current
+    if (!pending) return null
+
+    try {
+      // A slow or offline capture API must never hold the local review flow.
+      const id = await Promise.race([
+        pending,
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 1500)),
+      ])
+      if (id) captureSessionIdRef.current = id
+      return id
+    } catch {
+      return null
+    }
+  }, [])
+
+  const markCaptureSession = useCallback(async (
+    readinessStatus: 'completed' | 'failed',
+    error?: unknown,
+  ) => {
+    const id = await resolveCaptureSessionId()
+    if (!id) return
+
+    try {
+      await updateCaptureSession(id, {
+        readinessStatus,
+        endedAt: new Date(),
+        orientation: normalizeCaptureOrientation(orientation),
+        frameWidth: videoDimensions.width,
+        frameHeight: videoDimensions.height,
+        observation: buildLiveCaptureObservation(),
+        readinessChecks: {
+          status: readinessStatus,
+          checks: captureReadiness.checks,
+          error: error instanceof Error ? error.message : undefined,
+        },
+      })
+    } catch {
+      // Capture-session telemetry is best-effort; local recording/review wins.
+    }
+  }, [buildLiveCaptureObservation, captureReadiness.checks, orientation, resolveCaptureSessionId, videoDimensions.height, videoDimensions.width])
   
   // Keep refs updated
   useEffect(() => {
@@ -935,6 +1015,25 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     setRecordingDuration(0)
     setShotCount(0) // Reset shot counter
     detectedShotEventsRef.current = []
+    captureSessionIdRef.current = null
+    captureSessionPromiseRef.current = createCaptureSession(buildCaptureSessionMetadata({
+      mode: 'shot_tracking',
+      source: 'live',
+      platform: normalizeCapturePlatform(getPlatform()),
+      deviceModel: typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 255) : undefined,
+      cameraFacing: normalizeCameraFacing(facingMode),
+      orientation: normalizeCaptureOrientation(orientation),
+      poseProvider: 'on-device',
+      poseModel: 'MoveNet',
+      readinessStatus: 'recording',
+      readinessChecks: captureReadiness.checks,
+      frameWidth: videoDimensions.width,
+      frameHeight: videoDimensions.height,
+      observation: buildLiveCaptureObservation(),
+    })).then((session) => {
+      captureSessionIdRef.current = session.id
+      return session.id
+    }).catch(() => null)
     setShowControls(false) // Hide controls when recording starts
 
     // Get the DISPLAY dimensions (what user sees on screen)
@@ -1313,9 +1412,17 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     const audioTracks = streamRef.current.getAudioTracks()
     audioTracks.forEach(track => compositeStream.addTrack(track))
 
-    const mediaRecorder = new MediaRecorder(compositeStream, {
-      mimeType: 'video/webm;codecs=vp9',
-    })
+    let mediaRecorder: MediaRecorder
+    try {
+      mediaRecorder = new MediaRecorder(compositeStream, {
+        mimeType: 'video/webm;codecs=vp9',
+      })
+    } catch (error) {
+      void markCaptureSession('failed', error)
+      compositeStream.getTracks().forEach((track) => track.stop())
+      setCameraError('This browser cannot record the camera preview. Try uploading the video instead.')
+      return
+    }
 
     mediaRecorder.ondataavailable = (event) => {
       if (event.data.size > 0) {
@@ -1339,7 +1446,11 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       // Store URL for display
       setSavedVideoUrl(url)
 
-      const persistedShotEvents = await persistShotEvents(detectedShotEventsRef.current)
+      const captureSessionId = await resolveCaptureSessionId()
+      const persistedShotEvents = await persistShotEvents(
+        detectedShotEventsRef.current,
+        captureSessionId ?? undefined,
+      )
 
       // Live recordings are video results even when the user is signed out.
       // Keep local detector rows as an explicit review-only fallback when the
@@ -1352,18 +1463,29 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
         duration: recordingDurationRef.current,
         detectedShotEvents: detectedShotEventsRef.current,
         persistedShotEvents,
+        captureSessionId,
       }))
+
+      await markCaptureSession('completed')
 
       // Show save choice dialog
       setShowSaveChoice(true)
     }
 
-    mediaRecorderRef.current = mediaRecorder
-    mediaRecorder.start(1000)
+    try {
+      mediaRecorderRef.current = mediaRecorder
+      mediaRecorder.start(1000)
+    } catch (error) {
+      mediaRecorderRef.current = null
+      compositeStream.getTracks().forEach((track) => track.stop())
+      void markCaptureSession('failed', error)
+      setCameraError('Recording could not start on this device. Try uploading the video instead.')
+      return
+    }
     isRecordingRef.current = true
     recordingDurationRef.current = 0
     setIsRecording(true)
-  }, [setMediaType, setVideoAnalysisData, videoDimensions])
+  }, [buildLiveCaptureObservation, captureReadiness.checks, facingMode, markCaptureSession, orientation, resolveCaptureSessionId, setMediaType, setVideoAnalysisData, videoDimensions])
 
   // Start recording with countdown. This remains available as an explicit
   // override so the existing record capability is never removed when the
