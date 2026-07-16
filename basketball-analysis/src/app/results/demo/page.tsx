@@ -118,7 +118,7 @@ import {
   normalizeCapturePlatform,
 } from "@/lib/capture/captureSession"
 import { createLocalReviewShotEvents } from "@/lib/live/liveReviewData"
-import { getPlatform } from "@/utils/platform"
+import { getPlatformOS } from "@/utils/platform"
 import { useDashboardViewStore, type DashboardView } from "@/stores/dashboardViewStore"
 import { 
   StandardBiomechanicalAnalysis, 
@@ -2242,7 +2242,7 @@ function DemoResultsPageContent() {
                     const captureSessionPromise = createCaptureSession(buildCaptureSessionMetadata({
                       mode: 'form',
                       source: 'uploaded_video',
-                      platform: normalizeCapturePlatform(getPlatform()),
+                      platform: normalizeCapturePlatform(getPlatformOS()),
                       deviceModel: typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 255) : undefined,
                       readinessStatus: 'recording',
                     })).then((session) => session.id).catch(() => null)
@@ -2332,8 +2332,10 @@ function DemoResultsPageContent() {
                           metadata: { source: "results_video_upload", frameIndex: phase.frame },
                         }
                       })
-                      const persistedShotEvents = await persistShotEvents(detectorEvents, captureSessionId ?? undefined)
-                      const shotEvents = persistedShotEvents ?? createLocalReviewShotEvents(detectorEvents)
+                      const persistedShotEvents = captureSessionId
+                        ? await persistShotEvents(detectorEvents, captureSessionId)
+                        : null
+                      const shotEvents = persistedShotEvents ?? createLocalReviewShotEvents(detectorEvents, 'results_video_upload')
                       
                       // Store main image in analysis store
                       storeData?.setUploadedImageBase64?.(sessionData.mainImageBase64)
@@ -2415,14 +2417,18 @@ function DemoResultsPageContent() {
                       console.log("✅ Video session saved:", session.id)
 
                       if (captureSessionId) {
-                        await updateCaptureSession(captureSessionId, {
+                        void updateCaptureSession(captureSessionId, {
                           readinessStatus: 'completed',
                           endedAt: new Date(),
-                          orientation: normalizeCaptureOrientation(
-                            (analysisResult.video_info?.width ?? 0) >= (analysisResult.video_info?.height ?? 0)
-                              ? 'landscape'
-                              : 'portrait',
-                          ),
+                          ...(analysisResult.video_info?.width && analysisResult.video_info?.height
+                            ? {
+                                orientation: normalizeCaptureOrientation(
+                                  analysisResult.video_info.width >= analysisResult.video_info.height
+                                    ? 'landscape'
+                                    : 'portrait',
+                                ),
+                              }
+                            : {}),
                           frameWidth: analysisResult.video_info?.width,
                           frameHeight: analysisResult.video_info?.height,
                           observation: {
@@ -2440,6 +2446,56 @@ function DemoResultsPageContent() {
                             analyzedFrames: analysisResult.frame_count ?? analysisResult.video_info?.extracted_frames ?? 0,
                             trustedScore: sessionData.overallScore,
                           },
+                        }, { timeoutMs: 2_000 }).catch(() => undefined)
+                      } else {
+                        void captureSessionPromise.then(async (lateSessionId) => {
+                          if (!lateSessionId) return
+                          const lateShotEvents = await persistShotEvents(detectorEvents, lateSessionId)
+                          if (lateShotEvents === null) return
+                          storeData?.setVideoAnalysisData?.({
+                            videoUrl: URL.createObjectURL(file),
+                            captureSessionId: lateSessionId,
+                            frames: analysisResult.frame_data || [],
+                            annotatedFramesBase64: analysisResult.annotated_frames_base64,
+                            fps: analysisResult.fps || 10,
+                            frameData: analysisResult.frame_data,
+                            keyScreenshots: analysisResult.key_screenshots,
+                            allKeypoints: analysisResult.all_keypoints,
+                            phases: analysisResult.phases,
+                            metrics: analysisResult.metrics,
+                            shotEvents: lateShotEvents,
+                            canonicalObservation: analysisResult.canonicalObservation,
+                          })
+                          await updateCaptureSession(lateSessionId, {
+                            readinessStatus: 'completed',
+                            endedAt: new Date(),
+                            ...(analysisResult.video_info?.width && analysisResult.video_info?.height
+                              ? {
+                                  orientation: normalizeCaptureOrientation(
+                                    analysisResult.video_info.width >= analysisResult.video_info.height
+                                      ? 'landscape'
+                                      : 'portrait',
+                                  ),
+                                  frameWidth: analysisResult.video_info.width,
+                                  frameHeight: analysisResult.video_info.height,
+                                }
+                              : {}),
+                            observation: {
+                              timestampMs: Math.max(0, Math.round((analysisResult.video_info?.duration ?? 0) * 1000)),
+                              orientation: 'unknown',
+                              poseConfidence: (analysisResult.frame_data?.reduce((sum: number, frame: any) =>
+                                sum + (frame?.canonicalObservation?.poseConfidence ?? 0), 0
+                              ) ?? 0) / Math.max(1, analysisResult.frame_data?.length ?? 0),
+                              fullBodyVisible: (analysisResult.frame_data?.at(-1)?.keypoint_count ?? 0) >= 12,
+                              stable: true,
+                              lighting: 'unknown',
+                            },
+                            readinessChecks: {
+                              source: 'results_video_upload',
+                              analyzedFrames: analysisResult.frame_count ?? analysisResult.video_info?.extracted_frames ?? 0,
+                              trustedScore: sessionData.overallScore,
+                            },
+                          }).catch(() => undefined)
                         }).catch(() => undefined)
                       }
                       

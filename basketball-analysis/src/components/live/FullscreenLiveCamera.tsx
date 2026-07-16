@@ -37,7 +37,7 @@ import { ProfessionalSkeletonOverlay } from './ProfessionalSkeletonOverlay'
 import { GuidedCaptureStatus } from './GuidedCaptureStatus'
 import { useAnalysisStore } from '@/stores/analysisStore'
 import { useRouter } from 'next/navigation'
-import { getPlatform, getPlatformOS, isMobile } from '@/utils/platform'
+import { getPlatformOS, isMobile } from '@/utils/platform'
 import { useUsage } from '@/lib/usage'
 import { usePoints } from '@/lib/points/pointsContext'
 import { saveSession, createSessionFromAnalysis } from '@/services/sessionStorage'
@@ -383,6 +383,8 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   const detectedShotEventsRef = useRef<ShotEventInput[]>([])
   const captureSessionIdRef = useRef<string | null>(null)
   const captureSessionPromiseRef = useRef<Promise<string | null> | null>(null)
+  const recordingFinalizingRef = useRef(false)
+  const recordingGenerationRef = useRef(0)
   const isRecordingRef = useRef(false)
   const recordingDurationRef = useRef(0)
   const audioFeedbackEnabledRef = useRef(false)
@@ -526,6 +528,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       }),
     })
   }, [cameraReady, isLoading, pose, poseDisplayDimensions.height])
+  const captureReadinessRef = useRef(captureReadiness)
 
   useEffect(() => {
     poseInputRotationRef.current = 'none'
@@ -916,18 +919,28 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   const showShotFlashRef = useRef<boolean>(false)
   const lastShotScoreRef = useRef<number | null>(null)
   const shotCountRef = useRef<number>(0)
+  const videoDimensionsRef = useRef(videoDimensions)
+  const orientationRef = useRef(orientation)
+  const cameraReadyRef = useRef(cameraReady)
+  const modelReadyRef = useRef(!isLoading)
 
   const buildLiveCaptureObservation = useCallback(() => {
+    const currentPose = latestPoseRef.current
+    const currentDimensions = videoDimensionsRef.current
+    const currentOrientation = currentPose ? getTorsoOrientation(currentPose).alignment === 'vertical'
+      ? 'upright'
+      : getTorsoOrientation(currentPose).alignment === 'horizontal'
+        ? 'sideways'
+        : 'unknown'
+      : 'unknown'
     const captureObservation = derivePoseCaptureObservation({
-      cameraReady,
-      modelReady: !isLoading,
-      orientation: pose ? getTorsoOrientation(pose).alignment === 'vertical'
-        ? 'upright'
-        : getTorsoOrientation(pose).alignment === 'horizontal'
-          ? 'sideways'
-          : 'unknown' : 'unknown',
-      pose,
-      frameHeight: poseDisplayDimensions.height,
+      cameraReady: cameraReadyRef.current,
+      modelReady: modelReadyRef.current,
+      orientation: currentOrientation,
+      pose: currentPose,
+      frameHeight: poseInputRotationRef.current === 'none'
+        ? currentDimensions.height
+        : currentDimensions.width,
     })
 
     return {
@@ -940,13 +953,15 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       lighting: captureObservation.lighting,
       hoopVisible: captureObservation.hoopVisible ?? undefined,
       ballVisible: captureObservation.ballVisible ?? undefined,
-      keypoints: pose?.keypoints,
+      keypoints: currentPose?.keypoints,
     }
-  }, [cameraReady, isLoading, pose, poseDisplayDimensions.height])
+  }, [])
 
-  const resolveCaptureSessionId = useCallback(async (): Promise<string | null> => {
-    if (captureSessionIdRef.current) return captureSessionIdRef.current
-    const pending = captureSessionPromiseRef.current
+  const resolveCaptureSessionIdFromPromise = useCallback(async (
+    pending: Promise<string | null> | null,
+    knownId: string | null,
+  ): Promise<string | null> => {
+    if (knownId) return knownId
     if (!pending) return null
 
     try {
@@ -962,6 +977,10 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     }
   }, [])
 
+  const resolveCaptureSessionId = useCallback(async (): Promise<string | null> => {
+    return resolveCaptureSessionIdFromPromise(captureSessionPromiseRef.current, captureSessionIdRef.current)
+  }, [resolveCaptureSessionIdFromPromise])
+
   const markCaptureSession = useCallback(async (
     readinessStatus: 'completed' | 'failed',
     error?: unknown,
@@ -973,20 +992,20 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       await updateCaptureSession(id, {
         readinessStatus,
         endedAt: new Date(),
-        orientation: normalizeCaptureOrientation(orientation),
-        frameWidth: videoDimensions.width,
-        frameHeight: videoDimensions.height,
+        orientation: normalizeCaptureOrientation(orientationRef.current),
+        frameWidth: videoDimensionsRef.current.width,
+        frameHeight: videoDimensionsRef.current.height,
         observation: buildLiveCaptureObservation(),
         readinessChecks: {
           status: readinessStatus,
-          checks: captureReadiness.checks,
+          checks: captureReadinessRef.current.checks,
           error: error instanceof Error ? error.message : undefined,
         },
       })
     } catch {
       // Capture-session telemetry is best-effort; local recording/review wins.
     }
-  }, [buildLiveCaptureObservation, captureReadiness.checks, orientation, resolveCaptureSessionId, videoDimensions.height, videoDimensions.width])
+  }, [buildLiveCaptureObservation, resolveCaptureSessionId])
   
   // Keep refs updated
   useEffect(() => {
@@ -1004,11 +1023,25 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     showShotFlashRef.current = showShotFlash
     lastShotScoreRef.current = lastShotScore
     shotCountRef.current = shotCount
-  }, [isRecording, recordingDuration, audioFeedbackEnabled, pose, feedback, stableFeedback, showSkeleton, selectedMetrics, stableAngles, showShotFlash, lastShotScore, shotCount])
+    videoDimensionsRef.current = videoDimensions
+    orientationRef.current = orientation
+    cameraReadyRef.current = cameraReady
+    modelReadyRef.current = !isLoading
+    captureReadinessRef.current = captureReadiness
+  }, [isRecording, recordingDuration, audioFeedbackEnabled, pose, feedback, stableFeedback, showSkeleton, selectedMetrics, stableAngles, showShotFlash, lastShotScore, shotCount, videoDimensions, orientation, cameraReady, isLoading, captureReadiness])
   
   // Actual recording start (after countdown)
   const startActualRecording = useCallback(() => {
-    if (!streamRef.current || !videoRef.current || !containerRef.current) return
+    if (
+      recordingFinalizingRef.current
+      || isRecordingRef.current
+      || !streamRef.current
+      || !videoRef.current
+      || !containerRef.current
+    ) return
+
+    const recordingGeneration = recordingGenerationRef.current + 1
+    recordingGenerationRef.current = recordingGeneration
 
     recordedChunksRef.current = []
     recordingDurationRef.current = 0
@@ -1019,7 +1052,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     captureSessionPromiseRef.current = createCaptureSession(buildCaptureSessionMetadata({
       mode: 'shot_tracking',
       source: 'live',
-      platform: normalizeCapturePlatform(getPlatform()),
+      platform: normalizeCapturePlatform(getPlatformOS()),
       deviceModel: typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 255) : undefined,
       cameraFacing: normalizeCameraFacing(facingMode),
       orientation: normalizeCaptureOrientation(orientation),
@@ -1431,6 +1464,18 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     }
 
     mediaRecorder.onstop = async () => {
+      // Snapshot every mutable recording value before any network await. A new
+      // recording must never overwrite the events/frames belonging to this one.
+      recordingFinalizingRef.current = true
+      const sessionPromise = captureSessionPromiseRef.current
+      const sessionIdAtStop = captureSessionIdRef.current
+      const shotEventsSnapshot = [...detectedShotEventsRef.current]
+      const framesSnapshot = [...capturedFramesRef.current]
+      const durationSnapshot = recordingDurationRef.current
+      const finalObservation = buildLiveCaptureObservation()
+      const finalOrientation = orientationRef.current
+      const finalDimensions = { ...videoDimensionsRef.current }
+
       // Stop composite animation
       if (compositeAnimationRef.current) {
         cancelAnimationFrame(compositeAnimationRef.current)
@@ -1446,11 +1491,10 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       // Store URL for display
       setSavedVideoUrl(url)
 
-      const captureSessionId = await resolveCaptureSessionId()
-      const persistedShotEvents = await persistShotEvents(
-        detectedShotEventsRef.current,
-        captureSessionId ?? undefined,
-      )
+      const captureSessionId = await resolveCaptureSessionIdFromPromise(sessionPromise, sessionIdAtStop)
+      const persistedShotEvents = captureSessionId
+        ? await persistShotEvents(shotEventsSnapshot, captureSessionId)
+        : null
 
       // Live recordings are video results even when the user is signed out.
       // Keep local detector rows as an explicit review-only fallback when the
@@ -1459,17 +1503,60 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       setMediaType('VIDEO')
       setVideoAnalysisData(buildLiveVideoAnalysisData({
         videoUrl: url,
-        frames: capturedFramesRef.current,
-        duration: recordingDurationRef.current,
-        detectedShotEvents: detectedShotEventsRef.current,
+        frames: framesSnapshot,
+        duration: durationSnapshot,
+        detectedShotEvents: shotEventsSnapshot,
         persistedShotEvents,
         captureSessionId,
       }))
 
-      await markCaptureSession('completed')
+      if (captureSessionId) {
+        void updateCaptureSession(captureSessionId, {
+          readinessStatus: 'completed',
+          endedAt: new Date(),
+          orientation: normalizeCaptureOrientation(finalOrientation),
+          frameWidth: finalDimensions.width,
+          frameHeight: finalDimensions.height,
+          observation: finalObservation,
+          readinessChecks: {
+            status: 'completed',
+            checks: captureReadinessRef.current.checks,
+          },
+        }, { timeoutMs: 2_000 }).catch(() => undefined)
+      }
+
+      // If session creation resolved after the local Results view was shown,
+      // reconcile the same immutable detector rows against that late ID.
+      if (!captureSessionId && sessionPromise) {
+        void sessionPromise.then(async (lateSessionId) => {
+          if (!lateSessionId) return
+          const lateShotEvents = await persistShotEvents(shotEventsSnapshot, lateSessionId)
+          if (lateShotEvents === null) return
+          if (recordingGenerationRef.current === recordingGeneration) {
+            setVideoAnalysisData(buildLiveVideoAnalysisData({
+              videoUrl: url,
+              frames: framesSnapshot,
+              duration: durationSnapshot,
+              detectedShotEvents: shotEventsSnapshot,
+              persistedShotEvents: lateShotEvents,
+              captureSessionId: lateSessionId,
+            }))
+          }
+          await updateCaptureSession(lateSessionId, {
+            readinessStatus: 'completed',
+            endedAt: new Date(),
+            orientation: normalizeCaptureOrientation(finalOrientation),
+            frameWidth: finalDimensions.width,
+            frameHeight: finalDimensions.height,
+            observation: finalObservation,
+            readinessChecks: { status: 'completed', checks: captureReadinessRef.current.checks },
+          }).catch(() => undefined)
+        }).catch(() => undefined)
+      }
 
       // Show save choice dialog
       setShowSaveChoice(true)
+      recordingFinalizingRef.current = false
     }
 
     try {
@@ -1485,7 +1572,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     isRecordingRef.current = true
     recordingDurationRef.current = 0
     setIsRecording(true)
-  }, [buildLiveCaptureObservation, captureReadiness.checks, facingMode, markCaptureSession, orientation, resolveCaptureSessionId, setMediaType, setVideoAnalysisData, videoDimensions])
+  }, [buildLiveCaptureObservation, captureReadiness.checks, facingMode, markCaptureSession, orientation, resolveCaptureSessionIdFromPromise, setMediaType, setVideoAnalysisData, videoDimensions])
 
   // Start recording with countdown. This remains available as an explicit
   // override so the existing record capability is never removed when the
@@ -1543,7 +1630,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   }, [audioFeedbackEnabled, startActualRecording])
 
   const handleStartRecording = useCallback(() => {
-    if (!captureReadiness.ready) return
+    if (!captureReadiness.ready || recordingFinalizingRef.current) return
     startRecordingCountdown()
   }, [captureReadiness.ready, startRecordingCountdown])
 

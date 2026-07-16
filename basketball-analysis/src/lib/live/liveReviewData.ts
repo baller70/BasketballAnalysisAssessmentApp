@@ -22,14 +22,17 @@ function toBase64Frame(dataUrl: string): string {
   return dataUrl.replace(/^data:[^;]+;base64,/, '')
 }
 
-export function createLocalReviewShotEvents(events: ShotEventInput[]): LocalReviewShotEvent[] {
+export function createLocalReviewShotEvents(
+  events: ShotEventInput[],
+  source = 'live_camera',
+): LocalReviewShotEvent[] {
   return events.map((event, index) => ({
     ...event,
     id: `live-review-${index}-${event.timestampMs ?? 0}`,
     reviewOnly: true,
     metadata: {
       ...(event.metadata && typeof event.metadata === 'object' ? event.metadata : {}),
-      source: 'live_camera',
+      source,
       reviewOnly: true,
     },
   }))

@@ -60,4 +60,10 @@ describe('createLocalReviewShotEvents', () => {
     expect(event).toEqual(expect.objectContaining({ reviewOnly: true, detectedPhase: 'RELEASE' }))
     expect(event.metadata).toEqual({ source: 'live_camera', reviewOnly: true, shotScore: 84 })
   })
+
+  it('preserves a non-live source for uploaded local review rows', () => {
+    const [event] = createLocalReviewShotEvents([detectorEvent], 'video_upload')
+
+    expect(event.metadata).toEqual({ source: 'video_upload', reviewOnly: true })
+  })
 })

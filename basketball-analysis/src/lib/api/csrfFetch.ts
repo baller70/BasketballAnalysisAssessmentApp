@@ -18,12 +18,13 @@
 let cachedToken: string | null = null
 
 /** Fetch (and cache) a CSRF token. Returns '' on failure; the server rejects. */
-export async function getCsrfToken(forceRefresh = false): Promise<string> {
+export async function getCsrfToken(forceRefresh = false, signal?: AbortSignal): Promise<string> {
   if (cachedToken && !forceRefresh) return cachedToken
   try {
     const res = await fetch("/api/auth/csrf", {
       method: "GET",
       credentials: "include",
+      signal,
     })
     if (!res.ok) return ""
     const data = await res.json()
@@ -56,10 +57,10 @@ export async function csrfFetch(
     return fetch(url, { ...opts, headers, credentials: "include" })
   }
 
-  let res = await send(await getCsrfToken())
+  let res = await send(await getCsrfToken(false, opts.signal ?? undefined))
   if (res.status === 403) {
     // Token may be stale — refresh once and retry.
-    res = await send(await getCsrfToken(true))
+    res = await send(await getCsrfToken(true, opts.signal ?? undefined))
   }
   return res
 }
