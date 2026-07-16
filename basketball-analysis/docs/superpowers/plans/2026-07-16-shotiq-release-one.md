@@ -83,10 +83,10 @@
 - Implements: `VisionAdapter`.
 - Falls back explicitly to `WebMoveNetAdapter` when the native plugin is unavailable.
 
-- [ ] Write native availability, success, and explicit fallback tests.
-- [ ] Implement the TypeScript bridge and adapter.
-- [ ] Add the Capacitor plugin configuration contract.
-- [ ] Run unit tests and generate/sync the iOS project.
+- [x] Write native availability, success, and explicit fallback tests.
+- [x] Implement the TypeScript bridge and adapter.
+- [x] Add the Capacitor plugin configuration contract.
+- [x] Run unit tests and generate/sync the iOS project.
 
 ### Task 5: Capture session database and API
 
@@ -100,10 +100,10 @@
 **Interfaces:**
 - Produces persisted capture device/orientation/view/readiness/model metadata.
 
-- [ ] Write authenticated API tests first.
-- [ ] Add normalized capture-session and observation models.
-- [ ] Implement create/read/update routes and client.
-- [ ] Generate Prisma client and run migration/build checks.
+- [x] Write authenticated API tests first.
+- [x] Add normalized capture-session and observation models.
+- [x] Implement create/read/update routes and client.
+- [x] Generate Prisma client and run migration/build checks.
 
 ### Task 6: Shot phase and confidence engine
 

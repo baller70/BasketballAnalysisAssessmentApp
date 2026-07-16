@@ -9,6 +9,7 @@
 
 import { MoveNetProvider } from './MoveNetProvider'
 import { HybridApiProvider } from './HybridApiProvider'
+import { NativeVisionAdapter } from '@/services/vision/NativeVisionAdapter'
 import type { PoseProvider, FormAnalysis, ProviderKeypoint } from './types'
 import type { ModelType } from '@/services/poseDetection'
 
@@ -17,9 +18,10 @@ export { MoveNetProvider } from './MoveNetProvider'
 export { HybridApiProvider } from './HybridApiProvider'
 export { providerKeypointsToPose } from './conversions'
 
-export type PoseProviderId = 'movenet' | 'hybrid-api'
+export type PoseProviderId = 'movenet' | 'native-ios' | 'hybrid-api'
 
 const moveNetProviders = new Map<ModelType, PoseProvider>()
+const nativeVisionProviders = new Map<ModelType, PoseProvider>()
 
 /**
  * Returns a pose provider. With no argument (or 'movenet') you get the shared,
@@ -32,6 +34,16 @@ export function getPoseProvider(
 ): PoseProvider {
   if (id === 'hybrid-api') {
     return new HybridApiProvider()
+  }
+  if (id === 'native-ios') {
+    let provider = nativeVisionProviders.get(modelType)
+    if (!provider) {
+      provider = new NativeVisionAdapter({
+        fallback: getPoseProvider('movenet', modelType),
+      })
+      nativeVisionProviders.set(modelType, provider)
+    }
+    return provider
   }
   let provider = moveNetProviders.get(modelType)
   if (!provider) {

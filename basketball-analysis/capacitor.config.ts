@@ -33,6 +33,10 @@ const config: CapacitorConfig = {
   
   // Plugins configuration
   plugins: {
+    ShotIQVision: {
+      minimumConfidence: 0.2,
+    },
+
     // Camera plugin configuration
     Camera: {
       // iOS camera permissions

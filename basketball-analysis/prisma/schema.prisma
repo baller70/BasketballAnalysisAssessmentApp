@@ -88,6 +88,7 @@ model UserProfile {
   pointEvents           PointEvent[]
   earnedBadges          EarnedBadge[]
   challenges            UserChallenge[]
+  captureSessions       CaptureSession[]
   
   // Indexes
   @@index([experienceLevel], name: "idx_user_experience")
@@ -96,6 +97,61 @@ model UserProfile {
   @@index([heightInches], name: "idx_user_height")
   
   @@map("user_profiles")
+}
+
+// ============================================
+// CAPTURE SESSIONS (Cross-platform pose capture metadata)
+// ============================================
+model CaptureSession {
+  id                String    @id @default(cuid())
+  userProfileId     String    @map("user_profile_id")
+  mode              String    @db.VarChar(30)
+  source            String    @db.VarChar(30)
+  platform          String    @db.VarChar(30)
+  deviceModel       String?   @map("device_model") @db.VarChar(255)
+  cameraFacing      String?   @map("camera_facing") @db.VarChar(20)
+  orientation       String?   @db.VarChar(20)
+  view              String?   @db.VarChar(20)
+  shootingHand      String?   @map("shooting_hand") @db.VarChar(20)
+  poseProvider      String?   @map("pose_provider") @db.VarChar(100)
+  poseModel         String?   @map("pose_model") @db.VarChar(100)
+  readinessStatus   String    @default("checking") @map("readiness_status") @db.VarChar(30)
+  readinessChecks   Json?     @map("readiness_checks")
+  frameWidth        Int?      @map("frame_width")
+  frameHeight       Int?      @map("frame_height")
+  startedAt         DateTime  @default(now()) @map("started_at")
+  endedAt           DateTime? @map("ended_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  userProfile       UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  observations      CaptureSessionObservation[]
+
+  @@index([userProfileId], name: "idx_capture_session_user")
+  @@index([createdAt], name: "idx_capture_session_created")
+  @@index([userProfileId, createdAt], name: "idx_capture_session_user_created")
+  @@map("capture_sessions")
+}
+
+model CaptureSessionObservation {
+  id                  String    @id @default(cuid())
+  captureSessionId    String    @map("capture_session_id")
+  timestampMs         Int       @map("timestamp_ms")
+  orientation         String?   @db.VarChar(20)
+  poseConfidence      Decimal?  @map("pose_confidence") @db.Decimal(5, 4)
+  fullBodyVisible     Boolean?  @map("full_body_visible")
+  subjectFrameRatio   Decimal?  @map("subject_frame_ratio") @db.Decimal(5, 4)
+  stable              Boolean?
+  lighting            String?   @db.VarChar(20)
+  hoopVisible         Boolean?  @map("hoop_visible")
+  ballVisible         Boolean?  @map("ball_visible")
+  keypoints           Json?
+  createdAt           DateTime  @default(now()) @map("created_at")
+
+  captureSession      CaptureSession @relation(fields: [captureSessionId], references: [id], onDelete: Cascade)
+
+  @@index([captureSessionId, timestampMs], name: "idx_capture_observation_time")
+  @@map("capture_session_observations")
 }
 
 // ============================================

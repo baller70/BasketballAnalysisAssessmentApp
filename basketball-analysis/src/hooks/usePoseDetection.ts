@@ -17,6 +17,8 @@ import {
   getPoseProvider,
   providerKeypointsToPose,
 } from '@/services/pose';
+import { selectRuntimePoseProviderId } from '@/services/pose/runtime';
+import { getPlatform } from '@/utils/platform';
 
 // ============================================
 // TYPES
@@ -96,7 +98,7 @@ export function usePoseDetection(
   // analysis. The model selection remains configurable for multi-person live
   // tracking, but callers no longer bypass the canonical adapter.
   const poseProvider = useMemo(
-    () => getPoseProvider('movenet', modelType),
+    () => getPoseProvider(selectRuntimePoseProviderId(getPlatform()), modelType),
     [modelType]
   );
 
@@ -317,6 +319,5 @@ export function usePoseDetection(
 }
 
 export default usePoseDetection;
-
 
 

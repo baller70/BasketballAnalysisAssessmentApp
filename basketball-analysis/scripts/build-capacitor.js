@@ -3,8 +3,9 @@
 /**
  * Capacitor Build Script
  * 
- * This script builds the Next.js app for Capacitor (iOS/Android)
- * It handles the static export requirements and syncs with native platforms.
+ * ShotIQ's native shell is server-backed, so the normal path creates the small
+ * local shell required by Capacitor and syncs native projects. Set
+ * CAPACITOR_STATIC_BUILD=true only when the Next app is made fully exportable.
  * 
  * Usage:
  *   node scripts/build-capacitor.js [ios|android|all]
@@ -13,120 +14,65 @@
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const { getCapacitorBuildMode } = require('./capacitor-build-mode');
 
 const platform = process.argv[2] || 'ios';
+const buildMode = getCapacitorBuildMode();
 
 console.log('🏀 SHOTIQ AI - Capacitor Build');
 console.log('================================');
 console.log(`Target platform: ${platform}`);
+console.log(`Build mode: ${buildMode}`);
 console.log('');
 
-// Step 1: Create temporary next.config for static export
-console.log('📝 Step 1: Configuring Next.js for static export...');
+console.log('📦 Step 1: Preparing Capacitor web assets...');
 
-const originalConfig = fs.readFileSync('next.config.js', 'utf8');
-
-const staticExportConfig = `
-const path = require('path');
-
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  output: 'export',
-  distDir: 'out',
-  
-  // Skip API routes during static export
-  // Mobile apps will call the backend API directly
-  skipTrailingSlashRedirect: true,
-  
-  experimental: {
-    outputFileTracingRoot: path.join(__dirname, '../'),
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true, // Allow build even with type errors for mobile
-  },
-  images: { 
-    unoptimized: true,
-  },
-  
-  // Exclude API routes from static export
-  // These will be handled by the backend server
-  exportPathMap: async function (defaultPathMap) {
-    // Remove API routes from static export
-    const filteredPaths = {};
-    for (const [path, config] of Object.entries(defaultPathMap)) {
-      if (!path.startsWith('/api/')) {
-        filteredPaths[path] = config;
-      }
-    }
-    return filteredPaths;
-  },
-};
-
-module.exports = nextConfig;
-`;
-
-fs.writeFileSync('next.config.capacitor.js', staticExportConfig);
-
-// Step 2: Build with static export config
-console.log('🔨 Step 2: Building Next.js for static export...');
-
-try {
-  // Temporarily rename configs
-  fs.renameSync('next.config.js', 'next.config.js.backup');
-  fs.renameSync('next.config.capacitor.js', 'next.config.js');
-  
-  // Clean previous builds
-  if (fs.existsSync('out')) {
-    fs.rmSync('out', { recursive: true });
-  }
-  if (fs.existsSync('.next')) {
-    fs.rmSync('.next', { recursive: true });
-  }
-  
-  // Run the build
-  execSync('npx next build', { 
-    stdio: 'inherit',
-    env: { ...process.env, CAPACITOR_BUILD: 'true' }
-  });
-  
-  console.log('✅ Build completed!');
-  
-} catch (error) {
-  console.error('❌ Build failed:', error.message);
-  // Restore original config
-  if (fs.existsSync('next.config.js.backup')) {
-    fs.renameSync('next.config.js.backup', 'next.config.js');
-  }
-  process.exit(1);
-} finally {
-  // Restore original config
-  if (fs.existsSync('next.config.js.backup')) {
-    fs.unlinkSync('next.config.js');
-    fs.renameSync('next.config.js.backup', 'next.config.js');
-  }
+if (fs.existsSync('out')) {
+  fs.rmSync('out', { recursive: true });
 }
 
-// Step 3: Verify output
-console.log('📂 Step 3: Verifying build output...');
+if (buildMode === 'static-export') {
+  console.log('🔨 Explicit static export requested...');
+  try {
+    execSync('npx next build', {
+      stdio: 'inherit',
+      env: { ...process.env, CAPACITOR_BUILD: 'true' },
+    });
+  } catch (error) {
+    console.error('❌ Static export failed:', error.message);
+    process.exit(1);
+  }
+} else {
+  // capacitor.config.ts points the native webview at ShotIQ's production URL.
+  // Capacitor still requires webDir to exist during sync, so provide a small,
+  // branded local document without attempting to export server/API routes.
+  fs.mkdirSync('out', { recursive: true });
+  fs.writeFileSync('out/index.html', `<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ShotIQ</title></head>
+<body style="margin:0;background:#101010;color:white;font-family:system-ui;display:grid;min-height:100vh;place-items:center">
+  <main style="text-align:center"><h1>SHOTIQ</h1><p>Connect to the internet to load your training.</p></main>
+</body>
+</html>`);
+}
+
+console.log('📂 Step 2: Verifying Capacitor web assets...');
 
 if (!fs.existsSync('out/index.html')) {
   console.error('❌ Build output missing index.html');
   process.exit(1);
 }
 
-console.log('✅ Build output verified!');
+console.log('✅ Capacitor web assets verified!');
 
-// Step 4: Sync with Capacitor
-console.log('🔄 Step 4: Syncing with Capacitor...');
+// Step 3: Sync with Capacitor
+console.log('🔄 Step 3: Syncing with Capacitor...');
 
 try {
   if (platform === 'all') {
     execSync('npx cap sync', { stdio: 'inherit' });
   } else {
-    execSync(\`npx cap sync \${platform}\`, { stdio: 'inherit' });
+    execSync(`npx cap sync ${platform}`, { stdio: 'inherit' });
   }
   console.log('✅ Capacitor sync completed!');
 } catch (error) {
@@ -134,9 +80,9 @@ try {
   process.exit(1);
 }
 
-// Step 5: Copy iOS icons if needed
+// Step 4: Copy iOS icons if needed
 if (platform === 'ios' || platform === 'all') {
-  console.log('🎨 Step 5: Setting up iOS icons...');
+  console.log('🎨 Step 4: Setting up iOS icons...');
   
   const tauriIconsDir = 'src-tauri/icons/ios';
   const capacitorIconsDir = 'ios/App/App/Assets.xcassets/AppIcon.appiconset';
@@ -148,7 +94,7 @@ if (platform === 'ios' || platform === 'all') {
       const dest = path.join(capacitorIconsDir, icon);
       fs.copyFileSync(src, dest);
     });
-    console.log(\`✅ Copied \${icons.length} icons to iOS project\`);
+    console.log(`✅ Copied ${icons.length} icons to iOS project`);
   } else {
     console.log('⚠️  Icon directories not found, skipping icon copy');
   }
@@ -166,8 +112,6 @@ if (platform === 'android' || platform === 'all') {
   console.log('  Android: npx cap open android');
 }
 console.log('');
-
-
 
 
 
