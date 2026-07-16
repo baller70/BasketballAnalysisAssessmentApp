@@ -32,6 +32,7 @@ import {
   Activity,
 } from 'lucide-react'
 import { usePoseDetection } from '@/hooks/usePoseDetection'
+import type { Pose, ShootingFormFeedback } from '@/services/poseDetection'
 import { ProfessionalSkeletonOverlay } from './ProfessionalSkeletonOverlay'
 import { GuidedCaptureStatus } from './GuidedCaptureStatus'
 import { useAnalysisStore } from '@/stores/analysisStore'
@@ -47,6 +48,7 @@ import {
   evaluateCaptureReadiness,
 } from '@/lib/capture/guidedCapture'
 import { persistShotEvents, type ShotEventInput } from '@/lib/api/shotEvents'
+import { recordLiveShotDetection } from '@/lib/live/shotDetection'
 
 // ============================================
 // TYPES
@@ -367,6 +369,11 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   // Detector outputs are kept separately from captured thumbnails so a live
   // session can be written as durable ShotEvent rows when recording stops.
   const detectedShotEventsRef = useRef<ShotEventInput[]>([])
+  const isRecordingRef = useRef(false)
+  const recordingDurationRef = useRef(0)
+  const audioFeedbackEnabledRef = useRef(false)
+  const latestPoseRef = useRef<Pose | null>(null)
+  const latestFeedbackRef = useRef<ShootingFormFeedback | null>(null)
   
   // Stabilized metrics - hold values for longer so users can read them
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- loosely-typed runtime angles from the pose pipeline
@@ -410,6 +417,58 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     context.drawImage(video, 0, 0, sourceWidth, sourceHeight)
     return canvas
   }, [])
+
+  // Keep the detector callback stable. `usePoseDetection` owns a long-lived
+  // animation-frame loop, so recreating this callback on every render would
+  // either retain the initial `isRecording` value or restart the loop. The
+  // mutable refs below are read when a shot is actually detected.
+  const handleShootingDetected = useCallback((detectedPose: Pose) => {
+    console.log('[FullscreenLive] Shooting motion detected!')
+    latestPoseRef.current = detectedPose
+    const { shotScore } = recordLiveShotDetection(
+      latestPoseRef.current ?? detectedPose,
+      {
+        isRecording: isRecordingRef,
+        recordingDuration: recordingDurationRef,
+        feedback: latestFeedbackRef,
+        detectedShotEvents: detectedShotEventsRef,
+      },
+    )
+
+    // Show shot flash and increment counter
+    if (shotScore !== null) {
+      setLastShotScore(shotScore)
+      setShowShotFlash(true)
+      setShotCount(prev => prev + 1)
+
+      // Play audio feedback if enabled
+      if (audioFeedbackEnabledRef.current) {
+        try {
+          // Create a simple beep sound
+          const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
+          const oscillator = audioContext.createOscillator()
+          const gainNode = audioContext.createGain()
+
+          oscillator.connect(gainNode)
+          gainNode.connect(audioContext.destination)
+
+          // Higher pitch for good shots, lower for poor shots
+          oscillator.frequency.value = shotScore >= 70 ? 880 : 440
+          oscillator.type = 'sine'
+
+          gainNode.gain.setValueAtTime(0.3, audioContext.currentTime)
+          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3)
+
+          oscillator.start(audioContext.currentTime)
+          oscillator.stop(audioContext.currentTime + 0.3)
+        } catch {
+          console.log('[FullscreenLive] Audio feedback not available')
+        }
+      }
+
+      setTimeout(() => setShowShotFlash(false), 1500)
+    }
+  }, [])
   
   // MoveNet already applies temporal smoothing. Keep detection responsive and
   // render every result instead of adding a second delayed smoothing layer.
@@ -427,59 +486,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     modelType: 'multipose',
     targetFps: 20,
     prepareVideoFrame,
-    onShootingDetected: () => {
-      console.log('[FullscreenLive] Shooting motion detected!')
-      const scores = pose?.keypoints
-        ?.map((point: { score?: number }) => point.score)
-        .filter((score): score is number => typeof score === 'number' && Number.isFinite(score)) ?? []
-      const confidence = scores.length
-        ? Math.max(0, Math.min(1, scores.reduce((sum, score) => sum + score, 0) / scores.length))
-        : undefined
-      if (isRecording) {
-        detectedShotEventsRef.current.push({
-          sequence: detectedShotEventsRef.current.length,
-          timestampMs: Math.max(0, Math.round(recordingDuration * 1000)),
-          detected: true,
-          detectedResult: 'unknown',
-          detectedPhase: 'RELEASE',
-          confidence,
-          metadata: { source: 'live_camera', shotScore: feedback?.overallScore ?? null },
-        })
-      }
-      // Show shot flash and increment counter
-      if (feedback?.overallScore) {
-        setLastShotScore(feedback.overallScore)
-        setShowShotFlash(true)
-        setShotCount(prev => prev + 1)
-        
-        // Play audio feedback if enabled
-        if (audioFeedbackEnabled) {
-          try {
-            // Create a simple beep sound
-            const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
-            const oscillator = audioContext.createOscillator()
-            const gainNode = audioContext.createGain()
-            
-            oscillator.connect(gainNode)
-            gainNode.connect(audioContext.destination)
-            
-            // Higher pitch for good shots, lower for poor shots
-            oscillator.frequency.value = feedback.overallScore >= 70 ? 880 : 440
-            oscillator.type = 'sine'
-            
-            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime)
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3)
-            
-            oscillator.start(audioContext.currentTime)
-            oscillator.stop(audioContext.currentTime + 0.3)
-          } catch {
-            console.log('[FullscreenLive] Audio feedback not available')
-          }
-        }
-        
-        setTimeout(() => setShowShotFlash(false), 1500)
-      }
-    },
+    onShootingDetected: handleShootingDetected,
   })
 
   const poseDisplayDimensions = poseInputRotation === 'none'
@@ -796,6 +803,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
             console.log('[FullscreenLive] Max recording duration reached, flagging stop...')
             shouldStopRef.current = true
           }
+          recordingDurationRef.current = newDuration
           return newDuration
         })
       }, 1000)
@@ -813,6 +821,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
         mediaRecorderRef.current.stop()
       }
+      isRecordingRef.current = false
       setIsRecording(false)
       setShowControls(true)
     }
@@ -896,6 +905,11 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   
   // Keep refs updated
   useEffect(() => {
+    isRecordingRef.current = isRecording
+    recordingDurationRef.current = recordingDuration
+    audioFeedbackEnabledRef.current = audioFeedbackEnabled
+    latestPoseRef.current = pose
+    latestFeedbackRef.current = feedback
     currentPoseRef.current = pose
     currentFeedbackRef.current = stableFeedback
     currentTipRef.current = stableFeedback?.tips?.[0] || null
@@ -905,13 +919,14 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     showShotFlashRef.current = showShotFlash
     lastShotScoreRef.current = lastShotScore
     shotCountRef.current = shotCount
-  }, [pose, stableFeedback, showSkeleton, selectedMetrics, stableAngles, showShotFlash, lastShotScore, shotCount])
+  }, [isRecording, recordingDuration, audioFeedbackEnabled, pose, feedback, stableFeedback, showSkeleton, selectedMetrics, stableAngles, showShotFlash, lastShotScore, shotCount])
   
   // Actual recording start (after countdown)
   const startActualRecording = useCallback(() => {
     if (!streamRef.current || !videoRef.current || !containerRef.current) return
 
     recordedChunksRef.current = []
+    recordingDurationRef.current = 0
     setRecordingDuration(0)
     setShotCount(0) // Reset shot counter
     detectedShotEventsRef.current = []
@@ -1338,6 +1353,8 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
 
     mediaRecorderRef.current = mediaRecorder
     mediaRecorder.start(1000)
+    isRecordingRef.current = true
+    recordingDurationRef.current = 0
     setIsRecording(true)
   }, [capturedFrames, setVideoAnalysisData, videoDimensions])
 
@@ -1412,6 +1429,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop()
     }
+    isRecordingRef.current = false
     setIsRecording(false)
     setShowControls(true)
   }, [])

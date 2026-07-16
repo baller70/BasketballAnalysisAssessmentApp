@@ -34,3 +34,22 @@ Status: complete
 - `npm test` — 11 files, 40 tests passed (including persistence API, correction hydration, and low-confidence review tests).
 - `npx tsc --noEmit` — passed.
 - `npm run build` — passed; Prisma generation, type checking, static page generation, and route collection completed.
+
+## Live capture callback hardening
+
+- Fixed the fullscreen live detector's stale callback closure. The callback is
+  now stable for the lifetime of the detector loop and reads recording state,
+  elapsed duration, current pose, and current feedback through refs at shot
+  detection time. Starting detection before recording therefore no longer
+  drops every live shot event, and recording controls do not restart the loop
+  on each React render.
+- Extracted `recordLiveShotDetection` into a small testable helper. It keeps
+  confidence/score metadata and append-only event sequencing in one place.
+- Added regression coverage for the idle-to-recording transition and the
+  non-recording guard.
+
+## Live capture verification
+
+- `npm test` — 12 files, 42 tests passed.
+- `npx tsc --noEmit` — passed after regenerating the Prisma client.
+- `npm test -- --run tests/lib/live/shotDetection.test.ts` — 2 tests passed.
