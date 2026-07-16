@@ -43,7 +43,11 @@ const jsonValue = (value: unknown): Prisma.InputJsonValue | undefined => {
 
 const REVIEW_CONFIDENCE_THRESHOLD = 0.6
 
-function serializeShotEvent(event: any) {
+type ShotEventWithCorrections = Prisma.ShotEventGetPayload<{
+  include: { corrections: true }
+}>
+
+function serializeShotEvent(event: ShotEventWithCorrections) {
   return {
     ...event,
     confidence: event.confidence == null ? undefined : Number(event.confidence),
