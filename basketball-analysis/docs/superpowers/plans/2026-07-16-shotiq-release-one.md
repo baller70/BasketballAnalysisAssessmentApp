@@ -118,10 +118,10 @@
 - Produces canonical gather, rise, set, release, follow-through, flight, rim-event, and complete states.
 - Produces trusted/omitted mechanics measurements with reasons.
 
-- [ ] Write phase-transition and confidence-omission tests.
-- [ ] Implement the minimal state machine and confidence gate.
-- [ ] Integrate canonical observations from the adapter.
-- [ ] Run focused benchmark fixtures and full tests.
+- [x] Write phase-transition and confidence-omission tests.
+- [x] Implement the minimal state machine and confidence gate.
+- [x] Integrate canonical observations from the adapter.
+- [x] Run focused benchmark fixtures and full tests.
 
 ### Task 7: Shot review and corrections
 
@@ -135,11 +135,11 @@
 **Interfaces:**
 - Produces correction records for false shot, make/miss, shooter, and phase markers.
 
-- [ ] Write timeline and correction API tests first.
-- [ ] Add shot event and immutable correction records.
-- [ ] Implement the existing-style review timeline.
-- [ ] Insert it into the current Results experience.
-- [ ] Run tests, lint, and build.
+- [x] Write timeline and correction API tests first.
+- [x] Add shot event and immutable correction records.
+- [x] Implement the existing-style review timeline.
+- [x] Insert it into the current Results experience.
+- [x] Run tests, lint, and build.
 
 ### Task 8: Coaching target, prescribed drill, and retest
 
@@ -154,11 +154,11 @@
 **Interfaces:**
 - Produces one active coaching target with flaw, cue, drill, baseline, target value, and retest result.
 
-- [ ] Write target-selection and retest evaluation tests first.
-- [ ] Persist the normalized coaching target.
-- [ ] Insert the prescribed drill into the current Training/calendar flow.
-- [ ] Show improvement/no-change/regression on retest.
-- [ ] Run the full suite, lint, build, and cross-platform smoke tests.
+- [x] Write target-selection and retest evaluation tests first.
+- [x] Persist the normalized coaching target.
+- [x] Insert the prescribed drill into the current Training/calendar flow.
+- [x] Show improvement/no-change/regression on retest.
+- [x] Run the full suite, lint, build, and cross-platform smoke tests.
 
 ### Task 9: Benchmark and deployment gates
 
@@ -171,8 +171,8 @@
 **Interfaces:**
 - Produces reproducible FPS, pose completeness, shot precision/recall, make/miss, and phase error summaries.
 
-- [ ] Write metric-aggregation tests first.
-- [ ] Implement benchmark summaries without committing private footage.
-- [ ] Add CI gates for unit tests, lint, build, and public fixtures.
-- [ ] Document device validation for iPhone 11/12 web and native.
-- [ ] Deploy only after all gates pass.
+- [x] Write metric-aggregation tests first.
+- [x] Implement benchmark summaries without committing private footage.
+- [x] Add CI gates for unit tests, lint, build, and public fixtures.
+- [x] Document device validation for iPhone 11/12 web and native.
+- [x] Deploy only after all gates pass.
