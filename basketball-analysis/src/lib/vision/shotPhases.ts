@@ -250,6 +250,7 @@ function nextPhase(
     case 'follow-through':
       if (rimHint) return { phase: 'flight', reason: 'Ball flight toward the rim detected' }
       if (ballInFlight) return { phase: 'flight', reason: 'Ball is in flight' }
+      if (observation.shotComplete) return { phase: 'complete', reason: 'Shot sequence completed' }
       if (hasPose && phaseFrames >= options.followThroughFrames) {
         return { phase: 'complete', reason: 'Body follow-through completed' }
       }
