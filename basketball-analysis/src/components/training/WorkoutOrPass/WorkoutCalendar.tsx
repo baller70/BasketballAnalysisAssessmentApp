@@ -19,6 +19,7 @@ import {
 } from "lucide-react"
 import { ALL_DRILLS, Drill, DrillFocusArea, SkillLevel, getRecommendedDrills, mapFlawToFocusArea } from "@/data/drillDatabase"
 import { csrfFetch } from "@/lib/api/csrfFetch"
+import { coachingMetricUnit } from "@/lib/coaching/coachingTarget"
 import {
   fetchWorkouts, createWorkout, updateWorkout, deleteWorkout,
   fetchPreferences, savePreferences, resolveDrillIds, asFocusAreas,
@@ -1044,7 +1045,7 @@ export function WorkoutCalendar({ userFlaws = [], latestMetrics, onStartWorkout 
           const created = await createResponse.json().catch(() => null)
           if (!cancelled && created?.target) {
             setCoachingTarget(created.target as ClientCoachingTarget)
-          } else if (!cancelled && created?.error) {
+          } else if (!cancelled && created?.error && createResponse.status !== 401 && createResponse.status !== 403) {
             setCoachingTargetError(String(created.error))
           }
         }
@@ -1092,7 +1093,10 @@ export function WorkoutCalendar({ userFlaws = [], latestMetrics, onStartWorkout 
   const scheduleCoachingDrill = useCallback(() => {
     if (!coachingTarget) return
     const drill = allDrills.find((candidate) => candidate.id === coachingTarget.drillId)
-    if (!drill) return
+    if (!drill) {
+      setCoachingTargetError("The prescribed drill is no longer available. Choose a regular drill or create a new target.")
+      return
+    }
     const date = new Date()
     const workout: ScheduledWorkout = {
       id: `coaching-${Date.now()}`,
@@ -1111,7 +1115,11 @@ export function WorkoutCalendar({ userFlaws = [], latestMetrics, onStartWorkout 
   const startCoachingDrill = useCallback(() => {
     if (!coachingTarget || !onStartWorkout) return
     const drill = allDrills.find((candidate) => candidate.id === coachingTarget.drillId)
-    if (drill) onStartWorkout([drill])
+    if (!drill) {
+      setCoachingTargetError("The prescribed drill is no longer available. Choose a regular drill or create a new target.")
+      return
+    }
+    onStartWorkout([drill])
   }, [allDrills, coachingTarget, onStartWorkout])
 
   const removeScheduledWorkout = useCallback((workoutId: string) => {
@@ -1265,9 +1273,9 @@ export function WorkoutCalendar({ userFlaws = [], latestMetrics, onStartWorkout 
               <h3 className="mt-1 text-lg font-black text-slate-900">{coachingTarget.flaw}</h3>
               <p className="mt-1 max-w-2xl text-sm text-slate-600">{coachingTarget.cue}</p>
               <p className="mt-2 text-xs font-semibold text-slate-500">
-                Baseline {coachingTarget.baseline}{['balancescore', 'consistencyscore', 'formscore', 'followthrough'].includes(coachingTarget.metric.toLowerCase()) ? '%' : '°'}
+                Baseline {coachingTarget.baseline}{coachingMetricUnit(coachingTarget.metric)}
                 <span className="mx-2">→</span>
-                Target {coachingTarget.targetValue}{['balancescore', 'consistencyscore', 'formscore', 'followthrough'].includes(coachingTarget.metric.toLowerCase()) ? '%' : '°'}
+                Target {coachingTarget.targetValue}{coachingMetricUnit(coachingTarget.metric)}
                 <span className="mx-2">•</span>
                 Prescribed drill: {coachingTarget.drillName}
               </p>

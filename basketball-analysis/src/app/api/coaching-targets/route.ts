@@ -48,6 +48,7 @@ interface AnalysisHistoryDelegate {
     balanceScore?: unknown
     formScore?: unknown
     consistencyScore?: unknown
+    overallScore?: unknown
   } | null>
 }
 interface CoachingTargetTransaction {
@@ -100,6 +101,7 @@ async function latestMeasuredMetrics(profileId: string): Promise<CoachingTargetI
       balanceScore: true,
       formScore: true,
       consistencyScore: true,
+      overallScore: true,
     },
   })
   if (!row) return undefined
@@ -110,6 +112,7 @@ async function latestMeasuredMetrics(profileId: string): Promise<CoachingTargetI
     balanceScore: row.balanceScore == null ? undefined : Number(row.balanceScore),
     formScore: row.formScore == null ? undefined : Number(row.formScore),
     consistencyScore: row.consistencyScore == null ? undefined : Number(row.consistencyScore),
+    overallScore: row.overallScore == null ? undefined : Number(row.overallScore),
   }
 }
 
