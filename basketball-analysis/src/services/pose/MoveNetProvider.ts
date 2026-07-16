@@ -26,6 +26,14 @@ import type {
   FormAnalysis,
   JointStatus,
 } from './types'
+import {
+  gateMechanicsMeasurements,
+  type MechanicsGateResult,
+} from '@/lib/vision/confidenceGate'
+import {
+  ShotPhaseTracker,
+  observationFromKeypoints,
+} from '@/lib/vision/shotPhases'
 
 const KEYPOINT_NAMES: string[] = Object.keys(
   KEYPOINT_INDICES
@@ -145,6 +153,8 @@ export class MoveNetProvider implements PoseProvider {
   readonly onDevice = true
 
   private modelType: ModelType
+  private readonly phaseTracker = new ShotPhaseTracker()
+  private latestTimestampMs: number | null = null
 
   constructor(modelType: ModelType = 'lightning') {
     this.modelType = modelType
@@ -162,6 +172,9 @@ export class MoveNetProvider implements PoseProvider {
     if (!this.isReady()) {
       await this.init()
     }
+    this.latestTimestampMs = typeof timestampMs === 'number' && Number.isFinite(timestampMs)
+      ? timestampMs
+      : null
     const pose = await poseDetectionService.detectPose(input, timestampMs)
     if (!pose) return null
 
@@ -197,6 +210,25 @@ export class MoveNetProvider implements PoseProvider {
     // Deterministic scoring — the single source of truth for the numbers shown.
     const scores = scoreShootingForm(angles)
 
+    // Every adapter frame now carries one canonical, confidence-aware mechanics
+    // record. The angle scorer remains unchanged; this sidecar determines which
+    // values may be shown as trusted feedback and why others were omitted.
+    const mechanics: MechanicsGateResult = gateMechanicsMeasurements({
+      angles,
+      keypoints,
+      minConfidence: MIN_SIGNAL_SCORE,
+    })
+
+    const phaseObservation = observationFromKeypoints(
+      keypoints,
+      this.latestTimestampMs ?? 0,
+      {
+        elbowAngle: angles.elbow,
+        kneeAngle: angles.knee,
+      }
+    )
+    const phaseEvent = this.phaseTracker.update(phaseObservation)
+
     // Status mirrors the score band so the UI's colour and number agree.
     const status = {} as Record<JointName, JointStatus>
     ;(Object.keys(angles) as JointName[]).forEach((joint) => {
@@ -215,10 +247,24 @@ export class MoveNetProvider implements PoseProvider {
       overallScore: scores.overallScore,
       tips,
       measuredCount: scores.measuredCount,
+      mechanics,
+      canonicalObservation: {
+        timestampMs: this.latestTimestampMs,
+        keypoints: [...keypoints],
+        poseConfidence: phaseObservation.poseConfidence ?? null,
+        phase: phaseEvent.phase,
+        mechanics,
+      },
       // Non-joint signals (shoulder/hip tilt, ball-launch arc) for the flaw
       // engine. Computed from the raw keypoints + confidences, omitted when not
       // measurable — never defaulted.
       poseSignals: computePoseSignals(keypoints),
     }
+  }
+
+  /** Start a fresh shot sequence when a live capture/session is restarted. */
+  resetShotPhase(): void {
+    this.phaseTracker.reset()
+    this.latestTimestampMs = null
   }
 }

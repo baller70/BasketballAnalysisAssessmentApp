@@ -19,6 +19,8 @@ import type {
   BiomechanicalScores,
   JointName,
 } from '@/lib/scoring/biomechanicalScoring'
+import type { MechanicsGateResult } from '@/lib/vision/confidenceGate'
+import type { ShotPhase } from '@/lib/vision/shotPhases'
 
 /** Anything MoveNet (or a future provider) can run inference on. */
 export type PoseInput = HTMLVideoElement | HTMLImageElement | HTMLCanvasElement
@@ -66,6 +68,22 @@ export interface FormAnalysis {
   tips: string[]
   /** How many joints contributed to the score (0 -> nothing detected). */
   measuredCount: number
+  /** Confidence-aware records for the canonical mechanics values. */
+  mechanics?: MechanicsGateResult
+  /** Canonical observation emitted by the active pose adapter. */
+  canonicalObservation?: CanonicalVisionObservation
+}
+
+/**
+ * Adapter output shared by image, video, live, and native paths. Timestamp is
+ * null for a still image; a live/video adapter supplies the frame timestamp.
+ */
+export interface CanonicalVisionObservation {
+  timestampMs: number | null
+  keypoints: ProviderKeypoint[]
+  poseConfidence: number | null
+  phase: ShotPhase
+  mechanics: MechanicsGateResult
 }
 
 /**
