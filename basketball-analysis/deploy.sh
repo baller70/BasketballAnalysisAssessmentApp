@@ -61,7 +61,13 @@ npm run build
 echo "==> [6/6] (Re)starting PM2 process '$APP_NAME'"
 # restart if it already exists, otherwise start it from the ecosystem file.
 if pm2 describe "$APP_NAME" >/dev/null 2>&1; then
-  pm2 restart "$APP_NAME" --update-env
+  # PM2 can retain an errored entry whose process id has already disappeared.
+  # A normal restart reports "Process <id> not found" in that state. Starting
+  # the ecosystem entry repairs the stale slot without touching other apps.
+  if ! pm2 restart "$APP_NAME" --update-env; then
+    echo "    Restart found a stale PM2 entry — repairing '$APP_NAME'"
+    pm2 start ecosystem.config.js --env production
+  fi
 else
   pm2 start ecosystem.config.js --env production
 fi
