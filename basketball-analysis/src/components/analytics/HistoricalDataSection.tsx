@@ -3,7 +3,12 @@
 import React, { useState, useMemo, useEffect } from "react"
 import { useAnalysisStore } from "@/stores/analysisStore"
 import { getAllSessions, AnalysisSession } from "@/services/sessionStorage"
-import { fetchServerHistory, serverHistoryToSessions } from "@/components/analytics/serverHistory"
+import {
+  buildHistoricalChartData,
+  fetchServerHistory,
+  mergeLocalAndServerSessions,
+  serverHistoryToSessions,
+} from "@/components/analytics/serverHistory"
 import { csrfFetch } from "@/lib/api/csrfFetch"
 import { coachingMetricUnit } from "@/lib/coaching/coachingTarget"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -40,151 +45,12 @@ function getShooterLevel(score: number) {
   return { name: 'Beginner', color: 'text-red-400' }
 }
 
-// Generate demo sessions for display
-function generateDemoSessions(): AnalysisSession[] {
-  const now = Date.now()
-  const DAY = 24 * 60 * 60 * 1000
-  
-  const demoSessions: AnalysisSession[] = [
-    {
-      id: 'demo_1',
-      date: new Date(now - 30 * DAY).toISOString(),
-      displayDate: 'Dec 7',
-      timestamp: now - 30 * DAY,
-      mainImageBase64: '',
-      screenshots: [],
-      analysisData: {
-        overallScore: 68,
-        shooterLevel: 'Developing',
-        angles: { right_elbow_angle: 82, right_knee_angle: 140, release_angle: 42 },
-        detectedFlaws: ['Low Release Point', 'Elbow Drift'],
-        measurements: {}
-      },
-      playerName: 'Player',
-      mediaType: 'image'
-    },
-    {
-      id: 'demo_2',
-      date: new Date(now - 25 * DAY).toISOString(),
-      displayDate: 'Dec 12',
-      timestamp: now - 25 * DAY,
-      mainImageBase64: '',
-      screenshots: [],
-      analysisData: {
-        overallScore: 71,
-        shooterLevel: 'Intermediate',
-        angles: { right_elbow_angle: 85, right_knee_angle: 142, release_angle: 44 },
-        detectedFlaws: ['Elbow Drift'],
-        measurements: {}
-      },
-      playerName: 'Player',
-      mediaType: 'image'
-    },
-    {
-      id: 'demo_3',
-      date: new Date(now - 20 * DAY).toISOString(),
-      displayDate: 'Dec 17',
-      timestamp: now - 20 * DAY,
-      mainImageBase64: '',
-      screenshots: [],
-      analysisData: {
-        overallScore: 73,
-        shooterLevel: 'Intermediate',
-        angles: { right_elbow_angle: 87, right_knee_angle: 145, release_angle: 46 },
-        detectedFlaws: ['Slight Elbow Drift'],
-        measurements: {}
-      },
-      playerName: 'Player',
-      mediaType: 'video'
-    },
-    {
-      id: 'demo_4',
-      date: new Date(now - 14 * DAY).toISOString(),
-      displayDate: 'Dec 23',
-      timestamp: now - 14 * DAY,
-      mainImageBase64: '',
-      screenshots: [],
-      analysisData: {
-        overallScore: 75,
-        shooterLevel: 'Intermediate',
-        angles: { right_elbow_angle: 88, right_knee_angle: 146, release_angle: 47 },
-        detectedFlaws: [],
-        measurements: {}
-      },
-      playerName: 'Player',
-      mediaType: 'image'
-    },
-    {
-      id: 'demo_5',
-      date: new Date(now - 10 * DAY).toISOString(),
-      displayDate: 'Dec 27',
-      timestamp: now - 10 * DAY,
-      mainImageBase64: '',
-      screenshots: [],
-      analysisData: {
-        overallScore: 74,
-        shooterLevel: 'Intermediate',
-        angles: { right_elbow_angle: 86, right_knee_angle: 144, release_angle: 45 },
-        detectedFlaws: ['Balance Issue'],
-        measurements: {}
-      },
-      playerName: 'Player',
-      mediaType: 'image'
-    },
-    {
-      id: 'demo_6',
-      date: new Date(now - 7 * DAY).toISOString(),
-      displayDate: 'Dec 30',
-      timestamp: now - 7 * DAY,
-      mainImageBase64: '',
-      screenshots: [],
-      analysisData: {
-        overallScore: 77,
-        shooterLevel: 'Intermediate',
-        angles: { right_elbow_angle: 89, right_knee_angle: 147, release_angle: 48 },
-        detectedFlaws: [],
-        measurements: {}
-      },
-      playerName: 'Player',
-      mediaType: 'video'
-    },
-    {
-      id: 'demo_7',
-      date: new Date(now - 3 * DAY).toISOString(),
-      displayDate: 'Jan 3',
-      timestamp: now - 3 * DAY,
-      mainImageBase64: '',
-      screenshots: [],
-      analysisData: {
-        overallScore: 78,
-        shooterLevel: 'Advanced',
-        angles: { right_elbow_angle: 90, right_knee_angle: 148, release_angle: 49 },
-        detectedFlaws: [],
-        measurements: {}
-      },
-      playerName: 'Player',
-      mediaType: 'image'
-    },
-    {
-      id: 'demo_8',
-      date: new Date(now - 1 * DAY).toISOString(),
-      displayDate: 'Jan 5',
-      timestamp: now - 1 * DAY,
-      mainImageBase64: '',
-      screenshots: [],
-      analysisData: {
-        overallScore: 80,
-        shooterLevel: 'Advanced',
-        angles: { right_elbow_angle: 91, right_knee_angle: 150, release_angle: 50 },
-        detectedFlaws: [],
-        measurements: {}
-      },
-      playerName: 'Player',
-      mediaType: 'image'
-    }
-  ]
-  
-  return demoSessions
+function measuredValue(values: Record<string, number>, keys: string[]): number | null {
+  for (const key of keys) {
+    const value = values[key]
+    if (typeof value === 'number' && Number.isFinite(value)) return value
+  }
+  return null
 }
 
 // Analytics Chart Section Component
@@ -192,10 +58,14 @@ interface AnalyticsChartSectionProps {
   sessions: Array<{
     id: string
     date: Date
-    score: number
-    elbowAngle: number
-    kneeAngle: number
-    releaseAngle: number
+    score: number | null
+    elbowAngle: number | null
+    kneeAngle: number | null
+    releaseAngle: number | null
+    consistency: number | null
+    formScore: number | null
+    balanceScore: number | null
+    releaseScore: number | null
     shooterLevel: string
     isLive: boolean
   }>
@@ -211,10 +81,9 @@ interface AnalyticsChartSectionProps {
 }
 
 function AnalyticsChartSection({ sessions, playerName }: AnalyticsChartSectionProps) {
-  const safeSessions = sessions || []
   const [timePeriod, setTimePeriod] = useState<'3months' | '30days' | '7days'>('3months')
   const [selectedMetrics, setSelectedMetrics] = useState<string[]>(['score', 'elbowAngle'])
-  const [hoveredBar, setHoveredBar] = useState<{ index: number; metric: string; value: number; date: string } | null>(null)
+  const [hoveredBar, setHoveredBar] = useState<{ index: number; metric: string; value: number | null; date: string } | null>(null)
   const [metricsDropdownOpen, setMetricsDropdownOpen] = useState(false)
   
   const allMetrics = [
@@ -225,12 +94,11 @@ function AnalyticsChartSection({ sessions, playerName }: AnalyticsChartSectionPr
     { id: 'consistency', label: 'CONSISTENCY', color: 'from-pink-600 to-pink-400', textColor: 'text-pink-400' },
     { id: 'formScore', label: 'FORM SCORE', color: 'from-cyan-600 to-cyan-400', textColor: 'text-cyan-400' },
     { id: 'balanceScore', label: 'BALANCE', color: 'from-orange-600 to-orange-400', textColor: 'text-orange-400' },
-    { id: 'followThrough', label: 'FOLLOW THROUGH', color: 'from-indigo-600 to-indigo-400', textColor: 'text-indigo-400' },
-    { id: 'arcScore', label: 'ARC SCORE', color: 'from-red-600 to-red-400', textColor: 'text-red-400' },
-    { id: 'powerScore', label: 'POWER', color: 'from-emerald-600 to-emerald-400', textColor: 'text-emerald-400' }
+    { id: 'releaseScore', label: 'RELEASE SCORE', color: 'from-red-600 to-red-400', textColor: 'text-red-400' }
   ]
   
   const filteredSessions = useMemo(() => {
+    const safeSessions = sessions || []
     if (!sessions || !Array.isArray(sessions) || sessions.length === 0) {
       return []
     }
@@ -254,100 +122,10 @@ function AnalyticsChartSection({ sessions, playerName }: AnalyticsChartSectionPr
     return safeSessions.filter(s => s && s.date && new Date(s.date) >= cutoffDate).sort((a, b) => 
       new Date(a.date).getTime() - new Date(b.date).getTime()
     )
-  }, [safeSessions, timePeriod])
+  }, [sessions, timePeriod])
   
   const chartData = useMemo(() => {
-    const grouped: Record<string, { date: Date; sessions: typeof filteredSessions }> = {}
-    
-    filteredSessions.forEach(session => {
-      const dateKey = new Date(session.date).toISOString().split('T')[0]
-      if (!grouped[dateKey]) {
-        grouped[dateKey] = { date: new Date(session.date), sessions: [] }
-      }
-      grouped[dateKey].sessions.push(session)
-    })
-    
-    const realData = Object.entries(grouped).map(([, data]) => {
-      if (!data.sessions || data.sessions.length === 0) {
-        return {
-          date: data.date,
-          dateLabel: data.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-          sessionCount: 0,
-          score: 0,
-          elbowAngle: 0,
-          kneeAngle: 0,
-          releaseAngle: 0,
-          consistency: 0,
-          formScore: 0,
-          balanceScore: 0,
-          followThrough: 0,
-          arcScore: 0,
-          powerScore: 0
-        }
-      }
-      
-      const avgScore = Math.round(data.sessions.reduce((sum, s) => sum + (s.score || 0), 0) / data.sessions.length)
-      const avgElbow = Math.round(data.sessions.reduce((sum, s) => sum + (s.elbowAngle || 0), 0) / data.sessions.length)
-      const avgKnee = Math.round(data.sessions.reduce((sum, s) => sum + (s.kneeAngle || 0), 0) / data.sessions.length)
-      const avgRelease = Math.round(data.sessions.reduce((sum, s) => sum + (s.releaseAngle || 0), 0) / data.sessions.length)
-      
-      const consistency = Math.min(100, Math.max(0, avgScore))
-      const formScore = Math.min(100, Math.max(0, Math.round((avgElbow + avgKnee) / 2)))
-      const balanceScore = Math.min(100, Math.max(0, avgScore - 5))
-      const followThrough = Math.min(100, Math.max(0, avgRelease))
-      const arcScore = Math.min(100, Math.max(0, avgRelease - 10))
-      const powerScore = Math.min(100, Math.max(0, avgScore))
-      
-      return {
-        date: data.date,
-        dateLabel: data.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        sessionCount: data.sessions.length,
-        score: avgScore,
-        elbowAngle: avgElbow,
-        kneeAngle: avgKnee,
-        releaseAngle: avgRelease,
-        consistency,
-        formScore,
-        balanceScore,
-        followThrough,
-        arcScore,
-        powerScore
-      }
-    })
-    
-    if (realData.length === 0) {
-      const now = new Date()
-      const testData = []
-      const testValues = [70, 80, 90, 90, 90, 90, 90, 100]
-      const startMonth = 0
-      const currentYear = now.getFullYear()
-      
-      for (let i = 0; i < 8; i++) {
-        const monthIndex = startMonth + i
-        const date = new Date(currentYear, monthIndex, 15)
-        const score = testValues[i]
-        
-        testData.push({
-          date: date,
-          dateLabel: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-          sessionCount: Math.floor(Math.random() * 3) + 1,
-          score: score,
-          elbowAngle: score - 5,
-          kneeAngle: score + 5,
-          releaseAngle: score - 10,
-          consistency: score + 2,
-          formScore: score - 3,
-          balanceScore: score + 1,
-          followThrough: score - 2,
-          arcScore: score - 5,
-          powerScore: score + 3
-        })
-      }
-      
-      return testData
-    }
-    
-    return realData.slice(-10)
+    return buildHistoricalChartData(filteredSessions).slice(-10)
   }, [filteredSessions])
   
   const toggleMetric = (metricId: string) => {
@@ -577,8 +355,9 @@ function AnalyticsChartSection({ sessions, playerName }: AnalyticsChartSectionPr
                   {chartData.slice(-8).map((point, i) => {
                     const primaryMetricId = selectedMetrics[0] || 'score'
                     const metric = allMetrics.find(m => m.id === primaryMetricId)
-                    const value = point[primaryMetricId as keyof typeof point] as number
-                    const segmentsFilled = Math.round((value / 100) * 10)
+                    const rawValue = point[primaryMetricId as keyof typeof point]
+                    const value = typeof rawValue === 'number' && Number.isFinite(rawValue) ? rawValue : null
+                    const segmentsFilled = value == null ? 0 : Math.round((Math.max(0, Math.min(100, value)) / 100) * 10)
                     
                     return (
                       <div 
@@ -613,7 +392,7 @@ function AnalyticsChartSection({ sessions, playerName }: AnalyticsChartSectionPr
                         {hoveredBar?.index === i && (
                           <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 pointer-events-none">
                             <div className="bg-[#050505] border border-teal-400/50 rounded-lg px-3 py-2 shadow-xl whitespace-nowrap">
-                              <p className="text-teal-400 font-bold text-sm">{value}%</p>
+                              <p className="text-teal-400 font-bold text-sm">{value == null ? '—' : `${value}%`}</p>
                               <p className="text-[#888] text-xs">{metric?.label}</p>
                               <p className="text-[#666] text-xs">{point.dateLabel}</p>
                               <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-teal-400/50" />
@@ -681,26 +460,10 @@ export default function HistoricalDataSection() {
         /* offline / unauthenticated — fall back to local only */
       }
 
-      // Merge, de-duping server rows already represented locally (same day + score).
-      const localKeys = new Set(
-        localSessions.map((s) => {
-          const d = new Date(s.date)
-          d.setHours(0, 0, 0, 0)
-          return `${d.getTime()}:${Math.round(s.analysisData?.overallScore ?? 0)}`
-        })
-      )
-      const merged = [
-        ...localSessions,
-        ...serverSessions.filter((s) => {
-          const d = new Date(s.date)
-          d.setHours(0, 0, 0, 0)
-          return !localKeys.has(`${d.getTime()}:${Math.round(s.analysisData?.overallScore ?? 0)}`)
-        }),
-      ]
+      const merged = mergeLocalAndServerSessions(localSessions, serverSessions)
 
       if (cancelled) return
-      // Only fall back to demo data when there is genuinely nothing to show.
-      setSessions(merged.length > 0 ? merged : generateDemoSessions())
+      setSessions(merged)
     }
     load()
     return () => {
@@ -758,31 +521,43 @@ export default function HistoricalDataSection() {
 
     if (visionAnalysisResult?.success) {
       const angles = visionAnalysisResult.angles || {}
-      const score = visionAnalysisResult.overall_score || 70
-      data.push({
-        id: 'current',
-        date: new Date(),
-        displayDate: 'Today',
-        score,
-        elbowAngle: angles.right_elbow_angle || angles.left_elbow_angle || 88,
-        kneeAngle: angles.right_knee_angle || angles.left_knee_angle || 145,
-        releaseAngle: angles.release_angle || 48,
-        shooterLevel: getShooterLevel(score).name,
-        isLive: true
-      })
+      const score = visionAnalysisResult.overall_score
+      if (typeof score === 'number' && Number.isFinite(score)) {
+        data.push({
+          id: 'current',
+          date: new Date(),
+          displayDate: 'Today',
+          score,
+          elbowAngle: measuredValue(angles, ['right_elbow_angle', 'left_elbow_angle', 'elbow_angle']),
+          kneeAngle: measuredValue(angles, ['right_knee_angle', 'left_knee_angle', 'knee_angle']),
+          releaseAngle: measuredValue(angles, ['release_angle']),
+          consistency: null,
+          formScore: null,
+          balanceScore: null,
+          releaseScore: null,
+          shooterLevel: getShooterLevel(score).name,
+          isLive: true
+        })
+      }
     }
     
     sessions.forEach(session => {
       const angles = session.analysisData?.angles || {}
-      const score = session.analysisData?.overallScore || 70
+      const measurements = session.analysisData?.measurements || {}
+      const score = session.analysisData?.overallScore
+      if (typeof score !== 'number' || !Number.isFinite(score)) return
       data.push({
         id: session.id,
         date: new Date(session.date),
         displayDate: new Date(session.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         score,
-        elbowAngle: angles.right_elbow_angle || angles.left_elbow_angle || 88,
-        kneeAngle: angles.right_knee_angle || angles.left_knee_angle || 145,
-        releaseAngle: angles.release_angle || 48,
+        elbowAngle: measuredValue(angles, ['right_elbow_angle', 'left_elbow_angle', 'elbow_angle', 'elbowAngle']),
+        kneeAngle: measuredValue(angles, ['right_knee_angle', 'left_knee_angle', 'knee_angle', 'kneeAngle']),
+        releaseAngle: measuredValue(angles, ['release_angle', 'releaseAngle']),
+        consistency: measuredValue(measurements, ['consistencyScore', 'consistency_score']),
+        formScore: measuredValue(measurements, ['formScore', 'form_score']),
+        balanceScore: measuredValue(measurements, ['balanceScore', 'balance_score']),
+        releaseScore: measuredValue(measurements, ['releaseScore', 'release_score']),
         shooterLevel: getShooterLevel(score).name,
         isLive: false
       })
@@ -910,11 +685,11 @@ export default function HistoricalDataSection() {
                   
                   <div className="mt-6 pt-6 border-t border-slate-200/50">
                     <div className="flex items-end gap-1 h-12">
-                      {[...Array(8)].map((_, i) => (
+                      {allSessionsData.slice(-8).map((session, i) => (
                         <div 
-                          key={i}
+                          key={session.id || i}
                           className="flex-1 bg-gradient-to-t from-[#FF6B35]/20 to-[#FF6B35]/5 rounded-t transition-all duration-300 hover:from-[#FF6B35]/40 hover:to-[#FF6B35]/20"
-                          style={{ height: `${Math.random() * 60 + 40}%` }}
+                          style={{ height: `${Math.max(4, Math.min(100, session.score))}%` }}
                         ></div>
                       ))}
                     </div>
@@ -1202,9 +977,9 @@ export default function HistoricalDataSection() {
                                   </h3>
                                   
                                   {[
-                                    { label: 'ELBOW', value: session.elbowAngle || 0, color: 'blue' },
-                                    { label: 'KNEE', value: session.kneeAngle || 0, color: 'green' },
-                                    { label: 'RELEASE', value: session.releaseAngle || 0, color: 'orange' }
+                                    { label: 'ELBOW', value: session.elbowAngle, color: 'blue' },
+                                    { label: 'KNEE', value: session.kneeAngle, color: 'green' },
+                                    { label: 'RELEASE', value: session.releaseAngle, color: 'orange' }
                                   ].map((metric) => (
                                     <div key={metric.label} className="flex items-baseline gap-2">
                                       <span className={`text-xs font-semibold uppercase tracking-wider ${
@@ -1217,7 +992,7 @@ export default function HistoricalDataSection() {
                                         metric.color === 'blue' ? 'text-blue-400' :
                                         metric.color === 'green' ? 'text-green-400' : 'text-orange-400'
                                       }`}>
-                                        {metric.value}°
+                                        {metric.value == null ? '—' : `${metric.value}°`}
                                       </span>
                                     </div>
                                   ))}

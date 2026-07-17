@@ -17,6 +17,9 @@ import type { AnalysisSession } from "@/services/sessionStorage"
 export interface ServerHistoryEntry {
   id: string
   analysisId: string
+  clientSessionId?: string | null
+  mediaType?: string | null
+  captureSessionId?: string | null
   recordedAt: string
   scores: {
     overall: number | null
@@ -35,6 +38,9 @@ export interface ServerHistoryEntry {
   regressionAreas?: unknown
   analysis?: {
     id: string
+    clientSessionId?: string | null
+    mediaType?: string | null
+    captureSessionId?: string | null
     imageUrl?: string | null
     annotatedImageUrl?: string | null
     shootingPhase?: string | null
@@ -94,8 +100,9 @@ export async function fetchServerHistory(
 export function serverHistoryToSessions(
   history: ServerHistoryEntry[]
 ): AnalysisSession[] {
-  return history.map((h) => {
+  return history.flatMap((h) => {
     const date = new Date(h.recordedAt)
+    if (Number.isNaN(date.getTime()) || h.scores.overall == null) return []
     const angles: Record<string, number> = {}
     if (h.angles.elbow != null) {
       angles.right_elbow_angle = h.angles.elbow
@@ -109,8 +116,18 @@ export function serverHistoryToSessions(
       angles.release_angle = h.angles.release
     }
 
-    return {
-      id: `server-${h.id}`,
+    const measurements: Record<string, number> = {}
+    if (h.scores.form != null) measurements.formScore = h.scores.form
+    if (h.scores.balance != null) measurements.balanceScore = h.scores.balance
+    if (h.scores.release != null) measurements.releaseScore = h.scores.release
+    if (h.scores.consistency != null) measurements.consistencyScore = h.scores.consistency
+    const mediaType = h.mediaType === "video" ? "video" : "image"
+    const improvements = Array.isArray(h.analysis?.improvements)
+      ? h.analysis.improvements.filter((item): item is string => typeof item === "string")
+      : []
+
+    return [{
+      id: h.clientSessionId || `server-${h.analysisId || h.id}`,
       date: date.toISOString(),
       displayDate: date.toLocaleDateString("en-US", {
         month: "short",
@@ -121,15 +138,125 @@ export function serverHistoryToSessions(
         h.analysis?.annotatedImageUrl || h.analysis?.imageUrl || "",
       screenshots: [],
       analysisData: {
-        overallScore: h.scores.overall ?? 0,
+        overallScore: h.scores.overall,
         shooterLevel: "",
         angles,
-        detectedFlaws: [],
-        measurements: {},
+        detectedFlaws: improvements,
+        measurements,
       },
-      mediaType: "image",
-    } as AnalysisSession
+      mediaType,
+      videoData: mediaType === "video" ? {
+        captureSessionId: h.captureSessionId ?? null,
+        annotatedFramesBase64: [],
+        frameCount: 0,
+        duration: 0,
+        fps: 0,
+        phases: [],
+        metrics: {
+          elbow_angle_range: { min: null, max: null, at_release: h.angles.elbow },
+          knee_angle_range: { min: null, max: null },
+          release_frame: 0,
+          release_timestamp: 0,
+        },
+        frameData: [],
+      } : undefined,
+    } as AnalysisSession]
   })
+}
+
+function legacySignature(session: AnalysisSession): string {
+  const date = new Date(session.date)
+  const day = Number.isNaN(date.getTime()) ? session.date : date.toISOString().slice(0, 10)
+  return `${day}:${session.analysisData.overallScore}`
+}
+
+/**
+ * Merge database rows with richer local sessions. Modern rows reconcile by the
+ * exact client session id. Legacy rows use a counted fallback, so two genuine
+ * same-day/same-score sessions are never collapsed into one by a Set.
+ */
+export function mergeLocalAndServerSessions(
+  localSessions: AnalysisSession[],
+  serverSessions: AnalysisSession[],
+): AnalysisSession[] {
+  const localIds = new Set(localSessions.map((session) => session.id))
+  const exactServerIds = new Set(
+    serverSessions
+      .filter((session) => !session.id.startsWith("server-") && localIds.has(session.id))
+      .map((session) => session.id),
+  )
+  const legacyCounts = new Map<string, number>()
+  localSessions.forEach((session) => {
+    if (exactServerIds.has(session.id)) return
+    const key = legacySignature(session)
+    legacyCounts.set(key, (legacyCounts.get(key) || 0) + 1)
+  })
+
+  const unmatchedServer = serverSessions.filter((session) => {
+    if (localIds.has(session.id)) return false
+    if (!session.id.startsWith("server-")) return true
+    const key = legacySignature(session)
+    const remaining = legacyCounts.get(key) || 0
+    if (remaining === 0) return true
+    legacyCounts.set(key, remaining - 1)
+    return false
+  })
+
+  return [...localSessions, ...unmatchedServer].sort((a, b) => b.timestamp - a.timestamp)
+}
+
+export interface HistoricalMetricSession {
+  date: Date
+  score: number | null
+  elbowAngle: number | null
+  kneeAngle: number | null
+  releaseAngle: number | null
+  consistency: number | null
+  formScore: number | null
+  balanceScore: number | null
+  releaseScore: number | null
+}
+
+export interface HistoricalChartPoint extends HistoricalMetricSession {
+  dateLabel: string
+  sessionCount: number
+}
+
+function averageMeasured(values: Array<number | null>): number | null {
+  const measured = values.filter((value): value is number => typeof value === "number" && Number.isFinite(value))
+  if (measured.length === 0) return null
+  return Math.round(measured.reduce((sum, value) => sum + value, 0) / measured.length)
+}
+
+/** Build chart rows exclusively from persisted/measured nullable metrics. */
+export function buildHistoricalChartData(
+  sessions: HistoricalMetricSession[],
+): HistoricalChartPoint[] {
+  const grouped = new Map<string, HistoricalMetricSession[]>()
+  sessions.forEach((session) => {
+    if (Number.isNaN(session.date.getTime())) return
+    const key = session.date.toISOString().slice(0, 10)
+    grouped.set(key, [...(grouped.get(key) || []), session])
+  })
+
+  return Array.from(grouped.entries())
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([, rows]) => {
+      const date = rows[0].date
+      return {
+        date,
+        dateLabel: date.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+        sessionCount: rows.length,
+        score: averageMeasured(rows.map((row) => row.score)),
+        elbowAngle: averageMeasured(rows.map((row) => row.elbowAngle)),
+        kneeAngle: averageMeasured(rows.map((row) => row.kneeAngle)),
+        releaseAngle: averageMeasured(rows.map((row) => row.releaseAngle)),
+        consistency: averageMeasured(rows.map((row) => row.consistency)),
+        formScore: averageMeasured(rows.map((row) => row.formScore)),
+        balanceScore: averageMeasured(rows.map((row) => row.balanceScore)),
+        releaseScore: averageMeasured(rows.map((row) => row.releaseScore)),
+      }
+    })
 }
 
 /** A minimal scored record used to compute aggregate analytics. */

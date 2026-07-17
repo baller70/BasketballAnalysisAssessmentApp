@@ -35,12 +35,17 @@ import { usePoseDetection } from '@/hooks/usePoseDetection'
 import type { Pose, ShootingFormFeedback } from '@/services/poseDetection'
 import { ProfessionalSkeletonOverlay } from './ProfessionalSkeletonOverlay'
 import { GuidedCaptureStatus } from './GuidedCaptureStatus'
-import { useAnalysisStore } from '@/stores/analysisStore'
+import { useAnalysisStore, type VideoAnalysisData } from '@/stores/analysisStore'
 import { useRouter } from 'next/navigation'
 import { getPlatformOS, isMobile } from '@/utils/platform'
 import { useUsage } from '@/lib/usage'
 import { usePoints } from '@/lib/points/pointsContext'
-import { saveSession, createSessionFromAnalysis } from '@/services/sessionStorage'
+import {
+  saveSession,
+  createSessionFromAnalysis,
+  getSessionById,
+  type AnalysisSession,
+} from '@/services/sessionStorage'
 import { addWatermarkToImage } from '@/lib/watermark'
 import { isCameraAvailable, requestCameraPermissions } from '@/services/capacitorCamera'
 import {
@@ -70,6 +75,28 @@ interface CapturedFrame {
   angles: any
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- loosely-typed runtime angles/feedback from the live pose pipeline
   feedback: any
+}
+
+function toStoredVideoData(data: VideoAnalysisData): NonNullable<AnalysisSession['videoData']> {
+  return {
+    captureSessionId: data.captureSessionId ?? null,
+    shotEvents: data.shotEvents as NonNullable<AnalysisSession['videoData']>['shotEvents'],
+    annotatedFramesBase64: data.annotatedFramesBase64 || [],
+    frameCount: data.frameCount || data.frames?.length || 0,
+    duration: data.duration || 0,
+    fps: data.fps || 0,
+    phases: data.phases || [],
+    metrics: data.metrics || {
+      elbow_angle_range: { min: null, max: null, at_release: null },
+      knee_angle_range: { min: null, max: null },
+      release_frame: 0,
+      release_timestamp: 0,
+    },
+    frameData: data.frameData || [],
+    allKeypoints: data.allKeypoints,
+    keyScreenshots: data.keyScreenshots,
+    canonicalObservation: data.canonicalObservation,
+  }
 }
 
 type Orientation = 'portrait' | 'landscape'
@@ -280,7 +307,7 @@ const SKELETON_CONNECTIONS: [number, number][] = [
 
 export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   const router = useRouter()
-  const { setUploadedImageBase64, setVideoAnalysisData, setMediaType } = useAnalysisStore()
+  const { setUploadedImageBase64, setVideoAnalysisData, setMediaType, videoAnalysisData } = useAnalysisStore()
   const { canAnalyze, remainingToday, dailyLimit, incrementUsage } = useUsage()
   const { earnPoints } = usePoints()
 
@@ -385,6 +412,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   const captureSessionPromiseRef = useRef<Promise<string | null> | null>(null)
   const recordingFinalizingRef = useRef(false)
   const recordingGenerationRef = useRef(0)
+  const savedLiveHistorySessionsRef = useRef(new Map<number, string>())
   const isRecordingRef = useRef(false)
   const recordingDurationRef = useRef(0)
   const audioFeedbackEnabledRef = useRef(false)
@@ -1568,16 +1596,31 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
             readinessChecks: { status: 'completed', checks: captureReadinessRef.current.checks },
           }, { timeoutMs: 2_000 }).catch(() => undefined)
           const lateShotEvents = await persistShotEvents(shotEventsSnapshot, lateSessionId)
-          if (lateShotEvents === null) return
+          const reconciledVideoData = buildLiveVideoAnalysisData({
+            videoUrl: url,
+            frames: framesSnapshot,
+            duration: durationSnapshot,
+            detectedShotEvents: shotEventsSnapshot,
+            persistedShotEvents: lateShotEvents,
+            captureSessionId: lateSessionId,
+          })
           if (recordingGenerationRef.current === recordingGeneration) {
-            setVideoAnalysisData(buildLiveVideoAnalysisData({
-              videoUrl: url,
-              frames: framesSnapshot,
-              duration: durationSnapshot,
-              detectedShotEvents: shotEventsSnapshot,
-              persistedShotEvents: lateShotEvents,
-              captureSessionId: lateSessionId,
-            }))
+            setVideoAnalysisData(reconciledVideoData)
+          }
+
+          // The player may tap Save before a slow capture-session request
+          // resolves. Re-save that exact history row with the late durable id
+          // and either persisted events or the explicit review-only fallback.
+          const savedHistorySessionId = savedLiveHistorySessionsRef.current.get(recordingGeneration)
+          if (savedHistorySessionId) {
+            savedLiveHistorySessionsRef.current.delete(recordingGeneration)
+            const savedHistorySession = getSessionById(savedHistorySessionId)
+            if (savedHistorySession) {
+              saveSession({
+                ...savedHistorySession,
+                videoData: toStoredVideoData(reconciledVideoData),
+              })
+            }
           }
         }).catch(() => undefined)
       }
@@ -1823,6 +1866,18 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       }
     }
     
+    const currentRecordingGeneration = recordingGenerationRef.current
+    const historyVideoResult = videoAnalysisData || (savedVideoUrl
+      ? buildLiveVideoAnalysisData({
+          videoUrl: savedVideoUrl,
+          captureSessionId: captureSessionIdRef.current,
+          frames: capturedFrames,
+          duration: recordingDuration,
+          detectedShotEvents: [...detectedShotEventsRef.current],
+          persistedShotEvents: null,
+        })
+      : null)
+
     // Create and save session to Player tab storage
     const session = createSessionFromAnalysis(
       thumbnailBase64,
@@ -1850,29 +1905,14 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       undefined, // profileSnapshot
       1, // imagesAnalyzed
       'video', // mediaType - live counts as video
-      savedVideoUrl ? {
-        annotatedFramesBase64: capturedFrames.map(f => f.dataUrl),
-        frameCount: capturedFrames.length,
-        duration: recordingDuration,
-        fps: 30,
-        phases: [],
-        metrics: {
-          elbow_angle_range: { min: null, max: null, at_release: angles?.elbowAngle || null },
-          knee_angle_range: { min: null, max: null },
-          release_frame: 0,
-          release_timestamp: 0,
-        },
-        frameData: capturedFrames.map((f, i) => ({
-          frame: i,
-          timestamp: f.timestamp,
-          phase: 'release',
-          metrics: f.angles || {},
-        })),
-      } : undefined
+      historyVideoResult ? toStoredVideoData(historyVideoResult) : undefined,
     )
     
     // Save to localStorage (Player tab will read from here)
     const saved = saveSession(session)
+    if (saved) {
+      savedLiveHistorySessionsRef.current.set(currentRecordingGeneration, session.id)
+    }
     console.log('[FullscreenLive] Session saved to Player tab:', saved)
     
     // Also save video file to device
@@ -1944,7 +1984,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       setShowSaveSuccess(false)
       router.push('/results/demo')
     }, 2000)
-  }, [handleUseAnalysis, earnPoints, capturedFrames, feedback, angles, savedVideoUrl, recordingDuration, router])
+  }, [handleUseAnalysis, earnPoints, capturedFrames, feedback, angles, savedVideoUrl, recordingDuration, router, videoAnalysisData])
 
   // Just view analysis (still counts against limit, but doesn't save to Player tab)
   const handleJustView = useCallback(() => {

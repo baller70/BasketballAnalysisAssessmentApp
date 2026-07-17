@@ -25,6 +25,8 @@ import { getAllSessions } from "@/services/sessionStorage"
 import {
   fetchServerHistory,
   computeCardAnalytics,
+  mergeLocalAndServerSessions,
+  serverHistoryToSessions,
   type ScoredRecord,
 } from "@/components/analytics/serverHistory"
 
@@ -919,21 +921,6 @@ interface AnalyticsCardGameProps {
   data?: AnalyticsData
 }
 
-// Default demo data
-const DEFAULT_DATA: AnalyticsData = {
-  totalSessions: 47,
-  averageScore: 76,
-  progressPercent: 18,
-  trendDirection: 'up',
-  trendPercent: 5,
-  currentStreak: 4,
-  bestStreak: 7,
-  thisWeekSessions: 5,
-  lastWeekSessions: 3,
-  totalPracticeMinutes: 423,
-  activeDays: [1, 2, 5, 6, 8, 9, 12, 13, 15, 16, 19, 20, 22, 23, 26, 27, 29, 30]
-}
-
 export function AnalyticsCardGame({ data: dataProp }: AnalyticsCardGameProps) {
   // Points system
   const { earnPoints } = usePoints()
@@ -959,43 +946,20 @@ export function AnalyticsCardGame({ data: dataProp }: AnalyticsCardGameProps) {
     let cancelled = false
     const load = async () => {
       setIsLoading(true)
-      const records: ScoredRecord[] = []
-      // Local (offline) cache first.
+      let local = [] as ReturnType<typeof getAllSessions>
       try {
-        const local = getAllSessions()
-        if (Array.isArray(local)) {
-          local.forEach((s) => {
-            const score = s.analysisData?.overallScore
-            if (typeof score === "number" && Number.isFinite(score)) {
-              records.push({ timestamp: s.timestamp ?? new Date(s.date).getTime(), score })
-            }
-          })
-        }
+        local = getAllSessions()
       } catch {
         /* ignore local cache errors */
       }
-      // Server history (source of truth, cross-device).
-      const seenDays = new Set(
-        records.map((r) => {
-          const d = new Date(r.timestamp)
-          d.setHours(0, 0, 0, 0)
-          return `${d.getTime()}:${Math.round(r.score)}`
-        })
-      )
       const { history } = await fetchServerHistory(100)
-      history.forEach((h) => {
-        const score = h.scores.overall
-        if (typeof score === "number" && Number.isFinite(score)) {
-          const ts = new Date(h.recordedAt).getTime()
-          const d = new Date(ts)
-          d.setHours(0, 0, 0, 0)
-          const key = `${d.getTime()}:${Math.round(score)}`
-          // De-dupe entries already present in the local cache.
-          if (!seenDays.has(key)) {
-            records.push({ timestamp: ts, score })
-            seenDays.add(key)
-          }
-        }
+      const merged = mergeLocalAndServerSessions(local, serverHistoryToSessions(history))
+      const records: ScoredRecord[] = merged.flatMap((session) => {
+        const score = session.analysisData?.overallScore
+        const timestamp = session.timestamp ?? new Date(session.date).getTime()
+        return typeof score === "number" && Number.isFinite(score) && Number.isFinite(timestamp)
+          ? [{ timestamp, score }]
+          : []
       })
 
       if (cancelled) return
@@ -1007,8 +971,6 @@ export function AnalyticsCardGame({ data: dataProp }: AnalyticsCardGameProps) {
       cancelled = true
     }
   }, [dataProp])
-
-  const data: AnalyticsData = loadedData ?? DEFAULT_DATA
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [gameStats, setGameStats] = useState({
@@ -1129,6 +1091,8 @@ export function AnalyticsCardGame({ data: dataProp }: AnalyticsCardGameProps) {
       </div>
     )
   }
+
+  const data: AnalyticsData = loadedData
 
   return (
     <div className="space-y-6">
@@ -1344,4 +1308,3 @@ export function AnalyticsCardGame({ data: dataProp }: AnalyticsCardGameProps) {
 }
 
 export default AnalyticsCardGame
-

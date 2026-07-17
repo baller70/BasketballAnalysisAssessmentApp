@@ -65,6 +65,9 @@ interface GroupedSessions {
 interface ServerHistoryEntry {
   id: string
   analysisId: string
+  clientSessionId?: string | null
+  mediaType?: string | null
+  captureSessionId?: string | null
   recordedAt: string
   scores: {
     overall: number | null
@@ -79,6 +82,9 @@ interface ServerHistoryEntry {
   regressionAreas?: unknown
   analysis?: {
     id: string
+    clientSessionId?: string | null
+    mediaType?: string | null
+    captureSessionId?: string | null
     imageUrl: string | null
     annotatedImageUrl: string | null
     shootingPhase: string | null
@@ -167,9 +173,15 @@ function mapServerEntry(entry: ServerHistoryEntry): GallerySession {
 
   const image =
     entry.analysis?.annotatedImageUrl || entry.analysis?.imageUrl || ''
+  const measurements: Record<string, number> = {}
+  if (typeof entry.scores.form === 'number') measurements.formScore = entry.scores.form
+  if (typeof entry.scores.balance === 'number') measurements.balanceScore = entry.scores.balance
+  if (typeof entry.scores.release === 'number') measurements.releaseScore = entry.scores.release
+  if (typeof entry.scores.consistency === 'number') measurements.consistencyScore = entry.scores.consistency
+  const mediaType = entry.mediaType === 'video' ? 'video' : 'image'
 
   return {
-    id: `server-${entry.id}`,
+    id: entry.clientSessionId || `server-${entry.analysisId || entry.id}`,
     date: entry.recordedAt,
     displayDate: formatDate(entry.recordedAt),
     timestamp: new Date(entry.recordedAt).getTime(),
@@ -183,12 +195,59 @@ function mapServerEntry(entry: ServerHistoryEntry): GallerySession {
       shooterLevel: entry.analysis?.shootingPhase || 'Analysis',
       angles,
       detectedFlaws: toStringList(entry.analysis?.improvements ?? entry.improvementAreas),
-      measurements: {},
+      measurements,
     },
-    mediaType: 'image',
+    mediaType,
+    videoData: mediaType === 'video' ? {
+      captureSessionId: entry.captureSessionId ?? null,
+      annotatedFramesBase64: [],
+      frameCount: 0,
+      duration: 0,
+      fps: 0,
+      phases: [],
+      metrics: {
+        elbow_angle_range: { min: null, max: null, at_release: entry.angles.elbow },
+        knee_angle_range: { min: null, max: null },
+        release_frame: 0,
+        release_timestamp: 0,
+      },
+      frameData: [],
+    } : undefined,
     _source: 'server',
     _analysisId: entry.analysisId,
   }
+}
+
+function galleryLegacySignature(session: AnalysisSession): string {
+  const date = new Date(session.date)
+  const day = Number.isNaN(date.getTime()) ? session.date : date.toISOString().slice(0, 10)
+  return `${day}:${session.analysisData.overallScore}`
+}
+
+/** Server rows win exact matches so deleting a synced gallery item is durable. */
+function mergeGallerySessions(
+  serverSessions: GallerySession[],
+  localSessions: GallerySession[],
+): GallerySession[] {
+  const modernServerIds = new Set(
+    serverSessions.filter((session) => !session.id.startsWith('server-')).map((session) => session.id),
+  )
+  const legacyCounts = new Map<string, number>()
+  serverSessions.filter((session) => session.id.startsWith('server-')).forEach((session) => {
+    const key = galleryLegacySignature(session)
+    legacyCounts.set(key, (legacyCounts.get(key) || 0) + 1)
+  })
+
+  const unmatchedLocal = localSessions.filter((session) => {
+    if (modernServerIds.has(session.id)) return false
+    const key = galleryLegacySignature(session)
+    const remaining = legacyCounts.get(key) || 0
+    if (remaining === 0) return true
+    legacyCounts.set(key, remaining - 1)
+    return false
+  })
+
+  return [...serverSessions, ...unmatchedLocal].sort((a, b) => b.timestamp - a.timestamp)
 }
 
 // ============================================
@@ -516,17 +575,7 @@ export default function MediaGalleryPage() {
 
       if (cancelled) return
 
-      // Merge: server entries are authoritative. Drop any local cache item that
-      // is the same analysis already returned by the server (matched on a
-      // ~5s timestamp window) so a just-saved shot doesn't appear twice.
-      const serverTimestamps = serverSessions.map(s => s.timestamp)
-      const dedupedLocal = localSessions.filter(
-        local => !serverTimestamps.some(ts => Math.abs(ts - local.timestamp) < 5000)
-      )
-
-      const merged = [...serverSessions, ...dedupedLocal].sort(
-        (a, b) => b.timestamp - a.timestamp
-      )
+      const merged = mergeGallerySessions(serverSessions, localSessions)
 
       setSessions(merged)
       setLoading(false)

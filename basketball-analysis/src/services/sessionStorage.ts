@@ -5,6 +5,7 @@
 import type { CanonicalAngles, CanonicalVisionObservation } from '@/services/pose'
 import type { MechanicsGateResult } from '@/lib/vision/confidenceGate'
 import type { PersistedShotEvent } from '@/lib/api/shotEvents'
+import { csrfFetch } from '@/lib/api/csrfFetch'
 
 export interface SessionScreenshot {
   id: string
@@ -160,6 +161,116 @@ export interface AnalyticsData {
 
 const STORAGE_KEY = 'basketball_analysis_sessions'
 const MAX_SESSIONS = 20 // Limit to prevent localStorage overflow
+const SESSION_SYNC_TIMEOUT_MS = 5_000
+
+export interface SaveAnalysisPayload {
+  clientSessionId: string
+  recordedAt: string
+  mediaType: 'image' | 'video'
+  captureSessionId?: string | null
+  imageUrl?: string
+  imageData?: string
+  annotatedImageUrl?: string
+  annotatedImageData?: string
+  overallScore?: number
+  formScore?: number
+  balanceScore?: number
+  releaseScore?: number
+  consistencyScore?: number
+  elbowAngle?: number
+  kneeAngle?: number
+  wristAngle?: number
+  shoulderAngle?: number
+  hipAngle?: number
+  releaseAngle?: number
+  visionAnalysis?: Record<string, unknown>
+  improvements?: string[]
+}
+
+function firstFinite(
+  values: Record<string, number> | undefined,
+  keys: string[],
+): number | undefined {
+  for (const key of keys) {
+    const value = values?.[key]
+    if (typeof value === 'number' && Number.isFinite(value)) return value
+  }
+  return undefined
+}
+
+function mediaField(value: string): { imageUrl?: string; imageData?: string } {
+  if (!value) return {}
+  if (/^https?:\/\//i.test(value) || value.startsWith('/')) return { imageUrl: value }
+  return { imageData: value }
+}
+
+/**
+ * Map the local session contract to the database API without manufacturing
+ * metrics that were never measured. The client session id is the durable key
+ * used to reconcile the same analysis across desktop and mobile devices.
+ */
+export function analysisSessionToSavePayload(session: AnalysisSession): SaveAnalysisPayload {
+  const angles = session.analysisData?.angles
+  const measurements = session.analysisData?.measurements
+  const rawMedia = mediaField(session.mainImageBase64)
+  const annotatedMedia = mediaField(session.skeletonImageBase64 || '')
+  const detectedFlaws = Array.isArray(session.analysisData?.detectedFlaws)
+    ? session.analysisData.detectedFlaws.filter((item): item is string => typeof item === 'string')
+    : []
+
+  return {
+    clientSessionId: session.id,
+    recordedAt: session.date,
+    mediaType: session.mediaType === 'video' ? 'video' : 'image',
+    captureSessionId: session.videoData?.captureSessionId ?? null,
+    ...rawMedia,
+    ...(annotatedMedia.imageUrl ? { annotatedImageUrl: annotatedMedia.imageUrl } : {}),
+    ...(annotatedMedia.imageData ? { annotatedImageData: annotatedMedia.imageData } : {}),
+    overallScore: Number.isFinite(session.analysisData?.overallScore)
+      ? session.analysisData.overallScore
+      : undefined,
+    formScore: firstFinite(measurements, ['formScore', 'form_score']),
+    balanceScore: firstFinite(measurements, ['balanceScore', 'balance_score']),
+    releaseScore: firstFinite(measurements, ['releaseScore', 'release_score']),
+    consistencyScore: firstFinite(measurements, ['consistencyScore', 'consistency_score']),
+    elbowAngle: firstFinite(angles, ['right_elbow_angle', 'left_elbow_angle', 'elbow_angle', 'elbowAngle']),
+    kneeAngle: firstFinite(angles, ['right_knee_angle', 'left_knee_angle', 'knee_angle', 'kneeAngle']),
+    wristAngle: firstFinite(angles, ['right_wrist_angle', 'left_wrist_angle', 'wrist_angle', 'wristAngle']),
+    shoulderAngle: firstFinite(angles, ['right_shoulder_angle', 'left_shoulder_angle', 'shoulder_angle', 'shoulderAngle']),
+    hipAngle: firstFinite(angles, ['right_hip_angle', 'left_hip_angle', 'hip_angle', 'hipAngle']),
+    releaseAngle: firstFinite(angles, ['release_angle', 'releaseAngle']),
+    visionAnalysis: {
+      shooterLevel: session.analysisData?.shooterLevel || undefined,
+      imagesAnalyzed: session.imagesAnalyzed,
+      coachingLevelUsed: session.coachingLevelUsed,
+    },
+    improvements: detectedFlaws.length > 0 ? detectedFlaws : undefined,
+  }
+}
+
+/** Persist in the background while preserving saveSession's synchronous API. */
+export async function syncSessionToServer(
+  session: AnalysisSession,
+  timeoutMs = SESSION_SYNC_TIMEOUT_MS,
+): Promise<boolean> {
+  if (typeof window === 'undefined') return false
+
+  const controller = new AbortController()
+  const timeout = window.setTimeout(() => controller.abort(), Math.max(250, timeoutMs))
+  try {
+    const response = await csrfFetch('/api/save-analysis', {
+      method: 'POST',
+      signal: controller.signal,
+      body: JSON.stringify(analysisSessionToSavePayload(session)),
+    })
+    return response.ok
+  } catch {
+    // Offline and signed-out users retain the same local-first behavior.
+    return false
+  } finally {
+    window.clearTimeout(timeout)
+  }
+}
 
 /**
  * Generate a unique session ID based on timestamp
@@ -238,6 +349,7 @@ export function saveSession(session: AnalysisSession): boolean {
     }
     
     localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions))
+    void syncSessionToServer(session)
     return true
   } catch (error) {
     console.error('Error saving session to localStorage:', error)
@@ -251,6 +363,7 @@ export function saveSession(session: AnalysisSession): boolean {
         // Try saving again
         sessions.unshift(session)
         localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions))
+        void syncSessionToServer(session)
         return true
       } catch {
         return false

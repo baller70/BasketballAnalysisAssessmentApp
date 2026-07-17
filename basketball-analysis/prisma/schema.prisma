@@ -226,6 +226,9 @@ model ShotEventCorrection {
 model UserAnalysis {
   id                    String    @id @default(cuid())
   userProfileId         String    @map("user_profile_id")
+  clientSessionId       String?   @map("client_session_id") @db.VarChar(191)
+  mediaType             String?   @map("media_type") @db.VarChar(16)
+  captureSessionId      String?   @map("capture_session_id") @db.VarChar(191)
   
   // Image Data
   imageUrl              String?   @map("image_url") @db.VarChar(500)
@@ -290,6 +293,7 @@ model UserAnalysis {
   @@index([matchedShooterId], name: "idx_analysis_matched")
   @@index([shootingPhase], name: "idx_shooting_phase")
   @@index([processingStatus], name: "idx_processing_status")
+  @@unique([userProfileId, clientSessionId], name: "userProfileId_clientSessionId", map: "uq_analysis_user_client_session")
   
   @@map("user_analyses")
 }
@@ -300,7 +304,7 @@ model UserAnalysis {
 model AnalysisHistory {
   id                    String    @id @default(cuid())
   userProfileId         String    @map("user_profile_id")
-  analysisId            String    @map("analysis_id")
+  analysisId            String    @unique(map: "uq_history_analysis") @map("analysis_id")
   
   // Snapshot of key metrics at time of analysis
   overallScore          Decimal   @map("overall_score") @db.Decimal(5, 2)
@@ -334,7 +338,6 @@ model AnalysisHistory {
   // Indexes
   @@index([userProfileId], name: "idx_history_user")
   @@index([analysisDate], name: "idx_history_date")
-  @@index([analysisId], name: "idx_history_analysis")
   @@index([userProfileId, analysisDate], name: "idx_history_user_date")
   
   @@map("analysis_history")
