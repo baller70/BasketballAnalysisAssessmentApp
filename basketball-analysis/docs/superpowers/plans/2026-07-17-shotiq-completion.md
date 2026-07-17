@@ -123,16 +123,16 @@
 - `resumeQueuedUploads()` retries only unfinished parts on startup and browser `online`; queue status is visible and manually retryable.
 - Completed media URL/key is attached idempotently to the exact analysis session.
 
-- [ ] **Step 1: Write failing API tests** for CSRF, authentication, ownership, filename/content-type validation, deterministic key scope, part signing, completion, and abort.
-- [ ] **Step 2: Run** the API tests and confirm missing-route failures.
-- [ ] **Step 3: Add the persistence model/migration and server multipart helpers**, then implement the four API operations using AWS SDK v3 commands and presigned URLs.
-- [ ] **Step 4: Write failing IndexedDB queue tests** with an injected storage adapter for enqueue, checkpoint, retry, completion, corruption, and quota failure.
-- [ ] **Step 5: Implement the queue and resumable client** using 8 MiB parts, sequential iPhone uploads, bounded exponential retry, and caller cancellation.
-- [ ] **Step 6: Write failing UI tests** for uploading, paused/offline, retrying, failed, and complete states.
-- [ ] **Step 7: Add the ShotIQ queue status UI** to video upload and live-save flows without blocking local analysis/navigation.
-- [ ] **Step 8: Link completed video media** to `UserAnalysis` by exact user/client session ID and verify an old retry cannot overwrite a newer capture identity.
-- [ ] **Step 9: Run migration validation, focused/full tests, type-check, lint, and build.**
-- [ ] **Step 10: Commit** `feat: add resumable video upload queue`.
+- [x] **Step 1: Write failing API tests** for CSRF, authentication, ownership, filename/content-type validation, deterministic key scope, part signing, completion, and abort.
+- [x] **Step 2: Run** the API tests and confirm missing-route failures.
+- [x] **Step 3: Add the persistence model/migration and server multipart helpers**, then implement the four API operations using AWS SDK v3 commands and presigned URLs.
+- [x] **Step 4: Write failing IndexedDB queue tests** with an injected storage adapter for enqueue, checkpoint, retry, completion, corruption, and quota failure.
+- [x] **Step 5: Implement the queue and resumable client** using 8 MiB parts, sequential iPhone uploads, bounded exponential retry, and caller cancellation.
+- [x] **Step 6: Write failing UI tests** for uploading, paused/offline, retrying, failed, and complete states.
+- [x] **Step 7: Add the ShotIQ queue status UI** to video upload and live-save flows without blocking local analysis/navigation.
+- [x] **Step 8: Link completed video media** to `UserAnalysis` by exact user/client session ID and verify an old retry cannot overwrite a newer capture identity.
+- [x] **Step 9: Run migration validation, focused/full tests, type-check, lint, and build (40 files / 170 tests; lint has zero errors; 67-page build).**
+- [x] **Step 10: Commit** `feat: add resumable video upload queue`.
 
 ### Task 5: Replace synthetic benchmark checks with enforceable release evidence
 

@@ -38,6 +38,8 @@ export async function GET(request: NextRequest) {
             ...(includeAnalysis ? {
               imageUrl: true,
               annotatedImageUrl: true,
+              videoUrl: true,
+              videoS3Path: true,
               shootingPhase: true,
               strengths: true,
               improvements: true,

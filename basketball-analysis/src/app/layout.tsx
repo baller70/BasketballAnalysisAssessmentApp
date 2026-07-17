@@ -5,6 +5,7 @@ import "./globals.css"
 import { Header } from "@/components/layout/Header"
 import { Footer } from "@/components/layout/Footer"
 import { Providers } from "./providers"
+import { UploadQueueManager } from "@/components/upload/UploadQueueManager"
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -49,6 +50,7 @@ export default function RootLayout({
           <Header />
           <main className="flex-1 bg-slate-50">{children}</main>
           <Footer />
+          <UploadQueueManager />
         </Providers>
       </body>
     </html>

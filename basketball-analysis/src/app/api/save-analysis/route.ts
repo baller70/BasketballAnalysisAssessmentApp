@@ -165,8 +165,32 @@ export async function POST(request: NextRequest) {
           imageUrl: true,
           annotatedImageUrl: true,
           captureSessionId: true,
+          videoUrl: true,
+          videoS3Path: true,
         },
       })
+
+      // The multipart upload can finish before or after this analysis write.
+      // The shared user + clientSession identity is the only join key, so a
+      // late retry can never attach its video to a newer analysis.
+      const completedMediaUpload = await tx.mediaUpload.findUnique({
+        where: {
+          userProfileId_clientSessionId: {
+            userProfileId,
+            clientSessionId: body.clientSessionId,
+          },
+        },
+        select: {
+          id: true,
+          status: true,
+          objectKey: true,
+          mediaUrl: true,
+          analysisId: true,
+        },
+      })
+      const completedVideo = completedMediaUpload?.status === "complete" && completedMediaUpload.mediaUrl
+        ? completedMediaUpload
+        : null
 
       let imageUrl = existing?.imageUrl ?? body.imageUrl ?? undefined
       if (!imageUrl && body.imageData) {
@@ -206,6 +230,8 @@ export async function POST(request: NextRequest) {
         captureSessionId: body.captureSessionId ?? existing?.captureSessionId ?? null,
         imageUrl,
         s3Path: body.s3Path,
+        videoUrl: existing?.videoUrl ?? completedVideo?.mediaUrl ?? undefined,
+        videoS3Path: existing?.videoS3Path ?? completedVideo?.objectKey ?? undefined,
         roboflowPoseData: body.roboflowPoseData as any,
         roboflowDetection: body.roboflowDetection as any,
         shootingPhase: body.shootingPhase,
@@ -249,6 +275,13 @@ export async function POST(request: NextRequest) {
         },
         update: persisted,
       })
+
+      if (completedVideo && completedVideo.analysisId !== analysis.id) {
+        await tx.mediaUpload.update({
+          where: { id: completedVideo.id },
+          data: { analysisId: analysis.id },
+        })
+      }
 
       if (body.overallScore !== undefined) {
         await tx.analysisHistory.upsert({

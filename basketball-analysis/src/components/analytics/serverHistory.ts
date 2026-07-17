@@ -43,6 +43,8 @@ export interface ServerHistoryEntry {
     captureSessionId?: string | null
     imageUrl?: string | null
     annotatedImageUrl?: string | null
+    videoUrl?: string | null
+    videoS3Path?: string | null
     shootingPhase?: string | null
     strengths?: unknown
     improvements?: unknown
@@ -146,6 +148,7 @@ export function serverHistoryToSessions(
       },
       mediaType,
       videoData: mediaType === "video" ? {
+        videoUrl: h.analysis?.videoUrl || undefined,
         captureSessionId: h.captureSessionId ?? null,
         annotatedFramesBase64: [],
         frameCount: 0,

@@ -75,6 +75,11 @@ import {
   type ShotResult,
   type ShotResultObservation,
 } from '@/lib/vision/shotResult'
+import {
+  enqueueVideoUpload,
+  notifyUploadQueueChanged,
+  uploadQueueStorage,
+} from '@/lib/upload/uploadQueue'
 
 // ============================================
 // TYPES
@@ -92,6 +97,7 @@ interface CapturedFrame {
 
 function toStoredVideoData(data: VideoAnalysisData): NonNullable<AnalysisSession['videoData']> {
   return {
+    videoUrl: data.videoUrl,
     captureSessionId: data.captureSessionId ?? null,
     shotEvents: data.shotEvents as NonNullable<AnalysisSession['videoData']>['shotEvents'],
     annotatedFramesBase64: data.annotatedFramesBase64 || [],
@@ -2020,6 +2026,18 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       savedLiveHistorySessionsRef.current.set(currentRecordingGeneration, session.id)
     }
     console.log('[FullscreenLive] Session saved to Player tab:', saved)
+
+    if (recordingBlobRef.current) {
+      const blob = recordingBlobRef.current
+      const extension = blob.type.includes('webm') ? 'webm' : 'mp4'
+      void enqueueVideoUpload(uploadQueueStorage, {
+          blob,
+          clientSessionId: session.id,
+          fileName: `shotiq-live-${session.id}.${extension}`,
+        }).then(() => notifyUploadQueueChanged()).catch((queueError) => {
+        console.error('[FullscreenLive] Could not retain recording for background upload', queueError)
+        })
+    }
     
     // Also save video file to device
     if (recordingBlobRef.current && savedVideoUrl) {

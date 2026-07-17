@@ -13,6 +13,8 @@ const mocks = vi.hoisted(() => ({
   historyUpsert: vi.fn(),
   historyFindMany: vi.fn(),
   historyUpdate: vi.fn(),
+  mediaUploadFindUnique: vi.fn(),
+  mediaUploadUpdate: vi.fn(),
 }))
 
 vi.mock('@/lib/auth/currentUser', () => ({
@@ -37,6 +39,10 @@ const tx = {
     upsert: mocks.historyUpsert,
     findMany: mocks.historyFindMany,
     update: mocks.historyUpdate,
+  },
+  mediaUpload: {
+    findUnique: mocks.mediaUploadFindUnique,
+    update: mocks.mediaUploadUpdate,
   },
 }
 
@@ -67,6 +73,8 @@ describe('POST /api/save-analysis', () => {
     mocks.historyUpsert.mockResolvedValue({ id: 'history-1' })
     mocks.historyFindMany.mockResolvedValue([{ id: 'history-1', overallScore: 82 }])
     mocks.historyUpdate.mockResolvedValue({ id: 'history-1' })
+    mocks.mediaUploadFindUnique.mockResolvedValue(null)
+    mocks.mediaUploadUpdate.mockResolvedValue({ id: 'upload-1' })
   })
 
   it('requires CSRF before writing', async () => {
@@ -135,5 +143,37 @@ describe('POST /api/save-analysis', () => {
     expect(mocks.analysisUpsert).toHaveBeenCalledWith(expect.objectContaining({
       update: expect.objectContaining({ captureSessionId: 'capture-late-1' }),
     }))
+  })
+
+  it('links only the completed upload with the same user and client session identity', async () => {
+    mocks.mediaUploadFindUnique.mockResolvedValue({
+      id: 'upload-1',
+      status: 'complete',
+      objectKey: 'user-uploads/profile-1/videos/shot.mov',
+      mediaUrl: 'https://media.test/shot.mov',
+      analysisId: null,
+    })
+
+    await POST(request(valid))
+
+    expect(mocks.mediaUploadFindUnique).toHaveBeenCalledWith({
+      where: {
+        userProfileId_clientSessionId: {
+          userProfileId: 'profile-1',
+          clientSessionId: 'session-1',
+        },
+      },
+      select: expect.any(Object),
+    })
+    expect(mocks.analysisUpsert).toHaveBeenCalledWith(expect.objectContaining({
+      create: expect.objectContaining({
+        videoUrl: 'https://media.test/shot.mov',
+        videoS3Path: 'user-uploads/profile-1/videos/shot.mov',
+      }),
+    }))
+    expect(mocks.mediaUploadUpdate).toHaveBeenCalledWith({
+      where: { id: 'upload-1' },
+      data: { analysisId: 'analysis-1' },
+    })
   })
 })

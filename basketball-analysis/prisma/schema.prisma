@@ -2,13 +2,13 @@
 // Database: PostgreSQL (compatible with Abacus AI)
 
 generator client {
-    provider = "prisma-client-js"
-    binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
 }
 
 datasource db {
-    provider = "postgresql"
-    url      = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // ============================================
@@ -17,18 +17,18 @@ datasource db {
 model User {
   id              String    @id @default(cuid())
   email           String    @unique @db.VarChar(255)
-  password        String    @db.VarChar(255)  // Hashed password
+  password        String    @db.VarChar(255) // Hashed password
   firstName       String?   @map("first_name") @db.VarChar(100)
   lastName        String?   @map("last_name") @db.VarChar(100)
   displayName     String?   @map("display_name") @db.VarChar(255)
   profileComplete Boolean   @default(false) @map("profile_complete")
-  emailVerified   DateTime? @map("email_verified")  // null until the user confirms their email
+  emailVerified   DateTime? @map("email_verified") // null until the user confirms their email
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
-  
+
   // Relations
-  profile         UserProfile?
-  
+  profile UserProfile?
+
   // Indexes
   @@index([email], name: "idx_user_email")
   @@map("users")
@@ -38,67 +38,67 @@ model User {
 // USER PROFILE (App users who want analysis)
 // ============================================
 model UserProfile {
-  id                    String    @id @default(cuid())
-  userId                String?   @unique @map("user_id")  // Link to User for authenticated users
-  
+  id     String  @id @default(cuid())
+  userId String? @unique @map("user_id") // Link to User for authenticated users
+
   // Physical Measurements
-  heightInches          Int?      @map("height_inches")
-  weightLbs             Int?      @map("weight_lbs")
-  wingspanInches        Int?      @map("wingspan_inches")
-  
+  heightInches   Int? @map("height_inches")
+  weightLbs      Int? @map("weight_lbs")
+  wingspanInches Int? @map("wingspan_inches")
+
   // Demographics
-  age                   Int?
-  
+  age Int?
+
   // Experience & Body Type
-  experienceLevel       String?   @map("experience_level") @db.VarChar(50) // beginner/intermediate/advanced/professional
-  bodyType              String?   @map("body_type") @db.VarChar(50)        // ectomorph/mesomorph/endomorph
-  
+  experienceLevel String? @map("experience_level") @db.VarChar(50) // beginner/intermediate/advanced/professional
+  bodyType        String? @map("body_type") @db.VarChar(50) // ectomorph/mesomorph/endomorph
+
   // Athletic Profile
-  athleticAbility       Int?      @map("athletic_ability")  // 1-10 scale
-  dominantHand          String?   @map("dominant_hand") @db.VarChar(20)  // right/left/ambidextrous
-  shootingStyle         String?   @map("shooting_style") @db.VarChar(50)  // one_motion/two_motion/set_shot/jump_shot/not_sure
-  
+  athleticAbility Int?    @map("athletic_ability") // 1-10 scale
+  dominantHand    String? @map("dominant_hand") @db.VarChar(20) // right/left/ambidextrous
+  shootingStyle   String? @map("shooting_style") @db.VarChar(50) // one_motion/two_motion/set_shot/jump_shot/not_sure
+
   // Bio
-  bio                   String?   @db.Text
-  enhancedBio           String?   @map("enhanced_bio") @db.Text
-  
+  bio         String? @db.Text
+  enhancedBio String? @map("enhanced_bio") @db.Text
+
   // Points & Gamification (Synced JSON state)
-  pointsState           Json?     @map("points_state")
-  
+  pointsState Json? @map("points_state")
+
   // Derived Values
-  coachingTier          String?   @map("coaching_tier") @db.VarChar(50)    // elementary/middle_school/high_school/college/professional
-  wingspanToHeightRatio Decimal?  @map("wingspan_to_height_ratio") @db.Decimal(5, 2)
-  bmi                   Decimal?  @db.Decimal(5, 2)
-  
+  coachingTier          String?  @map("coaching_tier") @db.VarChar(50) // elementary/middle_school/high_school/college/professional
+  wingspanToHeightRatio Decimal? @map("wingspan_to_height_ratio") @db.Decimal(5, 2)
+  bmi                   Decimal? @db.Decimal(5, 2)
+
   // Metadata
-  profileComplete       Boolean   @default(false) @map("profile_complete")
-  createdAt             DateTime  @default(now()) @map("created_at")
-  updatedAt             DateTime  @updatedAt @map("updated_at")
-  
+  profileComplete Boolean  @default(false) @map("profile_complete")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
   // Relations
-  user                  User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  analyses              UserAnalysis[]
-  analysisHistory       AnalysisHistory[]
-  drillVideos           DrillVideoSubmission[]
-  goals                 Goal[]
-  workouts              Workout[]
-  trainingPreference    TrainingPreference?
-  savedWorkouts         SavedWorkout[]
-  settings              UserSettings?
-  pointEvents           PointEvent[]
-  earnedBadges          EarnedBadge[]
-  challenges            UserChallenge[]
-  captureSessions       CaptureSession[]
-  shotEvents            ShotEvent[]
-  shotCorrections       ShotEventCorrection[]
-  coachingTargets       CoachingTarget[]
-  
+  user               User?                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  analyses           UserAnalysis[]
+  analysisHistory    AnalysisHistory[]
+  drillVideos        DrillVideoSubmission[]
+  goals              Goal[]
+  workouts           Workout[]
+  trainingPreference TrainingPreference?
+  savedWorkouts      SavedWorkout[]
+  settings           UserSettings?
+  pointEvents        PointEvent[]
+  earnedBadges       EarnedBadge[]
+  challenges         UserChallenge[]
+  captureSessions    CaptureSession[]
+  shotEvents         ShotEvent[]
+  shotCorrections    ShotEventCorrection[]
+  coachingTargets    CoachingTarget[]
+  mediaUploads       MediaUpload[]
+
   // Indexes
   @@index([experienceLevel], name: "idx_user_experience")
   @@index([bodyType], name: "idx_user_body_type")
   @@index([coachingTier], name: "idx_user_coaching_tier")
   @@index([heightInches], name: "idx_user_height")
-  
   @@map("user_profiles")
 }
 
@@ -106,30 +106,30 @@ model UserProfile {
 // CAPTURE SESSIONS (Cross-platform pose capture metadata)
 // ============================================
 model CaptureSession {
-  id                String    @id @default(cuid())
-  userProfileId     String    @map("user_profile_id")
-  mode              String    @db.VarChar(30)
-  source            String    @db.VarChar(30)
-  platform          String    @db.VarChar(30)
-  deviceModel       String?   @map("device_model") @db.VarChar(255)
-  cameraFacing      String?   @map("camera_facing") @db.VarChar(20)
-  orientation       String?   @db.VarChar(20)
-  view              String?   @db.VarChar(20)
-  shootingHand      String?   @map("shooting_hand") @db.VarChar(20)
-  poseProvider      String?   @map("pose_provider") @db.VarChar(100)
-  poseModel         String?   @map("pose_model") @db.VarChar(100)
-  readinessStatus   String    @default("checking") @map("readiness_status") @db.VarChar(30)
-  readinessChecks   Json?     @map("readiness_checks")
-  frameWidth        Int?      @map("frame_width")
-  frameHeight       Int?      @map("frame_height")
-  startedAt         DateTime  @default(now()) @map("started_at")
-  endedAt           DateTime? @map("ended_at")
-  createdAt         DateTime  @default(now()) @map("created_at")
-  updatedAt         DateTime  @updatedAt @map("updated_at")
+  id              String    @id @default(cuid())
+  userProfileId   String    @map("user_profile_id")
+  mode            String    @db.VarChar(30)
+  source          String    @db.VarChar(30)
+  platform        String    @db.VarChar(30)
+  deviceModel     String?   @map("device_model") @db.VarChar(255)
+  cameraFacing    String?   @map("camera_facing") @db.VarChar(20)
+  orientation     String?   @db.VarChar(20)
+  view            String?   @db.VarChar(20)
+  shootingHand    String?   @map("shooting_hand") @db.VarChar(20)
+  poseProvider    String?   @map("pose_provider") @db.VarChar(100)
+  poseModel       String?   @map("pose_model") @db.VarChar(100)
+  readinessStatus String    @default("checking") @map("readiness_status") @db.VarChar(30)
+  readinessChecks Json?     @map("readiness_checks")
+  frameWidth      Int?      @map("frame_width")
+  frameHeight     Int?      @map("frame_height")
+  startedAt       DateTime  @default(now()) @map("started_at")
+  endedAt         DateTime? @map("ended_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
 
-  userProfile       UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
-  observations      CaptureSessionObservation[]
-  shotEvents        ShotEvent[]
+  userProfile  UserProfile                 @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  observations CaptureSessionObservation[]
+  shotEvents   ShotEvent[]
 
   @@index([userProfileId], name: "idx_capture_session_user")
   @@index([createdAt], name: "idx_capture_session_created")
@@ -138,21 +138,21 @@ model CaptureSession {
 }
 
 model CaptureSessionObservation {
-  id                  String    @id @default(cuid())
-  captureSessionId    String    @map("capture_session_id")
-  timestampMs         Int       @map("timestamp_ms")
-  orientation         String?   @db.VarChar(20)
-  poseConfidence      Decimal?  @map("pose_confidence") @db.Decimal(5, 4)
-  fullBodyVisible     Boolean?  @map("full_body_visible")
-  subjectFrameRatio   Decimal?  @map("subject_frame_ratio") @db.Decimal(5, 4)
-  stable              Boolean?
-  lighting            String?   @db.VarChar(20)
-  hoopVisible         Boolean?  @map("hoop_visible")
-  ballVisible         Boolean?  @map("ball_visible")
-  keypoints           Json?
-  createdAt           DateTime  @default(now()) @map("created_at")
+  id                String   @id @default(cuid())
+  captureSessionId  String   @map("capture_session_id")
+  timestampMs       Int      @map("timestamp_ms")
+  orientation       String?  @db.VarChar(20)
+  poseConfidence    Decimal? @map("pose_confidence") @db.Decimal(5, 4)
+  fullBodyVisible   Boolean? @map("full_body_visible")
+  subjectFrameRatio Decimal? @map("subject_frame_ratio") @db.Decimal(5, 4)
+  stable            Boolean?
+  lighting          String?  @db.VarChar(20)
+  hoopVisible       Boolean? @map("hoop_visible")
+  ballVisible       Boolean? @map("ball_visible")
+  keypoints         Json?
+  createdAt         DateTime @default(now()) @map("created_at")
 
-  captureSession      CaptureSession @relation(fields: [captureSessionId], references: [id], onDelete: Cascade)
+  captureSession CaptureSession @relation(fields: [captureSessionId], references: [id], onDelete: Cascade)
 
   @@index([captureSessionId, timestampMs], name: "idx_capture_observation_time")
   @@map("capture_session_observations")
@@ -165,31 +165,31 @@ model CaptureSessionObservation {
 // are appended to this row rather than mutating the detector output, so model
 // quality and human review can be compared later.
 model ShotEvent {
-  id                String    @id @default(cuid())
-  userProfileId     String    @map("user_profile_id")
-  captureSessionId  String?   @map("capture_session_id")
+  id               String  @id @default(cuid())
+  userProfileId    String  @map("user_profile_id")
+  captureSessionId String? @map("capture_session_id")
 
-  sequence          Int?
-  timestampMs       Int?      @map("timestamp_ms")
-  startFrame        Int?      @map("start_frame")
-  endFrame          Int?      @map("end_frame")
-  thumbnailUrl      String?   @map("thumbnail_url") @db.Text
-  detected          Boolean   @default(true)
-  detectedResult    String?   @map("detected_result") @db.VarChar(10) // make|miss|unknown
-  detectedShooter   String?   @map("detected_shooter") @db.VarChar(255)
-  detectedPhase     String?   @map("detected_phase") @db.VarChar(50)
+  sequence        Int?
+  timestampMs     Int?     @map("timestamp_ms")
+  startFrame      Int?     @map("start_frame")
+  endFrame        Int?     @map("end_frame")
+  thumbnailUrl    String?  @map("thumbnail_url") @db.Text
+  detected        Boolean  @default(true)
+  detectedResult  String?  @map("detected_result") @db.VarChar(10) // make|miss|unknown
+  detectedShooter String?  @map("detected_shooter") @db.VarChar(255)
+  detectedPhase   String?  @map("detected_phase") @db.VarChar(50)
   // Detector confidence is retained with the immutable output. Consumers must
   // treat rows below the review threshold as review-only/untrusted.
-  confidence        Decimal?  @db.Decimal(5, 4)
-  phaseMarkers      Json?     @map("phase_markers")
-  metadata          Json?
+  confidence      Decimal? @db.Decimal(5, 4)
+  phaseMarkers    Json?    @map("phase_markers")
+  metadata        Json?
 
-  createdAt         DateTime  @default(now()) @map("created_at")
-  updatedAt         DateTime  @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  userProfile       UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
-  captureSession    CaptureSession? @relation(fields: [captureSessionId], references: [id], onDelete: Cascade)
-  corrections       ShotEventCorrection[]
+  userProfile    UserProfile           @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  captureSession CaptureSession?       @relation(fields: [captureSessionId], references: [id], onDelete: Cascade)
+  corrections    ShotEventCorrection[]
 
   @@index([userProfileId, createdAt], name: "idx_shot_event_user_created")
   @@index([captureSessionId, timestampMs], name: "idx_shot_event_session_time")
@@ -200,20 +200,20 @@ model ShotEvent {
 // SHOT EVENT CORRECTIONS (Append-only human review)
 // ============================================
 model ShotEventCorrection {
-  id                String    @id @default(cuid())
-  shotEventId       String    @map("shot_event_id")
-  userProfileId     String    @map("user_profile_id")
+  id            String @id @default(cuid())
+  shotEventId   String @map("shot_event_id")
+  userProfileId String @map("user_profile_id")
 
   // Canonical kinds: false_shot, make_miss, shooter, phase.
-  kind              String    @db.VarChar(30)
-  value             Json
-  timestampMs       Int?      @map("timestamp_ms")
-  frameIndex        Int?      @map("frame_index")
-  reason            String?   @db.Text
-  createdAt         DateTime  @default(now()) @map("created_at")
+  kind        String   @db.VarChar(30)
+  value       Json
+  timestampMs Int?     @map("timestamp_ms")
+  frameIndex  Int?     @map("frame_index")
+  reason      String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
 
-  shotEvent         ShotEvent @relation(fields: [shotEventId], references: [id], onDelete: Cascade)
-  userProfile       UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  shotEvent   ShotEvent   @relation(fields: [shotEventId], references: [id], onDelete: Cascade)
+  userProfile UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
 
   @@index([shotEventId, createdAt], name: "idx_shot_correction_event_created")
   @@index([userProfileId, createdAt], name: "idx_shot_correction_user_created")
@@ -224,122 +224,151 @@ model ShotEventCorrection {
 // USER ANALYSIS (Analysis sessions for app users)
 // ============================================
 model UserAnalysis {
-  id                    String    @id @default(cuid())
-  userProfileId         String    @map("user_profile_id")
-  clientSessionId       String?   @map("client_session_id") @db.VarChar(191)
-  mediaType             String?   @map("media_type") @db.VarChar(16)
-  captureSessionId      String?   @map("capture_session_id") @db.VarChar(191)
-  
-  // Image Data
-  imageUrl              String?   @map("image_url") @db.VarChar(500)
-  s3Path                String?   @map("s3_path") @db.VarChar(500)
-  
-  // Phase 4: RoboFlow Pose Detection Data
-  roboflowPoseData      Json?     @map("roboflow_pose_data")    // 10 body points from pose estimation
-  roboflowDetection     Json?     @map("roboflow_detection")    // Basketball detection
-  shootingPhase         String?   @map("shooting_phase") @db.VarChar(50) // stance/dip/rise/release/follow_through
-  
-  // Phase 4: Calculated Angles
-  elbowAngle            Decimal?  @map("elbow_angle") @db.Decimal(5, 2)
-  kneeAngle             Decimal?  @map("knee_angle") @db.Decimal(5, 2)
-  wristAngle            Decimal?  @map("wrist_angle") @db.Decimal(5, 2)
-  shoulderAngle         Decimal?  @map("shoulder_angle") @db.Decimal(5, 2)
-  hipAngle              Decimal?  @map("hip_angle") @db.Decimal(5, 2)
-  releaseAngle          Decimal?  @map("release_angle") @db.Decimal(5, 2)
-  
-  // Analysis Results (JSON)
-  visionAnalysis        Json?     @map("vision_analysis")       // GPT-4 Vision response
-  bodyPositions         Json?     @map("body_positions")        // Detected body part positions
-  
-  // Phase 4: Visual Enhancements
-  annotatedImageUrl     String?   @map("annotated_image_url") @db.VarChar(500) // ShotStack/Custom annotated image
-  annotatedS3Path       String?   @map("annotated_s3_path") @db.VarChar(500)
-  visualOverlays        Json?     @map("visual_overlays")       // Overlay configuration data
-  
-  // Scores
-  overallScore          Decimal?  @map("overall_score") @db.Decimal(5, 2)
-  formScore             Decimal?  @map("form_score") @db.Decimal(5, 2)
-  balanceScore          Decimal?  @map("balance_score") @db.Decimal(5, 2)
-  releaseScore          Decimal?  @map("release_score") @db.Decimal(5, 2)
-  consistencyScore      Decimal?  @map("consistency_score") @db.Decimal(5, 2)
-  
-  // Feedback
-  strengths             Json?                                   // Array of strength objects
-  improvements          Json?                                   // Array of improvement objects
-  drills                Json?                                   // Array of recommended drills
-  coachingNotes         String?   @map("coaching_notes") @db.Text
-  
-  // Matched Shooter (who they're most similar to)
-  matchedShooterId      Int?      @map("matched_shooter_id")
-  matchConfidence       Decimal?  @map("match_confidence") @db.Decimal(3, 2)
-  similarShooters       Json?     @map("similar_shooters")      // Top 3-5 similar shooters
-  
-  // Processing Status
-  processingStatus      String?   @map("processing_status") @db.VarChar(50) @default("pending") // pending/processing/completed/failed
-  processingError       String?   @map("processing_error") @db.Text
-  
-  // Metadata
-  createdAt             DateTime  @default(now()) @map("created_at")
-  updatedAt             DateTime  @updatedAt @map("updated_at")
-  
-  // Relations
-  userProfile           UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
-  matchedShooter        Shooter?    @relation("MatchedShooter", fields: [matchedShooterId], references: [id], onDelete: SetNull)
-  historyEntries        AnalysisHistory[]
+  id               String  @id @default(cuid())
+  userProfileId    String  @map("user_profile_id")
+  clientSessionId  String? @map("client_session_id") @db.VarChar(191)
+  mediaType        String? @map("media_type") @db.VarChar(16)
+  captureSessionId String? @map("capture_session_id") @db.VarChar(191)
 
+  // Image Data
+  imageUrl    String? @map("image_url") @db.VarChar(500)
+  s3Path      String? @map("s3_path") @db.VarChar(500)
+  videoUrl    String? @map("video_url") @db.VarChar(1000)
+  videoS3Path String? @map("video_s3_path") @db.VarChar(500)
+
+  // Phase 4: RoboFlow Pose Detection Data
+  roboflowPoseData  Json?   @map("roboflow_pose_data") // 10 body points from pose estimation
+  roboflowDetection Json?   @map("roboflow_detection") // Basketball detection
+  shootingPhase     String? @map("shooting_phase") @db.VarChar(50) // stance/dip/rise/release/follow_through
+
+  // Phase 4: Calculated Angles
+  elbowAngle    Decimal? @map("elbow_angle") @db.Decimal(5, 2)
+  kneeAngle     Decimal? @map("knee_angle") @db.Decimal(5, 2)
+  wristAngle    Decimal? @map("wrist_angle") @db.Decimal(5, 2)
+  shoulderAngle Decimal? @map("shoulder_angle") @db.Decimal(5, 2)
+  hipAngle      Decimal? @map("hip_angle") @db.Decimal(5, 2)
+  releaseAngle  Decimal? @map("release_angle") @db.Decimal(5, 2)
+
+  // Analysis Results (JSON)
+  visionAnalysis Json? @map("vision_analysis") // GPT-4 Vision response
+  bodyPositions  Json? @map("body_positions") // Detected body part positions
+
+  // Phase 4: Visual Enhancements
+  annotatedImageUrl String? @map("annotated_image_url") @db.VarChar(500) // ShotStack/Custom annotated image
+  annotatedS3Path   String? @map("annotated_s3_path") @db.VarChar(500)
+  visualOverlays    Json?   @map("visual_overlays") // Overlay configuration data
+
+  // Scores
+  overallScore     Decimal? @map("overall_score") @db.Decimal(5, 2)
+  formScore        Decimal? @map("form_score") @db.Decimal(5, 2)
+  balanceScore     Decimal? @map("balance_score") @db.Decimal(5, 2)
+  releaseScore     Decimal? @map("release_score") @db.Decimal(5, 2)
+  consistencyScore Decimal? @map("consistency_score") @db.Decimal(5, 2)
+
+  // Feedback
+  strengths     Json? // Array of strength objects
+  improvements  Json? // Array of improvement objects
+  drills        Json? // Array of recommended drills
+  coachingNotes String? @map("coaching_notes") @db.Text
+
+  // Matched Shooter (who they're most similar to)
+  matchedShooterId Int?     @map("matched_shooter_id")
+  matchConfidence  Decimal? @map("match_confidence") @db.Decimal(3, 2)
+  similarShooters  Json?    @map("similar_shooters") // Top 3-5 similar shooters
+
+  // Processing Status
+  processingStatus String? @default("pending") @map("processing_status") @db.VarChar(50) // pending/processing/completed/failed
+  processingError  String? @map("processing_error") @db.Text
+
+  // Metadata
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  userProfile    UserProfile       @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  matchedShooter Shooter?          @relation("MatchedShooter", fields: [matchedShooterId], references: [id], onDelete: SetNull)
+  historyEntries AnalysisHistory[]
+  mediaUploads   MediaUpload[]
+
+  @@unique([userProfileId, clientSessionId], name: "userProfileId_clientSessionId", map: "uq_analysis_user_client_session")
   // Indexes
   @@index([userProfileId], name: "idx_analysis_user")
   @@index([createdAt], name: "idx_analysis_date")
   @@index([matchedShooterId], name: "idx_analysis_matched")
   @@index([shootingPhase], name: "idx_shooting_phase")
   @@index([processingStatus], name: "idx_processing_status")
-  @@unique([userProfileId, clientSessionId], name: "userProfileId_clientSessionId", map: "uq_analysis_user_client_session")
-  
   @@map("user_analyses")
+}
+
+// Resumable original-video uploads. The storage upload id never leaves an
+// authenticated, owner-scoped API response.
+model MediaUpload {
+  id              String    @id @default(cuid())
+  userProfileId   String    @map("user_profile_id")
+  clientSessionId String    @map("client_session_id") @db.VarChar(191)
+  analysisId      String?   @map("analysis_id")
+  fileName        String    @map("file_name") @db.VarChar(255)
+  contentType     String    @map("content_type") @db.VarChar(100)
+  sizeBytes       BigInt    @map("size_bytes")
+  objectKey       String    @map("object_key") @db.VarChar(500)
+  storageUploadId String    @map("storage_upload_id") @db.VarChar(500)
+  status          String    @default("pending") @db.VarChar(20)
+  completedParts  Json?     @map("completed_parts")
+  mediaUrl        String?   @map("media_url") @db.VarChar(1000)
+  completedAt     DateTime? @map("completed_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  userProfile UserProfile   @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  analysis    UserAnalysis? @relation(fields: [analysisId], references: [id], onDelete: SetNull)
+
+  @@unique([userProfileId, clientSessionId], name: "userProfileId_clientSessionId", map: "uq_media_upload_user_client_session")
+  @@index([userProfileId, status], name: "idx_media_upload_user_status")
+  @@index([analysisId], name: "idx_media_upload_analysis")
+  @@map("media_uploads")
 }
 
 // ============================================
 // ANALYSIS HISTORY (Track progress over time)
 // ============================================
 model AnalysisHistory {
-  id                    String    @id @default(cuid())
-  userProfileId         String    @map("user_profile_id")
-  analysisId            String    @unique(map: "uq_history_analysis") @map("analysis_id")
-  
+  id            String @id @default(cuid())
+  userProfileId String @map("user_profile_id")
+  analysisId    String @unique(map: "uq_history_analysis") @map("analysis_id")
+
   // Snapshot of key metrics at time of analysis
-  overallScore          Decimal   @map("overall_score") @db.Decimal(5, 2)
-  formScore             Decimal?  @map("form_score") @db.Decimal(5, 2)
-  balanceScore          Decimal?  @map("balance_score") @db.Decimal(5, 2)
-  releaseScore          Decimal?  @map("release_score") @db.Decimal(5, 2)
-  consistencyScore      Decimal?  @map("consistency_score") @db.Decimal(5, 2)
-  
+  overallScore     Decimal  @map("overall_score") @db.Decimal(5, 2)
+  formScore        Decimal? @map("form_score") @db.Decimal(5, 2)
+  balanceScore     Decimal? @map("balance_score") @db.Decimal(5, 2)
+  releaseScore     Decimal? @map("release_score") @db.Decimal(5, 2)
+  consistencyScore Decimal? @map("consistency_score") @db.Decimal(5, 2)
+
   // Improvement tracking
-  scoreChange           Decimal?  @map("score_change") @db.Decimal(5, 2) // Change from previous analysis
-  improvementAreas      Json?     @map("improvement_areas")              // What improved
-  regressionAreas       Json?     @map("regression_areas")               // What got worse
-  
+  scoreChange      Decimal? @map("score_change") @db.Decimal(5, 2) // Change from previous analysis
+  improvementAreas Json?    @map("improvement_areas") // What improved
+  regressionAreas  Json?    @map("regression_areas") // What got worse
+
   // Key angles snapshot
-  elbowAngle            Decimal?  @map("elbow_angle") @db.Decimal(5, 2)
-  kneeAngle             Decimal?  @map("knee_angle") @db.Decimal(5, 2)
-  releaseAngle          Decimal?  @map("release_angle") @db.Decimal(5, 2)
-  
+  elbowAngle   Decimal? @map("elbow_angle") @db.Decimal(5, 2)
+  kneeAngle    Decimal? @map("knee_angle") @db.Decimal(5, 2)
+  releaseAngle Decimal? @map("release_angle") @db.Decimal(5, 2)
+
   // Progress notes
-  progressNotes         String?   @map("progress_notes") @db.Text
-  milestonesAchieved    Json?     @map("milestones_achieved")           // Array of milestone objects
-  
+  progressNotes      String? @map("progress_notes") @db.Text
+  milestonesAchieved Json?   @map("milestones_achieved") // Array of milestone objects
+
   // Metadata
-  analysisDate          DateTime  @map("analysis_date") @default(now())
-  createdAt             DateTime  @default(now()) @map("created_at")
-  
+  analysisDate DateTime @default(now()) @map("analysis_date")
+  createdAt    DateTime @default(now()) @map("created_at")
+
   // Relations
-  analysis              UserAnalysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
-  userProfile           UserProfile  @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  analysis    UserAnalysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  userProfile UserProfile  @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
 
   // Indexes
   @@index([userProfileId], name: "idx_history_user")
   @@index([analysisDate], name: "idx_history_date")
   @@index([userProfileId, analysisDate], name: "idx_history_user_date")
-  
   @@map("analysis_history")
 }
 
@@ -347,26 +376,26 @@ model AnalysisHistory {
 // COACHING TARGETS (one focused flaw -> drill -> retest loop)
 // ============================================
 model CoachingTarget {
-  id            String    @id @default(cuid())
-  userProfileId String    @map("user_profile_id")
+  id            String @id @default(cuid())
+  userProfileId String @map("user_profile_id")
 
-  flaw          String    @db.VarChar(255)
-  cue           String    @db.Text
-  drillId       String    @map("drill_id") @db.VarChar(100)
-  drillName     String    @map("drill_name") @db.VarChar(255)
-  metric        String    @db.VarChar(100)
-  baseline      Decimal   @db.Decimal(10, 2)
-  targetValue   Decimal   @map("target_value") @db.Decimal(10, 2)
-  direction     String    @db.VarChar(20) // increase | decrease
-  confidence    Decimal   @db.Decimal(4, 3)
-  status        String    @default("active") @db.VarChar(20) // active | improved | no_change | regression
-  retestValue   Decimal?  @map("retest_value") @db.Decimal(10, 2)
-  retestedAt    DateTime? @map("retested_at")
+  flaw        String    @db.VarChar(255)
+  cue         String    @db.Text
+  drillId     String    @map("drill_id") @db.VarChar(100)
+  drillName   String    @map("drill_name") @db.VarChar(255)
+  metric      String    @db.VarChar(100)
+  baseline    Decimal   @db.Decimal(10, 2)
+  targetValue Decimal   @map("target_value") @db.Decimal(10, 2)
+  direction   String    @db.VarChar(20) // increase | decrease
+  confidence  Decimal   @db.Decimal(4, 3)
+  status      String    @default("active") @db.VarChar(20) // active | improved | no_change | regression
+  retestValue Decimal?  @map("retest_value") @db.Decimal(10, 2)
+  retestedAt  DateTime? @map("retested_at")
 
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  userProfile   UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  userProfile UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
 
   @@index([userProfileId, status], name: "idx_coaching_target_user_status")
   @@index([userProfileId, createdAt], name: "idx_coaching_target_user_created")
@@ -377,69 +406,61 @@ model CoachingTarget {
 // TABLE 1: shooters (Professional shooter database)
 // ============================================
 model Shooter {
-  id                    Int       @id @default(autoincrement()) @map("shooter_id")
-  name                  String    @unique @db.VarChar(255)
-  position              String?   @db.VarChar(50)       // Guard/Forward/Center
-  heightInches          Int?      @map("height_inches")
-  weightLbs             Int?      @map("weight_lbs")
-  wingspanInches        Int?      @map("wingspan_inches")
-  armLengthInches       Int?      @map("arm_length_inches")
-  bodyType              String?   @map("body_type") @db.VarChar(100)
-  dominantHand          String?   @map("dominant_hand") @db.VarChar(20) // Left/Right/Ambidextrous
-  careerFgPercentage    Decimal?  @map("career_fg_percentage") @db.Decimal(5, 2)
-  career3ptPercentage   Decimal?  @map("career_3pt_percentage") @db.Decimal(5, 2)
-  careerFtPercentage    Decimal?  @map("career_ft_percentage") @db.Decimal(5, 2)
-  shootingStyle         String?   @map("shooting_style") @db.VarChar(100) // One-motion/Two-motion/Set shot
-  era                   String?   @db.VarChar(50)       // Modern/Classic/Historical
-  skillLevel            String?   @map("skill_level") @db.VarChar(50) // Professional/College/High School/Amateur
-  profileImageUrl       String?   @map("profile_image_url") @db.VarChar(500)
-  team                  String?   @db.VarChar(255)      // Current/last team (display)
-  signature             String?   @db.Text              // One-line signature-form description
-  createdAt             DateTime  @default(now()) @map("created_at")
-  updatedAt             DateTime  @default(now()) @updatedAt @map("updated_at")
+  id                  Int      @id @default(autoincrement()) @map("shooter_id")
+  name                String   @unique @db.VarChar(255)
+  position            String?  @db.VarChar(50) // Guard/Forward/Center
+  heightInches        Int?     @map("height_inches")
+  weightLbs           Int?     @map("weight_lbs")
+  wingspanInches      Int?     @map("wingspan_inches")
+  armLengthInches     Int?     @map("arm_length_inches")
+  bodyType            String?  @map("body_type") @db.VarChar(100)
+  dominantHand        String?  @map("dominant_hand") @db.VarChar(20) // Left/Right/Ambidextrous
+  careerFgPercentage  Decimal? @map("career_fg_percentage") @db.Decimal(5, 2)
+  career3ptPercentage Decimal? @map("career_3pt_percentage") @db.Decimal(5, 2)
+  careerFtPercentage  Decimal? @map("career_ft_percentage") @db.Decimal(5, 2)
+  shootingStyle       String?  @map("shooting_style") @db.VarChar(100) // One-motion/Two-motion/Set shot
+  era                 String?  @db.VarChar(50) // Modern/Classic/Historical
+  skillLevel          String?  @map("skill_level") @db.VarChar(50) // Professional/College/High School/Amateur
+  profileImageUrl     String?  @map("profile_image_url") @db.VarChar(500)
+  team                String?  @db.VarChar(255) // Current/last team (display)
+  signature           String?  @db.Text // One-line signature-form description
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @default(now()) @updatedAt @map("updated_at")
 
   // Relations
-  biomechanics          ShootingBiomechanics?
-  images                ShooterImage[]
-  stats                 ShootingStats[]
-  strengths             ShootingStrength[]
-  weaknesses            ShootingWeakness[]
-  habitualMechanics     HabitualMechanics[]
-  matchedAnalyses       UserAnalysis[]    @relation("MatchedShooter")
+  biomechanics      ShootingBiomechanics?
+  images            ShooterImage[]
+  stats             ShootingStats[]
+  strengths         ShootingStrength[]
+  weaknesses        ShootingWeakness[]
+  habitualMechanics HabitualMechanics[]
+  matchedAnalyses   UserAnalysis[]        @relation("MatchedShooter")
 
   // ==========================================
   // INDEXES FOR FAST RETRIEVAL
   // ==========================================
-  
+
   // Search by name (most common query)
   @@index([name], name: "idx_shooter_name")
-  
   // Filter by skill level (Professional/College/Amateur)
   @@index([skillLevel], name: "idx_skill_level")
-  
   // Filter by shooting style (One-motion/Two-motion)
   @@index([shootingStyle], name: "idx_shooting_style")
-  
   // Filter by position (Guard/Forward/Center)
   @@index([position], name: "idx_position")
-  
   // Filter by era (Modern/Classic/Historical)
   @@index([era], name: "idx_era")
-  
   // Sort by shooting percentages (find best shooters)
   @@index([career3ptPercentage], name: "idx_3pt_percentage")
   @@index([careerFgPercentage], name: "idx_fg_percentage")
   @@index([careerFtPercentage], name: "idx_ft_percentage")
-  
   // Composite index for common filter combinations
   @@index([skillLevel, position], name: "idx_skill_position")
   @@index([skillLevel, shootingStyle], name: "idx_skill_style")
   @@index([era, skillLevel], name: "idx_era_skill")
-  
   // Physical attributes (for matching similar body types)
   @@index([heightInches], name: "idx_height")
   @@index([bodyType], name: "idx_body_type")
-  
   @@map("shooters")
 }
 
@@ -447,44 +468,39 @@ model Shooter {
 // TABLE 2: shooting_biomechanics (Detailed form analysis)
 // ============================================
 model ShootingBiomechanics {
-  id                      Int       @id @default(autoincrement()) @map("biomech_id")
-  shooterId               Int       @unique @map("shooter_id")
-  elbowAngle              Decimal?  @map("elbow_angle") @db.Decimal(5, 2)        // Degrees at release
-  shoulderAngle           Decimal?  @map("shoulder_angle") @db.Decimal(5, 2)     // Shoulder rotation
-  hipAngle                Decimal?  @map("hip_angle") @db.Decimal(5, 2)          // Hip alignment
-  kneeAngle               Decimal?  @map("knee_angle") @db.Decimal(5, 2)         // Knee bend
-  ankleAngle              Decimal?  @map("ankle_angle") @db.Decimal(5, 2)        // Ankle position
-  releaseHeight           Decimal?  @map("release_height") @db.Decimal(5, 2)     // Height of release in inches
-  releaseAngle            Decimal?  @map("release_angle") @db.Decimal(5, 2)      // Ball trajectory angle
-  entryAngle              Decimal?  @map("entry_angle") @db.Decimal(5, 2)        // Ball entry angle to hoop
-  followThroughExtension  Decimal?  @map("follow_through_extension") @db.Decimal(5, 2)
-  wristAngle              Decimal?  @map("wrist_angle") @db.Decimal(5, 2)        // Forearm/wrist angle for arc
-  balanceScore            Decimal?  @map("balance_score") @db.Decimal(3, 2)      // 0-1 scale
-  arcConsistency          Decimal?  @map("arc_consistency") @db.Decimal(3, 2)    // 0-1 scale
-  createdAt               DateTime  @default(now()) @map("created_at")
+  id                     Int      @id @default(autoincrement()) @map("biomech_id")
+  shooterId              Int      @unique @map("shooter_id")
+  elbowAngle             Decimal? @map("elbow_angle") @db.Decimal(5, 2) // Degrees at release
+  shoulderAngle          Decimal? @map("shoulder_angle") @db.Decimal(5, 2) // Shoulder rotation
+  hipAngle               Decimal? @map("hip_angle") @db.Decimal(5, 2) // Hip alignment
+  kneeAngle              Decimal? @map("knee_angle") @db.Decimal(5, 2) // Knee bend
+  ankleAngle             Decimal? @map("ankle_angle") @db.Decimal(5, 2) // Ankle position
+  releaseHeight          Decimal? @map("release_height") @db.Decimal(5, 2) // Height of release in inches
+  releaseAngle           Decimal? @map("release_angle") @db.Decimal(5, 2) // Ball trajectory angle
+  entryAngle             Decimal? @map("entry_angle") @db.Decimal(5, 2) // Ball entry angle to hoop
+  followThroughExtension Decimal? @map("follow_through_extension") @db.Decimal(5, 2)
+  wristAngle             Decimal? @map("wrist_angle") @db.Decimal(5, 2) // Forearm/wrist angle for arc
+  balanceScore           Decimal? @map("balance_score") @db.Decimal(3, 2) // 0-1 scale
+  arcConsistency         Decimal? @map("arc_consistency") @db.Decimal(3, 2) // 0-1 scale
+  createdAt              DateTime @default(now()) @map("created_at")
 
   // Relations
-  shooter                 Shooter   @relation(fields: [shooterId], references: [id], onDelete: Cascade)
+  shooter Shooter @relation(fields: [shooterId], references: [id], onDelete: Cascade)
 
   // ==========================================
   // INDEXES FOR BIOMECHANICS QUERIES
   // ==========================================
-  
+
   @@index([shooterId], name: "idx_biomech_shooter_id")
-  
   // Find shooters with similar elbow angle
   @@index([elbowAngle], name: "idx_elbow_angle")
-  
   // Find shooters with similar release angle
   @@index([releaseAngle], name: "idx_release_angle")
-  
   // Find shooters with similar knee bend
   @@index([kneeAngle], name: "idx_knee_angle")
-  
   // Composite: Find similar shooting form
   @@index([elbowAngle, kneeAngle], name: "idx_elbow_knee")
   @@index([releaseAngle, releaseHeight], name: "idx_release_metrics")
-  
   @@map("shooting_biomechanics")
 }
 
@@ -492,47 +508,40 @@ model ShootingBiomechanics {
 // TABLE 3: shooter_images (Image library)
 // ============================================
 model ShooterImage {
-  id                Int       @id @default(autoincrement()) @map("image_id")
-  shooterId         Int       @map("shooter_id")
-  imageCategory     String?   @map("image_category") @db.VarChar(50)  // form_front/form_side/release_point/follow_through
-  imageUrl          String?   @map("image_url") @db.VarChar(500)
-  s3Path            String?   @map("s3_path") @db.VarChar(500)        // AWS S3 storage path
-  imageResolution   String?   @map("image_resolution") @db.VarChar(20) // 1920x1080 format
-  capturePhase      String?   @map("capture_phase") @db.VarChar(50)   // setup/dip/release/follow_through
-  shootingAngle     String?   @map("shooting_angle") @db.VarChar(50)  // front/side/45_degree
-  isPrimary         Boolean   @default(false) @map("is_primary")
-  createdAt         DateTime  @default(now()) @map("created_at")
+  id              Int      @id @default(autoincrement()) @map("image_id")
+  shooterId       Int      @map("shooter_id")
+  imageCategory   String?  @map("image_category") @db.VarChar(50) // form_front/form_side/release_point/follow_through
+  imageUrl        String?  @map("image_url") @db.VarChar(500)
+  s3Path          String?  @map("s3_path") @db.VarChar(500) // AWS S3 storage path
+  imageResolution String?  @map("image_resolution") @db.VarChar(20) // 1920x1080 format
+  capturePhase    String?  @map("capture_phase") @db.VarChar(50) // setup/dip/release/follow_through
+  shootingAngle   String?  @map("shooting_angle") @db.VarChar(50) // front/side/45_degree
+  isPrimary       Boolean  @default(false) @map("is_primary")
+  createdAt       DateTime @default(now()) @map("created_at")
 
   // Relations
-  shooter           Shooter   @relation(fields: [shooterId], references: [id], onDelete: Cascade)
+  shooter Shooter @relation(fields: [shooterId], references: [id], onDelete: Cascade)
 
   // ==========================================
   // INDEXES FOR FAST IMAGE RETRIEVAL
   // ==========================================
-  
+
   // Find all images for a shooter
   @@index([shooterId], name: "idx_images_shooter_id")
-  
   // Filter by image category (form_front, form_side, release_point)
   @@index([imageCategory], name: "idx_image_category")
-  
   // Filter by capture phase (setup, dip, release, follow-through)
   @@index([capturePhase], name: "idx_capture_phase")
-  
   // Filter by shooting angle (front, side, 45-degree)
   @@index([shootingAngle], name: "idx_shooting_angle")
-  
   // Find primary images quickly
   @@index([isPrimary], name: "idx_is_primary")
-  
   // Composite: Get specific phase/angle for a shooter
   @@index([shooterId, capturePhase], name: "idx_shooter_phase")
   @@index([shooterId, shootingAngle], name: "idx_shooter_angle")
   @@index([shooterId, imageCategory], name: "idx_shooter_category")
-  
   // Composite: Get primary image for a shooter
   @@index([shooterId, isPrimary], name: "idx_shooter_primary")
-  
   @@map("shooter_images")
 }
 
@@ -540,32 +549,30 @@ model ShooterImage {
 // TABLE 4: shooting_stats (Season statistics)
 // ============================================
 model ShootingStats {
-  id                Int       @id @default(autoincrement()) @map("stat_id")
-  shooterId         Int       @map("shooter_id")
-  season            String?   @db.VarChar(20)         // 2023-24 format
-  gamesPlayed       Int?      @map("games_played")
-  fgAttempts        Int?      @map("fg_attempts")     // Field goal attempts
-  fgMade            Int?      @map("fg_made")         // Field goals made
-  threePtAttempts   Int?      @map("three_pt_attempts")
-  threePtMade       Int?      @map("three_pt_made")
-  ftAttempts        Int?      @map("ft_attempts")     // Free throw attempts
-  ftMade            Int?      @map("ft_made")         // Free throws made
-  pointsPerGame     Decimal?  @map("points_per_game") @db.Decimal(5, 2)
-  createdAt         DateTime  @default(now()) @map("created_at")
+  id              Int      @id @default(autoincrement()) @map("stat_id")
+  shooterId       Int      @map("shooter_id")
+  season          String?  @db.VarChar(20) // 2023-24 format
+  gamesPlayed     Int?     @map("games_played")
+  fgAttempts      Int?     @map("fg_attempts") // Field goal attempts
+  fgMade          Int?     @map("fg_made") // Field goals made
+  threePtAttempts Int?     @map("three_pt_attempts")
+  threePtMade     Int?     @map("three_pt_made")
+  ftAttempts      Int?     @map("ft_attempts") // Free throw attempts
+  ftMade          Int?     @map("ft_made") // Free throws made
+  pointsPerGame   Decimal? @map("points_per_game") @db.Decimal(5, 2)
+  createdAt       DateTime @default(now()) @map("created_at")
 
   // Relations
-  shooter           Shooter   @relation(fields: [shooterId], references: [id], onDelete: Cascade)
+  shooter Shooter @relation(fields: [shooterId], references: [id], onDelete: Cascade)
 
   // ==========================================
   // INDEXES FOR STATS QUERIES
   // ==========================================
-  
+
   @@index([shooterId], name: "idx_stats_shooter_id")
   @@index([season], name: "idx_season")
-  
   // Composite: Get stats for shooter in a season
   @@index([shooterId, season], name: "idx_shooter_season")
-  
   @@map("shooting_stats")
 }
 
@@ -573,15 +580,15 @@ model ShootingStats {
 // TABLE 5: shooting_strengths (What they do well)
 // ============================================
 model ShootingStrength {
-  id                  Int       @id @default(autoincrement()) @map("strength_id")
-  shooterId           Int       @map("shooter_id")
-  strengthCategory    String?   @map("strength_category") @db.VarChar(100) // Release consistency/Arc/Balance/etc
-  description         String?   @db.Text              // Detailed explanation
-  confidenceScore     Decimal?  @map("confidence_score") @db.Decimal(3, 2) // 0-1 scale
-  createdAt           DateTime  @default(now()) @map("created_at")
+  id               Int      @id @default(autoincrement()) @map("strength_id")
+  shooterId        Int      @map("shooter_id")
+  strengthCategory String?  @map("strength_category") @db.VarChar(100) // Release consistency/Arc/Balance/etc
+  description      String?  @db.Text // Detailed explanation
+  confidenceScore  Decimal? @map("confidence_score") @db.Decimal(3, 2) // 0-1 scale
+  createdAt        DateTime @default(now()) @map("created_at")
 
   // Relations
-  shooter             Shooter   @relation(fields: [shooterId], references: [id], onDelete: Cascade)
+  shooter Shooter @relation(fields: [shooterId], references: [id], onDelete: Cascade)
 
   @@index([shooterId], name: "idx_strengths_shooter_id")
   @@map("shooting_strengths")
@@ -591,15 +598,15 @@ model ShootingStrength {
 // TABLE 6: shooting_weaknesses (Areas for improvement)
 // ============================================
 model ShootingWeakness {
-  id                  Int       @id @default(autoincrement()) @map("weakness_id")
-  shooterId           Int       @map("shooter_id")
-  weaknessCategory    String?   @map("weakness_category") @db.VarChar(100) // Footwork/Release/Balance/etc
-  description         String?   @db.Text              // Detailed explanation
-  severityScore       Decimal?  @map("severity_score") @db.Decimal(3, 2) // 0-1 scale (1 = severe)
-  createdAt           DateTime  @default(now()) @map("created_at")
+  id               Int      @id @default(autoincrement()) @map("weakness_id")
+  shooterId        Int      @map("shooter_id")
+  weaknessCategory String?  @map("weakness_category") @db.VarChar(100) // Footwork/Release/Balance/etc
+  description      String?  @db.Text // Detailed explanation
+  severityScore    Decimal? @map("severity_score") @db.Decimal(3, 2) // 0-1 scale (1 = severe)
+  createdAt        DateTime @default(now()) @map("created_at")
 
   // Relations
-  shooter             Shooter   @relation(fields: [shooterId], references: [id], onDelete: Cascade)
+  shooter Shooter @relation(fields: [shooterId], references: [id], onDelete: Cascade)
 
   @@index([shooterId], name: "idx_weaknesses_shooter_id")
   @@map("shooting_weaknesses")
@@ -609,16 +616,16 @@ model ShootingWeakness {
 // TABLE 7: habitual_mechanics (Shooting habits)
 // ============================================
 model HabitualMechanics {
-  id                    Int       @id @default(autoincrement()) @map("habit_id")
-  shooterId             Int       @map("shooter_id")
-  habitName             String?   @map("habit_name") @db.VarChar(100)  // Specific habit description
-  habitType             String?   @map("habit_type") @db.VarChar(50)   // Good/Bad/Neutral
-  frequency             String?   @db.VarChar(50)     // Always/Often/Sometimes/Rarely
-  impactOnPerformance   String?   @map("impact_on_performance") @db.Text
-  createdAt             DateTime  @default(now()) @map("created_at")
+  id                  Int      @id @default(autoincrement()) @map("habit_id")
+  shooterId           Int      @map("shooter_id")
+  habitName           String?  @map("habit_name") @db.VarChar(100) // Specific habit description
+  habitType           String?  @map("habit_type") @db.VarChar(50) // Good/Bad/Neutral
+  frequency           String?  @db.VarChar(50) // Always/Often/Sometimes/Rarely
+  impactOnPerformance String?  @map("impact_on_performance") @db.Text
+  createdAt           DateTime @default(now()) @map("created_at")
 
   // Relations
-  shooter               Shooter   @relation(fields: [shooterId], references: [id], onDelete: Cascade)
+  shooter Shooter @relation(fields: [shooterId], references: [id], onDelete: Cascade)
 
   @@index([shooterId], name: "idx_habits_shooter_id")
   @@map("habitual_mechanics")
@@ -628,65 +635,65 @@ model HabitualMechanics {
 // TABLE 8: drill_video_submissions (User drill videos for analysis)
 // ============================================
 model DrillVideoSubmission {
-  id                    String    @id @default(cuid())
-  
+  id String @id @default(cuid())
+
   // Drill Information
-  drillId               String    @map("drill_id") @db.VarChar(100)
-  drillName             String    @map("drill_name") @db.VarChar(255)
-  focusArea             String?   @map("focus_area") @db.VarChar(100)  // elbow/knee/balance/release/follow-through/power/general
-  
+  drillId   String  @map("drill_id") @db.VarChar(100)
+  drillName String  @map("drill_name") @db.VarChar(255)
+  focusArea String? @map("focus_area") @db.VarChar(100) // elbow/knee/balance/release/follow-through/power/general
+
   // Media Storage
-  mediaType             String?   @map("media_type") @db.VarChar(20)   // 'video' or 'image'
-  mediaUrl              String?   @map("media_url") @db.Text           // URL to stored media
-  thumbnailUrl          String?   @map("thumbnail_url") @db.Text       // Thumbnail/frame image
-  videoDuration         Decimal?  @map("video_duration") @db.Decimal(10, 2) // Duration in seconds (for video)
-  
+  mediaType     String?  @map("media_type") @db.VarChar(20) // 'video' or 'image'
+  mediaUrl      String?  @map("media_url") @db.Text // URL to stored media
+  thumbnailUrl  String?  @map("thumbnail_url") @db.Text // Thumbnail/frame image
+  videoDuration Decimal? @map("video_duration") @db.Decimal(10, 2) // Duration in seconds (for video)
+
   // Workout Context
-  workoutId             String?   @map("workout_id") @db.VarChar(100)  // Which workout this was part of
-  workoutName           String?   @map("workout_name") @db.VarChar(255)
-  workoutDate           DateTime? @map("workout_date")
-  
+  workoutId   String?   @map("workout_id") @db.VarChar(100) // Which workout this was part of
+  workoutName String?   @map("workout_name") @db.VarChar(255)
+  workoutDate DateTime? @map("workout_date")
+
   // Analysis Status
-  analyzed              Boolean   @default(false)
-  analyzedAt            DateTime? @map("analyzed_at")
-  analysisType          String?   @map("analysis_type") @db.VarChar(20) // 'quick' (Vision AI) or 'deep' (Hybrid)
-  
+  analyzed     Boolean   @default(false)
+  analyzedAt   DateTime? @map("analyzed_at")
+  analysisType String?   @map("analysis_type") @db.VarChar(20) // 'quick' (Vision AI) or 'deep' (Hybrid)
+
   // Coach Analysis Results (Full structured feedback)
-  overallGrade          String?   @map("overall_grade") @db.VarChar(1)  // A/B/C/D/F
-  gradeDescription      String?   @map("grade_description") @db.Text
-  isCorrectDrill        Boolean?  @map("is_correct_drill")
-  wrongDrillMessage     String?   @map("wrong_drill_message") @db.Text
-  whatISee              String?   @map("what_i_see") @db.Text
-  coachSays             String?   @map("coach_says") @db.Text
-  
+  overallGrade      String?  @map("overall_grade") @db.VarChar(1) // A/B/C/D/F
+  gradeDescription  String?  @map("grade_description") @db.Text
+  isCorrectDrill    Boolean? @map("is_correct_drill")
+  wrongDrillMessage String?  @map("wrong_drill_message") @db.Text
+  whatISee          String?  @map("what_i_see") @db.Text
+  coachSays         String?  @map("coach_says") @db.Text
+
   // Priority Focus
-  priorityIssue         String?   @map("priority_issue") @db.Text
-  priorityWhy           String?   @map("priority_why") @db.Text
-  priorityHowToFix      String?   @map("priority_how_to_fix") @db.Text
-  priorityCue           String?   @map("priority_cue") @db.VarChar(255)
-  
+  priorityIssue    String? @map("priority_issue") @db.Text
+  priorityWhy      String? @map("priority_why") @db.Text
+  priorityHowToFix String? @map("priority_how_to_fix") @db.Text
+  priorityCue      String? @map("priority_cue") @db.VarChar(255)
+
   // Full Analysis JSON (stores complete CoachAnalysis object)
-  coachAnalysis         Json?     @map("coach_analysis")               // Full CoachAnalysis object
-  
+  coachAnalysis Json? @map("coach_analysis") // Full CoachAnalysis object
+
   // Legacy fields (keeping for compatibility)
-  formScore             Int?      @map("form_score")
-  feedback              Json?
-  improvements          Json?
-  positives             Json?
-  coachingTips          Json?     @map("coaching_tips")
-  detailedFeedback      String?   @map("detailed_feedback") @db.Text
-  drillSpecific         Boolean   @default(false) @map("drill_specific")
-  
+  formScore        Int?    @map("form_score")
+  feedback         Json?
+  improvements     Json?
+  positives        Json?
+  coachingTips     Json?   @map("coaching_tips")
+  detailedFeedback String? @map("detailed_feedback") @db.Text
+  drillSpecific    Boolean @default(false) @map("drill_specific")
+
   // User Association
-  userProfileId         String?   @map("user_profile_id")
-  
+  userProfileId String? @map("user_profile_id")
+
   // Metadata
-  createdAt             DateTime  @default(now()) @map("created_at")
-  updatedAt             DateTime  @updatedAt @map("updated_at")
-  
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
   // Relations
-  userProfile           UserProfile? @relation(fields: [userProfileId], references: [id], onDelete: SetNull)
-  
+  userProfile UserProfile? @relation(fields: [userProfileId], references: [id], onDelete: SetNull)
+
   // Indexes
   @@index([drillId], name: "idx_drill_video_drill_id")
   @@index([analyzed], name: "idx_drill_video_analyzed")
@@ -696,7 +703,6 @@ model DrillVideoSubmission {
   @@index([workoutId], name: "idx_drill_video_workout")
   @@index([overallGrade], name: "idx_drill_video_grade")
   @@index([mediaType], name: "idx_drill_video_media_type")
-
   @@map("drill_video_submissions")
 }
 
@@ -704,28 +710,28 @@ model DrillVideoSubmission {
 // GOALS (User shooting goals — was localStorage `shotiq_goals`)
 // ============================================
 model Goal {
-  id                String    @id @default(cuid())
-  userProfileId     String    @map("user_profile_id")
+  id            String @id @default(cuid())
+  userProfileId String @map("user_profile_id")
 
-  name              String    @db.VarChar(255)
-  description       String?   @db.Text
-  category          String    @db.VarChar(50)   // form|consistency|volume|accuracy|streak|custom
+  name        String  @db.VarChar(255)
+  description String? @db.Text
+  category    String  @db.VarChar(50) // form|consistency|volume|accuracy|streak|custom
 
-  targetValue       Int       @map("target_value")
-  currentValue      Int       @default(0) @map("current_value")
-  unit              String    @db.VarChar(100)  // e.g. "shots", "score", "days", "makes"
-  xpReward          Int       @map("xp_reward")
+  targetValue  Int    @map("target_value")
+  currentValue Int    @default(0) @map("current_value")
+  unit         String @db.VarChar(100) // e.g. "shots", "score", "days", "makes"
+  xpReward     Int    @map("xp_reward")
 
-  deadline          DateTime?
-  landmark          String?   @db.VarChar(255)
-  coordinates       Json?                       // [lng, lat] for the goal transit map
+  deadline    DateTime?
+  landmark    String?   @db.VarChar(255)
+  coordinates Json? // [lng, lat] for the goal transit map
 
-  completedAt       DateTime? @map("completed_at")
+  completedAt DateTime? @map("completed_at")
 
-  createdAt         DateTime  @default(now()) @map("created_at")
-  updatedAt         DateTime  @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  userProfile       UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  userProfile UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
 
   @@index([userProfileId], name: "idx_goal_user")
   @@index([category], name: "idx_goal_category")
@@ -737,28 +743,28 @@ model Goal {
 // WORKOUTS (Scheduled training sessions — was localStorage `workout-calendar-data`)
 // ============================================
 model Workout {
-  id                String    @id @default(cuid())
-  userProfileId     String    @map("user_profile_id")
+  id            String @id @default(cuid())
+  userProfileId String @map("user_profile_id")
 
-  name              String?   @db.VarChar(255)
-  scheduledDate     DateTime  @map("scheduled_date")
+  name          String?  @db.VarChar(255)
+  scheduledDate DateTime @map("scheduled_date")
 
-  drillIds          Json      @map("drill_ids")    // Array of drill IDs from drillDatabase
-  focusAreas        Json?     @map("focus_areas")  // Array of focus-area strings
-  duration          Int?                           // minutes
+  drillIds   Json  @map("drill_ids") // Array of drill IDs from drillDatabase
+  focusAreas Json? @map("focus_areas") // Array of focus-area strings
+  duration   Int? // minutes
 
-  completed         Boolean   @default(false)
-  completedAt       DateTime? @map("completed_at")
+  completed   Boolean   @default(false)
+  completedAt DateTime? @map("completed_at")
 
-  totalShots        Int?      @default(0) @map("total_shots")
-  totalMade         Int?      @default(0) @map("total_made")
-  totalMissed       Int?      @default(0) @map("total_missed")
-  accuracy          Decimal?  @db.Decimal(5, 2)
+  totalShots  Int?     @default(0) @map("total_shots")
+  totalMade   Int?     @default(0) @map("total_made")
+  totalMissed Int?     @default(0) @map("total_missed")
+  accuracy    Decimal? @db.Decimal(5, 2)
 
-  createdAt         DateTime  @default(now()) @map("created_at")
-  updatedAt         DateTime  @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  userProfile       UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  userProfile UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
 
   @@index([userProfileId], name: "idx_workout_user")
   @@index([userProfileId, scheduledDate], name: "idx_workout_user_date")
@@ -769,22 +775,22 @@ model Workout {
 // TRAINING PREFERENCES (Per-user — was localStorage in WorkoutCalendar)
 // ============================================
 model TrainingPreference {
-  id                    String    @id @default(cuid())
-  userProfileId         String    @unique @map("user_profile_id")
+  id            String @id @default(cuid())
+  userProfileId String @unique @map("user_profile_id")
 
-  frequency             Int                              // 1-7 days/week
-  preferredDuration     Int       @map("preferred_duration") // minutes
-  drillCount            Int       @map("drill_count")    // 1-7 drills/workout
-  workoutMode           String    @map("workout_mode") @db.VarChar(50) // continuous|step-by-step
-  soundEnabled          Boolean   @default(true) @map("sound_enabled")
-  ageLevel              String    @map("age_level") @db.VarChar(50)
-  autoPopulateFromFlaws Boolean   @default(false) @map("auto_populate_from_flaws")
-  notificationsEnabled  Boolean   @default(true) @map("notifications_enabled")
+  frequency             Int // 1-7 days/week
+  preferredDuration     Int     @map("preferred_duration") // minutes
+  drillCount            Int     @map("drill_count") // 1-7 drills/workout
+  workoutMode           String  @map("workout_mode") @db.VarChar(50) // continuous|step-by-step
+  soundEnabled          Boolean @default(true) @map("sound_enabled")
+  ageLevel              String  @map("age_level") @db.VarChar(50)
+  autoPopulateFromFlaws Boolean @default(false) @map("auto_populate_from_flaws")
+  notificationsEnabled  Boolean @default(true) @map("notifications_enabled")
 
-  createdAt             DateTime  @default(now()) @map("created_at")
-  updatedAt             DateTime  @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  userProfile           UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  userProfile UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
 
   @@map("training_preferences")
 }
@@ -793,21 +799,21 @@ model TrainingPreference {
 // SAVED WORKOUTS (Reusable templates — was localStorage `shotiq_saved_workouts`)
 // ============================================
 model SavedWorkout {
-  id                String    @id @default(cuid())
-  userProfileId     String    @map("user_profile_id")
+  id            String @id @default(cuid())
+  userProfileId String @map("user_profile_id")
 
-  name              String    @db.VarChar(255)
-  drillCount        Int       @map("drill_count")
-  drillIds          Json      @map("drill_ids")
+  name       String @db.VarChar(255)
+  drillCount Int    @map("drill_count")
+  drillIds   Json   @map("drill_ids")
 
-  totalMade         Int       @default(0) @map("total_made")
-  totalMissed       Int       @default(0) @map("total_missed")
-  lastPlayed        DateTime? @map("last_played")
+  totalMade   Int       @default(0) @map("total_made")
+  totalMissed Int       @default(0) @map("total_missed")
+  lastPlayed  DateTime? @map("last_played")
 
-  createdAt         DateTime  @default(now()) @map("created_at")
-  updatedAt         DateTime  @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  userProfile       UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  userProfile UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
 
   @@index([userProfileId], name: "idx_saved_workout_user")
   @@map("saved_workouts")
@@ -817,12 +823,12 @@ model SavedWorkout {
 // VERIFICATION TOKENS (email verify + password reset)
 // ============================================
 model VerificationToken {
-  id                String    @id @default(cuid())
-  userId            String    @map("user_id")
-  token             String    @unique
-  type              String    @db.VarChar(50)   // "email_verify" | "password_reset"
-  expiresAt         DateTime  @map("expires_at")
-  createdAt         DateTime  @default(now()) @map("created_at")
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  type      String   @db.VarChar(50) // "email_verify" | "password_reset"
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@index([userId], name: "idx_verification_token_user")
   @@map("verification_tokens")
@@ -832,17 +838,17 @@ model VerificationToken {
 // USER SETTINGS (per-profile preferences — JSON-shaped)
 // ============================================
 model UserSettings {
-  id                String    @id @default(cuid())
-  userProfileId     String    @unique @map("user_profile_id")
+  id            String @id @default(cuid())
+  userProfileId String @unique @map("user_profile_id")
 
-  notifications     Json?
-  privacy           Json?
-  automation        Json?
-  avatarUrl         String?   @map("avatar_url") @db.VarChar(500)
+  notifications Json?
+  privacy       Json?
+  automation    Json?
+  avatarUrl     String? @map("avatar_url") @db.VarChar(500)
 
-  updatedAt         DateTime  @updatedAt @map("updated_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  userProfile       UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  userProfile UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
 
   @@map("user_settings")
 }
@@ -851,16 +857,16 @@ model UserSettings {
 // POINT EVENTS (server-validated points ledger)
 // ============================================
 model PointEvent {
-  id                String    @id @default(cuid())
-  userProfileId     String    @map("user_profile_id")
+  id            String @id @default(cuid())
+  userProfileId String @map("user_profile_id")
 
-  type              String    @db.VarChar(100)
-  points            Int
-  metadata          Json?
+  type     String @db.VarChar(100)
+  points   Int
+  metadata Json?
 
-  createdAt         DateTime  @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
-  userProfile       UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  userProfile UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
 
   @@index([userProfileId], name: "idx_point_event_user")
   @@map("point_events")
@@ -870,15 +876,15 @@ model PointEvent {
 // EARNED BADGES (achievement state)
 // ============================================
 model EarnedBadge {
-  id                String    @id @default(cuid())
-  userProfileId     String    @map("user_profile_id")
+  id            String @id @default(cuid())
+  userProfileId String @map("user_profile_id")
 
-  badgeId           String    @map("badge_id") @db.VarChar(100)
-  progress          Json?
+  badgeId  String @map("badge_id") @db.VarChar(100)
+  progress Json?
 
-  earnedAt          DateTime  @default(now()) @map("earned_at")
+  earnedAt DateTime @default(now()) @map("earned_at")
 
-  userProfile       UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  userProfile UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
 
   @@unique([userProfileId, badgeId], name: "uniq_earned_badge")
   @@map("earned_badges")
@@ -888,18 +894,18 @@ model EarnedBadge {
 // USER CHALLENGES (weekly challenge progress)
 // ============================================
 model UserChallenge {
-  id                String    @id @default(cuid())
-  userProfileId     String    @map("user_profile_id")
+  id            String @id @default(cuid())
+  userProfileId String @map("user_profile_id")
 
-  challengeKey      String    @map("challenge_key") @db.VarChar(100)
-  target            Int
-  current           Int       @default(0)
-  weekStart         DateTime  @map("week_start")
-  completed         Boolean   @default(false)
+  challengeKey String   @map("challenge_key") @db.VarChar(100)
+  target       Int
+  current      Int      @default(0)
+  weekStart    DateTime @map("week_start")
+  completed    Boolean  @default(false)
 
-  createdAt         DateTime  @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
-  userProfile       UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+  userProfile UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
 
   @@index([userProfileId], name: "idx_user_challenge_user")
   @@map("user_challenges")

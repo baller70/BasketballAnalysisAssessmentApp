@@ -25,6 +25,11 @@ import { createLocalReviewShotEvents } from "@/lib/live/liveReviewData"
 import { getPlatformOS } from "@/utils/platform"
 import { HoopCalibrationOverlay } from "@/components/live/HoopCalibrationOverlay"
 import type { RimCalibration } from "@/lib/vision/objectTracking"
+import {
+  enqueueVideoUpload,
+  notifyUploadQueueChanged,
+  uploadQueueStorage,
+} from "@/lib/upload/uploadQueue"
 
 interface VideoUploadProps {
   onAnalysisComplete?: (result: VideoAnalysisResult) => void
@@ -265,6 +270,7 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
 
       const videoData = {
         ...sessionData.videoData,
+        videoUrl: videoPreviewUrl || undefined,
         captureSessionId,
         shotEvents,
       }
@@ -292,6 +298,17 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
       if (saved) {
         console.log("✅ Video session saved:", session.id)
       }
+
+      // The original stays binary in IndexedDB and uploads independently of
+      // local analysis/navigation. A signed-out or offline attempt remains
+      // retryable and never blocks the Results screen.
+      void enqueueVideoUpload(uploadQueueStorage, {
+          blob: videoFile,
+          clientSessionId: session.id,
+          fileName: videoFile.name,
+        }).then(() => notifyUploadQueueChanged()).catch((queueError) => {
+        console.error('Could not retain original video for background upload', queueError)
+        })
 
       if (onAnalysisComplete) {
         onAnalysisComplete(analysisResult)

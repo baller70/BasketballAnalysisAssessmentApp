@@ -42,6 +42,7 @@ export interface AnalysisSession {
   // Video session data
   mediaType?: 'image' | 'video' // Type of media analyzed
   videoData?: {
+    videoUrl?: string
     captureSessionId?: string | null
     shotEvents?: Array<PersistedShotEvent & { reviewOnly?: boolean }>
     annotatedFramesBase64: string[] // All frames with skeleton overlay
