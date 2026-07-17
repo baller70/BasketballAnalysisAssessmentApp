@@ -187,11 +187,15 @@ function isNearRim(observation: ShotFrameObservation, options: Required<ShotPhas
   if (!observation.ball || !observation.rim || !validBall(observation, options.minConfidence)) return false
   const dx = observation.ball.x - observation.rim.x
   const dy = observation.ball.y - observation.rim.y
-  const radius = Math.max(
-    options.rimDistancePixels,
-    (observation.rim.width ?? 0) / 2,
-    (observation.rim.height ?? 0) / 2
-  )
+  const normalizedCoordinates = [observation.ball.x, observation.ball.y, observation.rim.x, observation.rim.y]
+    .every((value) => value >= 0 && value <= 1.5)
+  const radius = normalizedCoordinates
+    ? Math.max(0.08, (observation.rim.width ?? 0) / 2, (observation.rim.height ?? 0) / 2)
+    : Math.max(
+        options.rimDistancePixels,
+        (observation.rim.width ?? 0) / 2,
+        (observation.rim.height ?? 0) / 2,
+      )
   return Math.hypot(dx, dy) <= radius
 }
 

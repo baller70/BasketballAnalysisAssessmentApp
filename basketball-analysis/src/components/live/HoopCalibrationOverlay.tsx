@@ -47,6 +47,8 @@ export interface HoopCalibrationOverlayProps {
   ball?: BallObservation | null
   onChange(value: RimCalibration | null): void
   disabled?: boolean
+  /** `null` keeps one-off uploaded-video calibration out of live-camera storage. */
+  persistenceKey?: string | null
 }
 
 export function HoopCalibrationOverlay({
@@ -57,11 +59,14 @@ export function HoopCalibrationOverlay({
   ball = null,
   onChange,
   disabled = false,
+  persistenceKey,
 }: HoopCalibrationOverlayProps) {
   const [calibrating, setCalibrating] = useState(false)
   const [displaySize, setDisplaySize] = useState<FrameSize | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
-  const storageKey = rimCalibrationStorageKey(facingMode, orientation)
+  const storageKey = persistenceKey === undefined
+    ? rimCalibrationStorageKey(facingMode, orientation)
+    : persistenceKey
 
   useEffect(() => {
     setCalibrating(false)
@@ -105,7 +110,7 @@ export function HoopCalibrationOverlay({
   }, [ball, displaySize, facingMode, frameSize])
 
   const update = (next: RimCalibration | null) => {
-    saveRimCalibration(storageKey, next)
+    if (storageKey) saveRimCalibration(storageKey, next)
     onChange(next)
   }
 

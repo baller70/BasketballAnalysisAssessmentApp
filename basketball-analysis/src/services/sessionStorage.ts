@@ -5,6 +5,8 @@
 import type { CanonicalAngles, CanonicalVisionObservation } from '@/services/pose'
 import type { MechanicsGateResult } from '@/lib/vision/confidenceGate'
 import type { PersistedShotEvent } from '@/lib/api/shotEvents'
+import type { BallObservation } from '@/lib/vision/objectTracking'
+import type { ShotResultObservation } from '@/lib/vision/shotResult'
 import { csrfFetch } from '@/lib/api/csrfFetch'
 
 export interface SessionScreenshot {
@@ -72,6 +74,8 @@ export interface AnalysisSession {
       metrics: Record<string, number>
       keypoint_count?: number
       ball_detected?: boolean
+      ball?: BallObservation | { x: number; y: number; radius: number }
+      shot_result?: ShotResultObservation
       keypoints?: Record<string, { x: number; y: number; confidence: number }>
       mechanics?: MechanicsGateResult
       canonicalObservation?: CanonicalVisionObservation
@@ -89,6 +93,7 @@ export interface AnalysisSession {
       image_base64: string
     }>
     canonicalObservation?: CanonicalVisionObservation
+    shotResult?: ShotResultObservation
   }
 }
 

@@ -1,5 +1,6 @@
 import type { Pose, ShootingFormFeedback } from '@/services/poseDetection'
 import type { ShotEventInput } from '@/lib/api/shotEvents'
+import type { ShotResultObservation } from '@/lib/vision/shotResult'
 
 /**
  * The detector runs from a long-lived animation-frame callback. Keep the
@@ -21,6 +22,32 @@ export interface LiveShotDetectionResult {
   confidence?: number
   shotScore: number | null
   event: ShotEventInput | null
+}
+
+/** Attach a final calibrated result to the newest detector event awaiting review. */
+export function applyLiveShotResult(
+  events: ShotEventInput[],
+  observation: ShotResultObservation,
+): boolean {
+  if (!observation.final || observation.result === 'unknown') return false
+  for (let index = events.length - 1; index >= 0; index -= 1) {
+    const event = events[index]
+    if ((event.detectedResult ?? 'unknown') !== 'unknown') continue
+    const priorMetadata = event.metadata && typeof event.metadata === 'object' && !Array.isArray(event.metadata)
+      ? event.metadata as Record<string, unknown>
+      : {}
+    event.detectedResult = observation.result
+    event.confidence = observation.confidence ?? event.confidence
+    event.metadata = {
+      ...priorMetadata,
+      resultProvenance: observation.provenance.source,
+      resultReason: observation.reason,
+      trajectorySampleCount: observation.provenance.trustedSampleCount,
+      resultTimestampMs: observation.timestampMs,
+    }
+    return true
+  }
+  return false
 }
 
 /**

@@ -41,7 +41,11 @@ export default function UploadPage() {
   const { setUploadedFile, setUploadedImageBase64 } = useAnalysisStore()
 
   // State
-  const [mode, setMode] = useState<UploadMode>("image")
+  const [mode, setMode] = useState<UploadMode>(() => {
+    if (typeof window === 'undefined') return 'image'
+    const requested = new URLSearchParams(window.location.search).get('mode')
+    return requested === 'video' || requested === 'live' ? requested : 'image'
+  })
   const [showEducation, setShowEducation] = useState(true)
   const [files, setFiles] = useState<File[]>([])
   const [previewUrls, setPreviewUrls] = useState<string[]>([])

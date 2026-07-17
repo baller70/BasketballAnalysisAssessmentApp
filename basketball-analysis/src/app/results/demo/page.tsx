@@ -1948,15 +1948,11 @@ function DemoResultsPageContent() {
   const [showFabMenu, setShowFabMenu] = useState(false)
   const videoUploadInputRef = useRef<HTMLInputElement>(null)
 
-  // iPhone Safari is unreliable when a floating label targets an off-screen
-  // file input. Keep the native input and open it synchronously from the user's
-  // actual tap so the browser recognizes the required user gesture.
+  // Use the dedicated video flow so every upload gets an orientation-correct
+  // preview and optional hoop calibration before analysis starts.
   const openVideoPicker = useCallback(() => {
-    const input = videoUploadInputRef.current
-    if (!input) return
-    input.value = ''
-    input.click()
     setShowFabMenu(false)
+    window.location.assign('/upload?mode=video')
   }, [])
 
   // Processing screen state for 7-stage popup

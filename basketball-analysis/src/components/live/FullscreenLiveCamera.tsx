@@ -66,10 +66,15 @@ import {
   normalizeCaptureOrientation,
   normalizeCapturePlatform,
 } from '@/lib/capture/captureSession'
-import { recordLiveShotDetection } from '@/lib/live/shotDetection'
+import { applyLiveShotResult, recordLiveShotDetection } from '@/lib/live/shotDetection'
 import { buildLiveVideoAnalysisData } from '@/lib/live/liveReviewData'
 import { deriveLiveObjectVisibility } from '@/lib/live/liveObjectTracking'
 import type { BallObservation, RimCalibration } from '@/lib/vision/objectTracking'
+import {
+  ShotTrajectoryTracker,
+  type ShotResult,
+  type ShotResultObservation,
+} from '@/lib/vision/shotResult'
 
 // ============================================
 // TYPES
@@ -104,6 +109,7 @@ function toStoredVideoData(data: VideoAnalysisData): NonNullable<AnalysisSession
     allKeypoints: data.allKeypoints,
     keyScreenshots: data.keyScreenshots,
     canonicalObservation: data.canonicalObservation,
+    shotResult: data.shotResult,
   }
 }
 
@@ -355,6 +361,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   const [showControls, setShowControls] = useState(true)
   const [showShotFlash, setShowShotFlash] = useState(false)
   const [lastShotScore, setLastShotScore] = useState<number | null>(null)
+  const [lastShotOutcome, setLastShotOutcome] = useState<Exclude<ShotResult, 'unknown'> | null>(null)
 
   // State for saved video
   const [savedVideoUrl, setSavedVideoUrl] = useState<string | null>(null)
@@ -430,6 +437,8 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   const latestBallRef = useRef<BallObservation | null>(null)
   const rimCalibrationRef = useRef<RimCalibration | null>(null)
   const objectDetectorReadyRef = useRef(false)
+  const shotTrajectoryRef = useRef(new ShotTrajectoryTracker())
+  const pendingShotResultRef = useRef<ShotResultObservation | null>(null)
   
   // Stabilized metrics - hold values for longer so users can read them
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- loosely-typed runtime angles from the pose pipeline
@@ -480,6 +489,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   // mutable refs below are read when a shot is actually detected.
   const handleShootingDetected = useCallback((detectedPose: Pose) => {
     console.log('[FullscreenLive] Shooting motion detected!')
+    setLastShotOutcome(null)
     latestPoseRef.current = detectedPose
     const { shotScore } = recordLiveShotDetection(
       latestPoseRef.current ?? detectedPose,
@@ -490,6 +500,12 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
         detectedShotEvents: detectedShotEventsRef,
       },
     )
+    const pendingResult = pendingShotResultRef.current
+    if (pendingResult && applyLiveShotResult(detectedShotEventsRef.current, pendingResult)) {
+      pendingShotResultRef.current = null
+      setLastShotOutcome(pendingResult.result === 'unknown' ? null : pendingResult.result)
+      shotTrajectoryRef.current.reset()
+    }
 
     // Show shot flash and increment counter
     if (shotScore !== null) {
@@ -558,6 +574,29 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   })
 
   const objectDetectorReady = !isObjectTrackingLoading && objectTrackingError === null
+
+  // Ball and pose inference share the same orientation-normalized pixels. Feed
+  // each trusted ball observation into the calibrated trajectory classifier;
+  // only a final make/miss is allowed to update the detector event.
+  useEffect(() => {
+    if (!isRecording || !ball) return
+    const result = shotTrajectoryRef.current.update({
+      timestampMs: ball.timestampMs,
+      ball,
+      rim: rimCalibration,
+    })
+    if (!result.final || result.result === 'unknown') return
+
+    if (applyLiveShotResult(detectedShotEventsRef.current, result)) {
+      setLastShotOutcome(result.result)
+      pendingShotResultRef.current = null
+      shotTrajectoryRef.current.reset()
+    } else {
+      // A calibrated rim event can land just before the body detector emits
+      // RELEASE. Retain it briefly and attach it to that next detector event.
+      pendingShotResultRef.current = result
+    }
+  }, [ball, isRecording, rimCalibration])
 
   const poseDisplayDimensions = poseInputRotation === 'none'
     ? videoDimensions
@@ -919,6 +958,9 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   // Flip camera
   const handleFlipCamera = useCallback(async () => {
     const newMode = facingMode === 'user' ? 'environment' : 'user'
+    shotTrajectoryRef.current.reset()
+    pendingShotResultRef.current = null
+    setLastShotOutcome(null)
     setFacingMode(newMode)
     
     // Re-initialize camera with new facing mode
@@ -1156,6 +1198,9 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     setRecordingDuration(0)
     setShotCount(0) // Reset shot counter
     detectedShotEventsRef.current = []
+    shotTrajectoryRef.current.reset()
+    pendingShotResultRef.current = null
+    setLastShotOutcome(null)
     captureSessionIdRef.current = null
     captureSessionPromiseRef.current = createCaptureSession(buildCaptureSessionMetadata({
       mode: 'shot_tracking',
@@ -2643,6 +2688,23 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
               <Target className="w-4 h-4 text-white" />
               <span className="text-white text-sm font-bold">SHOT DETECTED</span>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Trusted make/miss feedback is separate from body-only shot detection. */}
+      <AnimatePresence>
+        {lastShotOutcome && isRecording && (
+          <motion.div
+            initial={{ opacity: 0, y: -16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -16 }}
+            className={`absolute top-28 left-1/2 z-40 -translate-x-1/2 rounded-full px-5 py-2 text-sm font-black uppercase tracking-wide text-white ${
+              lastShotOutcome === 'make' ? 'bg-green-500/90' : 'bg-red-500/90'
+            }`}
+            role="status"
+          >
+            {lastShotOutcome}
           </motion.div>
         )}
       </AnimatePresence>

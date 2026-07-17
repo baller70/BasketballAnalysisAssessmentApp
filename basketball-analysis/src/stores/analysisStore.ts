@@ -43,6 +43,8 @@ import type {
 } from "@/types"
 import type { CanonicalAngles, CanonicalVisionObservation } from "@/services/pose"
 import type { MechanicsGateResult } from "@/lib/vision/confidenceGate"
+import type { BallObservation } from "@/lib/vision/objectTracking"
+import type { ShotResultObservation } from "@/lib/vision/shotResult"
 
 // Form analysis result type (previously from formAnalysis.ts)
 export interface FormAnalysisResult {
@@ -143,7 +145,8 @@ export interface VideoAnalysisData {
     legacy_phase?: string
     metrics: Record<string, number>
     confidence?: number
-    ball?: { x: number; y: number; radius: number }
+    ball?: BallObservation | { x: number; y: number; radius: number }
+    shot_result?: ShotResultObservation
     keypoint_count?: number
     ball_detected?: boolean
     keypoints?: Record<string, { x: number; y: number; confidence: number }>
@@ -186,6 +189,7 @@ export interface VideoAnalysisData {
     image_base64: string
   }>
   canonicalObservation?: CanonicalVisionObservation
+  shotResult?: ShotResultObservation
 }
 
 interface AnalysisState {

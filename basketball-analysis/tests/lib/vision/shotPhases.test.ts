@@ -85,4 +85,20 @@ describe('shot phase tracker', () => {
     expect(tracker.update(frame(66, 480)).phase).toBe('rise')
     expect(tracker.update(frame(99, 480)).phase).toBe('set')
   })
+
+  it('does not apply the pixel rim radius to normalized ball coordinates', () => {
+    const tracker = createShotPhaseTracker()
+    tracker.update(frame(0, 500))
+    tracker.update(frame(33, 480))
+    tracker.update(frame(66, 480, { isSet: true }))
+    tracker.update(frame(99, 460, { released: true }))
+    tracker.update(frame(132, 450, { ballInFlight: true }))
+    const distant = tracker.update(frame(165, 445, {
+      ballInFlight: true,
+      ball: { x: 0.1, y: 0.1, confidence: 0.9 },
+      rim: { x: 0.8, y: 0.8, width: 0.14, height: 0.12 },
+    }))
+
+    expect(distant.phase).toBe('flight')
+  })
 })

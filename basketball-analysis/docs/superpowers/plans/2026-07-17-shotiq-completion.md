@@ -67,7 +67,7 @@
 - [x] **Step 7: Implement the existing-style ShotIQ overlay** without moving or hiding record controls.
 - [x] **Step 8: Wire live ball and hoop observations** into readiness and capture-session observations; the record override remains available, while shot-result tracking clearly says `Calibrate hoop` until calibration exists.
 - [x] **Step 9: Run focused tests, full tests, type-check, lint, and build.**
-- [ ] **Step 10: Commit** `feat: add live ball tracking and hoop calibration`.
+- [x] **Step 10: Commit** `feat: add live ball tracking and hoop calibration` (`a8947f1`).
 
 ### Task 3: Classify trusted make/miss results from trajectory
 
@@ -86,14 +86,14 @@
 - Result is `make`, `miss`, or `unknown`; `make` requires downward center crossing through the calibrated rim window; `miss` requires a trusted near-rim approach followed by exit outside the cylinder; all other sequences remain `unknown`.
 - Shot events persist result confidence and trajectory provenance without overwriting human corrections.
 
-- [ ] **Step 1: Write failing trajectory tests** for make, left/right/front miss, occlusion, upward pass, low confidence, stale frames, and no rim calibration.
-- [ ] **Step 2: Run** `npx vitest run tests/lib/vision/shotResult.test.ts` and confirm the module is missing.
-- [ ] **Step 3: Implement the pure tracker** with monotonic timestamps, bounded trajectory history, normalized rim geometry, and conservative confidence output.
-- [ ] **Step 4: Extend phase tests first** so trusted ball separation advances release/flight/rim-event/complete and untrusted data does not.
-- [ ] **Step 5: Integrate live results** into shot-event creation, counter feedback, capture observations, and Results review while retaining `unknown` for body-only captures.
-- [ ] **Step 6: Extend uploaded-video sampling** to run the same throttled ball detector and shared trajectory engine; persist per-frame ball observations and the trusted result.
-- [ ] **Step 7: Run all focused tests, then full tests, type-check, lint, and build.**
-- [ ] **Step 8: Commit** `feat: classify trusted shot results`.
+- [x] **Step 1: Write failing trajectory tests** for make, left/right/front miss, occlusion, upward pass, low confidence, stale frames, and no rim calibration.
+- [x] **Step 2: Run** `npx vitest run tests/lib/vision/shotResult.test.ts` and confirm the module is missing.
+- [x] **Step 3: Implement the pure tracker** with monotonic timestamps, bounded trajectory history, normalized rim geometry, and conservative confidence output.
+- [x] **Step 4: Extend phase tests first** so normalized rim geometry cannot accidentally use the pixel-distance default.
+- [x] **Step 5: Integrate live results** into shot-event creation, counter feedback, capture observations, and Results review while retaining `unknown` for body-only captures.
+- [x] **Step 6: Extend uploaded-video sampling** to run the same throttled ball detector and shared trajectory engine; persist per-frame ball observations and the trusted result.
+- [x] **Step 7: Run all focused tests, then full tests, type-check, lint, and build (36 files / 146 tests; lint has zero errors; 66-page build).**
+- [x] **Step 8: Commit** `feat: classify trusted shot results`.
 
 ### Task 4: Add resumable authenticated video uploads and durable offline queueing
 

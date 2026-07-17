@@ -41,6 +41,19 @@ import {
   type ShootingAnglesInput,
 } from '@/lib/scoring/biomechanicalScoring'
 import { FILE_LIMITS, VIDEO_CONSTRAINTS } from '@/lib/constants'
+import {
+  isValidRimCalibration,
+  type BallObservation,
+  type RimCalibration,
+} from '@/lib/vision/objectTracking'
+import {
+  ShotTrajectoryTracker,
+  type ShotResultObservation,
+} from '@/lib/vision/shotResult'
+import {
+  cocoBallDetector,
+  type CocoDetectorInput,
+} from '@/services/vision/CocoBallDetector'
 
 // Cap on how many frames we actually run inference on, so a long clip stays
 // responsive (90s * 10fps would be 900 frames). Frames are sampled evenly.
@@ -124,6 +137,9 @@ export interface VideoAnalysisResult {
   } | null
 
   fps?: number
+
+  /** Final result only when calibrated ball evidence was sufficient. */
+  shot_result?: ShotResultObservation
 }
 
 // ----------------------------------------------------------------------------
@@ -164,6 +180,8 @@ interface SampledFrame {
   keypoints: ProviderKeypoint[] | null
   form: FormAnalysis | null
   imageBase64: string
+  ball?: BallObservation | null
+  shotResult?: ShotResultObservation
 }
 
 export interface VideoFrameRecord {
@@ -175,6 +193,8 @@ export interface VideoFrameRecord {
   metrics: Record<string, number>
   keypoint_count: number
   ball_detected: boolean
+  ball?: BallObservation
+  shot_result?: ShotResultObservation
   keypoints?: Record<string, { x: number; y: number; confidence: number }>
   mechanics?: MechanicsGateResult
   canonicalObservation?: CanonicalVisionObservation
@@ -199,6 +219,7 @@ export interface VideoSessionData {
   allKeypoints: Array<Record<string, { x: number; y: number; confidence: number }>>
   keyScreenshots?: KeyScreenshot[]
   canonicalObservation?: CanonicalVisionObservation
+  shotResult?: ShotResultObservation
 }
 
 /** Build a persistence-safe video payload without fabricating metrics. */
@@ -227,6 +248,7 @@ export function toVideoSessionData(videoResult: VideoAnalysisResult): VideoSessi
     allKeypoints: videoResult.all_keypoints ?? [],
     keyScreenshots: videoResult.key_screenshots,
     canonicalObservation: videoResult.canonicalObservation,
+    shotResult: videoResult.shot_result,
   }
 }
 
@@ -251,7 +273,9 @@ export function buildVideoFrameRecord(
     legacy_phase: legacyPhase,
     metrics,
     keypoint_count: frame.keypoints?.length ?? 0,
-    ball_detected: false,
+    ball_detected: Boolean(frame.ball),
+    ball: frame.ball ?? undefined,
+    shot_result: frame.shotResult,
     keypoints: frame.keypoints ? keypointsToRecord(frame.keypoints) : undefined,
     mechanics: frame.form?.mechanics,
     canonicalObservation: frame.form?.canonicalObservation,
@@ -295,8 +319,21 @@ function findReleaseFrame(frames: SampledFrame[]): number {
 // Main analysis
 // ----------------------------------------------------------------------------
 
+export interface UploadedVideoBallDetector {
+  reset(): void
+  init(): Promise<void>
+  detect(input: CocoDetectorInput, timestampMs?: number): Promise<BallObservation | null>
+}
+
+export interface VideoAnalysisOptions {
+  rimCalibration?: RimCalibration | null
+  /** Injectable for deterministic tests; production uses the shared COCO model. */
+  ballDetector?: UploadedVideoBallDetector
+}
+
 export async function analyzeVideoShooting(
-  videoFile: File
+  videoFile: File,
+  options: VideoAnalysisOptions = {},
 ): Promise<VideoAnalysisResult> {
   // Validate file size.
   if (videoFile.size > FILE_LIMITS.MAX_VIDEO_SIZE_BYTES) {
@@ -345,6 +382,20 @@ export async function analyzeVideoShooting(
     provider.reset?.()
     await provider.init()
 
+    const rimCalibration = isValidRimCalibration(options.rimCalibration)
+      ? options.rimCalibration
+      : null
+    const ballDetector: UploadedVideoBallDetector | null = rimCalibration
+      ? (options.ballDetector ?? cocoBallDetector)
+      : null
+    const shotTracker = new ShotTrajectoryTracker()
+    let latestShotResult: ShotResultObservation | undefined
+    const objectSampleStride = Math.max(1, Math.round(fps / 6))
+    if (ballDetector) {
+      ballDetector.reset()
+      await ballDetector.init()
+    }
+
     const frames: SampledFrame[] = []
     for (let i = 0; i < frameCount; i++) {
       const t = i * step
@@ -356,7 +407,15 @@ export async function analyzeVideoShooting(
       const keypoints = await provider.detectPose(canvas, timestampMs)
       const form = keypoints ? provider.analyzeForm(keypoints, timestampMs) : null
 
-      frames.push({ index: i, timestamp: t, keypoints, form, imageBase64 })
+      let ball: BallObservation | null = null
+      let shotResult: ShotResultObservation | undefined
+      if (ballDetector && rimCalibration && i % objectSampleStride === 0) {
+        ball = await ballDetector.detect(canvas, timestampMs)
+        shotResult = shotTracker.update({ timestampMs, ball, rim: rimCalibration })
+        latestShotResult = shotResult
+      }
+
+      frames.push({ index: i, timestamp: t, keypoints, form, imageBase64, ball, shotResult })
     }
 
     const detected = frames.filter((f) => f.keypoints && f.form)
@@ -505,6 +564,7 @@ export async function analyzeVideoShooting(
       key_screenshots,
       shot_range: { start: setupIdx, end: followIdx, phases: ['SETUP', 'RELEASE', 'FOLLOW_THROUGH'] },
       canonicalObservation: releaseForm.canonicalObservation,
+      shot_result: latestShotResult,
     }
   } catch (error) {
     console.error('Video analysis error:', error)

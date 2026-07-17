@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Pose, ShootingFormFeedback } from '@/services/poseDetection'
 import type { ShotEventInput } from '@/lib/api/shotEvents'
-import { recordLiveShotDetection } from '@/lib/live/shotDetection'
+import { applyLiveShotResult, recordLiveShotDetection } from '@/lib/live/shotDetection'
 
 const pose: Pose = {
   keypoints: [
@@ -50,5 +50,56 @@ describe('recordLiveShotDetection', () => {
 
     expect(result.event).toBeNull()
     expect(refs.detectedShotEvents.current).toHaveLength(0)
+  })
+
+  it('applies a trusted trajectory result to the newest unresolved detector event', () => {
+    const events: ShotEventInput[] = [
+      { sequence: 0, timestampMs: 1_000, detectedResult: 'make' },
+      { sequence: 1, timestampMs: 2_000, detectedResult: 'unknown', metadata: { source: 'live_camera' } },
+    ]
+
+    const updated = applyLiveShotResult(events, {
+      result: 'miss',
+      confidence: 0.82,
+      final: true,
+      timestampMs: 2_400,
+      reason: 'Ball exited outside the hoop cylinder',
+      provenance: {
+        source: 'calibrated_ball_trajectory',
+        rimCalibrated: true,
+        sampleCount: 4,
+        trustedSampleCount: 4,
+      },
+    })
+
+    expect(updated).toBe(true)
+    expect(events[0].detectedResult).toBe('make')
+    expect(events[1]).toMatchObject({ detectedResult: 'miss', confidence: 0.82 })
+    expect(events[1].metadata).toMatchObject({
+      source: 'live_camera',
+      resultProvenance: 'calibrated_ball_trajectory',
+      resultReason: 'Ball exited outside the hoop cylinder',
+      trajectorySampleCount: 4,
+    })
+  })
+
+  it('does not promote an unknown or unfinished trajectory result', () => {
+    const events: ShotEventInput[] = [{ detectedResult: 'unknown' }]
+    const updated = applyLiveShotResult(events, {
+      result: 'unknown',
+      confidence: null,
+      final: false,
+      timestampMs: 100,
+      reason: 'Waiting',
+      provenance: {
+        source: 'calibrated_ball_trajectory',
+        rimCalibrated: true,
+        sampleCount: 2,
+        trustedSampleCount: 2,
+      },
+    })
+
+    expect(updated).toBe(false)
+    expect(events[0].detectedResult).toBe('unknown')
   })
 })

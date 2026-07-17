@@ -23,6 +23,8 @@ import {
 } from "@/lib/capture/captureSession"
 import { createLocalReviewShotEvents } from "@/lib/live/liveReviewData"
 import { getPlatformOS } from "@/utils/platform"
+import { HoopCalibrationOverlay } from "@/components/live/HoopCalibrationOverlay"
+import type { RimCalibration } from "@/lib/vision/objectTracking"
 
 interface VideoUploadProps {
   onAnalysisComplete?: (result: VideoAnalysisResult) => void
@@ -36,6 +38,8 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
   const [, setAnalysisProgress] = useState<string>("")
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<VideoAnalysisResult | null>(null)
+  const [videoDimensions, setVideoDimensions] = useState({ width: 0, height: 0 })
+  const [rimCalibration, setRimCalibration] = useState<RimCalibration | null>(null)
   
   // Frame playback state
   const [currentFrameIndex, setCurrentFrameIndex] = useState(0)
@@ -103,6 +107,8 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
     setResult(null)
     setCurrentFrameIndex(0)
     setIsPlaying(false)
+    setVideoDimensions({ width: 0, height: 0 })
+    setRimCalibration(null)
   }
 
   const clearVideo = () => {
@@ -113,6 +119,8 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
     setError(null)
     setCurrentFrameIndex(0)
     setIsPlaying(false)
+    setVideoDimensions({ width: 0, height: 0 })
+    setRimCalibration(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
@@ -149,7 +157,7 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
       setAnalysisProgress("Analyzing frames...")
       
       // Call the video analysis service
-      const analysisResult = await analyzeVideoShooting(videoFile)
+      const analysisResult = await analyzeVideoShooting(videoFile, { rimCalibration })
 
       if (!analysisResult.success) {
         throw new Error(analysisResult.error || 'Analysis failed')
@@ -161,21 +169,40 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
 
       captureSessionId = await resolveCaptureSessionId()
 
+      const trustedShotResult = analysisResult.shot_result?.final
+        && analysisResult.shot_result.result !== 'unknown'
+        ? analysisResult.shot_result
+        : null
+      const releaseEventIndex = (analysisResult.phases || []).findIndex((phase) =>
+        String(phase.legacy_phase ?? phase.phase).toLowerCase() === 'release')
       const detectorEvents: ShotEventInput[] = (analysisResult.phases || []).map((phase, index) => {
         const frame = analysisResult.frame_data?.[phase.frame]
+        const carriesShotResult = Boolean(trustedShotResult) && index === releaseEventIndex
         return {
           sequence: index,
           timestampMs: Math.max(0, Math.round(Number(phase.timestamp || 0) * 1000)),
           startFrame: Number.isFinite(Number(phase.frame)) ? Number(phase.frame) : undefined,
           endFrame: Number.isFinite(Number(phase.frame)) ? Number(phase.frame) : undefined,
           detected: true,
-          detectedResult: 'unknown',
+          detectedResult: carriesShotResult ? trustedShotResult!.result : 'unknown',
           detectedPhase: String(phase.phase || 'unknown'),
-          confidence: typeof frame?.canonicalObservation?.poseConfidence === 'number'
-            ? frame.canonicalObservation.poseConfidence
-            : undefined,
+          confidence: carriesShotResult
+            ? trustedShotResult!.confidence ?? undefined
+            : typeof frame?.canonicalObservation?.poseConfidence === 'number'
+              ? frame.canonicalObservation.poseConfidence
+              : undefined,
           phaseMarkers: { phase: String(phase.phase || 'unknown') },
-          metadata: { source: 'video_upload', frameIndex: phase.frame },
+          metadata: {
+            source: 'video_upload',
+            frameIndex: phase.frame,
+            ...(carriesShotResult
+              ? {
+                  resultProvenance: trustedShotResult!.provenance.source,
+                  resultReason: trustedShotResult!.reason,
+                  trajectorySampleCount: trustedShotResult!.provenance.trustedSampleCount,
+                }
+              : {}),
+          },
         }
       })
       // Do not create orphan detector rows while session creation is still in
@@ -448,20 +475,46 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
         ) : (
           <div className="space-y-4">
             {/* Video Preview */}
-            <div className="relative">
+            <div
+              className="relative mx-auto w-full max-w-full overflow-hidden rounded-lg bg-black"
+              style={videoDimensions.width > 0 && videoDimensions.height > 0
+                ? { aspectRatio: `${videoDimensions.width} / ${videoDimensions.height}`, maxHeight: '300px', width: 'fit-content' }
+                : { height: '300px' }}
+            >
               <video
                 src={videoPreviewUrl || undefined}
                 controls
-                className="w-full rounded-lg bg-black"
-                style={{ maxHeight: '300px' }}
+                className="absolute inset-0 h-full w-full object-cover"
+                onLoadedMetadata={(event) => setVideoDimensions({
+                  width: event.currentTarget.videoWidth || 1,
+                  height: event.currentTarget.videoHeight || 1,
+                })}
               />
+              {videoDimensions.width > 0 && videoDimensions.height > 0 && (
+                <HoopCalibrationOverlay
+                  frameSize={videoDimensions}
+                  facingMode="environment"
+                  orientation={videoDimensions.width >= videoDimensions.height ? 'landscape' : 'portrait'}
+                  value={rimCalibration}
+                  onChange={setRimCalibration}
+                  persistenceKey={null}
+                  disabled={isAnalyzing}
+                />
+              )}
               <button
                 onClick={clearVideo}
-                className="absolute top-2 right-2 bg-red-500/80 hover:bg-red-500 text-white p-1.5 rounded-full transition-colors"
+                className="absolute left-2 top-2 z-40 bg-red-500/80 hover:bg-red-500 text-white p-1.5 rounded-full transition-colors"
+                aria-label="Remove video"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
+
+            <p className="text-center text-xs text-[#aaa]">
+              {rimCalibration
+                ? 'Hoop locked — make/miss tracking will use the calibrated rim.'
+                : 'Calibrate the hoop for make/miss tracking. Form analysis can still run without it.'}
+            </p>
 
             <div className="flex items-center justify-between">
               <span className="text-[#888] text-sm truncate">{videoFile.name}</span>
@@ -627,6 +680,14 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
               <div className="text-[#E5E5E5] font-semibold">{result.phases?.length || 0}</div>
             </div>
           </div>
+
+          {result.shot_result?.final && result.shot_result.result !== 'unknown' && (
+            <div className={`rounded-lg p-3 text-center text-lg font-black uppercase text-white ${
+              result.shot_result.result === 'make' ? 'bg-green-600' : 'bg-red-600'
+            }`}>
+              {result.shot_result.result} · {Math.round((result.shot_result.confidence ?? 0) * 100)}% trajectory confidence
+            </div>
+          )}
 
           {/* Note about full results */}
           <p className="text-[#888] text-xs text-center">
