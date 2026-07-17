@@ -13,6 +13,7 @@
 
 import * as poseDetection from '@tensorflow-models/pose-detection';
 import * as tf from '@tensorflow/tfjs';
+import { prepareVisionTensorflowBackend } from '@/services/vision/tensorflowBackend';
 
 // ============================================
 // TYPES
@@ -148,8 +149,9 @@ class PoseDetectionService {
     try {
       console.log(`[PoseDetection] Initializing MoveNet ${modelType}...`);
       
-      // Ensure TensorFlow.js is ready
-      await tf.ready();
+      // Pose and ball tracking share one TensorFlow runtime. Prepare it before
+      // either model loads so COCO-SSD cannot run blocking suppression on WebGPU.
+      await prepareVisionTensorflowBackend();
       console.log('[PoseDetection] TensorFlow.js ready, backend:', tf.getBackend());
       
       // Create detector with MoveNet
@@ -614,5 +616,4 @@ export const poseDetectionService = new PoseDetectionService();
 
 // Export class for testing
 export { PoseDetectionService };
-
 

@@ -48,6 +48,20 @@ vi.mock('@/hooks/usePoseDetection', () => ({
   },
 }))
 
+// Object-model startup is covered by useObjectTracking/CocoBallDetector tests.
+// Keep this camera-coordinate suite isolated from a real browser GPU backend.
+vi.mock('@/hooks/useObjectTracking', () => ({
+  useObjectTracking: () => ({
+    ball: null,
+    error: null,
+    fps: 0,
+    isLoading: false,
+    isTracking: false,
+    startTracking: vi.fn(),
+    stopTracking: vi.fn(),
+  }),
+}))
+
 vi.mock('@/components/live/ProfessionalSkeletonOverlay', () => ({
   ProfessionalSkeletonOverlay: ({ width, height, pose }: {
     width: number

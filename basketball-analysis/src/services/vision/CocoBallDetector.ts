@@ -3,6 +3,7 @@ import {
   type BallObservation,
   type ObjectDetection,
 } from '@/lib/vision/objectTracking'
+import { prepareVisionTensorflowBackend } from '@/services/vision/tensorflowBackend'
 
 export type CocoDetectorInput = HTMLImageElement | HTMLCanvasElement | HTMLVideoElement
 
@@ -22,6 +23,7 @@ export interface CocoBallDetectorOptions {
 }
 
 async function loadDefaultModel(): Promise<CocoObjectModel> {
+  await prepareVisionTensorflowBackend()
   const cocoSsd = await import('@tensorflow-models/coco-ssd')
   return cocoSsd.load({ base: 'lite_mobilenet_v2' })
 }
@@ -101,4 +103,3 @@ export class CocoBallDetector {
 }
 
 export const cocoBallDetector = new CocoBallDetector()
-
