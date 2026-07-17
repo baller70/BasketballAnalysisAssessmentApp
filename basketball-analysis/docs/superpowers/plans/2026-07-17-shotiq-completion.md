@@ -189,13 +189,13 @@
 **Interfaces:**
 - Produces one GitHub `main` commit chain, one matching production server commit, current migrations, healthy PM2 process, and passing public smoke routes.
 
-- [ ] **Step 1: Re-read every plan requirement** and map it to code, tests, or measured device evidence.
-- [ ] **Step 2: Run** `npm test -- --run`, `npx tsc --noEmit`, `npm run lint`, `npm run build`, Prisma validation/migration status, benchmark gate, and device-matrix gate.
-- [ ] **Step 3: Confirm the worktree contains no unrelated or uncommitted changes.**
-- [ ] **Step 4: Push all verified commits directly to GitHub `main`.**
-- [ ] **Step 5: SSH-deploy with `/opt/shotiq/basketball-analysis/deploy.sh`.**
-- [ ] **Step 6: Verify server/GitHub commit parity, PM2 health, migration status, clean startup logs, and public Results/Training/Media/Upload routes.**
-- [ ] **Step 7: Report the checked checklist, exact commits, test counts, live URLs, and any physical evidence blocker plainly.**
+- [x] **Step 1: Re-read every plan requirement** and map it to code, tests, or measured device evidence.
+- [ ] **Step 2: Run** `npm test -- --run`, `npx tsc --noEmit`, `npm run lint`, `npm run build`, Prisma validation/migration status, benchmark gate, and device-matrix gate. Every automated gate passes (46 files / 197 tests, TypeScript clean, lint zero errors, Prisma valid/current, benchmark passed, 67-page production build); the physical device-matrix gate correctly remains nonzero because measured evidence is unavailable.
+- [x] **Step 3: Confirm the worktree contains no unrelated or uncommitted changes.**
+- [x] **Step 4: Push all verified commits directly to GitHub `main`.**
+- [x] **Step 5: SSH-deploy with `/opt/shotiq/basketball-analysis/deploy.sh`.**
+- [x] **Step 6: Verify server/GitHub commit parity, PM2 health, migration status, clean startup logs, and public Results/Training/Media/Upload routes.**
+- [x] **Step 7: Report the checked checklist, exact commits, test counts, live URLs, and the physical evidence blocker plainly.**
 
 ## Source References
 
