@@ -10,6 +10,8 @@
     "lint": "next lint",
     "test": "vitest run",
     "test:watch": "vitest",
+    "benchmark:vision": "tsx scripts/run-vision-benchmark.ts",
+    "verify:device-matrix": "tsx scripts/verify-device-matrix.ts",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",

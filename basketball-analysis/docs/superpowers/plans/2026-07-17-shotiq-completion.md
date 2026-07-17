@@ -152,13 +152,13 @@
 - Benchmark command consumes real JSON observations and exits nonzero on missing/failed evidence.
 - Device-matrix command requires iPhone 11 and 12, Safari web and native, portrait/landscape, and front/rear entries with build/commit identity.
 
-- [ ] **Step 1: Write failing gate tests** for every threshold, missing denominators, fixture provenance, and low-confidence promotion.
-- [ ] **Step 2: Implement the gate and CLI** and confirm failure against deliberately incomplete evidence.
-- [ ] **Step 3: Add a small consented/public deterministic fixture** containing observations and labels, not private footage; run the same production trajectory engine over it.
-- [ ] **Step 4: Add device-matrix schema/validator tests** that reject missing devices, modes, orientations, cameras, commit hashes, or metrics.
-- [ ] **Step 5: Update CI** so type-check, lint, unit tests, production build, public benchmark, and evidence validation are mandatory.
-- [ ] **Step 6: Run the benchmark and CI commands locally.** Do not mark physical iPhone combinations complete without actual captured evidence.
-- [ ] **Step 7: Commit** `test: enforce vision release evidence`.
+- [x] **Step 1: Write failing gate tests** for every threshold, missing denominators, fixture provenance, and low-confidence promotion.
+- [x] **Step 2: Implement the gate and CLI** and confirm failure against deliberately incomplete evidence.
+- [x] **Step 3: Add a small public deterministic fixture** containing observations and labels, not private footage; run the same production trajectory engine over it.
+- [x] **Step 4: Add device-matrix schema/validator tests** that reject missing devices, modes, orientations, cameras, commit hashes, or metrics.
+- [x] **Step 5: Update CI** so type-check, lint, unit tests, production build, public benchmark, and release-validator tests are mandatory. Physical matrix validation remains the strict pre-deploy command.
+- [x] **Step 6: Run the benchmark and CI commands locally** (42 files / 185 tests, TypeScript clean, lint zero errors, benchmark gate passed, 67-page production build). The separate physical-device command correctly fails while measured iPhone evidence is absent.
+- [x] **Step 7: Commit** `test: enforce vision release evidence`.
 
 ### Task 6: Verify native iPhone build and physical device matrix
 

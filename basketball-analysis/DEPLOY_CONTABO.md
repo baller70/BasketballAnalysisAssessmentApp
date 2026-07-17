@@ -23,7 +23,8 @@ Before deploying a vision change, run the public benchmark fixture and the
 full release gates from `basketball-analysis/`:
 
 ```bash
-npx vitest run tests/lib/vision/benchmark.test.ts
+npm run benchmark:vision
+npm run verify:device-matrix
 npx tsc --noEmit
 npm run lint
 npm test
@@ -38,6 +39,16 @@ recall, make/miss accuracy, and phase error for every run. Use consented or
 synthetic public fixtures only; private player footage must stay out of the
 repository. Do not deploy until the benchmark, type-check, lint, test, and
 production-build gates all pass.
+
+`verify:device-matrix` is intentionally strict: it fails until
+`docs/validation/shotiq-device-matrix.json` contains all 16 measured iPhone
+11/12 combinations from the exact release commit. Never copy test fixtures into
+that file or enter estimated metrics.
+
+Original-video multipart uploads also require the object-store CORS policy to
+allow `PUT` from `https://shotiq.194-146-12-139.sslip.io` and expose the `ETag`
+response header. Without exposed ETags, the browser cannot checkpoint or
+complete uploaded parts.
 
 ---
 
