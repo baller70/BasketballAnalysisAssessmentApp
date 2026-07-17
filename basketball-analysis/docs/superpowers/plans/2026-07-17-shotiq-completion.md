@@ -38,7 +38,7 @@
 - [x] **Step 4: Audit the live scheduler** and confirm the checked-in hook schedules exactly one `requestAnimationFrame` after inference; no production scheduler change is required.
 - [x] **Step 5: Run** `npx vitest run tests/hooks/usePoseDetection.test.tsx` and retain the existing canonical-provider regression.
 - [x] **Step 6: Run the object-tracking and hook tests together** and confirm both remain green.
-- [ ] **Step 7: Commit** `fix: stabilize live vision scheduling` after focused and full tests pass.
+- [x] **Step 7: Commit** the verified canonical object-tracking slice after focused and full tests pass (`0c38444`).
 
 ### Task 2: Add real on-device basketball tracking and ShotIQ hoop calibration
 
@@ -58,15 +58,15 @@
 - `useObjectTracking` throttles object inference to 6 FPS, exposes current ball/FPS/error, and never starts a second overlapping inference.
 - `HoopCalibrationOverlay` maps one user tap into a normalized `RimCalibration`, supports clear/recalibrate, and stores calibration per camera/orientation.
 
-- [ ] **Step 1: Write failing detector tests** for model reuse, class filtering, confidence filtering, and coordinate mapping.
-- [ ] **Step 2: Run** `npx vitest run tests/services/vision/CocoBallDetector.test.ts` and confirm the missing implementation failure.
-- [ ] **Step 3: Implement the detector** using the already-installed official COCO-SSD package; no API keys or remote model are required.
-- [ ] **Step 4: Write failing hook tests** for 6 FPS throttling, no overlapping predictions, stop/reset behavior, and surfaced initialization errors.
-- [ ] **Step 5: Implement the hook** and verify its focused tests.
-- [ ] **Step 6: Write failing calibration component tests** for tap, persistence key, recalibration, orientation isolation, and accessible controls.
-- [ ] **Step 7: Implement the existing-style ShotIQ overlay** without moving or hiding record controls.
-- [ ] **Step 8: Wire live ball and hoop observations** into readiness and capture-session observations; the record override remains available, while shot-result tracking clearly says `Calibrate hoop` until calibration exists.
-- [ ] **Step 9: Run focused tests, full tests, type-check, lint, and build.**
+- [x] **Step 1: Write failing detector tests** for model reuse, class filtering, confidence filtering, and coordinate mapping.
+- [x] **Step 2: Run** `npx vitest run tests/services/vision/CocoBallDetector.test.ts` and confirm the missing implementation failure.
+- [x] **Step 3: Implement the detector** using the already-installed official COCO-SSD package; no API keys or remote model are required.
+- [x] **Step 4: Write failing hook tests** for 6 FPS throttling, no overlapping predictions, stop/reset behavior, surfaced initialization errors, and shared pose/object pixels.
+- [x] **Step 5: Implement the hook** and verify its focused tests.
+- [x] **Step 6: Write failing calibration component tests** for tap, persistence key, recalibration, orientation isolation, accessible controls, and visible ball tracking.
+- [x] **Step 7: Implement the existing-style ShotIQ overlay** without moving or hiding record controls.
+- [x] **Step 8: Wire live ball and hoop observations** into readiness and capture-session observations; the record override remains available, while shot-result tracking clearly says `Calibrate hoop` until calibration exists.
+- [x] **Step 9: Run focused tests, full tests, type-check, lint, and build.**
 - [ ] **Step 10: Commit** `feat: add live ball tracking and hoop calibration`.
 
 ### Task 3: Classify trusted make/miss results from trajectory

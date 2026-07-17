@@ -164,3 +164,45 @@ export function normalizedRectToPixels(rect: NormalizedRect, frame: FrameSize): 
     height: Math.round(rect.height * frame.height),
   }
 }
+
+/** Reverse CSS `object-fit: cover` so preview taps address detector pixels. */
+export function mapDisplayPointToFrame(
+  point: { x: number; y: number },
+  display: FrameSize,
+  frame: FrameSize,
+  mirrored = false,
+): { x: number; y: number } | null {
+  if (!validFrame(display) || !validFrame(frame) || !finite(point.x) || !finite(point.y)) {
+    return null
+  }
+  const displayX = mirrored ? display.width - point.x : point.x
+  const scale = Math.max(display.width / frame.width, display.height / frame.height)
+  const renderedWidth = frame.width * scale
+  const renderedHeight = frame.height * scale
+  const offsetX = (display.width - renderedWidth) / 2
+  const offsetY = (display.height - renderedHeight) / 2
+  return {
+    x: rounded(clamp((displayX - offsetX) / scale, 0, frame.width)),
+    y: rounded(clamp((point.y - offsetY) / scale, 0, frame.height)),
+  }
+}
+
+/** Apply CSS `object-fit: cover` to place source observations on the preview. */
+export function mapFramePointToDisplay(
+  point: { x: number; y: number },
+  frame: FrameSize,
+  display: FrameSize,
+  mirrored = false,
+): { x: number; y: number } | null {
+  if (!validFrame(display) || !validFrame(frame) || !finite(point.x) || !finite(point.y)) {
+    return null
+  }
+  const scale = Math.max(display.width / frame.width, display.height / frame.height)
+  const offsetX = (display.width - frame.width * scale) / 2
+  const offsetY = (display.height - frame.height * scale) / 2
+  const unmirroredX = point.x * scale + offsetX
+  return {
+    x: rounded(mirrored ? display.width - unmirroredX : unmirroredX),
+    y: rounded(point.y * scale + offsetY),
+  }
+}

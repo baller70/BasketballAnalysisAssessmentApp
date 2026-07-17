@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest'
 import {
   createRimCalibrationFromPoint,
   isValidRimCalibration,
+  mapDisplayPointToFrame,
+  mapFramePointToDisplay,
   normalizedRectToPixels,
   selectBallObservation,
   type BallObservation,
@@ -70,6 +72,30 @@ describe('selectBallObservation', () => {
 })
 
 describe('rim calibration geometry', () => {
+  it('maps object-cover display taps back to source pixels, including mirrored cameras', () => {
+    // 16:9 source cropped into a 9:16 portrait preview.
+    expect(mapDisplayPointToFrame(
+      { x: 100, y: 200 },
+      { width: 200, height: 400 },
+      { width: 1280, height: 720 },
+      false,
+    )).toEqual({ x: 640, y: 360 })
+
+    expect(mapDisplayPointToFrame(
+      { x: 25, y: 200 },
+      { width: 200, height: 400 },
+      { width: 1280, height: 720 },
+      true,
+    )?.x).toBeGreaterThan(640)
+
+    expect(mapFramePointToDisplay(
+      { x: 640, y: 360 },
+      { width: 1280, height: 720 },
+      { width: 200, height: 400 },
+      false,
+    )).toEqual({ x: 100, y: 200 })
+  })
+
   it('creates a bounded normalized hoop target from one frame-space point', () => {
     const rim = createRimCalibrationFromPoint({ x: 950, y: 25 }, frame, 999)
 

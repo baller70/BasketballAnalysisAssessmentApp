@@ -32,9 +32,15 @@ import {
   Activity,
 } from 'lucide-react'
 import { usePoseDetection } from '@/hooks/usePoseDetection'
+import { useObjectTracking } from '@/hooks/useObjectTracking'
 import type { Pose, ShootingFormFeedback } from '@/services/poseDetection'
 import { ProfessionalSkeletonOverlay } from './ProfessionalSkeletonOverlay'
 import { GuidedCaptureStatus } from './GuidedCaptureStatus'
+import {
+  HoopCalibrationOverlay,
+  loadRimCalibration,
+  rimCalibrationStorageKey,
+} from './HoopCalibrationOverlay'
 import { useAnalysisStore, type VideoAnalysisData } from '@/stores/analysisStore'
 import { useRouter } from 'next/navigation'
 import { getPlatformOS, isMobile } from '@/utils/platform'
@@ -62,6 +68,8 @@ import {
 } from '@/lib/capture/captureSession'
 import { recordLiveShotDetection } from '@/lib/live/shotDetection'
 import { buildLiveVideoAnalysisData } from '@/lib/live/liveReviewData'
+import { deriveLiveObjectVisibility } from '@/lib/live/liveObjectTracking'
+import type { BallObservation, RimCalibration } from '@/lib/vision/objectTracking'
 
 // ============================================
 // TYPES
@@ -342,6 +350,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   const capturedFramesRef = useRef<CapturedFrame[]>([])
   const [videoDimensions, setVideoDimensions] = useState({ width: 640, height: 480 })
   const [orientation, setOrientation] = useState<Orientation>('portrait')
+  const [rimCalibration, setRimCalibration] = useState<RimCalibration | null>(null)
   const [poseInputRotation, setPoseInputRotation] = useState<PoseInputRotation>('none')
   const [showControls, setShowControls] = useState(true)
   const [showShotFlash, setShowShotFlash] = useState(false)
@@ -418,6 +427,9 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   const audioFeedbackEnabledRef = useRef(false)
   const latestPoseRef = useRef<Pose | null>(null)
   const latestFeedbackRef = useRef<ShootingFormFeedback | null>(null)
+  const latestBallRef = useRef<BallObservation | null>(null)
+  const rimCalibrationRef = useRef<RimCalibration | null>(null)
+  const objectDetectorReadyRef = useRef(false)
   
   // Stabilized metrics - hold values for longer so users can read them
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- loosely-typed runtime angles from the pose pipeline
@@ -533,6 +545,20 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     onShootingDetected: handleShootingDetected,
   })
 
+  const {
+    ball,
+    error: objectTrackingError,
+    isLoading: isObjectTrackingLoading,
+    isTracking: isObjectTracking,
+    startTracking: startObjectTracking,
+    stopTracking: stopObjectTracking,
+  } = useObjectTracking({
+    targetFps: 6,
+    prepareVideoFrame,
+  })
+
+  const objectDetectorReady = !isObjectTrackingLoading && objectTrackingError === null
+
   const poseDisplayDimensions = poseInputRotation === 'none'
     ? videoDimensions
     : { width: videoDimensions.height, height: videoDimensions.width }
@@ -545,18 +571,29 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
         ? 'sideways'
         : 'unknown'
 
-    return evaluateCaptureReadiness({
-      mode: 'form',
-      observation: derivePoseCaptureObservation({
+    const poseObservation = derivePoseCaptureObservation({
         cameraReady,
         modelReady: !isLoading,
         orientation: captureOrientation,
         pose,
         frameHeight: poseDisplayDimensions.height,
-      }),
+      })
+    const objectVisibility = deriveLiveObjectVisibility({
+      ball,
+      rim: rimCalibration,
+      detectorReady: objectDetectorReady,
     })
-  }, [cameraReady, isLoading, pose, poseDisplayDimensions.height])
+
+    return evaluateCaptureReadiness({
+      mode: 'shot_tracking',
+      observation: { ...poseObservation, ...objectVisibility },
+    })
+  }, [ball, cameraReady, isLoading, objectDetectorReady, pose, poseDisplayDimensions.height, rimCalibration])
   const captureReadinessRef = useRef(captureReadiness)
+
+  useEffect(() => {
+    setRimCalibration(loadRimCalibration(rimCalibrationStorageKey(facingMode, orientation)))
+  }, [facingMode, orientation])
 
   useEffect(() => {
     poseInputRotationRef.current = 'none'
@@ -649,6 +686,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     
     // Stop pose detection first
     stopDetection()
+    stopObjectTracking()
     
     // Stop media recorder if active
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
@@ -675,7 +713,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     }
     
     setCameraReady(false)
-  }, [stopDetection])
+  }, [stopDetection, stopObjectTracking])
 
   // Initialize camera
   const initCamera = useCallback(async () => {
@@ -811,6 +849,12 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       startDetection(videoRef.current)
     }
   }, [cameraReady, isLoading, isDetecting, startDetection])
+
+  useEffect(() => {
+    if (cameraReady && videoRef.current && objectDetectorReady && !isObjectTracking) {
+      startObjectTracking(videoRef.current)
+    }
+  }, [cameraReady, isObjectTracking, objectDetectorReady, startObjectTracking])
 
   // Initialize camera on mount
   useEffect(() => {
@@ -970,6 +1014,11 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
         ? currentDimensions.height
         : currentDimensions.width,
     })
+    const objectVisibility = deriveLiveObjectVisibility({
+      ball: latestBallRef.current,
+      rim: rimCalibrationRef.current,
+      detectorReady: objectDetectorReadyRef.current,
+    })
 
     return {
       timestampMs: Math.max(0, Math.round(recordingDurationRef.current * 1000)),
@@ -979,9 +1028,13 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       subjectFrameRatio: captureObservation.subjectFrameRatio ?? undefined,
       stable: captureObservation.stable ?? undefined,
       lighting: captureObservation.lighting,
-      hoopVisible: captureObservation.hoopVisible ?? undefined,
-      ballVisible: captureObservation.ballVisible ?? undefined,
+      hoopVisible: objectVisibility.hoopVisible,
+      ballVisible: objectVisibility.ballVisible ?? undefined,
       keypoints: currentPose?.keypoints,
+      objectTracking: {
+        ball: latestBallRef.current,
+        rim: rimCalibrationRef.current,
+      },
     }
   }, [])
 
@@ -1066,6 +1119,9 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     audioFeedbackEnabledRef.current = audioFeedbackEnabled
     latestPoseRef.current = pose
     latestFeedbackRef.current = feedback
+    latestBallRef.current = ball
+    rimCalibrationRef.current = rimCalibration
+    objectDetectorReadyRef.current = objectDetectorReady
     currentPoseRef.current = pose
     currentFeedbackRef.current = stableFeedback
     currentTipRef.current = stableFeedback?.tips?.[0] || null
@@ -1080,7 +1136,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     cameraReadyRef.current = cameraReady
     modelReadyRef.current = !isLoading
     captureReadinessRef.current = captureReadiness
-  }, [isRecording, recordingDuration, audioFeedbackEnabled, pose, feedback, stableFeedback, showSkeleton, selectedMetrics, stableAngles, showShotFlash, lastShotScore, shotCount, videoDimensions, orientation, cameraReady, isLoading, captureReadiness])
+  }, [isRecording, recordingDuration, audioFeedbackEnabled, pose, feedback, ball, rimCalibration, objectDetectorReady, stableFeedback, showSkeleton, selectedMetrics, stableAngles, showShotFlash, lastShotScore, shotCount, videoDimensions, orientation, cameraReady, isLoading, captureReadiness])
   
   // Actual recording start (after countdown)
   const startActualRecording = useCallback(() => {
@@ -1806,11 +1862,13 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     if (isPaused) {
       if (videoRef.current) {
         startDetection(videoRef.current)
+        startObjectTracking(videoRef.current)
       }
     } else {
       stopDetection()
+      stopObjectTracking()
     }
-  }, [isPaused, startDetection, stopDetection])
+  }, [isPaused, startDetection, startObjectTracking, stopDetection, stopObjectTracking])
 
   // Reset
   const handleReset = useCallback(() => {
@@ -1825,7 +1883,10 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     if (!isDetecting && videoRef.current) {
       startDetection(videoRef.current)
     }
-  }, [isDetecting, startDetection])
+    if (!isObjectTracking && videoRef.current) {
+      startObjectTracking(videoRef.current)
+    }
+  }, [isDetecting, isObjectTracking, startDetection, startObjectTracking])
 
   // Both options count against tier limit - this is called first
   const handleUseAnalysis = useCallback((): boolean => {
@@ -2503,6 +2564,16 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
           className={`absolute inset-0 z-[1] w-full h-full object-cover ${facingMode === 'user' ? 'scale-x-[-1]' : ''}`}
         />
       )}
+
+      <HoopCalibrationOverlay
+        frameSize={poseDisplayDimensions}
+        facingMode={facingMode}
+        orientation={orientation}
+        value={rimCalibration}
+        ball={ball}
+        onChange={setRimCalibration}
+        disabled={!cameraReady || isRecording || showCountdown}
+      />
 
       {/* Skeleton Overlay - MoveNet supplies the temporally smoothed live pose */}
       <AnimatePresence>
