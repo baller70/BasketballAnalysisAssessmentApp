@@ -57,6 +57,9 @@ public class ShotIQVisionPlugin: CAPPlugin, CAPBridgedPlugin {
             call.reject("ShotIQ Vision requires positive frame dimensions")
             return
         }
+        let frameOrientation = ShotIQVisionGeometry.frameOrientation(
+            call.getString("orientation", "up")
+        )
 
         let configuredConfidence = getConfig().getConfigJSON()["minimumConfidence"] as? NSNumber
         let minimumConfidence = Float(configuredConfidence?.doubleValue ?? 0.2)
@@ -77,7 +80,7 @@ public class ShotIQVisionPlugin: CAPPlugin, CAPBridgedPlugin {
                 let request = VNDetectHumanBodyPoseRequest()
                 let handler = VNImageRequestHandler(
                     cgImage: cgImage,
-                    orientation: .up,
+                    orientation: frameOrientation.cgImagePropertyOrientation,
                     options: [:]
                 )
                 try handler.perform([request])
@@ -87,7 +90,10 @@ public class ShotIQVisionPlugin: CAPPlugin, CAPBridgedPlugin {
                         call.resolve([
                             "keypoints": [],
                             "score": NSNull(),
-                            "engine": "apple-vision"
+                            "engine": "apple-vision",
+                            "width": width,
+                            "height": height,
+                            "orientation": frameOrientation.rawValue
                         ])
                     }
                     return
@@ -125,7 +131,10 @@ public class ShotIQVisionPlugin: CAPPlugin, CAPBridgedPlugin {
                     call.resolve([
                         "keypoints": keypoints,
                         "score": score,
-                        "engine": "apple-vision"
+                        "engine": "apple-vision",
+                        "width": width,
+                        "height": height,
+                        "orientation": frameOrientation.rawValue
                     ])
                 }
             } catch {
@@ -133,6 +142,21 @@ public class ShotIQVisionPlugin: CAPPlugin, CAPBridgedPlugin {
                     call.reject("Apple Vision could not analyze this frame", nil, error)
                 }
             }
+        }
+    }
+}
+
+private extension ShotIQVisionFrameOrientation {
+    var cgImagePropertyOrientation: CGImagePropertyOrientation {
+        switch self {
+        case .up: return .up
+        case .upMirrored: return .upMirrored
+        case .down: return .down
+        case .downMirrored: return .downMirrored
+        case .left: return .left
+        case .leftMirrored: return .leftMirrored
+        case .right: return .right
+        case .rightMirrored: return .rightMirrored
         }
     }
 }

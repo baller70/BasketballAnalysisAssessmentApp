@@ -6,7 +6,22 @@ struct ShotIQVisionPixelPoint {
     let confidence: Double
 }
 
+enum ShotIQVisionFrameOrientation: String {
+    case up
+    case upMirrored = "up-mirrored"
+    case down
+    case downMirrored = "down-mirrored"
+    case left
+    case leftMirrored = "left-mirrored"
+    case right
+    case rightMirrored = "right-mirrored"
+}
+
 enum ShotIQVisionGeometry {
+    static func frameOrientation(_ rawValue: String) -> ShotIQVisionFrameOrientation {
+        ShotIQVisionFrameOrientation(rawValue: rawValue) ?? .up
+    }
+
     static func pixelPoint(
         normalizedX: Double,
         normalizedY: Double,

@@ -7,10 +7,21 @@ export interface NativeVisionAvailability {
   engine: 'apple-vision'
 }
 
+export type NativeVisionFrameOrientation =
+  | 'up'
+  | 'up-mirrored'
+  | 'down'
+  | 'down-mirrored'
+  | 'left'
+  | 'left-mirrored'
+  | 'right'
+  | 'right-mirrored'
+
 export interface NativeVisionDetectOptions {
   imageData: string
   width: number
   height: number
+  orientation: NativeVisionFrameOrientation
   timestampMs?: number
 }
 
@@ -18,6 +29,9 @@ export interface NativeVisionDetectResult {
   keypoints: ProviderKeypoint[]
   score: number | null
   engine: 'apple-vision'
+  width: number
+  height: number
+  orientation: NativeVisionFrameOrientation
 }
 
 export interface NativeVisionPlugin {
@@ -29,6 +43,7 @@ export interface EncodedVisionFrame {
   imageData: string
   width: number
   height: number
+  orientation: NativeVisionFrameOrientation
 }
 
 export const ShotIQVision = registerPlugin<NativeVisionPlugin>('ShotIQVision')
@@ -47,6 +62,8 @@ export async function encodePoseInputFrame(input: PoseInput): Promise<EncodedVis
       imageData: input.toDataURL('image/jpeg', 0.82),
       width: input.width,
       height: input.height,
+      // Canvas serialization has already rasterized browser/EXIF orientation.
+      orientation: 'up',
     }
   }
 
@@ -67,5 +84,7 @@ export async function encodePoseInputFrame(input: PoseInput): Promise<EncodedVis
     imageData: canvas.toDataURL('image/jpeg', 0.82),
     width,
     height,
+    // drawImage creates a new upright raster regardless of source EXIF data.
+    orientation: 'up',
   }
 }

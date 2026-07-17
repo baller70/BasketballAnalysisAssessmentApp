@@ -27,6 +27,12 @@ struct ShotIQVisionGeometryTests {
         precondition(clamped.y == 200)
         precondition(clamped.confidence == 1)
 
+        precondition(ShotIQVisionGeometry.frameOrientation("up") == .up)
+        precondition(ShotIQVisionGeometry.frameOrientation("right") == .right)
+        precondition(ShotIQVisionGeometry.frameOrientation("down-mirrored") == .downMirrored)
+        precondition(ShotIQVisionGeometry.frameOrientation("left-mirrored") == .leftMirrored)
+        precondition(ShotIQVisionGeometry.frameOrientation("not-an-orientation") == .up)
+
         print("ShotIQVisionGeometryTests passed")
     }
 }

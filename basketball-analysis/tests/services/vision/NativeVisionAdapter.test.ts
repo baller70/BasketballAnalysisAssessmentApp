@@ -79,6 +79,9 @@ class FakeNativePlugin implements NativeVisionPlugin {
     keypoints: [{ name: 'nose', x: 320, y: 80, score: 0.96 }],
     score: 0.96,
     engine: 'apple-vision',
+    width: 640,
+    height: 480,
+    orientation: 'up',
   }
 
   async isAvailable() {
@@ -96,6 +99,7 @@ const frame = {
   imageData: 'data:image/jpeg;base64,shotiq-frame',
   width: 640,
   height: 480,
+  orientation: 'up' as const,
 }
 
 const encodeFrame = async (_input: PoseInput) => frame

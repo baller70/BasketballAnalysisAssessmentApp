@@ -172,12 +172,14 @@
 - Native plugin emits the same named/normalized body-pose contract as web and preserves orientation metadata.
 - Device matrix contains only measured runs from the exact Git commit being released.
 
-- [ ] **Step 1: Run TypeScript native-adapter tests and Swift geometry tests.**
-- [ ] **Step 2: Run** `npm run cap:build:ios` and `xcodebuild` for the ShotIQ iOS target; fix only failures attributable to ShotIQ source/configuration.
+- [x] **Step 1: Run TypeScript native-adapter tests and Swift geometry tests** (5 Vitest assertions plus the standalone Swift executable passed).
+- [ ] **Step 2: Run** `npm run cap:build:ios` and `xcodebuild` for the ShotIQ iOS target; fix only failures attributable to ShotIQ source/configuration. Capacitor sync passes; `xcodebuild` remains unavailable because this Mac has Command Line Tools but no full Xcode installation.
 - [ ] **Step 3: Install the signed build on an actual iPhone 11 and 12**, then record Safari/native, portrait/landscape, front/rear runs.
 - [ ] **Step 4: Feed each run to the benchmark CLI** and record exact commit, model, FPS, pose completeness, shot precision/recall, make/miss accuracy, and phase error.
 - [ ] **Step 5: Run the device-matrix validator** and require a zero exit code.
 - [ ] **Step 6: Commit measured evidence** only after all combinations are present. If Xcode, signing, devices, or consented footage are unavailable, leave this task explicitly blocked rather than fabricating completion.
+
+**Current physical blocker (2026-07-17):** no full Xcode installation and no connected iPhone 11/12 are visible on this Mac. The source-level native orientation contract, Capacitor sync, TypeScript tests, and standalone Swift geometry tests pass; signed-build and 16-combination physical evidence cannot truthfully be checked yet.
 
 ### Task 7: Final verification, GitHub delivery, and production deployment
 
