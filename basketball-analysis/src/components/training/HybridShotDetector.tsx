@@ -20,7 +20,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react"
 import {
   Camera, CameraOff, Circle,
   Settings, AlertCircle,
-  CheckCircle, X, Activity, Volume2, VolumeX
+  CheckCircle, Activity, Volume2, VolumeX
 } from "lucide-react"
 
 // ============================================
@@ -773,6 +773,5 @@ export function CompactShotDetector({
 }
 
 export default HybridShotDetector
-
 
 
