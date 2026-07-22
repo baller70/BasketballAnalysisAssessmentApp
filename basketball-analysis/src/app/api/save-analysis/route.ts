@@ -151,7 +151,10 @@ export async function POST(request: NextRequest) {
     const result = await prisma.$transaction(async (tx) => {
       // Serialize a user's writes so two devices cannot race the same history
       // chronology or duplicate the same deterministic media upload.
-      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${userProfileId}))`
+      // PostgreSQL reports pg_advisory_xact_lock as `void`. Prisma cannot
+      // deserialize a raw `void` column, so cast it to text while preserving
+      // the transaction-scoped locking side effect.
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${userProfileId}))::text AS lock_result`
 
       const existing = await tx.userAnalysis.findUnique({
         where: {
