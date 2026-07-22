@@ -188,29 +188,10 @@ export function HybridShotDetector({
       console.log('[HybridShotDetector] Camera initialized')
       
     } catch (err) {
-      console.log('[HybridShotDetector] Camera error:', err)
-      // Automatically fallback to demo video!
-      console.log('[HybridShotDetector] Automatically falling back to demo video')
-      if (videoRef.current) {
-        setError(null)
-        videoRef.current.srcObject = null
-        videoRef.current.src = '/demo-basketball.mp4'
-        videoRef.current.loop = true
-        videoRef.current.muted = true
-        
-        videoRef.current.onloadedmetadata = () => {
-          if (canvasRef.current && overlayCanvasRef.current && videoRef.current) {
-            canvasRef.current.width = videoRef.current.videoWidth
-            canvasRef.current.height = videoRef.current.videoHeight
-            overlayCanvasRef.current.width = videoRef.current.videoWidth
-            overlayCanvasRef.current.height = videoRef.current.videoHeight
-          }
-          
-          setCameraActive(true)
-          console.log('[HybridShotDetector] Auto-fallback demo video initialized')
-          videoRef.current?.play()
-        }
-      }
+      console.error('[HybridShotDetector] Camera error:', err)
+      setCameraActive(false)
+      setError('Camera access failed. Check browser or device permissions, then retry.')
+      onError?.('Camera access failed')
     }
   }, [onError])
   
@@ -586,8 +567,14 @@ export function HybridShotDetector({
         <div className="absolute top-0 left-0 right-0 z-50 bg-red-500/90 text-white p-3 flex items-center gap-2">
           <AlertCircle className="w-5 h-5 flex-shrink-0" />
           <span className="text-sm">{error}</span>
-          <button onClick={() => setError(null)} className="ml-auto">
-            <X className="w-4 h-4" />
+          <button
+            onClick={() => {
+              setError(null)
+              void initializeCamera()
+            }}
+            className="ml-auto rounded-md bg-white/20 px-3 py-1 text-xs font-bold"
+          >
+            Retry camera
           </button>
         </div>
       )}
@@ -786,7 +773,6 @@ export function CompactShotDetector({
 }
 
 export default HybridShotDetector
-
 
 
 

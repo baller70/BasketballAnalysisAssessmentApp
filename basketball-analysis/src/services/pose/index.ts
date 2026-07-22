@@ -8,7 +8,6 @@
  */
 
 import { MoveNetProvider } from './MoveNetProvider'
-import { HybridApiProvider } from './HybridApiProvider'
 import { NativeVisionAdapter } from '@/services/vision/NativeVisionAdapter'
 import type {
   PoseProvider,
@@ -20,26 +19,21 @@ import type { ModelType } from '@/services/poseDetection'
 
 export * from './types'
 export { MoveNetProvider } from './MoveNetProvider'
-export { HybridApiProvider } from './HybridApiProvider'
 export { providerKeypointsToPose } from './conversions'
 
-export type PoseProviderId = 'movenet' | 'native-ios' | 'hybrid-api'
+export type PoseProviderId = 'movenet' | 'native-ios'
 
 const moveNetProviders = new Map<ModelType, PoseProvider>()
 const nativeVisionProviders = new Map<ModelType, PoseProvider>()
 
 /**
  * Returns a pose provider. With no argument (or 'movenet') you get the shared,
- * memoized on-device MoveNet provider — the canonical engine. Pass 'hybrid-api'
- * only if a server backend has been explicitly configured (experimental).
+ * memoized on-device MoveNet provider — the canonical engine.
  */
 export function getPoseProvider(
   id: PoseProviderId = 'movenet',
   modelType: ModelType = 'lightning'
 ): PoseProvider {
-  if (id === 'hybrid-api') {
-    return new HybridApiProvider()
-  }
   if (id === 'native-ios') {
     let provider = nativeVisionProviders.get(modelType)
     if (!provider) {

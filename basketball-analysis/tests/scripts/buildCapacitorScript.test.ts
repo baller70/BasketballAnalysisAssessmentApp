@@ -11,4 +11,12 @@ describe('Capacitor build script', () => {
       execFileSync(process.execPath, ['--check', script], { stdio: 'pipe' })
     }).not.toThrow()
   })
+
+  it('has a passing pre-Xcode handoff gate for the synced project', () => {
+    const script = path.resolve(process.cwd(), 'scripts/verify-ios-handoff.js')
+
+    expect(() => {
+      execFileSync(process.execPath, [script], { stdio: 'pipe' })
+    }).not.toThrow()
+  })
 })

@@ -2,6 +2,9 @@
   "name": "basketball-analysis",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
@@ -9,6 +12,10 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
+    "test:e2e": "playwright test",
+    "verify": "npm run test && npm run build && npm run test:e2e",
+    "verify:ios-handoff": "node scripts/verify-ios-handoff.js",
+    "handoff:ios": "npm run verify && npm run cap:build:ios && npm run verify:ios-handoff",
     "test:watch": "vitest",
     "benchmark:vision": "tsx scripts/run-vision-benchmark.ts",
     "verify:device-matrix": "tsx scripts/verify-device-matrix.ts",
@@ -103,6 +110,7 @@
     "zustand": "^5.0.9"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.0",
     "@tauri-apps/cli": "^2.0.0",
     "@testing-library/react": "^16.1.0",
     "@types/node": "^20",
