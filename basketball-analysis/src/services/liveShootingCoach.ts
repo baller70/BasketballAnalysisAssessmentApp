@@ -1,6 +1,22 @@
 import type { ShootingFormFeedback } from '@/services/poseDetection'
 
-type FeedbackArea = 'elbow' | 'wrist' | 'release' | 'knee' | 'shoulder' | 'hip'
+export type FeedbackArea = 'elbow' | 'wrist' | 'release' | 'knee' | 'shoulder' | 'hip'
+export type CoachStyle = 'concise' | 'instructional' | 'encouraging' | 'high-energy'
+export type ExperienceLevel = 'beginner' | 'intermediate' | 'advanced'
+export type CueCadence = 'every-shot' | 'every-two' | 'critical-only'
+export type AudioEnvironment = 'quiet' | 'gym' | 'headphones'
+export type ShotOutcome = 'make' | 'miss' | null
+
+export interface ShootingCoachOptions {
+  style: CoachStyle
+  level: ExperienceLevel
+  cadence: CueCadence
+  environment: AudioEnvironment
+}
+
+export const DEFAULT_COACH_OPTIONS: ShootingCoachOptions = {
+  style: 'instructional', level: 'intermediate', cadence: 'every-shot', environment: 'gym',
+}
 
 const PRIORITY: FeedbackArea[] = ['elbow', 'wrist', 'release', 'knee', 'shoulder', 'hip']
 
@@ -66,4 +82,94 @@ export function buildLiveCoachCue(
 
   if (focus) return `Shot ${shotNumber}, score ${score}. ${directionalCue(focus, feedback)}`
   return `Shot ${shotNumber}, score ${score}. ${PRAISE[(Math.max(1, shotNumber) - 1) % PRAISE.length]}`
+}
+
+interface Rep { score: number; focus: FeedbackArea | null; outcome: ShotOutcome }
+
+export class ShootingCoachSession {
+  private reps: Rep[] = []
+  private focusCounts = new Map<FeedbackArea, number>()
+  private lastFocus: FeedbackArea | null = null
+  private repeated = 0
+  constructor(public options: ShootingCoachOptions = DEFAULT_COACH_OPTIONS) {}
+
+  reset(): void { this.reps = []; this.focusCounts.clear(); this.lastFocus = null; this.repeated = 0 }
+  setOptions(options: ShootingCoachOptions): void { this.options = options }
+  updateLastOutcome(outcome: Exclude<ShotOutcome, null>): void {
+    const last = this.reps.at(-1)
+    if (last) last.outcome = outcome
+  }
+
+  observe(feedback: ShootingFormFeedback | null, score: number, outcome: ShotOutcome = null): string | null {
+    const shot = this.reps.length + 1
+    const critical = feedback && PRIORITY.find(a => feedback[`${a}Status`] === 'critical')
+    const warning = feedback && PRIORITY.find(a => feedback[`${a}Status`] === 'warning')
+    const focus = critical || warning || null
+    this.reps.push({ score, focus, outcome })
+    if (focus) this.focusCounts.set(focus, (this.focusCounts.get(focus) ?? 0) + 1)
+    this.repeated = focus && focus === this.lastFocus ? this.repeated + 1 : focus ? 1 : 0
+    this.lastFocus = focus
+
+    if (this.options.cadence === 'every-two' && shot % 2 !== 0) return null
+    if (this.options.cadence === 'critical-only' && !critical) return null
+
+    let cue = buildLiveCoachCue(feedback, score, shot)
+    if (focus && this.repeated === 2) cue += ' Same focus, but make the adjustment smooth instead of forced.'
+    if (focus && this.repeated >= 3) {
+      const drill = this.drillFor(focus)
+      const variations = [
+        ` Pause the set and use the ${drill} for five slow reps.`,
+        ` Reset with three controlled reps of the ${drill}.`,
+        ` That pattern is persisting; isolate it now with the ${drill}.`,
+      ]
+      cue += variations[(this.repeated - 3) % variations.length]
+    }
+    const prior = this.reps.slice(-4, -1)
+    if (focus && prior.length === 3 && prior.every(r => r.focus === focus) && score >= Math.max(...prior.map(r => r.score)) + 5) {
+      cue = `Shot ${shot}, score ${score}. Your ${focus} improved from the last three reps. Keep that adjustment.`
+    }
+    if (this.reps.length >= 8) {
+      const early = this.average(this.reps.slice(0, 3).map(r => r.score))
+      const late = this.average(this.reps.slice(-3).map(r => r.score))
+      if (early - late >= 8) cue += ' Your mechanics are fading late in the set; reset your legs and take one quality breath.'
+    }
+    if (outcome) cue += outcome === 'make' ? ' That one was a make.' : ' That one missed; keep the same target and apply the cue.'
+    return this.applyVoice(cue)
+  }
+
+  summary(): string {
+    if (!this.reps.length) return 'Set complete. No measured shots were available to summarize.'
+    const common = [...this.focusCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0]
+    const avg = Math.round(this.average(this.reps.map(r => r.score)))
+    const makes = this.reps.filter(r => r.outcome === 'make').length
+    const misses = this.reps.filter(r => r.outcome === 'miss').length
+    const makeScores = this.reps.filter(r => r.outcome === 'make').map(r => r.score)
+    const missScores = this.reps.filter(r => r.outcome === 'miss').map(r => r.score)
+    const comparison = makeScores.length && missScores.length
+      ? ` Mechanics averaged ${Math.round(this.average(makeScores))} on makes versus ${Math.round(this.average(missScores))} on misses.`
+      : ''
+    const context = makes + misses ? ` Recorded result: ${makes} makes and ${misses} misses.${comparison}` : ''
+    return common
+      ? `Set complete. Average score ${avg}. Main focus: ${common}. Next, use the ${this.drillFor(common)}.${context}`
+      : `Set complete. Average score ${avg}. Your measured mechanics stayed solid; repeat that rhythm.${context}`
+  }
+
+  audioProfile(): { rate: number; volume: number } {
+    if (this.options.environment === 'gym') return { rate: 0.92, volume: 1 }
+    if (this.options.environment === 'headphones') return { rate: 1, volume: 0.72 }
+    return { rate: 1, volume: 0.88 }
+  }
+
+  private drillFor(area: FeedbackArea): string {
+    return ({ elbow: 'one-hand form shooting drill', wrist: 'wall follow-through drill', release: 'high-finish form drill', knee: 'one-motion chair-load drill', shoulder: 'line-to-the-rim drill', hip: 'balance-and-freeze drill' })[area]
+  }
+  private average(values: number[]): number { return values.reduce((a, b) => a + b, 0) / Math.max(1, values.length) }
+  private applyVoice(cue: string): string {
+    if (this.options.level === 'beginner') cue = cue.replace('mechanics', 'form').replace('vertical', 'straight up')
+    if (this.options.level === 'advanced') cue = cue.replace('Stay balanced', 'Keep your kinetic chain stacked')
+    if (this.options.style === 'concise') return cue.split('. ').slice(0, 2).join('. ')
+    if (this.options.style === 'encouraging') return `Good work. ${cue}`
+    if (this.options.style === 'high-energy') return `Let's go! ${cue}`
+    return cue
+  }
 }

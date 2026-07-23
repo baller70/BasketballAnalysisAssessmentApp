@@ -60,7 +60,11 @@ import {
   playLiveFeedbackTone,
   speakLiveFeedback,
 } from '@/services/liveVoiceFeedback'
-import { buildLiveCoachCue } from '@/services/liveShootingCoach'
+import {
+  DEFAULT_COACH_OPTIONS,
+  ShootingCoachSession,
+  type ShootingCoachOptions,
+} from '@/services/liveShootingCoach'
 import {
   derivePoseCaptureObservation,
   evaluateCaptureReadiness,
@@ -428,6 +432,11 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     }
     return false
   })
+  const [coachOptions, setCoachOptions] = useState<ShootingCoachOptions>(() => {
+    if (typeof window === 'undefined') return DEFAULT_COACH_OPTIONS
+    try { return { ...DEFAULT_COACH_OPTIONS, ...JSON.parse(localStorage.getItem('shotiq_coach_options') ?? '{}') } }
+    catch { return DEFAULT_COACH_OPTIONS }
+  })
   
   // Current preset mode
   const [currentPreset, setCurrentPreset] = useState<PresetMode>(() => {
@@ -458,6 +467,8 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   const recordingDurationRef = useRef(0)
   const audioFeedbackEnabledRef = useRef(false)
   const shootingCoachEnabledRef = useRef(false)
+  const shootingCoachRef = useRef(new ShootingCoachSession(coachOptions))
+  const coachOptionsRef = useRef(coachOptions)
   const latestPoseRef = useRef<Pose | null>(null)
   const latestFeedbackRef = useRef<ShootingFormFeedback | null>(null)
   const latestBallRef = useRef<BallObservation | null>(null)
@@ -544,9 +555,9 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
         void playLiveFeedbackTone(shotScore >= 70 ? 880 : 440, 0.3)
         const shotNumber = shotCountRef.current + 1
         const message = shootingCoachEnabledRef.current
-          ? buildLiveCoachCue(latestFeedbackRef.current, shotScore, shotNumber)
+          ? shootingCoachRef.current.observe(latestFeedbackRef.current, shotScore)
           : `Shot detected. Score ${shotScore}.`
-        speakLiveFeedback(message, true)
+        if (message) speakLiveFeedback(message, true, shootingCoachRef.current.audioProfile())
       }
 
       setTimeout(() => setShowShotFlash(false), 1500)
@@ -604,6 +615,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
 
     if (applyLiveShotResult(detectedShotEventsRef.current, result)) {
       setLastShotOutcome(result.result)
+      shootingCoachRef.current.updateLastOutcome(result.result)
       pendingShotResultRef.current = null
       shotTrajectoryRef.current.reset()
     } else {
@@ -1195,6 +1207,8 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     recordingDurationRef.current = recordingDuration
     audioFeedbackEnabledRef.current = audioFeedbackEnabled
     shootingCoachEnabledRef.current = shootingCoachEnabled
+    coachOptionsRef.current = coachOptions
+    shootingCoachRef.current.setOptions(coachOptions)
     latestPoseRef.current = pose
     latestFeedbackRef.current = feedback
     latestBallRef.current = ball
@@ -1214,7 +1228,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     cameraReadyRef.current = cameraReady
     modelReadyRef.current = !isLoading
     captureReadinessRef.current = captureReadiness
-  }, [isRecording, recordingDuration, audioFeedbackEnabled, shootingCoachEnabled, pose, feedback, ball, rimCalibration, objectDetectorReady, stableFeedback, showSkeleton, selectedMetrics, stableAngles, showShotFlash, lastShotScore, shotCount, videoDimensions, orientation, cameraReady, isLoading, captureReadiness])
+  }, [isRecording, recordingDuration, audioFeedbackEnabled, shootingCoachEnabled, coachOptions, pose, feedback, ball, rimCalibration, objectDetectorReady, stableFeedback, showSkeleton, selectedMetrics, stableAngles, showShotFlash, lastShotScore, shotCount, videoDimensions, orientation, cameraReady, isLoading, captureReadiness])
   
   // Actual recording start (after countdown)
   const startActualRecording = useCallback(() => {
@@ -1233,6 +1247,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     recordingDurationRef.current = 0
     setRecordingDuration(0)
     setShotCount(0) // Reset shot counter
+    shootingCoachRef.current.reset()
     detectedShotEventsRef.current = []
     shotTrajectoryRef.current.reset()
     pendingShotResultRef.current = null
@@ -1844,6 +1859,19 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     isRecordingRef.current = false
     setIsRecording(false)
     setShowControls(true)
+    if (shootingCoachEnabledRef.current) {
+      speakLiveFeedback(shootingCoachRef.current.summary(), true, shootingCoachRef.current.audioProfile())
+    }
+  }, [])
+
+  const updateCoachOption = useCallback(<K extends keyof ShootingCoachOptions>(key: K, value: ShootingCoachOptions[K]) => {
+    setCoachOptions(prev => {
+      const next = { ...prev, [key]: value }
+      coachOptionsRef.current = next
+      shootingCoachRef.current.setOptions(next)
+      localStorage.setItem('shotiq_coach_options', JSON.stringify(next))
+      return next
+    })
   }, [])
 
   // Toggle metric selection
@@ -3111,6 +3139,29 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
                     {shootingCoachEnabled ? 'ON' : 'OFF'}
                   </span>
                 </button>
+
+                {shootingCoachEnabled && (
+                  <div className="grid grid-cols-2 gap-2 rounded-xl border border-white/10 bg-black/20 p-3">
+                    {([
+                      ['style', 'Trainer style', ['concise', 'instructional', 'encouraging', 'high-energy']],
+                      ['level', 'Experience', ['beginner', 'intermediate', 'advanced']],
+                      ['cadence', 'Cue frequency', ['every-shot', 'every-two', 'critical-only']],
+                      ['environment', 'Audio setup', ['quiet', 'gym', 'headphones']],
+                    ] as const).map(([key, label, values]) => (
+                      <label key={key} className="text-left text-[10px] font-bold uppercase tracking-wide text-white/50">
+                        {label}
+                        <select
+                          aria-label={label}
+                          value={coachOptions[key]}
+                          onChange={(event) => updateCoachOption(key, event.target.value as never)}
+                          className="mt-1 w-full rounded-lg border border-white/15 bg-[#171717] p-2 text-xs normal-case text-white"
+                        >
+                          {values.map(value => <option key={value} value={value}>{value.replaceAll('-', ' ')}</option>)}
+                        </select>
+                      </label>
+                    ))}
+                  </div>
+                )}
 
                 <div className="border-t border-white/10 pt-3">
                   <p className="text-white/40 text-[10px] uppercase tracking-wider mb-2">Metrics to Display</p>

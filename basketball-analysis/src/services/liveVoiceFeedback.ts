@@ -32,7 +32,7 @@ export async function playLiveFeedbackTone(frequency: number, duration = 0.2): P
   }
 }
 
-export function speakLiveFeedback(message: string, interrupt = false): boolean {
+export function speakLiveFeedback(message: string, interrupt = false, profile?: { rate?: number; volume?: number }): boolean {
   if (
     typeof window === 'undefined'
     || !('speechSynthesis' in window)
@@ -42,9 +42,9 @@ export function speakLiveFeedback(message: string, interrupt = false): boolean {
   try {
     if (interrupt) window.speechSynthesis.cancel()
     const utterance = new SpeechSynthesisUtterance(message)
-    utterance.rate = 1
+    utterance.rate = profile?.rate ?? 1
     utterance.pitch = 1
-    utterance.volume = 1
+    utterance.volume = profile?.volume ?? 1
     window.speechSynthesis.speak(utterance)
     return true
   } catch {

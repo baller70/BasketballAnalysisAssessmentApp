@@ -242,6 +242,11 @@ describe('FullscreenLiveCamera pose coordinate space', () => {
       'Shooting coach on. I will give you one clear cue after every shot.',
       true,
     )
+    fireEvent.change(screen.getByLabelText('Trainer style'), { target: { value: 'high-energy' } })
+    fireEvent.change(screen.getByLabelText('Experience'), { target: { value: 'advanced' } })
+    fireEvent.change(screen.getByLabelText('Cue frequency'), { target: { value: 'critical-only' } })
+    fireEvent.change(screen.getByLabelText('Audio setup'), { target: { value: 'headphones' } })
+    expect((screen.getByLabelText('Trainer style') as HTMLSelectElement).value).toBe('high-energy')
     fireEvent.click(voiceToggle)
     expect(coachToggle.getAttribute('aria-pressed')).toBe('false')
     fireEvent.click(screen.getByText('Done'))

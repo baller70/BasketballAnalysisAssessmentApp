@@ -49,3 +49,15 @@ This ordering emphasizes the shooting-line and release cues first while still
 using lower-body and balance feedback when those are the highest measured
 problem. Future changes must be validated against captured sessions and must
 not claim a flaw when its measurement status is `unknown`.
+
+## Completed trainer capabilities
+
+- Repetition-aware cues and persistent-focus drill recommendations.
+- Three-rep improvement recognition.
+- End-of-set average, main focus, drill, and recorded make/miss summary.
+- Concise, instructional, encouraging, and high-energy trainer styles.
+- Beginner, intermediate, and advanced language levels.
+- Fatigue warnings only after eight measured reps and an eight-point decline.
+- Make/miss context only when a calibrated outcome exists; no guessed result.
+- Every-shot, every-two-shots, and critical-only cue cadence.
+- Quiet, gym, and headphones speech profiles with adjusted volume and rate.
