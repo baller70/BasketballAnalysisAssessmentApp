@@ -104,4 +104,29 @@ describe('useObjectTracking', () => {
     expect(detector.detect.mock.calls[0][0]).toBe(prepared)
     act(() => result.current.stopTracking())
   })
+
+  it('discards a ball observation from a stopped tracking session', async () => {
+    let resolveDetection: ((value: BallObservation) => void) | undefined
+    const detector = {
+      init: vi.fn(async () => undefined),
+      isReady: vi.fn(() => true),
+      detect: vi.fn(() => new Promise<BallObservation>((resolve) => { resolveDetection = resolve })),
+      reset: vi.fn(),
+    }
+    vi.stubGlobal('requestAnimationFrame', vi.fn(() => 1))
+    vi.stubGlobal('cancelAnimationFrame', vi.fn())
+
+    const { result } = renderHook(() => useObjectTracking({ detector }))
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+    const video = document.createElement('video')
+    Object.defineProperty(video, 'readyState', { value: 2 })
+
+    act(() => result.current.startTracking(video))
+    await waitFor(() => expect(detector.detect).toHaveBeenCalledTimes(1))
+    act(() => result.current.stopTracking())
+    await act(async () => resolveDetection?.(ball))
+
+    expect(result.current.ball).toBeNull()
+    expect(result.current.isTracking).toBe(false)
+  })
 })

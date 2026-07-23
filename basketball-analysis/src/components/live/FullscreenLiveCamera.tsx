@@ -2645,7 +2645,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
         disabled={!cameraReady || isRecording || showCountdown}
       />
 
-      {/* Skeleton Overlay - MoveNet supplies the temporally smoothed live pose */}
+      {/* Skeleton Overlay - MoveNet supplies the latest tracked live pose */}
       <AnimatePresence>
         {showSkeleton && pose && (
           <motion.div

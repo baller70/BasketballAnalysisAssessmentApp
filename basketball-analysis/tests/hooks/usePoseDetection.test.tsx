@@ -77,4 +77,27 @@ describe('usePoseDetection canonical provider seam', () => {
     expect(provider.reset).toHaveBeenCalled()
     void rafCallbacks
   })
+
+  it('discards an inference result from a stopped camera session', async () => {
+    let resolveDetection: ((value: typeof points) => void) | undefined
+    provider.detectPose.mockImplementationOnce(() => new Promise((resolve) => {
+      resolveDetection = resolve
+    }))
+    vi.stubGlobal('requestAnimationFrame', vi.fn(() => 1))
+    vi.stubGlobal('cancelAnimationFrame', vi.fn())
+
+    const { result } = renderHook(() => usePoseDetection({ targetFps: 1_000_000 }))
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+    const video = document.createElement('video')
+    Object.defineProperty(video, 'readyState', { value: 2 })
+    Object.defineProperty(video, 'currentTime', { value: 0 })
+
+    act(() => result.current.startDetection(video))
+    await waitFor(() => expect(provider.detectPose).toHaveBeenCalledTimes(1))
+    act(() => result.current.stopDetection())
+    await act(async () => resolveDetection?.(points))
+
+    expect(result.current.pose).toBeNull()
+    expect(provider.analyzeForm).not.toHaveBeenCalled()
+  })
 })

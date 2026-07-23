@@ -116,6 +116,10 @@ export function usePoseDetection(
   const fpsIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const previousPoseRef = useRef<Pose | null>(null);
   const isDetectingRef = useRef(false);
+  // Invalidates inference that completes after pause, camera flip, or unmount.
+  // A boolean alone is insufficient because a new session may already be
+  // running when an older asynchronous result resolves.
+  const detectionSessionRef = useRef(0);
 
   // Initialize the model
   useEffect(() => {
@@ -151,6 +155,7 @@ export function usePoseDetection(
     }
 
     const video = videoRef.current;
+    const session = detectionSessionRef.current;
     
     // Check if video is ready
     if (video.readyState < 2) {
@@ -176,8 +181,8 @@ export function usePoseDetection(
       // requested. Images and ordinary video elements continue through as-is.
       const detectionInput = prepareVideoFrame ? prepareVideoFrame(video) : video;
       // Canvas-prepared iPhone frames do not carry HTMLVideoElement.currentTime.
-      // Pass the source timestamp explicitly so MoveNet's temporal filter keeps
-      // smoothing across calibrated frames.
+      // Pass the source timestamp explicitly so tracked poses and ShotIQ's
+      // phase analysis remain monotonic across calibrated frames.
       // MediaStream-backed video elements may report currentTime as zero. Use
       // the rAF clock in that case so the canonical phase sidecar still gets a
       // real monotonic timestamp for every live frame.
@@ -185,6 +190,7 @@ export function usePoseDetection(
         ? video.currentTime * 1000
         : now;
       const detectedKeypoints = await poseProvider.detectPose(detectionInput, timestampMs);
+      if (!isDetectingRef.current || detectionSessionRef.current !== session) return;
       const detectedPose = detectedKeypoints
         ? providerKeypointsToPose(detectedKeypoints)
         : null;
@@ -236,7 +242,7 @@ export function usePoseDetection(
     }
 
     // Continue loop
-    if (isDetectingRef.current) {
+    if (isDetectingRef.current && detectionSessionRef.current === session) {
       animationFrameRef.current = requestAnimationFrame(runDetection);
     }
   }, [targetFps, prepareVideoFrame, onPoseDetected, onShootingDetected, poseProvider]);
@@ -247,7 +253,9 @@ export function usePoseDetection(
       console.warn('[usePoseDetection] Model not ready');
       return;
     }
+    if (isDetectingRef.current && videoRef.current === videoElement) return;
 
+    detectionSessionRef.current += 1;
     videoRef.current = videoElement;
     poseProvider.reset?.();
     isDetectingRef.current = true;
@@ -267,6 +275,7 @@ export function usePoseDetection(
 
   // Stop detection
   const stopDetection = useCallback(() => {
+    detectionSessionRef.current += 1;
     isDetectingRef.current = false;
     setIsDetecting(false);
 
@@ -281,6 +290,10 @@ export function usePoseDetection(
     }
 
     setFps(0);
+    setPose(null);
+    setAngles(null);
+    setFeedback(null);
+    setIsShootingDetected(false);
     previousPoseRef.current = null;
     setAnalysis(null);
     poseProvider.reset?.();

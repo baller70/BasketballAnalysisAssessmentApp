@@ -46,6 +46,9 @@ export function useObjectTracking(
   const lastInferenceRef = useRef(0)
   const frameCountRef = useRef(0)
   const fpsTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  // Reject results from a previous camera/pause session after tracking has
+  // already restarted. This prevents an old ball box jumping onto new video.
+  const trackingSessionRef = useRef(0)
 
   useEffect(() => {
     let active = true
@@ -66,6 +69,7 @@ export function useObjectTracking(
   const runTracking = useCallback(async () => {
     const video = videoRef.current
     if (!trackingRef.current || !video) return
+    const session = trackingSessionRef.current
 
     const scheduleNext = () => {
       if (trackingRef.current) frameRef.current = requestAnimationFrame(runTracking)
@@ -87,15 +91,16 @@ export function useObjectTracking(
     try {
       const input = prepareVideoFrame ? prepareVideoFrame(video) : video
       const observation = await detector.detect(input, now)
-      if (trackingRef.current) {
+      if (trackingRef.current && trackingSessionRef.current === session) {
         setBall(observation)
         frameCountRef.current += 1
       }
     } catch (reason) {
-      if (trackingRef.current) {
+      if (trackingRef.current && trackingSessionRef.current === session) {
         setError(reason instanceof Error ? reason : new Error('Basketball tracking failed'))
       }
     } finally {
+      if (trackingSessionRef.current !== session) return
       inFlightRef.current = false
       scheduleNext()
     }
@@ -103,6 +108,7 @@ export function useObjectTracking(
 
   const startTracking = useCallback((video: HTMLVideoElement) => {
     if (trackingRef.current || isLoading || error || !detector.isReady()) return
+    trackingSessionRef.current += 1
     detector.reset()
     videoRef.current = video
     trackingRef.current = true
@@ -118,6 +124,7 @@ export function useObjectTracking(
   }, [detector, error, isLoading, runTracking, targetFps])
 
   const stopTracking = useCallback(() => {
+    trackingSessionRef.current += 1
     trackingRef.current = false
     inFlightRef.current = false
     setIsTracking(false)
