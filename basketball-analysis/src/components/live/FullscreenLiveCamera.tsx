@@ -55,6 +55,12 @@ import {
 import { addWatermarkToImage } from '@/lib/watermark'
 import { isCameraAvailable, requestCameraPermissions } from '@/services/capacitorCamera'
 import {
+  disableLiveVoiceFeedback,
+  enableLiveVoiceFeedback,
+  playLiveFeedbackTone,
+  speakLiveFeedback,
+} from '@/services/liveVoiceFeedback'
+import {
   derivePoseCaptureObservation,
   evaluateCaptureReadiness,
 } from '@/lib/capture/guidedCapture'
@@ -525,27 +531,8 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
 
       // Play audio feedback if enabled
       if (audioFeedbackEnabledRef.current) {
-        try {
-          // Create a simple beep sound
-          const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
-          const oscillator = audioContext.createOscillator()
-          const gainNode = audioContext.createGain()
-
-          oscillator.connect(gainNode)
-          gainNode.connect(audioContext.destination)
-
-          // Higher pitch for good shots, lower for poor shots
-          oscillator.frequency.value = shotScore >= 70 ? 880 : 440
-          oscillator.type = 'sine'
-
-          gainNode.gain.setValueAtTime(0.3, audioContext.currentTime)
-          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3)
-
-          oscillator.start(audioContext.currentTime)
-          oscillator.stop(audioContext.currentTime + 0.3)
-        } catch {
-          console.log('[FullscreenLive] Audio feedback not available')
-        }
+        void playLiveFeedbackTone(shotScore >= 70 ? 880 : 440, 0.3)
+        speakLiveFeedback(`Shot detected. Score ${shotScore}.`, true)
       }
 
       setTimeout(() => setShowShotFlash(false), 1500)
@@ -1795,44 +1782,30 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     // Play countdown sound if audio enabled
     const playCountdownBeep = (isLast: boolean) => {
       if (audioFeedbackEnabled) {
-        try {
-          const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
-          const oscillator = audioContext.createOscillator()
-          const gainNode = audioContext.createGain()
-          
-          oscillator.connect(gainNode)
-          gainNode.connect(audioContext.destination)
-          
-          oscillator.frequency.value = isLast ? 880 : 440
-          oscillator.type = 'sine'
-          
-          gainNode.gain.setValueAtTime(0.2, audioContext.currentTime)
-          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2)
-          
-          oscillator.start(audioContext.currentTime)
-          oscillator.stop(audioContext.currentTime + 0.2)
-        } catch {
-          // Audio not available
-        }
+        void playLiveFeedbackTone(isLast ? 880 : 440)
       }
     }
     
     playCountdownBeep(false)
+    if (audioFeedbackEnabled) speakLiveFeedback('3', true)
     
     // Countdown sequence
     setTimeout(() => {
       setCountdownValue(2)
       playCountdownBeep(false)
+      if (audioFeedbackEnabled) speakLiveFeedback('2', true)
     }, 1000)
     
     setTimeout(() => {
       setCountdownValue(1)
       playCountdownBeep(false)
+      if (audioFeedbackEnabled) speakLiveFeedback('1', true)
     }, 2000)
     
     setTimeout(() => {
       setShowCountdown(false)
       playCountdownBeep(true)
+      if (audioFeedbackEnabled) speakLiveFeedback('Go', true)
       startActualRecording()
     }, 3000)
   }, [audioFeedbackEnabled, startActualRecording])
@@ -1898,9 +1871,12 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   const toggleAudioFeedback = useCallback(() => {
     setAudioFeedbackEnabled(prev => {
       const newValue = !prev
+      audioFeedbackEnabledRef.current = newValue
       if (typeof window !== 'undefined') {
         localStorage.setItem('shotiq_audio_feedback', String(newValue))
       }
+      if (newValue) enableLiveVoiceFeedback()
+      else disableLiveVoiceFeedback()
       return newValue
     })
   }, [])
@@ -3044,6 +3020,8 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
                 {/* Audio Feedback Toggle */}
                 <button
                   onClick={toggleAudioFeedback}
+                  aria-label="Toggle voice feedback"
+                  aria-pressed={audioFeedbackEnabled}
                   className={`w-full flex items-center gap-3 p-4 rounded-xl border transition-all ${
                     audioFeedbackEnabled
                       ? 'bg-green-500/20 border-green-500/50'
@@ -3061,8 +3039,8 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
                   
                   {/* Info */}
                   <div className="flex-1 text-left">
-                    <p className="text-white font-bold text-sm">AUDIO FEEDBACK</p>
-                    <p className="text-white/50 text-[10px]">Sound cues for shots & countdown</p>
+                    <p className="text-white font-bold text-sm">VOICE FEEDBACK</p>
+                    <p className="text-white/50 text-[10px]">Spoken shot scores, countdown & sound cues</p>
                   </div>
                   
                   {/* Status */}

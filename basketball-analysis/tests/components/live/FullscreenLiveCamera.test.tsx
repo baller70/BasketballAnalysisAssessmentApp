@@ -7,6 +7,8 @@ const doubles = vi.hoisted(() => ({
   stopDetection: vi.fn(),
   startObjectTracking: vi.fn(),
   stopObjectTracking: vi.fn(),
+  enableLiveVoiceFeedback: vi.fn(),
+  disableLiveVoiceFeedback: vi.fn(),
   lastPoseOptions: undefined as {
     modelType?: string
     targetFps?: number
@@ -101,6 +103,12 @@ vi.mock('@/services/capacitorCamera', () => ({
   isCameraAvailable: () => doubles.cameraAvailable,
   requestCameraPermissions: vi.fn(),
 }))
+vi.mock('@/services/liveVoiceFeedback', () => ({
+  enableLiveVoiceFeedback: doubles.enableLiveVoiceFeedback,
+  disableLiveVoiceFeedback: doubles.disableLiveVoiceFeedback,
+  playLiveFeedbackTone: vi.fn(),
+  speakLiveFeedback: vi.fn(),
+}))
 
 import { FullscreenLiveCamera } from '@/components/live/FullscreenLiveCamera'
 
@@ -112,6 +120,8 @@ describe('FullscreenLiveCamera pose coordinate space', () => {
     doubles.stopDetection.mockReset()
     doubles.startObjectTracking.mockReset()
     doubles.stopObjectTracking.mockReset()
+    doubles.enableLiveVoiceFeedback.mockReset()
+    doubles.disableLiveVoiceFeedback.mockReset()
     doubles.lastPoseOptions = undefined
     doubles.cameraAvailable = true
     doubles.mobile = false
@@ -188,6 +198,7 @@ describe('FullscreenLiveCamera pose coordinate space', () => {
   })
 
   it('keeps inference aligned through rapid pause taps and page backgrounding', async () => {
+    localStorage.removeItem('shotiq_audio_feedback')
     const videoTrack = {
       getSettings: () => ({ width: 1280, height: 720 }),
       stop: vi.fn(),
@@ -214,6 +225,15 @@ describe('FullscreenLiveCamera pose coordinate space', () => {
     await waitFor(() => expect(getUserMedia).toHaveBeenCalled())
     fireEvent.loadedMetadata(video)
     await waitFor(() => expect(doubles.startDetection).toHaveBeenCalled())
+
+    fireEvent.click(screen.getByTitle('Metric Settings'))
+    const voiceToggle = screen.getByRole('button', { name: 'Toggle voice feedback' })
+    fireEvent.click(voiceToggle)
+    expect(doubles.enableLiveVoiceFeedback).toHaveBeenCalledOnce()
+    expect(voiceToggle.getAttribute('aria-pressed')).toBe('true')
+    fireEvent.click(voiceToggle)
+    expect(doubles.disableLiveVoiceFeedback).toHaveBeenCalledOnce()
+    fireEvent.click(screen.getByText('Done'))
 
     const pause = screen.getByRole('button', { name: 'Pause live tracking' })
     fireEvent.click(pause)
