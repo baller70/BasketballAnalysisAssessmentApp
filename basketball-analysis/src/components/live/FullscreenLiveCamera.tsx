@@ -60,6 +60,7 @@ import {
   playLiveFeedbackTone,
   speakLiveFeedback,
 } from '@/services/liveVoiceFeedback'
+import { buildLiveCoachCue } from '@/services/liveCoach'
 import {
   derivePoseCaptureObservation,
   evaluateCaptureReadiness,
@@ -419,6 +420,10 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     }
     return false
   })
+  const [coachModeEnabled, setCoachModeEnabled] = useState(() => {
+    if (typeof window !== 'undefined') return localStorage.getItem('shotiq_live_coach') === 'true'
+    return false
+  })
   
   // Current preset mode
   const [currentPreset, setCurrentPreset] = useState<PresetMode>(() => {
@@ -448,6 +453,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   const isRecordingRef = useRef(false)
   const recordingDurationRef = useRef(0)
   const audioFeedbackEnabledRef = useRef(false)
+  const coachModeEnabledRef = useRef(false)
   const latestPoseRef = useRef<Pose | null>(null)
   const latestFeedbackRef = useRef<ShootingFormFeedback | null>(null)
   const latestBallRef = useRef<BallObservation | null>(null)
@@ -532,7 +538,11 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       // Play audio feedback if enabled
       if (audioFeedbackEnabledRef.current) {
         void playLiveFeedbackTone(shotScore >= 70 ? 880 : 440, 0.3)
-        speakLiveFeedback(`Shot detected. Score ${shotScore}.`, true)
+        const shotNumber = shotCountRef.current + 1
+        const message = coachModeEnabledRef.current
+          ? buildLiveCoachCue(latestFeedbackRef.current, shotScore, shotNumber)
+          : `Shot detected. Score ${shotScore}.`
+        speakLiveFeedback(message, true)
       }
 
       setTimeout(() => setShowShotFlash(false), 1500)
@@ -1180,6 +1190,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     isRecordingRef.current = isRecording
     recordingDurationRef.current = recordingDuration
     audioFeedbackEnabledRef.current = audioFeedbackEnabled
+    coachModeEnabledRef.current = coachModeEnabled
     latestPoseRef.current = pose
     latestFeedbackRef.current = feedback
     latestBallRef.current = ball
@@ -1199,7 +1210,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     cameraReadyRef.current = cameraReady
     modelReadyRef.current = !isLoading
     captureReadinessRef.current = captureReadiness
-  }, [isRecording, recordingDuration, audioFeedbackEnabled, pose, feedback, ball, rimCalibration, objectDetectorReady, stableFeedback, showSkeleton, selectedMetrics, stableAngles, showShotFlash, lastShotScore, shotCount, videoDimensions, orientation, cameraReady, isLoading, captureReadiness])
+  }, [isRecording, recordingDuration, audioFeedbackEnabled, coachModeEnabled, pose, feedback, ball, rimCalibration, objectDetectorReady, stableFeedback, showSkeleton, selectedMetrics, stableAngles, showShotFlash, lastShotScore, shotCount, videoDimensions, orientation, cameraReady, isLoading, captureReadiness])
   
   // Actual recording start (after countdown)
   const startActualRecording = useCallback(() => {
@@ -1878,6 +1889,22 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       if (newValue) enableLiveVoiceFeedback()
       else disableLiveVoiceFeedback()
       return newValue
+    })
+  }, [])
+
+  const toggleCoachMode = useCallback(() => {
+    setCoachModeEnabled(prev => {
+      const next = !prev
+      coachModeEnabledRef.current = next
+      localStorage.setItem('shotiq_live_coach', String(next))
+      if (next) {
+        audioFeedbackEnabledRef.current = true
+        setAudioFeedbackEnabled(true)
+        localStorage.setItem('shotiq_audio_feedback', 'true')
+        enableLiveVoiceFeedback()
+        speakLiveFeedback('Pocket coach on. I will give you one clear cue after every shot.', true)
+      }
+      return next
     })
   }, [])
 
@@ -3046,6 +3073,32 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
                   {/* Status */}
                   <span className={`text-xs font-bold ${audioFeedbackEnabled ? 'text-green-400' : 'text-white/40'}`}>
                     {audioFeedbackEnabled ? 'ON' : 'OFF'}
+                  </span>
+                </button>
+
+                <button
+                  onClick={toggleCoachMode}
+                  aria-label="Toggle pocket coach"
+                  aria-pressed={coachModeEnabled}
+                  className={`w-full flex items-center gap-3 p-4 rounded-xl border transition-all ${
+                    coachModeEnabled
+                      ? 'bg-[#FF6B35]/20 border-[#FF6B35]/50'
+                      : 'bg-white/5 border-white/10 hover:border-white/20'
+                  }`}
+                >
+                  <div className={`w-12 h-6 rounded-full flex items-center px-1 transition-colors ${
+                    coachModeEnabled ? 'bg-[#FF6B35]' : 'bg-white/20'
+                  }`}>
+                    <div className={`w-4 h-4 rounded-full bg-white transition-transform ${
+                      coachModeEnabled ? 'translate-x-6' : 'translate-x-0'
+                    }`} />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-white font-bold text-sm">POCKET COACH</p>
+                    <p className="text-white/50 text-[10px]">One measured, trainer-style cue after every shot</p>
+                  </div>
+                  <span className={`text-xs font-bold ${coachModeEnabled ? 'text-[#FF8A5C]' : 'text-white/40'}`}>
+                    {coachModeEnabled ? 'ON' : 'OFF'}
                   </span>
                 </button>
 

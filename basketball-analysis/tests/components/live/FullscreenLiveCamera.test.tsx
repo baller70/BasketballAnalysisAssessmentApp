@@ -9,6 +9,7 @@ const doubles = vi.hoisted(() => ({
   stopObjectTracking: vi.fn(),
   enableLiveVoiceFeedback: vi.fn(),
   disableLiveVoiceFeedback: vi.fn(),
+  speakLiveFeedback: vi.fn(),
   lastPoseOptions: undefined as {
     modelType?: string
     targetFps?: number
@@ -107,7 +108,7 @@ vi.mock('@/services/liveVoiceFeedback', () => ({
   enableLiveVoiceFeedback: doubles.enableLiveVoiceFeedback,
   disableLiveVoiceFeedback: doubles.disableLiveVoiceFeedback,
   playLiveFeedbackTone: vi.fn(),
-  speakLiveFeedback: vi.fn(),
+  speakLiveFeedback: doubles.speakLiveFeedback,
 }))
 
 import { FullscreenLiveCamera } from '@/components/live/FullscreenLiveCamera'
@@ -122,6 +123,7 @@ describe('FullscreenLiveCamera pose coordinate space', () => {
     doubles.stopObjectTracking.mockReset()
     doubles.enableLiveVoiceFeedback.mockReset()
     doubles.disableLiveVoiceFeedback.mockReset()
+    doubles.speakLiveFeedback.mockReset()
     doubles.lastPoseOptions = undefined
     doubles.cameraAvailable = true
     doubles.mobile = false
@@ -233,6 +235,13 @@ describe('FullscreenLiveCamera pose coordinate space', () => {
     expect(voiceToggle.getAttribute('aria-pressed')).toBe('true')
     fireEvent.click(voiceToggle)
     expect(doubles.disableLiveVoiceFeedback).toHaveBeenCalledOnce()
+    const coachToggle = screen.getByRole('button', { name: 'Toggle pocket coach' })
+    fireEvent.click(coachToggle)
+    expect(coachToggle.getAttribute('aria-pressed')).toBe('true')
+    expect(doubles.speakLiveFeedback).toHaveBeenCalledWith(
+      'Pocket coach on. I will give you one clear cue after every shot.',
+      true,
+    )
     fireEvent.click(screen.getByText('Done'))
 
     const pause = screen.getByRole('button', { name: 'Pause live tracking' })
