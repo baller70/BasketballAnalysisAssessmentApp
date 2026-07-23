@@ -23,20 +23,42 @@ All platforms share the same source code in `src/`.
 
 ## 🚀 Quick Start
 
+### Verified pre-Xcode handoff
+
+From Node 22, run the complete repository gate before handing the project to
+the Mac/Xcode owner:
+
+```bash
+cd basketball-analysis
+nvm use
+npm install
+npm run handoff:ios
+```
+
+`handoff:ios` runs the web/unit/browser verification, synchronizes Capacitor,
+and validates the Xcode project, bundle/version/signing settings, permission
+descriptions, Swift package plugins, custom Vision bridge, generated native
+configuration, and bundled offline bootstrap page. A passing command means the
+repository is **ready to be handed to Xcode**; compiling, signing, simulator,
+and physical-device testing are the next Xcode phase, not prerequisites to the
+handoff.
+
 ### Development Build
 
 ```bash
 # Navigate to the basketball-analysis directory
 cd basketball-analysis
 
-# Build for iOS and open Xcode
-npm run ios:dev
+# Verify/sync, then open Xcode
+npm run handoff:ios
+npm run cap:open:ios
 ```
 
 This will:
-1. Build Next.js as a static export
-2. Sync web assets to the iOS project
-3. Open Xcode
+1. Verify the web application and browser flows
+2. Sync the server-backed native shell and plugins
+3. Validate every required pre-Xcode artifact
+4. Open Xcode
 
 ### Production Build
 
@@ -70,6 +92,8 @@ basketball-analysis/
 
 | Script | Description |
 |--------|-------------|
+| `npm run handoff:ios` | Complete pre-Xcode verification and Capacitor sync |
+| `npm run verify:ios-handoff` | Validate the already-synced Xcode handoff artifacts |
 | `npm run ios:dev` | Build and open Xcode for development |
 | `npm run ios:build` | Build static export and sync to iOS |
 | `npm run cap:sync:ios` | Sync web assets to iOS (after changes) |
@@ -240,7 +264,6 @@ const photos = await pickPhotos(7); // Up to 7 photos
 ---
 
 **Your SHOTIQ AI app is now ready for iOS! 🏀📱**
-
 
 
 

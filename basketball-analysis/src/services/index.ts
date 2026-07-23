@@ -5,7 +5,7 @@
  * ANALYSIS SERVICES:
  * - visionAnalysis - Image pose detection via on-device MoveNet (services/pose)
  * - videoAnalysis - Client-side frame extraction + on-device MoveNet per frame
- * - pose/ - Pluggable PoseProvider (canonical: MoveNetProvider; optional: HybridApiProvider)
+ * - pose/ - Pluggable PoseProvider (MoveNet with native iOS Vision adapter)
  * 
  * DATA SERVICES:
  * - sessionStorage - localStorage session management

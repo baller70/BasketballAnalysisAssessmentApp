@@ -11,7 +11,7 @@
  *   node scripts/build-capacitor.js [ios|android|all]
  */
 
-const { execSync } = require('child_process');
+const { execFileSync, execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const { getCapacitorBuildMode } = require('./capacitor-build-mode');
@@ -69,11 +69,14 @@ console.log('✅ Capacitor web assets verified!');
 console.log('🔄 Step 3: Syncing with Capacitor...');
 
 try {
-  if (platform === 'all') {
-    execSync('npx cap sync', { stdio: 'inherit' });
-  } else {
-    execSync(`npx cap sync ${platform}`, { stdio: 'inherit' });
+  const capacitorCli = path.resolve('node_modules/@capacitor/cli/bin/capacitor');
+  const args = platform === 'all' ? ['sync'] : ['sync', platform];
+  if (!fs.existsSync(capacitorCli)) {
+    throw new Error('Local Capacitor CLI is missing. Run npm install first.');
   }
+  // Use the current Node process explicitly. This avoids `npx` selecting a
+  // different system Node version than the Node 22 handoff process.
+  execFileSync(process.execPath, [capacitorCli, ...args], { stdio: 'inherit' });
   console.log('✅ Capacitor sync completed!');
 } catch (error) {
   console.error('❌ Capacitor sync failed:', error.message);
@@ -112,7 +115,6 @@ if (platform === 'android' || platform === 'all') {
   console.log('  Android: npx cap open android');
 }
 console.log('');
-
 
 
 

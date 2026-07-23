@@ -63,7 +63,7 @@ This repository contains multiple directories. Here's what each one is:
   - This is the production-ready version
   - Contains all latest features
   - This is what you should always run and develop on
-  - **Node Version Required:** 20.x
+  - **Node Version Required:** 22.x (required by Capacitor 8)
 
 ### 📦 Other Directories
 
@@ -80,7 +80,7 @@ This repository contains multiple directories. Here's what each one is:
 
 ### Prerequisites
 
-- Node.js 20.x (managed via nvm)
+- Node.js 22.x (managed via nvm)
 - npm 10.x
 - PostgreSQL (for database)
 
@@ -97,15 +97,15 @@ This repository contains multiple directories. Here's what each one is:
    ```
 
    This will automatically:
-   - Switch to Node.js 20
+   - Switch to Node.js 22
    - Install dependencies if needed
    - Start the development server
 
 ### Manual Setup (Alternative)
 
 ```bash
-# Switch to Node 20
-nvm use 20
+# Switch to Node 22
+nvm use 22
 
 # Navigate to the main app
 cd basketball-analysis
@@ -172,7 +172,7 @@ npx prisma studio    # Open Prisma Studio GUI
 
 1. **Always use `basketball-analysis/` directory** - This is the main app
 2. **Do not use `nextjs_space/`** - This is an old version
-3. **Use Node 20.x** - Required for Prisma compatibility
+3. **Use Node 22.x** - Required by Capacitor 8 and supported by Prisma
 4. **Use the startup script** - `./start-dev.sh` ensures correct setup
 
 ---
@@ -185,15 +185,15 @@ npx prisma studio    # Open Prisma Studio GUI
 
 ### "Prisma Client errors"
 - Run: `npx prisma generate`
-- Make sure you're using Node 20.x: `nvm use 20`
+- Make sure you're using Node 22.x: `nvm use 22`
 
 ### "Port 3000 already in use"
 - Kill existing Next.js processes: `pkill -f "next dev"`
 - Or use a different port: `PORT=3001 npm run dev`
 
 ### "Node version issues"
-- Install Node 20: `nvm install 20`
-- Switch to Node 20: `nvm use 20`
+- Install Node 22: `nvm install 22`
+- Switch to Node 22: `nvm use 22`
 
 ---
 
@@ -211,7 +211,7 @@ For more detailed documentation, see:
 
 If you encounter issues, check:
 1. You're in the `basketball-analysis/` directory
-2. You're using Node 20.x (`node -v`)
+2. You're using Node 22.x (`node -v`)
 3. Dependencies are installed (`node_modules/` exists)
 4. The startup script is executable (`chmod +x start-dev.sh`)
 

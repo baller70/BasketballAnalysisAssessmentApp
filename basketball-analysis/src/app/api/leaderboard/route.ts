@@ -236,17 +236,19 @@ export async function GET(request: NextRequest) {
       totalParticipants,
     })
   } catch (error) {
-    console.error("Leaderboard error:", error)
+    console.warn("Leaderboard unavailable", {
+      reason: error instanceof Error ? error.name : "UnknownError",
+    })
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : "Failed to build leaderboard",
+        error: "Leaderboard is temporarily unavailable",
         type,
         entries: [],
         userRank: 0,
         totalParticipants: 0,
       },
-      { status: 500 }
+      { status: 503 }
     )
   }
 }

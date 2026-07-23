@@ -791,7 +791,7 @@ function GuideCardComponent({ card, data, isActive, dragX }: GuideCardProps) {
           {/* Description */}
           <p className="text-slate-500 text-sm leading-relaxed">{data.description}</p>
           
-          {/* Image Placeholder */}
+          {/* Instructional visual cue */}
           {data.imagePlaceholder && (
             <div 
               className="relative w-full h-40 rounded-xl overflow-hidden border-2 border-dashed flex items-center justify-center"
@@ -807,8 +807,8 @@ function GuideCardComponent({ card, data, isActive, dragX }: GuideCardProps) {
                     <Camera className="w-6 h-6" style={{ color: card.color }} />
                   )}
                 </div>
-                <p className="text-slate-500 text-xs">{data.imageDescription}</p>
-                <p className="text-slate-400 text-[10px] mt-1">(Image placeholder)</p>
+                <p className="text-slate-500 text-xs font-medium">{data.imageDescription}</p>
+                <p className="text-slate-400 text-[10px] mt-1 uppercase tracking-wide">Key visual cue</p>
               </div>
             </div>
           )}

@@ -201,7 +201,9 @@ export async function POST(request: NextRequest) {
     }
 
     const historyEntry = await prisma.$transaction(async (tx) => {
-      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${userProfileId}))`
+      // Cast PostgreSQL's `void` lock result so Prisma can deserialize the raw
+      // query without P2010 while the transaction lock remains in effect.
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${userProfileId}))::text AS lock_result`
       const entry = await tx.analysisHistory.upsert({
         where: { analysisId },
         create: {

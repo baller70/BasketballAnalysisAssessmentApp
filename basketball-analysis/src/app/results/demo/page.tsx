@@ -4245,6 +4245,7 @@ interface ImageModeContentProps {
 }
 
 function ImageModeContent({ analysisData, playerName, poseConfidence, teaserFrames, fullFrames, allUploadedUrls, mainImageUrl, cleanImageUrl, visionAnalysis, roboflowBallDetection, hideAnimatedWalkthrough = false, hideAutoScreenshots = false, hideMainImage = false, isVideoMode = false }: ImageModeContentProps) {
+  const hasMeasuredAnalysis = analysisData !== DEFAULT_DEMO_ANALYSIS
   // Track hydration to handle SSR/client mismatch
   // const [isHydrated, setIsHydrated] = useState(false)
   
@@ -4949,8 +4950,9 @@ function ImageModeContent({ analysisData, playerName, poseConfidence, teaserFram
             </div>
             </>
           </div>
-          {/* TOP 5 MATCHED ELITE SHOOTERS */}
-          <div className="space-y-3">
+          {/* Elite comparisons only exist after a measured analysis. */}
+          {hasMeasuredAnalysis ? (
+          <div className="space-y-3" data-testid="elite-comparisons">
             {/* #1 - Primary Match */}
             <div className="bg-white rounded-lg overflow-hidden border border-slate-200 shadow-sm">
               {/* Orange top accent bar */}
@@ -5074,6 +5076,18 @@ function ImageModeContent({ analysisData, playerName, poseConfidence, teaserFram
               </div>
             ))}
           </div>
+          ) : (
+            <section
+              data-testid="analysis-empty-state"
+              className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6 text-center"
+            >
+              <Target className="mx-auto mb-3 h-8 w-8 text-[#FF6B35]" />
+              <h2 className="font-bold text-slate-900">No analysis yet</h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Upload a shot or record a video to calculate real measurements and elite comparisons.
+              </p>
+            </section>
+          )}
 
         </div>
       </div>

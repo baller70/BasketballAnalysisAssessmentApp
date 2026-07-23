@@ -71,6 +71,7 @@ export function FullScreenShotTracker({
   // State
   const [cameraActive, setCameraActive] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [cameraError, setCameraError] = useState<string | null>(null)
   const [soundEnabled, setSoundEnabled] = useState(enableSound)
   const [detectionStatus, setDetectionStatus] = useState<'idle' | 'detecting' | 'made' | 'missed'>('idle')
   
@@ -148,6 +149,7 @@ export function FullScreenShotTracker({
   
   const initializeCamera = useCallback(async () => {
     if (!videoRef.current) return
+    setCameraError(null)
     
     try {
       let stream: MediaStream;
@@ -178,28 +180,10 @@ export function FullScreenShotTracker({
       setDetectionStatus('detecting')
       console.log('[FullScreenShotTracker] Camera initialized')
     } catch (err) {
-      console.log('[FullScreenShotTracker] Camera error:', err)
-      // Automatically fallback to demo video!
-      console.log('[FullScreenShotTracker] Automatically falling back to demo video')
-      if (videoRef.current) {
-        videoRef.current.srcObject = null
-        videoRef.current.src = '/demo-basketball.mp4'
-        videoRef.current.loop = true
-        videoRef.current.muted = true
-        
-        videoRef.current.onloadedmetadata = () => {
-          if (canvasRef.current && overlayCanvasRef.current && videoRef.current) {
-            canvasRef.current.width = videoRef.current.videoWidth
-            canvasRef.current.height = videoRef.current.videoHeight
-            overlayCanvasRef.current.width = videoRef.current.videoWidth
-            overlayCanvasRef.current.height = videoRef.current.videoHeight
-          }
-          
-          setCameraActive(true)
-          setDetectionStatus('detecting')
-          videoRef.current?.play()
-        }
-      }
+      console.error('[FullScreenShotTracker] Camera error:', err)
+      setCameraActive(false)
+      setDetectionStatus('idle')
+      setCameraError('Camera access failed. Check device permissions and try again.')
     }
   }, [])
   
@@ -461,7 +445,9 @@ export function FullScreenShotTracker({
         <div className="absolute inset-0 bg-[#0a0a0a] flex flex-col items-center justify-center">
           <CameraOff className="w-20 h-20 text-[#555] mb-4" />
           <p className="text-white text-xl font-bold">Camera Unavailable</p>
-          <p className="text-[#888] text-sm mt-2">Please allow camera access</p>
+          <p role="alert" className="text-[#aaa] text-sm mt-2 max-w-xs text-center">
+            {cameraError ?? 'Please allow camera access'}
+          </p>
           <button
             onClick={initializeCamera}
             className="mt-6 px-6 py-3 bg-[#FF6B35] text-white font-bold rounded-xl"

@@ -74,8 +74,8 @@ const config: CapacitorConfig = {
     },
   },
   
-  // Logging configuration
-  loggingBehavior: 'debug',
+  // Never expose verbose bridge logs in a production archive.
+  loggingBehavior: process.env.NODE_ENV === 'development' ? 'debug' : 'none',
 };
 
 export default config;

@@ -166,10 +166,12 @@ export async function GET() {
     let dbShooters: DbShooter[] = []
     try {
       dbShooters = await loadDbShooters()
-    } catch (e) {
+    } catch (error) {
       // DB unreachable / not migrated — degrade gracefully to the static catalog
       // so the page is never blank. Reported as source: "static-fallback".
-      console.error("[/api/shooters] DB read failed, using static fallback:", e)
+      console.warn("[/api/shooters] using static fallback", {
+        reason: error instanceof Error ? error.name : "UnknownError",
+      })
     }
 
     const dbByName = new Map<string, DbShooter>()
@@ -188,14 +190,16 @@ export async function GET() {
       shooters,
     })
   } catch (error) {
-    console.error("[/api/shooters] GET error:", error)
+    console.warn("[/api/shooters] GET unavailable", {
+      reason: error instanceof Error ? error.name : "UnknownError",
+    })
     return NextResponse.json(
       {
         success: false,
         error:
-          error instanceof Error ? error.message : "Failed to load shooters",
+          "Shooter catalog is temporarily unavailable",
       },
-      { status: 500 }
+      { status: 503 }
     )
   }
 }
