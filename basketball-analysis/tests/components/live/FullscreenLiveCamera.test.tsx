@@ -130,7 +130,7 @@ describe('FullscreenLiveCamera pose coordinate space', () => {
     render(<FullscreenLiveCamera />)
 
     expect(doubles.lastPoseOptions?.modelType).toBe('multipose')
-    expect(doubles.lastPoseOptions?.targetFps).toBe(20)
+    expect(doubles.lastPoseOptions?.targetFps).toBe(30)
     await waitFor(() => expect(screen.queryByText('No Camera Available')).not.toBeNull())
   })
 

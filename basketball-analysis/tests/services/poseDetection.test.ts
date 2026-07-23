@@ -71,7 +71,7 @@ describe('poseDetectionService live shooter tracking', () => {
       'MoveNet',
       expect.objectContaining({
         modelType: 'multi-lightning',
-        enableSmoothing: true,
+        enableSmoothing: false,
         enableTracking: true,
         trackerType: 'keypoint',
       })

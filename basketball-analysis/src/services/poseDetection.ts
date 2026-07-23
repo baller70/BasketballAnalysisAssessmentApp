@@ -164,7 +164,10 @@ class PoseDetectionService {
       const modelConfig = modelType === 'multipose'
         ? {
             modelType: model,
-            enableSmoothing: true,
+            // Live multi-person tracking already keeps a stable subject ID.
+            // MoveNet's temporal smoothing trails fast cuts and jump shots on
+            // mobile devices, so prefer the newest measured frame here.
+            enableSmoothing: false,
             minPoseScore: 0.3,
             multiPoseMaxDimension: 384,
             enableTracking: true,
@@ -616,4 +619,3 @@ export const poseDetectionService = new PoseDetectionService();
 
 // Export class for testing
 export { PoseDetectionService };
-

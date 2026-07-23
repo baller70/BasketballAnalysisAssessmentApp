@@ -548,8 +548,9 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     }
   }, [])
   
-  // MoveNet already applies temporal smoothing. Keep detection responsive and
-  // render every result instead of adding a second delayed smoothing layer.
+  // Live tracking uses the newest unsmoothed MoveNet result. At 30 fps the
+  // detector gets another frame immediately after inference instead of adding
+  // an application-side buffer that visually trails the player.
   const {
     isLoading,
     isDetecting,
@@ -562,7 +563,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     stopDetection,
   } = usePoseDetection({
     modelType: 'multipose',
-    targetFps: 20,
+    targetFps: 30,
     prepareVideoFrame,
     onShootingDetected: handleShootingDetected,
   })
@@ -575,7 +576,10 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
     startTracking: startObjectTracking,
     stopTracking: stopObjectTracking,
   } = useObjectTracking({
-    targetFps: 6,
+    // COCO-SSD shares TensorFlow's WebGL queue with MoveNet. Running it at six
+    // frames per second can starve body tracking on phones; three observations
+    // per second is sufficient for ball trajectory while preserving pose FPS.
+    targetFps: 3,
     prepareVideoFrame,
   })
 
@@ -791,12 +795,14 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
         }
       }
 
-      // Request camera access - prefer higher resolution for fullscreen
+      // 720p retains enough source detail for the 384px MoveNet input without
+      // making mobile Safari decode and rotate unused 1080p pixels every frame.
       const constraints: MediaStreamConstraints = {
         video: {
           facingMode,
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          frameRate: { ideal: 30, max: 30 },
         },
         audio: false,
       }
@@ -977,8 +983,9 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       const constraints: MediaStreamConstraints = {
         video: {
           facingMode: newMode,
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          frameRate: { ideal: 30, max: 30 },
         },
         audio: false,
       }
