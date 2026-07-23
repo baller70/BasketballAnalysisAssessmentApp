@@ -5,6 +5,8 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 const doubles = vi.hoisted(() => ({
   startDetection: vi.fn(),
   stopDetection: vi.fn(),
+  startObjectTracking: vi.fn(),
+  stopObjectTracking: vi.fn(),
   lastPoseOptions: undefined as {
     modelType?: string
     targetFps?: number
@@ -57,8 +59,8 @@ vi.mock('@/hooks/useObjectTracking', () => ({
     fps: 0,
     isLoading: false,
     isTracking: false,
-    startTracking: vi.fn(),
-    stopTracking: vi.fn(),
+    startTracking: doubles.startObjectTracking,
+    stopTracking: doubles.stopObjectTracking,
   }),
 }))
 
@@ -108,6 +110,8 @@ describe('FullscreenLiveCamera pose coordinate space', () => {
     vi.restoreAllMocks()
     doubles.startDetection.mockReset()
     doubles.stopDetection.mockReset()
+    doubles.startObjectTracking.mockReset()
+    doubles.stopObjectTracking.mockReset()
     doubles.lastPoseOptions = undefined
     doubles.cameraAvailable = true
     doubles.mobile = false
@@ -181,6 +185,52 @@ describe('FullscreenLiveCamera pose coordinate space', () => {
     await waitFor(() => {
       expect(screen.getByTestId('skeleton-overlay').getAttribute('data-x0')).toBe('300')
     })
+  })
+
+  it('keeps inference aligned through rapid pause taps and page backgrounding', async () => {
+    const videoTrack = {
+      getSettings: () => ({ width: 1280, height: 720 }),
+      stop: vi.fn(),
+      kind: 'video',
+      label: 'Mobile camera',
+    }
+    const stream = {
+      id: 'lifecycle-stream',
+      getVideoTracks: () => [videoTrack],
+      getTracks: () => [videoTrack],
+    }
+    const getUserMedia = vi.fn().mockResolvedValue(stream)
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: { getUserMedia },
+    })
+    Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' })
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue()
+
+    const { container } = render(<FullscreenLiveCamera />)
+    const video = container.querySelector('video')!
+    Object.defineProperty(video, 'videoWidth', { configurable: true, value: 1280 })
+    Object.defineProperty(video, 'videoHeight', { configurable: true, value: 720 })
+    await waitFor(() => expect(getUserMedia).toHaveBeenCalled())
+    fireEvent.loadedMetadata(video)
+    await waitFor(() => expect(doubles.startDetection).toHaveBeenCalled())
+
+    const pause = screen.getByRole('button', { name: 'Pause live tracking' })
+    fireEvent.click(pause)
+    fireEvent.click(screen.getByRole('button', { name: 'Resume live tracking' }))
+    expect(doubles.stopDetection).toHaveBeenCalled()
+    expect(doubles.stopObjectTracking).toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: 'Pause live tracking' })).not.toBeNull()
+
+    const startsBeforeBackground = doubles.startDetection.mock.calls.length
+    Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'hidden' })
+    fireEvent(document, new Event('visibilitychange'))
+    const stopsAfterBackground = doubles.stopDetection.mock.calls.length
+    expect(stopsAfterBackground).toBeGreaterThan(0)
+
+    Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' })
+    fireEvent(document, new Event('visibilitychange'))
+    await waitFor(() => expect(doubles.startDetection.mock.calls.length).toBeGreaterThan(startsBeforeBackground))
   })
 
   it('sizes the skeleton from the intrinsic video frame when iPhone track settings differ', async () => {

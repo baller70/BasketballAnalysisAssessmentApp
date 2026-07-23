@@ -355,6 +355,10 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
   const [isRecording, setIsRecording] = useState(false)
   const [recordingDuration, setRecordingDuration] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
+  const isPausedRef = useRef(false)
+  const [isPageVisible, setIsPageVisible] = useState(() =>
+    typeof document === 'undefined' || document.visibilityState !== 'hidden'
+  )
   const [capturedFrames, setCapturedFrames] = useState<CapturedFrame[]>([])
   // MediaRecorder callbacks are created when recording starts. Keep the
   // latest frame list in a ref so onstop cannot close over the empty list from
@@ -896,16 +900,33 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
 
   // Start detection when camera is ready
   useEffect(() => {
-    if (cameraReady && videoRef.current && !isLoading && !isDetecting) {
+    if (cameraReady && isPageVisible && !isPaused && videoRef.current && !isLoading && !isDetecting) {
       startDetection(videoRef.current)
     }
-  }, [cameraReady, isLoading, isDetecting, startDetection])
+  }, [cameraReady, isLoading, isDetecting, isPageVisible, isPaused, startDetection])
 
   useEffect(() => {
-    if (cameraReady && videoRef.current && objectDetectorReady && !isObjectTracking) {
+    if (cameraReady && isPageVisible && !isPaused && videoRef.current && objectDetectorReady && !isObjectTracking) {
       startObjectTracking(videoRef.current)
     }
-  }, [cameraReady, isObjectTracking, objectDetectorReady, startObjectTracking])
+  }, [cameraReady, isObjectTracking, isPageVisible, isPaused, objectDetectorReady, startObjectTracking])
+
+  // Mobile browsers suspend animation frames in the background. Explicitly
+  // end the inference session so a frame captured before backgrounding cannot
+  // be applied on return; the guarded effects above restart only when visible
+  // and only when the user did not intentionally pause.
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      const visible = document.visibilityState !== 'hidden'
+      setIsPageVisible(visible)
+      if (!visible) {
+        stopDetection()
+        stopObjectTracking()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [stopDetection, stopObjectTracking])
 
   // Initialize camera on mount
   useEffect(() => {
@@ -1915,10 +1936,14 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
 
   // Toggle pause
   const handleTogglePause = useCallback(() => {
-    setIsPaused(prev => !prev)
-    
-    if (isPaused) {
-      if (videoRef.current) {
+    // Update the ref synchronously so two quick taps cannot both act on the
+    // same stale React render and leave UI state out of sync with inference.
+    const nextPaused = !isPausedRef.current
+    isPausedRef.current = nextPaused
+    setIsPaused(nextPaused)
+
+    if (!nextPaused) {
+      if (isPageVisible && videoRef.current) {
         startDetection(videoRef.current)
         startObjectTracking(videoRef.current)
       }
@@ -1926,13 +1951,14 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
       stopDetection()
       stopObjectTracking()
     }
-  }, [isPaused, startDetection, startObjectTracking, stopDetection, stopObjectTracking])
+  }, [isPageVisible, startDetection, startObjectTracking, stopDetection, stopObjectTracking])
 
   // Reset
   const handleReset = useCallback(() => {
     capturedFramesRef.current = []
     setCapturedFrames([])
     setRecordingDuration(0)
+    isPausedRef.current = false
     setIsPaused(false)
     setSavedVideoUrl(null)
     setShowSaveChoice(false)
@@ -2358,6 +2384,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
           <button
             onClick={handleFlipCamera}
             disabled={isLoading || isRecording}
+            aria-label="Switch camera"
             className={`p-3 rounded-full transition-all ${
               isLoading || isRecording
                 ? 'bg-white/10 text-white/30'
@@ -2372,6 +2399,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
         <button
           onClick={handleCaptureFrame}
           disabled={isLoading || isPaused}
+          aria-label="Capture frame"
           className={`p-3 rounded-full transition-all ${
             isLoading || isPaused
               ? 'bg-white/10 text-white/30'
@@ -2406,6 +2434,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
         <button
           onClick={handleTogglePause}
           disabled={isLoading}
+          aria-label={isPaused ? 'Resume live tracking' : 'Pause live tracking'}
           className={`p-3 rounded-full transition-all ${
             isLoading
               ? 'bg-white/10 text-white/30'
@@ -2421,6 +2450,7 @@ export function FullscreenLiveCamera({ onClose }: { onClose?: () => void }) {
         <button
           onClick={handleReset}
           disabled={isLoading || isRecording}
+          aria-label="Reset live session"
           className={`p-3 rounded-full transition-all ${
             isLoading || isRecording
               ? 'bg-white/10 text-white/30'
