@@ -1,8 +1,8 @@
-# ShotIQ Pocket Coach: research and language standard
+# ShotIQ Shooting Coach: research and language standard
 
 ## Product role
 
-Pocket Coach gives one short, measurement-backed cue after each detected shot.
+Shooting Coach gives one short, measurement-backed cue after each detected shot.
 It complements practice and qualified coaching; it does not diagnose injury or
 claim to replace an in-person trainer who can evaluate context the camera does
 not observe.
@@ -21,6 +21,11 @@ not observe.
    repeatable behavior instead of manufacturing a flaw.
 5. **External, simple focus.** Cues prefer the target and visible outcome over
    dense anatomy or angle readouts while the player is shooting.
+6. **Direction matters.** “Too bent” and “too straight” cannot receive the same
+   correction. Shooting Coach uses the measured tip direction to avoid making
+   an identified problem worse.
+7. **Audio dependency stays honest.** Turning Voice Feedback off also turns
+   Shooting Coach off; the interface never claims a silent trainer is active.
 
 ## Evidence reviewed
 

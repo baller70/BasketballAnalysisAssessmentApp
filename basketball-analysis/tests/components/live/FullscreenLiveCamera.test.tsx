@@ -235,13 +235,15 @@ describe('FullscreenLiveCamera pose coordinate space', () => {
     expect(voiceToggle.getAttribute('aria-pressed')).toBe('true')
     fireEvent.click(voiceToggle)
     expect(doubles.disableLiveVoiceFeedback).toHaveBeenCalledOnce()
-    const coachToggle = screen.getByRole('button', { name: 'Toggle pocket coach' })
+    const coachToggle = screen.getByRole('button', { name: 'Toggle shooting coach' })
     fireEvent.click(coachToggle)
     expect(coachToggle.getAttribute('aria-pressed')).toBe('true')
     expect(doubles.speakLiveFeedback).toHaveBeenCalledWith(
-      'Pocket coach on. I will give you one clear cue after every shot.',
+      'Shooting coach on. I will give you one clear cue after every shot.',
       true,
     )
+    fireEvent.click(voiceToggle)
+    expect(coachToggle.getAttribute('aria-pressed')).toBe('false')
     fireEvent.click(screen.getByText('Done'))
 
     const pause = screen.getByRole('button', { name: 'Pause live tracking' })

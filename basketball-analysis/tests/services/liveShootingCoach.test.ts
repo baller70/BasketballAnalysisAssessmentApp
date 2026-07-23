@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { buildLiveCoachCue } from '@/services/liveCoach'
+import { buildLiveCoachCue } from '@/services/liveShootingCoach'
 import type { ShootingFormFeedback } from '@/services/poseDetection'
 
 const good: ShootingFormFeedback = {
@@ -35,5 +35,24 @@ describe('buildLiveCoachCue', () => {
   it('gives a neutral fundamental when measurements are unavailable', () => {
     expect(buildLiveCoachCue(null, 65, 1))
       .toBe('Shot 1, score 65. Stay balanced and hold your finish.')
+  })
+
+  it('does not tell an over-bent shooter to load deeper', () => {
+    const cue = buildLiveCoachCue({
+      ...good,
+      kneeStatus: 'warning',
+      tips: ["Don't over-bend your knees"],
+    }, 67, 5)
+    expect(cue).toContain('Stay a little taller')
+    expect(cue).not.toContain('Sit into your legs')
+  })
+
+  it('gives the opposite knee direction when more bend is measured', () => {
+    const cue = buildLiveCoachCue({
+      ...good,
+      kneeStatus: 'critical',
+      tips: ['Bend your knees more to generate power'],
+    }, 61, 6)
+    expect(cue).toContain('Sit into your legs earlier')
   })
 })

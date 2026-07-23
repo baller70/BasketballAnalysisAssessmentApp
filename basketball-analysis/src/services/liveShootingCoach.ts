@@ -19,6 +19,33 @@ const PRAISE = [
   'Strong mechanics. Freeze your follow-through and repeat that rhythm.',
 ]
 
+function directionalCue(area: FeedbackArea, feedback: ShootingFormFeedback): string {
+  const tips = feedback.tips.join(' ').toLowerCase()
+  if (area === 'elbow') {
+    if (tips.includes('open your elbow')) return 'Give your shooting arm a clean L shape, then extend straight up.'
+    if (tips.includes('tuck your elbow')) return 'Bring your elbow under the ball and keep it on the rim line.'
+  }
+  if (area === 'knee') {
+    if (tips.includes('straighten your knees') || tips.includes('over-bend')) {
+      return 'Stay a little taller in your load, then rise smoothly into the shot.'
+    }
+    if (tips.includes('bend your knees')) return 'Sit into your legs earlier and carry that power up through the ball.'
+  }
+  if (area === 'wrist') {
+    if (tips.includes('raise your arm') || tips.includes('more lift')) {
+      return 'Finish higher through the rim, then snap your wrist with your fingers down.'
+    }
+    if (tips.includes("don't over-extend")) return 'Stay smooth at release; reach up without forcing your arm past the finish.'
+  }
+  if (area === 'release') {
+    if (tips.includes('more forward')) return 'Reach through the front of the rim and hold your finish forward.'
+    if (tips.includes('more vertically') || tips.includes('vertical release')) {
+      return 'Lift through the ball and finish higher for a cleaner arc.'
+    }
+  }
+  return COACHING_CUES[area]
+}
+
 /**
  * Produce one short, actionable cue from measured feedback. One correction per
  * rep mirrors how on-court trainers avoid overloading a shooter. The cue bank
@@ -37,6 +64,6 @@ export function buildLiveCoachCue(
   const warning = PRIORITY.find((area) => feedback[`${area}Status`] === 'warning')
   const focus = critical ?? warning
 
-  if (focus) return `Shot ${shotNumber}, score ${score}. ${COACHING_CUES[focus]}`
+  if (focus) return `Shot ${shotNumber}, score ${score}. ${directionalCue(focus, feedback)}`
   return `Shot ${shotNumber}, score ${score}. ${PRAISE[(Math.max(1, shotNumber) - 1) % PRAISE.length]}`
 }
