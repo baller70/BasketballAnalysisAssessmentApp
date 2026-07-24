@@ -172,6 +172,11 @@ function valueFor(row: string, stat: string): string | null {
   return match?.[1] ? stripTags(match[1]) : null
 }
 
+function hrefFor(row: string, stat: string): string | null {
+  const re = new RegExp(`<t[hd][^>]*data-stat=["']${stat}["'][^>]*>[\\s\\S]*?<a[^>]*href=["']([^"']+)["']`, "i")
+  return row.match(re)?.[1] ?? null
+}
+
 function num(value: string | null): number | null {
   if (!value) return null
   const cleaned = value.replace(/[%,$]/g, "").trim()
@@ -236,14 +241,17 @@ function parseBasketballReference(html: string, source: StatSource, existingIds:
     const rawName = valueFor(row, "player")
     const name = rawName ? cleanPlayerName(rawName) : null
     if (!name || name === "Player") continue
+    const playerHref = hrefFor(row, "player")
+    const playerSourceUrl = playerHref ? new URL(playerHref, source.url).toString() : source.url
+    const basketballReferenceId = playerHref?.match(/\/([^/]+)\.html$/)?.[1] ?? null
     const base = {
       canonicalId: canonicalizeName(name),
       displayName: name,
       sourceName: source.sourceName,
-      sourceUrl: source.url,
+      sourceUrl: playerSourceUrl,
       league: source.league,
       season: source.season,
-      team: valueFor(row, "team_name_abbr") ?? valueFor(row, "team_id"),
+      team: valueFor(row, "team") ?? valueFor(row, "team_name_abbr") ?? valueFor(row, "team_id"),
       games: num(valueFor(row, "g")),
       fgPct: pct(valueFor(row, "fg_pct")),
       threePct: pct(valueFor(row, "fg3_pct")),
@@ -254,9 +262,9 @@ function parseBasketballReference(html: string, source: StatSource, existingIds:
       pointsPerGame: num(valueFor(row, "pts_per_g")),
       minutesPerGame: num(valueFor(row, "mp_per_g")),
       height: null,
-      position: null,
+      position: valueFor(row, "pos"),
       classYear: null,
-      externalProviderId: null,
+      externalProviderId: basketballReferenceId,
       photoUrl: null,
       alreadyInApp: existingIds.has(canonicalizeName(name)),
       retrievedAt,
@@ -273,7 +281,7 @@ function parseBasketballReference(html: string, source: StatSource, existingIds:
         league: source.league,
         season: source.season,
         team: base.team,
-        sourceUrl: source.url,
+        sourceUrl: playerSourceUrl,
         games: base.games,
         fgPct: base.fgPct,
         threePct: base.threePct,

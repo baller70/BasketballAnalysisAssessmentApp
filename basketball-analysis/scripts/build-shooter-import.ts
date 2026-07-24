@@ -154,6 +154,12 @@ function primaryLeague(candidate: Candidate): ImportSeed["league"] {
 }
 
 function bestTeam(candidate: Candidate): string {
+  const league = primaryLeague(candidate)
+  const leagueTeam = candidate.evidenceSeasons
+    .filter((evidence) => evidence.league === league && evidence.team?.trim())
+    .sort((a, b) => Number(b.season.replace(/\D/g, "")) - Number(a.season.replace(/\D/g, "")))[0]?.team
+  if (candidate.league === league && candidate.team?.trim()) return candidate.team
+  if (leagueTeam) return leagueTeam
   return [candidate.team, ...candidate.evidenceSeasons.map((evidence) => evidence.team)]
     .filter((team): team is string => Boolean(team?.trim()))
     .sort((a, b) => b.length - a.length)[0] ?? "Team unavailable"
