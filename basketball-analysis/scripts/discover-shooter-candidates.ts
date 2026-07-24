@@ -586,7 +586,7 @@ function parseFibaWomenCandidates(
     const cells = [...row.matchAll(/<t[hd][^>]*>([\s\S]*?)<\/t[hd]>/gi)]
     if (cells.length < 12) continue
     const values = cells.map((match) => stripTags(match[1]))
-    if (!/^\d+$/.test(values[0])) continue
+    if (!/^\d+\.?$/.test(values[0])) continue
 
     const playerTeam = values[1].match(/^(.*?)\s+\(([^)]+)\)\s*$/)
     const displayName = cleanPlayerName(playerTeam?.[1] ?? values[1])
