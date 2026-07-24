@@ -54,6 +54,93 @@ interface Checkpoint {
   failedIds: string[]
 }
 
+const OFFICIAL_MEDIA_SEEDS: Record<string, DiscoveredMediaSeed[]> = {
+  "louie-dampier": [{
+    sourceName: "official",
+    sourcePageUrl: "https://www.hoophall.com/hall-of-famers/louie-dampier/",
+    assetUrl: "https://www.hoophall.com/application/files/1217/6487/8763/dampier_louie_headshot.webp",
+    mediaKind: "headshot",
+  }],
+  "darel-carrier": [{
+    sourceName: "official",
+    sourcePageUrl: "https://khsbhf.com/inductee/darel-carrier/",
+    assetUrl: "https://khsbhf.com/wp-content/uploads/2018/02/17darelcarrier.png",
+    mediaKind: "headshot",
+  }],
+  "nicole-powell": [{
+    sourceName: "official",
+    sourcePageUrl: "https://www.wnba.com/player/100919",
+    assetUrl: "https://ak-static.cms.nba.com/wp-content/uploads/headshots/wnba/latest/1040x760/100919.png",
+    mediaKind: "headshot",
+  }],
+  "allison-feaster": [{
+    sourceName: "official",
+    sourcePageUrl: "https://www.wnba.com/player/100170/allison-feaster",
+    assetUrl: "https://ak-static.cms.nba.com/wp-content/uploads/headshots/wnba/latest/1040x760/100170.png",
+    mediaKind: "headshot",
+  }],
+  "laurie-koehn": [{
+    sourceName: "official",
+    sourcePageUrl: "https://www.kstatesports.com/honors/k-state-athletics-hall-of-fame/laurie-koehn/96",
+    assetUrl: "https://images.sidearmdev.com/crop?url=https%3A%2F%2Fdxbhsrqyrr690.cloudfront.net%2Fsidearm.nextgen.sites%2Fkstate.sidearmsports.com%2Fimages%2F2020%2F6%2F16%2Fkoehn_hof.jpg&width=600&height=900&type=webp",
+    mediaKind: "headshot",
+  }],
+  "erin-thorn": [{
+    sourceName: "official",
+    sourcePageUrl: "https://byucougars.com/news/2003/04/25/thorn-wnba-bound-drafted-by-new-york-liberty/",
+    assetUrl: "https://byucougars.com/imgproxy/lklO4tRanYfF4_aixlgBK_pTAnUF9xryHf-H_dzCR00/rs:fit:1200:630:0:0/g:ce:0:0/q:70/aHR0cHM6Ly9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL2J5dWNvdWdhcnMtcHJvZC8yMDI2LzAxLzI3L2U3Mk1OdVhsV1VpVEJIdUVJd3Bmb2tINGNKQVFObmRQTkFXNzFVbHMuanBn.jpg",
+    mediaKind: "action",
+  }],
+  "fletcher-magee": [{
+    sourceName: "official",
+    sourcePageUrl: "https://woffordterriers.com/sports/mens-basketball/roster/fletcher-magee/5572",
+    assetUrl: "https://woffordterriers.com/images/2018/9/28/Magee_Fletcher_2018.jpg",
+    mediaKind: "headshot",
+  }],
+  "travis-bader": [{
+    sourceName: "official",
+    sourcePageUrl: "https://goldengrizzlies.com/sports/mens-basketball/roster/travis-bader/661",
+    assetUrl: "https://goldengrizzlies.com/images/2018/5/8/9386964.jpeg",
+    mediaKind: "headshot",
+  }],
+  "steve-alford": [{
+    sourceName: "official",
+    sourcePageUrl: "https://iuhoosiers.com/honors/indiana-university-athletics-hall-of-fame/steve-alford/111",
+    assetUrl: "https://images.sidearmdev.com/crop?url=https%3A%2F%2Fdxbhsrqyrr690.cloudfront.net%2Fsidearm.nextgen.sites%2Fiuhoosiers.com%2Fimages%2F2015%2F4%2F1%2Falford.gif&width=600&height=900&type=webp",
+    mediaKind: "headshot",
+  }],
+  "jack-taylor": [{
+    sourceName: "official",
+    sourcePageUrl: "https://pioneers.grinnell.edu/sports/mens-basketball/roster/jack-taylor/2320",
+    assetUrl: "https://pioneers.grinnell.edu/images/2014/11/10/24_Taylor_5334.jpg",
+    mediaKind: "headshot",
+  }],
+  "katelynn-flaherty": [{
+    sourceName: "official",
+    sourcePageUrl: "https://mgoblue.com/sports/womens-basketball/roster/katelynn-flaherty/14044",
+    assetUrl: "https://images.sidearmdev.com/resize?url=https%3A%2F%2Fdxbhsrqyrr690.cloudfront.net%2Fsidearm.nextgen.sites%2Fmgoblue.com%2Fimages%2F2017%2F10%2F25%2F20171025_bkw_flaherty.jpg&width=1600&type=jpeg",
+    mediaKind: "headshot",
+  }],
+  "jess-kovatch": [{
+    sourceName: "official",
+    sourcePageUrl: "https://sfuathletics.com/roster.aspx?rp_id=6526",
+    assetUrl: "https://sfuathletics.com/images/2018/9/28/Kovatch_Jessica.jpg",
+    mediaKind: "headshot",
+  }],
+  "heather-butler": [{
+    sourceName: "official",
+    sourcePageUrl: "https://utmsports.com/sports/womens-basketball/roster/heather-butler/3203",
+    assetUrl: "https://images.sidearmdev.com/crop?url=https%3A%2F%2Fdxbhsrqyrr690.cloudfront.net%2Fsidearm.nextgen.sites%2Futm.sidearmsports.com%2Fimages%2F2022%2F7%2F5%2FBUTLER_HEATHER.jpg&width=600&height=900&type=webp",
+    mediaKind: "headshot",
+  }],
+  "jamie-carey": [{
+    sourceName: "official",
+    sourcePageUrl: "https://texaslonghorns.com/honors/hall-of-honor/jamie-carey/956",
+    assetUrl: "https://images.sidearmdev.com/crop?url=https%3A%2F%2Fdxbhsrqyrr690.cloudfront.net%2Fsidearm.nextgen.sites%2Ftexassports_com%2Fimages%2F2023%2F8%2F14%2Fcarey_uJtXN.jpg&width=600&height=900&type=webp",
+    mediaKind: "headshot",
+  }],
+}
+
 function parseArgs(argv: string[]): Args {
   const args: Args = {
     ids: [],
@@ -311,6 +398,7 @@ async function main() {
       let espnSeeds: DiscoveredMediaSeed[] = []
       let basketballReferenceSeeds: DiscoveredMediaSeed[] = []
       let wikimediaSeeds: DiscoveredMediaSeed[] = []
+      const officialSeeds = args.sources?.has("official") ? OFFICIAL_MEDIA_SEEDS[entry.canonicalId] ?? [] : []
       if ((!args.sources || args.sources.has("espn")) && reserveRequest()) {
         try {
           espnSeeds = await fetchEspnMediaSeeds(entry, metrics)
@@ -333,7 +421,7 @@ async function main() {
         }
       }
       const verifiedCatalogSeeds = rejectConflictingProviderSeeds(profile, seeds, espnSeeds)
-      const eligibleSeeds = [...espnSeeds, ...basketballReferenceSeeds, ...verifiedCatalogSeeds, ...wikimediaSeeds]
+      const eligibleSeeds = [...officialSeeds, ...espnSeeds, ...basketballReferenceSeeds, ...verifiedCatalogSeeds, ...wikimediaSeeds]
         .filter((seed) => !args.sources || args.sources.has(seed.sourceName))
       const allSeeds = prioritizeAndDedupeSeeds(entry, eligibleSeeds, args.maxImagesPerAthlete)
 
