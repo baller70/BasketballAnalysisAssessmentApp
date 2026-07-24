@@ -36,6 +36,7 @@ interface Args {
   reportOnly: boolean
   resume: boolean
   resumeFailed: boolean
+  uncoveredOnly: boolean
   skipSourceEvidence: boolean
   maxRequests: number
   maxBytes: number
@@ -60,6 +61,7 @@ function parseArgs(argv: string[]): Args {
     reportOnly: false,
     resume: false,
     resumeFailed: false,
+    uncoveredOnly: false,
     skipSourceEvidence: false,
     maxRequests: 600,
     maxBytes: 8_000_000,
@@ -75,6 +77,7 @@ function parseArgs(argv: string[]): Args {
     else if (arg === "--report-only") args.reportOnly = true
     else if (arg === "--resume") args.resume = true
     else if (arg === "--resume-failed") args.resumeFailed = true
+    else if (arg === "--uncovered") args.uncoveredOnly = true
     else if (arg === "--skip-source-evidence") args.skipSourceEvidence = true
     else if (arg.startsWith("--max-requests=")) args.maxRequests = Number(arg.slice("--max-requests=".length))
     else if (arg.startsWith("--max-bytes=")) args.maxBytes = Number(arg.slice("--max-bytes=".length))
@@ -228,6 +231,11 @@ async function main() {
     const staging = await loadStaging()
     const failedIds = new Set(staging.athletes.filter((athlete) => athlete.status === "failed").map((athlete) => athlete.canonicalId))
     selected = selected.filter((entry) => failedIds.has(entry.canonicalId))
+  }
+  if (args.uncoveredOnly) {
+    const staging = await loadStaging()
+    const coveredIds = new Set(staging.athletes.filter((athlete) => athlete.mediaCandidates.length > 0).map((athlete) => athlete.canonicalId))
+    selected = selected.filter((entry) => !coveredIds.has(entry.canonicalId))
   }
 
   if (args.reportOnly) {
