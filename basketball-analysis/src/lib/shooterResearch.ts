@@ -78,6 +78,7 @@ export interface MediaCandidate {
   licenseName: string | null
   licenseUrl: string | null
   attributionRequired: string | null
+  mediaKind: "headshot" | "action" | "unknown"
   shotPhase: "setup" | "dip" | "set_point" | "release" | "follow_through" | "unknown"
   cameraView: "front" | "side" | "three_quarter" | "unknown"
   identityReview: ReviewState
@@ -376,8 +377,15 @@ export function validateMediaCandidates(candidates: MediaCandidate[]): Validatio
     for (const reason of validatePublicHttpsUrl(candidate.assetUrl)) {
       issues.push({ level: "error", code: `asset_${reason}`, message: `${candidate.assetUrl}: ${reason}`, canonicalId: candidate.canonicalId })
     }
-    if (candidate.width !== null && candidate.height !== null && (candidate.width < 1200 || candidate.height < 800)) {
-      issues.push({ level: "warning", code: "image_below_minimum_dimensions", message: `${candidate.assetUrl} is ${candidate.width}x${candidate.height}`, canonicalId: candidate.canonicalId })
+    const minimumWidth = candidate.mediaKind === "headshot" ? 300 : 1200
+    const minimumHeight = candidate.mediaKind === "headshot" ? 250 : 800
+    if (candidate.width !== null && candidate.height !== null && (candidate.width < minimumWidth || candidate.height < minimumHeight)) {
+      issues.push({
+        level: "warning",
+        code: "image_below_minimum_dimensions",
+        message: `${candidate.assetUrl} is ${candidate.width}x${candidate.height}; expected at least ${minimumWidth}x${minimumHeight}`,
+        canonicalId: candidate.canonicalId,
+      })
     }
     if (candidate.contentHash) {
       const existing = hashes.get(candidate.contentHash)

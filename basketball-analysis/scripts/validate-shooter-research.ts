@@ -26,7 +26,8 @@ async function main() {
     generatedAt: new Date().toISOString(),
     athletes: [],
   })
-  const issues = [...validateRoster(roster), ...validateStagingDataset(staging), ...validateMediaCandidates(mediaCandidates)]
+  const expectedShape = roster.length === 106 ? "balanced" : "complete"
+  const issues = [...validateRoster(roster, expectedShape), ...validateStagingDataset(staging), ...validateMediaCandidates(mediaCandidates)]
   printIssues(issues)
 
   const errors = issues.filter((issue) => issue.level === "error")

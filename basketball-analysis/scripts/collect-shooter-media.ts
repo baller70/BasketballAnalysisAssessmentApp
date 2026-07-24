@@ -175,11 +175,36 @@ function prioritizeAndDedupeSeeds(entry: ShooterRosterEntry, seeds: DiscoveredMe
   }
   const byUrl = new Map<string, DiscoveredMediaSeed>()
   for (const seed of seeds) {
-    if (!byUrl.has(seed.assetUrl)) byUrl.set(seed.assetUrl, seed)
+    const provider = seed.mediaKind === "headshot" ? extractOfficialProviderId(seed.assetUrl) : null
+    const key = provider ? `headshot:${provider.sourceName}:${provider.providerId}` : seed.assetUrl
+    if (!byUrl.has(key)) byUrl.set(key, seed)
   }
   return [...byUrl.values()]
     .sort((a, b) => priority(a) - priority(b))
     .slice(0, limit)
+}
+
+function rejectConflictingProviderSeeds(
+  profile: AthleteStagingProfile,
+  catalogSeeds: DiscoveredMediaSeed[],
+  discoveredSeeds: DiscoveredMediaSeed[],
+): DiscoveredMediaSeed[] {
+  const verifiedIds = new Map<string, string>()
+  for (const seed of discoveredSeeds) {
+    const provider = extractOfficialProviderId(seed.assetUrl)
+    if (provider) verifiedIds.set(provider.sourceName, provider.providerId)
+  }
+  return catalogSeeds.filter((seed) => {
+    const provider = extractOfficialProviderId(seed.assetUrl)
+    const verifiedId = provider ? verifiedIds.get(provider.sourceName) : null
+    if (!provider || !verifiedId || provider.providerId === verifiedId) return true
+    profile.errors.push(`Rejected catalog ${provider.sourceName} provider ID mismatch for ${entryLabel(profile)}`)
+    return false
+  })
+}
+
+function entryLabel(profile: AthleteStagingProfile): string {
+  return `${profile.displayName} (${profile.canonicalId})`
 }
 
 async function main() {
@@ -260,13 +285,14 @@ async function main() {
         }
         requestBudgetRemaining -= 1
       }
-      const eligibleSeeds = [...seeds, ...espnSeeds, ...wikimediaSeeds]
+      const verifiedCatalogSeeds = rejectConflictingProviderSeeds(profile, seeds, espnSeeds)
+      const eligibleSeeds = [...espnSeeds, ...verifiedCatalogSeeds, ...wikimediaSeeds]
         .filter((seed) => !args.sources || args.sources.has(seed.sourceName))
       const allSeeds = prioritizeAndDedupeSeeds(entry, eligibleSeeds, args.maxImagesPerAthlete)
 
       updateProviderIds(profile, allSeeds)
 
-      const sourcePages = sourcePagesForAthlete(entry, seeds.map((seed) => seed.assetUrl))
+      const sourcePages = sourcePagesForAthlete(entry, allSeeds.map((seed) => seed.assetUrl))
         .filter((source) => !args.sources || args.sources.has(source.sourceName))
       const discoveredSourcePages = allSeeds.map((seed) => ({
         sourceName: seed.sourceName,
@@ -286,7 +312,15 @@ async function main() {
       const collected: MediaCandidate[] = []
       for (const seed of allSeeds) {
         if (requestBudgetRemaining <= 0) break
-        const candidate = await createMediaCandidateFromAsset(entry, seed.sourceName, seed.assetUrl, seed.sourcePageUrl, metrics, args.maxBytes)
+        const candidate = await createMediaCandidateFromAsset(
+          entry,
+          seed.sourceName,
+          seed.assetUrl,
+          seed.sourcePageUrl,
+          metrics,
+          args.maxBytes,
+          seed.mediaKind,
+        )
         requestBudgetRemaining -= 1
         collected.push(candidate)
       }

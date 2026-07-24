@@ -142,6 +142,7 @@ export async function createMediaCandidateFromAsset(
   sourcePageUrl: string,
   metrics: Map<string, ProxyRequestMetrics>,
   maxBytes: number,
+  mediaKind: MediaCandidate["mediaKind"] = "unknown",
 ): Promise<MediaCandidate> {
   const now = new Date().toISOString()
   const id = `${entry.canonicalId}-${sourceName}-${hashText(assetUrl).slice(0, 12)}`
@@ -166,8 +167,10 @@ export async function createMediaCandidateFromAsset(
       width = metadata.width ?? null
       height = metadata.height ?? null
       if (!width || !height) rejectionReasons.push("image_dimensions_unavailable")
-      if (width !== null && width < 1200) rejectionReasons.push("image_width_below_1200")
-      if (height !== null && height < 800) rejectionReasons.push("image_height_below_800")
+      const minimumWidth = mediaKind === "headshot" ? 300 : 1200
+      const minimumHeight = mediaKind === "headshot" ? 250 : 800
+      if (width !== null && width < minimumWidth) rejectionReasons.push(`image_width_below_${minimumWidth}`)
+      if (height !== null && height < minimumHeight) rejectionReasons.push(`image_height_below_${minimumHeight}`)
     } catch (error) {
       rejectionReasons.push(sanitizeSecret(error))
     }
@@ -188,6 +191,7 @@ export async function createMediaCandidateFromAsset(
     licenseName: null,
     licenseUrl: null,
     attributionRequired: null,
+    mediaKind,
     shotPhase: "unknown",
     cameraView: "unknown",
     identityReview: "PENDING_REVIEW",
