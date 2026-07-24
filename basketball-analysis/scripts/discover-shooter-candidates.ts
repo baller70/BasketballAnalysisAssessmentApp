@@ -30,9 +30,12 @@ interface CandidateEvidence {
   season: string
   team: string | null
   sourceUrl: string
+  games: number | null
   fgPct: number | null
   threePct: number | null
   ftPct: number | null
+  threePointAttempts: number | null
+  qualified: boolean
 }
 
 interface StatCandidate {
@@ -254,17 +257,21 @@ function parseBasketballReference(html: string, source: StatSource, existingIds:
       ...base,
       threePointAttempts: base.threePointAttemptsPerGame !== null && base.games !== null ? Math.round(base.threePointAttemptsPerGame * base.games) : null,
     }
+    const classification = classify(withAttempts)
     parsed.push({
       ...withAttempts,
-      ...classify(withAttempts),
+      ...classification,
       evidenceSeasons: [{
         league: source.league,
         season: source.season,
         team: base.team,
         sourceUrl: source.url,
+        games: base.games,
         fgPct: base.fgPct,
         threePct: base.threePct,
         ftPct: base.ftPct,
+        threePointAttempts: withAttempts.threePointAttempts,
+        qualified: classification.qualification === "elite" || classification.qualification === "great",
       }],
     })
   }
@@ -401,17 +408,21 @@ async function fetchNcaaSeasonCandidates(
       alreadyInApp: existingIds.has(three.canonicalId),
       retrievedAt,
     }
+    const classification = classify(base)
     candidates.push({
       ...base,
-      ...classify(base),
+      ...classification,
       evidenceSeasons: [{
         league,
         season: String(season),
         team: three.team,
         sourceUrl,
+        games: base.games,
         fgPct: fieldGoal.percentage,
         threePct: three.percentage,
         ftPct: freeThrow.percentage,
+        threePointAttempts: three.attempts,
+        qualified: classification.qualification === "elite" || classification.qualification === "great",
       }],
     })
   }
@@ -509,17 +520,21 @@ function parseEspnNcaaCandidates(
       alreadyInApp: existingIds.has(canonicalId),
       retrievedAt: new Date().toISOString(),
     }
+    const classification = classify(base)
     parsed.push({
       ...base,
-      ...classify(base),
+      ...classification,
       evidenceSeasons: [{
         league,
         season: String(season),
         team,
         sourceUrl,
+        games,
         fgPct: base.fgPct,
         threePct: base.threePct,
         ftPct: base.ftPct,
+        threePointAttempts: base.threePointAttempts,
+        qualified: classification.qualification === "elite" || classification.qualification === "great",
       }],
     })
   }
@@ -633,17 +648,21 @@ function parseFibaWomenCandidates(
       alreadyInApp: existingIds.has(canonicalId),
       retrievedAt,
     }
+    const classification = classify(base)
     parsed.push({
       ...base,
-      ...classify(base),
+      ...classification,
       evidenceSeasons: [{
         league: base.league,
         season,
         team,
         sourceUrl: base.sourceUrl,
+        games,
         fgPct,
         threePct,
         ftPct,
+        threePointAttempts: base.threePointAttempts,
+        qualified: classification.qualification === "elite" || classification.qualification === "great",
       }],
     })
   }
@@ -696,6 +715,15 @@ function deduplicateCandidates(candidates: StatCandidate[]): StatCandidate[] {
     })
   }
   return [...byId.values()]
+}
+
+function hasThreeQualifiedFibaSeasons(candidate: StatCandidate): boolean {
+  const qualifiedSeasons = new Set(
+    candidate.evidenceSeasons
+      .filter((evidence) => evidence.league === "EUROLEAGUE_WOMEN" && evidence.qualified)
+      .map((evidence) => evidence.season),
+  )
+  return qualifiedSeasons.size >= 3
 }
 
 function existingGaps(): ExistingGap[] {
@@ -779,7 +807,11 @@ async function main() {
 
   const deduplicated = deduplicateCandidates(discovered)
   const newQualified = deduplicated
-    .filter((candidate) => !candidate.alreadyInApp && ["elite", "great"].includes(candidate.qualification))
+    .filter((candidate) => {
+      if (candidate.alreadyInApp || !["elite", "great"].includes(candidate.qualification)) return false
+      if (candidate.league === "EUROLEAGUE_WOMEN") return hasThreeQualifiedFibaSeasons(candidate)
+      return true
+    })
     .sort((a, b) => {
       const women = Number(isWomenLeague(b.league)) - Number(isWomenLeague(a.league))
       return women || b.score - a.score
@@ -795,6 +827,7 @@ async function main() {
       nbaMen: { minGames: 30, minThreePct: 37, minFreeThrowPct: 80, minTwoOrFieldPct: 45, minThreeAttempts: 100, minThreeAttemptsPerGame: 2.0 },
       wnbaWomen: { minGames: 8, minThreePct: 35.5, minFreeThrowPct: 80, minTwoOrFieldPct: 44, minThreeAttempts: 35, minThreeAttemptsPerGame: 1.2 },
       euroLeagueWomen: { minGames: 8, minThreePct: 35.5, minFreeThrowPct: 80, minTwoPct: 44, minThreeAttempts: 35, minThreeAttemptsPerGame: 1.2 },
+      euroLeagueWomenCareerMinimum: { qualifiedSeasons: 3 },
       ncaaMen: { minGames: 20, minThreePct: 37, minFreeThrowPct: 80, minFieldPct: 45, minThreeAttempts: 60, minThreeAttemptsPerGame: 1.5 },
       ncaaWomen: { minGames: 20, minThreePct: 35.5, minFreeThrowPct: 80, minFieldPct: 44, minThreeAttempts: 50, minThreeAttemptsPerGame: 1.5 },
     },
