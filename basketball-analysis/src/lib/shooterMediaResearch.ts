@@ -372,14 +372,21 @@ export async function fetchEspnMediaSeeds(
   const exactLeaguePlayer = playerResults.find((result) => result.defaultLeagueSlug === expectedLeague)
   const matchedPlayer = exactLeaguePlayer ?? playerResults[0]
   const seeds: DiscoveredMediaSeed[] = []
+  const profileUrl = matchedPlayer?.link?.web
+  const profileId = profileUrl?.match(/\/id\/(\d+)\//)?.[1]
+  const profileLeague = matchedPlayer?.defaultLeagueSlug
+  const derivedHeadshot = profileId && profileLeague
+    ? `https://a.espncdn.com/i/headshots/${profileLeague}/players/full/${profileId}.png`
+    : null
+  const headshotUrl = matchedPlayer?.image?.default ?? derivedHeadshot
   if (
-    matchedPlayer?.image?.default?.startsWith("https://a.espncdn.com/")
-    && matchedPlayer.link?.web?.startsWith("https://www.espn.com/")
+    headshotUrl?.startsWith("https://a.espncdn.com/")
+    && profileUrl?.startsWith("https://www.espn.com/")
   ) {
     seeds.push({
       sourceName: "espn",
-      sourcePageUrl: matchedPlayer.link.web,
-      assetUrl: matchedPlayer.image.default,
+      sourcePageUrl: profileUrl,
+      assetUrl: headshotUrl,
       mediaKind: "headshot",
     })
   }
