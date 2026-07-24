@@ -9,6 +9,7 @@ import {
   createEmptyProfile,
   loadRoster,
   loadStaging,
+  pruneInvalidMediaCandidates,
   sanitizeSecret,
   type AthleteStagingProfile,
   type MediaCandidate,
@@ -380,6 +381,15 @@ async function main() {
   await Promise.all(Array.from({ length: workerCount }, () => worker()))
   await persistenceQueue
 
+  const pruning = pruneInvalidMediaCandidates([...profileById.values()].flatMap((profile) => profile.mediaCandidates))
+  const retainedById = new Set(pruning.candidates.map((candidate) => candidate.id))
+  for (const profile of profileById.values()) {
+    profile.mediaCandidates = profile.mediaCandidates.filter((candidate) => retainedById.has(candidate.id))
+    profile.externalProviderIds = {}
+    updateProviderIds(profile, profile.mediaCandidates)
+  }
+  await persistProfiles()
+
   const report = {
     generatedAt: new Date().toISOString(),
     selectedAthletes: selected.length,
@@ -387,6 +397,8 @@ async function main() {
     failed: [...profileById.values()].filter((profile) => profile.status === "failed").length,
     mediaCandidates: [...profileById.values()].reduce((total, profile) => total + profile.mediaCandidates.length, 0),
     athletesWithMediaCandidates: [...profileById.values()].filter((profile) => profile.mediaCandidates.length > 0).length,
+    prunedMediaCandidates: pruning.removedIds.length,
+    crossPlayerDuplicateHashes: pruning.crossPlayerDuplicateHashes.length,
     metrics: [...metrics.values()],
   }
   await atomicWriteJson(REPORT_PATH, report)

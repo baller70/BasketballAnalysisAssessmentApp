@@ -115,6 +115,12 @@ export interface ValidationIssue {
   canonicalId?: string
 }
 
+export interface MediaPruneResult {
+  candidates: MediaCandidate[]
+  removedIds: string[]
+  crossPlayerDuplicateHashes: string[]
+}
+
 export const SHOOTER_RESEARCH_DIR = path.join(process.cwd(), "data", "shooter-research")
 export const ROSTER_PATH = path.join(SHOOTER_RESEARCH_DIR, "candidate-roster.json")
 export const STAGING_PATH = path.join(SHOOTER_RESEARCH_DIR, "staging.json")
@@ -400,6 +406,47 @@ export function validateMediaCandidates(candidates: MediaCandidate[]): Validatio
   }
 
   return issues
+}
+
+export function pruneInvalidMediaCandidates(candidates: MediaCandidate[]): MediaPruneResult {
+  const removedIds = new Set<string>()
+  const byHash = new Map<string, MediaCandidate[]>()
+
+  for (const candidate of candidates) {
+    if (!candidate.contentHash || !candidate.width || !candidate.height) {
+      removedIds.add(candidate.id)
+      continue
+    }
+    const matching = byHash.get(candidate.contentHash) ?? []
+    matching.push(candidate)
+    byHash.set(candidate.contentHash, matching)
+  }
+
+  const crossPlayerDuplicateHashes: string[] = []
+  for (const [contentHash, matching] of byHash) {
+    const athleteIds = new Set(matching.map((candidate) => candidate.canonicalId))
+    if (athleteIds.size > 1) {
+      crossPlayerDuplicateHashes.push(contentHash)
+      for (const candidate of matching) removedIds.add(candidate.id)
+      continue
+    }
+    if (matching.length > 1) {
+      const keep = [...matching].sort((a, b) => {
+        const rejectionDifference = a.rejectionReasons.length - b.rejectionReasons.length
+        if (rejectionDifference !== 0) return rejectionDifference
+        return (b.width ?? 0) * (b.height ?? 0) - (a.width ?? 0) * (a.height ?? 0)
+      })[0]
+      for (const candidate of matching) {
+        if (candidate.id !== keep.id) removedIds.add(candidate.id)
+      }
+    }
+  }
+
+  return {
+    candidates: candidates.filter((candidate) => !removedIds.has(candidate.id)),
+    removedIds: [...removedIds],
+    crossPlayerDuplicateHashes,
+  }
 }
 
 export function validateStagingDataset(dataset: ShooterStagingDataset): ValidationIssue[] {
