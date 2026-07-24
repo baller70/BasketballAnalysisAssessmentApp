@@ -13,6 +13,25 @@ import path from "node:path"
 interface Args {
   maxBytes: number
   sources: Set<string> | null
+  ncaaSeasons: number[]
+  wnbaSeasons: number[]
+}
+
+interface StatSource {
+  sourceName: string
+  league: StatCandidate["league"]
+  season: string
+  url: string
+}
+
+interface CandidateEvidence {
+  league: StatCandidate["league"]
+  season: string
+  team: string | null
+  sourceUrl: string
+  fgPct: number | null
+  threePct: number | null
+  ftPct: number | null
 }
 
 interface StatCandidate {
@@ -32,11 +51,15 @@ interface StatCandidate {
   threePointAttemptsPerGame: number | null
   pointsPerGame: number | null
   minutesPerGame: number | null
+  height: string | null
+  position: string | null
+  classYear: string | null
   alreadyInApp: boolean
   qualification: "elite" | "great" | "near_miss" | "rejected"
   qualificationReasons: string[]
   score: number
   retrievedAt: string
+  evidenceSeasons: CandidateEvidence[]
 }
 
 interface ExistingGap {
@@ -51,18 +74,51 @@ interface ExistingGap {
   priority: number
 }
 
-const SOURCES = [
+const BASE_SOURCES: StatSource[] = [
   { sourceName: "basketball-reference", league: "NBA" as const, season: "2025-26", url: "https://www.basketball-reference.com/leagues/NBA_2026_per_game.html" },
-  { sourceName: "basketball-reference-wnba", league: "WNBA" as const, season: "2026", url: "https://www.basketball-reference.com/wnba/years/2026_per_game.html" },
 ]
 
 function parseArgs(argv: string[]): Args {
-  const args: Args = { maxBytes: 4_000_000, sources: null }
+  const args: Args = {
+    maxBytes: 4_000_000,
+    sources: null,
+    ncaaSeasons: [2026, 2025, 2024, 2023],
+    wnbaSeasons: Array.from({ length: 30 }, (_, index) => 2026 - index),
+  }
   for (const arg of argv) {
     if (arg.startsWith("--max-bytes=")) args.maxBytes = Number(arg.slice("--max-bytes=".length))
     if (arg.startsWith("--sources=")) args.sources = new Set(arg.slice("--sources=".length).split(",").map((s) => s.trim()).filter(Boolean))
+    if (arg.startsWith("--ncaa-seasons=")) args.ncaaSeasons = parseSeasonList(arg.slice("--ncaa-seasons=".length))
+    if (arg.startsWith("--wnba-seasons=")) args.wnbaSeasons = parseSeasonList(arg.slice("--wnba-seasons=".length))
   }
   return args
+}
+
+function parseSeasonList(value: string): number[] {
+  const seasons = new Set<number>()
+  for (const part of value.split(",").map((item) => item.trim()).filter(Boolean)) {
+    const range = part.match(/^(\d{4})-(\d{4})$/)
+    if (range) {
+      const start = Number(range[1])
+      const end = Number(range[2])
+      for (let season = Math.min(start, end); season <= Math.max(start, end); season++) seasons.add(season)
+      continue
+    }
+    const season = Number(part)
+    if (Number.isInteger(season)) seasons.add(season)
+  }
+  return [...seasons].sort((a, b) => b - a)
+}
+
+function wnbaSources(seasons: number[]): StatSource[] {
+  return seasons
+    .filter((season) => season >= 1997)
+    .map((season) => ({
+      sourceName: "basketball-reference-wnba",
+      league: "WNBA",
+      season: String(season),
+      url: `https://www.basketball-reference.com/wnba/years/${season}_per_game.html`,
+    }))
 }
 
 function decodeHtml(value: string): string {
@@ -104,7 +160,7 @@ function rowsFor(html: string): string[] {
   return [...html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)].map((m) => m[0])
 }
 
-function classify(candidate: Omit<StatCandidate, "qualification" | "qualificationReasons" | "score">): Pick<StatCandidate, "qualification" | "qualificationReasons" | "score"> {
+function classify(candidate: Omit<StatCandidate, "qualification" | "qualificationReasons" | "score" | "evidenceSeasons">): Pick<StatCandidate, "qualification" | "qualificationReasons" | "score"> {
   const reasons: string[] = []
   const games = candidate.games ?? 0
   const threePct = candidate.threePct ?? 0
@@ -114,9 +170,10 @@ function classify(candidate: Omit<StatCandidate, "qualification" | "qualificatio
   const threesPerGame = candidate.threePointAttemptsPerGame ?? 0
   const minutes = candidate.minutesPerGame ?? 0
   const womens = candidate.league === "WNBA" || candidate.league === "NCAA_WOMEN"
-  const minGames = womens ? 8 : 30
-  const minThreeAttempts = womens ? 35 : 100
-  const minThreePerGame = womens ? 1.2 : 2.0
+  const college = candidate.league === "NCAA_MEN" || candidate.league === "NCAA_WOMEN"
+  const minGames = college ? 20 : womens ? 8 : 30
+  const minThreeAttempts = college ? (womens ? 50 : 60) : womens ? 35 : 100
+  const minThreePerGame = college ? 1.5 : womens ? 1.2 : 2.0
   const greatThree = womens ? 35.5 : 37
   const eliteThree = womens ? 38 : 39
   const greatFt = 80
@@ -142,7 +199,7 @@ function classify(candidate: Omit<StatCandidate, "qualification" | "qualificatio
   return { qualification: "great", qualificationReasons: ["passes great 3PT/FT/2PT criteria with volume"], score }
 }
 
-function parseBasketballReference(html: string, source: typeof SOURCES[number], existingIds: Set<string>, retrievedAt: string): StatCandidate[] {
+function parseBasketballReference(html: string, source: StatSource, existingIds: Set<string>, retrievedAt: string): StatCandidate[] {
   const parsed: StatCandidate[] = []
   for (const row of rowsFor(html)) {
     if (!row.includes('data-stat="player"') && !row.includes("data-stat='player'")) continue
@@ -165,6 +222,9 @@ function parseBasketballReference(html: string, source: typeof SOURCES[number], 
       threePointAttemptsPerGame: num(valueFor(row, "fg3a_per_g")),
       pointsPerGame: num(valueFor(row, "pts_per_g")),
       minutesPerGame: num(valueFor(row, "mp_per_g")),
+      height: null,
+      position: null,
+      classYear: null,
       alreadyInApp: existingIds.has(canonicalizeName(name)),
       retrievedAt,
     }
@@ -172,9 +232,192 @@ function parseBasketballReference(html: string, source: typeof SOURCES[number], 
       ...base,
       threePointAttempts: base.threePointAttemptsPerGame !== null && base.games !== null ? Math.round(base.threePointAttemptsPerGame * base.games) : null,
     }
-    parsed.push({ ...withAttempts, ...classify(withAttempts) })
+    parsed.push({
+      ...withAttempts,
+      ...classify(withAttempts),
+      evidenceSeasons: [{
+        league: source.league,
+        season: source.season,
+        team: base.team,
+        sourceUrl: source.url,
+        fgPct: base.fgPct,
+        threePct: base.threePct,
+        ftPct: base.ftPct,
+      }],
+    })
   }
   return parsed
+}
+
+interface NcaaRankingRow {
+  canonicalId: string
+  displayName: string
+  team: string
+  classYear: string | null
+  height: string | null
+  position: string | null
+  games: number
+  made: number
+  attempts: number
+  percentage: number
+}
+
+function parseNcaaRankingRows(html: string): NcaaRankingRow[] {
+  const parsed: NcaaRankingRow[] = []
+  for (const row of rowsFor(html)) {
+    const cells = [...row.matchAll(/<t[hd][^>]*>([\s\S]*?)<\/t[hd]>/gi)].map((match) => stripTags(match[1]))
+    if (cells.length < 10 || cells[0] === "Rank" || !/^\d+$/.test(cells[0])) continue
+    const games = num(cells[6])
+    const made = num(cells[7])
+    const attempts = num(cells[8])
+    const percentage = pct(cells[9])
+    if (!cells[1] || games === null || made === null || attempts === null || percentage === null) continue
+    parsed.push({
+      canonicalId: canonicalizeName(cells[1]),
+      displayName: cells[1],
+      team: cells[2],
+      classYear: cells[3] || null,
+      height: cells[4] || null,
+      position: cells[5] || null,
+      games,
+      made,
+      attempts,
+      percentage,
+    })
+  }
+  return parsed
+}
+
+function ncaaPageCount(html: string): number {
+  let maximum = 1
+  for (const match of html.matchAll(/\/p(\d+)(?:["'?/]|$)/gi)) {
+    maximum = Math.max(maximum, Number(match[1]))
+  }
+  return maximum
+}
+
+async function fetchNcaaRanking(
+  league: "NCAA_MEN" | "NCAA_WOMEN",
+  season: number,
+  statId: number,
+  args: Args,
+  metrics: Map<string, ProxyRequestMetrics>,
+): Promise<NcaaRankingRow[]> {
+  const sport = league === "NCAA_WOMEN" ? "basketball-women" : "basketball-men"
+  const sourceName = league === "NCAA_WOMEN" ? "ncaa-women" : "ncaa-men"
+  const baseUrl = `https://www.ncaa.com/stats/${sport}/d1/${season}/individual/${statId}`
+  const first = await proxyFetch(baseUrl, {
+    sourceName,
+    timeoutMs: 25_000,
+    maxBytes: args.maxBytes,
+    retries: 3,
+    metrics,
+  })
+  const firstHtml = first.body.toString("utf8")
+  if (/Access Denied|Just a moment|cf-mitigated|challenge-platform/i.test(firstHtml)) {
+    throw new Error(`${sourceName} ${season} stat ${statId} returned an access challenge`)
+  }
+  const parsed = parseNcaaRankingRows(firstHtml)
+  const pageCount = ncaaPageCount(firstHtml)
+  for (let page = 2; page <= pageCount; page++) {
+    const response = await proxyFetch(`${baseUrl}/p${page}`, {
+      sourceName,
+      timeoutMs: 25_000,
+      maxBytes: args.maxBytes,
+      retries: 3,
+      metrics,
+    })
+    parsed.push(...parseNcaaRankingRows(response.body.toString("utf8")))
+  }
+  return parsed
+}
+
+async function fetchNcaaSeasonCandidates(
+  league: "NCAA_MEN" | "NCAA_WOMEN",
+  season: number,
+  existingIds: Set<string>,
+  args: Args,
+  metrics: Map<string, ProxyRequestMetrics>,
+): Promise<StatCandidate[]> {
+  const [threeRows, freeThrowRows, fieldGoalRows] = await Promise.all([
+    fetchNcaaRanking(league, season, 109, args, metrics),
+    fetchNcaaRanking(league, season, 108, args, metrics),
+    fetchNcaaRanking(league, season, 107, args, metrics),
+  ])
+  const freeThrows = new Map(freeThrowRows.map((row) => [row.canonicalId, row]))
+  const fieldGoals = new Map(fieldGoalRows.map((row) => [row.canonicalId, row]))
+  const sourceUrl = `https://www.ncaa.com/stats/${league === "NCAA_WOMEN" ? "basketball-women" : "basketball-men"}/d1/${season}/individual/109`
+  const retrievedAt = new Date().toISOString()
+  const candidates: StatCandidate[] = []
+
+  for (const three of threeRows) {
+    const freeThrow = freeThrows.get(three.canonicalId)
+    const fieldGoal = fieldGoals.get(three.canonicalId)
+    if (!freeThrow || !fieldGoal) continue
+    const base = {
+      canonicalId: three.canonicalId,
+      displayName: three.displayName,
+      sourceName: league === "NCAA_WOMEN" ? "ncaa-women" : "ncaa-men",
+      sourceUrl,
+      league,
+      season: String(season),
+      team: three.team,
+      games: Math.max(three.games, freeThrow.games, fieldGoal.games),
+      fgPct: fieldGoal.percentage,
+      threePct: three.percentage,
+      twoPct: null,
+      ftPct: freeThrow.percentage,
+      threePointAttempts: three.attempts,
+      threePointAttemptsPerGame: Number((three.attempts / three.games).toFixed(2)),
+      pointsPerGame: null,
+      minutesPerGame: null,
+      height: three.height,
+      position: three.position,
+      classYear: three.classYear,
+      alreadyInApp: existingIds.has(three.canonicalId),
+      retrievedAt,
+    }
+    candidates.push({
+      ...base,
+      ...classify(base),
+      evidenceSeasons: [{
+        league,
+        season: String(season),
+        team: three.team,
+        sourceUrl,
+        fgPct: fieldGoal.percentage,
+        threePct: three.percentage,
+        ftPct: freeThrow.percentage,
+      }],
+    })
+  }
+  return candidates
+}
+
+function deduplicateCandidates(candidates: StatCandidate[]): StatCandidate[] {
+  const qualificationRank = { rejected: 0, near_miss: 1, great: 2, elite: 3 }
+  const byId = new Map<string, StatCandidate>()
+  for (const candidate of candidates) {
+    const current = byId.get(candidate.canonicalId)
+    if (!current) {
+      byId.set(candidate.canonicalId, candidate)
+      continue
+    }
+    const evidenceSeasons = [...current.evidenceSeasons, ...candidate.evidenceSeasons]
+      .filter((evidence, index, all) => all.findIndex((item) =>
+        item.league === evidence.league &&
+        item.season === evidence.season &&
+        item.team === evidence.team
+      ) === index)
+    const candidateIsBetter =
+      qualificationRank[candidate.qualification] > qualificationRank[current.qualification] ||
+      (qualificationRank[candidate.qualification] === qualificationRank[current.qualification] && candidate.score > current.score)
+    byId.set(candidate.canonicalId, {
+      ...(candidateIsBetter ? candidate : current),
+      evidenceSeasons,
+    })
+  }
+  return [...byId.values()]
 }
 
 function existingGaps(): ExistingGap[] {
@@ -205,29 +448,47 @@ async function main() {
   const existingIds = new Set(ALL_ELITE_SHOOTERS.map((shooter) => canonicalizeName(shooter.name)))
   const metrics = new Map<string, ProxyRequestMetrics>()
   const discovered: StatCandidate[] = []
-  for (const source of SOURCES) {
+  const discoveryErrors: string[] = []
+  for (const source of [...BASE_SOURCES, ...wnbaSources(args.wnbaSeasons)]) {
     if (args.sources && !args.sources.has(source.league.toLowerCase()) && !args.sources.has(source.sourceName)) continue
-    const response = await proxyFetch(source.url, {
-      sourceName: source.sourceName,
-      timeoutMs: 25_000,
-      maxBytes: args.maxBytes,
-      retries: 2,
-      metrics,
-    })
-    const html = response.body.toString("utf8")
-    if (/Just a moment|cf-mitigated|challenge-platform/i.test(html)) {
-      throw new Error(`${source.sourceName} returned an anti-bot challenge; refusing to bypass it`)
+    try {
+      const response = await proxyFetch(source.url, {
+        sourceName: source.sourceName,
+        timeoutMs: 25_000,
+        maxBytes: args.maxBytes,
+        retries: 3,
+        metrics,
+      })
+      const html = response.body.toString("utf8")
+      if (/Just a moment|cf-mitigated|challenge-platform/i.test(html)) {
+        throw new Error(`${source.sourceName} ${source.season} returned an access challenge`)
+      }
+      discovered.push(...parseBasketballReference(html, source, existingIds, new Date().toISOString()))
+    } catch (error) {
+      discoveryErrors.push(sanitizeSecret(`${source.sourceName} ${source.season}: ${error instanceof Error ? error.message : String(error)}`))
     }
-    discovered.push(...parseBasketballReference(html, source, existingIds, new Date().toISOString()))
   }
 
-  const newQualified = discovered
+  for (const league of ["NCAA_WOMEN", "NCAA_MEN"] as const) {
+    const sourceAliases = new Set([league.toLowerCase(), league.toLowerCase().replace("_", "-"), league === "NCAA_WOMEN" ? "women" : "men"])
+    if (args.sources && ![...sourceAliases].some((source) => args.sources?.has(source))) continue
+    for (const season of args.ncaaSeasons) {
+      try {
+        discovered.push(...await fetchNcaaSeasonCandidates(league, season, existingIds, args, metrics))
+      } catch (error) {
+        discoveryErrors.push(sanitizeSecret(`${league} ${season}: ${error instanceof Error ? error.message : String(error)}`))
+      }
+    }
+  }
+
+  const deduplicated = deduplicateCandidates(discovered)
+  const newQualified = deduplicated
     .filter((candidate) => !candidate.alreadyInApp && ["elite", "great"].includes(candidate.qualification))
     .sort((a, b) => {
       const women = Number(b.league === "WNBA" || b.league === "NCAA_WOMEN") - Number(a.league === "WNBA" || a.league === "NCAA_WOMEN")
       return women || b.score - a.score
     })
-  const nearMisses = discovered
+  const nearMisses = deduplicated
     .filter((candidate) => !candidate.alreadyInApp && candidate.qualification === "near_miss")
     .sort((a, b) => b.score - a.score)
   const existingQualifiedMissing = existingGaps()
@@ -237,8 +498,15 @@ async function main() {
     criteria: {
       nbaMen: { minGames: 30, minThreePct: 37, minFreeThrowPct: 80, minTwoOrFieldPct: 45, minThreeAttempts: 100, minThreeAttemptsPerGame: 2.0 },
       wnbaWomen: { minGames: 8, minThreePct: 35.5, minFreeThrowPct: 80, minTwoOrFieldPct: 44, minThreeAttempts: 35, minThreeAttemptsPerGame: 1.2 },
+      ncaaMen: { minGames: 20, minThreePct: 37, minFreeThrowPct: 80, minFieldPct: 45, minThreeAttempts: 60, minThreeAttemptsPerGame: 1.5 },
+      ncaaWomen: { minGames: 20, minThreePct: 35.5, minFreeThrowPct: 80, minFieldPct: 44, minThreeAttempts: 50, minThreeAttemptsPerGame: 1.5 },
+    },
+    requestedSeasons: {
+      wnba: args.wnbaSeasons,
+      ncaa: args.ncaaSeasons,
     },
     sourceMetrics: [...metrics.values()],
+    discoveryErrors,
     existingGapSummary: {
       totalExisting: ALL_ELITE_SHOOTERS.length,
       existingMissingPhoto: existingQualifiedMissing.filter((g) => g.missingPhoto).length,
@@ -249,7 +517,7 @@ async function main() {
     newQualified,
     nearMisses,
     existingQualifiedMissing,
-    rejectedCount: discovered.filter((candidate) => candidate.qualification === "rejected").length,
+    rejectedCount: deduplicated.filter((candidate) => candidate.qualification === "rejected").length,
   }
 
   await atomicWriteJson(path.join(SHOOTER_RESEARCH_DIR, "discovered-shooter-candidates.json"), report)
@@ -259,6 +527,7 @@ async function main() {
     womenNewQualified: newQualified.filter((c) => c.league === "WNBA" || c.league === "NCAA_WOMEN").length,
     menNewQualified: newQualified.filter((c) => c.league === "NBA" || c.league === "NCAA_MEN").length,
     nearMisses: nearMisses.length,
+    discoveryErrors: discoveryErrors.length,
     existingMissingPhoto: report.existingGapSummary.existingMissingPhoto,
     existingMissingShootingFormImages: report.existingGapSummary.existingMissingShootingFormImages,
     metrics: report.sourceMetrics,
