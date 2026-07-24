@@ -1,0 +1,19 @@
+{
+  "generatedAt": "2026-07-24T02:29:07.531Z",
+  "selectedAthletes": 4,
+  "completed": 328,
+  "failed": 0,
+  "mediaCandidates": 602,
+  "athletesWithMediaCandidates": 327,
+  "prunedMediaCandidates": 0,
+  "crossPlayerDuplicateHashes": 0,
+  "metrics": [
+    {
+      "sourceName": "official",
+      "requests": 3,
+      "successes": 3,
+      "errors": 0,
+      "bytes": 243309
+    }
+  ]
+}
