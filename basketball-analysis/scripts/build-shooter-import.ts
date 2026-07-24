@@ -92,6 +92,13 @@ interface ImportSeed {
 
 const WOMEN_LEAGUES = new Set<CandidateLeague>(["WNBA", "NCAA_WOMEN", "EUROLEAGUE_WOMEN"])
 const MEN_LEAGUES = new Set<CandidateLeague>(["NBA", "NCAA_MEN", "EUROLEAGUE_MEN"])
+const OFFICIAL_WNBA_PLAYER_IDS: Record<string, string> = {
+  "lexie-brown": "1628882",
+  "megan-gustafson": "1629484",
+  "iziane-castro-marques": "100796",
+  "shenise-johnson": "203018",
+  "trisha-fallon": "100399",
+}
 
 function isImportedShooter(shooter: (typeof ALL_ELITE_SHOOTERS)[number]): boolean {
   return shooter.statScope === "qualifying-season"
@@ -177,6 +184,14 @@ async function findHeadshot(
 ): Promise<{ photoUrl: string | null; photoSourceUrl: string | null; warning: string | null }> {
   if (candidate.photoUrl?.startsWith("https://")) {
     return { photoUrl: candidate.photoUrl, photoSourceUrl: candidate.sourceUrl, warning: null }
+  }
+  const wnbaPlayerId = OFFICIAL_WNBA_PLAYER_IDS[candidate.canonicalId]
+  if (wnbaPlayerId) {
+    return {
+      photoUrl: `https://cdn.wnba.com/headshots/wnba/latest/1040x760/${wnbaPlayerId}.png`,
+      photoSourceUrl: `https://www.wnba.com/player/${wnbaPlayerId}`,
+      warning: null,
+    }
   }
   try {
     const headshot = (await fetchEspnMediaSeeds(rosterEntry(candidate), metrics, 0))
