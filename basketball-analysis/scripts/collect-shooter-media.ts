@@ -39,6 +39,7 @@ interface Args {
   maxRequests: number
   maxBytes: number
   maxImagesPerAthlete: number
+  concurrency: number
   sources: Set<string> | null
   competitions: Set<string> | null
 }
@@ -62,6 +63,7 @@ function parseArgs(argv: string[]): Args {
     maxRequests: 600,
     maxBytes: 8_000_000,
     maxImagesPerAthlete: 3,
+    concurrency: 1,
     sources: null,
     competitions: null,
   }
@@ -76,6 +78,7 @@ function parseArgs(argv: string[]): Args {
     else if (arg.startsWith("--max-requests=")) args.maxRequests = Number(arg.slice("--max-requests=".length))
     else if (arg.startsWith("--max-bytes=")) args.maxBytes = Number(arg.slice("--max-bytes=".length))
     else if (arg.startsWith("--max-images-per-athlete=")) args.maxImagesPerAthlete = Number(arg.slice("--max-images-per-athlete=".length))
+    else if (arg.startsWith("--concurrency=")) args.concurrency = Math.max(1, Number(arg.slice("--concurrency=".length)))
     else if (arg.startsWith("--sources=")) args.sources = new Set(arg.slice("--sources=".length).split(",").map((source) => source.trim()).filter(Boolean))
     else if (arg.startsWith("--competitions=")) args.competitions = new Set(arg.slice("--competitions=".length).split(",").map((competition) => competition.trim()).filter(Boolean))
   }
@@ -247,46 +250,69 @@ async function main() {
 
   const staging = await loadStaging()
   const profileById = new Map(staging.athletes.map((athlete) => [athlete.canonicalId, athlete]))
-  const mediaCandidates: MediaCandidate[] = []
   const metrics = new Map<string, ProxyRequestMetrics>()
   let requestBudgetRemaining = args.maxRequests
+  let persistenceQueue: Promise<void> = Promise.resolve()
+  let interrupted = false
+
+  const reserveRequest = () => {
+    if (requestBudgetRemaining <= 0) return false
+    requestBudgetRemaining -= 1
+    return true
+  }
+
+  const persistProfiles = () => {
+    const profiles = [...profileById.values()]
+    const dataset = {
+      schemaVersion: 1 as const,
+      generatedAt: new Date().toISOString(),
+      athletes: profiles,
+    }
+    const candidates = profiles.flatMap((profile) => profile.mediaCandidates)
+    const checkpoint = buildCheckpoint(profiles)
+    persistenceQueue = persistenceQueue.then(async () => {
+      await atomicWriteJson(STAGING_PATH, dataset)
+      await atomicWriteJson(MEDIA_CANDIDATES_PATH, candidates)
+      await atomicWriteJson(CHECKPOINT_PATH, checkpoint)
+    })
+    return persistenceQueue
+  }
 
   process.on("SIGINT", async () => {
-    await atomicWriteJson(CHECKPOINT_PATH, buildCheckpoint([...profileById.values()]))
+    interrupted = true
+    await persistProfiles()
     console.log("Interrupted; checkpoint saved.")
     process.exit(130)
   })
 
-  for (const entry of selected) {
+  const processEntry = async (entry: ShooterRosterEntry) => {
     const profile = profileById.get(entry.canonicalId) ?? createEmptyProfile(entry)
     profile.researchSources ??= []
     profile.mediaCandidates ??= []
     profile.errors ??= []
-    if (args.resume && profile.status === "completed") continue
+    if (args.resume && profile.status === "completed") return
     profile.status = "in_progress"
     profile.updatedAt = new Date().toISOString()
     profileById.set(entry.canonicalId, profile)
-    await atomicWriteJson(CHECKPOINT_PATH, buildCheckpoint([...profileById.values()]))
+    await persistProfiles()
 
     try {
       const seeds = seedUrlsFor(entry)
       let espnSeeds: DiscoveredMediaSeed[] = []
       let wikimediaSeeds: DiscoveredMediaSeed[] = []
-      if (requestBudgetRemaining > 0 && (!args.sources || args.sources.has("espn"))) {
+      if ((!args.sources || args.sources.has("espn")) && reserveRequest()) {
         try {
           espnSeeds = await fetchEspnMediaSeeds(entry, metrics)
         } catch (error) {
           profile.errors.push(`ESPN discovery: ${sanitizeSecret(error)}`)
         }
-        requestBudgetRemaining -= 1
       }
-      if (requestBudgetRemaining > 0 && args.sources?.has("wikimedia")) {
+      if (args.sources?.has("wikimedia") && reserveRequest()) {
         try {
           wikimediaSeeds = await fetchWikimediaSearch(entry, metrics)
         } catch (error) {
           profile.errors.push(`Wikimedia discovery: ${sanitizeSecret(error)}`)
         }
-        requestBudgetRemaining -= 1
       }
       const verifiedCatalogSeeds = rejectConflictingProviderSeeds(profile, seeds, espnSeeds)
       const eligibleSeeds = [...espnSeeds, ...verifiedCatalogSeeds, ...wikimediaSeeds]
@@ -308,15 +334,14 @@ async function main() {
       const sourceEvidence: ResearchSourceEvidence[] = []
       if (!args.skipSourceEvidence) {
         for (const sourcePage of uniqueSourcePages) {
-          if (requestBudgetRemaining <= 0) break
+          if (!reserveRequest()) break
           sourceEvidence.push(await fetchResearchSourceEvidence(sourcePage, metrics, 2_000_000))
-          requestBudgetRemaining -= 1
         }
       }
 
       const collected: MediaCandidate[] = []
       for (const seed of allSeeds) {
-        if (requestBudgetRemaining <= 0) break
+        if (!reserveRequest()) break
         const candidate = await createMediaCandidateFromAsset(
           entry,
           seed.sourceName,
@@ -326,7 +351,6 @@ async function main() {
           args.maxBytes,
           seed.mediaKind,
         )
-        requestBudgetRemaining -= 1
         collected.push(candidate)
       }
 
@@ -334,20 +358,27 @@ async function main() {
       profile.mediaCandidates = mergeCandidates(profile.mediaCandidates, collected)
       profile.status = "completed"
       profile.updatedAt = new Date().toISOString()
-      mediaCandidates.push(...profile.mediaCandidates)
     } catch (error) {
       profile.status = "failed"
       profile.errors.push(sanitizeSecret(error))
       profile.updatedAt = new Date().toISOString()
     }
 
-    await atomicWriteJson(STAGING_PATH, {
-      schemaVersion: 1,
-      generatedAt: new Date().toISOString(),
-      athletes: [...profileById.values()],
-    })
-    await atomicWriteJson(MEDIA_CANDIDATES_PATH, mergeCandidates(mediaCandidates, [...profileById.values()].flatMap((profile) => profile.mediaCandidates)))
+    await persistProfiles()
   }
+
+  let nextIndex = 0
+  const worker = async () => {
+    while (!interrupted) {
+      const index = nextIndex
+      nextIndex += 1
+      if (index >= selected.length) return
+      await processEntry(selected[index])
+    }
+  }
+  const workerCount = Math.min(args.concurrency, Math.max(1, selected.length))
+  await Promise.all(Array.from({ length: workerCount }, () => worker()))
+  await persistenceQueue
 
   const report = {
     generatedAt: new Date().toISOString(),

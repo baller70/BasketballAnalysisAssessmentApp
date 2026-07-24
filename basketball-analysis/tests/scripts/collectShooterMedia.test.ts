@@ -21,5 +21,6 @@ describe("collect-shooter-media script wiring", () => {
     expect(source).toContain("--max-bytes=")
     expect(source).toContain("--sources=")
     expect(source).toContain("--skip-source-evidence")
+    expect(source).toContain("--concurrency=")
   })
 })
