@@ -622,10 +622,12 @@ async function main() {
     const sourceAliases = new Set([league.toLowerCase(), league.toLowerCase().replace("_", "-"), league === "NCAA_WOMEN" ? "women" : "men"])
     if (args.sources && ![...sourceAliases].some((source) => args.sources?.has(source))) continue
     for (const season of args.ncaaSeasons) {
-      try {
-        discovered.push(...await fetchNcaaSeasonCandidates(league, season, existingIds, args, metrics))
-      } catch (error) {
-        discoveryErrors.push(sanitizeSecret(`${league} ${season}: ${error instanceof Error ? error.message : String(error)}`))
+      if (season >= 2021) {
+        try {
+          discovered.push(...await fetchNcaaSeasonCandidates(league, season, existingIds, args, metrics))
+        } catch (error) {
+          discoveryErrors.push(sanitizeSecret(`${league} ${season}: ${error instanceof Error ? error.message : String(error)}`))
+        }
       }
       try {
         discovered.push(...await fetchEspnNcaaSeasonCandidates(league, season, existingIds, args, metrics))
