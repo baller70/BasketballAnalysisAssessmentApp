@@ -67,17 +67,23 @@ const OFFICIAL_MEDIA_SEEDS: Record<string, DiscoveredMediaSeed[]> = {
     assetUrl: "https://khsbhf.com/wp-content/uploads/2018/02/17darelcarrier.png",
     mediaKind: "headshot",
   }],
+  "billy-keller": [{
+    sourceName: "official",
+    sourcePageUrl: "https://hoopshall.com/inductees/billy-keller/",
+    assetUrl: "https://hoopshall.com/wp-content/uploads/2019/09/2790-303x450.jpg",
+    mediaKind: "action",
+  }],
   "nicole-powell": [{
     sourceName: "official",
-    sourcePageUrl: "https://www.wnba.com/player/100919",
-    assetUrl: "https://cdn.wnba.com/headshots/wnba/latest/1040x760/100919.png",
+    sourcePageUrl: "https://gostanford.com/sports/womens-basketball/roster/player/nicole-powell",
+    assetUrl: "https://gostanford.com/imgproxy/TdlEaQW1PTZIcqSwBzw6qs3XzdH9wxkdhQl9JcCzcow/rs:fit:1980:0:0:0/g:ce:0:0/q:90/aHR0cHM6Ly9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL3N0YW5mb3JkLXByb2QvMjAyNC8wMS8yMi82Wm9RcFhxbXJlcVpUVEpsQ1B3NUxsYWhrd2o0NnBXWWJsU1FOdnNFLmpwZw.jpg",
     mediaKind: "headshot",
   }],
   "allison-feaster": [{
     sourceName: "official",
-    sourcePageUrl: "https://www.wnba.com/player/100170/allison-feaster",
-    assetUrl: "https://cdn.wnba.com/headshots/wnba/latest/1040x760/100170.png",
-    mediaKind: "headshot",
+    sourcePageUrl: "https://gocrimson.com/news/2023/9/7/womens-basketball-feaster-former-womens-basketball-standout-joins-ncaa-board-of-governors.aspx",
+    assetUrl: "https://gocrimson.com/images/2023/9/7/Screenshot_2023-09-07_at_11.26.11_AM.png",
+    mediaKind: "action",
   }],
   "laurie-koehn": [{
     sourceName: "official",
