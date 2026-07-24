@@ -709,8 +709,15 @@ function deduplicateCandidates(candidates: StatCandidate[]): StatCandidate[] {
     const candidateIsBetter =
       qualificationRank[candidate.qualification] > qualificationRank[current.qualification] ||
       (qualificationRank[candidate.qualification] === qualificationRank[current.qualification] && candidate.score > current.score)
+    const preferred = candidateIsBetter ? candidate : current
+    const alternate = candidateIsBetter ? current : candidate
     byId.set(candidate.canonicalId, {
-      ...(candidateIsBetter ? candidate : current),
+      ...preferred,
+      photoUrl: preferred.photoUrl ?? alternate.photoUrl,
+      externalProviderId: preferred.externalProviderId ?? alternate.externalProviderId,
+      height: preferred.height ?? alternate.height,
+      position: preferred.position ?? alternate.position,
+      classYear: preferred.classYear ?? alternate.classYear,
       evidenceSeasons,
     })
   }

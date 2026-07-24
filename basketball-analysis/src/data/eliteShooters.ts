@@ -38,12 +38,14 @@
 export type ShooterTier = 'legendary' | 'elite' | 'great' | 'good' | 'mid_level' | 'bad';
 export type Position = 'POINT_GUARD' | 'SHOOTING_GUARD' | 'SMALL_FORWARD' | 'POWER_FORWARD' | 'CENTER' | 'GUARD' | 'FORWARD';
 export type BodyType = 'LEAN' | 'ATHLETIC' | 'STOCKY' | 'TALL_LEAN';
+export type League = 'NBA' | 'WNBA' | 'NCAA_MEN' | 'NCAA_WOMEN' | 'TOP_COLLEGE';
 
 export interface EliteShooter {
   id: number;
   name: string;
   team: string;
-  league: 'NBA' | 'WNBA' | 'NCAA_MEN' | 'NCAA_WOMEN' | 'TOP_COLLEGE';
+  league: League;
+  competitionHistory?: League[];
   era: string;
   tier: ShooterTier;
   position: Position;
@@ -55,6 +57,30 @@ export interface EliteShooter {
   // Shooting stats
   careerPct?: number;  // Career 3PT%
   careerFreeThrowPct: number;
+  statScope?: 'career' | 'qualifying-season';
+  qualificationEvidence?: {
+    season: string;
+    games: number;
+    fgPct: number;
+    threePct: number;
+    twoPct: number;
+    ftPct: number;
+    threePointAttempts: number;
+    threePointAttemptsPerGame: number;
+    sourceUrl: string;
+    evidenceSeasons: Array<{
+      league: string;
+      season: string;
+      team: string | null;
+      sourceUrl: string;
+      games: number | null;
+      fgPct: number | null;
+      threePct: number | null;
+      ftPct: number | null;
+      threePointAttempts: number | null;
+      qualified: boolean;
+    }>;
+  };
   achievements?: string;
   keyTraits: string[];
   shootingStyle: string;
@@ -771,4 +797,3 @@ export const LEAGUE_COLORS: Record<EliteShooter['league'], string> = {
   NCAA_WOMEN: 'from-purple-500 to-purple-600',
   TOP_COLLEGE: 'from-amber-500 to-amber-600'
 };
-
