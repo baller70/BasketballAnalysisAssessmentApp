@@ -35,6 +35,7 @@ interface Args {
   reportOnly: boolean
   resume: boolean
   resumeFailed: boolean
+  skipSourceEvidence: boolean
   maxRequests: number
   maxBytes: number
   maxImagesPerAthlete: number
@@ -57,6 +58,7 @@ function parseArgs(argv: string[]): Args {
     reportOnly: false,
     resume: false,
     resumeFailed: false,
+    skipSourceEvidence: false,
     maxRequests: 600,
     maxBytes: 8_000_000,
     maxImagesPerAthlete: 3,
@@ -70,6 +72,7 @@ function parseArgs(argv: string[]): Args {
     else if (arg === "--report-only") args.reportOnly = true
     else if (arg === "--resume") args.resume = true
     else if (arg === "--resume-failed") args.resumeFailed = true
+    else if (arg === "--skip-source-evidence") args.skipSourceEvidence = true
     else if (arg.startsWith("--max-requests=")) args.maxRequests = Number(arg.slice("--max-requests=".length))
     else if (arg.startsWith("--max-bytes=")) args.maxBytes = Number(arg.slice("--max-bytes=".length))
     else if (arg.startsWith("--max-images-per-athlete=")) args.maxImagesPerAthlete = Number(arg.slice("--max-images-per-athlete=".length))
@@ -303,10 +306,12 @@ async function main() {
         [...sourcePages, ...discoveredSourcePages].map((source) => [source.sourcePageUrl, source]),
       ).values()].slice(0, 10)
       const sourceEvidence: ResearchSourceEvidence[] = []
-      for (const sourcePage of uniqueSourcePages) {
-        if (requestBudgetRemaining <= 0) break
-        sourceEvidence.push(await fetchResearchSourceEvidence(sourcePage, metrics, 2_000_000))
-        requestBudgetRemaining -= 1
+      if (!args.skipSourceEvidence) {
+        for (const sourcePage of uniqueSourcePages) {
+          if (requestBudgetRemaining <= 0) break
+          sourceEvidence.push(await fetchResearchSourceEvidence(sourcePage, metrics, 2_000_000))
+          requestBudgetRemaining -= 1
+        }
       }
 
       const collected: MediaCandidate[] = []
