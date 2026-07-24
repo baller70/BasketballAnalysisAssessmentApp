@@ -32,6 +32,19 @@ describe("shooterMediaResearch", () => {
       sourceName: "wnba",
       providerId: "1629498",
     })
+    expect(extractOfficialProviderId("https://a.espncdn.com/i/headshots/womens-college-basketball/players/full/4398884.png")).toEqual({
+      sourceName: "espn",
+      providerId: "4398884",
+    })
+  })
+
+  it("builds the correct ESPN profile URL for women's college assets", () => {
+    expect(
+      sourcePageForOfficialAsset(
+        "https://a.espncdn.com/i/headshots/womens-college-basketball/players/full/4398884.png",
+        "Taylor Robertson",
+      ),
+    ).toBe("https://www.espn.com/womens-college-basketball/player/_/id/4398884/taylor-robertson")
   })
 
   it("converts official assets into source pages instead of treating assets as citations", () => {

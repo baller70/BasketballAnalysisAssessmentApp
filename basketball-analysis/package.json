@@ -20,6 +20,7 @@
     "benchmark:vision": "tsx scripts/run-vision-benchmark.ts",
     "verify:device-matrix": "tsx scripts/verify-device-matrix.ts",
     "plan:shooters": "DOTENV_CONFIG_PATH=.env.local tsx -r dotenv/config scripts/plan-shooter-roster.ts",
+    "plan:all-shooters": "DOTENV_CONFIG_PATH=.env.local tsx -r dotenv/config scripts/plan-shooter-roster.ts --scope=all",
     "validate:shooters": "DOTENV_CONFIG_PATH=.env.local tsx -r dotenv/config scripts/validate-shooter-research.ts",
     "verify:iproyal": "DOTENV_CONFIG_PATH=.env.local tsx -r dotenv/config scripts/verify-iproyal-proxy.ts",
     "collect:shooter-media": "DOTENV_CONFIG_PATH=.env.local tsx -r dotenv/config scripts/collect-shooter-media.ts",

@@ -3,6 +3,7 @@ import { promisify } from "node:util"
 import sharp from "sharp"
 import {
   assertProxyConfigured,
+  canonicalizeName,
   hashText,
   sanitizeSecret,
   validatePublicHttpsUrl,
@@ -34,6 +35,13 @@ export interface ProxyFetchOptions {
   maxBytes: number
   retries: number
   metrics: Map<string, ProxyRequestMetrics>
+}
+
+export interface DiscoveredMediaSeed {
+  sourceName: string
+  sourcePageUrl: string
+  assetUrl: string
+  mediaKind: "headshot" | "action" | "unknown"
 }
 
 function metricFor(metrics: Map<string, ProxyRequestMetrics>, sourceName: string): ProxyRequestMetrics {
@@ -227,7 +235,8 @@ export function extractOfficialProviderId(assetUrl: string): { sourceName: strin
     if (url.hostname === "cdn.nba.com" && nba?.[1]) return { sourceName: "nba", providerId: nba[1] }
     const wnba = path.match(/\/headshots\/wnba\/latest\/1040x760\/(\d+)\.png$/)
     if (url.hostname === "ak-static.cms.nba.com" && wnba?.[1]) return { sourceName: "wnba", providerId: wnba[1] }
-    const espn = path.match(/\/headshots\/(?:mens|womens)-college-basketball\/players\/full\/(\d+)\.png$/)
+    const espnPath = url.searchParams.get("img") ?? path
+    const espn = espnPath.match(/\/headshots\/(?:nba|wnba|mens-college-basketball|womens-college-basketball)\/players\/full\/(\d+)\.png$/)
     if (url.hostname === "a.espncdn.com" && espn?.[1]) return { sourceName: "espn", providerId: espn[1] }
   } catch {
     return null
@@ -240,7 +249,12 @@ export function sourcePageForOfficialAsset(assetUrl: string, displayName: string
   const slug = displayName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
   if (provider?.sourceName === "nba") return `https://www.nba.com/player/${provider.providerId}/${slug}`
   if (provider?.sourceName === "wnba") return `https://www.wnba.com/player/${provider.providerId}/${slug}`
-  if (provider?.sourceName === "espn") return `https://www.espn.com/mens-college-basketball/player/_/id/${provider.providerId}/${slug}`
+  if (provider?.sourceName === "espn") {
+    const url = new URL(assetUrl)
+    const espnPath = url.searchParams.get("img") ?? url.pathname
+    const leagueSlug = espnPath.match(/\/headshots\/(nba|wnba|mens-college-basketball|womens-college-basketball)\//)?.[1]
+    if (leagueSlug) return `https://www.espn.com/${leagueSlug}/player/_/id/${provider.providerId}/${slug}`
+  }
   return assetUrl
 }
 
@@ -269,6 +283,133 @@ export function sourcePagesForAthlete(entry: ShooterRosterEntry, assetUrls: stri
   add({ sourceName: "eurobasket", sourcePageUrl: `https://www.eurobasket.com/search.aspx?Search=${encodedName}`, evidenceType: "search_results" })
 
   return [...pages.values()]
+}
+
+interface EspnSearchImage {
+  width?: number
+  height?: number
+  url?: string
+  name?: string
+  alt?: string
+  caption?: string
+  peers?: EspnSearchImage[]
+}
+
+interface EspnSearchContent {
+  type?: string
+  displayName?: string
+  description?: string
+  subtitle?: string
+  sport?: string
+  defaultLeagueSlug?: string
+  link?: { web?: string }
+  image?: { default?: string }
+  images?: EspnSearchImage[]
+}
+
+interface EspnSearchResultGroup {
+  type?: string
+  contents?: EspnSearchContent[]
+}
+
+const ESPN_LEAGUE_BY_COMPETITION: Record<ShooterRosterEntry["competitionCategory"], string> = {
+  NBA: "nba",
+  WNBA: "wnba",
+  NCAA_MEN: "mens-college-basketball",
+  NCAA_WOMEN: "womens-college-basketball",
+  TOP_COLLEGE: "womens-college-basketball",
+}
+
+function containsAthleteName(value: string, entry: ShooterRosterEntry): boolean {
+  const normalized = canonicalizeName(value)
+  return [entry.canonicalId, ...entry.aliases.map(canonicalizeName)].some((name) => normalized.includes(name))
+}
+
+function bestEspnImage(image: EspnSearchImage): EspnSearchImage | null {
+  const candidates = [image, ...(image.peers ?? [])]
+    .filter((candidate) => candidate.url?.startsWith("https://a.espncdn.com/"))
+    .filter((candidate) => containsUsefulDimensions(candidate))
+  return candidates.sort((a, b) => imageScore(b) - imageScore(a))[0] ?? null
+}
+
+function containsUsefulDimensions(image: EspnSearchImage): boolean {
+  return Number.isFinite(image.width) && Number.isFinite(image.height) && (image.width ?? 0) >= 600 && (image.height ?? 0) >= 400
+}
+
+function imageScore(image: EspnSearchImage): number {
+  const width = image.width ?? 0
+  const height = image.height ?? 0
+  const minimumSizeBonus = width >= 1200 && height >= 800 ? 1_000_000_000 : 0
+  return minimumSizeBonus + width * height
+}
+
+export async function fetchEspnMediaSeeds(
+  entry: ShooterRosterEntry,
+  metrics: Map<string, ProxyRequestMetrics>,
+  maxActions = 2,
+): Promise<DiscoveredMediaSeed[]> {
+  const searchUrl = `https://site.web.api.espn.com/apis/search/v2?query=${encodeURIComponent(entry.displayName)}`
+  const response = await proxyFetch(searchUrl, {
+    sourceName: "espn",
+    timeoutMs: 20_000,
+    maxBytes: 2_000_000,
+    retries: 2,
+    metrics,
+  })
+  const payload = JSON.parse(response.body.toString("utf8")) as { results?: EspnSearchResultGroup[] }
+  const expectedLeague = ESPN_LEAGUE_BY_COMPETITION[entry.competitionCategory]
+  const playerResults = (payload.results ?? [])
+    .filter((group) => group.type === "player")
+    .flatMap((group) => group.contents ?? [])
+    .filter((result) => result.sport === "basketball")
+    .filter((result) => canonicalizeName(result.displayName ?? "") === entry.canonicalId)
+    .sort((a, b) => Number(b.defaultLeagueSlug === expectedLeague) - Number(a.defaultLeagueSlug === expectedLeague))
+
+  const exactLeaguePlayer = playerResults.find((result) => result.defaultLeagueSlug === expectedLeague)
+  const matchedPlayer = exactLeaguePlayer ?? playerResults[0]
+  const seeds: DiscoveredMediaSeed[] = []
+  if (
+    matchedPlayer?.image?.default?.startsWith("https://a.espncdn.com/")
+    && matchedPlayer.link?.web?.startsWith("https://www.espn.com/")
+  ) {
+    seeds.push({
+      sourceName: "espn",
+      sourcePageUrl: matchedPlayer.link.web,
+      assetUrl: matchedPlayer.image.default,
+      mediaKind: "headshot",
+    })
+  }
+
+  const actionSeeds = (payload.results ?? [])
+    .filter((group) => group.type === "article")
+    .flatMap((group) => group.contents ?? [])
+    .flatMap((article) => {
+      const sourcePageUrl = article.link?.web
+      if (!sourcePageUrl?.startsWith("https://www.espn.com/")) return []
+      return (article.images ?? []).flatMap((image) => {
+        const identityText = [image.name, image.alt, image.caption, ...(image.peers ?? []).flatMap((peer) => [peer.name, peer.alt, peer.caption])]
+          .filter(Boolean)
+          .join(" ")
+        if (!containsAthleteName(identityText, entry)) return []
+        const selected = bestEspnImage(image)
+        if (!selected?.url) return []
+        return [{
+          sourceName: "espn",
+          sourcePageUrl,
+          assetUrl: selected.url,
+          mediaKind: "action" as const,
+        }]
+      })
+    })
+
+  const seen = new Set(seeds.map((seed) => seed.assetUrl))
+  for (const seed of actionSeeds) {
+    if (seen.has(seed.assetUrl)) continue
+    seen.add(seed.assetUrl)
+    seeds.push(seed)
+    if (seeds.filter((candidate) => candidate.mediaKind === "action").length >= maxActions) break
+  }
+  return seeds
 }
 
 export async function fetchResearchSourceEvidence(

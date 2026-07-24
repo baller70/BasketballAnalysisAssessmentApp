@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import {
   buildBalancedRoster,
+  buildCompleteRoster,
   canonicalizeName,
   validatePublicHttpsUrl,
   validateRoster,
@@ -13,6 +14,16 @@ describe("shooterResearch", () => {
     expect(roster.filter((entry) => entry.category === "men")).toHaveLength(53)
     expect(roster.filter((entry) => entry.category === "women")).toHaveLength(53)
     expect(validateRoster(roster).filter((issue) => issue.level === "error")).toHaveLength(0)
+  })
+
+  it("builds a complete roster covering every current catalog entry", () => {
+    const roster = buildCompleteRoster()
+    expect(roster).toHaveLength(328)
+    expect(roster.filter((entry) => entry.competitionCategory === "NBA")).toHaveLength(260)
+    expect(roster.filter((entry) => entry.competitionCategory === "WNBA")).toHaveLength(30)
+    expect(roster.filter((entry) => entry.competitionCategory === "NCAA_MEN")).toHaveLength(15)
+    expect(roster.filter((entry) => entry.competitionCategory === "NCAA_WOMEN")).toHaveLength(22)
+    expect(validateRoster(roster, "complete").filter((issue) => issue.level === "error")).toHaveLength(0)
   })
 
   it("keeps canonical IDs stable across punctuation and accents", () => {

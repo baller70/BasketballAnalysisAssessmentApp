@@ -18,12 +18,14 @@ import {
 import {
   createMediaCandidateFromAsset,
   extractOfficialProviderId,
+  fetchEspnMediaSeeds,
   fetchResearchSourceEvidence,
   proxyFetch,
   sourcePageForOfficialAsset,
   sourcePagesForAthlete,
   verifyIproyalProxy,
   type ProxyRequestMetrics,
+  type DiscoveredMediaSeed,
 } from "@/lib/shooterMediaResearch"
 
 interface Args {
@@ -35,7 +37,9 @@ interface Args {
   resumeFailed: boolean
   maxRequests: number
   maxBytes: number
+  maxImagesPerAthlete: number
   sources: Set<string> | null
+  competitions: Set<string> | null
 }
 
 interface Checkpoint {
@@ -55,7 +59,9 @@ function parseArgs(argv: string[]): Args {
     resumeFailed: false,
     maxRequests: 600,
     maxBytes: 8_000_000,
+    maxImagesPerAthlete: 3,
     sources: null,
+    competitions: null,
   }
   for (const arg of argv) {
     if (arg.startsWith("--ids=")) args.ids = arg.slice("--ids=".length).split(",").map((id) => id.trim()).filter(Boolean)
@@ -66,7 +72,9 @@ function parseArgs(argv: string[]): Args {
     else if (arg === "--resume-failed") args.resumeFailed = true
     else if (arg.startsWith("--max-requests=")) args.maxRequests = Number(arg.slice("--max-requests=".length))
     else if (arg.startsWith("--max-bytes=")) args.maxBytes = Number(arg.slice("--max-bytes=".length))
+    else if (arg.startsWith("--max-images-per-athlete=")) args.maxImagesPerAthlete = Number(arg.slice("--max-images-per-athlete=".length))
     else if (arg.startsWith("--sources=")) args.sources = new Set(arg.slice("--sources=".length).split(",").map((source) => source.trim()).filter(Boolean))
+    else if (arg.startsWith("--competitions=")) args.competitions = new Set(arg.slice("--competitions=".length).split(",").map((competition) => competition.trim()).filter(Boolean))
   }
   return args
 }
@@ -75,15 +83,16 @@ function catalogFor(entry: ShooterRosterEntry) {
   return ALL_ELITE_SHOOTERS.find((shooter) => shooter.id === entry.sourceCatalogId)
 }
 
-function seedUrlsFor(entry: ShooterRosterEntry): Array<{ sourceName: string; sourcePageUrl: string; assetUrl: string }> {
+function seedUrlsFor(entry: ShooterRosterEntry): DiscoveredMediaSeed[] {
   const shooter = catalogFor(entry)
   if (!shooter) return []
-  const urls: Array<{ sourceName: string; sourcePageUrl: string; assetUrl: string }> = []
+  const urls: DiscoveredMediaSeed[] = []
   if (shooter.photoUrl) {
     urls.push({
       sourceName: sourceNameForUrl(shooter.photoUrl),
       sourcePageUrl: sourcePageForOfficialAsset(shooter.photoUrl, entry.displayName),
       assetUrl: shooter.photoUrl,
+      mediaKind: "headshot",
     })
   }
   for (const assetUrl of shooter.shootingFormImages ?? []) {
@@ -91,6 +100,7 @@ function seedUrlsFor(entry: ShooterRosterEntry): Array<{ sourceName: string; sou
       sourceName: sourceNameForUrl(assetUrl),
       sourcePageUrl: sourcePageForOfficialAsset(assetUrl, entry.displayName),
       assetUrl,
+      mediaKind: "action",
     })
   }
   return urls
@@ -108,7 +118,7 @@ function sourceNameForUrl(url: string): string {
   }
 }
 
-async function fetchWikimediaSearch(entry: ShooterRosterEntry, metrics: Map<string, ProxyRequestMetrics>): Promise<Array<{ sourceName: string; sourcePageUrl: string; assetUrl: string }>> {
+async function fetchWikimediaSearch(entry: ShooterRosterEntry, metrics: Map<string, ProxyRequestMetrics>): Promise<DiscoveredMediaSeed[]> {
   const query = encodeURIComponent(`${entry.displayName} basketball shooting`)
   const apiUrl = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${query}&gsrnamespace=6&gsrlimit=5&prop=imageinfo&iiprop=url|mime|size|extmetadata&format=json&origin=*`
   const response = await proxyFetch(apiUrl, {
@@ -128,6 +138,7 @@ async function fetchWikimediaSearch(entry: ShooterRosterEntry, metrics: Map<stri
       sourceName: "wikimedia",
       sourcePageUrl: info.descriptionurl || `https://commons.wikimedia.org/wiki/${encodeURIComponent(page.title.replaceAll(" ", "_"))}`,
       assetUrl: info.url || "",
+      mediaKind: "unknown" as const,
     })) ?? [])
     .filter((item) => item.assetUrl.startsWith("https://"))
 }
@@ -151,6 +162,26 @@ function updateProviderIds(profile: AthleteStagingProfile, seeds: Array<{ assetU
   }
 }
 
+function prioritizeAndDedupeSeeds(entry: ShooterRosterEntry, seeds: DiscoveredMediaSeed[], limit: number): DiscoveredMediaSeed[] {
+  const shooter = catalogFor(entry)
+  const needsHeadshot = !shooter?.photoUrl
+  const needsAction = !(shooter?.shootingFormImages?.length)
+  const priority = (seed: DiscoveredMediaSeed) => {
+    if (needsHeadshot && seed.mediaKind === "headshot") return 0
+    if (needsAction && seed.mediaKind === "action") return 0
+    if (seed.mediaKind === "action") return 1
+    if (seed.mediaKind === "headshot") return 2
+    return 3
+  }
+  const byUrl = new Map<string, DiscoveredMediaSeed>()
+  for (const seed of seeds) {
+    if (!byUrl.has(seed.assetUrl)) byUrl.set(seed.assetUrl, seed)
+  }
+  return [...byUrl.values()]
+    .sort((a, b) => priority(a) - priority(b))
+    .slice(0, limit)
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2))
   const roster = await loadRoster()
@@ -159,6 +190,7 @@ async function main() {
   }
 
   let selected = args.ids.length > 0 ? roster.filter((entry) => args.ids.includes(entry.canonicalId)) : roster
+  if (args.competitions) selected = selected.filter((entry) => args.competitions?.has(entry.competitionCategory))
   if (args.limit !== null) selected = selected.slice(0, args.limit)
   if (args.resumeFailed) {
     const staging = await loadStaging()
@@ -210,22 +242,42 @@ async function main() {
 
     try {
       const seeds = seedUrlsFor(entry)
-      const wikimediaSeeds =
-        requestBudgetRemaining > 0 && args.sources?.has("wikimedia")
-          ? await fetchWikimediaSearch(entry, metrics)
-          : []
-      if (args.sources?.has("wikimedia")) requestBudgetRemaining -= 1
-      const allSeeds = [...seeds, ...wikimediaSeeds]
+      let espnSeeds: DiscoveredMediaSeed[] = []
+      let wikimediaSeeds: DiscoveredMediaSeed[] = []
+      if (requestBudgetRemaining > 0 && (!args.sources || args.sources.has("espn"))) {
+        try {
+          espnSeeds = await fetchEspnMediaSeeds(entry, metrics)
+        } catch (error) {
+          profile.errors.push(`ESPN discovery: ${sanitizeSecret(error)}`)
+        }
+        requestBudgetRemaining -= 1
+      }
+      if (requestBudgetRemaining > 0 && args.sources?.has("wikimedia")) {
+        try {
+          wikimediaSeeds = await fetchWikimediaSearch(entry, metrics)
+        } catch (error) {
+          profile.errors.push(`Wikimedia discovery: ${sanitizeSecret(error)}`)
+        }
+        requestBudgetRemaining -= 1
+      }
+      const eligibleSeeds = [...seeds, ...espnSeeds, ...wikimediaSeeds]
         .filter((seed) => !args.sources || args.sources.has(seed.sourceName))
-        .slice(0, 8)
+      const allSeeds = prioritizeAndDedupeSeeds(entry, eligibleSeeds, args.maxImagesPerAthlete)
 
       updateProviderIds(profile, allSeeds)
 
       const sourcePages = sourcePagesForAthlete(entry, seeds.map((seed) => seed.assetUrl))
         .filter((source) => !args.sources || args.sources.has(source.sourceName))
-        .slice(0, 10)
+      const discoveredSourcePages = allSeeds.map((seed) => ({
+        sourceName: seed.sourceName,
+        sourcePageUrl: seed.sourcePageUrl,
+        evidenceType: seed.mediaKind === "headshot" ? "identity_profile" as const : "media_source" as const,
+      }))
+      const uniqueSourcePages = [...new Map(
+        [...sourcePages, ...discoveredSourcePages].map((source) => [source.sourcePageUrl, source]),
+      ).values()].slice(0, 10)
       const sourceEvidence: ResearchSourceEvidence[] = []
-      for (const sourcePage of sourcePages) {
+      for (const sourcePage of uniqueSourcePages) {
         if (requestBudgetRemaining <= 0) break
         sourceEvidence.push(await fetchResearchSourceEvidence(sourcePage, metrics, 2_000_000))
         requestBudgetRemaining -= 1
@@ -263,6 +315,8 @@ async function main() {
     selectedAthletes: selected.length,
     completed: [...profileById.values()].filter((profile) => profile.status === "completed").length,
     failed: [...profileById.values()].filter((profile) => profile.status === "failed").length,
+    mediaCandidates: [...profileById.values()].reduce((total, profile) => total + profile.mediaCandidates.length, 0),
+    athletesWithMediaCandidates: [...profileById.values()].filter((profile) => profile.mediaCandidates.length > 0).length,
     metrics: [...metrics.values()],
   }
   await atomicWriteJson(REPORT_PATH, report)

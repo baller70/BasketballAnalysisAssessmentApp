@@ -214,9 +214,9 @@ export function validatePublicHttpsUrl(rawUrl: string): string[] {
   return issues
 }
 
-export function buildBalancedRoster(): ShooterRosterEntry[] {
+function createRosterEntryFactory() {
   const seen = new Set<string>()
-  const toEntry = (shooter: EliteShooter): ShooterRosterEntry | null => {
+  return (shooter: EliteShooter): ShooterRosterEntry | null => {
     const canonicalId = canonicalizeName(shooter.name)
     if (seen.has(canonicalId)) return null
     seen.add(canonicalId)
@@ -238,6 +238,17 @@ export function buildBalancedRoster(): ShooterRosterEntry[] {
       sourceCatalogId: shooter.id,
     }
   }
+}
+
+export function buildCompleteRoster(): ShooterRosterEntry[] {
+  const toEntry = createRosterEntryFactory()
+  return ALL_ELITE_SHOOTERS
+    .map(toEntry)
+    .filter((entry): entry is ShooterRosterEntry => Boolean(entry))
+}
+
+export function buildBalancedRoster(): ShooterRosterEntry[] {
+  const toEntry = createRosterEntryFactory()
 
   const priorityWomen = ["Diana Taurasi", "Caitlin Clark", "Sabrina Ionescu"]
   const priorityMen = ["Allan Houston", "Stephen Curry", "Ray Allen", "Klay Thompson", "Reggie Miller"]
@@ -316,7 +327,7 @@ export function createEmptyProfile(entry: ShooterRosterEntry): AthleteStagingPro
   }
 }
 
-export function validateRoster(roster: ShooterRosterEntry[]): ValidationIssue[] {
+export function validateRoster(roster: ShooterRosterEntry[], expectedShape: "balanced" | "complete" = "balanced"): ValidationIssue[] {
   const issues: ValidationIssue[] = []
   const names = new Map<string, string>()
   const ids = new Set<string>()
@@ -338,11 +349,18 @@ export function validateRoster(roster: ShooterRosterEntry[]): ValidationIssue[] 
     if (entry.category === "women") women += 1
   }
 
-  if (roster.length !== 106) {
+  if (expectedShape === "balanced" && roster.length !== 106) {
     issues.push({ level: "error", code: "invalid_roster_size", message: `Expected 106 roster entries, found ${roster.length}` })
   }
-  if (men !== 53 || women !== 53) {
+  if (expectedShape === "balanced" && (men !== 53 || women !== 53)) {
     issues.push({ level: "error", code: "invalid_roster_balance", message: `Expected 53 men and 53 women, found ${men} men and ${women} women` })
+  }
+  if (expectedShape === "complete" && roster.length !== ALL_ELITE_SHOOTERS.length) {
+    issues.push({
+      level: "error",
+      code: "incomplete_catalog_roster",
+      message: `Expected ${ALL_ELITE_SHOOTERS.length} unique roster entries, found ${roster.length}`,
+    })
   }
   return issues
 }
