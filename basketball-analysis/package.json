@@ -38,7 +38,8 @@
     "ios:dev": "npm run cap:build:ios && cap open ios",
     "ios:build": "CAPACITOR_BUILD=true npm run build && cap sync ios",
     "db:migrate": "prisma migrate deploy",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "discover:shooters": "DOTENV_CONFIG_PATH=.env.local tsx -r dotenv/config scripts/discover-shooter-candidates.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
