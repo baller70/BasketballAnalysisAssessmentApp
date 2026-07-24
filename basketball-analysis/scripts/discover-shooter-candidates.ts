@@ -140,6 +140,14 @@ function decodeHtml(value: string): string {
     .replace(/&nbsp;/g, " ")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
+    .replace(/&#(\d+);/g, (entity, code: string) => {
+      const point = Number(code)
+      return Number.isInteger(point) && point >= 0 && point <= 0x10ffff ? String.fromCodePoint(point) : entity
+    })
+    .replace(/&#x([0-9a-f]+);/gi, (entity, code: string) => {
+      const point = Number.parseInt(code, 16)
+      return Number.isInteger(point) && point >= 0 && point <= 0x10ffff ? String.fromCodePoint(point) : entity
+    })
 }
 
 function stripTags(value: string): string {

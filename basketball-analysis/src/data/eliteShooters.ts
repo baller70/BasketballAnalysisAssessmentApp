@@ -63,7 +63,8 @@ export interface EliteShooter {
     games: number;
     fgPct: number;
     threePct: number;
-    twoPct: number;
+    twoOrFieldPct: number;
+    twoOrFieldBasis: '2PT' | 'FG';
     ftPct: number;
     threePointAttempts: number;
     threePointAttemptsPerGame: number;

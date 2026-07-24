@@ -73,7 +73,8 @@ interface ImportSeed {
   games: number
   fgPct: number
   threePct: number
-  twoPct: number
+  twoOrFieldPct: number
+  twoOrFieldBasis: "2PT" | "FG"
   ftPct: number
   threePointAttempts: number
   threePointAttemptsPerGame: number
@@ -109,7 +110,7 @@ function validateCandidate(candidate: Candidate): string[] {
   const errors: string[] = []
   if (candidate.alreadyInApp) errors.push("already_in_app")
   if (candidate.qualification !== "elite" && candidate.qualification !== "great") errors.push("not_qualified")
-  if (!candidate.games || candidate.fgPct === null || candidate.threePct === null || candidate.twoPct === null || candidate.ftPct === null) {
+  if (!candidate.games || candidate.fgPct === null || candidate.threePct === null || candidate.ftPct === null) {
     errors.push("missing_required_stats")
   }
   if (!candidate.threePointAttempts || candidate.threePointAttemptsPerGame === null) errors.push("missing_three_point_volume")
@@ -251,7 +252,8 @@ async function main() {
       games: candidate.games as number,
       fgPct: candidate.fgPct as number,
       threePct: candidate.threePct as number,
-      twoPct: candidate.twoPct as number,
+      twoOrFieldPct: candidate.twoPct ?? candidate.fgPct as number,
+      twoOrFieldBasis: candidate.twoPct === null ? "FG" : "2PT",
       ftPct: candidate.ftPct as number,
       threePointAttempts: candidate.threePointAttempts as number,
       threePointAttemptsPerGame: candidate.threePointAttemptsPerGame as number,
