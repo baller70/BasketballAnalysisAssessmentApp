@@ -133,6 +133,7 @@ const APPROVED_SOURCE_HOSTS = new Set([
   "www.nba.com",
   "stats.nba.com",
   "ak-static.cms.nba.com",
+  "cdn.wnba.com",
   "www.wnba.com",
   "wnba.com",
   "a.espncdn.com",

@@ -70,13 +70,13 @@ const OFFICIAL_MEDIA_SEEDS: Record<string, DiscoveredMediaSeed[]> = {
   "nicole-powell": [{
     sourceName: "official",
     sourcePageUrl: "https://www.wnba.com/player/100919",
-    assetUrl: "https://ak-static.cms.nba.com/wp-content/uploads/headshots/wnba/latest/1040x760/100919.png",
+    assetUrl: "https://cdn.wnba.com/headshots/wnba/latest/1040x760/100919.png",
     mediaKind: "headshot",
   }],
   "allison-feaster": [{
     sourceName: "official",
     sourcePageUrl: "https://www.wnba.com/player/100170/allison-feaster",
-    assetUrl: "https://ak-static.cms.nba.com/wp-content/uploads/headshots/wnba/latest/1040x760/100170.png",
+    assetUrl: "https://cdn.wnba.com/headshots/wnba/latest/1040x760/100170.png",
     mediaKind: "headshot",
   }],
   "laurie-koehn": [{
