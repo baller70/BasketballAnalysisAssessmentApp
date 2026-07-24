@@ -54,6 +54,8 @@ interface StatCandidate {
   height: string | null
   position: string | null
   classYear: string | null
+  externalProviderId: string | null
+  photoUrl: string | null
   alreadyInApp: boolean
   qualification: "elite" | "great" | "near_miss" | "rejected"
   qualificationReasons: string[]
@@ -136,6 +138,10 @@ function stripTags(value: string): string {
   return decodeHtml(value.replace(/<[^>]*>?/g, " ").replace(/\s+/g, " ").trim())
 }
 
+function cleanPlayerName(value: string): string {
+  return value.replace(/\s*\*+\s*$/, "").trim()
+}
+
 function valueFor(row: string, stat: string): string | null {
   const re = new RegExp(`<t[hd][^>]*data-stat=["']${stat}["'][^>]*>([\\s\\S]*?)<\\/t[hd]>`, "i")
   const match = row.match(re)
@@ -203,7 +209,8 @@ function parseBasketballReference(html: string, source: StatSource, existingIds:
   const parsed: StatCandidate[] = []
   for (const row of rowsFor(html)) {
     if (!row.includes('data-stat="player"') && !row.includes("data-stat='player'")) continue
-    const name = valueFor(row, "player")
+    const rawName = valueFor(row, "player")
+    const name = rawName ? cleanPlayerName(rawName) : null
     if (!name || name === "Player") continue
     const base = {
       canonicalId: canonicalizeName(name),
@@ -225,6 +232,8 @@ function parseBasketballReference(html: string, source: StatSource, existingIds:
       height: null,
       position: null,
       classYear: null,
+      externalProviderId: null,
+      photoUrl: null,
       alreadyInApp: existingIds.has(canonicalizeName(name)),
       retrievedAt,
     }
@@ -374,6 +383,8 @@ async function fetchNcaaSeasonCandidates(
       height: three.height,
       position: three.position,
       classYear: three.classYear,
+      externalProviderId: null,
+      photoUrl: null,
       alreadyInApp: existingIds.has(three.canonicalId),
       retrievedAt,
     }
@@ -392,6 +403,144 @@ async function fetchNcaaSeasonCandidates(
     })
   }
   return candidates
+}
+
+interface EspnCategoryDefinition {
+  name: string
+  names: string[]
+}
+
+interface EspnAthleteStat {
+  athlete: {
+    id: string
+    displayName: string
+    displayHeight?: string
+    position?: { abbreviation?: string }
+    teamShortName?: string
+    teamName?: string
+    headshot?: { href?: string }
+    links?: Array<{ rel?: string[]; href?: string }>
+  }
+  categories: Array<{
+    name: string
+    values: number[]
+  }>
+}
+
+interface EspnAthleteStatsResponse {
+  pagination?: { pages?: number }
+  categories?: EspnCategoryDefinition[]
+  athletes?: EspnAthleteStat[]
+}
+
+function espnStatValues(response: EspnAthleteStatsResponse, athlete: EspnAthleteStat): Map<string, number> {
+  const values = new Map<string, number>()
+  for (const category of athlete.categories) {
+    const definition = response.categories?.find((item) => item.name === category.name)
+    definition?.names.forEach((name, index) => {
+      const value = category.values[index]
+      if (Number.isFinite(value)) values.set(name, value)
+    })
+  }
+  return values
+}
+
+function parseEspnNcaaCandidates(
+  response: EspnAthleteStatsResponse,
+  league: "NCAA_MEN" | "NCAA_WOMEN",
+  season: number,
+  existingIds: Set<string>,
+): StatCandidate[] {
+  const parsed: StatCandidate[] = []
+  for (const entry of response.athletes ?? []) {
+    const name = cleanPlayerName(entry.athlete.displayName)
+    const canonicalId = canonicalizeName(name)
+    const stats = espnStatValues(response, entry)
+    const games = stats.get("gamesPlayed") ?? null
+    const fieldGoalPct = stats.get("fieldGoalPct") ?? null
+    const threePct = stats.get("threePointFieldGoalPct") ?? null
+    const freeThrowPct = stats.get("freeThrowPct") ?? null
+    const fieldGoalsMade = stats.get("fieldGoalsMade") ?? null
+    const fieldGoalAttempts = stats.get("fieldGoalsAttempted") ?? null
+    const threesMade = stats.get("threePointFieldGoalsMade") ?? null
+    const threeAttempts = stats.get("threePointFieldGoalsAttempted") ?? null
+    if (games === null || fieldGoalPct === null || threePct === null || freeThrowPct === null || threeAttempts === null) continue
+    const twoAttempts = fieldGoalAttempts !== null ? fieldGoalAttempts - threeAttempts : null
+    const twoMade = fieldGoalsMade !== null && threesMade !== null ? fieldGoalsMade - threesMade : null
+    const twoPct = twoAttempts && twoMade !== null ? Number(((twoMade / twoAttempts) * 100).toFixed(1)) : null
+    const sourceUrl = entry.athlete.links?.find((link) => link.rel?.includes("stats") && link.rel?.includes("desktop"))?.href ??
+      `https://www.espn.com/${league === "NCAA_WOMEN" ? "womens-college-basketball" : "mens-college-basketball"}/player/stats/_/id/${entry.athlete.id}`
+    const team = entry.athlete.teamShortName ?? entry.athlete.teamName ?? null
+    const base = {
+      canonicalId,
+      displayName: name,
+      sourceName: league === "NCAA_WOMEN" ? "espn-ncaa-women" : "espn-ncaa-men",
+      sourceUrl,
+      league,
+      season: String(season),
+      team,
+      games,
+      fgPct: Number(fieldGoalPct.toFixed(1)),
+      threePct: Number(threePct.toFixed(1)),
+      twoPct,
+      ftPct: Number(freeThrowPct.toFixed(1)),
+      threePointAttempts: Math.round(threeAttempts),
+      threePointAttemptsPerGame: Number((threeAttempts / games).toFixed(2)),
+      pointsPerGame: stats.get("avgPoints") ?? null,
+      minutesPerGame: stats.get("avgMinutes") ?? null,
+      height: entry.athlete.displayHeight ?? null,
+      position: entry.athlete.position?.abbreviation ?? null,
+      classYear: null,
+      externalProviderId: entry.athlete.id,
+      photoUrl: entry.athlete.headshot?.href ?? null,
+      alreadyInApp: existingIds.has(canonicalId),
+      retrievedAt: new Date().toISOString(),
+    }
+    parsed.push({
+      ...base,
+      ...classify(base),
+      evidenceSeasons: [{
+        league,
+        season: String(season),
+        team,
+        sourceUrl,
+        fgPct: base.fgPct,
+        threePct: base.threePct,
+        ftPct: base.ftPct,
+      }],
+    })
+  }
+  return parsed
+}
+
+async function fetchEspnNcaaSeasonCandidates(
+  league: "NCAA_MEN" | "NCAA_WOMEN",
+  season: number,
+  existingIds: Set<string>,
+  args: Args,
+  metrics: Map<string, ProxyRequestMetrics>,
+): Promise<StatCandidate[]> {
+  const sport = league === "NCAA_WOMEN" ? "womens-college-basketball" : "mens-college-basketball"
+  const sourceName = league === "NCAA_WOMEN" ? "espn-ncaa-women" : "espn-ncaa-men"
+  const baseUrl = `https://site.web.api.espn.com/apis/common/v3/sports/basketball/${sport}/statistics/byathlete?isqualified=true&limit=250&season=${season}&seasontype=2&sort=offensive.threePointFieldGoalPct%3Adesc`
+  const merged: EspnAthleteStatsResponse = { athletes: [] }
+  let page = 1
+  let pages = 1
+  do {
+    const response = await proxyFetch(`${baseUrl}&page=${page}`, {
+      sourceName,
+      timeoutMs: 35_000,
+      maxBytes: Math.max(args.maxBytes, 6_000_000),
+      retries: 3,
+      metrics,
+    })
+    const parsed = JSON.parse(response.body.toString("utf8")) as EspnAthleteStatsResponse
+    if (!merged.categories) merged.categories = parsed.categories
+    merged.athletes?.push(...(parsed.athletes ?? []))
+    pages = parsed.pagination?.pages ?? 1
+    page++
+  } while (page <= pages)
+  return parseEspnNcaaCandidates(merged, league, season, existingIds)
 }
 
 function deduplicateCandidates(candidates: StatCandidate[]): StatCandidate[] {
@@ -477,6 +626,11 @@ async function main() {
         discovered.push(...await fetchNcaaSeasonCandidates(league, season, existingIds, args, metrics))
       } catch (error) {
         discoveryErrors.push(sanitizeSecret(`${league} ${season}: ${error instanceof Error ? error.message : String(error)}`))
+      }
+      try {
+        discovered.push(...await fetchEspnNcaaSeasonCandidates(league, season, existingIds, args, metrics))
+      } catch (error) {
+        discoveryErrors.push(sanitizeSecret(`ESPN ${league} ${season}: ${error instanceof Error ? error.message : String(error)}`))
       }
     }
   }
