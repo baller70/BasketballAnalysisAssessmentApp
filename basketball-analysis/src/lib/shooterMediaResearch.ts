@@ -423,6 +423,44 @@ export async function fetchEspnMediaSeeds(
   return seeds
 }
 
+export function extractBasketballReferencePlayerLink(
+  html: string,
+  entry: ShooterRosterEntry,
+): { sourcePageUrl: string; playerSlug: string } | null {
+  const links = html.matchAll(/<a[^>]+href=["'](\/(?:wnba\/)?players\/[a-z]\/([^"']+)\.html)["'][^>]*>([\s\S]*?)<\/a>/gi)
+  for (const match of links) {
+    const displayName = decodeHtmlEntities(stripHtml(match[3])).replace(/\s*\([^)]*\)\s*$/, "")
+    if (canonicalizeName(displayName) !== entry.canonicalId) continue
+    return {
+      sourcePageUrl: `https://www.basketball-reference.com${match[1]}`,
+      playerSlug: match[2],
+    }
+  }
+  return null
+}
+
+export async function fetchBasketballReferenceMediaSeeds(
+  entry: ShooterRosterEntry,
+  metrics: Map<string, ProxyRequestMetrics>,
+): Promise<DiscoveredMediaSeed[]> {
+  const searchUrl = `https://www.basketball-reference.com/search/search.fcgi?search=${encodeURIComponent(entry.displayName)}`
+  const response = await proxyFetch(searchUrl, {
+    sourceName: "basketball-reference",
+    timeoutMs: 25_000,
+    maxBytes: 2_000_000,
+    retries: 2,
+    metrics,
+  })
+  const match = extractBasketballReferencePlayerLink(response.body.toString("utf8"), entry)
+  if (!match) return []
+  return [{
+    sourceName: "basketball-reference",
+    sourcePageUrl: match.sourcePageUrl,
+    assetUrl: `https://www.basketball-reference.com/req/202106291/images/headshots/${match.playerSlug}.jpg`,
+    mediaKind: "headshot",
+  }]
+}
+
 export async function fetchResearchSourceEvidence(
   candidate: SourcePageCandidate,
   metrics: Map<string, ProxyRequestMetrics>,

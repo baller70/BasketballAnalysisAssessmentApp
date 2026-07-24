@@ -19,6 +19,7 @@ import {
 import {
   createMediaCandidateFromAsset,
   extractOfficialProviderId,
+  fetchBasketballReferenceMediaSeeds,
   fetchEspnMediaSeeds,
   fetchResearchSourceEvidence,
   proxyFetch,
@@ -308,12 +309,20 @@ async function main() {
     try {
       const seeds = seedUrlsFor(entry)
       let espnSeeds: DiscoveredMediaSeed[] = []
+      let basketballReferenceSeeds: DiscoveredMediaSeed[] = []
       let wikimediaSeeds: DiscoveredMediaSeed[] = []
       if ((!args.sources || args.sources.has("espn")) && reserveRequest()) {
         try {
           espnSeeds = await fetchEspnMediaSeeds(entry, metrics)
         } catch (error) {
           profile.errors.push(`ESPN discovery: ${sanitizeSecret(error)}`)
+        }
+      }
+      if (args.sources?.has("basketball-reference") && reserveRequest()) {
+        try {
+          basketballReferenceSeeds = await fetchBasketballReferenceMediaSeeds(entry, metrics)
+        } catch (error) {
+          profile.errors.push(`Basketball Reference discovery: ${sanitizeSecret(error)}`)
         }
       }
       if (args.sources?.has("wikimedia") && reserveRequest()) {
@@ -324,7 +333,7 @@ async function main() {
         }
       }
       const verifiedCatalogSeeds = rejectConflictingProviderSeeds(profile, seeds, espnSeeds)
-      const eligibleSeeds = [...espnSeeds, ...verifiedCatalogSeeds, ...wikimediaSeeds]
+      const eligibleSeeds = [...espnSeeds, ...basketballReferenceSeeds, ...verifiedCatalogSeeds, ...wikimediaSeeds]
         .filter((seed) => !args.sources || args.sources.has(seed.sourceName))
       const allSeeds = prioritizeAndDedupeSeeds(entry, eligibleSeeds, args.maxImagesPerAthlete)
 

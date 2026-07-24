@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import {
   extractOfficialProviderId,
+  extractBasketballReferencePlayerLink,
   sourcePageForOfficialAsset,
   sourcePagesForAthlete,
 } from "@/lib/shooterMediaResearch"
@@ -58,5 +59,16 @@ describe("shooterMediaResearch", () => {
     expect(pages.some((page) => page.sourceName === "nba")).toBe(true)
     expect(pages.some((page) => page.sourceName === "ncaa")).toBe(true)
     expect(pages.some((page) => page.sourceName === "wikimedia")).toBe(false)
+  })
+
+  it("extracts only the exact Basketball Reference player result", () => {
+    const html = `
+      <a href="/players/h/houstal01.html">Allan Houston (1994-2005)</a>
+      <a href="/players/h/houstjo01.html">John Houston (1971-1975)</a>
+    `
+    expect(extractBasketballReferencePlayerLink(html, allanHouston)).toEqual({
+      sourcePageUrl: "https://www.basketball-reference.com/players/h/houstal01.html",
+      playerSlug: "houstal01",
+    })
   })
 })
