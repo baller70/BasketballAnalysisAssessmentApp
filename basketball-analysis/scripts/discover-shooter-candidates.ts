@@ -15,6 +15,7 @@ interface Args {
   sources: Set<string> | null
   ncaaSeasons: number[]
   wnbaSeasons: number[]
+  fibaWomenSeasons: string[]
 }
 
 interface StatSource {
@@ -39,7 +40,7 @@ interface StatCandidate {
   displayName: string
   sourceName: string
   sourceUrl: string
-  league: "NBA" | "WNBA" | "NCAA_MEN" | "NCAA_WOMEN"
+  league: "NBA" | "WNBA" | "NCAA_MEN" | "NCAA_WOMEN" | "EUROLEAGUE_MEN" | "EUROLEAGUE_WOMEN"
   season: string
   team: string | null
   games: number | null
@@ -86,12 +87,16 @@ function parseArgs(argv: string[]): Args {
     sources: null,
     ncaaSeasons: [2026, 2025, 2024, 2023],
     wnbaSeasons: Array.from({ length: 30 }, (_, index) => 2026 - index),
+    fibaWomenSeasons: ["25-26", "24-25", "23-24", "22-23"],
   }
   for (const arg of argv) {
     if (arg.startsWith("--max-bytes=")) args.maxBytes = Number(arg.slice("--max-bytes=".length))
     if (arg.startsWith("--sources=")) args.sources = new Set(arg.slice("--sources=".length).split(",").map((s) => s.trim()).filter(Boolean))
     if (arg.startsWith("--ncaa-seasons=")) args.ncaaSeasons = parseSeasonList(arg.slice("--ncaa-seasons=".length))
     if (arg.startsWith("--wnba-seasons=")) args.wnbaSeasons = parseSeasonList(arg.slice("--wnba-seasons=".length))
+    if (arg.startsWith("--fiba-women-seasons=")) {
+      args.fibaWomenSeasons = arg.slice("--fiba-women-seasons=".length).split(",").map((season) => season.trim()).filter(Boolean)
+    }
   }
   return args
 }
@@ -142,6 +147,14 @@ function cleanPlayerName(value: string): string {
   return value.replace(/\s*\*+\s*$/, "").trim()
 }
 
+function isWomenLeague(league: StatCandidate["league"]): boolean {
+  return league === "WNBA" || league === "NCAA_WOMEN" || league === "EUROLEAGUE_WOMEN"
+}
+
+function isMenLeague(league: StatCandidate["league"]): boolean {
+  return league === "NBA" || league === "NCAA_MEN" || league === "EUROLEAGUE_MEN"
+}
+
 function valueFor(row: string, stat: string): string | null {
   const re = new RegExp(`<t[hd][^>]*data-stat=["']${stat}["'][^>]*>([\\s\\S]*?)<\\/t[hd]>`, "i")
   const match = row.match(re)
@@ -175,7 +188,7 @@ function classify(candidate: Omit<StatCandidate, "qualification" | "qualificatio
   const threes = candidate.threePointAttempts ?? 0
   const threesPerGame = candidate.threePointAttemptsPerGame ?? 0
   const minutes = candidate.minutesPerGame ?? 0
-  const womens = candidate.league === "WNBA" || candidate.league === "NCAA_WOMEN"
+  const womens = isWomenLeague(candidate.league)
   const college = candidate.league === "NCAA_MEN" || candidate.league === "NCAA_WOMEN"
   const minGames = college ? 20 : womens ? 8 : 30
   const minThreeAttempts = college ? (womens ? 50 : 60) : womens ? 35 : 100
@@ -543,6 +556,122 @@ async function fetchEspnNcaaSeasonCandidates(
   return parseEspnNcaaCandidates(merged, league, season, existingIds)
 }
 
+function madeAttemptPair(value: string): [number, number] | null {
+  const match = value.replace(/\s+/g, "").match(/^([\d.]+)-([\d.]+)$/)
+  if (!match) return null
+  const made = Number(match[1])
+  const attempts = Number(match[2])
+  return Number.isFinite(made) && Number.isFinite(attempts) ? [made, attempts] : null
+}
+
+function absoluteFibaUrl(href: string | undefined, fallback: string): string {
+  if (!href) return fallback
+  try {
+    return new URL(decodeHtml(href), fallback).toString()
+  } catch {
+    return fallback
+  }
+}
+
+function parseFibaWomenCandidates(
+  html: string,
+  season: string,
+  sourceUrl: string,
+  existingIds: Set<string>,
+): StatCandidate[] {
+  const parsed: StatCandidate[] = []
+  const retrievedAt = new Date().toISOString()
+
+  for (const row of rowsFor(html)) {
+    const cells = [...row.matchAll(/<t[hd][^>]*>([\s\S]*?)<\/t[hd]>/gi)]
+    if (cells.length < 12) continue
+    const values = cells.map((match) => stripTags(match[1]))
+    if (!/^\d+$/.test(values[0])) continue
+
+    const playerTeam = values[1].match(/^(.*?)\s+\(([^)]+)\)\s*$/)
+    const displayName = cleanPlayerName(playerTeam?.[1] ?? values[1])
+    const team = playerTeam?.[2]?.trim() || null
+    const games = num(values[2])
+    const minutesPerGame = num(values[3])
+    const pointsPerGame = num(values[4])
+    const fieldGoals = madeAttemptPair(values[6])
+    const fgPct = pct(values[7])
+    const threes = madeAttemptPair(values[8])
+    const threePct = pct(values[9])
+    const ftPct = pct(values[11])
+    if (!displayName || games === null || !fieldGoals || fgPct === null || !threes || threePct === null || ftPct === null) continue
+
+    const twoAttemptsPerGame = fieldGoals[1] - threes[1]
+    const twoMadePerGame = fieldGoals[0] - threes[0]
+    const twoPct = twoAttemptsPerGame > 0
+      ? Number(((twoMadePerGame / twoAttemptsPerGame) * 100).toFixed(1))
+      : null
+    const playerLink = cells[1][1].match(/href=["']([^"']+)["']/i)?.[1]
+    const canonicalId = canonicalizeName(displayName)
+    const base = {
+      canonicalId,
+      displayName,
+      sourceName: "fiba-euroleague-women",
+      sourceUrl: absoluteFibaUrl(playerLink, sourceUrl),
+      league: "EUROLEAGUE_WOMEN" as const,
+      season,
+      team,
+      games,
+      fgPct,
+      threePct,
+      twoPct,
+      ftPct,
+      threePointAttempts: Math.round(threes[1] * games),
+      threePointAttemptsPerGame: threes[1],
+      pointsPerGame,
+      minutesPerGame,
+      height: null,
+      position: null,
+      classYear: null,
+      externalProviderId: null,
+      photoUrl: null,
+      alreadyInApp: existingIds.has(canonicalId),
+      retrievedAt,
+    }
+    parsed.push({
+      ...base,
+      ...classify(base),
+      evidenceSeasons: [{
+        league: base.league,
+        season,
+        team,
+        sourceUrl: base.sourceUrl,
+        fgPct,
+        threePct,
+        ftPct,
+      }],
+    })
+  }
+
+  return parsed
+}
+
+async function fetchFibaWomenSeasonCandidates(
+  season: string,
+  existingIds: Set<string>,
+  args: Args,
+  metrics: Map<string, ProxyRequestMetrics>,
+): Promise<StatCandidate[]> {
+  const sourceUrl = `https://www.fiba.basketball/en/events/euroleague-women-${season}/stats`
+  const response = await proxyFetch(sourceUrl, {
+    sourceName: "fiba-euroleague-women",
+    timeoutMs: 35_000,
+    maxBytes: Math.max(args.maxBytes, 6_000_000),
+    retries: 3,
+    metrics,
+  })
+  const html = response.body.toString("utf8")
+  if (/Access Denied|Just a moment|cf-mitigated|challenge-platform/i.test(html)) {
+    throw new Error(`fiba-euroleague-women ${season} returned an access challenge`)
+  }
+  return parseFibaWomenCandidates(html, season, sourceUrl, existingIds)
+}
+
 function deduplicateCandidates(candidates: StatCandidate[]): StatCandidate[] {
   const qualificationRank = { rejected: 0, near_miss: 1, great: 2, elite: 3 }
   const byId = new Map<string, StatCandidate>()
@@ -637,11 +766,22 @@ async function main() {
     }
   }
 
+  const fibaWomenAliases = new Set(["fiba-women", "fiba-euroleague-women", "euroleague-women", "euroleague_women"])
+  if (!args.sources || [...fibaWomenAliases].some((source) => args.sources?.has(source))) {
+    for (const season of args.fibaWomenSeasons) {
+      try {
+        discovered.push(...await fetchFibaWomenSeasonCandidates(season, existingIds, args, metrics))
+      } catch (error) {
+        discoveryErrors.push(sanitizeSecret(`FIBA EUROLEAGUE_WOMEN ${season}: ${error instanceof Error ? error.message : String(error)}`))
+      }
+    }
+  }
+
   const deduplicated = deduplicateCandidates(discovered)
   const newQualified = deduplicated
     .filter((candidate) => !candidate.alreadyInApp && ["elite", "great"].includes(candidate.qualification))
     .sort((a, b) => {
-      const women = Number(b.league === "WNBA" || b.league === "NCAA_WOMEN") - Number(a.league === "WNBA" || a.league === "NCAA_WOMEN")
+      const women = Number(isWomenLeague(b.league)) - Number(isWomenLeague(a.league))
       return women || b.score - a.score
     })
   const nearMisses = deduplicated
@@ -654,12 +794,14 @@ async function main() {
     criteria: {
       nbaMen: { minGames: 30, minThreePct: 37, minFreeThrowPct: 80, minTwoOrFieldPct: 45, minThreeAttempts: 100, minThreeAttemptsPerGame: 2.0 },
       wnbaWomen: { minGames: 8, minThreePct: 35.5, minFreeThrowPct: 80, minTwoOrFieldPct: 44, minThreeAttempts: 35, minThreeAttemptsPerGame: 1.2 },
+      euroLeagueWomen: { minGames: 8, minThreePct: 35.5, minFreeThrowPct: 80, minTwoPct: 44, minThreeAttempts: 35, minThreeAttemptsPerGame: 1.2 },
       ncaaMen: { minGames: 20, minThreePct: 37, minFreeThrowPct: 80, minFieldPct: 45, minThreeAttempts: 60, minThreeAttemptsPerGame: 1.5 },
       ncaaWomen: { minGames: 20, minThreePct: 35.5, minFreeThrowPct: 80, minFieldPct: 44, minThreeAttempts: 50, minThreeAttemptsPerGame: 1.5 },
     },
     requestedSeasons: {
       wnba: args.wnbaSeasons,
       ncaa: args.ncaaSeasons,
+      fibaWomen: args.fibaWomenSeasons,
     },
     sourceMetrics: [...metrics.values()],
     discoveryErrors,
@@ -680,8 +822,8 @@ async function main() {
   console.log(JSON.stringify({
     generatedAt: report.generatedAt,
     newQualified: newQualified.length,
-    womenNewQualified: newQualified.filter((c) => c.league === "WNBA" || c.league === "NCAA_WOMEN").length,
-    menNewQualified: newQualified.filter((c) => c.league === "NBA" || c.league === "NCAA_MEN").length,
+    womenNewQualified: newQualified.filter((c) => isWomenLeague(c.league)).length,
+    menNewQualified: newQualified.filter((c) => isMenLeague(c.league)).length,
     nearMisses: nearMisses.length,
     discoveryErrors: discoveryErrors.length,
     existingMissingPhoto: report.existingGapSummary.existingMissingPhoto,
