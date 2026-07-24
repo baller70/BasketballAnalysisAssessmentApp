@@ -307,7 +307,7 @@ interface EspnSearchContent {
   sport?: string
   defaultLeagueSlug?: string
   link?: { web?: string }
-  image?: { default?: string }
+  image?: { default?: string } | string
   images?: EspnSearchImage[]
 }
 
@@ -378,7 +378,8 @@ export async function fetchEspnMediaSeeds(
   const derivedHeadshot = profileId && profileLeague
     ? `https://a.espncdn.com/i/headshots/${profileLeague}/players/full/${profileId}.png`
     : null
-  const headshotUrl = matchedPlayer?.image?.default ?? derivedHeadshot
+  const playerImage = typeof matchedPlayer?.image === "object" ? matchedPlayer.image.default : null
+  const headshotUrl = playerImage ?? derivedHeadshot
   if (
     headshotUrl?.startsWith("https://a.espncdn.com/")
     && profileUrl?.startsWith("https://www.espn.com/")
@@ -413,8 +414,26 @@ export async function fetchEspnMediaSeeds(
       })
     })
 
+  const clipSeeds = (payload.results ?? [])
+    .filter((group) => group.type === "clips")
+    .flatMap((group) => group.contents ?? [])
+    .flatMap((clip) => {
+      const sourcePageUrl = clip.link?.web
+      const assetUrl = typeof clip.image === "string" ? clip.image : clip.image?.default
+      const identityText = [clip.displayName, clip.subtitle].filter(Boolean).join(" ")
+      if (!sourcePageUrl?.startsWith("https://www.espn.com/")) return []
+      if (!assetUrl?.startsWith("https://a.espncdn.com/")) return []
+      if (!containsAthleteName(identityText, entry)) return []
+      return [{
+        sourceName: "espn",
+        sourcePageUrl,
+        assetUrl,
+        mediaKind: "action" as const,
+      }]
+    })
+
   const seen = new Set(seeds.map((seed) => seed.assetUrl))
-  for (const seed of actionSeeds) {
+  for (const seed of [...actionSeeds, ...clipSeeds]) {
     if (seen.has(seed.assetUrl)) continue
     seen.add(seed.assetUrl)
     seeds.push(seed)
