@@ -26,7 +26,7 @@ const SUFFIX = process.env.SUFFIX || String(process.pid)
 const ROUTES = [
   '/signin', '/signup', '/onboarding', '/dashboard', '/analyze', '/media',
   '/profile', '/settings', '/upload', '/video-analysis', '/video-analysis/upload',
-  '/training/drills/quick-release-builder', '/elite-shooters',
+  '/training/drills/quick-release-builder', '/training/drills', '/training/calendar', '/elite-shooters',
   '/elite-shooters/stephen-curry', '/results/demo', '/results/demo/analysis',
   '/results/demo/biomechanics', '/results/demo/flaws', '/results/demo/compare',
   '/results/demo/history', '/results/demo/player', '/results/demo/training',

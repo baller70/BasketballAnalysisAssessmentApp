@@ -21,7 +21,7 @@ const PASSWORD = 'audit-pass-1234'
 const ROUTES = [
   '/onboarding', '/dashboard', '/analyze', '/media', '/profile', '/settings',
   '/upload', '/video-analysis', '/video-analysis/upload',
-  '/training/drills/quick-release-builder', '/elite-shooters/stephen-curry',
+  '/training/drills/quick-release-builder', '/training/drills', '/training/calendar', '/elite-shooters/stephen-curry',
   '/results/demo', '/results/demo/analysis', '/results/demo/history',
   '/terms', '/privacy',
 ]

@@ -19,6 +19,7 @@ export default function GoalsPlanPage() {
   const [goals, setGoals] = useState<Goal[]>([])
   const [modal, setModal] = useState<null | "create" | "edit" | "log">(null)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [workoutMenu, setWorkoutMenu] = useState<string | null>(null)
   const [notice, setNotice] = useState("")
   const [form, setForm] = useState({ title: "", description: "" })
   useEffect(() => {
@@ -178,7 +179,8 @@ export default function GoalsPlanPage() {
             </div>
             <div className="mt-[4px] divide-y divide-[var(--shotiq-color-rule)]">
               {[["Pull-Up Jumper", "May 12, 2025 at 8:24 AM", "82"], ["Spot-Up Three", "May 11, 2025 at 6:15 PM", "78"], ["Transition Pull-Up", "May 10, 2025 at 4:02 PM", "75"]].map(([t, d, s]) => (
-                <div key={String(t)} className="flex items-center gap-[12px] py-[9px]">
+                <Link key={String(t)} href="/results/demo/history"
+                      className="flex items-center gap-[12px] py-[9px] hover:bg-[var(--shotiq-color-warmCanvas)]">
                   <MediaSurface width={92} height={54} />
                   <div className="min-w-0 flex-1">
                     <div className="text-[14px] font-semibold">{t}</div>
@@ -188,7 +190,7 @@ export default function GoalsPlanPage() {
                       <span className="ml-[4px] text-[10px] text-[var(--shotiq-color-analysisBlue)]">● Good</span></div>
                   </div>
                   <ChevronRight className="h-[14px] w-[14px] text-[var(--shotiq-color-graphite)]" />
-                </div>
+                </Link>
               ))}
             </div>
           </Card>
@@ -201,17 +203,29 @@ export default function GoalsPlanPage() {
               {[["Quick Release Builder", "20 min · Form Focus · Today at 5:00 PM", "Speed & Consistency"],
                 ["Combo Control Ladder", "18 min · Control Focus · Tomorrow at 11:00 AM", "Control & Timing"],
                 ["Handle to Release Flow", "22 min · Game Speed · May 15 at 4:30 PM", "Flow & Integration"]].map(([t, d, f]) => (
-                <div key={String(t)} className="flex items-center gap-[12px] py-[9px]">
+                <div key={String(t)} className="relative flex items-center gap-[12px] py-[9px]">
                   <span className="grid h-[36px] w-[36px] place-items-center rounded-[8px] bg-[var(--shotiq-color-analysisBlue)] text-white">◎</span>
                   <div className="min-w-0 flex-1">
                     <div className="text-[14px] font-semibold">{t}</div>
                     <div className="text-[10px] text-[var(--shotiq-color-graphite)]">{d}</div>
                   </div>
-                  <div className="w-[90px] text-right">
+                  <div className="w-[90px] shrink-0 text-right">
                     <div className="text-[9px] tracking-[0.04em] text-[var(--shotiq-color-graphite)]">FOCUS</div>
-                    <div className="text-[10px]">{f}</div>
+                    <div className="text-[10px] leading-[13px]">{f}</div>
                   </div>
-                  <MoreVertical className="h-[13px] w-[13px] text-[var(--shotiq-color-graphite)]" />
+                  <button type="button" aria-label={`Options for ${t}`}
+                          onClick={() => setWorkoutMenu((m) => (m === t ? null : String(t)))}
+                          className="grid h-[24px] w-[24px] place-items-center rounded-[4px] hover:bg-[var(--shotiq-color-warmCanvas)]">
+                    <MoreVertical className="h-[13px] w-[13px] text-[var(--shotiq-color-graphite)]" />
+                  </button>
+                  {workoutMenu === t && (
+                    <div className="absolute right-0 top-[42px] z-30 w-[170px] rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white py-[4px] shadow-[0_8px_20px_rgba(17,17,17,0.10)]">
+                      <Link href={`/training/drills/${String(t).toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
+                            className="flex h-[30px] w-full items-center px-[12px] text-[12px] hover:bg-[var(--shotiq-color-warmCanvas)]">Open drill</Link>
+                      <Link href="/training/calendar"
+                            className="flex h-[30px] w-full items-center px-[12px] text-[12px] hover:bg-[var(--shotiq-color-warmCanvas)]">View in calendar</Link>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -243,7 +257,7 @@ export default function GoalsPlanPage() {
                     <div className="text-[13px] font-semibold">{t}</div>
                     <div className="text-[10px] text-[var(--shotiq-color-graphite)]">{d}</div>
                   </div>
-                  <span className={`shotiq-numeric text-[15px] ${st === "done" ? "text-[var(--shotiq-color-confirmGreen)]" : st === "active" ? "text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>{v}</span>
+                  <span className={`shotiq-numeric w-[52px] shrink-0 text-right text-[15px] tabular-nums ${st === "done" ? "text-[var(--shotiq-color-confirmGreen)]" : st === "active" ? "text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>{v}</span>
                 </div>
               ))}
             </div>

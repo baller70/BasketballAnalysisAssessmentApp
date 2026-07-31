@@ -202,7 +202,7 @@ export default function EliteShooterDetailClient() {
               <tr className="text-left text-[10px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">
                 <th className="py-[6px] font-bold">PHASE</th><th className="font-bold">METRIC</th>
                 <th className="font-bold">{shooter.name.split(" ").pop()?.toUpperCase()}</th>
-                <th className="font-bold">ELITE RANGE</th><th className="font-bold">YOU</th><th className="font-bold">DIFF</th>
+                <th className="whitespace-nowrap font-bold">ELITE RANGE</th><th className="font-bold">YOU</th><th className="font-bold">DIFF</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--shotiq-color-rule)]">
@@ -211,16 +211,16 @@ export default function EliteShooterDetailClient() {
                   <td className="py-[8px] pr-[8px] text-[10px] font-bold tracking-[0.04em] text-[var(--shotiq-color-graphite)]">
                     {i === 0 || rows[i - 1][0] !== phase ? phase : ""}
                   </td>
-                  <td className="pr-[8px]">{metric}</td>
-                  <td className="pr-[8px] font-semibold">{val}</td>
-                  <td className="pr-[8px] text-[var(--shotiq-color-graphite)]">{range}</td>
-                  <td className="pr-[8px]">{you}</td>
-                  <td className={diff.startsWith("+") ? "text-[var(--shotiq-color-confirmGreen)]" : diff === "—" ? "" : "text-[var(--shotiq-color-reviewRed)]"}>{diff}</td>
+                  <td className="pr-[8px] align-top pt-[8px]">{metric}</td>
+                  <td className="whitespace-nowrap pr-[8px] align-top pt-[8px] font-semibold">{val}</td>
+                  <td className="whitespace-nowrap pr-[8px] align-top pt-[8px] text-[var(--shotiq-color-graphite)]">{range}</td>
+                  <td className="whitespace-nowrap pr-[8px] align-top pt-[8px]">{you}</td>
+                  <td className={`whitespace-nowrap align-top pt-[8px] ${diff.startsWith("+") ? "text-[var(--shotiq-color-confirmGreen)]" : diff === "—" ? "" : "text-[var(--shotiq-color-reviewRed)]"}`}>{diff}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-          <Link href="/results/demo/analysis" className="mt-[10px] flex items-center justify-between text-[13px] text-[var(--shotiq-color-analysisBlue)]">
+          <Link href="/results/demo/biomechanics" className="mt-[10px] flex items-center justify-between text-[13px] text-[var(--shotiq-color-analysisBlue)]">
             View full mechanics report <ChevronRight className="h-[15px] w-[15px]" />
           </Link>
         </Card>
@@ -304,7 +304,7 @@ export default function EliteShooterDetailClient() {
               "Elite release consistency and speed", "Excellent balance and body control",
               "High, repeatable release point", "Outstanding shooting range and accuracy",
               "Quick load and efficient energy transfer"]).slice(0, 5).map((s) => (
-              <li key={s} className="flex items-center gap-[10px]">
+              <li key={s} className="flex items-start gap-[10px] [&>svg]:mt-[2px] [&>svg]:shrink-0">
                 <Check className="h-[15px] w-[15px] shrink-0 text-[var(--shotiq-color-confirmGreen)]" /> {s}
               </li>
             ))}
@@ -318,7 +318,7 @@ export default function EliteShooterDetailClient() {
               "Slight loss of balance on long range", "Front foot alignment can drift",
               "Lower hold time in follow-through", "Maintain elbow stack on fatigue",
               "Improve reset consistency in transitions"]).slice(0, 5).map((s) => (
-              <li key={s} className="flex items-center gap-[10px]">
+              <li key={s} className="flex items-start gap-[10px] [&>svg]:mt-[2px] [&>svg]:shrink-0">
                 <PhaseGlyph size={16} /> {s}
               </li>
             ))}

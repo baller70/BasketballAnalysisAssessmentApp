@@ -204,7 +204,7 @@ export default function MediaLibraryPage() {
           <div key={day} className="mt-[16px]">
             <div className="flex items-center justify-between">
               <SectionLabel>{day}</SectionLabel>
-              <span className="text-[11px] text-[var(--shotiq-color-graphite)]">{items.length * 2} items</span>
+              <span className="text-[11px] text-[var(--shotiq-color-graphite)]">{items.length} items</span>
             </div>
             <div className="mt-[8px] grid grid-cols-6 gap-[12px]">
               {items.map((m) => (
