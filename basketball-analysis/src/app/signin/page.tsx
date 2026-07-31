@@ -15,7 +15,7 @@
  * presentation was replaced.
  */
 
-import React, { useState } from "react"
+import React, { useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useAuthStore } from "@/stores/authStore"
@@ -78,6 +78,7 @@ export default function SignInPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [remember, setRemember] = useState(false)
+  const emailRef = useRef<HTMLInputElement>(null)
 
   // --- preserved authentication behaviour -----------------------------------
   const handleSubmit = async (e: React.FormEvent) => {
@@ -86,6 +87,9 @@ export default function SignInPage() {
 
     if (!formData.email || !formData.password) {
       setError("Email and password are required")
+      // Accessibility contract (covered by e2e): failed validation moves
+      // focus to the first invalid field so keyboard users land on it.
+      emailRef.current?.focus()
       return
     }
 
@@ -187,7 +191,7 @@ export default function SignInPage() {
 
           <form onSubmit={handleSubmit} className="mt-[30px]" noValidate>
             <label htmlFor="email" className={label}>EMAIL</label>
-            <input id="email" type="email" autoComplete="email" data-testid="signin-email"
+            <input id="email" ref={emailRef} type="email" autoComplete="email" data-testid="signin-email"
                    className={`${field} mt-[9px]`} placeholder="Enter your email"
                    value={formData.email}
                    onChange={(e) => setFormData({ ...formData, email: e.target.value })} />

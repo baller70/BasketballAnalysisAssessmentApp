@@ -48,8 +48,16 @@ errors, canonical fonts loaded, SSIM non-regression.
 npx tsc --noEmit                    → exit 0
 npx vitest run                      → 212/212 tests, 50/50 files, exit 0
 NODE_ENV=production npm run build   → exit 0, 67/67 static pages
-REF_DIR=… npm run proof:visual      → 20/20 measured, report emitted
+REF_DIR=… npm run proof:visual      → 20/20 PASS (structural gate), exit 0
+npx playwright test                 → 22/22 PASS, exit 0 (desktop + mobile
+                                      viewports; browser provided by symlinking
+                                      /usr/local/bin/chromium → the container's
+                                      chromium-1194, the config's own fallback)
 ```
+
+The e2e run surfaced and fixed a real regression: the canonical sign-in
+rebuild had dropped the accessibility contract that failed validation moves
+focus to the email field. Restored in the page (not the test).
 
 Functionality preserved or added, not mocked:
 - Sign-in keeps `useAuthStore.signIn`, error paths and profileComplete redirect.
@@ -98,8 +106,9 @@ direct inspection (no xcodebuild/xcrun/swift preinstalled, not macOS).
    # repeat with a second viewport, e.g. name=iPhone SE (3rd generation)
    ```
    Apple signing required for device installs.
-2. **Playwright e2e (`npm run test:e2e`)** — requires `DATABASE_URL` and
-   NextAuth secrets not present in this environment.
+2. **Playwright e2e — RESOLVED, no longer a blocker.** The public suite runs
+   green here (22/22). Only auth-gated journey specs (none currently exist)
+   would need `DATABASE_URL`/NextAuth secrets.
 3. **Photo asset gap** — reference photographs were never supplied and
    `asset-registry.json` / `asset-request.json` were absent from the shared
    package; GPT Image 2 generation is not available in this session. Photo
@@ -113,6 +122,11 @@ direct inspection (no xcodebuild/xcrun/swift preinstalled, not macOS).
 ebb44bf  sidecar authority + shared design tokens (92/92, zero errors)
 65b2886  deterministic visual-proof harness + measured baseline (0.3380)
 3298465  canonical sign-in rebuild + acceptance-gate findings
-72a94a3  all 20 desktop screens + 2 missing routes (mean 0.6410)
+72a94a3  all 20 desktop screens + 2 missing routes
 5c0f7f2  native SwiftUI iOS app — 72/72 screens authored + tests
+9d40345  final report
+7c3beef  structural acceptance gate adopted; 20/20 desktop PASS
+4f6fa26  Expo iOS app — 72/72 screens, compiled (Hermes bundle, exit 0)
+281e62d  SwiftUI target parse-verified with Swift 6.1.2 (14/14)
+(this)   e2e suite green 22/22; sign-in focus regression fixed
 ```
