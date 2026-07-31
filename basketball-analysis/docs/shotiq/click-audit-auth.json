@@ -7,7 +7,7 @@
   "deadButtons": [
    "Left"
   ],
-  "consoleErrors": 17
+  "consoleErrors": 12
  },
  {
   "route": "/dashboard",
@@ -31,7 +31,7 @@
   "brokenLinks": [],
   "buttons": 20,
   "deadButtons": [],
-  "consoleErrors": 5
+  "consoleErrors": 4
  },
  {
   "route": "/profile",
@@ -85,7 +85,7 @@
   "route": "/training/drills",
   "links": 22,
   "brokenLinks": [],
-  "buttons": 10,
+  "buttons": 11,
   "deadButtons": [],
   "consoleErrors": 0
  },
@@ -93,7 +93,7 @@
   "route": "/training/calendar",
   "links": 19,
   "brokenLinks": [],
-  "buttons": 12,
+  "buttons": 18,
   "deadButtons": [],
   "consoleErrors": 0
  },

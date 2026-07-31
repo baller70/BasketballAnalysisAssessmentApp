@@ -34,6 +34,11 @@ export default function GoalsPlanPage() {
   const primary = goals[0] ?? DEMO_GOAL
   const pct = Math.round((primary.progress ?? 0) * 100)
   const flash = (m: string) => { setNotice(m); setTimeout(() => setNotice(""), 2500) }
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { setModal(null); setMenuOpen(false); setWorkoutMenu(null) } }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [])
 
   // Server-first; if the API declines (e.g. signed-out preview) the change is
   // kept locally so the control still does real, visible work.

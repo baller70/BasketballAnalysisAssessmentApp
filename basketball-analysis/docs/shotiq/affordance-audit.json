@@ -71,6 +71,20 @@
   "findings": []
  },
  {
+  "route": "/training/drills",
+  "findings": [
+   {
+    "kind": "bare-icon",
+    "text": "lucide lucide-search h-[14px] w-[14px] text-[var(--shotiq-co",
+    "tag": "div"
+   }
+  ]
+ },
+ {
+  "route": "/training/calendar",
+  "findings": []
+ },
+ {
   "route": "/elite-shooters",
   "findings": [
    {
