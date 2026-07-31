@@ -72,8 +72,13 @@ AVFoundation, UserNotifications, status bar hidden, tokens generated from the
 same sidecar source as web. Pose overlays and charts are Canvas/Path with
 normalized keypoints scaled through the surface transform (with a unit test
 asserting proportional alignment). XCTest + XCUITest suites included.
-Structural verification (runnable on Linux): 72/72 screenIds present, braces
-balanced, 14 files / 3,594 lines.
+Verification on Linux: 72/72 screenIds present; all 14 files (3,594 lines)
+**pass the real Swift 6.1.2 parser** (`swiftc -parse`, toolchain from
+swift.org for Ubuntu 24.04 — `ios-native/verify-parse.sh`). This is the
+verification ceiling off-macOS: SwiftUI and Security are Apple-platform
+frameworks, so type-check/build/XCTest still require Xcode. Xcode itself is
+macOS-only software and cannot run in this Linux container - confirmed by
+direct inspection (no xcodebuild/xcrun/swift preinstalled, not macOS).
 
 ## 5. Remaining external blockers (exact commands)
 
