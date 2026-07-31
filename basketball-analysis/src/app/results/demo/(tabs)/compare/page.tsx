@@ -19,11 +19,23 @@ const MATCH: [string, number][] = [["SETUP", 88], ["LOAD", 79], ["RISE", 83], ["
 
 export default function ComparePage() {
   const { hasData, score } = useHistory()
+  const [shooters, setShooters] = useState<Shooter[]>([])
   const [elite, setElite] = useState<Shooter | null>(null)
+  const [menu, setMenu] = useState<null | "shooters" | "overlays" | "phase">(null)
+  const [overlays, setOverlays] = useState({ Skeleton: true, Joints: true, Trajectory: false })
+  const [phase, setPhase] = useState("RELEASE")
+  const [synced, setSynced] = useState(false)
+  const [saved, setSaved] = useState(false)
   useEffect(() => {
     fetch("/api/shooters").then((r) => (r.ok ? r.json() : null))
-      .then((d) => setElite(d?.shooters?.[0] ?? null)).catch(() => {})
+      .then((d) => {
+        const list: Shooter[] = d?.shooters ?? []
+        setShooters(list)
+        setElite(list[0] ?? null)
+      }).catch(() => {})
   }, [])
+  const stepPhase = (dir: 1 | -1) =>
+    setPhase((p) => PHASES[(PHASES.indexOf(p) + dir + PHASES.length) % PHASES.length])
 
   return (
     <div data-testid="screen-desktop-web-elite-comparison">
@@ -33,21 +45,55 @@ export default function ComparePage() {
           <p className="mt-[4px] text-[14px] text-[var(--shotiq-color-graphite)]">See how your mechanics compare to elite-level form.</p>
         </div>
         <div className="flex gap-[10px] pt-[4px]">
-          {["Choose shooters", "Overlay skeletons", "Release"].map((t) => (
-            <button key={t} type="button" className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[16px] text-[13px]">
-              {t} <ChevronDown className="h-[13px] w-[13px] text-[var(--shotiq-color-graphite)]" />
-            </button>
+          {([["shooters", elite ? `Shooter: ${elite.name}` : "Choose shooters"],
+             ["overlays", "Overlay skeletons"],
+             ["phase", phase.charAt(0) + phase.slice(1).toLowerCase()]] as const).map(([key, label]) => (
+            <div key={key} className="relative">
+              <button type="button" aria-expanded={menu === key}
+                      onClick={() => setMenu((m) => (m === key ? null : key))}
+                      className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[16px] text-[13px]">
+                {label} <ChevronDown className="h-[13px] w-[13px] text-[var(--shotiq-color-graphite)]" />
+              </button>
+              {menu === key && (
+                <div className="absolute right-0 top-[46px] z-30 w-[230px] rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white py-[4px] shadow-[0_8px_20px_rgba(17,17,17,0.10)]">
+                  {key === "shooters" && (shooters.length ? shooters : [{ id: 0, name: "Elite Guard" }]).slice(0, 8).map((s) => (
+                    <button key={s.id} type="button"
+                            onClick={() => { setElite(s); setMenu(null) }}
+                            className={`flex h-[32px] w-full items-center px-[12px] text-[13px] hover:bg-[var(--shotiq-color-warmCanvas)] ${elite?.id === s.id ? "font-semibold text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
+                      {s.name}
+                    </button>
+                  ))}
+                  {key === "overlays" && (Object.keys(overlays) as (keyof typeof overlays)[]).map((k) => (
+                    <button key={k} type="button"
+                            onClick={() => setOverlays({ ...overlays, [k]: !overlays[k] })}
+                            className="flex h-[32px] w-full items-center justify-between px-[12px] text-[13px] hover:bg-[var(--shotiq-color-warmCanvas)]">
+                      {k}<span className={overlays[k] ? "text-[var(--shotiq-color-confirmGreen)]" : "text-[var(--shotiq-color-muted)]"}>{overlays[k] ? "On" : "Off"}</span>
+                    </button>
+                  ))}
+                  {key === "phase" && PHASES.map((p) => (
+                    <button key={p} type="button"
+                            onClick={() => { setPhase(p); setMenu(null) }}
+                            className={`flex h-[32px] w-full items-center px-[12px] text-[13px] hover:bg-[var(--shotiq-color-warmCanvas)] ${phase === p ? "font-semibold text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
+                      {p.charAt(0) + p.slice(1).toLowerCase()}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           ))}
-          <button type="button" className="flex h-[42px] items-center gap-[8px] rounded-[6px] bg-[var(--shotiq-color-confirmGreen)] px-[16px] text-[13px] font-medium text-white">
-            <RefreshCcw className="h-[14px] w-[14px]" /> Sync release frames
+          <button type="button" onClick={() => setSynced((v) => !v)} aria-pressed={synced}
+                  className={`flex h-[42px] items-center gap-[8px] rounded-[6px] px-[16px] text-[13px] font-medium text-white ${synced ? "bg-[var(--shotiq-color-analysisBlue)]" : "bg-[var(--shotiq-color-confirmGreen)]"}`}>
+            <RefreshCcw className="h-[14px] w-[14px]" /> {synced ? "Release frames synced" : "Sync release frames"}
           </button>
         </div>
       </div>
       <div className="mt-[6px] flex items-center justify-between">
         <Link href="/results/demo/history" className="text-[12px] text-[var(--shotiq-color-graphite)]">‹ Back to analyses</Link>
-        <span className="flex items-center gap-[6px] text-[12px] text-[var(--shotiq-color-graphite)]">
-          <Bookmark className="h-[13px] w-[13px]" /> Save comparison <MoreVertical className="h-[13px] w-[13px]" />
-        </span>
+        <button type="button" onClick={() => setSaved((v) => !v)} aria-pressed={saved}
+                className={`flex items-center gap-[6px] text-[12px] ${saved ? "text-[var(--shotiq-color-confirmGreen)]" : "text-[var(--shotiq-color-graphite)]"}`}>
+          <Bookmark className="h-[13px] w-[13px]" fill={saved ? "currentColor" : "none"} />
+          {saved ? "Comparison saved" : "Save comparison"} <MoreVertical className="h-[13px] w-[13px]" />
+        </button>
       </div>
 
       {/* dual viewers */}
@@ -79,7 +125,7 @@ export default function ComparePage() {
             </div>
             <div className="mt-[6px] flex gap-[4px]">
               {Array.from({ length: 10 }).map((_, i) => (
-                <div key={i} className={`h-[36px] flex-1 rounded-[3px] bg-[#1B1D20] ${i === (sideIdx ? 7 : 5) ? `ring-2 ${sideIdx ? "ring-[var(--shotiq-color-analysisBlue)]" : "ring-[var(--shotiq-color-shotiqOrange)]"}` : ""}`} />
+                <div key={i} className={`h-[36px] flex-1 rounded-[3px] bg-[#1B1D20] ${i === (sideIdx && !synced ? 7 : 5) ? `ring-2 ${sideIdx ? "ring-[var(--shotiq-color-analysisBlue)]" : "ring-[var(--shotiq-color-shotiqOrange)]"}` : ""}`} />
               ))}
             </div>
           </div>
@@ -91,14 +137,18 @@ export default function ComparePage() {
         <SectionLabel>SELECT PHASE</SectionLabel>
         {[0, 1].map((side) => (
           <div key={side} className="flex flex-1 items-center justify-between px-[10px]">
-            <ChevronLeft className="h-[14px] w-[14px] text-[var(--shotiq-color-graphite)]" />
+            <button type="button" aria-label="Previous phase" onClick={() => stepPhase(-1)}>
+              <ChevronLeft className="h-[14px] w-[14px] text-[var(--shotiq-color-graphite)]" />
+            </button>
             {PHASES.map((p) => (
-              <div key={p} className="text-center">
-                <PhaseGlyph active={p === "RELEASE"} size={24} />
-                <div className={`text-[9px] tracking-[0.04em] ${p === "RELEASE" ? (side ? "font-bold text-[var(--shotiq-color-analysisBlue)]" : "font-bold text-[var(--shotiq-color-shotiqOrange)]") : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
-              </div>
+              <button key={p} type="button" onClick={() => setPhase(p)} aria-pressed={p === phase} className="text-center">
+                <PhaseGlyph active={p === phase} size={24} />
+                <div className={`text-[9px] tracking-[0.04em] ${p === phase ? (side ? "font-bold text-[var(--shotiq-color-analysisBlue)]" : "font-bold text-[var(--shotiq-color-shotiqOrange)]") : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
+              </button>
             ))}
-            <ChevronRight className="h-[14px] w-[14px] text-[var(--shotiq-color-graphite)]" />
+            <button type="button" aria-label="Next phase" onClick={() => stepPhase(1)}>
+              <ChevronRight className="h-[14px] w-[14px] text-[var(--shotiq-color-graphite)]" />
+            </button>
           </div>
         ))}
       </div>

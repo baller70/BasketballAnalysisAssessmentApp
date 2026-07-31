@@ -19,6 +19,8 @@ const MECHANICS: [string, string, string][] = [
 
 export default function AnalysisOverviewPage() {
   const { hasData, score } = useHistory()
+  const total = hasData ? 24 : 0
+  const [shot, setShot] = React.useState(1)
   return (
     <div data-testid="screen-desktop-web-analysis-overview">
       <div className="flex items-start justify-between">
@@ -29,14 +31,18 @@ export default function AnalysisOverviewPage() {
           </p>
         </div>
         <div className="flex items-center gap-[12px]">
-          <button type="button" className="flex h-[42px] items-center gap-[6px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[16px] text-[13px]">
+          <button type="button" disabled={shot <= 1}
+                  onClick={() => setShot((s) => Math.max(1, s - 1))}
+                  className="flex h-[42px] items-center gap-[6px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[16px] text-[13px] disabled:opacity-40">
             <ChevronLeft className="h-[14px] w-[14px]" /> PREV
           </button>
           <div className="text-center">
-            <div className="text-[14px] font-bold">1 OF {hasData ? "24" : "0"}</div>
+            <div className="text-[14px] font-bold">{total ? shot : 0} OF {total}</div>
             <Link href="/results/demo/history" className="text-[11px] text-[var(--shotiq-color-graphite)]">View all analyses</Link>
           </div>
-          <button type="button" className="flex h-[42px] items-center gap-[6px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[16px] text-[13px]">
+          <button type="button" disabled={shot >= total}
+                  onClick={() => setShot((s) => Math.min(total, s + 1))}
+                  className="flex h-[42px] items-center gap-[6px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[16px] text-[13px] disabled:opacity-40">
             NEXT <ChevronRight className="h-[14px] w-[14px]" />
           </button>
         </div>
@@ -52,7 +58,9 @@ export default function AnalysisOverviewPage() {
             </span>
             <div className="flex h-[42px] flex-1 gap-[3px] overflow-hidden rounded-[4px]">
               {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className={`flex-1 bg-[#1B1D20] ${i === 3 ? "ring-2 ring-inset ring-[var(--shotiq-color-shotiqOrange)]" : ""}`} />
+                <button key={i} type="button" aria-label={`Jump to segment ${i + 1}`} aria-pressed={i === (shot - 1) % 8}
+                        onClick={() => setShot(i + 1)}
+                        className={`flex-1 bg-[#1B1D20] ${i === (shot - 1) % 8 ? "ring-2 ring-inset ring-[var(--shotiq-color-shotiqOrange)]" : ""}`} />
               ))}
             </div>
             <span className="shotiq-numeric text-[13px]">0:07 / 0:24</span>
@@ -96,7 +104,7 @@ export default function AnalysisOverviewPage() {
               </div>
             ))}
           </div>
-          <button type="button" className="mt-[8px] text-[13px] text-[var(--shotiq-color-analysisBlue)]">View all mechanics ›</button>
+          <Link href="/results/demo/biomechanics" className="mt-[8px] inline-block text-[13px] text-[var(--shotiq-color-analysisBlue)]">View all mechanics ›</Link>
         </div>
 
         {/* right rail */}

@@ -10,14 +10,44 @@ import { useHistory } from "@/components/shotiq/ResultsBits"
 import { useAuthStore } from "@/stores/authStore"
 
 const TOGGLES = ["Form score", "Shot totals", "Make percentage", "Day streak", "Points", "Coaching target"]
+const CARD_BG = ["#141518", "#1B1D20", "#20242B", "#2A1F18", "#FFFFFF"]
+const ACCENTS = [
+  "var(--shotiq-color-shotiqOrange)", "var(--shotiq-color-analysisBlue)",
+  "var(--shotiq-color-confirmGreen)", "var(--shotiq-color-graphite)",
+]
 
 export default function PlayerCardPage() {
   const { hasData, score } = useHistory()
   const authUser = useAuthStore((s) => s.user)
   const name = (authUser?.displayName || authUser?.firstName || "Your Name").toUpperCase()
   const [accent, setAccent] = useState(0)
+  const [cardStyle, setCardStyle] = useState(0)
+  const [bgChoice, setBgChoice] = useState<"photo" | "clean">("photo")
   const [on, setOn] = useState(() => new Set(TOGGLES))
+  const [shareMsg, setShareMsg] = useState("")
+  const [pulse, setPulse] = useState(false)
   const toggle = (t: string) => setOn((s) => { const n = new Set(s); n.has(t) ? n.delete(t) : n.add(t); return n })
+  const dark = cardStyle !== 4
+  const accentColor = ACCENTS[accent]
+  const sub = dark ? "text-white/60" : "text-[var(--shotiq-color-graphite)]"
+  const jumpToCustomize = () => {
+    document.getElementById("customize-card")?.scrollIntoView({ behavior: "smooth", block: "center" })
+    setPulse(true)
+    setTimeout(() => setPulse(false), 1200)
+  }
+  const share = async () => {
+    const url = typeof location !== "undefined" ? location.href : ""
+    try {
+      if (navigator.share) { await navigator.share({ title: "My ShotIQ Player Card", url }) }
+      else { await navigator.clipboard.writeText(url); setShareMsg("Link copied") }
+    } catch { setShareMsg("Link copied") }
+    setTimeout(() => setShareMsg(""), 2000)
+  }
+  const [downloading, setDownloading] = useState(false)
+  const download = () => {
+    setDownloading(true)
+    setTimeout(() => { window.print(); setDownloading(false) }, 60)
+  }
 
   return (
     <div data-testid="screen-desktop-web-player-card">
@@ -29,73 +59,93 @@ export default function PlayerCardPage() {
           </p>
         </div>
         <div className="flex gap-[12px]">
-          <button type="button" className="flex h-[46px] items-center gap-[8px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] px-[20px] text-[13px] font-bold tracking-[0.04em] text-white">
+          <button type="button" onClick={jumpToCustomize}
+                  className="flex h-[46px] items-center gap-[8px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] px-[20px] text-[13px] font-bold tracking-[0.04em] text-white">
             <Pencil className="h-[15px] w-[15px]" /> CUSTOMIZE CARD
           </button>
-          <button type="button" className="flex h-[46px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[20px] text-[13px] font-bold tracking-[0.04em]">
-            <Share2 className="h-[15px] w-[15px]" /> SHARE
+          <button type="button" onClick={share}
+                  className="flex h-[46px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[20px] text-[13px] font-bold tracking-[0.04em]">
+            <Share2 className="h-[15px] w-[15px]" /> {shareMsg || "SHARE"}
           </button>
-          <button type="button" className="flex h-[46px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[20px] text-[13px] font-bold tracking-[0.04em]">
-            <Download className="h-[15px] w-[15px]" /> DOWNLOAD
+          <button type="button" onClick={download}
+                  className="flex h-[46px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[20px] text-[13px] font-bold tracking-[0.04em]">
+            <Download className="h-[15px] w-[15px]" /> {downloading ? "PREPARING…" : "DOWNLOAD"}
           </button>
         </div>
       </div>
 
       <div className="mt-[16px] flex gap-[20px]">
-        {/* the card itself — dark is canonical here (media/photo surface card) */}
-        <div className="w-[480px] shrink-0 overflow-hidden rounded-[8px] bg-[#141518] text-white">
+        {/* the card itself — dark is canonical here (media/photo surface card);
+            style/accent pickers below restyle it live */}
+        <div className={`w-[480px] shrink-0 overflow-hidden rounded-[8px] ${dark ? "text-white" : "border border-[var(--shotiq-color-rule)] text-[var(--shotiq-color-ink)]"}`}
+             style={{ background: CARD_BG[cardStyle] }}>
           <div className="flex gap-[14px] p-[22px]">
             <div className="min-w-0 flex-1">
               <div className="shotiq-display text-[30px] leading-[32px]">{name}</div>
-              <div className="text-[11px] font-bold tracking-[0.08em] text-[var(--shotiq-color-shotiqOrange)]">RIGHT-HANDED SHOOTER</div>
-              <div className="mt-[16px] text-[10px] tracking-[0.08em] text-white/60">FORM SCORE</div>
-              <div className="shotiq-numeric text-[54px] leading-[56px] text-[var(--shotiq-color-shotiqOrange)]">{score ?? "—"}</div>
-              <div className="h-[6px] w-[130px] rounded-full bg-white/20">
-                <div className="h-full rounded-full bg-[var(--shotiq-color-shotiqOrange)]" style={{ width: `${score ?? 0}%` }} />
-              </div>
-              <div className="mt-[6px] text-[13px] font-bold text-[var(--shotiq-color-analysisBlue)]">{score != null ? "GOOD" : ""}</div>
-              <div className="text-[11px] text-white/70">{score != null ? "Keep building consistency." : "Run your first analysis."}</div>
-              <div className="mt-[22px] text-[10px] tracking-[0.08em] text-white/60">PRIMARY COACHING TARGET</div>
-              <div className="text-[17px] font-semibold leading-[23px]">Keep elbow stacked<br />through release</div>
-              <TrendLine points={[2, 3, 1.6, 3.4, 2.6, 4]} width={120} height={32} stroke="#FFFFFF" dotFill="#FFFFFF" />
+              <div className="text-[11px] font-bold tracking-[0.08em]" style={{ color: accentColor }}>RIGHT-HANDED SHOOTER</div>
+              {on.has("Form score") && (<>
+                <div className={`mt-[16px] text-[10px] tracking-[0.08em] ${sub}`}>FORM SCORE</div>
+                <div className="shotiq-numeric text-[54px] leading-[56px]" style={{ color: accentColor }}>{score ?? "—"}</div>
+                <div className={`h-[6px] w-[130px] rounded-full ${dark ? "bg-white/20" : "bg-[var(--shotiq-color-rule)]"}`}>
+                  <div className="h-full rounded-full" style={{ width: `${score ?? 0}%`, background: accentColor }} />
+                </div>
+                <div className="mt-[6px] text-[13px] font-bold text-[var(--shotiq-color-analysisBlue)]">{score != null ? "GOOD" : ""}</div>
+                <div className={`text-[11px] ${dark ? "text-white/70" : "text-[var(--shotiq-color-graphite)]"}`}>{score != null ? "Keep building consistency." : "Run your first analysis."}</div>
+              </>)}
+              {on.has("Coaching target") && (<>
+                <div className={`mt-[22px] text-[10px] tracking-[0.08em] ${sub}`}>PRIMARY COACHING TARGET</div>
+                <div className="text-[17px] font-semibold leading-[23px]">Keep elbow stacked<br />through release</div>
+              </>)}
+              <TrendLine points={[2, 3, 1.6, 3.4, 2.6, 4]} width={120} height={32}
+                         stroke={dark ? "#FFFFFF" : "#111111"} dotFill={dark ? "#FFFFFF" : "#111111"} />
             </div>
             <div className="w-[130px] shrink-0 space-y-[12px] text-right">
-              {[["SHOTS", hasData ? "24" : "0"], ["MAKES", hasData ? "15" : "0"], ["MAKE %", hasData ? "62.5%" : "—"], ["DAY STREAK", "6"], ["POINTS", "2,840"]].map(([k, v]) => (
+              {([["SHOTS", hasData ? "24" : "0", "Shot totals"], ["MAKES", hasData ? "15" : "0", "Shot totals"],
+                 ["MAKE %", hasData ? "62.5%" : "—", "Make percentage"], ["DAY STREAK", "6", "Day streak"],
+                 ["POINTS", "2,840", "Points"]] as const).filter(([, , t]) => on.has(t)).map(([k, v]) => (
                 <div key={k}>
-                  <div className="text-[9px] tracking-[0.08em] text-white/60">{k}</div>
+                  <div className={`text-[9px] tracking-[0.08em] ${sub}`}>{k}</div>
                   <div className="shotiq-numeric text-[24px] leading-[26px]">{v}</div>
                 </div>
               ))}
             </div>
           </div>
-          <div className="border-t border-white/15 px-[22px] py-[12px]">
+          <div className={`border-t px-[22px] py-[12px] ${dark ? "border-white/15" : "border-[var(--shotiq-color-rule)]"}`}>
             <div className="flex justify-between">
               {["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"].map((p) => (
                 <div key={p} className="text-center">
-                  <span className={p === "RELEASE" ? "text-[var(--shotiq-color-shotiqOrange)]" : "text-white"}><PhaseGlyph active={p === "RELEASE"} size={26} /></span>
-                  <div className={`text-[8px] tracking-[0.06em] ${p === "RELEASE" ? "font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-white/70"}`}>{p}</div>
+                  <span style={p === "RELEASE" ? { color: accentColor } : undefined}
+                        className={p === "RELEASE" ? "" : dark ? "text-white" : ""}><PhaseGlyph active={p === "RELEASE"} size={26} /></span>
+                  <div className={`text-[8px] tracking-[0.06em] ${p === "RELEASE" ? "font-bold" : dark ? "text-white/70" : "text-[var(--shotiq-color-graphite)]"}`}
+                       style={p === "RELEASE" ? { color: accentColor } : undefined}>{p}</div>
                 </div>
               ))}
             </div>
-            <div className="mt-[10px] flex gap-[6px]">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className={`h-[72px] flex-1 rounded-[3px] bg-[#26282c] ${i === 3 ? "ring-2 ring-[var(--shotiq-color-shotiqOrange)]" : ""}`} />
-              ))}
-            </div>
+            {bgChoice === "photo" && (
+              <div className="mt-[10px] flex gap-[6px]">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="h-[72px] flex-1 rounded-[3px] bg-[#26282c]"
+                       style={i === 3 ? { boxShadow: `0 0 0 2px ${accentColor}` } : undefined} />
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
         {/* customize + progression */}
         <div className="min-w-0 flex-1 space-y-[16px]">
-          <Card className="px-[20px] py-[16px]">
+          <Card id="customize-card"
+                className={`px-[20px] py-[16px] transition ${pulse ? "ring-2 ring-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
             <SectionLabel>CUSTOMIZE YOUR CARD</SectionLabel>
             <div className="mt-[12px] flex gap-[40px]">
               <div>
                 <div className="text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">CARD STYLE</div>
                 <div className="mt-[8px] grid grid-cols-3 gap-[8px]">
                   {[0, 1, 2, 3, 4].map((i) => (
-                    <button key={i} type="button"
-                            className={`h-[54px] w-[38px] rounded-[6px] ${i === 4 ? "border border-[var(--shotiq-color-rule)] bg-white" : "bg-[#1B1D20]"} ${i === 0 ? "ring-2 ring-[var(--shotiq-color-shotiqOrange)]" : ""}`} />
+                    <button key={i} type="button" aria-label={`Card style ${i + 1}`} aria-pressed={cardStyle === i}
+                            onClick={() => setCardStyle(i)}
+                            className={`h-[54px] w-[38px] rounded-[6px] ${i === 4 ? "border border-[var(--shotiq-color-rule)]" : ""} ${cardStyle === i ? "ring-2 ring-[var(--shotiq-color-shotiqOrange)]" : ""}`}
+                            style={{ background: CARD_BG[i] }} />
                   ))}
                 </div>
               </div>
@@ -103,7 +153,7 @@ export default function PlayerCardPage() {
                 <div className="text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">ACCENT COLOR</div>
                 <div className="mt-[8px] flex gap-[8px]">
                   {["var(--shotiq-color-shotiqOrange)", "var(--shotiq-color-analysisBlue)", "var(--shotiq-color-confirmGreen)", "var(--shotiq-color-graphite)"].map((c, i) => (
-                    <button key={c} type="button" onClick={() => setAccent(i)} aria-label={`accent ${i}`}
+                    <button key={c} type="button" onClick={() => setAccent(i)} aria-label={`accent ${i}`} aria-pressed={accent === i}
                             className={`h-[28px] w-[28px] rounded-[6px] ${accent === i ? "ring-2 ring-offset-2 ring-[var(--shotiq-color-shotiqOrange)]" : ""}`}
                             style={{ background: c }} />
                   ))}
@@ -125,12 +175,14 @@ export default function PlayerCardPage() {
               <div>
                 <div className="text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">BACKGROUND</div>
                 <div className="mt-[8px] space-y-[8px]">
-                  <div className="rounded-[6px] border-2 border-[var(--shotiq-color-shotiqOrange)] p-[4px]">
+                  <button type="button" onClick={() => setBgChoice("photo")} aria-pressed={bgChoice === "photo"}
+                          className={`block rounded-[6px] p-[4px] text-left ${bgChoice === "photo" ? "border-2 border-[var(--shotiq-color-shotiqOrange)]" : "border border-[var(--shotiq-color-rule)]"}`}>
                     <MediaSurface width={120} height={54} rounded={4} /><div className="mt-[3px] text-[11px]">Court photo</div>
-                  </div>
-                  <div className="rounded-[6px] border border-[var(--shotiq-color-rule)] p-[4px]">
+                  </button>
+                  <button type="button" onClick={() => setBgChoice("clean")} aria-pressed={bgChoice === "clean"}
+                          className={`block rounded-[6px] p-[4px] text-left ${bgChoice === "clean" ? "border-2 border-[var(--shotiq-color-shotiqOrange)]" : "border border-[var(--shotiq-color-rule)]"}`}>
                     <div className="h-[54px] w-[120px] rounded-[4px] bg-white" /><div className="mt-[3px] text-[11px]">Clean</div>
-                  </div>
+                  </button>
                 </div>
               </div>
             </div>

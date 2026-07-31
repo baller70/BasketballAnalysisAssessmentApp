@@ -4,8 +4,8 @@
 
 import React, { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
-import { Search, ChevronDown, GitCompare, Users, Bookmark } from "lucide-react"
-import { SectionLabel, Card, MediaSurface, WideSidebar, Stat } from "@/components/shotiq/ShotIQShell"
+import { Search, ChevronDown, GitCompare } from "lucide-react"
+import { Card, MediaSurface, Stat } from "@/components/shotiq/ShotIQShell"
 
 interface Shooter {
   id: number; name: string; team: string; league: string; era?: string; tier?: string
@@ -20,25 +20,25 @@ export default function EliteShootersPage() {
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState("")
   const [league, setLeague] = useState("All")
+  const [sort, setSort] = useState<"Match" | "Name A–Z" | "FT %">("Match")
+  const [sortOpen, setSortOpen] = useState(false)
   useEffect(() => {
     fetch("/api/shooters").then((r) => (r.ok ? r.json() : null))
       .then((d) => setShooters(d?.shooters ?? []))
       .catch(() => {}).finally(() => setLoading(false))
   }, [])
-  const filtered = useMemo(() => shooters.filter((s) =>
-    (league === "All" || s.league === league) &&
-    (!query || s.name.toLowerCase().includes(query.toLowerCase()))), [shooters, query, league])
+  const filtered = useMemo(() => {
+    const out = shooters.filter((s) =>
+      (league === "All" || s.league === league) &&
+      (!query || s.name.toLowerCase().includes(query.toLowerCase())))
+    if (sort === "Name A–Z") out.sort((a, b) => a.name.localeCompare(b.name))
+    if (sort === "FT %") out.sort((a, b) => (b.careerFreeThrowPct ?? 0) - (a.careerFreeThrowPct ?? 0))
+    return out
+  }, [shooters, query, league, sort])
   const slug = (n: string) => n.toLowerCase().replace(/\s+/g, "-")
 
   return (
     <div data-testid="screen-desktop-web-elite-shooters-database" className="flex">
-      <WideSidebar sections={[
-        { heading: "REFERENCES", items: [
-          { label: "My Shooters", href: "/elite-shooters", icon: Users },
-          { label: "Elite Shooters", href: "/elite-shooters", icon: Bookmark, active: true },
-          { label: "Saved Comparisons", href: "/results/demo/compare", icon: GitCompare },
-        ]},
-      ]} />
       <div className="min-w-0 flex-1 px-[24px] py-[18px]">
         <div className="flex items-start justify-between">
           <div>
@@ -53,9 +53,22 @@ export default function EliteShootersPage() {
                      className="w-[150px] bg-transparent text-[13px] outline-none placeholder:text-[var(--shotiq-color-muted)]" />
               <Search className="h-[14px] w-[14px] text-[var(--shotiq-color-graphite)]" />
             </div>
-            <button type="button" className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-[13px]">
-              Sort: Match <ChevronDown className="h-[12px] w-[12px]" />
-            </button>
+            <div className="relative">
+              <button type="button" aria-expanded={sortOpen} onClick={() => setSortOpen((v) => !v)}
+                      className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-[13px]">
+                Sort: {sort} <ChevronDown className="h-[12px] w-[12px]" />
+              </button>
+              {sortOpen && (
+                <div className="absolute right-0 top-[46px] z-30 w-[160px] rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white py-[4px] shadow-[0_8px_20px_rgba(17,17,17,0.10)]">
+                  {(["Match", "Name A–Z", "FT %"] as const).map((s) => (
+                    <button key={s} type="button" onClick={() => { setSort(s); setSortOpen(false) }}
+                            className={`flex h-[32px] w-full items-center px-[12px] text-[13px] hover:bg-[var(--shotiq-color-warmCanvas)] ${sort === s ? "font-semibold text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <Link href="/results/demo/compare"
                   className="flex h-[42px] items-center gap-[8px] rounded-[6px] bg-[var(--shotiq-color-analysisBlue)] px-[16px] text-[13px] font-medium text-white">
               <GitCompare className="h-[14px] w-[14px]" /> Compare with my shot
@@ -65,7 +78,7 @@ export default function EliteShootersPage() {
 
         <div className="mt-[12px] flex gap-[8px]">
           {LEAGUES.map((l) => (
-            <button key={l} type="button" onClick={() => setLeague(l)}
+            <button key={l} type="button" onClick={() => setLeague(l)} aria-pressed={league === l}
                     className={`h-[34px] rounded-full px-[16px] text-[13px] ${league === l ? "bg-[var(--shotiq-color-ink)] text-white" : "border border-[var(--shotiq-color-rule)]"}`}>
               {l}
             </button>

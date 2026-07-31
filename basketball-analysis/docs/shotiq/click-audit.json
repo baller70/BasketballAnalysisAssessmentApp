@@ -1,0 +1,116 @@
+[
+ {
+  "route": "/signin",
+  "links": 12,
+  "brokenLinks": [],
+  "buttons": 4,
+  "deadButtons": [],
+  "consoleErrors": 2
+ },
+ {
+  "route": "/results/demo",
+  "links": 18,
+  "brokenLinks": [],
+  "buttons": 3,
+  "deadButtons": [],
+  "consoleErrors": 3
+ },
+ {
+  "route": "/results/demo/analysis",
+  "links": 19,
+  "brokenLinks": [],
+  "buttons": 13,
+  "deadButtons": [],
+  "consoleErrors": 3
+ },
+ {
+  "route": "/results/demo/biomechanics",
+  "links": 18,
+  "brokenLinks": [],
+  "buttons": 21,
+  "deadButtons": [],
+  "consoleErrors": 3
+ },
+ {
+  "route": "/results/demo/flaws",
+  "links": 19,
+  "brokenLinks": [],
+  "buttons": 4,
+  "deadButtons": [],
+  "consoleErrors": 3
+ },
+ {
+  "route": "/results/demo/compare",
+  "links": 19,
+  "brokenLinks": [],
+  "buttons": 22,
+  "deadButtons": [],
+  "consoleErrors": 3
+ },
+ {
+  "route": "/results/demo/history",
+  "links": 18,
+  "brokenLinks": [],
+  "buttons": 8,
+  "deadButtons": [],
+  "consoleErrors": 3
+ },
+ {
+  "route": "/results/demo/player",
+  "links": 18,
+  "brokenLinks": [],
+  "buttons": 23,
+  "deadButtons": [],
+  "consoleErrors": 3
+ },
+ {
+  "route": "/results/demo/training",
+  "links": 27,
+  "brokenLinks": [],
+  "buttons": 3,
+  "deadButtons": [],
+  "consoleErrors": 3
+ },
+ {
+  "route": "/results/demo/goals",
+  "links": 18,
+  "brokenLinks": [],
+  "buttons": 8,
+  "deadButtons": [],
+  "consoleErrors": 4
+ },
+ {
+  "route": "/elite-shooters",
+  "links": 18,
+  "brokenLinks": [],
+  "buttons": 9,
+  "deadButtons": [],
+  "consoleErrors": 2
+ },
+ {
+  "route": "/points",
+  "links": 18,
+  "brokenLinks": [],
+  "buttons": 22,
+  "deadButtons": [],
+  "consoleErrors": 7
+ },
+ {
+  "route": "/badges",
+  "links": 18,
+  "brokenLinks": [],
+  "buttons": 22,
+  "deadButtons": [],
+  "consoleErrors": 2
+ },
+ {
+  "route": "/guide",
+  "links": 19,
+  "brokenLinks": [],
+  "buttons": 43,
+  "deadButtons": [
+   "Upload Video"
+  ],
+  "consoleErrors": 6
+ }
+]
