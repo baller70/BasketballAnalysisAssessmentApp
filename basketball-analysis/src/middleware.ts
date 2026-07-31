@@ -11,6 +11,8 @@ const PUBLIC_ROUTES = [
   '/signup',
   '/forgot-password',
   '/reset-password',
+  '/terms',
+  '/privacy',
   '/results/demo',
   '/badges',
   '/elite-shooters',

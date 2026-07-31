@@ -2,7 +2,8 @@
 
 /** /media — canonical 094-web-media-library, backed by /api/media. */
 
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useMemo, useState } from "react"
+import Link from "next/link"
 import { Search, Upload, SlidersHorizontal, ChevronDown, Trash2, Calendar } from "lucide-react"
 import { SectionLabel, Card, MediaSurface, PhaseGlyph } from "@/components/shotiq/ShotIQShell"
 
@@ -35,10 +36,19 @@ const FILTERS: [string, [string, number][]][] = [
   ["HAND", [["All hands", -1], ["Right", 76], ["Left", 10]]],
 ]
 
+const RANGES: [string, string][] = [["7", "May 6 – May 12, 2025"], ["1", "Today only"], ["30", "Apr 12 – May 12, 2025"]]
+const SORTS = ["Newest", "Oldest", "Score"] as const
+
 export default function MediaLibraryPage() {
   const [groups, setGroups] = useState(DEMO)
   const [empty, setEmpty] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [checked, setChecked] = useState<Record<string, string>>(() =>
+    Object.fromEntries(FILTERS.map(([head, opts]) => [head, String(opts[0][0])])))
+  const [range, setRange] = useState(RANGES[0])
+  const [sort, setSort] = useState<(typeof SORTS)[number]>("Newest")
+  const [menu, setMenu] = useState<null | "range" | "sort">(null)
+  const [railOpen, setRailOpen] = useState(true)
   useEffect(() => {
     fetch("/api/media", { credentials: "include" }).then((r) => (r.ok ? r.json() : null))
       .then((d) => {
@@ -46,29 +56,78 @@ export default function MediaLibraryPage() {
         if (Array.isArray(list) && list.length === 0) { setGroups({}); setEmpty(true) }
       }).catch(() => {})
   }, [])
-  const total = Object.values(groups).flat().length
+  const statusFilter = checked["ANALYSIS STATUS"]
+  const workoutFilter = checked["WORKOUT"]
+  const shown = useMemo(() => {
+    const out: Record<string, MediaItem[]> = {}
+    for (const [day, items] of Object.entries(groups)) {
+      if (range[0] === "1" && !day.startsWith("TODAY")) continue
+      let list = items.filter((m) =>
+        (statusFilter.startsWith("All") || m.status === statusFilter) &&
+        (workoutFilter.startsWith("All") || m.style === workoutFilter || m.title === workoutFilter))
+      list = [...list]
+      if (sort === "Oldest") list.reverse()
+      if (sort === "Score") list.sort((a, b) => (b.score ?? -1) - (a.score ?? -1))
+      if (list.length) out[day] = list
+    }
+    return out
+  }, [groups, statusFilter, workoutFilter, range, sort])
+  const total = Object.values(shown).flat().length
   const toggle = (id: string) => setSelected((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
+  const clearAll = () => {
+    setChecked(Object.fromEntries(FILTERS.map(([head, opts]) => [head, String(opts[0][0])])))
+    setRange(RANGES[0]); setSort("Newest"); setSelected(new Set())
+  }
+  const deleteSelected = () => {
+    setGroups((g) => {
+      const next: Record<string, MediaItem[]> = {}
+      for (const [day, items] of Object.entries(g)) {
+        const keep = items.filter((m) => !selected.has(m.id))
+        if (keep.length) next[day] = keep
+      }
+      if (!Object.keys(next).length) setEmpty(true)
+      return next
+    })
+    setSelected(new Set())
+  }
   const statusColor = (s: string) =>
     s === "Analyzed" ? "var(--shotiq-color-confirmGreen)" : s === "Review" ? "var(--shotiq-color-shotiqOrange)" : "var(--shotiq-color-muted)"
 
   return (
     <div data-testid="screen-desktop-web-media-library" className="flex">
       {/* filters rail */}
+      {railOpen && (
       <aside className="w-[200px] shrink-0 border-r border-[var(--shotiq-color-rule)] px-[18px] py-[18px]">
         <div className="flex items-center justify-between">
           <SectionLabel>FILTERS</SectionLabel>
-          <button type="button" className="text-[11px] text-[var(--shotiq-color-shotiqOrange)]">Clear all</button>
+          <button type="button" onClick={clearAll} className="text-[11px] text-[var(--shotiq-color-shotiqOrange)]">Clear all</button>
         </div>
         <div className="mt-[12px] text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">DATE RANGE</div>
-        <button type="button" className="mt-[6px] flex h-[36px] w-full items-center gap-[6px] rounded-[5px] border border-[var(--shotiq-color-rule)] px-[8px] text-[11px]">
-          <Calendar className="h-[12px] w-[12px]" /> May 6 – May 12, 2025 <ChevronDown className="ml-auto h-[11px] w-[11px]" />
-        </button>
+        <div className="relative">
+          <button type="button" aria-expanded={menu === "range"}
+                  onClick={() => setMenu((m) => (m === "range" ? null : "range"))}
+                  className="mt-[6px] flex h-[36px] w-full items-center gap-[6px] rounded-[5px] border border-[var(--shotiq-color-rule)] px-[8px] text-[11px]">
+            <Calendar className="h-[12px] w-[12px]" /> {range[1]} <ChevronDown className="ml-auto h-[11px] w-[11px]" />
+          </button>
+          {menu === "range" && (
+            <div className="absolute left-0 top-[42px] z-30 w-full rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white py-[4px] shadow-[0_8px_20px_rgba(17,17,17,0.10)]">
+              {RANGES.map((r) => (
+                <button key={r[0]} type="button" onClick={() => { setRange(r); setMenu(null) }}
+                        className={`flex h-[28px] w-full items-center px-[8px] text-[11px] hover:bg-[var(--shotiq-color-warmCanvas)] ${range[0] === r[0] ? "font-semibold text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
+                  {r[1]}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         {FILTERS.map(([head, opts]) => (
           <div key={head} className="mt-[14px]">
             <div className="text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">{head}</div>
-            {opts.map(([label, n], i) => (
+            {opts.map(([label, n]) => (
               <label key={String(label)} className="mt-[6px] flex items-center gap-[8px] text-[12px]">
-                <input type="checkbox" defaultChecked={i === 0} className="h-[13px] w-[13px] accent-[var(--shotiq-color-shotiqOrange)]" />
+                <input type="checkbox" checked={checked[head] === String(label)}
+                       onChange={() => setChecked((c) => ({ ...c, [head]: String(label) }))}
+                       className="h-[13px] w-[13px] accent-[var(--shotiq-color-shotiqOrange)]" />
                 <span className="flex-1">{label}</span>
                 {n >= 0 && <span className="text-[11px] text-[var(--shotiq-color-graphite)]">{n}</span>}
               </label>
@@ -76,6 +135,7 @@ export default function MediaLibraryPage() {
           </div>
         ))}
       </aside>
+      )}
 
       {/* content */}
       <div className="min-w-0 flex-1 px-[24px] py-[18px]">
@@ -89,16 +149,31 @@ export default function MediaLibraryPage() {
               <input placeholder="Search media…" className="w-[130px] bg-transparent text-[13px] outline-none placeholder:text-[var(--shotiq-color-muted)]" />
               <Search className="h-[14px] w-[14px] text-[var(--shotiq-color-graphite)]" />
             </div>
-            <button type="button" className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-[13px]">
+            <Link href="/upload" className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-[13px]">
               <Upload className="h-[14px] w-[14px]" /> Upload
-            </button>
-            <button type="button" className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-[13px]">
+            </Link>
+            <button type="button" aria-expanded={railOpen} onClick={() => setRailOpen((v) => !v)}
+                    className={`flex h-[42px] items-center gap-[8px] rounded-[6px] border px-[14px] text-[13px] ${railOpen ? "border-[var(--shotiq-color-rule)]" : "border-[var(--shotiq-color-shotiqOrange)] text-[var(--shotiq-color-shotiqOrange)]"}`}>
               <SlidersHorizontal className="h-[14px] w-[14px]" /> Filter
             </button>
-            <button type="button" className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-[13px]">
-              Sort: Newest <ChevronDown className="h-[12px] w-[12px]" />
-            </button>
-            <button type="button" disabled={!selected.size}
+            <div className="relative">
+              <button type="button" aria-expanded={menu === "sort"}
+                      onClick={() => setMenu((m) => (m === "sort" ? null : "sort"))}
+                      className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-[13px]">
+                Sort: {sort} <ChevronDown className="h-[12px] w-[12px]" />
+              </button>
+              {menu === "sort" && (
+                <div className="absolute right-0 top-[46px] z-30 w-[140px] rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white py-[4px] shadow-[0_8px_20px_rgba(17,17,17,0.10)]">
+                  {SORTS.map((o) => (
+                    <button key={o} type="button" onClick={() => { setSort(o); setMenu(null) }}
+                            className={`flex h-[30px] w-full items-center px-[12px] text-[12px] hover:bg-[var(--shotiq-color-warmCanvas)] ${sort === o ? "font-semibold text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
+                      {o}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <button type="button" disabled={!selected.size} onClick={deleteSelected}
                     className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-reviewRed)] px-[14px] text-[13px] text-[var(--shotiq-color-reviewRed)] disabled:opacity-50">
               <Trash2 className="h-[14px] w-[14px]" /> Delete
             </button>
@@ -116,7 +191,12 @@ export default function MediaLibraryPage() {
             No media yet — captures and uploads will appear here.
           </Card>
         )}
-        {Object.entries(groups).map(([day, items]) => (
+        {!empty && total === 0 && (
+          <Card className="mt-[20px] p-[30px] text-center text-[14px] text-[var(--shotiq-color-graphite)]">
+            No media matches these filters.
+          </Card>
+        )}
+        {Object.entries(shown).map(([day, items]) => (
           <div key={day} className="mt-[16px]">
             <div className="flex items-center justify-between">
               <SectionLabel>{day}</SectionLabel>

@@ -1,5 +1,4 @@
 @import "../styles/shotiq-tokens.css";
-@import url('https://fonts.googleapis.com/css2?family=Saira:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -75,7 +74,7 @@
   body {
     background: #ffffff;
     color: hsl(var(--foreground));
-    font-family: 'Saira', system-ui, sans-serif;
+    font-family: var(--font-shotiq-inter, system-ui), system-ui, sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
     min-height: 100vh;
     position: relative;

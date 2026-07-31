@@ -105,7 +105,7 @@ export default function SignInPage() {
         // Returning users (profile complete) go directly to dashboard;
         // new users go to onboarding to set up their profile.
         const targetUrl = user?.profileComplete ? "/results/demo" : "/onboarding"
-        router.push(targetUrl)
+        window.location.assign(targetUrl)
       } else {
         setError(result.error || "Sign in failed")
         setIsSubmitting(false)

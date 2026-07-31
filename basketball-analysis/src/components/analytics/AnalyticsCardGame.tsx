@@ -769,11 +769,6 @@ function AnalyticsCard({ metricKey, data, dragX }: AnalyticsCardProps) {
           </svg>
           {/* SWIPE text - turns BLUE when swiping left */}
           <svg width="100" height="40" viewBox="0 0 100 40" className="-ml-2">
-            <defs>
-              <style>
-                @import url(&apos;https://fonts.googleapis.com/css2?family=Russo+One&amp;display=swap&apos;);
-              </style>
-            </defs>
             <text 
               x="50" 
               y="30" 
@@ -806,11 +801,6 @@ function AnalyticsCard({ metricKey, data, dragX }: AnalyticsCardProps) {
         >
           {/* SWIPE text - turns GREEN when swiping right */}
           <svg width="100" height="40" viewBox="0 0 100 40" className="-mr-2">
-            <defs>
-              <style>
-                @import url(&apos;https://fonts.googleapis.com/css2?family=Russo+One&amp;display=swap&apos;);
-              </style>
-            </defs>
             <text 
               x="50" 
               y="30" 

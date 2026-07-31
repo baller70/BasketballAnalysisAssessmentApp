@@ -454,18 +454,18 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
   return (
     <div className="space-y-6">
       {/* Upload Section */}
-      <div className="bg-[#2a2a2a] border border-[#4a4a4a] rounded-lg p-4 space-y-4">
+      <div className="bg-[var(--shotiq-color-warmCanvas)] border border-[var(--shotiq-color-rule)] rounded-lg p-4 space-y-4">
         <h4 className="text-[#FF6B35] font-semibold text-sm mb-2 flex items-center gap-2">
           <Video className="w-4 h-4" />
           Video Analysis
         </h4>
         
-        <div className="bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg p-4">
+        <div className="bg-white border border-[var(--shotiq-color-rule)] rounded-lg p-4">
           <h5 className="text-[#FF6B35] font-semibold text-xs mb-2 flex items-center gap-2">
             <AlertTriangle className="w-3 h-3" />
             Video Requirements
           </h5>
-          <ul className="text-[#888] text-xs space-y-1">
+          <ul className="text-[var(--shotiq-color-graphite)] text-xs space-y-1">
             <li>• <strong className="text-[#FF6B35]">Maximum 90 seconds</strong>, under {FILE_LIMITS.MAX_VIDEO_SIZE_MB}MB</li>
             <li>• Full body visible throughout</li>
             <li>• Single shooter, clear view</li>
@@ -477,9 +477,9 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
 
         {/* Upload Area */}
         {!videoFile ? (
-          <label className="border-2 border-dashed border-[#4a4a4a] rounded-lg p-8 flex flex-col items-center justify-center cursor-pointer hover:border-[#FF6B35]/60 transition-colors">
+          <label className="border-2 border-dashed border-[var(--shotiq-color-rule)] rounded-lg p-8 flex flex-col items-center justify-center cursor-pointer hover:border-[#FF6B35]/60 transition-colors">
             <Upload className="w-12 h-12 text-[#666] mb-3" />
-            <span className="text-[#888] text-sm">Click to upload video</span>
+            <span className="text-[var(--shotiq-color-graphite)] text-sm">Click to upload video</span>
             <span className="text-[#666] text-xs mt-1">MP4, MOV, WebM (max 90 sec, {FILE_LIMITS.MAX_VIDEO_SIZE_MB}MB)</span>
             <input
               ref={fileInputRef}
@@ -534,7 +534,7 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
             </p>
 
             <div className="flex items-center justify-between">
-              <span className="text-[#888] text-sm truncate">{videoFile.name}</span>
+              <span className="text-[var(--shotiq-color-graphite)] text-sm truncate">{videoFile.name}</span>
               <span className="text-[#666] text-xs">
                 {(videoFile.size / (1024 * 1024)).toFixed(1)} MB
               </span>
@@ -547,7 +547,7 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
               className={cn(
                 "w-full py-3 px-4 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-all whitespace-nowrap",
                 isAnalyzing
-                  ? "bg-[#3a3a3a] text-[#888] cursor-not-allowed"
+                  ? "bg-[var(--shotiq-color-rule)] text-[var(--shotiq-color-graphite)] cursor-not-allowed"
                   : "bg-[#FF6B35] text-white hover:bg-[#FFC000]"
               )}
             >
@@ -576,13 +576,13 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
 
       {/* Results Preview (before navigation) */}
       {result && !isAnalyzing && (
-        <div className="bg-[#2a2a2a] border border-[#4a4a4a] rounded-lg p-4 space-y-4">
+        <div className="bg-[var(--shotiq-color-warmCanvas)] border border-[var(--shotiq-color-rule)] rounded-lg p-4 space-y-4">
           <h4 className="text-[#FF6B35] font-semibold text-lg">Analysis Preview</h4>
 
           {/* Key Screenshots */}
           {result.key_screenshots && result.key_screenshots.length > 0 && (
             <div className="space-y-2">
-              <h5 className="text-[#E5E5E5] font-medium text-sm">3 Key Frames Extracted</h5>
+              <h5 className="text-[var(--shotiq-color-ink)] font-medium text-sm">3 Key Frames Extracted</h5>
               <div className="grid grid-cols-3 gap-2">
                 {result.key_screenshots.map((ks, idx) => (
                   <div key={idx} className="relative">
@@ -606,7 +606,7 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
           {/* Frame Viewer */}
           {result.annotated_frames_base64 && result.annotated_frames_base64.length > 0 && (
             <div className="space-y-3">
-              <h5 className="text-[#E5E5E5] font-medium text-sm">Frame-by-Frame View</h5>
+              <h5 className="text-[var(--shotiq-color-ink)] font-medium text-sm">Frame-by-Frame View</h5>
               
               {/* Frame Display */}
               <div className="relative bg-black rounded-lg overflow-hidden">
@@ -680,21 +680,21 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
 
           {/* Quick Stats */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="bg-[#1a1a1a] rounded-lg p-3">
+            <div className="bg-white rounded-lg p-3">
               <div className="text-[#666] text-xs">Duration</div>
-              <div className="text-[#E5E5E5] font-semibold">{result.video_info?.duration.toFixed(1)}s</div>
+              <div className="text-[var(--shotiq-color-ink)] font-semibold">{result.video_info?.duration.toFixed(1)}s</div>
             </div>
-            <div className="bg-[#1a1a1a] rounded-lg p-3">
+            <div className="bg-white rounded-lg p-3">
               <div className="text-[#666] text-xs">Frames</div>
-              <div className="text-[#E5E5E5] font-semibold">{result.frame_count}</div>
+              <div className="text-[var(--shotiq-color-ink)] font-semibold">{result.frame_count}</div>
             </div>
-            <div className="bg-[#1a1a1a] rounded-lg p-3">
+            <div className="bg-white rounded-lg p-3">
               <div className="text-[#666] text-xs">Release Elbow</div>
-              <div className="text-[#E5E5E5] font-semibold">{result.metrics?.elbow_angle_range.at_release || '-'}°</div>
+              <div className="text-[var(--shotiq-color-ink)] font-semibold">{result.metrics?.elbow_angle_range.at_release || '-'}°</div>
             </div>
-            <div className="bg-[#1a1a1a] rounded-lg p-3">
+            <div className="bg-white rounded-lg p-3">
               <div className="text-[#666] text-xs">Phases</div>
-              <div className="text-[#E5E5E5] font-semibold">{result.phases?.length || 0}</div>
+              <div className="text-[var(--shotiq-color-ink)] font-semibold">{result.phases?.length || 0}</div>
             </div>
           </div>
 
@@ -707,7 +707,7 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
           )}
 
           {/* Note about full results */}
-          <p className="text-[#888] text-xs text-center">
+          <p className="text-[var(--shotiq-color-graphite)] text-xs text-center">
             Redirecting to full results page...
           </p>
         </div>
