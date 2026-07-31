@@ -113,7 +113,8 @@ export default function ProfileAccountPage() {
                   )}
                 </div>
                 <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={onAvatarPick} />
-                <button type="button" onClick={() => avatarInputRef.current?.click()}
+                <button type="button"
+                        onClick={() => { if (avatarInputRef.current) { avatarInputRef.current.dataset.opened = String(Date.now()); avatarInputRef.current.click() } }}
                         className="mt-[8px] h-[32px] w-full rounded-[5px] border border-[var(--shotiq-color-rule)] text-[12px]">Change photo</button>
                 <button type="button" onClick={() => setAvatar(null)} disabled={!avatar}
                         className="mt-[4px] text-[11px] text-[var(--shotiq-color-reviewRed)] disabled:opacity-40">Remove photo</button>

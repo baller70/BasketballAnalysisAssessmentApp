@@ -2,8 +2,6 @@ import type { Metadata } from "next"
 import localFont from "next/font/local"
 import { Russo_One, Inter, Bebas_Neue, Oswald } from "next/font/google"
 import "./globals.css"
-import { Header } from "@/components/layout/Header"
-import { Footer } from "@/components/layout/Footer"
 import { Providers } from "./providers"
 import { UploadQueueManager } from "@/components/upload/UploadQueueManager"
 
@@ -72,9 +70,9 @@ export default function RootLayout({
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} ${russoOne.variable} ${inter.variable} ${bebasNeue.variable} ${oswald.variable} antialiased min-h-screen flex flex-col bg-white`}>
         <Providers>
-          <Header />
-          <main className="flex-1 bg-slate-50">{children}</main>
-          <Footer />
+          {/* Every screen is canonical now — the app shell (unified sidebar +
+              topbar) is painted per-page; no global legacy chrome. */}
+          <main className="flex-1 bg-white">{children}</main>
           <UploadQueueManager />
         </Providers>
       </body>

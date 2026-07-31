@@ -105,12 +105,12 @@
  },
  {
   "route": "/guide",
-  "links": 19,
+  "links": 18,
   "brokenLinks": [],
   "buttons": 43,
   "deadButtons": [
    "Upload Video"
   ],
-  "consoleErrors": 9
+  "consoleErrors": 8
  }
 ]

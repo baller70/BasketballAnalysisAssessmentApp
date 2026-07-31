@@ -86,7 +86,7 @@ export default function LiveCapturePage() {
               </button>
               <button type="button" onClick={switchCam}
                       className="flex h-[46px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[18px] text-[13px]">
-                <SwitchCamera className="h-[15px] w-[15px]" /> Switch camera
+                <SwitchCamera className="h-[15px] w-[15px]" /> Switch camera · {facing === "user" ? "Front" : "Rear"}
               </button>
               <button type="button" onClick={() => setMuted(!muted)}
                       className="flex h-[46px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[18px] text-[13px]">

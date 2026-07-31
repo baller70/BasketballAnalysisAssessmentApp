@@ -43,6 +43,7 @@ export default function EliteShooterDetailClient() {
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState("OVERVIEW")
   const [frame, setFrame] = useState(3)
+  const [saved, setSaved] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -99,8 +100,9 @@ export default function EliteShooterDetailClient() {
           <ChevronLeft className="h-[15px] w-[15px]" /> Back to Elite Shooters
         </Link>
         <div className="flex gap-[12px]">
-          <button type="button" className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[18px] text-[14px]">
-            <Bookmark className="h-[16px] w-[16px]" /> Save reference
+          <button type="button" onClick={() => setSaved((v) => !v)} aria-pressed={saved}
+                  className={`flex h-[42px] items-center gap-[8px] rounded-[6px] border px-[18px] text-[14px] ${saved ? "border-[var(--shotiq-color-confirmGreen)] text-[var(--shotiq-color-confirmGreen)]" : "border-[var(--shotiq-color-rule)]"}`}>
+            <Bookmark className="h-[16px] w-[16px]" fill={saved ? "currentColor" : "none"} /> {saved ? "Reference saved" : "Save reference"}
           </button>
           <Link href="/results/demo/compare" data-testid="compare-with-my-shot"
                 className="flex h-[42px] items-center gap-[8px] rounded-[6px] bg-[var(--shotiq-color-analysisBlue)] px-[18px] text-[14px] text-white">
@@ -227,10 +229,14 @@ export default function EliteShooterDetailClient() {
         <Card className="w-[420px] shrink-0 px-[20px] py-[16px]">
           <div className="flex items-center justify-between">
             <SectionLabel>SHOOTING FORM GALLERY</SectionLabel>
-            <span className="text-[12px] text-[var(--shotiq-color-graphite)]">View all</span>
+            <button type="button" onClick={() => setTab("FORM GALLERY")}
+                    className="text-[12px] text-[var(--shotiq-color-analysisBlue)]">View all</button>
           </div>
           <div className="mt-[12px] flex items-center gap-[6px]">
-            <ChevronLeft className="h-[16px] w-[16px] shrink-0 text-[var(--shotiq-color-graphite)]" />
+            <button type="button" aria-label="Previous frame" disabled={frame === 0} className="disabled:opacity-40"
+                    onClick={() => setFrame((f) => Math.max(0, f - 1))}>
+              <ChevronLeft className="h-[16px] w-[16px] shrink-0 text-[var(--shotiq-color-graphite)]" />
+            </button>
             {PHASES.map((p, i) => (
               <button key={p} type="button" onClick={() => setFrame(i)}
                       className={`relative h-[110px] w-[70px] overflow-hidden rounded-[4px] bg-[#1B1D20] ${frame === i ? "ring-2 ring-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
@@ -240,7 +246,10 @@ export default function EliteShooterDetailClient() {
                 ) : null}
               </button>
             ))}
-            <ChevronRight className="h-[16px] w-[16px] shrink-0 text-[var(--shotiq-color-graphite)]" />
+            <button type="button" aria-label="Next frame" disabled={frame >= PHASES.length - 1} className="disabled:opacity-40"
+                    onClick={() => setFrame((f) => Math.min(PHASES.length - 1, f + 1))}>
+              <ChevronRight className="h-[16px] w-[16px] shrink-0 text-[var(--shotiq-color-graphite)]" />
+            </button>
           </div>
           <div className="mt-[8px] flex justify-between px-[20px]">
             {PHASES.map((p, i) => (
@@ -266,7 +275,8 @@ export default function EliteShooterDetailClient() {
         <Card className="w-[430px] shrink-0 px-[20px] py-[16px]">
           <div className="flex items-center justify-between">
             <SectionLabel>CAREER SHOOTING STATS</SectionLabel>
-            <span className="text-[12px] text-[var(--shotiq-color-graphite)]">View all</span>
+            <button type="button" onClick={() => setTab("CAREER STATS")}
+                    className="text-[12px] text-[var(--shotiq-color-analysisBlue)]">View all</button>
           </div>
           <div className="mt-[10px] grid grid-cols-6 divide-x divide-[var(--shotiq-color-rule)] text-center">
             {[["3P%", shooter.careerPct != null ? `${shooter.careerPct.toFixed(1)}%` : "—"],

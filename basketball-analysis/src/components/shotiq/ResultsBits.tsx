@@ -2,6 +2,7 @@
 
 /** Small shared pieces for the canonical results screens (083-093). */
 import React, { useEffect, useState } from "react"
+import Link from "next/link"
 import { SectionLabel, Card, TrendLine, Stat, PhaseGlyph } from "@/components/shotiq/ShotIQShell"
 
 export interface HistoryStats {
@@ -73,7 +74,9 @@ export function CoachingTarget() {
       <SectionLabel>PRIMARY COACHING TARGET</SectionLabel>
       <div className="mt-[6px] flex items-start justify-between">
         <p className="text-[19px] font-semibold leading-[25px]">Keep elbow stacked through release</p>
-        <span className="text-[var(--shotiq-color-graphite)]">›</span>
+        <Link href="/results/demo/goals" aria-label="Open goals">
+          <span className="text-[var(--shotiq-color-graphite)]">›</span>
+        </Link>
       </div>
       <span className="mt-[10px] inline-block rounded-[4px] border border-[var(--shotiq-color-confirmGreen)] px-[8px] py-[3px] text-[10px] font-bold tracking-[0.05em] text-[var(--shotiq-color-confirmGreen)]">ACTIVE GOAL</span>
       <p className="mt-[8px] text-[13px] text-[var(--shotiq-color-graphite)]">Improve release consistency and arm alignment</p>

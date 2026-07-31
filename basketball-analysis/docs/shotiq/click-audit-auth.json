@@ -4,8 +4,10 @@
   "links": 18,
   "brokenLinks": [],
   "buttons": 13,
-  "deadButtons": [],
-  "consoleErrors": 8
+  "deadButtons": [
+   "Left"
+  ],
+  "consoleErrors": 16
  },
  {
   "route": "/dashboard",
@@ -29,7 +31,7 @@
   "brokenLinks": [],
   "buttons": 20,
   "deadButtons": [],
-  "consoleErrors": 4
+  "consoleErrors": 5
  },
  {
   "route": "/profile",
@@ -61,15 +63,15 @@
   "brokenLinks": [],
   "buttons": 6,
   "deadButtons": [],
-  "consoleErrors": 2
+  "consoleErrors": 0
  },
  {
   "route": "/video-analysis/upload",
-  "links": 19,
+  "links": 18,
   "brokenLinks": [],
-  "buttons": 7,
+  "buttons": 6,
   "deadButtons": [],
-  "consoleErrors": 1
+  "consoleErrors": 0
  },
  {
   "route": "/training/drills/quick-release-builder",
@@ -77,13 +79,13 @@
   "brokenLinks": [],
   "buttons": 10,
   "deadButtons": [],
-  "consoleErrors": 7
+  "consoleErrors": 12
  },
  {
   "route": "/elite-shooters/stephen-curry",
   "links": 18,
   "brokenLinks": [],
-  "buttons": 17,
+  "buttons": 21,
   "deadButtons": [],
   "consoleErrors": 0
  },
@@ -108,23 +110,25 @@
   "links": 18,
   "brokenLinks": [],
   "buttons": 8,
-  "deadButtons": [],
+  "deadButtons": [
+   "All"
+  ],
   "consoleErrors": 0
  },
  {
   "route": "/terms",
-  "links": 2,
+  "links": 1,
   "brokenLinks": [],
-  "buttons": 1,
+  "buttons": 0,
   "deadButtons": [],
   "consoleErrors": 0
  },
  {
   "route": "/privacy",
-  "links": 2,
+  "links": 1,
   "brokenLinks": [],
-  "buttons": 1,
+  "buttons": 0,
   "deadButtons": [],
-  "consoleErrors": 5
+  "consoleErrors": 0
  }
 ]
