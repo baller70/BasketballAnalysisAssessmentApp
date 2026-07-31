@@ -26,15 +26,15 @@ import {
 } from "lucide-react"
 
 const NAV = [
-  { label: "Home", icon: Home },
-  { label: "Capture", icon: Camera },
-  { label: "History", icon: History },
-  { label: "Analysis", icon: LineChart },
-  { label: "Training", icon: Activity },
-  { label: "Goals", icon: Target },
-  { label: "Media", icon: Film },
-  { label: "Points", icon: Coins },
-  { label: "Settings", icon: Settings },
+  { label: "Home", icon: Home, href: "/dashboard" },
+  { label: "Capture", icon: Camera, href: "/video-analysis" },
+  { label: "History", icon: History, href: "/results/demo/history" },
+  { label: "Analysis", icon: LineChart, href: "/results/demo/analysis" },
+  { label: "Training", icon: Activity, href: "/results/demo/training" },
+  { label: "Goals", icon: Target, href: "/results/demo/goals" },
+  { label: "Media", icon: Film, href: "/media" },
+  { label: "Points", icon: Coins, href: "/points" },
+  { label: "Settings", icon: Settings, href: "/settings" },
 ]
 
 const STEPS = [
@@ -140,13 +140,15 @@ export default function SignInPage() {
         </span>
 
         <div className="flex items-center">
-          <button type="button" className="flex items-center gap-[10px] pr-[22px]">
+          {/* Decorative on the sign-in screen — nobody is signed in yet, so
+              this is a static chip, not an interactive control. */}
+          <div className="flex items-center gap-[10px] pr-[22px]">
             <span className="grid h-[34px] w-[34px] place-items-center overflow-hidden rounded-full bg-[var(--shotiq-color-rule)] text-[12px] font-bold text-[var(--shotiq-color-graphite)]">
               JE
             </span>
             <span className="text-[15px]">Jordan Ellis</span>
             <ChevronDown className="h-[16px] w-[16px] text-[var(--shotiq-color-graphite)]" />
-          </button>
+          </div>
           <div className="h-[38px] w-px bg-[var(--shotiq-color-rule)]" />
           <div className="w-[112px] text-center">
             <div className="shotiq-numeric text-[19px] leading-[22px]">2,840</div>
@@ -167,19 +169,21 @@ export default function SignInPage() {
           data-testid="region-sidebar"
           aria-label="Primary"
         >
-          {NAV.map(({ label: l, icon: Icon }) => (
-            <button key={l} type="button"
-                    className="flex h-[48px] items-center gap-[12px] pl-[18px] text-[13px] text-[var(--shotiq-color-ink)]">
+          {/* Real links: auth-gated routes bounce to sign-in via middleware,
+              which is app behaviour, not a dead control. */}
+          {NAV.map(({ label: l, icon: Icon, href }) => (
+            <Link key={l} href={href}
+                  className="flex h-[48px] items-center gap-[12px] pl-[18px] text-[13px] text-[var(--shotiq-color-ink)]">
               <Icon className="h-[18px] w-[18px]" strokeWidth={1.6} />
               <span>{l}</span>
-            </button>
+            </Link>
           ))}
           <div className="flex-1" />
-          <button type="button"
-                  className="mb-[26px] flex h-[48px] items-center gap-[12px] pl-[18px] text-[13px] text-[var(--shotiq-color-ink)]">
+          <Link href="/guide"
+                className="mb-[26px] flex h-[48px] items-center gap-[12px] pl-[18px] text-[13px] text-[var(--shotiq-color-ink)]">
             <HelpCircle className="h-[18px] w-[18px]" strokeWidth={1.6} />
             <span>Help</span>
-          </button>
+          </Link>
         </nav>
 
         {/* --------------------------------------------------- form column */}
@@ -242,6 +246,10 @@ export default function SignInPage() {
 
           {["Continue with Apple", "Continue with Google"].map((t, i) => (
             <button key={t} type="button"
+                    onClick={() => {
+                      setError(`${t.replace("Continue with ", "")} sign-in isn't enabled on this server yet — use your email and password.`)
+                      emailRef.current?.focus()
+                    }}
                     className={`${i ? "mt-[14px]" : "mt-[20px]"} flex h-[46px] w-full items-center justify-center gap-[11px] rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white text-[15px]`}>
               {t}
             </button>

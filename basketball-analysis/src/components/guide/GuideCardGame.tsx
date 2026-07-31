@@ -954,6 +954,7 @@ function CategoryFilter({ activeCategory, onCategoryChange }: CategoryFilterProp
         <button
           key={cat.id}
           onClick={() => onCategoryChange(cat.id)}
+          aria-pressed={activeCategory === cat.id}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
             activeCategory === cat.id 
               ? 'text-white' 
@@ -1140,6 +1141,8 @@ export function GuideCardGame() {
           <button
             key={card.id}
             onClick={() => setCurrentIndex(i)}
+            aria-label={`Card ${i + 1}`}
+            aria-pressed={i === currentIndex}
             className={`w-2 h-2 rounded-full transition-all ${
               i === currentIndex
                 ? 'w-6'
@@ -1227,7 +1230,7 @@ export function GuideCardGame() {
           <span className="text-slate-700 text-xs font-semibold">Upload Video</span>
         </button>
         <button
-          onClick={() => router.push('/live')}
+          onClick={() => router.push('/video-analysis')}
           className="flex flex-col items-center gap-2 p-4 bg-white border border-slate-200 rounded-xl hover:border-[#F59E0B]/50 hover:shadow-sm transition-all group"
         >
           <Radio className="w-6 h-6 text-[#F59E0B] group-hover:scale-110 transition-transform" />

@@ -14,11 +14,12 @@
 
 import React from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import {
   Search, Bell, ChevronDown, Home, LineChart, Activity, TrendingUp,
   Film, Compass, Settings, type LucideIcon,
 } from "lucide-react"
+import { useAuthStore } from "@/stores/authStore"
 
 export type IconType = LucideIcon
 
@@ -43,6 +44,35 @@ const RAIL: { label: string; href: string; icon: IconType }[] = [
   { label: "EXPLORE", href: "/elite-shooters", icon: Compass },
 ]
 
+/** Every reachable screen, searchable from the topbar. */
+const SEARCH_DESTINATIONS: { label: string; href: string; group: string }[] = [
+  { label: "Dashboard", href: "/dashboard", group: "MAIN" },
+  { label: "Analyze", href: "/analyze", group: "MAIN" },
+  { label: "Live Capture", href: "/video-analysis", group: "MAIN" },
+  { label: "Upload Video", href: "/video-analysis/upload", group: "MAIN" },
+  { label: "Results Overview", href: "/results/demo", group: "RESULTS" },
+  { label: "Analysis", href: "/results/demo/analysis", group: "RESULTS" },
+  { label: "Biomechanics", href: "/results/demo/biomechanics", group: "RESULTS" },
+  { label: "Flaws", href: "/results/demo/flaws", group: "RESULTS" },
+  { label: "Compare", href: "/results/demo/compare", group: "RESULTS" },
+  { label: "History", href: "/results/demo/history", group: "RESULTS" },
+  { label: "Player Card", href: "/results/demo/player", group: "RESULTS" },
+  { label: "Training", href: "/results/demo/training", group: "TRAIN" },
+  { label: "Goals", href: "/results/demo/goals", group: "TRAIN" },
+  { label: "Media", href: "/media", group: "LIBRARY" },
+  { label: "Elite Shooters", href: "/elite-shooters", group: "LIBRARY" },
+  { label: "Achievements", href: "/points", group: "LIBRARY" },
+  { label: "Profile", href: "/profile", group: "ACCOUNT" },
+  { label: "Settings", href: "/settings", group: "ACCOUNT" },
+  { label: "Help & Guide", href: "/guide", group: "ACCOUNT" },
+]
+
+const TOPBAR_NOTICES = [
+  { title: "Analysis complete", body: "Your latest session finished processing.", href: "/results/demo" },
+  { title: "Streak at risk", body: "Train today to keep your 6-day streak.", href: "/results/demo/training" },
+  { title: "New badge earned", body: "Form Improver unlocked in Achievements.", href: "/points" },
+]
+
 export function ShotIQShell({
   active,
   children,
@@ -64,10 +94,21 @@ export function ShotIQShell({
 }) {
   const pathname = usePathname()
   void pathname
+  const router = useRouter()
+  const [panel, setPanel] = React.useState<null | "search" | "bell" | "account">(null)
+  const [query, setQuery] = React.useState("")
+  const [notices, setNotices] = React.useState(TOPBAR_NOTICES)
+  const toggle = (p: "search" | "bell" | "account") => {
+    setPanel((cur) => (cur === p ? null : p))
+    setQuery("")
+  }
+  const matches = SEARCH_DESTINATIONS.filter((d) =>
+    d.label.toLowerCase().includes(query.trim().toLowerCase()))
+  const go = (href: string) => { setPanel(null); setQuery(""); router.push(href) }
 
   return (
     <div
-      className="shotiq-canonical mx-auto flex w-full max-w-[1440px] flex-col bg-[var(--shotiq-color-paper)] text-[var(--shotiq-color-ink)]"
+      className="shotiq-canonical relative mx-auto flex w-full max-w-[1440px] flex-col bg-[var(--shotiq-color-paper)] text-[var(--shotiq-color-ink)]"
       style={{ minHeight: 900 }}
     >
       {/* ---------------------------------------------------------- topbar */}
@@ -79,27 +120,12 @@ export function ShotIQShell({
           SHOT<span className="text-[var(--shotiq-color-shotiqOrange)]">IQ</span>
         </Link>
 
-        <nav aria-label="Sections" className="flex h-full items-center gap-[44px]">
-          {TABS.map((t) => {
-            const is = t.label === active
-            return (
-              <Link
-                key={t.label}
-                href={t.href}
-                aria-current={is ? "page" : undefined}
-                className={`relative flex h-full items-center text-[15px] ${is ? "font-semibold" : "text-[var(--shotiq-color-graphite)]"}`}
-              >
-                {t.label}
-                {is && (
-                  <span className="absolute inset-x-0 bottom-0 h-[3px] bg-[var(--shotiq-color-shotiqOrange)]" />
-                )}
-              </Link>
-            )
-          })}
-        </nav>
+        {/* Per Kevin: single navigation surface — the unified sidebar. The
+            topbar keeps only brand + utilities, no menu. */}
 
         <div className="ml-auto flex h-full items-center">
-          <button type="button" aria-label="Search" className="px-[18px]">
+          <button type="button" aria-label="Search" aria-expanded={panel === "search"}
+                  onClick={() => toggle("search")} className="px-[18px]">
             <Search className="h-[19px] w-[19px]" strokeWidth={1.7} />
           </button>
 
@@ -119,12 +145,18 @@ export function ShotIQShell({
             </div>
           </div>
 
-          <button type="button" aria-label="Notifications"
-                  className="flex h-[38px] items-center border-l border-[var(--shotiq-color-rule)] px-[18px]">
+          <button type="button" aria-label="Notifications" aria-expanded={panel === "bell"}
+                  onClick={() => toggle("bell")}
+                  className="relative flex h-[38px] items-center border-l border-[var(--shotiq-color-rule)] px-[18px]">
             <Bell className="h-[19px] w-[19px]" strokeWidth={1.7} />
+            {notices.length > 0 && (
+              <span className="absolute right-[13px] top-[4px] h-[7px] w-[7px] rounded-full bg-[var(--shotiq-color-shotiqOrange)]" />
+            )}
           </button>
 
-          <button type="button" className="flex items-center gap-[10px] border-l border-[var(--shotiq-color-rule)] pl-[16px]">
+          <button type="button" aria-expanded={panel === "account"} aria-label="Account menu"
+                  onClick={() => toggle("account")}
+                  className="flex items-center gap-[10px] border-l border-[var(--shotiq-color-rule)] pl-[16px]">
             <span className="grid h-[36px] w-[36px] place-items-center rounded-full bg-[var(--shotiq-color-rule)] text-[12px] font-bold text-[var(--shotiq-color-graphite)]">
               {user.initials}
             </span>
@@ -134,8 +166,79 @@ export function ShotIQShell({
         </div>
       </header>
 
+      {panel && (
+        <>
+          <button type="button" aria-label="Close menu" onClick={() => setPanel(null)}
+                  className="fixed inset-0 z-40 cursor-default bg-transparent" />
+          <div className="absolute right-[12px] top-[62px] z-50 w-[300px] rounded-[8px] border border-[var(--shotiq-color-rule)] bg-white shadow-[0_10px_28px_rgba(17,17,17,0.12)]"
+               data-testid={`topbar-panel-${panel}`}>
+            {panel === "search" && (
+              <div className="p-[10px]">
+                <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)}
+                       onKeyDown={(e) => { if (e.key === "Enter" && matches[0]) go(matches[0].href); if (e.key === "Escape") setPanel(null) }}
+                       placeholder="Search ShotIQ…" aria-label="Search ShotIQ"
+                       className="h-[38px] w-full rounded-[6px] border border-[var(--shotiq-color-rule)] px-[12px] text-[13px] outline-none focus:border-[var(--shotiq-color-ink)]" />
+                <div className="mt-[8px] max-h-[300px] overflow-y-auto">
+                  {matches.length === 0 && (
+                    <div className="px-[10px] py-[12px] text-[12px] text-[var(--shotiq-color-graphite)]">No screens match “{query}”.</div>
+                  )}
+                  {matches.slice(0, 9).map((d) => (
+                    <button key={d.href + d.label} type="button" onClick={() => go(d.href)}
+                            className="flex h-[34px] w-full items-center justify-between rounded-[6px] px-[10px] text-[13px] hover:bg-[var(--shotiq-color-warmCanvas)]">
+                      <span>{d.label}</span>
+                      <span className="text-[10px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">{d.group}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {panel === "bell" && (
+              <div className="p-[10px]">
+                <div className="flex items-center justify-between px-[6px] pb-[6px]">
+                  <span className="text-[12px] font-bold tracking-[0.06em]">NOTIFICATIONS</span>
+                  <button type="button" onClick={() => setNotices([])} disabled={!notices.length}
+                          className="text-[12px] text-[var(--shotiq-color-analysisBlue)] disabled:text-[var(--shotiq-color-muted)]">
+                    Mark all read
+                  </button>
+                </div>
+                {notices.length === 0 && (
+                  <div className="px-[6px] py-[14px] text-[12px] text-[var(--shotiq-color-graphite)]">You&apos;re all caught up.</div>
+                )}
+                {notices.map((n) => (
+                  <button key={n.title} type="button" onClick={() => go(n.href)}
+                          className="block w-full rounded-[6px] px-[6px] py-[8px] text-left hover:bg-[var(--shotiq-color-warmCanvas)]">
+                    <div className="text-[13px] font-medium">{n.title}</div>
+                    <div className="mt-[2px] text-[12px] text-[var(--shotiq-color-graphite)]">{n.body}</div>
+                  </button>
+                ))}
+              </div>
+            )}
+            {panel === "account" && (
+              <div className="p-[8px]">
+                <div className="border-b border-[var(--shotiq-color-rule)] px-[10px] pb-[8px]">
+                  <div className="text-[13px] font-bold">{user.name}</div>
+                  <div className="text-[12px] text-[var(--shotiq-color-graphite)]">Signed in</div>
+                </div>
+                {[["Profile", "/profile"], ["Settings", "/settings"], ["Help & guide", "/guide"]].map(([l, href]) => (
+                  <button key={href} type="button" onClick={() => go(href)}
+                          className="flex h-[34px] w-full items-center rounded-[6px] px-[10px] text-[13px] hover:bg-[var(--shotiq-color-warmCanvas)]">
+                    {l}
+                  </button>
+                ))}
+                <button type="button"
+                        onClick={() => { useAuthStore.getState().signOut(); go("/signin") }}
+                        className="mt-[2px] flex h-[34px] w-full items-center rounded-[6px] px-[10px] text-[13px] text-[var(--shotiq-color-reviewRed)] hover:bg-[var(--shotiq-color-warmCanvas)]">
+                  Sign out
+                </button>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
       <div className="flex min-h-0 flex-1">
-        {sidebar ?? (
+        <UnifiedSidebar />
+        {false && (sidebar ?? (
         <nav
           data-testid="region-sidebar"
           aria-label="Primary"
@@ -159,7 +262,7 @@ export function ShotIQShell({
             <span className="text-[9px] font-bold tracking-[0.08em]">SETTINGS</span>
           </Link>
         </nav>
-        )}
+        ))}
 
         {/* ---------------------------------------------------- screen body */}
         <div data-testid="region-main" className="min-w-0 flex-1">
@@ -311,5 +414,83 @@ export function Ring({ pct, size = 96, stroke = 8, color = "var(--shotiq-color-s
       </svg>
       <span className="absolute">{children}</span>
     </span>
+  )
+}
+
+/**
+ * THE single navigation sidebar (Kevin's directive: one uniform sidebar across
+ * the whole app, no top menu, no per-screen variants). Active state derives
+ * from the pathname; every destination in the product is reachable from here.
+ */
+export function UnifiedSidebar() {
+  const pathname = usePathname() ?? ""
+  const groups: { heading: string; items: { label: string; href: string }[] }[] = [
+    { heading: "MAIN", items: [
+      { label: "Dashboard", href: "/dashboard" },
+      { label: "Analyze", href: "/analyze" },
+      { label: "Live Capture", href: "/video-analysis" },
+    ]},
+    { heading: "RESULTS", items: [
+      { label: "Overview", href: "/results/demo" },
+      { label: "Analysis", href: "/results/demo/analysis" },
+      { label: "Biomechanics", href: "/results/demo/biomechanics" },
+      { label: "Flaws", href: "/results/demo/flaws" },
+      { label: "Compare", href: "/results/demo/compare" },
+      { label: "History", href: "/results/demo/history" },
+      { label: "Player Card", href: "/results/demo/player" },
+    ]},
+    { heading: "TRAIN", items: [
+      { label: "Training", href: "/results/demo/training" },
+      { label: "Goals", href: "/results/demo/goals" },
+    ]},
+    { heading: "LIBRARY", items: [
+      { label: "Media", href: "/media" },
+      { label: "Elite Shooters", href: "/elite-shooters" },
+      { label: "Achievements", href: "/points" },
+    ]},
+  ]
+  const isActive = (href: string) =>
+    href === "/results/demo" || href === "/dashboard"
+      ? pathname === href
+      : pathname === href || pathname.startsWith(href + "/")
+  return (
+    <nav data-testid="region-sidebar" aria-label="Primary"
+         className="flex w-[184px] shrink-0 flex-col border-r border-[var(--shotiq-color-rule)] pt-[16px]">
+      <div className="flex-1 overflow-y-auto">
+        {groups.map((g) => (
+          <div key={g.heading} className="mb-[10px]">
+            <div className="px-[22px] pb-[4px] text-[10px] font-bold tracking-[0.08em] text-[var(--shotiq-color-graphite)]">
+              {g.heading}
+            </div>
+            {g.items.map((it) => {
+              const on = isActive(it.href)
+              return (
+                <Link key={it.href + it.label} href={it.href}
+                      aria-current={on ? "page" : undefined}
+                      className={`relative flex h-[36px] items-center px-[22px] text-[13px] ${
+                        on ? "bg-[var(--shotiq-color-warmCanvas)] font-semibold text-[var(--shotiq-color-shotiqOrange)]"
+                           : "text-[var(--shotiq-color-ink)]"}`}>
+                  {on && <span className="absolute inset-y-0 left-0 w-[3px] bg-[var(--shotiq-color-shotiqOrange)]" />}
+                  {it.label}
+                </Link>
+              )
+            })}
+          </div>
+        ))}
+      </div>
+      <div className="border-t border-[var(--shotiq-color-rule)] py-[8px]">
+        {[["Profile", "/profile"], ["Settings", "/settings"], ["Help", "/guide"]].map(([l, href]) => {
+          const on = isActive(href)
+          return (
+            <Link key={href} href={href}
+                  className={`relative flex h-[34px] items-center px-[22px] text-[13px] ${
+                    on ? "font-semibold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-ink)]"}`}>
+              {on && <span className="absolute inset-y-0 left-0 w-[3px] bg-[var(--shotiq-color-shotiqOrange)]" />}
+              {l}
+            </Link>
+          )
+        })}
+      </div>
+    </nav>
   )
 }

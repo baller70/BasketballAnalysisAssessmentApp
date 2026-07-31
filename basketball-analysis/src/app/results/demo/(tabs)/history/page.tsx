@@ -3,6 +3,7 @@
 /** /results/demo/history — canonical 093-web-analytics-history. */
 
 import React, { useState } from "react"
+import Link from "next/link"
 import { Calendar, ChevronDown, SlidersHorizontal, Share, Play, X, ChevronLeft, ChevronRight } from "lucide-react"
 import { SectionLabel, Card, MediaSurface, TrendLine, PhaseGlyph, Stat } from "@/components/shotiq/ShotIQShell"
 import { useHistory } from "@/components/shotiq/ResultsBits"
@@ -18,15 +19,44 @@ const DEMO_ROWS: [string, string, string, string, string, string][] = [
   ["May 2, 2025 · 8:02 PM", "81", "Good", "61.9%", "21 / 13", "High"],
 ]
 
+const RANGES: [string, string, number][] = [
+  ["7", "May 6 – May 12, 2025", 6], ["14", "Apr 28 – May 12, 2025", 8], ["30", "Apr 12 – May 12, 2025", 8],
+]
+const METRICS = ["Form Score", "Make %", "Confidence"]
+const METRIC_TRENDS: Record<string, number[]> = {
+  "Form Score": [72, 75, 73, 78, 76, 80, 79, 82],
+  "Make %": [48, 52, 50, 55, 57, 56, 60, 62.5],
+  "Confidence": [2, 2, 3, 3, 3, 4, 4, 4],
+}
+
 export default function AnalysisHistoryPage() {
   const { items, hasData, score, loading } = useHistory()
   const [sel, setSel] = useState(0)
-  const rows: [string, string, string, string, string, string][] = items.length
+  const [range, setRange] = useState(RANGES[1])
+  const [metric, setMetric] = useState(METRICS[0])
+  const [menu, setMenu] = useState<null | "range" | "metric">(null)
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [band, setBand] = useState<"All" | "Good" | "Fair">("All")
+  const allRows: [string, string, string, string, string, string][] = items.length
     ? items.map((a) => [
         `${a.when}`, a.score != null ? String(Math.round(a.score)) : "—",
         (a.score ?? 0) >= 70 ? "Good" : "Fair", "—", "—", "High",
       ] as [string, string, string, string, string, string])
     : hasData ? DEMO_ROWS : []
+  const rows = allRows.slice(0, items.length ? undefined : range[2])
+    .filter((r) => band === "All" || r[2] === band)
+  const exportCsv = () => {
+    const head = "date,form_score,band,make_pct,shots_makes,confidence"
+    const body = rows.map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(",")).join("\n")
+    const url = URL.createObjectURL(new Blob([`${head}\n${body}\n`], { type: "text/csv" }))
+    const a = document.createElement("a")
+    a.href = url
+    a.download = "shotiq-analysis-history.csv"
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <div data-testid="screen-desktop-web-analytics-history" className="flex gap-[18px]">
@@ -37,21 +67,63 @@ export default function AnalysisHistoryPage() {
             <p className="mt-[4px] text-[13px] text-[var(--shotiq-color-graphite)]">Review and track your shooting performance over time.</p>
           </div>
           <div className="flex gap-[10px] pt-[4px]">
-            <button type="button" className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-[13px]">
-              <Calendar className="h-[14px] w-[14px]" /> Apr 28 – May 12, 2025 <ChevronDown className="h-[12px] w-[12px]" />
+            <div className="relative">
+              <button type="button" aria-expanded={menu === "range"}
+                      onClick={() => setMenu((m) => (m === "range" ? null : "range"))}
+                      className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-[13px]">
+                <Calendar className="h-[14px] w-[14px]" /> {range[1]} <ChevronDown className="h-[12px] w-[12px]" />
+              </button>
+              {menu === "range" && (
+                <div className="absolute left-0 top-[46px] z-30 w-[220px] rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white py-[4px] shadow-[0_8px_20px_rgba(17,17,17,0.10)]">
+                  {RANGES.map((r) => (
+                    <button key={r[0]} type="button" onClick={() => { setRange(r); setMenu(null) }}
+                            className={`flex h-[32px] w-full items-center px-[12px] text-[13px] hover:bg-[var(--shotiq-color-warmCanvas)] ${range[0] === r[0] ? "font-semibold text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
+                      Last {r[0]} days
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="relative">
+              <button type="button" aria-expanded={menu === "metric"}
+                      onClick={() => setMenu((m) => (m === "metric" ? null : "metric"))}
+                      className="flex h-[42px] flex-col justify-center rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-left">
+                <span className="text-[9px] text-[var(--shotiq-color-graphite)]">Select metric</span>
+                <span className="flex items-center gap-[6px] text-[13px]">{metric} <ChevronDown className="h-[11px] w-[11px]" /></span>
+              </button>
+              {menu === "metric" && (
+                <div className="absolute left-0 top-[46px] z-30 w-[170px] rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white py-[4px] shadow-[0_8px_20px_rgba(17,17,17,0.10)]">
+                  {METRICS.map((m) => (
+                    <button key={m} type="button" onClick={() => { setMetric(m); setMenu(null) }}
+                            className={`flex h-[32px] w-full items-center px-[12px] text-[13px] hover:bg-[var(--shotiq-color-warmCanvas)] ${metric === m ? "font-semibold text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
+                      {m}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <button type="button" aria-expanded={filterOpen} onClick={() => setFilterOpen((v) => !v)}
+                    className={`flex h-[42px] items-center gap-[8px] rounded-[6px] border px-[14px] text-[13px] ${filterOpen || band !== "All" ? "border-[var(--shotiq-color-shotiqOrange)] text-[var(--shotiq-color-shotiqOrange)]" : "border-[var(--shotiq-color-rule)]"}`}>
+              <SlidersHorizontal className="h-[14px] w-[14px]" /> Filter{band !== "All" ? `: ${band}` : ""}
             </button>
-            <button type="button" className="flex h-[42px] flex-col justify-center rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-left">
-              <span className="text-[9px] text-[var(--shotiq-color-graphite)]">Select metric</span>
-              <span className="flex items-center gap-[6px] text-[13px]">Form Score <ChevronDown className="h-[11px] w-[11px]" /></span>
-            </button>
-            <button type="button" className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-[13px]">
-              <SlidersHorizontal className="h-[14px] w-[14px]" /> Filter
-            </button>
-            <button type="button" className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-[13px]">
+            <button type="button" onClick={exportCsv} disabled={!rows.length}
+                    className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-[13px] disabled:opacity-40">
               <Share className="h-[14px] w-[14px]" /> Export
             </button>
           </div>
         </div>
+
+        {filterOpen && (
+          <div className="mt-[10px] flex items-center gap-[8px]">
+            <span className="text-[11px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">SCORE BAND</span>
+            {(["All", "Good", "Fair"] as const).map((b) => (
+              <button key={b} type="button" onClick={() => { setBand(b); setSel(0) }}
+                      className={`h-[30px] rounded-[999px] border px-[14px] text-[12px] ${band === b ? "border-[var(--shotiq-color-shotiqOrange)] bg-[var(--shotiq-color-warmCanvas)] font-semibold text-[var(--shotiq-color-shotiqOrange)]" : "border-[var(--shotiq-color-rule)]"}`}>
+                {b}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* summary strip */}
         <Card className="mt-[12px] flex items-center divide-x divide-[var(--shotiq-color-rule)] px-[8px] py-[12px]">
@@ -66,9 +138,9 @@ export default function AnalysisHistoryPage() {
           <div className="px-[16px]"><Stat value={hasData ? "15" : "0"} label="MAKES · Total" valueClass="text-[26px] leading-[30px]" /></div>
           <div className="px-[16px]"><Stat value={hasData ? "62.5%" : "—"} label="MAKE %" valueClass="text-[26px] leading-[30px]" /></div>
           <div className="flex-1 px-[16px]">
-            <div className="text-[10px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">FORM SCORE TREND</div>
+            <div className="text-[10px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">{metric.toUpperCase()} TREND</div>
             <div className="flex items-center gap-[12px]">
-              <TrendLine points={[72, 75, 73, 78, 76, 80, 79, 82]} width={220} height={44} />
+              <TrendLine points={METRIC_TRENDS[metric]} width={220} height={44} />
               <div><div className="text-[12px] font-bold text-[var(--shotiq-color-confirmGreen)]">+8.1%</div>
                 <div className="text-[9px] text-[var(--shotiq-color-graphite)]">vs previous 6</div></div>
             </div>
@@ -139,7 +211,10 @@ export default function AnalysisHistoryPage() {
       <aside className="w-[350px] shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[18px]">
         <div className="flex items-center justify-between">
           <SectionLabel>SELECTED SESSION</SectionLabel>
-          <X className="h-[14px] w-[14px] text-[var(--shotiq-color-graphite)]" />
+          <button type="button" aria-label="Clear selection" onClick={() => setSel(-1)}
+                  disabled={sel < 0 || !rows.length} className="disabled:opacity-40">
+            <X className="h-[14px] w-[14px] text-[var(--shotiq-color-graphite)]" />
+          </button>
         </div>
         <div className="mt-[4px] text-[19px] font-semibold">{rows[sel]?.[0] ?? "—"}</div>
         <div className="relative mt-[10px]">
@@ -182,9 +257,10 @@ export default function AnalysisHistoryPage() {
             <div className="text-[9px] text-[var(--shotiq-color-graphite)]">vs previous 6</div>
           </div>
         </Card>
-        <button type="button" className="mt-[12px] h-[46px] w-full rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] text-[14px] font-medium text-white">
+        <Link href="/results/demo/compare"
+              className="mt-[12px] flex h-[46px] w-full items-center justify-center rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] text-[14px] font-medium text-white">
           Compare sessions
-        </button>
+        </Link>
       </aside>
     </div>
   )

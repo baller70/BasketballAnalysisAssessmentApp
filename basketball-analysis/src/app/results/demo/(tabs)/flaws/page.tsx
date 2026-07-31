@@ -13,9 +13,16 @@ const FLAWS = [
   { n: 3, title: "Release point too low", impact: "MEDIUM IMPACT", desc: "Release height below optimal window reduces arc.", affects: "AFFECTS 26% OF SHOTS", delta: "-3.1% IMPACT" },
 ]
 
+const LOWER_FLAWS = [
+  { n: 4, title: "Narrow base on catch", impact: "LOW IMPACT", desc: "Feet slightly inside shoulder width on the catch.", affects: "AFFECTS 14% OF SHOTS", delta: "-1.2% IMPACT" },
+  { n: 5, title: "Guide-hand thumb flick", impact: "LOW IMPACT", desc: "Occasional off-hand thumb movement at release.", affects: "AFFECTS 9% OF SHOTS", delta: "-0.8% IMPACT" },
+]
+
 export default function FlawsPage() {
   const { hasData, score } = useHistory()
   const [sel, setSel] = useState(0)
+  const [showLower, setShowLower] = useState(false)
+  const visible = hasData ? (showLower ? [...FLAWS, ...LOWER_FLAWS] : FLAWS) : []
   return (
     <div data-testid="screen-desktop-web-flaws-history">
       <div className="flex items-start justify-between gap-[20px]">
@@ -35,14 +42,14 @@ export default function FlawsPage() {
         {/* flaw list */}
         <div className="w-[270px] shrink-0">
           <SectionLabel>YOUR TOP FLAWS</SectionLabel>
-          {(hasData ? FLAWS : []).map((f, i) => (
-            <button key={f.n} type="button" onClick={() => setSel(i)}
+          {visible.map((f, i) => (
+            <button key={f.n} type="button" onClick={() => setSel(i)} aria-pressed={sel === i}
                     className={`mt-[10px] w-full rounded-[8px] border p-[14px] text-left ${sel === i ? "border-[var(--shotiq-color-shotiqOrange)] border-2" : "border-[var(--shotiq-color-rule)]"}`}>
               <div className="flex items-center gap-[8px]">
                 <span className="grid h-[20px] w-[20px] place-items-center rounded-[4px] bg-[var(--shotiq-color-shotiqOrange)] text-[11px] font-bold text-white">{f.n}</span>
                 <span className="text-[14px] font-semibold">{f.title}</span>
               </div>
-              <span className={`mt-[6px] inline-block rounded-[3px] px-[6px] py-[2px] text-[9px] font-bold text-white ${f.impact === "HIGH IMPACT" ? "bg-[var(--shotiq-color-reviewRed)]" : "bg-[var(--shotiq-color-shotiqOrange)]"}`}>{f.impact}</span>
+              <span className={`mt-[6px] inline-block rounded-[3px] px-[6px] py-[2px] text-[9px] font-bold text-white ${f.impact === "HIGH IMPACT" ? "bg-[var(--shotiq-color-reviewRed)]" : f.impact === "LOW IMPACT" ? "bg-[var(--shotiq-color-graphite)]" : "bg-[var(--shotiq-color-shotiqOrange)]"}`}>{f.impact}</span>
               <p className="mt-[6px] text-[12px] leading-[16px] text-[var(--shotiq-color-graphite)]">{f.desc}</p>
               <div className="mt-[8px] flex justify-between border-t border-[var(--shotiq-color-rule)] pt-[6px] text-[9px] tracking-[0.04em] text-[var(--shotiq-color-graphite)]">
                 <span>{f.affects}</span><span>{f.delta}</span>
@@ -54,14 +61,17 @@ export default function FlawsPage() {
               Flaws appear after your first analysis. <Link className="text-[var(--shotiq-color-analysisBlue)]" href="/analyze">Analyze a shot</Link>.
             </Card>
           )}
-          <button type="button" className="mt-[10px] text-[13px] text-[var(--shotiq-color-graphite)]">Lower impact flaws (2) ›</button>
+          <button type="button" onClick={() => setShowLower((v) => !v)} aria-expanded={showLower}
+                  className="mt-[10px] text-[13px] text-[var(--shotiq-color-graphite)]">
+            {showLower ? "Hide lower impact flaws ‹" : "Lower impact flaws (2) ›"}
+          </button>
         </div>
 
         {/* comparison viewer */}
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between">
-            <SectionLabel>{hasData ? `SELECTED FLAW: ${FLAWS[sel].title.toUpperCase()}` : "SELECTED FLAW"}</SectionLabel>
-            <span className="text-[12px] text-[var(--shotiq-color-analysisBlue)]">View details</span>
+            <SectionLabel>{visible[sel] ? `SELECTED FLAW: ${visible[sel].title.toUpperCase()}` : "SELECTED FLAW"}</SectionLabel>
+            <Link href="/results/demo/biomechanics" className="text-[12px] text-[var(--shotiq-color-analysisBlue)]">View details</Link>
           </div>
           <div className="mt-[8px] flex gap-[4px]">
             <div className="relative flex-1"><MediaSurface height={330} rounded={4} />

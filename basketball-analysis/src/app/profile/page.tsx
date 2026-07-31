@@ -5,11 +5,8 @@
 import React, { useEffect, useState } from "react"
 import Link from "next/link"
 import { ChevronDown, ChevronRight, CheckCircle2, Upload, Trash2, LogOut } from "lucide-react"
-import { SectionLabel, Card, TrendLine, Stat, WideSidebar, PhaseGlyph } from "@/components/shotiq/ShotIQShell"
+import { SectionLabel, Card, TrendLine, Stat, PhaseGlyph } from "@/components/shotiq/ShotIQShell"
 import { useAuthStore } from "@/stores/authStore"
-import {
-  UserCog, Bell, Workflow, ShieldCheck, MonitorSmartphone, Settings2,
-} from "lucide-react"
 
 export default function ProfileAccountPage() {
   const { user, signOut } = useAuthStore()
@@ -43,33 +40,6 @@ export default function ProfileAccountPage() {
 
   return (
     <div data-testid="screen-desktop-web-profile-settings" className="flex">
-      <div className="w-[190px] shrink-0 border-r border-[var(--shotiq-color-rule)]">
-        <WideSidebar sections={[
-          { heading: "SETTINGS", items: [
-            { label: "Profile & account", href: "/profile", icon: UserCog, active: true },
-            { label: "Notifications", href: "/settings", icon: Bell },
-            { label: "Automation", href: "/settings", icon: Workflow },
-            { label: "Data & privacy", href: "/settings", icon: ShieldCheck },
-            { label: "Connected devices", href: "/settings", icon: MonitorSmartphone },
-            { label: "Preferences", href: "/settings", icon: Settings2 },
-          ]},
-        ]} />
-        <div className="px-[22px]">
-          <div className="text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">QUICK ACTIONS</div>
-          {[["Export all data", Upload], ["Clear history", Trash2]].map(([t, I]) => {
-            const Icon = I as typeof Upload
-            return (
-              <button key={String(t)} type="button" className="mt-[10px] flex w-full items-center gap-[10px] text-[13px]">
-                <Icon className="h-[15px] w-[15px]" /> {String(t)}
-              </button>
-            )
-          })}
-          <button type="button" onClick={signOut} className="mt-[10px] flex w-full items-center gap-[10px] text-[13px] text-[var(--shotiq-color-reviewRed)]">
-            <LogOut className="h-[15px] w-[15px]" /> Sign out
-          </button>
-        </div>
-      </div>
-
       <div className="min-w-0 flex-1 px-[24px] py-[18px]">
         <h1 className="shotiq-display text-[46px] leading-[48px]">PROFILE &amp; ACCOUNT</h1>
         <p className="mt-[2px] text-[13px] text-[var(--shotiq-color-graphite)]">Manage your profile, account, and personal settings.</p>
