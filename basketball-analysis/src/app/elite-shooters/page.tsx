@@ -1,994 +1,114 @@
 "use client"
 
-import React, { useState, useMemo, useEffect } from "react"
-import Image from "next/image"
-import { ALL_ELITE_SHOOTERS, TIER_LABELS, TIER_COLORS, POSITION_LABELS, LEAGUE_LABELS, LEAGUE_COLORS, type EliteShooter, type ShooterTier, type Position } from "@/data/eliteShooters"
-import { Users, Ruler, Zap, Search, ChevronDown, ArrowUpDown, RotateCcw, HelpCircle, X, Camera, ImageOff, Settings } from "lucide-react"
+/** /elite-shooters — canonical 088-web-elite-shooters-database, DB-backed. */
+
+import React, { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
-import PlayerBioPopup from "@/components/PlayerBioPopup"
-import ShootingFormGallery from "@/components/ShootingFormGallery"
-import { usePoints } from "@/lib/points/pointsContext"
-import { InlinePointsBurst } from "@/components/points/PointsBurst"
+import { Search, ChevronDown, GitCompare, Users, Bookmark } from "lucide-react"
+import { SectionLabel, Card, MediaSurface, WideSidebar, Stat } from "@/components/shotiq/ShotIQShell"
 
-// Helper to format height from inches to feet/inches
-const formatHeight = (inches: number) => {
-  const feet = Math.floor(inches / 12);
-  const remainingInches = inches % 12;
-  return `${feet}'${remainingInches}"`;
-};
+interface Shooter {
+  id: number; name: string; team: string; league: string; era?: string; tier?: string
+  position: string; careerPct?: number; careerFreeThrowPct: number
+  approvedFormImages?: string[]; imageUrl?: string
+}
 
-// Calculate WSI (Weighted Shooting Index) for a player
-const calculateWSI = (shooter: EliteShooter): number => {
-  const threePct = shooter.careerPct || 0;
-  const ftPct = shooter.careerFreeThrowPct || 0;
-  const estimatedMidRange = ftPct * 0.55;
-  const estimatedRim = Math.min(70, ftPct * 0.75 + 10);
-  const wsi = (0.45 * threePct) + (0.35 * estimatedMidRange) + (0.15 * ftPct) + (0.05 * estimatedRim);
-  return Math.round(wsi * 10) / 10;
-};
-
-// Get era category from era string
-const getEraCategory = (era: string): string => {
-  const years = era.match(/\d{4}/g);
-  if (!years || years.length === 0) return 'Unknown';
-  const startYear = parseInt(years[0]);
-  if (era.includes('Present') || startYear >= 2020) return '2020s';
-  if (startYear >= 2010) return '2010s';
-  if (startYear >= 2000) return '2000s';
-  if (startYear >= 1990) return '1990s';
-  if (startYear >= 1980) return '1980s';
-  if (startYear >= 1970) return '1970s';
-  return 'Classic';
-};
-
-// Real signed-in user's shooting profile, derived from their latest saved
-// analysis (NO hardcoded mock). Any subset of fields may be present.
-type UserMeasurements = Partial<{
-  height: number; weight: number; wingspan: number;
-  elbowAngle: number; releaseAngle: number; kneeAngle: number;
-  releaseHeight: number; shoulderAngle: number; entryAngle: number; hipAngle: number;
-}>;
-
-// Calculate similarity score against the user's real measurements. Returns null
-// when there's nothing to compare against (no signed-in user / no analysis yet),
-// so the UI can fall back to a neutral sort instead of inventing a number.
-const calculateSimilarity = (shooter: EliteShooter, user: UserMeasurements | null): number | null => {
-  if (!user) return null;
-  const terms: { w: number; diff: number }[] = [];
-  const push = (val: number | undefined, target: number, scale: number, w: number) => {
-    if (val == null || Number.isNaN(val)) return;
-    terms.push({ w, diff: Math.min(1, Math.abs(target - val) / scale) });
-  };
-  push(user.height, shooter.height, 20, 0.15);
-  push(user.wingspan, shooter.wingspan, 20, 0.15);
-  push(user.weight, shooter.weight, 100, 0.10);
-  push(user.elbowAngle, shooter.measurements.elbowAngle, 30, 0.15);
-  push(user.releaseAngle, shooter.measurements.releaseAngle, 20, 0.12);
-  push(user.kneeAngle, shooter.measurements.kneeAngle, 30, 0.10);
-  push(user.releaseHeight, shooter.measurements.releaseHeight, 20, 0.10);
-  push(user.shoulderAngle, shooter.measurements.shoulderAngle, 20, 0.08);
-  push(user.entryAngle, shooter.measurements.entryAngle, 15, 0.05);
-  if (terms.length === 0) return null;
-  const totalW = terms.reduce((s, t) => s + t.w, 0);
-  const weighted = terms.reduce((s, t) => s + t.diff * t.w, 0) / totalW;
-  return Math.max(0, Math.min(100, Math.round((1 - weighted) * 100)));
-};
-
-// Filter options
-const TIER_OPTIONS: ShooterTier[] = ['legendary', 'elite', 'great', 'good', 'mid_level', 'bad'];
-const LEAGUE_OPTIONS: EliteShooter['league'][] = ['NBA', 'WNBA', 'NCAA_MEN', 'NCAA_WOMEN', 'TOP_COLLEGE'];
-const POSITION_OPTIONS: Position[] = ['POINT_GUARD', 'SHOOTING_GUARD', 'SMALL_FORWARD', 'POWER_FORWARD', 'CENTER', 'GUARD', 'FORWARD'];
-const ERA_OPTIONS = ['2020s', '2010s', '2000s', '1990s', '1980s', '1970s', 'Classic'];
-
-type SortOption = 'similarity' | 'name_asc' | 'name_desc' | 'threePct_desc' | 'threePct_asc' | 'ftPct_desc' | 'ftPct_asc' | 'wsi_desc' | 'wsi_asc' | 'score_desc' | 'tier_best' | 'tier_worst';
-
-const SORT_OPTIONS: { value: SortOption; label: string }[] = [
-  { value: 'similarity', label: 'Form Similarity' },
-  { value: 'name_asc', label: 'Name (A-Z)' },
-  { value: 'name_desc', label: 'Name (Z-A)' },
-  { value: 'threePct_desc', label: '3PT% (High to Low)' },
-  { value: 'threePct_asc', label: '3PT% (Low to High)' },
-  { value: 'ftPct_desc', label: 'FT% (High to Low)' },
-  { value: 'ftPct_asc', label: 'FT% (Low to High)' },
-  { value: 'wsi_desc', label: 'WSI (High to Low)' },
-  { value: 'wsi_asc', label: 'WSI (Low to High)' },
-  { value: 'score_desc', label: 'Overall Score (High to Low)' },
-  { value: 'tier_best', label: 'Tier (Best to Worst)' },
-  { value: 'tier_worst', label: 'Tier (Worst to Best)' },
-];
-
-const TIER_ORDER: Record<ShooterTier, number> = { legendary: 1, elite: 2, great: 3, good: 4, mid_level: 5, bad: 6 };
-
-// WSI Info Popup Component
-const WSIInfoPopup = ({ onClose }: { onClose: () => void }) => (
-  <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
-    <div className="bg-gradient-to-br from-white to-slate-50 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-[#B8860B]/30 shadow-2xl" onClick={e => e.stopPropagation()}>
-      <div className="p-6 border-b border-[#B8860B]/30 flex items-center justify-between">
-        <h2 className="text-2xl font-bold bg-gradient-to-r from-[#FFD700] to-[#B8860B] bg-clip-text text-transparent">Weighted Shooting Index (WSI)</h2>
-        <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
-          <X className="w-5 h-5 text-slate-900" />
-        </button>
-      </div>
-      <div className="p-6 space-y-6">
-        {/* Formula */}
-        <div className="bg-slate-50 rounded-xl p-4 border border-[#B8860B]/20">
-          <h3 className="bg-gradient-to-r from-[#FFD700] to-[#B8860B] bg-clip-text text-transparent font-semibold mb-2">The Formula</h3>
-          <p className="text-slate-900 font-mono text-lg">WSI = (0.45 × 3P%) + (0.35 × Mid-Range%) + (0.15 × FT%) + (0.05 × Rim%)</p>
-        </div>
-        
-        {/* Explanation */}
-        <div className="space-y-4">
-          <h3 className="text-slate-900 font-semibold text-lg">What Each Component Means</h3>
-          <div className="grid gap-3">
-            <div className="flex items-start gap-3 bg-green-500/10 rounded-lg p-3 border border-green-500/20">
-              <span className="bg-green-500 text-slate-900 font-bold text-xs px-2 py-1 rounded">45%</span>
-              <div>
-                <p className="text-green-400 font-semibold">3-Point Percentage</p>
-                <p className="text-slate-500 text-sm">The primary indicator of modern shooting skill. Heavily weighted because it&apos;s the most valuable shot in today&apos;s game.</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 bg-orange-500/10 rounded-lg p-3 border border-orange-500/20">
-              <span className="bg-orange-500 text-slate-900 font-bold text-xs px-2 py-1 rounded">35%</span>
-              <div>
-                <p className="text-orange-400 font-semibold">Mid-Range Percentage</p>
-                <p className="text-slate-500 text-sm">Captures &quot;touch&quot; and ability to hit pull-ups. Shows versatility and shot-making ability from different distances.</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 bg-blue-500/10 rounded-lg p-3 border border-blue-500/20">
-              <span className="bg-blue-500 text-slate-900 font-bold text-xs px-2 py-1 rounded">15%</span>
-              <div>
-                <p className="text-blue-400 font-semibold">Free Throw Percentage</p>
-                <p className="text-slate-500 text-sm">The purest measure of shooting mechanics. No defense, same distance every time - shows true form consistency.</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 bg-gray-500/10 rounded-lg p-3 border border-gray-500/20">
-              <span className="bg-gray-500 text-slate-900 font-bold text-xs px-2 py-1 rounded">5%</span>
-              <div>
-                <p className="text-gray-400 font-semibold">Rim Percentage</p>
-                <p className="text-slate-500 text-sm">Minimized to just 5%. A player gets a small boost for finishing well, but rim-runners who can&apos;t shoot will still score low.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Tier Thresholds */}
-        <div className="space-y-4">
-          <h3 className="text-slate-900 font-semibold text-lg">WSI Tier Thresholds</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            <div className="text-center p-3 rounded-lg" style={{ backgroundColor: '#FF6B3520', border: '1px solid #FF6B3560' }}>
-              <p className="text-[#FF6B35] font-bold">LEGENDARY</p>
-              <p className="text-slate-900 text-lg font-mono">50+</p>
-            </div>
-            <div className="text-center p-3 rounded-lg" style={{ backgroundColor: '#C0C0C020', border: '1px solid #C0C0C060' }}>
-              <p className="text-[#C0C0C0] font-bold">ELITE</p>
-              <p className="text-slate-900 text-lg font-mono">45-49</p>
-            </div>
-            <div className="text-center p-3 rounded-lg" style={{ backgroundColor: '#CD7F3220', border: '1px solid #CD7F3260' }}>
-              <p className="text-[#CD7F32] font-bold">GREAT</p>
-              <p className="text-slate-900 text-lg font-mono">40-44</p>
-            </div>
-            <div className="text-center p-3 rounded-lg" style={{ backgroundColor: '#4A90D920', border: '1px solid #4A90D960' }}>
-              <p className="text-[#4A90D9] font-bold">GOOD</p>
-              <p className="text-slate-900 text-lg font-mono">35-39</p>
-            </div>
-            <div className="text-center p-3 rounded-lg" style={{ backgroundColor: '#80808020', border: '1px solid #80808060' }}>
-              <p className="text-[#808080] font-bold">MID-LEVEL</p>
-              <p className="text-slate-900 text-lg font-mono">28-34</p>
-            </div>
-            <div className="text-center p-3 rounded-lg" style={{ backgroundColor: '#8B000020', border: '1px solid #8B000060' }}>
-              <p className="text-[#ff4444] font-bold">BAD</p>
-              <p className="text-slate-900 text-lg font-mono">&lt;28</p>
-            </div>
-          </div>
-        </div>
-
-        <p className="text-slate-400 text-sm text-center">This formula ensures that true shooters are rated highly, while players who primarily score at the rim are rated appropriately for their shooting ability.</p>
-      </div>
-    </div>
-  </div>
-);
-
-// Dropdown Filter Component
-const FilterDropdown = ({ 
-  label, 
-  options, 
-  selected, 
-  onSelect, 
-  getLabel,
-  getColor
-}: { 
-  label: string; 
-  options: string[]; 
-  selected: string[]; 
-  onSelect: (value: string) => void;
-  getLabel?: (value: string) => string;
-  getColor?: (value: string) => string;
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border transition-all ${
-          selected.length > 0 
-            ? 'bg-[#FF6B35]/20 border-[#FF6B35]/50 text-[#FF6B35]' 
-            : 'bg-slate-50 border-slate-200 text-slate-900 hover:border-[#FF6B35]/30'
-        }`}
-      >
-        <span className="font-medium">{label}</span>
-        {selected.length > 0 && (
-          <span className="bg-[#FF6B35] text-white text-xs font-bold px-1.5 py-0.5 rounded-full">{selected.length}</span>
-        )}
-        <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
-      
-      {isOpen && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-          <div className="absolute top-full left-0 mt-2 bg-slate-50 border border-slate-200 rounded-lg shadow-xl z-50 min-w-[180px] py-2 max-h-[300px] overflow-y-auto">
-            {options.map(option => {
-              const isSelected = selected.includes(option);
-              const displayLabel = getLabel ? getLabel(option) : option;
-              const color = getColor ? getColor(option) : null;
-              
-              return (
-                <button
-                  key={option}
-                  onClick={() => { onSelect(option); }}
-                  className={`w-full px-4 py-2 text-left flex items-center gap-2 hover:bg-slate-200 transition-colors ${
-                    isSelected ? 'bg-[#FF6B35]/10' : ''
-                  }`}
-                >
-                  <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
-                    isSelected ? 'border-[#FF6B35] bg-[#FF6B35]' : 'border-slate-300'
-                  }`}>
-                    {isSelected && <span className="text-slate-900 text-xs">✓</span>}
-                  </div>
-                  {color && <span className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />}
-                  <span className={isSelected ? 'text-[#FF6B35]' : 'text-slate-900'}>{displayLabel}</span>
-                </button>
-              );
-            })}
-            {selected.length > 0 && (
-              <button
-                onClick={() => { options.forEach(o => { if (selected.includes(o)) onSelect(o); }); }}
-                className="w-full px-4 py-2 text-left text-slate-500 hover:text-slate-900 hover:bg-slate-200 border-t border-slate-200 mt-1"
-              >
-                Clear all
-              </button>
-            )}
-          </div>
-        </>
-      )}
-    </div>
-  );
-};
-
-const ITEMS_PER_PAGE = 24; // Show 24 players per page (8 rows of 3)
+const LEAGUES = ["All", "NBA", "WNBA", "FIBA", "NCAA"]
 
 export default function EliteShootersPage() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTiers, setSelectedTiers] = useState<ShooterTier[]>([]);
-  const [selectedLeagues, setSelectedLeagues] = useState<EliteShooter['league'][]>([]);
-  const [selectedPositions, setSelectedPositions] = useState<Position[]>([]);
-  const [selectedEras, setSelectedEras] = useState<string[]>([]);
-  const [threePctRange, setThreePctRange] = useState<[number, number]>([0, 50]);
-  const [ftPctRange, setFtPctRange] = useState<[number, number]>([0, 100]);
-  const [wsiRange, setWsiRange] = useState<[number, number]>([0, 60]);
-  const [sortBy, setSortBy] = useState<SortOption>('similarity');
-  const [selectedPlayer, setSelectedPlayer] = useState<(EliteShooter & { wsi: number; similarity: number; eraCategory: string }) | null>(null);
-  const [showWSIInfo, setShowWSIInfo] = useState(false);
-  const [shootingFormPlayer, setShootingFormPlayer] = useState<(EliteShooter & { wsi: number; similarity: number; eraCategory: string }) | null>(null);
-  const [approvedImages, setApprovedImages] = useState<Record<number, string[]>>({});
-  const [excludedImages, setExcludedImages] = useState<Record<number, string[]>>({});
-  // Shooter roster — loaded from the DB-backed /api/shooters endpoint, with the
-  // static catalog as an offline fallback so the page is never blank.
-  const [shooters, setShooters] = useState<EliteShooter[]>(ALL_ELITE_SHOOTERS);
-  // The signed-in user's real measurements (latest analysis). null => none yet.
-  const [userMeasurements, setUserMeasurements] = useState<UserMeasurements | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [showPointsBurst, setShowPointsBurst] = useState(false);
-  
-  const { earnPoints } = usePoints();
-  
-  // Handle selecting a player - awards points
-  const handleSelectPlayer = (shooter: EliteShooter & { wsi: number; similarity: number; eraCategory: string }) => {
-    setSelectedPlayer(shooter);
-    const result = earnPoints('elite_shooter_view');
-    if (result.earned) {
-      setShowPointsBurst(true);
-      setTimeout(() => setShowPointsBurst(false), 1500);
-    }
-  };
-
-  // Load the consolidated, DB-backed shooter roster (single source of truth)
-  // plus server-persisted admin approvals. Falls back to the static catalog if
-  // the request fails so the browser still renders.
+  const [shooters, setShooters] = useState<Shooter[]>([])
+  const [loading, setLoading] = useState(true)
+  const [query, setQuery] = useState("")
+  const [league, setLeague] = useState("All")
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch('/api/shooters', { credentials: 'include' });
-        if (!res.ok) return;
-        const data = await res.json();
-        if (cancelled || !data?.success || !Array.isArray(data.shooters)) return;
-        const list: (EliteShooter & { approvedFormImages?: string[]; excludedFormImages?: string[] })[] = data.shooters;
-        setShooters(list);
-        const approved: Record<number, string[]> = {};
-        const excluded: Record<number, string[]> = {};
-        for (const s of list) {
-          if (s.approvedFormImages?.length) approved[s.id] = s.approvedFormImages;
-          if (s.excludedFormImages?.length) excluded[s.id] = s.excludedFormImages;
-        }
-        setApprovedImages(approved);
-        setExcludedImages(excluded);
-      } catch (e) {
-        console.error('Failed to load shooters from /api/shooters:', e);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
-
-  // Derive the user's real shooting measurements from their latest saved
-  // analysis. Replaces the old hardcoded mock USER_PROFILE. When the user is not
-  // signed in or has no analysis yet, userMeasurements stays null and the
-  // "Form Similarity" sort gracefully degrades to a neutral (overall-score) sort.
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch('/api/analysis-history?limit=1&includeAnalysis=true', { credentials: 'include' });
-        if (!res.ok) return; // 401 (signed out) etc. -> leave measurements null
-        const data = await res.json();
-        if (cancelled || !data?.success || !Array.isArray(data.history) || data.history.length === 0) return;
-        const latest = data.history[0];
-        const a = latest?.angles ?? {};
-        const detail = latest?.analysis ?? {};
-        const pick = (...vals: unknown[]): number | undefined => {
-          for (const v of vals) {
-            const n = typeof v === 'string' ? parseFloat(v) : (v as number);
-            if (typeof n === 'number' && !Number.isNaN(n)) return n;
-          }
-          return undefined;
-        };
-        const m: UserMeasurements = {
-          elbowAngle: pick(a.elbow, detail.elbowAngle, detail.elbow_angle),
-          kneeAngle: pick(a.knee, detail.kneeAngle, detail.knee_angle),
-          releaseAngle: pick(a.release, detail.releaseAngle, detail.release_angle),
-          shoulderAngle: pick(detail.shoulderAngle, detail.shoulder_angle),
-          hipAngle: pick(detail.hipAngle, detail.hip_angle),
-          releaseHeight: pick(detail.releaseHeight, detail.release_height),
-          entryAngle: pick(detail.entryAngle, detail.entry_angle),
-          height: pick(detail.heightInches, detail.height),
-          weight: pick(detail.weightLbs, detail.weight),
-          wingspan: pick(detail.wingspanInches, detail.wingspan),
-        };
-        // Only adopt if at least one usable field was found.
-        if (Object.values(m).some((v) => v != null)) setUserMeasurements(m);
-      } catch (e) {
-        console.error('Failed to load user analysis for similarity:', e);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
-
-  const hasUserData = userMeasurements != null;
-  
-  // Helper to get total shooting form images count (database + approved - excluded)
-  const getShootingFormCount = (shooter: EliteShooter): number => {
-    // Get database images, filtering out excluded ones
-    const excluded = excludedImages[shooter.id] || [];
-    const dbImages = (shooter.shootingFormImages || []).filter(url => !excluded.includes(url));
-    const approved = approvedImages[shooter.id] || [];
-    // Combine and deduplicate
-    const allImages = [...new Set([...dbImages, ...approved])];
-    return allImages.length;
-  };
-
-  const processedShooters = useMemo(() => {
-    return shooters.map(shooter => ({
-      ...shooter,
-      // null (no user data) collapses to 0 for the field; the sort below uses
-      // hasUserData to decide whether similarity is meaningful.
-      similarity: calculateSimilarity(shooter, userMeasurements) ?? 0,
-      wsi: calculateWSI(shooter),
-      eraCategory: getEraCategory(shooter.era),
-    }));
-  }, [shooters, userMeasurements]);
-
-  const filteredShooters = useMemo(() => {
-    let result = processedShooters;
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(s => s.name.toLowerCase().includes(query) || s.team.toLowerCase().includes(query));
-    }
-    if (selectedTiers.length > 0) result = result.filter(s => selectedTiers.includes(s.tier));
-    if (selectedLeagues.length > 0) result = result.filter(s => selectedLeagues.includes(s.league));
-    if (selectedPositions.length > 0) result = result.filter(s => selectedPositions.includes(s.position));
-    if (selectedEras.length > 0) result = result.filter(s => selectedEras.includes(s.eraCategory));
-    result = result.filter(s => (s.careerPct || 0) >= threePctRange[0] && (s.careerPct || 0) <= threePctRange[1]);
-    result = result.filter(s => (s.careerFreeThrowPct || 0) >= ftPctRange[0] && (s.careerFreeThrowPct || 0) <= ftPctRange[1]);
-    result = result.filter(s => s.wsi >= wsiRange[0] && s.wsi <= wsiRange[1]);
-
-    switch (sortBy) {
-      // With no signed-in user / analysis, "Form Similarity" has nothing to
-      // compare to — degrade to a neutral best-shooters-first ordering.
-      case 'similarity': result.sort((a, b) => hasUserData ? b.similarity - a.similarity : b.overallScore - a.overallScore); break;
-      case 'name_asc': result.sort((a, b) => a.name.localeCompare(b.name)); break;
-      case 'name_desc': result.sort((a, b) => b.name.localeCompare(a.name)); break;
-      case 'threePct_desc': result.sort((a, b) => (b.careerPct || 0) - (a.careerPct || 0)); break;
-      case 'threePct_asc': result.sort((a, b) => (a.careerPct || 0) - (b.careerPct || 0)); break;
-      case 'ftPct_desc': result.sort((a, b) => b.careerFreeThrowPct - a.careerFreeThrowPct); break;
-      case 'ftPct_asc': result.sort((a, b) => a.careerFreeThrowPct - b.careerFreeThrowPct); break;
-      case 'wsi_desc': result.sort((a, b) => b.wsi - a.wsi); break;
-      case 'wsi_asc': result.sort((a, b) => a.wsi - b.wsi); break;
-      case 'score_desc': result.sort((a, b) => b.overallScore - a.overallScore); break;
-      case 'tier_best': result.sort((a, b) => TIER_ORDER[a.tier] - TIER_ORDER[b.tier]); break;
-      case 'tier_worst': result.sort((a, b) => TIER_ORDER[b.tier] - TIER_ORDER[a.tier]); break;
-    }
-    return result;
-  }, [processedShooters, searchQuery, selectedTiers, selectedLeagues, selectedPositions, selectedEras, threePctRange, ftPctRange, wsiRange, sortBy, hasUserData]);
-
-  const threePtRanks = useMemo(() => {
-    const ranks = new Map<number, number>();
-    const sorted = [...filteredShooters].filter(s => s.careerPct != null).sort((a, b) => (b.careerPct ?? 0) - (a.careerPct ?? 0));
-    sorted.forEach((shooter, idx) => ranks.set(shooter.id, idx + 1));
-    return ranks;
-  }, [filteredShooters]);
-
-  const ftRanks = useMemo(() => {
-    const ranks = new Map<number, number>();
-    const sorted = [...filteredShooters].sort((a, b) => b.careerFreeThrowPct - a.careerFreeThrowPct);
-    sorted.forEach((shooter, idx) => ranks.set(shooter.id, idx + 1));
-    return ranks;
-  }, [filteredShooters]);
-
-  const resetFilters = () => {
-    setSearchQuery(''); setSelectedTiers([]); setSelectedLeagues([]); setSelectedPositions([]); setSelectedEras([]);
-    setThreePctRange([0, 50]); setFtPctRange([0, 100]); setWsiRange([0, 60]); setSortBy('similarity');
-  };
-
-  const hasActiveFilters = searchQuery || selectedTiers.length > 0 || selectedLeagues.length > 0 || 
-    selectedPositions.length > 0 || selectedEras.length > 0 || 
-    threePctRange[0] > 0 || threePctRange[1] < 50 || ftPctRange[0] > 0 || ftPctRange[1] < 100 || wsiRange[0] > 0 || wsiRange[1] < 60;
-
-  // Pagination calculations
-  const totalPages = Math.ceil(filteredShooters.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const paginatedShooters = filteredShooters.slice(startIndex, endIndex);
-
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, selectedTiers, selectedLeagues, selectedPositions, selectedEras, threePctRange, ftPctRange, wsiRange, sortBy]);
-
-  const toggleTier = (tier: ShooterTier) => setSelectedTiers(prev => prev.includes(tier) ? prev.filter(t => t !== tier) : [...prev, tier]);
-  const toggleLeague = (league: EliteShooter['league']) => setSelectedLeagues(prev => prev.includes(league) ? prev.filter(l => l !== league) : [...prev, league]);
-  const togglePosition = (position: Position) => setSelectedPositions(prev => prev.includes(position) ? prev.filter(p => p !== position) : [...prev, position]);
-  const toggleEra = (era: string) => setSelectedEras(prev => prev.includes(era) ? prev.filter(e => e !== era) : [...prev, era]);
+    fetch("/api/shooters").then((r) => (r.ok ? r.json() : null))
+      .then((d) => setShooters(d?.shooters ?? []))
+      .catch(() => {}).finally(() => setLoading(false))
+  }, [])
+  const filtered = useMemo(() => shooters.filter((s) =>
+    (league === "All" || s.league === league) &&
+    (!query || s.name.toLowerCase().includes(query.toLowerCase()))), [shooters, query, league])
+  const slug = (n: string) => n.toLowerCase().replace(/\s+/g, "-")
 
   return (
-    <main className="min-h-[calc(100vh-200px)] py-8 px-4 bg-slate-50 relative">
-      {/* GOLD Video Game Style Points Animation */}
-      <InlinePointsBurst points={1} show={showPointsBurst} label="IQ" />
-      
-      <div className="container mx-auto max-w-7xl">
-        <div className="bg-white shadow-sm rounded-lg overflow-hidden shadow-lg">
-          {/* Header */}
-          <div className="p-6 border-b border-slate-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <Users className="w-7 h-7 text-[#FF6B35]" />
-                  <h1 className="text-2xl font-bold text-[#FF6B35] uppercase tracking-wider">ELITE SHOOTERS DATABASE</h1>
-                </div>
-                <p className="text-slate-900">Reference database of basketball players across all skill levels.</p>
-                <p className="text-slate-500 text-sm mt-1">
-                  Showing <span className="text-[#FF6B35] font-bold">{filteredShooters.length}</span> of {processedShooters.length} players
-                  {hasActiveFilters && <span className="text-[#FF6B35]"> (filtered)</span>}
-                </p>
-                {sortBy === 'similarity' && !hasUserData && (
-                  <p className="text-slate-500 text-xs mt-1 italic">
-                    Sign in and analyze a shot to rank these by similarity to your form. Showing best shooters first for now.
-                  </p>
-                )}
-              </div>
-              <Link 
-                href="/admin/shooting-forms"
-                className="flex items-center gap-2 px-4 py-2 bg-black hover:bg-slate-800 rounded-lg transition-colors text-white font-semibold shadow-sm"
-              >
-                <Settings size={18} />
-                <span>Manage</span>
-              </Link>
-            </div>
+    <div data-testid="screen-desktop-web-elite-shooters-database" className="flex">
+      <WideSidebar sections={[
+        { heading: "REFERENCES", items: [
+          { label: "My Shooters", href: "/elite-shooters", icon: Users },
+          { label: "Elite Shooters", href: "/elite-shooters", icon: Bookmark, active: true },
+          { label: "Saved Comparisons", href: "/results/demo/compare", icon: GitCompare },
+        ]},
+      ]} />
+      <div className="min-w-0 flex-1 px-[24px] py-[18px]">
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="shotiq-display text-[46px] leading-[48px]">ELITE SHOOTERS</h1>
+            <p className="mt-[2px] text-[13px] text-[var(--shotiq-color-graphite)]">
+              Reference mechanics from the best shooters in the world.
+            </p>
           </div>
-
-          {/* Filters Section - Clean Dropdowns */}
-          <div className="p-4 bg-slate-50 border-b border-slate-200">
-            {/* Row 1: Search + Sort + Reset */}
-            <div className="flex flex-col lg:flex-row gap-4 mb-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-                <input
-                  type="text"
-                  placeholder="Search by name or team..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#FF6B35] transition-colors"
-                />
-                {searchQuery && (
-                  <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-900">
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-              <div className="relative min-w-[200px]">
-                <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as SortOption)}
-                  className="w-full pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 appearance-none cursor-pointer focus:outline-none focus:border-[#FF6B35]"
-                >
-                  {SORT_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
-              </div>
-              {hasActiveFilters && (
-                <button onClick={resetFilters} className="flex items-center gap-2 px-4 py-2.5 bg-[#8B0000] hover:bg-[#a00000] rounded-lg text-slate-900 transition-colors">
-                  <RotateCcw className="w-4 h-4" /> Reset
-                </button>
-              )}
+          <div className="flex gap-[10px]">
+            <div className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[12px]">
+              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search shooters…"
+                     className="w-[150px] bg-transparent text-[13px] outline-none placeholder:text-[var(--shotiq-color-muted)]" />
+              <Search className="h-[14px] w-[14px] text-[var(--shotiq-color-graphite)]" />
             </div>
-
-            {/* Row 2: Dropdown Filters */}
-            <div className="flex flex-wrap gap-3 items-center">
-              <FilterDropdown
-                label="Tier"
-                options={TIER_OPTIONS}
-                selected={selectedTiers}
-                onSelect={(t) => toggleTier(t as ShooterTier)}
-                getLabel={(t) => TIER_LABELS[t as ShooterTier]}
-                getColor={(t) => TIER_COLORS[t as ShooterTier]}
-              />
-              <FilterDropdown
-                label="League"
-                options={LEAGUE_OPTIONS}
-                selected={selectedLeagues}
-                onSelect={(l) => toggleLeague(l as EliteShooter['league'])}
-                getLabel={(l) => LEAGUE_LABELS[l as EliteShooter['league']]}
-              />
-              <FilterDropdown
-                label="Position"
-                options={POSITION_OPTIONS}
-                selected={selectedPositions}
-                onSelect={(p) => togglePosition(p as Position)}
-                getLabel={(p) => POSITION_LABELS[p as Position]}
-              />
-              <FilterDropdown
-                label="Era"
-                options={ERA_OPTIONS}
-                selected={selectedEras}
-                onSelect={(e) => toggleEra(e)}
-              />
-              
-              {/* WSI Info Button */}
-              <button
-                onClick={() => setShowWSIInfo(true)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#FF6B35] text-white hover:bg-[#E55A2B] shadow-sm transition-colors"
-              >
-                <HelpCircle className="w-4 h-4" />
-                <span className="font-medium">What is WSI?</span>
-              </button>
-            </div>
-
-            {/* Row 3: Range Sliders */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4 pt-4 border-t border-slate-200">
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-green-400 text-sm font-semibold">3PT%</span>
-                  <span className="text-slate-900 text-sm font-mono">{threePctRange[0]}% - {threePctRange[1]}%</span>
-                </div>
-                <div className="flex gap-2">
-                  <input type="range" min="0" max="50" value={threePctRange[0]} onChange={(e) => setThreePctRange([parseInt(e.target.value), threePctRange[1]])} className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-green-500" />
-                  <input type="range" min="0" max="50" value={threePctRange[1]} onChange={(e) => setThreePctRange([threePctRange[0], parseInt(e.target.value)])} className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-green-500" />
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-blue-400 text-sm font-semibold">FT%</span>
-                  <span className="text-slate-900 text-sm font-mono">{ftPctRange[0]}% - {ftPctRange[1]}%</span>
-                </div>
-                <div className="flex gap-2">
-                  <input type="range" min="0" max="100" value={ftPctRange[0]} onChange={(e) => setFtPctRange([parseInt(e.target.value), ftPctRange[1]])} className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-500" />
-                  <input type="range" min="0" max="100" value={ftPctRange[1]} onChange={(e) => setFtPctRange([ftPctRange[0], parseInt(e.target.value)])} className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-500" />
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="bg-gradient-to-r from-[#FFD700] to-[#B8860B] bg-clip-text text-transparent text-sm font-semibold">WSI Score</span>
-                  <span className="text-slate-900 text-sm font-mono">{wsiRange[0]} - {wsiRange[1]}</span>
-                </div>
-                <div className="flex gap-2">
-                  <input type="range" min="0" max="60" value={wsiRange[0]} onChange={(e) => setWsiRange([parseInt(e.target.value), wsiRange[1]])} className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#FFD700]" />
-                  <input type="range" min="0" max="60" value={wsiRange[1]} onChange={(e) => setWsiRange([wsiRange[0], parseInt(e.target.value)])} className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#FFD700]" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Shooters Grid */}
-          <div className="p-6">
-            {filteredShooters.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-slate-500 text-lg">No players match your filters.</p>
-                <button onClick={resetFilters} className="mt-4 px-6 py-2 bg-[#FF6B35] text-white rounded-lg font-semibold hover:bg-[#E55A2B] transition-colors shadow-md shadow-[#FF6B35]/20">
-                  Reset Filters
-                </button>
-              </div>
-            ) : (
-              <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {paginatedShooters.map((shooter) => {
-                  const photoUrl = shooter.photoUrl || null;
-                  const tierColor = TIER_COLORS[shooter.tier];
-                  const threePct = shooter.careerPct ?? null;
-                  const threeWidth = Math.min(100, (threePct || 0) * 2.5);
-                  const ftWidth = Math.min(100, shooter.careerFreeThrowPct);
-                  const threePtRank = threePtRanks.get(shooter.id) ?? null;
-                  const ftRank = ftRanks.get(shooter.id) ?? null;
-
-                  return (
-                    <div 
-                      key={shooter.id} 
-                      className="bg-gradient-to-br from-white to-slate-50 rounded-xl overflow-hidden border border-slate-200 hover:border-[#FF6B35]/60 transition-all shadow-lg hover:shadow-[0_0_20px_rgba(255,215,0,0.15)] group cursor-pointer"
-                      onClick={() => handleSelectPlayer(shooter)}
-                    >
-                      {/* Player Header */}
-                      <div className="relative p-4 pt-8">
-                        {/* WSI Badge - positioned at top */}
-                        <div className="absolute top-2 right-3 bg-gradient-to-r from-[#FFD700] to-[#B8860B] text-black font-bold text-[11px] px-2 py-0.5 rounded">
-                          WSI {shooter.wsi}
-                        </div>
-                        
-                        <div className="flex items-center gap-4">
-                          {/* Photo with hover effect */}
-                          <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-[#FF6B35]/50 bg-slate-200 flex-shrink-0 group-hover:border-[#FF6B35] transition-colors">
-                            {photoUrl ? (
-                              <Image src={photoUrl} alt={shooter.name} fill className="object-cover object-top" unoptimized />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center">
-                                <span className="text-2xl font-bold text-[#FF6B35]">{shooter.name.split(' ').map(n => n[0]).join('')}</span>
-                              </div>
-                            )}
-                            {/* Hover overlay for bio hint */}
-                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                              <span className="text-slate-900 text-xs font-semibold">View Bio</span>
-                            </div>
-                          </div>
-
-                          <div className="flex-1 min-w-0">
-                            <h3 className="text-lg font-bold text-slate-900 uppercase tracking-wide truncate">{shooter.name}</h3>
-                            <p className="text-slate-500 text-sm truncate">{shooter.team}</p>
-                            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                              <span className="inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase bg-slate-200 text-slate-900">
-                                {POSITION_LABELS[shooter.position]}
-                              </span>
-                              <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase bg-gradient-to-r ${LEAGUE_COLORS[shooter.league]} text-slate-900`}>
-                                {LEAGUE_LABELS[shooter.league]}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2 mt-1">
-                              <span className="px-2 py-0.5 rounded text-xs font-semibold uppercase" style={{ backgroundColor: `${tierColor}20`, border: `1px solid ${tierColor}60`, color: tierColor }}>
-                                {TIER_LABELS[shooter.tier]}
-                              </span>
-                              <span className="text-slate-500 text-xs">{shooter.era}</span>
-                            </div>
-                          </div>
-
-                          <div className="flex flex-col items-center gap-1 mt-2">
-                            <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: `${tierColor}20`, border: `2px solid ${tierColor}` }}>
-                              <span className="text-lg font-bold" style={{ color: tierColor }}>{shooter.overallScore}</span>
-                            </div>
-                            <span className="text-[10px] text-slate-500 font-bold">OVR</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Card Body */}
-                      <div className="p-4 pt-0 space-y-4">
-                        {/* Key Traits */}
-                        <div>
-                          <p className="text-slate-500 text-xs mb-2 uppercase tracking-wider flex items-center gap-1">
-                            <Zap className="w-3 h-3 text-[#FF6B35]" /> Key Traits
-                          </p>
-                          <div className="flex flex-wrap gap-1.5">
-                            {shooter.keyTraits.map((trait, idx) => (
-                              <span key={idx} className="px-2 py-1 rounded-full text-[10px] font-semibold bg-[#FF6B35]/10 text-[#FF6B35] border border-[#FF6B35]/30">
-                                {trait}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Shooting Stats - 3PT% and FT% (SPAR-style horizontal bars) */}
-                        <div className="bg-slate-50 rounded-lg p-3 border border-[#FF6B35]/20 space-y-3">
-                          {/* 3PT% */}
-                          <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              <div className="flex gap-0.5">
-                                <span className="w-1 h-1 rounded-full bg-slate-300" />
-                                <span className="w-1 h-1 rounded-full bg-slate-300" />
-                                <span className="w-1 h-1 rounded-full bg-slate-300" />
-                              </div>
-                              <span className="text-green-400 text-xs font-semibold uppercase tracking-wider">Career 3PT%</span>
-                              <div className="flex gap-0.5">
-                                <span className="w-1 h-1 rounded-full bg-slate-300" />
-                                <span className="w-1 h-1 rounded-full bg-slate-300" />
-                                <span className="w-1 h-1 rounded-full bg-slate-300" />
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-lg font-bold text-slate-900 w-8 text-right">
-                                {threePct != null ? Math.round(threePct) : "—"}
-                              </span>
-                              <div
-                                className="relative flex-1 h-5 overflow-hidden"
-                                style={{ borderLeft: "3px solid #22c55e", borderRight: "3px solid #22c55e" }}
-                              >
-                                <div className="absolute inset-0 bg-slate-50">
-                                  <div
-                                    className="absolute inset-0 opacity-40"
-                                    style={{
-                                      backgroundImage: `repeating-linear-gradient(-60deg, transparent, transparent 2px, #333 2px, #333 4px)`
-                                    }}
-                                  />
-                                </div>
-                                <div
-                                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-green-500 to-green-600"
-                                  style={{ width: `${threeWidth}%` }}
-                                >
-                                  <div
-                                    className="absolute inset-0"
-                                    style={{
-                                      backgroundImage: `repeating-linear-gradient(-60deg, transparent, transparent 3px, rgba(0,0,0,0.3) 3px, rgba(0,0,0,0.3) 6px)`
-                                    }}
-                                  />
-                                  <div className="absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-white/20 to-transparent" />
-                                </div>
-                                <div className="absolute inset-y-0 right-0 w-[14%] bg-white" />
-                                <div className="absolute top-0 bottom-0 w-0.5 bg-white/50" style={{ left: "86%" }} />
-                              </div>
-                              <div className="flex flex-col items-center w-8">
-                                <span className="text-sm font-bold text-slate-500">{threePtRank ?? "—"}</span>
-                                <span className="text-[8px] text-slate-400 uppercase">Rank</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* FT% */}
-                          <div>
-                            <div className="flex items-center gap-2 mb-1">
-                              <div className="flex gap-0.5">
-                                <span className="w-1 h-1 rounded-full bg-slate-300" />
-                                <span className="w-1 h-1 rounded-full bg-slate-300" />
-                                <span className="w-1 h-1 rounded-full bg-slate-300" />
-                              </div>
-                              <span className="text-blue-400 text-xs font-semibold uppercase tracking-wider">Career FT%</span>
-                              <div className="flex gap-0.5">
-                                <span className="w-1 h-1 rounded-full bg-slate-300" />
-                                <span className="w-1 h-1 rounded-full bg-slate-300" />
-                                <span className="w-1 h-1 rounded-full bg-slate-300" />
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-lg font-bold text-slate-900 w-8 text-right">
-                                {Math.round(shooter.careerFreeThrowPct)}
-                              </span>
-                              <div
-                                className="relative flex-1 h-5 overflow-hidden"
-                                style={{ borderLeft: "3px solid #3b82f6", borderRight: "3px solid #3b82f6" }}
-                              >
-                                <div className="absolute inset-0 bg-slate-50">
-                                  <div
-                                    className="absolute inset-0 opacity-40"
-                                    style={{
-                                      backgroundImage: `repeating-linear-gradient(-60deg, transparent, transparent 2px, #333 2px, #333 4px)`
-                                    }}
-                                  />
-                                </div>
-                                <div
-                                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-blue-500 to-blue-600"
-                                  style={{ width: `${ftWidth}%` }}
-                                >
-                                  <div
-                                    className="absolute inset-0"
-                                    style={{
-                                      backgroundImage: `repeating-linear-gradient(-60deg, transparent, transparent 3px, rgba(0,0,0,0.3) 3px, rgba(0,0,0,0.3) 6px)`
-                                    }}
-                                  />
-                                  <div className="absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-white/20 to-transparent" />
-                                </div>
-                                <div className="absolute inset-y-0 right-0 w-[14%] bg-white" />
-                                <div className="absolute top-0 bottom-0 w-0.5 bg-white/50" style={{ left: "86%" }} />
-                              </div>
-                              <div className="flex flex-col items-center w-8">
-                                <span className="text-sm font-bold text-slate-500">{ftRank ?? "—"}</span>
-                                <span className="text-[8px] text-slate-400 uppercase">Rank</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Physical Stats */}
-                        <div>
-                          <p className="text-slate-500 text-xs mb-2 uppercase tracking-wider flex items-center gap-1">
-                            <Ruler className="w-3 h-3" /> Physical Stats
-                          </p>
-                          <div className="grid grid-cols-3 gap-2 text-center">
-                            <div className="bg-slate-50 rounded-lg p-2">
-                              <p className="text-[#FF6B35] font-bold text-sm">{formatHeight(shooter.height)}</p>
-                              <p className="text-slate-500 text-[10px] uppercase">Height</p>
-                            </div>
-                            <div className="bg-slate-50 rounded-lg p-2">
-                              <p className="text-[#FF6B35] font-bold text-sm">{formatHeight(shooter.wingspan)}</p>
-                              <p className="text-slate-500 text-[10px] uppercase">Wingspan</p>
-                            </div>
-                            <div className="bg-slate-50 rounded-lg p-2">
-                              <p className="text-[#FF6B35] font-bold text-sm">{shooter.weight} lbs</p>
-                              <p className="text-slate-500 text-[10px] uppercase">Weight</p>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Biomechanics */}
-                        <div className="border-t border-slate-200 pt-3">
-                          <p className="text-slate-500 text-xs mb-2 uppercase tracking-wider">
-                            Biomechanics
-                            {shooter.biomechanicsEstimated !== false && (
-                              <span className="ml-1 normal-case tracking-normal text-slate-400 italic">(estimated)</span>
-                            )}
-                          </p>
-                          <div className="grid grid-cols-2 gap-2 text-xs">
-                            <div className="flex justify-between bg-slate-50 rounded px-2 py-1">
-                              <span className="text-slate-500">Elbow:</span>
-                              <span className="text-[#FF6B35] font-semibold">{shooter.measurements.elbowAngle}°</span>
-                            </div>
-                            <div className="flex justify-between bg-slate-50 rounded px-2 py-1">
-                              <span className="text-slate-500">Release:</span>
-                              <span className="text-[#FF6B35] font-semibold">{shooter.measurements.releaseAngle}°</span>
-                            </div>
-                            <div className="flex justify-between bg-slate-50 rounded px-2 py-1">
-                              <span className="text-slate-500">Knee:</span>
-                              <span className="text-[#FF6B35] font-semibold">{shooter.measurements.kneeAngle}°</span>
-                            </div>
-                            <div className="flex justify-between bg-slate-50 rounded px-2 py-1">
-                              <span className="text-slate-500">Entry:</span>
-                              <span className="text-[#FF6B35] font-semibold">{shooter.measurements.entryAngle}°</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Shooting Form Button */}
-                        <div className="border-t border-slate-200 pt-3 mt-auto">
-                          {(() => {
-                            const imageCount = getShootingFormCount(shooter);
-                            return (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setShootingFormPlayer(shooter);
-                                }}
-                                className={`w-full py-2.5 rounded-lg font-semibold text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
-                                  imageCount > 0
-                                    ? 'bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-slate-900 hover:from-[#FFE44D] hover:to-[#FFB733] shadow-lg shadow-[#FF6B35]/20'
-                                    : 'bg-slate-50 text-slate-500 border border-slate-200 hover:border-[#555] hover:text-slate-900'
-                                }`}
-                              >
-                                {imageCount > 0 ? (
-                                  <>
-                                    <Camera className="w-4 h-4" />
-                                    View Shooting Form ({imageCount})
-                                  </>
-                                ) : (
-                                  <>
-                                    <ImageOff className="w-4 h-4" />
-                                    No Pictures Found
-                                  </>
-                                )}
-                              </button>
-                            );
-                          })()}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              
-              {/* Pagination Controls */}
-              {totalPages > 1 && (
-                <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <div className="text-slate-500 text-sm">
-                    Showing {startIndex + 1}-{Math.min(endIndex, filteredShooters.length)} of {filteredShooters.length} players
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setCurrentPage(1)}
-                      disabled={currentPage === 1}
-                      className="px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed hover:border-[#FF6B35]/50 transition-colors"
-                    >
-                      First
-                    </button>
-                    <button
-                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                      disabled={currentPage === 1}
-                      className="px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed hover:border-[#FF6B35]/50 transition-colors"
-                    >
-                      Previous
-                    </button>
-                    
-                    <div className="flex items-center gap-1">
-                      {Array.from({ length: totalPages }, (_, i) => i + 1)
-                        .filter(page => {
-                          // Show first, last, current, and pages near current
-                          if (page === 1 || page === totalPages) return true;
-                          if (Math.abs(page - currentPage) <= 2) return true;
-                          return false;
-                        })
-                        .map((page, idx, arr) => {
-                          // Add ellipsis if there's a gap
-                          const showEllipsisBefore = idx > 0 && page - arr[idx - 1] > 1;
-                          return (
-                            <React.Fragment key={page}>
-                              {showEllipsisBefore && <span className="px-2 text-slate-400">...</span>}
-                              <button
-                                onClick={() => setCurrentPage(page)}
-                                className={`w-10 h-10 rounded-lg font-semibold transition-colors ${
-                                  currentPage === page
-                                    ? 'bg-[#FF6B35] text-white shadow-md shadow-[#FF6B35]/20'
-                                    : 'bg-slate-50 border border-slate-200 text-slate-900 hover:border-[#FF6B35]/50'
-                                }`}
-                              >
-                                {page}
-                              </button>
-                            </React.Fragment>
-                          );
-                        })}
-                    </div>
-                    
-                    <button
-                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                      disabled={currentPage === totalPages}
-                      className="px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed hover:border-[#FF6B35]/50 transition-colors"
-                    >
-                      Next
-                    </button>
-                    <button
-                      onClick={() => setCurrentPage(totalPages)}
-                      disabled={currentPage === totalPages}
-                      className="px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed hover:border-[#FF6B35]/50 transition-colors"
-                    >
-                      Last
-                    </button>
-                  </div>
-                </div>
-              )}
-              </>
-            )}
+            <button type="button" className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-[13px]">
+              Sort: Match <ChevronDown className="h-[12px] w-[12px]" />
+            </button>
+            <Link href="/results/demo/compare"
+                  className="flex h-[42px] items-center gap-[8px] rounded-[6px] bg-[var(--shotiq-color-analysisBlue)] px-[16px] text-[13px] font-medium text-white">
+              <GitCompare className="h-[14px] w-[14px]" /> Compare with my shot
+            </Link>
           </div>
         </div>
+
+        <div className="mt-[12px] flex gap-[8px]">
+          {LEAGUES.map((l) => (
+            <button key={l} type="button" onClick={() => setLeague(l)}
+                    className={`h-[34px] rounded-full px-[16px] text-[13px] ${league === l ? "bg-[var(--shotiq-color-ink)] text-white" : "border border-[var(--shotiq-color-rule)]"}`}>
+              {l}
+            </button>
+          ))}
+          <span className="ml-auto self-center text-[12px] text-[var(--shotiq-color-graphite)]">
+            {loading ? "Loading roster…" : `${filtered.length} shooters`}
+          </span>
+        </div>
+
+        <div className="mt-[12px] grid grid-cols-4 gap-[14px]">
+          {filtered.map((s) => (
+            <Link key={s.id} href={`/elite-shooters/${slug(s.name)}`}>
+              <Card className="overflow-hidden">
+                <div className="relative">
+                  {s.imageUrl || s.approvedFormImages?.[0] ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={s.imageUrl || s.approvedFormImages![0]} alt={s.name} className="h-[150px] w-full object-cover" />
+                  ) : (
+                    <MediaSurface height={150} rounded={0} />
+                  )}
+                  <span className="absolute left-[8px] top-[8px] rounded-[3px] bg-black/75 px-[6px] py-[2px] text-[9px] font-bold text-white">{s.league}</span>
+                </div>
+                <div className="p-[12px]">
+                  <div className="truncate text-[15px] font-semibold">{s.name}</div>
+                  <div className="truncate text-[11px] text-[var(--shotiq-color-graphite)]">{s.team} · {s.position}</div>
+                  <div className="mt-[8px] flex items-center gap-[14px] border-t border-[var(--shotiq-color-rule)] pt-[8px]">
+                    {s.careerPct != null && <Stat value={`${s.careerPct.toFixed(1)}%`} label="3P%" valueClass="text-[18px] leading-[20px]" />}
+                    <Stat value={`${s.careerFreeThrowPct.toFixed(1)}%`} label="FT%" valueClass="text-[18px] leading-[20px]" />
+                    <span className="ml-auto rounded-[4px] border border-[var(--shotiq-color-analysisBlue)] px-[6px] py-[2px] text-[9px] font-bold text-[var(--shotiq-color-analysisBlue)]">
+                      {s.tier?.toUpperCase() ?? "ELITE"}
+                    </span>
+                  </div>
+                </div>
+              </Card>
+            </Link>
+          ))}
+          {!loading && !filtered.length && (
+            <Card className="col-span-4 p-[26px] text-center text-[13px] text-[var(--shotiq-color-graphite)]">
+              No shooters match your filters.
+            </Card>
+          )}
+        </div>
       </div>
-      
-      {/* WSI Info Popup */}
-      {showWSIInfo && <WSIInfoPopup onClose={() => setShowWSIInfo(false)} />}
-      
-      {/* Player Bio Popup */}
-      {selectedPlayer && <PlayerBioPopup shooter={selectedPlayer} onClose={() => setSelectedPlayer(null)} />}
-      
-      {/* Shooting Form Gallery */}
-      {shootingFormPlayer && <ShootingFormGallery shooter={shootingFormPlayer} onClose={() => setShootingFormPlayer(null)} />}
-    </main>
+    </div>
   )
 }

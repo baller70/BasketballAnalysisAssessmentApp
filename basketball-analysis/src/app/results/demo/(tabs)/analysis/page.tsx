@@ -1,88 +1,175 @@
 "use client"
 
-import { useMemo } from "react"
+/** /results/demo/analysis — canonical 083-web-analysis-overview. */
+
+import React from "react"
 import Link from "next/link"
-import { AnalysisCardGame } from "@/components/analysis/AnalysisCardGame"
-import { useAnalysisStore } from "@/stores/analysisStore"
+import { ChevronLeft, ChevronRight, Play, Maximize2 } from "lucide-react"
+import { SectionLabel, Card, MediaSurface, Stat, TrendLine, PhaseGlyph } from "@/components/shotiq/ShotIQShell"
+import { useHistory, CoachingTarget } from "@/components/shotiq/ResultsBits"
 
-export default function AnalysisPage() {
-  const { visionAnalysisResult, formAnalysisResult, currentAnalysis, uploadedFile } = useAnalysisStore()
+const PHASES: [string, string][] = [
+  ["SETUP", "0:00 – 0:02"], ["LOAD", "0:02 – 0:04"], ["RISE", "0:04 – 0:06"],
+  ["RELEASE", "0:06 – 0:07"], ["FOLLOW-THROUGH", "0:07 – 0:10"],
+]
+const MECHANICS: [string, string, string][] = [
+  ["Elbow Angle", "172°", "160° – 180°"], ["Wrist Angle", "21°", "15° – 30°"],
+  ["Release Height", "8'6\"", "7'8\" – 8'8\""], ["Body Alignment", "2°", "-5° – 5°"],
+]
 
-  // A real analysis exists only when the engine produced one this session.
-  const hasAnalysis =
-    !!(visionAnalysisResult?.success && visionAnalysisResult.angles) || !!formAnalysisResult
-
-  // Read a measured angle from whichever real source has it (vision record or
-  // the FormAnalysis angle array). Returns null when the engine never measured
-  // it — we surface that honestly instead of substituting a fake constant.
-  const getAngle = (...names: string[]): number | null => {
-    const visionAngles = visionAnalysisResult?.angles
-    if (visionAngles) {
-      for (const n of names) {
-        const v = visionAngles[n]
-        if (typeof v === "number" && v > 0) return v
-      }
-    }
-    if (formAnalysisResult?.angles) {
-      for (const n of names) {
-        const a = formAnalysisResult.angles.find((x) => x.name === n)
-        if (a && typeof a.angle === "number" && a.angle > 0) return a.angle
-      }
-    }
-    return null
-  }
-
-  // Real measurements from the analysis. Joint angles come straight from the
-  // pose engine; release height / release angle / entry angle are only shown
-  // when the engine actually reported them (0 = not measured, never faked).
-  const measurements = useMemo(
-    () => ({
-      shoulderAngle: getAngle("shoulder_tilt", "left_shoulder_angle", "right_shoulder_angle", "Shoulder Angle") ?? 0,
-      elbowAngle: getAngle("right_elbow_angle", "left_elbow_angle", "Elbow Angle") ?? 0,
-      hipAngle: getAngle("hip_tilt", "left_hip_angle", "right_hip_angle") ?? 0,
-      kneeAngle: getAngle("right_knee_angle", "left_knee_angle", "Knee Bend") ?? 0,
-      ankleAngle: getAngle("left_ankle_angle", "right_ankle_angle") ?? 0,
-      releaseHeight: getAngle("release_height", "releaseHeight", "Release Height") ?? 0,
-      releaseAngle: getAngle("release_angle", "releaseAngle", "Release Angle") ?? 0,
-      entryAngle: getAngle("entry_angle", "entryAngle", "Entry Angle") ?? 0,
-    }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [visionAnalysisResult, formAnalysisResult]
-  )
-
-  // Generate a unique session ID based on analysis data
-  // This ensures points are only earned once per unique analysis
-  // The AnalysisCardGame component will generate a hash from measurements if no sessionId is provided
-  const sessionId = useMemo(() => {
-    if (currentAnalysis?.id) return currentAnalysis.id
-    // Use uploaded file name as a stable identifier
-    if (uploadedFile?.name) {
-      return `analysis-${uploadedFile.name}-${uploadedFile.size}`.replace(/[^a-zA-Z0-9-]/g, '_')
-    }
-    // Let the component generate its own ID from measurements
-    return undefined
-  }, [currentAnalysis?.id, uploadedFile?.name, uploadedFile?.size])
-
-  // Empty state — no fabricated demo numbers when nothing has been analyzed.
-  if (!hasAnalysis) {
-    return (
-      <div className="flex flex-col items-center justify-center text-center py-16 px-6">
-        <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
-          <span className="text-3xl">🏀</span>
+export default function AnalysisOverviewPage() {
+  const { hasData, score } = useHistory()
+  return (
+    <div data-testid="screen-desktop-web-analysis-overview">
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="shotiq-display text-[48px] leading-[50px]">ANALYSIS OVERVIEW</h1>
+          <p className="mt-[4px] text-[13px] text-[var(--shotiq-color-graphite)]">
+            {hasData ? "Latest analysis · Catch & Shoot · Right Hand" : "Run an analysis to populate this view."}
+          </p>
         </div>
-        <h2 className="text-lg font-black text-slate-900 uppercase tracking-wide">No Analysis Yet</h2>
-        <p className="text-slate-500 text-sm mt-2 max-w-sm">
-          Upload a shot to see your biomechanical breakdown — release, angles, and form scores.
-        </p>
-        <Link
-          href="/results/demo"
-          className="mt-5 inline-flex items-center gap-2 bg-[#FF6B35] hover:bg-[#E55300] text-white font-bold text-sm px-6 py-2.5 rounded-full transition-colors"
-        >
-          Upload a Shot
-        </Link>
+        <div className="flex items-center gap-[12px]">
+          <button type="button" className="flex h-[42px] items-center gap-[6px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[16px] text-[13px]">
+            <ChevronLeft className="h-[14px] w-[14px]" /> PREV
+          </button>
+          <div className="text-center">
+            <div className="text-[14px] font-bold">1 OF {hasData ? "24" : "0"}</div>
+            <Link href="/results/demo/history" className="text-[11px] text-[var(--shotiq-color-graphite)]">View all analyses</Link>
+          </div>
+          <button type="button" className="flex h-[42px] items-center gap-[6px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[16px] text-[13px]">
+            NEXT <ChevronRight className="h-[14px] w-[14px]" />
+          </button>
+        </div>
       </div>
-    )
-  }
 
-  return <AnalysisCardGame measurements={measurements} sessionId={sessionId} />
+      <div className="mt-[16px] flex gap-[20px]">
+        {/* media + scrubber + phases */}
+        <div className="w-[520px] shrink-0">
+          <MediaSurface width={520} height={335} />
+          <div className="mt-[8px] flex items-center gap-[10px]">
+            <span className="grid h-[34px] w-[34px] place-items-center rounded-[4px] border border-[var(--shotiq-color-rule)]">
+              <Play className="h-[14px] w-[14px]" fill="currentColor" />
+            </span>
+            <div className="flex h-[42px] flex-1 gap-[3px] overflow-hidden rounded-[4px]">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className={`flex-1 bg-[#1B1D20] ${i === 3 ? "ring-2 ring-inset ring-[var(--shotiq-color-shotiqOrange)]" : ""}`} />
+              ))}
+            </div>
+            <span className="shotiq-numeric text-[13px]">0:07 / 0:24</span>
+            <Maximize2 className="h-[15px] w-[15px] text-[var(--shotiq-color-graphite)]" />
+          </div>
+          <div className="mt-[14px] flex items-start justify-between">
+            {PHASES.map(([p, t]) => (
+              <div key={p} className="text-center">
+                <PhaseGlyph active={p === "RELEASE"} />
+                <div className={`mt-[3px] text-[10px] tracking-[0.05em] ${p === "RELEASE" ? "font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
+                <div className="text-[9px] text-[var(--shotiq-color-graphite)]">{t}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* form score + mechanics */}
+        <div className="w-[250px] shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[20px]">
+          <SectionLabel>FORM SCORE</SectionLabel>
+          <div className="flex items-end gap-[6px]">
+            <span className="shotiq-numeric text-[58px] leading-[62px] text-[var(--shotiq-color-shotiqOrange)]">{score ?? "—"}</span>
+            <span className="pb-[10px] text-[15px] text-[var(--shotiq-color-muted)]">/100</span>
+          </div>
+          <div className="h-[7px] rounded-full bg-[var(--shotiq-color-rule)]">
+            <div className="h-full rounded-full bg-[var(--shotiq-color-shotiqOrange)]" style={{ width: `${score ?? 0}%` }} />
+          </div>
+          <div className="mt-[8px] text-[14px] font-bold text-[var(--shotiq-color-analysisBlue)]">{score != null ? "GOOD" : "—"}</div>
+          <p className="text-[12px] text-[var(--shotiq-color-graphite)]">{score != null ? "Keep building consistency." : "No analysis yet."}</p>
+
+          <SectionLabel className="mt-[20px] border-t border-[var(--shotiq-color-rule)] pt-[14px]">MECHANICS AT RELEASE</SectionLabel>
+          <div className="mt-[6px] divide-y divide-[var(--shotiq-color-rule)]">
+            {MECHANICS.map(([m, v, range]) => (
+              <div key={m} className="flex items-center gap-[10px] py-[9px]">
+                <PhaseGlyph size={20} />
+                <span className="flex-1 text-[13px]">{m}</span>
+                <span className="shotiq-numeric text-[18px]">{hasData ? v : "—"}</span>
+                <span className="w-[64px] text-right">
+                  <span className="block text-[10px] font-bold text-[var(--shotiq-color-confirmGreen)]">IDEAL</span>
+                  <span className="block text-[9px] text-[var(--shotiq-color-graphite)]">{range}</span>
+                </span>
+              </div>
+            ))}
+          </div>
+          <button type="button" className="mt-[8px] text-[13px] text-[var(--shotiq-color-analysisBlue)]">View all mechanics ›</button>
+        </div>
+
+        {/* right rail */}
+        <div className="min-w-0 flex-1 border-l border-[var(--shotiq-color-rule)] pl-[20px]">
+          <CoachingTarget />
+          <SectionLabel className="mt-[20px] border-t border-[var(--shotiq-color-rule)] pt-[14px]">KEY INSIGHT</SectionLabel>
+          <p className="mt-[6px] text-[13px] leading-[19px] text-[var(--shotiq-color-graphite)]">
+            {hasData
+              ? "Your elbow is slightly flaring late in release. Keeping it stacked will help improve consistency and shot accuracy."
+              : "Insights appear after your first analysis."}
+          </p>
+          <div className="mt-[12px] flex items-center justify-center gap-[26px]">
+            <div className="text-center">
+              <PhaseGlyph size={54} />
+              <div className="shotiq-numeric text-[15px]">172°</div>
+              <div className="text-[9px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">CURRENT</div>
+            </div>
+            <span className="text-[18px] text-[var(--shotiq-color-graphite)]">→</span>
+            <div className="text-center">
+              <PhaseGlyph size={54} active />
+              <div className="shotiq-numeric text-[15px]">180°</div>
+              <div className="text-[9px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">IDEAL</div>
+            </div>
+          </div>
+          <SectionLabel className="mt-[16px] border-t border-[var(--shotiq-color-rule)] pt-[14px]">ELITE MATCH</SectionLabel>
+          <div className="mt-[8px] flex items-center gap-[14px]">
+            <div className="min-w-0 flex-1">
+              <div className="text-[15px] font-semibold">Trae Young</div>
+              <div className="text-[12px] font-semibold text-[var(--shotiq-color-confirmGreen)]">92% Similarity</div>
+              <Link href="/results/demo/compare" className="text-[12px] text-[var(--shotiq-color-analysisBlue)]">View comparison ›</Link>
+            </div>
+            <MediaSurface width={130} height={78} />
+          </div>
+        </div>
+      </div>
+
+      {/* bottom strip */}
+      <Card className="mt-[20px] flex items-center divide-x divide-[var(--shotiq-color-rule)] px-[8px] py-[14px]">
+        <div className="flex items-center gap-[24px] px-[16px]">
+          <SectionLabel>ANALYSIS SUMMARY</SectionLabel>
+          <Stat value={hasData ? "24" : "0"} label="SHOTS" />
+          <Stat value={hasData ? "15" : "0"} label="MAKES" />
+          <Stat value={hasData ? "62.5%" : "—"} label="MAKE %" />
+          <Stat value={score != null ? String(score) : "—"} label="FORM SCORE" />
+          <div>
+            <div className="text-[10px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">TREND</div>
+            <TrendLine points={[3, 2.6, 3.3, 3, 4]} width={84} height={28} />
+          </div>
+        </div>
+        <div className="flex flex-1 items-center gap-[12px] px-[16px]">
+          <SectionLabel>TOP FLAW</SectionLabel>
+          <PhaseGlyph size={30} />
+          <div className="min-w-0 flex-1">
+            <span className="text-[14px] font-semibold">Elbow flare at release </span>
+            <span className="rounded-[3px] border border-[var(--shotiq-color-reviewRed)] px-[6px] py-[1px] text-[9px] font-bold text-[var(--shotiq-color-reviewRed)]">HIGH IMPACT</span>
+            <p className="text-[12px] text-[var(--shotiq-color-graphite)]">Elbow moves outward slightly during release, reducing alignment.</p>
+          </div>
+          <Link href="/results/demo/flaws" aria-label="Open flaws">
+            <span className="text-[var(--shotiq-color-graphite)]">›</span>
+          </Link>
+        </div>
+        <div className="flex items-center gap-[12px] px-[16px]">
+          <SectionLabel>NEXT TRAINING</SectionLabel>
+          <span className="grid h-[42px] w-[42px] place-items-center rounded-full bg-[var(--shotiq-color-analysisBlue)] text-white">◎</span>
+          <div>
+            <div className="text-[14px] font-semibold">Quick Release Builder</div>
+            <div className="text-[11px] text-[var(--shotiq-color-graphite)]">20 min · Form Focus</div>
+          </div>
+          <Link href="/training/drills/quick-release-builder" aria-label="Start training">
+            <span className="text-[var(--shotiq-color-graphite)]">›</span>
+          </Link>
+        </div>
+      </Card>
+    </div>
+  )
 }

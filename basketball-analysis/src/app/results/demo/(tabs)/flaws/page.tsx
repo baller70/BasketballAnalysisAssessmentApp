@@ -1,455 +1,153 @@
 "use client"
 
-import { useState, useEffect, useMemo, useRef } from "react"
-import { AlertTriangle, Calendar, ChevronDown, ChevronRight, Zap, Play, Clock, Target } from "lucide-react"
-import { useAnalysisStore } from "@/stores/analysisStore"
-import { getAllSessions, AnalysisSession } from "@/services/sessionStorage"
-import { detectFlawsFromAngles } from "@/data/shootingFlawsDatabase"
-import { usePoints } from "@/lib/points/pointsContext"
-import { InlinePointsBurst } from "@/components/points/PointsBurst"
+/** /results/demo/flaws — canonical 085-web-flaws-history. */
+
+import React, { useState } from "react"
+import Link from "next/link"
+import { SectionLabel, Card, MediaSurface, TrendLine, PhaseGlyph } from "@/components/shotiq/ShotIQShell"
+import { ScoreBand, CoachingTarget, useHistory } from "@/components/shotiq/ResultsBits"
+
+const FLAWS = [
+  { n: 1, title: "Elbow not stacked at release", impact: "HIGH IMPACT", desc: "Elbow drifts forward causing inconsistent release point.", affects: "AFFECTS 62% OF SHOTS", delta: "-8.3% IMPACT" },
+  { n: 2, title: "Slight wrist roll to the left", impact: "MEDIUM IMPACT", desc: "Ball rotates slightly left on release affecting accuracy.", affects: "AFFECTS 38% OF SHOTS", delta: "-4.1% IMPACT" },
+  { n: 3, title: "Release point too low", impact: "MEDIUM IMPACT", desc: "Release height below optimal window reduces arc.", affects: "AFFECTS 26% OF SHOTS", delta: "-3.1% IMPACT" },
+]
 
 export default function FlawsPage() {
-  const [expandedSessions, setExpandedSessions] = useState<string[]>(['current', 'demo'])
-  const [expandedCards, setExpandedCards] = useState<string[]>([])
-  const [currentPage, setCurrentPage] = useState(1)
-  const sessionsPerPage = 10
-  const [showPointsBurst, setShowPointsBurst] = useState(false)
-  const viewedFlaws = useRef<Set<string>>(new Set())
-  
-  const { earnPoints } = usePoints()
-  const { visionAnalysisResult, uploadedImageBase64 } = useAnalysisStore()
-  const [sessions, setSessions] = useState<AnalysisSession[]>([])
-  
-  useEffect(() => {
-    const loadedSessions = getAllSessions()
-    setSessions(loadedSessions)
-  }, [])
-
-  const toggleSession = (sessionId: string) => {
-    setExpandedSessions(prev =>
-      prev.includes(sessionId) ? prev.filter(id => id !== sessionId) : [...prev, sessionId]
-    )
-  }
-
-  const toggleCard = (cardId: string) => {
-    const isExpanding = !expandedCards.includes(cardId)
-    setExpandedCards(prev =>
-      prev.includes(cardId) ? prev.filter(id => id !== cardId) : [...prev, cardId]
-    )
-    
-    // Award points when viewing a flaw for the first time
-    if (isExpanding && !viewedFlaws.current.has(cardId)) {
-      viewedFlaws.current.add(cardId)
-      const result = earnPoints('flaw_view')
-      if (result.earned) {
-        setShowPointsBurst(true)
-        setTimeout(() => setShowPointsBurst(false), 1500)
-      }
-    }
-  }
-
-  const getFlawsForAngles = (angles: Record<string, number> | undefined) => {
-    if (!angles) {
-      return [{
-        id: 0,
-        title: "No Data Available",
-        severity: "UNKNOWN",
-        severityScore: 0,
-        category: "N/A",
-        description: "No analysis data available for this session.",
-        correction: "Upload an image to analyze your shooting form.",
-        causeChain: [],
-        drills: [],
-        impact: "N/A"
-      }]
-    }
-    
-    const dbFlaws = detectFlawsFromAngles(angles)
-    
-    return dbFlaws.map((flaw, idx) => ({
-      id: idx,
-      title: flaw.name,
-      severity: flaw.priority >= 8 ? "CRITICAL" : flaw.priority >= 6 ? "MODERATE" : "MINOR",
-      severityScore: Math.max(20, 100 - flaw.priority * 8),
-      category: flaw.id.includes("ELBOW") ? "Form" : 
-                flaw.id.includes("KNEE") ? "Power" : 
-                flaw.id.includes("SHOULDER") || flaw.id.includes("HIP") ? "Balance" : "Mechanics",
-      description: flaw.description,
-      correction: flaw.fixes[0] || "Work with a coach to correct this issue.",
-      causeChain: flaw.causeChain,
-      drills: flaw.drills.slice(0, 3).map((drill, i) => ({
-        name: drill,
-        reps: i === 0 ? "3 sets × 20 reps" : i === 1 ? "50 shots" : "5 minutes",
-        difficulty: i === 0 ? "Easy" : i === 1 ? "Medium" : "Easy"
-      })),
-      impact: flaw.priority >= 8 ? "Critical impact on accuracy" : 
-              flaw.priority >= 6 ? "High impact on shot accuracy" : "Medium impact on shot power"
-    }))
-  }
-
-  // Default demo flaws
-  const defaultDemoFlaws = [
-    {
-      id: 1,
-      title: "Elbow Flare",
-      severity: "CRITICAL",
-      severityScore: 35,
-      category: "Form",
-      description: "Your shooting elbow is drifting outward during release, causing inconsistent ball flight and reducing accuracy on mid-range shots.",
-      correction: "Practice form shooting with your elbow tucked against a wall. Use the 'cookie jar' drill.",
-      causeChain: [
-        { effect: "Ball drifts left/right", explanation: "Side spin from elbow position", severity: "high" },
-        { effect: "Inconsistent accuracy", explanation: "Variable release angle", severity: "medium" }
-      ],
-      drills: [
-        { name: "Wall Elbow Drill", reps: "3 sets × 20 reps", difficulty: "Easy" },
-        { name: "One-Hand Form Shots", reps: "50 shots", difficulty: "Medium" },
-        { name: "Mirror Practice", reps: "5 minutes", difficulty: "Easy" }
-      ],
-      impact: "Critical impact on accuracy"
-    },
-    {
-      id: 2,
-      title: "Low Release Point",
-      severity: "MODERATE",
-      severityScore: 55,
-      category: "Mechanics",
-      description: "Your release height is below optimal range, making your shot easier to block and reducing the entry angle into the basket.",
-      correction: "Extend fully through your shot before releasing. Practice releasing at the peak of your jump.",
-      causeChain: [
-        { effect: "Shot gets blocked", explanation: "Release too low for defenders", severity: "high" },
-        { effect: "Flat arc trajectory", explanation: "Lower release = flatter shot", severity: "medium" }
-      ],
-      drills: [
-        { name: "High Release Drill", reps: "3 sets × 15 reps", difficulty: "Medium" },
-        { name: "Jump Shot Peak Practice", reps: "40 shots", difficulty: "Medium" },
-        { name: "Chair Shooting Drill", reps: "5 minutes", difficulty: "Easy" }
-      ],
-      impact: "High impact on shot accuracy"
-    },
-    {
-      id: 3,
-      title: "Inconsistent Follow Through",
-      severity: "MODERATE",
-      severityScore: 60,
-      category: "Form",
-      description: "Your follow through varies from shot to shot, leading to inconsistent backspin and ball rotation.",
-      correction: "Hold your follow through until the ball hits the rim. Focus on snapping your wrist.",
-      causeChain: [
-        { effect: "Variable backspin", explanation: "Inconsistent wrist action", severity: "medium" },
-        { effect: "Unpredictable bounces", explanation: "Ball rotation varies", severity: "low" }
-      ],
-      drills: [
-        { name: "Freeze Follow Through", reps: "3 sets × 25 reps", difficulty: "Easy" },
-        { name: "Wrist Snap Drill", reps: "50 shots", difficulty: "Easy" },
-        { name: "One-Hand Form Shooting", reps: "5 minutes", difficulty: "Medium" }
-      ],
-      impact: "Medium impact on shot power"
-    },
-    {
-      id: 4,
-      title: "Poor Base Alignment",
-      severity: "MINOR",
-      severityScore: 72,
-      category: "Balance",
-      description: "Your feet are not consistently aligned with the basket, causing your body to rotate during the shot.",
-      correction: "Practice catching and squaring in one motion. Use floor markers to check foot alignment.",
-      causeChain: [
-        { effect: "Body rotation", explanation: "Feet not square to basket", severity: "medium" },
-        { effect: "Off-balance shots", explanation: "Weight distribution uneven", severity: "low" }
-      ],
-      drills: [
-        { name: "Footwork Square-Up", reps: "3 sets × 20 reps", difficulty: "Easy" },
-        { name: "Catch & Shoot Alignment", reps: "30 shots", difficulty: "Medium" },
-        { name: "Tape Line Drill", reps: "5 minutes", difficulty: "Easy" }
-      ],
-      impact: "Medium impact on shot power"
-    },
-    {
-      id: 5,
-      title: "Rushed Shot Motion",
-      severity: "MINOR",
-      severityScore: 68,
-      category: "Power",
-      description: "Your shooting motion is too quick, not allowing proper energy transfer from legs to arms.",
-      correction: "Slow down your shot in practice, focus on rhythm. Use the 'dip' to create better timing.",
-      causeChain: [
-        { effect: "Weak shots", explanation: "No leg power transfer", severity: "medium" },
-        { effect: "Inconsistent rhythm", explanation: "Timing varies shot to shot", severity: "low" }
-      ],
-      drills: [
-        { name: "Slow Motion Shooting", reps: "3 sets × 15 reps", difficulty: "Easy" },
-        { name: "Rhythm Dribble-Shot", reps: "40 shots", difficulty: "Medium" },
-        { name: "Fatigue Shooting", reps: "5 minutes", difficulty: "Hard" }
-      ],
-      impact: "Medium impact on shot power"
-    }
-  ]
-
-  const allSessionsWithFlaws = useMemo(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- flaw objects have a dynamic shape from vision analysis
-    const result: { id: string; date: string; displayDate: string; flaws: any[]; score: number; isLive: boolean }[] = []
-    
-    if (visionAnalysisResult?.success && uploadedImageBase64) {
-      result.push({
-        id: 'current',
-        date: new Date().toISOString(),
-        displayDate: 'Today (Live)',
-        flaws: getFlawsForAngles(visionAnalysisResult.angles),
-        score: visionAnalysisResult.overall_score || 70,
-        isLive: true
-      })
-    }
-    
-    sessions.forEach(session => {
-      result.push({
-        id: session.id,
-        date: session.date,
-        displayDate: session.displayDate,
-        flaws: getFlawsForAngles(session.analysisData?.angles),
-        score: session.analysisData?.overallScore || 0,
-        isLive: false
-      })
-    })
-    
-    if (result.length === 0) {
-      result.push({
-        id: 'demo',
-        date: new Date().toISOString(),
-        displayDate: 'Demo Session',
-        flaws: defaultDemoFlaws,
-        score: 74,
-        isLive: true
-      })
-    }
-    
-    return result
-  }, [visionAnalysisResult, uploadedImageBase64, sessions])
-
-  const totalPages = Math.ceil(allSessionsWithFlaws.length / sessionsPerPage)
-  const paginatedSessions = allSessionsWithFlaws.slice(
-    (currentPage - 1) * sessionsPerPage,
-    currentPage * sessionsPerPage
-  )
-  const totalFlawsCurrentSession = allSessionsWithFlaws[0]?.flaws.length || 0
-
-  const getDifficultyColor = (difficulty: string) => {
-    if (difficulty === "Hard") return "bg-red-50 text-red-600 border-red-200"
-    if (difficulty === "Medium") return "bg-orange-50 text-orange-600 border-orange-200"
-    return "bg-green-50 text-green-600 border-green-200"
-  }
-
-  const getSeverityColor = (severity: string) => {
-    if (severity === "CRITICAL") return "bg-red-50 text-red-600 border-red-200"
-    if (severity === "MODERATE") return "bg-orange-50 text-orange-600 border-orange-200"
-    return "bg-yellow-50 text-yellow-600 border-yellow-200"
-  }
-
+  const { hasData, score } = useHistory()
+  const [sel, setSel] = useState(0)
   return (
-    <div className="space-y-6 relative">
-      {/* GOLD Video Game Style Points Animation */}
-      <InlinePointsBurst points={1} show={showPointsBurst} label="IQ" />
-      
-      {/* Header Section */}
-      <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm overflow-hidden">
-        <div className="h-1 bg-gradient-to-r from-red-500 to-orange-500 -mx-6 -mt-6 mb-5" />
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-red-50 flex items-center justify-center border border-red-100">
-              <AlertTriangle className="w-7 h-7 text-red-500" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-black text-slate-900 uppercase tracking-wider">
-                Identified Flaws
-              </h2>
-              <p className="text-slate-500 text-sm">{allSessionsWithFlaws.length} session{allSessionsWithFlaws.length !== 1 ? 's' : ''} • Click to expand</p>
-            </div>
-          </div>
-          <div className="text-center px-4 py-2 bg-red-50 rounded-lg border border-red-200">
-            <p className="text-red-600 text-2xl font-black">{totalFlawsCurrentSession}</p>
-            <p className="text-red-500 text-xs uppercase">Current Issues</p>
-          </div>
+    <div data-testid="screen-desktop-web-flaws-history">
+      <div className="flex items-start justify-between gap-[20px]">
+        <div>
+          <h1 className="shotiq-display text-[48px] leading-[50px]">FLAWS &amp; CORRECTIONS</h1>
+          <p className="mt-[4px] text-[14px] text-[var(--shotiq-color-graphite)]">
+            Identify weaknesses. Focus your fixes. Track your progress.
+          </p>
+        </div>
+        <div className="flex min-w-0 gap-[16px]">
+          <ScoreBand score={score} />
+          <Card className="w-[280px] px-[18px] py-[12px]"><CoachingTarget /></Card>
         </div>
       </div>
 
-      {/* Sessions Accordion List */}
-      <div className="space-y-4">
-        {paginatedSessions.map((session) => {
-          const isSessionExpanded = expandedSessions.includes(session.id)
-          
-          return (
-            <div
-              key={session.id}
-              className={`rounded-xl overflow-hidden border transition-all duration-300 ${
-                session.isLive 
-                  ? 'border-green-200 bg-green-50/30' 
-                  : 'border-slate-200 bg-white'
-              }`}
-            >
-              {/* Session Header */}
-              <button
-                onClick={() => toggleSession(session.id)}
-                className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-colors"
-              >
-                <div className="flex items-center gap-4">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                    session.isLive ? 'bg-green-50 border border-green-200' : 'bg-slate-50 border border-slate-200'
-                  }`}>
-                    <Calendar className={`w-5 h-5 ${session.isLive ? 'text-green-500' : 'text-slate-400'}`} />
-                  </div>
-                  <div className="text-left">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-bold text-slate-900">{session.displayDate}</h3>
-                      {session.isLive && (
-                        <span className="px-2 py-0.5 bg-green-500 rounded text-[10px] font-bold text-white">LIVE</span>
-                      )}
-                    </div>
-                    <p className="text-slate-500 text-sm">{session.flaws.length} flaw{session.flaws.length !== 1 ? 's' : ''} • Score: {session.score}%</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className={`px-3 py-1.5 rounded-lg text-xs font-bold ${
-                    session.flaws.length === 0 ? 'bg-green-50 text-green-600 border border-green-200' :
-                    session.flaws.length <= 2 ? 'bg-orange-50 text-orange-600 border border-orange-200' :
-                    'bg-red-50 text-red-600 border border-red-200'
-                  }`}>
-                    {session.flaws.length === 0 ? 'EXCELLENT' : session.flaws.length <= 2 ? 'GOOD' : 'NEEDS WORK'}
-                  </div>
-                  <div className={`w-8 h-8 rounded-full bg-white flex items-center justify-center border border-slate-200 text-slate-400 transition-transform duration-300 ${isSessionExpanded ? 'rotate-180' : ''}`}>
-                    <ChevronDown className="w-5 h-5" />
-                  </div>
-                </div>
-              </button>
-
-              {/* Session Content - Expandable */}
-              {isSessionExpanded && (
-                <div className="border-t border-slate-200 p-4 space-y-4">
-                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic flaw shape from vision analysis */}
-                  {session.flaws.map((flaw: any, flawIdx: number) => {
-                    const cardId = `${session.id}-${flawIdx}`
-                    const isCardExpanded = expandedCards.includes(cardId)
-                    
-                    return (
-                      <div key={cardId} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                        {/* Flaw Header */}
-                        <button
-                          onClick={() => toggleCard(cardId)}
-                          className="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-colors"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className={`w-2 h-12 rounded-full ${
-                              flaw.severity === 'CRITICAL' ? 'bg-red-500' :
-                              flaw.severity === 'MODERATE' ? 'bg-orange-500' : 'bg-yellow-500'
-                            }`} />
-                            <div className="text-left">
-                              <h4 className="text-slate-900 font-bold">{flaw.title}</h4>
-                              <div className="flex items-center gap-2 mt-1">
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${getSeverityColor(flaw.severity)}`}>
-                                  {flaw.severity}
-                                </span>
-                                <span className="text-slate-400 text-xs">{flaw.category}</span>
-                              </div>
-                            </div>
-                          </div>
-                          <ChevronRight className={`w-5 h-5 text-slate-400 transition-transform ${isCardExpanded ? 'rotate-90' : ''}`} />
-                        </button>
-
-                        {/* Flaw Details - Expandable */}
-                        {isCardExpanded && (
-                          <div className="border-t border-slate-100 p-4 space-y-4">
-                            <div>
-                              <p className="text-slate-600 text-sm leading-relaxed">{flaw.description}</p>
-                            </div>
-                            
-                            {/* Cause Chain */}
-                            {flaw.causeChain && flaw.causeChain.length > 0 && (
-                              <div className="bg-slate-50 border border-slate-100 rounded-lg p-3">
-                                <p className="text-[#FF6B35] text-xs font-bold uppercase mb-2 flex items-center gap-2">
-                                  <Zap className="w-3 h-3" /> Cause Chain
-                                </p>
-                                <div className="space-y-2">
-                                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic cause shape from vision analysis */}
-                                  {flaw.causeChain.map((cause: any, i: number) => (
-                                    <div key={i} className="flex items-start gap-2">
-                                      <ChevronRight className="w-4 h-4 text-orange-400 flex-shrink-0 mt-0.5" />
-                                      <div>
-                                        <span className="text-slate-900 text-sm font-medium">{cause.effect}</span>
-                                        <span className="text-slate-500 text-xs ml-2">— {cause.explanation}</span>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Correction */}
-                            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                              <p className="text-green-700 text-xs font-bold uppercase mb-1 flex items-center gap-2">
-                                <Target className="w-3 h-3" /> How to Fix
-                              </p>
-                              <p className="text-green-700 text-sm">{flaw.correction}</p>
-                            </div>
-
-                            {/* Drills */}
-                            {flaw.drills && flaw.drills.length > 0 && (
-                              <div>
-                                <p className="text-[#FF6B35] text-xs font-bold uppercase mb-2 flex items-center gap-2">
-                                  <Play className="w-3 h-3" /> Recommended Drills
-                                </p>
-                                <div className="grid gap-2">
-                                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic drill shape from vision analysis */}
-                                  {flaw.drills.map((drill: any, i: number) => (
-                                    <div key={i} className="flex items-center justify-between bg-slate-50 border border-slate-100 rounded-lg p-3">
-                                      <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-lg bg-[#FF6B35]/10 flex items-center justify-center">
-                                          <Play className="w-4 h-4 text-[#FF6B35]" />
-                                        </div>
-                                        <span className="text-slate-900 text-sm font-medium">{drill.name}</span>
-                                      </div>
-                                      <div className="flex items-center gap-2">
-                                        <span className="text-slate-500 text-xs flex items-center gap-1">
-                                          <Clock className="w-3 h-3" /> {drill.reps}
-                                        </span>
-                                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${getDifficultyColor(drill.difficulty)}`}>
-                                          {drill.difficulty}
-                                        </span>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2">
-          {Array.from({ length: totalPages }).map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrentPage(i + 1)}
-              className={`w-8 h-8 rounded-lg text-sm font-medium transition-all ${
-                currentPage === i + 1
-                  ? 'bg-[#FF6B35] text-white'
-                  : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50'
-              }`}
-            >
-              {i + 1}
+      <div className="mt-[18px] flex gap-[18px]">
+        {/* flaw list */}
+        <div className="w-[270px] shrink-0">
+          <SectionLabel>YOUR TOP FLAWS</SectionLabel>
+          {(hasData ? FLAWS : []).map((f, i) => (
+            <button key={f.n} type="button" onClick={() => setSel(i)}
+                    className={`mt-[10px] w-full rounded-[8px] border p-[14px] text-left ${sel === i ? "border-[var(--shotiq-color-shotiqOrange)] border-2" : "border-[var(--shotiq-color-rule)]"}`}>
+              <div className="flex items-center gap-[8px]">
+                <span className="grid h-[20px] w-[20px] place-items-center rounded-[4px] bg-[var(--shotiq-color-shotiqOrange)] text-[11px] font-bold text-white">{f.n}</span>
+                <span className="text-[14px] font-semibold">{f.title}</span>
+              </div>
+              <span className={`mt-[6px] inline-block rounded-[3px] px-[6px] py-[2px] text-[9px] font-bold text-white ${f.impact === "HIGH IMPACT" ? "bg-[var(--shotiq-color-reviewRed)]" : "bg-[var(--shotiq-color-shotiqOrange)]"}`}>{f.impact}</span>
+              <p className="mt-[6px] text-[12px] leading-[16px] text-[var(--shotiq-color-graphite)]">{f.desc}</p>
+              <div className="mt-[8px] flex justify-between border-t border-[var(--shotiq-color-rule)] pt-[6px] text-[9px] tracking-[0.04em] text-[var(--shotiq-color-graphite)]">
+                <span>{f.affects}</span><span>{f.delta}</span>
+              </div>
             </button>
           ))}
+          {!hasData && (
+            <Card className="mt-[10px] p-[16px] text-[13px] text-[var(--shotiq-color-graphite)]">
+              Flaws appear after your first analysis. <Link className="text-[var(--shotiq-color-analysisBlue)]" href="/analyze">Analyze a shot</Link>.
+            </Card>
+          )}
+          <button type="button" className="mt-[10px] text-[13px] text-[var(--shotiq-color-graphite)]">Lower impact flaws (2) ›</button>
         </div>
-      )}
+
+        {/* comparison viewer */}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between">
+            <SectionLabel>{hasData ? `SELECTED FLAW: ${FLAWS[sel].title.toUpperCase()}` : "SELECTED FLAW"}</SectionLabel>
+            <span className="text-[12px] text-[var(--shotiq-color-analysisBlue)]">View details</span>
+          </div>
+          <div className="mt-[8px] flex gap-[4px]">
+            <div className="relative flex-1"><MediaSurface height={330} rounded={4} />
+              <span className="absolute left-[12px] top-[12px] text-[11px] font-bold text-white">YOUR SHOT</span></div>
+            <div className="relative flex-1"><MediaSurface height={330} rounded={4} />
+              <span className="absolute left-[12px] top-[12px] text-[11px] font-bold text-white">MODEL REFERENCE
+                <span className="ml-[6px] rounded-[3px] bg-[var(--shotiq-color-analysisBlue)] px-[5px] py-[1px] text-[8px]">PRO LEVEL</span></span></div>
+          </div>
+          <SectionLabel className="mt-[12px]">AFFECTED FRAMES (15)</SectionLabel>
+          <div className="mt-[6px] flex items-center gap-[6px]">
+            {Array.from({ length: 7 }).map((_, i) => (
+              <div key={i} className={`h-[64px] flex-1 rounded-[4px] bg-[#1B1D20] ${i === 3 ? "ring-2 ring-[var(--shotiq-color-shotiqOrange)]" : ""}`} />
+            ))}
+          </div>
+          <div className="mt-[2px] text-center text-[9px] font-bold tracking-[0.06em] text-[var(--shotiq-color-shotiqOrange)]">RELEASE</div>
+        </div>
+
+        {/* insights rail */}
+        <div className="w-[250px] shrink-0">
+          <SectionLabel>FLAW INSIGHTS</SectionLabel>
+          <Card className="mt-[8px] divide-y divide-[var(--shotiq-color-rule)]">
+            {["Your elbow angle at release averages 118°. Goal range: 145° – 165°.",
+              "Elbow drift moves release point forward by 2.6\" on average. Goal: keep elbow over hip.",
+              "Impact: -8.3% to make % on affected shots."].map((t, i) => (
+              <div key={i} className="flex gap-[10px] p-[12px]">
+                <PhaseGlyph size={26} />
+                <p className="text-[12px] leading-[17px]">{t}</p>
+              </div>
+            ))}
+          </Card>
+          <SectionLabel className="mt-[14px]">CORRECTIONS</SectionLabel>
+          <Card className="mt-[8px] divide-y divide-[var(--shotiq-color-rule)]">
+            {["Stack elbow over shooting hip.", "Create a 90° angle at set point.", "Drive straight up through release."].map((t) => (
+              <div key={t} className="flex items-center gap-[10px] p-[10px]">
+                <PhaseGlyph size={20} /><span className="text-[12px]">{t}</span>
+              </div>
+            ))}
+          </Card>
+          <SectionLabel className="mt-[14px]">RECOMMENDED DRILLS</SectionLabel>
+          <Card className="mt-[8px] p-[12px]">
+            <div className="flex items-center gap-[10px]">
+              <span className="grid h-[36px] w-[36px] place-items-center rounded-full bg-[var(--shotiq-color-analysisBlue)] text-white">◎</span>
+              <div className="flex-1">
+                <div className="text-[13px] font-semibold">Elbow Alignment Holds</div>
+                <div className="text-[11px] text-[var(--shotiq-color-graphite)]">8 min · Form Focus</div>
+              </div>
+            </div>
+            <Link href="/training/drills/elbow-alignment-holds"
+                  className="mt-[10px] flex h-[36px] items-center justify-center rounded-[4px] bg-[var(--shotiq-color-shotiqOrange)] text-[12px] font-bold tracking-[0.05em] text-white">
+              START DRILL
+            </Link>
+          </Card>
+        </div>
+      </div>
+
+      {/* bottom strip */}
+      <div className="mt-[18px] flex gap-[16px]">
+        <Card className="flex-1 px-[18px] py-[14px]">
+          <SectionLabel>FLAW HISTORY</SectionLabel>
+          <TrendLine points={[-1, -2, -5, -7, -7.5, -8, -8.2, -8.3].map((v) => -v)} width={420} height={110}
+                     stroke="var(--shotiq-color-shotiqOrange)" dotFill="var(--shotiq-color-shotiqOrange)" />
+          <div className="text-right text-[13px] font-bold text-[var(--shotiq-color-shotiqOrange)]">-8.3%</div>
+        </Card>
+        <Card className="w-[230px] shrink-0 px-[18px] py-[14px]">
+          <SectionLabel>TREND SUMMARY</SectionLabel>
+          <p className="mt-[6px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
+            Impact on make % has improved 8.7% over the last 14 days.
+          </p>
+          <div className="mt-[8px] text-[18px] font-bold text-[var(--shotiq-color-confirmGreen)]">↓ 8.7%</div>
+          <div className="text-[10px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">FROM -17.0% TO -8.3%</div>
+        </Card>
+        <Card className="flex-1 px-[18px] py-[14px]">
+          <div className="flex items-center justify-between">
+            <SectionLabel>RECENT SESSIONS</SectionLabel>
+            <Link href="/results/demo/history" className="text-[11px] text-[var(--shotiq-color-graphite)]">View all history</Link>
+          </div>
+          <div className="mt-[4px] divide-y divide-[var(--shotiq-color-rule)]">
+            {[["Today at 8:24 AM", "24 shots", "-8.3%"], ["May 10, 2025 at 6:15 PM", "22 shots", "-9.6%"], ["May 7, 2025 at 5:02 PM", "25 shots", "-11.2%"]].map(([d, s, v]) => (
+              <div key={d} className="flex items-center justify-between py-[8px] text-[12px]">
+                <span>{d}</span><span className="text-[var(--shotiq-color-graphite)]">{s}</span>
+                <span className="font-bold text-[var(--shotiq-color-reviewRed)]">{v}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
     </div>
   )
 }
-

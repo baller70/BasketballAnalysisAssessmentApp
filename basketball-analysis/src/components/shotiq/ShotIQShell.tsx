@@ -295,3 +295,21 @@ export function WideSidebar({ sections }: {
     </nav>
   )
 }
+
+/** Circular progress ring (SVG, data-driven). */
+export function Ring({ pct, size = 96, stroke = 8, color = "var(--shotiq-color-shotiqOrange)", children }: {
+  pct: number; size?: number; stroke?: number; color?: string; children?: React.ReactNode
+}) {
+  const r = (size - stroke) / 2
+  const c = 2 * Math.PI * r
+  return (
+    <span className="relative inline-grid place-items-center" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--shotiq-color-rule)" strokeWidth={stroke} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={stroke}
+                strokeDasharray={`${c * Math.min(1, Math.max(0, pct))} ${c}`} strokeLinecap="round" />
+      </svg>
+      <span className="absolute">{children}</span>
+    </span>
+  )
+}
