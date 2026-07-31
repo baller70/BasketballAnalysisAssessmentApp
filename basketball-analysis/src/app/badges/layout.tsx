@@ -1,10 +1,6 @@
 "use client"
 
-/**
- * Canonical shell wrapper for /badges.
- * Gives this route the canonical ShotIQ topbar and rail (sidecar contract)
- * while the page's existing domain logic renders inside region-main untouched.
- */
+/** Canonical shell wrapper for /badges (renders the 095 achievements view). */
 
 import { ShotIQShell } from "@/components/shotiq/ShotIQShell"
 

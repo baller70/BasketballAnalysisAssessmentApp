@@ -1,74 +1,191 @@
 "use client"
 
-import React, { useState } from "react"
-import HistoricalDataSection from "@/components/analytics/HistoricalDataSection"
-import { AnalyticsCardGame } from "@/components/analytics/AnalyticsCardGame"
-import { ArrowLeft, BarChart3, Layers, Table2 } from "lucide-react"
-import Link from "next/link"
+/** /results/demo/history — canonical 093-web-analytics-history. */
 
-export default function HistoryPage() {
-  const [viewMode, setViewMode] = useState<'cards' | 'detailed'>('cards')
+import React, { useState } from "react"
+import { Calendar, ChevronDown, SlidersHorizontal, Share, Play, X, ChevronLeft, ChevronRight } from "lucide-react"
+import { SectionLabel, Card, MediaSurface, TrendLine, PhaseGlyph, Stat } from "@/components/shotiq/ShotIQShell"
+import { useHistory } from "@/components/shotiq/ResultsBits"
+
+const DEMO_ROWS: [string, string, string, string, string, string][] = [
+  ["May 12, 2025 · 8:24 AM", "82", "Good", "62.5%", "24 / 15", "High"],
+  ["May 11, 2025 · 6:15 PM", "78", "Good", "58.3%", "12 / 7", "High"],
+  ["May 10, 2025 · 4:02 PM", "75", "Good", "54.5%", "11 / 6", "High"],
+  ["May 9, 2025 · 7:33 PM", "80", "Good", "60.0%", "20 / 12", "High"],
+  ["May 7, 2025 · 9:11 AM", "72", "Fair", "52.4%", "21 / 11", "Medium"],
+  ["May 6, 2025 · 5:48 PM", "69", "Fair", "50.0%", "14 / 7", "Medium"],
+  ["May 4, 2025 · 11:23 AM", "77", "Good", "56.3%", "16 / 9", "High"],
+  ["May 2, 2025 · 8:02 PM", "81", "Good", "61.9%", "21 / 13", "High"],
+]
+
+export default function AnalysisHistoryPage() {
+  const { items, hasData, score, loading } = useHistory()
+  const [sel, setSel] = useState(0)
+  const rows: [string, string, string, string, string, string][] = items.length
+    ? items.map((a) => [
+        `${a.when}`, a.score != null ? String(Math.round(a.score)) : "—",
+        (a.score ?? 0) >= 70 ? "Good" : "Fair", "—", "—", "High",
+      ] as [string, string, string, string, string, string])
+    : hasData ? DEMO_ROWS : []
 
   return (
-    <div className="space-y-8">
-      {/* Page Header - Back button and Title inside the page */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div className="flex items-center gap-4">
-          {/* Back to Dashboard */}
-          <Link 
-            href="/results/demo" 
-            className="flex items-center text-slate-500 hover:text-slate-900 transition-colors group"
-          >
-            <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 shadow-sm flex items-center justify-center group-hover:border-[#FF6B35]/50 group-hover:bg-[#FF6B35]/10 transition-all">
-              <ArrowLeft className="w-5 h-5" />
-            </div>
-          </Link>
-          
-          {/* Divider */}
-          <div className="h-8 w-px bg-slate-200" />
-          
-          {/* Title */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#FF6B35]/10 border border-[#FF6B35]/30 flex items-center justify-center">
-              <BarChart3 className="w-5 h-5 text-[#FF6B35]" />
-            </div>
-            <h1 className="text-2xl font-bold text-slate-900 uppercase tracking-wider">Analytics</h1>
+    <div data-testid="screen-desktop-web-analytics-history" className="flex gap-[18px]">
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="shotiq-display text-[48px] leading-[50px]">ANALYSIS HISTORY</h1>
+            <p className="mt-[4px] text-[13px] text-[var(--shotiq-color-graphite)]">Review and track your shooting performance over time.</p>
+          </div>
+          <div className="flex gap-[10px] pt-[4px]">
+            <button type="button" className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-[13px]">
+              <Calendar className="h-[14px] w-[14px]" /> Apr 28 – May 12, 2025 <ChevronDown className="h-[12px] w-[12px]" />
+            </button>
+            <button type="button" className="flex h-[42px] flex-col justify-center rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-left">
+              <span className="text-[9px] text-[var(--shotiq-color-graphite)]">Select metric</span>
+              <span className="flex items-center gap-[6px] text-[13px]">Form Score <ChevronDown className="h-[11px] w-[11px]" /></span>
+            </button>
+            <button type="button" className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-[13px]">
+              <SlidersHorizontal className="h-[14px] w-[14px]" /> Filter
+            </button>
+            <button type="button" className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-[13px]">
+              <Share className="h-[14px] w-[14px]" /> Export
+            </button>
           </div>
         </div>
 
-        {/* View Mode Toggle */}
-        <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-xl border border-slate-200">
-          <button
-            onClick={() => setViewMode('cards')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold uppercase transition-all ${
-              viewMode === 'cards'
-                ? 'bg-[#FF6B35] text-white'
-                : 'text-slate-500 hover:text-slate-900'
-            }`}
-          >
-            <Layers className="w-4 h-4" />
-            <span className="hidden sm:inline">Cards</span>
-          </button>
-          <button
-            onClick={() => setViewMode('detailed')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold uppercase transition-all ${
-              viewMode === 'detailed'
-                ? 'bg-[#FF6B35] text-white'
-                : 'text-slate-500 hover:text-slate-900'
-            }`}
-          >
-            <Table2 className="w-4 h-4" />
-            <span className="hidden sm:inline">Detailed</span>
-          </button>
+        {/* summary strip */}
+        <Card className="mt-[12px] flex items-center divide-x divide-[var(--shotiq-color-rule)] px-[8px] py-[12px]">
+          <div className="px-[16px]">
+            <div className="text-[10px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">AVERAGE FORM SCORE</div>
+            <div className="flex items-end gap-[8px]">
+              <span className="shotiq-numeric text-[34px] leading-[38px]">{score ?? "—"}</span>
+              <span className="pb-[8px] text-[11px] text-[var(--shotiq-color-analysisBlue)]">● Good</span>
+            </div>
+          </div>
+          <div className="px-[16px]"><Stat value={hasData ? "24" : "0"} label="SHOTS · Total" valueClass="text-[26px] leading-[30px]" /></div>
+          <div className="px-[16px]"><Stat value={hasData ? "15" : "0"} label="MAKES · Total" valueClass="text-[26px] leading-[30px]" /></div>
+          <div className="px-[16px]"><Stat value={hasData ? "62.5%" : "—"} label="MAKE %" valueClass="text-[26px] leading-[30px]" /></div>
+          <div className="flex-1 px-[16px]">
+            <div className="text-[10px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">FORM SCORE TREND</div>
+            <div className="flex items-center gap-[12px]">
+              <TrendLine points={[72, 75, 73, 78, 76, 80, 79, 82]} width={220} height={44} />
+              <div><div className="text-[12px] font-bold text-[var(--shotiq-color-confirmGreen)]">+8.1%</div>
+                <div className="text-[9px] text-[var(--shotiq-color-graphite)]">vs previous 6</div></div>
+            </div>
+          </div>
+        </Card>
+
+        {/* sessions table */}
+        <div className="mt-[14px] flex items-center gap-[10px]">
+          <SectionLabel>SESSIONS</SectionLabel>
+          <span className="text-[12px] text-[var(--shotiq-color-graphite)]">{rows.length} sessions</span>
         </div>
+        <table className="mt-[6px] w-full text-[12px]">
+          <thead>
+            <tr className="text-left text-[9px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">
+              {["DATE / TIME ↓", "FORM SCORE", "MAKE %", "SHOTS / MAKES", "CONFIDENCE", "FOCUS", "MEDIA", ""].map((h) => (
+                <th key={h} className="py-[6px] font-bold">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[var(--shotiq-color-rule)]">
+            {rows.map(([d, fs, band, mk, sm, conf], i) => (
+              <tr key={i} onClick={() => setSel(i)}
+                  className={`cursor-pointer ${sel === i ? "outline outline-1 outline-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
+                <td className="py-[9px]">
+                  <span className={`mr-[8px] inline-block h-[12px] w-[12px] rounded-full border-2 align-middle ${sel === i ? "border-[var(--shotiq-color-shotiqOrange)] bg-[var(--shotiq-color-shotiqOrange)]" : "border-[var(--shotiq-color-rule)]"}`} />
+                  {d}
+                </td>
+                <td><span className="shotiq-numeric text-[18px]">{fs}</span>
+                  <span className={`ml-[6px] text-[10px] ${band === "Good" ? "text-[var(--shotiq-color-analysisBlue)]" : "text-[var(--shotiq-color-graphite)]"}`}>● {band}</span></td>
+                <td className="shotiq-numeric text-[16px]">{mk}</td>
+                <td className="shotiq-numeric text-[16px]">{sm}</td>
+                <td>
+                  <span className="mr-[6px] inline-flex gap-[2px]">
+                    {[0, 1, 2, 3].map((b) => (
+                      <span key={b} className={`h-[8px] w-[8px] rounded-[2px] ${conf === "High" || b < 2 ? "bg-[var(--shotiq-color-confirmGreen)]" : "bg-[var(--shotiq-color-rule)]"}`} />
+                    ))}
+                  </span>{conf}
+                </td>
+                <td><PhaseGlyph size={22} /></td>
+                <td>
+                  <span className="flex gap-[2px]">
+                    {[0, 1, 2, 3].map((m) => <span key={m} className="h-[22px] w-[30px] rounded-[2px] bg-[#1B1D20]" />)}
+                    <span className="grid h-[22px] w-[22px] place-items-center rounded-[2px] bg-[var(--shotiq-color-rule)] text-[9px]">+3</span>
+                  </span>
+                </td>
+                <td><ChevronRight className="h-[13px] w-[13px] text-[var(--shotiq-color-graphite)]" /></td>
+              </tr>
+            ))}
+            {!rows.length && (
+              <tr><td colSpan={8} className="py-[26px] text-center text-[13px] text-[var(--shotiq-color-graphite)]">
+                {loading ? "Loading history…" : "No sessions yet — run your first analysis."}
+              </td></tr>
+            )}
+          </tbody>
+        </table>
+        {rows.length > 0 && (
+          <div className="mt-[10px] flex items-center justify-center gap-[10px] text-[12px]">
+            Showing 1–{Math.min(8, rows.length)} of {rows.length}
+            <ChevronLeft className="h-[13px] w-[13px]" />
+            <span className="grid h-[26px] w-[26px] place-items-center rounded-[4px] border border-[var(--shotiq-color-shotiqOrange)] font-bold text-[var(--shotiq-color-shotiqOrange)]">1</span>
+            <span className="grid h-[26px] w-[26px] place-items-center rounded-[4px] border border-[var(--shotiq-color-rule)]">2</span>
+            <ChevronRight className="h-[13px] w-[13px]" />
+          </div>
+        )}
       </div>
 
-      {/* Conditional Content Based on View Mode */}
-      {viewMode === 'cards' ? (
-        <AnalyticsCardGame />
-      ) : (
-        <HistoricalDataSection />
-      )}
+      {/* selected session rail */}
+      <aside className="w-[350px] shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[18px]">
+        <div className="flex items-center justify-between">
+          <SectionLabel>SELECTED SESSION</SectionLabel>
+          <X className="h-[14px] w-[14px] text-[var(--shotiq-color-graphite)]" />
+        </div>
+        <div className="mt-[4px] text-[19px] font-semibold">{rows[sel]?.[0] ?? "—"}</div>
+        <div className="relative mt-[10px]">
+          <MediaSurface height={210} duration="0:12" />
+          <Play className="absolute bottom-[46px] left-[12px] h-[15px] w-[15px] text-white" fill="white" />
+        </div>
+        <Card className="mt-[12px] divide-y divide-[var(--shotiq-color-rule)]">
+          <div className="flex divide-x divide-[var(--shotiq-color-rule)]">
+            <div className="flex-1 p-[12px]">
+              <div className="text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">FORM SCORE</div>
+              <div className="shotiq-numeric text-[26px] text-[var(--shotiq-color-shotiqOrange)]">{rows[sel]?.[1] ?? "—"}</div>
+              <div className="h-[5px] rounded-full bg-[var(--shotiq-color-rule)]"><div className="h-full w-[82%] rounded-full bg-[var(--shotiq-color-shotiqOrange)]" /></div>
+            </div>
+            <div className="flex-1 p-[12px]"><Stat value={rows[sel]?.[3] ?? "—"} label="MAKE %" valueClass="text-[24px] leading-[28px]" /></div>
+            <div className="flex-1 p-[12px]"><Stat value={rows[sel]?.[4] ?? "—"} label="SHOTS / MAKES" valueClass="text-[24px] leading-[28px]" /></div>
+          </div>
+          <div className="flex divide-x divide-[var(--shotiq-color-rule)]">
+            <div className="flex-1 p-[12px]">
+              <div className="text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">CONFIDENCE</div>
+              <div className="mt-[4px] flex items-center gap-[6px]">
+                <span className="flex gap-[2px]">{[0, 1, 2, 3].map((b) => <span key={b} className="h-[9px] w-[9px] rounded-[2px] bg-[var(--shotiq-color-confirmGreen)]" />)}</span>
+                <span className="text-[12px]">High</span>
+              </div>
+            </div>
+            <div className="flex-1 p-[12px]">
+              <div className="text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">FOCUS</div>
+              <div className="mt-[2px] flex items-center gap-[8px]">
+                <PhaseGlyph size={24} /><span className="text-[11px] leading-[14px]">Keep elbow stacked through release</span>
+              </div>
+            </div>
+          </div>
+        </Card>
+        <Card className="mt-[12px] flex items-center gap-[12px] p-[12px]">
+          <div className="flex-1">
+            <div className="text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">MECHANICS TREND (LAST 6)</div>
+            <TrendLine points={[72, 76, 74, 78, 80, 82]} width={200} height={42} />
+          </div>
+          <div className="text-right">
+            <div className="text-[13px] font-bold text-[var(--shotiq-color-confirmGreen)]">+8.1% ↗</div>
+            <div className="text-[9px] text-[var(--shotiq-color-graphite)]">vs previous 6</div>
+          </div>
+        </Card>
+        <button type="button" className="mt-[12px] h-[46px] w-full rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] text-[14px] font-medium text-white">
+          Compare sessions
+        </button>
+      </aside>
     </div>
   )
 }

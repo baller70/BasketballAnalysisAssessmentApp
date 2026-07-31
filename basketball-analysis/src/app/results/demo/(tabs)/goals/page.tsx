@@ -1,370 +1,200 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
-import { Target, Plus, TrendingUp, Calendar, Trophy, X, Check } from "lucide-react"
-import { GoalTransitMap } from "@/components/goals"
-import { useAnalysisStore } from "@/stores/analysisStore"
-import { getAllSessions, AnalysisSession } from "@/services/sessionStorage"
-import { Card, CardContent } from "@/components/ui/card"
-import { useGoals } from "@/lib/goals"
+/** /results/demo/goals — canonical 092-web-goals-plan, backed by /api/goals. */
 
-export default function GoalsPage() {
-  const store = useAnalysisStore()
-  
-  const visionAnalysisResult = store?.visionAnalysisResult || null
-  const [sessions, setSessions] = useState<AnalysisSession[]>([])
-  
-  // Get goals from context (dynamic, not hardcoded)
-  const { totalGoals, completedCount, addGoal } = useGoals()
+import React, { useEffect, useState } from "react"
+import Link from "next/link"
+import { Pencil, MoreVertical, Check, ChevronRight } from "lucide-react"
+import { SectionLabel, Card, MediaSurface, TrendLine, PhaseGlyph, Stat } from "@/components/shotiq/ShotIQShell"
+import { useHistory } from "@/components/shotiq/ResultsBits"
 
-  // Goal creation modal state
-  const [showGoalModal, setShowGoalModal] = useState(false)
-  
+interface Goal { id: string; title: string; progress?: number; targetDate?: string }
+
+export default function GoalsPlanPage() {
+  const { hasData, score } = useHistory()
+  const [goals, setGoals] = useState<Goal[]>([])
   useEffect(() => {
-    try {
-      const loadedSessions = getAllSessions()
-      setSessions(Array.isArray(loadedSessions) ? loadedSessions : [])
-    } catch (error) {
-      console.error('Error loading sessions:', error)
-      setSessions([])
-    }
+    fetch("/api/goals", { credentials: "include" }).then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d?.goals?.length) setGoals(d.goals) }).catch(() => {})
   }, [])
-  
-  // Combine current session with historical sessions for stats
-  const allSessionsData = useMemo(() => {
-    const data: { id: string; date: Date; score: number; isLive: boolean }[] = []
-    
-    if (visionAnalysisResult?.success) {
-      const score = visionAnalysisResult.overall_score || 70
-      data.push({
-        id: 'current',
-        date: new Date(),
-        score,
-        isLive: true
-      })
-    }
-    
-    sessions.forEach(session => {
-      const score = session.analysisData?.overallScore || 70
-      data.push({
-        id: session.id,
-        date: new Date(session.date),
-        score,
-        isLive: false
-      })
-    })
-    
-    return data.sort((a, b) => a.date.getTime() - b.date.getTime())
-  }, [visionAnalysisResult, sessions])
-  
-  // Calculate progress stats
-  const progressStats = useMemo(() => {
-    if (!allSessionsData || allSessionsData.length === 0) {
-      return { scoreChange: 0, sessionsCount: 0, avgScore: 0, trend: 'stable' as const }
-    }
-    if (allSessionsData.length < 2) {
-      return { scoreChange: 0, sessionsCount: allSessionsData.length, avgScore: allSessionsData[0]?.score || 0, trend: 'stable' as const }
-    }
-    
-    const first = allSessionsData[0]
-    const last = allSessionsData[allSessionsData.length - 1]
-    if (!first || !last) {
-      return { scoreChange: 0, sessionsCount: allSessionsData.length, avgScore: 0, trend: 'stable' as const }
-    }
-    const scoreChange = last.score - first.score
-    const avgScore = allSessionsData.reduce((sum, s) => sum + (s?.score || 0), 0) / allSessionsData.length
-    const trend = scoreChange > 5 ? 'improving' as const : scoreChange < -5 ? 'declining' as const : 'stable' as const
-    
-    return { scoreChange, sessionsCount: allSessionsData.length, avgScore: Math.round(avgScore), trend }
-  }, [allSessionsData])
-
-  // Points are awarded by real activity (e.g. completing a goal), never for
-  // merely opening the create-goal modal — so this just opens the modal.
-  const handleCreateGoal = () => {
-    setShowGoalModal(true)
+  const primary = goals[0] ?? {
+    id: "demo", title: "Keep elbow stacked through release", progress: 0.72,
   }
+  const pct = Math.round((primary.progress ?? 0) * 100)
 
   return (
-    <div className="space-y-8 relative">
-      {/* Goals Card - Gold Theme */}
-      <Card className="bg-white border-slate-200 shadow-sm overflow-hidden">
-        <CardContent className="p-0">
-          <div className="relative p-6 lg:p-8 overflow-hidden">
-            {/* Background gradient mesh */}
-            <div className="absolute inset-0 opacity-30">
-              <div className="absolute top-0 left-0 w-96 h-96 bg-[#FF6B35]/5 rounded-full blur-3xl"></div>
-              <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#B8860B]/5 rounded-full blur-3xl"></div>
+    <div data-testid="screen-desktop-web-goals-plan">
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="shotiq-display text-[48px] leading-[50px]">GOALS &amp; PLAN</h1>
+          <p className="mt-[4px] text-[14px] text-[var(--shotiq-color-graphite)]">Stay focused. Track progress. Build better mechanics.</p>
+        </div>
+        <div className="flex gap-[12px]">
+          <button type="button" className="flex h-[48px] items-center gap-[10px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] px-[22px] text-[14px] font-medium text-white">
+            <TrendLine points={[2, 4, 3, 5]} width={26} height={16} stroke="#fff" dotFill="#fff" /> Create goal
+          </button>
+          <button type="button" className="flex h-[48px] items-center gap-[10px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[22px] text-[14px]">
+            <TrendLine points={[2, 3, 4]} width={26} height={16} stroke="var(--shotiq-color-ink)" dotFill="var(--shotiq-color-ink)" /> Log progress
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-[16px] grid grid-cols-3 gap-[16px]">
+        {/* primary goal */}
+        <Card className="p-[18px]">
+          <div className="text-[11px] font-bold tracking-[0.06em] text-[var(--shotiq-color-confirmGreen)]">PRIMARY GOAL</div>
+          <h2 className="mt-[6px] text-[22px] font-semibold leading-[28px]">{primary.title}</h2>
+          <div className="mt-[8px] flex items-center gap-[10px] text-[12px] text-[var(--shotiq-color-graphite)]">
+            <span className="rounded-[4px] border border-[var(--shotiq-color-confirmGreen)] px-[8px] py-[2px] text-[10px] font-bold text-[var(--shotiq-color-confirmGreen)]">ACTIVE</span>
+            Started May 10, 2025 · Target date Jun 10, 2025 <Pencil className="h-[12px] w-[12px]" />
+          </div>
+          <p className="mt-[10px] text-[13px] text-[var(--shotiq-color-graphite)]">Improve release consistency and arm alignment</p>
+          <div className="mt-[8px] flex items-center gap-[10px]">
+            <div className="h-[7px] flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
+              <div className="h-full rounded-full bg-[var(--shotiq-color-confirmGreen)]" style={{ width: `${pct}%` }} />
             </div>
-            
-            {/* Goals Count Card */}
-            <div className="relative grid grid-cols-1 gap-6 lg:gap-8">
-              <div className="relative group max-w-md mx-auto w-full">
-                <div className="relative bg-white backdrop-blur-xl rounded-3xl p-8 lg:p-10 border border-slate-200 hover:border-[#FF6B35]/40 transition-all duration-500 overflow-hidden shadow-sm">
-                  <div className="absolute inset-0 bg-gradient-to-br from-slate-50/50 to-transparent"></div>
-                  
-                  {/* Create Goal Button */}
-                  <button
-                    type="button"
-                    onClick={handleCreateGoal}
-                    className="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1.5 bg-[#FF6B35] hover:bg-[#FF4500] text-white text-xs font-bold rounded-lg transition-all shadow-lg shadow-[#FF6B35]/20"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    Create Goal
-                  </button>
-                  
-                  <div className="relative mb-6">
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-8xl lg:text-9xl font-black text-[#FF6B35] tabular-nums leading-none tracking-tight" style={{
-                        textShadow: '0 0 40px rgba(255, 215, 0, 0.3), 0 0 80px rgba(255, 215, 0, 0.1)'
-                      }}>
-                        {totalGoals}
-                      </span>
-                      <Target className="w-8 h-8 lg:w-10 lg:h-10 text-[#FF6B35]/60 mb-4" />
-                    </div>
+            <span className="text-[13px]">{pct}%</span>
+          </div>
+          <div className="mt-[12px] flex gap-[18px] border-t border-[var(--shotiq-color-rule)] pt-[12px]">
+            <Stat value={hasData ? "24" : "0"} label="SHOTS" valueClass="text-[20px] leading-[22px]" />
+            <Stat value={hasData ? "15" : "0"} label="MAKES" valueClass="text-[20px] leading-[22px]" />
+            <Stat value={hasData ? "62.5%" : "—"} label="MAKE %" valueClass="text-[20px] leading-[22px]" />
+            <div><div className="shotiq-numeric text-[20px] leading-[22px] text-[var(--shotiq-color-confirmGreen)]">+8.1%</div>
+              <div className="text-[9px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">VS LAST SESSION</div></div>
+          </div>
+          <SectionLabel className="mt-[12px] border-t border-[var(--shotiq-color-rule)] pt-[12px]">PROGRESS TREND</SectionLabel>
+          <div className="flex items-center gap-[12px]">
+            <TrendLine points={[2, 2.6, 2.2, 3, 2.7, 3.4, 3.2, 4]} width={230} height={70} />
+            <div className="text-right">
+              <div className="text-[16px] font-bold text-[var(--shotiq-color-confirmGreen)]">+8.1%</div>
+              <div className="text-[9px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">VS LAST SESSION</div>
+            </div>
+          </div>
+          <SectionLabel className="mt-[10px] border-t border-[var(--shotiq-color-rule)] pt-[12px]">KEY MECHANIC FOCUS</SectionLabel>
+          <div className="mt-[6px] flex items-center gap-[12px]">
+            <PhaseGlyph size={40} />
+            <div className="flex-1">
+              <div className="text-[14px] font-semibold">Elbow vertical at release</div>
+              <p className="text-[11px] text-[var(--shotiq-color-graphite)]">Maintain a stacked arm position to improve consistency and accuracy.</p>
+            </div>
+            <div className="text-right">
+              <div className="text-[9px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">IMPACT</div>
+              <div className="text-[13px] font-bold text-[var(--shotiq-color-confirmGreen)]">High</div>
+              <div className="mt-[3px] text-[9px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">CONFIDENCE</div>
+              <div className="shotiq-numeric text-[13px]">7/10</div>
+            </div>
+          </div>
+          <div className="mt-[12px] flex gap-[10px]">
+            <button type="button" className="flex h-[42px] flex-1 items-center justify-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] text-[13px]">
+              <Pencil className="h-[13px] w-[13px]" /> Edit goal
+            </button>
+            <button type="button" aria-label="More" className="grid h-[42px] w-[46px] place-items-center rounded-[6px] border border-[var(--shotiq-color-rule)]">
+              <MoreVertical className="h-[14px] w-[14px]" />
+            </button>
+          </div>
+        </Card>
+
+        {/* middle column */}
+        <div className="space-y-[16px]">
+          <Card className="p-[16px]">
+            <div className="flex items-center justify-between">
+              <SectionLabel>LINKED ANALYSES</SectionLabel>
+              <Link href="/results/demo/history" className="text-[11px] text-[var(--shotiq-color-graphite)]">View all</Link>
+            </div>
+            <div className="mt-[4px] divide-y divide-[var(--shotiq-color-rule)]">
+              {[["Pull-Up Jumper", "May 12, 2025 at 8:24 AM", "82"], ["Spot-Up Three", "May 11, 2025 at 6:15 PM", "78"], ["Transition Pull-Up", "May 10, 2025 at 4:02 PM", "75"]].map(([t, d, s]) => (
+                <div key={String(t)} className="flex items-center gap-[12px] py-[9px]">
+                  <MediaSurface width={92} height={54} />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[14px] font-semibold">{t}</div>
+                    <div className="text-[10px] text-[var(--shotiq-color-graphite)]">{d}</div>
+                    <div className="text-[10px] text-[var(--shotiq-color-graphite)]">Form Score
+                      <span className="ml-[6px] shotiq-numeric text-[16px] text-[var(--shotiq-color-analysisBlue)]">{hasData ? s : "—"}</span>
+                      <span className="ml-[4px] text-[10px] text-[var(--shotiq-color-analysisBlue)]">● Good</span></div>
                   </div>
-                  
-                  <div className="relative">
-                    <p className="text-sm font-bold text-slate-500 uppercase tracking-[0.15em] mb-1">GOALS</p>
-                    <div className="h-0.5 w-16 bg-gradient-to-r from-[#FF6B35]/40 to-transparent"></div>
-                  </div>
-                  
-                  {/* Progress indicator */}
-                  <div className="mt-6 pt-6 border-t border-slate-200">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs text-slate-500 uppercase tracking-wider">Progress</span>
-                      <span className="text-xs text-[#FF6B35] font-bold">{completedCount}/{totalGoals} completed</span>
-                    </div>
-                    <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-to-r from-[#FF6B35] to-[#FF4500] rounded-full transition-all duration-500"
-                        style={{ width: `${totalGoals > 0 ? (completedCount / totalGoals) * 100 : 0}%` }}
-                      />
-                    </div>
-                  </div>
+                  <ChevronRight className="h-[14px] w-[14px] text-[var(--shotiq-color-graphite)]" />
                 </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-          <div className="flex items-center gap-2 mb-2">
-            <Calendar className="w-4 h-4 text-slate-400" />
-            <span className="text-slate-500 text-xs uppercase">Sessions</span>
-          </div>
-          <p className="text-slate-900 text-2xl font-black">{progressStats.sessionsCount}</p>
-        </div>
-        <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-          <div className="flex items-center gap-2 mb-2">
-            <Trophy className="w-4 h-4 text-slate-400" />
-            <span className="text-slate-500 text-xs uppercase">Avg Score</span>
-          </div>
-          <p className="text-slate-900 text-2xl font-black">{progressStats.avgScore}%</p>
-        </div>
-        <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-          <div className="flex items-center gap-2 mb-2">
-            <TrendingUp className="w-4 h-4 text-slate-400" />
-            <span className="text-slate-500 text-xs uppercase">Change</span>
-          </div>
-          <p className={`text-2xl font-black ${progressStats.scoreChange >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-            {progressStats.scoreChange >= 0 ? '+' : ''}{progressStats.scoreChange}%
-          </p>
-        </div>
-      </div>
-      
-      {/* Goal Transit Map - Journey */}
-      <GoalTransitMap />
-
-      {/* Goal Creation Modal */}
-      {showGoalModal && (
-        <GoalCreationModal
-          onClose={() => setShowGoalModal(false)}
-          onCreate={(goal) => {
-            addGoal(goal)
-            setShowGoalModal(false)
-          }}
-        />
-      )}
-    </div>
-  )
-}
-
-// ============================================
-// GOAL CREATION MODAL
-// ============================================
-
-type NewGoalCategory = 'form' | 'consistency' | 'volume' | 'accuracy' | 'streak' | 'custom'
-
-interface GoalCreationModalProps {
-  onClose: () => void
-  onCreate: (goal: {
-    name: string
-    description: string
-    targetValue: number
-    currentValue: number
-    unit: string
-    category: NewGoalCategory
-    xpReward: number
-  }) => void
-}
-
-const CATEGORY_OPTIONS: { value: NewGoalCategory; label: string; defaultUnit: string }[] = [
-  { value: 'form', label: 'Form', defaultUnit: 'score' },
-  { value: 'consistency', label: 'Consistency', defaultUnit: 'sessions' },
-  { value: 'volume', label: 'Volume', defaultUnit: 'shots' },
-  { value: 'accuracy', label: 'Accuracy', defaultUnit: 'makes' },
-  { value: 'streak', label: 'Streak', defaultUnit: 'days' },
-  { value: 'custom', label: 'Custom', defaultUnit: 'reps' },
-]
-
-function GoalCreationModal({ onClose, onCreate }: GoalCreationModalProps) {
-  const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
-  const [category, setCategory] = useState<NewGoalCategory>('volume')
-  const [targetValue, setTargetValue] = useState<number>(50)
-  const [unit, setUnit] = useState('shots')
-  const [xpReward, setXpReward] = useState<number>(100)
-  const [error, setError] = useState<string | null>(null)
-
-  const handleCategoryChange = (value: NewGoalCategory) => {
-    setCategory(value)
-    const opt = CATEGORY_OPTIONS.find((o) => o.value === value)
-    if (opt) setUnit(opt.defaultUnit)
-  }
-
-  const handleSubmit = () => {
-    if (!name.trim()) {
-      setError('Please enter a goal name.')
-      return
-    }
-    const safeTarget = Number.isFinite(targetValue) && targetValue > 0 ? Math.round(targetValue) : 1
-    onCreate({
-      name: name.trim().toUpperCase(),
-      description: description.trim() || `Reach ${safeTarget} ${unit.trim() || 'units'}`,
-      targetValue: safeTarget,
-      currentValue: 0,
-      unit: unit.trim() || 'units',
-      category,
-      xpReward: Number.isFinite(xpReward) && xpReward > 0 ? Math.round(xpReward) : 100,
-    })
-  }
-
-  return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
-          <div className="flex items-center gap-2">
-            <Target className="w-5 h-5 text-[#FF6B35]" />
-            <h3 className="font-bold text-slate-900 text-sm uppercase tracking-wide">Create Goal</h3>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-            aria-label="Close"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="p-5 space-y-4 overflow-y-auto">
-          {/* Name */}
-          <div>
-            <label className="block text-xs font-bold text-slate-600 uppercase mb-1.5">Goal Name *</label>
-            <input
-              value={name}
-              onChange={(e) => { setName(e.target.value); setError(null) }}
-              placeholder="e.g. 200 Makes"
-              className="w-full h-10 rounded-lg border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/40"
-            />
-          </div>
-
-          {/* Description */}
-          <div>
-            <label className="block text-xs font-bold text-slate-600 uppercase mb-1.5">Description</label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="What do you want to achieve?"
-              rows={2}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/40 resize-none"
-            />
-          </div>
-
-          {/* Category */}
-          <div>
-            <label className="block text-xs font-bold text-slate-600 uppercase mb-1.5">Category</label>
-            <select
-              value={category}
-              onChange={(e) => handleCategoryChange(e.target.value as NewGoalCategory)}
-              className="w-full h-10 rounded-lg border border-slate-200 px-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/40"
-            >
-              {CATEGORY_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
               ))}
-            </select>
-          </div>
-
-          {/* Target + Unit */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-bold text-slate-600 uppercase mb-1.5">Target</label>
-              <input
-                type="number"
-                min={1}
-                value={targetValue}
-                onChange={(e) => setTargetValue(parseInt(e.target.value, 10))}
-                className="w-full h-10 rounded-lg border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/40"
-              />
             </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-600 uppercase mb-1.5">Unit</label>
-              <input
-                value={unit}
-                onChange={(e) => setUnit(e.target.value)}
-                placeholder="shots"
-                className="w-full h-10 rounded-lg border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/40"
-              />
+          </Card>
+          <Card className="p-[16px]">
+            <div className="flex items-center justify-between">
+              <SectionLabel>SCHEDULED WORKOUTS</SectionLabel>
+              <span className="text-[11px] text-[var(--shotiq-color-graphite)]">View all</span>
             </div>
-          </div>
-
-          {/* XP Reward */}
-          <div>
-            <label className="block text-xs font-bold text-slate-600 uppercase mb-1.5">XP Reward</label>
-            <input
-              type="number"
-              min={0}
-              value={xpReward}
-              onChange={(e) => setXpReward(parseInt(e.target.value, 10))}
-              className="w-full h-10 rounded-lg border border-slate-200 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/40"
-            />
-          </div>
-
-          {error && <p className="text-sm text-red-500">{error}</p>}
+            <div className="mt-[4px] divide-y divide-[var(--shotiq-color-rule)]">
+              {[["Quick Release Builder", "20 min · Form Focus · Today at 5:00 PM", "Speed & Consistency"],
+                ["Combo Control Ladder", "18 min · Control Focus · Tomorrow at 11:00 AM", "Control & Timing"],
+                ["Handle to Release Flow", "22 min · Game Speed · May 15 at 4:30 PM", "Flow & Integration"]].map(([t, d, f]) => (
+                <div key={String(t)} className="flex items-center gap-[12px] py-[9px]">
+                  <span className="grid h-[36px] w-[36px] place-items-center rounded-[8px] bg-[var(--shotiq-color-analysisBlue)] text-white">◎</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[14px] font-semibold">{t}</div>
+                    <div className="text-[10px] text-[var(--shotiq-color-graphite)]">{d}</div>
+                  </div>
+                  <div className="w-[90px] text-right">
+                    <div className="text-[9px] tracking-[0.04em] text-[var(--shotiq-color-graphite)]">FOCUS</div>
+                    <div className="text-[10px]">{f}</div>
+                  </div>
+                  <MoreVertical className="h-[13px] w-[13px] text-[var(--shotiq-color-graphite)]" />
+                </div>
+              ))}
+            </div>
+            <button type="button" className="mt-[8px] flex h-[38px] w-full items-center justify-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] text-[13px]">
+              <PhaseGlyph size={16} /> Add drill
+            </button>
+          </Card>
         </div>
 
-        {/* Footer */}
-        <div className="p-5 border-t border-slate-200 flex gap-3">
-          <button
-            onClick={onClose}
-            className="flex-1 py-3 rounded-xl bg-white border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-all"
-          >
-            CANCEL
-          </button>
-          <button
-            onClick={handleSubmit}
-            className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#FF6B35] to-[#FF4500] text-white font-bold hover:brightness-110 transition-all flex items-center justify-center gap-2"
-          >
-            <Check className="w-5 h-5" />
-            CREATE GOAL
-          </button>
+        {/* right column */}
+        <div className="space-y-[16px]">
+          <Card className="p-[16px]">
+            <div className="flex items-center justify-between">
+              <SectionLabel>MILESTONES</SectionLabel>
+              <span className="text-[11px] text-[var(--shotiq-color-graphite)]">View all</span>
+            </div>
+            <div className="mt-[4px] divide-y divide-[var(--shotiq-color-rule)]">
+              {[["+5% Make Percentage", "Achieved May 11, 2025", "62.5%", "done"],
+                ["3 Sessions Logged", "Achieved May 11, 2025", "3/3", "done"],
+                ["75+ Form Score Average", "In progress", score != null ? String(score) : "—", "active"],
+                ["10 Consecutive Sessions", "0 / 10", "0/10", "open"],
+                ["65% Make Percentage", "In progress", "62.5%", "open"]].map(([t, d, v, st]) => (
+                <div key={String(t)} className="flex items-center gap-[12px] py-[9px]">
+                  <span className={`grid h-[24px] w-[24px] place-items-center rounded-full ${st === "done" ? "bg-[var(--shotiq-color-confirmGreen)] text-white" : st === "active" ? "border-2 border-[var(--shotiq-color-shotiqOrange)]" : "border-2 border-[var(--shotiq-color-rule)]"}`}>
+                    {st === "done" && <Check className="h-[13px] w-[13px]" />}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[13px] font-semibold">{t}</div>
+                    <div className="text-[10px] text-[var(--shotiq-color-graphite)]">{d}</div>
+                  </div>
+                  <span className={`shotiq-numeric text-[15px] ${st === "done" ? "text-[var(--shotiq-color-confirmGreen)]" : st === "active" ? "text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>{v}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+          <Card className="p-[16px]">
+            <SectionLabel>CREATE A NEW GOAL</SectionLabel>
+            <p className="mt-[6px] text-[12px] text-[var(--shotiq-color-graphite)]">
+              Define what you want to improve and we&apos;ll help track your progress.
+            </p>
+            <div className="mt-[10px] flex gap-[14px]">
+              <div className="grid h-[86px] w-[86px] shrink-0 place-items-center rounded-[8px] border-2 border-dashed border-[var(--shotiq-color-rule)]">
+                <TrendLine points={[2, 4, 1.6, 3.4]} width={50} height={36} stroke="var(--shotiq-color-shotiqOrange)" dotFill="var(--shotiq-color-shotiqOrange)" />
+              </div>
+              <ul className="space-y-[8px] text-[12px]">
+                {["Focus on the right mechanics", "Track progress with AI analysis", "Stay accountable and improve"].map((t) => (
+                  <li key={t} className="flex items-center gap-[8px]">
+                    <Check className="h-[13px] w-[13px] text-[var(--shotiq-color-confirmGreen)]" /> {t}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <button type="button" className="mt-[12px] flex h-[46px] w-full items-center justify-center gap-[10px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] text-[14px] font-medium text-white">
+              <TrendLine points={[2, 4, 3, 5]} width={26} height={16} stroke="#fff" dotFill="#fff" /> Create goal
+            </button>
+          </Card>
         </div>
       </div>
     </div>
   )
 }
-

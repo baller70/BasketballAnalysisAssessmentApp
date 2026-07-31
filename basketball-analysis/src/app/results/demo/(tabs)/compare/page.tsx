@@ -1,230 +1,198 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
-import { ScoreOrPassGame } from "@/components/comparison/ScoreOrPass"
-import { PhotoCompare } from "@/components/comparison/PhotoCompare"
-import { Phase6ComparisonPanel } from "@/components/comparison/Phase6ComparisonPanel"
-import { useAnalysisStore } from "@/stores/analysisStore"
-import {
-  fetchShooterDataset,
-  findTopMatches,
-  type UserPhysicalProfile,
-  type UserShootingMetrics,
-} from "@/services/comparisonAlgorithm"
-import type { ShooterProfile } from "@/data/shooterDatabase"
-import { Camera, Gamepad2 } from "lucide-react"
+/** /results/demo/compare — canonical 087-web-elite-comparison. */
 
-// Parse "6'2", "6-2" or raw inches into total inches. Returns undefined if blank.
-function parseHeightInches(height?: string): number | undefined {
-  if (!height) return undefined
-  const ftIn = height.match(/(\d+)['\-](\d+)/)
-  if (ftIn) return parseInt(ftIn[1]) * 12 + parseInt(ftIn[2])
-  const n = parseInt(height)
-  return !isNaN(n) && n > 40 && n < 100 ? n : undefined
-}
+import React, { useEffect, useState } from "react"
+import Link from "next/link"
+import { ChevronDown, RefreshCcw, Bookmark, MoreVertical, Play, ChevronLeft, ChevronRight } from "lucide-react"
+import { SectionLabel, Card, MediaSurface, Ring, PhaseGlyph, Stat } from "@/components/shotiq/ShotIQShell"
+import { useHistory } from "@/components/shotiq/ResultsBits"
 
-// PlayerProfile.skillLevel ("PROFESSIONAL") -> algorithm skill level ("ELITE").
-function mapSkillLevel(
-  level?: string
-): "BEGINNER" | "INTERMEDIATE" | "ADVANCED" | "ELITE" {
-  switch (level) {
-    case "BEGINNER":
-      return "BEGINNER"
-    case "ADVANCED":
-      return "ADVANCED"
-    case "PROFESSIONAL":
-    case "ELITE":
-      return "ELITE"
-    default:
-      return "INTERMEDIATE"
-  }
-}
+interface Shooter { id: number; name: string; position?: string }
+const PHASES = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
+const DIFFS: [string, string, string, string][] = [
+  ["Release Angle", "52°", "56°", "-4°"], ["Release Height", "7'1\"", "7'4\"", "-3\""],
+  ["Release Time", "0.64s", "0.62s", "+0.02s"], ["Elbow Angle at Release", "92°", "78°", "+14°"],
+  ["Wrist Flexion", "21°", "28°", "-7°"], ["Shot Arc", "Medium", "High", "—"], ["Balance at Release", "Good", "Great", "—"],
+]
+const MATCH: [string, number][] = [["SETUP", 88], ["LOAD", 79], ["RISE", 83], ["RELEASE", 71], ["FOLLOW-THROUGH", 84]]
 
 export default function ComparePage() {
-  const [viewMode, setViewMode] = useState<"photo" | "game">("photo")
-  const {
-    visionAnalysisResult,
-    uploadedImageBase64,
-    playerProfile,
-    detectedKeypoints,
-  } = useAnalysisStore()
-
-  // Live, consolidated reference-shooter dataset (GET /api/shooters with a
-  // bundled fallback). Shared by the match panel and the photo overlay so the
-  // whole tab runs on ONE dataset.
-  const [shooters, setShooters] = useState<ShooterProfile[] | null>(null)
-  // Latest persisted analysis (fallback when the in-memory store is empty,
-  // e.g. a returning user opens the compare tab directly).
-  const [latest, setLatest] = useState<{
-    angles?: Record<string, number | null>
-    imageUrl?: string | null
-  } | null>(null)
-
+  const { hasData, score } = useHistory()
+  const [elite, setElite] = useState<Shooter | null>(null)
   useEffect(() => {
-    let cancelled = false
-    fetchShooterDataset().then((d) => {
-      if (!cancelled) setShooters(d)
-    })
-    return () => {
-      cancelled = true
-    }
+    fetch("/api/shooters").then((r) => (r.ok ? r.json() : null))
+      .then((d) => setElite(d?.shooters?.[0] ?? null)).catch(() => {})
   }, [])
-
-  useEffect(() => {
-    let cancelled = false
-    fetch("/api/analysis-history?limit=1&includeAnalysis=true", {
-      credentials: "include",
-    })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (cancelled || !data?.success || !data.history?.length) return
-        const h = data.history[0]
-        setLatest({
-          angles: h.angles,
-          imageUrl: h.analysis?.annotatedImageUrl || h.analysis?.imageUrl || null,
-        })
-      })
-      .catch(() => {})
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  // REAL measured shooting metrics from the latest on-device analysis.
-  const userMetrics: UserShootingMetrics = useMemo(() => {
-    const a = visionAnalysisResult?.angles
-    if (a) {
-      return {
-        elbowAngle: a.right_elbow_angle ?? a.left_elbow_angle,
-        kneeAngle: a.right_knee_angle ?? a.left_knee_angle,
-        releaseAngle: a.release_angle,
-        shoulderTilt: a.shoulder_tilt ?? a.left_shoulder_angle,
-        hipTilt: a.hip_tilt,
-        followThroughAngle: a.follow_through_angle,
-      }
-    }
-    // Fallback to persisted history (elbow/knee/release only).
-    if (latest?.angles) {
-      return {
-        elbowAngle: latest.angles.elbow ?? undefined,
-        kneeAngle: latest.angles.knee ?? undefined,
-        releaseAngle: latest.angles.release ?? undefined,
-      }
-    }
-    return {}
-  }, [visionAnalysisResult, latest])
-
-  // Algorithm-shaped physical profile (drives matching + PhotoCompare reference).
-  const physicalProfile: UserPhysicalProfile = useMemo(
-    () => ({
-      heightInches: parseHeightInches(playerProfile.height) ?? 72,
-      weightLbs: playerProfile.weight ? parseInt(playerProfile.weight) : undefined,
-      wingspanInches: parseHeightInches(playerProfile.wingspan),
-      age: playerProfile.age ?? 25,
-      skillLevel: mapSkillLevel(playerProfile.skillLevel),
-    }),
-    [playerProfile]
-  )
-
-  const hasMetrics = useMemo(
-    () => Object.values(userMetrics).some((v) => typeof v === "number" && !isNaN(v)),
-    [userMetrics]
-  )
-
-  // Top matched shooter -> reference image for the photo overlay.
-  const topMatch = useMemo(() => {
-    if (!shooters || !hasMetrics) return null
-    return findTopMatches(physicalProfile, userMetrics, 1, shooters)[0] ?? null
-  }, [shooters, hasMetrics, physicalProfile, userMetrics])
-
-  const userImage = uploadedImageBase64 || latest?.imageUrl || null
-  const referenceImage = topMatch?.shooter.imageUrl || null
-
-  // Props for the consolidated match panel (string-shaped, real metrics).
-  const panelProfile = useMemo(
-    () => ({
-      name: playerProfile.name,
-      age: playerProfile.age,
-      height: playerProfile.height,
-      weight: playerProfile.weight ? parseInt(playerProfile.weight) : undefined,
-      wingspan: playerProfile.wingspan,
-      skillLevel: mapSkillLevel(playerProfile.skillLevel),
-    }),
-    [playerProfile]
-  )
 
   return (
-    <div className="space-y-6">
-      {/* View Mode Toggle */}
-      <div className="flex gap-2 p-1 bg-slate-50 rounded-xl border border-slate-200">
-        <button
-          onClick={() => setViewMode("photo")}
-          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-semibold transition-all ${
-            viewMode === "photo"
-              ? "bg-[#FF6B35] text-white"
-              : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
-          }`}
-        >
-          <Camera className="w-4 h-4" />
-          Photo Compare
-        </button>
-        <button
-          onClick={() => setViewMode("game")}
-          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg text-sm font-semibold transition-all ${
-            viewMode === "game"
-              ? "bg-[#FF6B35] text-white"
-              : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
-          }`}
-        >
-          <Gamepad2 className="w-4 h-4" />
-          Score or Pass
-        </button>
+    <div data-testid="screen-desktop-web-elite-comparison">
+      <div className="flex items-start justify-between gap-[14px]">
+        <div>
+          <h1 className="shotiq-display text-[46px] leading-[48px]">ELITE COMPARISON</h1>
+          <p className="mt-[4px] text-[14px] text-[var(--shotiq-color-graphite)]">See how your mechanics compare to elite-level form.</p>
+        </div>
+        <div className="flex gap-[10px] pt-[4px]">
+          {["Choose shooters", "Overlay skeletons", "Release"].map((t) => (
+            <button key={t} type="button" className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[16px] text-[13px]">
+              {t} <ChevronDown className="h-[13px] w-[13px] text-[var(--shotiq-color-graphite)]" />
+            </button>
+          ))}
+          <button type="button" className="flex h-[42px] items-center gap-[8px] rounded-[6px] bg-[var(--shotiq-color-confirmGreen)] px-[16px] text-[13px] font-medium text-white">
+            <RefreshCcw className="h-[14px] w-[14px]" /> Sync release frames
+          </button>
+        </div>
+      </div>
+      <div className="mt-[6px] flex items-center justify-between">
+        <Link href="/results/demo/history" className="text-[12px] text-[var(--shotiq-color-graphite)]">‹ Back to analyses</Link>
+        <span className="flex items-center gap-[6px] text-[12px] text-[var(--shotiq-color-graphite)]">
+          <Bookmark className="h-[13px] w-[13px]" /> Save comparison <MoreVertical className="h-[13px] w-[13px]" />
+        </span>
       </div>
 
-      {/* Content */}
-      {viewMode === "photo" ? (
-        <div className="space-y-6">
-          <PhotoCompare
-            beforeImage={userImage}
-            afterImage={referenceImage}
-            beforeLabel="You"
-            afterLabel={topMatch?.shooter.name || "Reference"}
-            beforeKeypoints={
-              visionAnalysisResult?.keypoints ??
-              (detectedKeypoints.length ? detectedKeypoints : null)
-            }
-          />
+      {/* dual viewers */}
+      <div className="mt-[8px] flex items-center gap-[14px]">
+        {(["YOU", "ELITE REFERENCE"] as const).map((side, sideIdx) => (
+          <div key={side} className="min-w-0 flex-1">
+            <div className="relative">
+              <MediaSurface height={280} />
+              <div className="absolute left-[14px] top-[12px] text-white">
+                <div className="text-[11px] font-bold tracking-[0.05em]">{side}</div>
+                <div className={`text-[14px] font-semibold ${sideIdx ? "text-[var(--shotiq-color-analysisBlue)]" : ""}`}>
+                  {sideIdx ? (elite?.name ?? "Elite Guard") : "You"}
+                </div>
+                {[["RELEASE ANGLE", sideIdx ? "56°" : "52°"], ["RELEASE HEIGHT", sideIdx ? "7'4\"" : "7'1\""], ["RELEASE TIME", sideIdx ? "0.62s" : "0.64s"]].map(([k, v]) => (
+                  <div key={k} className="mt-[6px]">
+                    <div className="text-[8px] tracking-[0.08em] text-white/60">{k}</div>
+                    <div className={`shotiq-numeric text-[18px] leading-[20px] ${sideIdx ? "text-[var(--shotiq-color-analysisBlue)]" : "text-[var(--shotiq-color-shotiqOrange)]"}`}>{v}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="mt-[6px] flex items-center gap-[8px]">
+              <Play className="h-[14px] w-[14px]" fill="currentColor" />
+              <span className="shotiq-numeric text-[12px]">0.64s</span>
+              <div className="relative h-[3px] flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
+                <span className={`absolute top-1/2 h-[11px] w-[11px] -translate-y-1/2 rounded-full ${sideIdx ? "bg-[var(--shotiq-color-analysisBlue)]" : "bg-[var(--shotiq-color-shotiqOrange)]"}`}
+                      style={{ left: sideIdx ? "72%" : "48%" }} />
+              </div>
+            </div>
+            <div className="mt-[6px] flex gap-[4px]">
+              {Array.from({ length: 10 }).map((_, i) => (
+                <div key={i} className={`h-[36px] flex-1 rounded-[3px] bg-[#1B1D20] ${i === (sideIdx ? 7 : 5) ? `ring-2 ${sideIdx ? "ring-[var(--shotiq-color-analysisBlue)]" : "ring-[var(--shotiq-color-shotiqOrange)]"}` : ""}`} />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
 
-          {/* Consolidated match panel — ONE algorithm, REAL measured metrics,
-              live /api/shooters dataset. */}
-          <Phase6ComparisonPanel
-            userProfile={panelProfile}
-            userMetrics={userMetrics}
-            overallScore={visionAnalysisResult?.overall_score ?? undefined}
-            shooters={shooters ?? undefined}
-          />
-        </div>
-      ) : (
-        <ScoreOrPassGame
-          userProfile={{
-            height: physicalProfile.heightInches,
-            weight: physicalProfile.weightLbs,
-          }}
-          userAnalysis={{
-            imageUrl: userImage || undefined,
-            angles: hasMetrics
-              ? {
-                  elbowAngle: userMetrics.elbowAngle,
-                  kneeAngle: userMetrics.kneeAngle,
-                  shoulderAngle: userMetrics.shoulderTilt,
-                  hipAngle: userMetrics.hipTilt,
-                  releaseAngle: userMetrics.releaseAngle,
-                }
-              : undefined,
-            overallScore: visionAnalysisResult?.overall_score,
-          }}
-        />
-      )}
+      {/* phase selector */}
+      <div className="mt-[12px] flex items-center gap-[16px]">
+        <SectionLabel>SELECT PHASE</SectionLabel>
+        {[0, 1].map((side) => (
+          <div key={side} className="flex flex-1 items-center justify-between px-[10px]">
+            <ChevronLeft className="h-[14px] w-[14px] text-[var(--shotiq-color-graphite)]" />
+            {PHASES.map((p) => (
+              <div key={p} className="text-center">
+                <PhaseGlyph active={p === "RELEASE"} size={24} />
+                <div className={`text-[9px] tracking-[0.04em] ${p === "RELEASE" ? (side ? "font-bold text-[var(--shotiq-color-analysisBlue)]" : "font-bold text-[var(--shotiq-color-shotiqOrange)]") : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
+              </div>
+            ))}
+            <ChevronRight className="h-[14px] w-[14px] text-[var(--shotiq-color-graphite)]" />
+          </div>
+        ))}
+      </div>
+
+      {/* analysis band */}
+      <div className="mt-[14px] flex gap-[16px]">
+        <Card className="w-[250px] shrink-0 px-[18px] py-[14px]">
+          <SectionLabel>FORM SCORE</SectionLabel>
+          <div className="mt-[8px] flex items-center gap-[14px]">
+            <Ring pct={(score ?? 0) / 100} size={86}>
+              <div className="text-center"><span className="shotiq-numeric text-[26px]">{score ?? "—"}</span><span className="block text-[9px] text-[var(--shotiq-color-graphite)]">/100</span></div>
+            </Ring>
+            <div>
+              <div className="text-[14px] font-bold text-[var(--shotiq-color-analysisBlue)]">GOOD</div>
+              <div className="text-[11px] text-[var(--shotiq-color-graphite)]">Keep building consistency.</div>
+            </div>
+          </div>
+          <div className="mt-[12px] flex gap-[18px] border-t border-[var(--shotiq-color-rule)] pt-[10px]">
+            <Stat value={hasData ? "24" : "0"} label="SHOTS" valueClass="text-[20px] leading-[22px]" />
+            <Stat value={hasData ? "15" : "0"} label="MAKES" valueClass="text-[20px] leading-[22px]" />
+            <Stat value={hasData ? "62.5%" : "—"} label="MAKE %" valueClass="text-[20px] leading-[22px]" />
+          </div>
+        </Card>
+
+        <Card className="min-w-0 flex-1 px-[18px] py-[14px]">
+          <SectionLabel>KEY DIFFERENCES</SectionLabel>
+          <table className="mt-[6px] w-full text-[12px]">
+            <thead><tr className="text-left text-[9px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">
+              <th className="py-[4px] font-bold">METRIC</th><th className="font-bold">YOU</th><th className="font-bold">ELITE</th><th className="font-bold">DIFFERENCE</th></tr></thead>
+            <tbody className="divide-y divide-[var(--shotiq-color-rule)]">
+              {DIFFS.map(([m, you, el, d]) => (
+                <tr key={m}>
+                  <td className="py-[5px] pr-[8px]">{m}</td>
+                  <td className="pr-[8px] font-semibold text-[var(--shotiq-color-shotiqOrange)]">{you}</td>
+                  <td className="pr-[8px] font-semibold text-[var(--shotiq-color-analysisBlue)]">{el}</td>
+                  <td>{d}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+
+        <Card className="w-[300px] shrink-0 px-[18px] py-[14px]">
+          <SectionLabel>WHY THE DIFFERENCE MATTERS</SectionLabel>
+          <div className="mt-[6px] space-y-[8px]">
+            {["Slightly lower release angle reduces margin for error on longer shots.",
+              "More open elbow improves line to target and repeatability.",
+              "Increased wrist flexion adds backspin and softens the shot.",
+              "Elite balance helps maintain consistency under fatigue."].map((t) => (
+              <div key={t} className="flex gap-[10px]">
+                <PhaseGlyph size={22} />
+                <p className="text-[12px] leading-[16px]">{t}</p>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <Card className="w-[210px] shrink-0 px-[18px] py-[14px]">
+          <SectionLabel>TOP MATCHES</SectionLabel>
+          <div className="mt-[8px] space-y-[9px]">
+            {MATCH.map(([p, v]) => (
+              <div key={p}>
+                <div className="flex justify-between text-[10px]">
+                  <span className={`font-bold tracking-[0.04em] ${p === "RELEASE" ? "text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</span>
+                  <span className="shotiq-numeric">{v}%</span>
+                </div>
+                <div className="mt-[2px] h-[4px] rounded-full bg-[var(--shotiq-color-rule)]">
+                  <div className={`h-full rounded-full ${p === "RELEASE" ? "bg-[var(--shotiq-color-shotiqOrange)]" : "bg-[var(--shotiq-color-analysisBlue)]"}`} style={{ width: `${v}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+
+      {/* footer band */}
+      <div className="mt-[14px] flex gap-[16px]">
+        <Card className="flex flex-1 items-center gap-[14px] px-[20px] py-[14px]">
+          <span className="text-[22px]">💡</span>
+          <div>
+            <SectionLabel>FOCUS RECOMMENDATION</SectionLabel>
+            <p className="text-[13px] text-[var(--shotiq-color-graphite)]">Keep elbow stacked through release to improve your release angle and consistency.</p>
+          </div>
+        </Card>
+        <Card className="flex w-[420px] shrink-0 items-center gap-[14px] px-[20px] py-[14px]">
+          <span className="grid h-[42px] w-[42px] place-items-center rounded-full bg-[var(--shotiq-color-analysisBlue)] text-white">◎</span>
+          <div className="flex-1">
+            <SectionLabel>NEXT BEST WORKOUT</SectionLabel>
+            <div className="text-[14px] font-semibold">Quick Release Builder</div>
+            <div className="text-[11px] text-[var(--shotiq-color-graphite)]">20 min · Form Focus</div>
+          </div>
+          <Link href="/training/drills/quick-release-builder" aria-label="Open workout">›</Link>
+        </Card>
+      </div>
     </div>
   )
 }
