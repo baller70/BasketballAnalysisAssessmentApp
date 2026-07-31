@@ -49,6 +49,7 @@ export default function MediaLibraryPage() {
   const [sort, setSort] = useState<(typeof SORTS)[number]>("Newest")
   const [menu, setMenu] = useState<null | "range" | "sort">(null)
   const [railOpen, setRailOpen] = useState(true)
+  const [query, setQuery] = useState("")
   useEffect(() => {
     fetch("/api/media", { credentials: "include" }).then((r) => (r.ok ? r.json() : null))
       .then((d) => {
@@ -64,14 +65,15 @@ export default function MediaLibraryPage() {
       if (range[0] === "1" && !day.startsWith("TODAY")) continue
       let list = items.filter((m) =>
         (statusFilter.startsWith("All") || m.status === statusFilter) &&
-        (workoutFilter.startsWith("All") || m.style === workoutFilter || m.title === workoutFilter))
+        (workoutFilter.startsWith("All") || m.style === workoutFilter || m.title === workoutFilter) &&
+        (!query.trim() || m.title.toLowerCase().includes(query.trim().toLowerCase())))
       list = [...list]
       if (sort === "Oldest") list.reverse()
       if (sort === "Score") list.sort((a, b) => (b.score ?? -1) - (a.score ?? -1))
       if (list.length) out[day] = list
     }
     return out
-  }, [groups, statusFilter, workoutFilter, range, sort])
+  }, [groups, statusFilter, workoutFilter, range, sort, query])
   const total = Object.values(shown).flat().length
   const toggle = (id: string) => setSelected((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
   const clearAll = () => {
@@ -146,7 +148,9 @@ export default function MediaLibraryPage() {
           </div>
           <div className="flex gap-[10px]">
             <div className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[12px]">
-              <input placeholder="Search media…" className="w-[130px] bg-transparent text-[13px] outline-none placeholder:text-[var(--shotiq-color-muted)]" />
+              <input placeholder="Search media…" value={query} onChange={(e) => setQuery(e.target.value)}
+                     data-testid="media-search"
+                     className="w-[130px] bg-transparent text-[13px] outline-none placeholder:text-[var(--shotiq-color-muted)]" />
               <Search className="h-[14px] w-[14px] text-[var(--shotiq-color-graphite)]" />
             </div>
             <Link href="/upload" className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-[13px]">

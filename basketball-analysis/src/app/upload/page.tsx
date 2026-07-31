@@ -4,7 +4,6 @@ import React, { useState, useCallback, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { useAnalysisStore } from "@/stores/analysisStore"
-import { ShotIQShell } from "@/components/shotiq/ShotIQShell"
 import { UploadEducation } from "@/components/upload/UploadEducation"
 import { UploadQualityScore } from "@/components/upload/UploadQualityScore"
 import { PreUploadValidationDisplay } from "@/components/upload/PreUploadValidation"
@@ -147,18 +146,15 @@ export default function UploadPage() {
   // If showing education module (only for image mode)
   if (showEducation && files.length === 0 && mode === "image") {
     return (
-      <ShotIQShell active="Analyze">
-        <div data-testid="screen-desktop-web-upload" className="flex items-start justify-center px-[26px] py-[24px]">
-          <UploadEducation
-            onStartUpload={() => setShowEducation(false)}
-          />
-        </div>
-      </ShotIQShell>
+      <div data-testid="screen-desktop-web-upload" className="flex items-start justify-center px-[26px] py-[24px]">
+        <UploadEducation
+          onStartUpload={() => setShowEducation(false)}
+        />
+      </div>
     )
   }
 
   return (
-    <ShotIQShell active="Analyze">
     <div data-testid="screen-desktop-web-upload" className="px-[26px] py-[18px]">
       <div className="max-w-4xl mx-auto">
         {/* Header — canonical, per iOS 022/026 upload screens */}
@@ -258,7 +254,6 @@ export default function UploadPage() {
         </AnimatePresence>
       </div>
     </div>
-    </ShotIQShell>
   )
 }
 

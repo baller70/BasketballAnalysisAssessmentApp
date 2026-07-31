@@ -14,7 +14,11 @@ export default defineConfig({
     baseURL: 'http://127.0.0.1:3000',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
-    launchOptions: existsSync(systemChromium) ? { executablePath: systemChromium } : {},
+    launchOptions: {
+      ...(existsSync(systemChromium) ? { executablePath: systemChromium } : {}),
+      // Fake camera lets capture flows run headless (harmless elsewhere).
+      args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'],
+    },
   },
   projects: [
     { name: 'desktop-chromium', use: { ...devices['Desktop Chrome'] } },

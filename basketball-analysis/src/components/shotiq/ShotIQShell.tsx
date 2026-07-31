@@ -226,7 +226,19 @@ export function ShotIQShell({
                   </button>
                 ))}
                 <button type="button"
-                        onClick={() => { useAuthStore.getState().signOut(); window.location.assign("/signin") }}
+                        onClick={async () => {
+                          useAuthStore.getState().signOut()
+                          // signOut clears the httpOnly cookie asynchronously —
+                          // wait for it so /signin doesn't bounce us back in.
+                          try {
+                            const { getCsrfToken } = await import("@/lib/api/csrfFetch")
+                            await fetch("/api/auth/signout", {
+                              method: "POST", credentials: "include",
+                              headers: { "x-csrf-token": await getCsrfToken() },
+                            })
+                          } catch { /* cookie may already be gone */ }
+                          window.location.assign("/signin")
+                        }}
                         className="mt-[2px] flex h-[34px] w-full items-center rounded-[6px] px-[10px] text-[13px] text-[var(--shotiq-color-reviewRed)] hover:bg-[var(--shotiq-color-warmCanvas)]">
                   Sign out
                 </button>

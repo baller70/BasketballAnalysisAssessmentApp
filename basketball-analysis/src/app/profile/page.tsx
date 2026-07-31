@@ -66,8 +66,9 @@ export default function ProfileAccountPage() {
     fetch("/api/profile", { credentials: "include" }).then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         const p = d?.profile
+        const cap = (v?: string | null) => (v ? v.charAt(0).toUpperCase() + v.slice(1) : undefined)
         if (p) setForm((f) => ({ ...f, name: p.displayName ?? f.name, email: p.email ?? f.email,
-          hand: p.handedness ?? f.hand, level: p.experienceLevel ?? f.level }))
+          hand: cap(p.dominantHand) ?? f.hand, level: cap(p.experienceLevel) ?? f.level }))
       }).catch(() => {})
   }, [])
   useEffect(() => {
@@ -77,12 +78,21 @@ export default function ProfileAccountPage() {
   const save = async () => {
     setSaved(false)
     try {
-      await fetch("/api/profile", {
-        method: "PUT", credentials: "include", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ displayName: form.name, handedness: form.hand, experienceLevel: form.level }),
+      const { csrfFetch } = await import("@/lib/api/csrfFetch")
+      const res = await csrfFetch("/api/profile", {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: form.name,
+          dominantHand: form.hand.toLowerCase(),
+          experienceLevel: form.level.toLowerCase(),
+        }),
       })
-    } catch { /* offline tolerant */ }
-    setSaved(true)
+      if (!res.ok) throw new Error(`save failed: ${res.status}`)
+      setSaved(true)
+    } catch (e) {
+      console.error(e)
+      setSaved(false)
+    }
   }
 
   const field = "h-[40px] w-full rounded-[5px] border border-[var(--shotiq-color-rule)] px-[10px] text-[13px] outline-none focus:border-[var(--shotiq-color-ink)]"
