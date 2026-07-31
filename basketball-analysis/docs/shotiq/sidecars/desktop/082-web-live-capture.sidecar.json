@@ -1,0 +1,6983 @@
+{
+ "app": {
+  "appId": "shotiq",
+  "batchId": "shotiq-white-court-imagegen2-2026-07-30-v2",
+  "platform": "desktop",
+  "platformId": "shotiq.desktop",
+  "screenId": "desktop.web-live-capture",
+  "sharedTokenSet": "shotiq-white-court-core-v1"
+ },
+ "asset": {
+  "canvas": {
+   "height": 900,
+   "width": 1440
+  },
+  "name": "desktop.web-live-capture"
+ },
+ "assets": {
+  "app.shotiq.brand.logo.primary": {
+   "description": "SHOTIQ primary wordmark with orange Q accent",
+   "kind": "logo",
+   "preferredFormat": "svg",
+   "qualityProfile": "faithful-premium",
+   "recolorable": true
+  },
+  "app.shotiq.icon.motion.default": {
+   "description": "Shared ShotIQ motion-glyph family placeholder for navigation, actions, and metrics.",
+   "iconSpec": {
+    "minReadableSize": 16,
+    "nicheMetaphor": "Tracked body landmark nodes and shot-release motion geometry",
+    "preserveFromReference": [
+     "semantic meaning",
+     "orientation",
+     "major silhouette",
+     "relative visual weight"
+    ],
+    "safeInset": 1.5,
+    "semanticConcept": "ShotIQ basketball performance motion glyph",
+    "silhouette": "Compact line glyph with rounded joints and a clear motion focal point",
+    "upgradeFromReference": [
+     "construction quality",
+     "domain specificity",
+     "optical balance",
+     "small-size legibility"
+    ]
+   },
+   "kind": "icon",
+   "preferredFormat": "svg",
+   "qualityProfile": "faithful-premium",
+   "recolorable": true
+  },
+  "app.shotiq.photo.athlete-frame": {
+   "description": "Independent athlete/court frame asset used by analysis and training screens.",
+   "kind": "photo",
+   "poseRequired": true,
+   "preferredFormat": "png",
+   "qualityProfile": "awaiting-independent-asset-pack"
+  }
+ },
+ "baselineGroups": [],
+ "canonicalContractSha256": "94e4c35acc090b0d22cc91ff25c57dd73f53f270a15be2773307c9e46b46f73a",
+ "designTokens": {
+  "colors": {
+   "analysisBlue": "#2D6CDF",
+   "confirmGreen": "#168A55",
+   "graphite": "#5F646B",
+   "ink": "#111111",
+   "muted": "#A7AAB0",
+   "paper": "#FFFFFF",
+   "reviewRed": "#D92D20",
+   "rule": "#D9D9D4",
+   "shotiqOrange": "#FF5A1F",
+   "warmCanvas": "#F7F7F4"
+  },
+  "iconography": {
+   "activeStrokeWidth": 2,
+   "creativeDirection": "Motion glyphs built from pose landmarks, release arcs, frame strips, measurement brackets, and court geometry.",
+   "domain": "basketball shooting mechanics, biomechanics, capture review, and athlete progress",
+   "familyId": "shotiq-motion-glyphs-v1",
+   "fillPolicy": "Outline-led with one intentional filled focal detail.",
+   "grid": 24,
+   "lineCap": "round",
+   "lineJoin": "round",
+   "opticalSize": 24,
+   "profile": "premium-icon-v1",
+   "prohibited": [
+    "emoji",
+    "clip art",
+    "generic stick figures",
+    "stock-library clones",
+    "mixed icon families",
+    "text baked into icons",
+    "edge-touching paint"
+   ],
+   "readabilityPx": [
+    16,
+    20,
+    24,
+    32
+   ],
+   "reconstructionMode": "faithful-premium",
+   "safeInset": 1.5,
+   "selectedState": "Same glyph with tokenized color or external indicator.",
+   "strokeWidth": 1.75
+  },
+  "radii": {
+   "card": 8,
+   "control": 6,
+   "none": 0,
+   "pill": 999
+  },
+  "spacing": {
+   "lg": 24,
+   "md": 16,
+   "sm": 8,
+   "xl": 32,
+   "xs": 4
+  },
+  "typography": {
+   "body": {
+    "fontFamily": "Inter",
+    "fontSize": 16,
+    "fontWeight": 400,
+    "letterSpacing": 0,
+    "lineHeight": 22
+   },
+   "brand": {
+    "fontFamily": "Inter",
+    "fontSize": 28,
+    "fontWeight": 900,
+    "letterSpacing": 0,
+    "lineHeight": 32
+   },
+   "button": {
+    "fontSize": 16,
+    "fontWeight": 700,
+    "inherits": "body",
+    "letterSpacing": 0,
+    "lineHeight": 22
+   },
+   "caption": {
+    "fontSize": 12,
+    "fontWeight": 500,
+    "inherits": "body",
+    "letterSpacing": 0,
+    "lineHeight": 16
+   },
+   "h1": {
+    "fontFamily": "Bebas Neue",
+    "fontSize": 64,
+    "fontWeight": 900,
+    "letterSpacing": 0,
+    "lineHeight": 70
+   },
+   "h2": {
+    "fontFamily": "Bebas Neue",
+    "fontSize": 40,
+    "fontWeight": 900,
+    "letterSpacing": 0,
+    "lineHeight": 46
+   },
+   "h3": {
+    "fontFamily": "Bebas Neue",
+    "fontSize": 28,
+    "fontWeight": 800,
+    "letterSpacing": 0,
+    "lineHeight": 34
+   },
+   "h4": {
+    "fontFamily": "Inter",
+    "fontSize": 18,
+    "fontWeight": 700,
+    "letterSpacing": 0,
+    "lineHeight": 24
+   },
+   "h5": {
+    "fontFamily": "Inter",
+    "fontSize": 14,
+    "fontWeight": 700,
+    "letterSpacing": 0,
+    "lineHeight": 20
+   },
+   "label": {
+    "fontSize": 12,
+    "fontWeight": 700,
+    "inherits": "body",
+    "letterSpacing": 0,
+    "lineHeight": 16
+   },
+   "numeric": {
+    "fontFamily": "DIN Condensed",
+    "fontSize": 40,
+    "fontWeight": 800,
+    "letterSpacing": 0,
+    "lineHeight": 44
+   }
+  }
+ },
+ "elements": [
+  {
+   "backgroundColor": "paper",
+   "bounds": {
+    "height": 900,
+    "width": 1440,
+    "x": 0,
+    "y": 0
+   },
+   "id": "screen-background",
+   "measurementId": "desktop.web-live-capture.screen-background",
+   "owningRegion": "main",
+   "proofMethod": "canvas dimensions",
+   "sourceKey": "desktop.web-live-capture.screen-background",
+   "type": "screen",
+   "zIndex": 0
+  },
+  {
+   "bounds": {
+    "height": 130,
+    "width": 1440,
+    "x": 0,
+    "y": 0
+   },
+   "id": "topbar",
+   "measurementId": "desktop.web-live-capture.topbar",
+   "owningRegion": "topbar",
+   "proofMethod": "declared semantic region bounds",
+   "sourceKey": "desktop.web-live-capture.topbar",
+   "type": "group",
+   "zIndex": 1
+  },
+  {
+   "bounds": {
+    "height": 790,
+    "width": 190,
+    "x": 0,
+    "y": 110
+   },
+   "id": "sidebar",
+   "measurementId": "desktop.web-live-capture.sidebar",
+   "owningRegion": "sidebar",
+   "proofMethod": "declared semantic region bounds",
+   "sourceKey": "desktop.web-live-capture.sidebar",
+   "type": "group",
+   "zIndex": 2
+  },
+  {
+   "bounds": {
+    "height": 790,
+    "width": 1250,
+    "x": 190,
+    "y": 110
+   },
+   "id": "main",
+   "measurementId": "desktop.web-live-capture.main",
+   "owningRegion": "main",
+   "proofMethod": "declared semantic region bounds",
+   "sourceKey": "desktop.web-live-capture.main",
+   "type": "group",
+   "zIndex": 3
+  },
+  {
+   "baseline": 53,
+   "bounds": {
+    "height": 45,
+    "width": 1312,
+    "x": 27,
+    "y": 8
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 56,
+   "fontWeight": 900,
+   "generatedObservedText": "SHOT: Home Analyze Training \u00ab= Q rms \u00a9 2,840 fay (3) JORDAN",
+   "id": "text-001",
+   "inkBounds": {
+    "height": 45,
+    "width": 1312,
+    "x": 27,
+    "y": 8
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 61,
+   "measurementId": "desktop.web-live-capture.text-001",
+   "ocrConfidence": 67.82,
+   "owningRegion": "topbar",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 53.24,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "desktop.web-live-capture.text-001",
+   "style": "h1",
+   "text": "SHOT Home Analyze Media. Q mms 2,840 iat e JORDAN ELLIS",
+   "type": "text",
+   "visibleGlyphHeight": 45,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 128,
+   "bounds": {
+    "height": 38,
+    "width": 1094,
+    "x": 40,
+    "y": 90
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 48,
+   "fontWeight": 900,
+   "generatedObservedText": "alt LIVE CAPTURE.\u00bb eons eee) ieee oe ii oe",
+   "id": "text-002",
+   "inkBounds": {
+    "height": 38,
+    "width": 1094,
+    "x": 40,
+    "y": 90
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 51,
+   "measurementId": "desktop.web-live-capture.text-002",
+   "ocrConfidence": 36.97,
+   "owningRegion": "topbar",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 46.06,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "desktop.web-live-capture.text-002",
+   "style": "h2",
+   "text": "al LIVE CAPTURE \u00ab Pause \u00a9} switch camera 2). Mate coaching",
+   "type": "text",
+   "visibleGlyphHeight": 38,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 152,
+   "bounds": {
+    "height": 24,
+    "width": 281,
+    "x": 29,
+    "y": 128
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 30,
+   "fontWeight": 400,
+   "generatedObservedText": "emai) \u2018Web Camera 1080p - 30fps",
+   "id": "text-003",
+   "inkBounds": {
+    "height": 24,
+    "width": 281,
+    "x": 29,
+    "y": 128
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 32,
+   "measurementId": "desktop.web-live-capture.text-003",
+   "ocrConfidence": 73.4,
+   "owningRegion": "sidebar",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 72.13,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "desktop.web-live-capture.text-003",
+   "style": "body",
+   "text": "Web Camera 1080p _ 30fps",
+   "type": "text",
+   "visibleGlyphHeight": 24,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 202,
+   "bounds": {
+    "height": 36,
+    "width": 648,
+    "x": 420,
+    "y": 166
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 45,
+   "fontWeight": 900,
+   "generatedObservedText": "es ft CAPTURE READINESS",
+   "id": "text-004",
+   "inkBounds": {
+    "height": 36,
+    "width": 648,
+    "x": 420,
+    "y": 166
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 49,
+   "measurementId": "desktop.web-live-capture.text-004",
+   "ocrConfidence": 62.95,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 77.6,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "desktop.web-live-capture.text-004",
+   "style": "h2",
+   "text": "= \u2122 a CAPTURE READINESS 6000",
+   "type": "text",
+   "visibleGlyphHeight": 36,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 205,
+   "bounds": {
+    "height": 12,
+    "width": 705,
+    "x": 173,
+    "y": 193
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 15,
+   "fontWeight": 500,
+   "generatedObservedText": "GOOD RANGE > FPS",
+   "id": "text-005",
+   "inkBounds": {
+    "height": 12,
+    "width": 705,
+    "x": 173,
+    "y": 193
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 16,
+   "measurementId": "desktop.web-live-capture.text-005",
+   "ocrConfidence": 78.28,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 82.87,
+   "referenceTextMatched": true,
+   "semanticRole": "caption",
+   "sourceKey": "desktop.web-live-capture.text-005",
+   "style": "caption",
+   "text": "GOOD RANGE ys FPS",
+   "type": "text",
+   "visibleGlyphHeight": 12,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 230,
+   "bounds": {
+    "height": 22,
+    "width": 1175,
+    "x": 174,
+    "y": 208
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 28,
+   "fontWeight": 400,
+   "generatedObservedText": "72\" Y | 30 vy. fo?",
+   "id": "text-006",
+   "inkBounds": {
+    "height": 22,
+    "width": 1175,
+    "x": 174,
+    "y": 208
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 30,
+   "measurementId": "desktop.web-live-capture.text-006",
+   "ocrConfidence": 59.91,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 49.63,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "desktop.web-live-capture.text-006",
+   "style": "body",
+   "text": "Ti ay) \\ ae | oe Ns a, am &,",
+   "type": "text",
+   "visibleGlyphHeight": 22,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 282,
+   "bounds": {
+    "height": 39,
+    "width": 1171,
+    "x": 42,
+    "y": 243
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 49,
+   "fontWeight": 900,
+   "generatedObservedText": "o) | ony 174\u00b0 tet eect tae ond",
+   "id": "text-007",
+   "inkBounds": {
+    "height": 39,
+    "width": 1171,
+    "x": 42,
+    "y": 243
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 53,
+   "measurementId": "desktop.web-live-capture.text-007",
+   "ocrConfidence": 49.13,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 70.44,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "desktop.web-live-capture.text-007",
+   "style": "h2",
+   "text": "wsroRt te | \u00b0 \u00b0 \u00b0 \u00b0",
+   "type": "text",
+   "visibleGlyphHeight": 39,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 305,
+   "bounds": {
+    "height": 29,
+    "width": 866,
+    "x": 470,
+    "y": 276
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 36,
+   "fontWeight": 400,
+   "generatedObservedText": "{ ad | \u00b0 \u00b0 \u00b0 \u00b0",
+   "id": "text-008",
+   "inkBounds": {
+    "height": 29,
+    "width": 866,
+    "x": 470,
+    "y": 276
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 39,
+   "measurementId": "desktop.web-live-capture.text-008",
+   "ocrConfidence": 63.25,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 86.47,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "desktop.web-live-capture.text-008",
+   "style": "body",
+   "text": "Keep going. Great capture quality",
+   "type": "text",
+   "visibleGlyphHeight": 29,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 348,
+   "bounds": {
+    "height": 56,
+    "width": 667,
+    "x": 455,
+    "y": 292
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 70,
+   "fontWeight": 900,
+   "generatedObservedText": "3 Keep going. Great capture quality",
+   "id": "text-009",
+   "inkBounds": {
+    "height": 56,
+    "width": 667,
+    "x": 455,
+    "y": 292
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 76,
+   "measurementId": "desktop.web-live-capture.text-009",
+   "ocrConfidence": 71.29,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 69.01,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "desktop.web-live-capture.text-009",
+   "style": "h1",
+   "text": "coats | SESSION STATS Today st 8:26 AM",
+   "type": "text",
+   "visibleGlyphHeight": 56,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 357,
+   "bounds": {
+    "height": 25,
+    "width": 789,
+    "x": 42,
+    "y": 332
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 31,
+   "fontWeight": 400,
+   "generatedObservedText": "\u00ae 8 (a a)",
+   "id": "text-010",
+   "inkBounds": {
+    "height": 25,
+    "width": 789,
+    "x": 42,
+    "y": 332
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 34,
+   "measurementId": "desktop.web-live-capture.text-010",
+   "ocrConfidence": 46.81,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "body",
+   "sourceKey": "desktop.web-live-capture.text-010",
+   "style": "body",
+   "text": "\u00ae 8 (a a)",
+   "type": "text",
+   "visibleGlyphHeight": 25,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 416,
+   "bounds": {
+    "height": 56,
+    "width": 1346,
+    "x": 38,
+    "y": 360
+   },
+   "color": "ink",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 70,
+   "fontWeight": 900,
+   "generatedObservedText": "coals | | SESSION STATS Today a 828 AM",
+   "id": "text-011",
+   "inkBounds": {
+    "height": 56,
+    "width": 1346,
+    "x": 38,
+    "y": 360
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 76,
+   "measurementId": "desktop.web-live-capture.text-011",
+   "ocrConfidence": 70.9,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 73.06,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "desktop.web-live-capture.text-011",
+   "style": "h1",
+   "text": "zs De 24 15 62.5%",
+   "type": "text",
+   "visibleGlyphHeight": 56,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 405,
+   "bounds": {
+    "height": 9,
+    "width": 17,
+    "x": 1230,
+    "y": 396
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 11,
+   "fontWeight": 500,
+   "generatedObservedText": "rom",
+   "id": "text-012",
+   "inkBounds": {
+    "height": 9,
+    "width": 17,
+    "x": 1230,
+    "y": 396
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 12,
+   "measurementId": "desktop.web-live-capture.text-012",
+   "ocrConfidence": 54.39,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 42.99,
+   "referenceTextMatched": true,
+   "semanticRole": "caption",
+   "sourceKey": "desktop.web-live-capture.text-012",
+   "style": "caption",
+   "text": "rom sore",
+   "type": "text",
+   "visibleGlyphHeight": 9,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 432,
+   "bounds": {
+    "height": 35,
+    "width": 1144,
+    "x": 36,
+    "y": 397
+   },
+   "color": "ink",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 44,
+   "fontWeight": 900,
+   "generatedObservedText": "nA A 24 15 62.5%",
+   "id": "text-013",
+   "inkBounds": {
+    "height": 35,
+    "width": 1144,
+    "x": 36,
+    "y": 397
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 47,
+   "measurementId": "desktop.web-live-capture.text-013",
+   "ocrConfidence": 74.3,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 76.3,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "desktop.web-live-capture.text-013",
+   "style": "h2",
+   "text": "& a PRIMARY COACHING TARGET",
+   "type": "text",
+   "visibleGlyphHeight": 35,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 435,
+   "bounds": {
+    "height": 21,
+    "width": 1111,
+    "x": 44,
+    "y": 414
+   },
+   "color": "ink",
+   "fontFamily": "Inter",
+   "fontSize": 26,
+   "fontWeight": 400,
+   "generatedObservedText": "Rr E",
+   "id": "text-014",
+   "inkBounds": {
+    "height": 21,
+    "width": 1111,
+    "x": 44,
+    "y": 414
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 28,
+   "measurementId": "desktop.web-live-capture.text-014",
+   "ocrConfidence": 37.43,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "body",
+   "sourceKey": "desktop.web-live-capture.text-014",
+   "style": "body",
+   "text": "Rr E",
+   "type": "text",
+   "visibleGlyphHeight": 21,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 452,
+   "bounds": {
+    "height": 27,
+    "width": 1326,
+    "x": 46,
+    "y": 425
+   },
+   "color": "ink",
+   "fontFamily": "Inter",
+   "fontSize": 34,
+   "fontWeight": 400,
+   "generatedObservedText": "ie [ \u2018SHOTS MAKES MAKE % Keep biting",
+   "id": "text-015",
+   "inkBounds": {
+    "height": 27,
+    "width": 1326,
+    "x": 46,
+    "y": 425
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 36,
+   "measurementId": "desktop.web-live-capture.text-015",
+   "ocrConfidence": 75.81,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 77.27,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "desktop.web-live-capture.text-015",
+   "style": "body",
+   "text": "sertines & ey = XS = = Keep elbow stacked through release >",
+   "type": "text",
+   "visibleGlyphHeight": 27,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 461,
+   "bounds": {
+    "height": 8,
+    "width": 44,
+    "x": 1319,
+    "y": 453
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 10,
+   "fontWeight": 500,
+   "generatedObservedText": "eas",
+   "id": "text-016",
+   "inkBounds": {
+    "height": 8,
+    "width": 44,
+    "x": 1319,
+    "y": 453
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 12,
+   "measurementId": "desktop.web-live-capture.text-016",
+   "ocrConfidence": 32.03,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "caption",
+   "sourceKey": "desktop.web-live-capture.text-016",
+   "style": "caption",
+   "text": "eas",
+   "type": "text",
+   "visibleGlyphHeight": 8,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 512,
+   "bounds": {
+    "height": 22,
+    "width": 1064,
+    "x": 41,
+    "y": 490
+   },
+   "color": "ink",
+   "fontFamily": "Inter",
+   "fontSize": 28,
+   "fontWeight": 700,
+   "generatedObservedText": "3 PRIMARY COACHING TARGET",
+   "id": "text-017",
+   "inkBounds": {
+    "height": 22,
+    "width": 1064,
+    "x": 41,
+    "y": 490
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 30,
+   "measurementId": "desktop.web-live-capture.text-017",
+   "ocrConfidence": 80.85,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 56.8,
+   "referenceTextMatched": true,
+   "semanticRole": "h4",
+   "sourceKey": "desktop.web-live-capture.text-017",
+   "style": "h4",
+   "text": "\u2014\u2014= SS \u2014 EEE TARGET PROGRESS",
+   "type": "text",
+   "visibleGlyphHeight": 22,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 537,
+   "bounds": {
+    "height": 20,
+    "width": 1346,
+    "x": 32,
+    "y": 517
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 25,
+   "fontWeight": 400,
+   "generatedObservedText": "sertines fe RIGHT = Vi Keep elbow stacked through release >",
+   "id": "text-018",
+   "inkBounds": {
+    "height": 20,
+    "width": 1346,
+    "x": 32,
+    "y": 517
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 27,
+   "measurementId": "desktop.web-live-capture.text-018",
+   "ocrConfidence": 78.55,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "body",
+   "sourceKey": "desktop.web-live-capture.text-018",
+   "style": "body",
+   "text": "sertines fe RIGHT = Vi Keep elbow stacked through release >",
+   "type": "text",
+   "visibleGlyphHeight": 20,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 549,
+   "bounds": {
+    "height": 24,
+    "width": 380,
+    "x": 151,
+    "y": 525
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 30,
+   "fontWeight": 400,
+   "generatedObservedText": "Fane \u2014 we",
+   "id": "text-019",
+   "inkBounds": {
+    "height": 24,
+    "width": 380,
+    "x": 151,
+    "y": 525
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 32,
+   "measurementId": "desktop.web-live-capture.text-019",
+   "ocrConfidence": 44.53,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 42.49,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "desktop.web-live-capture.text-019",
+   "style": "body",
+   "text": "SS Se SS ESS",
+   "type": "text",
+   "visibleGlyphHeight": 24,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 555,
+   "bounds": {
+    "height": 16,
+    "width": 349,
+    "x": 490,
+    "y": 539
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 20,
+   "fontWeight": 400,
+   "generatedObservedText": "SSS Se i",
+   "id": "text-020",
+   "inkBounds": {
+    "height": 16,
+    "width": 349,
+    "x": 490,
+    "y": 539
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 22,
+   "measurementId": "desktop.web-live-capture.text-020",
+   "ocrConfidence": 37.23,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "body",
+   "sourceKey": "desktop.web-live-capture.text-020",
+   "style": "body",
+   "text": "SSS Se i",
+   "type": "text",
+   "visibleGlyphHeight": 16,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 572,
+   "bounds": {
+    "height": 24,
+    "width": 835,
+    "x": 222,
+    "y": 548
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 30,
+   "fontWeight": 400,
+   "generatedObservedText": "SSS a TARGET PROGRESS",
+   "id": "text-021",
+   "inkBounds": {
+    "height": 24,
+    "width": 835,
+    "x": 222,
+    "y": 548
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 32,
+   "measurementId": "desktop.web-live-capture.text-021",
+   "ocrConfidence": 63.99,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 37.47,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "desktop.web-live-capture.text-021",
+   "style": "body",
+   "text": "0x0 Ase FouLOW-THROUGH",
+   "type": "text",
+   "visibleGlyphHeight": 24,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 580,
+   "bounds": {
+    "height": 9,
+    "width": 723,
+    "x": 600,
+    "y": 571
+   },
+   "color": "confirmGreen",
+   "fontFamily": "Inter",
+   "fontSize": 11,
+   "fontWeight": 500,
+   "generatedObservedText": "= es",
+   "id": "text-022",
+   "inkBounds": {
+    "height": 9,
+    "width": 723,
+    "x": 600,
+    "y": 571
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 12,
+   "measurementId": "desktop.web-live-capture.text-022",
+   "ocrConfidence": 59.78,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 87.22,
+   "referenceTextMatched": true,
+   "semanticRole": "caption",
+   "sourceKey": "desktop.web-live-capture.text-022",
+   "style": "caption",
+   "text": "LIVE COACHING CUE",
+   "type": "text",
+   "visibleGlyphHeight": 9,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 613,
+   "bounds": {
+    "height": 34,
+    "width": 983,
+    "x": 199,
+    "y": 579
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 42,
+   "fontWeight": 900,
+   "generatedObservedText": "& \u00a2 g f Innprovng release consistency and erm alignment.",
+   "id": "text-023",
+   "inkBounds": {
+    "height": 34,
+    "width": 983,
+    "x": 199,
+    "y": 579
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 46,
+   "measurementId": "desktop.web-live-capture.text-023",
+   "ocrConfidence": 62.31,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "h2",
+   "sourceKey": "desktop.web-live-capture.text-023",
+   "style": "h2",
+   "text": "& \u00a2 g f Innprovng release consistency and erm alignment.",
+   "type": "text",
+   "visibleGlyphHeight": 34,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 614,
+   "bounds": {
+    "height": 9,
+    "width": 9,
+    "x": 499,
+    "y": 605
+   },
+   "color": "graphite",
+   "fontFamily": "DIN Condensed",
+   "fontSize": 11,
+   "fontWeight": 800,
+   "generatedObservedText": "2",
+   "id": "text-024",
+   "inkBounds": {
+    "height": 9,
+    "width": 9,
+    "x": 499,
+    "y": 605
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 12,
+   "measurementId": "desktop.web-live-capture.text-024",
+   "ocrConfidence": 87.88,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "numeric",
+   "sourceKey": "desktop.web-live-capture.text-024",
+   "style": "numeric",
+   "text": "2",
+   "type": "text",
+   "visibleGlyphHeight": 9,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 630,
+   "bounds": {
+    "height": 9,
+    "width": 164,
+    "x": 195,
+    "y": 621
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 11,
+   "fontWeight": 500,
+   "generatedObservedText": "sete tao",
+   "id": "text-025",
+   "inkBounds": {
+    "height": 9,
+    "width": 164,
+    "x": 195,
+    "y": 621
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 12,
+   "measurementId": "desktop.web-live-capture.text-025",
+   "ocrConfidence": 38.56,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "caption",
+   "sourceKey": "desktop.web-live-capture.text-025",
+   "style": "caption",
+   "text": "sete tao",
+   "type": "text",
+   "visibleGlyphHeight": 9,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 654,
+   "bounds": {
+    "height": 13,
+    "width": 415,
+    "x": 959,
+    "y": 641
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 16,
+   "fontWeight": 500,
+   "generatedObservedText": "LIVE COACHING CUE 1\"",
+   "id": "text-026",
+   "inkBounds": {
+    "height": 13,
+    "width": 415,
+    "x": 959,
+    "y": 641
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 18,
+   "measurementId": "desktop.web-live-capture.text-026",
+   "ocrConfidence": 79.43,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "caption",
+   "sourceKey": "desktop.web-live-capture.text-026",
+   "style": "caption",
+   "text": "LIVE COACHING CUE 1\"",
+   "type": "text",
+   "visibleGlyphHeight": 13,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 692,
+   "bounds": {
+    "height": 21,
+    "width": 53,
+    "x": 156,
+    "y": 671
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 26,
+   "fontWeight": 400,
+   "generatedObservedText": "i 5",
+   "id": "text-027",
+   "inkBounds": {
+    "height": 21,
+    "width": 53,
+    "x": 156,
+    "y": 671
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 28,
+   "measurementId": "desktop.web-live-capture.text-027",
+   "ocrConfidence": 44.39,
+   "owningRegion": "sidebar",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "body",
+   "sourceKey": "desktop.web-live-capture.text-027",
+   "style": "body",
+   "text": "i 5",
+   "type": "text",
+   "visibleGlyphHeight": 21,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "assetRef": "app.shotiq.photo.athlete-frame",
+   "bounds": {
+    "height": 164,
+    "width": 374,
+    "x": 127,
+    "y": 228
+   },
+   "componentRef": "app.shotiq.media.analysis-frame",
+   "fit": "cover",
+   "id": "visual-001",
+   "inkBounds": {
+    "height": 164,
+    "width": 374,
+    "x": 127,
+    "y": 228
+   },
+   "measurementId": "desktop.web-live-capture.visual-001",
+   "objectPosition": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-001",
+   "type": "photo",
+   "zIndex": 2
+  },
+  {
+   "assetRef": "app.shotiq.photo.athlete-frame",
+   "bounds": {
+    "height": 208,
+    "width": 161,
+    "x": 743,
+    "y": 169
+   },
+   "componentRef": "app.shotiq.media.analysis-frame",
+   "fit": "cover",
+   "id": "visual-002",
+   "inkBounds": {
+    "height": 208,
+    "width": 161,
+    "x": 743,
+    "y": 169
+   },
+   "measurementId": "desktop.web-live-capture.visual-002",
+   "objectPosition": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-002",
+   "type": "photo",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 86,
+    "width": 201,
+    "x": 711,
+    "y": 662
+   },
+   "cornerRadius": "card",
+   "id": "visual-003",
+   "inkBounds": {
+    "height": 86,
+    "width": 201,
+    "x": 711,
+    "y": 662
+   },
+   "measurementId": "desktop.web-live-capture.visual-003",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-003",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "reviewRed",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 52,
+    "width": 229,
+    "x": 1169,
+    "y": 89
+   },
+   "componentRef": "app.shotiq.action.primary",
+   "cornerRadius": "control",
+   "id": "visual-004",
+   "inkBounds": {
+    "height": 52,
+    "width": 229,
+    "x": 1169,
+    "y": 89
+   },
+   "measurementId": "desktop.web-live-capture.visual-004",
+   "owningRegion": "topbar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-004",
+   "type": "button",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 80,
+    "width": 133,
+    "x": 495,
+    "y": 664
+   },
+   "cornerRadius": "card",
+   "id": "visual-005",
+   "inkBounds": {
+    "height": 80,
+    "width": 133,
+    "x": 495,
+    "y": 664
+   },
+   "measurementId": "desktop.web-live-capture.visual-005",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-005",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 207,
+    "width": 51,
+    "x": 692,
+    "y": 169
+   },
+   "cornerRadius": "card",
+   "id": "visual-006",
+   "inkBounds": {
+    "height": 207,
+    "width": 51,
+    "x": 692,
+    "y": 169
+   },
+   "measurementId": "desktop.web-live-capture.visual-006",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-006",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "warmCanvas",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 55,
+    "width": 188,
+    "x": 1208,
+    "y": 818
+   },
+   "cornerRadius": "card",
+   "id": "visual-007",
+   "inkBounds": {
+    "height": 55,
+    "width": 188,
+    "x": 1208,
+    "y": 818
+   },
+   "measurementId": "desktop.web-live-capture.visual-007",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-007",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 211,
+    "width": 49,
+    "x": 644,
+    "y": 169
+   },
+   "cornerRadius": "card",
+   "id": "visual-008",
+   "inkBounds": {
+    "height": 211,
+    "width": 49,
+    "x": 644,
+    "y": 169
+   },
+   "measurementId": "desktop.web-live-capture.visual-008",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-008",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "warmCanvas",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 53,
+    "width": 165,
+    "x": 991,
+    "y": 88
+   },
+   "cornerRadius": "card",
+   "id": "visual-009",
+   "inkBounds": {
+    "height": 53,
+    "width": 165,
+    "x": 991,
+    "y": 88
+   },
+   "measurementId": "desktop.web-live-capture.visual-009",
+   "owningRegion": "topbar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-009",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "warmCanvas",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 53,
+    "width": 161,
+    "x": 818,
+    "y": 88
+   },
+   "cornerRadius": "card",
+   "id": "visual-010",
+   "inkBounds": {
+    "height": 53,
+    "width": 161,
+    "x": 818,
+    "y": 88
+   },
+   "measurementId": "desktop.web-live-capture.visual-010",
+   "owningRegion": "topbar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-010",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 42,
+    "width": 185,
+    "x": 127,
+    "y": 507
+   },
+   "cornerRadius": "card",
+   "id": "visual-011",
+   "inkBounds": {
+    "height": 42,
+    "width": 185,
+    "x": 127,
+    "y": 507
+   },
+   "measurementId": "desktop.web-live-capture.visual-011",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-011",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "ink",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 107,
+    "width": 70,
+    "x": 812,
+    "y": 340
+   },
+   "cornerRadius": "card",
+   "id": "visual-012",
+   "inkBounds": {
+    "height": 107,
+    "width": 70,
+    "x": 812,
+    "y": 340
+   },
+   "measurementId": "desktop.web-live-capture.visual-012",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-012",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 31,
+    "width": 238,
+    "x": 335,
+    "y": 180
+   },
+   "cornerRadius": "card",
+   "id": "visual-013",
+   "inkBounds": {
+    "height": 31,
+    "width": 238,
+    "x": 335,
+    "y": 180
+   },
+   "measurementId": "desktop.web-live-capture.visual-013",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-013",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "muted",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 90,
+    "width": 79,
+    "x": 242,
+    "y": 194
+   },
+   "cornerRadius": "card",
+   "id": "visual-014",
+   "inkBounds": {
+    "height": 90,
+    "width": 79,
+    "x": 242,
+    "y": 194
+   },
+   "measurementId": "desktop.web-live-capture.visual-014",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-014",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "warmCanvas",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 54,
+    "width": 128,
+    "x": 679,
+    "y": 88
+   },
+   "cornerRadius": "card",
+   "id": "visual-015",
+   "inkBounds": {
+    "height": 54,
+    "width": 128,
+    "x": 679,
+    "y": 88
+   },
+   "measurementId": "desktop.web-live-capture.visual-015",
+   "owningRegion": "topbar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-015",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 17,
+    "width": 393,
+    "x": 516,
+    "y": 502
+   },
+   "cornerRadius": "card",
+   "id": "visual-016",
+   "inkBounds": {
+    "height": 17,
+    "width": 393,
+    "x": 516,
+    "y": 502
+   },
+   "measurementId": "desktop.web-live-capture.visual-016",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-016",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "muted",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 83,
+    "width": 63,
+    "x": 333,
+    "y": 216
+   },
+   "cornerRadius": "card",
+   "id": "visual-017",
+   "inkBounds": {
+    "height": 83,
+    "width": 63,
+    "x": 333,
+    "y": 216
+   },
+   "measurementId": "desktop.web-live-capture.visual-017",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-017",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "ink",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 77,
+    "width": 67,
+    "x": 744,
+    "y": 379
+   },
+   "cornerRadius": "card",
+   "id": "visual-018",
+   "inkBounds": {
+    "height": 77,
+    "width": 67,
+    "x": 744,
+    "y": 379
+   },
+   "measurementId": "desktop.web-live-capture.visual-018",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-018",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 31,
+    "width": 147,
+    "x": 489,
+    "y": 523
+   },
+   "cornerRadius": "card",
+   "id": "visual-019",
+   "inkBounds": {
+    "height": 31,
+    "width": 147,
+    "x": 489,
+    "y": 523
+   },
+   "measurementId": "desktop.web-live-capture.visual-019",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-019",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "ink",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 39,
+    "width": 116,
+    "x": 180,
+    "y": 701
+   },
+   "cornerRadius": "card",
+   "id": "visual-020",
+   "inkBounds": {
+    "height": 39,
+    "width": 116,
+    "x": 180,
+    "y": 701
+   },
+   "measurementId": "desktop.web-live-capture.visual-020",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-020",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "rule",
+   "borderWidth": 4,
+   "bounds": {
+    "height": 4,
+    "width": 1105,
+    "x": 335,
+    "y": 56
+   },
+   "id": "visual-021",
+   "inkBounds": {
+    "height": 4,
+    "width": 1105,
+    "x": 335,
+    "y": 56
+   },
+   "measurementId": "desktop.web-live-capture.visual-021",
+   "owningRegion": "topbar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-021",
+   "type": "divider",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 39,
+    "width": 107,
+    "x": 395,
+    "y": 664
+   },
+   "cornerRadius": "card",
+   "id": "visual-022",
+   "inkBounds": {
+    "height": 39,
+    "width": 107,
+    "x": 395,
+    "y": 664
+   },
+   "measurementId": "desktop.web-live-capture.visual-022",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-022",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "ink",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 75,
+    "width": 55,
+    "x": 848,
+    "y": 376
+   },
+   "cornerRadius": "card",
+   "id": "visual-023",
+   "inkBounds": {
+    "height": 75,
+    "width": 55,
+    "x": 848,
+    "y": 376
+   },
+   "measurementId": "desktop.web-live-capture.visual-023",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-023",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "ink",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 32,
+    "width": 120,
+    "x": 322,
+    "y": 170
+   },
+   "cornerRadius": "card",
+   "id": "visual-024",
+   "inkBounds": {
+    "height": 32,
+    "width": 120,
+    "x": 322,
+    "y": 170
+   },
+   "measurementId": "desktop.web-live-capture.visual-024",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-024",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "ink",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 165,
+    "width": 21,
+    "x": 493,
+    "y": 289
+   },
+   "cornerRadius": "card",
+   "id": "visual-025",
+   "inkBounds": {
+    "height": 165,
+    "width": 21,
+    "x": 493,
+    "y": 289
+   },
+   "measurementId": "desktop.web-live-capture.visual-025",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-025",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 38,
+    "width": 76,
+    "x": 633,
+    "y": 665
+   },
+   "cornerRadius": "card",
+   "id": "visual-026",
+   "inkBounds": {
+    "height": 38,
+    "width": 76,
+    "x": 633,
+    "y": 665
+   },
+   "measurementId": "desktop.web-live-capture.visual-026",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-026",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 52,
+    "width": 49,
+    "x": 648,
+    "y": 381
+   },
+   "id": "visual-027",
+   "inkBounds": {
+    "height": 52,
+    "width": 49,
+    "x": 648,
+    "y": 381
+   },
+   "measurementId": "desktop.web-live-capture.visual-027",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-027",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 74,
+    "width": 32,
+    "x": 475,
+    "y": 421
+   },
+   "cornerRadius": "card",
+   "id": "visual-028",
+   "inkBounds": {
+    "height": 74,
+    "width": 32,
+    "x": 475,
+    "y": 421
+   },
+   "measurementId": "desktop.web-live-capture.visual-028",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-028",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 45,
+    "width": 49,
+    "x": 1324,
+    "y": 680
+   },
+   "id": "visual-029",
+   "inkBounds": {
+    "height": 45,
+    "width": 49,
+    "x": 1324,
+    "y": 680
+   },
+   "measurementId": "desktop.web-live-capture.visual-029",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-029",
+   "stroke": "warmCanvas",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "ink",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 22,
+    "width": 95,
+    "x": 394,
+    "y": 709
+   },
+   "cornerRadius": "card",
+   "id": "visual-030",
+   "inkBounds": {
+    "height": 22,
+    "width": 95,
+    "x": 394,
+    "y": 709
+   },
+   "measurementId": "desktop.web-live-capture.visual-030",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-030",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 55,
+    "width": 32,
+    "x": 985,
+    "y": 687
+   },
+   "id": "visual-031",
+   "inkBounds": {
+    "height": 55,
+    "width": 32,
+    "x": 985,
+    "y": 687
+   },
+   "measurementId": "desktop.web-live-capture.visual-031",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-031",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 31,
+    "width": 56,
+    "x": 292,
+    "y": 702
+   },
+   "id": "visual-032",
+   "inkBounds": {
+    "height": 31,
+    "width": 56,
+    "x": 292,
+    "y": 702
+   },
+   "measurementId": "desktop.web-live-capture.visual-032",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-032",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 23,
+    "width": 66,
+    "x": 289,
+    "y": 170
+   },
+   "id": "visual-033",
+   "inkBounds": {
+    "height": 23,
+    "width": 66,
+    "x": 289,
+    "y": 170
+   },
+   "measurementId": "desktop.web-live-capture.visual-033",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-033",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "rule",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 19,
+    "width": 78,
+    "x": 632,
+    "y": 727
+   },
+   "cornerRadius": "card",
+   "id": "visual-034",
+   "inkBounds": {
+    "height": 19,
+    "width": 78,
+    "x": 632,
+    "y": 727
+   },
+   "measurementId": "desktop.web-live-capture.visual-034",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-034",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 9,
+    "width": 105,
+    "x": 180,
+    "y": 547
+   },
+   "cornerRadius": "card",
+   "id": "visual-035",
+   "inkBounds": {
+    "height": 9,
+    "width": 105,
+    "x": 180,
+    "y": 547
+   },
+   "measurementId": "desktop.web-live-capture.visual-035",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-035",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 12,
+    "width": 65,
+    "x": 201,
+    "y": 182
+   },
+   "id": "visual-036",
+   "inkBounds": {
+    "height": 12,
+    "width": 65,
+    "x": 201,
+    "y": 182
+   },
+   "measurementId": "desktop.web-live-capture.visual-036",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-036",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 31,
+    "width": 24,
+    "x": 534,
+    "y": 198
+   },
+   "id": "visual-037",
+   "inkBounds": {
+    "height": 31,
+    "width": 24,
+    "x": 534,
+    "y": 198
+   },
+   "measurementId": "desktop.web-live-capture.visual-037",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-037",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 32,
+    "width": 19,
+    "x": 472,
+    "y": 486
+   },
+   "id": "visual-038",
+   "inkBounds": {
+    "height": 32,
+    "width": 19,
+    "x": 472,
+    "y": 486
+   },
+   "measurementId": "desktop.web-live-capture.visual-038",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-038",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 37,
+    "width": 15,
+    "x": 1230,
+    "y": 414
+   },
+   "id": "visual-039",
+   "inkBounds": {
+    "height": 37,
+    "width": 15,
+    "x": 1230,
+    "y": 414
+   },
+   "measurementId": "desktop.web-live-capture.visual-039",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-039",
+   "stroke": "shotiqOrange",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 54,
+    "width": 10,
+    "x": 594,
+    "y": 218
+   },
+   "id": "visual-040",
+   "inkBounds": {
+    "height": 54,
+    "width": 10,
+    "x": 594,
+    "y": 218
+   },
+   "measurementId": "desktop.web-live-capture.visual-040",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-040",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 19,
+    "width": 28,
+    "x": 1314,
+    "y": 222
+   },
+   "id": "visual-041",
+   "inkBounds": {
+    "height": 19,
+    "width": 28,
+    "x": 1314,
+    "y": 222
+   },
+   "measurementId": "desktop.web-live-capture.visual-041",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-041",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 37,
+    "width": 14,
+    "x": 1248,
+    "y": 414
+   },
+   "id": "visual-042",
+   "inkBounds": {
+    "height": 37,
+    "width": 14,
+    "x": 1248,
+    "y": 414
+   },
+   "measurementId": "desktop.web-live-capture.visual-042",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-042",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 23,
+    "width": 22,
+    "x": 40,
+    "y": 170
+   },
+   "id": "visual-043",
+   "inkBounds": {
+    "height": 23,
+    "width": 22,
+    "x": 40,
+    "y": 170
+   },
+   "measurementId": "desktop.web-live-capture.visual-043",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-043",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 45,
+    "x": 464,
+    "y": 728
+   },
+   "id": "visual-044",
+   "inkBounds": {
+    "height": 11,
+    "width": 45,
+    "x": 464,
+    "y": 728
+   },
+   "measurementId": "desktop.web-live-capture.visual-044",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-044",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 13,
+    "width": 38,
+    "x": 150,
+    "y": 170
+   },
+   "id": "visual-045",
+   "inkBounds": {
+    "height": 13,
+    "width": 38,
+    "x": 150,
+    "y": 170
+   },
+   "measurementId": "desktop.web-live-capture.visual-045",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-045",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 22,
+    "width": 21,
+    "x": 1205,
+    "y": 219
+   },
+   "id": "visual-046",
+   "inkBounds": {
+    "height": 22,
+    "width": 21,
+    "x": 1205,
+    "y": 219
+   },
+   "measurementId": "desktop.web-live-capture.visual-046",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-046",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 22,
+    "width": 21,
+    "x": 41,
+    "y": 702
+   },
+   "id": "visual-047",
+   "inkBounds": {
+    "height": 22,
+    "width": 21,
+    "x": 41,
+    "y": 702
+   },
+   "measurementId": "desktop.web-live-capture.visual-047",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-047",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 21,
+    "width": 21,
+    "x": 1095,
+    "y": 221
+   },
+   "id": "visual-048",
+   "inkBounds": {
+    "height": 21,
+    "width": 21,
+    "x": 1095,
+    "y": 221
+   },
+   "measurementId": "desktop.web-live-capture.visual-048",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-048",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 12,
+    "width": 36,
+    "x": 32,
+    "y": 205
+   },
+   "id": "visual-049",
+   "inkBounds": {
+    "height": 12,
+    "width": 36,
+    "x": 32,
+    "y": 205
+   },
+   "measurementId": "desktop.web-live-capture.visual-049",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-049",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 13,
+    "width": 32,
+    "x": 877,
+    "y": 542
+   },
+   "id": "visual-050",
+   "inkBounds": {
+    "height": 13,
+    "width": 32,
+    "x": 877,
+    "y": 542
+   },
+   "measurementId": "desktop.web-live-capture.visual-050",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-050",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 24,
+    "width": 17,
+    "x": 499,
+    "y": 497
+   },
+   "id": "visual-051",
+   "inkBounds": {
+    "height": 24,
+    "width": 17,
+    "x": 499,
+    "y": 497
+   },
+   "measurementId": "desktop.web-live-capture.visual-051",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-051",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 12,
+    "width": 32,
+    "x": 1082,
+    "y": 679
+   },
+   "id": "visual-052",
+   "inkBounds": {
+    "height": 12,
+    "width": 32,
+    "x": 1082,
+    "y": 679
+   },
+   "measurementId": "desktop.web-live-capture.visual-052",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-052",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "rule",
+   "borderWidth": 6,
+   "bounds": {
+    "height": 6,
+    "width": 61,
+    "x": 1230,
+    "y": 457
+   },
+   "id": "visual-053",
+   "inkBounds": {
+    "height": 6,
+    "width": 61,
+    "x": 1230,
+    "y": 457
+   },
+   "measurementId": "desktop.web-live-capture.visual-053",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-053",
+   "type": "divider",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 33,
+    "x": 270,
+    "y": 665
+   },
+   "id": "visual-054",
+   "inkBounds": {
+    "height": 11,
+    "width": 33,
+    "x": 270,
+    "y": 665
+   },
+   "measurementId": "desktop.web-live-capture.visual-054",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-054",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 35,
+    "x": 1196,
+    "y": 702
+   },
+   "id": "visual-055",
+   "inkBounds": {
+    "height": 10,
+    "width": 35,
+    "x": 1196,
+    "y": 702
+   },
+   "measurementId": "desktop.web-live-capture.visual-055",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-055",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 35,
+    "x": 175,
+    "y": 665
+   },
+   "id": "visual-056",
+   "inkBounds": {
+    "height": 10,
+    "width": 35,
+    "x": 175,
+    "y": 665
+   },
+   "measurementId": "desktop.web-live-capture.visual-056",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-056",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 19,
+    "width": 18,
+    "x": 576,
+    "y": 202
+   },
+   "id": "visual-057",
+   "inkBounds": {
+    "height": 19,
+    "width": 18,
+    "x": 576,
+    "y": 202
+   },
+   "measurementId": "desktop.web-live-capture.visual-057",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-057",
+   "stroke": "reviewRed",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 26,
+    "width": 13,
+    "x": 499,
+    "y": 227
+   },
+   "id": "visual-058",
+   "inkBounds": {
+    "height": 26,
+    "width": 13,
+    "x": 499,
+    "y": 227
+   },
+   "measurementId": "desktop.web-live-capture.visual-058",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-058",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 29,
+    "x": 1114,
+    "y": 701
+   },
+   "id": "visual-059",
+   "inkBounds": {
+    "height": 11,
+    "width": 29,
+    "x": 1114,
+    "y": 701
+   },
+   "measurementId": "desktop.web-live-capture.visual-059",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-059",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 28,
+    "x": 1215,
+    "y": 258
+   },
+   "id": "visual-060",
+   "inkBounds": {
+    "height": 11,
+    "width": 28,
+    "x": 1215,
+    "y": 258
+   },
+   "measurementId": "desktop.web-live-capture.visual-060",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-060",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 12,
+    "width": 23,
+    "x": 1084,
+    "y": 722
+   },
+   "id": "visual-061",
+   "inkBounds": {
+    "height": 12,
+    "width": 23,
+    "x": 1084,
+    "y": 722
+   },
+   "measurementId": "desktop.web-live-capture.visual-061",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-061",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 25,
+    "x": 770,
+    "y": 620
+   },
+   "id": "visual-062",
+   "inkBounds": {
+    "height": 11,
+    "width": 25,
+    "x": 770,
+    "y": 620
+   },
+   "measurementId": "desktop.web-live-capture.visual-062",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-062",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 25,
+    "x": 629,
+    "y": 620
+   },
+   "id": "visual-063",
+   "inkBounds": {
+    "height": 11,
+    "width": 25,
+    "x": 629,
+    "y": 620
+   },
+   "measurementId": "desktop.web-live-capture.visual-063",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-063",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 16,
+    "width": 17,
+    "x": 1020,
+    "y": 690
+   },
+   "id": "visual-064",
+   "inkBounds": {
+    "height": 16,
+    "width": 17,
+    "x": 1020,
+    "y": 690
+   },
+   "measurementId": "desktop.web-live-capture.visual-064",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-064",
+   "stroke": "warmCanvas",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 22,
+    "width": 12,
+    "x": 248,
+    "y": 677
+   },
+   "id": "visual-065",
+   "inkBounds": {
+    "height": 22,
+    "width": 12,
+    "x": 248,
+    "y": 677
+   },
+   "measurementId": "desktop.web-live-capture.visual-065",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-065",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 22,
+    "x": 816,
+    "y": 620
+   },
+   "id": "visual-066",
+   "inkBounds": {
+    "height": 11,
+    "width": 22,
+    "x": 816,
+    "y": 620
+   },
+   "measurementId": "desktop.web-live-capture.visual-066",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-066",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 22,
+    "x": 43,
+    "y": 284
+   },
+   "id": "visual-067",
+   "inkBounds": {
+    "height": 11,
+    "width": 22,
+    "x": 43,
+    "y": 284
+   },
+   "measurementId": "desktop.web-live-capture.visual-067",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-067",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 12,
+    "width": 20,
+    "x": 1140,
+    "y": 679
+   },
+   "id": "visual-068",
+   "inkBounds": {
+    "height": 12,
+    "width": 20,
+    "x": 1140,
+    "y": 679
+   },
+   "measurementId": "desktop.web-live-capture.visual-068",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-068",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 15,
+    "width": 16,
+    "x": 892,
+    "y": 630
+   },
+   "id": "visual-069",
+   "inkBounds": {
+    "height": 15,
+    "width": 16,
+    "x": 892,
+    "y": 630
+   },
+   "measurementId": "desktop.web-live-capture.visual-069",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-069",
+   "stroke": "warmCanvas",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 17,
+    "width": 14,
+    "x": 585,
+    "y": 199
+   },
+   "id": "visual-070",
+   "inkBounds": {
+    "height": 17,
+    "width": 14,
+    "x": 585,
+    "y": 199
+   },
+   "measurementId": "desktop.web-live-capture.visual-070",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-070",
+   "stroke": "reviewRed",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "rule",
+   "borderWidth": 7,
+   "bounds": {
+    "height": 7,
+    "width": 34,
+    "x": 293,
+    "y": 515
+   },
+   "id": "visual-071",
+   "inkBounds": {
+    "height": 7,
+    "width": 34,
+    "x": 293,
+    "y": 515
+   },
+   "measurementId": "desktop.web-live-capture.visual-071",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-071",
+   "type": "divider",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 20,
+    "x": 800,
+    "y": 620
+   },
+   "id": "visual-072",
+   "inkBounds": {
+    "height": 11,
+    "width": 20,
+    "x": 800,
+    "y": 620
+   },
+   "measurementId": "desktop.web-live-capture.visual-072",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-072",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 20,
+    "x": 41,
+    "y": 735
+   },
+   "id": "visual-073",
+   "inkBounds": {
+    "height": 11,
+    "width": 20,
+    "x": 41,
+    "y": 735
+   },
+   "measurementId": "desktop.web-live-capture.visual-073",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-073",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 24,
+    "x": 1302,
+    "y": 258
+   },
+   "id": "visual-074",
+   "inkBounds": {
+    "height": 9,
+    "width": 24,
+    "x": 1302,
+    "y": 258
+   },
+   "measurementId": "desktop.web-live-capture.visual-074",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-074",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 15,
+    "width": 14,
+    "x": 126,
+    "y": 629
+   },
+   "id": "visual-075",
+   "inkBounds": {
+    "height": 15,
+    "width": 14,
+    "x": 126,
+    "y": 629
+   },
+   "measurementId": "desktop.web-live-capture.visual-075",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-075",
+   "stroke": "warmCanvas",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 16,
+    "width": 13,
+    "x": 347,
+    "y": 730
+   },
+   "id": "visual-076",
+   "inkBounds": {
+    "height": 16,
+    "width": 13,
+    "x": 347,
+    "y": 730
+   },
+   "measurementId": "desktop.web-live-capture.visual-076",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-076",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 7,
+    "width": 29,
+    "x": 1327,
+    "y": 260
+   },
+   "id": "visual-077",
+   "inkBounds": {
+    "height": 7,
+    "width": 29,
+    "x": 1327,
+    "y": 260
+   },
+   "measurementId": "desktop.web-live-capture.visual-077",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-077",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 18,
+    "x": 496,
+    "y": 620
+   },
+   "id": "visual-078",
+   "inkBounds": {
+    "height": 11,
+    "width": 18,
+    "x": 496,
+    "y": 620
+   },
+   "measurementId": "desktop.web-live-capture.visual-078",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-078",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 14,
+    "x": 967,
+    "y": 856
+   },
+   "id": "visual-079",
+   "inkBounds": {
+    "height": 14,
+    "width": 14,
+    "x": 967,
+    "y": 856
+   },
+   "measurementId": "desktop.web-live-capture.visual-079",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-079",
+   "stroke": "warmCanvas",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 14,
+    "x": 928,
+    "y": 856
+   },
+   "id": "visual-080",
+   "inkBounds": {
+    "height": 14,
+    "width": 14,
+    "x": 928,
+    "y": 856
+   },
+   "measurementId": "desktop.web-live-capture.visual-080",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-080",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 14,
+    "x": 850,
+    "y": 856
+   },
+   "id": "visual-081",
+   "inkBounds": {
+    "height": 14,
+    "width": 14,
+    "x": 850,
+    "y": 856
+   },
+   "measurementId": "desktop.web-live-capture.visual-081",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-081",
+   "stroke": "warmCanvas",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 14,
+    "x": 150,
+    "y": 198
+   },
+   "id": "visual-082",
+   "inkBounds": {
+    "height": 14,
+    "width": 14,
+    "x": 150,
+    "y": 198
+   },
+   "measurementId": "desktop.web-live-capture.visual-082",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-082",
+   "stroke": "confirmGreen",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 12,
+    "width": 16,
+    "x": 862,
+    "y": 543
+   },
+   "id": "visual-083",
+   "inkBounds": {
+    "height": 12,
+    "width": 16,
+    "x": 862,
+    "y": 543
+   },
+   "measurementId": "desktop.web-live-capture.visual-083",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-083",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 13,
+    "width": 14,
+    "x": 1355,
+    "y": 178
+   },
+   "id": "visual-084",
+   "inkBounds": {
+    "height": 13,
+    "width": 14,
+    "x": 1355,
+    "y": 178
+   },
+   "measurementId": "desktop.web-live-capture.visual-084",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-084",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 13,
+    "x": 890,
+    "y": 856
+   },
+   "id": "visual-085",
+   "inkBounds": {
+    "height": 14,
+    "width": 13,
+    "x": 890,
+    "y": 856
+   },
+   "measurementId": "desktop.web-live-capture.visual-085",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-085",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 13,
+    "x": 811,
+    "y": 856
+   },
+   "id": "visual-086",
+   "inkBounds": {
+    "height": 14,
+    "width": 13,
+    "x": 811,
+    "y": 856
+   },
+   "measurementId": "desktop.web-live-capture.visual-086",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-086",
+   "stroke": "analysisBlue",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 13,
+    "x": 771,
+    "y": 856
+   },
+   "id": "visual-087",
+   "inkBounds": {
+    "height": 14,
+    "width": 13,
+    "x": 771,
+    "y": 856
+   },
+   "measurementId": "desktop.web-live-capture.visual-087",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-087",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 13,
+    "x": 732,
+    "y": 856
+   },
+   "id": "visual-088",
+   "inkBounds": {
+    "height": 14,
+    "width": 13,
+    "x": 732,
+    "y": 856
+   },
+   "measurementId": "desktop.web-live-capture.visual-088",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-088",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 13,
+    "x": 653,
+    "y": 856
+   },
+   "id": "visual-089",
+   "inkBounds": {
+    "height": 14,
+    "width": 13,
+    "x": 653,
+    "y": 856
+   },
+   "measurementId": "desktop.web-live-capture.visual-089",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-089",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 13,
+    "x": 574,
+    "y": 856
+   },
+   "id": "visual-090",
+   "inkBounds": {
+    "height": 14,
+    "width": 13,
+    "x": 574,
+    "y": 856
+   },
+   "measurementId": "desktop.web-live-capture.visual-090",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-090",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 13,
+    "x": 535,
+    "y": 856
+   },
+   "id": "visual-091",
+   "inkBounds": {
+    "height": 14,
+    "width": 13,
+    "x": 535,
+    "y": 856
+   },
+   "measurementId": "desktop.web-live-capture.visual-091",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-091",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 13,
+    "x": 495,
+    "y": 856
+   },
+   "id": "visual-092",
+   "inkBounds": {
+    "height": 14,
+    "width": 13,
+    "x": 495,
+    "y": 856
+   },
+   "measurementId": "desktop.web-live-capture.visual-092",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-092",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 13,
+    "x": 454,
+    "y": 856
+   },
+   "id": "visual-093",
+   "inkBounds": {
+    "height": 14,
+    "width": 13,
+    "x": 454,
+    "y": 856
+   },
+   "measurementId": "desktop.web-live-capture.visual-093",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-093",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 13,
+    "x": 414,
+    "y": 856
+   },
+   "id": "visual-094",
+   "inkBounds": {
+    "height": 14,
+    "width": 13,
+    "x": 414,
+    "y": 856
+   },
+   "measurementId": "desktop.web-live-capture.visual-094",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-094",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 13,
+    "x": 374,
+    "y": 856
+   },
+   "id": "visual-095",
+   "inkBounds": {
+    "height": 14,
+    "width": 13,
+    "x": 374,
+    "y": 856
+   },
+   "measurementId": "desktop.web-live-capture.visual-095",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-095",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 13,
+    "x": 333,
+    "y": 856
+   },
+   "id": "visual-096",
+   "inkBounds": {
+    "height": 14,
+    "width": 13,
+    "x": 333,
+    "y": 856
+   },
+   "measurementId": "desktop.web-live-capture.visual-096",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-096",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 13,
+    "x": 292,
+    "y": 856
+   },
+   "id": "visual-097",
+   "inkBounds": {
+    "height": 14,
+    "width": 13,
+    "x": 292,
+    "y": 856
+   },
+   "measurementId": "desktop.web-live-capture.visual-097",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-097",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 13,
+    "x": 249,
+    "y": 856
+   },
+   "id": "visual-098",
+   "inkBounds": {
+    "height": 14,
+    "width": 13,
+    "x": 249,
+    "y": 856
+   },
+   "measurementId": "desktop.web-live-capture.visual-098",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-098",
+   "stroke": "analysisBlue",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 13,
+    "x": 208,
+    "y": 856
+   },
+   "id": "visual-099",
+   "inkBounds": {
+    "height": 14,
+    "width": 13,
+    "x": 208,
+    "y": 856
+   },
+   "measurementId": "desktop.web-live-capture.visual-099",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-099",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 13,
+    "x": 167,
+    "y": 856
+   },
+   "id": "visual-100",
+   "inkBounds": {
+    "height": 14,
+    "width": 13,
+    "x": 167,
+    "y": 856
+   },
+   "measurementId": "desktop.web-live-capture.visual-100",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-100",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 13,
+    "x": 126,
+    "y": 856
+   },
+   "id": "visual-101",
+   "inkBounds": {
+    "height": 14,
+    "width": 13,
+    "x": 126,
+    "y": 856
+   },
+   "measurementId": "desktop.web-live-capture.visual-101",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-101",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 13,
+    "x": 47,
+    "y": 856
+   },
+   "id": "visual-102",
+   "inkBounds": {
+    "height": 14,
+    "width": 13,
+    "x": 47,
+    "y": 856
+   },
+   "measurementId": "desktop.web-live-capture.visual-102",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-102",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 13,
+    "width": 13,
+    "x": 127,
+    "y": 601
+   },
+   "id": "visual-103",
+   "inkBounds": {
+    "height": 13,
+    "width": 13,
+    "x": 127,
+    "y": 601
+   },
+   "measurementId": "desktop.web-live-capture.visual-103",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-103",
+   "stroke": "warmCanvas",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 12,
+    "x": 693,
+    "y": 856
+   },
+   "id": "visual-104",
+   "inkBounds": {
+    "height": 14,
+    "width": 12,
+    "x": 693,
+    "y": 856
+   },
+   "measurementId": "desktop.web-live-capture.visual-104",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-104",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 12,
+    "x": 614,
+    "y": 856
+   },
+   "id": "visual-105",
+   "inkBounds": {
+    "height": 14,
+    "width": 12,
+    "x": 614,
+    "y": 856
+   },
+   "measurementId": "desktop.web-live-capture.visual-105",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-105",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 12,
+    "x": 87,
+    "y": 856
+   },
+   "id": "visual-106",
+   "inkBounds": {
+    "height": 14,
+    "width": 12,
+    "x": 87,
+    "y": 856
+   },
+   "measurementId": "desktop.web-live-capture.visual-106",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-106",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 15,
+    "width": 11,
+    "x": 560,
+    "y": 200
+   },
+   "id": "visual-107",
+   "inkBounds": {
+    "height": 15,
+    "width": 11,
+    "x": 560,
+    "y": 200
+   },
+   "measurementId": "desktop.web-live-capture.visual-107",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-107",
+   "stroke": "reviewRed",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 16,
+    "x": 1201,
+    "y": 722
+   },
+   "id": "visual-108",
+   "inkBounds": {
+    "height": 10,
+    "width": 16,
+    "x": 1201,
+    "y": 722
+   },
+   "measurementId": "desktop.web-live-capture.visual-108",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-108",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 13,
+    "width": 12,
+    "x": 1073,
+    "y": 844
+   },
+   "id": "visual-109",
+   "inkBounds": {
+    "height": 13,
+    "width": 12,
+    "x": 1073,
+    "y": 844
+   },
+   "measurementId": "desktop.web-live-capture.visual-109",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-109",
+   "stroke": "shotiqOrange",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 12,
+    "width": 13,
+    "x": 845,
+    "y": 543
+   },
+   "id": "visual-110",
+   "inkBounds": {
+    "height": 12,
+    "width": 13,
+    "x": 845,
+    "y": 543
+   },
+   "measurementId": "desktop.web-live-capture.visual-110",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-110",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 14,
+    "x": 1118,
+    "y": 680
+   },
+   "id": "visual-111",
+   "inkBounds": {
+    "height": 11,
+    "width": 14,
+    "x": 1118,
+    "y": 680
+   },
+   "measurementId": "desktop.web-live-capture.visual-111",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-111",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 14,
+    "x": 651,
+    "y": 620
+   },
+   "id": "visual-112",
+   "inkBounds": {
+    "height": 11,
+    "width": 14,
+    "x": 651,
+    "y": 620
+   },
+   "measurementId": "desktop.web-live-capture.visual-112",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-112",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 7,
+    "width": 22,
+    "x": 389,
+    "y": 731
+   },
+   "id": "visual-113",
+   "inkBounds": {
+    "height": 7,
+    "width": 22,
+    "x": 389,
+    "y": 731
+   },
+   "measurementId": "desktop.web-live-capture.visual-113",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-113",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 17,
+    "width": 9,
+    "x": 133,
+    "y": 692
+   },
+   "id": "visual-114",
+   "inkBounds": {
+    "height": 17,
+    "width": 9,
+    "x": 133,
+    "y": 692
+   },
+   "measurementId": "desktop.web-live-capture.visual-114",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-114",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 15,
+    "x": 1226,
+    "y": 722
+   },
+   "id": "visual-115",
+   "inkBounds": {
+    "height": 10,
+    "width": 15,
+    "x": 1226,
+    "y": 722
+   },
+   "measurementId": "desktop.web-live-capture.visual-115",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-115",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 8,
+    "width": 18,
+    "x": 1241,
+    "y": 724
+   },
+   "id": "visual-116",
+   "inkBounds": {
+    "height": 8,
+    "width": 18,
+    "x": 1241,
+    "y": 724
+   },
+   "measurementId": "desktop.web-live-capture.visual-116",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-116",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 8,
+    "width": 18,
+    "x": 1132,
+    "y": 724
+   },
+   "id": "visual-117",
+   "inkBounds": {
+    "height": 8,
+    "width": 18,
+    "x": 1132,
+    "y": 724
+   },
+   "measurementId": "desktop.web-live-capture.visual-117",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-117",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 12,
+    "width": 12,
+    "x": 1120,
+    "y": 844
+   },
+   "id": "visual-118",
+   "inkBounds": {
+    "height": 12,
+    "width": 12,
+    "x": 1120,
+    "y": 844
+   },
+   "measurementId": "desktop.web-live-capture.visual-118",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-118",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 12,
+    "width": 12,
+    "x": 1022,
+    "y": 844
+   },
+   "id": "visual-119",
+   "inkBounds": {
+    "height": 12,
+    "width": 12,
+    "x": 1022,
+    "y": 844
+   },
+   "measurementId": "desktop.web-live-capture.visual-119",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-119",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 18,
+    "width": 8,
+    "x": 984,
+    "y": 227
+   },
+   "id": "visual-120",
+   "inkBounds": {
+    "height": 18,
+    "width": 8,
+    "x": 984,
+    "y": 227
+   },
+   "measurementId": "desktop.web-live-capture.visual-120",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-120",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 6,
+    "width": 24,
+    "x": 353,
+    "y": 664
+   },
+   "id": "visual-121",
+   "inkBounds": {
+    "height": 6,
+    "width": 24,
+    "x": 353,
+    "y": 664
+   },
+   "measurementId": "desktop.web-live-capture.visual-121",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-121",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 13,
+    "x": 1326,
+    "y": 418
+   },
+   "id": "visual-122",
+   "inkBounds": {
+    "height": 11,
+    "width": 13,
+    "x": 1326,
+    "y": 418
+   },
+   "measurementId": "desktop.web-live-capture.visual-122",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-122",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 8,
+    "width": 17,
+    "x": 1176,
+    "y": 724
+   },
+   "id": "visual-123",
+   "inkBounds": {
+    "height": 8,
+    "width": 17,
+    "x": 1176,
+    "y": 724
+   },
+   "measurementId": "desktop.web-live-capture.visual-123",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-123",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 15,
+    "x": 1148,
+    "y": 703
+   },
+   "id": "visual-124",
+   "inkBounds": {
+    "height": 9,
+    "width": 15,
+    "x": 1148,
+    "y": 703
+   },
+   "measurementId": "desktop.web-live-capture.visual-124",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-124",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 12,
+    "x": 1162,
+    "y": 722
+   },
+   "id": "visual-125",
+   "inkBounds": {
+    "height": 10,
+    "width": 12,
+    "x": 1162,
+    "y": 722
+   },
+   "measurementId": "desktop.web-live-capture.visual-125",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-125",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 12,
+    "x": 1098,
+    "y": 845
+   },
+   "id": "visual-126",
+   "inkBounds": {
+    "height": 10,
+    "width": 12,
+    "x": 1098,
+    "y": 845
+   },
+   "measurementId": "desktop.web-live-capture.visual-126",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-126",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 12,
+    "x": 934,
+    "y": 797
+   },
+   "id": "visual-127",
+   "inkBounds": {
+    "height": 10,
+    "width": 12,
+    "x": 934,
+    "y": 797
+   },
+   "measurementId": "desktop.web-live-capture.visual-127",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-127",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 12,
+    "x": 890,
+    "y": 837
+   },
+   "id": "visual-128",
+   "inkBounds": {
+    "height": 10,
+    "width": 12,
+    "x": 890,
+    "y": 837
+   },
+   "measurementId": "desktop.web-live-capture.visual-128",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-128",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 12,
+    "x": 54,
+    "y": 445
+   },
+   "id": "visual-129",
+   "inkBounds": {
+    "height": 10,
+    "width": 12,
+    "x": 54,
+    "y": 445
+   },
+   "measurementId": "desktop.web-live-capture.visual-129",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-129",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 13,
+    "x": 1095,
+    "y": 703
+   },
+   "id": "visual-130",
+   "inkBounds": {
+    "height": 9,
+    "width": 13,
+    "x": 1095,
+    "y": 703
+   },
+   "measurementId": "desktop.web-live-capture.visual-130",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-130",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 5,
+    "width": 23,
+    "x": 170,
+    "y": 171
+   },
+   "id": "visual-131",
+   "inkBounds": {
+    "height": 5,
+    "width": 23,
+    "x": 170,
+    "y": 171
+   },
+   "measurementId": "desktop.web-live-capture.visual-131",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-131",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 16,
+    "width": 7,
+    "x": 79,
+    "y": 794
+   },
+   "id": "visual-132",
+   "inkBounds": {
+    "height": 16,
+    "width": 7,
+    "x": 79,
+    "y": 794
+   },
+   "measurementId": "desktop.web-live-capture.visual-132",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-132",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 16,
+    "width": 7,
+    "x": 59,
+    "y": 794
+   },
+   "id": "visual-133",
+   "inkBounds": {
+    "height": 16,
+    "width": 7,
+    "x": 59,
+    "y": 794
+   },
+   "measurementId": "desktop.web-live-capture.visual-133",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-133",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 8,
+    "x": 50,
+    "y": 795
+   },
+   "id": "visual-134",
+   "inkBounds": {
+    "height": 14,
+    "width": 8,
+    "x": 50,
+    "y": 795
+   },
+   "measurementId": "desktop.web-live-capture.visual-134",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-134",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 16,
+    "width": 7,
+    "x": 42,
+    "y": 794
+   },
+   "id": "visual-135",
+   "inkBounds": {
+    "height": 16,
+    "width": 7,
+    "x": 42,
+    "y": 794
+   },
+   "measurementId": "desktop.web-live-capture.visual-135",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-135",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 11,
+    "x": 1363,
+    "y": 572
+   },
+   "id": "visual-136",
+   "inkBounds": {
+    "height": 10,
+    "width": 11,
+    "x": 1363,
+    "y": 572
+   },
+   "measurementId": "desktop.web-live-capture.visual-136",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-136",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 11,
+    "x": 929,
+    "y": 837
+   },
+   "id": "visual-137",
+   "inkBounds": {
+    "height": 10,
+    "width": 11,
+    "x": 929,
+    "y": 837
+   },
+   "measurementId": "desktop.web-live-capture.visual-137",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-137",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 10,
+    "x": 386,
+    "y": 676
+   },
+   "id": "visual-138",
+   "inkBounds": {
+    "height": 11,
+    "width": 10,
+    "x": 386,
+    "y": 676
+   },
+   "measurementId": "desktop.web-live-capture.visual-138",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-138",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 15,
+    "width": 7,
+    "x": 87,
+    "y": 794
+   },
+   "id": "visual-139",
+   "inkBounds": {
+    "height": 15,
+    "width": 7,
+    "x": 87,
+    "y": 794
+   },
+   "measurementId": "desktop.web-live-capture.visual-139",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-139",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 13,
+    "width": 8,
+    "x": 251,
+    "y": 834
+   },
+   "id": "visual-140",
+   "inkBounds": {
+    "height": 13,
+    "width": 8,
+    "x": 251,
+    "y": 834
+   },
+   "measurementId": "desktop.web-live-capture.visual-140",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-140",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 10,
+    "x": 921,
+    "y": 797
+   },
+   "id": "visual-141",
+   "inkBounds": {
+    "height": 10,
+    "width": 10,
+    "x": 921,
+    "y": 797
+   },
+   "measurementId": "desktop.web-live-capture.visual-141",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-141",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 10,
+    "x": 790,
+    "y": 621
+   },
+   "id": "visual-142",
+   "inkBounds": {
+    "height": 10,
+    "width": 10,
+    "x": 790,
+    "y": 621
+   },
+   "measurementId": "desktop.web-live-capture.visual-142",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-142",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 10,
+    "x": 733,
+    "y": 837
+   },
+   "id": "visual-143",
+   "inkBounds": {
+    "height": 10,
+    "width": 10,
+    "x": 733,
+    "y": 837
+   },
+   "measurementId": "desktop.web-live-capture.visual-143",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-143",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 10,
+    "x": 654,
+    "y": 837
+   },
+   "id": "visual-144",
+   "inkBounds": {
+    "height": 10,
+    "width": 10,
+    "x": 654,
+    "y": 837
+   },
+   "measurementId": "desktop.web-live-capture.visual-144",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-144",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 10,
+    "x": 615,
+    "y": 837
+   },
+   "id": "visual-145",
+   "inkBounds": {
+    "height": 10,
+    "width": 10,
+    "x": 615,
+    "y": 837
+   },
+   "measurementId": "desktop.web-live-capture.visual-145",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-145",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 10,
+    "x": 416,
+    "y": 837
+   },
+   "id": "visual-146",
+   "inkBounds": {
+    "height": 10,
+    "width": 10,
+    "x": 416,
+    "y": 837
+   },
+   "measurementId": "desktop.web-live-capture.visual-146",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-146",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 11,
+    "x": 1040,
+    "y": 845
+   },
+   "id": "visual-147",
+   "inkBounds": {
+    "height": 9,
+    "width": 11,
+    "x": 1040,
+    "y": 845
+   },
+   "measurementId": "desktop.web-live-capture.visual-147",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-147",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 11,
+    "x": 968,
+    "y": 837
+   },
+   "id": "visual-148",
+   "inkBounds": {
+    "height": 9,
+    "width": 11,
+    "x": 968,
+    "y": 837
+   },
+   "measurementId": "desktop.web-live-capture.visual-148",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-148",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 12,
+    "width": 8,
+    "x": 463,
+    "y": 506
+   },
+   "id": "visual-149",
+   "inkBounds": {
+    "height": 12,
+    "width": 8,
+    "x": 463,
+    "y": 506
+   },
+   "measurementId": "desktop.web-live-capture.visual-149",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-149",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 13,
+    "width": 7,
+    "x": 1378,
+    "y": 178
+   },
+   "id": "visual-150",
+   "inkBounds": {
+    "height": 13,
+    "width": 7,
+    "x": 1378,
+    "y": 178
+   },
+   "measurementId": "desktop.web-live-capture.visual-150",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-150",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 13,
+    "width": 7,
+    "x": 1370,
+    "y": 178
+   },
+   "id": "visual-151",
+   "inkBounds": {
+    "height": 13,
+    "width": 7,
+    "x": 1370,
+    "y": 178
+   },
+   "measurementId": "desktop.web-live-capture.visual-151",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-151",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 10,
+    "x": 1178,
+    "y": 703
+   },
+   "id": "visual-152",
+   "inkBounds": {
+    "height": 9,
+    "width": 10,
+    "x": 1178,
+    "y": 703
+   },
+   "measurementId": "desktop.web-live-capture.visual-152",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-152",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 9,
+    "x": 1052,
+    "y": 845
+   },
+   "id": "visual-153",
+   "inkBounds": {
+    "height": 10,
+    "width": 9,
+    "x": 1052,
+    "y": 845
+   },
+   "measurementId": "desktop.web-live-capture.visual-153",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-153",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 10,
+    "x": 991,
+    "y": 225
+   },
+   "id": "visual-154",
+   "inkBounds": {
+    "height": 9,
+    "width": 10,
+    "x": 991,
+    "y": 225
+   },
+   "measurementId": "desktop.web-live-capture.visual-154",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-154",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 10,
+    "x": 851,
+    "y": 837
+   },
+   "id": "visual-155",
+   "inkBounds": {
+    "height": 9,
+    "width": 10,
+    "x": 851,
+    "y": 837
+   },
+   "measurementId": "desktop.web-live-capture.visual-155",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-155",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 9,
+    "x": 537,
+    "y": 837
+   },
+   "id": "visual-156",
+   "inkBounds": {
+    "height": 10,
+    "width": 9,
+    "x": 537,
+    "y": 837
+   },
+   "measurementId": "desktop.web-live-capture.visual-156",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-156",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 18,
+    "width": 5,
+    "x": 356,
+    "y": 677
+   },
+   "id": "visual-157",
+   "inkBounds": {
+    "height": 18,
+    "width": 5,
+    "x": 356,
+    "y": 677
+   },
+   "measurementId": "desktop.web-live-capture.visual-157",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-157",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 5,
+    "width": 18,
+    "x": 250,
+    "y": 664
+   },
+   "id": "visual-158",
+   "inkBounds": {
+    "height": 5,
+    "width": 18,
+    "x": 250,
+    "y": 664
+   },
+   "measurementId": "desktop.web-live-capture.visual-158",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-158",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 15,
+    "width": 6,
+    "x": 100,
+    "y": 795
+   },
+   "id": "visual-159",
+   "inkBounds": {
+    "height": 15,
+    "width": 6,
+    "x": 100,
+    "y": 795
+   },
+   "measurementId": "desktop.web-live-capture.visual-159",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-159",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 8,
+    "x": 1082,
+    "y": 701
+   },
+   "id": "visual-160",
+   "inkBounds": {
+    "height": 11,
+    "width": 8,
+    "x": 1082,
+    "y": 701
+   },
+   "measurementId": "desktop.web-live-capture.visual-160",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-160",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 8,
+    "x": 297,
+    "y": 674
+   },
+   "id": "visual-161",
+   "inkBounds": {
+    "height": 11,
+    "width": 8,
+    "x": 297,
+    "y": 674
+   },
+   "measurementId": "desktop.web-live-capture.visual-161",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-161",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 6,
+    "x": 1366,
+    "y": 24
+   },
+   "id": "visual-162",
+   "inkBounds": {
+    "height": 14,
+    "width": 6,
+    "x": 1366,
+    "y": 24
+   },
+   "measurementId": "desktop.web-live-capture.visual-162",
+   "owningRegion": "topbar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-162",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 9,
+    "x": 1091,
+    "y": 846
+   },
+   "id": "visual-163",
+   "inkBounds": {
+    "height": 9,
+    "width": 9,
+    "x": 1091,
+    "y": 846
+   },
+   "measurementId": "desktop.web-live-capture.visual-163",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-163",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 9,
+    "x": 576,
+    "y": 837
+   },
+   "id": "visual-164",
+   "inkBounds": {
+    "height": 9,
+    "width": 9,
+    "x": 576,
+    "y": 837
+   },
+   "measurementId": "desktop.web-live-capture.visual-164",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-164",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 9,
+    "x": 535,
+    "y": 229
+   },
+   "id": "visual-165",
+   "inkBounds": {
+    "height": 9,
+    "width": 9,
+    "x": 535,
+    "y": 229
+   },
+   "measurementId": "desktop.web-live-capture.visual-165",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-165",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 9,
+    "x": 382,
+    "y": 729
+   },
+   "id": "visual-166",
+   "inkBounds": {
+    "height": 9,
+    "width": 9,
+    "x": 382,
+    "y": 729
+   },
+   "measurementId": "desktop.web-live-capture.visual-166",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-166",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 8,
+    "width": 10,
+    "x": 1188,
+    "y": 724
+   },
+   "id": "visual-167",
+   "inkBounds": {
+    "height": 8,
+    "width": 10,
+    "x": 1188,
+    "y": 724
+   },
+   "measurementId": "desktop.web-live-capture.visual-167",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-167",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 8,
+    "x": 43,
+    "y": 445
+   },
+   "id": "visual-168",
+   "inkBounds": {
+    "height": 10,
+    "width": 8,
+    "x": 43,
+    "y": 445
+   },
+   "measurementId": "desktop.web-live-capture.visual-168",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-168",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 8,
+    "x": 34,
+    "y": 285
+   },
+   "id": "visual-169",
+   "inkBounds": {
+    "height": 10,
+    "width": 8,
+    "x": 34,
+    "y": 285
+   },
+   "measurementId": "desktop.web-live-capture.visual-169",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-169",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 6,
+    "width": 13,
+    "x": 1123,
+    "y": 726
+   },
+   "id": "visual-170",
+   "inkBounds": {
+    "height": 6,
+    "width": 13,
+    "x": 1123,
+    "y": 726
+   },
+   "measurementId": "desktop.web-live-capture.visual-170",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-170",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 13,
+    "width": 6,
+    "x": 67,
+    "y": 796
+   },
+   "id": "visual-171",
+   "inkBounds": {
+    "height": 13,
+    "width": 6,
+    "x": 67,
+    "y": 796
+   },
+   "measurementId": "desktop.web-live-capture.visual-171",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-171",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 7,
+    "x": 211,
+    "y": 836
+   },
+   "id": "visual-172",
+   "inkBounds": {
+    "height": 11,
+    "width": 7,
+    "x": 211,
+    "y": 836
+   },
+   "measurementId": "desktop.web-live-capture.visual-172",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-172",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 8,
+    "width": 9,
+    "x": 1219,
+    "y": 724
+   },
+   "id": "visual-173",
+   "inkBounds": {
+    "height": 8,
+    "width": 9,
+    "x": 1219,
+    "y": 724
+   },
+   "measurementId": "desktop.web-live-capture.visual-173",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-173",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 8,
+    "x": 1137,
+    "y": 846
+   },
+   "id": "visual-174",
+   "inkBounds": {
+    "height": 9,
+    "width": 8,
+    "x": 1137,
+    "y": 846
+   },
+   "measurementId": "desktop.web-live-capture.visual-174",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-174",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 12,
+    "width": 6,
+    "x": 1133,
+    "y": 679
+   },
+   "id": "visual-175",
+   "inkBounds": {
+    "height": 12,
+    "width": 6,
+    "x": 1133,
+    "y": 679
+   },
+   "measurementId": "desktop.web-live-capture.visual-175",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-175",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 12,
+    "width": 6,
+    "x": 856,
+    "y": 543
+   },
+   "id": "visual-176",
+   "inkBounds": {
+    "height": 12,
+    "width": 6,
+    "x": 856,
+    "y": 543
+   },
+   "measurementId": "desktop.web-live-capture.visual-176",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-176",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 12,
+    "width": 6,
+    "x": 488,
+    "y": 713
+   },
+   "id": "visual-177",
+   "inkBounds": {
+    "height": 12,
+    "width": 6,
+    "x": 488,
+    "y": 713
+   },
+   "measurementId": "desktop.web-live-capture.visual-177",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-177",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 8,
+    "x": 456,
+    "y": 837
+   },
+   "id": "visual-178",
+   "inkBounds": {
+    "height": 9,
+    "width": 8,
+    "x": 456,
+    "y": 837
+   },
+   "measurementId": "desktop.web-live-capture.visual-178",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-178",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 6,
+    "width": 12,
+    "x": 413,
+    "y": 700
+   },
+   "id": "visual-179",
+   "inkBounds": {
+    "height": 6,
+    "width": 12,
+    "x": 413,
+    "y": 700
+   },
+   "measurementId": "desktop.web-live-capture.visual-179",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-179",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 5,
+    "x": 1344,
+    "y": 24
+   },
+   "id": "visual-180",
+   "inkBounds": {
+    "height": 14,
+    "width": 5,
+    "x": 1344,
+    "y": 24
+   },
+   "measurementId": "desktop.web-live-capture.visual-180",
+   "owningRegion": "topbar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-180",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 7,
+    "x": 377,
+    "y": 837
+   },
+   "id": "visual-181",
+   "inkBounds": {
+    "height": 10,
+    "width": 7,
+    "x": 377,
+    "y": 837
+   },
+   "measurementId": "desktop.web-live-capture.visual-181",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-181",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 7,
+    "x": 336,
+    "y": 837
+   },
+   "id": "visual-182",
+   "inkBounds": {
+    "height": 10,
+    "width": 7,
+    "x": 336,
+    "y": 837
+   },
+   "measurementId": "desktop.web-live-capture.visual-182",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-182",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 5,
+    "width": 14,
+    "x": 125,
+    "y": 220
+   },
+   "id": "visual-183",
+   "inkBounds": {
+    "height": 5,
+    "width": 14,
+    "x": 125,
+    "y": 220
+   },
+   "measurementId": "desktop.web-live-capture.visual-183",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-183",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 6,
+    "x": 1340,
+    "y": 418
+   },
+   "id": "visual-184",
+   "inkBounds": {
+    "height": 11,
+    "width": 6,
+    "x": 1340,
+    "y": 418
+   },
+   "measurementId": "desktop.web-live-capture.visual-184",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-184",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 6,
+    "x": 1319,
+    "y": 418
+   },
+   "id": "visual-185",
+   "inkBounds": {
+    "height": 11,
+    "width": 6,
+    "x": 1319,
+    "y": 418
+   },
+   "measurementId": "desktop.web-live-capture.visual-185",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-185",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 13,
+    "width": 5,
+    "x": 992,
+    "y": 231
+   },
+   "id": "visual-186",
+   "inkBounds": {
+    "height": 13,
+    "width": 5,
+    "x": 992,
+    "y": 231
+   },
+   "measurementId": "desktop.web-live-capture.visual-186",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-186",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 5,
+    "width": 13,
+    "x": 163,
+    "y": 664
+   },
+   "id": "visual-187",
+   "inkBounds": {
+    "height": 5,
+    "width": 13,
+    "x": 163,
+    "y": 664
+   },
+   "measurementId": "desktop.web-live-capture.visual-187",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-187",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 16,
+    "width": 4,
+    "x": 155,
+    "y": 677
+   },
+   "id": "visual-188",
+   "inkBounds": {
+    "height": 16,
+    "width": 4,
+    "x": 155,
+    "y": 677
+   },
+   "measurementId": "desktop.web-live-capture.visual-188",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-188",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 6,
+    "width": 10,
+    "x": 1387,
+    "y": 28
+   },
+   "id": "visual-189",
+   "inkBounds": {
+    "height": 6,
+    "width": 10,
+    "x": 1387,
+    "y": 28
+   },
+   "measurementId": "desktop.web-live-capture.visual-189",
+   "owningRegion": "topbar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-189",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 12,
+    "width": 5,
+    "x": 1167,
+    "y": 679
+   },
+   "id": "visual-190",
+   "inkBounds": {
+    "height": 12,
+    "width": 5,
+    "x": 1167,
+    "y": 679
+   },
+   "measurementId": "desktop.web-live-capture.visual-190",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-190",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 6,
+    "x": 1146,
+    "y": 845
+   },
+   "id": "visual-191",
+   "inkBounds": {
+    "height": 10,
+    "width": 6,
+    "x": 1146,
+    "y": 845
+   },
+   "measurementId": "desktop.web-live-capture.visual-191",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-191",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 6,
+    "x": 1109,
+    "y": 722
+   },
+   "id": "visual-192",
+   "inkBounds": {
+    "height": 10,
+    "width": 6,
+    "x": 1109,
+    "y": 722
+   },
+   "measurementId": "desktop.web-live-capture.visual-192",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-192",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 6,
+    "x": 1038,
+    "y": 685
+   },
+   "id": "visual-193",
+   "inkBounds": {
+    "height": 10,
+    "width": 6,
+    "x": 1038,
+    "y": 685
+   },
+   "measurementId": "desktop.web-live-capture.visual-193",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-193",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 6,
+    "x": 130,
+    "y": 837
+   },
+   "id": "visual-194",
+   "inkBounds": {
+    "height": 10,
+    "width": 6,
+    "x": 130,
+    "y": 837
+   },
+   "measurementId": "desktop.web-live-capture.visual-194",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-194",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 6,
+    "x": 90,
+    "y": 837
+   },
+   "id": "visual-195",
+   "inkBounds": {
+    "height": 10,
+    "width": 6,
+    "x": 90,
+    "y": 837
+   },
+   "measurementId": "desktop.web-live-capture.visual-195",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-195",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 6,
+    "x": 36,
+    "y": 445
+   },
+   "id": "visual-196",
+   "inkBounds": {
+    "height": 10,
+    "width": 6,
+    "x": 36,
+    "y": 445
+   },
+   "measurementId": "desktop.web-live-capture.visual-196",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-196",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 6,
+    "x": 30,
+    "y": 445
+   },
+   "id": "visual-197",
+   "inkBounds": {
+    "height": 10,
+    "width": 6,
+    "x": 30,
+    "y": 445
+   },
+   "measurementId": "desktop.web-live-capture.visual-197",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-197",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 7,
+    "width": 8,
+    "x": 1137,
+    "y": 705
+   },
+   "id": "visual-198",
+   "inkBounds": {
+    "height": 7,
+    "width": 8,
+    "x": 1137,
+    "y": 705
+   },
+   "measurementId": "desktop.web-live-capture.visual-198",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-198",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 7,
+    "width": 8,
+    "x": 217,
+    "y": 699
+   },
+   "id": "visual-199",
+   "inkBounds": {
+    "height": 7,
+    "width": 8,
+    "x": 217,
+    "y": 699
+   },
+   "measurementId": "desktop.web-live-capture.visual-199",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-199",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 5,
+    "x": 1356,
+    "y": 25
+   },
+   "id": "visual-200",
+   "inkBounds": {
+    "height": 11,
+    "width": 5,
+    "x": 1356,
+    "y": 25
+   },
+   "measurementId": "desktop.web-live-capture.visual-200",
+   "owningRegion": "topbar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-200",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 6,
+    "x": 296,
+    "y": 837
+   },
+   "id": "visual-201",
+   "inkBounds": {
+    "height": 9,
+    "width": 6,
+    "x": 296,
+    "y": 837
+   },
+   "measurementId": "desktop.web-live-capture.visual-201",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-201",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 6,
+    "x": 284,
+    "y": 675
+   },
+   "id": "visual-202",
+   "inkBounds": {
+    "height": 9,
+    "width": 6,
+    "x": 284,
+    "y": 675
+   },
+   "measurementId": "desktop.web-live-capture.visual-202",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-202",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 6,
+    "x": 171,
+    "y": 837
+   },
+   "id": "visual-203",
+   "inkBounds": {
+    "height": 9,
+    "width": 6,
+    "x": 171,
+    "y": 837
+   },
+   "measurementId": "desktop.web-live-capture.visual-203",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-203",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 5,
+    "width": 10,
+    "x": 1175,
+    "y": 596
+   },
+   "id": "visual-204",
+   "inkBounds": {
+    "height": 5,
+    "width": 10,
+    "x": 1175,
+    "y": 596
+   },
+   "measurementId": "desktop.web-live-capture.visual-204",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-204",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 5,
+    "x": 840,
+    "y": 545
+   },
+   "id": "visual-205",
+   "inkBounds": {
+    "height": 10,
+    "width": 5,
+    "x": 840,
+    "y": 545
+   },
+   "measurementId": "desktop.web-live-capture.visual-205",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-205",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 5,
+    "x": 818,
+    "y": 837
+   },
+   "id": "visual-206",
+   "inkBounds": {
+    "height": 10,
+    "width": 5,
+    "x": 818,
+    "y": 837
+   },
+   "measurementId": "desktop.web-live-capture.visual-206",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-206",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 5,
+    "x": 777,
+    "y": 837
+   },
+   "id": "visual-207",
+   "inkBounds": {
+    "height": 10,
+    "width": 5,
+    "x": 777,
+    "y": 837
+   },
+   "measurementId": "desktop.web-live-capture.visual-207",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-207",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 5,
+    "x": 765,
+    "y": 620
+   },
+   "id": "visual-208",
+   "inkBounds": {
+    "height": 10,
+    "width": 5,
+    "x": 765,
+    "y": 620
+   },
+   "measurementId": "desktop.web-live-capture.visual-208",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-208",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 5,
+    "x": 699,
+    "y": 836
+   },
+   "id": "visual-209",
+   "inkBounds": {
+    "height": 10,
+    "width": 5,
+    "x": 699,
+    "y": 836
+   },
+   "measurementId": "desktop.web-live-capture.visual-209",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-209",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 5,
+    "x": 501,
+    "y": 837
+   },
+   "id": "visual-210",
+   "inkBounds": {
+    "height": 10,
+    "width": 5,
+    "x": 501,
+    "y": 837
+   },
+   "measurementId": "desktop.web-live-capture.visual-210",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-210",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 7,
+    "width": 7,
+    "x": 1343,
+    "y": 241
+   },
+   "id": "visual-211",
+   "inkBounds": {
+    "height": 7,
+    "width": 7,
+    "x": 1343,
+    "y": 241
+   },
+   "measurementId": "desktop.web-live-capture.visual-211",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-211",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 7,
+    "width": 7,
+    "x": 1116,
+    "y": 241
+   },
+   "id": "visual-212",
+   "inkBounds": {
+    "height": 7,
+    "width": 7,
+    "x": 1116,
+    "y": 241
+   },
+   "measurementId": "desktop.web-live-capture.visual-212",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-212",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 7,
+    "width": 7,
+    "x": 1088,
+    "y": 241
+   },
+   "id": "visual-213",
+   "inkBounds": {
+    "height": 7,
+    "width": 7,
+    "x": 1088,
+    "y": 241
+   },
+   "measurementId": "desktop.web-live-capture.visual-213",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-213",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 7,
+    "width": 7,
+    "x": 974,
+    "y": 241
+   },
+   "id": "visual-214",
+   "inkBounds": {
+    "height": 7,
+    "width": 7,
+    "x": 974,
+    "y": 241
+   },
+   "measurementId": "desktop.web-live-capture.visual-214",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-214",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 8,
+    "width": 6,
+    "x": 1169,
+    "y": 702
+   },
+   "id": "visual-215",
+   "inkBounds": {
+    "height": 8,
+    "width": 6,
+    "x": 1169,
+    "y": 702
+   },
+   "measurementId": "desktop.web-live-capture.visual-215",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-215",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 8,
+    "width": 6,
+    "x": 1164,
+    "y": 702
+   },
+   "id": "visual-216",
+   "inkBounds": {
+    "height": 8,
+    "width": 6,
+    "x": 1164,
+    "y": 702
+   },
+   "measurementId": "desktop.web-live-capture.visual-216",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-216",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 8,
+    "width": 6,
+    "x": 947,
+    "y": 799
+   },
+   "id": "visual-217",
+   "inkBounds": {
+    "height": 8,
+    "width": 6,
+    "x": 947,
+    "y": 799
+   },
+   "measurementId": "desktop.web-live-capture.visual-217",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-217",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 8,
+    "width": 6,
+    "x": 851,
+    "y": 839
+   },
+   "id": "visual-218",
+   "inkBounds": {
+    "height": 8,
+    "width": 6,
+    "x": 851,
+    "y": 839
+   },
+   "measurementId": "desktop.web-live-capture.visual-218",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-218",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 7,
+    "width": 6,
+    "x": 1306,
+    "y": 241
+   },
+   "id": "visual-219",
+   "inkBounds": {
+    "height": 7,
+    "width": 6,
+    "x": 1306,
+    "y": 241
+   },
+   "measurementId": "desktop.web-live-capture.visual-219",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-219",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 7,
+    "width": 6,
+    "x": 1003,
+    "y": 241
+   },
+   "id": "visual-220",
+   "inkBounds": {
+    "height": 7,
+    "width": 6,
+    "x": 1003,
+    "y": 241
+   },
+   "measurementId": "desktop.web-live-capture.visual-220",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-220",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 7,
+    "width": 6,
+    "x": 958,
+    "y": 800
+   },
+   "id": "visual-221",
+   "inkBounds": {
+    "height": 7,
+    "width": 6,
+    "x": 958,
+    "y": 800
+   },
+   "measurementId": "desktop.web-live-capture.visual-221",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-221",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 4,
+    "width": 10,
+    "x": 1359,
+    "y": 572
+   },
+   "id": "visual-222",
+   "inkBounds": {
+    "height": 4,
+    "width": 10,
+    "x": 1359,
+    "y": 572
+   },
+   "measurementId": "desktop.web-live-capture.visual-222",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-222",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 8,
+    "width": 5,
+    "x": 1353,
+    "y": 572
+   },
+   "id": "visual-223",
+   "inkBounds": {
+    "height": 8,
+    "width": 5,
+    "x": 1353,
+    "y": 572
+   },
+   "measurementId": "desktop.web-live-capture.visual-223",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-223",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 8,
+    "width": 5,
+    "x": 1191,
+    "y": 704
+   },
+   "id": "visual-224",
+   "inkBounds": {
+    "height": 8,
+    "width": 5,
+    "x": 1191,
+    "y": 704
+   },
+   "measurementId": "desktop.web-live-capture.visual-224",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-224",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 8,
+    "width": 5,
+    "x": 1156,
+    "y": 724
+   },
+   "id": "visual-225",
+   "inkBounds": {
+    "height": 8,
+    "width": 5,
+    "x": 1156,
+    "y": 724
+   },
+   "measurementId": "desktop.web-live-capture.visual-225",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-225",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 8,
+    "width": 5,
+    "x": 812,
+    "y": 839
+   },
+   "id": "visual-226",
+   "inkBounds": {
+    "height": 8,
+    "width": 5,
+    "x": 812,
+    "y": 839
+   },
+   "measurementId": "desktop.web-live-capture.visual-226",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-226",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 8,
+    "width": 5,
+    "x": 348,
+    "y": 676
+   },
+   "id": "visual-227",
+   "inkBounds": {
+    "height": 8,
+    "width": 5,
+    "x": 348,
+    "y": 676
+   },
+   "measurementId": "desktop.web-live-capture.visual-227",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-227",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 8,
+    "width": 5,
+    "x": 194,
+    "y": 620
+   },
+   "id": "visual-228",
+   "inkBounds": {
+    "height": 8,
+    "width": 5,
+    "x": 194,
+    "y": 620
+   },
+   "measurementId": "desktop.web-live-capture.visual-228",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-228",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 5,
+    "width": 8,
+    "x": 192,
+    "y": 178
+   },
+   "id": "visual-229",
+   "inkBounds": {
+    "height": 5,
+    "width": 8,
+    "x": 192,
+    "y": 178
+   },
+   "measurementId": "desktop.web-live-capture.visual-229",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-229",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 8,
+    "width": 5,
+    "x": 67,
+    "y": 447
+   },
+   "id": "visual-230",
+   "inkBounds": {
+    "height": 8,
+    "width": 5,
+    "x": 67,
+    "y": 447
+   },
+   "measurementId": "desktop.web-live-capture.visual-230",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-230",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 4,
+    "x": 64,
+    "y": 285
+   },
+   "id": "visual-231",
+   "inkBounds": {
+    "height": 10,
+    "width": 4,
+    "x": 64,
+    "y": 285
+   },
+   "measurementId": "desktop.web-live-capture.visual-231",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-231",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 4,
+    "x": 953,
+    "y": 797
+   },
+   "id": "visual-232",
+   "inkBounds": {
+    "height": 9,
+    "width": 4,
+    "x": 953,
+    "y": 797
+   },
+   "measurementId": "desktop.web-live-capture.visual-232",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-232",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 4,
+    "x": 772,
+    "y": 837
+   },
+   "id": "visual-233",
+   "inkBounds": {
+    "height": 9,
+    "width": 4,
+    "x": 772,
+    "y": 837
+   },
+   "measurementId": "desktop.web-live-capture.visual-233",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-233",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 4,
+    "x": 694,
+    "y": 837
+   },
+   "id": "visual-234",
+   "inkBounds": {
+    "height": 9,
+    "width": 4,
+    "x": 694,
+    "y": 837
+   },
+   "measurementId": "desktop.web-live-capture.visual-234",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-234",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 4,
+    "x": 496,
+    "y": 837
+   },
+   "id": "visual-235",
+   "inkBounds": {
+    "height": 9,
+    "width": 4,
+    "x": 496,
+    "y": 837
+   },
+   "measurementId": "desktop.web-live-capture.visual-235",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-235",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 4,
+    "width": 9,
+    "x": 132,
+    "y": 193
+   },
+   "id": "visual-236",
+   "inkBounds": {
+    "height": 4,
+    "width": 9,
+    "x": 132,
+    "y": 193
+   },
+   "measurementId": "desktop.web-live-capture.visual-236",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-236",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 4,
+    "width": 9,
+    "x": 125,
+    "y": 191
+   },
+   "id": "visual-237",
+   "inkBounds": {
+    "height": 4,
+    "width": 9,
+    "x": 125,
+    "y": 191
+   },
+   "measurementId": "desktop.web-live-capture.visual-237",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-237",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 4,
+    "x": 51,
+    "y": 837
+   },
+   "id": "visual-238",
+   "inkBounds": {
+    "height": 9,
+    "width": 4,
+    "x": 51,
+    "y": 837
+   },
+   "measurementId": "desktop.web-live-capture.visual-238",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-live-capture.visual-238",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  }
+ ],
+ "imageGenerationNormalization": {
+  "finalCanvas": {
+   "height": 900,
+   "width": 1440
+  },
+  "finalPixelsAreEmbedSourceOfTruth": true,
+  "finalSha256": "c9872201e6a8e3c24f5f109f185cbc07de702cd2f50c83e3c8f702840b9f439b",
+  "generator": "GPT Image 2",
+  "occursBeforeSidecarMeasurement": true,
+  "rawCanvas": {
+   "height": 992,
+   "width": 1586
+  },
+  "rawSha256": "02ca58f42ad14ec549171330dde53368d2bcce9e2f73e9fa0bf7d8aeaec65cfc",
+  "transform": {
+   "resampling": "Lanczos",
+   "scaleX": 0.9079445145018915,
+   "scaleY": 0.907258064516129
+  }
+ },
+ "measurementContract": {
+  "autoCorrectGlobalTransform": false,
+  "coordinateSpace": "final-bitmap-source-pixels",
+  "limitations": [
+   "Automated contour semantics and OCR text matching require browser proof before production acceptance.",
+   "Missing standalone completed asset packs remain explicit failures and are never filled with source pixels."
+  ],
+  "methods": [
+   "final-bitmap source-pixel bounds",
+   "Tesseract OCR TSV line bounds",
+   "normalized-reference text verification",
+   "OpenCV edge-contour visual bounds",
+   "regional visual-difference analysis"
+  ],
+  "origin": "top-left",
+  "precisionPx": 1
+ },
+ "pinnedRegions": [
+  {
+   "edges": [
+    "top",
+    "left",
+    "right"
+   ],
+   "elementId": "topbar",
+   "id": "pin-topbar"
+  },
+  {
+   "edges": [
+    "top",
+    "bottom",
+    "left"
+   ],
+   "elementId": "sidebar",
+   "id": "pin-sidebar"
+  },
+  {
+   "edges": [
+    "left",
+    "right"
+   ],
+   "elementId": "main",
+   "id": "pin-main"
+  }
+ ],
+ "referenceNormalization": {
+  "contentBounds": {
+   "height": 1000,
+   "width": 1600,
+   "x": 640,
+   "y": 421
+  },
+  "normalizedSha256": "338ce23b02bbba4a549fc2c39db4e3facd4a54ad94f2ea1a7a4eaae664cb429f",
+  "originalPreserved": true,
+  "removedMargins": {
+   "bottom": 379,
+   "left": 640,
+   "right": 640,
+   "top": 421
+  },
+  "removedPresentationLabels": [
+   "SHOTIQ CONCEPT - NOT LIVE",
+   "presentation-board whitespace"
+  ],
+  "sourceCanvas": {
+   "height": 1800,
+   "width": 2880
+  },
+  "sourceSha256": "a956f2900bea84c95f157251a46e8094fbde2388c6351c8c9ae88e4bc2c950e7",
+  "targetCanvas": {
+   "height": 900,
+   "width": 1440
+  },
+  "transform": {
+   "resampling": "Lanczos",
+   "scaleX": 0.9,
+   "scaleY": 0.9,
+   "translateX": -640,
+   "translateY": -421
+  }
+ },
+ "regions": [
+  {
+   "bounds": {
+    "height": 130,
+    "width": 1440,
+    "x": 0,
+    "y": 0
+   },
+   "critical": true,
+   "fidelityFloor": 0.98,
+   "id": "topbar"
+  },
+  {
+   "bounds": {
+    "height": 790,
+    "width": 190,
+    "x": 0,
+    "y": 110
+   },
+   "critical": true,
+   "fidelityFloor": 0.98,
+   "id": "sidebar"
+  },
+  {
+   "bounds": {
+    "height": 790,
+    "width": 1250,
+    "x": 190,
+    "y": 110
+   },
+   "critical": true,
+   "fidelityFloor": 0.98,
+   "id": "main"
+  }
+ ],
+ "renderingContract": {
+  "browserZoom": 1,
+  "colorSpace": "srgb",
+  "defaultBoxSizing": "border-box",
+  "devicePixelRatio": 1,
+  "fontLoadingGate": "document.fonts.ready",
+  "locale": "en-US",
+  "screenshotGate": "two requestAnimationFrame callbacks after fonts and assets resolve",
+  "viewport": {
+   "height": 900,
+   "width": 1440
+  }
+ },
+ "repeatGroups": [],
+ "schemaVersion": "2.0.0",
+ "source": {
+  "fromSourceCrop": false,
+  "generationProvenance": "Fresh independent GPT Image 2 recreation generated in this batch from the supplied reference.",
+  "originalFilename": "web-desktop/82-web-live-capture.png",
+  "sourcePrompt": "/Volumes/APPLICATIONS/CodexStorage/projects/shotiq-sidecar-job/design/imagegen-screen-pack/prompts/82-web-live-capture.txt"
+ }
+}

@@ -1,0 +1,4525 @@
+{
+ "app": {
+  "appId": "shotiq",
+  "batchId": "shotiq-white-court-imagegen2-2026-07-30-v2",
+  "platform": "ios",
+  "platformId": "shotiq.ios",
+  "screenId": "ios.photo-library-permission",
+  "sharedTokenSet": "shotiq-white-court-core-v1"
+ },
+ "asset": {
+  "canvas": {
+   "height": 1844,
+   "width": 853
+  },
+  "name": "ios.photo-library-permission"
+ },
+ "assets": {
+  "app.shotiq.brand.logo.primary": {
+   "description": "SHOTIQ primary wordmark with orange Q accent",
+   "kind": "logo",
+   "preferredFormat": "svg",
+   "qualityProfile": "faithful-premium",
+   "recolorable": true
+  },
+  "app.shotiq.icon.motion.default": {
+   "description": "Shared ShotIQ motion-glyph family placeholder for navigation, actions, and metrics.",
+   "iconSpec": {
+    "minReadableSize": 16,
+    "nicheMetaphor": "Tracked body landmark nodes and shot-release motion geometry",
+    "preserveFromReference": [
+     "semantic meaning",
+     "orientation",
+     "major silhouette",
+     "relative visual weight"
+    ],
+    "safeInset": 1.5,
+    "semanticConcept": "ShotIQ basketball performance motion glyph",
+    "silhouette": "Compact line glyph with rounded joints and a clear motion focal point",
+    "upgradeFromReference": [
+     "construction quality",
+     "domain specificity",
+     "optical balance",
+     "small-size legibility"
+    ]
+   },
+   "kind": "icon",
+   "preferredFormat": "svg",
+   "qualityProfile": "faithful-premium",
+   "recolorable": true
+  },
+  "app.shotiq.photo.athlete-frame": {
+   "description": "Independent athlete/court frame asset used by analysis and training screens.",
+   "kind": "photo",
+   "poseRequired": true,
+   "preferredFormat": "png",
+   "qualityProfile": "awaiting-independent-asset-pack"
+  }
+ },
+ "baselineGroups": [],
+ "canonicalContractSha256": "0dc55adeb964b5fe1cf085825cdf6bec3062dde5faa5961e26ebd0364e747a8c",
+ "designTokens": {
+  "colors": {
+   "analysisBlue": "#2D6CDF",
+   "confirmGreen": "#168A55",
+   "graphite": "#5F646B",
+   "ink": "#111111",
+   "muted": "#A7AAB0",
+   "paper": "#FFFFFF",
+   "reviewRed": "#D92D20",
+   "rule": "#D9D9D4",
+   "shotiqOrange": "#FF5A1F",
+   "warmCanvas": "#F7F7F4"
+  },
+  "iconography": {
+   "activeStrokeWidth": 2,
+   "creativeDirection": "Motion glyphs built from pose landmarks, release arcs, frame strips, measurement brackets, and court geometry.",
+   "domain": "basketball shooting mechanics, biomechanics, capture review, and athlete progress",
+   "familyId": "shotiq-motion-glyphs-v1",
+   "fillPolicy": "Outline-led with one intentional filled focal detail.",
+   "grid": 24,
+   "lineCap": "round",
+   "lineJoin": "round",
+   "opticalSize": 24,
+   "profile": "premium-icon-v1",
+   "prohibited": [
+    "emoji",
+    "clip art",
+    "generic stick figures",
+    "stock-library clones",
+    "mixed icon families",
+    "text baked into icons",
+    "edge-touching paint"
+   ],
+   "readabilityPx": [
+    16,
+    20,
+    24,
+    32
+   ],
+   "reconstructionMode": "faithful-premium",
+   "safeInset": 1.5,
+   "selectedState": "Same glyph with tokenized color or external indicator.",
+   "strokeWidth": 1.75
+  },
+  "radii": {
+   "card": 8,
+   "control": 6,
+   "none": 0,
+   "pill": 999
+  },
+  "spacing": {
+   "lg": 24,
+   "md": 16,
+   "sm": 8,
+   "xl": 32,
+   "xs": 4
+  },
+  "typography": {
+   "body": {
+    "fontFamily": "Inter",
+    "fontSize": 16,
+    "fontWeight": 400,
+    "letterSpacing": 0,
+    "lineHeight": 22
+   },
+   "brand": {
+    "fontFamily": "Inter",
+    "fontSize": 28,
+    "fontWeight": 900,
+    "letterSpacing": 0,
+    "lineHeight": 32
+   },
+   "button": {
+    "fontSize": 16,
+    "fontWeight": 700,
+    "inherits": "body",
+    "letterSpacing": 0,
+    "lineHeight": 22
+   },
+   "caption": {
+    "fontSize": 12,
+    "fontWeight": 500,
+    "inherits": "body",
+    "letterSpacing": 0,
+    "lineHeight": 16
+   },
+   "h1": {
+    "fontFamily": "Bebas Neue",
+    "fontSize": 64,
+    "fontWeight": 900,
+    "letterSpacing": 0,
+    "lineHeight": 70
+   },
+   "h2": {
+    "fontFamily": "Bebas Neue",
+    "fontSize": 40,
+    "fontWeight": 900,
+    "letterSpacing": 0,
+    "lineHeight": 46
+   },
+   "h3": {
+    "fontFamily": "Bebas Neue",
+    "fontSize": 28,
+    "fontWeight": 800,
+    "letterSpacing": 0,
+    "lineHeight": 34
+   },
+   "h4": {
+    "fontFamily": "Inter",
+    "fontSize": 18,
+    "fontWeight": 700,
+    "letterSpacing": 0,
+    "lineHeight": 24
+   },
+   "h5": {
+    "fontFamily": "Inter",
+    "fontSize": 14,
+    "fontWeight": 700,
+    "letterSpacing": 0,
+    "lineHeight": 20
+   },
+   "label": {
+    "fontSize": 12,
+    "fontWeight": 700,
+    "inherits": "body",
+    "letterSpacing": 0,
+    "lineHeight": 16
+   },
+   "numeric": {
+    "fontFamily": "DIN Condensed",
+    "fontSize": 40,
+    "fontWeight": 800,
+    "letterSpacing": 0,
+    "lineHeight": 44
+   }
+  }
+ },
+ "elements": [
+  {
+   "backgroundColor": "paper",
+   "bounds": {
+    "height": 1844,
+    "width": 853,
+    "x": 0,
+    "y": 0
+   },
+   "id": "screen-background",
+   "measurementId": "ios.photo-library-permission.screen-background",
+   "owningRegion": "main",
+   "proofMethod": "canvas dimensions",
+   "sourceKey": "ios.photo-library-permission.screen-background",
+   "type": "screen",
+   "zIndex": 0
+  },
+  {
+   "bounds": {
+    "height": 260,
+    "width": 853,
+    "x": 0,
+    "y": 0
+   },
+   "id": "header",
+   "measurementId": "ios.photo-library-permission.header",
+   "owningRegion": "header",
+   "proofMethod": "declared semantic region bounds",
+   "sourceKey": "ios.photo-library-permission.header",
+   "type": "group",
+   "zIndex": 1
+  },
+  {
+   "bounds": {
+    "height": 1424,
+    "width": 853,
+    "x": 0,
+    "y": 220
+   },
+   "id": "main",
+   "measurementId": "ios.photo-library-permission.main",
+   "owningRegion": "main",
+   "proofMethod": "declared semantic region bounds",
+   "sourceKey": "ios.photo-library-permission.main",
+   "type": "group",
+   "zIndex": 2
+  },
+  {
+   "bounds": {
+    "height": 220,
+    "width": 853,
+    "x": 0,
+    "y": 1624
+   },
+   "id": "navigation",
+   "measurementId": "ios.photo-library-permission.navigation",
+   "owningRegion": "navigation",
+   "proofMethod": "declared semantic region bounds",
+   "sourceKey": "ios.photo-library-permission.navigation",
+   "type": "group",
+   "zIndex": 3
+  },
+  {
+   "baseline": 201,
+   "bounds": {
+    "height": 33,
+    "width": 741,
+    "x": 37,
+    "y": 168
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 41,
+   "fontWeight": 900,
+   "generatedObservedText": "Right-handed \u00bb Advanced 6 2,840",
+   "id": "text-001",
+   "inkBounds": {
+    "height": 33,
+    "width": 741,
+    "x": 37,
+    "y": 168
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 45,
+   "measurementId": "ios.photo-library-permission.text-001",
+   "ocrConfidence": 90.76,
+   "owningRegion": "header",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 73.78,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "ios.photo-library-permission.text-001",
+   "style": "h2",
+   "text": "Right-handed + Advanced Gay ates",
+   "type": "text",
+   "visibleGlyphHeight": 33,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 223,
+   "bounds": {
+    "height": 13,
+    "width": 247,
+    "x": 522,
+    "y": 210
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 16,
+   "fontWeight": 500,
+   "generatedObservedText": "DAY STREAK POINTS",
+   "id": "text-002",
+   "inkBounds": {
+    "height": 13,
+    "width": 247,
+    "x": 522,
+    "y": 210
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 18,
+   "measurementId": "ios.photo-library-permission.text-002",
+   "ocrConfidence": 96.96,
+   "owningRegion": "header",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "caption",
+   "sourceKey": "ios.photo-library-permission.text-002",
+   "style": "caption",
+   "text": "DAY STREAK POINTS",
+   "type": "text",
+   "visibleGlyphHeight": 13,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 300,
+   "bounds": {
+    "height": 28,
+    "width": 373,
+    "x": 65,
+    "y": 272
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 35,
+   "fontWeight": 700,
+   "generatedObservedText": "82 24 15 62.5%",
+   "id": "text-003",
+   "inkBounds": {
+    "height": 28,
+    "width": 373,
+    "x": 65,
+    "y": 272
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 38,
+   "measurementId": "ios.photo-library-permission.text-003",
+   "ocrConfidence": 76.17,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 72.24,
+   "referenceTextMatched": true,
+   "semanticRole": "h4",
+   "sourceKey": "ios.photo-library-permission.text-003",
+   "style": "h4",
+   "text": "TO YOUR PHOTOS",
+   "type": "text",
+   "visibleGlyphHeight": 28,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 336,
+   "bounds": {
+    "height": 31,
+    "width": 398,
+    "x": 37,
+    "y": 305
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 39,
+   "fontWeight": 900,
+   "generatedObservedText": "FORM SCORE | SHOTS MAKES SHOOTING",
+   "id": "text-004",
+   "inkBounds": {
+    "height": 31,
+    "width": 398,
+    "x": 37,
+    "y": 305
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 42,
+   "measurementId": "ios.photo-library-permission.text-004",
+   "ocrConfidence": 83.88,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "h2",
+   "sourceKey": "ios.photo-library-permission.text-004",
+   "style": "h2",
+   "text": "FORM SCORE | SHOTS MAKES SHOOTING",
+   "type": "text",
+   "visibleGlyphHeight": 31,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 368,
+   "bounds": {
+    "height": 26,
+    "width": 47,
+    "x": 516,
+    "y": 342
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 32,
+   "fontWeight": 400,
+   "generatedObservedText": "[Ver",
+   "id": "text-005",
+   "inkBounds": {
+    "height": 26,
+    "width": 47,
+    "x": 516,
+    "y": 342
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 35,
+   "measurementId": "ios.photo-library-permission.text-005",
+   "ocrConfidence": 24.24,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "body",
+   "sourceKey": "ios.photo-library-permission.text-005",
+   "style": "body",
+   "text": "[Ver",
+   "type": "text",
+   "visibleGlyphHeight": 26,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 388,
+   "bounds": {
+    "height": 12,
+    "width": 122,
+    "x": 37,
+    "y": 376
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 15,
+   "fontWeight": 500,
+   "generatedObservedText": "PRIMARY TARGET",
+   "id": "text-006",
+   "inkBounds": {
+    "height": 12,
+    "width": 122,
+    "x": 37,
+    "y": 376
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 16,
+   "measurementId": "ios.photo-library-permission.text-006",
+   "ocrConfidence": 96.96,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "caption",
+   "sourceKey": "ios.photo-library-permission.text-006",
+   "style": "caption",
+   "text": "PRIMARY TARGET",
+   "type": "text",
+   "visibleGlyphHeight": 12,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 437,
+   "bounds": {
+    "height": 60,
+    "width": 517,
+    "x": 38,
+    "y": 377
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 75,
+   "fontWeight": 900,
+   "generatedObservedText": "Keep elbow stacked i Il",
+   "id": "text-007",
+   "inkBounds": {
+    "height": 60,
+    "width": 517,
+    "x": 38,
+    "y": 377
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 81,
+   "measurementId": "ios.photo-library-permission.text-007",
+   "ocrConfidence": 75.22,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 90.8,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "ios.photo-library-permission.text-007",
+   "style": "h1",
+   "text": "from your library. You choose what to share\u2014 =",
+   "type": "text",
+   "visibleGlyphHeight": 60,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 465,
+   "bounds": {
+    "height": 38,
+    "width": 493,
+    "x": 37,
+    "y": 427
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 48,
+   "fontWeight": 900,
+   "generatedObservedText": "through release. fe",
+   "id": "text-008",
+   "inkBounds": {
+    "height": 38,
+    "width": 493,
+    "x": 37,
+    "y": 427
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 51,
+   "measurementId": "ios.photo-library-permission.text-008",
+   "ocrConfidence": 79.05,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 96.85,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "ios.photo-library-permission.text-008",
+   "style": "h2",
+   "text": "nothing is uploaded without your permission.",
+   "type": "text",
+   "visibleGlyphHeight": 38,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 584,
+   "bounds": {
+    "height": 62,
+    "width": 398,
+    "x": 37,
+    "y": 522
+   },
+   "color": "ink",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 78,
+   "fontWeight": 900,
+   "generatedObservedText": "WE NEED ACCESS",
+   "id": "text-009",
+   "inkBounds": {
+    "height": 62,
+    "width": 398,
+    "x": 37,
+    "y": 522
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 84,
+   "measurementId": "ios.photo-library-permission.text-009",
+   "ocrConfidence": 84.97,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 83.47,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "ios.photo-library-permission.text-009",
+   "style": "h1",
+   "text": ": Selected photos only",
+   "type": "text",
+   "visibleGlyphHeight": 62,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 716,
+   "bounds": {
+    "height": 23,
+    "width": 405,
+    "x": 39,
+    "y": 693
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 29,
+   "fontWeight": 400,
+   "generatedObservedText": "ShotIQ analyzes your mechanics using photos",
+   "id": "text-010",
+   "inkBounds": {
+    "height": 23,
+    "width": 405,
+    "x": 39,
+    "y": 693
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 31,
+   "measurementId": "ios.photo-library-permission.text-010",
+   "ocrConfidence": 90.6,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 86.19,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.photo-library-permission.text-010",
+   "style": "body",
+   "text": "foe You pick the photos we analyze.",
+   "type": "text",
+   "visibleGlyphHeight": 23,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 749,
+   "bounds": {
+    "height": 22,
+    "width": 400,
+    "x": 38,
+    "y": 727
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 28,
+   "fontWeight": 400,
+   "generatedObservedText": "from your library. You choose what to share\u2014",
+   "id": "text-011",
+   "inkBounds": {
+    "height": 22,
+    "width": 400,
+    "x": 38,
+    "y": 727
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 30,
+   "measurementId": "ios.photo-library-permission.text-011",
+   "ocrConfidence": 95.52,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 96.46,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.photo-library-permission.text-011",
+   "style": "body",
+   "text": "We never scan your entire library.",
+   "type": "text",
+   "visibleGlyphHeight": 22,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 782,
+   "bounds": {
+    "height": 38,
+    "width": 635,
+    "x": 39,
+    "y": 744
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 48,
+   "fontWeight": 900,
+   "generatedObservedText": "nothing is uploaded without your permission. ag",
+   "id": "text-012",
+   "inkBounds": {
+    "height": 38,
+    "width": 635,
+    "x": 39,
+    "y": 744
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 51,
+   "measurementId": "ios.photo-library-permission.text-012",
+   "ocrConfidence": 88.1,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 73.72,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "ios.photo-library-permission.text-012",
+   "style": "h2",
+   "text": "WHAT WE ACCESS \\ \\ Sa",
+   "type": "text",
+   "visibleGlyphHeight": 38,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 807,
+   "bounds": {
+    "height": 35,
+    "width": 183,
+    "x": 619,
+    "y": 772
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 44,
+   "fontWeight": 900,
+   "generatedObservedText": "XS :",
+   "id": "text-013",
+   "inkBounds": {
+    "height": 35,
+    "width": 183,
+    "x": 619,
+    "y": 772
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 47,
+   "measurementId": "ios.photo-library-permission.text-013",
+   "ocrConfidence": 23.16,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 40.78,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "ios.photo-library-permission.text-013",
+   "style": "h2",
+   "text": "Sa cl",
+   "type": "text",
+   "visibleGlyphHeight": 35,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 836,
+   "bounds": {
+    "height": 22,
+    "width": 21,
+    "x": 786,
+    "y": 814
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 28,
+   "fontWeight": 400,
+   "generatedObservedText": "|",
+   "id": "text-014",
+   "inkBounds": {
+    "height": 22,
+    "width": 21,
+    "x": 786,
+    "y": 814
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 30,
+   "measurementId": "ios.photo-library-permission.text-014",
+   "ocrConfidence": 23.29,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "body",
+   "sourceKey": "ios.photo-library-permission.text-014",
+   "style": "body",
+   "text": "|",
+   "type": "text",
+   "visibleGlyphHeight": 22,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 877,
+   "bounds": {
+    "height": 24,
+    "width": 165,
+    "x": 38,
+    "y": 853
+   },
+   "color": "ink",
+   "fontFamily": "Inter",
+   "fontSize": 30,
+   "fontWeight": 400,
+   "generatedObservedText": "WHAT WE ACCESS",
+   "id": "text-015",
+   "inkBounds": {
+    "height": 24,
+    "width": 165,
+    "x": 38,
+    "y": 853
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 32,
+   "measurementId": "ios.photo-library-permission.text-015",
+   "ocrConfidence": 95.75,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 78.81,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.photo-library-permission.text-015",
+   "style": "body",
+   "text": "Fi Private and secure",
+   "type": "text",
+   "visibleGlyphHeight": 24,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 930,
+   "bounds": {
+    "height": 24,
+    "width": 201,
+    "x": 151,
+    "y": 906
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 30,
+   "fontWeight": 400,
+   "generatedObservedText": "Selected photos only",
+   "id": "text-016",
+   "inkBounds": {
+    "height": 24,
+    "width": 201,
+    "x": 151,
+    "y": 906
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 32,
+   "measurementId": "ios.photo-library-permission.text-016",
+   "ocrConfidence": 96.8,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 84.39,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.photo-library-permission.text-016",
+   "style": "body",
+   "text": "Your photos are never shared.",
+   "type": "text",
+   "visibleGlyphHeight": 24,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 978,
+   "bounds": {
+    "height": 56,
+    "width": 354,
+    "x": 50,
+    "y": 922
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 70,
+   "fontWeight": 900,
+   "generatedObservedText": "fo You pick the photos we analyze.",
+   "id": "text-017",
+   "inkBounds": {
+    "height": 56,
+    "width": 354,
+    "x": 50,
+    "y": 922
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 76,
+   "measurementId": "ios.photo-library-permission.text-017",
+   "ocrConfidence": 88.88,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 83.22,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "ios.photo-library-permission.text-017",
+   "style": "h1",
+   "text": "' & 1 Analysis happens in the cloud.",
+   "type": "text",
+   "visibleGlyphHeight": 56,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 993,
+   "bounds": {
+    "height": 20,
+    "width": 371,
+    "x": 42,
+    "y": 973
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 25,
+   "fontWeight": 400,
+   "generatedObservedText": "\u00b0 We never scan your entire library.",
+   "id": "text-018",
+   "inkBounds": {
+    "height": 20,
+    "width": 371,
+    "x": 42,
+    "y": 973
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 27,
+   "measurementId": "ios.photo-library-permission.text-018",
+   "ocrConfidence": 95.11,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 79.23,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.photo-library-permission.text-018",
+   "style": "body",
+   "text": "6) Used for analysis",
+   "type": "text",
+   "visibleGlyphHeight": 20,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1061,
+   "bounds": {
+    "height": 21,
+    "width": 285,
+    "x": 39,
+    "y": 1040
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 26,
+   "fontWeight": 400,
+   "generatedObservedText": "[1 Private and secure",
+   "id": "text-019",
+   "inkBounds": {
+    "height": 21,
+    "width": 285,
+    "x": 39,
+    "y": 1040
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 28,
+   "measurementId": "ios.photo-library-permission.text-019",
+   "ocrConfidence": 76.13,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 96.43,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.photo-library-permission.text-019",
+   "style": "body",
+   "text": "accurate form insights.",
+   "type": "text",
+   "visibleGlyphHeight": 21,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1098,
+   "bounds": {
+    "height": 36,
+    "width": 254,
+    "x": 39,
+    "y": 1062
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 45,
+   "fontWeight": 900,
+   "generatedObservedText": "1 a ' 4",
+   "id": "text-020",
+   "inkBounds": {
+    "height": 36,
+    "width": 254,
+    "x": 39,
+    "y": 1062
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 49,
+   "measurementId": "ios.photo-library-permission.text-020",
+   "ocrConfidence": 52.71,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 96.02,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "ios.photo-library-permission.text-020",
+   "style": "h2",
+   "text": "OTHER WAYS TO ADD PHOTOS",
+   "type": "text",
+   "visibleGlyphHeight": 36,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1100,
+   "bounds": {
+    "height": 20,
+    "width": 344,
+    "x": 39,
+    "y": 1080
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 25,
+   "fontWeight": 400,
+   "generatedObservedText": "1 1 Analysis happens in the cloud.",
+   "id": "text-021",
+   "inkBounds": {
+    "height": 20,
+    "width": 344,
+    "x": 39,
+    "y": 1080
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 27,
+   "measurementId": "ios.photo-library-permission.text-021",
+   "ocrConfidence": 89.51,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 96.14,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.photo-library-permission.text-021",
+   "style": "body",
+   "text": "Your photos help us deliver",
+   "type": "text",
+   "visibleGlyphHeight": 20,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1128,
+   "bounds": {
+    "height": 21,
+    "width": 340,
+    "x": 39,
+    "y": 1107
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 26,
+   "fontWeight": 400,
+   "generatedObservedText": "t-J4d Your photos are never shared.",
+   "id": "text-022",
+   "inkBounds": {
+    "height": 21,
+    "width": 340,
+    "x": 39,
+    "y": 1107
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 28,
+   "measurementId": "ios.photo-library-permission.text-022",
+   "ocrConfidence": 89.02,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 96.8,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.photo-library-permission.text-022",
+   "style": "body",
+   "text": "Use camera instead",
+   "type": "text",
+   "visibleGlyphHeight": 21,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1233,
+   "bounds": {
+    "height": 65,
+    "width": 277,
+    "x": 34,
+    "y": 1168
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 81,
+   "fontWeight": 900,
+   "generatedObservedText": "C3 Used for analysis",
+   "id": "text-023",
+   "inkBounds": {
+    "height": 65,
+    "width": 277,
+    "x": 34,
+    "y": 1168
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 88,
+   "measurementId": "ios.photo-library-permission.text-023",
+   "ocrConfidence": 89.48,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 93.47,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "ios.photo-library-permission.text-023",
+   "style": "h1",
+   "text": "a new shot.",
+   "type": "text",
+   "visibleGlyphHeight": 65,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1244,
+   "bounds": {
+    "height": 60,
+    "width": 299,
+    "x": 55,
+    "y": 1184
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 75,
+   "fontWeight": 900,
+   "generatedObservedText": "a Your photos help us deliver",
+   "id": "text-024",
+   "inkBounds": {
+    "height": 60,
+    "width": 299,
+    "x": 55,
+    "y": 1184
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 81,
+   "measurementId": "ios.photo-library-permission.text-024",
+   "ocrConfidence": 87.49,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 94.25,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "ios.photo-library-permission.text-024",
+   "style": "h1",
+   "text": "CHOOSE HOW YOU'D LIKE TO PROCEED",
+   "type": "text",
+   "visibleGlyphHeight": 60,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1259,
+   "bounds": {
+    "height": 19,
+    "width": 169,
+    "x": 152,
+    "y": 1240
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 24,
+   "fontWeight": 400,
+   "generatedObservedText": "accurate form insights.",
+   "id": "text-025",
+   "inkBounds": {
+    "height": 19,
+    "width": 169,
+    "x": 152,
+    "y": 1240
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 26,
+   "measurementId": "ios.photo-library-permission.text-025",
+   "ocrConfidence": 95.34,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "body",
+   "sourceKey": "ios.photo-library-permission.text-025",
+   "style": "body",
+   "text": "accurate form insights.",
+   "type": "text",
+   "visibleGlyphHeight": 19,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1327,
+   "bounds": {
+    "height": 24,
+    "width": 277,
+    "x": 39,
+    "y": 1303
+   },
+   "color": "ink",
+   "fontFamily": "Inter",
+   "fontSize": 30,
+   "fontWeight": 700,
+   "generatedObservedText": "OTHER WAYS TO ADD PHOTOS",
+   "id": "text-026",
+   "inkBounds": {
+    "height": 24,
+    "width": 277,
+    "x": 39,
+    "y": 1303
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 32,
+   "measurementId": "ios.photo-library-permission.text-026",
+   "ocrConfidence": 96.06,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "h4",
+   "sourceKey": "ios.photo-library-permission.text-026",
+   "style": "h4",
+   "text": "OTHER WAYS TO ADD PHOTOS",
+   "type": "text",
+   "visibleGlyphHeight": 24,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1389,
+   "bounds": {
+    "height": 35,
+    "width": 650,
+    "x": 153,
+    "y": 1354
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 44,
+   "fontWeight": 900,
+   "generatedObservedText": "Use camera instead >",
+   "id": "text-027",
+   "inkBounds": {
+    "height": 35,
+    "width": 650,
+    "x": 153,
+    "y": 1354
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 47,
+   "measurementId": "ios.photo-library-permission.text-027",
+   "ocrConfidence": 88.27,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 87.31,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "ios.photo-library-permission.text-027",
+   "style": "h2",
+   "text": "{0} Use camera instead",
+   "type": "text",
+   "visibleGlyphHeight": 35,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1402,
+   "bounds": {
+    "height": 19,
+    "width": 215,
+    "x": 152,
+    "y": 1383
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 24,
+   "fontWeight": 400,
+   "generatedObservedText": "Open the camera to capture",
+   "id": "text-028",
+   "inkBounds": {
+    "height": 19,
+    "width": 215,
+    "x": 152,
+    "y": 1383
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 26,
+   "measurementId": "ios.photo-library-permission.text-028",
+   "ocrConfidence": 96.42,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 55.97,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.photo-library-permission.text-028",
+   "style": "body",
+   "text": "Tel",
+   "type": "text",
+   "visibleGlyphHeight": 19,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1424,
+   "bounds": {
+    "height": 14,
+    "width": 85,
+    "x": 152,
+    "y": 1410
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 18,
+   "fontWeight": 500,
+   "generatedObservedText": "anew shot.",
+   "id": "text-029",
+   "inkBounds": {
+    "height": 14,
+    "width": 85,
+    "x": 152,
+    "y": 1410
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 19,
+   "measurementId": "ios.photo-library-permission.text-029",
+   "ocrConfidence": 85.8,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "caption",
+   "sourceKey": "ios.photo-library-permission.text-029",
+   "style": "caption",
+   "text": "anew shot.",
+   "type": "text",
+   "visibleGlyphHeight": 14,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1486,
+   "bounds": {
+    "height": 23,
+    "width": 362,
+    "x": 40,
+    "y": 1463
+   },
+   "color": "ink",
+   "fontFamily": "Inter",
+   "fontSize": 29,
+   "fontWeight": 700,
+   "generatedObservedText": "CHOOSE HOW YOU'D LIKE TO PROCEED",
+   "id": "text-030",
+   "inkBounds": {
+    "height": 23,
+    "width": 362,
+    "x": 40,
+    "y": 1463
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 31,
+   "measurementId": "ios.photo-library-permission.text-030",
+   "ocrConfidence": 92.46,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "h4",
+   "sourceKey": "ios.photo-library-permission.text-030",
+   "style": "h4",
+   "text": "CHOOSE HOW YOU'D LIKE TO PROCEED",
+   "type": "text",
+   "visibleGlyphHeight": 23,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1523,
+   "bounds": {
+    "height": 11,
+    "width": 42,
+    "x": 304,
+    "y": 1512
+   },
+   "color": "shotiqOrange",
+   "fontFamily": "Inter",
+   "fontSize": 14,
+   "fontWeight": 500,
+   "generatedObservedText": "Taal",
+   "id": "text-031",
+   "inkBounds": {
+    "height": 11,
+    "width": 42,
+    "x": 304,
+    "y": 1512
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 15,
+   "measurementId": "ios.photo-library-permission.text-031",
+   "ocrConfidence": 36.47,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "caption",
+   "sourceKey": "ios.photo-library-permission.text-031",
+   "style": "caption",
+   "text": "Taal",
+   "type": "text",
+   "visibleGlyphHeight": 11,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1618,
+   "bounds": {
+    "height": 31,
+    "width": 299,
+    "x": 283,
+    "y": 1587
+   },
+   "color": "analysisBlue",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 39,
+   "fontWeight": 900,
+   "generatedObservedText": "{0} Use camera instead",
+   "id": "text-032",
+   "inkBounds": {
+    "height": 31,
+    "width": 299,
+    "x": 283,
+    "y": 1587
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 42,
+   "measurementId": "ios.photo-library-permission.text-032",
+   "ocrConfidence": 82.08,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 95.56,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "ios.photo-library-permission.text-032",
+   "style": "h2",
+   "text": "You can change this anytime in Settings. Learn more",
+   "type": "text",
+   "visibleGlyphHeight": 31,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1680,
+   "bounds": {
+    "height": 20,
+    "width": 90,
+    "x": 385,
+    "y": 1660
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 25,
+   "fontWeight": 400,
+   "generatedObservedText": "Not now",
+   "id": "text-033",
+   "inkBounds": {
+    "height": 20,
+    "width": 90,
+    "x": 385,
+    "y": 1660
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 27,
+   "measurementId": "ios.photo-library-permission.text-033",
+   "ocrConfidence": 96.83,
+   "owningRegion": "navigation",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 47.37,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.photo-library-permission.text-033",
+   "style": "body",
+   "text": "im j& ee JE",
+   "type": "text",
+   "visibleGlyphHeight": 20,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1728,
+   "bounds": {
+    "height": 16,
+    "width": 397,
+    "x": 262,
+    "y": 1712
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 20,
+   "fontWeight": 400,
+   "generatedObservedText": "You can change this anytime in Settings. Learn more",
+   "id": "text-034",
+   "inkBounds": {
+    "height": 16,
+    "width": 397,
+    "x": 262,
+    "y": 1712
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 22,
+   "measurementId": "ios.photo-library-permission.text-034",
+   "ocrConfidence": 88.92,
+   "owningRegion": "navigation",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 96.5,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.photo-library-permission.text-034",
+   "style": "body",
+   "text": "Home Capture Train Progress Profile",
+   "type": "text",
+   "visibleGlyphHeight": 16,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1801,
+   "bounds": {
+    "height": 54,
+    "width": 712,
+    "x": 60,
+    "y": 1747
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 68,
+   "fontWeight": 900,
+   "generatedObservedText": "re) Per JE",
+   "id": "text-035",
+   "inkBounds": {
+    "height": 54,
+    "width": 712,
+    "x": 60,
+    "y": 1747
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 73,
+   "measurementId": "ios.photo-library-permission.text-035",
+   "ocrConfidence": 59.9,
+   "owningRegion": "navigation",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 44.44,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "ios.photo-library-permission.text-035",
+   "style": "h1",
+   "text": "| res (ai",
+   "type": "text",
+   "visibleGlyphHeight": 54,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1763,
+   "bounds": {
+    "height": 9,
+    "width": 16,
+    "x": 575,
+    "y": 1754
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 11,
+   "fontWeight": 500,
+   "generatedObservedText": "+",
+   "id": "text-036",
+   "inkBounds": {
+    "height": 9,
+    "width": 16,
+    "x": 575,
+    "y": 1754
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 12,
+   "measurementId": "ios.photo-library-permission.text-036",
+   "ocrConfidence": 29.81,
+   "owningRegion": "navigation",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "caption",
+   "sourceKey": "ios.photo-library-permission.text-036",
+   "style": "caption",
+   "text": "+",
+   "type": "text",
+   "visibleGlyphHeight": 9,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1773,
+   "bounds": {
+    "height": 15,
+    "width": 33,
+    "x": 570,
+    "y": 1758
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 19,
+   "fontWeight": 400,
+   "generatedObservedText": "~",
+   "id": "text-037",
+   "inkBounds": {
+    "height": 15,
+    "width": 33,
+    "x": 570,
+    "y": 1758
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 20,
+   "measurementId": "ios.photo-library-permission.text-037",
+   "ocrConfidence": 71.97,
+   "owningRegion": "navigation",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "body",
+   "sourceKey": "ios.photo-library-permission.text-037",
+   "style": "body",
+   "text": "~",
+   "type": "text",
+   "visibleGlyphHeight": 15,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1832,
+   "bounds": {
+    "height": 31,
+    "width": 715,
+    "x": 64,
+    "y": 1801
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 39,
+   "fontWeight": 900,
+   "generatedObservedText": "Home Capture Train Progress Profile",
+   "id": "text-038",
+   "inkBounds": {
+    "height": 31,
+    "width": 715,
+    "x": 64,
+    "y": 1801
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 42,
+   "measurementId": "ios.photo-library-permission.text-038",
+   "ocrConfidence": 96.72,
+   "owningRegion": "navigation",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "h2",
+   "sourceKey": "ios.photo-library-permission.text-038",
+   "style": "h2",
+   "text": "Home Capture Train Progress Profile",
+   "type": "text",
+   "visibleGlyphHeight": 31,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 126,
+    "width": 131,
+    "x": 511,
+    "y": 474
+   },
+   "cornerRadius": "card",
+   "id": "visual-001",
+   "inkBounds": {
+    "height": 126,
+    "width": 131,
+    "x": 511,
+    "y": 474
+   },
+   "measurementId": "ios.photo-library-permission.visual-001",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-001",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 87,
+    "width": 70,
+    "x": 592,
+    "y": 337
+   },
+   "cornerRadius": "card",
+   "id": "visual-002",
+   "inkBounds": {
+    "height": 87,
+    "width": 70,
+    "x": 592,
+    "y": 337
+   },
+   "measurementId": "ios.photo-library-permission.visual-002",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-002",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 87,
+    "width": 69,
+    "x": 666,
+    "y": 337
+   },
+   "cornerRadius": "card",
+   "id": "visual-003",
+   "inkBounds": {
+    "height": 87,
+    "width": 69,
+    "x": 666,
+    "y": 337
+   },
+   "measurementId": "ios.photo-library-permission.visual-003",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-003",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 87,
+    "width": 67,
+    "x": 740,
+    "y": 337
+   },
+   "cornerRadius": "card",
+   "id": "visual-004",
+   "inkBounds": {
+    "height": 87,
+    "width": 67,
+    "x": 740,
+    "y": 337
+   },
+   "measurementId": "ios.photo-library-permission.visual-004",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-004",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 53,
+    "width": 71,
+    "x": 42,
+    "y": 1358
+   },
+   "id": "visual-005",
+   "inkBounds": {
+    "height": 53,
+    "width": 71,
+    "x": 42,
+    "y": 1358
+   },
+   "measurementId": "ios.photo-library-permission.visual-005",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-005",
+   "stroke": "warmCanvas",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 66,
+    "width": 43,
+    "x": 627,
+    "y": 605
+   },
+   "id": "visual-006",
+   "inkBounds": {
+    "height": 66,
+    "width": 43,
+    "x": 627,
+    "y": 605
+   },
+   "measurementId": "ios.photo-library-permission.visual-006",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-006",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "muted",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 31,
+    "width": 81,
+    "x": 527,
+    "y": 116
+   },
+   "cornerRadius": "card",
+   "id": "visual-007",
+   "inkBounds": {
+    "height": 31,
+    "width": 81,
+    "x": 527,
+    "y": 116
+   },
+   "measurementId": "ios.photo-library-permission.visual-007",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-007",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 47,
+    "width": 45,
+    "x": 772,
+    "y": 18
+   },
+   "id": "visual-008",
+   "inkBounds": {
+    "height": 47,
+    "width": 45,
+    "x": 772,
+    "y": 18
+   },
+   "measurementId": "ios.photo-library-permission.visual-008",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-008",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 44,
+    "width": 39,
+    "x": 725,
+    "y": 110
+   },
+   "id": "visual-009",
+   "inkBounds": {
+    "height": 44,
+    "width": 39,
+    "x": 725,
+    "y": 110
+   },
+   "measurementId": "ios.photo-library-permission.visual-009",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-009",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 13,
+    "width": 130,
+    "x": 511,
+    "y": 791
+   },
+   "cornerRadius": "card",
+   "id": "visual-010",
+   "inkBounds": {
+    "height": 13,
+    "width": 130,
+    "x": 511,
+    "y": 791
+   },
+   "measurementId": "ios.photo-library-permission.visual-010",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-010",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 60,
+    "width": 27,
+    "x": 112,
+    "y": 606
+   },
+   "id": "visual-011",
+   "inkBounds": {
+    "height": 60,
+    "width": 27,
+    "x": 112,
+    "y": 606
+   },
+   "measurementId": "ios.photo-library-permission.visual-011",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-011",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 60,
+    "width": 27,
+    "x": 36,
+    "y": 606
+   },
+   "id": "visual-012",
+   "inkBounds": {
+    "height": 60,
+    "width": 27,
+    "x": 36,
+    "y": 606
+   },
+   "measurementId": "ios.photo-library-permission.visual-012",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-012",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 60,
+    "width": 26,
+    "x": 348,
+    "y": 606
+   },
+   "id": "visual-013",
+   "inkBounds": {
+    "height": 60,
+    "width": 26,
+    "x": 348,
+    "y": 606
+   },
+   "measurementId": "ios.photo-library-permission.visual-013",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-013",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 60,
+    "width": 26,
+    "x": 208,
+    "y": 606
+   },
+   "id": "visual-014",
+   "inkBounds": {
+    "height": 60,
+    "width": 26,
+    "x": 208,
+    "y": 606
+   },
+   "measurementId": "ios.photo-library-permission.visual-014",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-014",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 62,
+    "width": 25,
+    "x": 409,
+    "y": 605
+   },
+   "id": "visual-015",
+   "inkBounds": {
+    "height": 62,
+    "width": 25,
+    "x": 409,
+    "y": 605
+   },
+   "measurementId": "ios.photo-library-permission.visual-015",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-015",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 62,
+    "width": 25,
+    "x": 378,
+    "y": 605
+   },
+   "id": "visual-016",
+   "inkBounds": {
+    "height": 62,
+    "width": 25,
+    "x": 378,
+    "y": 605
+   },
+   "measurementId": "ios.photo-library-permission.visual-016",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-016",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 62,
+    "width": 25,
+    "x": 318,
+    "y": 605
+   },
+   "id": "visual-017",
+   "inkBounds": {
+    "height": 62,
+    "width": 25,
+    "x": 318,
+    "y": 605
+   },
+   "measurementId": "ios.photo-library-permission.visual-017",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-017",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 62,
+    "width": 25,
+    "x": 144,
+    "y": 605
+   },
+   "id": "visual-018",
+   "inkBounds": {
+    "height": 62,
+    "width": 25,
+    "x": 144,
+    "y": 605
+   },
+   "measurementId": "ios.photo-library-permission.visual-018",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-018",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 62,
+    "width": 25,
+    "x": 67,
+    "y": 605
+   },
+   "id": "visual-019",
+   "inkBounds": {
+    "height": 62,
+    "width": 25,
+    "x": 67,
+    "y": 605
+   },
+   "measurementId": "ios.photo-library-permission.visual-019",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-019",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 61,
+    "width": 25,
+    "x": 176,
+    "y": 606
+   },
+   "id": "visual-020",
+   "inkBounds": {
+    "height": 61,
+    "width": 25,
+    "x": 176,
+    "y": 606
+   },
+   "measurementId": "ios.photo-library-permission.visual-020",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-020",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 60,
+    "width": 25,
+    "x": 286,
+    "y": 606
+   },
+   "id": "visual-021",
+   "inkBounds": {
+    "height": 60,
+    "width": 25,
+    "x": 286,
+    "y": 606
+   },
+   "measurementId": "ios.photo-library-permission.visual-021",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-021",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 60,
+    "width": 25,
+    "x": 255,
+    "y": 606
+   },
+   "id": "visual-022",
+   "inkBounds": {
+    "height": 60,
+    "width": 25,
+    "x": 255,
+    "y": 606
+   },
+   "measurementId": "ios.photo-library-permission.visual-022",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-022",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 31,
+    "width": 35,
+    "x": 620,
+    "y": 578
+   },
+   "id": "visual-023",
+   "inkBounds": {
+    "height": 31,
+    "width": 35,
+    "x": 620,
+    "y": 578
+   },
+   "measurementId": "ios.photo-library-permission.visual-023",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-023",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 18,
+    "width": 57,
+    "x": 676,
+    "y": 576
+   },
+   "id": "visual-024",
+   "inkBounds": {
+    "height": 18,
+    "width": 57,
+    "x": 676,
+    "y": 576
+   },
+   "measurementId": "ios.photo-library-permission.visual-024",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-024",
+   "stroke": "reviewRed",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 67,
+    "width": 13,
+    "x": 523,
+    "y": 458
+   },
+   "id": "visual-025",
+   "inkBounds": {
+    "height": 67,
+    "width": 13,
+    "x": 523,
+    "y": 458
+   },
+   "measurementId": "ios.photo-library-permission.visual-025",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-025",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 30,
+    "width": 29,
+    "x": 157,
+    "y": 27
+   },
+   "id": "visual-026",
+   "inkBounds": {
+    "height": 30,
+    "width": 29,
+    "x": 157,
+    "y": 27
+   },
+   "measurementId": "ios.photo-library-permission.visual-026",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-026",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 41,
+    "width": 21,
+    "x": 122,
+    "y": 115
+   },
+   "id": "visual-027",
+   "inkBounds": {
+    "height": 41,
+    "width": 21,
+    "x": 122,
+    "y": 115
+   },
+   "measurementId": "ios.photo-library-permission.visual-027",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-027",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 29,
+    "width": 29,
+    "x": 90,
+    "y": 27
+   },
+   "id": "visual-028",
+   "inkBounds": {
+    "height": 29,
+    "width": 29,
+    "x": 90,
+    "y": 27
+   },
+   "measurementId": "ios.photo-library-permission.visual-028",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-028",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 41,
+    "width": 20,
+    "x": 147,
+    "y": 115
+   },
+   "id": "visual-029",
+   "inkBounds": {
+    "height": 41,
+    "width": 20,
+    "x": 147,
+    "y": 115
+   },
+   "measurementId": "ios.photo-library-permission.visual-029",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-029",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 43,
+    "width": 19,
+    "x": 253,
+    "y": 114
+   },
+   "id": "visual-030",
+   "inkBounds": {
+    "height": 43,
+    "width": 19,
+    "x": 253,
+    "y": 114
+   },
+   "measurementId": "ios.photo-library-permission.visual-030",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-030",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 37,
+    "width": 22,
+    "x": 635,
+    "y": 549
+   },
+   "id": "visual-031",
+   "inkBounds": {
+    "height": 37,
+    "width": 22,
+    "x": 635,
+    "y": 549
+   },
+   "measurementId": "ios.photo-library-permission.visual-031",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-031",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "muted",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 133,
+    "width": 6,
+    "x": 729,
+    "y": 442
+   },
+   "cornerRadius": "card",
+   "id": "visual-032",
+   "inkBounds": {
+    "height": 133,
+    "width": 6,
+    "x": 729,
+    "y": 442
+   },
+   "measurementId": "ios.photo-library-permission.visual-032",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-032",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 42,
+    "width": 19,
+    "x": 53,
+    "y": 115
+   },
+   "id": "visual-033",
+   "inkBounds": {
+    "height": 42,
+    "width": 19,
+    "x": 53,
+    "y": 115
+   },
+   "measurementId": "ios.photo-library-permission.visual-033",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-033",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "rule",
+   "borderWidth": 6,
+   "bounds": {
+    "height": 6,
+    "width": 131,
+    "x": 674,
+    "y": 759
+   },
+   "id": "visual-034",
+   "inkBounds": {
+    "height": 6,
+    "width": 131,
+    "x": 674,
+    "y": 759
+   },
+   "measurementId": "ios.photo-library-permission.visual-034",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-034",
+   "type": "divider",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 41,
+    "width": 19,
+    "x": 77,
+    "y": 115
+   },
+   "id": "visual-035",
+   "inkBounds": {
+    "height": 41,
+    "width": 19,
+    "x": 77,
+    "y": 115
+   },
+   "measurementId": "ios.photo-library-permission.visual-035",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-035",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 26,
+    "width": 29,
+    "x": 641,
+    "y": 471
+   },
+   "id": "visual-036",
+   "inkBounds": {
+    "height": 26,
+    "width": 29,
+    "x": 641,
+    "y": 471
+   },
+   "measurementId": "ios.photo-library-permission.visual-036",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-036",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 41,
+    "width": 18,
+    "x": 100,
+    "y": 115
+   },
+   "id": "visual-037",
+   "inkBounds": {
+    "height": 41,
+    "width": 18,
+    "x": 100,
+    "y": 115
+   },
+   "measurementId": "ios.photo-library-permission.visual-037",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-037",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 28,
+    "width": 26,
+    "x": 60,
+    "y": 27
+   },
+   "id": "visual-038",
+   "inkBounds": {
+    "height": 28,
+    "width": 26,
+    "x": 60,
+    "y": 27
+   },
+   "measurementId": "ios.photo-library-permission.visual-038",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-038",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 27,
+    "width": 26,
+    "x": 627,
+    "y": 572
+   },
+   "id": "visual-039",
+   "inkBounds": {
+    "height": 27,
+    "width": 26,
+    "x": 627,
+    "y": 572
+   },
+   "measurementId": "ios.photo-library-permission.visual-039",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-039",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 28,
+    "width": 24,
+    "x": 120,
+    "y": 27
+   },
+   "id": "visual-040",
+   "inkBounds": {
+    "height": 28,
+    "width": 24,
+    "x": 120,
+    "y": 27
+   },
+   "measurementId": "ios.photo-library-permission.visual-040",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-040",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 41,
+    "width": 16,
+    "x": 223,
+    "y": 115
+   },
+   "id": "visual-041",
+   "inkBounds": {
+    "height": 41,
+    "width": 16,
+    "x": 223,
+    "y": 115
+   },
+   "measurementId": "ios.photo-library-permission.visual-041",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-041",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 41,
+    "width": 16,
+    "x": 203,
+    "y": 115
+   },
+   "id": "visual-042",
+   "inkBounds": {
+    "height": 41,
+    "width": 16,
+    "x": 203,
+    "y": 115
+   },
+   "measurementId": "ios.photo-library-permission.visual-042",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-042",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 41,
+    "width": 16,
+    "x": 183,
+    "y": 115
+   },
+   "id": "visual-043",
+   "inkBounds": {
+    "height": 41,
+    "width": 16,
+    "x": 183,
+    "y": 115
+   },
+   "measurementId": "ios.photo-library-permission.visual-043",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-043",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "rule",
+   "borderWidth": 5,
+   "bounds": {
+    "height": 5,
+    "width": 129,
+    "x": 675,
+    "y": 750
+   },
+   "id": "visual-044",
+   "inkBounds": {
+    "height": 5,
+    "width": 129,
+    "x": 675,
+    "y": 750
+   },
+   "measurementId": "ios.photo-library-permission.visual-044",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-044",
+   "type": "divider",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "muted",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 128,
+    "width": 5,
+    "x": 736,
+    "y": 447
+   },
+   "cornerRadius": "card",
+   "id": "visual-045",
+   "inkBounds": {
+    "height": 128,
+    "width": 5,
+    "x": 736,
+    "y": 447
+   },
+   "measurementId": "ios.photo-library-permission.visual-045",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-045",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 29,
+    "width": 22,
+    "x": 34,
+    "y": 27
+   },
+   "id": "visual-046",
+   "inkBounds": {
+    "height": 29,
+    "width": 22,
+    "x": 34,
+    "y": 27
+   },
+   "measurementId": "ios.photo-library-permission.visual-046",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-046",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 30,
+    "width": 19,
+    "x": 662,
+    "y": 678
+   },
+   "id": "visual-047",
+   "inkBounds": {
+    "height": 30,
+    "width": 19,
+    "x": 662,
+    "y": 678
+   },
+   "measurementId": "ios.photo-library-permission.visual-047",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-047",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 26,
+    "width": 21,
+    "x": 694,
+    "y": 452
+   },
+   "id": "visual-048",
+   "inkBounds": {
+    "height": 26,
+    "width": 21,
+    "x": 694,
+    "y": 452
+   },
+   "measurementId": "ios.photo-library-permission.visual-048",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-048",
+   "stroke": "reviewRed",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "muted",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 131,
+    "width": 4,
+    "x": 751,
+    "y": 443
+   },
+   "cornerRadius": "card",
+   "id": "visual-049",
+   "inkBounds": {
+    "height": 131,
+    "width": 4,
+    "x": 751,
+    "y": 443
+   },
+   "measurementId": "ios.photo-library-permission.visual-049",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-049",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 23,
+    "width": 22,
+    "x": 509,
+    "y": 814
+   },
+   "id": "visual-050",
+   "inkBounds": {
+    "height": 23,
+    "width": 22,
+    "x": 509,
+    "y": 814
+   },
+   "measurementId": "ios.photo-library-permission.visual-050",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-050",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 42,
+    "width": 12,
+    "x": 36,
+    "y": 115
+   },
+   "id": "visual-051",
+   "inkBounds": {
+    "height": 42,
+    "width": 12,
+    "x": 36,
+    "y": 115
+   },
+   "measurementId": "ios.photo-library-permission.visual-051",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-051",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 26,
+    "width": 19,
+    "x": 227,
+    "y": 1704
+   },
+   "id": "visual-052",
+   "inkBounds": {
+    "height": 26,
+    "width": 19,
+    "x": 227,
+    "y": 1704
+   },
+   "measurementId": "ios.photo-library-permission.visual-052",
+   "owningRegion": "navigation",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-052",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 23,
+    "width": 21,
+    "x": 786,
+    "y": 439
+   },
+   "id": "visual-053",
+   "inkBounds": {
+    "height": 23,
+    "width": 21,
+    "x": 786,
+    "y": 439
+   },
+   "measurementId": "ios.photo-library-permission.visual-053",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-053",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 15,
+    "width": 30,
+    "x": 771,
+    "y": 575
+   },
+   "id": "visual-054",
+   "inkBounds": {
+    "height": 15,
+    "width": 30,
+    "x": 771,
+    "y": 575
+   },
+   "measurementId": "ios.photo-library-permission.visual-054",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-054",
+   "stroke": "reviewRed",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 15,
+    "width": 28,
+    "x": 420,
+    "y": 1527
+   },
+   "id": "visual-055",
+   "inkBounds": {
+    "height": 15,
+    "width": 28,
+    "x": 420,
+    "y": 1527
+   },
+   "measurementId": "ios.photo-library-permission.visual-055",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-055",
+   "stroke": "shotiqOrange",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 24,
+    "width": 17,
+    "x": 509,
+    "y": 499
+   },
+   "id": "visual-056",
+   "inkBounds": {
+    "height": 24,
+    "width": 17,
+    "x": 509,
+    "y": 499
+   },
+   "measurementId": "ios.photo-library-permission.visual-056",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-056",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 40,
+    "width": 10,
+    "x": 663,
+    "y": 622
+   },
+   "id": "visual-057",
+   "inkBounds": {
+    "height": 40,
+    "width": 10,
+    "x": 663,
+    "y": 622
+   },
+   "measurementId": "ios.photo-library-permission.visual-057",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-057",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 23,
+    "width": 17,
+    "x": 509,
+    "y": 478
+   },
+   "id": "visual-058",
+   "inkBounds": {
+    "height": 23,
+    "width": 17,
+    "x": 509,
+    "y": 478
+   },
+   "measurementId": "ios.photo-library-permission.visual-058",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-058",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 22,
+    "width": 17,
+    "x": 682,
+    "y": 472
+   },
+   "id": "visual-059",
+   "inkBounds": {
+    "height": 22,
+    "width": 17,
+    "x": 682,
+    "y": 472
+   },
+   "measurementId": "ios.photo-library-permission.visual-059",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-059",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 22,
+    "width": 16,
+    "x": 388,
+    "y": 1520
+   },
+   "id": "visual-060",
+   "inkBounds": {
+    "height": 22,
+    "width": 16,
+    "x": 388,
+    "y": 1520
+   },
+   "measurementId": "ios.photo-library-permission.visual-060",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-060",
+   "stroke": "shotiqOrange",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 20,
+    "width": 17,
+    "x": 509,
+    "y": 460
+   },
+   "id": "visual-061",
+   "inkBounds": {
+    "height": 20,
+    "width": 17,
+    "x": 509,
+    "y": 460
+   },
+   "measurementId": "ios.photo-library-permission.visual-061",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-061",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 24,
+    "width": 14,
+    "x": 545,
+    "y": 397
+   },
+   "id": "visual-062",
+   "inkBounds": {
+    "height": 24,
+    "width": 14,
+    "x": 545,
+    "y": 397
+   },
+   "measurementId": "ios.photo-library-permission.visual-062",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-062",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 46,
+    "width": 7,
+    "x": 811,
+    "y": 1649
+   },
+   "id": "visual-063",
+   "inkBounds": {
+    "height": 46,
+    "width": 7,
+    "x": 811,
+    "y": 1649
+   },
+   "measurementId": "ios.photo-library-permission.visual-063",
+   "owningRegion": "navigation",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-063",
+   "stroke": "warmCanvas",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 46,
+    "width": 7,
+    "x": 35,
+    "y": 1649
+   },
+   "id": "visual-064",
+   "inkBounds": {
+    "height": 46,
+    "width": 7,
+    "x": 35,
+    "y": 1649
+   },
+   "measurementId": "ios.photo-library-permission.visual-064",
+   "owningRegion": "navigation",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-064",
+   "stroke": "warmCanvas",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 18,
+    "width": 16,
+    "x": 645,
+    "y": 517
+   },
+   "id": "visual-065",
+   "inkBounds": {
+    "height": 18,
+    "width": 16,
+    "x": 645,
+    "y": 517
+   },
+   "measurementId": "ios.photo-library-permission.visual-065",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-065",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 41,
+    "width": 7,
+    "x": 242,
+    "y": 115
+   },
+   "id": "visual-066",
+   "inkBounds": {
+    "height": 41,
+    "width": 7,
+    "x": 242,
+    "y": 115
+   },
+   "measurementId": "ios.photo-library-permission.visual-066",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-066",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 16,
+    "width": 17,
+    "x": 646,
+    "y": 501
+   },
+   "id": "visual-067",
+   "inkBounds": {
+    "height": 16,
+    "width": 17,
+    "x": 646,
+    "y": 501
+   },
+   "measurementId": "ios.photo-library-permission.visual-067",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-067",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 21,
+    "width": 12,
+    "x": 406,
+    "y": 1521
+   },
+   "id": "visual-068",
+   "inkBounds": {
+    "height": 21,
+    "width": 12,
+    "x": 406,
+    "y": 1521
+   },
+   "measurementId": "ios.photo-library-permission.visual-068",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-068",
+   "stroke": "shotiqOrange",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "rule",
+   "borderWidth": 4,
+   "bounds": {
+    "height": 4,
+    "width": 56,
+    "x": 522,
+    "y": 820
+   },
+   "id": "visual-069",
+   "inkBounds": {
+    "height": 4,
+    "width": 56,
+    "x": 522,
+    "y": 820
+   },
+   "measurementId": "ios.photo-library-permission.visual-069",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-069",
+   "type": "divider",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 28,
+    "width": 8,
+    "x": 146,
+    "y": 27
+   },
+   "id": "visual-070",
+   "inkBounds": {
+    "height": 28,
+    "width": 8,
+    "x": 146,
+    "y": 27
+   },
+   "measurementId": "ios.photo-library-permission.visual-070",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-070",
+   "stroke": "shotiqOrange",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 56,
+    "width": 4,
+    "x": 135,
+    "y": 271
+   },
+   "id": "visual-071",
+   "inkBounds": {
+    "height": 56,
+    "width": 4,
+    "x": 135,
+    "y": 271
+   },
+   "measurementId": "ios.photo-library-permission.visual-071",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-071",
+   "stroke": "warmCanvas",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 24,
+    "x": 642,
+    "y": 461
+   },
+   "id": "visual-072",
+   "inkBounds": {
+    "height": 9,
+    "width": 24,
+    "x": 642,
+    "y": 461
+   },
+   "measurementId": "ios.photo-library-permission.visual-072",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-072",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 14,
+    "x": 318,
+    "y": 1524
+   },
+   "id": "visual-073",
+   "inkBounds": {
+    "height": 14,
+    "width": 14,
+    "x": 318,
+    "y": 1524
+   },
+   "measurementId": "ios.photo-library-permission.visual-073",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-073",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 15,
+    "width": 13,
+    "x": 521,
+    "y": 1527
+   },
+   "id": "visual-074",
+   "inkBounds": {
+    "height": 15,
+    "width": 13,
+    "x": 521,
+    "y": 1527
+   },
+   "measurementId": "ios.photo-library-permission.visual-074",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-074",
+   "stroke": "shotiqOrange",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 15,
+    "width": 13,
+    "x": 460,
+    "y": 1527
+   },
+   "id": "visual-075",
+   "inkBounds": {
+    "height": 15,
+    "width": 13,
+    "x": 460,
+    "y": 1527
+   },
+   "measurementId": "ios.photo-library-permission.visual-075",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-075",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 17,
+    "width": 11,
+    "x": 682,
+    "y": 495
+   },
+   "id": "visual-076",
+   "inkBounds": {
+    "height": 17,
+    "width": 11,
+    "x": 682,
+    "y": 495
+   },
+   "measurementId": "ios.photo-library-permission.visual-076",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-076",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 15,
+    "width": 12,
+    "x": 494,
+    "y": 1527
+   },
+   "id": "visual-077",
+   "inkBounds": {
+    "height": 15,
+    "width": 12,
+    "x": 494,
+    "y": 1527
+   },
+   "measurementId": "ios.photo-library-permission.visual-077",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-077",
+   "stroke": "shotiqOrange",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 15,
+    "width": 12,
+    "x": 481,
+    "y": 1527
+   },
+   "id": "visual-078",
+   "inkBounds": {
+    "height": 15,
+    "width": 12,
+    "x": 481,
+    "y": 1527
+   },
+   "measurementId": "ios.photo-library-permission.visual-078",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-078",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 16,
+    "x": 663,
+    "y": 593
+   },
+   "id": "visual-079",
+   "inkBounds": {
+    "height": 11,
+    "width": 16,
+    "x": 663,
+    "y": 593
+   },
+   "measurementId": "ios.photo-library-permission.visual-079",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-079",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "rule",
+   "borderWidth": 4,
+   "bounds": {
+    "height": 4,
+    "width": 44,
+    "x": 511,
+    "y": 788
+   },
+   "id": "visual-080",
+   "inkBounds": {
+    "height": 4,
+    "width": 44,
+    "x": 511,
+    "y": 788
+   },
+   "measurementId": "ios.photo-library-permission.visual-080",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-080",
+   "type": "divider",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 15,
+    "width": 11,
+    "x": 547,
+    "y": 1527
+   },
+   "id": "visual-081",
+   "inkBounds": {
+    "height": 15,
+    "width": 11,
+    "x": 547,
+    "y": 1527
+   },
+   "measurementId": "ios.photo-library-permission.visual-081",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-081",
+   "stroke": "shotiqOrange",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 15,
+    "width": 11,
+    "x": 535,
+    "y": 1527
+   },
+   "id": "visual-082",
+   "inkBounds": {
+    "height": 15,
+    "width": 11,
+    "x": 535,
+    "y": 1527
+   },
+   "measurementId": "ios.photo-library-permission.visual-082",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-082",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 15,
+    "width": 11,
+    "x": 508,
+    "y": 1527
+   },
+   "id": "visual-083",
+   "inkBounds": {
+    "height": 15,
+    "width": 11,
+    "x": 508,
+    "y": 1527
+   },
+   "measurementId": "ios.photo-library-permission.visual-083",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-083",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 20,
+    "width": 8,
+    "x": 653,
+    "y": 693
+   },
+   "id": "visual-084",
+   "inkBounds": {
+    "height": 20,
+    "width": 8,
+    "x": 653,
+    "y": 693
+   },
+   "measurementId": "ios.photo-library-permission.visual-084",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-084",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 13,
+    "width": 12,
+    "x": 334,
+    "y": 1538
+   },
+   "id": "visual-085",
+   "inkBounds": {
+    "height": 13,
+    "width": 12,
+    "x": 334,
+    "y": 1538
+   },
+   "measurementId": "ios.photo-library-permission.visual-085",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-085",
+   "stroke": "shotiqOrange",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 12,
+    "width": 13,
+    "x": 303,
+    "y": 1539
+   },
+   "id": "visual-086",
+   "inkBounds": {
+    "height": 12,
+    "width": 13,
+    "x": 303,
+    "y": 1539
+   },
+   "measurementId": "ios.photo-library-permission.visual-086",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-086",
+   "stroke": "shotiqOrange",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 22,
+    "width": 7,
+    "x": 646,
+    "y": 695
+   },
+   "id": "visual-087",
+   "inkBounds": {
+    "height": 22,
+    "width": 7,
+    "x": 646,
+    "y": 695
+   },
+   "measurementId": "ios.photo-library-permission.visual-087",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-087",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 15,
+    "x": 646,
+    "y": 499
+   },
+   "id": "visual-088",
+   "inkBounds": {
+    "height": 10,
+    "width": 15,
+    "x": 646,
+    "y": 499
+   },
+   "measurementId": "ios.photo-library-permission.visual-088",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-088",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 15,
+    "width": 10,
+    "x": 449,
+    "y": 1527
+   },
+   "id": "visual-089",
+   "inkBounds": {
+    "height": 15,
+    "width": 10,
+    "x": 449,
+    "y": 1527
+   },
+   "measurementId": "ios.photo-library-permission.visual-089",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-089",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 5,
+    "width": 27,
+    "x": 668,
+    "y": 517
+   },
+   "id": "visual-090",
+   "inkBounds": {
+    "height": 5,
+    "width": 27,
+    "x": 668,
+    "y": 517
+   },
+   "measurementId": "ios.photo-library-permission.visual-090",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-090",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 18,
+    "width": 7,
+    "x": 650,
+    "y": 672
+   },
+   "id": "visual-091",
+   "inkBounds": {
+    "height": 18,
+    "width": 7,
+    "x": 650,
+    "y": 672
+   },
+   "measurementId": "ios.photo-library-permission.visual-091",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-091",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 8,
+    "width": 15,
+    "x": 651,
+    "y": 802
+   },
+   "id": "visual-092",
+   "inkBounds": {
+    "height": 8,
+    "width": 15,
+    "x": 651,
+    "y": 802
+   },
+   "measurementId": "ios.photo-library-permission.visual-092",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-092",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 12,
+    "x": 629,
+    "y": 463
+   },
+   "id": "visual-093",
+   "inkBounds": {
+    "height": 10,
+    "width": 12,
+    "x": 629,
+    "y": 463
+   },
+   "measurementId": "ios.photo-library-permission.visual-093",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-093",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 23,
+    "width": 5,
+    "x": 647,
+    "y": 671
+   },
+   "id": "visual-094",
+   "inkBounds": {
+    "height": 23,
+    "width": 5,
+    "x": 647,
+    "y": 671
+   },
+   "measurementId": "ios.photo-library-permission.visual-094",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-094",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 19,
+    "width": 6,
+    "x": 619,
+    "y": 610
+   },
+   "id": "visual-095",
+   "inkBounds": {
+    "height": 19,
+    "width": 6,
+    "x": 619,
+    "y": 610
+   },
+   "measurementId": "ios.photo-library-permission.visual-095",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-095",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 28,
+    "width": 4,
+    "x": 695,
+    "y": 488
+   },
+   "id": "visual-096",
+   "inkBounds": {
+    "height": 28,
+    "width": 4,
+    "x": 695,
+    "y": 488
+   },
+   "measurementId": "ios.photo-library-permission.visual-096",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-096",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 8,
+    "width": 14,
+    "x": 652,
+    "y": 496
+   },
+   "id": "visual-097",
+   "inkBounds": {
+    "height": 8,
+    "width": 14,
+    "x": 652,
+    "y": 496
+   },
+   "measurementId": "ios.photo-library-permission.visual-097",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-097",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 22,
+    "width": 5,
+    "x": 672,
+    "y": 552
+   },
+   "id": "visual-098",
+   "inkBounds": {
+    "height": 22,
+    "width": 5,
+    "x": 672,
+    "y": 552
+   },
+   "measurementId": "ios.photo-library-permission.visual-098",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-098",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 10,
+    "x": 634,
+    "y": 569
+   },
+   "id": "visual-099",
+   "inkBounds": {
+    "height": 11,
+    "width": 10,
+    "x": 634,
+    "y": 569
+   },
+   "measurementId": "ios.photo-library-permission.visual-099",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-099",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 18,
+    "width": 6,
+    "x": 690,
+    "y": 498
+   },
+   "id": "visual-100",
+   "inkBounds": {
+    "height": 18,
+    "width": 6,
+    "x": 690,
+    "y": 498
+   },
+   "measurementId": "ios.photo-library-permission.visual-100",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-100",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 7,
+    "width": 10,
+    "x": 557,
+    "y": 355
+   },
+   "id": "visual-101",
+   "inkBounds": {
+    "height": 7,
+    "width": 10,
+    "x": 557,
+    "y": 355
+   },
+   "measurementId": "ios.photo-library-permission.visual-101",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-101",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 6,
+    "x": 662,
+    "y": 675
+   },
+   "id": "visual-102",
+   "inkBounds": {
+    "height": 11,
+    "width": 6,
+    "x": 662,
+    "y": 675
+   },
+   "measurementId": "ios.photo-library-permission.visual-102",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-102",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 4,
+    "width": 16,
+    "x": 668,
+    "y": 666
+   },
+   "id": "visual-103",
+   "inkBounds": {
+    "height": 4,
+    "width": 16,
+    "x": 668,
+    "y": 666
+   },
+   "measurementId": "ios.photo-library-permission.visual-103",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-103",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 8,
+    "width": 8,
+    "x": 666,
+    "y": 620
+   },
+   "id": "visual-104",
+   "inkBounds": {
+    "height": 8,
+    "width": 8,
+    "x": 666,
+    "y": 620
+   },
+   "measurementId": "ios.photo-library-permission.visual-104",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-104",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 16,
+    "width": 4,
+    "x": 659,
+    "y": 673
+   },
+   "id": "visual-105",
+   "inkBounds": {
+    "height": 16,
+    "width": 4,
+    "x": 659,
+    "y": 673
+   },
+   "measurementId": "ios.photo-library-permission.visual-105",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-105",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 8,
+    "width": 8,
+    "x": 41,
+    "y": 909
+   },
+   "id": "visual-106",
+   "inkBounds": {
+    "height": 8,
+    "width": 8,
+    "x": 41,
+    "y": 909
+   },
+   "measurementId": "ios.photo-library-permission.visual-106",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-106",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 7,
+    "x": 637,
+    "y": 515
+   },
+   "id": "visual-107",
+   "inkBounds": {
+    "height": 9,
+    "width": 7,
+    "x": 637,
+    "y": 515
+   },
+   "measurementId": "ios.photo-library-permission.visual-107",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-107",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 5,
+    "width": 10,
+    "x": 674,
+    "y": 521
+   },
+   "id": "visual-108",
+   "inkBounds": {
+    "height": 5,
+    "width": 10,
+    "x": 674,
+    "y": 521
+   },
+   "measurementId": "ios.photo-library-permission.visual-108",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-108",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 5,
+    "x": 668,
+    "y": 534
+   },
+   "id": "visual-109",
+   "inkBounds": {
+    "height": 10,
+    "width": 5,
+    "x": 668,
+    "y": 534
+   },
+   "measurementId": "ios.photo-library-permission.visual-109",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-109",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 6,
+    "width": 7,
+    "x": 36,
+    "y": 1628
+   },
+   "id": "visual-110",
+   "inkBounds": {
+    "height": 6,
+    "width": 7,
+    "x": 36,
+    "y": 1628
+   },
+   "measurementId": "ios.photo-library-permission.visual-110",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-110",
+   "stroke": "warmCanvas",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 4,
+    "x": 707,
+    "y": 476
+   },
+   "id": "visual-111",
+   "inkBounds": {
+    "height": 10,
+    "width": 4,
+    "x": 707,
+    "y": 476
+   },
+   "measurementId": "ios.photo-library-permission.visual-111",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-111",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 4,
+    "x": 671,
+    "y": 564
+   },
+   "id": "visual-112",
+   "inkBounds": {
+    "height": 10,
+    "width": 4,
+    "x": 671,
+    "y": 564
+   },
+   "measurementId": "ios.photo-library-permission.visual-112",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-112",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 6,
+    "width": 6,
+    "x": 811,
+    "y": 1645
+   },
+   "id": "visual-113",
+   "inkBounds": {
+    "height": 6,
+    "width": 6,
+    "x": 811,
+    "y": 1645
+   },
+   "measurementId": "ios.photo-library-permission.visual-113",
+   "owningRegion": "navigation",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-113",
+   "stroke": "warmCanvas",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 4,
+    "x": 678,
+    "y": 679
+   },
+   "id": "visual-114",
+   "inkBounds": {
+    "height": 9,
+    "width": 4,
+    "x": 678,
+    "y": 679
+   },
+   "measurementId": "ios.photo-library-permission.visual-114",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-114",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 6,
+    "width": 6,
+    "x": 36,
+    "y": 1645
+   },
+   "id": "visual-115",
+   "inkBounds": {
+    "height": 6,
+    "width": 6,
+    "x": 36,
+    "y": 1645
+   },
+   "measurementId": "ios.photo-library-permission.visual-115",
+   "owningRegion": "navigation",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.photo-library-permission.visual-115",
+   "stroke": "warmCanvas",
+   "type": "vectorShape",
+   "zIndex": 2
+  }
+ ],
+ "imageGenerationNormalization": {
+  "finalCanvas": {
+   "height": 1844,
+   "width": 853
+  },
+  "finalPixelsAreEmbedSourceOfTruth": true,
+  "finalSha256": "9c78b1fea90753e8daefca3074c0fe1ae52ffb281e4c1bca70925edb78d147ec",
+  "generator": "GPT Image 2",
+  "occursBeforeSidecarMeasurement": true,
+  "rawCanvas": {
+   "height": 1844,
+   "width": 853
+  },
+  "rawSha256": "9c78b1fea90753e8daefca3074c0fe1ae52ffb281e4c1bca70925edb78d147ec",
+  "transform": {
+   "resampling": "none",
+   "scaleX": 1,
+   "scaleY": 1
+  }
+ },
+ "measurementContract": {
+  "autoCorrectGlobalTransform": false,
+  "coordinateSpace": "final-bitmap-source-pixels",
+  "limitations": [
+   "Automated contour semantics and OCR text matching require browser proof before production acceptance.",
+   "Missing standalone completed asset packs remain explicit failures and are never filled with source pixels."
+  ],
+  "methods": [
+   "final-bitmap source-pixel bounds",
+   "Tesseract OCR TSV line bounds",
+   "normalized-reference text verification",
+   "OpenCV edge-contour visual bounds",
+   "regional visual-difference analysis"
+  ],
+  "origin": "top-left",
+  "precisionPx": 1
+ },
+ "pinnedRegions": [
+  {
+   "edges": [
+    "top",
+    "left",
+    "right"
+   ],
+   "elementId": "header",
+   "id": "pin-header"
+  },
+  {
+   "edges": [
+    "left",
+    "right"
+   ],
+   "elementId": "main",
+   "id": "pin-main"
+  },
+  {
+   "edges": [
+    "bottom",
+    "left",
+    "right"
+   ],
+   "elementId": "navigation",
+   "id": "pin-navigation"
+  }
+ ],
+ "referenceNormalization": {
+  "contentBounds": {
+   "height": 1844,
+   "width": 853,
+   "x": 218,
+   "y": 502
+  },
+  "normalizedSha256": "153efc6e8faacf6ee09f056693742dc595cded6d825577df853807f4ec508128",
+  "originalPreserved": true,
+  "removedMargins": {
+   "bottom": 450,
+   "left": 218,
+   "right": 219,
+   "top": 502
+  },
+  "removedPresentationLabels": [
+   "SHOTIQ CONCEPT - NOT LIVE",
+   "iOS system status indicators",
+   "home indicator"
+  ],
+  "sourceCanvas": {
+   "height": 2796,
+   "width": 1290
+  },
+  "sourceSha256": "6c29b9db85d03014cf9ca1268bae5bc42fb9cc1276aeba5cd25dcf4466fbe98f",
+  "targetCanvas": {
+   "height": 1844,
+   "width": 853
+  },
+  "transform": {
+   "scaleX": 1,
+   "scaleY": 1,
+   "translateX": -218,
+   "translateY": -582
+  }
+ },
+ "regions": [
+  {
+   "bounds": {
+    "height": 260,
+    "width": 853,
+    "x": 0,
+    "y": 0
+   },
+   "critical": true,
+   "fidelityFloor": 0.98,
+   "id": "header"
+  },
+  {
+   "bounds": {
+    "height": 1424,
+    "width": 853,
+    "x": 0,
+    "y": 220
+   },
+   "critical": true,
+   "fidelityFloor": 0.98,
+   "id": "main"
+  },
+  {
+   "bounds": {
+    "height": 220,
+    "width": 853,
+    "x": 0,
+    "y": 1624
+   },
+   "critical": true,
+   "fidelityFloor": 0.98,
+   "id": "navigation"
+  }
+ ],
+ "renderingContract": {
+  "browserZoom": 1,
+  "colorSpace": "srgb",
+  "defaultBoxSizing": "border-box",
+  "devicePixelRatio": 1,
+  "fontLoadingGate": "document.fonts.ready",
+  "locale": "en-US",
+  "screenshotGate": "two requestAnimationFrame callbacks after fonts and assets resolve",
+  "viewport": {
+   "height": 1844,
+   "width": 853
+  }
+ },
+ "repeatGroups": [],
+ "schemaVersion": "2.0.0",
+ "source": {
+  "fromSourceCrop": false,
+  "generationProvenance": "Fresh independent GPT Image 2 recreation generated in this batch from the supplied reference.",
+  "originalFilename": "ios/15-photo-library-permission.png",
+  "sourcePrompt": "/Volumes/APPLICATIONS/CodexStorage/projects/shotiq-sidecar-job/design/imagegen-screen-pack/prompts/15-photo-library-permission.txt"
+ }
+}

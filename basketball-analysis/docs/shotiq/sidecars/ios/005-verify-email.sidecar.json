@@ -1,0 +1,1571 @@
+{
+ "app": {
+  "appId": "shotiq",
+  "batchId": "shotiq-white-court-imagegen2-2026-07-30-v2",
+  "platform": "ios",
+  "platformId": "shotiq.ios",
+  "screenId": "ios.verify-email",
+  "sharedTokenSet": "shotiq-white-court-core-v1"
+ },
+ "asset": {
+  "canvas": {
+   "height": 1844,
+   "width": 853
+  },
+  "name": "ios.verify-email"
+ },
+ "assets": {
+  "app.shotiq.brand.logo.primary": {
+   "description": "SHOTIQ primary wordmark with orange Q accent",
+   "kind": "logo",
+   "preferredFormat": "svg",
+   "qualityProfile": "faithful-premium",
+   "recolorable": true
+  },
+  "app.shotiq.icon.motion.default": {
+   "description": "Shared ShotIQ motion-glyph family placeholder for navigation, actions, and metrics.",
+   "iconSpec": {
+    "minReadableSize": 16,
+    "nicheMetaphor": "Tracked body landmark nodes and shot-release motion geometry",
+    "preserveFromReference": [
+     "semantic meaning",
+     "orientation",
+     "major silhouette",
+     "relative visual weight"
+    ],
+    "safeInset": 1.5,
+    "semanticConcept": "ShotIQ basketball performance motion glyph",
+    "silhouette": "Compact line glyph with rounded joints and a clear motion focal point",
+    "upgradeFromReference": [
+     "construction quality",
+     "domain specificity",
+     "optical balance",
+     "small-size legibility"
+    ]
+   },
+   "kind": "icon",
+   "preferredFormat": "svg",
+   "qualityProfile": "faithful-premium",
+   "recolorable": true
+  },
+  "app.shotiq.photo.athlete-frame": {
+   "description": "Independent athlete/court frame asset used by analysis and training screens.",
+   "kind": "photo",
+   "poseRequired": true,
+   "preferredFormat": "png",
+   "qualityProfile": "awaiting-independent-asset-pack"
+  }
+ },
+ "baselineGroups": [],
+ "canonicalContractSha256": "bd8094aa1de489c0f770fb35658688bea2f10e7e930e9e0e94d5a0979fdb9c79",
+ "designTokens": {
+  "colors": {
+   "analysisBlue": "#2D6CDF",
+   "confirmGreen": "#168A55",
+   "graphite": "#5F646B",
+   "ink": "#111111",
+   "muted": "#A7AAB0",
+   "paper": "#FFFFFF",
+   "reviewRed": "#D92D20",
+   "rule": "#D9D9D4",
+   "shotiqOrange": "#FF5A1F",
+   "warmCanvas": "#F7F7F4"
+  },
+  "iconography": {
+   "activeStrokeWidth": 2,
+   "creativeDirection": "Motion glyphs built from pose landmarks, release arcs, frame strips, measurement brackets, and court geometry.",
+   "domain": "basketball shooting mechanics, biomechanics, capture review, and athlete progress",
+   "familyId": "shotiq-motion-glyphs-v1",
+   "fillPolicy": "Outline-led with one intentional filled focal detail.",
+   "grid": 24,
+   "lineCap": "round",
+   "lineJoin": "round",
+   "opticalSize": 24,
+   "profile": "premium-icon-v1",
+   "prohibited": [
+    "emoji",
+    "clip art",
+    "generic stick figures",
+    "stock-library clones",
+    "mixed icon families",
+    "text baked into icons",
+    "edge-touching paint"
+   ],
+   "readabilityPx": [
+    16,
+    20,
+    24,
+    32
+   ],
+   "reconstructionMode": "faithful-premium",
+   "safeInset": 1.5,
+   "selectedState": "Same glyph with tokenized color or external indicator.",
+   "strokeWidth": 1.75
+  },
+  "radii": {
+   "card": 8,
+   "control": 6,
+   "none": 0,
+   "pill": 999
+  },
+  "spacing": {
+   "lg": 24,
+   "md": 16,
+   "sm": 8,
+   "xl": 32,
+   "xs": 4
+  },
+  "typography": {
+   "body": {
+    "fontFamily": "Inter",
+    "fontSize": 16,
+    "fontWeight": 400,
+    "letterSpacing": 0,
+    "lineHeight": 22
+   },
+   "brand": {
+    "fontFamily": "Inter",
+    "fontSize": 28,
+    "fontWeight": 900,
+    "letterSpacing": 0,
+    "lineHeight": 32
+   },
+   "button": {
+    "fontSize": 16,
+    "fontWeight": 700,
+    "inherits": "body",
+    "letterSpacing": 0,
+    "lineHeight": 22
+   },
+   "caption": {
+    "fontSize": 12,
+    "fontWeight": 500,
+    "inherits": "body",
+    "letterSpacing": 0,
+    "lineHeight": 16
+   },
+   "h1": {
+    "fontFamily": "Bebas Neue",
+    "fontSize": 64,
+    "fontWeight": 900,
+    "letterSpacing": 0,
+    "lineHeight": 70
+   },
+   "h2": {
+    "fontFamily": "Bebas Neue",
+    "fontSize": 40,
+    "fontWeight": 900,
+    "letterSpacing": 0,
+    "lineHeight": 46
+   },
+   "h3": {
+    "fontFamily": "Bebas Neue",
+    "fontSize": 28,
+    "fontWeight": 800,
+    "letterSpacing": 0,
+    "lineHeight": 34
+   },
+   "h4": {
+    "fontFamily": "Inter",
+    "fontSize": 18,
+    "fontWeight": 700,
+    "letterSpacing": 0,
+    "lineHeight": 24
+   },
+   "h5": {
+    "fontFamily": "Inter",
+    "fontSize": 14,
+    "fontWeight": 700,
+    "letterSpacing": 0,
+    "lineHeight": 20
+   },
+   "label": {
+    "fontSize": 12,
+    "fontWeight": 700,
+    "inherits": "body",
+    "letterSpacing": 0,
+    "lineHeight": 16
+   },
+   "numeric": {
+    "fontFamily": "DIN Condensed",
+    "fontSize": 40,
+    "fontWeight": 800,
+    "letterSpacing": 0,
+    "lineHeight": 44
+   }
+  }
+ },
+ "elements": [
+  {
+   "backgroundColor": "paper",
+   "bounds": {
+    "height": 1844,
+    "width": 853,
+    "x": 0,
+    "y": 0
+   },
+   "id": "screen-background",
+   "measurementId": "ios.verify-email.screen-background",
+   "owningRegion": "main",
+   "proofMethod": "canvas dimensions",
+   "sourceKey": "ios.verify-email.screen-background",
+   "type": "screen",
+   "zIndex": 0
+  },
+  {
+   "bounds": {
+    "height": 260,
+    "width": 853,
+    "x": 0,
+    "y": 0
+   },
+   "id": "header",
+   "measurementId": "ios.verify-email.header",
+   "owningRegion": "header",
+   "proofMethod": "declared semantic region bounds",
+   "sourceKey": "ios.verify-email.header",
+   "type": "group",
+   "zIndex": 1
+  },
+  {
+   "bounds": {
+    "height": 1424,
+    "width": 853,
+    "x": 0,
+    "y": 220
+   },
+   "id": "main",
+   "measurementId": "ios.verify-email.main",
+   "owningRegion": "main",
+   "proofMethod": "declared semantic region bounds",
+   "sourceKey": "ios.verify-email.main",
+   "type": "group",
+   "zIndex": 2
+  },
+  {
+   "bounds": {
+    "height": 220,
+    "width": 853,
+    "x": 0,
+    "y": 1624
+   },
+   "id": "navigation",
+   "measurementId": "ios.verify-email.navigation",
+   "owningRegion": "navigation",
+   "proofMethod": "declared semantic region bounds",
+   "sourceKey": "ios.verify-email.navigation",
+   "type": "group",
+   "zIndex": 3
+  },
+  {
+   "baseline": 76,
+   "bounds": {
+    "height": 45,
+    "width": 752,
+    "x": 47,
+    "y": 31
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 56,
+   "fontWeight": 900,
+   "generatedObservedText": "SHOTIQ {3",
+   "id": "text-001",
+   "inkBounds": {
+    "height": 45,
+    "width": 752,
+    "x": 47,
+    "y": 31
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 61,
+   "measurementId": "ios.verify-email.text-001",
+   "ocrConfidence": 65.17,
+   "owningRegion": "header",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 69.12,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "ios.verify-email.text-001",
+   "style": "h1",
+   "text": "SHOTIQ 3",
+   "type": "text",
+   "visibleGlyphHeight": 45,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 169,
+   "bounds": {
+    "height": 32,
+    "width": 33,
+    "x": 45,
+    "y": 137
+   },
+   "color": "ink",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 40,
+   "fontWeight": 900,
+   "generatedObservedText": "<",
+   "id": "text-002",
+   "inkBounds": {
+    "height": 32,
+    "width": 33,
+    "x": 45,
+    "y": 137
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 43,
+   "measurementId": "ios.verify-email.text-002",
+   "ocrConfidence": 86.91,
+   "owningRegion": "header",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 86.46,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "ios.verify-email.text-002",
+   "style": "h2",
+   "text": "<",
+   "type": "text",
+   "visibleGlyphHeight": 32,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 427,
+   "bounds": {
+    "height": 24,
+    "width": 349,
+    "x": 255,
+    "y": 403
+   },
+   "color": "confirmGreen",
+   "fontFamily": "Inter",
+   "fontSize": 30,
+   "fontWeight": 400,
+   "generatedObservedText": "Enter the code we sent to",
+   "id": "text-003",
+   "inkBounds": {
+    "height": 24,
+    "width": 349,
+    "x": 255,
+    "y": 403
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 32,
+   "measurementId": "ios.verify-email.text-003",
+   "ocrConfidence": 96.51,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 96.34,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.verify-email.text-003",
+   "style": "body",
+   "text": "Enter the code we sent to",
+   "type": "text",
+   "visibleGlyphHeight": 24,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 473,
+   "bounds": {
+    "height": 30,
+    "width": 320,
+    "x": 269,
+    "y": 443
+   },
+   "color": "ink",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 38,
+   "fontWeight": 900,
+   "generatedObservedText": "marcus@example.com.",
+   "id": "text-004",
+   "inkBounds": {
+    "height": 30,
+    "width": 320,
+    "x": 269,
+    "y": 443
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 40,
+   "measurementId": "ios.verify-email.text-004",
+   "ocrConfidence": 91.96,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 91.51,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "ios.verify-email.text-004",
+   "style": "h2",
+   "text": "marcus@example.com.",
+   "type": "text",
+   "visibleGlyphHeight": 30,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 756,
+   "bounds": {
+    "height": 25,
+    "width": 285,
+    "x": 288,
+    "y": 731
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 31,
+   "fontWeight": 400,
+   "generatedObservedText": "Resend code in 0:42",
+   "id": "text-005",
+   "inkBounds": {
+    "height": 25,
+    "width": 285,
+    "x": 288,
+    "y": 731
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 34,
+   "measurementId": "ios.verify-email.text-005",
+   "ocrConfidence": 96.56,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 96.42,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.verify-email.text-005",
+   "style": "body",
+   "text": "Resend code in 0:42",
+   "type": "text",
+   "visibleGlyphHeight": 25,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 836,
+   "bounds": {
+    "height": 25,
+    "width": 175,
+    "x": 339,
+    "y": 811
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 31,
+   "fontWeight": 400,
+   "generatedObservedText": "Resend email",
+   "id": "text-006",
+   "inkBounds": {
+    "height": 25,
+    "width": 175,
+    "x": 339,
+    "y": 811
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 34,
+   "measurementId": "ios.verify-email.text-006",
+   "ocrConfidence": 96.36,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 96.39,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.verify-email.text-006",
+   "style": "body",
+   "text": "Resend email",
+   "type": "text",
+   "visibleGlyphHeight": 25,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 985,
+   "bounds": {
+    "height": 46,
+    "width": 348,
+    "x": 241,
+    "y": 939
+   },
+   "color": "shotiqOrange",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 58,
+   "fontWeight": 900,
+   "generatedObservedText": "(1 Open email app",
+   "id": "text-007",
+   "inkBounds": {
+    "height": 46,
+    "width": 348,
+    "x": 241,
+    "y": 939
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 62,
+   "measurementId": "ios.verify-email.text-007",
+   "ocrConfidence": 80.21,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 79.08,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "ios.verify-email.text-007",
+   "style": "h1",
+   "text": "(4 Open email app",
+   "type": "text",
+   "visibleGlyphHeight": 46,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1140,
+   "bounds": {
+    "height": 62,
+    "width": 369,
+    "x": 243,
+    "y": 1078
+   },
+   "color": "ink",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 78,
+   "fontWeight": 900,
+   "generatedObservedText": "MS Use a different email",
+   "id": "text-008",
+   "inkBounds": {
+    "height": 62,
+    "width": 369,
+    "x": 243,
+    "y": 1078
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 84,
+   "measurementId": "ios.verify-email.text-008",
+   "ocrConfidence": 85.97,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 82.94,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "ios.verify-email.text-008",
+   "style": "h1",
+   "text": "i) Use a different email",
+   "type": "text",
+   "visibleGlyphHeight": 62,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1272,
+   "bounds": {
+    "height": 21,
+    "width": 272,
+    "x": 60,
+    "y": 1251
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 26,
+   "fontWeight": 700,
+   "generatedObservedText": "DIDN\u2019T GET THE EMAIL?",
+   "id": "text-009",
+   "inkBounds": {
+    "height": 21,
+    "width": 272,
+    "x": 60,
+    "y": 1251
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 28,
+   "measurementId": "ios.verify-email.text-009",
+   "ocrConfidence": 95.24,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 95.05,
+   "referenceTextMatched": true,
+   "semanticRole": "h4",
+   "sourceKey": "ios.verify-email.text-009",
+   "style": "h4",
+   "text": "DIDN\u2019T GET THE EMAIL?",
+   "type": "text",
+   "visibleGlyphHeight": 21,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1358,
+   "bounds": {
+    "height": 53,
+    "width": 732,
+    "x": 59,
+    "y": 1305
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 66,
+   "fontWeight": 900,
+   "generatedObservedText": "M4 Check your spam or promotions folder >",
+   "id": "text-010",
+   "inkBounds": {
+    "height": 53,
+    "width": 732,
+    "x": 59,
+    "y": 1305
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 72,
+   "measurementId": "ios.verify-email.text-010",
+   "ocrConfidence": 88.68,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 91.39,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "ios.verify-email.text-010",
+   "style": "h1",
+   "text": "A Wait a few minutes and tap \u201cResend email\u201d >",
+   "type": "text",
+   "visibleGlyphHeight": 53,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1451,
+   "bounds": {
+    "height": 29,
+    "width": 622,
+    "x": 169,
+    "y": 1422
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 36,
+   "fontWeight": 400,
+   "generatedObservedText": "Wait a few minutes and tap \u201cResend email\u201d >",
+   "id": "text-011",
+   "inkBounds": {
+    "height": 29,
+    "width": 622,
+    "x": 169,
+    "y": 1422
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 39,
+   "measurementId": "ios.verify-email.text-011",
+   "ocrConfidence": 96.6,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 92.19,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.verify-email.text-011",
+   "style": "body",
+   "text": "Q) Need help? Contact support >",
+   "type": "text",
+   "visibleGlyphHeight": 29,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1571,
+   "bounds": {
+    "height": 59,
+    "width": 731,
+    "x": 60,
+    "y": 1512
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 74,
+   "fontWeight": 900,
+   "generatedObservedText": ") Need help? Contact support >",
+   "id": "text-012",
+   "inkBounds": {
+    "height": 59,
+    "width": 731,
+    "x": 60,
+    "y": 1512
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 80,
+   "measurementId": "ios.verify-email.text-012",
+   "ocrConfidence": 84.49,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 94.75,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "ios.verify-email.text-012",
+   "style": "h1",
+   "text": "We\u2019ll never share your email or data.",
+   "type": "text",
+   "visibleGlyphHeight": 59,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1725,
+   "bounds": {
+    "height": 90,
+    "width": 406,
+    "x": 73,
+    "y": 1635
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 112,
+   "fontWeight": 900,
+   "generatedObservedText": "g Your account is safe",
+   "id": "text-013",
+   "inkBounds": {
+    "height": 90,
+    "width": 406,
+    "x": 73,
+    "y": 1635
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 122,
+   "measurementId": "ios.verify-email.text-013",
+   "ocrConfidence": 93.65,
+   "owningRegion": "navigation",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 92.05,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "ios.verify-email.text-013",
+   "style": "h1",
+   "text": "g Your account is safe",
+   "type": "text",
+   "visibleGlyphHeight": 90,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1727,
+   "bounds": {
+    "height": 26,
+    "width": 382,
+    "x": 185,
+    "y": 1701
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 32,
+   "fontWeight": 400,
+   "generatedObservedText": "We'll never share your email or data.",
+   "id": "text-014",
+   "inkBounds": {
+    "height": 26,
+    "width": 382,
+    "x": 185,
+    "y": 1701
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 35,
+   "measurementId": "ios.verify-email.text-014",
+   "ocrConfidence": 90.12,
+   "owningRegion": "navigation",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "body",
+   "sourceKey": "ios.verify-email.text-014",
+   "style": "body",
+   "text": "We'll never share your email or data.",
+   "type": "text",
+   "visibleGlyphHeight": 26,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "backgroundColor": "warmCanvas",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 134,
+    "width": 109,
+    "x": 694,
+    "y": 533
+   },
+   "cornerRadius": "card",
+   "id": "visual-001",
+   "inkBounds": {
+    "height": 134,
+    "width": 109,
+    "x": 694,
+    "y": 533
+   },
+   "measurementId": "ios.verify-email.visual-001",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.verify-email.visual-001",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "warmCanvas",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 134,
+    "width": 109,
+    "x": 436,
+    "y": 533
+   },
+   "cornerRadius": "card",
+   "id": "visual-002",
+   "inkBounds": {
+    "height": 134,
+    "width": 109,
+    "x": 436,
+    "y": 533
+   },
+   "measurementId": "ios.verify-email.visual-002",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.verify-email.visual-002",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "warmCanvas",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 134,
+    "width": 109,
+    "x": 308,
+    "y": 533
+   },
+   "cornerRadius": "card",
+   "id": "visual-003",
+   "inkBounds": {
+    "height": 134,
+    "width": 109,
+    "x": 308,
+    "y": 533
+   },
+   "measurementId": "ios.verify-email.visual-003",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.verify-email.visual-003",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "rule",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 134,
+    "width": 109,
+    "x": 179,
+    "y": 533
+   },
+   "cornerRadius": "card",
+   "id": "visual-004",
+   "inkBounds": {
+    "height": 134,
+    "width": 109,
+    "x": 179,
+    "y": 533
+   },
+   "measurementId": "ios.verify-email.visual-004",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.verify-email.visual-004",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "warmCanvas",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 134,
+    "width": 109,
+    "x": 49,
+    "y": 533
+   },
+   "cornerRadius": "card",
+   "id": "visual-005",
+   "inkBounds": {
+    "height": 134,
+    "width": 109,
+    "x": 49,
+    "y": 533
+   },
+   "measurementId": "ios.verify-email.visual-005",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.verify-email.visual-005",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "warmCanvas",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 134,
+    "width": 108,
+    "x": 566,
+    "y": 533
+   },
+   "cornerRadius": "card",
+   "id": "visual-006",
+   "inkBounds": {
+    "height": 134,
+    "width": 108,
+    "x": 566,
+    "y": 533
+   },
+   "measurementId": "ios.verify-email.visual-006",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.verify-email.visual-006",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 124,
+    "width": 43,
+    "x": 439,
+    "y": 230
+   },
+   "cornerRadius": "card",
+   "id": "visual-007",
+   "inkBounds": {
+    "height": 124,
+    "width": 43,
+    "x": 439,
+    "y": 230
+   },
+   "measurementId": "ios.verify-email.visual-007",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.verify-email.visual-007",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 123,
+    "width": 43,
+    "x": 476,
+    "y": 230
+   },
+   "cornerRadius": "card",
+   "id": "visual-008",
+   "inkBounds": {
+    "height": 123,
+    "width": 43,
+    "x": 476,
+    "y": 230
+   },
+   "measurementId": "ios.verify-email.visual-008",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.verify-email.visual-008",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 123,
+    "width": 43,
+    "x": 224,
+    "y": 230
+   },
+   "cornerRadius": "card",
+   "id": "visual-009",
+   "inkBounds": {
+    "height": 123,
+    "width": 43,
+    "x": 224,
+    "y": 230
+   },
+   "measurementId": "ios.verify-email.visual-009",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.verify-email.visual-009",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 125,
+    "width": 41,
+    "x": 400,
+    "y": 229
+   },
+   "cornerRadius": "card",
+   "id": "visual-010",
+   "inkBounds": {
+    "height": 125,
+    "width": 41,
+    "x": 400,
+    "y": 229
+   },
+   "measurementId": "ios.verify-email.visual-010",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.verify-email.visual-010",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 123,
+    "width": 39,
+    "x": 609,
+    "y": 230
+   },
+   "cornerRadius": "card",
+   "id": "visual-011",
+   "inkBounds": {
+    "height": 123,
+    "width": 39,
+    "x": 609,
+    "y": 230
+   },
+   "measurementId": "ios.verify-email.visual-011",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.verify-email.visual-011",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "muted",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 123,
+    "width": 37,
+    "x": 530,
+    "y": 230
+   },
+   "cornerRadius": "card",
+   "id": "visual-012",
+   "inkBounds": {
+    "height": 123,
+    "width": 37,
+    "x": 530,
+    "y": 230
+   },
+   "measurementId": "ios.verify-email.visual-012",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.verify-email.visual-012",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "muted",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 123,
+    "width": 37,
+    "x": 282,
+    "y": 230
+   },
+   "cornerRadius": "card",
+   "id": "visual-013",
+   "inkBounds": {
+    "height": 123,
+    "width": 37,
+    "x": 282,
+    "y": 230
+   },
+   "measurementId": "ios.verify-email.visual-013",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.verify-email.visual-013",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 123,
+    "width": 37,
+    "x": 195,
+    "y": 230
+   },
+   "cornerRadius": "card",
+   "id": "visual-014",
+   "inkBounds": {
+    "height": 123,
+    "width": 37,
+    "x": 195,
+    "y": 230
+   },
+   "measurementId": "ios.verify-email.visual-014",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.verify-email.visual-014",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 123,
+    "width": 36,
+    "x": 372,
+    "y": 230
+   },
+   "cornerRadius": "card",
+   "id": "visual-015",
+   "inkBounds": {
+    "height": 123,
+    "width": 36,
+    "x": 372,
+    "y": 230
+   },
+   "measurementId": "ios.verify-email.visual-015",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.verify-email.visual-015",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "muted",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 123,
+    "width": 36,
+    "x": 319,
+    "y": 230
+   },
+   "cornerRadius": "card",
+   "id": "visual-016",
+   "inkBounds": {
+    "height": 123,
+    "width": 36,
+    "x": 319,
+    "y": 230
+   },
+   "measurementId": "ios.verify-email.visual-016",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.verify-email.visual-016",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 123,
+    "width": 36,
+    "x": 166,
+    "y": 230
+   },
+   "cornerRadius": "card",
+   "id": "visual-017",
+   "inkBounds": {
+    "height": 123,
+    "width": 36,
+    "x": 166,
+    "y": 230
+   },
+   "measurementId": "ios.verify-email.visual-017",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.verify-email.visual-017",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 123,
+    "width": 29,
+    "x": 588,
+    "y": 230
+   },
+   "cornerRadius": "card",
+   "id": "visual-018",
+   "inkBounds": {
+    "height": 123,
+    "width": 29,
+    "x": 588,
+    "y": 230
+   },
+   "measurementId": "ios.verify-email.visual-018",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.verify-email.visual-018",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 123,
+    "width": 29,
+    "x": 560,
+    "y": 230
+   },
+   "cornerRadius": "card",
+   "id": "visual-019",
+   "inkBounds": {
+    "height": 123,
+    "width": 29,
+    "x": 560,
+    "y": 230
+   },
+   "measurementId": "ios.verify-email.visual-019",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.verify-email.visual-019",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 123,
+    "width": 26,
+    "x": 670,
+    "y": 230
+   },
+   "cornerRadius": "card",
+   "id": "visual-020",
+   "inkBounds": {
+    "height": 123,
+    "width": 26,
+    "x": 670,
+    "y": 230
+   },
+   "measurementId": "ios.verify-email.visual-020",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.verify-email.visual-020",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 123,
+    "width": 26,
+    "x": 650,
+    "y": 230
+   },
+   "cornerRadius": "card",
+   "id": "visual-021",
+   "inkBounds": {
+    "height": 123,
+    "width": 26,
+    "x": 650,
+    "y": 230
+   },
+   "measurementId": "ios.verify-email.visual-021",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.verify-email.visual-021",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 123,
+    "width": 26,
+    "x": 262,
+    "y": 230
+   },
+   "cornerRadius": "card",
+   "id": "visual-022",
+   "inkBounds": {
+    "height": 123,
+    "width": 26,
+    "x": 262,
+    "y": 230
+   },
+   "measurementId": "ios.verify-email.visual-022",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.verify-email.visual-022",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 41,
+    "width": 56,
+    "x": 59,
+    "y": 1411
+   },
+   "id": "visual-023",
+   "inkBounds": {
+    "height": 41,
+    "width": 56,
+    "x": 59,
+    "y": 1411
+   },
+   "measurementId": "ios.verify-email.visual-023",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.verify-email.visual-023",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 77,
+    "width": 21,
+    "x": 578,
+    "y": 276
+   },
+   "cornerRadius": "card",
+   "id": "visual-024",
+   "inkBounds": {
+    "height": 77,
+    "width": 21,
+    "x": 578,
+    "y": 276
+   },
+   "measurementId": "ios.verify-email.visual-024",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.verify-email.visual-024",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 28,
+    "width": 28,
+    "x": 96,
+    "y": 1435
+   },
+   "id": "visual-025",
+   "inkBounds": {
+    "height": 28,
+    "width": 28,
+    "x": 96,
+    "y": 1435
+   },
+   "measurementId": "ios.verify-email.visual-025",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.verify-email.visual-025",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  }
+ ],
+ "imageGenerationNormalization": {
+  "finalCanvas": {
+   "height": 1844,
+   "width": 853
+  },
+  "finalPixelsAreEmbedSourceOfTruth": true,
+  "finalSha256": "ad628e554d4f26e116ff75bf23c7a095e5c0cc31fcd1a27c0fd6e65ee0422132",
+  "generator": "GPT Image 2",
+  "occursBeforeSidecarMeasurement": true,
+  "rawCanvas": {
+   "height": 1844,
+   "width": 853
+  },
+  "rawSha256": "ad628e554d4f26e116ff75bf23c7a095e5c0cc31fcd1a27c0fd6e65ee0422132",
+  "transform": {
+   "resampling": "none",
+   "scaleX": 1,
+   "scaleY": 1
+  }
+ },
+ "measurementContract": {
+  "autoCorrectGlobalTransform": false,
+  "coordinateSpace": "final-bitmap-source-pixels",
+  "limitations": [
+   "Automated contour semantics and OCR text matching require browser proof before production acceptance.",
+   "Missing standalone completed asset packs remain explicit failures and are never filled with source pixels."
+  ],
+  "methods": [
+   "final-bitmap source-pixel bounds",
+   "Tesseract OCR TSV line bounds",
+   "normalized-reference text verification",
+   "OpenCV edge-contour visual bounds",
+   "regional visual-difference analysis"
+  ],
+  "origin": "top-left",
+  "precisionPx": 1
+ },
+ "pinnedRegions": [
+  {
+   "edges": [
+    "top",
+    "left",
+    "right"
+   ],
+   "elementId": "header",
+   "id": "pin-header"
+  },
+  {
+   "edges": [
+    "left",
+    "right"
+   ],
+   "elementId": "main",
+   "id": "pin-main"
+  },
+  {
+   "edges": [
+    "bottom",
+    "left",
+    "right"
+   ],
+   "elementId": "navigation",
+   "id": "pin-navigation"
+  }
+ ],
+ "referenceNormalization": {
+  "contentBounds": {
+   "height": 1844,
+   "width": 853,
+   "x": 218,
+   "y": 502
+  },
+  "normalizedSha256": "5ed1928ce04b812dad70e6b7d5d6e8962209e7ffc0819cb7589926f9620ba6be",
+  "originalPreserved": true,
+  "removedMargins": {
+   "bottom": 450,
+   "left": 218,
+   "right": 219,
+   "top": 502
+  },
+  "removedPresentationLabels": [
+   "SHOTIQ CONCEPT - NOT LIVE",
+   "iOS system status indicators",
+   "home indicator"
+  ],
+  "sourceCanvas": {
+   "height": 2796,
+   "width": 1290
+  },
+  "sourceSha256": "443dd490e9d3167919562d8f669cf95ef3c4c2f27a85615396f0966ecd39a422",
+  "targetCanvas": {
+   "height": 1844,
+   "width": 853
+  },
+  "transform": {
+   "scaleX": 1,
+   "scaleY": 1,
+   "translateX": -218,
+   "translateY": -582
+  }
+ },
+ "regions": [
+  {
+   "bounds": {
+    "height": 260,
+    "width": 853,
+    "x": 0,
+    "y": 0
+   },
+   "critical": true,
+   "fidelityFloor": 0.98,
+   "id": "header"
+  },
+  {
+   "bounds": {
+    "height": 1424,
+    "width": 853,
+    "x": 0,
+    "y": 220
+   },
+   "critical": true,
+   "fidelityFloor": 0.98,
+   "id": "main"
+  },
+  {
+   "bounds": {
+    "height": 220,
+    "width": 853,
+    "x": 0,
+    "y": 1624
+   },
+   "critical": true,
+   "fidelityFloor": 0.98,
+   "id": "navigation"
+  }
+ ],
+ "renderingContract": {
+  "browserZoom": 1,
+  "colorSpace": "srgb",
+  "defaultBoxSizing": "border-box",
+  "devicePixelRatio": 1,
+  "fontLoadingGate": "document.fonts.ready",
+  "locale": "en-US",
+  "screenshotGate": "two requestAnimationFrame callbacks after fonts and assets resolve",
+  "viewport": {
+   "height": 1844,
+   "width": 853
+  }
+ },
+ "repeatGroups": [],
+ "schemaVersion": "2.0.0",
+ "source": {
+  "fromSourceCrop": false,
+  "generationProvenance": "Fresh independent GPT Image 2 recreation generated in this batch from the supplied reference.",
+  "originalFilename": "ios/05-verify-email.png",
+  "sourcePrompt": "/Volumes/APPLICATIONS/CodexStorage/projects/shotiq-sidecar-job/design/imagegen-screen-pack/prompts/05-verify-email.txt"
+ }
+}
