@@ -1,8 +1,16 @@
 "use client"
 
 import React from "react"
+import { usePathname } from "next/navigation"
+import { isCanonicalShellRoute } from "@/lib/design/canonicalRoutes"
 
 export function Footer() {
+  const pathname = usePathname()
+
+  // Canonical ShotIQ screens are full-bleed at exact canvas height; the global
+  // footer would add presentation whitespace the design contract excludes.
+  if (isCanonicalShellRoute(pathname)) return null
+
   return (
     <footer className="bg-black py-10">
       <div className="container mx-auto px-6">
