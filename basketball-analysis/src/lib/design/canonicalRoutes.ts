@@ -7,9 +7,29 @@
  * by the design contract ("no device frames, browser frames, or surrounding
  * presentation whitespace").
  */
-export const CANONICAL_SHELL_ROUTES: readonly string[] = ['/signin']
+export const CANONICAL_SHELL_ROUTES: readonly string[] = [
+  '/signin',
+  '/dashboard',
+  '/analyze',
+  '/media',
+  '/points',
+  '/badges',
+  '/profile',
+  '/settings',
+  '/elite-shooters',
+  '/video-analysis',
+  '/upload',
+]
+
+/** Prefix-based variant for nested canonical route families. */
+export const CANONICAL_SHELL_PREFIXES: readonly string[] = [
+  '/results/demo',
+  '/elite-shooters/',
+  '/training/drills/',
+]
 
 export function isCanonicalShellRoute(pathname: string | null | undefined): boolean {
   if (!pathname) return false
-  return CANONICAL_SHELL_ROUTES.includes(pathname)
+  if (CANONICAL_SHELL_ROUTES.includes(pathname)) return true
+  return CANONICAL_SHELL_PREFIXES.some((p) => pathname.startsWith(p))
 }

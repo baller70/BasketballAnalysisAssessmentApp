@@ -1165,7 +1165,7 @@
   "elements": 143,
   "regions": 3,
   "testId": "screen-desktop-web-sign-in",
-  "status": "exists"
+  "status": "exists-canonical"
  },
  {
   "screenId": "desktop.web-onboarding",
@@ -1181,7 +1181,7 @@
   "elements": 178,
   "regions": 3,
   "testId": "screen-desktop-web-onboarding",
-  "status": "exists"
+  "status": "exists-shell-canonical"
  },
  {
   "screenId": "desktop.web-home-dashboard",
@@ -1197,7 +1197,7 @@
   "elements": 97,
   "regions": 3,
   "testId": "screen-desktop-web-home-dashboard",
-  "status": "exists"
+  "status": "exists-canonical"
  },
  {
   "screenId": "desktop.web-standard-dashboard",
@@ -1213,7 +1213,7 @@
   "elements": 87,
   "regions": 3,
   "testId": "screen-desktop-web-standard-dashboard",
-  "status": "exists-variant"
+  "status": "exists-canonical"
  },
  {
   "screenId": "desktop.web-analyze-workspace",
@@ -1229,7 +1229,7 @@
   "elements": 95,
   "regions": 3,
   "testId": "screen-desktop-web-analyze-workspace",
-  "status": "exists"
+  "status": "exists-canonical"
  },
  {
   "screenId": "desktop.web-live-capture",
@@ -1245,7 +1245,7 @@
   "elements": 269,
   "regions": 3,
   "testId": "screen-desktop-web-live-capture",
-  "status": "exists"
+  "status": "exists-shell-canonical"
  },
  {
   "screenId": "desktop.web-analysis-overview",
@@ -1261,7 +1261,7 @@
   "elements": 114,
   "regions": 3,
   "testId": "screen-desktop-web-analysis-overview",
-  "status": "exists"
+  "status": "exists-shell-canonical"
  },
  {
   "screenId": "desktop.web-biomechanics-workspace",
@@ -1277,7 +1277,7 @@
   "elements": 184,
   "regions": 3,
   "testId": "screen-desktop-web-biomechanics-workspace",
-  "status": "exists"
+  "status": "exists-shell-canonical"
  },
  {
   "screenId": "desktop.web-flaws-history",
@@ -1293,7 +1293,7 @@
   "elements": 114,
   "regions": 3,
   "testId": "screen-desktop-web-flaws-history",
-  "status": "exists"
+  "status": "exists-shell-canonical"
  },
  {
   "screenId": "desktop.web-player-card",
@@ -1309,7 +1309,7 @@
   "elements": 196,
   "regions": 3,
   "testId": "screen-desktop-web-player-card",
-  "status": "exists"
+  "status": "exists-shell-canonical"
  },
  {
   "screenId": "desktop.web-elite-comparison",
@@ -1325,7 +1325,7 @@
   "elements": 175,
   "regions": 3,
   "testId": "screen-desktop-web-elite-comparison",
-  "status": "exists"
+  "status": "exists-shell-canonical"
  },
  {
   "screenId": "desktop.web-elite-shooters-database",
@@ -1341,7 +1341,7 @@
   "elements": 225,
   "regions": 3,
   "testId": "screen-desktop-web-elite-shooters-database",
-  "status": "exists"
+  "status": "exists-shell-canonical"
  },
  {
   "screenId": "desktop.web-elite-shooter-detail",
@@ -1350,14 +1350,14 @@
   "canvas": "1440x900",
   "png": "output/desktop/embedded/089-web-elite-shooter-detail.embedded.png",
   "sidecar": "basketball-analysis/docs/shotiq/sidecars/desktop/089-web-elite-shooter-detail.sidecar.json",
-  "route": "/elite-shooters/[shooterId]",
-  "component": "MISSING - dynamic route not present",
+  "route": "/elite-shooters/stephen-curry",
+  "component": "src/app/elite-shooters/[shooterId]/page.tsx",
   "endpoint": "GET /api/shooters/[id]",
   "model": "Shooter",
   "elements": 225,
   "regions": 3,
   "testId": "screen-desktop-web-elite-shooter-detail",
-  "status": "MISSING"
+  "status": "exists-canonical"
  },
  {
   "screenId": "desktop.web-training-hub",
@@ -1373,7 +1373,7 @@
   "elements": 208,
   "regions": 3,
   "testId": "screen-desktop-web-training-hub",
-  "status": "exists"
+  "status": "exists-shell-canonical"
  },
  {
   "screenId": "desktop.web-drill-execution",
@@ -1382,14 +1382,14 @@
   "canvas": "1440x900",
   "png": "output/desktop/embedded/091-web-drill-execution.embedded.png",
   "sidecar": "basketball-analysis/docs/shotiq/sidecars/desktop/091-web-drill-execution.sidecar.json",
-  "route": "/training/drills/[drillId]",
-  "component": "MISSING - drill execution route not present",
+  "route": "/training/drills/pound-crossover-foundation",
+  "component": "src/app/training/drills/[drillId]/page.tsx",
   "endpoint": "POST /api/drill-feedback",
   "model": "DrillVideoSubmission",
   "elements": 193,
   "regions": 3,
   "testId": "screen-desktop-web-drill-execution",
-  "status": "MISSING"
+  "status": "exists-canonical"
  },
  {
   "screenId": "desktop.web-goals-plan",
@@ -1405,7 +1405,7 @@
   "elements": 127,
   "regions": 3,
   "testId": "screen-desktop-web-goals-plan",
-  "status": "exists"
+  "status": "exists-shell-canonical"
  },
  {
   "screenId": "desktop.web-analytics-history",
@@ -1421,7 +1421,7 @@
   "elements": 126,
   "regions": 3,
   "testId": "screen-desktop-web-analytics-history",
-  "status": "exists"
+  "status": "exists-shell-canonical"
  },
  {
   "screenId": "desktop.web-media-library",
@@ -1437,7 +1437,7 @@
   "elements": 126,
   "regions": 3,
   "testId": "screen-desktop-web-media-library",
-  "status": "exists"
+  "status": "exists-shell-canonical"
  },
  {
   "screenId": "desktop.web-achievements-points",
@@ -1453,7 +1453,7 @@
   "elements": 128,
   "regions": 3,
   "testId": "screen-desktop-web-achievements-points",
-  "status": "exists"
+  "status": "exists-shell-canonical"
  },
  {
   "screenId": "desktop.web-profile-settings",
@@ -1469,6 +1469,6 @@
   "elements": 82,
   "regions": 3,
   "testId": "screen-desktop-web-profile-settings",
-  "status": "exists"
+  "status": "exists-shell-canonical"
  }
 ]
