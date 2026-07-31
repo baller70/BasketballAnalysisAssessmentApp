@@ -1,5 +1,8 @@
 # ShotIQ Visual Proof — Round 2 (canonical implementation pass)
 
+> **SUPERSEDED.** These figures were measured against a stale server serving
+> unstyled pages (see `visual-proof-structural.md`). Kept for audit history only.
+
 Generated 2026-07-31 after the canonical implementation pass. Same method and
 gates as the baseline (`visual-proof-baseline.md`).
 

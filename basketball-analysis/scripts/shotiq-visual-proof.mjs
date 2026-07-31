@@ -31,6 +31,16 @@ const ONLY = process.env.ONLY || null
 
 const map = JSON.parse(readFileSync(join(APP, 'docs/shotiq/screen-implementation-map.json'), 'utf8'))
 
+// Structural acceptance gate (see docs/shotiq/acceptance-gate-findings.md).
+// SSIM is a regression signal, not a pass bar: each screen must stay within
+// REGRESSION_TOLERANCE of its recorded score in visual-proof-round2.json.
+const REGRESSION_TOLERANCE = 0.02
+const REGION_CONTAINMENT = 0.6
+let ssimFloor = {}
+try {
+  ssimFloor = JSON.parse(readFileSync(join(APP, 'docs/shotiq/visual-proof-floor.json'), 'utf8'))
+} catch { /* first run: no floor yet */ }
+
 /** Grayscale SSIM over a sliding 8x8 window (global mean fallback for small regions). */
 function ssim(a, b, w, h, box) {
   const x0 = box ? Math.max(0, box.x) : 0
@@ -93,8 +103,24 @@ for (const r of targets) {
     colorScheme: 'light',
   })
   const page = await ctx.newPage()
-  const consoleErrors = []
-  page.on('console', m => { if (m.type() === 'error') consoleErrors.push(m.text()) })
+  const consoleErrors = []            // JS/app errors -> gate
+  const sameOriginResourceFails = []  // our own assets failing -> gate
+  const crossOriginResourceFails = [] // external CDNs (environmental) -> reported only
+  page.on('console', m => {
+    if (m.type() !== 'error') return
+    const url = m.location()?.url || ''
+    if (/Failed to load resource/.test(m.text())) {
+      const sameOrigin = url.startsWith(BASE) || url.startsWith('/')
+      // Auth-gated APIs correctly return 401/403 to a logged-out renderer;
+      // that is expected behaviour, not a broken resource. Everything else
+      // (chunks, css, images, 404s, 500s) still gates.
+      const authGated = sameOrigin && /\/api\//.test(url) && /(401|403)/.test(m.text())
+      if (!authGated) (sameOrigin ? sameOriginResourceFails : crossOriginResourceFails).push(url)
+    } else {
+      consoleErrors.push(m.text())
+    }
+  })
+  page.on('pageerror', e => consoleErrors.push(String(e)))
   try {
     const resp = await page.goto(BASE + r.route, { waitUntil: 'load', timeout: 30000 })
     row.http = resp?.status()
@@ -104,13 +130,49 @@ for (const r of targets) {
     await page.evaluate(() => new Promise(res =>
       requestAnimationFrame(() => requestAnimationFrame(res))))
     // asset integrity
-    row.brokenImages = await page.evaluate(() =>
-      [...document.images].filter(i => !i.complete || i.naturalWidth === 0).length)
+    const imgs = await page.evaluate(() =>
+      [...document.images].filter(i => !i.complete || i.naturalWidth === 0).map(i => i.currentSrc || i.src))
+    row.brokenImages = imgs.filter(u => !u || u.startsWith(BASE) || u.startsWith('/') || u.startsWith('data:')).length
+    row.brokenImagesExternal = imgs.length - row.brokenImages
+    // Canonical faces: Inter + Bebas Neue exact; Oswald is the documented
+    // substitute for the unlicensable DIN Condensed. next/font renames
+    // families to __Name_hash, so normalize before matching.
     row.fallbackFonts = await page.evaluate(() => {
-      const want = new Set(['Inter', 'Bebas Neue', 'DIN Condensed'])
-      const have = new Set([...document.fonts].map(f => f.family.replace(/['"]/g, '')))
-      return [...want].filter(f => !have.has(f))
+      const norm = (f) => f.replace(/['"]/g, '').replace(/^__/, '').replace(/_[a-f0-9]+$/i, '').replace(/_/g, ' ').toLowerCase()
+      const have = new Set([...document.fonts].filter(f => f.status === 'loaded').map(f => norm(f.family)))
+      return ['Inter', 'Bebas Neue', 'Oswald'].filter(w => !have.has(w.toLowerCase()))
     })
+    // Structural check: every critical sidecar region must exist, be visible,
+    // and sit ≥REGION_CONTAINMENT inside its sidecar bounds.
+    const regionBoxes = await page.evaluate(() => {
+      const out = {}
+      for (const id of ['topbar', 'sidebar', 'main']) {
+        const el = document.querySelector(`[data-testid="region-${id}"]`)
+        if (!el) { out[id] = null; continue }
+        const r = el.getBoundingClientRect()
+        const style = getComputedStyle(el)
+        out[id] = { x: r.x, y: r.y, width: r.width, height: r.height,
+                    visible: style.display !== 'none' && style.visibility !== 'hidden' && r.width > 0 && r.height > 0 }
+      }
+      return out
+    })
+    row.structural = (sidecar.regions || []).filter(g => g.critical).map(g => {
+      const raw = regionBoxes[g.id]
+      if (!raw || !raw.visible) return { id: g.id, present: false, containment: 0, pass: false }
+      // The canonical claim is about the 1440x900 canvas: clip the DOM rect to
+      // the canvas before measuring (tall scrolling pages continue below it).
+      const dx0 = Math.max(0, raw.x), dy0 = Math.max(0, raw.y)
+      const dx1 = Math.min(vw, raw.x + raw.width), dy1 = Math.min(vh, raw.y + raw.height)
+      if (dx1 <= dx0 || dy1 <= dy0) return { id: g.id, present: true, containment: 0, pass: false }
+      const b = g.bounds
+      const ix = Math.max(0, Math.min(dx1, b.x + b.width) - Math.max(dx0, b.x))
+      const iy = Math.max(0, Math.min(dy1, b.y + b.height) - Math.max(dy0, b.y))
+      const containment = (ix * iy) / ((dx1 - dx0) * (dy1 - dy0))
+      return { id: g.id, present: true, containment: +containment.toFixed(3),
+               pass: containment >= REGION_CONTAINMENT }
+    })
+    row.structuralFailing = row.structural.filter(r => !r.pass).length
+
     const buf = await page.screenshot({ clip: { x: 0, y: 0, width: vw, height: vh } })
     writeFileSync(join(OUT_DIR, `${r.screen}.render.png`), buf)
 
@@ -131,8 +193,20 @@ for (const r of targets) {
         ssim: +ssim(ref.data, got.data, ref.width, ref.height, g.bounds).toFixed(4),
       }))
       row.regionsFailing = row.regions.filter(g => g.ssim < (g.floor ?? 0.98)).length
-      row.pass = row.ssim >= 0.98 && row.regionsFailing === 0 &&
-                 row.brokenImages === 0 && row.fallbackFonts.length === 0
+      const floor = ssimFloor[r.screen]
+      row.ssimRegressed = floor != null && row.ssim < floor - REGRESSION_TOLERANCE
+      // Structural gate: regions present+contained, assets sound, fonts loaded,
+      // no console errors, SSIM not regressed. (Raster-equality gates retired —
+      // see acceptance-gate-findings.md.)
+      row.sameOriginResourceFails = sameOriginResourceFails.length
+      row.sameOriginResourceFailUrls = [...new Set(sameOriginResourceFails)].slice(0, 5)
+      row.crossOriginResourceFails = crossOriginResourceFails.length
+      row.pass = row.structuralFailing === 0 &&
+                 row.brokenImages === 0 &&
+                 row.fallbackFonts.length === 0 &&
+                 consoleErrors.length === 0 &&
+                 sameOriginResourceFails.length === 0 &&
+                 !row.ssimRegressed
     }
     row.consoleErrors = consoleErrors.length
   } catch (e) {
@@ -141,7 +215,7 @@ for (const r of targets) {
   await ctx.close()
   rows.push(row)
   const verdict = row.error ? `ERROR ${row.error}`
-    : `ssim=${row.ssim} diff=${row.pixelDiffPct}% regionsFail=${row.regionsFailing}/${row.regions?.length} ${row.pass ? 'PASS' : 'FAIL'}`
+    : `ssim=${row.ssim}${row.ssimRegressed ? ' REGRESSED' : ''} structural=${(row.structural?.length ?? 0) - (row.structuralFailing ?? 0)}/${row.structural?.length} imgs=${row.brokenImages}(+${row.brokenImagesExternal ?? 0}ext) fonts=${row.fallbackFonts?.length} jsErr=${row.consoleErrors ?? 0} res=${row.sameOriginResourceFails ?? 0} ${row.pass ? 'PASS' : 'FAIL'}`
   console.log(`${r.screen.padEnd(34)} ${verdict}`)
 }
 

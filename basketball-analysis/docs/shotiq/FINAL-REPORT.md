@@ -16,22 +16,30 @@ the commands listed. Nothing here is estimated.
 | iOS screens authored (native SwiftUI) | **72 / 72** — verified by structural check (72/72 screenIds present in source) |
 | iOS screens compiled & simulator-tested | **0 / 72 — environmentally impossible here** (no macOS/Xcode; see §5) |
 
-## 2. Visual measurement (desktop, per-screen table in `visual-proof-round2.md`)
+## 2. Visual measurement (desktop, per-screen table in `visual-proof-structural.md`)
 
 | Metric | Baseline | Final |
 |---|---|---|
 | Screens measured | 18/18 | **20/20** |
-| Mean SSIM vs canonical reference | 0.3380 | **0.6410** |
+| Mean SSIM vs canonical reference (styled) | 0.3380 | **0.5738** |
 | Screens improved | — | 20/20 |
-| Screens passing nominal SSIM ≥ 0.98 | 0 | **0 — unreachable by construction** |
+| **Structural acceptance gate (accepted criteria)** | 0/18 | **20/20 PASS** |
+
+An earlier interim figure (0.6410) was measured against a stale server serving
+unstyled pages and is superseded — see `visual-proof-structural.md` for the
+correction and the enforced gate definition.
 
 The 0.98 gate is not achievable against these references, proven in
 `acceptance-gate-findings.md`: 0.0% of 8×8 patches in all 20 reference PNGs are
 flat (they are generated rasters — the token `#FF5A1F` renders there as
 `#FD6442`, `#111111` ink as `#4E5050`); sidecar elements cover only 55.15% of
 canvas; photo asset binaries were never supplied; DIN Condensed is not
-licensable for web. SSIM is therefore reported as a regression signal, and no
-screen is called "1:1".
+licensable for web. SSIM is therefore a regression signal (floor file:
+`visual-proof-floor.json`, tolerance 0.02), and no screen is called "1:1".
+The owner approved switching acceptance to the structural gate, which now
+passes **20/20** and is enforced by `npm run proof:visual`'s exit code:
+critical-region presence and containment, no broken same-origin assets, no JS
+errors, canonical fonts loaded, SSIM non-regression.
 
 ## 3. Functional verification (web) — actual command results
 

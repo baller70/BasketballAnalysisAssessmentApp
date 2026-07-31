@@ -19,6 +19,7 @@ export const CANONICAL_SHELL_ROUTES: readonly string[] = [
   '/elite-shooters',
   '/video-analysis',
   '/upload',
+  '/onboarding',
 ]
 
 /** Prefix-based variant for nested canonical route families. */
