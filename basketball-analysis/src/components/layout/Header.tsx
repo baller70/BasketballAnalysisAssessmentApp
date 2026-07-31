@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter, usePathname } from "next/navigation"
+import { isCanonicalShellRoute } from "@/lib/design/canonicalRoutes"
 import { ChevronDown, BarChart3, Users, BookOpen, Settings, Trophy, Star, GraduationCap, LogOut, Share2, Twitter, Facebook, Linkedin, Download, Link2, Check, Zap } from "lucide-react"
 import { useDashboardViewStore, type DashboardView } from "@/stores/dashboardViewStore"
 import { useAuthStore } from "@/stores/authStore"
@@ -138,6 +139,11 @@ export function Header() {
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
+
+  // Canonical ShotIQ screens paint their own topbar at exact sidecar geometry,
+  // so the global header must not render above them. Placed after every hook so
+  // the hook order stays stable across renders.
+  if (isCanonicalShellRoute(pathname)) return null
 
   const profileMenuItems = [
     { label: "My Dashboard", href: "/dashboard", icon: Star },

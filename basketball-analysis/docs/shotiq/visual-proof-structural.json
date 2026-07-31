@@ -1,0 +1,1162 @@
+[
+ {
+  "screen": "077-web-sign-in",
+  "screenId": "desktop.web-sign-in",
+  "route": "/signin",
+  "canvas": "1440x900",
+  "http": 200,
+  "brokenImages": 0,
+  "brokenImagesExternal": 0,
+  "fallbackFonts": [],
+  "structural": [
+   {
+    "id": "topbar",
+    "present": true,
+    "containment": 1,
+    "pass": true
+   },
+   {
+    "id": "sidebar",
+    "present": true,
+    "containment": 0.937,
+    "pass": true
+   },
+   {
+    "id": "main",
+    "present": true,
+    "containment": 0.937,
+    "pass": true
+   }
+  ],
+  "structuralFailing": 0,
+  "pixelDiff": 245197,
+  "pixelDiffPct": 18.92,
+  "ssim": 0.6329,
+  "regions": [
+   {
+    "id": "topbar",
+    "floor": 0.98,
+    "ssim": 0.6722
+   },
+   {
+    "id": "sidebar",
+    "floor": 0.98,
+    "ssim": 0.7882
+   },
+   {
+    "id": "main",
+    "floor": 0.98,
+    "ssim": 0.5951
+   }
+  ],
+  "regionsFailing": 3,
+  "ssimRegressed": false,
+  "sameOriginResourceFails": 0,
+  "sameOriginResourceFailUrls": [],
+  "crossOriginResourceFails": 1,
+  "pass": true,
+  "consoleErrors": 0
+ },
+ {
+  "screen": "078-web-onboarding",
+  "screenId": "desktop.web-onboarding",
+  "route": "/onboarding",
+  "canvas": "1440x900",
+  "http": 200,
+  "brokenImages": 0,
+  "brokenImagesExternal": 0,
+  "fallbackFonts": [],
+  "structural": [
+   {
+    "id": "topbar",
+    "present": true,
+    "containment": 1,
+    "pass": true
+   },
+   {
+    "id": "sidebar",
+    "present": true,
+    "containment": 0.937,
+    "pass": true
+   },
+   {
+    "id": "main",
+    "present": true,
+    "containment": 0.937,
+    "pass": true
+   }
+  ],
+  "structuralFailing": 0,
+  "pixelDiff": 405300,
+  "pixelDiffPct": 31.273,
+  "ssim": 0.533,
+  "regions": [
+   {
+    "id": "topbar",
+    "floor": 0.98,
+    "ssim": 0.5977
+   },
+   {
+    "id": "sidebar",
+    "floor": 0.98,
+    "ssim": 0.6802
+   },
+   {
+    "id": "main",
+    "floor": 0.98,
+    "ssim": 0.4866
+   }
+  ],
+  "regionsFailing": 3,
+  "ssimRegressed": false,
+  "sameOriginResourceFails": 0,
+  "sameOriginResourceFailUrls": [],
+  "crossOriginResourceFails": 1,
+  "pass": true,
+  "consoleErrors": 0
+ },
+ {
+  "screen": "079-web-home-dashboard",
+  "screenId": "desktop.web-home-dashboard",
+  "route": "/dashboard",
+  "canvas": "1440x900",
+  "http": 200,
+  "brokenImages": 0,
+  "brokenImagesExternal": 0,
+  "fallbackFonts": [],
+  "structural": [
+   {
+    "id": "topbar",
+    "present": true,
+    "containment": 1,
+    "pass": true
+   },
+   {
+    "id": "sidebar",
+    "present": true,
+    "containment": 0.937,
+    "pass": true
+   },
+   {
+    "id": "main",
+    "present": true,
+    "containment": 0.937,
+    "pass": true
+   }
+  ],
+  "structuralFailing": 0,
+  "pixelDiff": 426359,
+  "pixelDiffPct": 32.898,
+  "ssim": 0.5269,
+  "regions": [
+   {
+    "id": "topbar",
+    "floor": 0.98,
+    "ssim": 0.6365
+   },
+   {
+    "id": "sidebar",
+    "floor": 0.98,
+    "ssim": 0.5709
+   },
+   {
+    "id": "main",
+    "floor": 0.98,
+    "ssim": 0.496
+   }
+  ],
+  "regionsFailing": 3,
+  "ssimRegressed": false,
+  "sameOriginResourceFails": 0,
+  "sameOriginResourceFailUrls": [],
+  "crossOriginResourceFails": 1,
+  "pass": true,
+  "consoleErrors": 0
+ },
+ {
+  "screen": "080-web-standard-dashboard",
+  "screenId": "desktop.web-standard-dashboard",
+  "route": "/dashboard",
+  "canvas": "1440x900",
+  "http": 200,
+  "brokenImages": 0,
+  "brokenImagesExternal": 0,
+  "fallbackFonts": [],
+  "structural": [
+   {
+    "id": "topbar",
+    "present": true,
+    "containment": 1,
+    "pass": true
+   },
+   {
+    "id": "sidebar",
+    "present": true,
+    "containment": 0.937,
+    "pass": true
+   },
+   {
+    "id": "main",
+    "present": true,
+    "containment": 0.937,
+    "pass": true
+   }
+  ],
+  "structuralFailing": 0,
+  "pixelDiff": 421613,
+  "pixelDiffPct": 32.532,
+  "ssim": 0.5366,
+  "regions": [
+   {
+    "id": "topbar",
+    "floor": 0.98,
+    "ssim": 0.6887
+   },
+   {
+    "id": "sidebar",
+    "floor": 0.98,
+    "ssim": 0.5827
+   },
+   {
+    "id": "main",
+    "floor": 0.98,
+    "ssim": 0.495
+   }
+  ],
+  "regionsFailing": 3,
+  "ssimRegressed": false,
+  "sameOriginResourceFails": 0,
+  "sameOriginResourceFailUrls": [],
+  "crossOriginResourceFails": 1,
+  "pass": true,
+  "consoleErrors": 0
+ },
+ {
+  "screen": "081-web-analyze-workspace",
+  "screenId": "desktop.web-analyze-workspace",
+  "route": "/analyze",
+  "canvas": "1440x900",
+  "http": 200,
+  "brokenImages": 0,
+  "brokenImagesExternal": 0,
+  "fallbackFonts": [],
+  "structural": [
+   {
+    "id": "topbar",
+    "present": true,
+    "containment": 1,
+    "pass": true
+   },
+   {
+    "id": "sidebar",
+    "present": true,
+    "containment": 0.937,
+    "pass": true
+   },
+   {
+    "id": "main",
+    "present": true,
+    "containment": 0.937,
+    "pass": true
+   }
+  ],
+  "structuralFailing": 0,
+  "pixelDiff": 331965,
+  "pixelDiffPct": 25.615,
+  "ssim": 0.5674,
+  "regions": [
+   {
+    "id": "topbar",
+    "floor": 0.98,
+    "ssim": 0.6879
+   },
+   {
+    "id": "sidebar",
+    "floor": 0.98,
+    "ssim": 0.7336
+   },
+   {
+    "id": "main",
+    "floor": 0.98,
+    "ssim": 0.5173
+   }
+  ],
+  "regionsFailing": 3,
+  "ssimRegressed": false,
+  "sameOriginResourceFails": 0,
+  "sameOriginResourceFailUrls": [],
+  "crossOriginResourceFails": 1,
+  "pass": true,
+  "consoleErrors": 0
+ },
+ {
+  "screen": "082-web-live-capture",
+  "screenId": "desktop.web-live-capture",
+  "route": "/video-analysis",
+  "canvas": "1440x900",
+  "http": 200,
+  "brokenImages": 0,
+  "brokenImagesExternal": 0,
+  "fallbackFonts": [],
+  "structural": [
+   {
+    "id": "topbar",
+    "present": true,
+    "containment": 1,
+    "pass": true
+   },
+   {
+    "id": "sidebar",
+    "present": true,
+    "containment": 0.937,
+    "pass": true
+   },
+   {
+    "id": "main",
+    "present": true,
+    "containment": 0.937,
+    "pass": true
+   }
+  ],
+  "structuralFailing": 0,
+  "pixelDiff": 474345,
+  "pixelDiffPct": 36.601,
+  "ssim": 0.5031,
+  "regions": [
+   {
+    "id": "topbar",
+    "floor": 0.98,
+    "ssim": 0.66
+   },
+   {
+    "id": "sidebar",
+    "floor": 0.98,
+    "ssim": 0.5564
+   },
+   {
+    "id": "main",
+    "floor": 0.98,
+    "ssim": 0.4691
+   }
+  ],
+  "regionsFailing": 3,
+  "ssimRegressed": false,
+  "sameOriginResourceFails": 0,
+  "sameOriginResourceFailUrls": [],
+  "crossOriginResourceFails": 1,
+  "pass": true,
+  "consoleErrors": 0
+ },
+ {
+  "screen": "083-web-analysis-overview",
+  "screenId": "desktop.web-analysis-overview",
+  "route": "/results/demo/analysis",
+  "canvas": "1440x900",
+  "http": 200,
+  "brokenImages": 0,
+  "brokenImagesExternal": 0,
+  "fallbackFonts": [],
+  "structural": [
+   {
+    "id": "topbar",
+    "present": true,
+    "containment": 1,
+    "pass": true
+   },
+   {
+    "id": "sidebar",
+    "present": true,
+    "containment": 0.946,
+    "pass": true
+   },
+   {
+    "id": "main",
+    "present": true,
+    "containment": 0.874,
+    "pass": true
+   }
+  ],
+  "structuralFailing": 0,
+  "pixelDiff": 310776,
+  "pixelDiffPct": 23.98,
+  "ssim": 0.6549,
+  "regions": [
+   {
+    "id": "topbar",
+    "floor": 0.98,
+    "ssim": 0.6617
+   },
+   {
+    "id": "sidebar",
+    "floor": 0.98,
+    "ssim": 0.6967
+   },
+   {
+    "id": "main",
+    "floor": 0.98,
+    "ssim": 0.6415
+   }
+  ],
+  "regionsFailing": 3,
+  "ssimRegressed": false,
+  "sameOriginResourceFails": 0,
+  "sameOriginResourceFailUrls": [],
+  "crossOriginResourceFails": 1,
+  "pass": true,
+  "consoleErrors": 0
+ },
+ {
+  "screen": "084-web-biomechanics-workspace",
+  "screenId": "desktop.web-biomechanics-workspace",
+  "route": "/results/demo/analysis",
+  "canvas": "1440x900",
+  "http": 200,
+  "brokenImages": 0,
+  "brokenImagesExternal": 0,
+  "fallbackFonts": [],
+  "structural": [
+   {
+    "id": "topbar",
+    "present": true,
+    "containment": 1,
+    "pass": true
+   },
+   {
+    "id": "sidebar",
+    "present": true,
+    "containment": 0.946,
+    "pass": true
+   },
+   {
+    "id": "main",
+    "present": true,
+    "containment": 0.874,
+    "pass": true
+   }
+  ],
+  "structuralFailing": 0,
+  "pixelDiff": 405799,
+  "pixelDiffPct": 31.312,
+  "ssim": 0.5987,
+  "regions": [
+   {
+    "id": "topbar",
+    "floor": 0.98,
+    "ssim": 0.6807
+   },
+   {
+    "id": "sidebar",
+    "floor": 0.98,
+    "ssim": 0.6126
+   },
+   {
+    "id": "main",
+    "floor": 0.98,
+    "ssim": 0.5738
+   }
+  ],
+  "regionsFailing": 3,
+  "ssimRegressed": false,
+  "sameOriginResourceFails": 0,
+  "sameOriginResourceFailUrls": [],
+  "crossOriginResourceFails": 1,
+  "pass": true,
+  "consoleErrors": 0
+ },
+ {
+  "screen": "085-web-flaws-history",
+  "screenId": "desktop.web-flaws-history",
+  "route": "/results/demo/flaws",
+  "canvas": "1440x900",
+  "http": 200,
+  "brokenImages": 0,
+  "brokenImagesExternal": 0,
+  "fallbackFonts": [],
+  "structural": [
+   {
+    "id": "topbar",
+    "present": true,
+    "containment": 1,
+    "pass": true
+   },
+   {
+    "id": "sidebar",
+    "present": true,
+    "containment": 0.946,
+    "pass": true
+   },
+   {
+    "id": "main",
+    "present": true,
+    "containment": 0.874,
+    "pass": true
+   }
+  ],
+  "structuralFailing": 0,
+  "pixelDiff": 345754,
+  "pixelDiffPct": 26.679,
+  "ssim": 0.5517,
+  "regions": [
+   {
+    "id": "topbar",
+    "floor": 0.98,
+    "ssim": 0.5586
+   },
+   {
+    "id": "sidebar",
+    "floor": 0.98,
+    "ssim": 0.6839
+   },
+   {
+    "id": "main",
+    "floor": 0.98,
+    "ssim": 0.5149
+   }
+  ],
+  "regionsFailing": 3,
+  "ssimRegressed": false,
+  "sameOriginResourceFails": 0,
+  "sameOriginResourceFailUrls": [],
+  "crossOriginResourceFails": 1,
+  "pass": true,
+  "consoleErrors": 0
+ },
+ {
+  "screen": "086-web-player-card",
+  "screenId": "desktop.web-player-card",
+  "route": "/results/demo/player",
+  "canvas": "1440x900",
+  "http": 200,
+  "brokenImages": 0,
+  "brokenImagesExternal": 0,
+  "fallbackFonts": [],
+  "structural": [
+   {
+    "id": "topbar",
+    "present": true,
+    "containment": 1,
+    "pass": true
+   },
+   {
+    "id": "sidebar",
+    "present": true,
+    "containment": 0.946,
+    "pass": true
+   },
+   {
+    "id": "main",
+    "present": true,
+    "containment": 0.874,
+    "pass": true
+   }
+  ],
+  "structuralFailing": 0,
+  "pixelDiff": 453829,
+  "pixelDiffPct": 35.018,
+  "ssim": 0.5532,
+  "regions": [
+   {
+    "id": "topbar",
+    "floor": 0.98,
+    "ssim": 0.6424
+   },
+   {
+    "id": "sidebar",
+    "floor": 0.98,
+    "ssim": 0.7217
+   },
+   {
+    "id": "main",
+    "floor": 0.98,
+    "ssim": 0.5043
+   }
+  ],
+  "regionsFailing": 3,
+  "ssimRegressed": false,
+  "sameOriginResourceFails": 0,
+  "sameOriginResourceFailUrls": [],
+  "crossOriginResourceFails": 1,
+  "pass": true,
+  "consoleErrors": 0
+ },
+ {
+  "screen": "087-web-elite-comparison",
+  "screenId": "desktop.web-elite-comparison",
+  "route": "/results/demo/compare",
+  "canvas": "1440x900",
+  "http": 200,
+  "brokenImages": 0,
+  "brokenImagesExternal": 0,
+  "fallbackFonts": [],
+  "structural": [
+   {
+    "id": "topbar",
+    "present": true,
+    "containment": 1,
+    "pass": true
+   },
+   {
+    "id": "sidebar",
+    "present": true,
+    "containment": 0.946,
+    "pass": true
+   },
+   {
+    "id": "main",
+    "present": true,
+    "containment": 0.874,
+    "pass": true
+   }
+  ],
+  "structuralFailing": 0,
+  "pixelDiff": 389632,
+  "pixelDiffPct": 30.064,
+  "ssim": 0.5798,
+  "regions": [
+   {
+    "id": "topbar",
+    "floor": 0.98,
+    "ssim": 0.605
+   },
+   {
+    "id": "sidebar",
+    "floor": 0.98,
+    "ssim": 0.7559
+   },
+   {
+    "id": "main",
+    "floor": 0.98,
+    "ssim": 0.5373
+   }
+  ],
+  "regionsFailing": 3,
+  "ssimRegressed": false,
+  "sameOriginResourceFails": 0,
+  "sameOriginResourceFailUrls": [],
+  "crossOriginResourceFails": 1,
+  "pass": true,
+  "consoleErrors": 0
+ },
+ {
+  "screen": "088-web-elite-shooters-database",
+  "screenId": "desktop.web-elite-shooters-database",
+  "route": "/elite-shooters",
+  "canvas": "1440x900",
+  "http": 200,
+  "brokenImages": 0,
+  "brokenImagesExternal": 19,
+  "fallbackFonts": [],
+  "structural": [
+   {
+    "id": "topbar",
+    "present": true,
+    "containment": 1,
+    "pass": true
+   },
+   {
+    "id": "sidebar",
+    "present": true,
+    "containment": 0.946,
+    "pass": true
+   },
+   {
+    "id": "main",
+    "present": true,
+    "containment": 0.874,
+    "pass": true
+   }
+  ],
+  "structuralFailing": 0,
+  "pixelDiff": 247820,
+  "pixelDiffPct": 19.122,
+  "ssim": 0.5497,
+  "regions": [
+   {
+    "id": "topbar",
+    "floor": 0.98,
+    "ssim": 0.6485
+   },
+   {
+    "id": "sidebar",
+    "floor": 0.98,
+    "ssim": 0.5832
+   },
+   {
+    "id": "main",
+    "floor": 0.98,
+    "ssim": 0.5328
+   }
+  ],
+  "regionsFailing": 3,
+  "ssimRegressed": false,
+  "sameOriginResourceFails": 0,
+  "sameOriginResourceFailUrls": [],
+  "crossOriginResourceFails": 1,
+  "pass": true,
+  "consoleErrors": 0
+ },
+ {
+  "screen": "089-web-elite-shooter-detail",
+  "screenId": "desktop.web-elite-shooter-detail",
+  "route": "/elite-shooters/stephen-curry",
+  "canvas": "1440x900",
+  "http": 200,
+  "brokenImages": 0,
+  "brokenImagesExternal": 0,
+  "fallbackFonts": [],
+  "structural": [
+   {
+    "id": "topbar",
+    "present": true,
+    "containment": 1,
+    "pass": true
+   },
+   {
+    "id": "sidebar",
+    "present": true,
+    "containment": 0.946,
+    "pass": true
+   },
+   {
+    "id": "main",
+    "present": true,
+    "containment": 0.874,
+    "pass": true
+   }
+  ],
+  "structuralFailing": 0,
+  "pixelDiff": 286283,
+  "pixelDiffPct": 22.09,
+  "ssim": 0.5013,
+  "regions": [
+   {
+    "id": "topbar",
+    "floor": 0.98,
+    "ssim": 0.646
+   },
+   {
+    "id": "sidebar",
+    "floor": 0.98,
+    "ssim": 0.6121
+   },
+   {
+    "id": "main",
+    "floor": 0.98,
+    "ssim": 0.4631
+   }
+  ],
+  "regionsFailing": 3,
+  "ssimRegressed": false,
+  "sameOriginResourceFails": 0,
+  "sameOriginResourceFailUrls": [],
+  "crossOriginResourceFails": 1,
+  "pass": true,
+  "consoleErrors": 0
+ },
+ {
+  "screen": "090-web-training-hub",
+  "screenId": "desktop.web-training-hub",
+  "route": "/results/demo/training",
+  "canvas": "1440x900",
+  "http": 200,
+  "brokenImages": 0,
+  "brokenImagesExternal": 0,
+  "fallbackFonts": [],
+  "structural": [
+   {
+    "id": "topbar",
+    "present": true,
+    "containment": 1,
+    "pass": true
+   },
+   {
+    "id": "sidebar",
+    "present": true,
+    "containment": 0.946,
+    "pass": true
+   },
+   {
+    "id": "main",
+    "present": true,
+    "containment": 0.874,
+    "pass": true
+   }
+  ],
+  "structuralFailing": 0,
+  "pixelDiff": 323888,
+  "pixelDiffPct": 24.991,
+  "ssim": 0.6088,
+  "regions": [
+   {
+    "id": "topbar",
+    "floor": 0.98,
+    "ssim": 0.6231
+   },
+   {
+    "id": "sidebar",
+    "floor": 0.98,
+    "ssim": 0.6614
+   },
+   {
+    "id": "main",
+    "floor": 0.98,
+    "ssim": 0.5929
+   }
+  ],
+  "regionsFailing": 3,
+  "ssimRegressed": false,
+  "sameOriginResourceFails": 0,
+  "sameOriginResourceFailUrls": [],
+  "crossOriginResourceFails": 1,
+  "pass": true,
+  "consoleErrors": 0
+ },
+ {
+  "screen": "091-web-drill-execution",
+  "screenId": "desktop.web-drill-execution",
+  "route": "/training/drills/pound-crossover-foundation",
+  "canvas": "1440x900",
+  "http": 200,
+  "brokenImages": 0,
+  "brokenImagesExternal": 0,
+  "fallbackFonts": [],
+  "structural": [
+   {
+    "id": "topbar",
+    "present": true,
+    "containment": 1,
+    "pass": true
+   },
+   {
+    "id": "sidebar",
+    "present": true,
+    "containment": 0.937,
+    "pass": true
+   },
+   {
+    "id": "main",
+    "present": true,
+    "containment": 0.937,
+    "pass": true
+   }
+  ],
+  "structuralFailing": 0,
+  "pixelDiff": 444187,
+  "pixelDiffPct": 34.274,
+  "ssim": 0.5088,
+  "regions": [
+   {
+    "id": "topbar",
+    "floor": 0.98,
+    "ssim": 0.6935
+   },
+   {
+    "id": "sidebar",
+    "floor": 0.98,
+    "ssim": 0.6685
+   },
+   {
+    "id": "main",
+    "floor": 0.98,
+    "ssim": 0.4485
+   }
+  ],
+  "regionsFailing": 3,
+  "ssimRegressed": false,
+  "sameOriginResourceFails": 0,
+  "sameOriginResourceFailUrls": [],
+  "crossOriginResourceFails": 1,
+  "pass": true,
+  "consoleErrors": 0
+ },
+ {
+  "screen": "092-web-goals-plan",
+  "screenId": "desktop.web-goals-plan",
+  "route": "/results/demo/goals",
+  "canvas": "1440x900",
+  "http": 200,
+  "brokenImages": 0,
+  "brokenImagesExternal": 0,
+  "fallbackFonts": [],
+  "structural": [
+   {
+    "id": "topbar",
+    "present": true,
+    "containment": 1,
+    "pass": true
+   },
+   {
+    "id": "sidebar",
+    "present": true,
+    "containment": 0.946,
+    "pass": true
+   },
+   {
+    "id": "main",
+    "present": true,
+    "containment": 0.874,
+    "pass": true
+   }
+  ],
+  "structuralFailing": 0,
+  "pixelDiff": 165238,
+  "pixelDiffPct": 12.75,
+  "ssim": 0.6905,
+  "regions": [
+   {
+    "id": "topbar",
+    "floor": 0.98,
+    "ssim": 0.6406
+   },
+   {
+    "id": "sidebar",
+    "floor": 0.98,
+    "ssim": 0.7455
+   },
+   {
+    "id": "main",
+    "floor": 0.98,
+    "ssim": 0.68
+   }
+  ],
+  "regionsFailing": 3,
+  "ssimRegressed": false,
+  "sameOriginResourceFails": 0,
+  "sameOriginResourceFailUrls": [],
+  "crossOriginResourceFails": 1,
+  "pass": true,
+  "consoleErrors": 0
+ },
+ {
+  "screen": "093-web-analytics-history",
+  "screenId": "desktop.web-analytics-history",
+  "route": "/results/demo/history",
+  "canvas": "1440x900",
+  "http": 200,
+  "brokenImages": 0,
+  "brokenImagesExternal": 0,
+  "fallbackFonts": [],
+  "structural": [
+   {
+    "id": "topbar",
+    "present": true,
+    "containment": 1,
+    "pass": true
+   },
+   {
+    "id": "sidebar",
+    "present": true,
+    "containment": 0.946,
+    "pass": true
+   },
+   {
+    "id": "main",
+    "present": true,
+    "containment": 0.874,
+    "pass": true
+   }
+  ],
+  "structuralFailing": 0,
+  "pixelDiff": 221648,
+  "pixelDiffPct": 17.102,
+  "ssim": 0.686,
+  "regions": [
+   {
+    "id": "topbar",
+    "floor": 0.98,
+    "ssim": 0.6593
+   },
+   {
+    "id": "sidebar",
+    "floor": 0.98,
+    "ssim": 0.777
+   },
+   {
+    "id": "main",
+    "floor": 0.98,
+    "ssim": 0.6716
+   }
+  ],
+  "regionsFailing": 3,
+  "ssimRegressed": false,
+  "sameOriginResourceFails": 0,
+  "sameOriginResourceFailUrls": [],
+  "crossOriginResourceFails": 1,
+  "pass": true,
+  "consoleErrors": 0
+ },
+ {
+  "screen": "094-web-media-library",
+  "screenId": "desktop.web-media-library",
+  "route": "/media",
+  "canvas": "1440x900",
+  "http": 200,
+  "brokenImages": 0,
+  "brokenImagesExternal": 0,
+  "fallbackFonts": [],
+  "structural": [
+   {
+    "id": "topbar",
+    "present": true,
+    "containment": 1,
+    "pass": true
+   },
+   {
+    "id": "sidebar",
+    "present": true,
+    "containment": 0.937,
+    "pass": true
+   },
+   {
+    "id": "main",
+    "present": true,
+    "containment": 0.937,
+    "pass": true
+   }
+  ],
+  "structuralFailing": 0,
+  "pixelDiff": 586500,
+  "pixelDiffPct": 45.255,
+  "ssim": 0.4166,
+  "regions": [
+   {
+    "id": "topbar",
+    "floor": 0.98,
+    "ssim": 0.7115
+   },
+   {
+    "id": "sidebar",
+    "floor": 0.98,
+    "ssim": 0.66
+   },
+   {
+    "id": "main",
+    "floor": 0.98,
+    "ssim": 0.3423
+   }
+  ],
+  "regionsFailing": 3,
+  "ssimRegressed": false,
+  "sameOriginResourceFails": 0,
+  "sameOriginResourceFailUrls": [],
+  "crossOriginResourceFails": 1,
+  "pass": true,
+  "consoleErrors": 0
+ },
+ {
+  "screen": "095-web-achievements-points",
+  "screenId": "desktop.web-achievements-points",
+  "route": "/points",
+  "canvas": "1440x900",
+  "http": 200,
+  "brokenImages": 0,
+  "brokenImagesExternal": 0,
+  "fallbackFonts": [],
+  "structural": [
+   {
+    "id": "topbar",
+    "present": true,
+    "containment": 1,
+    "pass": true
+   },
+   {
+    "id": "sidebar",
+    "present": true,
+    "containment": 0.946,
+    "pass": true
+   },
+   {
+    "id": "main",
+    "present": true,
+    "containment": 0.874,
+    "pass": true
+   }
+  ],
+  "structuralFailing": 0,
+  "pixelDiff": 132741,
+  "pixelDiffPct": 10.242,
+  "ssim": 0.6801,
+  "regions": [
+   {
+    "id": "topbar",
+    "floor": 0.98,
+    "ssim": 0.6403
+   },
+   {
+    "id": "sidebar",
+    "floor": 0.98,
+    "ssim": 0.8195
+   },
+   {
+    "id": "main",
+    "floor": 0.98,
+    "ssim": 0.6535
+   }
+  ],
+  "regionsFailing": 3,
+  "ssimRegressed": false,
+  "sameOriginResourceFails": 0,
+  "sameOriginResourceFailUrls": [],
+  "crossOriginResourceFails": 1,
+  "pass": true,
+  "consoleErrors": 0
+ },
+ {
+  "screen": "096-web-profile-settings",
+  "screenId": "desktop.web-profile-settings",
+  "route": "/profile",
+  "canvas": "1440x900",
+  "http": 200,
+  "brokenImages": 0,
+  "brokenImagesExternal": 0,
+  "fallbackFonts": [],
+  "structural": [
+   {
+    "id": "topbar",
+    "present": true,
+    "containment": 1,
+    "pass": true
+   },
+   {
+    "id": "sidebar",
+    "present": true,
+    "containment": 0.937,
+    "pass": true
+   },
+   {
+    "id": "main",
+    "present": true,
+    "containment": 0.937,
+    "pass": true
+   }
+  ],
+  "structuralFailing": 0,
+  "pixelDiff": 279649,
+  "pixelDiffPct": 21.578,
+  "ssim": 0.5958,
+  "regions": [
+   {
+    "id": "topbar",
+    "floor": 0.98,
+    "ssim": 0.7237
+   },
+   {
+    "id": "sidebar",
+    "floor": 0.98,
+    "ssim": 0.7104
+   },
+   {
+    "id": "main",
+    "floor": 0.98,
+    "ssim": 0.5543
+   }
+  ],
+  "regionsFailing": 3,
+  "ssimRegressed": false,
+  "sameOriginResourceFails": 0,
+  "sameOriginResourceFailUrls": [],
+  "crossOriginResourceFails": 1,
+  "pass": true,
+  "consoleErrors": 0
+ }
+]

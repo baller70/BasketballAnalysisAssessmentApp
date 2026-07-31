@@ -1,0 +1,3448 @@
+{
+ "app": {
+  "appId": "shotiq",
+  "batchId": "shotiq-white-court-imagegen2-2026-07-30-v2",
+  "platform": "ios",
+  "platformId": "shotiq.ios",
+  "screenId": "ios.drill-detail",
+  "sharedTokenSet": "shotiq-white-court-core-v1"
+ },
+ "asset": {
+  "canvas": {
+   "height": 1844,
+   "width": 853
+  },
+  "name": "ios.drill-detail"
+ },
+ "assets": {
+  "app.shotiq.brand.logo.primary": {
+   "description": "SHOTIQ primary wordmark with orange Q accent",
+   "kind": "logo",
+   "preferredFormat": "svg",
+   "qualityProfile": "faithful-premium",
+   "recolorable": true
+  },
+  "app.shotiq.icon.motion.default": {
+   "description": "Shared ShotIQ motion-glyph family placeholder for navigation, actions, and metrics.",
+   "iconSpec": {
+    "minReadableSize": 16,
+    "nicheMetaphor": "Tracked body landmark nodes and shot-release motion geometry",
+    "preserveFromReference": [
+     "semantic meaning",
+     "orientation",
+     "major silhouette",
+     "relative visual weight"
+    ],
+    "safeInset": 1.5,
+    "semanticConcept": "ShotIQ basketball performance motion glyph",
+    "silhouette": "Compact line glyph with rounded joints and a clear motion focal point",
+    "upgradeFromReference": [
+     "construction quality",
+     "domain specificity",
+     "optical balance",
+     "small-size legibility"
+    ]
+   },
+   "kind": "icon",
+   "preferredFormat": "svg",
+   "qualityProfile": "faithful-premium",
+   "recolorable": true
+  },
+  "app.shotiq.photo.athlete-frame": {
+   "description": "Independent athlete/court frame asset used by analysis and training screens.",
+   "kind": "photo",
+   "poseRequired": true,
+   "preferredFormat": "png",
+   "qualityProfile": "awaiting-independent-asset-pack"
+  }
+ },
+ "baselineGroups": [],
+ "canonicalContractSha256": "a6198cc54fa433ab52ea3d1f257761c695c9b159986d53d877bbe81db95cf839",
+ "designTokens": {
+  "colors": {
+   "analysisBlue": "#2D6CDF",
+   "confirmGreen": "#168A55",
+   "graphite": "#5F646B",
+   "ink": "#111111",
+   "muted": "#A7AAB0",
+   "paper": "#FFFFFF",
+   "reviewRed": "#D92D20",
+   "rule": "#D9D9D4",
+   "shotiqOrange": "#FF5A1F",
+   "warmCanvas": "#F7F7F4"
+  },
+  "iconography": {
+   "activeStrokeWidth": 2,
+   "creativeDirection": "Motion glyphs built from pose landmarks, release arcs, frame strips, measurement brackets, and court geometry.",
+   "domain": "basketball shooting mechanics, biomechanics, capture review, and athlete progress",
+   "familyId": "shotiq-motion-glyphs-v1",
+   "fillPolicy": "Outline-led with one intentional filled focal detail.",
+   "grid": 24,
+   "lineCap": "round",
+   "lineJoin": "round",
+   "opticalSize": 24,
+   "profile": "premium-icon-v1",
+   "prohibited": [
+    "emoji",
+    "clip art",
+    "generic stick figures",
+    "stock-library clones",
+    "mixed icon families",
+    "text baked into icons",
+    "edge-touching paint"
+   ],
+   "readabilityPx": [
+    16,
+    20,
+    24,
+    32
+   ],
+   "reconstructionMode": "faithful-premium",
+   "safeInset": 1.5,
+   "selectedState": "Same glyph with tokenized color or external indicator.",
+   "strokeWidth": 1.75
+  },
+  "radii": {
+   "card": 8,
+   "control": 6,
+   "none": 0,
+   "pill": 999
+  },
+  "spacing": {
+   "lg": 24,
+   "md": 16,
+   "sm": 8,
+   "xl": 32,
+   "xs": 4
+  },
+  "typography": {
+   "body": {
+    "fontFamily": "Inter",
+    "fontSize": 16,
+    "fontWeight": 400,
+    "letterSpacing": 0,
+    "lineHeight": 22
+   },
+   "brand": {
+    "fontFamily": "Inter",
+    "fontSize": 28,
+    "fontWeight": 900,
+    "letterSpacing": 0,
+    "lineHeight": 32
+   },
+   "button": {
+    "fontSize": 16,
+    "fontWeight": 700,
+    "inherits": "body",
+    "letterSpacing": 0,
+    "lineHeight": 22
+   },
+   "caption": {
+    "fontSize": 12,
+    "fontWeight": 500,
+    "inherits": "body",
+    "letterSpacing": 0,
+    "lineHeight": 16
+   },
+   "h1": {
+    "fontFamily": "Bebas Neue",
+    "fontSize": 64,
+    "fontWeight": 900,
+    "letterSpacing": 0,
+    "lineHeight": 70
+   },
+   "h2": {
+    "fontFamily": "Bebas Neue",
+    "fontSize": 40,
+    "fontWeight": 900,
+    "letterSpacing": 0,
+    "lineHeight": 46
+   },
+   "h3": {
+    "fontFamily": "Bebas Neue",
+    "fontSize": 28,
+    "fontWeight": 800,
+    "letterSpacing": 0,
+    "lineHeight": 34
+   },
+   "h4": {
+    "fontFamily": "Inter",
+    "fontSize": 18,
+    "fontWeight": 700,
+    "letterSpacing": 0,
+    "lineHeight": 24
+   },
+   "h5": {
+    "fontFamily": "Inter",
+    "fontSize": 14,
+    "fontWeight": 700,
+    "letterSpacing": 0,
+    "lineHeight": 20
+   },
+   "label": {
+    "fontSize": 12,
+    "fontWeight": 700,
+    "inherits": "body",
+    "letterSpacing": 0,
+    "lineHeight": 16
+   },
+   "numeric": {
+    "fontFamily": "DIN Condensed",
+    "fontSize": 40,
+    "fontWeight": 800,
+    "letterSpacing": 0,
+    "lineHeight": 44
+   }
+  }
+ },
+ "elements": [
+  {
+   "backgroundColor": "paper",
+   "bounds": {
+    "height": 1844,
+    "width": 853,
+    "x": 0,
+    "y": 0
+   },
+   "id": "screen-background",
+   "measurementId": "ios.drill-detail.screen-background",
+   "owningRegion": "main",
+   "proofMethod": "canvas dimensions",
+   "sourceKey": "ios.drill-detail.screen-background",
+   "type": "screen",
+   "zIndex": 0
+  },
+  {
+   "bounds": {
+    "height": 260,
+    "width": 853,
+    "x": 0,
+    "y": 0
+   },
+   "id": "header",
+   "measurementId": "ios.drill-detail.header",
+   "owningRegion": "header",
+   "proofMethod": "declared semantic region bounds",
+   "sourceKey": "ios.drill-detail.header",
+   "type": "group",
+   "zIndex": 1
+  },
+  {
+   "bounds": {
+    "height": 1424,
+    "width": 853,
+    "x": 0,
+    "y": 220
+   },
+   "id": "main",
+   "measurementId": "ios.drill-detail.main",
+   "owningRegion": "main",
+   "proofMethod": "declared semantic region bounds",
+   "sourceKey": "ios.drill-detail.main",
+   "type": "group",
+   "zIndex": 2
+  },
+  {
+   "bounds": {
+    "height": 220,
+    "width": 853,
+    "x": 0,
+    "y": 1624
+   },
+   "id": "navigation",
+   "measurementId": "ios.drill-detail.navigation",
+   "owningRegion": "navigation",
+   "proofMethod": "declared semantic region bounds",
+   "sourceKey": "ios.drill-detail.navigation",
+   "type": "group",
+   "zIndex": 3
+  },
+  {
+   "baseline": 56,
+   "bounds": {
+    "height": 36,
+    "width": 697,
+    "x": 31,
+    "y": 20
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 45,
+   "fontWeight": 900,
+   "generatedObservedText": "\u20ac SHOTIQ A",
+   "id": "text-001",
+   "inkBounds": {
+    "height": 36,
+    "width": 697,
+    "x": 31,
+    "y": 20
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 49,
+   "measurementId": "ios.drill-detail.text-001",
+   "ocrConfidence": 84.97,
+   "owningRegion": "header",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 85.15,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "ios.drill-detail.text-001",
+   "style": "h2",
+   "text": "\u20ac SHOTIQ",
+   "type": "text",
+   "visibleGlyphHeight": 36,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 111,
+   "bounds": {
+    "height": 22,
+    "width": 700,
+    "x": 31,
+    "y": 89
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 28,
+   "fontWeight": 400,
+   "generatedObservedText": "DRILL DETAIL lp B",
+   "id": "text-002",
+   "inkBounds": {
+    "height": 22,
+    "width": 700,
+    "x": 31,
+    "y": 89
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 30,
+   "measurementId": "ios.drill-detail.text-002",
+   "ocrConfidence": 74.12,
+   "owningRegion": "header",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 56.16,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.drill-detail.text-002",
+   "style": "body",
+   "text": "KEEP ELBOW STACKED gl ii",
+   "type": "text",
+   "visibleGlyphHeight": 22,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 227,
+   "bounds": {
+    "height": 111,
+    "width": 754,
+    "x": 32,
+    "y": 116
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 139,
+   "fontWeight": 900,
+   "generatedObservedText": "KEEP ELBOW STACKED wal \u201cal |",
+   "id": "text-003",
+   "inkBounds": {
+    "height": 111,
+    "width": 754,
+    "x": 32,
+    "y": 116
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 150,
+   "measurementId": "ios.drill-detail.text-003",
+   "ocrConfidence": 76.89,
+   "owningRegion": "header",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 81.92,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "ios.drill-detail.text-003",
+   "style": "h1",
+   "text": "THROUGH RELEASE a",
+   "type": "text",
+   "visibleGlyphHeight": 111,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 261,
+   "bounds": {
+    "height": 118,
+    "width": 747,
+    "x": 30,
+    "y": 143
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 148,
+   "fontWeight": 900,
+   "generatedObservedText": "THROUGH RELEASE a",
+   "id": "text-004",
+   "inkBounds": {
+    "height": 118,
+    "width": 747,
+    "x": 30,
+    "y": 143
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 159,
+   "measurementId": "ios.drill-detail.text-004",
+   "ocrConfidence": 84.81,
+   "owningRegion": "header",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 90.98,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "ios.drill-detail.text-004",
+   "style": "h1",
+   "text": "Build a tight, controlled release by stacking l",
+   "type": "text",
+   "visibleGlyphHeight": 118,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 309,
+   "bounds": {
+    "height": 57,
+    "width": 609,
+    "x": 33,
+    "y": 252
+   },
+   "color": "ink",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 71,
+   "fontWeight": 900,
+   "generatedObservedText": "Build a tight, controlled release by stacking J",
+   "id": "text-005",
+   "inkBounds": {
+    "height": 57,
+    "width": 609,
+    "x": 33,
+    "y": 252
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 77,
+   "measurementId": "ios.drill-detail.text-005",
+   "ocrConfidence": 92.19,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 87.79,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "ios.drill-detail.text-005",
+   "style": "h1",
+   "text": "your elbow and wrist through extension. Se",
+   "type": "text",
+   "visibleGlyphHeight": 57,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 339,
+   "bounds": {
+    "height": 22,
+    "width": 761,
+    "x": 32,
+    "y": 317
+   },
+   "color": "ink",
+   "fontFamily": "Inter",
+   "fontSize": 28,
+   "fontWeight": 400,
+   "generatedObservedText": "your elbow and wrist through extension. FORM SCORE",
+   "id": "text-006",
+   "inkBounds": {
+    "height": 22,
+    "width": 761,
+    "x": 32,
+    "y": 317
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 30,
+   "measurementId": "ios.drill-detail.text-006",
+   "ocrConfidence": 95.89,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 59.32,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.drill-detail.text-006",
+   "style": "body",
+   "text": "ool lv (0) \u00a9 ate",
+   "type": "text",
+   "visibleGlyphHeight": 22,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 394,
+   "bounds": {
+    "height": 45,
+    "width": 345,
+    "x": 438,
+    "y": 349
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 56,
+   "fontWeight": 900,
+   "generatedObservedText": ": ee 82",
+   "id": "text-007",
+   "inkBounds": {
+    "height": 45,
+    "width": 345,
+    "x": 438,
+    "y": 349
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 61,
+   "measurementId": "ios.drill-detail.text-007",
+   "ocrConfidence": 55.06,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 43.28,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "ios.drill-detail.text-007",
+   "style": "h1",
+   "text": "cae 9",
+   "type": "text",
+   "visibleGlyphHeight": 45,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 438,
+   "bounds": {
+    "height": 31,
+    "width": 624,
+    "x": 41,
+    "y": 407
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 39,
+   "fontWeight": 900,
+   "generatedObservedText": "SKILL TYPE LeveL DURATION REPS / TIME =a",
+   "id": "text-008",
+   "inkBounds": {
+    "height": 31,
+    "width": 624,
+    "x": 41,
+    "y": 407
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 42,
+   "measurementId": "ios.drill-detail.text-008",
+   "ocrConfidence": 83.85,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 68.32,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "ios.drill-detail.text-008",
+   "style": "h2",
+   "text": "SKILL TYPE Leven DURATION REPS / TIME NS",
+   "type": "text",
+   "visibleGlyphHeight": 31,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 463,
+   "bounds": {
+    "height": 31,
+    "width": 431,
+    "x": 45,
+    "y": 432
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 39,
+   "fontWeight": 900,
+   "generatedObservedText": "Shooting Advanced 15 min 60-70 reps",
+   "id": "text-009",
+   "inkBounds": {
+    "height": 31,
+    "width": 431,
+    "x": 45,
+    "y": 432
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 42,
+   "measurementId": "ios.drill-detail.text-009",
+   "ocrConfidence": 90.47,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 79.75,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "ios.drill-detail.text-009",
+   "style": "h2",
+   "text": "WHAT IT BUILDS ; 10)",
+   "type": "text",
+   "visibleGlyphHeight": 31,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 544,
+   "bounds": {
+    "height": 42,
+    "width": 752,
+    "x": 32,
+    "y": 502
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 52,
+   "fontWeight": 900,
+   "generatedObservedText": "WHAT IT BUILDS ! AO)",
+   "id": "text-010",
+   "inkBounds": {
+    "height": 42,
+    "width": 752,
+    "x": 32,
+    "y": 502
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 57,
+   "measurementId": "ios.drill-detail.text-010",
+   "ocrConfidence": 73.43,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 86.95,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "ios.drill-detail.text-010",
+   "style": "h1",
+   "text": "to improve consistency, accuracy, and repeatable 6",
+   "type": "text",
+   "visibleGlyphHeight": 42,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 512,
+   "bounds": {
+    "height": 8,
+    "width": 8,
+    "x": 495,
+    "y": 504
+   },
+   "color": "shotiqOrange",
+   "fontFamily": "Inter",
+   "fontSize": 10,
+   "fontWeight": 500,
+   "generatedObservedText": "\u00b0",
+   "id": "text-011",
+   "inkBounds": {
+    "height": 8,
+    "width": 8,
+    "x": 495,
+    "y": 504
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 12,
+   "measurementId": "ios.drill-detail.text-011",
+   "ocrConfidence": 79.57,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "caption",
+   "sourceKey": "ios.drill-detail.text-011",
+   "style": "caption",
+   "text": "\u00b0",
+   "type": "text",
+   "visibleGlyphHeight": 8,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 585,
+   "bounds": {
+    "height": 67,
+    "width": 712,
+    "x": 32,
+    "y": 518
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 84,
+   "fontWeight": 900,
+   "generatedObservedText": "Teaches vertical alignment of the shooting arm fi MX \u00b0",
+   "id": "text-012",
+   "inkBounds": {
+    "height": 67,
+    "width": 712,
+    "x": 32,
+    "y": 518
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 90,
+   "measurementId": "ios.drill-detail.text-012",
+   "ocrConfidence": 81.42,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 95.5,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "ios.drill-detail.text-012",
+   "style": "h1",
+   "text": "release mechanics. ELBOW STACK WRIST ALIGNMENT RELEASE PATH",
+   "type": "text",
+   "visibleGlyphHeight": 67,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 550,
+   "bounds": {
+    "height": 11,
+    "width": 268,
+    "x": 473,
+    "y": 539
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 14,
+   "fontWeight": 500,
+   "generatedObservedText": "a ?",
+   "id": "text-013",
+   "inkBounds": {
+    "height": 11,
+    "width": 268,
+    "x": 473,
+    "y": 539
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 15,
+   "measurementId": "ios.drill-detail.text-013",
+   "ocrConfidence": 49.62,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "caption",
+   "sourceKey": "ios.drill-detail.text-013",
+   "style": "caption",
+   "text": "a ?",
+   "type": "text",
+   "visibleGlyphHeight": 11,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 596,
+   "bounds": {
+    "height": 21,
+    "width": 712,
+    "x": 32,
+    "y": 575
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 26,
+   "fontWeight": 400,
+   "generatedObservedText": "to improve consistency, accuracy, and repeatable \u00b0",
+   "id": "text-014",
+   "inkBounds": {
+    "height": 21,
+    "width": 712,
+    "x": 32,
+    "y": 575
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 28,
+   "measurementId": "ios.drill-detail.text-014",
+   "ocrConfidence": 90.59,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 74.57,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.drill-detail.text-014",
+   "style": "body",
+   "text": "hy Basketball A Cones i Spot Location",
+   "type": "text",
+   "visibleGlyphHeight": 21,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 633,
+   "bounds": {
+    "height": 31,
+    "width": 760,
+    "x": 33,
+    "y": 602
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 39,
+   "fontWeight": 900,
+   "generatedObservedText": "release mechanics. ELBOW STACK WRIST ALIGNMENT \u00a9 RELEASE PATH",
+   "id": "text-015",
+   "inkBounds": {
+    "height": 31,
+    "width": 760,
+    "x": 33,
+    "y": 602
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 42,
+   "measurementId": "ios.drill-detail.text-015",
+   "ocrConfidence": 81.7,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 81.13,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "ios.drill-detail.text-015",
+   "style": "h2",
+   "text": "Y 4 2-3 Free throw line 71 Any court",
+   "type": "text",
+   "visibleGlyphHeight": 31,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 702,
+   "bounds": {
+    "height": 25,
+    "width": 182,
+    "x": 31,
+    "y": 677
+   },
+   "color": "ink",
+   "fontFamily": "Inter",
+   "fontSize": 31,
+   "fontWeight": 700,
+   "generatedObservedText": "EQUIPMENT & SETUP",
+   "id": "text-016",
+   "inkBounds": {
+    "height": 25,
+    "width": 182,
+    "x": 31,
+    "y": 677
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 34,
+   "measurementId": "ios.drill-detail.text-016",
+   "ocrConfidence": 94.42,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 94.15,
+   "referenceTextMatched": true,
+   "semanticRole": "h4",
+   "sourceKey": "ios.drill-detail.text-016",
+   "style": "h4",
+   "text": "EQUIPMENT & SETUP",
+   "type": "text",
+   "visibleGlyphHeight": 25,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 774,
+   "bounds": {
+    "height": 49,
+    "width": 700,
+    "x": 54,
+    "y": 725
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 61,
+   "fontWeight": 900,
+   "generatedObservedText": "Basketball Cones E Spot Location",
+   "id": "text-017",
+   "inkBounds": {
+    "height": 49,
+    "width": 700,
+    "x": 54,
+    "y": 725
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 66,
+   "measurementId": "ios.drill-detail.text-017",
+   "ocrConfidence": 79.83,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 22.48,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "ios.drill-detail.text-017",
+   "style": "h1",
+   "text": "a",
+   "type": "text",
+   "visibleGlyphHeight": 49,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 782,
+   "bounds": {
+    "height": 49,
+    "width": 657,
+    "x": 104,
+    "y": 733
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 61,
+   "fontWeight": 900,
+   "generatedObservedText": "4 & 2-3 Free throw line Any court",
+   "id": "text-018",
+   "inkBounds": {
+    "height": 49,
+    "width": 657,
+    "x": 104,
+    "y": 733
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 66,
+   "measurementId": "ios.drill-detail.text-018",
+   "ocrConfidence": 85.97,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 94.93,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "ios.drill-detail.text-018",
+   "style": "h1",
+   "text": "SETUP LOAD RISE RELEASE FOLLOW-THROUGH",
+   "type": "text",
+   "visibleGlyphHeight": 49,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 865,
+   "bounds": {
+    "height": 24,
+    "width": 129,
+    "x": 31,
+    "y": 841
+   },
+   "color": "ink",
+   "fontFamily": "Inter",
+   "fontSize": 30,
+   "fontWeight": 700,
+   "generatedObservedText": "STEP-BY-STEP",
+   "id": "text-019",
+   "inkBounds": {
+    "height": 24,
+    "width": 129,
+    "x": 31,
+    "y": 841
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 32,
+   "measurementId": "ios.drill-detail.text-019",
+   "ocrConfidence": 95.15,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 96.26,
+   "referenceTextMatched": true,
+   "semanticRole": "h4",
+   "sourceKey": "ios.drill-detail.text-019",
+   "style": "h4",
+   "text": "STEP-BY-STEP",
+   "type": "text",
+   "visibleGlyphHeight": 24,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 921,
+   "bounds": {
+    "height": 44,
+    "width": 682,
+    "x": 31,
+    "y": 877
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 55,
+   "fontWeight": 900,
+   "generatedObservedText": "Om Dy C3) Q (5)",
+   "id": "text-020",
+   "inkBounds": {
+    "height": 44,
+    "width": 682,
+    "x": 31,
+    "y": 877
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 59,
+   "measurementId": "ios.drill-detail.text-020",
+   "ocrConfidence": 41.47,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 76.39,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "ios.drill-detail.text-020",
+   "style": "h1",
+   "text": "Feet shoulder-width. Dip intoasmooth _Extend up. Keep Release at full Hold tall finish,",
+   "type": "text",
+   "visibleGlyphHeight": 44,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 967,
+   "bounds": {
+    "height": 43,
+    "width": 591,
+    "x": 40,
+    "y": 924
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 54,
+   "fontWeight": 900,
+   "generatedObservedText": "6 | aa dh i |",
+   "id": "text-021",
+   "inkBounds": {
+    "height": 43,
+    "width": 591,
+    "x": 40,
+    "y": 924
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 58,
+   "measurementId": "ios.drill-detail.text-021",
+   "ocrConfidence": 45.21,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 89.52,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "ios.drill-detail.text-021",
+   "style": "h1",
+   "text": "Ball in shooting gather. Keep elbow _elbow under ball extension. Wrist Elbow stacked,",
+   "type": "text",
+   "visibleGlyphHeight": 43,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1033,
+   "bounds": {
+    "height": 24,
+    "width": 49,
+    "x": 400,
+    "y": 1009
+   },
+   "color": "ink",
+   "fontFamily": "Inter",
+   "fontSize": 30,
+   "fontWeight": 400,
+   "generatedObservedText": "me",
+   "id": "text-022",
+   "inkBounds": {
+    "height": 24,
+    "width": 49,
+    "x": 400,
+    "y": 1009
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 32,
+   "measurementId": "ios.drill-detail.text-022",
+   "ocrConfidence": 37.12,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 90.21,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.drill-detail.text-022",
+   "style": "body",
+   "text": "pocket. Elbow in. tucked and stacked, _and aligned. snaps over. fingers down,",
+   "type": "text",
+   "visibleGlyphHeight": 24,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1070,
+   "bounds": {
+    "height": 18,
+    "width": 781,
+    "x": 36,
+    "y": 1052
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 22,
+   "fontWeight": 700,
+   "generatedObservedText": "SETUP LOAD RISE RELEASE FOLLOW-THROUGH",
+   "id": "text-023",
+   "inkBounds": {
+    "height": 18,
+    "width": 781,
+    "x": 36,
+    "y": 1052
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 24,
+   "measurementId": "ios.drill-detail.text-023",
+   "ocrConfidence": 93.58,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "h4",
+   "sourceKey": "ios.drill-detail.text-023",
+   "style": "h4",
+   "text": "SETUP LOAD RISE RELEASE FOLLOW-THROUGH",
+   "type": "text",
+   "visibleGlyphHeight": 18,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1101,
+   "bounds": {
+    "height": 16,
+    "width": 751,
+    "x": 36,
+    "y": 1085
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 20,
+   "fontWeight": 400,
+   "generatedObservedText": "Feet shoulder-width. Dip into a smooth Extend up. Keep Release at full Hold tall finish.",
+   "id": "text-024",
+   "inkBounds": {
+    "height": 16,
+    "width": 751,
+    "x": 36,
+    "y": 1085
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 22,
+   "measurementId": "ios.drill-detail.text-024",
+   "ocrConfidence": 95.44,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "body",
+   "sourceKey": "ios.drill-detail.text-024",
+   "style": "body",
+   "text": "Feet shoulder-width. Dip into a smooth Extend up. Keep Release at full Hold tall finish.",
+   "type": "text",
+   "visibleGlyphHeight": 16,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1126,
+   "bounds": {
+    "height": 17,
+    "width": 751,
+    "x": 36,
+    "y": 1109
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 21,
+   "fontWeight": 400,
+   "generatedObservedText": "Ball in shooting gather. Keep elbow \u2018elbow under ball extension. Wrist Elbow stacked,",
+   "id": "text-025",
+   "inkBounds": {
+    "height": 17,
+    "width": 751,
+    "x": 36,
+    "y": 1109
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 23,
+   "measurementId": "ios.drill-detail.text-025",
+   "ocrConfidence": 93.26,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 68.6,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.drill-detail.text-025",
+   "style": "body",
+   "text": "Stack your elbow =F Under Bal bal from oad to release",
+   "type": "text",
+   "visibleGlyphHeight": 17,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1151,
+   "bounds": {
+    "height": 17,
+    "width": 741,
+    "x": 36,
+    "y": 1134
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 21,
+   "fontWeight": 400,
+   "generatedObservedText": "pocket. Elbow in. tucked and stacked, and aligned. snaps over. fingers down.",
+   "id": "text-026",
+   "inkBounds": {
+    "height": 17,
+    "width": 741,
+    "x": 36,
+    "y": 1134
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 23,
+   "measurementId": "ios.drill-detail.text-026",
+   "ocrConfidence": 85.55,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 80.53,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.drill-detail.text-026",
+   "style": "body",
+   "text": "under the ball and @ Wrist Snap wrist over elbow",
+   "type": "text",
+   "visibleGlyphHeight": 17,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1229,
+   "bounds": {
+    "height": 24,
+    "width": 511,
+    "x": 31,
+    "y": 1205
+   },
+   "color": "ink",
+   "fontFamily": "Inter",
+   "fontSize": 30,
+   "fontWeight": 400,
+   "generatedObservedText": "COACHING CUE TARGET MECHANICS",
+   "id": "text-027",
+   "inkBounds": {
+    "height": 24,
+    "width": 511,
+    "x": 31,
+    "y": 1205
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 32,
+   "measurementId": "ios.drill-detail.text-027",
+   "ocrConfidence": 96.62,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 56.67,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.drill-detail.text-027",
+   "style": "body",
+   "text": "4 Over",
+   "type": "text",
+   "visibleGlyphHeight": 24,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1267,
+   "bounds": {
+    "height": 15,
+    "width": 243,
+    "x": 412,
+    "y": 1252
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 19,
+   "fontWeight": 400,
+   "generatedObservedText": "2 Elbow elbow under the",
+   "id": "text-028",
+   "inkBounds": {
+    "height": 15,
+    "width": 243,
+    "x": 412,
+    "y": 1252
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 20,
+   "measurementId": "ios.drill-detail.text-028",
+   "ocrConfidence": 85.87,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 84.39,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.drill-detail.text-028",
+   "style": "body",
+   "text": "ry, Straight Drive straight up with",
+   "type": "text",
+   "visibleGlyphHeight": 15,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1298,
+   "bounds": {
+    "height": 45,
+    "width": 635,
+    "x": 31,
+    "y": 1253
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 56,
+   "fontWeight": 900,
+   "generatedObservedText": "6 Stack your elbow oad Under Ball ball from load to release.",
+   "id": "text-029",
+   "inkBounds": {
+    "height": 45,
+    "width": 635,
+    "x": 31,
+    "y": 1253
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 61,
+   "measurementId": "ios.drill-detail.text-029",
+   "ocrConfidence": 85.55,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 93.46,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "ios.drill-detail.text-029",
+   "style": "h1",
+   "text": "finish tall every time. ver Elbow at the top of release.",
+   "type": "text",
+   "visibleGlyphHeight": 45,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1332,
+   "bounds": {
+    "height": 26,
+    "width": 585,
+    "x": 70,
+    "y": 1306
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 32,
+   "fontWeight": 400,
+   "generatedObservedText": "under the ball and Wrist Snap wrist over elbow",
+   "id": "text-030",
+   "inkBounds": {
+    "height": 26,
+    "width": 585,
+    "x": 70,
+    "y": 1306
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 35,
+   "measurementId": "ios.drill-detail.text-030",
+   "ocrConfidence": 91.51,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "body",
+   "sourceKey": "ios.drill-detail.text-030",
+   "style": "body",
+   "text": "under the ball and Wrist Snap wrist over elbow",
+   "type": "text",
+   "visibleGlyphHeight": 26,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1370,
+   "bounds": {
+    "height": 55,
+    "width": 572,
+    "x": 70,
+    "y": 1315
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 69,
+   "fontWeight": 900,
+   "generatedObservedText": "finish tal every time WW) Over Elbow at the top of release.",
+   "id": "text-031",
+   "inkBounds": {
+    "height": 55,
+    "width": 572,
+    "x": 70,
+    "y": 1315
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 74,
+   "measurementId": "ios.drill-detail.text-031",
+   "ocrConfidence": 84.34,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 45.99,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "ios.drill-detail.text-031",
+   "style": "h1",
+   "text": "tim 4",
+   "type": "text",
+   "visibleGlyphHeight": 55,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1401,
+   "bounds": {
+    "height": 25,
+    "width": 280,
+    "x": 368,
+    "y": 1376
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 31,
+   "fontWeight": 400,
+   "generatedObservedText": "i Straight Drive straight up with",
+   "id": "text-032",
+   "inkBounds": {
+    "height": 25,
+    "width": 280,
+    "x": 368,
+    "y": 1376
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 34,
+   "measurementId": "ios.drill-detail.text-032",
+   "ocrConfidence": 79.84,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 78.48,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.drill-detail.text-032",
+   "style": "body",
+   "text": "\u201c0. Green is the ideal alignment.",
+   "type": "text",
+   "visibleGlyphHeight": 25,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1426,
+   "bounds": {
+    "height": 29,
+    "width": 270,
+    "x": 371,
+    "y": 1397
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 36,
+   "fontWeight": 400,
+   "generatedObservedText": "+ \u00a9 _ Release Path minimal lateral drift.",
+   "id": "text-033",
+   "inkBounds": {
+    "height": 29,
+    "width": 270,
+    "x": 371,
+    "y": 1397
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 39,
+   "measurementId": "ios.drill-detail.text-033",
+   "ocrConfidence": 64.89,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 82.22,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.drill-detail.text-033",
+   "style": "body",
+   "text": "ptimal Orange is your tracked",
+   "type": "text",
+   "visibleGlyphHeight": 29,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1492,
+   "bounds": {
+    "height": 26,
+    "width": 250,
+    "x": 31,
+    "y": 1466
+   },
+   "color": "ink",
+   "fontFamily": "Inter",
+   "fontSize": 32,
+   "fontWeight": 400,
+   "generatedObservedText": "DRILL PREVIEW (Al OVERLAY)",
+   "id": "text-034",
+   "inkBounds": {
+    "height": 26,
+    "width": 250,
+    "x": 31,
+    "y": 1466
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 35,
+   "measurementId": "ios.drill-detail.text-034",
+   "ocrConfidence": 94.95,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 94.22,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.drill-detail.text-034",
+   "style": "body",
+   "text": "DRILL PREVIEW (Al OVERLAY)",
+   "type": "text",
+   "visibleGlyphHeight": 26,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1540,
+   "bounds": {
+    "height": 36,
+    "width": 420,
+    "x": 257,
+    "y": 1504
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 45,
+   "fontWeight": 900,
+   "generatedObservedText": "fe ony Green is the ideal alignment.",
+   "id": "text-035",
+   "inkBounds": {
+    "height": 36,
+    "width": 420,
+    "x": 257,
+    "y": 1504
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 49,
+   "measurementId": "ios.drill-detail.text-035",
+   "ocrConfidence": 76.91,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 67.5,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "ios.drill-detail.text-035",
+   "style": "h2",
+   "text": "| =f | You >",
+   "type": "text",
+   "visibleGlyphHeight": 36,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1557,
+   "bounds": {
+    "height": 31,
+    "width": 454,
+    "x": 193,
+    "y": 1526
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 39,
+   "fontWeight": 900,
+   "generatedObservedText": "ey Optimal J Orange is your tracked",
+   "id": "text-036",
+   "inkBounds": {
+    "height": 31,
+    "width": 454,
+    "x": 193,
+    "y": 1526
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 42,
+   "measurementId": "ios.drill-detail.text-036",
+   "ocrConfidence": 77.88,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 88.71,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "ios.drill-detail.text-036",
+   "style": "h2",
+   "text": "\u2014 Optimal Path",
+   "type": "text",
+   "visibleGlyphHeight": 31,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1582,
+   "bounds": {
+    "height": 43,
+    "width": 616,
+    "x": 172,
+    "y": 1539
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 54,
+   "fontWeight": 900,
+   "generatedObservedText": "pan { = movement. >\u00bb",
+   "id": "text-037",
+   "inkBounds": {
+    "height": 43,
+    "width": 616,
+    "x": 172,
+    "y": 1539
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 58,
+   "measurementId": "ios.drill-detail.text-037",
+   "ocrConfidence": 45.59,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 61.49,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "ios.drill-detail.text-037",
+   "style": "h1",
+   "text": "DP Start drill I}",
+   "type": "text",
+   "visibleGlyphHeight": 43,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1590,
+   "bounds": {
+    "height": 15,
+    "width": 97,
+    "x": 255,
+    "y": 1575
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 19,
+   "fontWeight": 400,
+   "generatedObservedText": "| Ye",
+   "id": "text-038",
+   "inkBounds": {
+    "height": 15,
+    "width": 97,
+    "x": 255,
+    "y": 1575
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 20,
+   "measurementId": "ios.drill-detail.text-038",
+   "ocrConfidence": 72.24,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "body",
+   "sourceKey": "ios.drill-detail.text-038",
+   "style": "body",
+   "text": "| Ye",
+   "type": "text",
+   "visibleGlyphHeight": 15,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1609,
+   "bounds": {
+    "height": 32,
+    "width": 383,
+    "x": 251,
+    "y": 1577
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 40,
+   "fontWeight": 900,
+   "generatedObservedText": "= Optimal Path",
+   "id": "text-039",
+   "inkBounds": {
+    "height": 32,
+    "width": 383,
+    "x": 251,
+    "y": 1577
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 43,
+   "measurementId": "ios.drill-detail.text-039",
+   "ocrConfidence": 86.46,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 48.09,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "ios.drill-detail.text-039",
+   "style": "h2",
+   "text": "Les x Sue 12: FO JE}",
+   "type": "text",
+   "visibleGlyphHeight": 32,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1631,
+   "bounds": {
+    "height": 12,
+    "width": 54,
+    "x": 559,
+    "y": 1619
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 15,
+   "fontWeight": 500,
+   "generatedObservedText": "Your Path",
+   "id": "text-040",
+   "inkBounds": {
+    "height": 12,
+    "width": 54,
+    "x": 559,
+    "y": 1619
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 16,
+   "measurementId": "ios.drill-detail.text-040",
+   "ocrConfidence": 95.1,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 67.26,
+   "referenceTextMatched": true,
+   "semanticRole": "caption",
+   "sourceKey": "ios.drill-detail.text-040",
+   "style": "caption",
+   "text": "T [pay 1",
+   "type": "text",
+   "visibleGlyphHeight": 12,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1705,
+   "bounds": {
+    "height": 30,
+    "width": 556,
+    "x": 242,
+    "y": 1675
+   },
+   "color": "shotiqOrange",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 38,
+   "fontWeight": 900,
+   "generatedObservedText": "D Start drill Da",
+   "id": "text-041",
+   "inkBounds": {
+    "height": 30,
+    "width": 556,
+    "x": 242,
+    "y": 1675
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 40,
+   "measurementId": "ios.drill-detail.text-041",
+   "ocrConfidence": 68.07,
+   "owningRegion": "navigation",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 94.53,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "ios.drill-detail.text-041",
+   "style": "h2",
+   "text": "Home Capture Train Progress Profile",
+   "type": "text",
+   "visibleGlyphHeight": 30,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1797,
+   "bounds": {
+    "height": 52,
+    "width": 693,
+    "x": 74,
+    "y": 1745
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 65,
+   "fontWeight": 900,
+   "generatedObservedText": "ry x god ke JE",
+   "id": "text-042",
+   "inkBounds": {
+    "height": 52,
+    "width": 693,
+    "x": 74,
+    "y": 1745
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 70,
+   "measurementId": "ios.drill-detail.text-042",
+   "ocrConfidence": 53.01,
+   "owningRegion": "navigation",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "h1",
+   "sourceKey": "ios.drill-detail.text-042",
+   "style": "h1",
+   "text": "ry x god ke JE",
+   "type": "text",
+   "visibleGlyphHeight": 52,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1760,
+   "bounds": {
+    "height": 5,
+    "width": 5,
+    "x": 592,
+    "y": 1755
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 10,
+   "fontWeight": 500,
+   "generatedObservedText": ".",
+   "id": "text-043",
+   "inkBounds": {
+    "height": 5,
+    "width": 5,
+    "x": 592,
+    "y": 1755
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 12,
+   "measurementId": "ios.drill-detail.text-043",
+   "ocrConfidence": 38.08,
+   "owningRegion": "navigation",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "caption",
+   "sourceKey": "ios.drill-detail.text-043",
+   "style": "caption",
+   "text": ".",
+   "type": "text",
+   "visibleGlyphHeight": 5,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1771,
+   "bounds": {
+    "height": 14,
+    "width": 29,
+    "x": 580,
+    "y": 1757
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 18,
+   "fontWeight": 500,
+   "generatedObservedText": "x",
+   "id": "text-044",
+   "inkBounds": {
+    "height": 14,
+    "width": 29,
+    "x": 580,
+    "y": 1757
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 19,
+   "measurementId": "ios.drill-detail.text-044",
+   "ocrConfidence": 33.18,
+   "owningRegion": "navigation",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "caption",
+   "sourceKey": "ios.drill-detail.text-044",
+   "style": "caption",
+   "text": "x",
+   "type": "text",
+   "visibleGlyphHeight": 14,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1818,
+   "bounds": {
+    "height": 16,
+    "width": 700,
+    "x": 75,
+    "y": 1802
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 20,
+   "fontWeight": 400,
+   "generatedObservedText": "Home Capture Train Progress Profile",
+   "id": "text-045",
+   "inkBounds": {
+    "height": 16,
+    "width": 700,
+    "x": 75,
+    "y": 1802
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 22,
+   "measurementId": "ios.drill-detail.text-045",
+   "ocrConfidence": 96.45,
+   "owningRegion": "navigation",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "body",
+   "sourceKey": "ios.drill-detail.text-045",
+   "style": "body",
+   "text": "Home Capture Train Progress Profile",
+   "type": "text",
+   "visibleGlyphHeight": 16,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "assetRef": "app.shotiq.photo.athlete-frame",
+   "bounds": {
+    "height": 282,
+    "width": 200,
+    "x": 505,
+    "y": 135
+   },
+   "componentRef": "app.shotiq.media.analysis-frame",
+   "fit": "cover",
+   "id": "visual-001",
+   "inkBounds": {
+    "height": 282,
+    "width": 200,
+    "x": 505,
+    "y": 135
+   },
+   "measurementId": "ios.drill-detail.visual-001",
+   "objectPosition": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-001",
+   "type": "photo",
+   "zIndex": 2
+  },
+  {
+   "assetRef": "app.shotiq.photo.athlete-frame",
+   "bounds": {
+    "height": 65,
+    "width": 599,
+    "x": 30,
+    "y": 1657
+   },
+   "componentRef": "app.shotiq.media.analysis-frame",
+   "fit": "cover",
+   "id": "visual-002",
+   "inkBounds": {
+    "height": 65,
+    "width": 599,
+    "x": 30,
+    "y": 1657
+   },
+   "measurementId": "ios.drill-detail.visual-002",
+   "objectPosition": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "owningRegion": "navigation",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-002",
+   "type": "photo",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 158,
+    "width": 121,
+    "x": 207,
+    "y": 881
+   },
+   "cornerRadius": "card",
+   "id": "visual-003",
+   "inkBounds": {
+    "height": 158,
+    "width": 121,
+    "x": 207,
+    "y": 881
+   },
+   "measurementId": "ios.drill-detail.visual-003",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-003",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 154,
+    "width": 123,
+    "x": 37,
+    "y": 885
+   },
+   "cornerRadius": "card",
+   "id": "visual-004",
+   "inkBounds": {
+    "height": 154,
+    "width": 123,
+    "x": 37,
+    "y": 885
+   },
+   "measurementId": "ios.drill-detail.visual-004",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-004",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 158,
+    "width": 118,
+    "x": 530,
+    "y": 881
+   },
+   "cornerRadius": "card",
+   "id": "visual-005",
+   "inkBounds": {
+    "height": 158,
+    "width": 118,
+    "x": 530,
+    "y": 881
+   },
+   "measurementId": "ios.drill-detail.visual-005",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-005",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 154,
+    "width": 113,
+    "x": 696,
+    "y": 885
+   },
+   "cornerRadius": "card",
+   "id": "visual-006",
+   "inkBounds": {
+    "height": 154,
+    "width": 113,
+    "x": 696,
+    "y": 885
+   },
+   "measurementId": "ios.drill-detail.visual-006",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-006",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "warmCanvas",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 80,
+    "width": 192,
+    "x": 28,
+    "y": 713
+   },
+   "cornerRadius": "card",
+   "id": "visual-007",
+   "inkBounds": {
+    "height": 80,
+    "width": 192,
+    "x": 28,
+    "y": 713
+   },
+   "measurementId": "ios.drill-detail.visual-007",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-007",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "rule",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 104,
+    "width": 94,
+    "x": 717,
+    "y": 316
+   },
+   "cornerRadius": "card",
+   "id": "visual-008",
+   "inkBounds": {
+    "height": 104,
+    "width": 94,
+    "x": 717,
+    "y": 316
+   },
+   "measurementId": "ios.drill-detail.visual-008",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-008",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 62,
+    "width": 147,
+    "x": 32,
+    "y": 1545
+   },
+   "cornerRadius": "card",
+   "id": "visual-009",
+   "inkBounds": {
+    "height": 62,
+    "width": 147,
+    "x": 32,
+    "y": 1545
+   },
+   "measurementId": "ios.drill-detail.visual-009",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-009",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "warmCanvas",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 87,
+    "width": 78,
+    "x": 731,
+    "y": 1516
+   },
+   "cornerRadius": "card",
+   "id": "visual-010",
+   "inkBounds": {
+    "height": 87,
+    "width": 78,
+    "x": 731,
+    "y": 1516
+   },
+   "measurementId": "ios.drill-detail.visual-010",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-010",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "rule",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 66,
+    "width": 75,
+    "x": 744,
+    "y": 1656
+   },
+   "cornerRadius": "card",
+   "id": "visual-011",
+   "inkBounds": {
+    "height": 66,
+    "width": 75,
+    "x": 744,
+    "y": 1656
+   },
+   "measurementId": "ios.drill-detail.visual-011",
+   "owningRegion": "navigation",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-011",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "rule",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 66,
+    "width": 73,
+    "x": 650,
+    "y": 1656
+   },
+   "cornerRadius": "card",
+   "id": "visual-012",
+   "inkBounds": {
+    "height": 66,
+    "width": 73,
+    "x": 650,
+    "y": 1656
+   },
+   "measurementId": "ios.drill-detail.visual-012",
+   "owningRegion": "navigation",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-012",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "ink",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 30,
+    "width": 137,
+    "x": 32,
+    "y": 1605
+   },
+   "cornerRadius": "card",
+   "id": "visual-013",
+   "inkBounds": {
+    "height": 30,
+    "width": 137,
+    "x": 32,
+    "y": 1605
+   },
+   "measurementId": "ios.drill-detail.visual-013",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-013",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 33,
+    "width": 44,
+    "x": 334,
+    "y": 1566
+   },
+   "id": "visual-014",
+   "inkBounds": {
+    "height": 33,
+    "width": 44,
+    "x": 334,
+    "y": 1566
+   },
+   "measurementId": "ios.drill-detail.visual-014",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-014",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 37,
+    "width": 35,
+    "x": 169,
+    "y": 1523
+   },
+   "id": "visual-015",
+   "inkBounds": {
+    "height": 37,
+    "width": 35,
+    "x": 169,
+    "y": 1523
+   },
+   "measurementId": "ios.drill-detail.visual-015",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-015",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 19,
+    "width": 42,
+    "x": 444,
+    "y": 961
+   },
+   "id": "visual-016",
+   "inkBounds": {
+    "height": 19,
+    "width": 42,
+    "x": 444,
+    "y": 961
+   },
+   "measurementId": "ios.drill-detail.visual-016",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-016",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 26,
+    "width": 27,
+    "x": 782,
+    "y": 30
+   },
+   "id": "visual-017",
+   "inkBounds": {
+    "height": 26,
+    "width": 27,
+    "x": 782,
+    "y": 30
+   },
+   "measurementId": "ios.drill-detail.visual-017",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-017",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 27,
+    "width": 25,
+    "x": 187,
+    "y": 373
+   },
+   "id": "visual-018",
+   "inkBounds": {
+    "height": 27,
+    "width": 25,
+    "x": 187,
+    "y": 373
+   },
+   "measurementId": "ios.drill-detail.visual-018",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-018",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 28,
+    "width": 23,
+    "x": 311,
+    "y": 372
+   },
+   "id": "visual-019",
+   "inkBounds": {
+    "height": 28,
+    "width": 23,
+    "x": 311,
+    "y": 372
+   },
+   "measurementId": "ios.drill-detail.visual-019",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-019",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 19,
+    "width": 28,
+    "x": 376,
+    "y": 964
+   },
+   "id": "visual-020",
+   "inkBounds": {
+    "height": 19,
+    "width": 28,
+    "x": 376,
+    "y": 964
+   },
+   "measurementId": "ios.drill-detail.visual-020",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-020",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "rule",
+   "borderWidth": 6,
+   "bounds": {
+    "height": 6,
+    "width": 63,
+    "x": 659,
+    "y": 424
+   },
+   "id": "visual-021",
+   "inkBounds": {
+    "height": 6,
+    "width": 63,
+    "x": 659,
+    "y": 424
+   },
+   "measurementId": "ios.drill-detail.visual-021",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-021",
+   "type": "divider",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 37,
+    "width": 10,
+    "x": 389,
+    "y": 997
+   },
+   "id": "visual-022",
+   "inkBounds": {
+    "height": 37,
+    "width": 10,
+    "x": 389,
+    "y": 997
+   },
+   "measurementId": "ios.drill-detail.visual-022",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-022",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 18,
+    "width": 18,
+    "x": 717,
+    "y": 108
+   },
+   "id": "visual-023",
+   "inkBounds": {
+    "height": 18,
+    "width": 18,
+    "x": 717,
+    "y": 108
+   },
+   "measurementId": "ios.drill-detail.visual-023",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-023",
+   "stroke": "reviewRed",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 23,
+    "width": 14,
+    "x": 788,
+    "y": 19
+   },
+   "id": "visual-024",
+   "inkBounds": {
+    "height": 23,
+    "width": 14,
+    "x": 788,
+    "y": 19
+   },
+   "measurementId": "ios.drill-detail.visual-024",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-024",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 15,
+    "width": 21,
+    "x": 395,
+    "y": 984
+   },
+   "id": "visual-025",
+   "inkBounds": {
+    "height": 15,
+    "width": 21,
+    "x": 395,
+    "y": 984
+   },
+   "measurementId": "ios.drill-detail.visual-025",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-025",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 31,
+    "x": 788,
+    "y": 224
+   },
+   "id": "visual-026",
+   "inkBounds": {
+    "height": 10,
+    "width": 31,
+    "x": 788,
+    "y": 224
+   },
+   "measurementId": "ios.drill-detail.visual-026",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-026",
+   "stroke": "reviewRed",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 16,
+    "width": 17,
+    "x": 398,
+    "y": 981
+   },
+   "id": "visual-027",
+   "inkBounds": {
+    "height": 16,
+    "width": 17,
+    "x": 398,
+    "y": 981
+   },
+   "measurementId": "ios.drill-detail.visual-027",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-027",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 19,
+    "width": 14,
+    "x": 687,
+    "y": 107
+   },
+   "id": "visual-028",
+   "inkBounds": {
+    "height": 19,
+    "width": 14,
+    "x": 687,
+    "y": 107
+   },
+   "measurementId": "ios.drill-detail.visual-028",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-028",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 17,
+    "width": 15,
+    "x": 707,
+    "y": 109
+   },
+   "id": "visual-029",
+   "inkBounds": {
+    "height": 17,
+    "width": 15,
+    "x": 707,
+    "y": 109
+   },
+   "measurementId": "ios.drill-detail.visual-029",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-029",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 28,
+    "x": 510,
+    "y": 86
+   },
+   "id": "visual-030",
+   "inkBounds": {
+    "height": 9,
+    "width": 28,
+    "x": 510,
+    "y": 86
+   },
+   "measurementId": "ios.drill-detail.visual-030",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-030",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 25,
+    "width": 10,
+    "x": 667,
+    "y": 947
+   },
+   "id": "visual-031",
+   "inkBounds": {
+    "height": 25,
+    "width": 10,
+    "x": 667,
+    "y": 947
+   },
+   "measurementId": "ios.drill-detail.visual-031",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-031",
+   "stroke": "warmCanvas",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 15,
+    "width": 16,
+    "x": 396,
+    "y": 981
+   },
+   "id": "visual-032",
+   "inkBounds": {
+    "height": 15,
+    "width": 16,
+    "x": 396,
+    "y": 981
+   },
+   "measurementId": "ios.drill-detail.visual-032",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-032",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 23,
+    "width": 9,
+    "x": 428,
+    "y": 376
+   },
+   "id": "visual-033",
+   "inkBounds": {
+    "height": 23,
+    "width": 9,
+    "x": 428,
+    "y": 376
+   },
+   "measurementId": "ios.drill-detail.visual-033",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-033",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 25,
+    "width": 8,
+    "x": 78,
+    "y": 374
+   },
+   "id": "visual-034",
+   "inkBounds": {
+    "height": 25,
+    "width": 8,
+    "x": 78,
+    "y": 374
+   },
+   "measurementId": "ios.drill-detail.visual-034",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-034",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 14,
+    "x": 705,
+    "y": 107
+   },
+   "id": "visual-035",
+   "inkBounds": {
+    "height": 14,
+    "width": 14,
+    "x": 705,
+    "y": 107
+   },
+   "measurementId": "ios.drill-detail.visual-035",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-035",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 16,
+    "width": 12,
+    "x": 728,
+    "y": 105
+   },
+   "id": "visual-036",
+   "inkBounds": {
+    "height": 16,
+    "width": 12,
+    "x": 728,
+    "y": 105
+   },
+   "measurementId": "ios.drill-detail.visual-036",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-036",
+   "stroke": "reviewRed",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 16,
+    "x": 421,
+    "y": 1005
+   },
+   "id": "visual-037",
+   "inkBounds": {
+    "height": 11,
+    "width": 16,
+    "x": 421,
+    "y": 1005
+   },
+   "measurementId": "ios.drill-detail.visual-037",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-037",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 18,
+    "width": 9,
+    "x": 280,
+    "y": 1362
+   },
+   "id": "visual-038",
+   "inkBounds": {
+    "height": 18,
+    "width": 9,
+    "x": 280,
+    "y": 1362
+   },
+   "measurementId": "ios.drill-detail.visual-038",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-038",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 11,
+    "x": 158,
+    "y": 1530
+   },
+   "id": "visual-039",
+   "inkBounds": {
+    "height": 14,
+    "width": 11,
+    "x": 158,
+    "y": 1530
+   },
+   "measurementId": "ios.drill-detail.visual-039",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-039",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 18,
+    "width": 8,
+    "x": 270,
+    "y": 1362
+   },
+   "id": "visual-040",
+   "inkBounds": {
+    "height": 18,
+    "width": 8,
+    "x": 270,
+    "y": 1362
+   },
+   "measurementId": "ios.drill-detail.visual-040",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-040",
+   "stroke": "shotiqOrange",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 18,
+    "width": 8,
+    "x": 68,
+    "y": 381
+   },
+   "id": "visual-041",
+   "inkBounds": {
+    "height": 18,
+    "width": 8,
+    "x": 68,
+    "y": 381
+   },
+   "measurementId": "ios.drill-detail.visual-041",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-041",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 7,
+    "width": 19,
+    "x": 752,
+    "y": 87
+   },
+   "id": "visual-042",
+   "inkBounds": {
+    "height": 7,
+    "width": 19,
+    "x": 752,
+    "y": 87
+   },
+   "measurementId": "ios.drill-detail.visual-042",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-042",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 12,
+    "x": 221,
+    "y": 1578
+   },
+   "id": "visual-043",
+   "inkBounds": {
+    "height": 11,
+    "width": 12,
+    "x": 221,
+    "y": 1578
+   },
+   "measurementId": "ios.drill-detail.visual-043",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-043",
+   "stroke": "shotiqOrange",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 8,
+    "width": 15,
+    "x": 429,
+    "y": 963
+   },
+   "id": "visual-044",
+   "inkBounds": {
+    "height": 8,
+    "width": 15,
+    "x": 429,
+    "y": 963
+   },
+   "measurementId": "ios.drill-detail.visual-044",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-044",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 12,
+    "x": 189,
+    "y": 1584
+   },
+   "id": "visual-045",
+   "inkBounds": {
+    "height": 10,
+    "width": 12,
+    "x": 189,
+    "y": 1584
+   },
+   "measurementId": "ios.drill-detail.visual-045",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-045",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 7,
+    "width": 13,
+    "x": 540,
+    "y": 87
+   },
+   "id": "visual-046",
+   "inkBounds": {
+    "height": 7,
+    "width": 13,
+    "x": 540,
+    "y": 87
+   },
+   "measurementId": "ios.drill-detail.visual-046",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-046",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 8,
+    "x": 250,
+    "y": 1520
+   },
+   "id": "visual-047",
+   "inkBounds": {
+    "height": 11,
+    "width": 8,
+    "x": 250,
+    "y": 1520
+   },
+   "measurementId": "ios.drill-detail.visual-047",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-047",
+   "stroke": "reviewRed",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 6,
+    "width": 14,
+    "x": 786,
+    "y": 263
+   },
+   "id": "visual-048",
+   "inkBounds": {
+    "height": 6,
+    "width": 14,
+    "x": 786,
+    "y": 263
+   },
+   "measurementId": "ios.drill-detail.visual-048",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-048",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 7,
+    "x": 59,
+    "y": 388
+   },
+   "id": "visual-049",
+   "inkBounds": {
+    "height": 11,
+    "width": 7,
+    "x": 59,
+    "y": 388
+   },
+   "measurementId": "ios.drill-detail.visual-049",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-049",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 7,
+    "width": 10,
+    "x": 394,
+    "y": 1020
+   },
+   "id": "visual-050",
+   "inkBounds": {
+    "height": 7,
+    "width": 10,
+    "x": 394,
+    "y": 1020
+   },
+   "measurementId": "ios.drill-detail.visual-050",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-050",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 8,
+    "width": 7,
+    "x": 541,
+    "y": 1621
+   },
+   "id": "visual-051",
+   "inkBounds": {
+    "height": 8,
+    "width": 7,
+    "x": 541,
+    "y": 1621
+   },
+   "measurementId": "ios.drill-detail.visual-051",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-051",
+   "stroke": "shotiqOrange",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 8,
+    "width": 7,
+    "x": 512,
+    "y": 1621
+   },
+   "id": "visual-052",
+   "inkBounds": {
+    "height": 8,
+    "width": 7,
+    "x": 512,
+    "y": 1621
+   },
+   "measurementId": "ios.drill-detail.visual-052",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-052",
+   "stroke": "shotiqOrange",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 4,
+    "width": 12,
+    "x": 523,
+    "y": 1623
+   },
+   "id": "visual-053",
+   "inkBounds": {
+    "height": 4,
+    "width": 12,
+    "x": 523,
+    "y": 1623
+   },
+   "measurementId": "ios.drill-detail.visual-053",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-053",
+   "stroke": "shotiqOrange",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 7,
+    "width": 6,
+    "x": 231,
+    "y": 1597
+   },
+   "id": "visual-054",
+   "inkBounds": {
+    "height": 7,
+    "width": 6,
+    "x": 231,
+    "y": 1597
+   },
+   "measurementId": "ios.drill-detail.visual-054",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-054",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 4,
+    "width": 10,
+    "x": 806,
+    "y": 436
+   },
+   "id": "visual-055",
+   "inkBounds": {
+    "height": 4,
+    "width": 10,
+    "x": 806,
+    "y": 436
+   },
+   "measurementId": "ios.drill-detail.visual-055",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-055",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 6,
+    "width": 6,
+    "x": 235,
+    "y": 1588
+   },
+   "id": "visual-056",
+   "inkBounds": {
+    "height": 6,
+    "width": 6,
+    "x": 235,
+    "y": 1588
+   },
+   "measurementId": "ios.drill-detail.visual-056",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.drill-detail.visual-056",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  }
+ ],
+ "imageGenerationNormalization": {
+  "finalCanvas": {
+   "height": 1844,
+   "width": 853
+  },
+  "finalPixelsAreEmbedSourceOfTruth": true,
+  "finalSha256": "c3e2d26e9aa5402e04b5878f398fdf3aaf01f15cac14e465f67f23f6884fd433",
+  "generator": "GPT Image 2",
+  "occursBeforeSidecarMeasurement": true,
+  "rawCanvas": {
+   "height": 1844,
+   "width": 853
+  },
+  "rawSha256": "c3e2d26e9aa5402e04b5878f398fdf3aaf01f15cac14e465f67f23f6884fd433",
+  "transform": {
+   "resampling": "none",
+   "scaleX": 1,
+   "scaleY": 1
+  }
+ },
+ "measurementContract": {
+  "autoCorrectGlobalTransform": false,
+  "coordinateSpace": "final-bitmap-source-pixels",
+  "limitations": [
+   "Automated contour semantics and OCR text matching require browser proof before production acceptance.",
+   "Missing standalone completed asset packs remain explicit failures and are never filled with source pixels."
+  ],
+  "methods": [
+   "final-bitmap source-pixel bounds",
+   "Tesseract OCR TSV line bounds",
+   "normalized-reference text verification",
+   "OpenCV edge-contour visual bounds",
+   "regional visual-difference analysis"
+  ],
+  "origin": "top-left",
+  "precisionPx": 1
+ },
+ "pinnedRegions": [
+  {
+   "edges": [
+    "top",
+    "left",
+    "right"
+   ],
+   "elementId": "header",
+   "id": "pin-header"
+  },
+  {
+   "edges": [
+    "left",
+    "right"
+   ],
+   "elementId": "main",
+   "id": "pin-main"
+  },
+  {
+   "edges": [
+    "bottom",
+    "left",
+    "right"
+   ],
+   "elementId": "navigation",
+   "id": "pin-navigation"
+  }
+ ],
+ "referenceNormalization": {
+  "contentBounds": {
+   "height": 1844,
+   "width": 853,
+   "x": 218,
+   "y": 502
+  },
+  "normalizedSha256": "9a160cf360071a2b6b3337ca2ff5fea9d1e9dc93bcdcf05b2d1b81e21f6e07af",
+  "originalPreserved": true,
+  "removedMargins": {
+   "bottom": 450,
+   "left": 218,
+   "right": 219,
+   "top": 502
+  },
+  "removedPresentationLabels": [
+   "SHOTIQ CONCEPT - NOT LIVE",
+   "iOS system status indicators",
+   "home indicator"
+  ],
+  "sourceCanvas": {
+   "height": 2796,
+   "width": 1290
+  },
+  "sourceSha256": "75f08caf91a8970f00593f8ea44fb573c5c1552526e336ce698ea79af273b061",
+  "targetCanvas": {
+   "height": 1844,
+   "width": 853
+  },
+  "transform": {
+   "scaleX": 1,
+   "scaleY": 1,
+   "translateX": -218,
+   "translateY": -582
+  }
+ },
+ "regions": [
+  {
+   "bounds": {
+    "height": 260,
+    "width": 853,
+    "x": 0,
+    "y": 0
+   },
+   "critical": true,
+   "fidelityFloor": 0.98,
+   "id": "header"
+  },
+  {
+   "bounds": {
+    "height": 1424,
+    "width": 853,
+    "x": 0,
+    "y": 220
+   },
+   "critical": true,
+   "fidelityFloor": 0.98,
+   "id": "main"
+  },
+  {
+   "bounds": {
+    "height": 220,
+    "width": 853,
+    "x": 0,
+    "y": 1624
+   },
+   "critical": true,
+   "fidelityFloor": 0.98,
+   "id": "navigation"
+  }
+ ],
+ "renderingContract": {
+  "browserZoom": 1,
+  "colorSpace": "srgb",
+  "defaultBoxSizing": "border-box",
+  "devicePixelRatio": 1,
+  "fontLoadingGate": "document.fonts.ready",
+  "locale": "en-US",
+  "screenshotGate": "two requestAnimationFrame callbacks after fonts and assets resolve",
+  "viewport": {
+   "height": 1844,
+   "width": 853
+  }
+ },
+ "repeatGroups": [],
+ "schemaVersion": "2.0.0",
+ "source": {
+  "fromSourceCrop": false,
+  "generationProvenance": "Fresh independent GPT Image 2 recreation generated in this batch from the supplied reference.",
+  "originalFilename": "ios/57-drill-detail.png",
+  "sourcePrompt": "/Volumes/APPLICATIONS/CodexStorage/projects/shotiq-sidecar-job/design/imagegen-screen-pack/prompts/57-drill-detail.txt"
+ }
+}

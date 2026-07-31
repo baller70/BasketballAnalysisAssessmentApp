@@ -1,0 +1,3493 @@
+{
+ "app": {
+  "appId": "shotiq",
+  "batchId": "shotiq-white-court-imagegen2-2026-07-30-v2",
+  "platform": "ios",
+  "platformId": "shotiq.ios",
+  "screenId": "ios.workout-calendar",
+  "sharedTokenSet": "shotiq-white-court-core-v1"
+ },
+ "asset": {
+  "canvas": {
+   "height": 1844,
+   "width": 853
+  },
+  "name": "ios.workout-calendar"
+ },
+ "assets": {
+  "app.shotiq.brand.logo.primary": {
+   "description": "SHOTIQ primary wordmark with orange Q accent",
+   "kind": "logo",
+   "preferredFormat": "svg",
+   "qualityProfile": "faithful-premium",
+   "recolorable": true
+  },
+  "app.shotiq.icon.motion.default": {
+   "description": "Shared ShotIQ motion-glyph family placeholder for navigation, actions, and metrics.",
+   "iconSpec": {
+    "minReadableSize": 16,
+    "nicheMetaphor": "Tracked body landmark nodes and shot-release motion geometry",
+    "preserveFromReference": [
+     "semantic meaning",
+     "orientation",
+     "major silhouette",
+     "relative visual weight"
+    ],
+    "safeInset": 1.5,
+    "semanticConcept": "ShotIQ basketball performance motion glyph",
+    "silhouette": "Compact line glyph with rounded joints and a clear motion focal point",
+    "upgradeFromReference": [
+     "construction quality",
+     "domain specificity",
+     "optical balance",
+     "small-size legibility"
+    ]
+   },
+   "kind": "icon",
+   "preferredFormat": "svg",
+   "qualityProfile": "faithful-premium",
+   "recolorable": true
+  },
+  "app.shotiq.photo.athlete-frame": {
+   "description": "Independent athlete/court frame asset used by analysis and training screens.",
+   "kind": "photo",
+   "poseRequired": true,
+   "preferredFormat": "png",
+   "qualityProfile": "awaiting-independent-asset-pack"
+  }
+ },
+ "baselineGroups": [],
+ "canonicalContractSha256": "797153a87e61102ed413eac2b3d3d2209d2e1f77a4d4740cc07b41d3f2c5938a",
+ "designTokens": {
+  "colors": {
+   "analysisBlue": "#2D6CDF",
+   "confirmGreen": "#168A55",
+   "graphite": "#5F646B",
+   "ink": "#111111",
+   "muted": "#A7AAB0",
+   "paper": "#FFFFFF",
+   "reviewRed": "#D92D20",
+   "rule": "#D9D9D4",
+   "shotiqOrange": "#FF5A1F",
+   "warmCanvas": "#F7F7F4"
+  },
+  "iconography": {
+   "activeStrokeWidth": 2,
+   "creativeDirection": "Motion glyphs built from pose landmarks, release arcs, frame strips, measurement brackets, and court geometry.",
+   "domain": "basketball shooting mechanics, biomechanics, capture review, and athlete progress",
+   "familyId": "shotiq-motion-glyphs-v1",
+   "fillPolicy": "Outline-led with one intentional filled focal detail.",
+   "grid": 24,
+   "lineCap": "round",
+   "lineJoin": "round",
+   "opticalSize": 24,
+   "profile": "premium-icon-v1",
+   "prohibited": [
+    "emoji",
+    "clip art",
+    "generic stick figures",
+    "stock-library clones",
+    "mixed icon families",
+    "text baked into icons",
+    "edge-touching paint"
+   ],
+   "readabilityPx": [
+    16,
+    20,
+    24,
+    32
+   ],
+   "reconstructionMode": "faithful-premium",
+   "safeInset": 1.5,
+   "selectedState": "Same glyph with tokenized color or external indicator.",
+   "strokeWidth": 1.75
+  },
+  "radii": {
+   "card": 8,
+   "control": 6,
+   "none": 0,
+   "pill": 999
+  },
+  "spacing": {
+   "lg": 24,
+   "md": 16,
+   "sm": 8,
+   "xl": 32,
+   "xs": 4
+  },
+  "typography": {
+   "body": {
+    "fontFamily": "Inter",
+    "fontSize": 16,
+    "fontWeight": 400,
+    "letterSpacing": 0,
+    "lineHeight": 22
+   },
+   "brand": {
+    "fontFamily": "Inter",
+    "fontSize": 28,
+    "fontWeight": 900,
+    "letterSpacing": 0,
+    "lineHeight": 32
+   },
+   "button": {
+    "fontSize": 16,
+    "fontWeight": 700,
+    "inherits": "body",
+    "letterSpacing": 0,
+    "lineHeight": 22
+   },
+   "caption": {
+    "fontSize": 12,
+    "fontWeight": 500,
+    "inherits": "body",
+    "letterSpacing": 0,
+    "lineHeight": 16
+   },
+   "h1": {
+    "fontFamily": "Bebas Neue",
+    "fontSize": 64,
+    "fontWeight": 900,
+    "letterSpacing": 0,
+    "lineHeight": 70
+   },
+   "h2": {
+    "fontFamily": "Bebas Neue",
+    "fontSize": 40,
+    "fontWeight": 900,
+    "letterSpacing": 0,
+    "lineHeight": 46
+   },
+   "h3": {
+    "fontFamily": "Bebas Neue",
+    "fontSize": 28,
+    "fontWeight": 800,
+    "letterSpacing": 0,
+    "lineHeight": 34
+   },
+   "h4": {
+    "fontFamily": "Inter",
+    "fontSize": 18,
+    "fontWeight": 700,
+    "letterSpacing": 0,
+    "lineHeight": 24
+   },
+   "h5": {
+    "fontFamily": "Inter",
+    "fontSize": 14,
+    "fontWeight": 700,
+    "letterSpacing": 0,
+    "lineHeight": 20
+   },
+   "label": {
+    "fontSize": 12,
+    "fontWeight": 700,
+    "inherits": "body",
+    "letterSpacing": 0,
+    "lineHeight": 16
+   },
+   "numeric": {
+    "fontFamily": "DIN Condensed",
+    "fontSize": 40,
+    "fontWeight": 800,
+    "letterSpacing": 0,
+    "lineHeight": 44
+   }
+  }
+ },
+ "elements": [
+  {
+   "backgroundColor": "paper",
+   "bounds": {
+    "height": 1844,
+    "width": 853,
+    "x": 0,
+    "y": 0
+   },
+   "id": "screen-background",
+   "measurementId": "ios.workout-calendar.screen-background",
+   "owningRegion": "main",
+   "proofMethod": "canvas dimensions",
+   "sourceKey": "ios.workout-calendar.screen-background",
+   "type": "screen",
+   "zIndex": 0
+  },
+  {
+   "bounds": {
+    "height": 260,
+    "width": 853,
+    "x": 0,
+    "y": 0
+   },
+   "id": "header",
+   "measurementId": "ios.workout-calendar.header",
+   "owningRegion": "header",
+   "proofMethod": "declared semantic region bounds",
+   "sourceKey": "ios.workout-calendar.header",
+   "type": "group",
+   "zIndex": 1
+  },
+  {
+   "bounds": {
+    "height": 1424,
+    "width": 853,
+    "x": 0,
+    "y": 220
+   },
+   "id": "main",
+   "measurementId": "ios.workout-calendar.main",
+   "owningRegion": "main",
+   "proofMethod": "declared semantic region bounds",
+   "sourceKey": "ios.workout-calendar.main",
+   "type": "group",
+   "zIndex": 2
+  },
+  {
+   "bounds": {
+    "height": 220,
+    "width": 853,
+    "x": 0,
+    "y": 1624
+   },
+   "id": "navigation",
+   "measurementId": "ios.workout-calendar.navigation",
+   "owningRegion": "navigation",
+   "proofMethod": "declared semantic region bounds",
+   "sourceKey": "ios.workout-calendar.navigation",
+   "type": "group",
+   "zIndex": 3
+  },
+  {
+   "baseline": 178,
+   "bounds": {
+    "height": 52,
+    "width": 494,
+    "x": 35,
+    "y": 126
+   },
+   "color": "ink",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 65,
+   "fontWeight": 900,
+   "generatedObservedText": "JORDAN ELLIS =",
+   "id": "text-001",
+   "inkBounds": {
+    "height": 52,
+    "width": 494,
+    "x": 35,
+    "y": 126
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 70,
+   "measurementId": "ios.workout-calendar.text-001",
+   "ocrConfidence": 29.86,
+   "owningRegion": "header",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 93.41,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "ios.workout-calendar.text-001",
+   "style": "h1",
+   "text": "JORDAN ELLIS",
+   "type": "text",
+   "visibleGlyphHeight": 52,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 219,
+   "bounds": {
+    "height": 41,
+    "width": 762,
+    "x": 37,
+    "y": 178
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 51,
+   "fontWeight": 900,
+   "generatedObservedText": "Right-handed * Advanced 6 2,840 82",
+   "id": "text-002",
+   "inkBounds": {
+    "height": 41,
+    "width": 762,
+    "x": 37,
+    "y": 178
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 55,
+   "measurementId": "ios.workout-calendar.text-002",
+   "ocrConfidence": 85.96,
+   "owningRegion": "header",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 78.22,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "ios.workout-calendar.text-002",
+   "style": "h2",
+   "text": "; 6 2,840",
+   "type": "text",
+   "visibleGlyphHeight": 41,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 228,
+   "bounds": {
+    "height": 13,
+    "width": 378,
+    "x": 450,
+    "y": 215
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 16,
+   "fontWeight": 500,
+   "generatedObservedText": "DAY STREAK POINTS FORM SCORE",
+   "id": "text-003",
+   "inkBounds": {
+    "height": 13,
+    "width": 378,
+    "x": 450,
+    "y": 215
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 18,
+   "measurementId": "ios.workout-calendar.text-003",
+   "ocrConfidence": 95.11,
+   "owningRegion": "header",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "caption",
+   "sourceKey": "ios.workout-calendar.text-003",
+   "style": "caption",
+   "text": "DAY STREAK POINTS FORM SCORE",
+   "type": "text",
+   "visibleGlyphHeight": 13,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 339,
+   "bounds": {
+    "height": 54,
+    "width": 724,
+    "x": 77,
+    "y": 285
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 68,
+   "fontWeight": 900,
+   "generatedObservedText": "x PRIMARY TARGET 24 15 62.5%",
+   "id": "text-004",
+   "inkBounds": {
+    "height": 54,
+    "width": 724,
+    "x": 77,
+    "y": 285
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 73,
+   "measurementId": "ios.workout-calendar.text-004",
+   "ocrConfidence": 84.04,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 95.8,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "ios.workout-calendar.text-004",
+   "style": "h1",
+   "text": "< MAY 2025 >",
+   "type": "text",
+   "visibleGlyphHeight": 54,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 347,
+   "bounds": {
+    "height": 31,
+    "width": 632,
+    "x": 155,
+    "y": 316
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 39,
+   "fontWeight": 900,
+   "generatedObservedText": "Keep elbow stacked through release SHOTS MAKES FG%",
+   "id": "text-005",
+   "inkBounds": {
+    "height": 31,
+    "width": 632,
+    "x": 155,
+    "y": 316
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 42,
+   "measurementId": "ios.workout-calendar.text-005",
+   "ocrConfidence": 90.53,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 96.59,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "ios.workout-calendar.text-005",
+   "style": "h2",
+   "text": "SUN MON TUE WED THU FRI SAT",
+   "type": "text",
+   "visibleGlyphHeight": 31,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 432,
+   "bounds": {
+    "height": 30,
+    "width": 746,
+    "x": 48,
+    "y": 402
+   },
+   "color": "ink",
+   "fontFamily": "DIN Condensed",
+   "fontSize": 38,
+   "fontWeight": 800,
+   "generatedObservedText": "< MAY 2025 >",
+   "id": "text-006",
+   "inkBounds": {
+    "height": 30,
+    "width": 746,
+    "x": 48,
+    "y": 402
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 40,
+   "measurementId": "ios.workout-calendar.text-006",
+   "ocrConfidence": 94.77,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 96.24,
+   "referenceTextMatched": true,
+   "semanticRole": "numeric",
+   "sourceKey": "ios.workout-calendar.text-006",
+   "style": "numeric",
+   "text": "2 28 29 30 1 2 3",
+   "type": "text",
+   "visibleGlyphHeight": 30,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 487,
+   "bounds": {
+    "height": 14,
+    "width": 716,
+    "x": 65,
+    "y": 473
+   },
+   "color": "graphite",
+   "fontFamily": "DIN Condensed",
+   "fontSize": 18,
+   "fontWeight": 800,
+   "generatedObservedText": "SUN MON TUE WED THU FRI SAT",
+   "id": "text-007",
+   "inkBounds": {
+    "height": 14,
+    "width": 716,
+    "x": 65,
+    "y": 473
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 19,
+   "measurementId": "ios.workout-calendar.text-007",
+   "ocrConfidence": 95.53,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 91.45,
+   "referenceTextMatched": true,
+   "semanticRole": "numeric",
+   "sourceKey": "ios.workout-calendar.text-007",
+   "style": "numeric",
+   "text": "4 5 6 1 8 9 10",
+   "type": "text",
+   "visibleGlyphHeight": 14,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 548,
+   "bounds": {
+    "height": 19,
+    "width": 575,
+    "x": 199,
+    "y": 529
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 24,
+   "fontWeight": 400,
+   "generatedObservedText": "8 1 2 3",
+   "id": "text-008",
+   "inkBounds": {
+    "height": 19,
+    "width": 575,
+    "x": 199,
+    "y": 529
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 26,
+   "measurementId": "ios.workout-calendar.text-008",
+   "ocrConfidence": 96.22,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 90.2,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.workout-calendar.text-008",
+   "style": "body",
+   "text": "18 min 17 min 20 min 20min 15 min Missed",
+   "type": "text",
+   "visibleGlyphHeight": 19,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 649,
+   "bounds": {
+    "height": 19,
+    "width": 707,
+    "x": 71,
+    "y": 630
+   },
+   "color": "graphite",
+   "fontFamily": "DIN Condensed",
+   "fontSize": 24,
+   "fontWeight": 800,
+   "generatedObservedText": "4 5 6 7 8 9 10",
+   "id": "text-009",
+   "inkBounds": {
+    "height": 19,
+    "width": 707,
+    "x": 71,
+    "y": 630
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 26,
+   "measurementId": "ios.workout-calendar.text-009",
+   "ocrConfidence": 86.11,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 90.36,
+   "referenceTextMatched": true,
+   "semanticRole": "numeric",
+   "sourceKey": "ios.workout-calendar.text-009",
+   "style": "numeric",
+   "text": "1 12 13 14 15 16 17",
+   "type": "text",
+   "visibleGlyphHeight": 19,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 725,
+   "bounds": {
+    "height": 18,
+    "width": 735,
+    "x": 56,
+    "y": 707
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 22,
+   "fontWeight": 400,
+   "generatedObservedText": "18 min 17 min 20 min In Progress 20 min 15 min Missed",
+   "id": "text-010",
+   "inkBounds": {
+    "height": 18,
+    "width": 735,
+    "x": 56,
+    "y": 707
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 24,
+   "measurementId": "ios.workout-calendar.text-010",
+   "ocrConfidence": 94.05,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 90.28,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.workout-calendar.text-010",
+   "style": "body",
+   "text": "20 min 17 min 20 min 20 min 15 min 20 min Missed",
+   "type": "text",
+   "visibleGlyphHeight": 18,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 781,
+   "bounds": {
+    "height": 19,
+    "width": 710,
+    "x": 67,
+    "y": 762
+   },
+   "color": "graphite",
+   "fontFamily": "DIN Condensed",
+   "fontSize": 24,
+   "fontWeight": 800,
+   "generatedObservedText": "1 12 13 14 15 16 17",
+   "id": "text-011",
+   "inkBounds": {
+    "height": 19,
+    "width": 710,
+    "x": 67,
+    "y": 762
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 26,
+   "measurementId": "ios.workout-calendar.text-011",
+   "ocrConfidence": 87.3,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 95.98,
+   "referenceTextMatched": true,
+   "semanticRole": "numeric",
+   "sourceKey": "ios.workout-calendar.text-011",
+   "style": "numeric",
+   "text": "18 19 20 21 22 23",
+   "type": "text",
+   "visibleGlyphHeight": 19,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 856,
+   "bounds": {
+    "height": 15,
+    "width": 735,
+    "x": 55,
+    "y": 841
+   },
+   "color": "graphite",
+   "fontFamily": "DIN Condensed",
+   "fontSize": 19,
+   "fontWeight": 800,
+   "generatedObservedText": "20 min 17 min 20 min 20 min 15 min 20 min Missed",
+   "id": "text-012",
+   "inkBounds": {
+    "height": 15,
+    "width": 735,
+    "x": 55,
+    "y": 841
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 20,
+   "measurementId": "ios.workout-calendar.text-012",
+   "ocrConfidence": 93.95,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 94.66,
+   "referenceTextMatched": true,
+   "semanticRole": "numeric",
+   "sourceKey": "ios.workout-calendar.text-012",
+   "style": "numeric",
+   "text": "25 26 21 28 29 30 3",
+   "type": "text",
+   "visibleGlyphHeight": 15,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 913,
+   "bounds": {
+    "height": 20,
+    "width": 593,
+    "x": 68,
+    "y": 893
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 25,
+   "fontWeight": 400,
+   "generatedObservedText": "18 19 20 21 22 23",
+   "id": "text-013",
+   "inkBounds": {
+    "height": 20,
+    "width": 593,
+    "x": 68,
+    "y": 893
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 27,
+   "measurementId": "ios.workout-calendar.text-013",
+   "ocrConfidence": 93.9,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 90.53,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.workout-calendar.text-013",
+   "style": "body",
+   "text": "18 min 20 min 20 min 20 min 20 min 20 min",
+   "type": "text",
+   "visibleGlyphHeight": 20,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 987,
+   "bounds": {
+    "height": 14,
+    "width": 618,
+    "x": 56,
+    "y": 973
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 18,
+   "fontWeight": 500,
+   "generatedObservedText": "18 min 20 min 20 min 20 min 20 min 20 min",
+   "id": "text-014",
+   "inkBounds": {
+    "height": 14,
+    "width": 618,
+    "x": 56,
+    "y": 973
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 19,
+   "measurementId": "ios.workout-calendar.text-014",
+   "ocrConfidence": 95.75,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 91.43,
+   "referenceTextMatched": true,
+   "semanticRole": "caption",
+   "sourceKey": "ios.workout-calendar.text-014",
+   "style": "caption",
+   "text": "20 min 20 min 20 min 20 min 20 min 20 min",
+   "type": "text",
+   "visibleGlyphHeight": 14,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1044,
+   "bounds": {
+    "height": 19,
+    "width": 700,
+    "x": 67,
+    "y": 1025
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 24,
+   "fontWeight": 400,
+   "generatedObservedText": "25 26 27 28 29 30 3",
+   "id": "text-015",
+   "inkBounds": {
+    "height": 19,
+    "width": 700,
+    "x": 67,
+    "y": 1025
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 26,
+   "measurementId": "ios.workout-calendar.text-015",
+   "ocrConfidence": 93.49,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 66.29,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.workout-calendar.text-015",
+   "style": "body",
+   "text": "QO completed \u00a9 scheduled \u00a9 In Progress (X) Missed 94 No workout",
+   "type": "text",
+   "visibleGlyphHeight": 19,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1118,
+   "bounds": {
+    "height": 14,
+    "width": 619,
+    "x": 55,
+    "y": 1104
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 18,
+   "fontWeight": 500,
+   "generatedObservedText": "20 min 20 min 20 min 20 min 20 min 20 min",
+   "id": "text-016",
+   "inkBounds": {
+    "height": 14,
+    "width": 619,
+    "x": 55,
+    "y": 1104
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 19,
+   "measurementId": "ios.workout-calendar.text-016",
+   "ocrConfidence": 96.2,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "caption",
+   "sourceKey": "ios.workout-calendar.text-016",
+   "style": "caption",
+   "text": "20 min 20 min 20 min 20 min 20 min 20 min",
+   "type": "text",
+   "visibleGlyphHeight": 14,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1281,
+   "bounds": {
+    "height": 40,
+    "width": 760,
+    "x": 46,
+    "y": 1241
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 50,
+   "fontWeight": 900,
+   "generatedObservedText": "1) Completed \u00a9 Scheduled 8 In Progress \u00ae Missed 24 No workout",
+   "id": "text-017",
+   "inkBounds": {
+    "height": 40,
+    "width": 760,
+    "x": 46,
+    "y": 1241
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 54,
+   "measurementId": "ios.workout-calendar.text-017",
+   "ocrConfidence": 73.86,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 96.23,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "ios.workout-calendar.text-017",
+   "style": "h2",
+   "text": "Combo Ladder",
+   "type": "text",
+   "visibleGlyphHeight": 40,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1350,
+   "bounds": {
+    "height": 27,
+    "width": 745,
+    "x": 52,
+    "y": 1323
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 34,
+   "fontWeight": 400,
+   "generatedObservedText": "WEDNESDAY, MAY 7 \u201cA",
+   "id": "text-018",
+   "inkBounds": {
+    "height": 27,
+    "width": 745,
+    "x": 52,
+    "y": 1323
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 36,
+   "measurementId": "ios.workout-calendar.text-018",
+   "ocrConfidence": 91.22,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 82.98,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.workout-calendar.text-018",
+   "style": "body",
+   "text": "| IL Layer catch-and-shoot reps with movement",
+   "type": "text",
+   "visibleGlyphHeight": 27,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1405,
+   "bounds": {
+    "height": 34,
+    "width": 416,
+    "x": 122,
+    "y": 1371
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 42,
+   "fontWeight": 900,
+   "generatedObservedText": "a COMBO LADDER",
+   "id": "text-019",
+   "inkBounds": {
+    "height": 34,
+    "width": 416,
+    "x": 122,
+    "y": 1371
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 46,
+   "measurementId": "ios.workout-calendar.text-019",
+   "ocrConfidence": 78.3,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 33.76,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "ios.workout-calendar.text-019",
+   "style": "h2",
+   "text": "ee O",
+   "type": "text",
+   "visibleGlyphHeight": 34,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1447,
+   "bounds": {
+    "height": 42,
+    "width": 157,
+    "x": 61,
+    "y": 1405
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 52,
+   "fontWeight": 900,
+   "generatedObservedText": "HA ayy",
+   "id": "text-020",
+   "inkBounds": {
+    "height": 42,
+    "width": 157,
+    "x": 61,
+    "y": 1405
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 57,
+   "measurementId": "ios.workout-calendar.text-020",
+   "ocrConfidence": 38.64,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 80.42,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "ios.workout-calendar.text-020",
+   "style": "h1",
+   "text": "a, P a \u00a9 Day 4 of 7 17 min",
+   "type": "text",
+   "visibleGlyphHeight": 42,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1457,
+   "bounds": {
+    "height": 39,
+    "width": 363,
+    "x": 199,
+    "y": 1418
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 49,
+   "fontWeight": 900,
+   "generatedObservedText": "Sail \u00a9 Day 4 of 7+ 17min",
+   "id": "text-021",
+   "inkBounds": {
+    "height": 39,
+    "width": 363,
+    "x": 199,
+    "y": 1418
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 53,
+   "measurementId": "ios.workout-calendar.text-021",
+   "ocrConfidence": 76.38,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 95.98,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "ios.workout-calendar.text-021",
+   "style": "h2",
+   "text": "| and alignment under fatigue.",
+   "type": "text",
+   "visibleGlyphHeight": 39,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1492,
+   "bounds": {
+    "height": 45,
+    "width": 652,
+    "x": 54,
+    "y": 1447
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 56,
+   "fontWeight": 900,
+   "generatedObservedText": "li | Layer catch-and-shoot reps with movement",
+   "id": "text-022",
+   "inkBounds": {
+    "height": 45,
+    "width": 652,
+    "x": 54,
+    "y": 1447
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 61,
+   "measurementId": "ios.workout-calendar.text-022",
+   "ocrConfidence": 89.55,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 69.87,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "ios.workout-calendar.text-022",
+   "style": "h1",
+   "text": "oa SETUP LoaD RISE FOLLOW-THROUGH",
+   "type": "text",
+   "visibleGlyphHeight": 45,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1515,
+   "bounds": {
+    "height": 20,
+    "width": 312,
+    "x": 362,
+    "y": 1495
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 25,
+   "fontWeight": 400,
+   "generatedObservedText": "progressions to reinforce release timing",
+   "id": "text-023",
+   "inkBounds": {
+    "height": 20,
+    "width": 312,
+    "x": 362,
+    "y": 1495
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 27,
+   "measurementId": "ios.workout-calendar.text-023",
+   "ocrConfidence": 96.86,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "body",
+   "sourceKey": "ios.workout-calendar.text-023",
+   "style": "body",
+   "text": "progressions to reinforce release timing",
+   "type": "text",
+   "visibleGlyphHeight": 20,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1547,
+   "bounds": {
+    "height": 36,
+    "width": 423,
+    "x": 165,
+    "y": 1511
+   },
+   "color": "ink",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 45,
+   "fontWeight": 900,
+   "generatedObservedText": "| and alignment under fatigue.",
+   "id": "text-024",
+   "inkBounds": {
+    "height": 36,
+    "width": 423,
+    "x": 165,
+    "y": 1511
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 49,
+   "measurementId": "ios.workout-calendar.text-024",
+   "ocrConfidence": 92.22,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 43.84,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "ios.workout-calendar.text-024",
+   "style": "h2",
+   "text": "fF. Fi sty op",
+   "type": "text",
+   "visibleGlyphHeight": 36,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1598,
+   "bounds": {
+    "height": 53,
+    "width": 396,
+    "x": 372,
+    "y": 1545
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 66,
+   "fontWeight": 900,
+   "generatedObservedText": "fo ff",
+   "id": "text-025",
+   "inkBounds": {
+    "height": 53,
+    "width": 396,
+    "x": 372,
+    "y": 1545
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 72,
+   "measurementId": "ios.workout-calendar.text-025",
+   "ocrConfidence": 25.28,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 57.95,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "ios.workout-calendar.text-025",
+   "style": "h1",
+   "text": "ae x iJE}",
+   "type": "text",
+   "visibleGlyphHeight": 53,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1570,
+   "bounds": {
+    "height": 23,
+    "width": 337,
+    "x": 153,
+    "y": 1547
+   },
+   "color": "ink",
+   "fontFamily": "Inter",
+   "fontSize": 29,
+   "fontWeight": 400,
+   "generatedObservedText": "~~ fo) oO",
+   "id": "text-026",
+   "inkBounds": {
+    "height": 23,
+    "width": 337,
+    "x": 153,
+    "y": 1547
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 31,
+   "measurementId": "ios.workout-calendar.text-026",
+   "ocrConfidence": 47.2,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "body",
+   "sourceKey": "ios.workout-calendar.text-026",
+   "style": "body",
+   "text": "~~ fo) oO",
+   "type": "text",
+   "visibleGlyphHeight": 23,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1627,
+   "bounds": {
+    "height": 31,
+    "width": 398,
+    "x": 177,
+    "y": 1596
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 39,
+   "fontWeight": 900,
+   "generatedObservedText": "a sevUP RISE",
+   "id": "text-027",
+   "inkBounds": {
+    "height": 31,
+    "width": 398,
+    "x": 177,
+    "y": 1596
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 42,
+   "measurementId": "ios.workout-calendar.text-027",
+   "ocrConfidence": 56.47,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 95.85,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "ios.workout-calendar.text-027",
+   "style": "h2",
+   "text": "Home Capture Train Progress Profile",
+   "type": "text",
+   "visibleGlyphHeight": 31,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1695,
+   "bounds": {
+    "height": 34,
+    "width": 218,
+    "x": 313,
+    "y": 1661
+   },
+   "color": "shotiqOrange",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 42,
+   "fontWeight": 900,
+   "generatedObservedText": "Le, Open workout",
+   "id": "text-028",
+   "inkBounds": {
+    "height": 34,
+    "width": 218,
+    "x": 313,
+    "y": 1661
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 46,
+   "measurementId": "ios.workout-calendar.text-028",
+   "ocrConfidence": 83.99,
+   "owningRegion": "navigation",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "h2",
+   "sourceKey": "ios.workout-calendar.text-028",
+   "style": "h2",
+   "text": "Le, Open workout",
+   "type": "text",
+   "visibleGlyphHeight": 34,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1761,
+   "bounds": {
+    "height": 17,
+    "width": 726,
+    "x": 61,
+    "y": 1744
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 21,
+   "fontWeight": 400,
+   "generatedObservedText": "[Ta | ty Cael",
+   "id": "text-029",
+   "inkBounds": {
+    "height": 17,
+    "width": 726,
+    "x": 61,
+    "y": 1744
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 23,
+   "measurementId": "ios.workout-calendar.text-029",
+   "ocrConfidence": 41.63,
+   "owningRegion": "navigation",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "body",
+   "sourceKey": "ios.workout-calendar.text-029",
+   "style": "body",
+   "text": "[Ta | ty Cael",
+   "type": "text",
+   "visibleGlyphHeight": 17,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1771,
+   "bounds": {
+    "height": 18,
+    "width": 213,
+    "x": 575,
+    "y": 1753
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 22,
+   "fontWeight": 400,
+   "generatedObservedText": "l ' '",
+   "id": "text-030",
+   "inkBounds": {
+    "height": 18,
+    "width": 213,
+    "x": 575,
+    "y": 1753
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 24,
+   "measurementId": "ios.workout-calendar.text-030",
+   "ocrConfidence": 57.61,
+   "owningRegion": "navigation",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "body",
+   "sourceKey": "ios.workout-calendar.text-030",
+   "style": "body",
+   "text": "l ' '",
+   "type": "text",
+   "visibleGlyphHeight": 18,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1829,
+   "bounds": {
+    "height": 31,
+    "width": 716,
+    "x": 67,
+    "y": 1798
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 39,
+   "fontWeight": 900,
+   "generatedObservedText": "Home Capture Train Progress Profile",
+   "id": "text-031",
+   "inkBounds": {
+    "height": 31,
+    "width": 716,
+    "x": 67,
+    "y": 1798
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 42,
+   "measurementId": "ios.workout-calendar.text-031",
+   "ocrConfidence": 93.64,
+   "owningRegion": "navigation",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "h2",
+   "sourceKey": "ios.workout-calendar.text-031",
+   "style": "h2",
+   "text": "Home Capture Train Progress Profile",
+   "type": "text",
+   "visibleGlyphHeight": 31,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "assetRef": "app.shotiq.photo.athlete-frame",
+   "bounds": {
+    "height": 250,
+    "width": 202,
+    "x": 127,
+    "y": 1371
+   },
+   "componentRef": "app.shotiq.media.analysis-frame",
+   "fit": "cover",
+   "id": "visual-001",
+   "inkBounds": {
+    "height": 250,
+    "width": 202,
+    "x": 127,
+    "y": 1371
+   },
+   "measurementId": "ios.workout-calendar.visual-001",
+   "objectPosition": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-001",
+   "type": "photo",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 21,
+    "width": 164,
+    "x": 63,
+    "y": 1381
+   },
+   "cornerRadius": "card",
+   "id": "visual-002",
+   "inkBounds": {
+    "height": 21,
+    "width": 164,
+    "x": 63,
+    "y": 1381
+   },
+   "measurementId": "ios.workout-calendar.visual-002",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-002",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "muted",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 33,
+    "width": 86,
+    "x": 386,
+    "y": 1753
+   },
+   "cornerRadius": "card",
+   "id": "visual-003",
+   "inkBounds": {
+    "height": 33,
+    "width": 86,
+    "x": 386,
+    "y": 1753
+   },
+   "measurementId": "ios.workout-calendar.visual-003",
+   "owningRegion": "navigation",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-003",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 45,
+    "width": 42,
+    "x": 235,
+    "y": 1743
+   },
+   "id": "visual-004",
+   "inkBounds": {
+    "height": 45,
+    "width": 42,
+    "x": 235,
+    "y": 1743
+   },
+   "measurementId": "ios.workout-calendar.visual-004",
+   "owningRegion": "navigation",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-004",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 43,
+    "width": 42,
+    "x": 773,
+    "y": 27
+   },
+   "id": "visual-005",
+   "inkBounds": {
+    "height": 43,
+    "width": 42,
+    "x": 773,
+    "y": 27
+   },
+   "measurementId": "ios.workout-calendar.visual-005",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-005",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 43,
+    "width": 41,
+    "x": 403,
+    "y": 658
+   },
+   "id": "visual-006",
+   "inkBounds": {
+    "height": 43,
+    "width": 41,
+    "x": 403,
+    "y": 658
+   },
+   "measurementId": "ios.workout-calendar.visual-006",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-006",
+   "stroke": "shotiqOrange",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 45,
+    "width": 39,
+    "x": 626,
+    "y": 120
+   },
+   "id": "visual-007",
+   "inkBounds": {
+    "height": 45,
+    "width": 39,
+    "x": 626,
+    "y": 120
+   },
+   "measurementId": "ios.workout-calendar.visual-007",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-007",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 23,
+    "width": 72,
+    "x": 54,
+    "y": 1372
+   },
+   "id": "visual-008",
+   "inkBounds": {
+    "height": 23,
+    "width": 72,
+    "x": 54,
+    "y": 1372
+   },
+   "measurementId": "ios.workout-calendar.visual-008",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-008",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "ink",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 14,
+    "width": 102,
+    "x": 54,
+    "y": 1496
+   },
+   "cornerRadius": "card",
+   "id": "visual-009",
+   "inkBounds": {
+    "height": 14,
+    "width": 102,
+    "x": 54,
+    "y": 1496
+   },
+   "measurementId": "ios.workout-calendar.visual-009",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-009",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 35,
+    "width": 34,
+    "x": 183,
+    "y": 30
+   },
+   "id": "visual-010",
+   "inkBounds": {
+    "height": 35,
+    "width": 34,
+    "x": 183,
+    "y": 30
+   },
+   "measurementId": "ios.workout-calendar.visual-010",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-010",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 34,
+    "width": 34,
+    "x": 101,
+    "y": 30
+   },
+   "id": "visual-011",
+   "inkBounds": {
+    "height": 34,
+    "width": 34,
+    "x": 101,
+    "y": 30
+   },
+   "measurementId": "ios.workout-calendar.visual-011",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-011",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 35,
+    "width": 33,
+    "x": 752,
+    "y": 796
+   },
+   "id": "visual-012",
+   "inkBounds": {
+    "height": 35,
+    "width": 33,
+    "x": 752,
+    "y": 796
+   },
+   "measurementId": "ios.workout-calendar.visual-012",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-012",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 36,
+    "width": 32,
+    "x": 754,
+    "y": 662
+   },
+   "id": "visual-013",
+   "inkBounds": {
+    "height": 36,
+    "width": 32,
+    "x": 754,
+    "y": 662
+   },
+   "measurementId": "ios.workout-calendar.visual-013",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-013",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 36,
+    "width": 32,
+    "x": 637,
+    "y": 662
+   },
+   "id": "visual-014",
+   "inkBounds": {
+    "height": 36,
+    "width": 32,
+    "x": 637,
+    "y": 662
+   },
+   "measurementId": "ios.workout-calendar.visual-014",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-014",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 24,
+    "width": 48,
+    "x": 567,
+    "y": 1763
+   },
+   "id": "visual-015",
+   "inkBounds": {
+    "height": 24,
+    "width": 48,
+    "x": 567,
+    "y": 1763
+   },
+   "measurementId": "ios.workout-calendar.visual-015",
+   "owningRegion": "navigation",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-015",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 36,
+    "width": 32,
+    "x": 182,
+    "y": 662
+   },
+   "id": "visual-016",
+   "inkBounds": {
+    "height": 36,
+    "width": 32,
+    "x": 182,
+    "y": 662
+   },
+   "measurementId": "ios.workout-calendar.visual-016",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-016",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 36,
+    "width": 32,
+    "x": 61,
+    "y": 662
+   },
+   "id": "visual-017",
+   "inkBounds": {
+    "height": 36,
+    "width": 32,
+    "x": 61,
+    "y": 662
+   },
+   "measurementId": "ios.workout-calendar.visual-017",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-017",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 35,
+    "width": 32,
+    "x": 522,
+    "y": 796
+   },
+   "id": "visual-018",
+   "inkBounds": {
+    "height": 35,
+    "width": 32,
+    "x": 522,
+    "y": 796
+   },
+   "measurementId": "ios.workout-calendar.visual-018",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-018",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 35,
+    "width": 32,
+    "x": 296,
+    "y": 663
+   },
+   "id": "visual-019",
+   "inkBounds": {
+    "height": 35,
+    "width": 32,
+    "x": 296,
+    "y": 663
+   },
+   "measurementId": "ios.workout-calendar.visual-019",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-019",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 35,
+    "width": 32,
+    "x": 181,
+    "y": 796
+   },
+   "id": "visual-020",
+   "inkBounds": {
+    "height": 35,
+    "width": 32,
+    "x": 181,
+    "y": 796
+   },
+   "measurementId": "ios.workout-calendar.visual-020",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-020",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 35,
+    "width": 32,
+    "x": 60,
+    "y": 927
+   },
+   "id": "visual-021",
+   "inkBounds": {
+    "height": 35,
+    "width": 32,
+    "x": 60,
+    "y": 927
+   },
+   "measurementId": "ios.workout-calendar.visual-021",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-021",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 36,
+    "width": 31,
+    "x": 60,
+    "y": 1059
+   },
+   "id": "visual-022",
+   "inkBounds": {
+    "height": 36,
+    "width": 31,
+    "x": 60,
+    "y": 1059
+   },
+   "measurementId": "ios.workout-calendar.visual-022",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-022",
+   "stroke": "warmCanvas",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 35,
+    "width": 31,
+    "x": 637,
+    "y": 1060
+   },
+   "id": "visual-023",
+   "inkBounds": {
+    "height": 35,
+    "width": 31,
+    "x": 637,
+    "y": 1060
+   },
+   "measurementId": "ios.workout-calendar.visual-023",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-023",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 35,
+    "width": 31,
+    "x": 637,
+    "y": 927
+   },
+   "id": "visual-024",
+   "inkBounds": {
+    "height": 35,
+    "width": 31,
+    "x": 637,
+    "y": 927
+   },
+   "measurementId": "ios.workout-calendar.visual-024",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-024",
+   "stroke": "warmCanvas",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 35,
+    "width": 31,
+    "x": 637,
+    "y": 796
+   },
+   "id": "visual-025",
+   "inkBounds": {
+    "height": 35,
+    "width": 31,
+    "x": 637,
+    "y": 796
+   },
+   "measurementId": "ios.workout-calendar.visual-025",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-025",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 35,
+    "width": 31,
+    "x": 522,
+    "y": 1060
+   },
+   "id": "visual-026",
+   "inkBounds": {
+    "height": 35,
+    "width": 31,
+    "x": 522,
+    "y": 1060
+   },
+   "measurementId": "ios.workout-calendar.visual-026",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-026",
+   "stroke": "warmCanvas",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 35,
+    "width": 31,
+    "x": 522,
+    "y": 927
+   },
+   "id": "visual-027",
+   "inkBounds": {
+    "height": 35,
+    "width": 31,
+    "x": 522,
+    "y": 927
+   },
+   "measurementId": "ios.workout-calendar.visual-027",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-027",
+   "stroke": "warmCanvas",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 35,
+    "width": 31,
+    "x": 522,
+    "y": 663
+   },
+   "id": "visual-028",
+   "inkBounds": {
+    "height": 35,
+    "width": 31,
+    "x": 522,
+    "y": 663
+   },
+   "measurementId": "ios.workout-calendar.visual-028",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-028",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 35,
+    "width": 31,
+    "x": 409,
+    "y": 1060
+   },
+   "id": "visual-029",
+   "inkBounds": {
+    "height": 35,
+    "width": 31,
+    "x": 409,
+    "y": 1060
+   },
+   "measurementId": "ios.workout-calendar.visual-029",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-029",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 35,
+    "width": 31,
+    "x": 409,
+    "y": 927
+   },
+   "id": "visual-030",
+   "inkBounds": {
+    "height": 35,
+    "width": 31,
+    "x": 409,
+    "y": 927
+   },
+   "measurementId": "ios.workout-calendar.visual-030",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-030",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 35,
+    "width": 31,
+    "x": 409,
+    "y": 796
+   },
+   "id": "visual-031",
+   "inkBounds": {
+    "height": 35,
+    "width": 31,
+    "x": 409,
+    "y": 796
+   },
+   "measurementId": "ios.workout-calendar.visual-031",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-031",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 35,
+    "width": 31,
+    "x": 295,
+    "y": 1060
+   },
+   "id": "visual-032",
+   "inkBounds": {
+    "height": 35,
+    "width": 31,
+    "x": 295,
+    "y": 1060
+   },
+   "measurementId": "ios.workout-calendar.visual-032",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-032",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 35,
+    "width": 31,
+    "x": 295,
+    "y": 927
+   },
+   "id": "visual-033",
+   "inkBounds": {
+    "height": 35,
+    "width": 31,
+    "x": 295,
+    "y": 927
+   },
+   "measurementId": "ios.workout-calendar.visual-033",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-033",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 35,
+    "width": 31,
+    "x": 295,
+    "y": 796
+   },
+   "id": "visual-034",
+   "inkBounds": {
+    "height": 35,
+    "width": 31,
+    "x": 295,
+    "y": 796
+   },
+   "measurementId": "ios.workout-calendar.visual-034",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-034",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 35,
+    "width": 31,
+    "x": 181,
+    "y": 1060
+   },
+   "id": "visual-035",
+   "inkBounds": {
+    "height": 35,
+    "width": 31,
+    "x": 181,
+    "y": 1060
+   },
+   "measurementId": "ios.workout-calendar.visual-035",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-035",
+   "stroke": "warmCanvas",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 35,
+    "width": 31,
+    "x": 181,
+    "y": 927
+   },
+   "id": "visual-036",
+   "inkBounds": {
+    "height": 35,
+    "width": 31,
+    "x": 181,
+    "y": 927
+   },
+   "measurementId": "ios.workout-calendar.visual-036",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-036",
+   "stroke": "warmCanvas",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 35,
+    "width": 31,
+    "x": 60,
+    "y": 796
+   },
+   "id": "visual-037",
+   "inkBounds": {
+    "height": 35,
+    "width": 31,
+    "x": 60,
+    "y": 796
+   },
+   "measurementId": "ios.workout-calendar.visual-037",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-037",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 33,
+    "width": 30,
+    "x": 66,
+    "y": 31
+   },
+   "id": "visual-038",
+   "inkBounds": {
+    "height": 33,
+    "width": 30,
+    "x": 66,
+    "y": 31
+   },
+   "measurementId": "ios.workout-calendar.visual-038",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-038",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 32,
+    "width": 28,
+    "x": 138,
+    "y": 31
+   },
+   "id": "visual-039",
+   "inkBounds": {
+    "height": 32,
+    "width": 28,
+    "x": 138,
+    "y": 31
+   },
+   "measurementId": "ios.workout-calendar.visual-039",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-039",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 34,
+    "width": 26,
+    "x": 34,
+    "y": 30
+   },
+   "id": "visual-040",
+   "inkBounds": {
+    "height": 34,
+    "width": 26,
+    "x": 34,
+    "y": 30
+   },
+   "measurementId": "ios.workout-calendar.visual-040",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-040",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 16,
+    "width": 46,
+    "x": 742,
+    "y": 1774
+   },
+   "id": "visual-041",
+   "inkBounds": {
+    "height": 16,
+    "width": 46,
+    "x": 742,
+    "y": 1774
+   },
+   "measurementId": "ios.workout-calendar.visual-041",
+   "owningRegion": "navigation",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-041",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 43,
+    "x": 53,
+    "y": 1382
+   },
+   "id": "visual-042",
+   "inkBounds": {
+    "height": 14,
+    "width": 43,
+    "x": 53,
+    "y": 1382
+   },
+   "measurementId": "ios.workout-calendar.visual-042",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-042",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "rule",
+   "borderWidth": 6,
+   "bounds": {
+    "height": 6,
+    "width": 63,
+    "x": 54,
+    "y": 1615
+   },
+   "id": "visual-043",
+   "inkBounds": {
+    "height": 6,
+    "width": 63,
+    "x": 54,
+    "y": 1615
+   },
+   "measurementId": "ios.workout-calendar.visual-043",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-043",
+   "type": "divider",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 18,
+    "width": 18,
+    "x": 780,
+    "y": 134
+   },
+   "id": "visual-044",
+   "inkBounds": {
+    "height": 18,
+    "width": 18,
+    "x": 780,
+    "y": 134
+   },
+   "measurementId": "ios.workout-calendar.visual-044",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-044",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 32,
+    "width": 10,
+    "x": 762,
+    "y": 128
+   },
+   "id": "visual-045",
+   "inkBounds": {
+    "height": 32,
+    "width": 10,
+    "x": 762,
+    "y": 128
+   },
+   "measurementId": "ios.workout-calendar.visual-045",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-045",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 17,
+    "width": 18,
+    "x": 77,
+    "y": 1761
+   },
+   "id": "visual-046",
+   "inkBounds": {
+    "height": 17,
+    "width": 18,
+    "x": 77,
+    "y": 1761
+   },
+   "measurementId": "ios.workout-calendar.visual-046",
+   "owningRegion": "navigation",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-046",
+   "stroke": "shotiqOrange",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 12,
+    "width": 23,
+    "x": 756,
+    "y": 1606
+   },
+   "id": "visual-047",
+   "inkBounds": {
+    "height": 12,
+    "width": 23,
+    "x": 756,
+    "y": 1606
+   },
+   "measurementId": "ios.workout-calendar.visual-047",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-047",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 33,
+    "width": 8,
+    "x": 170,
+    "y": 31
+   },
+   "id": "visual-048",
+   "inkBounds": {
+    "height": 33,
+    "width": 8,
+    "x": 170,
+    "y": 31
+   },
+   "measurementId": "ios.workout-calendar.visual-048",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-048",
+   "stroke": "shotiqOrange",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 23,
+    "width": 11,
+    "x": 753,
+    "y": 1757
+   },
+   "id": "visual-049",
+   "inkBounds": {
+    "height": 23,
+    "width": 11,
+    "x": 753,
+    "y": 1757
+   },
+   "measurementId": "ios.workout-calendar.visual-049",
+   "owningRegion": "navigation",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-049",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 28,
+    "width": 9,
+    "x": 798,
+    "y": 132
+   },
+   "id": "visual-050",
+   "inkBounds": {
+    "height": 28,
+    "width": 9,
+    "x": 798,
+    "y": 132
+   },
+   "measurementId": "ios.workout-calendar.visual-050",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-050",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 23,
+    "width": 10,
+    "x": 767,
+    "y": 1757
+   },
+   "id": "visual-051",
+   "inkBounds": {
+    "height": 23,
+    "width": 10,
+    "x": 767,
+    "y": 1757
+   },
+   "measurementId": "ios.workout-calendar.visual-051",
+   "owningRegion": "navigation",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-051",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 8,
+    "width": 27,
+    "x": 771,
+    "y": 122
+   },
+   "id": "visual-052",
+   "inkBounds": {
+    "height": 8,
+    "width": 27,
+    "x": 771,
+    "y": 122
+   },
+   "measurementId": "ios.workout-calendar.visual-052",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-052",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "rule",
+   "borderWidth": 7,
+   "bounds": {
+    "height": 7,
+    "width": 30,
+    "x": 97,
+    "y": 1371
+   },
+   "id": "visual-053",
+   "inkBounds": {
+    "height": 7,
+    "width": 30,
+    "x": 97,
+    "y": 1371
+   },
+   "measurementId": "ios.workout-calendar.visual-053",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-053",
+   "type": "divider",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 14,
+    "x": 98,
+    "y": 1781
+   },
+   "id": "visual-054",
+   "inkBounds": {
+    "height": 14,
+    "width": 14,
+    "x": 98,
+    "y": 1781
+   },
+   "measurementId": "ios.workout-calendar.visual-054",
+   "owningRegion": "navigation",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-054",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 14,
+    "x": 61,
+    "y": 1781
+   },
+   "id": "visual-055",
+   "inkBounds": {
+    "height": 14,
+    "width": 14,
+    "x": 61,
+    "y": 1781
+   },
+   "measurementId": "ios.workout-calendar.visual-055",
+   "owningRegion": "navigation",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-055",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 19,
+    "width": 9,
+    "x": 419,
+    "y": 1157
+   },
+   "id": "visual-056",
+   "inkBounds": {
+    "height": 19,
+    "width": 9,
+    "x": 419,
+    "y": 1157
+   },
+   "measurementId": "ios.workout-calendar.visual-056",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-056",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 20,
+    "width": 8,
+    "x": 771,
+    "y": 893
+   },
+   "id": "visual-057",
+   "inkBounds": {
+    "height": 20,
+    "width": 8,
+    "x": 771,
+    "y": 893
+   },
+   "measurementId": "ios.workout-calendar.visual-057",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-057",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 20,
+    "width": 8,
+    "x": 761,
+    "y": 1024
+   },
+   "id": "visual-058",
+   "inkBounds": {
+    "height": 20,
+    "width": 8,
+    "x": 761,
+    "y": 1024
+   },
+   "measurementId": "ios.workout-calendar.visual-058",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-058",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 20,
+    "width": 8,
+    "x": 761,
+    "y": 893
+   },
+   "id": "visual-059",
+   "inkBounds": {
+    "height": 20,
+    "width": 8,
+    "x": 761,
+    "y": 893
+   },
+   "measurementId": "ios.workout-calendar.visual-059",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-059",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 13,
+    "width": 12,
+    "x": 710,
+    "y": 1605
+   },
+   "id": "visual-060",
+   "inkBounds": {
+    "height": 13,
+    "width": 12,
+    "x": 710,
+    "y": 1605
+   },
+   "measurementId": "ios.workout-calendar.visual-060",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-060",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 13,
+    "width": 12,
+    "x": 664,
+    "y": 1605
+   },
+   "id": "visual-061",
+   "inkBounds": {
+    "height": 13,
+    "width": 12,
+    "x": 664,
+    "y": 1605
+   },
+   "measurementId": "ios.workout-calendar.visual-061",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-061",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 13,
+    "width": 12,
+    "x": 651,
+    "y": 1605
+   },
+   "id": "visual-062",
+   "inkBounds": {
+    "height": 13,
+    "width": 12,
+    "x": 651,
+    "y": 1605
+   },
+   "measurementId": "ios.workout-calendar.visual-062",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-062",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 19,
+    "width": 8,
+    "x": 765,
+    "y": 1157
+   },
+   "id": "visual-063",
+   "inkBounds": {
+    "height": 19,
+    "width": 8,
+    "x": 765,
+    "y": 1157
+   },
+   "measurementId": "ios.workout-calendar.visual-063",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-063",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 19,
+    "width": 8,
+    "x": 649,
+    "y": 1157
+   },
+   "id": "visual-064",
+   "inkBounds": {
+    "height": 19,
+    "width": 8,
+    "x": 649,
+    "y": 1157
+   },
+   "measurementId": "ios.workout-calendar.visual-064",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-064",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 19,
+    "width": 8,
+    "x": 192,
+    "y": 1157
+   },
+   "id": "visual-065",
+   "inkBounds": {
+    "height": 19,
+    "width": 8,
+    "x": 192,
+    "y": 1157
+   },
+   "measurementId": "ios.workout-calendar.visual-065",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-065",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 19,
+    "width": 8,
+    "x": 187,
+    "y": 529
+   },
+   "id": "visual-066",
+   "inkBounds": {
+    "height": 19,
+    "width": 8,
+    "x": 187,
+    "y": 529
+   },
+   "measurementId": "ios.workout-calendar.visual-066",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-066",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 19,
+    "width": 8,
+    "x": 78,
+    "y": 529
+   },
+   "id": "visual-067",
+   "inkBounds": {
+    "height": 19,
+    "width": 8,
+    "x": 78,
+    "y": 529
+   },
+   "measurementId": "ios.workout-calendar.visual-067",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-067",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 19,
+    "width": 8,
+    "x": 68,
+    "y": 529
+   },
+   "id": "visual-068",
+   "inkBounds": {
+    "height": 19,
+    "width": 8,
+    "x": 68,
+    "y": 529
+   },
+   "measurementId": "ios.workout-calendar.visual-068",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-068",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 19,
+    "width": 7,
+    "x": 534,
+    "y": 1157
+   },
+   "id": "visual-069",
+   "inkBounds": {
+    "height": 19,
+    "width": 7,
+    "x": 534,
+    "y": 1157
+   },
+   "measurementId": "ios.workout-calendar.visual-069",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-069",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 19,
+    "width": 7,
+    "x": 307,
+    "y": 1157
+   },
+   "id": "visual-070",
+   "inkBounds": {
+    "height": 19,
+    "width": 7,
+    "x": 307,
+    "y": 1157
+   },
+   "measurementId": "ios.workout-calendar.visual-070",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-070",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 12,
+    "width": 11,
+    "x": 734,
+    "y": 1606
+   },
+   "id": "visual-071",
+   "inkBounds": {
+    "height": 12,
+    "width": 11,
+    "x": 734,
+    "y": 1606
+   },
+   "measurementId": "ios.workout-calendar.visual-071",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-071",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 12,
+    "width": 10,
+    "x": 785,
+    "y": 1606
+   },
+   "id": "visual-072",
+   "inkBounds": {
+    "height": 12,
+    "width": 10,
+    "x": 785,
+    "y": 1606
+   },
+   "measurementId": "ios.workout-calendar.visual-072",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-072",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 19,
+    "width": 5,
+    "x": 772,
+    "y": 1025
+   },
+   "id": "visual-073",
+   "inkBounds": {
+    "height": 19,
+    "width": 5,
+    "x": 772,
+    "y": 1025
+   },
+   "measurementId": "ios.workout-calendar.visual-073",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-073",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 19,
+    "width": 5,
+    "x": 72,
+    "y": 1157
+   },
+   "id": "visual-074",
+   "inkBounds": {
+    "height": 19,
+    "width": 5,
+    "x": 72,
+    "y": 1157
+   },
+   "measurementId": "ios.workout-calendar.visual-074",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-074",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 13,
+    "width": 7,
+    "x": 638,
+    "y": 1605
+   },
+   "id": "visual-075",
+   "inkBounds": {
+    "height": 13,
+    "width": 7,
+    "x": 638,
+    "y": 1605
+   },
+   "measurementId": "ios.workout-calendar.visual-075",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-075",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 12,
+    "width": 6,
+    "x": 779,
+    "y": 1606
+   },
+   "id": "visual-076",
+   "inkBounds": {
+    "height": 12,
+    "width": 6,
+    "x": 779,
+    "y": 1606
+   },
+   "measurementId": "ios.workout-calendar.visual-076",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-076",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 12,
+    "width": 6,
+    "x": 631,
+    "y": 1606
+   },
+   "id": "visual-077",
+   "inkBounds": {
+    "height": 12,
+    "width": 6,
+    "x": 631,
+    "y": 1606
+   },
+   "measurementId": "ios.workout-calendar.visual-077",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-077",
+   "stroke": "shotiqOrange",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 12,
+    "width": 5,
+    "x": 645,
+    "y": 1606
+   },
+   "id": "visual-078",
+   "inkBounds": {
+    "height": 12,
+    "width": 5,
+    "x": 645,
+    "y": 1606
+   },
+   "measurementId": "ios.workout-calendar.visual-078",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-078",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 5,
+    "x": 728,
+    "y": 1606
+   },
+   "id": "visual-079",
+   "inkBounds": {
+    "height": 10,
+    "width": 5,
+    "x": 728,
+    "y": 1606
+   },
+   "measurementId": "ios.workout-calendar.visual-079",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-079",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 12,
+    "width": 4,
+    "x": 795,
+    "y": 1606
+   },
+   "id": "visual-080",
+   "inkBounds": {
+    "height": 12,
+    "width": 4,
+    "x": 795,
+    "y": 1606
+   },
+   "measurementId": "ios.workout-calendar.visual-080",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-080",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 4,
+    "x": 746,
+    "y": 1606
+   },
+   "id": "visual-081",
+   "inkBounds": {
+    "height": 11,
+    "width": 4,
+    "x": 746,
+    "y": 1606
+   },
+   "measurementId": "ios.workout-calendar.visual-081",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-081",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 4,
+    "x": 723,
+    "y": 1606
+   },
+   "id": "visual-082",
+   "inkBounds": {
+    "height": 10,
+    "width": 4,
+    "x": 723,
+    "y": 1606
+   },
+   "measurementId": "ios.workout-calendar.visual-082",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.workout-calendar.visual-082",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  }
+ ],
+ "imageGenerationNormalization": {
+  "finalCanvas": {
+   "height": 1844,
+   "width": 853
+  },
+  "finalPixelsAreEmbedSourceOfTruth": true,
+  "finalSha256": "0786c24153fe893c97b7b0b8b4f2dbc5726f89c6a205327a672ea3087f850853",
+  "generator": "GPT Image 2",
+  "occursBeforeSidecarMeasurement": true,
+  "rawCanvas": {
+   "height": 1844,
+   "width": 853
+  },
+  "rawSha256": "0786c24153fe893c97b7b0b8b4f2dbc5726f89c6a205327a672ea3087f850853",
+  "transform": {
+   "resampling": "none",
+   "scaleX": 1,
+   "scaleY": 1
+  }
+ },
+ "measurementContract": {
+  "autoCorrectGlobalTransform": false,
+  "coordinateSpace": "final-bitmap-source-pixels",
+  "limitations": [
+   "Automated contour semantics and OCR text matching require browser proof before production acceptance.",
+   "Missing standalone completed asset packs remain explicit failures and are never filled with source pixels."
+  ],
+  "methods": [
+   "final-bitmap source-pixel bounds",
+   "Tesseract OCR TSV line bounds",
+   "normalized-reference text verification",
+   "OpenCV edge-contour visual bounds",
+   "regional visual-difference analysis"
+  ],
+  "origin": "top-left",
+  "precisionPx": 1
+ },
+ "pinnedRegions": [
+  {
+   "edges": [
+    "top",
+    "left",
+    "right"
+   ],
+   "elementId": "header",
+   "id": "pin-header"
+  },
+  {
+   "edges": [
+    "left",
+    "right"
+   ],
+   "elementId": "main",
+   "id": "pin-main"
+  },
+  {
+   "edges": [
+    "bottom",
+    "left",
+    "right"
+   ],
+   "elementId": "navigation",
+   "id": "pin-navigation"
+  }
+ ],
+ "referenceNormalization": {
+  "contentBounds": {
+   "height": 1844,
+   "width": 853,
+   "x": 218,
+   "y": 502
+  },
+  "normalizedSha256": "599c8d70385d635eab2e495c4e461bd58f65fa0ac8d9028b571e10936d25efb4",
+  "originalPreserved": true,
+  "removedMargins": {
+   "bottom": 450,
+   "left": 218,
+   "right": 219,
+   "top": 502
+  },
+  "removedPresentationLabels": [
+   "SHOTIQ CONCEPT - NOT LIVE",
+   "iOS system status indicators",
+   "home indicator"
+  ],
+  "sourceCanvas": {
+   "height": 2796,
+   "width": 1290
+  },
+  "sourceSha256": "9a1519cf93a1cf951dbfe1e2dec7752a222ca02e3468e62dac8d9f6c206f4cad",
+  "targetCanvas": {
+   "height": 1844,
+   "width": 853
+  },
+  "transform": {
+   "scaleX": 1,
+   "scaleY": 1,
+   "translateX": -218,
+   "translateY": -582
+  }
+ },
+ "regions": [
+  {
+   "bounds": {
+    "height": 260,
+    "width": 853,
+    "x": 0,
+    "y": 0
+   },
+   "critical": true,
+   "fidelityFloor": 0.98,
+   "id": "header"
+  },
+  {
+   "bounds": {
+    "height": 1424,
+    "width": 853,
+    "x": 0,
+    "y": 220
+   },
+   "critical": true,
+   "fidelityFloor": 0.98,
+   "id": "main"
+  },
+  {
+   "bounds": {
+    "height": 220,
+    "width": 853,
+    "x": 0,
+    "y": 1624
+   },
+   "critical": true,
+   "fidelityFloor": 0.98,
+   "id": "navigation"
+  }
+ ],
+ "renderingContract": {
+  "browserZoom": 1,
+  "colorSpace": "srgb",
+  "defaultBoxSizing": "border-box",
+  "devicePixelRatio": 1,
+  "fontLoadingGate": "document.fonts.ready",
+  "locale": "en-US",
+  "screenshotGate": "two requestAnimationFrame callbacks after fonts and assets resolve",
+  "viewport": {
+   "height": 1844,
+   "width": 853
+  }
+ },
+ "repeatGroups": [],
+ "schemaVersion": "2.0.0",
+ "source": {
+  "fromSourceCrop": false,
+  "generationProvenance": "Fresh independent GPT Image 2 recreation generated in this batch from the supplied reference.",
+  "originalFilename": "ios/59-workout-calendar.png",
+  "sourcePrompt": "/Volumes/APPLICATIONS/CodexStorage/projects/shotiq-sidecar-job/design/imagegen-screen-pack/prompts/59-workout-calendar.txt"
+ }
+}

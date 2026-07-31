@@ -2,6 +2,11 @@
 const nextConfig = {
   distDir: process.env.NEXT_DIST_DIR || '.next',
 
+  // Serve from a subpath (e.g. GitHub Pages at /<repo>/) when NEXT_BASEPATH is
+  // set. Empty/unset keeps current behaviour.
+  basePath: process.env.NEXT_BASEPATH || undefined,
+  assetPrefix: process.env.NEXT_BASEPATH || undefined,
+
   // Enable static export for Tauri and Capacitor builds.
   // Set TAURI_BUILD=true or CAPACITOR_BUILD=true to enable static export.
   output: (process.env.TAURI_BUILD === 'true' || process.env.CAPACITOR_BUILD === 'true') ? 'export' : process.env.NEXT_OUTPUT_MODE,

@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import localFont from "next/font/local"
-import { Russo_One } from "next/font/google"
+import { Russo_One, Inter, Bebas_Neue, Oswald } from "next/font/google"
 import "./globals.css"
 import { Header } from "@/components/layout/Header"
 import { Footer } from "@/components/layout/Footer"
@@ -21,6 +21,31 @@ const russoOne = Russo_One({
   weight: "400",
   subsets: ["latin"],
   variable: "--font-russo-one",
+})
+
+// ShotIQ canonical typefaces, from the sidecar designTokens.typography.
+// `Inter` and `Bebas Neue` match the token families exactly.
+//
+// The `numeric` role specifies "DIN Condensed", a commercial Monotype face that
+// is not redistributable and is not on Google Fonts. `Oswald` is used as a
+// documented metric-similar substitute so numeric displays render in a
+// condensed grotesque rather than silently falling back to the body face.
+// Swapping in a licensed DIN Condensed only requires changing this binding.
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-shotiq-inter",
+  display: "swap",
+})
+const bebasNeue = Bebas_Neue({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-shotiq-display",
+  display: "swap",
+})
+const oswald = Oswald({
+  subsets: ["latin"],
+  variable: "--font-shotiq-numeric",
+  display: "swap",
 })
 
 export const metadata: Metadata = {
@@ -45,7 +70,7 @@ export default function RootLayout({
         {/* DISABLED: Cache clearing script was causing infinite reload loops */}
         {/* <Script src="/clear-cache.js" strategy="beforeInteractive" /> */}
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} ${russoOne.variable} antialiased min-h-screen flex flex-col bg-white`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} ${russoOne.variable} ${inter.variable} ${bebasNeue.variable} ${oswald.variable} antialiased min-h-screen flex flex-col bg-white`}>
         <Providers>
           <Header />
           <main className="flex-1 bg-slate-50">{children}</main>

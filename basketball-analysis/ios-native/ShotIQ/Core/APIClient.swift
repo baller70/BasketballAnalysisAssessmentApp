@@ -1,0 +1,187 @@
+import Foundation
+import Security
+
+// MARK: - Keychain-backed token store (secure mobile auth per the shared contract)
+
+enum KeychainStore {
+    private static let service = "com.shotiq.auth"
+
+    static func save(_ value: String, key: String) {
+        let data = Data(value.utf8)
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: key,
+        ]
+        SecItemDelete(query as CFDictionary)
+        var attrs = query
+        attrs[kSecValueData as String] = data
+        attrs[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
+        SecItemAdd(attrs as CFDictionary, nil)
+    }
+
+    static func read(key: String) -> String? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: key,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne,
+        ]
+        var out: AnyObject?
+        guard SecItemCopyMatching(query as CFDictionary, &out) == errSecSuccess,
+              let data = out as? Data else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
+
+    static func delete(key: String) {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: key,
+        ]
+        SecItemDelete(query as CFDictionary)
+    }
+}
+
+// MARK: - Shared API contract (field names mirror the Next.js/Prisma backend)
+
+struct APIUser: Codable, Equatable {
+    var id: String?
+    var email: String?
+    var displayName: String?
+    var firstName: String?
+    var lastName: String?
+    var profileComplete: Bool?
+}
+
+struct HistoryStats: Codable {
+    var totalAnalyses: Int
+    var averageScore: Double?
+    var latestScore: Double?
+    var overallTrend: String?
+    var improvementRate: Double?
+}
+
+struct AnalysisSummary: Codable, Identifiable {
+    var id: String { "\(title ?? "analysis")-\(createdAt ?? "")" }
+    var title: String?
+    var createdAt: String?
+    var shotType: String?
+    var score: Double?
+}
+
+struct EliteShooterDTO: Codable, Identifiable {
+    var id: Int
+    var name: String
+    var team: String
+    var league: String
+    var era: String?
+    var tier: String?
+    var position: String
+    var height: Int
+    var weight: Int
+    var careerPct: Double?
+    var careerFreeThrowPct: Double
+    var approvedFormImages: [String]?
+}
+
+struct GoalDTO: Codable, Identifiable {
+    var id: String
+    var title: String
+    var progress: Double?
+    var targetDate: String?
+    var status: String?
+}
+
+// MARK: - API client (async/await, URLSession, rotating token refresh)
+
+actor APIClient {
+    static let shared = APIClient()
+
+    /// Same origin the web client talks to; override via Info.plist / env in CI.
+    var baseURL = URL(string: ProcessInfo.processInfo.environment["SHOTIQ_API"] ?? "https://app.shotiqai.com")!
+
+    private var accessToken: String? { KeychainStore.read(key: "accessToken") }
+
+    enum APIError: Error { case http(Int), decode, network }
+
+    private func request<T: Decodable>(_ path: String, method: String = "GET", body: Encodable? = nil) async throws -> T {
+        var req = URLRequest(url: baseURL.appending(path: path))
+        req.httpMethod = method
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        if let token = accessToken {
+            req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        if let body {
+            req.httpBody = try JSONEncoder().encode(AnyEncodable(body))
+        }
+        let (data, resp) = try await URLSession.shared.data(for: req)
+        guard let http = resp as? HTTPURLResponse else { throw APIError.network }
+        if http.statusCode == 401 { try await refreshTokens(); return try await request(path, method: method, body: body) }
+        guard (200..<300).contains(http.statusCode) else { throw APIError.http(http.statusCode) }
+        do { return try JSONDecoder().decode(T.self, from: data) } catch { throw APIError.decode }
+    }
+
+    /// Short-lived access token + rotating refresh token, both in Keychain.
+    private func refreshTokens() async throws {
+        guard let refresh = KeychainStore.read(key: "refreshToken") else { throw APIError.http(401) }
+        struct Refresh: Codable { var accessToken: String; var refreshToken: String }
+        var req = URLRequest(url: baseURL.appending(path: "/api/auth/refresh"))
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.httpBody = try JSONEncoder().encode(["refreshToken": refresh])
+        let (data, resp) = try await URLSession.shared.data(for: req)
+        guard (resp as? HTTPURLResponse)?.statusCode == 200,
+              let tokens = try? JSONDecoder().decode(Refresh.self, from: data) else {
+            KeychainStore.delete(key: "accessToken"); KeychainStore.delete(key: "refreshToken")
+            throw APIError.http(401)
+        }
+        KeychainStore.save(tokens.accessToken, key: "accessToken")
+        KeychainStore.save(tokens.refreshToken, key: "refreshToken")
+    }
+
+    // MARK: endpoints (mirroring the web client)
+
+    func signIn(email: String, password: String) async throws -> APIUser {
+        struct Resp: Codable { var user: APIUser; var accessToken: String?; var refreshToken: String? }
+        let r: Resp = try await request("/api/auth/signin", method: "POST",
+                                        body: ["email": email, "password": password])
+        if let a = r.accessToken { KeychainStore.save(a, key: "accessToken") }
+        if let t = r.refreshToken { KeychainStore.save(t, key: "refreshToken") }
+        return r.user
+    }
+
+    func signOut() { KeychainStore.delete(key: "accessToken"); KeychainStore.delete(key: "refreshToken") }
+
+    func history(limit: Int = 100) async throws -> (stats: HistoryStats?, items: [AnalysisSummary]) {
+        struct Resp: Codable { var success: Bool; var stats: HistoryStats?; var history: [AnalysisSummary]? }
+        let r: Resp = try await request("/api/analysis-history?limit=\(limit)")
+        return (r.stats, r.history ?? [])
+    }
+
+    func shooters() async throws -> [EliteShooterDTO] {
+        struct Resp: Codable { var shooters: [EliteShooterDTO] }
+        let r: Resp = try await request("/api/shooters")
+        return r.shooters
+    }
+
+    func goals() async throws -> [GoalDTO] {
+        struct Resp: Codable { var goals: [GoalDTO]? }
+        let r: Resp = try await request("/api/goals")
+        return r.goals ?? []
+    }
+
+    func recordShotEvent(drillId: String, made: Bool) async {
+        struct Empty: Codable {}
+        _ = try? await request("/api/shot-events", method: "POST",
+                               body: ["drillId": drillId, "result": made ? "make" : "miss"]) as Empty?
+    }
+}
+
+/// Type-erasing encodable wrapper so the client can send dictionary bodies.
+struct AnyEncodable: Encodable {
+    private let encodeFn: (Encoder) throws -> Void
+    init(_ wrapped: Encodable) { encodeFn = wrapped.encode }
+    func encode(to encoder: Encoder) throws { try encodeFn(encoder) }
+}

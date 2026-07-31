@@ -1,0 +1,88 @@
+/* GENERATED from the canonical HoopTrackLayoutSidecar design tokens.
+   Source: 92 embedded screens, batch shotiq-white-court-imagegen2-2026-07-30-v2.
+   Verified identical across all 92 screens (zero drift).
+   Regenerate with tools/shotiq-sidecar/emit.py - do not hand-edit. */
+
+:root {
+  /* colors */
+  --shotiq-color-analysisBlue: #2D6CDF;
+  --shotiq-color-confirmGreen: #168A55;
+  --shotiq-color-graphite: #5F646B;
+  --shotiq-color-ink: #111111;
+  --shotiq-color-muted: #A7AAB0;
+  --shotiq-color-paper: #FFFFFF;
+  --shotiq-color-reviewRed: #D92D20;
+  --shotiq-color-rule: #D9D9D4;
+  --shotiq-color-shotiqOrange: #FF5A1F;
+  --shotiq-color-warmCanvas: #F7F7F4;
+
+  /* spacing */
+  --shotiq-space-xs: 4px;
+  --shotiq-space-sm: 8px;
+  --shotiq-space-md: 16px;
+  --shotiq-space-lg: 24px;
+  --shotiq-space-xl: 32px;
+
+  /* radii */
+  --shotiq-radius-none: 0px;
+  --shotiq-radius-control: 6px;
+  --shotiq-radius-card: 8px;
+  --shotiq-radius-pill: 999px;
+
+  /* typography */
+  --shotiq-font-body-family: 'Inter';
+  --shotiq-font-body-size: 16px;
+  --shotiq-font-body-weight: 400;
+  --shotiq-font-body-line-height: 22px;
+  --shotiq-font-body-letter-spacing: 0px;
+  --shotiq-font-brand-family: 'Inter';
+  --shotiq-font-brand-size: 28px;
+  --shotiq-font-brand-weight: 900;
+  --shotiq-font-brand-line-height: 32px;
+  --shotiq-font-brand-letter-spacing: 0px;
+  --shotiq-font-button-family: 'Inter';
+  --shotiq-font-button-size: 16px;
+  --shotiq-font-button-weight: 700;
+  --shotiq-font-button-line-height: 22px;
+  --shotiq-font-button-letter-spacing: 0px;
+  --shotiq-font-caption-family: 'Inter';
+  --shotiq-font-caption-size: 12px;
+  --shotiq-font-caption-weight: 500;
+  --shotiq-font-caption-line-height: 16px;
+  --shotiq-font-caption-letter-spacing: 0px;
+  --shotiq-font-h1-family: 'Bebas Neue';
+  --shotiq-font-h1-size: 64px;
+  --shotiq-font-h1-weight: 900;
+  --shotiq-font-h1-line-height: 70px;
+  --shotiq-font-h1-letter-spacing: 0px;
+  --shotiq-font-h2-family: 'Bebas Neue';
+  --shotiq-font-h2-size: 40px;
+  --shotiq-font-h2-weight: 900;
+  --shotiq-font-h2-line-height: 46px;
+  --shotiq-font-h2-letter-spacing: 0px;
+  --shotiq-font-h3-family: 'Bebas Neue';
+  --shotiq-font-h3-size: 28px;
+  --shotiq-font-h3-weight: 800;
+  --shotiq-font-h3-line-height: 34px;
+  --shotiq-font-h3-letter-spacing: 0px;
+  --shotiq-font-h4-family: 'Inter';
+  --shotiq-font-h4-size: 18px;
+  --shotiq-font-h4-weight: 700;
+  --shotiq-font-h4-line-height: 24px;
+  --shotiq-font-h4-letter-spacing: 0px;
+  --shotiq-font-h5-family: 'Inter';
+  --shotiq-font-h5-size: 14px;
+  --shotiq-font-h5-weight: 700;
+  --shotiq-font-h5-line-height: 20px;
+  --shotiq-font-h5-letter-spacing: 0px;
+  --shotiq-font-label-family: 'Inter';
+  --shotiq-font-label-size: 12px;
+  --shotiq-font-label-weight: 700;
+  --shotiq-font-label-line-height: 16px;
+  --shotiq-font-label-letter-spacing: 0px;
+  --shotiq-font-numeric-family: 'DIN Condensed';
+  --shotiq-font-numeric-size: 40px;
+  --shotiq-font-numeric-weight: 800;
+  --shotiq-font-numeric-line-height: 44px;
+  --shotiq-font-numeric-letter-spacing: 0px;
+}

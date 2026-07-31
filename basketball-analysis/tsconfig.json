@@ -40,6 +40,8 @@
     "node_modules",
     "prisma/seed.ts",
     "vitest.config.ts",
-    "tests/**/*"
+    "tests/**/*",
+    "mobile",
+    "ios-native"
   ]
 }

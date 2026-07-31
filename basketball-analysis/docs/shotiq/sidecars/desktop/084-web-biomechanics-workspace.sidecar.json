@@ -1,0 +1,5178 @@
+{
+ "app": {
+  "appId": "shotiq",
+  "batchId": "shotiq-white-court-imagegen2-2026-07-30-v2",
+  "platform": "desktop",
+  "platformId": "shotiq.desktop",
+  "screenId": "desktop.web-biomechanics-workspace",
+  "sharedTokenSet": "shotiq-white-court-core-v1"
+ },
+ "asset": {
+  "canvas": {
+   "height": 900,
+   "width": 1440
+  },
+  "name": "desktop.web-biomechanics-workspace"
+ },
+ "assets": {
+  "app.shotiq.brand.logo.primary": {
+   "description": "SHOTIQ primary wordmark with orange Q accent",
+   "kind": "logo",
+   "preferredFormat": "svg",
+   "qualityProfile": "faithful-premium",
+   "recolorable": true
+  },
+  "app.shotiq.icon.motion.default": {
+   "description": "Shared ShotIQ motion-glyph family placeholder for navigation, actions, and metrics.",
+   "iconSpec": {
+    "minReadableSize": 16,
+    "nicheMetaphor": "Tracked body landmark nodes and shot-release motion geometry",
+    "preserveFromReference": [
+     "semantic meaning",
+     "orientation",
+     "major silhouette",
+     "relative visual weight"
+    ],
+    "safeInset": 1.5,
+    "semanticConcept": "ShotIQ basketball performance motion glyph",
+    "silhouette": "Compact line glyph with rounded joints and a clear motion focal point",
+    "upgradeFromReference": [
+     "construction quality",
+     "domain specificity",
+     "optical balance",
+     "small-size legibility"
+    ]
+   },
+   "kind": "icon",
+   "preferredFormat": "svg",
+   "qualityProfile": "faithful-premium",
+   "recolorable": true
+  },
+  "app.shotiq.photo.athlete-frame": {
+   "description": "Independent athlete/court frame asset used by analysis and training screens.",
+   "kind": "photo",
+   "poseRequired": true,
+   "preferredFormat": "png",
+   "qualityProfile": "awaiting-independent-asset-pack"
+  }
+ },
+ "baselineGroups": [],
+ "canonicalContractSha256": "e7e576d62ccdf69c2912a0e093924e50357e71a313bd2b4c1322c8bc6114b6ff",
+ "designTokens": {
+  "colors": {
+   "analysisBlue": "#2D6CDF",
+   "confirmGreen": "#168A55",
+   "graphite": "#5F646B",
+   "ink": "#111111",
+   "muted": "#A7AAB0",
+   "paper": "#FFFFFF",
+   "reviewRed": "#D92D20",
+   "rule": "#D9D9D4",
+   "shotiqOrange": "#FF5A1F",
+   "warmCanvas": "#F7F7F4"
+  },
+  "iconography": {
+   "activeStrokeWidth": 2,
+   "creativeDirection": "Motion glyphs built from pose landmarks, release arcs, frame strips, measurement brackets, and court geometry.",
+   "domain": "basketball shooting mechanics, biomechanics, capture review, and athlete progress",
+   "familyId": "shotiq-motion-glyphs-v1",
+   "fillPolicy": "Outline-led with one intentional filled focal detail.",
+   "grid": 24,
+   "lineCap": "round",
+   "lineJoin": "round",
+   "opticalSize": 24,
+   "profile": "premium-icon-v1",
+   "prohibited": [
+    "emoji",
+    "clip art",
+    "generic stick figures",
+    "stock-library clones",
+    "mixed icon families",
+    "text baked into icons",
+    "edge-touching paint"
+   ],
+   "readabilityPx": [
+    16,
+    20,
+    24,
+    32
+   ],
+   "reconstructionMode": "faithful-premium",
+   "safeInset": 1.5,
+   "selectedState": "Same glyph with tokenized color or external indicator.",
+   "strokeWidth": 1.75
+  },
+  "radii": {
+   "card": 8,
+   "control": 6,
+   "none": 0,
+   "pill": 999
+  },
+  "spacing": {
+   "lg": 24,
+   "md": 16,
+   "sm": 8,
+   "xl": 32,
+   "xs": 4
+  },
+  "typography": {
+   "body": {
+    "fontFamily": "Inter",
+    "fontSize": 16,
+    "fontWeight": 400,
+    "letterSpacing": 0,
+    "lineHeight": 22
+   },
+   "brand": {
+    "fontFamily": "Inter",
+    "fontSize": 28,
+    "fontWeight": 900,
+    "letterSpacing": 0,
+    "lineHeight": 32
+   },
+   "button": {
+    "fontSize": 16,
+    "fontWeight": 700,
+    "inherits": "body",
+    "letterSpacing": 0,
+    "lineHeight": 22
+   },
+   "caption": {
+    "fontSize": 12,
+    "fontWeight": 500,
+    "inherits": "body",
+    "letterSpacing": 0,
+    "lineHeight": 16
+   },
+   "h1": {
+    "fontFamily": "Bebas Neue",
+    "fontSize": 64,
+    "fontWeight": 900,
+    "letterSpacing": 0,
+    "lineHeight": 70
+   },
+   "h2": {
+    "fontFamily": "Bebas Neue",
+    "fontSize": 40,
+    "fontWeight": 900,
+    "letterSpacing": 0,
+    "lineHeight": 46
+   },
+   "h3": {
+    "fontFamily": "Bebas Neue",
+    "fontSize": 28,
+    "fontWeight": 800,
+    "letterSpacing": 0,
+    "lineHeight": 34
+   },
+   "h4": {
+    "fontFamily": "Inter",
+    "fontSize": 18,
+    "fontWeight": 700,
+    "letterSpacing": 0,
+    "lineHeight": 24
+   },
+   "h5": {
+    "fontFamily": "Inter",
+    "fontSize": 14,
+    "fontWeight": 700,
+    "letterSpacing": 0,
+    "lineHeight": 20
+   },
+   "label": {
+    "fontSize": 12,
+    "fontWeight": 700,
+    "inherits": "body",
+    "letterSpacing": 0,
+    "lineHeight": 16
+   },
+   "numeric": {
+    "fontFamily": "DIN Condensed",
+    "fontSize": 40,
+    "fontWeight": 800,
+    "letterSpacing": 0,
+    "lineHeight": 44
+   }
+  }
+ },
+ "elements": [
+  {
+   "backgroundColor": "paper",
+   "bounds": {
+    "height": 900,
+    "width": 1440,
+    "x": 0,
+    "y": 0
+   },
+   "id": "screen-background",
+   "measurementId": "desktop.web-biomechanics-workspace.screen-background",
+   "owningRegion": "main",
+   "proofMethod": "canvas dimensions",
+   "sourceKey": "desktop.web-biomechanics-workspace.screen-background",
+   "type": "screen",
+   "zIndex": 0
+  },
+  {
+   "bounds": {
+    "height": 130,
+    "width": 1440,
+    "x": 0,
+    "y": 0
+   },
+   "id": "topbar",
+   "measurementId": "desktop.web-biomechanics-workspace.topbar",
+   "owningRegion": "topbar",
+   "proofMethod": "declared semantic region bounds",
+   "sourceKey": "desktop.web-biomechanics-workspace.topbar",
+   "type": "group",
+   "zIndex": 1
+  },
+  {
+   "bounds": {
+    "height": 790,
+    "width": 190,
+    "x": 0,
+    "y": 110
+   },
+   "id": "sidebar",
+   "measurementId": "desktop.web-biomechanics-workspace.sidebar",
+   "owningRegion": "sidebar",
+   "proofMethod": "declared semantic region bounds",
+   "sourceKey": "desktop.web-biomechanics-workspace.sidebar",
+   "type": "group",
+   "zIndex": 2
+  },
+  {
+   "bounds": {
+    "height": 790,
+    "width": 1250,
+    "x": 190,
+    "y": 110
+   },
+   "id": "main",
+   "measurementId": "desktop.web-biomechanics-workspace.main",
+   "owningRegion": "main",
+   "proofMethod": "declared semantic region bounds",
+   "sourceKey": "desktop.web-biomechanics-workspace.main",
+   "type": "group",
+   "zIndex": 3
+  },
+  {
+   "baseline": 42,
+   "bounds": {
+    "height": 31,
+    "width": 1386,
+    "x": 20,
+    "y": 11
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 39,
+   "fontWeight": 900,
+   "generatedObservedText": "SHOT Home Analyze Training Progress Q G 2,840 ra JORDAN ELLIS. v",
+   "id": "text-001",
+   "inkBounds": {
+    "height": 31,
+    "width": 1386,
+    "x": 20,
+    "y": 11
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 42,
+   "measurementId": "desktop.web-biomechanics-workspace.text-001",
+   "ocrConfidence": 67.74,
+   "owningRegion": "topbar",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 74.59,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-001",
+   "style": "h2",
+   "text": "SHOT Home Analyze Training Progress Media Explore Q tr s I 2,840 ray 3) JORDAN ELLIS. v",
+   "type": "text",
+   "visibleGlyphHeight": 31,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 47,
+   "bounds": {
+    "height": 7,
+    "width": 147,
+    "x": 982,
+    "y": 40
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 10,
+   "fontWeight": 500,
+   "generatedObservedText": "\u2018oar Steak vans",
+   "id": "text-002",
+   "inkBounds": {
+    "height": 7,
+    "width": 147,
+    "x": 982,
+    "y": 40
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 12,
+   "measurementId": "desktop.web-biomechanics-workspace.text-002",
+   "ocrConfidence": 48.73,
+   "owningRegion": "topbar",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 42.96,
+   "referenceTextMatched": true,
+   "semanticRole": "caption",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-002",
+   "style": "caption",
+   "text": "\u2018nr sea",
+   "type": "text",
+   "visibleGlyphHeight": 7,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 103,
+   "bounds": {
+    "height": 32,
+    "width": 167,
+    "x": 134,
+    "y": 71
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 40,
+   "fontWeight": 900,
+   "generatedObservedText": "ANALYSES > PULL-UP JUMPER",
+   "id": "text-003",
+   "inkBounds": {
+    "height": 32,
+    "width": 167,
+    "x": 134,
+    "y": 71
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 43,
+   "measurementId": "desktop.web-biomechanics-workspace.text-003",
+   "ocrConfidence": 85.18,
+   "owningRegion": "topbar",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 91.2,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-003",
+   "style": "h2",
+   "text": "ANALYSES > PULL-UP JUMPER",
+   "type": "text",
+   "visibleGlyphHeight": 32,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 115,
+   "bounds": {
+    "height": 8,
+    "width": 434,
+    "x": 874,
+    "y": 107
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 10,
+   "fontWeight": 500,
+   "generatedObservedText": "sce anes uae wust",
+   "id": "text-004",
+   "inkBounds": {
+    "height": 8,
+    "width": 434,
+    "x": 874,
+    "y": 107
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 12,
+   "measurementId": "desktop.web-biomechanics-workspace.text-004",
+   "ocrConfidence": 52.18,
+   "owningRegion": "topbar",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "caption",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-004",
+   "style": "caption",
+   "text": "sce anes uae wust",
+   "type": "text",
+   "visibleGlyphHeight": 8,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 161,
+   "bounds": {
+    "height": 38,
+    "width": 1073,
+    "x": 135,
+    "y": 123
+   },
+   "color": "ink",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 48,
+   "fontWeight": 900,
+   "generatedObservedText": "ANALYSIS \u2014 PULL-UP JUMPER mR",
+   "id": "text-005",
+   "inkBounds": {
+    "height": 38,
+    "width": 1073,
+    "x": 135,
+    "y": 123
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 51,
+   "measurementId": "desktop.web-biomechanics-workspace.text-005",
+   "ocrConfidence": 80.87,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 42.68,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-005",
+   "style": "h2",
+   "text": "eG roma uns we",
+   "type": "text",
+   "visibleGlyphHeight": 38,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 180,
+   "bounds": {
+    "height": 19,
+    "width": 18,
+    "x": 40,
+    "y": 161
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 24,
+   "fontWeight": 400,
+   "generatedObservedText": "od",
+   "id": "text-006",
+   "inkBounds": {
+    "height": 19,
+    "width": 18,
+    "x": 40,
+    "y": 161
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 26,
+   "measurementId": "desktop.web-biomechanics-workspace.text-006",
+   "ocrConfidence": 40.42,
+   "owningRegion": "sidebar",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 33.63,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-006",
+   "style": "body",
+   "text": "to)",
+   "type": "text",
+   "visibleGlyphHeight": 19,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 198,
+   "bounds": {
+    "height": 33,
+    "width": 314,
+    "x": 137,
+    "y": 165
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 41,
+   "fontWeight": 900,
+   "generatedObservedText": "May 12,2025 at 8:24AM + Catch& Shoot + Right Hend",
+   "id": "text-007",
+   "inkBounds": {
+    "height": 33,
+    "width": 314,
+    "x": 137,
+    "y": 165
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 45,
+   "measurementId": "desktop.web-biomechanics-workspace.text-007",
+   "ocrConfidence": 81.24,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 83.9,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-007",
+   "style": "h2",
+   "text": "May 12,2025 at 8:24AM + Catch & Shoot + Right Hand",
+   "type": "text",
+   "visibleGlyphHeight": 33,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 239,
+   "bounds": {
+    "height": 51,
+    "width": 384,
+    "x": 29,
+    "y": 188
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 64,
+   "fontWeight": 900,
+   "generatedObservedText": "fistorY y",
+   "id": "text-008",
+   "inkBounds": {
+    "height": 51,
+    "width": 384,
+    "x": 29,
+    "y": 188
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 69,
+   "measurementId": "desktop.web-biomechanics-workspace.text-008",
+   "ocrConfidence": 33.09,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 94.0,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-008",
+   "style": "h1",
+   "text": "ANALYSIS \u2014 PULL-UP JUMPER",
+   "type": "text",
+   "visibleGlyphHeight": 51,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 254,
+   "bounds": {
+    "height": 48,
+    "width": 1220,
+    "x": 163,
+    "y": 206
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 60,
+   "fontWeight": 900,
+   "generatedObservedText": "he # : f ;",
+   "id": "text-009",
+   "inkBounds": {
+    "height": 48,
+    "width": 1220,
+    "x": 163,
+    "y": 206
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 65,
+   "measurementId": "desktop.web-biomechanics-workspace.text-009",
+   "ocrConfidence": 42.69,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 44.91,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-009",
+   "style": "h1",
+   "text": "& ;",
+   "type": "text",
+   "visibleGlyphHeight": 48,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 268,
+   "bounds": {
+    "height": 38,
+    "width": 1173,
+    "x": 162,
+    "y": 230
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 48,
+   "fontWeight": 900,
+   "generatedObservedText": "sw 10 ase reo \u00a9 \u00a9 es \u00a9 Doyen",
+   "id": "text-010",
+   "inkBounds": {
+    "height": 38,
+    "width": 1173,
+    "x": 162,
+    "y": 230
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 51,
+   "measurementId": "desktop.web-biomechanics-workspace.text-010",
+   "ocrConfidence": 44.21,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 43.25,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-010",
+   "style": "h2",
+   "text": "oxo RISE FOLLOW-TAROUGH @ Sicteton @ \u00a9) ED 3",
+   "type": "text",
+   "visibleGlyphHeight": 38,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 331,
+   "bounds": {
+    "height": 36,
+    "width": 1265,
+    "x": 42,
+    "y": 295
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 45,
+   "fontWeight": 900,
+   "generatedObservedText": "\u00a2 Tee im | AOS STORY. parr conc ace",
+   "id": "text-011",
+   "inkBounds": {
+    "height": 36,
+    "width": 1265,
+    "x": 42,
+    "y": 295
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 49,
+   "measurementId": "desktop.web-biomechanics-workspace.text-011",
+   "ocrConfidence": 44.12,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 72.5,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-011",
+   "style": "h2",
+   "text": "g 0.540s i y METRICS COACHING TARGET NOTES \u2018HISTORY PRIMARY COACHING TARGET",
+   "type": "text",
+   "visibleGlyphHeight": 36,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 332,
+   "bounds": {
+    "height": 33,
+    "width": 255,
+    "x": 482,
+    "y": 299
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 41,
+   "fontWeight": 900,
+   "generatedObservedText": "off 4",
+   "id": "text-012",
+   "inkBounds": {
+    "height": 33,
+    "width": 255,
+    "x": 482,
+    "y": 299
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 45,
+   "measurementId": "desktop.web-biomechanics-workspace.text-012",
+   "ocrConfidence": 78.54,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 47.9,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-012",
+   "style": "h2",
+   "text": "{",
+   "type": "text",
+   "visibleGlyphHeight": 33,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 355,
+   "bounds": {
+    "height": 29,
+    "width": 1352,
+    "x": 30,
+    "y": 326
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 36,
+   "fontWeight": 400,
+   "generatedObservedText": "ey oe io jail Keep elbow stacked >",
+   "id": "text-013",
+   "inkBounds": {
+    "height": 29,
+    "width": 1352,
+    "x": 30,
+    "y": 326
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 39,
+   "measurementId": "desktop.web-biomechanics-workspace.text-013",
+   "ocrConfidence": 64.99,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 82.2,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-013",
+   "style": "body",
+   "text": "TRAINING | inn oe Keep elbow stacked >",
+   "type": "text",
+   "visibleGlyphHeight": 29,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 361,
+   "bounds": {
+    "height": 10,
+    "width": 90,
+    "x": 819,
+    "y": 351
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 12,
+   "fontWeight": 500,
+   "generatedObservedText": "KEY MEASUREMENTS",
+   "id": "text-014",
+   "inkBounds": {
+    "height": 10,
+    "width": 90,
+    "x": 819,
+    "y": 351
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 14,
+   "measurementId": "desktop.web-biomechanics-workspace.text-014",
+   "ocrConfidence": 73.13,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 61.29,
+   "referenceTextMatched": true,
+   "semanticRole": "caption",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-014",
+   "style": "caption",
+   "text": "my ACHING T I TORY A",
+   "type": "text",
+   "visibleGlyphHeight": 10,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 401,
+   "bounds": {
+    "height": 27,
+    "width": 807,
+    "x": 304,
+    "y": 374
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 34,
+   "fontWeight": 400,
+   "generatedObservedText": "i | \u00a2 A, Elbow Angle 92\u00b0 Good",
+   "id": "text-015",
+   "inkBounds": {
+    "height": 27,
+    "width": 807,
+    "x": 304,
+    "y": 374
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 36,
+   "measurementId": "desktop.web-biomechanics-workspace.text-015",
+   "ocrConfidence": 66.22,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 49.75,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-015",
+   "style": "body",
+   "text": "| a, | Rho hae 92\u00b0",
+   "type": "text",
+   "visibleGlyphHeight": 27,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 454,
+   "bounds": {
+    "height": 45,
+    "width": 905,
+    "x": 411,
+    "y": 409
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 56,
+   "fontWeight": 900,
+   "generatedObservedText": ") a emmy etn Zi igo nie ny",
+   "id": "text-016",
+   "inkBounds": {
+    "height": 45,
+    "width": 905,
+    "x": 411,
+    "y": 409
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 61,
+   "measurementId": "desktop.web-biomechanics-workspace.text-016",
+   "ocrConfidence": 41.89,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 70.34,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-016",
+   "style": "h1",
+   "text": "| Mea 1-18 COACHING SIGHTS",
+   "type": "text",
+   "visibleGlyphHeight": 45,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 427,
+   "bounds": {
+    "height": 9,
+    "width": 25,
+    "x": 35,
+    "y": 418
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 11,
+   "fontWeight": 500,
+   "generatedObservedText": "oats",
+   "id": "text-017",
+   "inkBounds": {
+    "height": 9,
+    "width": 25,
+    "x": 35,
+    "y": 418
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 12,
+   "measurementId": "desktop.web-biomechanics-workspace.text-017",
+   "ocrConfidence": 50.9,
+   "owningRegion": "sidebar",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "caption",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-017",
+   "style": "caption",
+   "text": "oats",
+   "type": "text",
+   "visibleGlyphHeight": 9,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 455,
+   "bounds": {
+    "height": 12,
+    "width": 410,
+    "x": 825,
+    "y": 443
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 15,
+   "fontWeight": 500,
+   "generatedObservedText": "a pass",
+   "id": "text-018",
+   "inkBounds": {
+    "height": 12,
+    "width": 410,
+    "x": 825,
+    "y": 443
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 16,
+   "measurementId": "desktop.web-biomechanics-workspace.text-018",
+   "ocrConfidence": 61.78,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 57.35,
+   "referenceTextMatched": true,
+   "semanticRole": "caption",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-018",
+   "style": "caption",
+   "text": "== a 8'6\"-9'2\" a 1%",
+   "type": "text",
+   "visibleGlyphHeight": 12,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 506,
+   "bounds": {
+    "height": 27,
+    "width": 34,
+    "x": 1001,
+    "y": 479
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 34,
+   "fontWeight": 400,
+   "generatedObservedText": "tr",
+   "id": "text-019",
+   "inkBounds": {
+    "height": 27,
+    "width": 34,
+    "x": 1001,
+    "y": 479
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 36,
+   "measurementId": "desktop.web-biomechanics-workspace.text-019",
+   "ocrConfidence": 49.29,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 50.62,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-019",
+   "style": "body",
+   "text": "1} 24.6\" eed \u00a9 Soil atgnment at release",
+   "type": "text",
+   "visibleGlyphHeight": 27,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 514,
+   "bounds": {
+    "height": 11,
+    "width": 285,
+    "x": 987,
+    "y": 503
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 14,
+   "fontWeight": 500,
+   "generatedObservedText": "West 1416 COACHING INSIGHTS",
+   "id": "text-020",
+   "inkBounds": {
+    "height": 11,
+    "width": 285,
+    "x": 987,
+    "y": 503
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 15,
+   "measurementId": "desktop.web-biomechanics-workspace.text-020",
+   "ocrConfidence": 72.46,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 54.54,
+   "referenceTextMatched": true,
+   "semanticRole": "caption",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-020",
+   "style": "caption",
+   "text": "ew cont moe ae casey",
+   "type": "text",
+   "visibleGlyphHeight": 11,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 559,
+   "bounds": {
+    "height": 43,
+    "width": 1278,
+    "x": 39,
+    "y": 516
+   },
+   "color": "ink",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 54,
+   "fontWeight": 900,
+   "generatedObservedText": "a \u201cSa 1p 248\" ol \u00a9 sol signer tase",
+   "id": "text-021",
+   "inkBounds": {
+    "height": 43,
+    "width": 1278,
+    "x": 39,
+    "y": 516
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 58,
+   "measurementId": "desktop.web-biomechanics-workspace.text-021",
+   "ocrConfidence": 48.47,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 44.77,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-021",
+   "style": "h1",
+   "text": "a uae Ew vckng sina good range",
+   "type": "text",
+   "visibleGlyphHeight": 43,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 565,
+   "bounds": {
+    "height": 33,
+    "width": 367,
+    "x": 985,
+    "y": 532
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 41,
+   "fontWeight": 900,
+   "generatedObservedText": "uae Ehow takings ina goed ange.",
+   "id": "text-022",
+   "inkBounds": {
+    "height": 33,
+    "width": 367,
+    "x": 985,
+    "y": 532
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 45,
+   "measurementId": "desktop.web-biomechanics-workspace.text-022",
+   "ocrConfidence": 52.52,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 57.75,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-022",
+   "style": "h2",
+   "text": "D> Ae 82 epg bl ce",
+   "type": "text",
+   "visibleGlyphHeight": 33,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 596,
+   "bounds": {
+    "height": 33,
+    "width": 911,
+    "x": 422,
+    "y": 563
+   },
+   "color": "ink",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 41,
+   "fontWeight": 900,
+   "generatedObservedText": "Vit : 5 Slightly high lease distance",
+   "id": "text-023",
+   "inkBounds": {
+    "height": 33,
+    "width": 911,
+    "x": 422,
+    "y": 563
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 45,
+   "measurementId": "desktop.web-biomechanics-workspace.text-023",
+   "ocrConfidence": 53.44,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 69.31,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-023",
+   "style": "h2",
+   "text": "WAY | = 45 Centerline Deviation 1.8\u00b0 Good \u00a9 Continue to maintain vertical itt",
+   "type": "text",
+   "visibleGlyphHeight": 33,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 579,
+   "bounds": {
+    "height": 9,
+    "width": 28,
+    "x": 34,
+    "y": 570
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 11,
+   "fontWeight": 500,
+   "generatedObservedText": "ows",
+   "id": "text-024",
+   "inkBounds": {
+    "height": 9,
+    "width": 28,
+    "x": 34,
+    "y": 570
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 12,
+   "measurementId": "desktop.web-biomechanics-workspace.text-024",
+   "ocrConfidence": 67.33,
+   "owningRegion": "sidebar",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "caption",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-024",
+   "style": "caption",
+   "text": "ows",
+   "type": "text",
+   "visibleGlyphHeight": 9,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 610,
+   "bounds": {
+    "height": 36,
+    "width": 527,
+    "x": 817,
+    "y": 574
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 45,
+   "fontWeight": 900,
+   "generatedObservedText": "D> Shooting Ae 52 Good tl ri",
+   "id": "text-025",
+   "inkBounds": {
+    "height": 36,
+    "width": 527,
+    "x": 817,
+    "y": 574
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 49,
+   "measurementId": "desktop.web-biomechanics-workspace.text-025",
+   "ocrConfidence": 52.14,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "h2",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-025",
+   "style": "h2",
+   "text": "D> Shooting Ae 52 Good tl ri",
+   "type": "text",
+   "visibleGlyphHeight": 36,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 632,
+   "bounds": {
+    "height": 27,
+    "width": 811,
+    "x": 438,
+    "y": 605
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 34,
+   "fontWeight": 400,
+   "generatedObservedText": "a Wea 45-55 poe,",
+   "id": "text-026",
+   "inkBounds": {
+    "height": 27,
+    "width": 811,
+    "x": 438,
+    "y": 605
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 36,
+   "measurementId": "desktop.web-biomechanics-workspace.text-026",
+   "ocrConfidence": 27.71,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 67.39,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-026",
+   "style": "body",
+   "text": "= <= Tighten Elbow Path",
+   "type": "text",
+   "visibleGlyphHeight": 27,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 657,
+   "bounds": {
+    "height": 30,
+    "width": 1322,
+    "x": 29,
+    "y": 627
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 38,
+   "fontWeight": 900,
+   "generatedObservedText": "caries = CQ SSS \u2014\u2014 18\u00b0 ood \u00a9 Contin to maintain it",
+   "id": "text-027",
+   "inkBounds": {
+    "height": 30,
+    "width": 1322,
+    "x": 29,
+    "y": 627
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 40,
+   "measurementId": "desktop.web-biomechanics-workspace.text-027",
+   "ocrConfidence": 52.51,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 43.76,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-027",
+   "style": "h2",
+   "text": "em \u2014 . ve to vera",
+   "type": "text",
+   "visibleGlyphHeight": 30,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 699,
+   "bounds": {
+    "height": 10,
+    "width": 80,
+    "x": 1182,
+    "y": 689
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 12,
+   "fontWeight": 500,
+   "generatedObservedText": "sis ons",
+   "id": "text-028",
+   "inkBounds": {
+    "height": 10,
+    "width": 80,
+    "x": 1182,
+    "y": 689
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 14,
+   "measurementId": "desktop.web-biomechanics-workspace.text-028",
+   "ocrConfidence": 44.71,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 42.93,
+   "referenceTextMatched": true,
+   "semanticRole": "caption",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-028",
+   "style": "caption",
+   "text": "1.) te",
+   "type": "text",
+   "visibleGlyphHeight": 10,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 735,
+   "bounds": {
+    "height": 26,
+    "width": 938,
+    "x": 413,
+    "y": 709
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 32,
+   "fontWeight": 400,
+   "generatedObservedText": "\u2014\u2014 SS SES Tighten Elbow Path",
+   "id": "text-029",
+   "inkBounds": {
+    "height": 26,
+    "width": 938,
+    "x": 413,
+    "y": 709
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 35,
+   "measurementId": "desktop.web-biomechanics-workspace.text-029",
+   "ocrConfidence": 61.24,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "body",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-029",
+   "style": "body",
+   "text": "\u2014\u2014 SS SES Tighten Elbow Path",
+   "type": "text",
+   "visibleGlyphHeight": 26,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 751,
+   "bounds": {
+    "height": 33,
+    "width": 1062,
+    "x": 301,
+    "y": 718
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 41,
+   "fontWeight": 900,
+   "generatedObservedText": "= Overall Confidence 93% werk on heping the bal",
+   "id": "text-030",
+   "inkBounds": {
+    "height": 33,
+    "width": 1062,
+    "x": 301,
+    "y": 718
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 45,
+   "measurementId": "desktop.web-biomechanics-workspace.text-030",
+   "ocrConfidence": 66.3,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 37.86,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-030",
+   "style": "h2",
+   "text": "Fe ee if oe ee ew lated dite >",
+   "type": "text",
+   "visibleGlyphHeight": 33,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 769,
+   "bounds": {
+    "height": 34,
+    "width": 253,
+    "x": 1105,
+    "y": 735
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 42,
+   "fontWeight": 900,
+   "generatedObservedText": "a GO )) yor cretion",
+   "id": "text-031",
+   "inkBounds": {
+    "height": 34,
+    "width": 253,
+    "x": 1105,
+    "y": 735
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 46,
+   "measurementId": "desktop.web-biomechanics-workspace.text-031",
+   "ocrConfidence": 42.2,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "h2",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-031",
+   "style": "h2",
+   "text": "a GO )) yor cretion",
+   "type": "text",
+   "visibleGlyphHeight": 34,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 789,
+   "bounds": {
+    "height": 40,
+    "width": 1181,
+    "x": 156,
+    "y": 749
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 50,
+   "fontWeight": 900,
+   "generatedObservedText": "Bele = = se through the ase",
+   "id": "text-032",
+   "inkBounds": {
+    "height": 40,
+    "width": 1181,
+    "x": 156,
+    "y": 749
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 54,
+   "measurementId": "desktop.web-biomechanics-workspace.text-032",
+   "ocrConfidence": 54.78,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 50.63,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-032",
+   "style": "h2",
+   "text": "- =: : ~ | = Pose 85H OT)",
+   "type": "text",
+   "visibleGlyphHeight": 40,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 799,
+   "bounds": {
+    "height": 16,
+    "width": 821,
+    "x": 179,
+    "y": 783
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 20,
+   "fontWeight": 400,
+   "generatedObservedText": "9 wii\") Sar.\u2019 i pea",
+   "id": "text-033",
+   "inkBounds": {
+    "height": 16,
+    "width": 821,
+    "x": 179,
+    "y": 783
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 22,
+   "measurementId": "desktop.web-biomechanics-workspace.text-033",
+   "ocrConfidence": 36.14,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 50.3,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-033",
+   "style": "body",
+   "text": "< i) = i ail \u201c| Join Visibility a 1915:",
+   "type": "text",
+   "visibleGlyphHeight": 16,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 807,
+   "bounds": {
+    "height": 19,
+    "width": 1008,
+    "x": 115,
+    "y": 788
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 24,
+   "fontWeight": 400,
+   "generatedObservedText": "< - = = aan! an > Joint Visibility 1%",
+   "id": "text-034",
+   "inkBounds": {
+    "height": 19,
+    "width": 1008,
+    "x": 115,
+    "y": 788
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 26,
+   "measurementId": "desktop.web-biomechanics-workspace.text-034",
+   "ocrConfidence": 63.04,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "body",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-034",
+   "style": "body",
+   "text": "< - = = aan! an > Joint Visibility 1%",
+   "type": "text",
+   "visibleGlyphHeight": 19,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 865,
+   "bounds": {
+    "height": 45,
+    "width": 1295,
+    "x": 40,
+    "y": 820
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 56,
+   "fontWeight": 900,
+   "generatedObservedText": "\u00a9 ee he oa View related dls >",
+   "id": "text-035",
+   "inkBounds": {
+    "height": 45,
+    "width": 1295,
+    "x": 40,
+    "y": 820
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 61,
+   "measurementId": "desktop.web-biomechanics-workspace.text-035",
+   "ocrConfidence": 51.01,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 45.03,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-035",
+   "style": "h1",
+   "text": "7 = - = overall Confidence [I",
+   "type": "text",
+   "visibleGlyphHeight": 45,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 833,
+   "bounds": {
+    "height": 11,
+    "width": 535,
+    "x": 174,
+    "y": 822
+   },
+   "color": "ink",
+   "fontFamily": "Inter",
+   "fontSize": 14,
+   "fontWeight": 500,
+   "generatedObservedText": "\\ \\ \\",
+   "id": "text-036",
+   "inkBounds": {
+    "height": 11,
+    "width": 535,
+    "x": 174,
+    "y": 822
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 15,
+   "measurementId": "desktop.web-biomechanics-workspace.text-036",
+   "ocrConfidence": 61.7,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 53.86,
+   "referenceTextMatched": true,
+   "semanticRole": "caption",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-036",
+   "style": "caption",
+   "text": "\\ \\ \\ i,",
+   "type": "text",
+   "visibleGlyphHeight": 11,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 880,
+   "bounds": {
+    "height": 8,
+    "width": 18,
+    "x": 39,
+    "y": 872
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 10,
+   "fontWeight": 500,
+   "generatedObservedText": "var",
+   "id": "text-037",
+   "inkBounds": {
+    "height": 8,
+    "width": 18,
+    "x": 39,
+    "y": 872
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 12,
+   "measurementId": "desktop.web-biomechanics-workspace.text-037",
+   "ocrConfidence": 46.48,
+   "owningRegion": "sidebar",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 63.3,
+   "referenceTextMatched": true,
+   "semanticRole": "caption",
+   "sourceKey": "desktop.web-biomechanics-workspace.text-037",
+   "style": "caption",
+   "text": "wap",
+   "type": "text",
+   "visibleGlyphHeight": 8,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "assetRef": "app.shotiq.photo.athlete-frame",
+   "bounds": {
+    "height": 182,
+    "width": 321,
+    "x": 130,
+    "y": 282
+   },
+   "componentRef": "app.shotiq.media.analysis-frame",
+   "fit": "cover",
+   "id": "visual-001",
+   "inkBounds": {
+    "height": 182,
+    "width": 321,
+    "x": 130,
+    "y": 282
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-001",
+   "objectPosition": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-001",
+   "type": "photo",
+   "zIndex": 2
+  },
+  {
+   "assetRef": "app.shotiq.photo.athlete-frame",
+   "bounds": {
+    "height": 174,
+    "width": 146,
+    "x": 460,
+    "y": 282
+   },
+   "componentRef": "app.shotiq.media.analysis-frame",
+   "fit": "cover",
+   "id": "visual-002",
+   "inkBounds": {
+    "height": 174,
+    "width": 146,
+    "x": 460,
+    "y": 282
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-002",
+   "objectPosition": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-002",
+   "type": "photo",
+   "zIndex": 2
+  },
+  {
+   "assetRef": "app.shotiq.photo.athlete-frame",
+   "bounds": {
+    "height": 122,
+    "width": 198,
+    "x": 344,
+    "y": 738
+   },
+   "componentRef": "app.shotiq.media.analysis-frame",
+   "fit": "cover",
+   "id": "visual-003",
+   "inkBounds": {
+    "height": 122,
+    "width": 198,
+    "x": 344,
+    "y": 738
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-003",
+   "objectPosition": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-003",
+   "type": "photo",
+   "zIndex": 2
+  },
+  {
+   "assetRef": "app.shotiq.photo.athlete-frame",
+   "bounds": {
+    "height": 155,
+    "width": 153,
+    "x": 453,
+    "y": 337
+   },
+   "componentRef": "app.shotiq.media.analysis-frame",
+   "fit": "cover",
+   "id": "visual-004",
+   "inkBounds": {
+    "height": 155,
+    "width": 153,
+    "x": 453,
+    "y": 337
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-004",
+   "objectPosition": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-004",
+   "type": "photo",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "ink",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 75,
+    "width": 134,
+    "x": 473,
+    "y": 462
+   },
+   "cornerRadius": "card",
+   "id": "visual-005",
+   "inkBounds": {
+    "height": 75,
+    "width": 134,
+    "x": 473,
+    "y": 462
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-005",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-005",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 185,
+    "width": 53,
+    "x": 605,
+    "y": 282
+   },
+   "cornerRadius": "card",
+   "id": "visual-006",
+   "inkBounds": {
+    "height": 185,
+    "width": 53,
+    "x": 605,
+    "y": 282
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-006",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-006",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "muted",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 161,
+    "width": 55,
+    "x": 658,
+    "y": 280
+   },
+   "cornerRadius": "card",
+   "id": "visual-007",
+   "inkBounds": {
+    "height": 161,
+    "width": 55,
+    "x": 658,
+    "y": 280
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-007",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-007",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 96,
+    "width": 65,
+    "x": 677,
+    "y": 757
+   },
+   "cornerRadius": "card",
+   "id": "visual-008",
+   "inkBounds": {
+    "height": 96,
+    "width": 65,
+    "x": 677,
+    "y": 757
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-008",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-008",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 96,
+    "width": 65,
+    "x": 610,
+    "y": 757
+   },
+   "cornerRadius": "card",
+   "id": "visual-009",
+   "inkBounds": {
+    "height": 96,
+    "width": 65,
+    "x": 610,
+    "y": 757
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-009",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-009",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 96,
+    "width": 65,
+    "x": 278,
+    "y": 757
+   },
+   "cornerRadius": "card",
+   "id": "visual-010",
+   "inkBounds": {
+    "height": 96,
+    "width": 65,
+    "x": 278,
+    "y": 757
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-010",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-010",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 96,
+    "width": 64,
+    "x": 544,
+    "y": 757
+   },
+   "cornerRadius": "card",
+   "id": "visual-011",
+   "inkBounds": {
+    "height": 96,
+    "width": 64,
+    "x": 544,
+    "y": 757
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-011",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-011",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 96,
+    "width": 64,
+    "x": 212,
+    "y": 757
+   },
+   "cornerRadius": "card",
+   "id": "visual-012",
+   "inkBounds": {
+    "height": 96,
+    "width": 64,
+    "x": 212,
+    "y": 757
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-012",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-012",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 96,
+    "width": 63,
+    "x": 147,
+    "y": 757
+   },
+   "cornerRadius": "card",
+   "id": "visual-013",
+   "inkBounds": {
+    "height": 96,
+    "width": 63,
+    "x": 147,
+    "y": 757
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-013",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-013",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "muted",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 15,
+    "width": 388,
+    "x": 255,
+    "y": 698
+   },
+   "cornerRadius": "card",
+   "id": "visual-014",
+   "inkBounds": {
+    "height": 15,
+    "width": 388,
+    "x": 255,
+    "y": 698
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-014",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-014",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "shotiqOrange",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 30,
+    "width": 185,
+    "x": 1189,
+    "y": 789
+   },
+   "componentRef": "app.shotiq.action.primary",
+   "cornerRadius": "control",
+   "id": "visual-015",
+   "inkBounds": {
+    "height": 30,
+    "width": 185,
+    "x": 1189,
+    "y": 789
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-015",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-015",
+   "type": "button",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "ink",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 90,
+    "width": 52,
+    "x": 726,
+    "y": 486
+   },
+   "cornerRadius": "card",
+   "id": "visual-016",
+   "inkBounds": {
+    "height": 90,
+    "width": 52,
+    "x": 726,
+    "y": 486
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-016",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-016",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "ink",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 82,
+    "width": 51,
+    "x": 402,
+    "y": 467
+   },
+   "cornerRadius": "card",
+   "id": "visual-017",
+   "inkBounds": {
+    "height": 82,
+    "width": 51,
+    "x": 402,
+    "y": 467
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-017",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-017",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 61,
+    "width": 61,
+    "x": 1184,
+    "y": 716
+   },
+   "id": "visual-018",
+   "inkBounds": {
+    "height": 61,
+    "width": 61,
+    "x": 1184,
+    "y": 716
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-018",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-018",
+   "stroke": "warmCanvas",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "ink",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 10,
+    "width": 322,
+    "x": 457,
+    "y": 602
+   },
+   "cornerRadius": "card",
+   "id": "visual-019",
+   "inkBounds": {
+    "height": 10,
+    "width": 322,
+    "x": 457,
+    "y": 602
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-019",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-019",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "ink",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 17,
+    "width": 185,
+    "x": 128,
+    "y": 600
+   },
+   "cornerRadius": "card",
+   "id": "visual-020",
+   "inkBounds": {
+    "height": 17,
+    "width": 185,
+    "x": 128,
+    "y": 600
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-020",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-020",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 57,
+    "width": 44,
+    "x": 428,
+    "y": 607
+   },
+   "id": "visual-021",
+   "inkBounds": {
+    "height": 57,
+    "width": 44,
+    "x": 428,
+    "y": 607
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-021",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-021",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 23,
+    "width": 109,
+    "x": 422,
+    "y": 283
+   },
+   "cornerRadius": "card",
+   "id": "visual-022",
+   "inkBounds": {
+    "height": 23,
+    "width": 109,
+    "x": 422,
+    "y": 283
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-022",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-022",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 50,
+    "width": 49,
+    "x": 387,
+    "y": 618
+   },
+   "id": "visual-023",
+   "inkBounds": {
+    "height": 50,
+    "width": 49,
+    "x": 387,
+    "y": 618
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-023",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-023",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 13,
+    "width": 124,
+    "x": 207,
+    "y": 658
+   },
+   "cornerRadius": "card",
+   "id": "visual-024",
+   "inkBounds": {
+    "height": 13,
+    "width": 124,
+    "x": 207,
+    "y": 658
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-024",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-024",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 32,
+    "width": 40,
+    "x": 457,
+    "y": 635
+   },
+   "id": "visual-025",
+   "inkBounds": {
+    "height": 32,
+    "width": 40,
+    "x": 457,
+    "y": 635
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-025",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-025",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 18,
+    "width": 71,
+    "x": 1184,
+    "y": 396
+   },
+   "id": "visual-026",
+   "inkBounds": {
+    "height": 18,
+    "width": 71,
+    "x": 1184,
+    "y": 396
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-026",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-026",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "ink",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 91,
+    "width": 14,
+    "x": 429,
+    "y": 381
+   },
+   "cornerRadius": "card",
+   "id": "visual-027",
+   "inkBounds": {
+    "height": 91,
+    "width": 14,
+    "x": 429,
+    "y": 381
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-027",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-027",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 35,
+    "width": 35,
+    "x": 203,
+    "y": 687
+   },
+   "id": "visual-028",
+   "inkBounds": {
+    "height": 35,
+    "width": 35,
+    "x": 203,
+    "y": 687
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-028",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-028",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 96,
+    "width": 12,
+    "x": 744,
+    "y": 757
+   },
+   "cornerRadius": "card",
+   "id": "visual-029",
+   "inkBounds": {
+    "height": 96,
+    "width": 12,
+    "x": 744,
+    "y": 757
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-029",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-029",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "ink",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 13,
+    "width": 86,
+    "x": 313,
+    "y": 461
+   },
+   "cornerRadius": "card",
+   "id": "visual-030",
+   "inkBounds": {
+    "height": 13,
+    "width": 86,
+    "x": 313,
+    "y": 461
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-030",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-030",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "rule",
+   "borderWidth": 7,
+   "bounds": {
+    "height": 7,
+    "width": 153,
+    "x": 254,
+    "y": 604
+   },
+   "id": "visual-031",
+   "inkBounds": {
+    "height": 7,
+    "width": 153,
+    "x": 254,
+    "y": 604
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-031",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-031",
+   "type": "divider",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 44,
+    "width": 23,
+    "x": 443,
+    "y": 484
+   },
+   "id": "visual-032",
+   "inkBounds": {
+    "height": 44,
+    "width": 23,
+    "x": 443,
+    "y": 484
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-032",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-032",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 69,
+    "width": 14,
+    "x": 410,
+    "y": 535
+   },
+   "id": "visual-033",
+   "inkBounds": {
+    "height": 69,
+    "width": 14,
+    "x": 410,
+    "y": 535
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-033",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-033",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 96,
+    "width": 10,
+    "x": 136,
+    "y": 757
+   },
+   "cornerRadius": "card",
+   "id": "visual-034",
+   "inkBounds": {
+    "height": 96,
+    "width": 10,
+    "x": 136,
+    "y": 757
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-034",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-034",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "rule",
+   "borderWidth": 5,
+   "bounds": {
+    "height": 5,
+    "width": 156,
+    "x": 127,
+    "y": 658
+   },
+   "id": "visual-035",
+   "inkBounds": {
+    "height": 5,
+    "width": 156,
+    "x": 127,
+    "y": 658
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-035",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-035",
+   "type": "divider",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 9,
+    "width": 82,
+    "x": 133,
+    "y": 678
+   },
+   "cornerRadius": "card",
+   "id": "visual-036",
+   "inkBounds": {
+    "height": 9,
+    "width": 82,
+    "x": 133,
+    "y": 678
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-036",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-036",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "rule",
+   "borderWidth": 5,
+   "bounds": {
+    "height": 5,
+    "width": 122,
+    "x": 1185,
+    "y": 459
+   },
+   "id": "visual-037",
+   "inkBounds": {
+    "height": 5,
+    "width": 122,
+    "x": 1185,
+    "y": 459
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-037",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-037",
+   "type": "divider",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 64,
+    "x": 384,
+    "y": 688
+   },
+   "id": "visual-038",
+   "inkBounds": {
+    "height": 9,
+    "width": 64,
+    "x": 384,
+    "y": 688
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-038",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-038",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 35,
+    "width": 15,
+    "x": 426,
+    "y": 635
+   },
+   "id": "visual-039",
+   "inkBounds": {
+    "height": 35,
+    "width": 15,
+    "x": 426,
+    "y": 635
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-039",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-039",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 25,
+    "width": 21,
+    "x": 406,
+    "y": 605
+   },
+   "id": "visual-040",
+   "inkBounds": {
+    "height": 25,
+    "width": 21,
+    "x": 406,
+    "y": 605
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-040",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-040",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 23,
+    "width": 22,
+    "x": 37,
+    "y": 386
+   },
+   "id": "visual-041",
+   "inkBounds": {
+    "height": 23,
+    "width": 22,
+    "x": 37,
+    "y": 386
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-041",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-041",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 15,
+    "width": 30,
+    "x": 441,
+    "y": 651
+   },
+   "id": "visual-042",
+   "inkBounds": {
+    "height": 15,
+    "width": 30,
+    "x": 441,
+    "y": 651
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-042",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-042",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 21,
+    "width": 20,
+    "x": 39,
+    "y": 612
+   },
+   "id": "visual-043",
+   "inkBounds": {
+    "height": 21,
+    "width": 20,
+    "x": 39,
+    "y": 612
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-043",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-043",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 64,
+    "width": 6,
+    "x": 663,
+    "y": 492
+   },
+   "id": "visual-044",
+   "inkBounds": {
+    "height": 64,
+    "width": 6,
+    "x": 663,
+    "y": 492
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-044",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-044",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "rule",
+   "borderWidth": 4,
+   "bounds": {
+    "height": 4,
+    "width": 94,
+    "x": 314,
+    "y": 601
+   },
+   "id": "visual-045",
+   "inkBounds": {
+    "height": 4,
+    "width": 94,
+    "x": 314,
+    "y": 601
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-045",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-045",
+   "type": "divider",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "rule",
+   "borderWidth": 5,
+   "bounds": {
+    "height": 5,
+    "width": 74,
+    "x": 592,
+    "y": 685
+   },
+   "id": "visual-046",
+   "inkBounds": {
+    "height": 5,
+    "width": 74,
+    "x": 592,
+    "y": 685
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-046",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-046",
+   "type": "divider",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "rule",
+   "borderWidth": 6,
+   "bounds": {
+    "height": 6,
+    "width": 61,
+    "x": 306,
+    "y": 710
+   },
+   "id": "visual-047",
+   "inkBounds": {
+    "height": 6,
+    "width": 61,
+    "x": 306,
+    "y": 710
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-047",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-047",
+   "type": "divider",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 19,
+    "width": 19,
+    "x": 40,
+    "y": 96
+   },
+   "id": "visual-048",
+   "inkBounds": {
+    "height": 19,
+    "width": 19,
+    "x": 40,
+    "y": 96
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-048",
+   "owningRegion": "topbar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-048",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 32,
+    "x": 859,
+    "y": 482
+   },
+   "id": "visual-049",
+   "inkBounds": {
+    "height": 11,
+    "width": 32,
+    "x": 859,
+    "y": 482
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-049",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-049",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 35,
+    "x": 1268,
+    "y": 656
+   },
+   "id": "visual-050",
+   "inkBounds": {
+    "height": 10,
+    "width": 35,
+    "x": 1268,
+    "y": 656
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-050",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-050",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 18,
+    "width": 19,
+    "x": 40,
+    "y": 467
+   },
+   "id": "visual-051",
+   "inkBounds": {
+    "height": 18,
+    "width": 19,
+    "x": 40,
+    "y": 467
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-051",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-051",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 27,
+    "width": 12,
+    "x": 427,
+    "y": 580
+   },
+   "id": "visual-052",
+   "inkBounds": {
+    "height": 27,
+    "width": 12,
+    "x": 427,
+    "y": 580
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-052",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-052",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "rule",
+   "borderWidth": 6,
+   "bounds": {
+    "height": 6,
+    "width": 51,
+    "x": 848,
+    "y": 165
+   },
+   "id": "visual-053",
+   "inkBounds": {
+    "height": 6,
+    "width": 51,
+    "x": 848,
+    "y": 165
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-053",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-053",
+   "type": "divider",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 12,
+    "width": 25,
+    "x": 815,
+    "y": 488
+   },
+   "id": "visual-054",
+   "inkBounds": {
+    "height": 12,
+    "width": 25,
+    "x": 815,
+    "y": 488
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-054",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-054",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 20,
+    "width": 15,
+    "x": 441,
+    "y": 465
+   },
+   "id": "visual-055",
+   "inkBounds": {
+    "height": 20,
+    "width": 15,
+    "x": 441,
+    "y": 465
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-055",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-055",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 33,
+    "x": 900,
+    "y": 484
+   },
+   "id": "visual-056",
+   "inkBounds": {
+    "height": 9,
+    "width": 33,
+    "x": 900,
+    "y": 484
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-056",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-056",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 32,
+    "width": 9,
+    "x": 399,
+    "y": 469
+   },
+   "id": "visual-057",
+   "inkBounds": {
+    "height": 32,
+    "width": 9,
+    "x": 399,
+    "y": 469
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-057",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-057",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 26,
+    "x": 45,
+    "y": 268
+   },
+   "id": "visual-058",
+   "inkBounds": {
+    "height": 11,
+    "width": 26,
+    "x": 45,
+    "y": 268
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-058",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-058",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 22,
+    "x": 1260,
+    "y": 359
+   },
+   "id": "visual-059",
+   "inkBounds": {
+    "height": 11,
+    "width": 22,
+    "x": 1260,
+    "y": 359
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-059",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-059",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "rule",
+   "borderWidth": 4,
+   "bounds": {
+    "height": 4,
+    "width": 60,
+    "x": 327,
+    "y": 55
+   },
+   "id": "visual-060",
+   "inkBounds": {
+    "height": 4,
+    "width": 60,
+    "x": 327,
+    "y": 55
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-060",
+   "owningRegion": "topbar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-060",
+   "type": "divider",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 21,
+    "x": 893,
+    "y": 697
+   },
+   "id": "visual-061",
+   "inkBounds": {
+    "height": 11,
+    "width": 21,
+    "x": 893,
+    "y": 697
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-061",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-061",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 16,
+    "x": 1243,
+    "y": 356
+   },
+   "id": "visual-062",
+   "inkBounds": {
+    "height": 14,
+    "width": 16,
+    "x": 1243,
+    "y": 356
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-062",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-062",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 23,
+    "x": 1026,
+    "y": 449
+   },
+   "id": "visual-063",
+   "inkBounds": {
+    "height": 9,
+    "width": 23,
+    "x": 1026,
+    "y": 449
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-063",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-063",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "rule",
+   "borderWidth": 4,
+   "bounds": {
+    "height": 4,
+    "width": 51,
+    "x": 359,
+    "y": 667
+   },
+   "id": "visual-064",
+   "inkBounds": {
+    "height": 4,
+    "width": 51,
+    "x": 359,
+    "y": 667
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-064",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-064",
+   "type": "divider",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "rule",
+   "borderWidth": 4,
+   "bounds": {
+    "height": 4,
+    "width": 50,
+    "x": 346,
+    "y": 622
+   },
+   "id": "visual-065",
+   "inkBounds": {
+    "height": 4,
+    "width": 50,
+    "x": 346,
+    "y": 622
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-065",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-065",
+   "type": "divider",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 18,
+    "x": 1078,
+    "y": 485
+   },
+   "id": "visual-066",
+   "inkBounds": {
+    "height": 11,
+    "width": 18,
+    "x": 1078,
+    "y": 485
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-066",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-066",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 22,
+    "x": 992,
+    "y": 656
+   },
+   "id": "visual-067",
+   "inkBounds": {
+    "height": 9,
+    "width": 22,
+    "x": 992,
+    "y": 656
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-067",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-067",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 22,
+    "x": 986,
+    "y": 400
+   },
+   "id": "visual-068",
+   "inkBounds": {
+    "height": 9,
+    "width": 22,
+    "x": 986,
+    "y": 400
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-068",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-068",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 22,
+    "x": 984,
+    "y": 449
+   },
+   "id": "visual-069",
+   "inkBounds": {
+    "height": 9,
+    "width": 22,
+    "x": 984,
+    "y": 449
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-069",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-069",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 22,
+    "x": 52,
+    "y": 123
+   },
+   "id": "visual-070",
+   "inkBounds": {
+    "height": 9,
+    "width": 22,
+    "x": 52,
+    "y": 123
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-070",
+   "owningRegion": "topbar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-070",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 14,
+    "x": 1184,
+    "y": 356
+   },
+   "id": "visual-071",
+   "inkBounds": {
+    "height": 14,
+    "width": 14,
+    "x": 1184,
+    "y": 356
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-071",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-071",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "rule",
+   "borderWidth": 4,
+   "bounds": {
+    "height": 4,
+    "width": 49,
+    "x": 541,
+    "y": 680
+   },
+   "id": "visual-072",
+   "inkBounds": {
+    "height": 4,
+    "width": 49,
+    "x": 541,
+    "y": 680
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-072",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-072",
+   "type": "divider",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "rule",
+   "borderWidth": 4,
+   "bounds": {
+    "height": 4,
+    "width": 48,
+    "x": 462,
+    "y": 674
+   },
+   "id": "visual-073",
+   "inkBounds": {
+    "height": 4,
+    "width": 48,
+    "x": 462,
+    "y": 674
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-073",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-073",
+   "type": "divider",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 21,
+    "x": 1245,
+    "y": 655
+   },
+   "id": "visual-074",
+   "inkBounds": {
+    "height": 9,
+    "width": 21,
+    "x": 1245,
+    "y": 655
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-074",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-074",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "rule",
+   "borderWidth": 4,
+   "bounds": {
+    "height": 4,
+    "width": 46,
+    "x": 169,
+    "y": 671
+   },
+   "id": "visual-075",
+   "inkBounds": {
+    "height": 4,
+    "width": 46,
+    "x": 169,
+    "y": 671
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-075",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-075",
+   "type": "divider",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 20,
+    "x": 1227,
+    "y": 655
+   },
+   "id": "visual-076",
+   "inkBounds": {
+    "height": 9,
+    "width": 20,
+    "x": 1227,
+    "y": 655
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-076",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-076",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 18,
+    "x": 1024,
+    "y": 399
+   },
+   "id": "visual-077",
+   "inkBounds": {
+    "height": 10,
+    "width": 18,
+    "x": 1024,
+    "y": 399
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-077",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-077",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 16,
+    "x": 876,
+    "y": 697
+   },
+   "id": "visual-078",
+   "inkBounds": {
+    "height": 11,
+    "width": 16,
+    "x": 876,
+    "y": 697
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-078",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-078",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 16,
+    "x": 817,
+    "y": 697
+   },
+   "id": "visual-079",
+   "inkBounds": {
+    "height": 11,
+    "width": 16,
+    "x": 817,
+    "y": 697
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-079",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-079",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 19,
+    "x": 670,
+    "y": 701
+   },
+   "id": "visual-080",
+   "inkBounds": {
+    "height": 9,
+    "width": 19,
+    "x": 670,
+    "y": 701
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-080",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-080",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 12,
+    "width": 14,
+    "x": 1373,
+    "y": 455
+   },
+   "id": "visual-081",
+   "inkBounds": {
+    "height": 12,
+    "width": 14,
+    "x": 1373,
+    "y": 455
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-081",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-081",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 15,
+    "x": 1276,
+    "y": 359
+   },
+   "id": "visual-082",
+   "inkBounds": {
+    "height": 11,
+    "width": 15,
+    "x": 1276,
+    "y": 359
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-082",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-082",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 15,
+    "x": 837,
+    "y": 697
+   },
+   "id": "visual-083",
+   "inkBounds": {
+    "height": 11,
+    "width": 15,
+    "x": 837,
+    "y": 697
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-083",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-083",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 16,
+    "x": 855,
+    "y": 106
+   },
+   "id": "visual-084",
+   "inkBounds": {
+    "height": 10,
+    "width": 16,
+    "x": 855,
+    "y": 106
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-084",
+   "owningRegion": "topbar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-084",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "rule",
+   "borderWidth": 4,
+   "bounds": {
+    "height": 4,
+    "width": 39,
+    "x": 323,
+    "y": 655
+   },
+   "id": "visual-085",
+   "inkBounds": {
+    "height": 4,
+    "width": 39,
+    "x": 323,
+    "y": 655
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-085",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-085",
+   "type": "divider",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 17,
+    "width": 9,
+    "x": 1282,
+    "y": 133
+   },
+   "id": "visual-086",
+   "inkBounds": {
+    "height": 17,
+    "width": 9,
+    "x": 1282,
+    "y": 133
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-086",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-086",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 17,
+    "x": 1008,
+    "y": 449
+   },
+   "id": "visual-087",
+   "inkBounds": {
+    "height": 9,
+    "width": 17,
+    "x": 1008,
+    "y": 449
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-087",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-087",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "rule",
+   "borderWidth": 5,
+   "bounds": {
+    "height": 5,
+    "width": 30,
+    "x": 401,
+    "y": 668
+   },
+   "id": "visual-088",
+   "inkBounds": {
+    "height": 5,
+    "width": 30,
+    "x": 401,
+    "y": 668
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-088",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-088",
+   "type": "divider",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 15,
+    "x": 36,
+    "y": 122
+   },
+   "id": "visual-089",
+   "inkBounds": {
+    "height": 10,
+    "width": 15,
+    "x": 36,
+    "y": 122
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-089",
+   "owningRegion": "topbar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-089",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 16,
+    "x": 1209,
+    "y": 655
+   },
+   "id": "visual-090",
+   "inkBounds": {
+    "height": 9,
+    "width": 16,
+    "x": 1209,
+    "y": 655
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-090",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-090",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 13,
+    "x": 1115,
+    "y": 485
+   },
+   "id": "visual-091",
+   "inkBounds": {
+    "height": 11,
+    "width": 13,
+    "x": 1115,
+    "y": 485
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-091",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-091",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 7,
+    "width": 20,
+    "x": 706,
+    "y": 701
+   },
+   "id": "visual-092",
+   "inkBounds": {
+    "height": 7,
+    "width": 20,
+    "x": 706,
+    "y": 701
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-092",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-092",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 14,
+    "x": 660,
+    "y": 701
+   },
+   "id": "visual-093",
+   "inkBounds": {
+    "height": 10,
+    "width": 14,
+    "x": 660,
+    "y": 701
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-093",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-093",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 10,
+    "x": 47,
+    "y": 239
+   },
+   "id": "visual-094",
+   "inkBounds": {
+    "height": 14,
+    "width": 10,
+    "x": 47,
+    "y": 239
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-094",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-094",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 15,
+    "x": 25,
+    "y": 123
+   },
+   "id": "visual-095",
+   "inkBounds": {
+    "height": 9,
+    "width": 15,
+    "x": 25,
+    "y": 123
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-095",
+   "owningRegion": "topbar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-095",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 12,
+    "x": 860,
+    "y": 697
+   },
+   "id": "visual-096",
+   "inkBounds": {
+    "height": 11,
+    "width": 12,
+    "x": 860,
+    "y": 697
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-096",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-096",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 12,
+    "x": 35,
+    "y": 493
+   },
+   "id": "visual-097",
+   "inkBounds": {
+    "height": 11,
+    "width": 12,
+    "x": 35,
+    "y": 493
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-097",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-097",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 13,
+    "x": 727,
+    "y": 701
+   },
+   "id": "visual-098",
+   "inkBounds": {
+    "height": 10,
+    "width": 13,
+    "x": 727,
+    "y": 701
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-098",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-098",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 13,
+    "x": 27,
+    "y": 269
+   },
+   "id": "visual-099",
+   "inkBounds": {
+    "height": 10,
+    "width": 13,
+    "x": 27,
+    "y": 269
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-099",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-099",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 14,
+    "x": 1010,
+    "y": 400
+   },
+   "id": "visual-100",
+   "inkBounds": {
+    "height": 9,
+    "width": 14,
+    "x": 1010,
+    "y": 400
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-100",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-100",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 11,
+    "x": 1097,
+    "y": 485
+   },
+   "id": "visual-101",
+   "inkBounds": {
+    "height": 11,
+    "width": 11,
+    "x": 1097,
+    "y": 485
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-101",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-101",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 15,
+    "width": 8,
+    "x": 1230,
+    "y": 355
+   },
+   "id": "visual-102",
+   "inkBounds": {
+    "height": 15,
+    "width": 8,
+    "x": 1230,
+    "y": 355
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-102",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-102",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 7,
+    "width": 17,
+    "x": 401,
+    "y": 461
+   },
+   "id": "visual-103",
+   "inkBounds": {
+    "height": 7,
+    "width": 17,
+    "x": 401,
+    "y": 461
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-103",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-103",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 14,
+    "width": 8,
+    "x": 1221,
+    "y": 360
+   },
+   "id": "visual-104",
+   "inkBounds": {
+    "height": 14,
+    "width": 8,
+    "x": 1221,
+    "y": 360
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-104",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-104",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 8,
+    "width": 13,
+    "x": 894,
+    "y": 482
+   },
+   "id": "visual-105",
+   "inkBounds": {
+    "height": 8,
+    "width": 13,
+    "x": 894,
+    "y": 482
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-105",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-105",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 8,
+    "width": 12,
+    "x": 154,
+    "y": 700
+   },
+   "id": "visual-106",
+   "inkBounds": {
+    "height": 8,
+    "width": 12,
+    "x": 154,
+    "y": 700
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-106",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-106",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 7,
+    "width": 13,
+    "x": 1328,
+    "y": 766
+   },
+   "id": "visual-107",
+   "inkBounds": {
+    "height": 7,
+    "width": 13,
+    "x": 1328,
+    "y": 766
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-107",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-107",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 10,
+    "x": 1272,
+    "y": 137
+   },
+   "id": "visual-108",
+   "inkBounds": {
+    "height": 9,
+    "width": 10,
+    "x": 1272,
+    "y": 137
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-108",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-108",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 15,
+    "width": 6,
+    "x": 425,
+    "y": 551
+   },
+   "id": "visual-109",
+   "inkBounds": {
+    "height": 15,
+    "width": 6,
+    "x": 425,
+    "y": 551
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-109",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-109",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 9,
+    "x": 145,
+    "y": 700
+   },
+   "id": "visual-110",
+   "inkBounds": {
+    "height": 10,
+    "width": 9,
+    "x": 145,
+    "y": 700
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-110",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-110",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 8,
+    "x": 1204,
+    "y": 359
+   },
+   "id": "visual-111",
+   "inkBounds": {
+    "height": 11,
+    "width": 8,
+    "x": 1204,
+    "y": 359
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-111",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-111",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 8,
+    "x": 850,
+    "y": 697
+   },
+   "id": "visual-112",
+   "inkBounds": {
+    "height": 11,
+    "width": 8,
+    "x": 850,
+    "y": 697
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-112",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-112",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 17,
+    "width": 5,
+    "x": 1302,
+    "y": 133
+   },
+   "id": "visual-113",
+   "inkBounds": {
+    "height": 17,
+    "width": 5,
+    "x": 1302,
+    "y": 133
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-113",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-113",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 9,
+    "x": 1026,
+    "y": 656
+   },
+   "id": "visual-114",
+   "inkBounds": {
+    "height": 9,
+    "width": 9,
+    "x": 1026,
+    "y": 656
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-114",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-114",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 9,
+    "x": 52,
+    "y": 494
+   },
+   "id": "visual-115",
+   "inkBounds": {
+    "height": 9,
+    "width": 9,
+    "x": 52,
+    "y": 494
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-115",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-115",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 16,
+    "width": 5,
+    "x": 1308,
+    "y": 134
+   },
+   "id": "visual-116",
+   "inkBounds": {
+    "height": 16,
+    "width": 5,
+    "x": 1308,
+    "y": 134
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-116",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-116",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 16,
+    "width": 5,
+    "x": 1295,
+    "y": 134
+   },
+   "id": "visual-117",
+   "inkBounds": {
+    "height": 16,
+    "width": 5,
+    "x": 1295,
+    "y": 134
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-117",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-117",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 13,
+    "width": 6,
+    "x": 41,
+    "y": 246
+   },
+   "id": "visual-118",
+   "inkBounds": {
+    "height": 13,
+    "width": 6,
+    "x": 41,
+    "y": 246
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-118",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-118",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 7,
+    "x": 34,
+    "y": 417
+   },
+   "id": "visual-119",
+   "inkBounds": {
+    "height": 11,
+    "width": 7,
+    "x": 34,
+    "y": 417
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-119",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-119",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 4,
+    "width": 18,
+    "x": 440,
+    "y": 356
+   },
+   "id": "visual-120",
+   "inkBounds": {
+    "height": 4,
+    "width": 18,
+    "x": 440,
+    "y": 356
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-120",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-120",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 7,
+    "x": 1213,
+    "y": 360
+   },
+   "id": "visual-121",
+   "inkBounds": {
+    "height": 10,
+    "width": 7,
+    "x": 1213,
+    "y": 360
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-121",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-121",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 7,
+    "x": 855,
+    "y": 482
+   },
+   "id": "visual-122",
+   "inkBounds": {
+    "height": 10,
+    "width": 7,
+    "x": 855,
+    "y": 482
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-122",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-122",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 5,
+    "width": 14,
+    "x": 443,
+    "y": 368
+   },
+   "id": "visual-123",
+   "inkBounds": {
+    "height": 5,
+    "width": 14,
+    "x": 443,
+    "y": 368
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-123",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-123",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 8,
+    "width": 8,
+    "x": 49,
+    "y": 251
+   },
+   "id": "visual-124",
+   "inkBounds": {
+    "height": 8,
+    "width": 8,
+    "x": 49,
+    "y": 251
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-124",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-124",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 8,
+    "width": 7,
+    "x": 426,
+    "y": 617
+   },
+   "id": "visual-125",
+   "inkBounds": {
+    "height": 8,
+    "width": 7,
+    "x": 426,
+    "y": 617
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-125",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-125",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 5,
+    "x": 1367,
+    "y": 455
+   },
+   "id": "visual-126",
+   "inkBounds": {
+    "height": 11,
+    "width": 5,
+    "x": 1367,
+    "y": 455
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-126",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-126",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 5,
+    "width": 11,
+    "x": 413,
+    "y": 674
+   },
+   "id": "visual-127",
+   "inkBounds": {
+    "height": 5,
+    "width": 11,
+    "x": 413,
+    "y": 674
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-127",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-127",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 6,
+    "x": 1109,
+    "y": 485
+   },
+   "id": "visual-128",
+   "inkBounds": {
+    "height": 9,
+    "width": 6,
+    "x": 1109,
+    "y": 485
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-128",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-128",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 6,
+    "x": 893,
+    "y": 484
+   },
+   "id": "visual-129",
+   "inkBounds": {
+    "height": 9,
+    "width": 6,
+    "x": 893,
+    "y": 484
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-129",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-129",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 5,
+    "x": 698,
+    "y": 701
+   },
+   "id": "visual-130",
+   "inkBounds": {
+    "height": 10,
+    "width": 5,
+    "x": 698,
+    "y": 701
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-130",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-130",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 5,
+    "x": 40,
+    "y": 268
+   },
+   "id": "visual-131",
+   "inkBounds": {
+    "height": 10,
+    "width": 5,
+    "x": 40,
+    "y": 268
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-131",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-131",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 5,
+    "x": 1199,
+    "y": 360
+   },
+   "id": "visual-132",
+   "inkBounds": {
+    "height": 9,
+    "width": 5,
+    "x": 1199,
+    "y": 360
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-132",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-132",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 5,
+    "x": 435,
+    "y": 556
+   },
+   "id": "visual-133",
+   "inkBounds": {
+    "height": 9,
+    "width": 5,
+    "x": 435,
+    "y": 556
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-133",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-133",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 5,
+    "x": 53,
+    "y": 871
+   },
+   "id": "visual-134",
+   "inkBounds": {
+    "height": 9,
+    "width": 5,
+    "x": 53,
+    "y": 871
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-134",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-134",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 6,
+    "width": 7,
+    "x": 761,
+    "y": 707
+   },
+   "id": "visual-135",
+   "inkBounds": {
+    "height": 6,
+    "width": 7,
+    "x": 761,
+    "y": 707
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-135",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-135",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 8,
+    "width": 5,
+    "x": 981,
+    "y": 39
+   },
+   "id": "visual-136",
+   "inkBounds": {
+    "height": 8,
+    "width": 5,
+    "x": 981,
+    "y": 39
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-136",
+   "owningRegion": "topbar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-136",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 8,
+    "width": 5,
+    "x": 58,
+    "y": 569
+   },
+   "id": "visual-137",
+   "inkBounds": {
+    "height": 8,
+    "width": 5,
+    "x": 58,
+    "y": 569
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-137",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-137",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 8,
+    "width": 5,
+    "x": 47,
+    "y": 493
+   },
+   "id": "visual-138",
+   "inkBounds": {
+    "height": 8,
+    "width": 5,
+    "x": 47,
+    "y": 493
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-138",
+   "owningRegion": "sidebar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-138",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 6,
+    "width": 6,
+    "x": 1017,
+    "y": 658
+   },
+   "id": "visual-139",
+   "inkBounds": {
+    "height": 6,
+    "width": 6,
+    "x": 1017,
+    "y": 658
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-139",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-139",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 4,
+    "x": 850,
+    "y": 106
+   },
+   "id": "visual-140",
+   "inkBounds": {
+    "height": 9,
+    "width": 4,
+    "x": 850,
+    "y": 106
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-140",
+   "owningRegion": "topbar",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-140",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 6,
+    "width": 6,
+    "x": 752,
+    "y": 707
+   },
+   "id": "visual-141",
+   "inkBounds": {
+    "height": 6,
+    "width": 6,
+    "x": 752,
+    "y": 707
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-141",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-141",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 6,
+    "width": 6,
+    "x": 752,
+    "y": 698
+   },
+   "id": "visual-142",
+   "inkBounds": {
+    "height": 6,
+    "width": 6,
+    "x": 752,
+    "y": 698
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-142",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-142",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 6,
+    "width": 6,
+    "x": 705,
+    "y": 704
+   },
+   "id": "visual-143",
+   "inkBounds": {
+    "height": 6,
+    "width": 6,
+    "x": 705,
+    "y": 704
+   },
+   "measurementId": "desktop.web-biomechanics-workspace.visual-143",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "desktop.web-biomechanics-workspace.visual-143",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  }
+ ],
+ "imageGenerationNormalization": {
+  "finalCanvas": {
+   "height": 900,
+   "width": 1440
+  },
+  "finalPixelsAreEmbedSourceOfTruth": true,
+  "finalSha256": "c2daa8e72a2aa5fde37d2850ddf31f7f32eaf06a3b4d4f47d472740b03b3075f",
+  "generator": "GPT Image 2",
+  "occursBeforeSidecarMeasurement": true,
+  "rawCanvas": {
+   "height": 992,
+   "width": 1586
+  },
+  "rawSha256": "b88ef0837907b994fa951279b83a1fc870eea78643b83d6de66402c7ff55651e",
+  "transform": {
+   "resampling": "Lanczos",
+   "scaleX": 0.9079445145018915,
+   "scaleY": 0.907258064516129
+  }
+ },
+ "measurementContract": {
+  "autoCorrectGlobalTransform": false,
+  "coordinateSpace": "final-bitmap-source-pixels",
+  "limitations": [
+   "Automated contour semantics and OCR text matching require browser proof before production acceptance.",
+   "Missing standalone completed asset packs remain explicit failures and are never filled with source pixels."
+  ],
+  "methods": [
+   "final-bitmap source-pixel bounds",
+   "Tesseract OCR TSV line bounds",
+   "normalized-reference text verification",
+   "OpenCV edge-contour visual bounds",
+   "regional visual-difference analysis"
+  ],
+  "origin": "top-left",
+  "precisionPx": 1
+ },
+ "pinnedRegions": [
+  {
+   "edges": [
+    "top",
+    "left",
+    "right"
+   ],
+   "elementId": "topbar",
+   "id": "pin-topbar"
+  },
+  {
+   "edges": [
+    "top",
+    "bottom",
+    "left"
+   ],
+   "elementId": "sidebar",
+   "id": "pin-sidebar"
+  },
+  {
+   "edges": [
+    "left",
+    "right"
+   ],
+   "elementId": "main",
+   "id": "pin-main"
+  }
+ ],
+ "referenceNormalization": {
+  "contentBounds": {
+   "height": 1000,
+   "width": 1600,
+   "x": 640,
+   "y": 421
+  },
+  "normalizedSha256": "4a30e8548dabd55ec39e410a8c99d2444482b2535c2ddde0a26054a00503d9d5",
+  "originalPreserved": true,
+  "removedMargins": {
+   "bottom": 379,
+   "left": 640,
+   "right": 640,
+   "top": 421
+  },
+  "removedPresentationLabels": [
+   "SHOTIQ CONCEPT - NOT LIVE",
+   "presentation-board whitespace"
+  ],
+  "sourceCanvas": {
+   "height": 1800,
+   "width": 2880
+  },
+  "sourceSha256": "b7fbb2bab832baa5c1cc5f63a75e1861381524e7f190b29368bc96075d1e67dc",
+  "targetCanvas": {
+   "height": 900,
+   "width": 1440
+  },
+  "transform": {
+   "resampling": "Lanczos",
+   "scaleX": 0.9,
+   "scaleY": 0.9,
+   "translateX": -640,
+   "translateY": -421
+  }
+ },
+ "regions": [
+  {
+   "bounds": {
+    "height": 130,
+    "width": 1440,
+    "x": 0,
+    "y": 0
+   },
+   "critical": true,
+   "fidelityFloor": 0.98,
+   "id": "topbar"
+  },
+  {
+   "bounds": {
+    "height": 790,
+    "width": 190,
+    "x": 0,
+    "y": 110
+   },
+   "critical": true,
+   "fidelityFloor": 0.98,
+   "id": "sidebar"
+  },
+  {
+   "bounds": {
+    "height": 790,
+    "width": 1250,
+    "x": 190,
+    "y": 110
+   },
+   "critical": true,
+   "fidelityFloor": 0.98,
+   "id": "main"
+  }
+ ],
+ "renderingContract": {
+  "browserZoom": 1,
+  "colorSpace": "srgb",
+  "defaultBoxSizing": "border-box",
+  "devicePixelRatio": 1,
+  "fontLoadingGate": "document.fonts.ready",
+  "locale": "en-US",
+  "screenshotGate": "two requestAnimationFrame callbacks after fonts and assets resolve",
+  "viewport": {
+   "height": 900,
+   "width": 1440
+  }
+ },
+ "repeatGroups": [],
+ "schemaVersion": "2.0.0",
+ "source": {
+  "fromSourceCrop": false,
+  "generationProvenance": "Fresh independent GPT Image 2 recreation generated in this batch from the supplied reference.",
+  "originalFilename": "web-desktop/84-web-biomechanics-workspace.png",
+  "sourcePrompt": "/Volumes/APPLICATIONS/CodexStorage/projects/shotiq-sidecar-job/design/imagegen-screen-pack/prompts/84-web-biomechanics-workspace.txt"
+ }
+}

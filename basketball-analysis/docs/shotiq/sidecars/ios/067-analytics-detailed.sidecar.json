@@ -1,0 +1,3311 @@
+{
+ "app": {
+  "appId": "shotiq",
+  "batchId": "shotiq-white-court-imagegen2-2026-07-30-v2",
+  "platform": "ios",
+  "platformId": "shotiq.ios",
+  "screenId": "ios.analytics-detailed",
+  "sharedTokenSet": "shotiq-white-court-core-v1"
+ },
+ "asset": {
+  "canvas": {
+   "height": 1844,
+   "width": 853
+  },
+  "name": "ios.analytics-detailed"
+ },
+ "assets": {
+  "app.shotiq.brand.logo.primary": {
+   "description": "SHOTIQ primary wordmark with orange Q accent",
+   "kind": "logo",
+   "preferredFormat": "svg",
+   "qualityProfile": "faithful-premium",
+   "recolorable": true
+  },
+  "app.shotiq.icon.motion.default": {
+   "description": "Shared ShotIQ motion-glyph family placeholder for navigation, actions, and metrics.",
+   "iconSpec": {
+    "minReadableSize": 16,
+    "nicheMetaphor": "Tracked body landmark nodes and shot-release motion geometry",
+    "preserveFromReference": [
+     "semantic meaning",
+     "orientation",
+     "major silhouette",
+     "relative visual weight"
+    ],
+    "safeInset": 1.5,
+    "semanticConcept": "ShotIQ basketball performance motion glyph",
+    "silhouette": "Compact line glyph with rounded joints and a clear motion focal point",
+    "upgradeFromReference": [
+     "construction quality",
+     "domain specificity",
+     "optical balance",
+     "small-size legibility"
+    ]
+   },
+   "kind": "icon",
+   "preferredFormat": "svg",
+   "qualityProfile": "faithful-premium",
+   "recolorable": true
+  },
+  "app.shotiq.photo.athlete-frame": {
+   "description": "Independent athlete/court frame asset used by analysis and training screens.",
+   "kind": "photo",
+   "poseRequired": true,
+   "preferredFormat": "png",
+   "qualityProfile": "awaiting-independent-asset-pack"
+  }
+ },
+ "baselineGroups": [],
+ "canonicalContractSha256": "7754f22bd6f853e02e76541f1462bfd84fb3dfbc4bf6ad904205752cb5f2b861",
+ "designTokens": {
+  "colors": {
+   "analysisBlue": "#2D6CDF",
+   "confirmGreen": "#168A55",
+   "graphite": "#5F646B",
+   "ink": "#111111",
+   "muted": "#A7AAB0",
+   "paper": "#FFFFFF",
+   "reviewRed": "#D92D20",
+   "rule": "#D9D9D4",
+   "shotiqOrange": "#FF5A1F",
+   "warmCanvas": "#F7F7F4"
+  },
+  "iconography": {
+   "activeStrokeWidth": 2,
+   "creativeDirection": "Motion glyphs built from pose landmarks, release arcs, frame strips, measurement brackets, and court geometry.",
+   "domain": "basketball shooting mechanics, biomechanics, capture review, and athlete progress",
+   "familyId": "shotiq-motion-glyphs-v1",
+   "fillPolicy": "Outline-led with one intentional filled focal detail.",
+   "grid": 24,
+   "lineCap": "round",
+   "lineJoin": "round",
+   "opticalSize": 24,
+   "profile": "premium-icon-v1",
+   "prohibited": [
+    "emoji",
+    "clip art",
+    "generic stick figures",
+    "stock-library clones",
+    "mixed icon families",
+    "text baked into icons",
+    "edge-touching paint"
+   ],
+   "readabilityPx": [
+    16,
+    20,
+    24,
+    32
+   ],
+   "reconstructionMode": "faithful-premium",
+   "safeInset": 1.5,
+   "selectedState": "Same glyph with tokenized color or external indicator.",
+   "strokeWidth": 1.75
+  },
+  "radii": {
+   "card": 8,
+   "control": 6,
+   "none": 0,
+   "pill": 999
+  },
+  "spacing": {
+   "lg": 24,
+   "md": 16,
+   "sm": 8,
+   "xl": 32,
+   "xs": 4
+  },
+  "typography": {
+   "body": {
+    "fontFamily": "Inter",
+    "fontSize": 16,
+    "fontWeight": 400,
+    "letterSpacing": 0,
+    "lineHeight": 22
+   },
+   "brand": {
+    "fontFamily": "Inter",
+    "fontSize": 28,
+    "fontWeight": 900,
+    "letterSpacing": 0,
+    "lineHeight": 32
+   },
+   "button": {
+    "fontSize": 16,
+    "fontWeight": 700,
+    "inherits": "body",
+    "letterSpacing": 0,
+    "lineHeight": 22
+   },
+   "caption": {
+    "fontSize": 12,
+    "fontWeight": 500,
+    "inherits": "body",
+    "letterSpacing": 0,
+    "lineHeight": 16
+   },
+   "h1": {
+    "fontFamily": "Bebas Neue",
+    "fontSize": 64,
+    "fontWeight": 900,
+    "letterSpacing": 0,
+    "lineHeight": 70
+   },
+   "h2": {
+    "fontFamily": "Bebas Neue",
+    "fontSize": 40,
+    "fontWeight": 900,
+    "letterSpacing": 0,
+    "lineHeight": 46
+   },
+   "h3": {
+    "fontFamily": "Bebas Neue",
+    "fontSize": 28,
+    "fontWeight": 800,
+    "letterSpacing": 0,
+    "lineHeight": 34
+   },
+   "h4": {
+    "fontFamily": "Inter",
+    "fontSize": 18,
+    "fontWeight": 700,
+    "letterSpacing": 0,
+    "lineHeight": 24
+   },
+   "h5": {
+    "fontFamily": "Inter",
+    "fontSize": 14,
+    "fontWeight": 700,
+    "letterSpacing": 0,
+    "lineHeight": 20
+   },
+   "label": {
+    "fontSize": 12,
+    "fontWeight": 700,
+    "inherits": "body",
+    "letterSpacing": 0,
+    "lineHeight": 16
+   },
+   "numeric": {
+    "fontFamily": "DIN Condensed",
+    "fontSize": 40,
+    "fontWeight": 800,
+    "letterSpacing": 0,
+    "lineHeight": 44
+   }
+  }
+ },
+ "elements": [
+  {
+   "backgroundColor": "paper",
+   "bounds": {
+    "height": 1844,
+    "width": 853,
+    "x": 0,
+    "y": 0
+   },
+   "id": "screen-background",
+   "measurementId": "ios.analytics-detailed.screen-background",
+   "owningRegion": "main",
+   "proofMethod": "canvas dimensions",
+   "sourceKey": "ios.analytics-detailed.screen-background",
+   "type": "screen",
+   "zIndex": 0
+  },
+  {
+   "bounds": {
+    "height": 260,
+    "width": 853,
+    "x": 0,
+    "y": 0
+   },
+   "id": "header",
+   "measurementId": "ios.analytics-detailed.header",
+   "owningRegion": "header",
+   "proofMethod": "declared semantic region bounds",
+   "sourceKey": "ios.analytics-detailed.header",
+   "type": "group",
+   "zIndex": 1
+  },
+  {
+   "bounds": {
+    "height": 1424,
+    "width": 853,
+    "x": 0,
+    "y": 220
+   },
+   "id": "main",
+   "measurementId": "ios.analytics-detailed.main",
+   "owningRegion": "main",
+   "proofMethod": "declared semantic region bounds",
+   "sourceKey": "ios.analytics-detailed.main",
+   "type": "group",
+   "zIndex": 2
+  },
+  {
+   "bounds": {
+    "height": 220,
+    "width": 853,
+    "x": 0,
+    "y": 1624
+   },
+   "id": "navigation",
+   "measurementId": "ios.analytics-detailed.navigation",
+   "owningRegion": "navigation",
+   "proofMethod": "declared semantic region bounds",
+   "sourceKey": "ios.analytics-detailed.navigation",
+   "type": "group",
+   "zIndex": 3
+  },
+  {
+   "baseline": 75,
+   "bounds": {
+    "height": 62,
+    "width": 154,
+    "x": 32,
+    "y": 13
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 78,
+   "fontWeight": 900,
+   "generatedObservedText": "SHOTIQ",
+   "id": "text-001",
+   "inkBounds": {
+    "height": 62,
+    "width": 154,
+    "x": 32,
+    "y": 13
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 84,
+   "measurementId": "ios.analytics-detailed.text-001",
+   "ocrConfidence": 88.91,
+   "owningRegion": "header",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 96.63,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "ios.analytics-detailed.text-001",
+   "style": "h1",
+   "text": "Track your mechanics. See what moves the needle.",
+   "type": "text",
+   "visibleGlyphHeight": 62,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 38,
+   "bounds": {
+    "height": 20,
+    "width": 127,
+    "x": 640,
+    "y": 18
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 25,
+   "fontWeight": 400,
+   "generatedObservedText": "= if",
+   "id": "text-002",
+   "inkBounds": {
+    "height": 20,
+    "width": 127,
+    "x": 640,
+    "y": 18
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 27,
+   "measurementId": "ios.analytics-detailed.text-002",
+   "ocrConfidence": 65.19,
+   "owningRegion": "header",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 81.53,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.analytics-detailed.text-002",
+   "style": "body",
+   "text": "Cards Select metric Export",
+   "type": "text",
+   "visibleGlyphHeight": 20,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 73,
+   "bounds": {
+    "height": 16,
+    "width": 256,
+    "x": 528,
+    "y": 57
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 20,
+   "fontWeight": 400,
+   "generatedObservedText": "Cards Select metric Export",
+   "id": "text-003",
+   "inkBounds": {
+    "height": 16,
+    "width": 256,
+    "x": 528,
+    "y": 57
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 22,
+   "measurementId": "ios.analytics-detailed.text-003",
+   "ocrConfidence": 68.22,
+   "owningRegion": "header",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "body",
+   "sourceKey": "ios.analytics-detailed.text-003",
+   "style": "body",
+   "text": "Cards Select metric Export",
+   "type": "text",
+   "visibleGlyphHeight": 16,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 182,
+   "bounds": {
+    "height": 16,
+    "width": 359,
+    "x": 35,
+    "y": 166
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 20,
+   "fontWeight": 400,
+   "generatedObservedText": "Track your mechanics. See what moves the needle.",
+   "id": "text-004",
+   "inkBounds": {
+    "height": 16,
+    "width": 359,
+    "x": 35,
+    "y": 166
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 22,
+   "measurementId": "ios.analytics-detailed.text-004",
+   "ocrConfidence": 96.43,
+   "owningRegion": "header",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "body",
+   "sourceKey": "ios.analytics-detailed.text-004",
+   "style": "body",
+   "text": "Track your mechanics. See what moves the needle.",
+   "type": "text",
+   "visibleGlyphHeight": 16,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 235,
+   "bounds": {
+    "height": 24,
+    "width": 701,
+    "x": 95,
+    "y": 211
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 30,
+   "fontWeight": 400,
+   "generatedObservedText": "Last 30 days Vv |-7 Release Consistency Vv Confidence: High \u00a9",
+   "id": "text-005",
+   "inkBounds": {
+    "height": 24,
+    "width": 701,
+    "x": 95,
+    "y": 211
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 32,
+   "measurementId": "ios.analytics-detailed.text-005",
+   "ocrConfidence": 73.31,
+   "owningRegion": "header",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 81.31,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.analytics-detailed.text-005",
+   "style": "body",
+   "text": "Last 30 days v |Z Release Consistency Vv Confidence: High @",
+   "type": "text",
+   "visibleGlyphHeight": 24,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 311,
+   "bounds": {
+    "height": 19,
+    "width": 672,
+    "x": 60,
+    "y": 292
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 24,
+   "fontWeight": 700,
+   "generatedObservedText": "TREND 80% LATEST",
+   "id": "text-006",
+   "inkBounds": {
+    "height": 19,
+    "width": 672,
+    "x": 60,
+    "y": 292
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 26,
+   "measurementId": "ios.analytics-detailed.text-006",
+   "ocrConfidence": 96.53,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 96.89,
+   "referenceTextMatched": true,
+   "semanticRole": "h4",
+   "sourceKey": "ios.analytics-detailed.text-006",
+   "style": "h4",
+   "text": "TREND LATEST",
+   "type": "text",
+   "visibleGlyphHeight": 19,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 351,
+   "bounds": {
+    "height": 38,
+    "width": 645,
+    "x": 130,
+    "y": 313
+   },
+   "color": "confirmGreen",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 48,
+   "fontWeight": 900,
+   "generatedObservedText": "\u2018 ae \u2018",
+   "id": "text-007",
+   "inkBounds": {
+    "height": 38,
+    "width": 645,
+    "x": 130,
+    "y": 313
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 51,
+   "measurementId": "ios.analytics-detailed.text-007",
+   "ocrConfidence": 50.28,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 48.22,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "ios.analytics-detailed.text-007",
+   "style": "h2",
+   "text": "0 eee Ss 0",
+   "type": "text",
+   "visibleGlyphHeight": 38,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 369,
+   "bounds": {
+    "height": 39,
+    "width": 730,
+    "x": 58,
+    "y": 330
+   },
+   "color": "confirmGreen",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 49,
+   "fontWeight": 900,
+   "generatedObservedText": "464% et 78.2%",
+   "id": "text-008",
+   "inkBounds": {
+    "height": 39,
+    "width": 730,
+    "x": 58,
+    "y": 330
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 53,
+   "measurementId": "ios.analytics-detailed.text-008",
+   "ocrConfidence": 68.86,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 75.37,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "ios.analytics-detailed.text-008",
+   "style": "h2",
+   "text": "+6.4% Ne 78.2%",
+   "type": "text",
+   "visibleGlyphHeight": 39,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 404,
+   "bounds": {
+    "height": 16,
+    "width": 673,
+    "x": 59,
+    "y": 388
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 20,
+   "fontWeight": 400,
+   "generatedObservedText": "vs previous 30 days 60% MAY 24",
+   "id": "text-009",
+   "inkBounds": {
+    "height": 16,
+    "width": 673,
+    "x": 59,
+    "y": 388
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 22,
+   "measurementId": "ios.analytics-detailed.text-009",
+   "ocrConfidence": 85.16,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 80.78,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.analytics-detailed.text-009",
+   "style": "body",
+   "text": "vs previous 30 days gg, MAY 24",
+   "type": "text",
+   "visibleGlyphHeight": 16,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 423,
+   "bounds": {
+    "height": 11,
+    "width": 390,
+    "x": 261,
+    "y": 412
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 14,
+   "fontWeight": 500,
+   "generatedObservedText": "APR 25 MAY 2 MAY 9 MAY 16 MAY 23",
+   "id": "text-010",
+   "inkBounds": {
+    "height": 11,
+    "width": 390,
+    "x": 261,
+    "y": 412
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 15,
+   "measurementId": "ios.analytics-detailed.text-010",
+   "ocrConfidence": 78.47,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 88.84,
+   "referenceTextMatched": true,
+   "semanticRole": "caption",
+   "sourceKey": "ios.analytics-detailed.text-010",
+   "style": "caption",
+   "text": "APR 25 MAY 2 MAY 9 MAY 16 MAY 23",
+   "type": "text",
+   "visibleGlyphHeight": 11,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 502,
+   "bounds": {
+    "height": 23,
+    "width": 249,
+    "x": 46,
+    "y": 479
+   },
+   "color": "ink",
+   "fontFamily": "Inter",
+   "fontSize": 29,
+   "fontWeight": 700,
+   "generatedObservedText": "MECHANICS SCORECARD \u00a9",
+   "id": "text-011",
+   "inkBounds": {
+    "height": 23,
+    "width": 249,
+    "x": 46,
+    "y": 479
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 31,
+   "measurementId": "ios.analytics-detailed.text-011",
+   "ocrConfidence": 96.52,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 96.27,
+   "referenceTextMatched": true,
+   "semanticRole": "h4",
+   "sourceKey": "ios.analytics-detailed.text-011",
+   "style": "h4",
+   "text": "MECHANICS SCORECARD \u00a9",
+   "type": "text",
+   "visibleGlyphHeight": 23,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 553,
+   "bounds": {
+    "height": 11,
+    "width": 10,
+    "x": 268,
+    "y": 542
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 14,
+   "fontWeight": 500,
+   "generatedObservedText": "\u00a9",
+   "id": "text-012",
+   "inkBounds": {
+    "height": 11,
+    "width": 10,
+    "x": 268,
+    "y": 542
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 15,
+   "measurementId": "ios.analytics-detailed.text-012",
+   "ocrConfidence": 49.45,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 51.03,
+   "referenceTextMatched": true,
+   "semanticRole": "caption",
+   "sourceKey": "ios.analytics-detailed.text-012",
+   "style": "caption",
+   "text": "2 \u00a9",
+   "type": "text",
+   "visibleGlyphHeight": 11,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 611,
+   "bounds": {
+    "height": 68,
+    "width": 515,
+    "x": 92,
+    "y": 543
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 85,
+   "fontWeight": 900,
+   "generatedObservedText": "\u00bb = & )",
+   "id": "text-013",
+   "inkBounds": {
+    "height": 68,
+    "width": 515,
+    "x": 92,
+    "y": 543
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 92,
+   "measurementId": "ios.analytics-detailed.text-013",
+   "ocrConfidence": 58.96,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 50.96,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "ios.analytics-detailed.text-013",
+   "style": "h1",
+   "text": "ne & )",
+   "type": "text",
+   "visibleGlyphHeight": 68,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 633,
+   "bounds": {
+    "height": 14,
+    "width": 698,
+    "x": 88,
+    "y": 619
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 18,
+   "fontWeight": 500,
+   "generatedObservedText": "SETUP LOAD RISE RELEASE FOLLOW-THROUGH",
+   "id": "text-014",
+   "inkBounds": {
+    "height": 14,
+    "width": 698,
+    "x": 88,
+    "y": 619
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 19,
+   "measurementId": "ios.analytics-detailed.text-014",
+   "ocrConfidence": 95.0,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 94.11,
+   "referenceTextMatched": true,
+   "semanticRole": "caption",
+   "sourceKey": "ios.analytics-detailed.text-014",
+   "style": "caption",
+   "text": "SETUP LOAD RISE RELEASE FOLLOW-THROUGH",
+   "type": "text",
+   "visibleGlyphHeight": 14,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 683,
+   "bounds": {
+    "height": 30,
+    "width": 693,
+    "x": 77,
+    "y": 653
+   },
+   "color": "graphite",
+   "fontFamily": "DIN Condensed",
+   "fontSize": 38,
+   "fontWeight": 800,
+   "generatedObservedText": "84 +4 79 +2 88 \u00ab5 78 +6 84 +3",
+   "id": "text-015",
+   "inkBounds": {
+    "height": 30,
+    "width": 693,
+    "x": 77,
+    "y": 653
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 40,
+   "measurementId": "ios.analytics-detailed.text-015",
+   "ocrConfidence": 87.85,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 82.9,
+   "referenceTextMatched": true,
+   "semanticRole": "numeric",
+   "sourceKey": "ios.analytics-detailed.text-015",
+   "style": "numeric",
+   "text": "84 +4 79 +2 88 +5 78 +6 84 +3",
+   "type": "text",
+   "visibleGlyphHeight": 30,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 714,
+   "bounds": {
+    "height": 15,
+    "width": 660,
+    "x": 88,
+    "y": 699
+   },
+   "color": "analysisBlue",
+   "fontFamily": "Inter",
+   "fontSize": 19,
+   "fontWeight": 400,
+   "generatedObservedText": "G00D Good GREAT Go0D",
+   "id": "text-016",
+   "inkBounds": {
+    "height": 15,
+    "width": 660,
+    "x": 88,
+    "y": 699
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 20,
+   "measurementId": "ios.analytics-detailed.text-016",
+   "ocrConfidence": 57.56,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 55.73,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.analytics-detailed.text-016",
+   "style": "body",
+   "text": "G00D GOOD GREAT Good",
+   "type": "text",
+   "visibleGlyphHeight": 15,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 806,
+   "bounds": {
+    "height": 24,
+    "width": 211,
+    "x": 40,
+    "y": 782
+   },
+   "color": "ink",
+   "fontFamily": "Inter",
+   "fontSize": 30,
+   "fontWeight": 700,
+   "generatedObservedText": "SESSION COMPARISON",
+   "id": "text-017",
+   "inkBounds": {
+    "height": 24,
+    "width": 211,
+    "x": 40,
+    "y": 782
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 32,
+   "measurementId": "ios.analytics-detailed.text-017",
+   "ocrConfidence": 96.76,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 96.66,
+   "referenceTextMatched": true,
+   "semanticRole": "h4",
+   "sourceKey": "ios.analytics-detailed.text-017",
+   "style": "h4",
+   "text": "SESSION COMPARISON",
+   "type": "text",
+   "visibleGlyphHeight": 24,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 842,
+   "bounds": {
+    "height": 14,
+    "width": 536,
+    "x": 244,
+    "y": 828
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 18,
+   "fontWeight": 500,
+   "generatedObservedText": "MAY 24, 8:24 AM MAY 16, 7:05 AM MAY 9, 6:40 AM CHANGE",
+   "id": "text-018",
+   "inkBounds": {
+    "height": 14,
+    "width": 536,
+    "x": 244,
+    "y": 828
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 19,
+   "measurementId": "ios.analytics-detailed.text-018",
+   "ocrConfidence": 91.61,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 92.12,
+   "referenceTextMatched": true,
+   "semanticRole": "caption",
+   "sourceKey": "ios.analytics-detailed.text-018",
+   "style": "caption",
+   "text": "MAY 24, 8:24 AM MAY 16, 7:05 AM MAY 9, 6:40 AM",
+   "type": "text",
+   "visibleGlyphHeight": 14,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 863,
+   "bounds": {
+    "height": 27,
+    "width": 757,
+    "x": 46,
+    "y": 836
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 34,
+   "fontWeight": 700,
+   "generatedObservedText": "METRIC 24 SHOTS 22 SHOTS 21 SHOTS (LATEST VS MAY 9)",
+   "id": "text-019",
+   "inkBounds": {
+    "height": 27,
+    "width": 757,
+    "x": 46,
+    "y": 836
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 36,
+   "measurementId": "ios.analytics-detailed.text-019",
+   "ocrConfidence": 88.84,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 73.29,
+   "referenceTextMatched": true,
+   "semanticRole": "h4",
+   "sourceKey": "ios.analytics-detailed.text-019",
+   "style": "h4",
+   "text": "METRIC 24 SHOTS : 22 SHOTS 21 SHOTS 9",
+   "type": "text",
+   "visibleGlyphHeight": 27,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 909,
+   "bounds": {
+    "height": 22,
+    "width": 716,
+    "x": 47,
+    "y": 887
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 28,
+   "fontWeight": 400,
+   "generatedObservedText": "Form Score 82 76 11 +11",
+   "id": "text-020",
+   "inkBounds": {
+    "height": 22,
+    "width": 716,
+    "x": 47,
+    "y": 887
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 30,
+   "measurementId": "ios.analytics-detailed.text-020",
+   "ocrConfidence": 88.5,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 82.5,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.analytics-detailed.text-020",
+   "style": "body",
+   "text": "Form Score 82 16 11 +11",
+   "type": "text",
+   "visibleGlyphHeight": 22,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 955,
+   "bounds": {
+    "height": 20,
+    "width": 731,
+    "x": 47,
+    "y": 935
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 25,
+   "fontWeight": 400,
+   "generatedObservedText": "Make % 62.5% 59.1% 52.4% +10.1%",
+   "id": "text-021",
+   "inkBounds": {
+    "height": 20,
+    "width": 731,
+    "x": 47,
+    "y": 935
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 27,
+   "measurementId": "ios.analytics-detailed.text-021",
+   "ocrConfidence": 88.67,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 84.07,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.analytics-detailed.text-021",
+   "style": "body",
+   "text": "Make % 62.5% 59.1% 52.4% +10.1%",
+   "type": "text",
+   "visibleGlyphHeight": 20,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1003,
+   "bounds": {
+    "height": 21,
+    "width": 592,
+    "x": 47,
+    "y": 982
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 26,
+   "fontWeight": 400,
+   "generatedObservedText": "Release Consistency \u00a9 78.2% 71.8% 64.0%",
+   "id": "text-022",
+   "inkBounds": {
+    "height": 21,
+    "width": 592,
+    "x": 47,
+    "y": 982
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 28,
+   "measurementId": "ios.analytics-detailed.text-022",
+   "ocrConfidence": 88.98,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 87.38,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.analytics-detailed.text-022",
+   "style": "body",
+   "text": "Release Consistency \u00a9 18.2% 71.8% 64.0% +14.2%",
+   "type": "text",
+   "visibleGlyphHeight": 21,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1048,
+   "bounds": {
+    "height": 21,
+    "width": 727,
+    "x": 47,
+    "y": 1027
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 26,
+   "fontWeight": 400,
+   "generatedObservedText": "Release Angle 50.4\u00b0 48.1\u00b0 45.2\u00b0 5:2\"",
+   "id": "text-023",
+   "inkBounds": {
+    "height": 21,
+    "width": 727,
+    "x": 47,
+    "y": 1027
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 28,
+   "measurementId": "ios.analytics-detailed.text-023",
+   "ocrConfidence": 83.24,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 89.43,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.analytics-detailed.text-023",
+   "style": "body",
+   "text": "Release Angle 50.4\u00b0 48.1\u00b0 45.2\u00b0 +5.2\u00b0",
+   "type": "text",
+   "visibleGlyphHeight": 21,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1094,
+   "bounds": {
+    "height": 23,
+    "width": 721,
+    "x": 47,
+    "y": 1071
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 29,
+   "fontWeight": 400,
+   "generatedObservedText": "Elbow Alignment \u00a9 92% 88% 81% +11%",
+   "id": "text-024",
+   "inkBounds": {
+    "height": 23,
+    "width": 721,
+    "x": 47,
+    "y": 1071
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 31,
+   "measurementId": "ios.analytics-detailed.text-024",
+   "ocrConfidence": 91.18,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 92.54,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.analytics-detailed.text-024",
+   "style": "body",
+   "text": "Elbow Alignment \u00a9 92% 88% 81% +11%",
+   "type": "text",
+   "visibleGlyphHeight": 23,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1139,
+   "bounds": {
+    "height": 22,
+    "width": 727,
+    "x": 47,
+    "y": 1117
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 28,
+   "fontWeight": 400,
+   "generatedObservedText": "Shot Depth 1.3 ft 1.5 ft 1.1 ft ft",
+   "id": "text-025",
+   "inkBounds": {
+    "height": 22,
+    "width": 727,
+    "x": 47,
+    "y": 1117
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 30,
+   "measurementId": "ios.analytics-detailed.text-025",
+   "ocrConfidence": 75.77,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 78.78,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.analytics-detailed.text-025",
+   "style": "body",
+   "text": "Shot Depth 1.3 ft 1.5 ft 1.7 ft \u201c0.4 ft",
+   "type": "text",
+   "visibleGlyphHeight": 22,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1183,
+   "bounds": {
+    "height": 22,
+    "width": 735,
+    "x": 47,
+    "y": 1161
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 28,
+   "fontWeight": 400,
+   "generatedObservedText": "Shot Speed 1.06 sec 1.11 sec 1.18 sec -0.12 sec",
+   "id": "text-026",
+   "inkBounds": {
+    "height": 22,
+    "width": 735,
+    "x": 47,
+    "y": 1161
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 30,
+   "measurementId": "ios.analytics-detailed.text-026",
+   "ocrConfidence": 92.99,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 94.4,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.analytics-detailed.text-026",
+   "style": "body",
+   "text": "Shot Speed 1.06 sec 1.11 sec 1.18 sec -0.12 sec",
+   "type": "text",
+   "visibleGlyphHeight": 22,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1224,
+   "bounds": {
+    "height": 20,
+    "width": 730,
+    "x": 47,
+    "y": 1204
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 25,
+   "fontWeight": 400,
+   "generatedObservedText": "Swish % 41.7% 36.4% 28.6% +13.1%",
+   "id": "text-027",
+   "inkBounds": {
+    "height": 20,
+    "width": 730,
+    "x": 47,
+    "y": 1204
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 27,
+   "measurementId": "ios.analytics-detailed.text-027",
+   "ocrConfidence": 83.67,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 87.39,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.analytics-detailed.text-027",
+   "style": "body",
+   "text": "Swish % 41.7% 36.4% 28.6% +13.1%",
+   "type": "text",
+   "visibleGlyphHeight": 20,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1281,
+   "bounds": {
+    "height": 21,
+    "width": 387,
+    "x": 53,
+    "y": 1260
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 26,
+   "fontWeight": 700,
+   "generatedObservedText": "RELEASE ARC RANGE \u00a9 so\"",
+   "id": "text-028",
+   "inkBounds": {
+    "height": 21,
+    "width": 387,
+    "x": 53,
+    "y": 1260
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 28,
+   "measurementId": "ios.analytics-detailed.text-028",
+   "ocrConfidence": 86.7,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 85.51,
+   "referenceTextMatched": true,
+   "semanticRole": "h4",
+   "sourceKey": "ios.analytics-detailed.text-028",
+   "style": "h4",
+   "text": "RELEASE ARC RANGE \u00a9 30\u00b0",
+   "type": "text",
+   "visibleGlyphHeight": 21,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1333,
+   "bounds": {
+    "height": 56,
+    "width": 704,
+    "x": 63,
+    "y": 1277
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 70,
+   "fontWeight": 900,
+   "generatedObservedText": "AVG ARC * CONSISTENCY",
+   "id": "text-029",
+   "inkBounds": {
+    "height": 56,
+    "width": 704,
+    "x": 63,
+    "y": 1277
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 76,
+   "measurementId": "ios.analytics-detailed.text-029",
+   "ocrConfidence": 78.68,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 94.92,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "ios.analytics-detailed.text-029",
+   "style": "h1",
+   "text": "AVG ARC CONSISTENCY",
+   "type": "text",
+   "visibleGlyphHeight": 56,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1366,
+   "bounds": {
+    "height": 36,
+    "width": 724,
+    "x": 59,
+    "y": 1330
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 45,
+   "fontWeight": 900,
+   "generatedObservedText": "50.4 78.2%",
+   "id": "text-030",
+   "inkBounds": {
+    "height": 36,
+    "width": 724,
+    "x": 59,
+    "y": 1330
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 49,
+   "measurementId": "ios.analytics-detailed.text-030",
+   "ocrConfidence": 95.47,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 83.28,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "ios.analytics-detailed.text-030",
+   "style": "h2",
+   "text": "\u2014 ou IDEAL RANGE",
+   "type": "text",
+   "visibleGlyphHeight": 36,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1342,
+   "bounds": {
+    "height": 12,
+    "width": 201,
+    "x": 132,
+    "y": 1330
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 15,
+   "fontWeight": 500,
+   "generatedObservedText": "\u00b0 /",
+   "id": "text-031",
+   "inkBounds": {
+    "height": 12,
+    "width": 201,
+    "x": 132,
+    "y": 1330
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 16,
+   "measurementId": "ios.analytics-detailed.text-031",
+   "ocrConfidence": 88.61,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "caption",
+   "sourceKey": "ios.analytics-detailed.text-031",
+   "style": "caption",
+   "text": "\u00b0 /",
+   "type": "text",
+   "visibleGlyphHeight": 12,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1396,
+   "bounds": {
+    "height": 15,
+    "width": 107,
+    "x": 61,
+    "y": 1381
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 19,
+   "fontWeight": 400,
+   "generatedObservedText": "IDEAL: 48\u00b0-52\u00b0",
+   "id": "text-032",
+   "inkBounds": {
+    "height": 15,
+    "width": 107,
+    "x": 61,
+    "y": 1381
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 20,
+   "measurementId": "ios.analytics-detailed.text-032",
+   "ocrConfidence": 92.38,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 84.76,
+   "referenceTextMatched": true,
+   "semanticRole": "body",
+   "sourceKey": "ios.analytics-detailed.text-032",
+   "style": "body",
+   "text": "\u00b0",
+   "type": "text",
+   "visibleGlyphHeight": 15,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1417,
+   "bounds": {
+    "height": 12,
+    "width": 209,
+    "x": 317,
+    "y": 1405
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 15,
+   "fontWeight": 500,
+   "generatedObservedText": "\u2014 yo IDEAL RANGE",
+   "id": "text-033",
+   "inkBounds": {
+    "height": 12,
+    "width": 209,
+    "x": 317,
+    "y": 1405
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 16,
+   "measurementId": "ios.analytics-detailed.text-033",
+   "ocrConfidence": 81.52,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "caption",
+   "sourceKey": "ios.analytics-detailed.text-033",
+   "style": "caption",
+   "text": "\u2014 yo IDEAL RANGE",
+   "type": "text",
+   "visibleGlyphHeight": 12,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1484,
+   "bounds": {
+    "height": 33,
+    "width": 248,
+    "x": 50,
+    "y": 1451
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 41,
+   "fontWeight": 900,
+   "generatedObservedText": "SHOT RAIL SUMMARY \u00a9 :",
+   "id": "text-034",
+   "inkBounds": {
+    "height": 33,
+    "width": 248,
+    "x": 50,
+    "y": 1451
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 45,
+   "measurementId": "ios.analytics-detailed.text-034",
+   "ocrConfidence": 80.03,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 96.74,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "ios.analytics-detailed.text-034",
+   "style": "h2",
+   "text": "SHOT RAIL SUMMARY \u00a9",
+   "type": "text",
+   "visibleGlyphHeight": 33,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1528,
+   "bounds": {
+    "height": 61,
+    "width": 643,
+    "x": 88,
+    "y": 1467
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 76,
+   "fontWeight": 900,
+   "generatedObservedText": "f g is 5S",
+   "id": "text-035",
+   "inkBounds": {
+    "height": 61,
+    "width": 643,
+    "x": 88,
+    "y": 1467
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 82,
+   "measurementId": "ios.analytics-detailed.text-035",
+   "ocrConfidence": 41.05,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 38.14,
+   "referenceTextMatched": true,
+   "semanticRole": "h1",
+   "sourceKey": "ios.analytics-detailed.text-035",
+   "style": "h1",
+   "text": "f g if oR",
+   "type": "text",
+   "visibleGlyphHeight": 61,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1525,
+   "bounds": {
+    "height": 10,
+    "width": 10,
+    "x": 725,
+    "y": 1515
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 12,
+   "fontWeight": 500,
+   "generatedObservedText": "e",
+   "id": "text-036",
+   "inkBounds": {
+    "height": 10,
+    "width": 10,
+    "x": 725,
+    "y": 1515
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 14,
+   "measurementId": "ios.analytics-detailed.text-036",
+   "ocrConfidence": 77.64,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "caption",
+   "sourceKey": "ios.analytics-detailed.text-036",
+   "style": "caption",
+   "text": "e",
+   "type": "text",
+   "visibleGlyphHeight": 10,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1552,
+   "bounds": {
+    "height": 34,
+    "width": 687,
+    "x": 82,
+    "y": 1518
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 42,
+   "fontWeight": 900,
+   "generatedObservedText": "serve RISE RELEASE FOLLOW-THROUGH",
+   "id": "text-037",
+   "inkBounds": {
+    "height": 34,
+    "width": 687,
+    "x": 82,
+    "y": 1518
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 46,
+   "measurementId": "ios.analytics-detailed.text-037",
+   "ocrConfidence": 77.84,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 65.03,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "ios.analytics-detailed.text-037",
+   "style": "h2",
+   "text": "sep alse RELEASE FOLLOW-THROUGH",
+   "type": "text",
+   "visibleGlyphHeight": 34,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1560,
+   "bounds": {
+    "height": 12,
+    "width": 643,
+    "x": 90,
+    "y": 1548
+   },
+   "color": "graphite",
+   "fontFamily": "DIN Condensed",
+   "fontSize": 15,
+   "fontWeight": 800,
+   "generatedObservedText": "84 79 88 78 84",
+   "id": "text-038",
+   "inkBounds": {
+    "height": 12,
+    "width": 643,
+    "x": 90,
+    "y": 1548
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 16,
+   "measurementId": "ios.analytics-detailed.text-038",
+   "ocrConfidence": 87.24,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 87.74,
+   "referenceTextMatched": true,
+   "semanticRole": "numeric",
+   "sourceKey": "ios.analytics-detailed.text-038",
+   "style": "numeric",
+   "text": "84 79 88 78 84",
+   "type": "text",
+   "visibleGlyphHeight": 12,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1654,
+   "bounds": {
+    "height": 30,
+    "width": 722,
+    "x": 86,
+    "y": 1624
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 38,
+   "fontWeight": 900,
+   "generatedObservedText": "Ad | Se | ee",
+   "id": "text-039",
+   "inkBounds": {
+    "height": 30,
+    "width": 722,
+    "x": 86,
+    "y": 1624
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 40,
+   "measurementId": "ios.analytics-detailed.text-039",
+   "ocrConfidence": 54.23,
+   "owningRegion": "main",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 48.32,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "ios.analytics-detailed.text-039",
+   "style": "h2",
+   "text": "e if i JE}",
+   "type": "text",
+   "visibleGlyphHeight": 30,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1726,
+   "bounds": {
+    "height": 32,
+    "width": 699,
+    "x": 46,
+    "y": 1694
+   },
+   "color": "graphite",
+   "fontFamily": "Bebas Neue",
+   "fontSize": 40,
+   "fontWeight": 900,
+   "generatedObservedText": "a> eS ae SS Se.",
+   "id": "text-040",
+   "inkBounds": {
+    "height": 32,
+    "width": 699,
+    "x": 46,
+    "y": 1694
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 43,
+   "measurementId": "ios.analytics-detailed.text-040",
+   "ocrConfidence": 52.05,
+   "owningRegion": "navigation",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": 95.42,
+   "referenceTextMatched": true,
+   "semanticRole": "h2",
+   "sourceKey": "ios.analytics-detailed.text-040",
+   "style": "h2",
+   "text": "Home Capture Train Progress Profile",
+   "type": "text",
+   "visibleGlyphHeight": 32,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1736,
+   "bounds": {
+    "height": 13,
+    "width": 686,
+    "x": 95,
+    "y": 1723
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 16,
+   "fontWeight": 500,
+   "generatedObservedText": "SETUP LOAD RISE RELEASE FOLLOW-THROUGH",
+   "id": "text-041",
+   "inkBounds": {
+    "height": 13,
+    "width": 686,
+    "x": 95,
+    "y": 1723
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 18,
+   "measurementId": "ios.analytics-detailed.text-041",
+   "ocrConfidence": 89.04,
+   "owningRegion": "navigation",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "caption",
+   "sourceKey": "ios.analytics-detailed.text-041",
+   "style": "caption",
+   "text": "SETUP LOAD RISE RELEASE FOLLOW-THROUGH",
+   "type": "text",
+   "visibleGlyphHeight": 13,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1780,
+   "bounds": {
+    "height": 11,
+    "width": 47,
+    "x": 75,
+    "y": 1769
+   },
+   "color": "shotiqOrange",
+   "fontFamily": "Inter",
+   "fontSize": 14,
+   "fontWeight": 500,
+   "generatedObservedText": "|",
+   "id": "text-042",
+   "inkBounds": {
+    "height": 11,
+    "width": 47,
+    "x": 75,
+    "y": 1769
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 15,
+   "measurementId": "ios.analytics-detailed.text-042",
+   "ocrConfidence": 26.84,
+   "owningRegion": "navigation",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "caption",
+   "sourceKey": "ios.analytics-detailed.text-042",
+   "style": "caption",
+   "text": "|",
+   "type": "text",
+   "visibleGlyphHeight": 11,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "baseline": 1828,
+   "bounds": {
+    "height": 14,
+    "width": 680,
+    "x": 82,
+    "y": 1814
+   },
+   "color": "graphite",
+   "fontFamily": "Inter",
+   "fontSize": 18,
+   "fontWeight": 500,
+   "generatedObservedText": "Home Capture Train Progress Profile",
+   "id": "text-043",
+   "inkBounds": {
+    "height": 14,
+    "width": 680,
+    "x": 82,
+    "y": 1814
+   },
+   "letterSpacing": 0,
+   "lineCount": 1,
+   "lineHeight": 19,
+   "measurementId": "ios.analytics-detailed.text-043",
+   "ocrConfidence": 82.57,
+   "owningRegion": "navigation",
+   "proofMethod": "final-bitmap OCR bounds with nearest normalized-reference text verification",
+   "referenceOcrConfidence": null,
+   "referenceTextMatched": false,
+   "semanticRole": "caption",
+   "sourceKey": "ios.analytics-detailed.text-043",
+   "style": "caption",
+   "text": "Home Capture Train Progress Profile",
+   "type": "text",
+   "visibleGlyphHeight": 14,
+   "wrapPoints": [],
+   "zIndex": 4
+  },
+  {
+   "backgroundColor": "warmCanvas",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 105,
+    "width": 386,
+    "x": 252,
+    "y": 297
+   },
+   "cornerRadius": "card",
+   "id": "visual-001",
+   "inkBounds": {
+    "height": 105,
+    "width": 386,
+    "x": 252,
+    "y": 297
+   },
+   "measurementId": "ios.analytics-detailed.visual-001",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-001",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "assetRef": "app.shotiq.photo.athlete-frame",
+   "bounds": {
+    "height": 109,
+    "width": 260,
+    "x": 300,
+    "y": 1280
+   },
+   "componentRef": "app.shotiq.media.analysis-frame",
+   "fit": "cover",
+   "id": "visual-002",
+   "inkBounds": {
+    "height": 109,
+    "width": 260,
+    "x": 300,
+    "y": 1280
+   },
+   "measurementId": "ios.analytics-detailed.visual-002",
+   "objectPosition": {
+    "x": 0.5,
+    "y": 0.5
+   },
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-002",
+   "type": "photo",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 172,
+    "width": 150,
+    "x": 198,
+    "y": 1568
+   },
+   "cornerRadius": "card",
+   "id": "visual-003",
+   "inkBounds": {
+    "height": 172,
+    "width": 150,
+    "x": 198,
+    "y": 1568
+   },
+   "measurementId": "ios.analytics-detailed.visual-003",
+   "owningRegion": "navigation",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-003",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 172,
+    "width": 148,
+    "x": 43,
+    "y": 1568
+   },
+   "cornerRadius": "card",
+   "id": "visual-004",
+   "inkBounds": {
+    "height": 172,
+    "width": 148,
+    "x": 43,
+    "y": 1568
+   },
+   "measurementId": "ios.analytics-detailed.visual-004",
+   "owningRegion": "navigation",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-004",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 172,
+    "width": 147,
+    "x": 663,
+    "y": 1568
+   },
+   "cornerRadius": "card",
+   "id": "visual-005",
+   "inkBounds": {
+    "height": 172,
+    "width": 147,
+    "x": 663,
+    "y": 1568
+   },
+   "measurementId": "ios.analytics-detailed.visual-005",
+   "owningRegion": "navigation",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-005",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 171,
+    "width": 146,
+    "x": 508,
+    "y": 1569
+   },
+   "cornerRadius": "card",
+   "id": "visual-006",
+   "inkBounds": {
+    "height": 171,
+    "width": 146,
+    "x": 508,
+    "y": 1569
+   },
+   "measurementId": "ios.analytics-detailed.visual-006",
+   "owningRegion": "navigation",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-006",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "graphite",
+   "borderColor": "rule",
+   "borderWidth": 1,
+   "bounds": {
+    "height": 170,
+    "width": 143,
+    "x": 357,
+    "y": 1570
+   },
+   "cornerRadius": "card",
+   "id": "visual-007",
+   "inkBounds": {
+    "height": 170,
+    "width": 143,
+    "x": 357,
+    "y": 1570
+   },
+   "measurementId": "ios.analytics-detailed.visual-007",
+   "owningRegion": "navigation",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-007",
+   "type": "card",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 26,
+    "width": 69,
+    "x": 392,
+    "y": 1775
+   },
+   "id": "visual-008",
+   "inkBounds": {
+    "height": 26,
+    "width": 69,
+    "x": 392,
+    "y": 1775
+   },
+   "measurementId": "ios.analytics-detailed.visual-008",
+   "owningRegion": "navigation",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-008",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 64,
+    "width": 28,
+    "x": 727,
+    "y": 538
+   },
+   "id": "visual-009",
+   "inkBounds": {
+    "height": 64,
+    "width": 28,
+    "x": 727,
+    "y": 538
+   },
+   "measurementId": "ios.analytics-detailed.visual-009",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-009",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 38,
+    "width": 36,
+    "x": 242,
+    "y": 1768
+   },
+   "id": "visual-010",
+   "inkBounds": {
+    "height": 38,
+    "width": 36,
+    "x": 242,
+    "y": 1768
+   },
+   "measurementId": "ios.analytics-detailed.visual-010",
+   "owningRegion": "navigation",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-010",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 35,
+    "width": 38,
+    "x": 725,
+    "y": 1770
+   },
+   "id": "visual-011",
+   "inkBounds": {
+    "height": 35,
+    "width": 38,
+    "x": 725,
+    "y": 1770
+   },
+   "measurementId": "ios.analytics-detailed.visual-011",
+   "owningRegion": "navigation",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-011",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 30,
+    "width": 32,
+    "x": 531,
+    "y": 18
+   },
+   "id": "visual-012",
+   "inkBounds": {
+    "height": 30,
+    "width": 32,
+    "x": 531,
+    "y": 18
+   },
+   "measurementId": "ios.analytics-detailed.visual-012",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-012",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 20,
+    "width": 40,
+    "x": 560,
+    "y": 1784
+   },
+   "id": "visual-013",
+   "inkBounds": {
+    "height": 20,
+    "width": 40,
+    "x": 560,
+    "y": 1784
+   },
+   "measurementId": "ios.analytics-detailed.visual-013",
+   "owningRegion": "navigation",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-013",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 39,
+    "width": 20,
+    "x": 80,
+    "y": 109
+   },
+   "id": "visual-014",
+   "inkBounds": {
+    "height": 39,
+    "width": 20,
+    "x": 80,
+    "y": 109
+   },
+   "measurementId": "ios.analytics-detailed.visual-014",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-014",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 39,
+    "width": 19,
+    "x": 331,
+    "y": 109
+   },
+   "id": "visual-015",
+   "inkBounds": {
+    "height": 39,
+    "width": 19,
+    "x": 331,
+    "y": 109
+   },
+   "measurementId": "ios.analytics-detailed.visual-015",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-015",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 39,
+    "width": 19,
+    "x": 57,
+    "y": 109
+   },
+   "id": "visual-016",
+   "inkBounds": {
+    "height": 39,
+    "width": 19,
+    "x": 57,
+    "y": 109
+   },
+   "measurementId": "ios.analytics-detailed.visual-016",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-016",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 39,
+    "width": 19,
+    "x": 34,
+    "y": 109
+   },
+   "id": "visual-017",
+   "inkBounds": {
+    "height": 39,
+    "width": 19,
+    "x": 34,
+    "y": 109
+   },
+   "measurementId": "ios.analytics-detailed.visual-017",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-017",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 40,
+    "width": 18,
+    "x": 288,
+    "y": 108
+   },
+   "id": "visual-018",
+   "inkBounds": {
+    "height": 40,
+    "width": 18,
+    "x": 288,
+    "y": 108
+   },
+   "measurementId": "ios.analytics-detailed.visual-018",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-018",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 40,
+    "width": 18,
+    "x": 247,
+    "y": 108
+   },
+   "id": "visual-019",
+   "inkBounds": {
+    "height": 40,
+    "width": 18,
+    "x": 247,
+    "y": 108
+   },
+   "measurementId": "ios.analytics-detailed.visual-019",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-019",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 40,
+    "width": 18,
+    "x": 177,
+    "y": 108
+   },
+   "id": "visual-020",
+   "inkBounds": {
+    "height": 40,
+    "width": 18,
+    "x": 177,
+    "y": 108
+   },
+   "measurementId": "ios.analytics-detailed.visual-020",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-020",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 40,
+    "width": 18,
+    "x": 143,
+    "y": 108
+   },
+   "id": "visual-021",
+   "inkBounds": {
+    "height": 40,
+    "width": 18,
+    "x": 143,
+    "y": 108
+   },
+   "measurementId": "ios.analytics-detailed.visual-021",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-021",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 39,
+    "width": 18,
+    "x": 267,
+    "y": 109
+   },
+   "id": "visual-022",
+   "inkBounds": {
+    "height": 39,
+    "width": 18,
+    "x": 267,
+    "y": 109
+   },
+   "measurementId": "ios.analytics-detailed.visual-022",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-022",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 39,
+    "width": 18,
+    "x": 211,
+    "y": 109
+   },
+   "id": "visual-023",
+   "inkBounds": {
+    "height": 39,
+    "width": 18,
+    "x": 211,
+    "y": 109
+   },
+   "measurementId": "ios.analytics-detailed.visual-023",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-023",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 39,
+    "width": 18,
+    "x": 122,
+    "y": 109
+   },
+   "id": "visual-024",
+   "inkBounds": {
+    "height": 39,
+    "width": 18,
+    "x": 122,
+    "y": 109
+   },
+   "measurementId": "ios.analytics-detailed.visual-024",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-024",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 27,
+    "width": 26,
+    "x": 54,
+    "y": 210
+   },
+   "id": "visual-025",
+   "inkBounds": {
+    "height": 27,
+    "width": 26,
+    "x": 54,
+    "y": 210
+   },
+   "measurementId": "ios.analytics-detailed.visual-025",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-025",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 39,
+    "width": 17,
+    "x": 311,
+    "y": 109
+   },
+   "id": "visual-026",
+   "inkBounds": {
+    "height": 39,
+    "width": 17,
+    "x": 311,
+    "y": 109
+   },
+   "measurementId": "ios.analytics-detailed.visual-026",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-026",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 39,
+    "width": 15,
+    "x": 104,
+    "y": 109
+   },
+   "id": "visual-027",
+   "inkBounds": {
+    "height": 39,
+    "width": 15,
+    "x": 104,
+    "y": 109
+   },
+   "measurementId": "ios.analytics-detailed.visual-027",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-027",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 20,
+    "width": 26,
+    "x": 748,
+    "y": 28
+   },
+   "id": "visual-028",
+   "inkBounds": {
+    "height": 20,
+    "width": 26,
+    "x": 748,
+    "y": 28
+   },
+   "measurementId": "ios.analytics-detailed.visual-028",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-028",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "rule",
+   "borderWidth": 5,
+   "bounds": {
+    "height": 5,
+    "width": 85,
+    "x": 367,
+    "y": 725
+   },
+   "id": "visual-029",
+   "inkBounds": {
+    "height": 5,
+    "width": 85,
+    "x": 367,
+    "y": 725
+   },
+   "measurementId": "ios.analytics-detailed.visual-029",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-029",
+   "type": "divider",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "rule",
+   "borderWidth": 5,
+   "bounds": {
+    "height": 5,
+    "width": 83,
+    "x": 685,
+    "y": 725
+   },
+   "id": "visual-030",
+   "inkBounds": {
+    "height": 5,
+    "width": 83,
+    "x": 685,
+    "y": 725
+   },
+   "measurementId": "ios.analytics-detailed.visual-030",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-030",
+   "type": "divider",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "rule",
+   "borderWidth": 5,
+   "bounds": {
+    "height": 5,
+    "width": 83,
+    "x": 210,
+    "y": 725
+   },
+   "id": "visual-031",
+   "inkBounds": {
+    "height": 5,
+    "width": 83,
+    "x": 210,
+    "y": 725
+   },
+   "measurementId": "ios.analytics-detailed.visual-031",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-031",
+   "type": "divider",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "rule",
+   "borderWidth": 5,
+   "bounds": {
+    "height": 5,
+    "width": 81,
+    "x": 58,
+    "y": 725
+   },
+   "id": "visual-032",
+   "inkBounds": {
+    "height": 5,
+    "width": 81,
+    "x": 58,
+    "y": 725
+   },
+   "measurementId": "ios.analytics-detailed.visual-032",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-032",
+   "type": "divider",
+   "zIndex": 2
+  },
+  {
+   "backgroundColor": "rule",
+   "borderWidth": 5,
+   "bounds": {
+    "height": 5,
+    "width": 77,
+    "x": 525,
+    "y": 725
+   },
+   "id": "visual-033",
+   "inkBounds": {
+    "height": 5,
+    "width": 77,
+    "x": 525,
+    "y": 725
+   },
+   "measurementId": "ios.analytics-detailed.visual-033",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-033",
+   "type": "divider",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 9,
+    "width": 34,
+    "x": 639,
+    "y": 39
+   },
+   "id": "visual-034",
+   "inkBounds": {
+    "height": 9,
+    "width": 34,
+    "x": 639,
+    "y": 39
+   },
+   "measurementId": "ios.analytics-detailed.visual-034",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-034",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 39,
+    "width": 7,
+    "x": 235,
+    "y": 109
+   },
+   "id": "visual-035",
+   "inkBounds": {
+    "height": 39,
+    "width": 7,
+    "x": 235,
+    "y": 109
+   },
+   "measurementId": "ios.analytics-detailed.visual-035",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-035",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 16,
+    "width": 16,
+    "x": 90,
+    "y": 1780
+   },
+   "id": "visual-036",
+   "inkBounds": {
+    "height": 16,
+    "width": 16,
+    "x": 90,
+    "y": 1780
+   },
+   "measurementId": "ios.analytics-detailed.visual-036",
+   "owningRegion": "navigation",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-036",
+   "stroke": "shotiqOrange",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 39,
+    "width": 6,
+    "x": 166,
+    "y": 109
+   },
+   "id": "visual-037",
+   "inkBounds": {
+    "height": 39,
+    "width": 6,
+    "x": 166,
+    "y": 109
+   },
+   "measurementId": "ios.analytics-detailed.visual-037",
+   "owningRegion": "header",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-037",
+   "stroke": "ink",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 20,
+    "width": 11,
+    "x": 767,
+    "y": 982
+   },
+   "id": "visual-038",
+   "inkBounds": {
+    "height": 20,
+    "width": 11,
+    "x": 767,
+    "y": 982
+   },
+   "measurementId": "ios.analytics-detailed.visual-038",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-038",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 20,
+    "width": 9,
+    "x": 757,
+    "y": 982
+   },
+   "id": "visual-039",
+   "inkBounds": {
+    "height": 20,
+    "width": 9,
+    "x": 757,
+    "y": 982
+   },
+   "measurementId": "ios.analytics-detailed.visual-039",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-039",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 19,
+    "width": 9,
+    "x": 742,
+    "y": 982
+   },
+   "id": "visual-040",
+   "inkBounds": {
+    "height": 19,
+    "width": 9,
+    "x": 742,
+    "y": 982
+   },
+   "measurementId": "ios.analytics-detailed.visual-040",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-040",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 12,
+    "x": 110,
+    "y": 1798
+   },
+   "id": "visual-041",
+   "inkBounds": {
+    "height": 11,
+    "width": 12,
+    "x": 110,
+    "y": 1798
+   },
+   "measurementId": "ios.analytics-detailed.visual-041",
+   "owningRegion": "navigation",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-041",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 12,
+    "width": 11,
+    "x": 75,
+    "y": 1797
+   },
+   "id": "visual-042",
+   "inkBounds": {
+    "height": 12,
+    "width": 11,
+    "x": 75,
+    "y": 1797
+   },
+   "measurementId": "ios.analytics-detailed.visual-042",
+   "owningRegion": "navigation",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-042",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 16,
+    "width": 8,
+    "x": 695,
+    "y": 1381
+   },
+   "id": "visual-043",
+   "inkBounds": {
+    "height": 16,
+    "width": 8,
+    "x": 695,
+    "y": 1381
+   },
+   "measurementId": "ios.analytics-detailed.visual-043",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-043",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 11,
+    "width": 11,
+    "x": 784,
+    "y": 1515
+   },
+   "id": "visual-044",
+   "inkBounds": {
+    "height": 11,
+    "width": 11,
+    "x": 784,
+    "y": 1515
+   },
+   "measurementId": "ios.analytics-detailed.visual-044",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-044",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 12,
+    "x": 381,
+    "y": 1569
+   },
+   "id": "visual-045",
+   "inkBounds": {
+    "height": 10,
+    "width": 12,
+    "x": 381,
+    "y": 1569
+   },
+   "measurementId": "ios.analytics-detailed.visual-045",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-045",
+   "stroke": "graphite",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 16,
+    "width": 7,
+    "x": 710,
+    "y": 1381
+   },
+   "id": "visual-046",
+   "inkBounds": {
+    "height": 16,
+    "width": 7,
+    "x": 710,
+    "y": 1381
+   },
+   "measurementId": "ios.analytics-detailed.visual-046",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-046",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 19,
+    "width": 5,
+    "x": 734,
+    "y": 982
+   },
+   "id": "visual-047",
+   "inkBounds": {
+    "height": 19,
+    "width": 5,
+    "x": 734,
+    "y": 982
+   },
+   "measurementId": "ios.analytics-detailed.visual-047",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-047",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 10,
+    "width": 7,
+    "x": 724,
+    "y": 987
+   },
+   "id": "visual-048",
+   "inkBounds": {
+    "height": 10,
+    "width": 7,
+    "x": 724,
+    "y": 987
+   },
+   "measurementId": "ios.analytics-detailed.visual-048",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-048",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 8,
+    "width": 8,
+    "x": 686,
+    "y": 1384
+   },
+   "id": "visual-049",
+   "inkBounds": {
+    "height": 8,
+    "width": 8,
+    "x": 686,
+    "y": 1384
+   },
+   "measurementId": "ios.analytics-detailed.visual-049",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-049",
+   "stroke": "rule",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 8,
+    "width": 7,
+    "x": 437,
+    "y": 539
+   },
+   "id": "visual-050",
+   "inkBounds": {
+    "height": 8,
+    "width": 7,
+    "x": 437,
+    "y": 539
+   },
+   "measurementId": "ios.analytics-detailed.visual-050",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-050",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 8,
+    "width": 6,
+    "x": 440,
+    "y": 538
+   },
+   "id": "visual-051",
+   "inkBounds": {
+    "height": 8,
+    "width": 6,
+    "x": 440,
+    "y": 538
+   },
+   "measurementId": "ios.analytics-detailed.visual-051",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-051",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 7,
+    "width": 6,
+    "x": 719,
+    "y": 1381
+   },
+   "id": "visual-052",
+   "inkBounds": {
+    "height": 7,
+    "width": 6,
+    "x": 719,
+    "y": 1381
+   },
+   "measurementId": "ios.analytics-detailed.visual-052",
+   "owningRegion": "main",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-052",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 7,
+    "width": 6,
+    "x": 588,
+    "y": 1776
+   },
+   "id": "visual-053",
+   "inkBounds": {
+    "height": 7,
+    "width": 6,
+    "x": 588,
+    "y": 1776
+   },
+   "measurementId": "ios.analytics-detailed.visual-053",
+   "owningRegion": "navigation",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-053",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  },
+  {
+   "borderWidth": 2,
+   "bounds": {
+    "height": 6,
+    "width": 6,
+    "x": 578,
+    "y": 1773
+   },
+   "id": "visual-054",
+   "inkBounds": {
+    "height": 6,
+    "width": 6,
+    "x": 578,
+    "y": 1773
+   },
+   "measurementId": "ios.analytics-detailed.visual-054",
+   "owningRegion": "navigation",
+   "proofMethod": "OpenCV Canny contour and source-pixel bounding rectangle",
+   "sourceKey": "ios.analytics-detailed.visual-054",
+   "stroke": "muted",
+   "type": "vectorShape",
+   "zIndex": 2
+  }
+ ],
+ "imageGenerationNormalization": {
+  "finalCanvas": {
+   "height": 1844,
+   "width": 853
+  },
+  "finalPixelsAreEmbedSourceOfTruth": true,
+  "finalSha256": "7e15ecf2194412f302240de8b471cf5c31666a07df6c009034c97a8c00b0e67c",
+  "generator": "GPT Image 2",
+  "occursBeforeSidecarMeasurement": true,
+  "rawCanvas": {
+   "height": 1844,
+   "width": 853
+  },
+  "rawSha256": "7e15ecf2194412f302240de8b471cf5c31666a07df6c009034c97a8c00b0e67c",
+  "transform": {
+   "resampling": "none",
+   "scaleX": 1,
+   "scaleY": 1
+  }
+ },
+ "measurementContract": {
+  "autoCorrectGlobalTransform": false,
+  "coordinateSpace": "final-bitmap-source-pixels",
+  "limitations": [
+   "Automated contour semantics and OCR text matching require browser proof before production acceptance.",
+   "Missing standalone completed asset packs remain explicit failures and are never filled with source pixels."
+  ],
+  "methods": [
+   "final-bitmap source-pixel bounds",
+   "Tesseract OCR TSV line bounds",
+   "normalized-reference text verification",
+   "OpenCV edge-contour visual bounds",
+   "regional visual-difference analysis"
+  ],
+  "origin": "top-left",
+  "precisionPx": 1
+ },
+ "pinnedRegions": [
+  {
+   "edges": [
+    "top",
+    "left",
+    "right"
+   ],
+   "elementId": "header",
+   "id": "pin-header"
+  },
+  {
+   "edges": [
+    "left",
+    "right"
+   ],
+   "elementId": "main",
+   "id": "pin-main"
+  },
+  {
+   "edges": [
+    "bottom",
+    "left",
+    "right"
+   ],
+   "elementId": "navigation",
+   "id": "pin-navigation"
+  }
+ ],
+ "referenceNormalization": {
+  "contentBounds": {
+   "height": 1844,
+   "width": 853,
+   "x": 218,
+   "y": 502
+  },
+  "normalizedSha256": "c27117467a5a677e39a19c00b6e165c9cb2bb20416ecdf990f6cda765f308bf7",
+  "originalPreserved": true,
+  "removedMargins": {
+   "bottom": 450,
+   "left": 218,
+   "right": 219,
+   "top": 502
+  },
+  "removedPresentationLabels": [
+   "SHOTIQ CONCEPT - NOT LIVE",
+   "iOS system status indicators",
+   "home indicator"
+  ],
+  "sourceCanvas": {
+   "height": 2796,
+   "width": 1290
+  },
+  "sourceSha256": "9ec6a9c9d128dcb837cbb7c9e0578f57c27e4b6b7541fbca23b3fc407e22e972",
+  "targetCanvas": {
+   "height": 1844,
+   "width": 853
+  },
+  "transform": {
+   "scaleX": 1,
+   "scaleY": 1,
+   "translateX": -218,
+   "translateY": -582
+  }
+ },
+ "regions": [
+  {
+   "bounds": {
+    "height": 260,
+    "width": 853,
+    "x": 0,
+    "y": 0
+   },
+   "critical": true,
+   "fidelityFloor": 0.98,
+   "id": "header"
+  },
+  {
+   "bounds": {
+    "height": 1424,
+    "width": 853,
+    "x": 0,
+    "y": 220
+   },
+   "critical": true,
+   "fidelityFloor": 0.98,
+   "id": "main"
+  },
+  {
+   "bounds": {
+    "height": 220,
+    "width": 853,
+    "x": 0,
+    "y": 1624
+   },
+   "critical": true,
+   "fidelityFloor": 0.98,
+   "id": "navigation"
+  }
+ ],
+ "renderingContract": {
+  "browserZoom": 1,
+  "colorSpace": "srgb",
+  "defaultBoxSizing": "border-box",
+  "devicePixelRatio": 1,
+  "fontLoadingGate": "document.fonts.ready",
+  "locale": "en-US",
+  "screenshotGate": "two requestAnimationFrame callbacks after fonts and assets resolve",
+  "viewport": {
+   "height": 1844,
+   "width": 853
+  }
+ },
+ "repeatGroups": [],
+ "schemaVersion": "2.0.0",
+ "source": {
+  "fromSourceCrop": false,
+  "generationProvenance": "Fresh independent GPT Image 2 recreation generated in this batch from the supplied reference.",
+  "originalFilename": "ios/67-analytics-detailed.png",
+  "sourcePrompt": "/Volumes/APPLICATIONS/CodexStorage/projects/shotiq-sidecar-job/design/imagegen-screen-pack/prompts/67-analytics-detailed.txt"
+ }
+}

@@ -1,0 +1,56 @@
+# Deploys the ShotIQ static visual preview to GitHub Pages.
+# The preview has no backend: /api/* calls 404 and screens show their honest
+# signed-out/empty states. Production hosting (Vercel etc.) is separate.
+name: Deploy ShotIQ preview to Pages
+
+on:
+  push:
+    branches: [claude/shotiq-production-build-txi5pl]
+    paths:
+      - 'basketball-analysis/**'
+      - '.github/workflows/deploy-shotiq-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: basketball-analysis/package-lock.json
+      - name: Install
+        working-directory: basketball-analysis
+        run: npm ci --no-audit --no-fund
+      - name: Build static preview
+        working-directory: basketball-analysis
+        env:
+          NEXT_BASEPATH: /BasketballAnalysisAssessmentApp
+        run: node scripts/build-pages-static.mjs
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: basketball-analysis/out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
