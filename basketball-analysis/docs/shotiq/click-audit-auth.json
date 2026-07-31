@@ -5,9 +5,9 @@
   "brokenLinks": [],
   "buttons": 13,
   "deadButtons": [
-   "Left"
+   "#11"
   ],
-  "consoleErrors": 12
+  "consoleErrors": 6
  },
  {
   "route": "/dashboard",
@@ -31,7 +31,7 @@
   "brokenLinks": [],
   "buttons": 20,
   "deadButtons": [],
-  "consoleErrors": 4
+  "consoleErrors": 3
  },
  {
   "route": "/profile",

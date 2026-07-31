@@ -79,7 +79,7 @@
   "brokenLinks": [],
   "buttons": 11,
   "deadButtons": [],
-  "consoleErrors": 8
+  "consoleErrors": 3
  },
  {
   "route": "/elite-shooters",
@@ -110,7 +110,9 @@
   "links": 18,
   "brokenLinks": [],
   "buttons": 43,
-  "deadButtons": [],
-  "consoleErrors": 11
+  "deadButtons": [
+   "Upload Video"
+  ],
+  "consoleErrors": 12
  }
 ]

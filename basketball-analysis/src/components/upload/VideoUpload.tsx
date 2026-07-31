@@ -444,7 +444,7 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
       case 'FOLLOW_THROUGH':
       case 'follow-through':
       case 'flight': return 'bg-purple-500'
-      default: return 'bg-gray-500'
+      default: return 'bg-[var(--shotiq-color-muted)]'
     }
   }
 
@@ -455,18 +455,18 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
     <div className="space-y-6">
       {/* Upload Section */}
       <div className="bg-[var(--shotiq-color-warmCanvas)] border border-[var(--shotiq-color-rule)] rounded-lg p-4 space-y-4">
-        <h4 className="text-[#FF6B35] font-semibold text-sm mb-2 flex items-center gap-2">
+        <h4 className="text-[var(--shotiq-color-shotiqOrange)] font-semibold text-sm mb-2 flex items-center gap-2">
           <Video className="w-4 h-4" />
           Video Analysis
         </h4>
         
         <div className="bg-white border border-[var(--shotiq-color-rule)] rounded-lg p-4">
-          <h5 className="text-[#FF6B35] font-semibold text-xs mb-2 flex items-center gap-2">
+          <h5 className="text-[var(--shotiq-color-shotiqOrange)] font-semibold text-xs mb-2 flex items-center gap-2">
             <AlertTriangle className="w-3 h-3" />
             Video Requirements
           </h5>
           <ul className="text-[var(--shotiq-color-graphite)] text-xs space-y-1">
-            <li>• <strong className="text-[#FF6B35]">Maximum 90 seconds</strong>, under {FILE_LIMITS.MAX_VIDEO_SIZE_MB}MB</li>
+            <li>• <strong className="text-[var(--shotiq-color-shotiqOrange)]">Maximum 90 seconds</strong>, under {FILE_LIMITS.MAX_VIDEO_SIZE_MB}MB</li>
             <li>• Full body visible throughout</li>
             <li>• Single shooter, clear view</li>
             <li>• Good lighting, minimal camera shake</li>
@@ -477,7 +477,7 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
 
         {/* Upload Area */}
         {!videoFile ? (
-          <label className="border-2 border-dashed border-[var(--shotiq-color-rule)] rounded-lg p-8 flex flex-col items-center justify-center cursor-pointer hover:border-[#FF6B35]/60 transition-colors">
+          <label className="border-2 border-dashed border-[var(--shotiq-color-rule)] rounded-lg p-8 flex flex-col items-center justify-center cursor-pointer hover:border-[var(--shotiq-color-shotiqOrange)]/60 transition-colors">
             <Upload className="w-12 h-12 text-[#666] mb-3" />
             <span className="text-[var(--shotiq-color-graphite)] text-sm">Click to upload video</span>
             <span className="text-[#666] text-xs mt-1">MP4, MOV, WebM (max 90 sec, {FILE_LIMITS.MAX_VIDEO_SIZE_MB}MB)</span>
@@ -548,7 +548,7 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
                 "w-full py-3 px-4 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-all whitespace-nowrap",
                 isAnalyzing
                   ? "bg-[var(--shotiq-color-rule)] text-[var(--shotiq-color-graphite)] cursor-not-allowed"
-                  : "bg-[#FF6B35] text-white hover:bg-[#FFC000]"
+                  : "bg-[var(--shotiq-color-shotiqOrange)] text-white hover:bg-[#FFC000]"
               )}
             >
               {isAnalyzing ? (
@@ -577,7 +577,7 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
       {/* Results Preview (before navigation) */}
       {result && !isAnalyzing && (
         <div className="bg-[var(--shotiq-color-warmCanvas)] border border-[var(--shotiq-color-rule)] rounded-lg p-4 space-y-4">
-          <h4 className="text-[#FF6B35] font-semibold text-lg">Analysis Preview</h4>
+          <h4 className="text-[var(--shotiq-color-shotiqOrange)] font-semibold text-lg">Analysis Preview</h4>
 
           {/* Key Screenshots */}
           {result.key_screenshots && result.key_screenshots.length > 0 && (
@@ -645,7 +645,7 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
                 
                 <button
                   onClick={() => setIsPlaying(!isPlaying)}
-                  className="p-3 bg-[#FF6B35] rounded-full hover:bg-[#FFC000]"
+                  className="p-3 bg-[var(--shotiq-color-shotiqOrange)] rounded-full hover:bg-[#FFC000]"
                 >
                   {isPlaying ? (
                     <Pause className="w-6 h-6 text-white" />

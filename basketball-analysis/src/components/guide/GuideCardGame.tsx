@@ -61,7 +61,7 @@ const GUIDE_CARDS: GuideCard[] = [
     type: 'welcome',
     title: 'WELCOME TO SHOTIQ',
     subtitle: 'AI-Powered Shooting Analysis',
-    color: '#FF6B35',
+    color: 'var(--shotiq-color-shotiqOrange)',
     icon: <Sparkles className="w-8 h-8" />
   },
   {
@@ -656,7 +656,7 @@ function GuideCardComponent({ card, data, isActive, dragX }: GuideCardProps) {
       className={`relative w-full transition-all duration-300 ${isActive ? 'scale-100 opacity-100' : 'scale-95 opacity-50'}`}
     >
       {/* Card Container */}
-      <div className="relative bg-white rounded-3xl overflow-hidden border-2 shadow-sm"
+      <div className="relative bg-white rounded-[8px] overflow-hidden border-2 shadow-sm"
         style={{ borderColor: `${card.color}50` }}
       >
         {/* Left Swipe Indicator - Previous */}
@@ -767,7 +767,7 @@ function GuideCardComponent({ card, data, isActive, dragX }: GuideCardProps) {
           
           {/* Title and Subtitle */}
           <div className="absolute inset-0 flex flex-col justify-center pl-5">
-            <h3 className="text-slate-900 font-black text-lg uppercase tracking-wider">{card.title}</h3>
+            <h3 className="text-[var(--shotiq-color-ink)] font-black text-lg uppercase tracking-wider">{card.title}</h3>
             <p className="text-xs font-semibold uppercase tracking-wider mt-0.5" style={{ color: card.color }}>{card.subtitle}</p>
           </div>
         </div>
@@ -780,21 +780,21 @@ function GuideCardComponent({ card, data, isActive, dragX }: GuideCardProps) {
               {isCorrect && <Check className="w-5 h-5 text-green-400" />}
               {isIncorrect && <X className="w-5 h-5 text-red-400" />}
               {isCompletion && <Trophy className="w-5 h-5 text-yellow-400" />}
-              <span className={`font-bold text-sm ${isCompletion ? 'text-yellow-600' : 'text-slate-900'}`}>{data.title}</span>
+              <span className={`font-bold text-sm ${isCompletion ? 'text-yellow-600' : 'text-[var(--shotiq-color-ink)]'}`}>{data.title}</span>
             </div>
             <div className="flex items-center gap-1">
               <ShotIQLogoIcon className="w-4 h-4" />
-              <span className="text-slate-400 text-[10px] font-semibold">SHOTIQ AI</span>
+              <span className="text-[var(--shotiq-color-muted)] text-[10px] font-semibold">SHOTIQ AI</span>
             </div>
           </div>
           
           {/* Description */}
-          <p className="text-slate-500 text-sm leading-relaxed">{data.description}</p>
+          <p className="text-[var(--shotiq-color-graphite)] text-sm leading-relaxed">{data.description}</p>
           
           {/* Instructional visual cue */}
           {data.imagePlaceholder && (
             <div 
-              className="relative w-full h-40 rounded-xl overflow-hidden border-2 border-dashed flex items-center justify-center"
+              className="relative w-full h-40 rounded-[8px] overflow-hidden border-2 border-dashed flex items-center justify-center"
               style={{ borderColor: `${card.color}30`, backgroundColor: `${card.color}10` }}
             >
               <div className="text-center">
@@ -807,8 +807,8 @@ function GuideCardComponent({ card, data, isActive, dragX }: GuideCardProps) {
                     <Camera className="w-6 h-6" style={{ color: card.color }} />
                   )}
                 </div>
-                <p className="text-slate-500 text-xs font-medium">{data.imageDescription}</p>
-                <p className="text-slate-400 text-[10px] mt-1 uppercase tracking-wide">Key visual cue</p>
+                <p className="text-[var(--shotiq-color-graphite)] text-xs font-medium">{data.imageDescription}</p>
+                <p className="text-[var(--shotiq-color-muted)] text-[10px] mt-1 uppercase tracking-wide">Key visual cue</p>
               </div>
             </div>
           )}
@@ -831,24 +831,24 @@ function GuideCardComponent({ card, data, isActive, dragX }: GuideCardProps) {
                     {isCompletion ? (
                       <>
                         {completionIcons[i] || <Check className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: card.color }} />}
-                        <span className="text-slate-600">{point}</span>
+                        <span className="text-[var(--shotiq-color-graphite)]">{point}</span>
                       </>
                     ) : isCorrect ? (
                       <>
                         <Check className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
-                        <span className="text-slate-600">{point}</span>
+                        <span className="text-[var(--shotiq-color-graphite)]">{point}</span>
                       </>
                     ) : isIncorrect ? (
                       <>
                         <X className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
-                        <span className="text-slate-600">{point}</span>
+                        <span className="text-[var(--shotiq-color-graphite)]">{point}</span>
                       </>
                     ) : (
                       <>
                         <div className="w-4 h-4 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0" style={{ backgroundColor: card.color }}>
                           <span className="text-white text-[10px] font-bold">{i + 1}</span>
                         </div>
-                        <span className="text-slate-600">{point}</span>
+                        <span className="text-[var(--shotiq-color-graphite)]">{point}</span>
                       </>
                     )}
                   </li>
@@ -860,7 +860,7 @@ function GuideCardComponent({ card, data, isActive, dragX }: GuideCardProps) {
           {/* Tip Box */}
           {data.tip && (
             <div 
-              className={`p-3 rounded-xl border ${isCompletion ? 'text-center' : ''}`}
+              className={`p-3 rounded-[8px] border ${isCompletion ? 'text-center' : ''}`}
               style={{ 
                 backgroundColor: `${card.color}10`, 
                 borderColor: `${card.color}30` 
@@ -885,9 +885,9 @@ function GuideCardComponent({ card, data, isActive, dragX }: GuideCardProps) {
           {isCompletion && (
             <div className="pt-2">
               <button 
-                className="w-full py-3 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="w-full py-3 px-4 rounded-[8px] font-bold text-sm flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
                 style={{ 
-                  background: `linear-gradient(135deg, ${card.color}, #FF6B35)`,
+                  background: `linear-gradient(135deg, ${card.color}, var(--shotiq-color-shotiqOrange))`,
                   color: '#fff',
                   boxShadow: `0 4px 20px ${card.color}40`
                 }}
@@ -904,7 +904,7 @@ function GuideCardComponent({ card, data, isActive, dragX }: GuideCardProps) {
         </div>
         
         {/* Footer */}
-        <div className="p-3 border-t border-slate-200 bg-slate-50">
+        <div className="p-3 border-t border-[var(--shotiq-color-rule)] bg-[var(--shotiq-color-warmCanvas)]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded overflow-hidden">
@@ -916,9 +916,9 @@ function GuideCardComponent({ card, data, isActive, dragX }: GuideCardProps) {
                   className="w-full h-full object-contain"
                 />
               </div>
-              <span className="text-[#FF6B35] text-[10px] font-bold">SHOTIQ AI GUIDE</span>
+              <span className="text-[var(--shotiq-color-shotiqOrange)] text-[10px] font-bold">SHOTIQ AI GUIDE</span>
             </div>
-            <span className="text-slate-400 text-[10px]">shotiqai.com</span>
+            <span className="text-[var(--shotiq-color-muted)] text-[10px]">shotiqai.com</span>
           </div>
         </div>
       </div>
@@ -936,8 +936,8 @@ interface CategoryFilterProps {
 }
 
 const CATEGORIES: { id: GuideCategory | 'all'; label: string; icon: React.ReactNode; color: string }[] = [
-  { id: 'all', label: 'All', icon: <BookOpen className="w-4 h-4" />, color: '#FF6B35' },
-  { id: 'welcome', label: 'Intro', icon: <Sparkles className="w-4 h-4" />, color: '#FF6B35' },
+  { id: 'all', label: 'All', icon: <BookOpen className="w-4 h-4" />, color: 'var(--shotiq-color-shotiqOrange)' },
+  { id: 'welcome', label: 'Intro', icon: <Sparkles className="w-4 h-4" />, color: 'var(--shotiq-color-shotiqOrange)' },
   { id: 'upload_dos', label: "Do's", icon: <Check className="w-4 h-4" />, color: '#22C55E' },
   { id: 'upload_donts', label: "Don'ts", icon: <X className="w-4 h-4" />, color: '#EF4444' },
   { id: 'image_guide', label: 'Image', icon: <Camera className="w-4 h-4" />, color: '#3B82F6' },
@@ -958,7 +958,7 @@ function CategoryFilter({ activeCategory, onCategoryChange }: CategoryFilterProp
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
             activeCategory === cat.id 
               ? 'text-white' 
-              : 'bg-white text-slate-500 border border-slate-200 hover:text-slate-900 hover:border-slate-300'
+              : 'bg-white text-[var(--shotiq-color-graphite)] border border-[var(--shotiq-color-rule)] hover:text-[var(--shotiq-color-ink)] hover:border-[var(--shotiq-color-rule)]'
           }`}
           style={activeCategory === cat.id ? { backgroundColor: cat.color } : {}}
         >
@@ -1108,23 +1108,23 @@ export function GuideCardGame() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-slate-900 font-black text-xl uppercase tracking-wider flex items-center gap-2">
-            <BookOpen className="w-6 h-6 text-[#FF6B35]" />
+          <h2 className="text-[var(--shotiq-color-ink)] font-black text-xl uppercase tracking-wider flex items-center gap-2">
+            <BookOpen className="w-6 h-6 text-[var(--shotiq-color-shotiqOrange)]" />
             Guide
           </h2>
-          <p className="text-[#FF6B35] text-sm font-semibold uppercase tracking-wider mt-1">Learn How to Use ShotIQ</p>
+          <p className="text-[var(--shotiq-color-shotiqOrange)] text-sm font-semibold uppercase tracking-wider mt-1">Learn How to Use ShotIQ</p>
         </div>
         
         <div className="flex items-center gap-3">
           {/* Points Display - Mini version */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 rounded-full border border-yellow-200">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--shotiq-color-warmCanvas)] rounded-full border border-yellow-200">
             <Zap className="w-4 h-4 text-yellow-400" />
-            <span className="font-bold text-slate-900 text-sm">{pointsState.totalPoints}</span>
+            <span className="font-bold text-[var(--shotiq-color-ink)] text-sm">{pointsState.totalPoints}</span>
           </div>
           
           <button
             onClick={() => router.push('/upload')}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#FF6B35] to-[#FF8F5F] rounded-xl text-white font-semibold text-sm hover:opacity-90 transition-all"
+            className="flex items-center gap-2 px-4 py-2 bg-[var(--shotiq-color-shotiqOrange)] rounded-[6px] text-white font-semibold text-sm hover:opacity-90 transition-all"
           >
             <Upload className="w-4 h-4" />
             Start Upload
@@ -1193,20 +1193,20 @@ export function GuideCardGame() {
         <button
           onClick={goToPrev}
           disabled={currentIndex === 0}
-          className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-700 font-semibold text-sm disabled:opacity-30 disabled:cursor-not-allowed hover:border-[#FF6B35]/50 hover:shadow-sm transition-all"
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-[var(--shotiq-color-rule)] rounded-[8px] text-[var(--shotiq-color-ink)] font-semibold text-sm disabled:opacity-30 disabled:cursor-not-allowed hover:border-[var(--shotiq-color-shotiqOrange)]/50 hover:shadow-sm transition-all"
         >
           <ChevronLeft className="w-4 h-4" />
           Prev
         </button>
         
-        <span className="text-slate-400 text-sm font-medium">
+        <span className="text-[var(--shotiq-color-muted)] text-sm font-medium">
           {currentIndex + 1} of {filteredCards.length}
         </span>
         
         <button
           onClick={goToNext}
           disabled={currentIndex === filteredCards.length - 1}
-          className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-700 font-semibold text-sm disabled:opacity-30 disabled:cursor-not-allowed hover:border-[#FF6B35]/50 hover:shadow-sm transition-all"
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-[var(--shotiq-color-rule)] rounded-[8px] text-[var(--shotiq-color-ink)] font-semibold text-sm disabled:opacity-30 disabled:cursor-not-allowed hover:border-[var(--shotiq-color-shotiqOrange)]/50 hover:shadow-sm transition-all"
         >
           Next
           <ChevronRight className="w-4 h-4" />
@@ -1217,24 +1217,24 @@ export function GuideCardGame() {
       <div className="grid grid-cols-3 gap-3">
         <button
           onClick={() => router.push('/upload?mode=image')}
-          className="flex flex-col items-center gap-2 p-4 bg-white border border-slate-200 rounded-xl hover:border-[#3B82F6]/50 hover:shadow-sm transition-all group"
+          className="flex flex-col items-center gap-2 p-4 bg-white border border-[var(--shotiq-color-rule)] rounded-[8px] hover:border-[#3B82F6]/50 hover:shadow-sm transition-all group"
         >
           <Camera className="w-6 h-6 text-[#3B82F6] group-hover:scale-110 transition-transform" />
-          <span className="text-slate-700 text-xs font-semibold">Upload Image</span>
+          <span className="text-[var(--shotiq-color-ink)] text-xs font-semibold">Upload Image</span>
         </button>
         <button
           onClick={() => router.push('/upload?mode=video')}
-          className="flex flex-col items-center gap-2 p-4 bg-white border border-slate-200 rounded-xl hover:border-[#8B5CF6]/50 hover:shadow-sm transition-all group"
+          className="flex flex-col items-center gap-2 p-4 bg-white border border-[var(--shotiq-color-rule)] rounded-[8px] hover:border-[#8B5CF6]/50 hover:shadow-sm transition-all group"
         >
           <Video className="w-6 h-6 text-[#8B5CF6] group-hover:scale-110 transition-transform" />
-          <span className="text-slate-700 text-xs font-semibold">Upload Video</span>
+          <span className="text-[var(--shotiq-color-ink)] text-xs font-semibold">Upload Video</span>
         </button>
         <button
           onClick={() => router.push('/video-analysis')}
-          className="flex flex-col items-center gap-2 p-4 bg-white border border-slate-200 rounded-xl hover:border-[#F59E0B]/50 hover:shadow-sm transition-all group"
+          className="flex flex-col items-center gap-2 p-4 bg-white border border-[var(--shotiq-color-rule)] rounded-[8px] hover:border-[#F59E0B]/50 hover:shadow-sm transition-all group"
         >
           <Radio className="w-6 h-6 text-[#F59E0B] group-hover:scale-110 transition-transform" />
-          <span className="text-slate-700 text-xs font-semibold">Go Live</span>
+          <span className="text-[var(--shotiq-color-ink)] text-xs font-semibold">Go Live</span>
         </button>
       </div>
     </div>

@@ -1,9 +1,14 @@
 "use client"
 
+/**
+ * /forgot-password — canonical white treatment (was the legacy black screen).
+ * The request flow is preserved verbatim: CSRF-protected POST to
+ * /api/auth/forgot-password, neutral success copy, dev-only reset link echo.
+ */
+
 import React, { useState } from "react"
 import Link from "next/link"
-import Image from "next/image"
-import { Loader2, ArrowRight, ArrowLeft, MailCheck } from "lucide-react"
+import { Loader2, ArrowLeft } from "lucide-react"
 
 async function getCsrfToken(): Promise<string> {
   try {
@@ -22,7 +27,6 @@ export default function ForgotPasswordPage() {
   const [message, setMessage] = useState("")
   const [devResetUrl, setDevResetUrl] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [focused, setFocused] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -64,138 +68,52 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#030303] flex items-center justify-center relative overflow-hidden px-6 py-12">
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-[#FF6B35]/5 blur-[120px] animate-pulse" />
-        <div className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-[#FF6B35]/3 blur-[100px] animate-pulse" style={{ animationDelay: "1s" }} />
-        <div
-          className="absolute inset-0 opacity-[0.02]"
-          style={{
-            backgroundImage: `linear-gradient(#FF6B35 1px, transparent 1px), linear-gradient(90deg, #FF6B35 1px, transparent 1px)`,
-            backgroundSize: "60px 60px",
-          }}
-        />
-      </div>
+    <div
+      data-testid="screen-desktop-web-forgot-password"
+      className="shotiq-canonical flex min-h-screen items-center justify-center bg-[var(--shotiq-color-paper)] px-6 py-12 text-[var(--shotiq-color-ink)]"
+    >
+      <div className="w-full max-w-[420px]">
+        <span className="shotiq-wordmark block text-center text-[30px] leading-none">
+          SHOT<span className="text-[var(--shotiq-color-shotiqOrange)]">IQ</span>
+        </span>
 
-      <div className="w-full max-w-[420px] relative z-10">
-        {/* Logo */}
-        <div className="text-center mb-10">
-          <Image
-            src="/images/shotiq-logo.png"
-            alt="SHOTIQ AI"
-            width={300}
-            height={84}
-            className="brightness-0 invert opacity-90 mx-auto"
-            priority
-          />
-        </div>
+        <h1 className="shotiq-display mt-[26px] text-center text-[40px] leading-[44px]">RESET YOUR PASSWORD</h1>
+        <p className="mt-[10px] text-center text-[14px] leading-[20px] text-[var(--shotiq-color-graphite)]">
+          Enter your email and we&apos;ll send you a link to get back into your account.
+        </p>
 
-        {/* Header */}
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3 tracking-tight">
-            Reset your password
-          </h1>
-          <p className="text-white/50 text-base">
-            Enter your email and we&apos;ll send you a link to get back into your account.
-          </p>
-        </div>
+        <form onSubmit={handleSubmit} noValidate
+              className="mt-[24px] rounded-[8px] border border-[var(--shotiq-color-rule)] bg-white p-[24px]">
+          <label htmlFor="email" className="text-[12px] font-bold tracking-[0.04em]">EMAIL</label>
+          <input id="email" type="email" autoComplete="email" data-testid="forgot-email"
+                 value={email} onChange={(e) => setEmail(e.target.value)}
+                 placeholder="Enter your email"
+                 className="mt-[8px] h-[46px] w-full rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white px-[14px] text-[15px] outline-none placeholder:text-[var(--shotiq-color-muted)] focus:border-[var(--shotiq-color-ink)]" />
 
-        {/* Card */}
-        <div className="relative">
-          <div className="absolute -inset-1 bg-gradient-to-r from-[#FF6B35]/20 via-[#FF6B35]/5 to-[#FF6B35]/20 rounded-2xl blur-xl opacity-50" />
-          <div className="relative bg-[#0a0a0a]/80 backdrop-blur-xl border border-white/[0.08] rounded-2xl p-8 shadow-2xl">
-            {message ? (
-              <div className="text-center space-y-4">
-                <div className="flex justify-center">
-                  <MailCheck className="w-12 h-12 text-[#FF6B35]" />
-                </div>
-                <p className="text-white/80">{message}</p>
-                {devResetUrl && (
-                  <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 text-left">
-                    <p className="text-white/40 text-xs mb-2">
-                      Dev mode — reset link (not shown in production):
-                    </p>
-                    <a
-                      href={devResetUrl}
-                      className="text-[#FF6B35] text-xs break-all hover:underline"
-                    >
-                      {devResetUrl}
-                    </a>
-                  </div>
-                )}
-                <Link
-                  href="/signin"
-                  className="inline-flex items-center gap-2 text-[#FF6B35] hover:text-[#FF8C5A] font-semibold transition-colors"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  Back to sign in
-                </Link>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="relative">
-                  <label
-                    className={`absolute left-4 transition-all duration-200 pointer-events-none ${
-                      focused || email
-                        ? "top-2 text-xs text-[#FF6B35]"
-                        : "top-1/2 -translate-y-1/2 text-white/40"
-                    }`}
-                  >
-                    Email address
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    onFocus={() => setFocused(true)}
-                    onBlur={() => setFocused(false)}
-                    className={`w-full bg-white/[0.03] border rounded-xl px-4 pt-6 pb-3 text-white text-base focus:outline-none transition-all duration-200 ${
-                      focused
-                        ? "border-[#FF6B35]/50 bg-white/[0.05]"
-                        : "border-white/[0.08] hover:border-white/[0.15]"
-                    }`}
-                  />
-                </div>
+          {error && (
+            <p role="alert" className="mt-[12px] text-[13px] text-[var(--shotiq-color-reviewRed)]">{error}</p>
+          )}
+          {message && (
+            <p className="mt-[12px] text-[13px] text-[var(--shotiq-color-confirmGreen)]">{message}</p>
+          )}
+          {devResetUrl && (
+            <p className="mt-[8px] break-all text-[12px] text-[var(--shotiq-color-graphite)]">
+              Dev reset link:{" "}
+              <a className="text-[var(--shotiq-color-analysisBlue)]" href={devResetUrl}>{devResetUrl}</a>
+            </p>
+          )}
 
-                {error && (
-                  <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 backdrop-blur-sm">
-                    <p className="text-red-400 text-sm">{error}</p>
-                  </div>
-                )}
+          <button type="submit" disabled={isSubmitting} data-testid="forgot-submit"
+                  className="mt-[16px] flex h-[46px] w-full items-center justify-center gap-2 rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] text-[15px] font-medium text-white disabled:opacity-70">
+            {isSubmitting && <Loader2 className="h-[16px] w-[16px] animate-spin" />}
+            {isSubmitting ? "Sending…" : "Send reset link"}
+          </button>
+        </form>
 
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="group w-full relative overflow-hidden bg-[#FF6B35] text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 hover:shadow-lg hover:shadow-[#FF6B35]/25 hover:bg-[#FF7A4A]"
-                >
-                  {isSubmitting ? (
-                    <span className="flex items-center gap-3">
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Sending...
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-3">
-                      Send reset link
-                      <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                    </span>
-                  )}
-                </button>
-
-                <div className="text-center">
-                  <Link
-                    href="/signin"
-                    className="inline-flex items-center gap-2 text-sm text-white/40 hover:text-[#FF6B35] transition-colors"
-                  >
-                    <ArrowLeft className="w-4 h-4" />
-                    Back to sign in
-                  </Link>
-                </div>
-              </form>
-            )}
-          </div>
-        </div>
+        <Link href="/signin"
+              className="mt-[18px] flex items-center justify-center gap-2 text-[13px] text-[var(--shotiq-color-graphite)] hover:text-[var(--shotiq-color-shotiqOrange)]">
+          <ArrowLeft className="h-4 w-4" /> Back to sign in
+        </Link>
       </div>
     </div>
   )
