@@ -64,3 +64,16 @@ Unsupplied photo assets (up to 25% of canvas), generated-raster references
 (zero flat patches, off-token colours), and OCR-derived text. See
 `acceptance-gate-findings.md`. These are input gaps, not implementation gaps,
 and the structural gate is the accepted acceptance standard.
+
+## Floor re-baseline — 2026-07-31 (unified sidebar)
+
+Kevin directed a single uniform sidebar across the whole app, replacing the
+per-screen rails painted on several canonical screens (083, 084, 085, 087,
+090, 092, 093, 095). SSIM against the original reference PNGs necessarily
+dropped on those screens because the navigation chrome intentionally differs
+from the canonical paint. All 20 screens continue to pass the structural gate
+(regions 3/3, fonts loaded, no broken images, no JS errors); the SSIM floor in
+`visual-proof-floor.json` was re-baselined to the post-unification values so
+future *unintentional* regressions are still caught. The 084 mapping was also
+corrected to `/results/demo/biomechanics` (it previously pointed at the
+analysis overview route, so 084 had been compared against the wrong screen).

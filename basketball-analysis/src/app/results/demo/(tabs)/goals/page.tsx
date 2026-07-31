@@ -195,7 +195,7 @@ export default function GoalsPlanPage() {
           <Card className="p-[16px]">
             <div className="flex items-center justify-between">
               <SectionLabel>SCHEDULED WORKOUTS</SectionLabel>
-              <span className="text-[11px] text-[var(--shotiq-color-graphite)]">View all</span>
+              <Link href="/results/demo/training" className="text-[11px] text-[var(--shotiq-color-analysisBlue)]">View all</Link>
             </div>
             <div className="mt-[4px] divide-y divide-[var(--shotiq-color-rule)]">
               {[["Quick Release Builder", "20 min · Form Focus · Today at 5:00 PM", "Speed & Consistency"],
@@ -227,7 +227,7 @@ export default function GoalsPlanPage() {
           <Card className="p-[16px]">
             <div className="flex items-center justify-between">
               <SectionLabel>MILESTONES</SectionLabel>
-              <span className="text-[11px] text-[var(--shotiq-color-graphite)]">View all</span>
+              <Link href="/points" className="text-[11px] text-[var(--shotiq-color-analysisBlue)]">View all</Link>
             </div>
             <div className="mt-[4px] divide-y divide-[var(--shotiq-color-rule)]">
               {[["+5% Make Percentage", "Achieved May 11, 2025", "62.5%", "done"],

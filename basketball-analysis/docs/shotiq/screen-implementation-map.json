@@ -1270,14 +1270,14 @@
   "canvas": "1440x900",
   "png": "output/desktop/embedded/084-web-biomechanics-workspace.embedded.png",
   "sidecar": "basketball-analysis/docs/shotiq/sidecars/desktop/084-web-biomechanics-workspace.sidecar.json",
-  "route": "/results/demo/analysis",
-  "component": "src/app/results/demo/(tabs)/analysis/page.tsx",
+  "route": "/results/demo/biomechanics",
+  "component": "basketball-analysis/src/app/results/demo/(tabs)/biomechanics/page.tsx",
   "endpoint": "POST /api/analyze-drill-frame",
   "model": "ShootingBiomechanics",
   "elements": 184,
   "regions": 3,
   "testId": "screen-desktop-web-biomechanics-workspace",
-  "status": "exists-shell-canonical"
+  "status": "exists"
  },
  {
   "screenId": "desktop.web-flaws-history",

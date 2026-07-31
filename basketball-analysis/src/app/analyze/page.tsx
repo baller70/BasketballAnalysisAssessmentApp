@@ -127,7 +127,7 @@ export default function AnalyzeWorkspacePage() {
             {/* source cards */}
             <div className="mt-[20px] grid grid-cols-4 gap-[16px]">
               <button type="button" data-testid="choose-media"
-                      onClick={() => inputRef.current?.click()}
+                      onClick={() => { if (inputRef.current) { inputRef.current.accept = ACCEPT; inputRef.current.click() } }}
                       className="flex h-[132px] flex-col items-center justify-center gap-[12px] rounded-[8px] border-2 border-dashed border-[var(--shotiq-color-shotiqOrange)] text-[var(--shotiq-color-shotiqOrange)]">
                 <FolderUp className="h-[34px] w-[34px]" strokeWidth={1.4} />
                 <span className="text-[14px] font-medium">Choose media</span>

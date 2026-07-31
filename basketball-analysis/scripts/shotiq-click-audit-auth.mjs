@@ -84,6 +84,14 @@ for (const route of ROUTES) {
   for (let i = 0; i < limit; i++) {
     try {
       if (!page.url().endsWith(route)) await page.goto(BASE + route, { waitUntil: 'load' }).catch(() => {})
+      // A previous click may have left a topbar panel open, shifting every
+      // later button index — close it so indices stay stable.
+      await page.keyboard.press('Escape').catch(() => {})
+      const openPanel = page.locator('[data-testid^="topbar-panel-"]')
+      if (await openPanel.count().catch(() => 0)) {
+        await page.mouse.click(5, 500)
+        await page.waitForTimeout(150)
+      }
       const btn = page.locator('button:visible').nth(i)
       if (!(await btn.count())) continue
       const label = ((await btn.getAttribute('aria-label', { timeout: 3000 }).catch(() => '')) ||

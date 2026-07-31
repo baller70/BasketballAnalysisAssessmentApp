@@ -1,0 +1,190 @@
+[
+ {
+  "route": "/signin",
+  "findings": []
+ },
+ {
+  "route": "/signup",
+  "findings": []
+ },
+ {
+  "route": "/onboarding",
+  "findings": []
+ },
+ {
+  "route": "/dashboard",
+  "findings": [
+   {
+    "kind": "bare-icon",
+    "text": "lucide lucide-activity h-[22px] w-[22px] text-white",
+    "tag": "span"
+   }
+  ]
+ },
+ {
+  "route": "/analyze",
+  "findings": []
+ },
+ {
+  "route": "/media",
+  "findings": [
+   {
+    "kind": "bare-icon",
+    "text": "lucide lucide-search h-[14px] w-[14px] text-[var(--shotiq-co",
+    "tag": "div"
+   }
+  ]
+ },
+ {
+  "route": "/profile",
+  "findings": []
+ },
+ {
+  "route": "/settings",
+  "findings": [
+   {
+    "kind": "bare-icon",
+    "text": "lucide lucide-camera w-5 h-5 text-[#FF6B35]",
+    "tag": "div"
+   },
+   {
+    "kind": "bare-icon",
+    "text": "lucide lucide-user w-5 h-5 text-blue-500",
+    "tag": "div"
+   }
+  ]
+ },
+ {
+  "route": "/upload",
+  "findings": []
+ },
+ {
+  "route": "/video-analysis",
+  "findings": []
+ },
+ {
+  "route": "/video-analysis/upload",
+  "findings": []
+ },
+ {
+  "route": "/training/drills/quick-release-builder",
+  "findings": []
+ },
+ {
+  "route": "/elite-shooters",
+  "findings": [
+   {
+    "kind": "bare-icon",
+    "text": "lucide lucide-search h-[14px] w-[14px] text-[var(--shotiq-co",
+    "tag": "div"
+   }
+  ]
+ },
+ {
+  "route": "/elite-shooters/stephen-curry",
+  "findings": [
+   {
+    "kind": "bare-icon",
+    "text": "lucide lucide-play h-[15px] w-[15px] text-white",
+    "tag": "span"
+   }
+  ]
+ },
+ {
+  "route": "/results/demo",
+  "findings": [
+   {
+    "kind": "bare-icon",
+    "text": "lucide lucide-activity h-[20px] w-[20px] text-white",
+    "tag": "span"
+   }
+  ]
+ },
+ {
+  "route": "/results/demo/analysis",
+  "findings": [
+   {
+    "kind": "bare-icon",
+    "text": "lucide lucide-play h-[14px] w-[14px]",
+    "tag": "span"
+   }
+  ]
+ },
+ {
+  "route": "/results/demo/biomechanics",
+  "findings": [
+   {
+    "kind": "bare-icon",
+    "text": "lucide lucide-play h-[12px] w-[12px] text-white",
+    "tag": "span"
+   },
+   {
+    "kind": "bare-icon",
+    "text": "lucide lucide-chevron-left h-[15px] w-[15px] shrink-0 text-[",
+    "tag": "div"
+   },
+   {
+    "kind": "bare-icon",
+    "text": "lucide lucide-chevron-right h-[15px] w-[15px] shrink-0 text-",
+    "tag": "div"
+   }
+  ]
+ },
+ {
+  "route": "/results/demo/flaws",
+  "findings": []
+ },
+ {
+  "route": "/results/demo/compare",
+  "findings": []
+ },
+ {
+  "route": "/results/demo/history",
+  "findings": []
+ },
+ {
+  "route": "/results/demo/player",
+  "findings": []
+ },
+ {
+  "route": "/results/demo/training",
+  "findings": []
+ },
+ {
+  "route": "/results/demo/goals",
+  "findings": [
+   {
+    "kind": "bare-icon",
+    "text": "lucide lucide-check h-[13px] w-[13px]",
+    "tag": "span"
+   },
+   {
+    "kind": "bare-icon",
+    "text": "lucide lucide-check h-[13px] w-[13px]",
+    "tag": "span"
+   }
+  ]
+ },
+ {
+  "route": "/points",
+  "findings": []
+ },
+ {
+  "route": "/guide",
+  "findings": [
+   {
+    "kind": "bare-icon",
+    "text": "lucide lucide-sparkles w-8 h-8",
+    "tag": "div"
+   }
+  ]
+ },
+ {
+  "route": "/terms",
+  "findings": []
+ },
+ {
+  "route": "/privacy",
+  "findings": []
+ }
+]

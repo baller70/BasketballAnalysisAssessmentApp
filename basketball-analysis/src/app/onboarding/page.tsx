@@ -61,7 +61,7 @@ export default function OnboardingPage() {
       {/* step rail */}
       <aside className="flex w-[200px] shrink-0 flex-col border-r border-[var(--shotiq-color-rule)] pt-[14px]">
         {STEPS.map((s, i) => (
-          <button key={s} type="button" onClick={() => setStep(i + 1)}
+          <button key={s} type="button" onClick={() => setStep(i + 1)} aria-current={step === i + 1 ? "true" : undefined}
                   className={`relative flex h-[44px] items-center gap-[10px] px-[20px] text-left text-[12px] font-bold tracking-[0.05em] ${
                     step === i + 1 ? "bg-[var(--shotiq-color-warmCanvas)] text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
             {step === i + 1 && <span className="absolute inset-y-0 left-0 w-[3px] bg-[var(--shotiq-color-shotiqOrange)]" />}
