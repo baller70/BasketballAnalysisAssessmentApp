@@ -23,10 +23,10 @@ export function PreUploadValidationDisplay({
 }: PreUploadValidationProps) {
   if (isLoading) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-4">
+      <div className="bg-white rounded-[8px] border border-gray-200 p-4">
         <div className="flex items-center gap-3">
           <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-          <span className="text-sm text-gray-600">Validating upload...</span>
+          <span className="text-sm text-[var(--shotiq-color-graphite)]">Validating upload...</span>
         </div>
       </div>
     )
@@ -75,7 +75,7 @@ export function PreUploadValidationDisplay({
   return (
     <div
       className={`
-        rounded-xl border p-4 transition-colors
+        rounded-[8px] border p-4 transition-colors
         ${validation.overallValid
           ? "bg-green-50 border-green-200"
           : "bg-red-50 border-red-200"
@@ -107,7 +107,7 @@ export function PreUploadValidationDisplay({
             transition={{ delay: index * 0.1 }}
             className="flex items-center justify-between text-sm"
           >
-            <span className="text-gray-600">{check.label}</span>
+            <span className="text-[var(--shotiq-color-graphite)]">{check.label}</span>
             <div className="flex items-center gap-1.5">
               <span className={check.valid ? "text-green-600" : "text-red-600"}>
                 {check.message}

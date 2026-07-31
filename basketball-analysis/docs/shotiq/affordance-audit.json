@@ -44,7 +44,7 @@
   "findings": [
    {
     "kind": "bare-icon",
-    "text": "lucide lucide-camera w-5 h-5 text-[#FF6B35]",
+    "text": "lucide lucide-camera w-5 h-5 text-[var(--shotiq-color-shotiq",
     "tag": "div"
    },
    {

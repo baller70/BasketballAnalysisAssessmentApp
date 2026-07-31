@@ -1,0 +1,322 @@
+[
+ {
+  "route": "/signin",
+  "total": 0,
+  "legacyOrange": 0,
+  "slate": 0,
+  "legacyGray": 0,
+  "bigRadius": 0,
+  "gradients": 0,
+  "legacyDark": 0
+ },
+ {
+  "route": "/signup",
+  "total": 0,
+  "legacyOrange": 0,
+  "slate": 0,
+  "legacyGray": 0,
+  "bigRadius": 0,
+  "gradients": 0,
+  "legacyDark": 0
+ },
+ {
+  "route": "/onboarding",
+  "total": 0,
+  "legacyOrange": 0,
+  "slate": 0,
+  "legacyGray": 0,
+  "bigRadius": 0,
+  "gradients": 0,
+  "legacyDark": 0
+ },
+ {
+  "route": "/dashboard",
+  "total": 0,
+  "legacyOrange": 0,
+  "slate": 0,
+  "legacyGray": 0,
+  "bigRadius": 0,
+  "gradients": 0,
+  "legacyDark": 0
+ },
+ {
+  "route": "/analyze",
+  "total": 0,
+  "legacyOrange": 0,
+  "slate": 0,
+  "legacyGray": 0,
+  "bigRadius": 0,
+  "gradients": 0,
+  "legacyDark": 0
+ },
+ {
+  "route": "/media",
+  "total": 0,
+  "legacyOrange": 0,
+  "slate": 0,
+  "legacyGray": 0,
+  "bigRadius": 0,
+  "gradients": 0,
+  "legacyDark": 0
+ },
+ {
+  "route": "/profile",
+  "total": 0,
+  "legacyOrange": 0,
+  "slate": 0,
+  "legacyGray": 0,
+  "bigRadius": 0,
+  "gradients": 0,
+  "legacyDark": 0
+ },
+ {
+  "route": "/settings",
+  "total": 0,
+  "legacyOrange": 0,
+  "slate": 0,
+  "legacyGray": 0,
+  "bigRadius": 0,
+  "gradients": 0,
+  "legacyDark": 0
+ },
+ {
+  "route": "/upload",
+  "total": 0,
+  "legacyOrange": 0,
+  "slate": 0,
+  "legacyGray": 0,
+  "bigRadius": 0,
+  "gradients": 0,
+  "legacyDark": 0
+ },
+ {
+  "route": "/video-analysis",
+  "total": 0,
+  "legacyOrange": 0,
+  "slate": 0,
+  "legacyGray": 0,
+  "bigRadius": 0,
+  "gradients": 0,
+  "legacyDark": 0
+ },
+ {
+  "route": "/video-analysis/upload",
+  "total": 0,
+  "legacyOrange": 0,
+  "slate": 0,
+  "legacyGray": 0,
+  "bigRadius": 0,
+  "gradients": 0,
+  "legacyDark": 0
+ },
+ {
+  "route": "/training/drills",
+  "total": 0,
+  "legacyOrange": 0,
+  "slate": 0,
+  "legacyGray": 0,
+  "bigRadius": 0,
+  "gradients": 0,
+  "legacyDark": 0
+ },
+ {
+  "route": "/training/calendar",
+  "total": 0,
+  "legacyOrange": 0,
+  "slate": 0,
+  "legacyGray": 0,
+  "bigRadius": 0,
+  "gradients": 0,
+  "legacyDark": 0
+ },
+ {
+  "route": "/training/drills/quick-release-builder",
+  "total": 0,
+  "legacyOrange": 0,
+  "slate": 0,
+  "legacyGray": 0,
+  "bigRadius": 0,
+  "gradients": 0,
+  "legacyDark": 0
+ },
+ {
+  "route": "/elite-shooters",
+  "total": 0,
+  "legacyOrange": 0,
+  "slate": 0,
+  "legacyGray": 0,
+  "bigRadius": 0,
+  "gradients": 0,
+  "legacyDark": 0
+ },
+ {
+  "route": "/elite-shooters/stephen-curry",
+  "total": 0,
+  "legacyOrange": 0,
+  "slate": 0,
+  "legacyGray": 0,
+  "bigRadius": 0,
+  "gradients": 0,
+  "legacyDark": 0
+ },
+ {
+  "route": "/results/demo",
+  "total": 0,
+  "legacyOrange": 0,
+  "slate": 0,
+  "legacyGray": 0,
+  "bigRadius": 0,
+  "gradients": 0,
+  "legacyDark": 0
+ },
+ {
+  "route": "/results/demo/analysis",
+  "total": 0,
+  "legacyOrange": 0,
+  "slate": 0,
+  "legacyGray": 0,
+  "bigRadius": 0,
+  "gradients": 0,
+  "legacyDark": 0
+ },
+ {
+  "route": "/results/demo/biomechanics",
+  "total": 0,
+  "legacyOrange": 0,
+  "slate": 0,
+  "legacyGray": 0,
+  "bigRadius": 0,
+  "gradients": 0,
+  "legacyDark": 0
+ },
+ {
+  "route": "/results/demo/flaws",
+  "total": 0,
+  "legacyOrange": 0,
+  "slate": 0,
+  "legacyGray": 0,
+  "bigRadius": 0,
+  "gradients": 0,
+  "legacyDark": 0
+ },
+ {
+  "route": "/results/demo/compare",
+  "total": 0,
+  "legacyOrange": 0,
+  "slate": 0,
+  "legacyGray": 0,
+  "bigRadius": 0,
+  "gradients": 0,
+  "legacyDark": 0
+ },
+ {
+  "route": "/results/demo/history",
+  "total": 0,
+  "legacyOrange": 0,
+  "slate": 0,
+  "legacyGray": 0,
+  "bigRadius": 0,
+  "gradients": 0,
+  "legacyDark": 0
+ },
+ {
+  "route": "/results/demo/player",
+  "total": 0,
+  "legacyOrange": 0,
+  "slate": 0,
+  "legacyGray": 0,
+  "bigRadius": 0,
+  "gradients": 0,
+  "legacyDark": 0
+ },
+ {
+  "route": "/results/demo/training",
+  "total": 0,
+  "legacyOrange": 0,
+  "slate": 0,
+  "legacyGray": 0,
+  "bigRadius": 0,
+  "gradients": 0,
+  "legacyDark": 0
+ },
+ {
+  "route": "/results/demo/goals",
+  "total": 0,
+  "legacyOrange": 0,
+  "slate": 0,
+  "legacyGray": 0,
+  "bigRadius": 0,
+  "gradients": 0,
+  "legacyDark": 0
+ },
+ {
+  "route": "/points",
+  "total": 0,
+  "legacyOrange": 0,
+  "slate": 0,
+  "legacyGray": 0,
+  "bigRadius": 0,
+  "gradients": 0,
+  "legacyDark": 0
+ },
+ {
+  "route": "/badges",
+  "total": 0,
+  "legacyOrange": 0,
+  "slate": 0,
+  "legacyGray": 0,
+  "bigRadius": 0,
+  "gradients": 0,
+  "legacyDark": 0
+ },
+ {
+  "route": "/guide",
+  "total": 0,
+  "legacyOrange": 0,
+  "slate": 0,
+  "legacyGray": 0,
+  "bigRadius": 0,
+  "gradients": 0,
+  "legacyDark": 0
+ },
+ {
+  "route": "/terms",
+  "total": 0,
+  "legacyOrange": 0,
+  "slate": 0,
+  "legacyGray": 0,
+  "bigRadius": 0,
+  "gradients": 0,
+  "legacyDark": 0
+ },
+ {
+  "route": "/privacy",
+  "total": 0,
+  "legacyOrange": 0,
+  "slate": 0,
+  "legacyGray": 0,
+  "bigRadius": 0,
+  "gradients": 0,
+  "legacyDark": 0
+ },
+ {
+  "route": "/forgot-password",
+  "total": 0,
+  "legacyOrange": 0,
+  "slate": 0,
+  "legacyGray": 0,
+  "bigRadius": 0,
+  "gradients": 0,
+  "legacyDark": 0
+ },
+ {
+  "route": "/reset-password",
+  "total": 0,
+  "legacyOrange": 0,
+  "slate": 0,
+  "legacyGray": 0,
+  "bigRadius": 0,
+  "gradients": 0,
+  "legacyDark": 0
+ }
+]

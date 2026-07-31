@@ -1,10 +1,15 @@
 "use client"
 
+/**
+ * /reset-password — canonical white treatment (was the legacy black screen).
+ * Flow preserved verbatim: token from the query string, CSRF-protected POST
+ * to /api/auth/reset-password, then redirect to sign-in.
+ */
+
 import React, { useState, Suspense } from "react"
 import Link from "next/link"
-import Image from "next/image"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Loader2, ArrowRight, ArrowLeft, Eye, EyeOff, CheckCircle2 } from "lucide-react"
+import { Loader2, ArrowLeft, Eye, EyeOff, CheckCircle2 } from "lucide-react"
 
 async function getCsrfToken(): Promise<string> {
   try {
@@ -70,145 +75,81 @@ function ResetPasswordForm() {
     }
   }
 
+  const field =
+    "h-[46px] w-full rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white px-[14px] " +
+    "text-[15px] outline-none placeholder:text-[var(--shotiq-color-muted)] focus:border-[var(--shotiq-color-ink)]"
+
   return (
-    <div className="relative">
-      <div className="absolute -inset-1 bg-gradient-to-r from-[#FF6B35]/20 via-[#FF6B35]/5 to-[#FF6B35]/20 rounded-2xl blur-xl opacity-50" />
-      <div className="relative bg-[#0a0a0a]/80 backdrop-blur-xl border border-white/[0.08] rounded-2xl p-8 shadow-2xl">
-        {done ? (
-          <div className="text-center space-y-4">
-            <div className="flex justify-center">
-              <CheckCircle2 className="w-12 h-12 text-[#FF6B35]" />
-            </div>
-            <p className="text-white/80">
-              Your password has been reset. Redirecting you to sign in...
-            </p>
-            <Link
-              href="/signin"
-              className="inline-flex items-center gap-2 text-[#FF6B35] hover:text-[#FF8C5A] font-semibold transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Go to sign in
-            </Link>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Password */}
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                required
-                placeholder="New password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-white/[0.03] border border-white/[0.08] hover:border-white/[0.15] focus:border-[#FF6B35]/50 rounded-xl px-4 py-4 pr-12 text-white text-base focus:outline-none transition-all duration-200 placeholder:text-white/40"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors"
-              >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
-            </div>
-
-            {/* Confirm Password */}
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                required
-                placeholder="Confirm new password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full bg-white/[0.03] border border-white/[0.08] hover:border-white/[0.15] focus:border-[#FF6B35]/50 rounded-xl px-4 py-4 text-white text-base focus:outline-none transition-all duration-200 placeholder:text-white/40"
-              />
-            </div>
-
-            {error && (
-              <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 backdrop-blur-sm">
-                <p className="text-red-400 text-sm">{error}</p>
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="group w-full relative overflow-hidden bg-[#FF6B35] text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 hover:shadow-lg hover:shadow-[#FF6B35]/25 hover:bg-[#FF7A4A]"
-            >
-              {isSubmitting ? (
-                <span className="flex items-center gap-3">
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Resetting...
-                </span>
-              ) : (
-                <span className="flex items-center gap-3">
-                  Reset password
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </span>
-              )}
+    <div className="rounded-[8px] border border-[var(--shotiq-color-rule)] bg-white p-[24px]">
+      {done ? (
+        <div className="space-y-4 text-center">
+          <CheckCircle2 className="mx-auto h-12 w-12 text-[var(--shotiq-color-confirmGreen)]" />
+          <p className="text-[14px] text-[var(--shotiq-color-graphite)]">
+            Your password has been reset. Redirecting you to sign in…
+          </p>
+          <Link href="/signin" className="inline-block text-[14px] font-medium text-[var(--shotiq-color-shotiqOrange)]">
+            Go to sign in now
+          </Link>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} noValidate>
+          <label htmlFor="password" className="text-[12px] font-bold tracking-[0.04em]">NEW PASSWORD</label>
+          <div className="relative mt-[8px]">
+            <input id="password" type={showPassword ? "text" : "password"} autoComplete="new-password"
+                   data-testid="reset-password" value={password}
+                   onChange={(e) => setPassword(e.target.value)} placeholder="At least 6 characters"
+                   className={`${field} pr-[44px]`} />
+            <button type="button" onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    className="absolute right-[13px] top-1/2 -translate-y-1/2 text-[var(--shotiq-color-graphite)]">
+              {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
             </button>
+          </div>
 
-            <div className="text-center">
-              <Link
-                href="/signin"
-                className="inline-flex items-center gap-2 text-sm text-white/40 hover:text-[#FF6B35] transition-colors"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                Back to sign in
-              </Link>
-            </div>
-          </form>
-        )}
-      </div>
+          <label htmlFor="confirm" className="mt-[16px] block text-[12px] font-bold tracking-[0.04em]">CONFIRM PASSWORD</label>
+          <input id="confirm" type={showPassword ? "text" : "password"} autoComplete="new-password"
+                 data-testid="reset-confirm" value={confirmPassword}
+                 onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Repeat your new password"
+                 className={`${field} mt-[8px]`} />
+
+          {error && (
+            <p role="alert" className="mt-[12px] text-[13px] text-[var(--shotiq-color-reviewRed)]">{error}</p>
+          )}
+
+          <button type="submit" disabled={isSubmitting} data-testid="reset-submit"
+                  className="mt-[16px] flex h-[46px] w-full items-center justify-center gap-2 rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] text-[15px] font-medium text-white disabled:opacity-70">
+            {isSubmitting && <Loader2 className="h-[16px] w-[16px] animate-spin" />}
+            {isSubmitting ? "Resetting…" : "Reset password"}
+          </button>
+        </form>
+      )}
     </div>
   )
 }
 
 export default function ResetPasswordPage() {
   return (
-    <div className="min-h-screen bg-[#030303] flex items-center justify-center relative overflow-hidden px-6 py-12">
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] rounded-full bg-[#FF6B35]/5 blur-[120px] animate-pulse" />
-        <div className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-[#FF6B35]/3 blur-[100px] animate-pulse" style={{ animationDelay: "1s" }} />
-        <div
-          className="absolute inset-0 opacity-[0.02]"
-          style={{
-            backgroundImage: `linear-gradient(#FF6B35 1px, transparent 1px), linear-gradient(90deg, #FF6B35 1px, transparent 1px)`,
-            backgroundSize: "60px 60px",
-          }}
-        />
-      </div>
-
-      <div className="w-full max-w-[420px] relative z-10">
-        <div className="text-center mb-10">
-          <Image
-            src="/images/shotiq-logo.png"
-            alt="SHOTIQ AI"
-            width={300}
-            height={84}
-            className="brightness-0 invert opacity-90 mx-auto"
-            priority
-          />
+    <div
+      data-testid="screen-desktop-web-reset-password"
+      className="shotiq-canonical flex min-h-screen items-center justify-center bg-[var(--shotiq-color-paper)] px-6 py-12 text-[var(--shotiq-color-ink)]"
+    >
+      <div className="w-full max-w-[420px]">
+        <span className="shotiq-wordmark block text-center text-[30px] leading-none">
+          SHOT<span className="text-[var(--shotiq-color-shotiqOrange)]">IQ</span>
+        </span>
+        <h1 className="shotiq-display mt-[26px] text-center text-[40px] leading-[44px]">CHOOSE A NEW PASSWORD</h1>
+        <p className="mt-[10px] text-center text-[14px] text-[var(--shotiq-color-graphite)]">
+          Pick something strong you haven&apos;t used before.
+        </p>
+        <div className="mt-[24px]">
+          <Suspense>
+            <ResetPasswordForm />
+          </Suspense>
         </div>
-
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3 tracking-tight">
-            Choose a new password
-          </h1>
-          <p className="text-white/50 text-base">
-            Pick a strong password you don&apos;t use anywhere else.
-          </p>
-        </div>
-
-        <Suspense
-          fallback={
-            <div className="flex justify-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin text-[#FF6B35]" />
-            </div>
-          }
-        >
-          <ResetPasswordForm />
-        </Suspense>
+        <Link href="/signin"
+              className="mt-[18px] flex items-center justify-center gap-2 text-[13px] text-[var(--shotiq-color-graphite)] hover:text-[var(--shotiq-color-shotiqOrange)]">
+          <ArrowLeft className="h-4 w-4" /> Back to sign in
+        </Link>
       </div>
     </div>
   )

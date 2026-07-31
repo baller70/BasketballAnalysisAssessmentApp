@@ -35,7 +35,7 @@ export function UploadQualityScore({
   const { totalScore, breakdown, status, feedback, canProceed } = result
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+    <div className="bg-white rounded-[8px] shadow-lg overflow-hidden">
       {/* Header with Score */}
       <div
         className={`
@@ -63,7 +63,7 @@ export function UploadQualityScore({
       {/* Score Breakdown */}
       {showDetails && (
         <div className="px-6 py-4 border-b border-gray-100">
-          <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-3">
+          <h4 className="text-sm font-medium text-[var(--shotiq-color-graphite)] uppercase tracking-wide mb-3">
             Score Breakdown
           </h4>
           <div className="space-y-3">
@@ -80,7 +80,7 @@ export function UploadQualityScore({
         <div className="px-6 py-4 border-b border-gray-100">
           {feedback.issues.length > 0 && (
             <div className="mb-4">
-              <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
+              <h4 className="text-sm font-medium text-[var(--shotiq-color-graphite)] uppercase tracking-wide mb-2">
                 Issues Found
               </h4>
               <ul className="space-y-1">
@@ -96,12 +96,12 @@ export function UploadQualityScore({
 
           {feedback.tips.length > 0 && (
             <div>
-              <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-2">
+              <h4 className="text-sm font-medium text-[var(--shotiq-color-graphite)] uppercase tracking-wide mb-2">
                 Tips to Improve
               </h4>
               <ul className="space-y-1">
                 {feedback.tips.map((tip, idx) => (
-                  <li key={idx} className="flex items-center gap-2 text-sm text-gray-600">
+                  <li key={idx} className="flex items-center gap-2 text-sm text-[var(--shotiq-color-graphite)]">
                     <span className="text-blue-500">💡</span>
                     {tip}
                   </li>
@@ -117,7 +117,7 @@ export function UploadQualityScore({
         {onRetake && (
           <button
             onClick={onRetake}
-            className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"
+            className="flex items-center gap-2 px-4 py-2 text-[var(--shotiq-color-graphite)] hover:bg-gray-200 rounded-lg transition-colors"
           >
             <RefreshIcon size="sm" color="neutral" />
             Retake
@@ -134,7 +134,7 @@ export function UploadQualityScore({
                 ? status === "approved"
                   ? "bg-green-600 text-white hover:bg-green-700"
                   : "bg-orange-500 text-white hover:bg-orange-600"
-                : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                : "bg-gray-200 text-[var(--shotiq-color-muted)] cursor-not-allowed"
               }
             `}
           >
@@ -219,7 +219,7 @@ function ScoreBar({ label, score, maxScore }: ScoreBarProps) {
   return (
     <div>
       <div className="flex items-center justify-between text-sm mb-1">
-        <span className="text-gray-600">{label}</span>
+        <span className="text-[var(--shotiq-color-graphite)]">{label}</span>
         <span className="font-medium text-gray-900">{score}/{maxScore}</span>
       </div>
       <div className="h-2 bg-gray-200 rounded-full overflow-hidden">

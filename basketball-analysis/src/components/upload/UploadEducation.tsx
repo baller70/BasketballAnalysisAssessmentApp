@@ -72,9 +72,9 @@ export function UploadEducation({
   ).length
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl overflow-hidden max-w-2xl mx-auto border border-[var(--shotiq-color-rule)]">
+    <div className="bg-white rounded-[8px] shadow-xl overflow-hidden max-w-2xl mx-auto border border-[var(--shotiq-color-rule)]">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#FF6B35] to-[#FF8C5A] px-6 py-4 text-white">
+      <div className="bg-[var(--shotiq-color-shotiqOrange)] px-6 py-4 text-white">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <CameraIcon size="lg" color="current" />
@@ -111,7 +111,7 @@ export function UploadEducation({
                 flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium
                 border-b-2 transition-colors
                 ${activeTab === tab.id
-                  ? "border-[#FF6B35] text-[#FF6B35] bg-[#FF6B35]/10"
+                  ? "border-[var(--shotiq-color-shotiqOrange)] text-[var(--shotiq-color-shotiqOrange)] bg-[var(--shotiq-color-shotiqOrange)]/10"
                   : "border-transparent text-[var(--shotiq-color-graphite)] hover:text-[var(--shotiq-color-ink)] hover:bg-[var(--shotiq-color-warmCanvas)]"
                 }
               `}
@@ -184,14 +184,14 @@ export function UploadEducation({
       {/* Footer */}
       <div className="border-t border-[var(--shotiq-color-rule)] px-6 py-4 bg-[var(--shotiq-color-warmCanvas)]">
         <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-[var(--shotiq-color-muted)]">
             <InfoIcon size="sm" color="neutral" className="inline mr-1" />
             Quality uploads = Better analysis
           </p>
           {onStartUpload && (
             <button
               onClick={onStartUpload}
-              className="px-6 py-2 bg-[#FF6B35] text-white rounded-lg font-medium hover:bg-[#FF8C5A] transition-colors flex items-center gap-2"
+              className="px-6 py-2 bg-[var(--shotiq-color-shotiqOrange)] text-white rounded-lg font-medium hover:bg-[var(--shotiq-color-shotiqOrange)] transition-colors flex items-center gap-2"
             >
               <CameraIcon size="sm" color="current" />
               Start Upload
@@ -226,7 +226,7 @@ function DosList() {
             </div>
             <div>
               <h4 className="font-medium text-[var(--shotiq-color-ink)]">{item.title}</h4>
-              <p className="text-sm text-gray-400">{item.description}</p>
+              <p className="text-sm text-[var(--shotiq-color-muted)]">{item.description}</p>
               <p className="text-xs text-green-400 mt-1">
                 <strong>Why:</strong> {item.whyItMatters}
               </p>
@@ -257,7 +257,7 @@ function DontsList() {
             </div>
             <div>
               <h4 className="font-medium text-[var(--shotiq-color-ink)]">{item.title}</h4>
-              <p className="text-sm text-gray-400">{item.description}</p>
+              <p className="text-sm text-[var(--shotiq-color-muted)]">{item.description}</p>
               <p className="text-xs text-red-400 mt-1">
                 <strong>Problem:</strong> {item.whyItMatters}
               </p>
@@ -286,7 +286,7 @@ function VideoChecklist({ checkedItems, onToggle, requiredCount, checkedCount }:
           <PlayIcon size="md" color="primary" />
           <h3 className="text-lg font-semibold text-[var(--shotiq-color-ink)]">Video Checklist</h3>
         </div>
-        <div className="text-sm text-gray-400">
+        <div className="text-sm text-[var(--shotiq-color-muted)]">
           {checkedCount}/{requiredCount} required
         </div>
       </div>
@@ -294,7 +294,7 @@ function VideoChecklist({ checkedItems, onToggle, requiredCount, checkedCount }:
       {/* Progress Bar */}
       <div className="w-full bg-[var(--shotiq-color-rule)] rounded-full h-2 mb-4">
         <motion.div
-          className="h-2 rounded-full bg-[#FF6B35]"
+          className="h-2 rounded-full bg-[var(--shotiq-color-shotiqOrange)]"
           initial={{ width: 0 }}
           animate={{ width: `${progress}%` }}
           transition={{ duration: 0.3 }}
@@ -312,7 +312,7 @@ function VideoChecklist({ checkedItems, onToggle, requiredCount, checkedCount }:
               className={`
                 w-full flex items-start gap-3 p-3 rounded-lg border-2 transition-all text-left
                 ${isChecked
-                  ? "bg-[#FF6B35]/10 border-[#FF6B35]/30"
+                  ? "bg-[var(--shotiq-color-shotiqOrange)]/10 border-[var(--shotiq-color-shotiqOrange)]/30"
                   : "bg-[var(--shotiq-color-warmCanvas)] border-[var(--shotiq-color-rule)] hover:border-[var(--shotiq-color-rule)]"
                 }
               `}
@@ -321,8 +321,8 @@ function VideoChecklist({ checkedItems, onToggle, requiredCount, checkedCount }:
                 className={`
                   flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center mt-0.5
                   ${isChecked
-                    ? "bg-[#FF6B35] border-[#FF6B35]"
-                    : "border-gray-500"
+                    ? "bg-[var(--shotiq-color-shotiqOrange)] border-[var(--shotiq-color-shotiqOrange)]"
+                    : "border-[var(--shotiq-color-muted)]"
                   }
                 `}
               >
@@ -338,7 +338,7 @@ function VideoChecklist({ checkedItems, onToggle, requiredCount, checkedCount }:
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <span className={`font-medium ${isChecked ? "text-[#FF6B35]" : "text-white"}`}>
+                  <span className={`font-medium ${isChecked ? "text-[var(--shotiq-color-shotiqOrange)]" : "text-white"}`}>
                     {item.label}
                   </span>
                   {item.required && (
@@ -347,7 +347,7 @@ function VideoChecklist({ checkedItems, onToggle, requiredCount, checkedCount }:
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-gray-400 mt-0.5">{item.description}</p>
+                <p className="text-sm text-[var(--shotiq-color-muted)] mt-0.5">{item.description}</p>
               </div>
             </button>
           )
@@ -368,7 +368,7 @@ function ImageSequenceGuide() {
         <h3 className="text-lg font-semibold text-[var(--shotiq-color-ink)]">Image Sequence Guide</h3>
       </div>
       
-      <p className="text-sm text-gray-400 mb-4">
+      <p className="text-sm text-[var(--shotiq-color-muted)] mb-4">
         For best results, upload 3-7 images showing different phases of your shot.
         Click through to see what each image should capture.
       </p>
@@ -391,7 +391,7 @@ function ImageSequenceGuide() {
               className={`
                 w-8 h-8 rounded-full text-sm font-medium transition-colors
                 ${idx === activePhase
-                  ? "bg-[#FF6B35] text-white"
+                  ? "bg-[var(--shotiq-color-shotiqOrange)] text-white"
                   : "bg-[var(--shotiq-color-rule)] text-[var(--shotiq-color-graphite)] hover:bg-[var(--shotiq-color-muted)]"
                 }
               `}
@@ -421,7 +421,7 @@ function ImageSequenceGuide() {
           className={`
             p-4 rounded-lg border-2
             ${phase.required
-              ? "bg-[#FF6B35]/10 border-[#FF6B35]/30"
+              ? "bg-[var(--shotiq-color-shotiqOrange)]/10 border-[var(--shotiq-color-shotiqOrange)]/30"
               : "bg-[var(--shotiq-color-warmCanvas)] border-[var(--shotiq-color-rule)]"
             }
           `}
@@ -431,7 +431,7 @@ function ImageSequenceGuide() {
               Image {phase.phase}: {phase.title}
             </h4>
             {phase.required ? (
-              <span className="text-xs px-2 py-1 bg-[#FF6B35]/20 text-[#FF6B35] rounded-full">
+              <span className="text-xs px-2 py-1 bg-[var(--shotiq-color-shotiqOrange)]/20 text-[var(--shotiq-color-shotiqOrange)] rounded-full">
                 Required
               </span>
             ) : (
@@ -441,10 +441,10 @@ function ImageSequenceGuide() {
             )}
           </div>
           
-          <p className="text-sm text-gray-400 mb-3">{phase.description}</p>
+          <p className="text-sm text-[var(--shotiq-color-muted)] mb-3">{phase.description}</p>
           
           <div className="space-y-1">
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+            <p className="text-xs font-medium text-[var(--shotiq-color-graphite)] uppercase tracking-wide">
               What to show:
             </p>
             <ul className="grid grid-cols-2 gap-1">
