@@ -22,6 +22,8 @@ interface ProfileInput {
   coachingTier?: string | null
   profileComplete?: boolean
   pointsState?: unknown
+  /** Lives on the User row, not UserProfile — handled separately in upsert. */
+  displayName?: string | null
 }
 
 const num = (v: unknown): number | null =>
@@ -126,7 +128,16 @@ async function upsertOwnProfile(request: NextRequest) {
         .catch((e) => console.error("Failed to sync User.profileComplete:", e))
     }
 
-    return NextResponse.json({ success: true, profile })
+    // displayName lives on User; persist it when the client sends it.
+    let displayName: string | null | undefined
+    if (has(input, "displayName") && str(input.displayName)) {
+      const updated = await prisma.user
+        .update({ where: { id: user.userId }, data: { displayName: str(input.displayName) } })
+        .catch((e) => { console.error("Failed to update displayName:", e); return null })
+      displayName = updated?.displayName
+    }
+
+    return NextResponse.json({ success: true, profile: { ...profile, displayName } })
   } catch (error) {
     console.error("Error creating/updating profile:", error)
     return NextResponse.json(
@@ -159,17 +170,25 @@ export async function GET(request: NextRequest) {
     // Guarantee a profile row exists so the client always gets a usable shape.
     await ensureUserProfile(user.userId)
 
-    const profile = await prisma.userProfile.findUnique({
-      where: { userId: user.userId },
-      include: {
-        analyses: {
-          orderBy: { createdAt: "desc" },
-          take: 10,
+    const [profile, userRow] = await Promise.all([
+      prisma.userProfile.findUnique({
+        where: { userId: user.userId },
+        include: {
+          analyses: {
+            orderBy: { createdAt: "desc" },
+            take: 10,
+          },
         },
-      },
-    })
+      }),
+      prisma.user.findUnique({ where: { id: user.userId }, select: { displayName: true, email: true } }),
+    ])
 
-    return NextResponse.json({ success: true, profile })
+    return NextResponse.json({
+      success: true,
+      profile: profile
+        ? { ...profile, displayName: userRow?.displayName ?? null, email: userRow?.email ?? null }
+        : profile,
+    })
   } catch (error) {
     console.error("Error fetching profile:", error)
     return NextResponse.json(

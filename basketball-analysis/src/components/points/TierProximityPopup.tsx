@@ -98,7 +98,7 @@ export function TierProximityPopup() {
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm"
+        className="pointer-events-none fixed inset-0 z-[100] flex items-end justify-end p-6"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -131,7 +131,7 @@ export function TierProximityPopup() {
         
         {/* Popup card */}
         <motion.div
-          className="relative max-w-md w-full mx-4 rounded-2xl overflow-hidden border border-slate-300"
+          className="pointer-events-auto relative w-full max-w-md rounded-2xl overflow-hidden border border-slate-300 bg-white shadow-2xl"
           style={{
             background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
             boxShadow: `0 25px 60px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.04), 0 0 40px ${nextTier.color}15`,

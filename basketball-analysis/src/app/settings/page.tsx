@@ -30,7 +30,6 @@ import { useAuthStore } from "@/stores/authStore"
 import { csrfFetch } from "@/lib/api/csrfFetch"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { ShotIQShell } from "@/components/shotiq/ShotIQShell"
 
 // ============================================
 // PHASE 10: SETTINGS & NOTIFICATION PREFERENCES
@@ -422,7 +421,6 @@ export default function SettingsPage() {
   }
 
     return (
-    <ShotIQShell active="Settings">
     <main data-testid="screen-desktop-web-settings-hub" className="px-[26px] py-[18px]">
       <div className="container mx-auto max-w-6xl">
         {/* Header — canonical per iOS 071-settings-hub */}
@@ -550,7 +548,17 @@ export default function SettingsPage() {
                 </button>
 
                 <button
-                  onClick={() => { useAuthStore.getState().signOut(); window.location.assign('/signin') }}
+                  onClick={async () => {
+                    useAuthStore.getState().signOut()
+                    try {
+                      const { getCsrfToken } = await import('@/lib/api/csrfFetch')
+                      await fetch('/api/auth/signout', {
+                        method: 'POST', credentials: 'include',
+                        headers: { 'x-csrf-token': await getCsrfToken() },
+                      })
+                    } catch { /* cookie may already be gone */ }
+                    window.location.assign('/signin')
+                  }}
                   className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[var(--shotiq-color-reviewRed)] hover:bg-slate-50 font-medium border-l-4 border-transparent transition-all"
                 >
                   <X className="w-5 h-5" />
@@ -1282,7 +1290,6 @@ export default function SettingsPage() {
         </div>
       </div>
     </main>
-    </ShotIQShell>
   )
 }
 

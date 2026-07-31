@@ -13,11 +13,10 @@ import { VideoUpload } from "@/components/upload/VideoUpload"
 import { PlayerProfileForm } from "@/components/upload/PlayerProfileForm"
 import Link from "next/link"
 import { ArrowLeft, Video, User } from "lucide-react"
-import { ShotIQShell, SectionLabel, Card } from "@/components/shotiq/ShotIQShell"
+import { SectionLabel, Card } from "@/components/shotiq/ShotIQShell"
 
 export default function VideoAnalysisPage() {
   return (
-    <ShotIQShell active="Analyze">
       <main data-testid="screen-desktop-web-video-upload" className="mx-auto max-w-4xl px-[26px] py-[18px]">
         <Link href="/video-analysis"
               className="flex items-center gap-2 text-[13px] text-[var(--shotiq-color-graphite)] hover:text-[var(--shotiq-color-shotiqOrange)]">
@@ -81,6 +80,5 @@ export default function VideoAnalysisPage() {
           </ul>
         </Card>
       </main>
-    </ShotIQShell>
   )
 }
