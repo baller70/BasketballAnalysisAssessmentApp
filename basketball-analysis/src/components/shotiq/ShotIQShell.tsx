@@ -58,6 +58,8 @@ const SEARCH_DESTINATIONS: { label: string; href: string; group: string }[] = [
   { label: "History", href: "/results/demo/history", group: "RESULTS" },
   { label: "Player Card", href: "/results/demo/player", group: "RESULTS" },
   { label: "Training", href: "/results/demo/training", group: "TRAIN" },
+  { label: "Drill Library", href: "/training/drills", group: "TRAIN" },
+  { label: "Training Calendar", href: "/training/calendar", group: "TRAIN" },
   { label: "Goals", href: "/results/demo/goals", group: "TRAIN" },
   { label: "Media", href: "/media", group: "LIBRARY" },
   { label: "Elite Shooters", href: "/elite-shooters", group: "LIBRARY" },
@@ -353,15 +355,17 @@ export function MediaSurface({
       style={{ width, height, borderRadius: rounded }}
       data-testid="media-surface"
     >
-      <div className="absolute inset-x-0 bottom-0 flex h-[42px] items-center gap-[10px] px-[12px]">
-        <svg width="15" height="15" viewBox="0 0 15 15" aria-hidden="true">
-          <path d="M3 2 L13 7.5 L3 13 Z" fill="white" />
-        </svg>
-        <span className="shotiq-numeric text-[11px] text-white">{elapsed} / {duration}</span>
-        <span className="relative h-[3px] flex-1 rounded-full bg-white/35">
-          <span className="absolute inset-y-0 left-0 rounded-full bg-white" style={{ width: `${progress * 100}%` }} />
-        </span>
-      </div>
+      {(typeof height !== "number" || height >= 64) && (
+        <div className="absolute inset-x-0 bottom-0 flex h-[42px] items-center gap-[10px] px-[12px]">
+          <svg width="15" height="15" viewBox="0 0 15 15" aria-hidden="true">
+            <path d="M3 2 L13 7.5 L3 13 Z" fill="white" />
+          </svg>
+          <span className="shotiq-numeric text-[11px] text-white">{elapsed} / {duration}</span>
+          <span className="relative h-[3px] flex-1 rounded-full bg-white/35">
+            <span className="absolute inset-y-0 left-0 rounded-full bg-white" style={{ width: `${progress * 100}%` }} />
+          </span>
+        </div>
+      )}
     </div>
   )
 }

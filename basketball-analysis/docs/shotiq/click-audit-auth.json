@@ -7,7 +7,7 @@
   "deadButtons": [
    "Left"
   ],
-  "consoleErrors": 16
+  "consoleErrors": 17
  },
  {
   "route": "/dashboard",
@@ -39,13 +39,13 @@
   "brokenLinks": [],
   "buttons": 8,
   "deadButtons": [],
-  "consoleErrors": 1
+  "consoleErrors": 0
  },
  {
   "route": "/settings",
   "links": 18,
   "brokenLinks": [],
-  "buttons": 15,
+  "buttons": 12,
   "deadButtons": [],
   "consoleErrors": 0
  },
@@ -53,7 +53,7 @@
   "route": "/upload",
   "links": 18,
   "brokenLinks": [],
-  "buttons": 11,
+  "buttons": 8,
   "deadButtons": [],
   "consoleErrors": 0
  },
@@ -69,7 +69,7 @@
   "route": "/video-analysis/upload",
   "links": 18,
   "brokenLinks": [],
-  "buttons": 6,
+  "buttons": 3,
   "deadButtons": [],
   "consoleErrors": 0
  },
@@ -80,6 +80,22 @@
   "buttons": 10,
   "deadButtons": [],
   "consoleErrors": 12
+ },
+ {
+  "route": "/training/drills",
+  "links": 22,
+  "brokenLinks": [],
+  "buttons": 10,
+  "deadButtons": [],
+  "consoleErrors": 0
+ },
+ {
+  "route": "/training/calendar",
+  "links": 19,
+  "brokenLinks": [],
+  "buttons": 12,
+  "deadButtons": [],
+  "consoleErrors": 0
  },
  {
   "route": "/elite-shooters/stephen-curry",

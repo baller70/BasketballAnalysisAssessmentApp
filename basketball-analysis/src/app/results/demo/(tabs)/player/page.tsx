@@ -163,8 +163,8 @@ export default function PlayerCardPage() {
                 <div className="text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">SHOW ON CARD</div>
                 <div className="mt-[6px] space-y-[5px]">
                   {TOGGLES.map((t) => (
-                    <button key={t} type="button" onClick={() => toggle(t)} className="flex w-full items-center justify-between gap-[16px]">
-                      <span className="text-[12px]">{t}</span>
+                    <button key={t} type="button" onClick={() => toggle(t)} className="flex w-[170px] items-center gap-[10px]">
+                      <span className="flex-1 whitespace-nowrap text-left text-[12px]">{t}</span>
                       <span className={`h-[16px] w-[30px] rounded-full p-[2px] transition ${on.has(t) ? "bg-[var(--shotiq-color-confirmGreen)]" : "bg-[var(--shotiq-color-rule)]"}`}>
                         <span className={`block h-[12px] w-[12px] rounded-full bg-white transition ${on.has(t) ? "translate-x-[14px]" : ""}`} />
                       </span>
