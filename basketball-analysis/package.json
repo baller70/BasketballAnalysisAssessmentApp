@@ -40,7 +40,9 @@
     "ios:build": "CAPACITOR_BUILD=true npm run build && cap sync ios",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "prisma db seed",
-    "discover:shooters": "DOTENV_CONFIG_PATH=.env.local tsx -r dotenv/config scripts/discover-shooter-candidates.ts"
+    "discover:shooters": "DOTENV_CONFIG_PATH=.env.local tsx -r dotenv/config scripts/discover-shooter-candidates.ts",
+    "proof:visual": "node scripts/shotiq-visual-proof.mjs",
+    "sidecar:audit": "python3 ../tools/shotiq-sidecar/audit.py"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

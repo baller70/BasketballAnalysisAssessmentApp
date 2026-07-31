@@ -122,3 +122,7 @@ yolov8*.pt
 
 # Local-only ship helper (server/SSH details)
 ship-shotiq.sh
+
+# ShotIQ visual proof artifacts (renders/diffs) and uncommitted reference PNGs
+.shotiq-proof/
+.shotiq-reference/
