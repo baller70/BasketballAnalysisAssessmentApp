@@ -154,7 +154,7 @@ export default function EliteShooterDetailClient() {
       {/* detail tabs */}
       <nav className="mt-[16px] flex gap-[30px] border-b border-[var(--shotiq-color-rule)]" aria-label="Shooter detail">
         {DETAIL_TABS.map((t) => (
-          <button key={t} type="button" onClick={() => setTab(t)}
+          <button key={t} type="button" onClick={() => setTab(t)} aria-current={tab === t ? "true" : undefined}
                   className={`relative pb-[10px] text-[12px] font-bold tracking-[0.05em] ${tab === t ? "text-[var(--shotiq-color-analysisBlue)]" : "text-[var(--shotiq-color-graphite)]"}`}>
             {t}
             {tab === t && <span className="absolute inset-x-0 bottom-0 h-[3px] bg-[var(--shotiq-color-analysisBlue)]" />}
@@ -326,7 +326,8 @@ export default function EliteShooterDetailClient() {
             <span className="text-[var(--shotiq-color-graphite)]">Era</span><span className="font-semibold">{shooter.era}</span>
             <span className="text-[var(--shotiq-color-graphite)]">League</span><span className="font-semibold">{shooter.league}</span>
           </div>
-          <button type="button" className="mt-[10px] flex w-full items-center justify-between border-t border-[var(--shotiq-color-rule)] pt-[10px] text-[13px] text-[var(--shotiq-color-analysisBlue)]">
+          <button type="button" onClick={() => setTab("BIO")} aria-current={tab === "BIO" ? "true" : undefined}
+                  className="mt-[10px] flex w-full items-center justify-between border-t border-[var(--shotiq-color-rule)] pt-[10px] text-[13px] text-[var(--shotiq-color-analysisBlue)]">
             View full bio <ChevronRight className="h-[15px] w-[15px]" />
           </button>
         </Card>

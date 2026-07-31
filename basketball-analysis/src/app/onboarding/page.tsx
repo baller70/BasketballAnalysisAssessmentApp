@@ -49,7 +49,7 @@ export default function OnboardingPage() {
     useAuthStore.getState().setProfileComplete(true)
     const saved = await useProfileStore.getState().saveProfile()
     if (!saved) console.error("Failed to save profile to server")
-    router.push("/dashboard")
+    window.location.assign("/dashboard")
   }
   const next = () => (step < STEPS.length ? setStep(step + 1) : finish())
 
@@ -102,6 +102,7 @@ export default function OnboardingPage() {
               <div className="mt-[6px] flex overflow-hidden rounded-[5px] border border-[var(--shotiq-color-rule)]">
                 {(["left", "right"] as const).map((h) => (
                   <button key={h} type="button" onClick={() => store.setDominantHand(h)} data-testid={`hand-${h}`}
+                          aria-pressed={store.dominantHand === h}
                           className={`h-[46px] flex-1 text-[14px] capitalize ${store.dominantHand === h ? "bg-[var(--shotiq-color-shotiqOrange)] font-medium text-white" : ""}`}>
                     {h}
                   </button>
@@ -180,8 +181,8 @@ export default function OnboardingPage() {
         </Card>
 
         <div className="mt-[14px] flex items-center justify-between">
-          <button type="button" onClick={() => setStep(Math.max(1, step - 1))}
-                  className="flex h-[44px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[16px] text-[14px]">
+          <button type="button" onClick={() => setStep(Math.max(1, step - 1))} disabled={step === 1}
+                  className="flex h-[44px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[16px] text-[14px] disabled:opacity-40">
             <ChevronLeft className="h-[14px] w-[14px]" /> Back
           </button>
           <div className="flex items-center gap-[16px]">

@@ -4,6 +4,7 @@ import React, { useState, useCallback, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { useAnalysisStore } from "@/stores/analysisStore"
+import { ShotIQShell } from "@/components/shotiq/ShotIQShell"
 import { UploadEducation } from "@/components/upload/UploadEducation"
 import { UploadQualityScore } from "@/components/upload/UploadQualityScore"
 import { PreUploadValidationDisplay } from "@/components/upload/PreUploadValidation"
@@ -146,31 +147,31 @@ export default function UploadPage() {
   // If showing education module (only for image mode)
   if (showEducation && files.length === 0 && mode === "image") {
     return (
-      <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center p-4">
-        <UploadEducation
-          onStartUpload={() => setShowEducation(false)}
-        />
-      </div>
+      <ShotIQShell active="Analyze">
+        <div data-testid="screen-desktop-web-upload" className="flex items-start justify-center px-[26px] py-[24px]">
+          <UploadEducation
+            onStartUpload={() => setShowEducation(false)}
+          />
+        </div>
+      </ShotIQShell>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#1a1a1a] p-4">
+    <ShotIQShell active="Analyze">
+    <div data-testid="screen-desktop-web-upload" className="px-[26px] py-[18px]">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-6">
-          <div className="flex items-center justify-center gap-3 mb-2">
-            <BasketballIcon size="xl" color="primary" />
-            <h1 className="text-3xl font-bold text-[#FF6B35]">Analyze Your Shot</h1>
-          </div>
-          <p className="text-[#888]">
-            Choose how you want to analyze your shooting form
+        {/* Header — canonical, per iOS 022/026 upload screens */}
+        <div className="mb-6">
+          <h1 className="shotiq-display text-[48px] leading-[50px]">UPLOAD &amp; ANALYZE</h1>
+          <p className="mt-[4px] text-[14px] text-[var(--shotiq-color-graphite)]">
+            Upload a clear photo or video of your shot for AI analysis.
           </p>
         </div>
 
         {/* Mode Tabs */}
-        <div className="flex justify-center mb-6">
-          <div className="inline-flex bg-[#2a2a2a] rounded-xl p-1 border border-[#3a3a3a]">
+        <div className="flex mb-6">
+          <div className="inline-flex rounded-[8px] border border-[var(--shotiq-color-rule)] bg-white p-1">
             <ModeTab
               icon={<ImageIcon className="w-5 h-5" />}
               label="IMAGE"
@@ -228,13 +229,13 @@ export default function UploadPage() {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
             >
-              <div className="bg-[#2a2a2a] rounded-xl border border-[#3a3a3a] p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <Video className="w-5 h-5 text-[#FF6B35]" />
-                  <h2 className="text-lg font-semibold text-[#FF6B35]">Video Upload</h2>
+              <div className="rounded-[8px] border border-[var(--shotiq-color-rule)] bg-white p-6">
+                <div className="flex items-center gap-3 mb-1">
+                  <Video className="w-5 h-5 text-[var(--shotiq-color-shotiqOrange)]" />
+                  <h2 className="text-[15px] font-bold tracking-[0.04em]">VIDEO UPLOAD</h2>
                 </div>
-                <p className="text-[#888] text-sm mb-6">
-                  Upload a video of your shooting form (max 90 seconds) for frame-by-frame analysis.
+                <p className="text-[var(--shotiq-color-graphite)] text-sm mb-6">
+                  MP4 · 3–90 seconds · best results in portrait orientation.
                 </p>
                 <VideoUpload />
               </div>
@@ -249,7 +250,7 @@ export default function UploadPage() {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
             >
-              <div className="bg-[#2a2a2a] rounded-xl border border-[#3a3a3a] p-6">
+              <div className="rounded-[8px] border border-[var(--shotiq-color-rule)] bg-white p-6">
                 <LiveAnalysis />
               </div>
             </motion.div>
@@ -257,6 +258,7 @@ export default function UploadPage() {
         </AnimatePresence>
       </div>
     </div>
+    </ShotIQShell>
   )
 }
 
@@ -279,8 +281,8 @@ function ModeTab({ icon, label, isActive, onClick, badge }: ModeTabProps) {
       className={`
         relative flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-sm transition-all
         ${isActive
-          ? "bg-[#FF6B35] text-white shadow-lg"
-          : "text-[#888] hover:text-[#E5E5E5] hover:bg-[#3a3a3a]"
+          ? "bg-[var(--shotiq-color-shotiqOrange)] text-white"
+          : "text-[var(--shotiq-color-graphite)] hover:bg-[var(--shotiq-color-warmCanvas)] hover:text-[var(--shotiq-color-ink)]"
         }
       `}
     >
@@ -341,10 +343,10 @@ function ImageUploadContent({
             onDragOver={onDrag}
             onDrop={onDrop}
             className={`
-              relative border-2 border-dashed rounded-xl p-8 text-center transition-all
+              relative border-2 border-dashed rounded-[8px] p-8 text-center transition-all
               ${dragActive
-                ? "border-[#FF6B35] bg-[#FF6B35]/10"
-                : "border-[#3a3a3a] bg-[#2a2a2a] hover:border-[#FF6B35]/50 hover:bg-[#2a2a2a]/80"
+                ? "border-[var(--shotiq-color-shotiqOrange)] bg-[var(--shotiq-color-warmCanvas)]"
+                : "border-[var(--shotiq-color-rule)] bg-white hover:border-[var(--shotiq-color-shotiqOrange)]"
               }
             `}
           >
@@ -357,18 +359,18 @@ function ImageUploadContent({
             />
             
             <div className="flex flex-col items-center gap-4">
-              <div className="p-4 bg-[#FF6B35]/20 rounded-full">
+              <div className="p-4 rounded-full border border-[var(--shotiq-color-rule)]">
                 <CameraIcon size="xl" color="primary" />
               </div>
               <div>
-                <p className="text-lg font-semibold text-[#E5E5E5] mb-1">
+                <p className="text-lg font-semibold text-[var(--shotiq-color-ink)] mb-1">
                   {dragActive ? "Drop images here" : "Drag & drop images here"}
                 </p>
-                <p className="text-sm text-[#888]">
+                <p className="text-sm text-[var(--shotiq-color-graphite)]">
                   or click to browse
                 </p>
               </div>
-              <div className="flex flex-wrap justify-center gap-2 text-xs text-[#666]">
+              <div className="flex flex-wrap justify-center gap-2 text-xs text-[var(--shotiq-color-muted)]">
                 <span>JPG, PNG, HEIC</span>
                 <span>•</span>
                 <span>Max {UPLOAD_CONSTANTS.MAX_IMAGE_SIZE / (1024 * 1024)}MB</span>
@@ -379,7 +381,7 @@ function ImageUploadContent({
           {/* View Guidelines Button */}
           <button
             onClick={onShowEducation}
-            className="mt-4 w-full text-sm text-[#FF6B35] hover:text-[#FF6B35]/80 flex items-center justify-center gap-2"
+            className="mt-4 w-full text-sm text-[var(--shotiq-color-shotiqOrange)] flex items-center justify-center gap-2"
           >
             <InfoIcon size="sm" color="primary" />
             View upload guidelines
@@ -400,9 +402,9 @@ function ImageUploadContent({
           className="space-y-6"
         >
           {/* Preview */}
-          <div className="bg-[#2a2a2a] rounded-xl border border-[#3a3a3a] overflow-hidden">
-            <div className="p-4 border-b border-[#3a3a3a]">
-              <h3 className="font-semibold text-[#E5E5E5]">
+          <div className="bg-white rounded-[8px] border border-[var(--shotiq-color-rule)] overflow-hidden">
+            <div className="p-4 border-b border-[var(--shotiq-color-rule)]">
+              <h3 className="font-semibold text-[var(--shotiq-color-ink)]">
                 {files.length} {files.length === 1 ? "file" : "files"} selected
               </h3>
             </div>
@@ -412,7 +414,7 @@ function ImageUploadContent({
                 {previewUrls.slice(0, 6).map((url, idx) => (
                   <div
                     key={idx}
-                    className="aspect-square rounded-lg overflow-hidden bg-[#1a1a1a]"
+                    className="aspect-square rounded-lg overflow-hidden bg-[#1B1D20]"
                   >
                     <img
                       src={url}
@@ -422,8 +424,8 @@ function ImageUploadContent({
                   </div>
                 ))}
                 {files.length > 6 && (
-                  <div className="aspect-square rounded-lg bg-[#1a1a1a] flex items-center justify-center">
-                    <span className="text-[#888] font-medium">
+                  <div className="aspect-square rounded-lg bg-[#1B1D20] flex items-center justify-center">
+                    <span className="text-white/70 font-medium">
                       +{files.length - 6} more
                     </span>
                   </div>
@@ -431,7 +433,7 @@ function ImageUploadContent({
               </div>
               
               {/* File Info */}
-              <div className="mt-3 text-xs text-[#888]">
+              <div className="mt-3 text-xs text-[var(--shotiq-color-graphite)]">
                 {files.map((f) => f.name).join(", ").slice(0, 100)}
                 {files.map((f) => f.name).join(", ").length > 100 && "..."}
                 <span className="mx-2">•</span>
@@ -471,7 +473,7 @@ function ImageUploadContent({
             <div className="flex justify-center">
               <button
                 onClick={onRetake}
-                className="px-6 py-3 bg-[#3a3a3a] text-[#E5E5E5] rounded-lg font-medium hover:bg-[#4a4a4a] transition-colors"
+                className="px-6 py-3 border border-[var(--shotiq-color-rule)] bg-white text-[var(--shotiq-color-ink)] rounded-[6px] font-medium hover:bg-[var(--shotiq-color-warmCanvas)] transition-colors"
               >
                 Try Different Files
               </button>
@@ -485,9 +487,9 @@ function ImageUploadContent({
 
 function QuickTip({ icon, text }: { icon: React.ReactNode; text: string }) {
   return (
-    <div className="flex items-center gap-2 p-3 bg-[#2a2a2a] rounded-lg border border-[#3a3a3a]">
+    <div className="flex items-center gap-2 p-3 bg-white rounded-[6px] border border-[var(--shotiq-color-rule)]">
       {icon}
-      <span className="text-sm text-[#E5E5E5]">{text}</span>
+      <span className="text-sm text-[var(--shotiq-color-ink)]">{text}</span>
     </div>
   )
 }

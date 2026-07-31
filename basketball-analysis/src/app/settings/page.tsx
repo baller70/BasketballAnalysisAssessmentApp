@@ -28,6 +28,9 @@ import {
 } from "lucide-react"
 import { useAuthStore } from "@/stores/authStore"
 import { csrfFetch } from "@/lib/api/csrfFetch"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
+import { ShotIQShell } from "@/components/shotiq/ShotIQShell"
 
 // ============================================
 // PHASE 10: SETTINGS & NOTIFICATION PREFERENCES
@@ -124,7 +127,8 @@ const DEFAULT_AUTOMATION_SETTINGS: AutomationSettings = {
 }
 
 export default function SettingsPage() {
-  const [activeSection, setActiveSection] = useState<'profile' | 'notifications' | 'automation' | 'account'>('profile')
+  const router = useRouter()
+  const [activeSection, setActiveSection] = useState<'profile' | 'notifications' | 'automation' | 'account' | 'about'>('profile')
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(DEFAULT_NOTIFICATION_SETTINGS)
   const [automationSettings, setAutomationSettings] = useState<AutomationSettings>(DEFAULT_AUTOMATION_SETTINGS)
   const [privacySettings, setPrivacySettings] = useState<PrivacySettings>(DEFAULT_PRIVACY_SETTINGS)
@@ -418,19 +422,15 @@ export default function SettingsPage() {
   }
 
     return (
-    <main className="min-h-screen bg-white py-8 px-4">
+    <ShotIQShell active="Settings">
+    <main data-testid="screen-desktop-web-settings-hub" className="px-[26px] py-[18px]">
       <div className="container mx-auto max-w-6xl">
-        {/* Header */}
+        {/* Header — canonical per iOS 071-settings-hub */}
         <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#E55A2B] flex items-center justify-center shadow-lg shadow-[#FF6B35]/20">
-              <Settings className="w-7 h-7 text-white" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-black text-[#FF6B35] uppercase tracking-wider">Settings</h1>
-              <p className="text-slate-500 text-sm">Manage notifications, automation & preferences</p>
-              </div>
-            </div>
+          <div>
+            <h1 className="shotiq-display text-[48px] leading-[50px]">SETTINGS</h1>
+            <p className="mt-[4px] text-[14px] text-[var(--shotiq-color-graphite)]">Manage your account, preferences, and app experience.</p>
+          </div>
             
           {/* Save Button */}
               <button
@@ -473,6 +473,7 @@ export default function SettingsPage() {
               <nav className="space-y-2">
                 <button
                   onClick={() => setActiveSection('profile')}
+                  aria-current={activeSection === 'profile' ? 'true' : undefined}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                     activeSection === 'profile'
                       ? 'bg-[#FF6B35]/10 text-[#FF6B35] font-bold border-l-4 border-[#FF6B35]'
@@ -486,6 +487,7 @@ export default function SettingsPage() {
                 
                 <button
                   onClick={() => setActiveSection('notifications')}
+                  aria-current={activeSection === 'notifications' ? 'true' : undefined}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                     activeSection === 'notifications'
                       ? 'bg-[#FF6B35]/10 text-[#FF6B35] font-bold border-l-4 border-[#FF6B35]'
@@ -499,6 +501,7 @@ export default function SettingsPage() {
                 
                 <button
                   onClick={() => setActiveSection('automation')}
+                  aria-current={activeSection === 'automation' ? 'true' : undefined}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                     activeSection === 'automation'
                       ? 'bg-[#FF6B35]/10 text-[#FF6B35] font-bold border-l-4 border-[#FF6B35]'
@@ -512,6 +515,7 @@ export default function SettingsPage() {
                 
                 <button
                   onClick={() => setActiveSection('account')}
+                  aria-current={activeSection === 'account' ? 'true' : undefined}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                     activeSection === 'account'
                       ? 'bg-[#FF6B35]/10 text-[#FF6B35] font-bold border-l-4 border-[#FF6B35]'
@@ -520,6 +524,37 @@ export default function SettingsPage() {
                 >
                   <Shield className="w-5 h-5" />
                   <span className="font-medium">Data & Privacy</span>
+                  <ChevronRight className="w-4 h-4 ml-auto" />
+                </button>
+
+                <Link href="/guide"
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium border-l-4 border-transparent transition-all"
+                >
+                  <Info className="w-5 h-5" />
+                  <span className="font-medium">Help & Support</span>
+                  <ChevronRight className="w-4 h-4 ml-auto" />
+                </Link>
+
+                <button
+                  onClick={() => setActiveSection('about')}
+                  aria-current={activeSection === 'about' ? 'true' : undefined}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                    activeSection === 'about'
+                      ? 'bg-[#FF6B35]/10 text-[#FF6B35] font-bold border-l-4 border-[#FF6B35]'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium border-l-4 border-transparent'
+                  }`}
+                >
+                  <Smartphone className="w-5 h-5" />
+                  <span className="font-medium">About ShotIQ</span>
+                  <ChevronRight className="w-4 h-4 ml-auto" />
+                </button>
+
+                <button
+                  onClick={() => { useAuthStore.getState().signOut(); window.location.assign('/signin') }}
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[var(--shotiq-color-reviewRed)] hover:bg-slate-50 font-medium border-l-4 border-transparent transition-all"
+                >
+                  <X className="w-5 h-5" />
+                  <span className="font-medium">Sign Out</span>
                   <ChevronRight className="w-4 h-4 ml-auto" />
                 </button>
               </nav>
@@ -1220,9 +1255,34 @@ export default function SettingsPage() {
               </>
             )}
                   </div>
+                  {/* About Section — version, terms, privacy (iOS 071 hub row) */}
+            {activeSection === 'about' && (
+              <div className="bg-white shadow-sm rounded-xl p-6 border border-slate-200">
+                <h2 className="text-[15px] font-bold tracking-[0.04em] text-slate-900">ABOUT SHOTIQ</h2>
+                <p className="mt-2 text-sm text-slate-500">Version, terms, and app information.</p>
+                <div className="mt-4 divide-y divide-slate-200 text-sm">
+                  <div className="flex items-center justify-between py-3">
+                    <span>App version</span><span className="font-semibold">1.0.0 (web)</span>
+                  </div>
+                  <div className="flex items-center justify-between py-3">
+                    <span>Design system</span><span className="font-semibold">ShotIQ canonical (white court)</span>
+                  </div>
+                  <Link href="/terms" className="flex items-center justify-between py-3 text-[var(--shotiq-color-analysisBlue)]">
+                    Terms of Use <ChevronRight className="w-4 h-4" />
+                  </Link>
+                  <Link href="/privacy" className="flex items-center justify-between py-3 text-[var(--shotiq-color-analysisBlue)]">
+                    Privacy Policy <ChevronRight className="w-4 h-4" />
+                  </Link>
+                  <Link href="/guide" className="flex items-center justify-between py-3 text-[var(--shotiq-color-analysisBlue)]">
+                    How to use ShotIQ <ChevronRight className="w-4 h-4" />
+                  </Link>
+                </div>
               </div>
+            )}
+        </div>
       </div>
     </main>
+    </ShotIQShell>
   )
 }
 

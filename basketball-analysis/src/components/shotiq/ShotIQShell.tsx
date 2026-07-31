@@ -226,7 +226,7 @@ export function ShotIQShell({
                   </button>
                 ))}
                 <button type="button"
-                        onClick={() => { useAuthStore.getState().signOut(); go("/signin") }}
+                        onClick={() => { useAuthStore.getState().signOut(); window.location.assign("/signin") }}
                         className="mt-[2px] flex h-[34px] w-full items-center rounded-[6px] px-[10px] text-[13px] text-[var(--shotiq-color-reviewRed)] hover:bg-[var(--shotiq-color-warmCanvas)]">
                   Sign out
                 </button>

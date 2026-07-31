@@ -336,12 +336,12 @@ export function LiveAnalysis() {
   // Error state
   if (cameraError) {
     return (
-      <div className="p-6 bg-[#2a2a2a] rounded-lg border border-red-500/50">
+      <div className="p-6 bg-white rounded-lg border border-[var(--shotiq-color-reviewRed)]">
         <div className="flex items-center gap-3 text-red-400 mb-4">
           <AlertCircle className="w-6 h-6" />
           <span className="font-semibold">No Camera Available</span>
         </div>
-        <p className="text-[#E5E5E5] mb-4">{cameraError}</p>
+        <p className="text-[var(--shotiq-color-ink)] mb-4">{cameraError}</p>
         <div className="flex flex-wrap gap-3">
           <button
             onClick={initCamera}
@@ -349,7 +349,7 @@ export function LiveAnalysis() {
           >
             Retry
           </button>
-          <label className="px-4 py-2 bg-[#3a3a3a] text-white rounded-lg hover:bg-[#4a4a4a] transition-colors whitespace-nowrap cursor-pointer">
+          <label className="px-4 py-2 border border-[var(--shotiq-color-rule)] bg-white text-[var(--shotiq-color-ink)] rounded-lg hover:bg-[var(--shotiq-color-warmCanvas)] transition-colors whitespace-nowrap cursor-pointer">
             Upload Demo Video
             <input 
               type="file" 
@@ -383,11 +383,11 @@ export function LiveAnalysis() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="p-6 bg-[#2a2a2a] rounded-lg border border-[#3a3a3a]">
+      <div className="p-6 bg-white rounded-lg border border-[var(--shotiq-color-rule)]">
         <div className="flex flex-col items-center justify-center py-12">
           <Loader2 className="w-12 h-12 text-[#FF6B35] animate-spin mb-4" />
-          <p className="text-[#E5E5E5] font-medium">Loading pose detection model...</p>
-          <p className="text-[#888] text-sm mt-2">This may take a few seconds on first load</p>
+          <p className="text-[var(--shotiq-color-ink)] font-medium">Loading pose detection model...</p>
+          <p className="text-[var(--shotiq-color-graphite)] text-sm mt-2">This may take a few seconds on first load</p>
         </div>
       </div>
     );
@@ -532,7 +532,7 @@ export function LiveAnalysis() {
 
       {/* Captured Frames Preview */}
       {capturedFrames.length > 0 && (
-        <div className="p-4 bg-[#2a2a2a] rounded-lg border border-[#3a3a3a]">
+        <div className="p-4 bg-white rounded-lg border border-[var(--shotiq-color-rule)]">
           <h3 className="text-sm font-semibold text-[#FF6B35] mb-3">
             Captured Frames ({capturedFrames.length})
           </h3>

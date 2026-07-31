@@ -2,7 +2,7 @@
 
 /** /profile — canonical 096-web-profile-settings, backed by /api/profile. */
 
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { ChevronDown, ChevronRight, CheckCircle2, Upload, Trash2, LogOut } from "lucide-react"
 import { SectionLabel, Card, TrendLine, Stat, PhaseGlyph } from "@/components/shotiq/ShotIQShell"
@@ -12,6 +12,56 @@ export default function ProfileAccountPage() {
   const { user, signOut } = useAuthStore()
   const [form, setForm] = useState({ name: "", email: "", hand: "Right", level: "Advanced", height: "6' 4\"", weight: "195 lbs", wingspan: "6' 8\"", pref: "Catch & Shoot" })
   const [saved, setSaved] = useState(false)
+  const [avatar, setAvatar] = useState<string | null>(null)
+  const [exporting, setExporting] = useState<"idle" | "working" | "done">("idle")
+  const [clearing, setClearing] = useState<"idle" | "confirm" | "working" | "done">("idle")
+  const avatarInputRef = useRef<HTMLInputElement>(null)
+  const onAvatarPick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0]
+    if (!f) return
+    const reader = new FileReader()
+    reader.onload = () => setAvatar(String(reader.result))
+    reader.readAsDataURL(f)
+  }
+  const exportData = async () => {
+    setExporting("working")
+    try {
+      const [profileRes, historyRes] = await Promise.all([
+        fetch("/api/profile", { credentials: "include" }),
+        fetch("/api/analysis-history?includeAnalysis=true&limit=1000", { credentials: "include" }),
+      ])
+      const payload = {
+        exportedAt: new Date().toISOString(),
+        profile: profileRes.ok ? await profileRes.json() : null,
+        history: historyRes.ok ? await historyRes.json() : null,
+      }
+      const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }))
+      const a = document.createElement("a")
+      a.href = url
+      a.download = "shotiq-data-export.json"
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+      setExporting("done")
+    } catch { setExporting("idle") }
+    setTimeout(() => setExporting("idle"), 2500)
+  }
+  const clearHistory = async () => {
+    if (clearing === "idle") { setClearing("confirm"); return }
+    if (clearing !== "confirm") return
+    setClearing("working")
+    try {
+      const { csrfFetch } = await import("@/lib/api/csrfFetch")
+      const res = await fetch("/api/analysis-history?limit=1000", { credentials: "include" })
+      const ids: string[] = res.ok ? ((await res.json())?.items ?? []).map((r: { id: string }) => r.id) : []
+      for (const id of ids) {
+        await csrfFetch(`/api/analysis-history?id=${encodeURIComponent(id)}`, { method: "DELETE" })
+      }
+      setClearing("done")
+    } catch { setClearing("idle") }
+    setTimeout(() => setClearing("idle"), 2500)
+  }
   useEffect(() => {
     fetch("/api/profile", { credentials: "include" }).then((r) => (r.ok ? r.json() : null))
       .then((d) => {
@@ -52,13 +102,21 @@ export default function ProfileAccountPage() {
             </div>
             <div className="mt-[10px] flex gap-[18px]">
               <div className="w-[120px] shrink-0 text-center">
-                <div className="mx-auto grid h-[110px] w-[110px] place-items-center rounded-full bg-[var(--shotiq-color-rule)]">
-                  <span className="text-[26px] font-bold text-[var(--shotiq-color-graphite)]">
-                    {(form.name || "You").slice(0, 2).toUpperCase()}
-                  </span>
+                <div className="mx-auto grid h-[110px] w-[110px] place-items-center overflow-hidden rounded-full bg-[var(--shotiq-color-rule)]">
+                  {avatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={avatar} alt="Profile photo" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-[26px] font-bold text-[var(--shotiq-color-graphite)]">
+                      {(form.name || "You").slice(0, 2).toUpperCase()}
+                    </span>
+                  )}
                 </div>
-                <button type="button" className="mt-[8px] h-[32px] w-full rounded-[5px] border border-[var(--shotiq-color-rule)] text-[12px]">Change photo</button>
-                <button type="button" className="mt-[4px] text-[11px] text-[var(--shotiq-color-reviewRed)]">Remove photo</button>
+                <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={onAvatarPick} />
+                <button type="button" onClick={() => avatarInputRef.current?.click()}
+                        className="mt-[8px] h-[32px] w-full rounded-[5px] border border-[var(--shotiq-color-rule)] text-[12px]">Change photo</button>
+                <button type="button" onClick={() => setAvatar(null)} disabled={!avatar}
+                        className="mt-[4px] text-[11px] text-[var(--shotiq-color-reviewRed)] disabled:opacity-40">Remove photo</button>
               </div>
               <div className="min-w-0 flex-1">
                 <div className={lbl}>FULL NAME</div>
@@ -174,7 +232,10 @@ export default function ProfileAccountPage() {
               <div className="text-[13px] font-semibold">Export all data</div>
               <div className="text-[11px] text-[var(--shotiq-color-graphite)]">Download a copy of all your shots, analyses, sessions, and account data.</div>
             </div>
-            <button type="button" className="h-[38px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-[13px]">Export all data</button>
+            <button type="button" onClick={exportData} disabled={exporting === "working"}
+                    className="h-[38px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-[13px] disabled:opacity-60">
+              {exporting === "working" ? "Exporting…" : exporting === "done" ? "Downloaded ✓" : "Export all data"}
+            </button>
           </div>
           <div className="flex flex-1 items-center gap-[12px] px-[16px]">
             <Trash2 className="h-[20px] w-[20px] text-[var(--shotiq-color-reviewRed)]" />
@@ -182,7 +243,10 @@ export default function ProfileAccountPage() {
               <div className="text-[13px] font-semibold">Clear history</div>
               <div className="text-[11px] text-[var(--shotiq-color-graphite)]">Permanently delete all shots, analyses, and session history.</div>
             </div>
-            <button type="button" className="h-[38px] rounded-[6px] border border-[var(--shotiq-color-reviewRed)] px-[14px] text-[13px] text-[var(--shotiq-color-reviewRed)]">Clear history</button>
+            <button type="button" onClick={clearHistory} disabled={clearing === "working"}
+                    className="h-[38px] rounded-[6px] border border-[var(--shotiq-color-reviewRed)] px-[14px] text-[13px] text-[var(--shotiq-color-reviewRed)] disabled:opacity-60">
+              {clearing === "confirm" ? "Click again to confirm" : clearing === "working" ? "Clearing…" : clearing === "done" ? "History cleared" : "Clear history"}
+            </button>
           </div>
         </Card>
       </div>

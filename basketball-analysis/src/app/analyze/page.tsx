@@ -132,8 +132,12 @@ export default function AnalyzeWorkspacePage() {
                 <FolderUp className="h-[34px] w-[34px]" strokeWidth={1.4} />
                 <span className="text-[14px] font-medium">Choose media</span>
               </button>
-              {[["Upload image", ImageIcon, () => inputRef.current?.click()],
-                ["Upload video", Film, () => inputRef.current?.click()],
+              {[["Upload image", ImageIcon, () => {
+                  if (inputRef.current) { inputRef.current.accept = "image/*"; inputRef.current.click() }
+                }],
+                ["Upload video", Film, () => {
+                  if (inputRef.current) { inputRef.current.accept = "video/*"; inputRef.current.click() }
+                }],
                 ["Live camera", ScanLine, () => router.push("/video-analysis")]].map(([t, I, fn]) => {
                 const Icon = I as typeof ImageIcon
                 return (
