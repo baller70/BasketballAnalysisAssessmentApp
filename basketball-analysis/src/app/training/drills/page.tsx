@@ -7,10 +7,10 @@
  * training-hub card language). Tab preselect via ?tab=recommended|saved|discover.
  */
 
-import React, { Suspense, useState } from "react"
+import React, { Suspense, useEffect, useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import { ArrowLeft, Bookmark, Search } from "lucide-react"
+import { ArrowLeft, Bookmark, Plus, Search, X } from "lucide-react"
 import { ShotIQShell, SectionLabel, Card, MediaSurface } from "@/components/shotiq/ShotIQShell"
 
 interface Drill {
@@ -41,6 +41,9 @@ const TABS = [
 
 const slug = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, "-")
 
+const CATEGORIES = ["Shooting", "Footwork", "Handling", "Scoring", "Form", "Flow"]
+const LEVELS = ["Beginner", "Intermediate", "Advanced"]
+
 function DrillLibrary() {
   const params = useSearchParams()
   const initial = (params?.get("tab") ?? "recommended") as (typeof TABS)[number]["id"]
@@ -49,11 +52,65 @@ function DrillLibrary() {
   const [query, setQuery] = useState("")
   const [saved, setSaved] = useState<Set<string>>(
     () => new Set(DRILLS.filter((d) => d.saved).map((d) => d.title)))
+  const [custom, setCustom] = useState<Drill[]>([])
+  const [creating, setCreating] = useState(false)
+  const [notice, setNotice] = useState("")
+  const [form, setForm] = useState({ title: "", cat: CATEGORIES[0], level: LEVELS[0], mins: "10", desc: "" })
+
+  // Custom drills persist through the saved-workouts API (drill metadata
+  // rides in the drillIds Json column).
+  useEffect(() => {
+    fetch("/api/saved-workouts", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        const rows = (d?.savedWorkouts ?? []).filter((w: { drillIds?: unknown[] }) =>
+          Array.isArray(w.drillIds) && (w.drillIds[0] as { customDrill?: boolean })?.customDrill)
+        if (rows.length) {
+          const drills: Drill[] = rows.map((w: { name: string; drillIds: unknown[] }) => {
+            const m = w.drillIds[0] as { len?: string; level?: string; cat?: string; desc?: string }
+            return { title: w.name, len: m.len ?? "10:00", level: m.level ?? "Beginner", cat: m.cat ?? "Shooting", desc: m.desc ?? "", saved: true }
+          })
+          setCustom(drills)
+          setSaved((s) => new Set([...s, ...drills.map((d) => d.title)]))
+        }
+      }).catch(() => {})
+  }, [])
+
+  const createDrill = async () => {
+    if (!form.title.trim()) return
+    const mins = Math.max(1, parseInt(form.mins) || 10)
+    const len = `${String(mins).padStart(2, "0")}:00`
+    const drill: Drill = { title: form.title.trim(), len, level: form.level, cat: form.cat, desc: form.desc.trim() || "Custom drill.", saved: true }
+    try {
+      const res = await fetch("/api/saved-workouts", {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: drill.title, drillCount: 1,
+          drillIds: [{ customDrill: true, slug: slug(drill.title), len, level: drill.level, cat: drill.cat, desc: drill.desc }],
+        }),
+      })
+      setNotice(res.ok ? "Drill created" : "Drill saved locally — sign in to sync")
+    } catch { setNotice("Drill saved locally — sign in to sync") }
+    setCustom((c) => [drill, ...c])
+    setSaved((s) => new Set([...s, drill.title]))
+    setCreating(false)
+    setForm({ title: "", cat: CATEGORIES[0], level: LEVELS[0], mins: "10", desc: "" })
+    setTimeout(() => setNotice(""), 2500)
+  }
+
+  // Modals must always be escapable — Escape or clicking the backdrop.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setCreating(false) }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [])
 
   const toggleSave = (title: string) =>
     setSaved((s) => { const n = new Set(s); n.has(title) ? n.delete(title) : n.add(title); return n })
 
-  const shown = DRILLS.filter((d) =>
+  const ALL = [...custom, ...DRILLS]
+  const shown = ALL.filter((d) =>
     (tab === "recommended" ? d.recommended : tab === "saved" ? saved.has(d.title) : true) &&
     (!query.trim() || `${d.title} ${d.cat} ${d.level}`.toLowerCase().includes(query.trim().toLowerCase())))
 
@@ -72,11 +129,18 @@ function DrillLibrary() {
               Every drill in one place — recommended for your goal, saved by you, or ready to discover.
             </p>
           </div>
-          <div className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[12px]">
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search drills…"
-                   data-testid="drill-search"
-                   className="w-[160px] bg-transparent text-[13px] outline-none placeholder:text-[var(--shotiq-color-muted)]" />
-            <Search className="h-[14px] w-[14px] text-[var(--shotiq-color-graphite)]" />
+          <div className="flex items-center gap-[10px]">
+            {notice && <span className="text-[12px] font-medium text-[var(--shotiq-color-confirmGreen)]">{notice}</span>}
+            <div className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[12px]">
+              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search drills…"
+                     data-testid="drill-search"
+                     className="w-[160px] bg-transparent text-[13px] outline-none placeholder:text-[var(--shotiq-color-muted)]" />
+              <Search className="h-[14px] w-[14px] text-[var(--shotiq-color-graphite)]" />
+            </div>
+            <button type="button" data-testid="create-drill" onClick={() => setCreating(true)}
+                    className="flex h-[42px] items-center gap-[8px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] px-[16px] text-[13px] font-medium text-white">
+              <Plus className="h-[15px] w-[15px]" /> Create drill
+            </button>
           </div>
         </div>
 
@@ -120,6 +184,58 @@ function DrillLibrary() {
             </Card>
           )}
         </div>
+
+        {creating && (
+          <div className="fixed inset-0 z-50 grid place-items-center bg-[rgba(17,17,17,0.35)]" role="dialog" aria-modal="true"
+               onClick={() => setCreating(false)}>
+            <Card className="w-[440px] p-[20px]" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+              <div className="flex items-center justify-between">
+                <SectionLabel>CREATE A DRILL</SectionLabel>
+                <button type="button" aria-label="Close" onClick={() => setCreating(false)}>
+                  <X className="h-[15px] w-[15px] text-[var(--shotiq-color-graphite)]" />
+                </button>
+              </div>
+              <label className="mt-[14px] block text-[12px] font-bold tracking-[0.04em]">DRILL NAME</label>
+              <input autoFocus value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
+                     data-testid="drill-name" placeholder="e.g. Corner Catch & Rise"
+                     className="mt-[6px] h-[42px] w-full rounded-[6px] border border-[var(--shotiq-color-rule)] px-[12px] text-[14px] outline-none focus:border-[var(--shotiq-color-ink)]" />
+              <div className="mt-[12px] grid grid-cols-3 gap-[10px]">
+                <div>
+                  <label className="block text-[12px] font-bold tracking-[0.04em]">CATEGORY</label>
+                  <select value={form.cat} onChange={(e) => setForm({ ...form, cat: e.target.value })}
+                          className="mt-[6px] h-[42px] w-full rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white px-[8px] text-[13px] outline-none">
+                    {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[12px] font-bold tracking-[0.04em]">LEVEL</label>
+                  <select value={form.level} onChange={(e) => setForm({ ...form, level: e.target.value })}
+                          className="mt-[6px] h-[42px] w-full rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white px-[8px] text-[13px] outline-none">
+                    {LEVELS.map((l) => <option key={l}>{l}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[12px] font-bold tracking-[0.04em]">MINUTES</label>
+                  <input type="number" min={1} max={90} value={form.mins}
+                         onChange={(e) => setForm({ ...form, mins: e.target.value })}
+                         className="mt-[6px] h-[42px] w-full rounded-[6px] border border-[var(--shotiq-color-rule)] px-[10px] text-[13px] outline-none focus:border-[var(--shotiq-color-ink)]" />
+                </div>
+              </div>
+              <label className="mt-[12px] block text-[12px] font-bold tracking-[0.04em]">WHAT IT TRAINS (OPTIONAL)</label>
+              <textarea rows={3} value={form.desc} onChange={(e) => setForm({ ...form, desc: e.target.value })}
+                        placeholder="Short description of the drill"
+                        className="mt-[6px] w-full rounded-[6px] border border-[var(--shotiq-color-rule)] px-[12px] py-[8px] text-[14px] outline-none focus:border-[var(--shotiq-color-ink)]" />
+              <div className="mt-[14px] flex justify-end gap-[10px]">
+                <button type="button" onClick={() => setCreating(false)}
+                        className="h-[42px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[18px] text-[13px]">Cancel</button>
+                <button type="button" disabled={!form.title.trim()} onClick={createDrill} data-testid="drill-create-submit"
+                        className="h-[42px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] px-[18px] text-[13px] font-medium text-white disabled:opacity-40">
+                  Create drill
+                </button>
+              </div>
+            </Card>
+          </div>
+        )}
       </div>
     </ShotIQShell>
   )

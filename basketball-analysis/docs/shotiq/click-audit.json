@@ -52,7 +52,9 @@
   "links": 18,
   "brokenLinks": [],
   "buttons": 8,
-  "deadButtons": [],
+  "deadButtons": [
+   "All"
+  ],
   "consoleErrors": 2
  },
  {
@@ -65,9 +67,9 @@
  },
  {
   "route": "/results/demo/training",
-  "links": 27,
+  "links": 31,
   "brokenLinks": [],
-  "buttons": 3,
+  "buttons": 10,
   "deadButtons": [],
   "consoleErrors": 2
  },
@@ -75,9 +77,9 @@
   "route": "/results/demo/goals",
   "links": 18,
   "brokenLinks": [],
-  "buttons": 8,
+  "buttons": 11,
   "deadButtons": [],
-  "consoleErrors": 3
+  "consoleErrors": 8
  },
  {
   "route": "/elite-shooters",
@@ -108,9 +110,7 @@
   "links": 18,
   "brokenLinks": [],
   "buttons": 43,
-  "deadButtons": [
-   "Upload Video"
-  ],
-  "consoleErrors": 8
+  "deadButtons": [],
+  "consoleErrors": 11
  }
 ]
