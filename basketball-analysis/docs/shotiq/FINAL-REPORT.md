@@ -13,8 +13,9 @@ the commands listed. Nothing here is estimated.
 |---|---|
 | Sidecars authoritative | **92 / 92** — zero unresolved authority errors (`sidecar-authority-report.md`) |
 | Desktop screens implemented & reachable | **20 / 20** — includes the two routes that did not exist (`/elite-shooters/[shooterId]`, `/training/drills/[drillId]`) |
-| iOS screens authored (native SwiftUI) | **72 / 72** — verified by structural check (72/72 screenIds present in source) |
-| iOS screens compiled & simulator-tested | **0 / 72 — environmentally impossible here** (no macOS/Xcode; see §5) |
+| iOS screens authored (native SwiftUI) | **72 / 72** — structural check (72/72 screenIds present in source) |
+| iOS screens — Expo/React Native port | **72 / 72 authored, registered, and COMPILED** — `expo export --platform ios` exit 0, 2.2MB Hermes bytecode bundle |
+| SwiftUI target compiled via Xcode | 0 / 72 — still needs macOS (see §5); the Expo port removes this as the blocking path |
 
 ## 2. Visual measurement (desktop, per-screen table in `visual-proof-structural.md`)
 
@@ -76,7 +77,14 @@ balanced, 14 files / 3,594 lines.
 
 ## 5. Remaining external blockers (exact commands)
 
-1. **iOS build & tests — needs macOS + Xcode** (not available in this Linux container):
+1. **iOS is no longer blocked for development.** The Expo port at
+   `basketball-analysis/mobile/` compiles on Linux (`npm run export:ios`,
+   verified exit 0) and runs immediately on a physical iPhone via Expo Go
+   (`npx expo start` and scan the QR). What still needs external input:
+   - a signed `.ipa` / TestFlight build: `eas build -p ios --profile preview`
+     (simulator build, no Apple account) or `--profile production` (Apple
+     signing) — both need an `EXPO_TOKEN` to run from this container;
+   - the alternative native SwiftUI target still needs macOS + Xcode:
    ```bash
    brew install xcodegen
    cd basketball-analysis/ios-native && xcodegen generate

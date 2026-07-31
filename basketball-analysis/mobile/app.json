@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "ShotIQ",
+    "slug": "shotiq",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.shotiq.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "ShotIQ analyzes your shooting form from live camera capture.",
+        "NSPhotoLibraryUsageDescription": "ShotIQ imports shot photos and videos for analysis."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "backgroundColor": "#FFFFFF",
+    "plugins": [
+      "expo-secure-store",
+      "expo-font"
+    ]
+  }
+}
