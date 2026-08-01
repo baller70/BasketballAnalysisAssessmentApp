@@ -5,6 +5,7 @@ import SwiftUI
 
 @MainActor
 final class OnboardingModel: ObservableObject {
+    @Published var ageYears = 24
     @Published var heightIn = 74
     @Published var weightLb = 185
     @Published var wingspanIn = 78
@@ -13,6 +14,8 @@ final class OnboardingModel: ObservableObject {
     @Published var hand = "Right"
     @Published var position = "Guard"
     @Published var shotStyle = "Catch & Shoot"
+    @Published var ability = "Advanced"
+    @Published var styleArc = "Balanced"
     @Published var bio = ""
     @Published var name = ""
 }
@@ -24,41 +27,263 @@ struct OnboardingFlowView: View {
     }
 }
 
-/// Shared scaffold: step header + progress + continue button.
-struct OnboardingStep<Content: View>: View {
-    var testID: String; var step: Int; var title: String; var subtitle: String
-    var next: AnyView?
-    var finish: (() -> Void)?
-    @ViewBuilder var content: Content
+// MARK: - Shared onboarding chrome
+
+private func ftIn(_ inches: Int) -> String { "\(inches / 12)'\(inches % 12)\"" }
+
+/// Canonical orange CTA label for NavigationLinks (same look as PrimaryButton).
+@ViewBuilder
+private func primaryLabel(_ title: String, icon: String? = nil, color: Color = ShotIQColor.shotiqOrange) -> some View {
+    HStack(spacing: 10) {
+        if let icon { Image(systemName: icon) }
+        Text(title).font(.system(size: 17, weight: .medium))
+    }
+    .frame(maxWidth: .infinity).frame(height: 54)
+    .background(color, in: RoundedRectangle(cornerRadius: ShotIQRadius.control))
+    .foregroundStyle(.white)
+}
+
+/// Canonical outline label for NavigationLinks (same look as SecondaryButton).
+@ViewBuilder
+private func secondaryLabel(_ title: String, tint: Color = ShotIQColor.ink, border: Color = ShotIQColor.rule) -> some View {
+    Text(title).font(.system(size: 17))
+        .frame(maxWidth: .infinity).frame(height: 54)
+        .overlay(RoundedRectangle(cornerRadius: ShotIQRadius.control).stroke(border))
+        .foregroundStyle(tint)
+}
+
+/// Canonical step progress bars: short orange/gray segments.
+private struct StepBars: View {
+    var total: Int
+    var filled: Int
+    var barWidth: CGFloat = 40
     var body: some View {
-        CanonicalScreen(testID: testID) {
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(spacing: 6) {
-                    ForEach(0..<6) { i in
-                        Capsule().fill(i < step ? ShotIQColor.shotiqOrange : ShotIQColor.rule)
-                            .frame(height: 4)
-                    }
-                }
-                .padding(.top, 20)
-                Text(title).shotiqDisplay(40).padding(.top, 26)
-                Text(subtitle).shotiqBody(15).foregroundStyle(ShotIQColor.graphite).padding(.top, 6)
-                ScrollView { content.padding(.top, 22) }
-                Spacer(minLength: 0)
-                if let next {
-                    NavigationLink { next } label: {
-                        Text("Continue").frame(maxWidth: .infinity).frame(height: 54)
-                            .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 6))
-                            .foregroundStyle(.white).font(.system(size: 17, weight: .medium))
-                    }
-                    .padding(.bottom, 30)
-                } else if let finish {
-                    PrimaryButton(title: "Finish setup", action: finish).padding(.bottom, 30)
-                }
+        HStack(spacing: 8) {
+            ForEach(0..<total, id: \.self) { i in
+                Capsule().fill(i < filled ? ShotIQColor.shotiqOrange : ShotIQColor.rule)
+                    .frame(width: barWidth, height: 5)
             }
-            .padding(.horizontal, 24)
         }
     }
 }
+
+/// Static bottom tab bar shown on the canonical onboarding screens (Home active).
+private struct OnboardingTabBar: View {
+    var initials: String = "SI"
+    var body: some View {
+        HStack {
+            tab("camera.metering.center.weighted", "Home", active: true)
+            tab("point.3.connected.trianglepath.dotted", "Capture")
+            tab("film", "Train")
+            tab("chart.line.uptrend.xyaxis", "Progress")
+            VStack(spacing: 5) {
+                Text(initials)
+                    .font(.system(size: 12, weight: .bold))
+                    .frame(width: 24, height: 24)
+                    .overlay(RoundedRectangle(cornerRadius: 5).stroke(ShotIQColor.graphite, lineWidth: 1.5))
+                Text("Profile").font(.system(size: 10))
+            }
+            .frame(maxWidth: .infinity)
+            .foregroundStyle(ShotIQColor.graphite)
+        }
+        .padding(.top, 10).padding(.bottom, 22)
+        .background(ShotIQColor.paper)
+        .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .top)
+    }
+    private func tab(_ icon: String, _ label: String, active: Bool = false) -> some View {
+        VStack(spacing: 5) {
+            Image(systemName: icon).font(.system(size: 21))
+            Text(label).font(.system(size: 10, weight: active ? .bold : .regular))
+        }
+        .frame(maxWidth: .infinity)
+        .foregroundStyle(active ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
+    }
+}
+
+/// Bold caps question header ("WHAT BEST DESCRIBES YOUR EXPERIENCE?").
+private struct QuestionLabel: View {
+    let text: String
+    var body: some View {
+        Text(text)
+            .font(.system(size: 15, weight: .bold)).kerning(0.5)
+            .foregroundStyle(ShotIQColor.ink)
+    }
+}
+
+/// DIN stat with tiny caps label, hairline separated in an HStack.
+private struct StatRow: View {
+    var stats: [(String, String, Color)]
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(Array(stats.enumerated()), id: \.offset) { i, s in
+                VStack(spacing: 2) {
+                    Text(s.0).font(.custom("DINCondensed-Bold", size: 26)).foregroundStyle(s.2)
+                        .lineLimit(1).minimumScaleFactor(0.7)
+                    Text(s.1).font(.system(size: 10, weight: .medium)).kerning(0.6)
+                        .foregroundStyle(ShotIQColor.graphite)
+                }
+                .frame(maxWidth: .infinity)
+                if i < stats.count - 1 {
+                    Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 34)
+                }
+            }
+        }
+    }
+}
+
+/// Selectable option card: centered icon, condensed caps label, gray caption,
+/// orange border + check badge when selected.
+private struct OptionCard: View {
+    var icon: String
+    var label: String
+    var caption: String? = nil
+    var selected: Bool
+    var action: () -> Void
+    var body: some View {
+        Button(action: action) {
+            ZStack(alignment: .topTrailing) {
+                VStack(spacing: 8) {
+                    Image(systemName: icon).font(.system(size: 26))
+                        .foregroundStyle(ShotIQColor.ink)
+                        .frame(height: 36)
+                    Text(label)
+                        .font(.system(size: 14, weight: .heavy).width(.condensed))
+                        .foregroundStyle(selected ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
+                        .lineLimit(1).minimumScaleFactor(0.7)
+                    if let caption {
+                        Text(caption).font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                            .multilineTextAlignment(.center)
+                    }
+                }
+                .padding(.vertical, 18).padding(.horizontal, 8)
+                .frame(maxWidth: .infinity)
+                Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 20))
+                    .foregroundStyle(selected ? ShotIQColor.shotiqOrange : ShotIQColor.rule)
+                    .padding(8)
+            }
+            .background(selected ? ShotIQColor.warmCanvas : ShotIQColor.paper)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .overlay(RoundedRectangle(cornerRadius: 8)
+                .stroke(selected ? ShotIQColor.shotiqOrange : ShotIQColor.rule, lineWidth: selected ? 1.5 : 1))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// Shooting-style card: media placeholder above a radio row and caption.
+private struct StyleCard: View {
+    var label: String
+    var caption: String
+    var selected: Bool
+    var action: () -> Void
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 8) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 6).fill(ShotIQColor.warmCanvas)
+                    Image(systemName: "figure.basketball")
+                        .font(.system(size: 30, weight: .light))
+                        .foregroundStyle(ShotIQColor.graphite)
+                }
+                .frame(height: 96)
+                HStack(spacing: 6) {
+                    Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 16))
+                        .foregroundStyle(selected ? ShotIQColor.shotiqOrange : ShotIQColor.muted)
+                    Text(label)
+                        .font(.system(size: 14, weight: .heavy).width(.condensed))
+                        .foregroundStyle(ShotIQColor.ink)
+                        .lineLimit(1).minimumScaleFactor(0.7)
+                }
+                Text(caption).font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(8)
+            .frame(maxWidth: .infinity)
+            .background(ShotIQColor.paper)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .overlay(RoundedRectangle(cornerRadius: 8)
+                .stroke(selected ? ShotIQColor.shotiqOrange : ShotIQColor.rule, lineWidth: selected ? 1.5 : 1))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// Segmented unit toggle: blue filled selected segment (YEARS/MONTHS, FT/IN vs CM…).
+private struct UnitToggle: View {
+    var left: String
+    var right: String
+    @Binding var leftSelected: Bool
+    var body: some View {
+        HStack(spacing: 0) {
+            seg(left, on: leftSelected) { leftSelected = true }
+            seg(right, on: !leftSelected) { leftSelected = false }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 6))
+        .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.rule))
+    }
+    private func seg(_ label: String, on: Bool, tap: @escaping () -> Void) -> some View {
+        Button(action: tap) {
+            Text(label).font(.system(size: 11, weight: .bold)).kerning(0.5)
+                .foregroundStyle(on ? .white : ShotIQColor.graphite)
+                .padding(.horizontal, 12).frame(height: 30)
+                .background(on ? ShotIQColor.analysisBlue : ShotIQColor.paper)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// Physical-profile measurement row: icon, condensed label + hint, big DIN value
+/// with discreet steppers, and a unit toggle underneath.
+private struct MeasurementRow: View {
+    var icon: String
+    var label: String
+    var sub: String
+    var value: String
+    var leftUnit: String
+    var rightUnit: String
+    @Binding var leftSelected: Bool
+    var onMinus: () -> Void
+    var onPlus: () -> Void
+    var body: some View {
+        HStack(alignment: .center, spacing: 14) {
+            Image(systemName: icon).font(.system(size: 26)).foregroundStyle(ShotIQColor.ink)
+                .frame(width: 52)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(label)
+                    .font(.system(size: 20, weight: .heavy).width(.condensed))
+                    .foregroundStyle(ShotIQColor.ink)
+                Text(sub).font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
+            }
+            Spacer()
+            VStack(alignment: .trailing, spacing: 6) {
+                HStack(spacing: 8) {
+                    Button(action: onMinus) {
+                        Image(systemName: "minus.circle")
+                            .font(.system(size: 18)).foregroundStyle(ShotIQColor.muted)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Decrease \(label.lowercased())")
+                    Text(value).font(.custom("DINCondensed-Bold", size: 36))
+                        .foregroundStyle(ShotIQColor.ink)
+                        .lineLimit(1).minimumScaleFactor(0.6)
+                    Button(action: onPlus) {
+                        Image(systemName: "plus.circle")
+                            .font(.system(size: 18)).foregroundStyle(ShotIQColor.muted)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Increase \(label.lowercased())")
+                }
+                UnitToggle(left: leftUnit, right: rightUnit, leftSelected: $leftSelected)
+            }
+        }
+        .padding(.vertical, 20)
+        .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
+    }
+}
+
+// MARK: - Chip helpers (also used by other flows)
 
 struct ChipRow: View {
     let options: [String]; @Binding var selection: String
@@ -97,203 +322,1301 @@ extension Array {
 }
 extension Array: @retroactive Identifiable where Element == String { public var id: String { joined() } }
 
-struct StepperRow: View {
-    let label: String; let unit: String; @Binding var value: Int
-    var body: some View {
-        HStack {
-            SectionLabel(text: label)
-            Spacer()
-            Button { value -= 1 } label: { Image(systemName: "minus.circle").font(.system(size: 26)) }
-            Text("\(value) \(unit)").font(.custom("DINCondensed-Bold", size: 30)).frame(width: 100)
-            Button { value += 1 } label: { Image(systemName: "plus.circle").font(.system(size: 26)) }
-        }
-        .foregroundStyle(ShotIQColor.ink)
-        .padding(.vertical, 12)
-        .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
-    }
-}
+// MARK: - 008 · ios.onboarding-intro
 
-struct OnboardingIntroView: View {   // 008
+struct OnboardingIntroView: View {
+    @EnvironmentObject var app: AppState
+    private let benefits: [(String, String, String)] = [
+        ("camera.metering.center.weighted", "PERSONALIZED ANALYSIS",
+         "Your measurements help tailor angles, ranges, and feedback that fit you."),
+        ("figure.run", "BETTER COMPARISONS",
+         "Compare against similar players with a profile like yours."),
+        ("film", "SMARTER COACHING",
+         "Get coaching cues that adapt as you improve.")
+    ]
     var body: some View {
-        OnboardingStep(testID: "screen-ios-onboarding-intro", step: 1,
-                       title: "LET'S BUILD YOUR PROFILE",
-                       subtitle: "A few questions so the AI can calibrate analysis to you.",
-                       next: AnyView(PhysicalProfileView())) {
-            VStack(spacing: 16) {
-                ForEach([("figure.stand", "Physical profile", "Height, weight and wingspan"),
-                         ("chart.bar", "Experience", "Skill level and body type"),
-                         ("scope", "Shooting profile", "Hand, position and shot style")], id: \.1) { icon, t, d in
-                    ShotIQCard {
-                        HStack(spacing: 14) {
-                            Image(systemName: icon).font(.system(size: 24)).frame(width: 40)
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text(t).shotiqBody(16, weight: .semibold)
-                                Text(d).font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+        CanonicalScreen(testID: "screen-ios-onboarding-intro") {
+            VStack(spacing: 0) {
+                HStack {
+                    Wordmark(size: 30)
+                    Spacer()
+                    Button("Skip") { app.onboardingComplete = true }
+                        .font(.system(size: 16)).foregroundStyle(ShotIQColor.graphite)
+                }
+                .padding(.horizontal, 20).frame(height: 52)
+                .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        StepBars(total: 4, filled: 1, barWidth: 34).padding(.top, 16)
+                        Text("STEP 1 OF 4")
+                            .font(.system(size: 13, weight: .semibold)).kerning(1)
+                            .foregroundStyle(ShotIQColor.graphite).padding(.top, 10)
+
+                        HStack(alignment: .top, spacing: 14) {
+                            VStack(alignment: .leading, spacing: 0) {
+                                Text("BUILD YOUR").shotiqDisplay(46).padding(.top, 14)
+                                Text("PLAYER PROFILE")
+                                    .font(.system(size: 36.8, weight: .heavy).width(.condensed))
+                                    .foregroundStyle(ShotIQColor.shotiqOrange)
+                                    .lineLimit(1).minimumScaleFactor(0.6)
+                                Text("Add quick measurements so ShotIQ can personalize your comparisons and coaching to you.")
+                                    .font(.system(size: 16)).foregroundStyle(ShotIQColor.graphite)
+                                    .padding(.top, 12)
+                            }
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 12).fill(ShotIQColor.warmCanvas)
+                                VStack(spacing: 14) {
+                                    Image(systemName: "figure.basketball")
+                                        .font(.system(size: 52, weight: .light))
+                                        .foregroundStyle(ShotIQColor.graphite)
+                                    PhaseGlyph(active: true, size: 32)
+                                }
+                            }
+                            .frame(width: 138, height: 290)
+                        }
+                        .padding(.top, 4)
+
+                        Rectangle().fill(ShotIQColor.rule).frame(height: 1).padding(.top, 18)
+
+                        VStack(spacing: 0) {
+                            ForEach(benefits, id: \.1) { icon, t, d in
+                                HStack(alignment: .top, spacing: 16) {
+                                    Image(systemName: icon)
+                                        .font(.system(size: 26))
+                                        .foregroundStyle(ShotIQColor.ink)
+                                        .frame(width: 46)
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(t).font(.system(size: 15, weight: .bold)).kerning(0.5)
+                                            .foregroundStyle(ShotIQColor.ink)
+                                        Text(d).font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
+                                    }
+                                    Spacer()
+                                }
+                                .padding(.vertical, 16)
+                                .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
+                            }
+                        }
+
+                        HStack(alignment: .top, spacing: 14) {
+                            Image(systemName: "info.circle")
+                                .font(.system(size: 26))
+                                .foregroundStyle(ShotIQColor.shotiqOrange)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("ABOUT YOUR DATA")
+                                    .font(.system(size: 15, weight: .bold)).kerning(0.5)
+                                    .foregroundStyle(ShotIQColor.ink)
+                                Text("Measurements personalize your experience only. ShotIQ does not provide medical advice or diagnoses.")
+                                    .font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
                             }
                             Spacer()
                         }
                         .padding(16)
-                    }
-                }
-            }
-        }
-    }
-}
+                        .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
+                        .padding(.top, 18)
 
-struct PhysicalProfileView: View {   // 009
-    @EnvironmentObject var m: OnboardingModel
-    var body: some View {
-        OnboardingStep(testID: "screen-ios-physical-profile", step: 2,
-                       title: "PHYSICAL PROFILE", subtitle: "Used to normalize biomechanics measurements.",
-                       next: AnyView(ExperienceBodyTypeView())) {
-            VStack(spacing: 6) {
-                StepperRow(label: "HEIGHT", unit: "in", value: $m.heightIn)
-                StepperRow(label: "WEIGHT", unit: "lb", value: $m.weightLb)
-                StepperRow(label: "WINGSPAN", unit: "in", value: $m.wingspanIn)
-            }
-        }
-    }
-}
-
-struct ExperienceBodyTypeView: View { // 010
-    @EnvironmentObject var m: OnboardingModel
-    var body: some View {
-        OnboardingStep(testID: "screen-ios-experience-body-type", step: 3,
-                       title: "EXPERIENCE & BODY TYPE", subtitle: "Calibrates elite-range comparisons.",
-                       next: AnyView(ShootingProfileView())) {
-            VStack(alignment: .leading, spacing: 18) {
-                SectionLabel(text: "EXPERIENCE LEVEL")
-                ChipRow(options: ["Beginner", "Intermediate", "Advanced", "Professional"], selection: $m.experience)
-                SectionLabel(text: "BODY TYPE").padding(.top, 8)
-                ChipRow(options: ["Slim", "Athletic", "Solid", "Big"], selection: $m.bodyType)
-            }
-        }
-    }
-}
-
-struct ShootingProfileView: View {    // 011
-    @EnvironmentObject var m: OnboardingModel
-    var body: some View {
-        OnboardingStep(testID: "screen-ios-shooting-profile", step: 4,
-                       title: "SHOOTING PROFILE", subtitle: "Hand, position and preferred shot.",
-                       next: AnyView(PlayerBioView())) {
-            VStack(alignment: .leading, spacing: 18) {
-                SectionLabel(text: "SHOOTING HAND")
-                ChipRow(options: ["Right", "Left"], selection: $m.hand)
-                SectionLabel(text: "POSITION").padding(.top, 8)
-                ChipRow(options: ["Guard", "Wing", "Forward", "Center"], selection: $m.position)
-                SectionLabel(text: "SHOT STYLE").padding(.top, 8)
-                ChipRow(options: ["Catch & Shoot", "Off the Dribble", "Pull-Up", "Spot-Up"], selection: $m.shotStyle)
-            }
-        }
-    }
-}
-
-struct PlayerBioView: View {          // 012
-    @EnvironmentObject var m: OnboardingModel
-    var body: some View {
-        OnboardingStep(testID: "screen-ios-player-bio", step: 5,
-                       title: "PLAYER BIO", subtitle: "Tell us who you are (optional).",
-                       next: AnyView(OnboardingReviewView())) {
-            VStack(alignment: .leading, spacing: 14) {
-                SectionLabel(text: "DISPLAY NAME")
-                TextField("Your name", text: $m.name)
-                    .padding(.horizontal, 14).frame(height: 50)
-                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.rule))
-                SectionLabel(text: "BIO").padding(.top, 8)
-                TextEditor(text: $m.bio)
-                    .frame(height: 130)
-                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.rule))
-            }
-        }
-    }
-}
-
-struct OnboardingReviewView: View {   // 013
-    @EnvironmentObject var m: OnboardingModel
-    var body: some View {
-        OnboardingStep(testID: "screen-ios-onboarding-review", step: 6,
-                       title: "REVIEW YOUR PROFILE", subtitle: "Confirm before we calibrate the AI.",
-                       next: AnyView(CameraPermissionPrimerView())) {
-            ShotIQCard {
-                VStack(spacing: 0) {
-                    ForEach([("Height", "\(m.heightIn) in"), ("Weight", "\(m.weightLb) lb"),
-                             ("Wingspan", "\(m.wingspanIn) in"), ("Experience", m.experience),
-                             ("Body type", m.bodyType), ("Hand", m.hand),
-                             ("Position", m.position), ("Shot style", m.shotStyle)], id: \.0) { k, v in
-                        HStack {
-                            Text(k).font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
-                            Spacer()
-                            Text(v).shotiqBody(15, weight: .semibold)
+                        HStack(spacing: 0) {
+                            HeaderStat(icon: "film", value: "6", label: "DAY STREAK")
+                                .frame(maxWidth: .infinity)
+                            Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 46)
+                            HeaderStat(icon: "circle.hexagongrid", value: "2,840", label: "POINTS")
+                                .frame(maxWidth: .infinity)
+                            Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 46)
+                            VStack(spacing: 3) {
+                                Image(systemName: "scope").font(.system(size: 17))
+                                    .foregroundStyle(ShotIQColor.shotiqOrange)
+                                Text("82").font(.custom("DINCondensed-Bold", size: 24))
+                                    .foregroundStyle(ShotIQColor.shotiqOrange)
+                                Text("FORM SCORE").font(.system(size: 9, weight: .medium)).kerning(0.6)
+                                    .foregroundStyle(ShotIQColor.graphite)
+                            }
+                            .frame(maxWidth: .infinity)
+                            Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 46)
+                            VStack(spacing: 4) {
+                                Text("PRIMARY TARGET")
+                                    .font(.system(size: 9, weight: .medium)).kerning(0.6)
+                                    .foregroundStyle(ShotIQColor.graphite)
+                                Text("Keep elbow stacked through release")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundStyle(ShotIQColor.ink)
+                                    .multilineTextAlignment(.center)
+                            }
+                            .frame(maxWidth: .infinity)
                         }
-                        .padding(.horizontal, 16).padding(.vertical, 11)
-                        .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
+                        .padding(.vertical, 14)
+                        .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
+                        .padding(.top, 14)
+
+                        ShotIQCard {
+                            StatRow(stats: [("24", "SHOTS", ShotIQColor.ink),
+                                            ("15", "MAKES", ShotIQColor.ink),
+                                            ("62.5%", "ACCURACY", ShotIQColor.ink),
+                                            ("RIGHT", "HANDED", ShotIQColor.ink)])
+                                .padding(.vertical, 14)
+                        }
+                        .padding(.top, 12)
+
+                        NavigationLink { PhysicalProfileView() } label: {
+                            primaryLabel("Build my player profile", icon: "camera.metering.center.weighted")
+                        }
+                        .padding(.top, 18)
+
+                        SecondaryButton(title: "Sign out") { app.signOut() }
+                            .padding(.top, 12).padding(.bottom, 24)
                     }
+                    .padding(.horizontal, 20)
                 }
+
+                OnboardingTabBar(initials: shotiqInitials(app.user))
             }
         }
     }
 }
 
-/// Shared permission primer scaffold — canonical screens explain before the
-/// system prompt is requested.
-struct PermissionPrimer: View {
-    var testID: String; var icon: String; var title: String; var body_: String
-    var next: AnyView?
-    var finish: (() -> Void)?
-    var body: some View {
-        CanonicalScreen(testID: testID) {
-            VStack(spacing: 0) {
-                Image(systemName: icon).font(.system(size: 56, weight: .light)).padding(.top, 130)
-                Text(title).shotiqDisplay(38).multilineTextAlignment(.center).padding(.top, 26)
-                Text(body_).shotiqBody(15).foregroundStyle(ShotIQColor.graphite)
-                    .multilineTextAlignment(.center).padding(.top, 12).padding(.horizontal, 30)
-                Spacer()
-                VStack(spacing: 12) {
-                    if let next {
-                        NavigationLink { next } label: {
-                            Text("Allow access").frame(maxWidth: .infinity).frame(height: 54)
-                                .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 6))
-                                .foregroundStyle(.white).font(.system(size: 17, weight: .medium))
-                        }
-                        NavigationLink { next } label: {
-                            Text("Not now").font(.system(size: 15)).foregroundStyle(ShotIQColor.graphite)
-                        }
-                    } else if let finish {
-                        PrimaryButton(title: "Allow notifications", action: finish)
-                        Button("Not now", action: finish).font(.system(size: 15)).foregroundStyle(ShotIQColor.graphite)
-                    }
-                }
-                .padding(.horizontal, 24).padding(.bottom, 36)
-            }
-        }
-    }
-}
+// MARK: - 009 · ios.physical-profile
 
-struct CameraPermissionPrimerView: View { // 014
-    var body: some View {
-        PermissionPrimer(testID: "screen-ios-camera-permission-primer",
-                         icon: "camera", title: "CAMERA ACCESS",
-                         body_: "ShotIQ uses the camera to capture live shooting sessions and give real-time form feedback.",
-                         next: AnyView(PhotoLibraryPermissionView()))
-    }
-}
-
-struct PhotoLibraryPermissionView: View { // 015
-    var body: some View {
-        PermissionPrimer(testID: "screen-ios-photo-library-permission",
-                         icon: "photo.on.rectangle", title: "PHOTO LIBRARY",
-                         body_: "Import existing shot photos and videos from your library for AI analysis.",
-                         next: AnyView(NotificationPermissionPrimerView()))
-    }
-}
-
-struct NotificationPermissionPrimerView: View { // 016
+struct PhysicalProfileView: View {
+    @EnvironmentObject var m: OnboardingModel
     @EnvironmentObject var app: AppState
+    @Environment(\.dismiss) private var dismiss
+    @State private var ageInYears = true
+    @State private var heightInFt = true
+    @State private var weightInLb = true
+    @State private var wingspanInFt = true
+
     var body: some View {
-        PermissionPrimer(testID: "screen-ios-notification-permission-primer",
-                         icon: "bell.badge", title: "STAY ON TRACK",
-                         body_: "Workout reminders, analysis results and streak alerts — never spam.",
-                         finish: { app.onboardingComplete = true })
+        CanonicalScreen(testID: "screen-ios-physical-profile") {
+            VStack(spacing: 0) {
+                HStack {
+                    Wordmark(size: 30)
+                    Spacer()
+                }
+                .padding(.horizontal, 20).frame(height: 52)
+                .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
+
+                ScrollView {
+                    VStack(spacing: 0) {
+                        Text("STEP 1 OF 4")
+                            .font(.system(size: 14, weight: .bold)).kerning(2)
+                            .foregroundStyle(ShotIQColor.shotiqOrange)
+                            .padding(.top, 22)
+                        StepBars(total: 4, filled: 1, barWidth: 66).padding(.top, 12)
+                        Text("PHYSICAL PROFILE").shotiqDisplay(56)
+                            .multilineTextAlignment(.center).padding(.top, 22)
+                        Text("Accurate measurements help AI personalize your analysis and training.")
+                            .font(.system(size: 17)).foregroundStyle(ShotIQColor.graphite)
+                            .multilineTextAlignment(.center)
+                            .padding(.top, 10).padding(.horizontal, 16)
+
+                        VStack(spacing: 0) {
+                            MeasurementRow(icon: "calendar", label: "AGE", sub: "Your current age",
+                                           value: ageInYears ? "\(m.ageYears)" : "\(m.ageYears * 12)",
+                                           leftUnit: "YEARS", rightUnit: "MONTHS",
+                                           leftSelected: $ageInYears,
+                                           onMinus: { m.ageYears = max(5, m.ageYears - 1) },
+                                           onPlus: { m.ageYears = min(99, m.ageYears + 1) })
+                            MeasurementRow(icon: "ruler", label: "HEIGHT", sub: "Without shoes",
+                                           value: heightInFt ? ftIn(m.heightIn) : "\(Int(Double(m.heightIn) * 2.54))",
+                                           leftUnit: "FT / IN", rightUnit: "CM",
+                                           leftSelected: $heightInFt,
+                                           onMinus: { m.heightIn = max(48, m.heightIn - 1) },
+                                           onPlus: { m.heightIn = min(96, m.heightIn + 1) })
+                            MeasurementRow(icon: "scalemass", label: "WEIGHT", sub: "Without shoes",
+                                           value: weightInLb ? "\(m.weightLb)" : "\(Int(Double(m.weightLb) * 0.4536))",
+                                           leftUnit: "LBS", rightUnit: "KG",
+                                           leftSelected: $weightInLb,
+                                           onMinus: { m.weightLb = max(60, m.weightLb - 1) },
+                                           onPlus: { m.weightLb = min(400, m.weightLb + 1) })
+                            MeasurementRow(icon: "arrow.left.and.right", label: "WINGSPAN", sub: "Fingertip to fingertip",
+                                           value: wingspanInFt ? ftIn(m.wingspanIn) : "\(Int(Double(m.wingspanIn) * 2.54))",
+                                           leftUnit: "FT / IN", rightUnit: "CM",
+                                           leftSelected: $wingspanInFt,
+                                           onMinus: { m.wingspanIn = max(48, m.wingspanIn - 1) },
+                                           onPlus: { m.wingspanIn = min(102, m.wingspanIn + 1) })
+                        }
+                        .padding(.top, 16)
+
+                        NavigationLink { ExperienceBodyTypeView() } label: {
+                            Text("CONTINUE")
+                                .font(.system(size: 19, weight: .heavy).width(.condensed)).kerning(2)
+                                .frame(maxWidth: .infinity).frame(height: 54)
+                                .background(ShotIQColor.confirmGreen, in: RoundedRectangle(cornerRadius: ShotIQRadius.control))
+                                .foregroundStyle(.white)
+                        }
+                        .padding(.top, 26)
+
+                        HStack {
+                            Button { dismiss() } label: {
+                                HStack(spacing: 10) {
+                                    Image(systemName: "chevron.left")
+                                        .font(.system(size: 16, weight: .semibold))
+                                    Text("BACK")
+                                        .font(.system(size: 14, weight: .bold)).kerning(1.5)
+                                }
+                                .foregroundStyle(ShotIQColor.ink)
+                            }
+                            Spacer()
+                        }
+                        .padding(.top, 18).padding(.bottom, 24)
+                    }
+                    .padding(.horizontal, 20)
+                }
+
+                OnboardingTabBar(initials: shotiqInitials(app.user))
+            }
+        }
+    }
+}
+
+// MARK: - 010 · ios.experience-body-type
+
+struct ExperienceBodyTypeView: View {
+    @EnvironmentObject var m: OnboardingModel
+    @EnvironmentObject var app: AppState
+    @Environment(\.dismiss) private var dismiss
+
+    private let experienceOptions: [(String, String, String, String)] = [
+        ("Beginner", "BEGINNER", "Just getting started", "chart.line.uptrend.xyaxis"),
+        ("Intermediate", "INTERMEDIATE", "Consistent with basics", "point.3.connected.trianglepath.dotted"),
+        ("Advanced", "ADVANCED", "Competes regularly", "point.3.filled.connected.trianglepath.dotted"),
+        ("Elite", "ELITE", "High-level competition", "triangle"),
+        ("Professional", "PROFESSIONAL", "Pro or aspiring pro", "arrow.up.right")
+    ]
+    private let bodyTypeOptions: [(String, String, String, String)] = [
+        ("Slim", "SLIM / LEAN", "Light frame, longer limbs", "figure.stand"),
+        ("Athletic", "ATHLETIC", "Balanced build, muscular", "figure.walk"),
+        ("Solid", "STOCKY / STRONG", "Solid build, powerful frame", "figure.strengthtraining.traditional"),
+        ("Big", "LARGER FRAME", "Broad build, higher mass", "figure.arms.open")
+    ]
+
+    var body: some View {
+        CanonicalScreen(testID: "screen-ios-experience-body-type") {
+            VStack(spacing: 0) {
+                TopBar()
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        PlayerHeader(name: app.user?.displayName ?? "Player",
+                                     subtitle: "\(m.hand)-handed • \(m.experience)")
+                            .padding(.horizontal, -20)
+
+                        ShotIQCard {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("PRIMARY TARGET")
+                                    .font(.system(size: 13, weight: .bold)).kerning(0.8)
+                                    .foregroundStyle(ShotIQColor.shotiqOrange)
+                                Text("Keep elbow stacked through release")
+                                    .font(.system(size: 17, weight: .medium))
+                                    .foregroundStyle(ShotIQColor.ink)
+                            }
+                            .padding(16)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .padding(.top, 16)
+
+                        Rectangle().fill(ShotIQColor.rule).frame(height: 1).padding(.top, 18)
+
+                        HStack {
+                            Text("STEP 2 OF 4")
+                                .font(.system(size: 14, weight: .bold)).kerning(1)
+                                .foregroundStyle(ShotIQColor.shotiqOrange)
+                            Spacer()
+                            StepBars(total: 4, filled: 2, barWidth: 40)
+                        }
+                        .padding(.top, 18)
+
+                        Text("EXPERIENCE & BODY TYPE").shotiqDisplay(52).padding(.top, 12)
+                        Text("This helps us tailor analysis and training recommendations to your game.")
+                            .font(.system(size: 16)).foregroundStyle(ShotIQColor.graphite).padding(.top, 8)
+
+                        QuestionLabel(text: "WHAT BEST DESCRIBES YOUR EXPERIENCE?").padding(.top, 24)
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 10) {
+                                ForEach(experienceOptions, id: \.0) { value, label, caption, icon in
+                                    OptionCard(icon: icon, label: label, caption: caption,
+                                               selected: m.experience == value) {
+                                        m.experience = value
+                                    }
+                                    .frame(width: 112)
+                                }
+                            }
+                            .padding(.vertical, 2)
+                        }
+                        .padding(.top, 12)
+
+                        QuestionLabel(text: "WHAT BEST DESCRIBES YOUR BODY TYPE?").padding(.top, 24)
+                        HStack(alignment: .top, spacing: 10) {
+                            ForEach(bodyTypeOptions, id: \.0) { value, label, caption, icon in
+                                OptionCard(icon: icon, label: label, caption: caption,
+                                           selected: m.bodyType == value) {
+                                    m.bodyType = value
+                                }
+                            }
+                        }
+                        .padding(.top, 12)
+
+                        HStack(spacing: 14) {
+                            Image(systemName: "lightbulb")
+                                .font(.system(size: 24))
+                                .foregroundStyle(ShotIQColor.ink)
+                            Text("You can update these anytime in your profile settings.")
+                                .font(.system(size: 15)).foregroundStyle(ShotIQColor.graphite)
+                            Spacer()
+                        }
+                        .padding(16)
+                        .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
+                        .padding(.top, 20)
+
+                        NavigationLink { ShootingProfileView() } label: {
+                            primaryLabel("Continue")
+                        }
+                        .padding(.top, 20)
+
+                        SecondaryButton(title: "Back") { dismiss() }
+                            .padding(.top, 12).padding(.bottom, 24)
+                    }
+                    .padding(.horizontal, 20)
+                }
+                OnboardingTabBar(initials: shotiqInitials(app.user))
+            }
+        }
+    }
+}
+
+// MARK: - 011 · ios.shooting-profile
+
+struct ShootingProfileView: View {
+    @EnvironmentObject var m: OnboardingModel
+    @EnvironmentObject var app: AppState
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        CanonicalScreen(testID: "screen-ios-shooting-profile") {
+            VStack(spacing: 0) {
+                TopBar()
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        HStack(alignment: .top) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("SHOOTING PROFILE").shotiqDisplay(48)
+                                Text("Tell us about your game.")
+                                    .font(.system(size: 15)).foregroundStyle(ShotIQColor.graphite)
+                            }
+                            Spacer()
+                            VStack(alignment: .trailing, spacing: 6) {
+                                Image(systemName: "film")
+                                    .font(.system(size: 28)).foregroundStyle(ShotIQColor.ink)
+                                Text("STEP 3 OF 4")
+                                    .font(.system(size: 12, weight: .semibold)).kerning(2)
+                                    .foregroundStyle(ShotIQColor.graphite)
+                            }
+                        }
+                        .padding(.top, 14)
+
+                        ShotIQCard {
+                            HStack(spacing: 12) {
+                                ZStack {
+                                    Circle().fill(ShotIQColor.warmCanvas)
+                                    Text(shotiqInitials(app.user))
+                                        .font(.system(size: 17, weight: .heavy).width(.condensed))
+                                        .foregroundStyle(ShotIQColor.graphite)
+                                }
+                                .frame(width: 54, height: 54)
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text((app.user?.displayName ?? "Player").uppercased())
+                                        .font(.system(size: 19, weight: .heavy).width(.condensed))
+                                        .foregroundStyle(ShotIQColor.ink)
+                                        .lineLimit(1).minimumScaleFactor(0.7)
+                                    Text("\(m.hand)-handed • \(m.experience)")
+                                        .font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                                    HStack(spacing: 4) {
+                                        Text("Form Score").font(.system(size: 12))
+                                            .foregroundStyle(ShotIQColor.graphite)
+                                        Text("82").font(.system(size: 14, weight: .semibold))
+                                            .foregroundStyle(ShotIQColor.analysisBlue)
+                                    }
+                                }
+                                Spacer()
+                                StatRow(stats: [("24", "SHOTS", ShotIQColor.ink),
+                                                ("15", "MAKES", ShotIQColor.ink),
+                                                ("62.5%", "ACC", ShotIQColor.ink)])
+                                    .frame(width: 150)
+                            }
+                            .padding(14)
+                        }
+                        .padding(.top, 16)
+
+                        HStack(alignment: .top, spacing: 14) {
+                            Image(systemName: "camera.metering.center.weighted")
+                                .font(.system(size: 28)).foregroundStyle(ShotIQColor.ink)
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text("PRIMARY TARGET")
+                                    .font(.system(size: 14, weight: .bold)).kerning(0.5)
+                                    .foregroundStyle(ShotIQColor.ink)
+                                Text("Keep elbow stacked through release.")
+                                    .font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
+                            }
+                            Spacer()
+                        }
+                        .padding(.top, 18)
+
+                        sectionHeader("DOMINANT HAND", "The hand you use to shoot.")
+                        HStack(spacing: 10) {
+                            OptionCard(icon: "point.3.filled.connected.trianglepath.dotted",
+                                       label: "RIGHT-HANDED", selected: m.hand == "Right") { m.hand = "Right" }
+                            OptionCard(icon: "point.3.connected.trianglepath.dotted",
+                                       label: "LEFT-HANDED", selected: m.hand == "Left") { m.hand = "Left" }
+                        }
+                        .padding(.top, 12)
+
+                        sectionHeader("ATHLETIC ABILITY", "How would you describe your athletic ability?")
+                        HStack(alignment: .top, spacing: 10) {
+                            OptionCard(icon: "figure.walk", label: "DEVELOPING",
+                                       selected: m.ability == "Developing") { m.ability = "Developing" }
+                            OptionCard(icon: "figure.run", label: "ADVANCED",
+                                       selected: m.ability == "Advanced") { m.ability = "Advanced" }
+                            OptionCard(icon: "figure.basketball", label: "ELITE",
+                                       selected: m.ability == "Elite") { m.ability = "Elite" }
+                        }
+                        .padding(.top, 12)
+
+                        sectionHeader("SHOOTING STYLE", "Pick the style that best matches your shot.")
+                        HStack(alignment: .top, spacing: 10) {
+                            StyleCard(label: "COMPACT", caption: "Quick, efficient release",
+                                      selected: m.styleArc == "Compact") { m.styleArc = "Compact" }
+                            StyleCard(label: "BALANCED", caption: "Versatile all-around approach",
+                                      selected: m.styleArc == "Balanced") { m.styleArc = "Balanced" }
+                            StyleCard(label: "HIGH ARC", caption: "Higher release, maximum arc",
+                                      selected: m.styleArc == "High Arc") { m.styleArc = "High Arc" }
+                        }
+                        .padding(.top, 12)
+
+                        HStack(alignment: .top, spacing: 14) {
+                            Image(systemName: "camera.metering.center.weighted")
+                                .font(.system(size: 26)).foregroundStyle(ShotIQColor.ink)
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text("Why this matters")
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .foregroundStyle(ShotIQColor.ink)
+                                Text("Your profile helps ShotIQ provide more accurate feedback and training recommendations.")
+                                    .font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                            }
+                            Spacer()
+                        }
+                        .padding(.top, 20)
+
+                        HStack(spacing: 14) {
+                            Button { dismiss() } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "chevron.left")
+                                        .font(.system(size: 15, weight: .semibold))
+                                    Text("Back").font(.system(size: 17))
+                                }
+                                .foregroundStyle(ShotIQColor.ink)
+                                .padding(.horizontal, 18).frame(height: 50)
+                            }
+                            NavigationLink { PlayerBioView() } label: {
+                                Text("Continue")
+                                    .font(.system(size: 17, weight: .medium))
+                                    .frame(maxWidth: .infinity).frame(height: 50)
+                                    .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: ShotIQRadius.control))
+                                    .foregroundStyle(.white)
+                            }
+                        }
+                        .padding(.top, 20).padding(.bottom, 24)
+                    }
+                    .padding(.horizontal, 20)
+                }
+                OnboardingTabBar(initials: shotiqInitials(app.user))
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func sectionHeader(_ title: String, _ sub: String) -> some View {
+        Text(title)
+            .font(.system(size: 22, weight: .heavy).width(.condensed))
+            .foregroundStyle(ShotIQColor.ink)
+            .padding(.top, 24)
+        Text(sub)
+            .font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
+            .padding(.top, 3)
+    }
+}
+
+// MARK: - 012 · ios.player-bio
+
+struct PlayerBioView: View {
+    @EnvironmentObject var m: OnboardingModel
+    @EnvironmentObject var app: AppState
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        CanonicalScreen(testID: "screen-ios-player-bio") {
+            VStack(spacing: 0) {
+                TopBar()
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        HStack {
+                            Text("ONBOARDING 7 OF 8")
+                                .font(.system(size: 13, weight: .bold)).kerning(1)
+                                .foregroundStyle(ShotIQColor.graphite)
+                            Spacer()
+                            StepBars(total: 5, filled: 4, barWidth: 34)
+                        }
+                        .padding(.top, 16)
+
+                        HStack(alignment: .top, spacing: 16) {
+                            VStack(alignment: .leading, spacing: 0) {
+                                Text("PLAYER BIO").shotiqDisplay(52).padding(.top, 12)
+                                Text("Add a short bio to personalize your profile.")
+                                    .font(.system(size: 15)).foregroundStyle(ShotIQColor.ink)
+                                    .padding(.top, 10)
+                                Text("You can always update it later in settings.")
+                                    .font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
+                                    .padding(.top, 6)
+                            }
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 10).fill(ShotIQColor.warmCanvas)
+                                Image(systemName: "person.fill")
+                                    .font(.system(size: 50))
+                                    .foregroundStyle(ShotIQColor.muted)
+                            }
+                            .frame(width: 148, height: 150)
+                        }
+
+                        HStack(spacing: 0) {
+                            HeaderStat(icon: "film", value: "6", label: "DAY STREAK")
+                                .frame(maxWidth: .infinity)
+                            Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 52)
+                            HeaderStat(icon: "circle.hexagongrid", value: "2,840", label: "POINTS")
+                                .frame(maxWidth: .infinity)
+                            Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 52)
+                            HeaderStat(icon: "scope", value: "82", label: "FORM SCORE")
+                                .frame(maxWidth: .infinity)
+                            Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 52)
+                            HeaderStat(icon: "chart.line.uptrend.xyaxis", value: "62.5%", label: "MAKE %")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .padding(.top, 20)
+
+                        Rectangle().fill(ShotIQColor.rule).frame(height: 1).padding(.top, 18)
+
+                        HStack(alignment: .firstTextBaseline) {
+                            Text("YOUR BIO")
+                                .font(.system(size: 24, weight: .heavy).width(.condensed))
+                                .foregroundStyle(ShotIQColor.ink)
+                            Spacer()
+                            Text("\(m.bio.count) / 160")
+                                .font(.custom("DINCondensed-Bold", size: 20))
+                                .foregroundStyle(ShotIQColor.graphite)
+                        }
+                        .padding(.top, 18)
+
+                        ZStack(alignment: .topLeading) {
+                            TextEditor(text: $m.bio)
+                                .font(.system(size: 16))
+                                .foregroundStyle(ShotIQColor.ink)
+                                .scrollContentBackground(.hidden)
+                                .padding(10)
+                                .frame(height: 190)
+                            if m.bio.isEmpty {
+                                Text("Tell us about your basketball journey, goals, and what motivates you.")
+                                    .font(.system(size: 16))
+                                    .foregroundStyle(ShotIQColor.muted)
+                                    .padding(.horizontal, 15).padding(.top, 18)
+                                    .allowsHitTesting(false)
+                            }
+                        }
+                        .background(ShotIQColor.paper, in: RoundedRectangle(cornerRadius: 8))
+                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+                        .padding(.top, 10)
+                        .onChange(of: m.bio) { _, v in
+                            if v.count > 160 { m.bio = String(v.prefix(160)) }
+                        }
+
+                        ShotIQCard {
+                            HStack(spacing: 14) {
+                                Image(systemName: "point.3.connected.trianglepath.dotted")
+                                    .font(.system(size: 28))
+                                    .foregroundStyle(ShotIQColor.shotiqOrange)
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("ENHANCE WITH AI")
+                                        .font(.system(size: 14, weight: .bold)).kerning(0.5)
+                                        .foregroundStyle(ShotIQColor.ink)
+                                    Text("Let ShotIQ AI craft a stronger bio based on your profile and training data.")
+                                        .font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                                }
+                                Spacer()
+                                Button {} label: {
+                                    HStack(spacing: 6) {
+                                        Image(systemName: "sparkles").font(.system(size: 13))
+                                        Text("Enhance bio").font(.system(size: 14, weight: .medium))
+                                    }
+                                    .foregroundStyle(ShotIQColor.shotiqOrange)
+                                    .padding(.horizontal, 12).frame(height: 40)
+                                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.shotiqOrange))
+                                }
+                            }
+                            .padding(16)
+                        }
+                        .padding(.top, 16)
+
+                        ShotIQCard {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("AI-ENHANCED PREVIEW")
+                                    .font(.system(size: 12, weight: .bold)).kerning(0.8)
+                                    .foregroundStyle(ShotIQColor.graphite)
+                                HStack(spacing: 14) {
+                                    Image(systemName: "circle.dashed")
+                                        .font(.system(size: 26))
+                                        .foregroundStyle(ShotIQColor.graphite)
+                                    Text("Your enhanced bio will appear here.\nReview and customize before saving.")
+                                        .font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
+                                    Spacer()
+                                }
+                            }
+                            .padding(16)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .padding(.top, 12)
+
+                        NavigationLink { OnboardingReviewView() } label: {
+                            primaryLabel("Review profile", color: ShotIQColor.confirmGreen)
+                        }
+                        .padding(.top, 20)
+
+                        SecondaryButton(title: "Back") { dismiss() }
+                            .padding(.top, 12).padding(.bottom, 24)
+                    }
+                    .padding(.horizontal, 20)
+                }
+                OnboardingTabBar(initials: shotiqInitials(app.user))
+            }
+        }
+    }
+}
+
+// MARK: - 013 · ios.onboarding-review
+
+struct OnboardingReviewView: View {
+    @EnvironmentObject var m: OnboardingModel
+    @EnvironmentObject var app: AppState
+
+    private var summaryRows: [(String, String)] {
+        [("Shooting Hand", m.hand),
+         ("Experience Level", m.experience),
+         ("Primary Position", m.position),
+         ("Height", ftIn(m.heightIn)),
+         ("Wingspan", ftIn(m.wingspanIn)),
+         ("Dominant Shot Type", m.shotStyle),
+         ("Practice Frequency", "3–5 times per week"),
+         ("Training Goal", "Improve consistency")]
+    }
+
+    var body: some View {
+        CanonicalScreen(testID: "screen-ios-onboarding-review") {
+            VStack(spacing: 0) {
+                TopBar()
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text("ONBOARDING • STEP 5 OF 5")
+                            .font(.system(size: 13, weight: .semibold)).kerning(1)
+                            .foregroundStyle(ShotIQColor.graphite)
+                            .padding(.top, 16)
+                        Text("REVIEW YOUR PROFILE").shotiqDisplay(50).padding(.top, 8)
+                        Text("We'll use your profile and shooting data to personalize your coaching experience.")
+                            .font(.system(size: 16)).foregroundStyle(ShotIQColor.graphite).padding(.top, 6)
+
+                        Rectangle().fill(ShotIQColor.rule).frame(height: 1).padding(.top, 16)
+
+                        HStack(alignment: .top, spacing: 14) {
+                            ZStack {
+                                Circle().fill(ShotIQColor.warmCanvas)
+                                Text(shotiqInitials(app.user))
+                                    .font(.system(size: 24, weight: .heavy).width(.condensed))
+                                    .foregroundStyle(ShotIQColor.graphite)
+                            }
+                            .frame(width: 74, height: 74)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text((app.user?.displayName ?? "Player").uppercased())
+                                    .font(.system(size: 26, weight: .heavy).width(.condensed))
+                                    .foregroundStyle(ShotIQColor.ink)
+                                    .lineLimit(1).minimumScaleFactor(0.6)
+                                Text("\(m.hand)-handed • \(m.experience)")
+                                    .font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
+                                HStack(spacing: 6) {
+                                    Image(systemName: "chart.bar.fill")
+                                        .font(.system(size: 12))
+                                        .foregroundStyle(ShotIQColor.analysisBlue)
+                                    Text("INTERMEDIATE TIER")
+                                        .font(.system(size: 13, weight: .bold)).kerning(0.5)
+                                        .foregroundStyle(ShotIQColor.analysisBlue)
+                                }
+                                Text("Built from your profile and data")
+                                    .font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                            }
+                            Spacer()
+                            VStack(alignment: .trailing, spacing: 8) {
+                                editButton("figure.stand", "Edit measurements")
+                                editButton("point.3.connected.trianglepath.dotted", "Edit shooting profile")
+                            }
+                        }
+                        .padding(.top, 18)
+
+                        ShotIQCard {
+                            HStack(spacing: 0) {
+                                HeaderStat(icon: "film", value: "6", label: "DAY STREAK")
+                                    .frame(maxWidth: .infinity)
+                                Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 52)
+                                HeaderStat(icon: "circle.hexagongrid", value: "2,840", label: "POINTS")
+                                    .frame(maxWidth: .infinity)
+                                Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 52)
+                                HeaderStat(icon: "scope", value: "82", label: "FORM SCORE")
+                                    .frame(maxWidth: .infinity)
+                                Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 52)
+                                VStack(spacing: 3) {
+                                    Image(systemName: "arrow.up.right")
+                                        .font(.system(size: 15))
+                                        .foregroundStyle(ShotIQColor.confirmGreen)
+                                    Text("+8.1%").font(.custom("DINCondensed-Bold", size: 24))
+                                        .foregroundStyle(ShotIQColor.confirmGreen)
+                                    Text("VS LAST SESSION")
+                                        .font(.system(size: 9, weight: .medium)).kerning(0.6)
+                                        .foregroundStyle(ShotIQColor.graphite)
+                                }
+                                .frame(maxWidth: .infinity)
+                            }
+                            .padding(.vertical, 16)
+                        }
+                        .padding(.top, 18)
+
+                        ShotIQCard {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Text("COACHING FOCUS")
+                                        .font(.system(size: 12, weight: .bold)).kerning(0.8)
+                                        .foregroundStyle(ShotIQColor.graphite)
+                                    Text("Keep elbow stacked through release")
+                                        .font(.system(size: 19, weight: .semibold))
+                                        .foregroundStyle(ShotIQColor.ink)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 15))
+                                    .foregroundStyle(ShotIQColor.graphite)
+                            }
+                            .padding(16)
+                        }
+                        .padding(.top, 12)
+
+                        ShotIQCard {
+                            VStack(alignment: .leading, spacing: 14) {
+                                SectionLabel(text: "SHOOTING SUMMARY")
+                                StatRow(stats: [("24", "SHOTS", ShotIQColor.ink),
+                                                ("15", "MAKES", ShotIQColor.ink),
+                                                ("62.5%", "MAKE %", ShotIQColor.ink)])
+                                SectionLabel(text: "SHOT RAIL").padding(.top, 4)
+                                PhaseStrip(active: "RELEASE")
+                            }
+                            .padding(16)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .padding(.top, 12)
+
+                        ShotIQCard {
+                            VStack(alignment: .leading, spacing: 10) {
+                                SectionLabel(text: "PROFILE SUMMARY")
+                                ForEach(summaryRows, id: \.0) { k, v in
+                                    HStack(alignment: .top) {
+                                        Text(k).font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
+                                            .frame(width: 150, alignment: .leading)
+                                        Text(v).font(.system(size: 14)).foregroundStyle(ShotIQColor.ink)
+                                        Spacer()
+                                    }
+                                }
+                            }
+                            .padding(16)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .padding(.top, 12)
+
+                        NavigationLink { CameraPermissionPrimerView() } label: {
+                            primaryLabel("Complete profile", icon: "checkmark.circle")
+                        }
+                        .padding(.top, 20).padding(.bottom, 24)
+                    }
+                    .padding(.horizontal, 20)
+                }
+                OnboardingTabBar(initials: shotiqInitials(app.user))
+            }
+        }
+    }
+
+    private func editButton(_ icon: String, _ label: String) -> some View {
+        Button {} label: {
+            HStack(spacing: 6) {
+                Image(systemName: icon).font(.system(size: 13))
+                Text(label).font(.system(size: 12, weight: .medium))
+            }
+            .padding(.horizontal, 10).frame(height: 34)
+            .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.rule))
+            .foregroundStyle(ShotIQColor.ink)
+        }
+    }
+}
+
+// MARK: - 014 · ios.camera-permission-primer
+
+struct CameraPermissionPrimerView: View {
+    @EnvironmentObject var m: OnboardingModel
+    @EnvironmentObject var app: AppState
+
+    private let recordTiles: [(String, String, String)] = [
+        ("figure.basketball", "Full-body motion", "Your movement from setup through follow-through."),
+        ("basketball", "Ball trajectory", "The path and release point of your shot."),
+        ("point.3.connected.trianglepath.dotted", "Timing & sequence", "Key moments and phase transitions.")
+    ]
+
+    var body: some View {
+        CanonicalScreen(testID: "screen-ios-camera-permission-primer") {
+            VStack(spacing: 0) {
+                TopBar()
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        PlayerHeader(name: app.user?.displayName ?? "Player",
+                                     subtitle: "\(m.hand)-handed • \(m.experience)")
+                            .padding(.horizontal, -20)
+
+                        Text("LIVE SHOT CAPTURE").shotiqDisplay(50).padding(.top, 18)
+                        Text("HOW IT WORKS")
+                            .font(.system(size: 16, weight: .semibold)).kerning(4)
+                            .foregroundStyle(ShotIQColor.graphite)
+                            .padding(.top, 2)
+                        Rectangle().fill(ShotIQColor.rule).frame(height: 1).padding(.top, 12)
+                        Text("Live capture uses your camera to record your shot so ShotIQ can analyze your mechanics in real time.")
+                            .font(.system(size: 16)).foregroundStyle(ShotIQColor.graphite)
+                            .padding(.top, 14)
+
+                        QuestionLabel(text: "WHAT WE RECORD").padding(.top, 22)
+                        HStack(alignment: .top, spacing: 12) {
+                            ForEach(recordTiles, id: \.1) { icon, title, caption in
+                                VStack(spacing: 8) {
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: 6).fill(ShotIQColor.warmCanvas)
+                                        Image(systemName: icon)
+                                            .font(.system(size: 30, weight: .light))
+                                            .foregroundStyle(ShotIQColor.graphite)
+                                    }
+                                    .frame(height: 110)
+                                    Text(title).font(.system(size: 15, weight: .semibold))
+                                        .foregroundStyle(ShotIQColor.ink)
+                                        .lineLimit(1).minimumScaleFactor(0.7)
+                                    Text(caption).font(.system(size: 12))
+                                        .foregroundStyle(ShotIQColor.graphite)
+                                        .multilineTextAlignment(.center)
+                                }
+                                .frame(maxWidth: .infinity)
+                            }
+                        }
+                        .padding(.top, 12)
+
+                        HStack(alignment: .top, spacing: 14) {
+                            Image(systemName: "shield")
+                                .font(.system(size: 28, weight: .light))
+                                .foregroundStyle(ShotIQColor.ink)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Your privacy matters")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundStyle(ShotIQColor.ink)
+                                Text("Videos are securely processed to generate your analysis. We do not share or use your videos for anything else.")
+                                    .font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
+                            }
+                            Spacer()
+                        }
+                        .padding(16)
+                        .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
+                        .padding(.top, 20)
+
+                        QuestionLabel(text: "WHEN YOU'LL SEE THIS").padding(.top, 24)
+                        HStack(alignment: .top, spacing: 16) {
+                            Text("You'll be asked for camera access the first time you start a live capture.")
+                                .font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                            // Mock of the system camera prompt.
+                            ShotIQCard {
+                                VStack(spacing: 0) {
+                                    Text("“ShotIQ” Would Like to Access the Camera")
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundStyle(ShotIQColor.ink)
+                                        .multilineTextAlignment(.center)
+                                        .padding(.top, 14).padding(.horizontal, 12)
+                                    Text("ShotIQ uses your camera to record live shots and analyze your form.")
+                                        .font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
+                                        .multilineTextAlignment(.center)
+                                        .padding(.top, 6).padding(.horizontal, 12).padding(.bottom, 12)
+                                    Rectangle().fill(ShotIQColor.rule).frame(height: 1)
+                                    HStack(spacing: 0) {
+                                        Text("Don't Allow")
+                                            .font(.system(size: 14))
+                                            .foregroundStyle(ShotIQColor.analysisBlue)
+                                            .frame(maxWidth: .infinity)
+                                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 40)
+                                        Text("Allow")
+                                            .font(.system(size: 14, weight: .semibold))
+                                            .foregroundStyle(ShotIQColor.analysisBlue)
+                                            .frame(maxWidth: .infinity)
+                                    }
+                                    .frame(height: 40)
+                                }
+                            }
+                            .frame(width: 200)
+                        }
+                        .padding(.top, 12)
+
+                        QuestionLabel(text: "HOW TO ALLOW").padding(.top, 24)
+                        HStack(alignment: .top, spacing: 4) {
+                            allowStep("gearshape", "Open Settings")
+                            stepChevron
+                            allowStep("hand.raised", "Tap Privacy & Security")
+                            stepChevron
+                            allowStep("camera", "Select Camera")
+                            stepChevron
+                            VStack(spacing: 8) {
+                                ZStack(alignment: .trailing) {
+                                    Capsule().fill(ShotIQColor.confirmGreen).frame(width: 40, height: 24)
+                                    Circle().fill(.white).frame(width: 18, height: 18).padding(.trailing, 3)
+                                }
+                                .frame(height: 30)
+                                Text("Turn on ShotIQ")
+                                    .font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                                    .multilineTextAlignment(.center)
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
+                        .padding(.top, 14)
+
+                        Rectangle().fill(ShotIQColor.rule).frame(height: 1).padding(.top, 20)
+
+                        HStack(alignment: .top, spacing: 16) {
+                            VStack(alignment: .leading, spacing: 6) {
+                                QuestionLabel(text: "GOOD TO KNOW")
+                                VStack(alignment: .leading, spacing: 4) {
+                                    bullet("You can change this anytime in Settings.")
+                                    bullet("Camera access is required for live shot capture.")
+                                    bullet("This permission does not affect your saved videos.")
+                                }
+                            }
+                            Spacer()
+                            Image(systemName: "film")
+                                .font(.system(size: 40, weight: .light))
+                                .foregroundStyle(ShotIQColor.ink)
+                        }
+                        .padding(.top, 18)
+
+                        NavigationLink { PhotoLibraryPermissionView() } label: {
+                            primaryLabel("Continue", color: ShotIQColor.confirmGreen)
+                        }
+                        .padding(.top, 20)
+
+                        NavigationLink { PhotoLibraryPermissionView() } label: {
+                            secondaryLabel("Not now", tint: ShotIQColor.confirmGreen, border: ShotIQColor.confirmGreen)
+                        }
+                        .padding(.top, 12).padding(.bottom, 24)
+                    }
+                    .padding(.horizontal, 20)
+                }
+                OnboardingTabBar(initials: shotiqInitials(app.user))
+            }
+        }
+    }
+
+    private var stepChevron: some View {
+        Image(systemName: "chevron.right")
+            .font(.system(size: 12))
+            .foregroundStyle(ShotIQColor.muted)
+            .padding(.top, 8)
+    }
+    private func allowStep(_ icon: String, _ label: String) -> some View {
+        VStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.system(size: 24))
+                .foregroundStyle(ShotIQColor.ink)
+                .frame(height: 30)
+            Text(label)
+                .font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+    }
+    private func bullet(_ text: String) -> some View {
+        HStack(alignment: .top, spacing: 6) {
+            Text("•").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+            Text(text).font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+        }
+    }
+}
+
+// MARK: - 015 · ios.photo-library-permission
+
+struct PhotoLibraryPermissionView: View {
+    @EnvironmentObject var m: OnboardingModel
+    @EnvironmentObject var app: AppState
+
+    private let accessRows: [(String, String, String)] = [
+        ("point.3.connected.trianglepath.dotted", "Selected photos only",
+         "You pick the photos we analyze. We never scan your entire library."),
+        ("lock", "Private and secure",
+         "Analysis happens in the cloud. Your photos are never shared."),
+        ("magnifyingglass", "Used for analysis",
+         "Your photos help us deliver accurate form insights.")
+    ]
+
+    var body: some View {
+        CanonicalScreen(testID: "screen-ios-photo-library-permission") {
+            VStack(spacing: 0) {
+                TopBar()
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        PlayerHeader(name: app.user?.displayName ?? "Player",
+                                     subtitle: "\(m.hand)-handed • \(m.experience)")
+                            .padding(.horizontal, -20)
+
+                        StatRow(stats: [("82", "FORM SCORE", ShotIQColor.analysisBlue),
+                                        ("24", "SHOTS", ShotIQColor.ink),
+                                        ("15", "MAKES", ShotIQColor.ink),
+                                        ("62.5%", "SHOOTING", ShotIQColor.ink)])
+                            .padding(.vertical, 14)
+                            .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .top)
+                            .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
+                            .padding(.top, 14)
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("PRIMARY TARGET")
+                                .font(.system(size: 12, weight: .semibold)).kerning(1)
+                                .foregroundStyle(ShotIQColor.graphite)
+                            Text("Keep elbow stacked through release.")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(ShotIQColor.ink)
+                        }
+                        .padding(.top, 16)
+
+                        HStack(alignment: .top, spacing: 16) {
+                            VStack(alignment: .leading, spacing: 0) {
+                                Text("WE NEED ACCESS TO YOUR PHOTOS").shotiqDisplay(44).padding(.top, 12)
+                                Text("ShotIQ analyzes your mechanics using photos from your library. You choose what to share—nothing is uploaded without your permission.")
+                                    .font(.system(size: 15)).foregroundStyle(ShotIQColor.graphite)
+                                    .padding(.top, 10)
+                            }
+                            VStack(spacing: 6) {
+                                HStack(spacing: 6) {
+                                    ForEach(0..<4, id: \.self) { _ in
+                                        RoundedRectangle(cornerRadius: 4)
+                                            .fill(ShotIQColor.warmCanvas)
+                                            .frame(height: 32)
+                                    }
+                                }
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 8).fill(ShotIQColor.warmCanvas)
+                                    Image(systemName: "photo.on.rectangle")
+                                        .font(.system(size: 38, weight: .light))
+                                        .foregroundStyle(ShotIQColor.graphite)
+                                }
+                                .frame(height: 210)
+                            }
+                            .frame(width: 150)
+                            .padding(.top, 12)
+                        }
+
+                        QuestionLabel(text: "WHAT WE ACCESS").padding(.top, 24)
+                        VStack(spacing: 0) {
+                            ForEach(accessRows, id: \.1) { icon, title, caption in
+                                HStack(alignment: .top, spacing: 16) {
+                                    Image(systemName: icon)
+                                        .font(.system(size: 26))
+                                        .foregroundStyle(ShotIQColor.ink)
+                                        .frame(width: 44)
+                                    VStack(alignment: .leading, spacing: 3) {
+                                        Text(title).font(.system(size: 16, weight: .semibold))
+                                            .foregroundStyle(ShotIQColor.ink)
+                                        Text(caption).font(.system(size: 14))
+                                            .foregroundStyle(ShotIQColor.graphite)
+                                    }
+                                    Spacer()
+                                }
+                                .padding(.vertical, 14)
+                                .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
+                            }
+                        }
+                        .padding(.top, 6)
+
+                        QuestionLabel(text: "OTHER WAYS TO ADD PHOTOS").padding(.top, 22)
+                        HStack(spacing: 16) {
+                            Image(systemName: "point.3.connected.trianglepath.dotted")
+                                .font(.system(size: 26))
+                                .foregroundStyle(ShotIQColor.analysisBlue)
+                                .frame(width: 44)
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text("Use camera instead").font(.system(size: 16, weight: .semibold))
+                                    .foregroundStyle(ShotIQColor.ink)
+                                Text("Open the camera to capture a new shot.")
+                                    .font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 14))
+                                .foregroundStyle(ShotIQColor.graphite)
+                        }
+                        .padding(.vertical, 14)
+
+                        QuestionLabel(text: "CHOOSE HOW YOU'D LIKE TO PROCEED").padding(.top, 14)
+
+                        NavigationLink { NotificationPermissionPrimerView() } label: {
+                            primaryLabel("Choose access", icon: "camera.metering.center.weighted")
+                        }
+                        .padding(.top, 14)
+
+                        Button {} label: {
+                            HStack(spacing: 10) {
+                                Image(systemName: "camera")
+                                Text("Use camera instead").font(.system(size: 17, weight: .medium))
+                            }
+                            .frame(maxWidth: .infinity).frame(height: 54)
+                            .overlay(RoundedRectangle(cornerRadius: ShotIQRadius.control).stroke(ShotIQColor.analysisBlue))
+                            .foregroundStyle(ShotIQColor.analysisBlue)
+                        }
+                        .padding(.top, 12)
+
+                        NavigationLink { NotificationPermissionPrimerView() } label: {
+                            secondaryLabel("Not now")
+                        }
+                        .padding(.top, 12)
+
+                        HStack(spacing: 6) {
+                            Image(systemName: "lock")
+                                .font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                            Text("You can change this anytime in Settings.")
+                                .font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                            Button("Learn more") {}
+                                .font(.system(size: 13))
+                                .foregroundStyle(ShotIQColor.analysisBlue)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 14).padding(.bottom, 24)
+                    }
+                    .padding(.horizontal, 20)
+                }
+                OnboardingTabBar(initials: shotiqInitials(app.user))
+            }
+        }
+    }
+}
+
+// MARK: - 016 · ios.notification-permission-primer
+
+struct NotificationPermissionPrimerView: View {
+    @EnvironmentObject var m: OnboardingModel
+    @EnvironmentObject var app: AppState
+
+    private let reasons: [(String, String, String)] = [
+        ("film", "ANALYSIS COMPLETE", "Get notified as soon as your AI analysis is ready to review."),
+        ("point.3.connected.trianglepath.dotted", "TRAINING REMINDERS", "Stay consistent with timely reminders for your workouts and goals."),
+        ("target", "GOAL MILESTONES", "Celebrate progress with nudges when you hit key milestones.")
+    ]
+
+    var body: some View {
+        CanonicalScreen(testID: "screen-ios-notification-permission-primer") {
+            VStack(spacing: 0) {
+                TopBar()
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        PlayerHeader(name: app.user?.displayName ?? "Player",
+                                     subtitle: "\(m.hand)-handed • \(m.experience)")
+                            .padding(.horizontal, -20)
+
+                        StatRow(stats: [("24", "SHOTS", ShotIQColor.ink),
+                                        ("15", "MAKES", ShotIQColor.ink),
+                                        ("62.5%", "SHOOTING", ShotIQColor.ink),
+                                        ("82", "FORM SCORE", ShotIQColor.shotiqOrange)])
+                            .padding(.vertical, 14)
+                            .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .top)
+                            .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
+                            .padding(.top, 14)
+
+                        HStack(spacing: 8) {
+                            Text("PRIMARY TARGET:")
+                                .font(.system(size: 12, weight: .bold)).kerning(0.8)
+                                .foregroundStyle(ShotIQColor.graphite)
+                            Text("Keep elbow stacked through release")
+                                .font(.system(size: 15)).foregroundStyle(ShotIQColor.ink)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 14)
+
+                        Text("STAY IN THE LOOP").shotiqDisplay(54).padding(.top, 16)
+                        Text("Turn on notifications so you never miss AI analysis results, training reminders, or goal milestones.")
+                            .font(.system(size: 16)).foregroundStyle(ShotIQColor.graphite).padding(.top, 8)
+
+                        VStack(spacing: 0) {
+                            ForEach(reasons, id: \.1) { icon, title, caption in
+                                HStack(alignment: .center, spacing: 16) {
+                                    Image(systemName: icon)
+                                        .font(.system(size: 32, weight: .light))
+                                        .foregroundStyle(ShotIQColor.ink)
+                                        .frame(width: 64)
+                                    Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 58)
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(title)
+                                            .font(.system(size: 19, weight: .heavy).width(.condensed))
+                                            .foregroundStyle(ShotIQColor.shotiqOrange)
+                                        Text(caption)
+                                            .font(.system(size: 15)).foregroundStyle(ShotIQColor.graphite)
+                                    }
+                                    Spacer()
+                                }
+                                .padding(.vertical, 16)
+                                .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
+                            }
+                        }
+                        .padding(.top, 8)
+
+                        HStack(alignment: .top, spacing: 16) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 8).fill(ShotIQColor.warmCanvas)
+                                Image(systemName: "figure.basketball")
+                                    .font(.system(size: 48, weight: .light))
+                                    .foregroundStyle(ShotIQColor.graphite)
+                            }
+                            .frame(height: 190)
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("FORM SCORE")
+                                    .font(.system(size: 12, weight: .bold)).kerning(0.8)
+                                    .foregroundStyle(ShotIQColor.ink)
+                                Text("82")
+                                    .font(.custom("DINCondensed-Bold", size: 62))
+                                    .foregroundStyle(ShotIQColor.shotiqOrange)
+                                ScoreBar(pct: 0.82)
+                                Text("GOOD")
+                                    .font(.system(size: 15, weight: .heavy).width(.condensed))
+                                    .foregroundStyle(ShotIQColor.analysisBlue)
+                                Text("Keep building consistency.")
+                                    .font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                            }
+                            .frame(width: 120)
+                        }
+                        .padding(.top, 20)
+
+                        PrimaryButton(title: "Turn on notifications", icon: "bell.badge",
+                                      color: ShotIQColor.confirmGreen) {
+                            app.onboardingComplete = true
+                        }
+                        .padding(.top, 22)
+
+                        SecondaryButton(title: "Not now") { app.onboardingComplete = true }
+                            .padding(.top, 12).padding(.bottom, 24)
+                    }
+                    .padding(.horizontal, 20)
+                }
+                OnboardingTabBar(initials: shotiqInitials(app.user))
+            }
+        }
     }
 }
