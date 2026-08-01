@@ -159,10 +159,13 @@ for (const app of APPS) {
   }
 
   // Reuse an internal group if there is one; internal groups skip beta review.
+  // hasAccessToAllBuilds is create-time-only (PATCH is rejected), and a group
+  // without it leaves every tester at "no installable builds" — so only a
+  // group that has the flag counts as usable.
   const groups = await api('GET', `/v1/apps/${appId}/betaGroups?limit=20`)
   let group = (groups.data ?? []).find(
-    (g) => g.attributes?.isInternalGroup && g.attributes?.name === groupName,
-  ) ?? (groups.data ?? []).find((g) => g.attributes?.isInternalGroup)
+    (g) => g.attributes?.isInternalGroup && g.attributes?.hasAccessToAllBuilds === true,
+  )
 
   if (!group) {
     if (!confirm) {
@@ -172,12 +175,12 @@ for (const app of APPS) {
     const created = await api('POST', '/v1/betaGroups', {
       data: {
         type: 'betaGroups',
-        attributes: { name: groupName, isInternalGroup: true },
+        attributes: { name: `${groupName} All Builds`, isInternalGroup: true, hasAccessToAllBuilds: true },
         relationships: { app: { data: { type: 'apps', id: appId } } },
       },
     })
     group = created.data
-    console.log(`   created internal group ${group.id}`)
+    console.log(`   created internal group ${group.id} (hasAccessToAllBuilds=true)`)
   }
   console.log(`   internal group "${group.attributes?.name}" (${group.id})`)
   console.log(
@@ -203,7 +206,9 @@ for (const app of APPS) {
     }
   }
 
-  const groupBuilds = await api('GET', `/v1/betaGroups/${group.id}/builds?limit=20`)
+  const groupBuilds = group.attributes?.hasAccessToAllBuilds
+    ? { data: [build] } // all-builds groups reject explicit attach and don't need it
+    : await api('GET', `/v1/betaGroups/${group.id}/builds?limit=20`)
   const already = (groupBuilds.data ?? []).some((b) => b.id === build.id)
   if (already) {
     console.log('   build already in this group')
