@@ -22,6 +22,8 @@
 	<false/>
 	<key>NSCameraUsageDescription</key>
 	<string>ShotIQ analyzes your shooting form from live camera capture.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>ShotIQ records audio with your shot videos for coaching playback.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>ShotIQ imports shot photos and videos for analysis.</string>
 	<key>NSUserNotificationsUsageDescription</key>

@@ -207,6 +207,46 @@ actor APIClient {
         _ = try? await request("/api/shot-events", method: "POST",
                                body: ["drillId": drillId, "result": made ? "make" : "miss"]) as Empty?
     }
+
+    // MARK: generic helpers so every screen can reach any web endpoint
+
+    /// Typed call for arbitrary endpoints (mirrors the web client). Screens
+    /// define their own Codable request/response structs.
+    func call<T: Decodable>(_ path: String, method: String = "GET", body: Encodable? = nil) async throws -> T {
+        try await request(path, method: method, body: body)
+    }
+
+    /// Fire-and-forget mutation where the response body doesn't matter.
+    func send(_ path: String, method: String = "POST", body: Encodable? = nil) async {
+        struct Anything: Codable {}
+        _ = try? await request(path, method: method, body: body) as Anything?
+    }
+
+    /// Multipart image upload matching POST /api/upload (field "image").
+    func uploadImage(_ imageData: Data, filename: String = "shot.jpg",
+                     uploadType: String = "user") async throws -> Data {
+        try await ensureCsrfToken()
+        var req = URLRequest(url: baseURL.appending(path: "/api/upload"))
+        req.httpMethod = "POST"
+        let boundary = "shotiq-\(UUID().uuidString)"
+        req.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        if let csrf = csrfToken { req.setValue(csrf, forHTTPHeaderField: "x-csrf-token") }
+        if let token = accessToken { req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
+        var bodyData = Data()
+        func field(_ name: String, _ value: String) {
+            bodyData.append("--\(boundary)\r\nContent-Disposition: form-data; name=\"\(name)\"\r\n\r\n\(value)\r\n".data(using: .utf8)!)
+        }
+        field("uploadType", uploadType)
+        bodyData.append("--\(boundary)\r\nContent-Disposition: form-data; name=\"image\"; filename=\"\(filename)\"\r\nContent-Type: image/jpeg\r\n\r\n".data(using: .utf8)!)
+        bodyData.append(imageData)
+        bodyData.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
+        req.httpBody = bodyData
+        let (data, resp) = try await URLSession.shared.data(for: req)
+        guard let http = resp as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+            throw APIError.http((resp as? HTTPURLResponse)?.statusCode ?? 0)
+        }
+        return data
+    }
 }
 
 /// Type-erasing encodable wrapper so the client can send dictionary bodies.

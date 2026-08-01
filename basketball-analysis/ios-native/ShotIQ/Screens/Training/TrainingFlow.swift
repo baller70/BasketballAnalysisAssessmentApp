@@ -49,6 +49,14 @@ struct VRule: View {
     var body: some View { Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: height) }
 }
 
+/// Request body for POST /api/saved-workouts — bookmarking a drill persists it
+/// to the signed-in user's saved workouts (shape per src/app/api/saved-workouts/route.ts).
+struct SavedWorkoutBody: Encodable {
+    var name: String
+    var drillCount = 1
+    var drillIds: [String] = []
+}
+
 struct HRule: View {
     var body: some View { Rectangle().fill(ShotIQColor.rule).frame(height: 1) }
 }
@@ -108,11 +116,13 @@ struct TrainingHomeView: View {     // 054
                         HStack {
                             SectionLabel(text: "SAVED DRILLS")
                             Spacer()
-                            HStack(spacing: 4) {
-                                Text("View all").font(.system(size: 13))
-                                Image(systemName: "chevron.right").font(.system(size: 11))
+                            NavigationLink { MyDrillsView() } label: {
+                                HStack(spacing: 4) {
+                                    Text("View all").font(.system(size: 13))
+                                    Image(systemName: "chevron.right").font(.system(size: 11))
+                                }
+                                .foregroundStyle(ShotIQColor.graphite)
                             }
-                            .foregroundStyle(ShotIQColor.graphite)
                         }
                         .padding(.top, 22)
                         ShotIQCard {
@@ -243,19 +253,22 @@ struct QuickStartView: View {       // 055
                         .padding(.top, 16)
                         SectionLabel(text: "SHOT RAIL FOCUS").padding(.top, 22)
                         PhaseStrip().padding(.top, 10)
-                        VStack(alignment: .leading, spacing: 6) {
-                            MicroLabel(text: "PRIMARY COACHING TARGET")
-                            HStack {
-                                Text("Keep elbow stacked through release").shotiqBody(18, weight: .bold)
-                                    .lineLimit(1).minimumScaleFactor(0.8)
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
+                        NavigationLink { GoalsView() } label: {
+                            VStack(alignment: .leading, spacing: 6) {
+                                MicroLabel(text: "PRIMARY COACHING TARGET")
+                                HStack {
+                                    Text("Keep elbow stacked through release").shotiqBody(18, weight: .bold)
+                                        .foregroundStyle(ShotIQColor.ink)
+                                        .lineLimit(1).minimumScaleFactor(0.8)
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
+                                }
                             }
+                            .padding(.vertical, 14)
+                            .overlay(HRule(), alignment: .top)
+                            .overlay(HRule(), alignment: .bottom)
                         }
-                        .padding(.vertical, 14)
-                        .overlay(HRule(), alignment: .top)
-                        .overlay(HRule(), alignment: .bottom)
                         .padding(.top, 18)
                         SectionLabel(text: "WORKOUT TARGETS").padding(.top, 16)
                         HStack(alignment: .top, spacing: 12) {
@@ -316,12 +329,62 @@ struct QuickStartView: View {       // 055
 struct DiscoverDrillsView: View {   // 056
     @EnvironmentObject var app: AppState
     @State private var query = ""
-    @State private var filter = "All Flaws"
+    // Each browse chip is a real filter dimension backed by a picker dialog.
+    @State private var flawFilter = "All Flaws"
+    @State private var phaseFilter = "All Phases"
+    @State private var difficultyFilter = "All Difficulties"
+    @State private var durationFilter = "Any Duration"
+    @State private var sortMode = "Recommended"
+    @State private var activeChip: String?
+    @State private var showFilterMenu = false
+    @State private var bookmarked: Set<String> = []
     private let drills: [(String, String, String, String)] = [
         ("STACK & SHOOT", "Beginner", "8 min", "Builds stacked elbow position and a straight shooting line."),
         ("WRIST STAY DRILL", "Beginner", "6 min", "Keeps wrist neutral for a clean, consistent release."),
         ("ALIGN & EXTEND", "Intermediate", "10 min", "Promotes full extension and vertical ball flight.")
     ]
+    private let chipOptions: [String: [String]] = [
+        "All Flaws": ["All Flaws", "Elbow flare", "Early wrist bend", "Left lean"],
+        "All Phases": ["All Phases", "Setup", "Load", "Rise", "Release", "Follow-through"],
+        "All Difficulties": ["All Difficulties", "Beginner", "Intermediate", "Advanced"],
+        "Any Duration": ["Any Duration", "Under 10 min", "10+ min"]
+    ]
+    private func minutes(_ s: String) -> Int { Int(s.split(separator: " ").first ?? "0") ?? 0 }
+    /// All sample drills target the Release phase / elbow-related flaws, so
+    /// phase and flaw filters keep them unless a non-matching value is chosen.
+    private var filteredDrills: [(String, String, String, String)] {
+        var out = drills.filter { d in
+            (query.isEmpty || d.0.localizedCaseInsensitiveContains(query) || d.3.localizedCaseInsensitiveContains(query))
+            && (difficultyFilter == "All Difficulties" || d.1 == difficultyFilter)
+            && (durationFilter == "Any Duration"
+                || (durationFilter == "Under 10 min" && minutes(d.2) < 10)
+                || (durationFilter == "10+ min" && minutes(d.2) >= 10))
+            && (phaseFilter == "All Phases" || phaseFilter == "Release")
+            && (flawFilter == "All Flaws" || flawFilter == "Elbow flare" || flawFilter == "Early wrist bend")
+        }
+        switch sortMode {
+        case "Shortest first": out.sort { minutes($0.2) < minutes($1.2) }
+        case "Name A–Z": out.sort { $0.0 < $1.0 }
+        default: break
+        }
+        return out
+    }
+    private func chipLabel(for dimension: String) -> String {
+        switch dimension {
+        case "All Flaws": return flawFilter
+        case "All Phases": return phaseFilter
+        case "All Difficulties": return difficultyFilter
+        default: return durationFilter
+        }
+    }
+    private func setChip(_ dimension: String, to value: String) {
+        switch dimension {
+        case "All Flaws": flawFilter = value
+        case "All Phases": phaseFilter = value
+        case "All Difficulties": difficultyFilter = value
+        default: durationFilter = value
+        }
+    }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-discover-drills") {
             ScrollView {
@@ -340,7 +403,7 @@ struct DiscoverDrillsView: View {   // 056
                             }
                             .padding(.horizontal, 12).frame(height: 46)
                             .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
-                            Button {} label: {
+                            Button { showFilterMenu = true } label: {
                                 HStack(spacing: 6) {
                                     Image(systemName: "slider.horizontal.3").font(.system(size: 14))
                                     Text("Filters").font(.system(size: 14, weight: .medium))
@@ -348,6 +411,16 @@ struct DiscoverDrillsView: View {   // 056
                                 .padding(.horizontal, 14).frame(height: 46)
                                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
                                 .foregroundStyle(ShotIQColor.ink)
+                            }
+                            .confirmationDialog("Filter drills", isPresented: $showFilterMenu, titleVisibility: .visible) {
+                                Button("Beginner only") { difficultyFilter = "Beginner" }
+                                Button("Intermediate only") { difficultyFilter = "Intermediate" }
+                                Button("Under 10 minutes") { durationFilter = "Under 10 min" }
+                                Button("Reset all filters") {
+                                    flawFilter = "All Flaws"; phaseFilter = "All Phases"
+                                    difficultyFilter = "All Difficulties"; durationFilter = "Any Duration"
+                                }
+                                Button("Cancel", role: .cancel) {}
                             }
                         }
                         .padding(.top, 12)
@@ -360,13 +433,17 @@ struct DiscoverDrillsView: View {   // 056
                                         .stroke(ShotIQColor.rule, style: StrokeStyle(lineWidth: 1, dash: [4])))
                                 VStack(alignment: .leading, spacing: 10) {
                                     MicroLabel(text: "PRIMARY COACHING TARGET")
-                                    HStack {
-                                        Text("Keep elbow stacked through release").shotiqBody(15, weight: .semibold)
-                                            .lineLimit(1).minimumScaleFactor(0.8)
-                                        Spacer()
-                                        Image(systemName: "chevron.right")
-                                            .font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                                    NavigationLink { GoalsView() } label: {
+                                        HStack {
+                                            Text("Keep elbow stacked through release").shotiqBody(15, weight: .semibold)
+                                                .foregroundStyle(ShotIQColor.ink)
+                                                .lineLimit(1).minimumScaleFactor(0.8)
+                                            Spacer()
+                                            Image(systemName: "chevron.right")
+                                                .font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                                        }
                                     }
+                                    .buttonStyle(.plain)
                                     HRule()
                                     MicroLabel(text: "RELATED FLAWS DETECTED")
                                     HStack(spacing: 14) {
@@ -387,30 +464,50 @@ struct DiscoverDrillsView: View {   // 056
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 8) {
                                 ForEach(["All Flaws", "All Phases", "All Difficulties", "Any Duration"], id: \.self) { f in
-                                    Button { filter = f } label: {
+                                    let selected = chipLabel(for: f) != f
+                                    Button { activeChip = f } label: {
                                         HStack(spacing: 4) {
-                                            Text(f).font(.system(size: 13, weight: filter == f ? .semibold : .regular))
+                                            Text(chipLabel(for: f)).font(.system(size: 13, weight: selected ? .semibold : .regular))
                                             Image(systemName: "chevron.down").font(.system(size: 9))
                                         }
                                         .padding(.horizontal, 12).frame(height: 38)
                                         .overlay(RoundedRectangle(cornerRadius: 8)
-                                            .stroke(filter == f ? ShotIQColor.shotiqOrange : ShotIQColor.rule))
-                                        .foregroundStyle(filter == f ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
+                                            .stroke(selected ? ShotIQColor.shotiqOrange : ShotIQColor.rule))
+                                        .foregroundStyle(selected ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
                                     }
                                 }
                             }
                         }
                         .padding(.top, 10)
+                        .confirmationDialog(activeChip ?? "Filter", isPresented: Binding(
+                            get: { activeChip != nil }, set: { if !$0 { activeChip = nil } }
+                        ), titleVisibility: .visible) {
+                            if let dim = activeChip {
+                                ForEach(chipOptions[dim] ?? [], id: \.self) { option in
+                                    Button(option) { setChip(dim, to: option) }
+                                }
+                            }
+                            Button("Cancel", role: .cancel) {}
+                        }
                         HStack(spacing: 5) {
                             Image(systemName: "arrow.up.arrow.down").font(.system(size: 12))
                             Text("Sort:").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
-                            Text("Recommended").font(.system(size: 13, weight: .semibold))
-                            Image(systemName: "chevron.down").font(.system(size: 9))
+                            Menu {
+                                ForEach(["Recommended", "Shortest first", "Name A–Z"], id: \.self) { s in
+                                    Button(s) { sortMode = s }
+                                }
+                            } label: {
+                                HStack(spacing: 5) {
+                                    Text(sortMode).font(.system(size: 13, weight: .semibold))
+                                    Image(systemName: "chevron.down").font(.system(size: 9))
+                                }
+                                .foregroundStyle(ShotIQColor.ink)
+                            }
                             Spacer()
-                            Text("128 drills").font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                            Text("\(filteredDrills.count) drills").font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
                         }
                         .padding(.top, 12)
-                        ForEach(drills, id: \.0) { d in
+                        ForEach(filteredDrills, id: \.0) { d in
                             NavigationLink { DrillDetailView(name: d.0) } label: {
                                 ShotIQCard {
                                     HStack(spacing: 0) {
@@ -419,8 +516,22 @@ struct DiscoverDrillsView: View {   // 056
                                             HStack(alignment: .top) {
                                                 Text(d.0).shotiqDisplay(20).lineLimit(1)
                                                 Spacer()
-                                                Image(systemName: "bookmark")
-                                                    .font(.system(size: 15)).foregroundStyle(ShotIQColor.ink)
+                                                Button {
+                                                    if bookmarked.contains(d.0) {
+                                                        bookmarked.remove(d.0)
+                                                    } else {
+                                                        bookmarked.insert(d.0)
+                                                        Task { await APIClient.shared.send("/api/saved-workouts",
+                                                                                           body: SavedWorkoutBody(name: d.0)) }
+                                                    }
+                                                } label: {
+                                                    Image(systemName: bookmarked.contains(d.0) ? "bookmark.fill" : "bookmark")
+                                                        .font(.system(size: 15))
+                                                        .foregroundStyle(bookmarked.contains(d.0) ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
+                                                        .frame(width: 32, height: 32, alignment: .topTrailing)
+                                                }
+                                                .buttonStyle(.plain)
+                                                .accessibilityLabel("Bookmark drill")
                                             }
                                             HStack(spacing: 8) {
                                                 HStack(spacing: 4) {
@@ -463,6 +574,7 @@ struct DiscoverDrillsView: View {   // 056
 struct DrillDetailView: View {      // 057
     var name = "Pound Crossover Foundation"
     @Environment(\.dismiss) private var dismiss
+    @State private var bookmarked = false
     private let steps: [(String, String)] = [
         ("SETUP", "Feet shoulder-width. Ball in shooting pocket. Elbow in."),
         ("LOAD", "Dip into a smooth gather. Keep elbow tucked and stacked."),
@@ -489,10 +601,22 @@ struct DrillDetailView: View {      // 057
                         Wordmark(size: 26)
                         Spacer()
                         HStack(spacing: 18) {
-                            Image(systemName: "bookmark")
-                            Image(systemName: "square.and.arrow.up")
+                            Button {
+                                bookmarked.toggle()
+                                if bookmarked {
+                                    Task { await APIClient.shared.send("/api/saved-workouts",
+                                                                       body: SavedWorkoutBody(name: name)) }
+                                }
+                            } label: {
+                                Image(systemName: bookmarked ? "bookmark.fill" : "bookmark")
+                                    .foregroundStyle(bookmarked ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
+                            }
+                            .accessibilityLabel("Bookmark drill")
+                            ShareLink(item: "Check out the \(name) drill on ShotIQ 🏀") {
+                                Image(systemName: "square.and.arrow.up").foregroundStyle(ShotIQColor.ink)
+                            }
                         }
-                        .font(.system(size: 17)).foregroundStyle(ShotIQColor.ink)
+                        .font(.system(size: 17))
                     }
                     .padding(.horizontal, 20).frame(height: 52)
                     .overlay(HRule(), alignment: .bottom)
@@ -624,8 +748,8 @@ struct DrillDetailView: View {      // 057
                                 .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 8))
                                 .foregroundStyle(.white)
                             }
-                            squareButton("calendar")
-                            squareButton("play.rectangle")
+                            squareNav("calendar") { WorkoutCalendarView() }
+                            squareNav("play.rectangle") { MediaDetailView() }
                         }
                         .padding(.vertical, 22)
                     }
@@ -674,8 +798,8 @@ struct DrillDetailView: View {      // 057
             Text(label).font(.system(size: 11)).foregroundStyle(ShotIQColor.ink)
         }
     }
-    private func squareButton(_ icon: String) -> some View {
-        Button {} label: {
+    private func squareNav(_ icon: String, @ViewBuilder dest: @escaping () -> some View) -> some View {
+        NavigationLink { dest() } label: {
             Image(systemName: icon).font(.system(size: 18))
                 .frame(width: 54, height: 54)
                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
@@ -686,6 +810,10 @@ struct DrillDetailView: View {      // 057
 
 struct MyDrillsView: View {         // 058
     @EnvironmentObject var app: AppState
+    @Environment(\.dismiss) private var dismiss
+    @State private var tab = 1                  // 0 TRAIN · 1 MY DRILLS · 2 ASSIGNED
+    @State private var sortMode = "Newest"
+    @State private var phaseFilter = "All phases"
     private let drills: [(String, String, String, Int, Int, String, String)] = [
         ("Quick Release Builder", "Keep elbow stacked through release", "RELEASE", 24, 15, "62.5%", "May 10, 2025"),
         ("Stationary Pound Dribble", "Build a strong handle with a stationary pound dribble focus", "LOAD", 18, 11, "61.1%", "May 8, 2025"),
@@ -693,6 +821,13 @@ struct MyDrillsView: View {         // 058
         ("1-2 Step Finishing", "Finish at the rim using quick 1-2 step footwork and control", "RISE", 16, 12, "75.0%", "Apr 28, 2025")
     ]
     private let phases = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
+    private var visibleDrills: [(String, String, String, Int, Int, String, String)] {
+        var out = drills.filter { phaseFilter == "All phases" || $0.2 == phaseFilter }
+        if sortMode == "Best accuracy" {
+            out.sort { (Double($0.5.dropLast()) ?? 0) > (Double($1.5.dropLast()) ?? 0) }
+        }
+        return out
+    }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-my-drills") {
             ScrollView {
@@ -711,30 +846,59 @@ struct MyDrillsView: View {         // 058
                         }
                         .padding(.top, 16)
                         HStack(spacing: 0) {
-                            tabItem("figure.run", "TRAIN", "Drills & workouts", false)
-                            tabItem("point.3.connected.trianglepath.dotted", "MY DRILLS", "Saved for you", true)
-                            tabItem("scribble.variable", "ASSIGNED", "From coach", false)
+                            tabButton("figure.run", "TRAIN", "Drills & workouts", 0)
+                            tabButton("point.3.connected.trianglepath.dotted", "MY DRILLS", "Saved for you", 1)
+                            tabButton("scribble.variable", "ASSIGNED", "From coach", 2)
                         }
                         .padding(.top, 18)
                         HStack {
-                            SectionLabel(text: "5 DRILLS")
+                            SectionLabel(text: "\(visibleDrills.count) DRILLS")
                             Spacer()
-                            HStack(spacing: 4) {
-                                Text("Sort:").font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
-                                Text("Newest").font(.system(size: 12, weight: .semibold))
-                                Image(systemName: "chevron.down").font(.system(size: 8))
+                            Menu {
+                                Button("Newest") { sortMode = "Newest" }
+                                Button("Best accuracy") { sortMode = "Best accuracy" }
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Text("Sort:").font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                                    Text(sortMode).font(.system(size: 12, weight: .semibold))
+                                        .foregroundStyle(ShotIQColor.ink)
+                                    Image(systemName: "chevron.down").font(.system(size: 8))
+                                        .foregroundStyle(ShotIQColor.ink)
+                                }
                             }
                             VRule(height: 14).padding(.horizontal, 8)
-                            HStack(spacing: 5) {
-                                Text("Filter").font(.system(size: 12))
-                                Image(systemName: "slider.horizontal.3").font(.system(size: 11))
+                            Menu {
+                                ForEach(["All phases", "SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"], id: \.self) { p in
+                                    Button(p) { phaseFilter = p }
+                                }
+                            } label: {
+                                HStack(spacing: 5) {
+                                    Text(phaseFilter == "All phases" ? "Filter" : phaseFilter)
+                                        .font(.system(size: 12))
+                                    Image(systemName: "slider.horizontal.3").font(.system(size: 11))
+                                }
+                                .foregroundStyle(phaseFilter == "All phases" ? ShotIQColor.ink : ShotIQColor.shotiqOrange)
                             }
-                            .foregroundStyle(ShotIQColor.ink)
                         }
                         .padding(.top, 18)
-                        ForEach(drills, id: \.0) { d in
-                            drillCard(d)
-                                .padding(.top, 12)
+                        if tab == 2 {
+                            ShotIQCard {
+                                VStack(spacing: 8) {
+                                    Image(systemName: "scribble.variable").font(.system(size: 26))
+                                        .foregroundStyle(ShotIQColor.graphite)
+                                    Text("No assigned drills yet").shotiqBody(15, weight: .semibold)
+                                    Text("Drills your coach assigns will appear here.")
+                                        .font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 28)
+                            }
+                            .padding(.top, 12)
+                        } else {
+                            ForEach(visibleDrills, id: \.0) { d in
+                                drillCard(d)
+                                    .padding(.top, 12)
+                            }
                         }
                         ShotIQCard {
                             HStack(spacing: 12) {
@@ -766,20 +930,27 @@ struct MyDrillsView: View {         // 058
             }
         }
     }
-    private func tabItem(_ icon: String, _ title: String, _ caption: String, _ selected: Bool) -> some View {
-        VStack(spacing: 6) {
-            HStack(spacing: 6) {
-                Image(systemName: icon).font(.system(size: 14))
-                Text(title).font(.system(size: 12, weight: .bold)).kerning(0.5)
+    private func tabButton(_ icon: String, _ title: String, _ caption: String, _ index: Int) -> some View {
+        let selected = tab == index
+        // TRAIN pops back to the training home this screen was pushed from;
+        // the other two switch the visible list in place.
+        return Button {
+            if index == 0 { dismiss() } else { tab = index }
+        } label: {
+            VStack(spacing: 6) {
+                HStack(spacing: 6) {
+                    Image(systemName: icon).font(.system(size: 14))
+                    Text(title).font(.system(size: 12, weight: .bold)).kerning(0.5)
+                        .lineLimit(1).minimumScaleFactor(0.7)
+                }
+                .foregroundStyle(selected ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
+                Text(caption).font(.system(size: 10)).foregroundStyle(ShotIQColor.graphite)
                     .lineLimit(1).minimumScaleFactor(0.7)
+                Rectangle().fill(selected ? ShotIQColor.shotiqOrange : ShotIQColor.rule)
+                    .frame(height: selected ? 2 : 1)
             }
-            .foregroundStyle(selected ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
-            Text(caption).font(.system(size: 10)).foregroundStyle(ShotIQColor.graphite)
-                .lineLimit(1).minimumScaleFactor(0.7)
-            Rectangle().fill(selected ? ShotIQColor.shotiqOrange : ShotIQColor.rule)
-                .frame(height: selected ? 2 : 1)
+            .frame(maxWidth: .infinity)
         }
-        .frame(maxWidth: .infinity)
     }
     private func drillCard(_ d: (String, String, String, Int, Int, String, String)) -> some View {
         ShotIQCard {
@@ -838,6 +1009,12 @@ struct MyDrillsView: View {         // 058
 struct WorkoutCalendarView: View {  // 059
     @EnvironmentObject var app: AppState
     @State private var selected = 7
+    @State private var monthIndex = 4          // 0-based; 4 = May 2025 (has data)
+    @State private var dayCardExpanded = true
+    private let monthNames = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE",
+                              "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"]
+    private let daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    private var isDataMonth: Bool { monthIndex == 4 }
     private let completed: Set<Int> = [4, 5, 6, 9, 12, 15, 18]
     private let missed: Set<Int> = [10, 17]
     private let minutes: [Int: String] = [4: "18 min", 5: "17 min", 6: "20 min", 9: "15 min",
@@ -870,15 +1047,19 @@ struct WorkoutCalendarView: View {  // 059
                         .padding(.top, 16)
                         // Month header
                         HStack {
-                            Button {} label: {
-                                Image(systemName: "chevron.left").font(.system(size: 17)).foregroundStyle(ShotIQColor.ink)
+                            Button { if monthIndex > 0 { monthIndex -= 1 } } label: {
+                                Image(systemName: "chevron.left").font(.system(size: 17))
+                                    .foregroundStyle(monthIndex > 0 ? ShotIQColor.ink : ShotIQColor.muted)
                             }
+                            .accessibilityLabel("Previous month")
                             Spacer()
-                            Text("MAY 2025").shotiqDisplay(26)
+                            Text("\(monthNames[monthIndex]) 2025").shotiqDisplay(26)
                             Spacer()
-                            Button {} label: {
-                                Image(systemName: "chevron.right").font(.system(size: 17)).foregroundStyle(ShotIQColor.ink)
+                            Button { if monthIndex < 11 { monthIndex += 1 } } label: {
+                                Image(systemName: "chevron.right").font(.system(size: 17))
+                                    .foregroundStyle(monthIndex < 11 ? ShotIQColor.ink : ShotIQColor.muted)
                             }
+                            .accessibilityLabel("Next month")
                         }
                         .padding(.top, 16)
                         let cols = Array(repeating: GridItem(.flexible(), spacing: 2), count: 7)
@@ -887,9 +1068,13 @@ struct WorkoutCalendarView: View {  // 059
                                 Text(d).font(.system(size: 9, weight: .bold)).kerning(0.4)
                                     .foregroundStyle(ShotIQColor.graphite)
                             }
-                            ForEach([27, 28, 29, 30], id: \.self) { d in adjacentCell(d) }
-                            ForEach(1...31, id: \.self) { d in dayCell(d) }
-                            ForEach(101...107, id: \.self) { d in adjacentCell(d - 100) }
+                            if isDataMonth {
+                                ForEach([27, 28, 29, 30], id: \.self) { d in adjacentCell(d) }
+                            }
+                            ForEach(1...daysInMonth[monthIndex], id: \.self) { d in dayCell(d) }
+                            if isDataMonth {
+                                ForEach(101...107, id: \.self) { d in adjacentCell(d - 100) }
+                            }
                         }
                         .padding(.top, 10)
                         // Legend
@@ -913,8 +1098,13 @@ struct WorkoutCalendarView: View {  // 059
                                         .overlay(RoundedRectangle(cornerRadius: 4).stroke(ShotIQColor.shotiqOrange))
                                         .foregroundStyle(ShotIQColor.shotiqOrange)
                                     Spacer()
-                                    Image(systemName: "chevron.up").font(.system(size: 13)).foregroundStyle(ShotIQColor.ink)
+                                    Button { withAnimation { dayCardExpanded.toggle() } } label: {
+                                        Image(systemName: dayCardExpanded ? "chevron.up" : "chevron.down")
+                                            .font(.system(size: 13)).foregroundStyle(ShotIQColor.ink)
+                                    }
+                                    .accessibilityLabel(dayCardExpanded ? "Collapse day details" : "Expand day details")
                                 }
+                                if dayCardExpanded {
                                 HStack(alignment: .top, spacing: 12) {
                                     PhotoThumb(width: 112, height: 128)
                                     VStack(alignment: .leading, spacing: 6) {
@@ -942,6 +1132,7 @@ struct WorkoutCalendarView: View {  // 059
                                     .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 8))
                                     .foregroundStyle(.white)
                                 }
+                                }
                             }
                             .padding(14)
                         }
@@ -967,9 +1158,11 @@ struct WorkoutCalendarView: View {  // 059
     }
     @ViewBuilder
     private func dayCell(_ d: Int) -> some View {
-        Button { selected = d } label: {
+        Button { selected = d; dayCardExpanded = true } label: {
             VStack(spacing: 3) {
-                if d == selected {
+                if !isDataMonth {
+                    Text("\(d)").font(.system(size: 13)).foregroundStyle(ShotIQColor.ink)
+                } else if d == selected {
                     Text("\(d)").font(.system(size: 12, weight: .bold)).foregroundStyle(.white)
                         .frame(width: 26, height: 26)
                         .background(ShotIQColor.shotiqOrange, in: Circle())
@@ -1011,6 +1204,7 @@ final class DrillSessionModel: ObservableObject {
     @Published var shots: [(n: Int, made: Bool)] = []
     @Published var elapsed = 0
     @Published var paused = false
+    @Published var saving = false
     private var n = 0
     private var timer: Timer?
     var makes: Int { shots.filter(\.made).count }
@@ -1022,17 +1216,70 @@ final class DrillSessionModel: ObservableObject {
         }
     }
     func stop() { timer?.invalidate() }
-    func mark(_ made: Bool, drillId: String) {
-        n += 1; shots.append((n, made))
-        Task { await APIClient.shared.recordShotEvent(drillId: drillId, made: made) }
+    /// Marks count locally so Undo can truly remove the last shot; the whole
+    /// session is persisted in one batch by `finish` — matching the backend,
+    /// where POST /api/shot-events accepts `{ events: [...] }` batches and has
+    /// no per-event delete.
+    func mark(_ made: Bool, drillId: String) { n += 1; shots.append((n, made)) }
+    func undo() { if !shots.isEmpty { shots.removeLast(); n = max(0, n - 1) } }
+
+    // POST /api/shot-events — shape per src/app/api/shot-events/route.ts.
+    private struct ShotEventsBody: Encodable {
+        struct Event: Encodable {
+            var sequence: Int
+            var detected = true
+            var detectedResult: String
+            var confidence = 1.0
+            var metadata: [String: String]
+        }
+        var events: [Event]
     }
-    func undo() { if !shots.isEmpty { shots.removeLast() } }
+    // POST /api/workouts — shape per src/app/api/workouts/route.ts.
+    private struct WorkoutBody: Encodable {
+        var name: String
+        var scheduledDate: String
+        var completed = true
+        var completedAt: String
+        var duration: Int
+        var totalShots: Int
+        var totalMade: Int
+        var totalMissed: Int
+        var accuracy: Double
+    }
+
+    /// Ends the session: writes every marked shot to /api/shot-events and the
+    /// completed workout (real totals) to /api/workouts.
+    func finish(drillName: String) async {
+        stop()
+        guard !shots.isEmpty, !saving else { return }
+        saving = true
+        defer { saving = false }
+        let events = shots.map { shot in
+            ShotEventsBody.Event(sequence: shot.n,
+                                 detectedResult: shot.made ? "make" : "miss",
+                                 metadata: ["drillId": drillName, "source": "ios-manual"])
+        }
+        await APIClient.shared.send("/api/shot-events", body: ShotEventsBody(events: events))
+        let now = ISO8601DateFormatter().string(from: Date())
+        let made = makes
+        await APIClient.shared.send("/api/workouts", body: WorkoutBody(
+            name: drillName,
+            scheduledDate: now,
+            completedAt: now,
+            duration: max(1, Int((Double(elapsed) / 60).rounded())),
+            totalShots: shots.count,
+            totalMade: made,
+            totalMissed: shots.count - made,
+            accuracy: Double(made) / Double(shots.count) * 100))
+    }
 }
 
 struct DrillExecutionView: View {   // 060
     @EnvironmentObject var app: AppState
     var drillName = "Pound Crossover Foundation"
     @StateObject private var m = DrillSessionModel()
+    @State private var viewAngle = "FRONT VIEW"
+    @State private var showCompletion = false
     private let target = 15
     var body: some View {
         CanonicalScreen(testID: "screen-ios-drill-execution") {
@@ -1103,13 +1350,19 @@ struct DrillExecutionView: View {   // 060
                         ZStack(alignment: .top) {
                             MediaSurface(height: 290)
                             HStack {
-                                HStack(spacing: 5) {
-                                    Text("FRONT VIEW").font(.system(size: 10, weight: .bold)).kerning(0.5)
-                                    Image(systemName: "chevron.down").font(.system(size: 8))
+                                Menu {
+                                    ForEach(["FRONT VIEW", "SIDE VIEW", "REAR VIEW"], id: \.self) { v in
+                                        Button(v) { viewAngle = v }
+                                    }
+                                } label: {
+                                    HStack(spacing: 5) {
+                                        Text(viewAngle).font(.system(size: 10, weight: .bold)).kerning(0.5)
+                                        Image(systemName: "chevron.down").font(.system(size: 8))
+                                    }
+                                    .foregroundStyle(.white)
+                                    .padding(.horizontal, 10).padding(.vertical, 6)
+                                    .background(.black.opacity(0.75), in: RoundedRectangle(cornerRadius: 5))
                                 }
-                                .foregroundStyle(.white)
-                                .padding(.horizontal, 10).padding(.vertical, 6)
-                                .background(.black.opacity(0.75), in: RoundedRectangle(cornerRadius: 5))
                                 Spacer()
                                 HStack(spacing: 6) {
                                     Circle().fill(ShotIQColor.shotiqOrange).frame(width: 7, height: 7)
@@ -1168,21 +1421,31 @@ struct DrillExecutionView: View {   // 060
                             }
                         }
                         .padding(.top, 10)
-                        NavigationLink { WorkoutCompletionView(shots: m.shots.count, makes: m.makes) } label: {
+                        Button {
+                            Task {
+                                await m.finish(drillName: drillName)   // persist shots + workout
+                                showCompletion = true
+                            }
+                        } label: {
                             HStack(spacing: 8) {
-                                Image(systemName: "stop.circle")
-                                Text("End workout").font(.system(size: 16, weight: .medium))
+                                if m.saving { ProgressView().tint(ShotIQColor.shotiqOrange) }
+                                else { Image(systemName: "stop.circle") }
+                                Text(m.saving ? "Saving…" : "End workout").font(.system(size: 16, weight: .medium))
                             }
                             .frame(maxWidth: .infinity).frame(height: 52)
                             .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
                             .foregroundStyle(ShotIQColor.shotiqOrange)
                         }
+                        .disabled(m.saving)
                         .padding(.top, 10)
                         Spacer(minLength: 30)
                     }
                     .padding(.horizontal, 20)
                 }
             }
+        }
+        .navigationDestination(isPresented: $showCompletion) {
+            WorkoutCompletionView(shots: m.shots.count, makes: m.makes, drillName: drillName)
         }
         .onAppear { m.start() }
         .onDisappear { m.stop() }
@@ -1201,6 +1464,7 @@ struct DrillExecutionView: View {   // 060
 struct ShotTrackerView: View {      // 061
     @EnvironmentObject var app: AppState
     @StateObject private var m = DrillSessionModel()
+    @State private var showCompletion = false
     private let baseShots = 24, baseMakes = 15, sessionTarget = 25
     private let baseMisses: Set<Int> = [2, 4, 5, 8, 11, 14, 17, 20, 21]
     private var shots: Int { baseShots + m.shots.count }
@@ -1281,7 +1545,7 @@ struct ShotTrackerView: View {      // 061
                                 correction("Elbow Height", "Raise elbow")
                                 correction("Shooting Pocket", "Tighten pocket")
                                 correction("Release Arc", "Less forward tilt")
-                                Button {} label: {
+                                NavigationLink { AnalysisResultOverviewView() } label: {
                                     HStack(spacing: 6) {
                                         Image(systemName: "list.bullet").font(.system(size: 10))
                                         Text("VIEW ANALYSIS").font(.system(size: 9, weight: .bold)).kerning(0.4)
@@ -1361,9 +1625,15 @@ struct ShotTrackerView: View {      // 061
                             Button { m.undo() } label: {
                                 trackerButton("arrow.uturn.backward", "UNDO", ShotIQColor.ink, nil)
                             }
-                            NavigationLink { WorkoutCompletionView(shots: shots, makes: makes) } label: {
-                                trackerButton("stop.circle", "END WORKOUT", ShotIQColor.ink, nil)
+                            Button {
+                                Task {
+                                    await m.finish(drillName: "Shot Tracker Session")
+                                    showCompletion = true
+                                }
+                            } label: {
+                                trackerButton("stop.circle", m.saving ? "SAVING…" : "END WORKOUT", ShotIQColor.ink, nil)
                             }
+                            .disabled(m.saving)
                         }
                         .padding(.top, 18)
                         Spacer(minLength: 30)
@@ -1372,6 +1642,11 @@ struct ShotTrackerView: View {      // 061
                 }
             }
         }
+        .navigationDestination(isPresented: $showCompletion) {
+            WorkoutCompletionView(shots: shots, makes: makes, drillName: "Shot Tracker Session")
+        }
+        .onAppear { m.start() }
+        .onDisappear { m.stop() }
     }
     private func correction(_ title: String, _ caption: String) -> some View {
         VStack(alignment: .leading, spacing: 1) {
@@ -1400,6 +1675,7 @@ struct ShotTrackerView: View {      // 061
 struct WorkoutCompletionView: View { // 062
     @EnvironmentObject var app: AppState
     var shots = 24; var makes = 15
+    var drillName = "Quick Release Builder"
     private var accuracy: String {
         shots > 0 ? String(format: "%.1f%%", Double(makes) / Double(shots) * 100) : "—"
     }
@@ -1415,9 +1691,15 @@ struct WorkoutCompletionView: View { // 062
                                 .font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
                         }
                         Spacer(minLength: 8)
-                        HeaderStat(icon: "film", value: "6", label: "DAY STREAK")
+                        NavigationLink { WorkoutCalendarView() } label: {
+                            HeaderStat(icon: "film", value: "6", label: "DAY STREAK")
+                        }
+                        .buttonStyle(.plain)
                         VRule(height: 46)
-                        HeaderStat(icon: "circle.hexagongrid", value: "2,840", label: "POINTS")
+                        NavigationLink { PlayerCardView() } label: {
+                            HeaderStat(icon: "circle.hexagongrid", value: "2,840", label: "POINTS")
+                        }
+                        .buttonStyle(.plain)
                     }
                     .padding(.horizontal, 20).padding(.top, 14)
                     VStack(alignment: .leading, spacing: 0) {
@@ -1527,7 +1809,7 @@ struct WorkoutCompletionView: View { // 062
                         }
                         .padding(.top, 10)
                         HStack(spacing: 10) {
-                            Button {} label: {
+                            NavigationLink { ShotBreakdownView() } label: {
                                 HStack(spacing: 6) {
                                     Image(systemName: "doc.text").font(.system(size: 12))
                                     Text("Review shots").font(.system(size: 13, weight: .semibold))
@@ -1547,7 +1829,7 @@ struct WorkoutCompletionView: View { // 062
                                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.analysisBlue))
                                 .foregroundStyle(ShotIQColor.analysisBlue)
                             }
-                            Button {} label: {
+                            NavigationLink { DrillExecutionView(drillName: drillName) } label: {
                                 HStack(spacing: 6) {
                                     Image(systemName: "arrow.clockwise").font(.system(size: 12))
                                     Text("Repeat drill").font(.system(size: 13, weight: .semibold))

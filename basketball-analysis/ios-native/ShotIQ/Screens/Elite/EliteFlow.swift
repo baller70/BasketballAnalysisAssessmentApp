@@ -1,11 +1,86 @@
 import SwiftUI
+import UIKit
 
 // Player card & elite comparison flow — screens 048-053. Shooter data comes
 // from the shared /api/shooters endpoint. Elite shooter photos are neutral
 // gray placeholder rectangles (no raster assets ship with the app).
 
+/// TopBar whose settings gear actually opens the Settings hub.
+fileprivate struct EliteTopBar: View {
+    @State private var showSettings = false
+    var body: some View {
+        TopBar(onSettings: { showSettings = true })
+            .navigationDestination(isPresented: $showSettings) { SettingsHubView() }
+    }
+}
+
+/// Lightweight payload for this flow's info alerts.
+fileprivate struct EliteInfoNote: Identifiable {
+    let id = UUID()
+    let title: String
+    let message: String
+}
+
+fileprivate extension View {
+    func eliteInfoAlert(_ note: Binding<EliteInfoNote?>) -> some View {
+        alert(note.wrappedValue?.title ?? "",
+              isPresented: Binding(get: { note.wrappedValue != nil },
+                                   set: { if !$0 { note.wrappedValue = nil } })) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(note.wrappedValue?.message ?? "")
+        }
+    }
+}
+
+/// Compact, self-contained card used for ImageRenderer exports ("Download card" /
+/// "Save card"). Mirrors the canonical card banner + score + session stats.
+fileprivate struct PlayerCardExportView: View {
+    var name: String
+    var accent: Color = ShotIQColor.shotiqOrange
+    var jersey: Int? = nil
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Text("SHOTIQ").font(.system(size: 17, weight: .black).width(.condensed))
+                Spacer()
+                if let jersey {
+                    Text("#\(jersey)").font(.custom("DINCondensed-Bold", size: 18))
+                }
+                Text("AI ANALYSIS").font(.system(size: 12, weight: .semibold)).kerning(3)
+            }
+            .foregroundStyle(.white)
+            .padding(.horizontal, 16).frame(height: 44)
+            .background(accent)
+            VStack(alignment: .leading, spacing: 10) {
+                Text(name.uppercased()).shotiqDisplay(34)
+                Text("RIGHT-HANDED • ADVANCED").font(.system(size: 11, weight: .medium)).kerning(0.6)
+                    .foregroundStyle(ShotIQColor.graphite)
+                HStack(alignment: .center, spacing: 16) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("FORM SCORE").font(.system(size: 10, weight: .semibold)).kerning(0.6)
+                            .foregroundStyle(ShotIQColor.graphite)
+                        Text("82").font(.custom("DINCondensed-Bold", size: 52)).foregroundStyle(accent)
+                        ScoreBar(pct: 0.82, color: accent).frame(width: 96)
+                    }
+                    Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 56)
+                    StatBlock(value: "24", label: "SHOTS", valueSize: 26)
+                    StatBlock(value: "15", label: "MAKES", valueSize: 26)
+                    StatBlock(value: "62.5%", label: "MAKE %", valueSize: 26)
+                }
+                PhaseStrip()
+            }
+            .padding(16)
+        }
+        .frame(width: 380)
+        .background(ShotIQColor.paper)
+    }
+}
+
 struct PlayerCardView: View {       // 048
     @EnvironmentObject var app: AppState
+    @State private var cardImage: Image?
+    private var playerName: String { app.user?.displayName ?? "Jordan Ellis" }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-player-card") {
             VStack(spacing: 0) {
@@ -15,8 +90,13 @@ struct PlayerCardView: View {       // 048
                     Wordmark(size: 30)
                     Spacer()
                     HStack(spacing: 18) {
-                        Image(systemName: "point.3.connected.trianglepath.dotted").font(.system(size: 17))
-                        Image(systemName: "arrow.down.to.line").font(.system(size: 17))
+                        NavigationLink { EliteMatchView() } label: {
+                            Image(systemName: "point.3.connected.trianglepath.dotted").font(.system(size: 17))
+                        }
+                        .buttonStyle(.plain)
+                        downloadControl {
+                            Image(systemName: "arrow.down.to.line").font(.system(size: 17))
+                        }
                     }
                     .foregroundStyle(ShotIQColor.ink)
                 }
@@ -155,14 +235,16 @@ struct PlayerCardView: View {       // 048
                                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
                                 .foregroundStyle(ShotIQColor.ink)
                             }
-                            VStack(spacing: 8) {
-                                Image(systemName: "arrow.down.to.line").font(.system(size: 20))
-                                Text("Download card").font(.system(size: 14))
-                                    .lineLimit(1).minimumScaleFactor(0.7)
+                            downloadControl {
+                                VStack(spacing: 8) {
+                                    Image(systemName: "arrow.down.to.line").font(.system(size: 20))
+                                    Text("Download card").font(.system(size: 14))
+                                        .lineLimit(1).minimumScaleFactor(0.7)
+                                }
+                                .frame(maxWidth: .infinity).frame(height: 84)
+                                .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+                                .foregroundStyle(ShotIQColor.ink)
                             }
-                            .frame(maxWidth: .infinity).frame(height: 84)
-                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
-                            .foregroundStyle(ShotIQColor.ink)
                         }
                         .padding(.top, 18)
                         Spacer(minLength: 24)
@@ -171,6 +253,28 @@ struct PlayerCardView: View {       // 048
                 }
             }
         }
+        .onAppear { renderCard() }
+    }
+    /// Renders the export card once, then serves it through ShareLink (the share
+    /// sheet's "Save Image" covers photo-library saving without an Info.plist key).
+    @ViewBuilder
+    private func downloadControl<Label: View>(@ViewBuilder label: () -> Label) -> some View {
+        if let cardImage {
+            ShareLink(item: cardImage,
+                      preview: SharePreview("ShotIQ Player Card", image: cardImage)) {
+                label()
+            }
+            .buttonStyle(.plain)
+        } else {
+            Button { renderCard() } label: { label() }
+                .buttonStyle(.plain)
+        }
+    }
+    private func renderCard() {
+        guard cardImage == nil else { return }
+        let renderer = ImageRenderer(content: PlayerCardExportView(name: playerName))
+        renderer.scale = 3
+        if let ui = renderer.uiImage { cardImage = Image(uiImage: ui) }
     }
     private func archetypeCol(_ label: String, _ icon: String, _ title: String, _ caption: String) -> some View {
         VStack(spacing: 8) {
@@ -215,6 +319,10 @@ struct PlayerCardView: View {       // 048
 }
 
 struct CustomizePlayerCardView: View { // 049
+    @Environment(\.dismiss) private var dismiss
+    @State private var savedImage: Image?
+    @State private var showSaveSheet = false
+    @State private var layoutInfo: EliteInfoNote?
     @State private var accent = "Orange"
     @State private var layout = "Classic"
     @State private var showTrend = true
@@ -233,12 +341,18 @@ struct CustomizePlayerCardView: View { // 049
         CanonicalScreen(testID: "screen-ios-customize-player-card") {
             VStack(spacing: 0) {
                 HStack {
-                    Image(systemName: "chevron.left").font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(ShotIQColor.ink)
+                    Button { dismiss() } label: {
+                        Image(systemName: "chevron.left").font(.system(size: 18, weight: .semibold))
+                            .foregroundStyle(ShotIQColor.ink)
+                    }
+                    .buttonStyle(.plain)
                     Spacer()
                     Text("CUSTOMIZE PLAYER CARD").shotiqDisplay(20)
                     Spacer()
-                    Text("Cancel").font(.system(size: 15)).foregroundStyle(ShotIQColor.shotiqOrange)
+                    Button { dismiss() } label: {
+                        Text("Cancel").font(.system(size: 15)).foregroundStyle(ShotIQColor.shotiqOrange)
+                    }
+                    .buttonStyle(.plain)
                 }
                 .padding(.horizontal, 20).frame(height: 52)
                 .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
@@ -381,11 +495,17 @@ struct CustomizePlayerCardView: View { // 049
                                     .font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
                             }
                             Spacer()
-                            Image(systemName: "info.circle").font(.system(size: 16)).foregroundStyle(ShotIQColor.graphite)
+                            Button {
+                                layoutInfo = EliteInfoNote(title: "Card layout",
+                                                           message: "ShotIQ cards use one fixed layout so every player card stays legible and instantly recognizable. Colors, names and jersey number are yours to customize.")
+                            } label: {
+                                Image(systemName: "info.circle").font(.system(size: 16)).foregroundStyle(ShotIQColor.graphite)
+                            }
+                            .buttonStyle(.plain)
                         }
                         .padding(.top, 18)
-                        PrimaryButton(title: "Save card").padding(.top, 18)
-                        Button {} label: {
+                        PrimaryButton(title: "Save card") { saveCard() }.padding(.top, 18)
+                        Button { dismiss() } label: {
                             Text("Cancel").font(.system(size: 16)).foregroundStyle(ShotIQColor.shotiqOrange)
                                 .frame(maxWidth: .infinity).frame(height: 44)
                         }
@@ -396,6 +516,45 @@ struct CustomizePlayerCardView: View { // 049
                     .padding(.horizontal, 20)
                 }
             }
+        }
+        .sheet(isPresented: $showSaveSheet) {
+            VStack(spacing: 18) {
+                Text("CARD SAVED").shotiqDisplay(26).padding(.top, 24)
+                Text("Share it, or choose \u{201C}Save Image\u{201D} to add it to your photos.")
+                    .font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
+                    .multilineTextAlignment(.center)
+                if let savedImage {
+                    savedImage.resizable().scaledToFit()
+                        .frame(maxHeight: 320)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .overlay(RoundedRectangle(cornerRadius: 10).stroke(ShotIQColor.rule))
+                    ShareLink(item: savedImage,
+                              preview: SharePreview("ShotIQ Player Card", image: savedImage)) {
+                        HStack(spacing: 10) {
+                            Image(systemName: "square.and.arrow.up")
+                            Text("Save or share image").font(.system(size: 17, weight: .medium))
+                        }
+                        .frame(maxWidth: .infinity).frame(height: 54)
+                        .background(bannerColor, in: RoundedRectangle(cornerRadius: ShotIQRadius.control))
+                        .foregroundStyle(.white)
+                    }
+                }
+                Spacer(minLength: 8)
+            }
+            .padding(.horizontal, 24)
+            .presentationDetents([.medium, .large])
+        }
+        .eliteInfoAlert($layoutInfo)
+    }
+    /// Renders the customized card to a bitmap; ShareLink's sheet handles saving
+    /// (no photo-library permission key ships in Info.plist).
+    private func saveCard() {
+        let renderer = ImageRenderer(content: PlayerCardExportView(
+            name: "\(firstName) \(lastName)", accent: bannerColor, jersey: jersey))
+        renderer.scale = 3
+        if let ui = renderer.uiImage {
+            savedImage = Image(uiImage: ui)
+            showSaveSheet = true
         }
     }
     private func detailLabel(_ title: String, _ caption: String) -> some View {
@@ -443,6 +602,8 @@ final class EliteViewModel: ObservableObject {
 }
 
 struct EliteMatchView: View {       // 050
+    @Environment(\.dismiss) private var dismiss
+    @State private var showSettings = false
     @StateObject private var vm = EliteViewModel()
     private let comparisons: [(String, String, String, String, String, String)] = [
         // icon, name, unit, you, elite, diff
@@ -460,16 +621,23 @@ struct EliteMatchView: View {       // 050
                     Wordmark(size: 30)
                     Spacer()
                     HeaderStat(icon: "circle.hexagongrid", value: "2,840", label: "POINTS")
-                    Image(systemName: "gearshape").font(.system(size: 20)).foregroundStyle(ShotIQColor.ink)
-                        .padding(.leading, 14)
+                    Button { showSettings = true } label: {
+                        Image(systemName: "gearshape").font(.system(size: 20)).foregroundStyle(ShotIQColor.ink)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.leading, 14)
                 }
                 .padding(.horizontal, 20).frame(height: 60)
                 .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
                         HStack(alignment: .top, spacing: 12) {
-                            Image(systemName: "arrow.left").font(.system(size: 20, weight: .semibold))
-                                .foregroundStyle(ShotIQColor.ink).padding(.top, 8)
+                            Button { dismiss() } label: {
+                                Image(systemName: "arrow.left").font(.system(size: 20, weight: .semibold))
+                                    .foregroundStyle(ShotIQColor.ink)
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.top, 8)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("AI ANALYSIS 50 – ELITE MATCH").shotiqDisplay(32)
                                 Text("Compare mechanics").font(.system(size: 15)).foregroundStyle(ShotIQColor.graphite)
@@ -535,7 +703,10 @@ struct EliteMatchView: View {       // 050
                                     actionRow("doc.text", "View elite profile")
                                 }
                             } else {
-                                actionRow("doc.text", "View elite profile")
+                                // Shooters still loading — browsing the list is the next-best destination.
+                                NavigationLink { EliteShootersView() } label: {
+                                    actionRow("doc.text", "View elite profile")
+                                }
                             }
                             NavigationLink { EliteShootersView() } label: {
                                 actionRow("person.2", "Choose another shooter")
@@ -670,6 +841,7 @@ struct EliteMatchView: View {       // 050
             }
         }
         .task { await vm.load() }
+        .navigationDestination(isPresented: $showSettings) { SettingsHubView() }
     }
     private func actionRow(_ icon: String, _ title: String) -> some View {
         HStack {
@@ -692,7 +864,12 @@ struct EliteMatchView: View {       // 050
 }
 
 struct PhotoComparisonView: View {  // 051
-    @State private var phase = 3.0
+    @Environment(\.dismiss) private var dismiss
+    @State private var phaseIndex = 3
+    @State private var overlaySkeletons = false
+    @State private var savedComparison = false
+    @State private var synced = false
+    private let phases = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
     private let rows: [(String, String, String, String, String, String)] = [
         // icon, label, sub, you, diff, elite
         ("point.3.connected.trianglepath.dotted", "ELBOW ANGLE", "at release", "162°", "12°", "174°"),
@@ -705,12 +882,17 @@ struct PhotoComparisonView: View {  // 051
         CanonicalScreen(testID: "screen-ios-photo-comparison") {
             VStack(spacing: 0) {
                 HStack {
-                    Image(systemName: "chevron.left").font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(ShotIQColor.ink)
+                    Button { dismiss() } label: {
+                        Image(systemName: "chevron.left").font(.system(size: 18, weight: .semibold))
+                            .foregroundStyle(ShotIQColor.ink)
+                    }
+                    .buttonStyle(.plain)
                     Spacer()
                     Text("COMPARE SHOOTERS").shotiqDisplay(22)
                     Spacer()
-                    Image(systemName: "square.and.arrow.up").font(.system(size: 18)).foregroundStyle(ShotIQColor.ink)
+                    ShareLink(item: "Comparing my shot to an elite reference on ShotIQ — 82 vs 94 form score, release angle within 12°. 🏀") {
+                        Image(systemName: "square.and.arrow.up").font(.system(size: 18)).foregroundStyle(ShotIQColor.ink)
+                    }
                 }
                 .padding(.horizontal, 20).frame(height: 52)
                 .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
@@ -762,8 +944,18 @@ struct PhotoComparisonView: View {  // 051
                         .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1).offset(y: -5), alignment: .top)
                         HStack(spacing: 2) {
                             ZStack(alignment: .topLeading) {
-                                ZStack { MediaSurface(height: 330); SkeletonOverlay() }
-                                mediaTag(ShotIQColor.shotiqOrange, "YOU")
+                                ZStack {
+                                    MediaSurface(height: 330)
+                                    SkeletonOverlay()
+                                    if overlaySkeletons {
+                                        // Elite skeleton overlaid on your frame for direct comparison.
+                                        SkeletonOverlay(boneColor: ShotIQColor.analysisBlue,
+                                                        jointColor: ShotIQColor.analysisBlue)
+                                            .opacity(0.75)
+                                            .offset(x: 5)
+                                    }
+                                }
+                                mediaTag(ShotIQColor.shotiqOrange, overlaySkeletons ? "YOU + ELITE" : "YOU")
                             }
                             ZStack(alignment: .topLeading) {
                                 ZStack { MediaSurface(height: 330); SkeletonOverlay() }
@@ -771,7 +963,16 @@ struct PhotoComparisonView: View {  // 051
                             }
                         }
                         .padding(.top, 12)
-                        PhaseStrip().padding(.top, 14)
+                        PhaseStrip(active: phases[phaseIndex]).padding(.top, 14)
+                        if synced && phaseIndex == 3 {
+                            HStack(spacing: 6) {
+                                Image(systemName: "checkmark.circle.fill").font(.system(size: 13))
+                                    .foregroundStyle(ShotIQColor.confirmGreen)
+                                Text("Release frames aligned — both shooters shown at RELEASE (±2°).")
+                                    .font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                            }
+                            .padding(.top, 8)
+                        }
                         ForEach(rows, id: \.1) { icon, label, sub, you, diff, elite in
                             HStack(spacing: 8) {
                                 Image(systemName: icon).font(.system(size: 17, weight: .light))
@@ -801,13 +1002,35 @@ struct PhotoComparisonView: View {  // 051
                             .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
                         }
                         HStack(spacing: 10) {
-                            smallAction("figure.2", "Overlay skeletons")
-                            smallAction("arrow.left.and.right", "Swipe phases")
-                            smallAction("bookmark", "Save comparison")
+                            Button { overlaySkeletons.toggle() } label: {
+                                smallAction("figure.2", "Overlay skeletons", active: overlaySkeletons)
+                            }
+                            .buttonStyle(.plain)
+                            Button {
+                                withAnimation(.easeInOut(duration: 0.15)) {
+                                    phaseIndex = (phaseIndex + 1) % phases.count
+                                    if phaseIndex != 3 { synced = false }
+                                }
+                            } label: {
+                                smallAction("arrow.left.and.right", "Phase: \(phases[phaseIndex].capitalized)")
+                            }
+                            .buttonStyle(.plain)
+                            Button { savedComparison.toggle() } label: {
+                                smallAction(savedComparison ? "bookmark.fill" : "bookmark",
+                                            savedComparison ? "Saved" : "Save comparison",
+                                            active: savedComparison)
+                            }
+                            .buttonStyle(.plain)
                         }
                         .padding(.top, 14)
-                        PrimaryButton(title: "Sync release frames", icon: "arrow.2.circlepath")
-                            .padding(.top, 12)
+                        PrimaryButton(title: synced && phaseIndex == 3 ? "Release frames synced" : "Sync release frames",
+                                      icon: synced && phaseIndex == 3 ? "checkmark" : "arrow.2.circlepath") {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                phaseIndex = 3
+                                synced = true
+                            }
+                        }
+                        .padding(.top, 12)
                         Spacer(minLength: 24)
                     }
                     .padding(.horizontal, 20)
@@ -825,28 +1048,55 @@ struct PhotoComparisonView: View {  // 051
         .background(.black.opacity(0.45), in: Capsule())
         .padding(8)
     }
-    private func smallAction(_ icon: String, _ label: String) -> some View {
+    private func smallAction(_ icon: String, _ label: String, active: Bool = false) -> some View {
         HStack(spacing: 6) {
             Image(systemName: icon).font(.system(size: 13))
             Text(label).font(.system(size: 12))
                 .lineLimit(1).minimumScaleFactor(0.6)
         }
-        .foregroundStyle(ShotIQColor.ink)
+        .foregroundStyle(active ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
         .frame(maxWidth: .infinity).frame(height: 46)
-        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+        .overlay(RoundedRectangle(cornerRadius: 8)
+            .stroke(active ? ShotIQColor.shotiqOrange : ShotIQColor.rule))
     }
 }
 
 struct EliteShootersView: View {    // 052
     @StateObject private var vm = EliteViewModel()
     @State private var query = ""
+    @State private var level = "All Levels"
+    @State private var position = "All Positions"
+    @State private var shotType = "All Shot Types"
+    @State private var league = "More Filters"
+    @State private var sortKey = "WSI"
+    @State private var showFilters = true
+    @State private var info: EliteInfoNote?
+    private var levelOptions: [String] {
+        ["All Levels"] + Array(Set(vm.shooters.compactMap { $0.tier })).sorted()
+    }
+    private var positionOptions: [String] {
+        ["All Positions"] + Array(Set(vm.shooters.map { $0.position })).sorted()
+    }
+    private var leagueOptions: [String] {
+        ["More Filters"] + Array(Set(vm.shooters.map { $0.league })).sorted()
+    }
     var filtered: [EliteShooterDTO] {
-        query.isEmpty ? vm.shooters : vm.shooters.filter { $0.name.localizedCaseInsensitiveContains(query) }
+        var out = vm.shooters
+        if !query.isEmpty { out = out.filter { $0.name.localizedCaseInsensitiveContains(query) } }
+        if level != "All Levels" { out = out.filter { $0.tier == level } }
+        if position != "All Positions" { out = out.filter { $0.position == position } }
+        if league != "More Filters" { out = out.filter { $0.league == league } }
+        switch sortKey {
+        case "FG%": out.sort { ($0.careerPct ?? 0) > ($1.careerPct ?? 0) }
+        case "Name": out.sort { $0.name < $1.name }
+        default: break // WSI — canonical server order
+        }
+        return out
     }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-elite-shooters") {
             VStack(spacing: 0) {
-                TopBar()
+                EliteTopBar()
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
                         Text("ELITE SHOOTERS").shotiqDisplay(40).padding(.top, 18)
@@ -861,35 +1111,55 @@ struct EliteShootersView: View {    // 052
                             }
                             .padding(.horizontal, 14).frame(height: 50)
                             .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
-                            HStack(spacing: 8) {
-                                Image(systemName: "slider.horizontal.3").font(.system(size: 15))
-                                Text("Filter").font(.system(size: 14))
+                            Button { withAnimation(.easeInOut(duration: 0.15)) { showFilters.toggle() } } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "slider.horizontal.3").font(.system(size: 15))
+                                    Text("Filter").font(.system(size: 14))
+                                }
+                                .foregroundStyle(showFilters ? ShotIQColor.ink : ShotIQColor.shotiqOrange)
+                                .padding(.horizontal, 14).frame(height: 50)
+                                .overlay(RoundedRectangle(cornerRadius: 8)
+                                    .stroke(showFilters ? ShotIQColor.rule : ShotIQColor.shotiqOrange))
                             }
-                            .foregroundStyle(ShotIQColor.ink)
-                            .padding(.horizontal, 14).frame(height: 50)
-                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+                            .buttonStyle(.plain)
                         }
                         .padding(.top, 14)
-                        HStack(spacing: 8) {
-                            filterChip("All Levels")
-                            filterChip("All Positions")
-                            filterChip("All Shot Types")
-                            filterChip("More Filters")
-                        }
-                        .padding(.top, 10)
-                        HStack {
+                        if showFilters {
                             HStack(spacing: 8) {
-                                Image(systemName: "arrow.up.arrow.down").font(.system(size: 14))
-                                    .foregroundStyle(ShotIQColor.ink)
-                                Text("Sort: WSI").font(.system(size: 14, weight: .semibold)).foregroundStyle(ShotIQColor.ink)
-                                Image(systemName: "chevron.down").font(.system(size: 10, weight: .semibold))
-                                    .foregroundStyle(ShotIQColor.ink)
+                                filterChip($level, options: levelOptions, defaultLabel: "All Levels")
+                                filterChip($position, options: positionOptions, defaultLabel: "All Positions")
+                                filterChip($shotType,
+                                           options: ["All Shot Types", "Catch & Shoot", "Pull-Up", "Off Dribble"],
+                                           defaultLabel: "All Shot Types")
+                                filterChip($league, options: leagueOptions, defaultLabel: "More Filters")
+                            }
+                            .padding(.top, 10)
+                        }
+                        HStack {
+                            Menu {
+                                ForEach(["WSI", "FG%", "Name"], id: \.self) { k in
+                                    Button(k) { sortKey = k }
+                                }
+                            } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "arrow.up.arrow.down").font(.system(size: 14))
+                                        .foregroundStyle(ShotIQColor.ink)
+                                    Text("Sort: \(sortKey)").font(.system(size: 14, weight: .semibold)).foregroundStyle(ShotIQColor.ink)
+                                    Image(systemName: "chevron.down").font(.system(size: 10, weight: .semibold))
+                                        .foregroundStyle(ShotIQColor.ink)
+                                }
                             }
                             Spacer()
-                            HStack(spacing: 5) {
-                                Text("What is WSI?").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
-                                Image(systemName: "info.circle").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                            Button {
+                                info = EliteInfoNote(title: "What is WSI?",
+                                                     message: "The Weighted Shooting Index blends career shooting efficiency, mechanics quality and consistency into a single 0–100 score so shooters across eras and leagues can be ranked side by side.")
+                            } label: {
+                                HStack(spacing: 5) {
+                                    Text("What is WSI?").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                                    Image(systemName: "info.circle").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                                }
                             }
+                            .buttonStyle(.plain)
                         }
                         .padding(.top, 14)
                         if vm.loading && vm.shooters.isEmpty {
@@ -933,16 +1203,25 @@ struct EliteShootersView: View {    // 052
             }
         }
         .task { await vm.load() }
+        .eliteInfoAlert($info)
     }
-    private func filterChip(_ label: String) -> some View {
-        HStack(spacing: 6) {
-            Text(label).font(.system(size: 12)).foregroundStyle(ShotIQColor.ink)
-                .lineLimit(1).minimumScaleFactor(0.6)
-            Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold))
-                .foregroundStyle(ShotIQColor.graphite)
+    private func filterChip(_ selection: Binding<String>, options: [String], defaultLabel: String) -> some View {
+        Menu {
+            ForEach(options, id: \.self) { o in
+                Button(o) { selection.wrappedValue = o }
+            }
+        } label: {
+            HStack(spacing: 6) {
+                Text(selection.wrappedValue).font(.system(size: 12))
+                    .foregroundStyle(selection.wrappedValue == defaultLabel ? ShotIQColor.ink : ShotIQColor.shotiqOrange)
+                    .lineLimit(1).minimumScaleFactor(0.6)
+                Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold))
+                    .foregroundStyle(ShotIQColor.graphite)
+            }
+            .frame(maxWidth: .infinity).frame(height: 42)
+            .overlay(RoundedRectangle(cornerRadius: 8)
+                .stroke(selection.wrappedValue == defaultLabel ? ShotIQColor.rule : ShotIQColor.shotiqOrange))
         }
-        .frame(maxWidth: .infinity).frame(height: 42)
-        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
     }
     private func shooterCard(_ s: EliteShooterDTO, rank: Int) -> some View {
         ShotIQCard {
@@ -1012,21 +1291,30 @@ struct EliteShootersView: View {    // 052
 
 struct EliteShooterDetailView: View { // 053
     var shooter: EliteShooterDTO
+    @Environment(\.dismiss) private var dismiss
+    @State private var tab = "OVERVIEW"
+    @State private var savedReference = false
+    @State private var info: EliteInfoNote?
+    private let tabs = ["OVERVIEW", "MECHANICS", "STRENGTHS", "WEAKNESSES", "REFERENCE"]
     private let strengths = ["Quick, repeatable release", "High shooting arc", "Consistent base and balance"]
     private let weaknesses = ["Slight elbow flare in load", "Lower body under-utilized", "Off dribble rhythm"]
     var body: some View {
         CanonicalScreen(testID: "screen-ios-elite-shooter-detail") {
             VStack(spacing: 0) {
-                TopBar()
+                EliteTopBar()
+                ScrollViewReader { proxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
                         HStack(alignment: .top, spacing: 0) {
                             VStack(alignment: .leading, spacing: 0) {
-                                HStack(spacing: 8) {
-                                    Image(systemName: "chevron.left").font(.system(size: 13, weight: .semibold))
-                                    Text("ELITE SHOOTERS").font(.system(size: 12, weight: .semibold)).kerning(0.8)
+                                Button { dismiss() } label: {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "chevron.left").font(.system(size: 13, weight: .semibold))
+                                        Text("ELITE SHOOTERS").font(.system(size: 12, weight: .semibold)).kerning(0.8)
+                                    }
+                                    .foregroundStyle(ShotIQColor.graphite)
                                 }
-                                .foregroundStyle(ShotIQColor.graphite)
+                                .buttonStyle(.plain)
                                 .padding(.top, 14)
                                 Text(shooter.name.uppercased()).shotiqDisplay(36).padding(.top, 12)
                                 Text("Right-handed  •  \(shooter.position)").font(.system(size: 14))
@@ -1052,15 +1340,21 @@ struct EliteShooterDetailView: View { // 053
                         }
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 26) {
-                                VStack(spacing: 8) {
-                                    Text("OVERVIEW").font(.system(size: 13, weight: .bold)).kerning(0.6)
-                                        .foregroundStyle(ShotIQColor.shotiqOrange)
-                                    Rectangle().fill(ShotIQColor.shotiqOrange).frame(height: 3)
-                                }
-                                .fixedSize()
-                                ForEach(["MECHANICS", "STRENGTHS", "WEAKNESSES", "REFERENCE"], id: \.self) { t in
-                                    Text(t).font(.system(size: 13, weight: .semibold)).kerning(0.6)
-                                        .foregroundStyle(ShotIQColor.graphite)
+                                ForEach(tabs, id: \.self) { t in
+                                    Button {
+                                        tab = t
+                                        withAnimation(.easeInOut(duration: 0.25)) {
+                                            proxy.scrollTo(anchorID(for: t), anchor: .top)
+                                        }
+                                    } label: {
+                                        VStack(spacing: 8) {
+                                            Text(t).font(.system(size: 13, weight: tab == t ? .bold : .semibold)).kerning(0.6)
+                                                .foregroundStyle(tab == t ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
+                                            Rectangle().fill(tab == t ? ShotIQColor.shotiqOrange : .clear).frame(height: 3)
+                                        }
+                                        .fixedSize()
+                                    }
+                                    .buttonStyle(.plain)
                                 }
                             }
                             .padding(.horizontal, 20)
@@ -1074,13 +1368,22 @@ struct EliteShooterDetailView: View { // 053
                                     Text("24 Shots Analyzed").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
                                 }
                                 Spacer()
-                                HStack(spacing: 3) {
-                                    Text("View bio").font(.system(size: 14)).foregroundStyle(ShotIQColor.shotiqOrange)
-                                    Image(systemName: "chevron.right").font(.system(size: 11))
-                                        .foregroundStyle(ShotIQColor.shotiqOrange)
+                                Button {
+                                    let fg = shooter.careerPct.map { String(format: "%.1f%%", $0) } ?? "—"
+                                    info = EliteInfoNote(
+                                        title: shooter.name,
+                                        message: "\(shooter.position) • \(shooter.team) (\(shooter.league)). \(shooter.tier ?? "Elite") \(shooter.era ?? "era") shooter standing \(shooter.height / 12)'\(shooter.height % 12)\" at \(shooter.weight) lb, with a \(fg) career field-goal percentage and \(String(format: "%.1f%%", shooter.careerFreeThrowPct)) from the line.")
+                                } label: {
+                                    HStack(spacing: 3) {
+                                        Text("View bio").font(.system(size: 14)).foregroundStyle(ShotIQColor.shotiqOrange)
+                                        Image(systemName: "chevron.right").font(.system(size: 11))
+                                            .foregroundStyle(ShotIQColor.shotiqOrange)
+                                    }
                                 }
+                                .buttonStyle(.plain)
                             }
                             .padding(.top, 18)
+                            .id("section-OVERVIEW")
                             HStack(alignment: .top, spacing: 12) {
                                 ShotIQCard {
                                     HStack(spacing: 0) {
@@ -1150,6 +1453,7 @@ struct EliteShooterDetailView: View { // 053
                             .padding(.top, 8)
                             Text("MECHANICS SNAPSHOT").shotiqDisplay(20).padding(.top, 22)
                                 .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1).offset(y: -11), alignment: .top)
+                                .id("section-MECHANICS")
                             HStack(spacing: 0) {
                                 snapshotCol("Elbow Angle", "89°")
                                 Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 44)
@@ -1164,7 +1468,7 @@ struct EliteShooterDetailView: View { // 053
                             .padding(.top, 8)
                             HStack(alignment: .top, spacing: 24) {
                                 VStack(alignment: .leading, spacing: 8) {
-                                    Text("STRENGTHS").shotiqDisplay(18)
+                                    Text("STRENGTHS").shotiqDisplay(18).id("section-STRENGTHS")
                                     ForEach(strengths, id: \.self) { s in
                                         HStack(spacing: 8) {
                                             Image(systemName: "checkmark.circle").font(.system(size: 14))
@@ -1190,6 +1494,7 @@ struct EliteShooterDetailView: View { // 053
                             }
                             .padding(.top, 20)
                             Text("REFERENCE FORM FRAMES").shotiqDisplay(20).padding(.top, 22)
+                                .id("section-REFERENCE")
                             HStack(spacing: 8) {
                                 ForEach(["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"], id: \.self) { p in
                                     VStack(spacing: 6) {
@@ -1218,18 +1523,24 @@ struct EliteShooterDetailView: View { // 053
                                     .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 6))
                                     .foregroundStyle(.white)
                                 }
-                                HStack(spacing: 8) {
-                                    Image(systemName: "bookmark")
-                                    Text("Save reference").font(.system(size: 14))
-                                        .lineLimit(1).minimumScaleFactor(0.7)
+                                Button { savedReference.toggle() } label: {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: savedReference ? "bookmark.fill" : "bookmark")
+                                        Text(savedReference ? "Saved" : "Save reference").font(.system(size: 14))
+                                            .lineLimit(1).minimumScaleFactor(0.7)
+                                    }
+                                    .foregroundStyle(savedReference ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
+                                    .padding(.horizontal, 16).frame(height: 52)
+                                    .overlay(RoundedRectangle(cornerRadius: 6)
+                                        .stroke(savedReference ? ShotIQColor.shotiqOrange : ShotIQColor.rule))
                                 }
-                                .foregroundStyle(ShotIQColor.ink)
-                                .padding(.horizontal, 16).frame(height: 52)
-                                .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.rule))
-                                Image(systemName: "square.and.arrow.up").font(.system(size: 17))
-                                    .foregroundStyle(ShotIQColor.ink)
-                                    .frame(width: 52, height: 52)
-                                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.rule))
+                                .buttonStyle(.plain)
+                                ShareLink(item: "Studying \(shooter.name)'s shooting form on ShotIQ — \(shooter.careerPct.map { String(format: "%.1f%%", $0) } ?? "elite") career FG. 🏀") {
+                                    Image(systemName: "square.and.arrow.up").font(.system(size: 17))
+                                        .foregroundStyle(ShotIQColor.ink)
+                                        .frame(width: 52, height: 52)
+                                        .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.rule))
+                                }
                             }
                             .padding(.top, 18)
                             Spacer(minLength: 24)
@@ -1237,8 +1548,14 @@ struct EliteShooterDetailView: View { // 053
                         .padding(.horizontal, 20)
                     }
                 }
+                }
             }
         }
+        .eliteInfoAlert($info)
+    }
+    /// Strengths and weaknesses share one row, so both tabs land on the same anchor.
+    private func anchorID(for tab: String) -> String {
+        tab == "WEAKNESSES" ? "section-STRENGTHS" : "section-\(tab)"
     }
     private func summaryStat(_ label: String, _ value: String) -> some View {
         VStack(spacing: 3) {

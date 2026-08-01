@@ -25,6 +25,7 @@ targets:
         UIStatusBarHidden: true            # canonical screens hide the system status bar
         UIViewControllerBasedStatusBarAppearance: false
         NSCameraUsageDescription: ShotIQ analyzes your shooting form from live camera capture.
+        NSMicrophoneUsageDescription: ShotIQ records audio with your shot videos for coaching playback.
         NSPhotoLibraryUsageDescription: ShotIQ imports shot photos and videos for analysis.
         NSUserNotificationsUsageDescription: ShotIQ reminds you about workouts and analysis results.
     settings:
