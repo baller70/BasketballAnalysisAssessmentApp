@@ -1,9 +1,120 @@
 import SwiftUI
 import PhotosUI
 import AVFoundation
+import AVKit
 
 // Capture & upload flow — screens 021-035. PhotosUI for library import,
 // AVFoundation capture session for live camera (permission-gated).
+
+// MARK: - Live camera plumbing shared by the capture flow
+
+/// One shared camera for the whole live flow (028-035) so pushing from setup →
+/// calibration → readiness → recording keeps a single AVCaptureSession alive
+/// instead of fighting over the device with per-screen sessions.
+extension CameraService {
+    static let live = CameraService()
+
+    /// Flip between the back and front wide-angle cameras in place.
+    func flipCamera() {
+        guard let current = session.inputs
+            .compactMap({ $0 as? AVCaptureDeviceInput })
+            .first(where: { $0.device.hasMediaType(.video) }) else { return }
+        let next: AVCaptureDevice.Position = current.device.position == .back ? .front : .back
+        guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: next),
+              let input = try? AVCaptureDeviceInput(device: device) else { return }
+        session.beginConfiguration()
+        session.removeInput(current)
+        if session.canAddInput(input) { session.addInput(input) } else { session.addInput(current) }
+        session.commitConfiguration()
+    }
+}
+
+/// Live viewfinder layer dropped inside the dark camera surfaces: real preview
+/// when running, Settings deep-link card when denied, dark placeholder while
+/// the session spins up.
+private struct LiveViewfinder: View {
+    @ObservedObject var camera: CameraService
+    var radius: CGFloat = 8
+    var body: some View {
+        ZStack {
+            if camera.status == .ready {
+                CameraPreviewView(session: camera.session)
+                    .clipShape(RoundedRectangle(cornerRadius: radius))
+            } else if camera.status == .unauthorized {
+                CameraDeniedView().padding(18)
+            }
+        }
+        .onAppear { camera.start() }
+    }
+}
+
+/// Full-screen camera sheet behind "Take photo" / "Retake" — real capture via
+/// CameraService.capturePhoto(); the shot flows back into the review path.
+struct CameraPhotoCaptureView: View {
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject private var camera = CameraService.live
+    var onCapture: (UIImage) -> Void
+    var body: some View {
+        ZStack(alignment: .bottom) {
+            Color.black.ignoresSafeArea()
+            if camera.status == .ready {
+                CameraPreviewView(session: camera.session).ignoresSafeArea()
+            } else if camera.status == .unauthorized {
+                CameraDeniedView().padding(24)
+            } else {
+                ProgressView().tint(.white)
+            }
+            VStack(spacing: 14) {
+                Button {
+                    camera.capturePhoto()
+                } label: {
+                    Circle().stroke(.white, lineWidth: 4).frame(width: 76, height: 76)
+                        .overlay(Circle().fill(.white).frame(width: 62, height: 62))
+                }
+                .buttonStyle(.plain)
+                .disabled(camera.status != .ready)
+                .accessibilityLabel("Take photo")
+                Button { dismiss() } label: {
+                    Text("Cancel").font(.system(size: 16, weight: .medium)).foregroundStyle(.white)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.bottom, 34)
+        }
+        .onAppear { camera.lastPhoto = nil; camera.start() }
+        .onChange(of: camera.lastPhoto) { _, data in
+            if let data, let img = UIImage(data: data) {
+                onCapture(img)
+                dismiss()
+            }
+        }
+    }
+}
+
+/// Bake a 90° rotation into the picked image (rotate dial side buttons).
+private func shotiqRotated(_ image: UIImage, clockwise: Bool) -> UIImage {
+    let size = CGSize(width: image.size.height, height: image.size.width)
+    return UIGraphicsImageRenderer(size: size).image { ctx in
+        let c = ctx.cgContext
+        c.translateBy(x: size.width / 2, y: size.height / 2)
+        c.rotate(by: (clockwise ? CGFloat.pi : -CGFloat.pi) / 2)
+        image.draw(in: CGRect(x: -image.size.width / 2, y: -image.size.height / 2,
+                              width: image.size.width, height: image.size.height))
+    }
+}
+
+/// Bake a centered 3:4 crop into the picked image (CROP button — matches the
+/// 3:4 badge on the crop frame).
+private func shotiqCropped34(_ image: UIImage) -> UIImage {
+    let w = image.size.width, h = image.size.height
+    let ratio: CGFloat = 3.0 / 4.0
+    var cropW = w, cropH = h
+    if w / h > ratio { cropW = h * ratio } else { cropH = w / ratio }
+    let origin = CGPoint(x: (w - cropW) / 2, y: (h - cropH) / 2)
+    return UIGraphicsImageRenderer(size: CGSize(width: cropW, height: cropH)).image { _ in
+        image.draw(at: CGPoint(x: -origin.x, y: -origin.y))
+    }
+}
 
 // MARK: - Shared canonical chrome for the capture screens
 
@@ -53,6 +164,7 @@ private func captureDark(_ height: CGFloat, radius: CGFloat = 8) -> some View {
 }
 
 /// PRIMARY COACHING TARGET row (canonical 026/028/030/031/032/034).
+/// Tapping it opens the coaching-target detail (FlawDetailView) everywhere.
 private struct CaptureCoachingRow: View {
     var boxed = false
     var body: some View {
@@ -68,13 +180,71 @@ private struct CaptureCoachingRow: View {
                 Image(systemName: "chevron.right").font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
             }
         }
-        Group {
-            if boxed {
-                ShotIQCard { row.padding(14) }
-            } else {
-                row.padding(.vertical, 12)
-                    .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .top)
-                    .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
+        NavigationLink {
+            FlawDetailView(title: "Keep elbow stacked through release", severity: "PRIMARY TARGET")
+        } label: {
+            Group {
+                if boxed {
+                    ShotIQCard { row.padding(14) }
+                } else {
+                    row.padding(.vertical, 12)
+                        .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .top)
+                        .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// Capture guide — the filming checklist behind "View capture guide" /
+/// "See capture guide" / "View filming tips" / "Camera help".
+struct CaptureGuideView: View {
+    private let tips: [(String, String, String)] = [
+        ("video", "CAMERA POSITION", "Place the camera at hip height, 15–20 ft away."),
+        ("iphone", "SIDE VIEW", "Film from the side at chest height — it gives the most accurate angles."),
+        ("figure.stand", "FULL BODY IN FRAME", "Feet to fingertips visible with a little space above your head."),
+        ("lightbulb", "GOOD LIGHTING", "Well-lit court, clear background, no backlight."),
+        ("rectangle.dashed", "HOOP VISIBLE", "Keep the backboard and rim in frame for make detection."),
+        ("figure.basketball", "NORMAL ROUTINE", "Use your regular pre-shot routine so we analyze your real shot."),
+    ]
+    var body: some View {
+        CanonicalScreen(testID: "screen-ios-capture-guide") {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    CaptureHeader()
+
+                    Text("CAPTURE GUIDE").shotiqDisplay(38)
+                        .padding(.horizontal, 20).padding(.top, 24)
+                    Text("Film like this for the most accurate AI analysis.")
+                        .font(.system(size: 15)).foregroundStyle(ShotIQColor.graphite)
+                        .padding(.horizontal, 20).padding(.top, 4)
+
+                    ShotIQCard {
+                        VStack(spacing: 0) {
+                            ForEach(tips, id: \.1) { icon, t, d in
+                                HStack(spacing: 14) {
+                                    Image(systemName: icon).font(.system(size: 20))
+                                        .foregroundStyle(ShotIQColor.ink).frame(width: 34)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(t).font(.system(size: 14, weight: .heavy).width(.condensed)).kerning(0.5)
+                                            .foregroundStyle(ShotIQColor.ink)
+                                        Text(d).font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                                    }
+                                    Spacer()
+                                }
+                                .padding(.vertical, 12)
+                                .overlay(alignment: .bottom) {
+                                    if t != "NORMAL ROUTINE" { Rectangle().fill(ShotIQColor.rule).frame(height: 1) }
+                                }
+                            }
+                        }
+                        .padding(.horizontal, 14).padding(.vertical, 4)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 16)
+
+                    PhaseStrip().padding(.horizontal, 20).padding(.top, 18).padding(.bottom, 26)
+                }
             }
         }
     }
@@ -144,7 +314,7 @@ struct AnalyzeHubView: View {       // 021
                     }
                     .padding(.horizontal, 20).padding(.top, 18)
 
-                    Button {} label: {
+                    NavigationLink { CaptureGuideView() } label: {
                         HStack(spacing: 12) {
                             Image(systemName: "doc.text").font(.system(size: 19)).foregroundStyle(ShotIQColor.ink)
                             Text("View capture guide").font(.system(size: 16, weight: .medium))
@@ -173,18 +343,21 @@ struct AnalyzeHubView: View {       // 021
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(alignment: .top, spacing: 10) {
                             ForEach(recents, id: \.1) { dur, when, kind in
-                                VStack(alignment: .leading, spacing: 4) {
-                                    ZStack(alignment: .bottomTrailing) {
-                                        captureDark(128, radius: 4).frame(width: 104)
-                                        Text(dur).font(.custom("DINCondensed-Bold", size: 12)).foregroundStyle(.white)
-                                            .padding(.horizontal, 6).padding(.vertical, 3)
-                                            .background(.black.opacity(0.75), in: RoundedRectangle(cornerRadius: 3))
-                                            .padding(6)
+                                NavigationLink { MediaDetailView() } label: {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        ZStack(alignment: .bottomTrailing) {
+                                            captureDark(128, radius: 4).frame(width: 104)
+                                            Text(dur).font(.custom("DINCondensed-Bold", size: 12)).foregroundStyle(.white)
+                                                .padding(.horizontal, 6).padding(.vertical, 3)
+                                                .background(.black.opacity(0.75), in: RoundedRectangle(cornerRadius: 3))
+                                                .padding(6)
+                                        }
+                                        Text(when).font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
+                                        Text(kind).font(.system(size: 12, weight: .medium)).foregroundStyle(ShotIQColor.ink)
                                     }
-                                    Text(when).font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
-                                    Text(kind).font(.system(size: 12, weight: .medium)).foregroundStyle(ShotIQColor.ink)
+                                    .frame(width: 104)
                                 }
-                                .frame(width: 104)
+                                .buttonStyle(.plain)
                             }
                         }
                         .padding(.horizontal, 20)
@@ -211,6 +384,8 @@ struct AnalyzeHubView: View {       // 021
             }
         }
         .navigationTitle("").toolbar(.hidden, for: .navigationBar)
+        // Returning to the hub means the live flow ended — release the camera.
+        .onAppear { CameraService.live.stop() }
     }
 
     private func hubOption(_ icon: String, _ t: String, _ d: String) -> some View {
@@ -234,6 +409,7 @@ struct PhotoUploadSourceView: View { // 022
     @State private var pick: PhotosPickerItem?
     @State private var image: UIImage?
     @State private var goReview = false
+    @State private var showCamera = false
     var body: some View {
         CanonicalScreen(testID: "screen-ios-photo-upload-source") {
             ScrollView {
@@ -283,7 +459,10 @@ struct PhotoUploadSourceView: View { // 022
                             sourceRow("camera.metering.center.weighted", "Choose from library",
                                       "Select a video or photo from your device.")
                         }
-                        sourceRow("camera", "Take photo", "Capture a new photo using your camera.")
+                        Button { showCamera = true } label: {
+                            sourceRow("camera", "Take photo", "Capture a new photo using your camera.")
+                        }
+                        .buttonStyle(.plain)
                         Button { dismiss() } label: {
                             Text("Cancel").font(.system(size: 16))
                                 .frame(maxWidth: .infinity).frame(height: 52)
@@ -301,6 +480,9 @@ struct PhotoUploadSourceView: View { // 022
                 if let data = try? await item?.loadTransferable(type: Data.self),
                    let img = UIImage(data: data) { image = img; goReview = true }
             }
+        }
+        .fullScreenCover(isPresented: $showCamera) {
+            CameraPhotoCaptureView { img in image = img; goReview = true }
         }
         .navigationDestination(isPresented: $goReview) { PhotoReviewCropView(image: image) }
     }
@@ -357,7 +539,9 @@ struct PhotoUploadSourceView: View { // 022
 
 struct PhotoReviewCropView: View {  // 023
     @Environment(\.dismiss) private var dismiss
-    var image: UIImage?
+    @State private var image: UIImage?
+    @State private var showCamera = false
+    init(image: UIImage?) { _image = State(initialValue: image) }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-photo-review-crop") {
             ScrollView {
@@ -439,10 +623,13 @@ struct PhotoReviewCropView: View {  // 023
 
                     // Rotation dial
                     HStack(spacing: 14) {
-                        Button {} label: {
+                        Button {
+                            if let img = image { image = shotiqRotated(img, clockwise: false) }
+                        } label: {
                             Image(systemName: "arrow.counterclockwise").font(.system(size: 19)).foregroundStyle(ShotIQColor.ink)
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel("Rotate left")
                         VStack(spacing: 5) {
                             HStack(spacing: 0) {
                                 ForEach(0..<21, id: \.self) { i in
@@ -458,15 +645,18 @@ struct PhotoReviewCropView: View {  // 023
                             }
                             .font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
                         }
-                        Button {} label: {
+                        Button {
+                            if let img = image { image = shotiqRotated(img, clockwise: true) }
+                        } label: {
                             Image(systemName: "rotate.right").font(.system(size: 19)).foregroundStyle(ShotIQColor.ink)
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel("Rotate right")
                     }
                     .padding(.horizontal, 20).padding(.top, 16)
 
                     HStack(spacing: 10) {
-                        Button {} label: {
+                        Button { showCamera = true } label: {
                             HStack(spacing: 8) {
                                 Image(systemName: "camera").font(.system(size: 15))
                                 Text("RETAKE").font(.system(size: 13, weight: .heavy).width(.condensed)).kerning(0.5)
@@ -476,7 +666,9 @@ struct PhotoReviewCropView: View {  // 023
                             .foregroundStyle(ShotIQColor.ink)
                         }
                         .buttonStyle(.plain)
-                        Button {} label: {
+                        Button {
+                            if let img = image { image = shotiqCropped34(img) }
+                        } label: {
                             HStack(spacing: 8) {
                                 Image(systemName: "crop").font(.system(size: 15))
                                 Text("CROP").font(.system(size: 13, weight: .heavy).width(.condensed)).kerning(0.5)
@@ -486,7 +678,7 @@ struct PhotoReviewCropView: View {  // 023
                             .foregroundStyle(ShotIQColor.ink)
                         }
                         .buttonStyle(.plain)
-                        NavigationLink { UploadQualityCheckView() } label: {
+                        NavigationLink { UploadQualityCheckView(image: image) } label: {
                             HStack(spacing: 8) {
                                 Image(systemName: "checkmark").font(.system(size: 15, weight: .bold))
                                 Text("USE PHOTO").font(.system(size: 13, weight: .heavy).width(.condensed)).kerning(0.5)
@@ -502,10 +694,18 @@ struct PhotoReviewCropView: View {  // 023
                 }
             }
         }
+        .fullScreenCover(isPresented: $showCamera) {
+            CameraPhotoCaptureView { img in image = img }
+        }
     }
 }
 
 struct UploadQualityCheckView: View { // 024
+    var image: UIImage? = nil
+    @Environment(\.dismiss) private var dismiss
+    @State private var busy = false
+    @State private var uploadError: String?
+    @State private var goAnalysis = false
     private let checks: [(String, String, String, Bool)] = [
         ("Lighting", "Well-lit and clear.", "Good", true),
         ("Full body visibility", "Entire body is visible.", "Good", true),
@@ -554,10 +754,16 @@ struct UploadQualityCheckView: View { // 024
                         .padding(.horizontal, 20).padding(.top, 4)
 
                     ZStack(alignment: .topLeading) {
-                        MediaSurface(height: 250, duration: "0:04")
+                        if let image {
+                            Image(uiImage: image).resizable().scaledToFill()
+                                .frame(height: 250).frame(maxWidth: .infinity).clipped()
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                        } else {
+                            MediaSurface(height: 250, duration: "0:04")
+                        }
                         VStack(alignment: .leading, spacing: 1) {
-                            Text("IMG_4521.MOV").font(.system(size: 12, weight: .semibold))
-                            Text("00:04 • 1080p • 30fps").font(.system(size: 10))
+                            Text(image == nil ? "IMG_4521.MOV" : "IMG_4521.JPG").font(.system(size: 12, weight: .semibold))
+                            Text(image == nil ? "00:04 • 1080p • 30fps" : "Photo • ready to analyze").font(.system(size: 10))
                         }
                         .foregroundStyle(.white)
                         .padding(.horizontal, 10).padding(.vertical, 6)
@@ -600,24 +806,117 @@ struct UploadQualityCheckView: View { // 024
                     .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
                     .padding(.horizontal, 20).padding(.top, 16)
 
-                    NavigationLink { AnalysisProcessingView() } label: {
-                        captureCTA("Continue to analysis", color: ShotIQColor.confirmGreen)
+                    Button {
+                        Task { await analyze() }
+                    } label: {
+                        HStack(spacing: 10) {
+                            if busy { ProgressView().tint(.white) }
+                            Text(busy ? "Uploading & analyzing…" : "Continue to analysis")
+                                .font(.system(size: 17, weight: .semibold))
+                        }
+                        .frame(maxWidth: .infinity).frame(height: 56)
+                        .background(ShotIQColor.confirmGreen, in: RoundedRectangle(cornerRadius: 8))
+                        .foregroundStyle(.white)
                     }
+                    .buttonStyle(.plain)
+                    .disabled(busy)
                     .padding(.horizontal, 20).padding(.top, 18)
-                    Button {} label: { captureOutline("Choose another") }
+                    if let uploadError {
+                        Text(uploadError).font(.system(size: 12)).foregroundStyle(ShotIQColor.reviewRed)
+                            .padding(.horizontal, 20).padding(.top, 8)
+                    }
+                    Button { dismiss() } label: { captureOutline("Choose another") }
                         .buttonStyle(.plain)
+                        .disabled(busy)
                         .padding(.horizontal, 20).padding(.top, 10).padding(.bottom, 26)
                 }
             }
+        }
+        .navigationDestination(isPresented: $goAnalysis) { AnalysisProcessingView() }
+    }
+
+    /// Mirrors the web upload flow: multipart POST /api/upload, then
+    /// POST /api/vision-analyze on the same frame, then POST /api/save-analysis
+    /// to persist the session — before showing the processing screen.
+    private func analyze() async {
+        guard let jpeg = image?.jpegData(compressionQuality: 0.7) else {
+            goAnalysis = true // nothing picked (placeholder path) — just proceed
+            return
+        }
+        busy = true
+        uploadError = nil
+        defer { busy = false }
+
+        // 1. Upload the raw frame (field "image", uploadType "user").
+        var imageUrl: String?
+        if let respData = try? await APIClient.shared.uploadImage(jpeg) {
+            struct UploadResp: Codable { var success: Bool?; var url: String?; var imageUrl: String? }
+            let r = try? JSONDecoder().decode(UploadResp.self, from: respData)
+            imageUrl = r?.url ?? r?.imageUrl
+        }
+
+        // 2. Coach-centric vision analysis (same contract the web client uses).
+        struct VisionBody: Codable {
+            var image: String; var drillId: String; var drillName: String
+            var drillDescription: String; var coachingPoints: [String]; var focusArea: String
+        }
+        struct VisionResp: Codable {
+            struct Analysis: Codable {
+                var overallGrade: String?
+                var gradeDescription: String?
+                var coachSays: String?
+            }
+            var success: Bool?
+            var analysis: Analysis?
+        }
+        var overallScore: Double?
+        var coachingNotes: String?
+        let vision: VisionResp? = try? await APIClient.shared.call(
+            "/api/vision-analyze", method: "POST",
+            body: VisionBody(
+                image: jpeg.base64EncodedString(),
+                drillId: "shot-form-photo",
+                drillName: "Shot form analysis",
+                drillDescription: "Single-frame jump shot form check from an uploaded photo.",
+                coachingPoints: ["Keep elbow stacked through release",
+                                 "Balanced base with feet shoulder-width apart",
+                                 "Full follow-through with a relaxed wrist"],
+                focusArea: "Shooting form"))
+        if let analysis = vision?.analysis {
+            let grades: [String: Double] = ["A": 95, "B": 85, "C": 75, "D": 65, "F": 50]
+            overallScore = analysis.overallGrade.flatMap { grades[$0] }
+            coachingNotes = analysis.coachSays ?? analysis.gradeDescription
+        }
+
+        // 3. Persist the analysis session (idempotent by clientSessionId).
+        struct SaveBody: Codable {
+            var clientSessionId: String; var recordedAt: String; var mediaType: String
+            var imageUrl: String?; var overallScore: Double?; var coachingNotes: String?
+        }
+        struct SaveResp: Codable { var success: Bool?; var analysisId: String? }
+        do {
+            let _: SaveResp = try await APIClient.shared.call(
+                "/api/save-analysis", method: "POST",
+                body: SaveBody(clientSessionId: "ios-\(UUID().uuidString)",
+                               recordedAt: ISO8601DateFormatter().string(from: Date()),
+                               mediaType: "image",
+                               imageUrl: imageUrl,
+                               overallScore: overallScore,
+                               coachingNotes: coachingNotes))
+            goAnalysis = true
+        } catch {
+            uploadError = "Couldn't reach the analysis service. Check your connection and try again."
         }
     }
 }
 
 struct UploadQueueView: View {      // 025
-    struct Item: Identifiable { let id = UUID(); let name: String; let pct: Double; let state: String }
+    struct Item: Identifiable { let id = UUID(); var name: String; var pct: Double; var state: String }
     @State private var items = [Item(name: "pullup-jumper.mov", pct: 0.62, state: "Uploading"),
                                 Item(name: "spotup-three.mov", pct: 1.0, state: "Complete"),
                                 Item(name: "transition-pullup.mov", pct: 0, state: "Queued")]
+    @State private var addPick: PhotosPickerItem?
+    @State private var goAnalyze = false
     var body: some View {
         CanonicalScreen(testID: "screen-ios-upload-queue") {
             ScrollView {
@@ -642,7 +941,7 @@ struct UploadQueueView: View {      // 025
                                 .font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
                         }
                         Spacer()
-                        Button {} label: {
+                        PhotosPicker(selection: $addPick, matching: .any(of: [.images, .videos])) {
                             VStack(spacing: 5) {
                                 Image(systemName: "plus.viewfinder").font(.system(size: 22)).foregroundStyle(ShotIQColor.ink)
                                 Text("Add media").font(.system(size: 13)).foregroundStyle(ShotIQColor.ink)
@@ -695,10 +994,12 @@ struct UploadQueueView: View {      // 025
                     }
                     .padding(.horizontal, 20).padding(.top, 16)
 
-                    Button {} label: { captureCTA("Analyze selected (1)") }
+                    Button { goAnalyze = true } label: { captureCTA("Analyze selected (1)") }
                         .buttonStyle(.plain)
                         .padding(.horizontal, 20).padding(.top, 16)
-                    Button {} label: {
+                    Button {
+                        withAnimation { items.removeAll { $0.state == "Complete" } }
+                    } label: {
                         HStack(spacing: 8) {
                             Image(systemName: "trash").font(.system(size: 14))
                             Text("Remove completed").font(.system(size: 14))
@@ -711,6 +1012,14 @@ struct UploadQueueView: View {      // 025
                 }
             }
         }
+        .onChange(of: addPick) { _, item in
+            guard item != nil else { return }
+            withAnimation {
+                items.append(Item(name: "new-capture-\(items.count + 1).mov", pct: 0, state: "Queued"))
+            }
+            addPick = nil
+        }
+        .navigationDestination(isPresented: $goAnalyze) { AnalysisProcessingView() }
     }
 
     private var queueSummary: String {
@@ -744,7 +1053,14 @@ struct UploadQueueView: View {      // 025
                             .foregroundStyle(it.state == "Complete" ? ShotIQColor.confirmGreen :
                                 (it.state == "Uploading" ? ShotIQColor.analysisBlue : ShotIQColor.graphite))
                         Spacer()
-                        Image(systemName: "ellipsis").foregroundStyle(ShotIQColor.graphite)
+                        Menu {
+                            Button("Remove from queue", role: .destructive) {
+                                withAnimation { items.removeAll { $0.id == it.id } }
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis").foregroundStyle(ShotIQColor.graphite)
+                                .padding(.vertical, 4).padding(.leading, 8)
+                        }
                     }
                     Text("May 21, 2025 at 8:24 AM").font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
                     Text(it.name).font(.system(size: 13, weight: .medium)).foregroundStyle(ShotIQColor.ink)
@@ -761,7 +1077,7 @@ struct UploadQueueView: View {      // 025
                             .frame(maxWidth: .infinity).frame(height: 40)
                             .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.shotiqOrange))
                         }
-                    } else if it.state == "Uploading" {
+                    } else if it.state == "Uploading" || it.state == "Paused" {
                         HStack(alignment: .firstTextBaseline) {
                             Text("\(Int(it.pct * 100))%").font(.custom("DINCondensed-Bold", size: 28))
                                 .foregroundStyle(ShotIQColor.ink)
@@ -770,11 +1086,21 @@ struct UploadQueueView: View {      // 025
                         }
                         ScoreBar(pct: it.pct, color: ShotIQColor.analysisBlue)
                         HStack {
-                            Text("Uploading over Wi-Fi").font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                            Text(it.state == "Paused" ? "Upload paused" : "Uploading over Wi-Fi")
+                                .font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
                             Spacer()
-                            Image(systemName: "pause").font(.system(size: 13)).foregroundStyle(ShotIQColor.ink)
-                                .padding(8)
-                                .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.rule))
+                            Button {
+                                if let idx = items.firstIndex(where: { $0.id == it.id }) {
+                                    items[idx].state = items[idx].state == "Uploading" ? "Paused" : "Uploading"
+                                }
+                            } label: {
+                                Image(systemName: it.state == "Uploading" ? "pause" : "play")
+                                    .font(.system(size: 13)).foregroundStyle(ShotIQColor.ink)
+                                    .padding(8)
+                                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.rule))
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel(it.state == "Uploading" ? "Pause upload" : "Resume upload")
                         }
                     } else {
                         Text("Waiting to upload").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
@@ -817,7 +1143,7 @@ struct VideoUploadView: View {      // 026
                     .padding(.horizontal, 20).padding(.top, 18)
 
                     HStack(alignment: .top, spacing: 10) {
-                        Button {} label: {
+                        NavigationLink { LiveCameraSetupView() } label: {
                             HStack(spacing: 12) {
                                 Image(systemName: "camera.metering.center.weighted").font(.system(size: 22))
                                     .foregroundStyle(ShotIQColor.shotiqOrange)
@@ -832,7 +1158,7 @@ struct VideoUploadView: View {      // 026
                             .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
                         }
                         .buttonStyle(.plain)
-                        Button {} label: {
+                        NavigationLink { CaptureGuideView() } label: {
                             HStack(spacing: 12) {
                                 Image(systemName: "point.topleft.down.curvedto.point.bottomright.up")
                                     .font(.system(size: 22)).foregroundStyle(ShotIQColor.analysisBlue)

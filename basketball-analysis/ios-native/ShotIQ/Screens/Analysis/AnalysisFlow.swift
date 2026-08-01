@@ -1,8 +1,37 @@
 import SwiftUI
+import UserNotifications
 
 // Analysis flow — screens 036-047. Pose overlays and gauges are Canvas/Path.
 
 // MARK: - Shared canonical fragments for this flow
+
+/// TopBar whose settings gear actually opens the Settings hub.
+fileprivate struct AnalysisTopBar: View {
+    @State private var showSettings = false
+    var body: some View {
+        TopBar(onSettings: { showSettings = true })
+            .navigationDestination(isPresented: $showSettings) { SettingsHubView() }
+    }
+}
+
+/// Lightweight payload for the shared info alert used by this flow's ⓘ affordances.
+fileprivate struct AnalysisInfoNote: Identifiable {
+    let id = UUID()
+    let title: String
+    let message: String
+}
+
+fileprivate extension View {
+    func analysisInfoAlert(_ note: Binding<AnalysisInfoNote?>) -> some View {
+        alert(note.wrappedValue?.title ?? "",
+              isPresented: Binding(get: { note.wrappedValue != nil },
+                                   set: { if !$0 { note.wrappedValue = nil } })) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(note.wrappedValue?.message ?? "")
+        }
+    }
+}
 
 /// "PRIMARY COACHING TARGET / Keep elbow stacked through release" row (037-040).
 fileprivate struct CoachTargetCard: View {
@@ -84,7 +113,7 @@ struct AnalysisProcessingView: View { // 036
     var body: some View {
         CanonicalScreen(testID: "screen-ios-analysis-processing") {
             VStack(spacing: 0) {
-                TopBar()
+                AnalysisTopBar()
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
                         PlayerHeader(name: "Jordan Ellis")
@@ -175,10 +204,13 @@ struct AnalysisProcessingView: View { // 036
 }
 
 struct AnalysisTakingLongerView: View { // 037
+    @Environment(\.dismiss) private var dismiss
+    @State private var notifyRequested = false
+    @State private var showCancelConfirm = false
     var body: some View {
         CanonicalScreen(testID: "screen-ios-analysis-taking-longer") {
             VStack(spacing: 0) {
-                TopBar()
+                AnalysisTopBar()
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
                         PlayerHeader(name: "Jordan Ellis")
@@ -227,10 +259,25 @@ struct AnalysisTakingLongerView: View { // 037
                                 .padding(18)
                             }
                             .padding(.top, 14)
-                            PrimaryButton(title: "Notify me when ready", icon: "bell", color: ShotIQColor.analysisBlue)
-                                .padding(.top, 16)
-                            SecondaryButton(title: "Keep waiting", icon: "arrow.2.circlepath").padding(.top, 10)
-                            SecondaryButton(title: "Cancel analysis", icon: "xmark").padding(.top, 10)
+                            PrimaryButton(title: notifyRequested ? "We'll notify you when it's ready" : "Notify me when ready",
+                                          icon: notifyRequested ? "bell.badge" : "bell",
+                                          color: ShotIQColor.analysisBlue) {
+                                UNUserNotificationCenter.current()
+                                    .requestAuthorization(options: [.alert, .sound, .badge]) { _, _ in }
+                                notifyRequested = true
+                            }
+                            .disabled(notifyRequested)
+                            .padding(.top, 16)
+                            SecondaryButton(title: "Keep waiting", icon: "arrow.2.circlepath") { dismiss() }
+                                .padding(.top, 10)
+                            SecondaryButton(title: "Cancel analysis", icon: "xmark") { showCancelConfirm = true }
+                                .padding(.top, 10)
+                                .alert("Cancel this analysis?", isPresented: $showCancelConfirm) {
+                                    Button("Cancel analysis", role: .destructive) { dismiss() }
+                                    Button("Keep waiting", role: .cancel) {}
+                                } message: {
+                                    Text("Processing will stop. Your clip stays saved in your history.")
+                                }
                             HStack {
                                 SectionLabel(text: "ANALYSIS QUEUE")
                                 Spacer()
@@ -253,9 +300,11 @@ struct AnalysisTakingLongerView: View { // 037
                             }
                             .padding(.top, 8)
                             PhaseStrip().padding(.top, 18)
-                            CoachTargetCard(bordered: false)
-                                .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .top)
-                                .padding(.top, 14)
+                            NavigationLink { FlawsOverviewView() } label: {
+                                CoachTargetCard(bordered: false)
+                                    .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .top)
+                            }
+                            .padding(.top, 14)
                             SessionStatsStrip()
                                 .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .top)
                                 .padding(.top, 4)
@@ -292,10 +341,11 @@ struct AnalysisResultOverviewView: View { // 038
         ("scope", "SPIN RATE", "8.6", "GOOD", false),
         ("viewfinder", "CENTEREDNESS", "92%", "EXCELLENT", true),
     ]
+    @State private var info: AnalysisInfoNote?
     var body: some View {
         CanonicalScreen(testID: "screen-ios-analysis-result-overview") {
             VStack(spacing: 0) {
-                TopBar()
+                AnalysisTopBar()
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
                         PlayerHeader(name: "Jordan Ellis")
@@ -311,10 +361,8 @@ struct AnalysisResultOverviewView: View { // 038
                                 stripLink("FLAWS", FlawsOverviewView())
                                 stripLink("PLAYER", PlayerCardView())
                                 stripLink("COMPARE", EliteMatchView())
-                                Text("TRAINING").font(.system(size: 13, weight: .semibold)).kerning(0.6)
-                                    .foregroundStyle(ShotIQColor.graphite)
-                                Text("GOALS").font(.system(size: 13, weight: .semibold)).kerning(0.6)
-                                    .foregroundStyle(ShotIQColor.graphite)
+                                stripLink("TRAINING", TrainingHomeView())
+                                stripLink("GOALS", GoalsView())
                             }
                             .padding(.horizontal, 20)
                         }
@@ -343,7 +391,13 @@ struct AnalysisResultOverviewView: View { // 038
                                 .padding(.top, 16)
                             HStack(spacing: 6) {
                                 SectionLabel(text: "YOUR SIX KEY METRICS")
-                                Image(systemName: "info.circle").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                                Button {
+                                    info = AnalysisInfoNote(title: "Your six key metrics",
+                                                            message: "Release height, release angle, elbow alignment, shot arc, spin rate and centeredness are measured on every analyzed shot and graded against elite ranges.")
+                                } label: {
+                                    Image(systemName: "info.circle").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                                }
+                                .buttonStyle(.plain)
                             }
                             .padding(.top, 22)
                             ShotIQCard {
@@ -357,13 +411,25 @@ struct AnalysisResultOverviewView: View { // 038
                             HStack {
                                 HStack(spacing: 6) {
                                     SectionLabel(text: "ELITE MATCH")
-                                    Image(systemName: "info.circle").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                                    Button {
+                                        info = AnalysisInfoNote(title: "Elite match",
+                                                                message: "We compare your measured mechanics to a library of elite shooters and surface the closest match.")
+                                    } label: {
+                                        Image(systemName: "info.circle").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                                    }
+                                    .buttonStyle(.plain)
                                 }
                                 Spacer()
-                                HStack(spacing: 3) {
-                                    Text("How it works").font(.system(size: 13)).foregroundStyle(ShotIQColor.analysisBlue)
-                                    Image(systemName: "chevron.right").font(.system(size: 11)).foregroundStyle(ShotIQColor.analysisBlue)
+                                Button {
+                                    info = AnalysisInfoNote(title: "How elite match works",
+                                                            message: "Your release angle, elbow alignment and shot arc are scored against each elite profile. The overall match is the weighted similarity across all six key metrics.")
+                                } label: {
+                                    HStack(spacing: 3) {
+                                        Text("How it works").font(.system(size: 13)).foregroundStyle(ShotIQColor.analysisBlue)
+                                        Image(systemName: "chevron.right").font(.system(size: 11)).foregroundStyle(ShotIQColor.analysisBlue)
+                                    }
                                 }
+                                .buttonStyle(.plain)
                             }
                             .padding(.top, 22)
                             NavigationLink { EliteMatchView() } label: {
@@ -420,6 +486,7 @@ struct AnalysisResultOverviewView: View { // 038
                 }
             }
         }
+        .analysisInfoAlert($info)
     }
     private func stripLink(_ t: String, _ dest: some View) -> some View {
         NavigationLink { dest } label: {
@@ -466,6 +533,9 @@ struct AnalysisResultOverviewView: View { // 038
 }
 
 /// Normalized-keypoint pose overlay drawn through the surface's fit transform.
+/// Layers (bones / joint points / ball / joint-angle callouts) can be toggled
+/// so screens with overlay controls give visible feedback; defaults keep the
+/// canonical look everywhere else.
 struct SkeletonOverlay: View {
     // normalized (0-1) demo keypoints: ankle→knee→hip→shoulder→elbow→wrist + ball
     let joints: [CGPoint] = [
@@ -473,21 +543,48 @@ struct SkeletonOverlay: View {
         .init(x: 0.52, y: 0.36), .init(x: 0.6, y: 0.27), .init(x: 0.66, y: 0.18),
     ]
     var ball = CGPoint(x: 0.7, y: 0.12)
+    var showBones = true
+    var showJoints = true
+    var showBall = true
+    var showAngles = false
+    var boneColor: Color = .white
+    var jointColor: Color = ShotIQColor.shotiqOrange
     var body: some View {
         Canvas { ctx, size in
             func pt(_ p: CGPoint) -> CGPoint { CGPoint(x: p.x * size.width, y: p.y * size.height) }
-            var path = Path()
-            path.move(to: pt(joints[0]))
-            joints.dropFirst().forEach { path.addLine(to: pt($0)) }
-            ctx.stroke(path, with: .color(.white), style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
-            for j in joints {
-                ctx.stroke(Path(ellipseIn: CGRect(origin: pt(j).applying(.init(translationX: -5, y: -5)),
-                                                  size: CGSize(width: 10, height: 10))),
-                           with: .color(ShotIQColor.shotiqOrange), lineWidth: 2.5)
+            if showBones {
+                var path = Path()
+                path.move(to: pt(joints[0]))
+                joints.dropFirst().forEach { path.addLine(to: pt($0)) }
+                ctx.stroke(path, with: .color(boneColor), style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
             }
-            ctx.stroke(Path(ellipseIn: CGRect(origin: pt(ball).applying(.init(translationX: -8, y: -8)),
-                                              size: CGSize(width: 16, height: 16))),
-                       with: .color(ShotIQColor.shotiqOrange), lineWidth: 3)
+            if showJoints {
+                for j in joints {
+                    ctx.stroke(Path(ellipseIn: CGRect(origin: pt(j).applying(.init(translationX: -5, y: -5)),
+                                                      size: CGSize(width: 10, height: 10))),
+                               with: .color(jointColor), lineWidth: 2.5)
+                }
+            }
+            if showBall {
+                ctx.stroke(Path(ellipseIn: CGRect(origin: pt(ball).applying(.init(translationX: -8, y: -8)),
+                                                  size: CGSize(width: 16, height: 16))),
+                           with: .color(jointColor), lineWidth: 3)
+            }
+            if showAngles {
+                // Interior angle at each mid-chain joint, from the demo keypoints.
+                for i in 1..<(joints.count - 1) {
+                    let a = pt(joints[i - 1]), b = pt(joints[i]), c = pt(joints[i + 1])
+                    let v1 = atan2(a.y - b.y, a.x - b.x), v2 = atan2(c.y - b.y, c.x - b.x)
+                    var deg = abs(v1 - v2) * 180 / .pi
+                    if deg > 180 { deg = 360 - deg }
+                    ctx.stroke(Path(ellipseIn: CGRect(x: b.x - 12, y: b.y - 12, width: 24, height: 24)),
+                               with: .color(ShotIQColor.shotiqOrange.opacity(0.7)), lineWidth: 1.5)
+                    ctx.draw(Text("\(Int(deg))°")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(ShotIQColor.shotiqOrange),
+                             at: CGPoint(x: b.x + 20, y: b.y - 14))
+                }
+            }
         }
         .accessibilityHidden(true)
     }
@@ -497,7 +594,7 @@ struct NoAnalysisYetView: View {    // 039
     var body: some View {
         CanonicalScreen(testID: "screen-ios-no-analysis-yet") {
             VStack(spacing: 0) {
-                TopBar()
+                AnalysisTopBar()
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
                         PlayerHeader(name: "Jordan Ellis")
@@ -531,9 +628,11 @@ struct NoAnalysisYetView: View {    // 039
                             .padding(.top, 26)
                             sourceRow.padding(.top, 24)
                             PhaseStrip().padding(.top, 22)
-                            CoachTargetCard(bordered: false)
-                                .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .top)
-                                .padding(.top, 14)
+                            NavigationLink { FlawsOverviewView() } label: {
+                                CoachTargetCard(bordered: false)
+                                    .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .top)
+                            }
+                            .padding(.top, 14)
                             VStack(alignment: .leading, spacing: 8) {
                                 SectionLabel(text: "LATEST SESSION")
                                 SessionStatsStrip()
@@ -550,9 +649,15 @@ struct NoAnalysisYetView: View {    // 039
     }
     private var sourceRow: some View {
         HStack(spacing: 12) {
-            sourceCard("photo.on.rectangle", "Upload image")
-            sourceCard("film", "Upload video")
-            sourceCard("point.3.connected.trianglepath.dotted", "Live camera")
+            NavigationLink { PhotoUploadSourceView() } label: {
+                sourceCard("photo.on.rectangle", "Upload image")
+            }
+            NavigationLink { VideoUploadView() } label: {
+                sourceCard("film", "Upload video")
+            }
+            NavigationLink { LiveCameraSetupView() } label: {
+                sourceCard("point.3.connected.trianglepath.dotted", "Live camera")
+            }
         }
     }
     private func sourceCard(_ icon: String, _ label: String) -> some View {
@@ -567,10 +672,12 @@ struct NoAnalysisYetView: View {    // 039
 }
 
 struct AnalysisErrorView: View {    // 040
+    @State private var retry = false
+    @State private var chooseFrame = false
     var body: some View {
         CanonicalScreen(testID: "screen-ios-analysis-error") {
             VStack(spacing: 0) {
-                TopBar()
+                AnalysisTopBar()
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
                         PlayerHeader(name: "Jordan Ellis")
@@ -597,11 +704,23 @@ struct AnalysisErrorView: View {    // 040
                             .padding(16)
                             .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.reviewRed))
                             .padding(.top, 14)
-                            PrimaryButton(title: "Try analysis again", icon: "viewfinder", color: ShotIQColor.analysisBlue)
-                                .padding(.top, 14)
+                            PrimaryButton(title: "Try analysis again", icon: "viewfinder", color: ShotIQColor.analysisBlue) {
+                                retry = true
+                            }
+                            .padding(.top, 14)
                             HStack(spacing: 12) {
-                                halfButton("point.3.connected.trianglepath.dotted", "Choose another frame")
-                                halfButton("headphones", "Contact support")
+                                Button { chooseFrame = true } label: {
+                                    halfButton("point.3.connected.trianglepath.dotted", "Choose another frame")
+                                }
+                                .buttonStyle(.plain)
+                                Button {
+                                    if let url = URL(string: "mailto:support@shotiq.app?subject=Analysis%20error") {
+                                        UIApplication.shared.open(url)
+                                    }
+                                } label: {
+                                    halfButton("headphones", "Contact support")
+                                }
+                                .buttonStyle(.plain)
                             }
                             .padding(.top, 10)
                             HStack(alignment: .top, spacing: 16) {
@@ -622,9 +741,11 @@ struct AnalysisErrorView: View {    // 040
                             }
                             .padding(.top, 18)
                             PhaseStrip().padding(.top, 16)
-                            CoachTargetCard(bordered: false)
-                                .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .top)
-                                .padding(.top, 14)
+                            NavigationLink { FlawsOverviewView() } label: {
+                                CoachTargetCard(bordered: false)
+                                    .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .top)
+                            }
+                            .padding(.top, 14)
                             VStack(alignment: .leading, spacing: 8) {
                                 SectionLabel(text: "LATEST SESSION")
                                 SessionStatsStrip()
@@ -647,6 +768,8 @@ struct AnalysisErrorView: View {    // 040
                 }
             }
         }
+        .navigationDestination(isPresented: $retry) { AnalyzeHubView() }
+        .navigationDestination(isPresented: $chooseFrame) { FrameDetailSkeletonView() }
     }
     private func halfButton(_ icon: String, _ title: String) -> some View {
         HStack(spacing: 8) {
@@ -661,18 +784,24 @@ struct AnalysisErrorView: View {    // 040
 }
 
 struct ShotBreakdownView: View {    // 041
+    @Environment(\.dismiss) private var dismiss
     private let phases = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
     var body: some View {
         CanonicalScreen(testID: "screen-ios-shot-breakdown") {
             VStack(spacing: 0) {
                 HStack {
-                    Image(systemName: "chevron.left").font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(ShotIQColor.ink)
+                    Button { dismiss() } label: {
+                        Image(systemName: "chevron.left").font(.system(size: 18, weight: .semibold))
+                            .foregroundStyle(ShotIQColor.ink)
+                    }
+                    .buttonStyle(.plain)
                     Spacer()
                     Wordmark(size: 30)
                     Spacer()
-                    Image(systemName: "square.and.arrow.up").font(.system(size: 18))
-                        .foregroundStyle(ShotIQColor.ink)
+                    ShareLink(item: "My ShotIQ shot breakdown — form score 82 (GOOD), 52° release angle, 7.5 ft arc. 🏀") {
+                        Image(systemName: "square.and.arrow.up").font(.system(size: 18))
+                            .foregroundStyle(ShotIQColor.ink)
+                    }
                 }
                 .padding(.horizontal, 20)
                 .frame(height: 52)
@@ -691,21 +820,24 @@ struct ShotBreakdownView: View {    // 041
                             HeaderStat(icon: "circle.hexagongrid", value: "2,840", label: "POINTS")
                         }
                         .padding(.top, 14)
-                        // Five-frame phase filmstrip.
+                        // Five-frame phase filmstrip — each frame opens the frame detail.
                         HStack(spacing: 2) {
                             ForEach(phases, id: \.self) { p in
-                                VStack(spacing: 8) {
-                                    ZStack {
-                                        RoundedRectangle(cornerRadius: 2)
-                                            .fill(Color(red: 0.106, green: 0.114, blue: 0.125))
-                                        SkeletonOverlay()
+                                NavigationLink { FrameDetailSkeletonView() } label: {
+                                    VStack(spacing: 8) {
+                                        ZStack {
+                                            RoundedRectangle(cornerRadius: 2)
+                                                .fill(Color(red: 0.106, green: 0.114, blue: 0.125))
+                                            SkeletonOverlay()
+                                        }
+                                        .frame(height: 190)
+                                        Text(p).font(.system(size: 9, weight: p == "RELEASE" ? .bold : .regular))
+                                            .kerning(0.4)
+                                            .foregroundStyle(p == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
+                                            .lineLimit(1).minimumScaleFactor(0.6)
                                     }
-                                    .frame(height: 190)
-                                    Text(p).font(.system(size: 9, weight: p == "RELEASE" ? .bold : .regular))
-                                        .kerning(0.4)
-                                        .foregroundStyle(p == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
-                                        .lineLimit(1).minimumScaleFactor(0.6)
                                 }
+                                .buttonStyle(.plain)
                             }
                         }
                         .padding(.top, 14)
@@ -850,43 +982,68 @@ struct ShotBreakdownView: View {    // 041
 }
 
 struct FrameDetailSkeletonView: View { // 042
+    @Environment(\.dismiss) private var dismiss
     @State private var frame = 3.0
+    @State private var phase = "RELEASE"
+    @State private var showSkeleton = true
+    @State private var showJoints = false
+    @State private var showBall = false
+    @State private var showAngles = false
+    private let allPhases = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
+    /// Frame 42 corresponds to the canonical slider position 3.
+    private var frameNumber: Int { 39 + Int(frame) }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-frame-detail-skeleton") {
             VStack(spacing: 0) {
-                TopBar()
+                AnalysisTopBar()
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
                         HStack {
-                            HStack(spacing: 8) {
-                                Image(systemName: "chevron.left").font(.system(size: 15, weight: .semibold))
-                                Text("ANALYZE").font(.system(size: 13, weight: .semibold)).kerning(0.8)
+                            Button { dismiss() } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "chevron.left").font(.system(size: 15, weight: .semibold))
+                                    Text("ANALYZE").font(.system(size: 13, weight: .semibold)).kerning(0.8)
+                                }
+                                .foregroundStyle(ShotIQColor.graphite)
                             }
-                            .foregroundStyle(ShotIQColor.graphite)
+                            .buttonStyle(.plain)
                             Spacer()
                             Text("SHOT 12 OF 24").font(.system(size: 13, weight: .semibold)).kerning(0.8)
                                 .foregroundStyle(ShotIQColor.graphite)
                             Spacer()
-                            HStack(spacing: 6) {
-                                Image(systemName: "film").font(.system(size: 15))
-                                Text("View sequence").font(.system(size: 13))
+                            NavigationLink { ShotBreakdownView() } label: {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "film").font(.system(size: 15))
+                                    Text("View sequence").font(.system(size: 13))
+                                }
+                                .foregroundStyle(ShotIQColor.ink)
                             }
-                            .foregroundStyle(ShotIQColor.ink)
+                            .buttonStyle(.plain)
                         }
                         .padding(.horizontal, 20).frame(height: 44)
                         .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
                         PlayerHeader(name: "Jordan Ellis")
                         VStack(alignment: .leading, spacing: 0) {
                             ZStack(alignment: .topLeading) {
-                                ZStack { MediaSurface(height: 400); SkeletonOverlay() }
+                                ZStack {
+                                    MediaSurface(height: 400)
+                                    SkeletonOverlay(showBones: showSkeleton, showJoints: showJoints,
+                                                    showBall: showBall, showAngles: showAngles)
+                                }
                                 HStack {
-                                    HStack(spacing: 6) {
-                                        Text("RELEASE • FRAME 42").font(.system(size: 12, weight: .bold)).kerning(0.5)
-                                        Image(systemName: "chevron.down").font(.system(size: 10, weight: .bold))
+                                    Menu {
+                                        ForEach(allPhases, id: \.self) { p in
+                                            Button(p) { phase = p }
+                                        }
+                                    } label: {
+                                        HStack(spacing: 6) {
+                                            Text("\(phase) • FRAME \(frameNumber)").font(.system(size: 12, weight: .bold)).kerning(0.5)
+                                            Image(systemName: "chevron.down").font(.system(size: 10, weight: .bold))
+                                        }
+                                        .foregroundStyle(.white)
+                                        .padding(.horizontal, 12).padding(.vertical, 8)
+                                        .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 8))
                                     }
-                                    .foregroundStyle(.white)
-                                    .padding(.horizontal, 12).padding(.vertical, 8)
-                                    .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 8))
                                     Spacer()
                                     Text("120 FPS").font(.system(size: 12, weight: .bold)).kerning(0.5)
                                         .foregroundStyle(.white)
@@ -921,46 +1078,66 @@ struct FrameDetailSkeletonView: View { // 042
                             }
                             .padding(.top, 14)
                             HStack(spacing: 10) {
-                                overlayToggle("point.3.connected.trianglepath.dotted", "Skeleton", true)
-                                overlayToggle("circle.dotted", "Joint points", false)
+                                Button { showSkeleton.toggle() } label: {
+                                    overlayToggleLabel("point.3.connected.trianglepath.dotted", "Skeleton", showSkeleton)
+                                }
+                                .buttonStyle(.plain)
+                                Button { showJoints.toggle() } label: {
+                                    overlayToggleLabel("circle.dotted", "Joint points", showJoints)
+                                }
+                                .buttonStyle(.plain)
                                 NavigationLink { AnnotationToolbarView() } label: {
                                     overlayToggleLabel("square.and.pencil", "Annotations", false)
                                 }
-                                overlayToggle("basketball", "Basketball", false)
+                                Button { showBall.toggle() } label: {
+                                    overlayToggleLabel("basketball", "Basketball", showBall)
+                                }
+                                .buttonStyle(.plain)
                             }
                             .padding(.top, 14)
-                            PhaseStrip().padding(.top, 16)
+                            PhaseStrip(active: phase).padding(.top, 16)
                             HStack(spacing: 10) {
-                                VStack(spacing: 2) {
-                                    HStack(spacing: 4) {
-                                        Image(systemName: "chevron.left").font(.system(size: 11, weight: .semibold))
-                                        Text("Previous").font(.system(size: 13, weight: .semibold))
+                                Button { frame = max(0, frame - 1) } label: {
+                                    VStack(spacing: 2) {
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "chevron.left").font(.system(size: 11, weight: .semibold))
+                                            Text("Previous").font(.system(size: 13, weight: .semibold))
+                                        }
+                                        Text("Frame \(frameNumber - 1)").font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
                                     }
-                                    Text("Frame 41").font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
+                                    .foregroundStyle(ShotIQColor.ink)
+                                    .frame(width: 78, height: 56)
+                                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.rule))
                                 }
-                                .foregroundStyle(ShotIQColor.ink)
-                                .frame(width: 78, height: 56)
-                                .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.rule))
+                                .buttonStyle(.plain)
+                                .disabled(frame <= 0)
                                 HStack(spacing: 4) {
                                     ForEach(0..<5, id: \.self) { i in
-                                        RoundedRectangle(cornerRadius: 4)
-                                            .fill(Color(red: 0.106, green: 0.114, blue: 0.125))
-                                            .frame(height: 52)
-                                            .overlay(RoundedRectangle(cornerRadius: 4)
-                                                .stroke(i == 2 ? ShotIQColor.shotiqOrange : .clear, lineWidth: 2))
+                                        Button { frame = min(9, max(0, frame + Double(i - 2))) } label: {
+                                            RoundedRectangle(cornerRadius: 4)
+                                                .fill(Color(red: 0.106, green: 0.114, blue: 0.125))
+                                                .frame(height: 52)
+                                                .overlay(RoundedRectangle(cornerRadius: 4)
+                                                    .stroke(i == 2 ? ShotIQColor.shotiqOrange : .clear, lineWidth: 2))
+                                        }
+                                        .buttonStyle(.plain)
                                     }
                                 }
                                 .frame(maxWidth: .infinity)
-                                VStack(spacing: 2) {
-                                    HStack(spacing: 4) {
-                                        Text("Next").font(.system(size: 13, weight: .semibold))
-                                        Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold))
+                                Button { frame = min(9, frame + 1) } label: {
+                                    VStack(spacing: 2) {
+                                        HStack(spacing: 4) {
+                                            Text("Next").font(.system(size: 13, weight: .semibold))
+                                            Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold))
+                                        }
+                                        Text("Frame \(frameNumber + 1)").font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
                                     }
-                                    Text("Frame 43").font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
+                                    .foregroundStyle(ShotIQColor.ink)
+                                    .frame(width: 78, height: 56)
+                                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.rule))
                                 }
-                                .foregroundStyle(ShotIQColor.ink)
-                                .frame(width: 78, height: 56)
-                                .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.rule))
+                                .buttonStyle(.plain)
+                                .disabled(frame >= 9)
                             }
                             .padding(.top, 14)
                             Slider(value: $frame, in: 0...9, step: 1).padding(.top, 6)
@@ -983,18 +1160,29 @@ struct FrameDetailSkeletonView: View { // 042
                                 Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 40).padding(.horizontal, 10)
                                 StatBlock(value: "62.5%", label: "MAKE %", valueSize: 24)
                                 Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 40).padding(.horizontal, 10)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("TARGET").font(.system(size: 9, weight: .semibold)).kerning(0.5)
-                                        .foregroundStyle(ShotIQColor.graphite)
-                                    Text("Keep elbow stacked through release")
-                                        .font(.system(size: 12, weight: .semibold)).foregroundStyle(ShotIQColor.ink)
-                                        .lineLimit(2).minimumScaleFactor(0.7)
+                                NavigationLink { FlawsOverviewView() } label: {
+                                    HStack(spacing: 0) {
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text("TARGET").font(.system(size: 9, weight: .semibold)).kerning(0.5)
+                                                .foregroundStyle(ShotIQColor.graphite)
+                                            Text("Keep elbow stacked through release")
+                                                .font(.system(size: 12, weight: .semibold)).foregroundStyle(ShotIQColor.ink)
+                                                .lineLimit(2).minimumScaleFactor(0.7)
+                                        }
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        Image(systemName: "chevron.right").font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                                    }
                                 }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                Image(systemName: "chevron.right").font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                                .buttonStyle(.plain)
                             }
                             .padding(.top, 14)
-                            PrimaryButton(title: "Show joint angles", icon: "angle").padding(.top, 16)
+                            PrimaryButton(title: showAngles ? "Hide joint angles" : "Show joint angles", icon: "angle") {
+                                withAnimation(.easeInOut(duration: 0.15)) {
+                                    showAngles.toggle()
+                                    if showAngles { showJoints = true }
+                                }
+                            }
+                            .padding(.top, 16)
                             Spacer(minLength: 24)
                         }
                         .padding(.horizontal, 20)
@@ -1002,9 +1190,6 @@ struct FrameDetailSkeletonView: View { // 042
                 }
             }
         }
-    }
-    private func overlayToggle(_ icon: String, _ label: String, _ active: Bool) -> some View {
-        overlayToggleLabel(icon, label, active)
     }
     private func overlayToggleLabel(_ icon: String, _ label: String, _ active: Bool) -> some View {
         VStack(spacing: 6) {
@@ -1019,7 +1204,19 @@ struct FrameDetailSkeletonView: View { // 042
 }
 
 struct AnnotationToolbarView: View { // 043
+    private struct Annotation: Identifiable {
+        let id = UUID()
+        let tool: String
+        var points: [CGPoint]
+    }
+    @Environment(\.dismiss) private var dismiss
     @State private var tool = "Draw"
+    @State private var annotations: [Annotation] = []
+    @State private var redoStack: [Annotation] = []
+    @State private var current: Annotation?
+    @State private var playing = true
+    @State private var frameTime = 1.28
+    @State private var showSaved = false
     private let tools: [(String, String)] = [
         ("Draw", "scribble"), ("Arrow", "arrow.up.right"), ("Angle", "angle"),
         ("Label", "textformat"), ("Undo", "arrow.uturn.backward"),
@@ -1028,15 +1225,18 @@ struct AnnotationToolbarView: View { // 043
     var body: some View {
         CanonicalScreen(testID: "screen-ios-annotation-toolbar") {
             VStack(spacing: 0) {
-                TopBar()
+                AnalysisTopBar()
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
                         HStack {
-                            HStack(spacing: 6) {
-                                Image(systemName: "chevron.left").font(.system(size: 15, weight: .semibold))
-                                Text("Back").font(.system(size: 14))
+                            Button { dismiss() } label: {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "chevron.left").font(.system(size: 15, weight: .semibold))
+                                    Text("Back").font(.system(size: 14))
+                                }
+                                .foregroundStyle(ShotIQColor.ink)
                             }
-                            .foregroundStyle(ShotIQColor.ink)
+                            .buttonStyle(.plain)
                             Spacer()
                             HStack(spacing: 6) {
                                 Text("ANALYSIS").font(.system(size: 14, weight: .heavy).width(.condensed))
@@ -1074,7 +1274,13 @@ struct AnnotationToolbarView: View { // 043
                             .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
                             .padding(.top, 12)
                             ZStack(alignment: .topLeading) {
-                                ZStack { MediaSurface(height: 430); SkeletonOverlay() }
+                                ZStack {
+                                    MediaSurface(height: 430)
+                                    SkeletonOverlay()
+                                    annotationCanvas
+                                }
+                                .contentShape(Rectangle())
+                                .gesture(annotationGesture)
                                 HStack(spacing: 6) {
                                     Circle().fill(.white).frame(width: 6, height: 6)
                                     Text("LIVE").font(.system(size: 12, weight: .bold)).kerning(0.5)
@@ -1085,17 +1291,25 @@ struct AnnotationToolbarView: View { // 043
                                 .padding(10)
                             }
                             .overlay(alignment: .bottomLeading) {
-                                Text("00:01.28").font(.custom("DINCondensed-Bold", size: 15)).foregroundStyle(.white)
+                                Text(String(format: "00:%05.2f", frameTime))
+                                    .font(.custom("DINCondensed-Bold", size: 15)).foregroundStyle(.white)
                                     .padding(.horizontal, 12).padding(.vertical, 7)
                                     .background(.black.opacity(0.6), in: RoundedRectangle(cornerRadius: 8))
                                     .padding(12)
                             }
                             .overlay(alignment: .bottomTrailing) {
                                 HStack(spacing: 18) {
-                                    Image(systemName: "backward.end.fill")
-                                    Image(systemName: "pause.fill")
-                                    Image(systemName: "forward.end.fill")
+                                    Button { frameTime = max(0, frameTime - 0.04) } label: {
+                                        Image(systemName: "backward.end.fill")
+                                    }
+                                    Button { playing.toggle() } label: {
+                                        Image(systemName: playing ? "pause.fill" : "play.fill")
+                                    }
+                                    Button { frameTime += 0.04 } label: {
+                                        Image(systemName: "forward.end.fill")
+                                    }
                                 }
+                                .buttonStyle(.plain)
                                 .font(.system(size: 14)).foregroundStyle(.white)
                                 .padding(.horizontal, 16).padding(.vertical, 10)
                                 .background(.black.opacity(0.6), in: RoundedRectangle(cornerRadius: 8))
@@ -1106,13 +1320,13 @@ struct AnnotationToolbarView: View { // 043
                             Text("ANNOTATION TOOLS").shotiqDisplay(20).padding(.top, 18)
                             HStack(spacing: 8) {
                                 ForEach(tools, id: \.0) { name, icon in
-                                    Button { tool = name } label: {
+                                    Button { activate(name) } label: {
                                         VStack(spacing: 6) {
                                             Image(systemName: icon).font(.system(size: 18, weight: .light))
-                                                .foregroundStyle(name == "Redo" ? ShotIQColor.muted :
+                                                .foregroundStyle(toolDisabled(name) ? ShotIQColor.muted :
                                                                  tool == name ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
                                             Text(name).font(.system(size: 11))
-                                                .foregroundStyle(name == "Redo" ? ShotIQColor.muted : ShotIQColor.ink)
+                                                .foregroundStyle(toolDisabled(name) ? ShotIQColor.muted : ShotIQColor.ink)
                                                 .lineLimit(1).minimumScaleFactor(0.6)
                                         }
                                         .frame(maxWidth: .infinity).frame(height: 62)
@@ -1120,17 +1334,110 @@ struct AnnotationToolbarView: View { // 043
                                             .stroke(tool == name ? ShotIQColor.shotiqOrange : ShotIQColor.rule))
                                     }
                                     .buttonStyle(.plain)
+                                    .disabled(toolDisabled(name))
                                 }
                             }
                             .padding(.top, 10)
-                            PrimaryButton(title: "Save annotations", color: ShotIQColor.confirmGreen)
-                                .padding(.top, 16)
+                            PrimaryButton(title: "Save annotations", color: ShotIQColor.confirmGreen) {
+                                showSaved = true
+                            }
+                            .padding(.top, 16)
+                            .alert("Annotations saved", isPresented: $showSaved) {
+                                Button("OK", role: .cancel) {}
+                            } message: {
+                                Text("\(annotations.count) annotation\(annotations.count == 1 ? "" : "s") saved to frame 43.")
+                            }
                             Spacer(minLength: 24)
                         }
                         .padding(.horizontal, 20)
                     }
                 }
             }
+        }
+    }
+    // MARK: annotation drawing
+
+    private func toolDisabled(_ name: String) -> Bool {
+        switch name {
+        case "Undo": return annotations.isEmpty
+        case "Redo": return redoStack.isEmpty
+        case "Clear": return annotations.isEmpty
+        default: return false
+        }
+    }
+    private func activate(_ name: String) {
+        switch name {
+        case "Undo":
+            if let last = annotations.popLast() { redoStack.append(last) }
+        case "Redo":
+            if let next = redoStack.popLast() { annotations.append(next) }
+        case "Clear":
+            annotations.removeAll()
+            redoStack.removeAll()
+        default:
+            tool = name
+        }
+    }
+    private var annotationGesture: some Gesture {
+        DragGesture(minimumDistance: 0)
+            .onChanged { v in
+                if current == nil {
+                    current = Annotation(tool: tool, points: [v.startLocation, v.location])
+                } else if tool == "Draw" {
+                    current?.points.append(v.location)
+                } else {
+                    current?.points[current!.points.count - 1] = v.location
+                }
+            }
+            .onEnded { _ in
+                if let done = current {
+                    annotations.append(done)
+                    redoStack.removeAll()
+                }
+                current = nil
+            }
+    }
+    private var annotationCanvas: some View {
+        Canvas { ctx, _ in
+            for a in annotations + (current.map { [$0] } ?? []) {
+                draw(a, in: &ctx)
+            }
+        }
+        .allowsHitTesting(false)
+    }
+    private func draw(_ a: Annotation, in ctx: inout GraphicsContext) {
+        guard let first = a.points.first else { return }
+        let last = a.points.last ?? first
+        let color = ShotIQColor.shotiqOrange
+        switch a.tool {
+        case "Draw":
+            var p = Path()
+            p.move(to: first)
+            a.points.dropFirst().forEach { p.addLine(to: $0) }
+            ctx.stroke(p, with: .color(color), style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
+        case "Arrow":
+            var p = Path()
+            p.move(to: first)
+            p.addLine(to: last)
+            let angle = atan2(last.y - first.y, last.x - first.x)
+            for side in [angle + .pi * 0.85, angle - .pi * 0.85] {
+                p.move(to: last)
+                p.addLine(to: CGPoint(x: last.x + 14 * cos(side), y: last.y + 14 * sin(side)))
+            }
+            ctx.stroke(p, with: .color(color), style: StrokeStyle(lineWidth: 3, lineCap: .round))
+        case "Angle":
+            var p = Path()
+            p.move(to: first)
+            p.addLine(to: last)
+            ctx.stroke(p, with: .color(color), style: StrokeStyle(lineWidth: 2.5, dash: [6, 4]))
+            let deg = abs(atan2(last.y - first.y, last.x - first.x)) * 180 / .pi
+            ctx.draw(Text("\(Int(deg))°").font(.system(size: 12, weight: .bold)).foregroundColor(color),
+                     at: CGPoint(x: (first.x + last.x) / 2, y: (first.y + last.y) / 2 - 12))
+        default: // Label
+            ctx.draw(Text("NOTE").font(.system(size: 11, weight: .bold)).foregroundColor(.white),
+                     at: last)
+            ctx.stroke(Path(roundedRect: CGRect(x: last.x - 24, y: last.y - 12, width: 48, height: 24), cornerRadius: 5),
+                       with: .color(color), lineWidth: 1.5)
         }
     }
     private func annotStat(_ label: String, _ value: String) -> some View {
@@ -1145,6 +1452,8 @@ struct AnnotationToolbarView: View { // 043
 }
 
 struct FormScoreView: View {        // 044
+    @Environment(\.dismiss) private var dismiss
+    @State private var info: AnalysisInfoNote?
     private let breakdown: [(String, Double, String, String)] = [
         ("Form", 0.84, "GOOD", "Solid mechanics overall."),
         ("Balance", 0.78, "GOOD", "Slight lean on the rise."),
@@ -1162,20 +1471,25 @@ struct FormScoreView: View {        // 044
     var body: some View {
         CanonicalScreen(testID: "screen-ios-form-score") {
             VStack(spacing: 0) {
-                TopBar()
+                AnalysisTopBar()
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
                         PlayerHeader(name: "Jordan Ellis")
                         VStack(alignment: .leading, spacing: 0) {
                             HStack {
-                                HStack(spacing: 8) {
-                                    Image(systemName: "chevron.left").font(.system(size: 14, weight: .semibold))
-                                    Text("Back to analysis").font(.system(size: 14))
-                                }
-                                .foregroundStyle(ShotIQColor.ink)
-                                Spacer()
-                                Image(systemName: "square.and.arrow.up").font(.system(size: 17))
+                                Button { dismiss() } label: {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "chevron.left").font(.system(size: 14, weight: .semibold))
+                                        Text("Back to analysis").font(.system(size: 14))
+                                    }
                                     .foregroundStyle(ShotIQColor.ink)
+                                }
+                                .buttonStyle(.plain)
+                                Spacer()
+                                ShareLink(item: "My ShotIQ form score: 82 (GOOD) — trending +8.1% vs last session. 🏀") {
+                                    Image(systemName: "square.and.arrow.up").font(.system(size: 17))
+                                        .foregroundStyle(ShotIQColor.ink)
+                                }
                             }
                             .padding(.vertical, 12)
                             .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
@@ -1208,8 +1522,17 @@ struct FormScoreView: View {        // 044
                             }
                             ScoreBar(pct: 0.82).padding(.top, 2)
                             HStack(spacing: 12) {
-                                linkRow("doc.text", "View score method")
-                                linkRow("point.3.connected.trianglepath.dotted", "Compare session")
+                                Button {
+                                    info = AnalysisInfoNote(title: "How the form score works",
+                                                            message: "Form, balance, elbow, power and consistency are each scored 0–100 from your pose data, then weighted into one form score. 80+ is GOOD; 90+ is EXCELLENT.")
+                                } label: {
+                                    linkRow("doc.text", "View score method")
+                                }
+                                .buttonStyle(.plain)
+                                NavigationLink { AnalyticsDetailedView() } label: {
+                                    linkRow("point.3.connected.trianglepath.dotted", "Compare session")
+                                }
+                                .buttonStyle(.plain)
                             }
                             .padding(.top, 16)
                             SectionLabel(text: "FORM BREAKDOWN").padding(.top, 22)
@@ -1335,6 +1658,7 @@ struct FormScoreView: View {        // 044
                 }
             }
         }
+        .analysisInfoAlert($info)
     }
     private func linkRow(_ icon: String, _ title: String) -> some View {
         HStack {
@@ -1352,12 +1676,19 @@ struct FormScoreView: View {        // 044
 
 struct MetricDetailView: View {     // 045
     var metric = "Release"; var value = 0.88
+    @Environment(\.dismiss) private var dismiss
+    @State private var addingPlan = false
+    @State private var addedPlan = false
+    @State private var planError: String?
     var body: some View {
         CanonicalScreen(testID: "screen-ios-metric-detail") {
             VStack(spacing: 0) {
                 HStack {
-                    Image(systemName: "chevron.left").font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(ShotIQColor.ink)
+                    Button { dismiss() } label: {
+                        Image(systemName: "chevron.left").font(.system(size: 18, weight: .semibold))
+                            .foregroundStyle(ShotIQColor.ink)
+                    }
+                    .buttonStyle(.plain)
                     Spacer()
                     HStack(spacing: 8) {
                         Wordmark(size: 26)
@@ -1365,7 +1696,9 @@ struct MetricDetailView: View {     // 045
                             .foregroundStyle(ShotIQColor.graphite)
                     }
                     Spacer()
-                    Image(systemName: "square.and.arrow.up").font(.system(size: 18)).foregroundStyle(ShotIQColor.ink)
+                    ShareLink(item: "My ShotIQ \(metric.lowercased()) metric: \(Int(value * 100)) — form score 82 (GOOD). 🏀") {
+                        Image(systemName: "square.and.arrow.up").font(.system(size: 18)).foregroundStyle(ShotIQColor.ink)
+                    }
                 }
                 .padding(.horizontal, 20).frame(height: 52)
                 .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
@@ -1547,7 +1880,7 @@ struct FlawsOverviewView: View {    // 046
     var body: some View {
         CanonicalScreen(testID: "screen-ios-flaws-overview") {
             VStack(spacing: 0) {
-                TopBar()
+                AnalysisTopBar()
                 ScrollView {
                     VStack(alignment: .leading, spacing: 0) {
                         HStack(alignment: .center, spacing: 12) {

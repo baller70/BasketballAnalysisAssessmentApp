@@ -1,19 +1,45 @@
 import SwiftUI
+import UIKit
 import UserNotifications
 
 // Remaining flows — goals 063-065, analytics 066-067, media 068-069,
 // profile 070, settings 071, share 072.
 
+/// A goal exactly as GET /api/goals serializes it (src/lib/api/serializers.ts
+/// `serializeGoal`: `name`, `currentValue`, `targetValue`, …).
+struct GoalRecord: Codable, Identifiable {
+    var id: String
+    var name: String
+    var description: String? = nil
+    var targetValue: Int? = nil
+    var currentValue: Int? = nil
+    var unit: String? = nil
+    var category: String? = nil
+    var xpReward: Int? = nil
+    var deadline: String? = nil
+    var completedAt: String? = nil
+    var progress: Double {
+        guard let t = targetValue, t > 0 else { return 0 }
+        return min(1, max(0, Double(currentValue ?? 0) / Double(t)))
+    }
+}
+
 @MainActor
 final class GoalsViewModel: ObservableObject {
-    @Published var goals: [GoalDTO] = []
-    func load() async { goals = (try? await APIClient.shared.goals()) ?? [] }
-    var display: [GoalDTO] {
-        goals.isEmpty
-            ? [GoalDTO(id: "g1", title: "Keep elbow stacked through release", progress: 0.68, targetDate: nil, status: "active"),
-               GoalDTO(id: "g2", title: "Raise make % to 65", progress: 0.4, targetDate: nil, status: "active")]
-            : goals
+    @Published var goals: [GoalRecord] = []
+    func load() async {
+        struct Resp: Codable { var goals: [GoalRecord]? }
+        if let r: Resp = try? await APIClient.shared.call("/api/goals") {
+            goals = r.goals ?? []
+        }
     }
+    private static let samples = [
+        GoalRecord(id: "g1", name: "Keep elbow stacked through release", targetValue: 100, currentValue: 68),
+        GoalRecord(id: "g2", name: "Raise make % to 65", targetValue: 100, currentValue: 40)
+    ]
+    var display: [GoalRecord] { goals.isEmpty ? Self.samples : goals }
+    var active: [GoalRecord] { display.filter { $0.completedAt == nil } }
+    var completed: [GoalRecord] { display.filter { $0.completedAt != nil } }
 }
 
 struct GoalsView: View {            // 063
@@ -33,10 +59,13 @@ struct GoalsView: View {            // 063
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                             Spacer(minLength: 8)
-                            HeaderStat(icon: "circle.hexagongrid", value: "2,840", label: "POINTS")
+                            NavigationLink { PlayerCardView() } label: {
+                                HeaderStat(icon: "circle.hexagongrid", value: "2,840", label: "POINTS")
+                            }
+                            .buttonStyle(.plain)
                         }
                         .padding(.top, 16)
-                        NavigationLink { CreateGoalView() } label: {
+                        NavigationLink { CreateGoalView(onCreated: { await vm.load() }) } label: {
                             HStack(spacing: 10) {
                                 Image(systemName: "plus.viewfinder")
                                 Text("Create goal").font(.system(size: 17, weight: .medium))
@@ -48,12 +77,28 @@ struct GoalsView: View {            // 063
                         .accessibilityLabel("Create goal")
                         .padding(.top, 16)
                         HStack(spacing: 0) {
-                            goalsTab("ACTIVE (\(vm.display.count))", 0)
-                            goalsTab("COMPLETED (3)", 1)
+                            goalsTab("ACTIVE (\(vm.active.count))", 0)
+                            goalsTab("COMPLETED (\(vm.completed.count))", 1)
                         }
                         .padding(.top, 18)
-                        ForEach(vm.display) { g in
-                            NavigationLink { GoalDetailView(goal: g) } label: {
+                        let shown = tab == 0 ? vm.active : vm.completed
+                        if shown.isEmpty {
+                            ShotIQCard {
+                                VStack(spacing: 8) {
+                                    Image(systemName: tab == 0 ? "target" : "checkmark.circle")
+                                        .font(.system(size: 26)).foregroundStyle(ShotIQColor.graphite)
+                                    Text(tab == 0 ? "No active goals" : "No completed goals yet")
+                                        .shotiqBody(15, weight: .semibold)
+                                    Text(tab == 0 ? "Create a goal to start tracking progress."
+                                                  : "Goals you finish will appear here.")
+                                        .font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                                }
+                                .frame(maxWidth: .infinity).padding(.vertical, 28)
+                            }
+                            .padding(.top, 14)
+                        }
+                        ForEach(shown) { g in
+                            NavigationLink { GoalDetailView(goal: g, onChanged: { await vm.load() }) } label: {
                                 goalCard(g)
                             }
                             .padding(.top, 14)
