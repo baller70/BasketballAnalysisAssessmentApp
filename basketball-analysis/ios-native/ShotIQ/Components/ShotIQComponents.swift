@@ -12,20 +12,24 @@ extension View {
     /// width at ~0.8x reproduces the canonical narrow-caps look, and the
     /// scale factor absorbs any title that would still overflow.
     func shotiqDisplay(_ size: CGFloat) -> some View {
-        font(.system(size: size * 0.8, weight: .heavy).width(.condensed))
+        // Wilson X Connect display face (Tungsten Bold), bundled via UIAppFonts.
+        font(.custom("Tungsten-Bold", size: size * 0.86))
             .foregroundStyle(ShotIQColor.ink)
             .lineLimit(2)
             .minimumScaleFactor(0.5)
     }
     func shotiqNumeric(_ size: CGFloat) -> some View {
-        // DIN Condensed ships with iOS as "DINCondensed-Bold", so unlike web the
+        // DIN Condensed ships with iOS as "Tungsten-Semibold", so unlike web the
         // canonical numeric face is available natively. Numerals never wrap.
-        font(.custom("DINCondensed-Bold", size: size)).foregroundStyle(ShotIQColor.ink)
+        // Wilson X numerals (Tungsten Semibold) replace DIN Condensed.
+        font(.custom("Tungsten-Semibold", size: size)).foregroundStyle(ShotIQColor.ink)
             .lineLimit(1)
             .minimumScaleFactor(0.6)
     }
     func shotiqBody(_ size: CGFloat = 16, weight: Font.Weight = .regular) -> some View {
-        font(.system(size: size, weight: weight)).foregroundStyle(ShotIQColor.ink)
+        // Wilson X body face (Boxed): Medium / Semibold / Heavy by weight.
+        let face = weight >= .bold ? "BoxedHeavy" : (weight >= .semibold ? "BoxedSemibold" : "BoxedMedium")
+        return font(.custom(face, size: size)).foregroundStyle(ShotIQColor.ink)
     }
 }
 
@@ -62,8 +66,8 @@ struct Wordmark: View {
     var size: CGFloat = 30
     var body: some View {
         HStack(spacing: 0) {
-            Text("SHOT").font(.system(size: size * 0.8, weight: .black).width(.condensed)).foregroundStyle(ShotIQColor.ink)
-            Text("IQ").font(.system(size: size * 0.8, weight: .black).width(.condensed)).foregroundStyle(ShotIQColor.shotiqOrange)
+            Text("SHOT").font(.custom("Tungsten-Black", size: size * 0.9)).foregroundStyle(ShotIQColor.ink)
+            Text("IQ").font(.custom("Tungsten-Black", size: size * 0.9)).foregroundStyle(ShotIQColor.shotiqOrange)
         }
         .lineLimit(1)
         .fixedSize()
@@ -99,7 +103,7 @@ struct HeaderStat: View {
     var body: some View {
         VStack(spacing: 3) {
             Image(systemName: icon).font(.system(size: 17)).foregroundStyle(ShotIQColor.ink)
-            Text(value).font(.custom("DINCondensed-Bold", size: 24)).foregroundStyle(ShotIQColor.ink)
+            Text(value).font(.custom("Tungsten-Semibold", size: 24)).foregroundStyle(ShotIQColor.ink)
                 .lineLimit(1).minimumScaleFactor(0.7)
             Text(label).font(.system(size: 9, weight: .medium)).kerning(0.6)
                 .foregroundStyle(ShotIQColor.graphite)
@@ -307,7 +311,7 @@ struct MediaSurface: View {
             RoundedRectangle(cornerRadius: 4).fill(Color(red: 0.106, green: 0.114, blue: 0.125))
             HStack(spacing: 10) {
                 Image(systemName: "play.fill").font(.system(size: 13)).foregroundStyle(.white)
-                Text("0:00 / \(duration)").font(.custom("DINCondensed-Bold", size: 13)).foregroundStyle(.white)
+                Text("0:00 / \(duration)").font(.custom("Tungsten-Semibold", size: 13)).foregroundStyle(.white)
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
                         Capsule().fill(.white.opacity(0.35))
@@ -332,7 +336,7 @@ struct StatBlock: View {
     var valueSize: CGFloat = 26
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(value).font(.custom("DINCondensed-Bold", size: valueSize)).foregroundStyle(color)
+            Text(value).font(.custom("Tungsten-Semibold", size: valueSize)).foregroundStyle(color)
             Text(label).font(.system(size: 10, weight: .medium)).kerning(0.7)
                 .foregroundStyle(ShotIQColor.graphite)
         }

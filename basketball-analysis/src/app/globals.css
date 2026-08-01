@@ -74,7 +74,7 @@
   body {
     background: #ffffff;
     color: hsl(var(--foreground));
-    font-family: var(--font-shotiq-inter, system-ui), system-ui, sans-serif;
+    font-family: var(--font-shotiq-inter, system-ui), system-ui, sans-serif; /* Boxed */
     font-feature-settings: "rlig" 1, "calt" 1;
     min-height: 100vh;
     position: relative;
@@ -185,11 +185,11 @@
    note in app/layout.tsx.
    --------------------------------------------------------------------------- */
 .shotiq-canonical {
-  font-family: var(--font-shotiq-inter), Inter, system-ui, sans-serif;
+  font-family: var(--font-shotiq-inter), "Boxed Medium", system-ui, sans-serif;
 }
 .shotiq-display,
 .shotiq-wordmark {
-  font-family: var(--font-shotiq-display), "Bebas Neue", Impact, sans-serif;
+  font-family: var(--font-shotiq-display), "Tungsten Bold", Impact, sans-serif;
   font-weight: 400;
 }
 .shotiq-wordmark {
@@ -197,6 +197,6 @@
   letter-spacing: 0.02em;
 }
 .shotiq-numeric {
-  font-family: var(--font-shotiq-numeric), Oswald, "DIN Condensed", sans-serif;
+  font-family: var(--font-shotiq-numeric), "Tungsten Semibold", "DIN Condensed", sans-serif;
   font-weight: 600;
 }

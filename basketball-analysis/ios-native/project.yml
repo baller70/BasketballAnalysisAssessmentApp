@@ -28,6 +28,15 @@ targets:
         NSMicrophoneUsageDescription: ShotIQ records audio with your shot videos for coaching playback.
         NSPhotoLibraryUsageDescription: ShotIQ imports shot photos and videos for analysis.
         NSUserNotificationsUsageDescription: ShotIQ reminds you about workouts and analysis results.
+        # Wilson X Connect typography bundled in ShotIQ/App/Fonts.
+        UIAppFonts:
+          - boxedmedium.otf
+          - boxedsemibold.otf
+          - boxedheavy.otf
+          - tungsten_medium.otf
+          - tungsten_semibold.otf
+          - tungsten_bold.otf
+          - tungsten_black.otf
     settings:
       TARGETED_DEVICE_FAMILY: "1"
       # App Store validation requires an asset-catalog app icon + CFBundleIconName;

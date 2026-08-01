@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import localFont from "next/font/local"
-import { Russo_One, Inter, Bebas_Neue, Oswald } from "next/font/google"
+import { Russo_One } from "next/font/google"
 import "./globals.css"
 import { Providers } from "./providers"
 import { UploadQueueManager } from "@/components/upload/UploadQueueManager"
@@ -29,19 +29,31 @@ const russoOne = Russo_One({
 // documented metric-similar substitute so numeric displays render in a
 // condensed grotesque rather than silently falling back to the body face.
 // Swapping in a licensed DIN Condensed only requires changing this binding.
-const inter = Inter({
-  subsets: ["latin"],
+// Wilson X Connect typography: Boxed carries UI/body text, Tungsten carries
+// display caps and numerals. Files live in public/fonts/wilson-x (from the
+// coach-ai-suite Wilson X asset pack).
+const boxed = localFont({
+  src: [
+    { path: "../../public/fonts/wilson-x/boxedmedium.otf", weight: "400" },
+    { path: "../../public/fonts/wilson-x/boxedsemibold.otf", weight: "600" },
+    { path: "../../public/fonts/wilson-x/boxedheavy.otf", weight: "800" },
+  ],
   variable: "--font-shotiq-inter",
   display: "swap",
 })
-const bebasNeue = Bebas_Neue({
-  weight: "400",
-  subsets: ["latin"],
+const tungstenDisplay = localFont({
+  src: [
+    { path: "../../public/fonts/wilson-x/tungsten_bold.otf", weight: "400" },
+    { path: "../../public/fonts/wilson-x/tungsten_black.otf", weight: "900" },
+  ],
   variable: "--font-shotiq-display",
   display: "swap",
 })
-const oswald = Oswald({
-  subsets: ["latin"],
+const tungstenNumeric = localFont({
+  src: [
+    { path: "../../public/fonts/wilson-x/tungsten_semibold.otf", weight: "400" },
+    { path: "../../public/fonts/wilson-x/tungsten_bold.otf", weight: "700" },
+  ],
   variable: "--font-shotiq-numeric",
   display: "swap",
 })
@@ -68,7 +80,7 @@ export default function RootLayout({
         {/* DISABLED: Cache clearing script was causing infinite reload loops */}
         {/* <Script src="/clear-cache.js" strategy="beforeInteractive" /> */}
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} ${russoOne.variable} ${inter.variable} ${bebasNeue.variable} ${oswald.variable} antialiased min-h-screen flex flex-col bg-white`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} ${russoOne.variable} ${boxed.variable} ${tungstenDisplay.variable} ${tungstenNumeric.variable} antialiased min-h-screen flex flex-col bg-white`}>
         <Providers>
           {/* Every screen is canonical now — the app shell (unified sidebar +
               topbar) is painted per-page; no global legacy chrome. */}

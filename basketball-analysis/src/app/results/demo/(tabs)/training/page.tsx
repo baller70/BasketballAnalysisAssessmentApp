@@ -5,17 +5,19 @@
 import React, { useState } from "react"
 import Link from "next/link"
 import { Bookmark, ChevronRight, Check } from "lucide-react"
-import { SectionLabel, Card, MediaSurface, TrendLine, Stat } from "@/components/shotiq/ShotIQShell"
+import { SectionLabel, Card, TrendLine, Stat } from "@/components/shotiq/ShotIQShell"
 import { useHistory } from "@/components/shotiq/ResultsBits"
 
 const RECOMMENDED = [
-  { len: "05:28", title: "Footwork Into Release", meta: "5:30 · Advanced · Footwork", desc: "Build rhythm from the catch into a balanced, stacked release." },
-  { len: "06:12", title: "Elbow Stack Holds", meta: "6:15 · Intermediate · Shooting", desc: "Train elbow alignment and forearm verticality through the lift." },
-  { len: "06:58", title: "High Elbow Release", meta: "7:02 · Advanced · Shooting", desc: "Reinforce a high elbow path for a clean, consistent release." },
+  { len: "05:28", title: "Footwork Into Release", meta: "5:30 · Advanced · Footwork", desc: "Build rhythm from the catch into a balanced, stacked release.", img: "/images/canonical/090-rec-1.png" },
+  { len: "06:12", title: "Elbow Stack Holds", meta: "6:15 · Intermediate · Shooting", desc: "Train elbow alignment and forearm verticality through the lift.", img: "/images/canonical/090-rec-2.png" },
+  { len: "06:58", title: "High Elbow Release", meta: "7:02 · Advanced · Shooting", desc: "Reinforce a high elbow path for a clean, consistent release.", img: "/images/canonical/090-rec-3.png" },
 ]
 const LIBRARY = [
-  ["06:38", "Catch & Set Series", "Intermediate · Shooting"], ["04:42", "One Dribble Pull-Up", "Beginner · Scoring"],
-  ["05:19", "Transition Pull-Up", "Advanced · Scoring"], ["06:01", "Sideline Elevation", "Intermediate · Shooting"],
+  ["06:38", "Catch & Set Series", "Intermediate · Shooting", "/images/canonical/090-lib-1.png"],
+  ["04:42", "One Dribble Pull-Up", "Beginner · Scoring", "/images/canonical/090-lib-2.png"],
+  ["05:19", "Transition Pull-Up", "Advanced · Scoring", "/images/canonical/090-lib-3.png"],
+  ["06:01", "Sideline Elevation", "Intermediate · Shooting", "/images/canonical/090-lib-4.png"],
 ]
 const WEEK: [string, string, boolean][] = [
   ["MON", "28 min", true], ["TUE", "30 min", false], ["WED", "25 min", false], ["THU", "35 min", false],
@@ -66,8 +68,8 @@ export default function TrainingHubPage() {
           {RECOMMENDED.map((r) => (
             <Card key={r.title} className="overflow-hidden">
               <div className="relative">
-                <MediaSurface height={150} rounded={0} />
-                <span className="absolute left-[8px] top-[8px] rounded-[3px] bg-black/75 px-[6px] py-[2px] text-[10px] font-bold text-white">{r.len}</span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={r.img} alt="" className="h-[150px] w-full object-cover" />
                 <button type="button" aria-pressed={saved.has(r.title)} onClick={() => toggleSave(r.title)}
                         aria-label={saved.has(r.title) ? "Remove from my drills" : "Save drill"}
                         className="absolute right-[6px] top-[6px] grid h-[24px] w-[24px] place-items-center rounded-[4px] bg-black/40">
@@ -92,12 +94,12 @@ export default function TrainingHubPage() {
           <Link href="/training/drills?tab=saved" className="text-[12px] text-[var(--shotiq-color-analysisBlue)]">View all drills ›</Link>
         </div>
         <div className="mt-[8px] grid grid-cols-4 gap-[12px]">
-          {LIBRARY.map(([len, t, meta]) => (
+          {LIBRARY.map(([len, t, meta, img]) => (
             <Link key={String(t)} href={`/training/drills/${slug(String(t))}`}>
               <Card className="overflow-hidden">
                 <div className="relative">
-                  <MediaSurface height={110} rounded={0} />
-                  <span className="absolute left-[8px] top-[8px] rounded-[3px] bg-black/75 px-[5px] py-[1px] text-[9px] font-bold text-white">{len}</span>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={String(img)} alt="" className="h-[113px] w-full object-cover" />
                   <button type="button" aria-pressed={saved.has(String(t))}
                           aria-label={saved.has(String(t)) ? "Remove from my drills" : "Save drill"}
                           onClick={(e) => { e.preventDefault(); toggleSave(String(t)) }}

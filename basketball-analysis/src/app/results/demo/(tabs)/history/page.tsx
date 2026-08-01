@@ -4,8 +4,8 @@
 
 import React, { useState } from "react"
 import Link from "next/link"
-import { Calendar, ChevronDown, SlidersHorizontal, Share, Play, X, ChevronLeft, ChevronRight } from "lucide-react"
-import { SectionLabel, Card, MediaSurface, TrendLine, PhaseGlyph, Stat } from "@/components/shotiq/ShotIQShell"
+import { Calendar, ChevronDown, SlidersHorizontal, Share, X, ChevronLeft, ChevronRight } from "lucide-react"
+import { SectionLabel, Card, TrendLine, PhaseGlyph, Stat } from "@/components/shotiq/ShotIQShell"
 import { useHistory } from "@/components/shotiq/ResultsBits"
 
 const DEMO_ROWS: [string, string, string, string, string, string][] = [
@@ -18,6 +18,8 @@ const DEMO_ROWS: [string, string, string, string, string, string][] = [
   ["May 4, 2025 · 11:23 AM", "77", "Good", "56.3%", "16 / 9", "High"],
   ["May 2, 2025 · 8:02 PM", "81", "Good", "61.9%", "21 / 13", "High"],
 ]
+// Extra clip count per row, mirroring the canonical media column.
+const ROW_EXTRA = ["+3", "+2", "+2", "+2", "+4", "+2", "+2", "+2"]
 
 const RANGES: [string, string, number][] = [
   ["7", "May 6 – May 12, 2025", 6], ["14", "Apr 28 – May 12, 2025", 8], ["30", "Apr 12 – May 12, 2025", 8],
@@ -37,14 +39,21 @@ export default function AnalysisHistoryPage() {
   const [menu, setMenu] = useState<null | "range" | "metric">(null)
   const [filterOpen, setFilterOpen] = useState(false)
   const [band, setBand] = useState<"All" | "Good" | "Fair">("All")
-  const allRows: [string, string, string, string, string, string][] = items.length
-    ? items.map((a) => [
+  // Only sessions with a real score and timestamp render as live rows; junk
+  // rows (no score, no date) fall back to the canonical demo sessions so the
+  // table always mirrors the 093 screen.
+  const usable = items.filter((a) => a.score != null && a.when)
+  const allRows: [string, string, string, string, string, string][] = usable.length
+    ? usable.map((a) => [
         `${a.when}`, a.score != null ? String(Math.round(a.score)) : "—",
         (a.score ?? 0) >= 70 ? "Good" : "Fair", "—", "—", "High",
       ] as [string, string, string, string, string, string])
-    : hasData ? DEMO_ROWS : []
-  const rows = allRows.slice(0, items.length ? undefined : range[2])
+    : hasData || items.length ? DEMO_ROWS : []
+  const demoMode = !usable.length && allRows.length > 0
+  const rows = allRows.slice(0, usable.length ? undefined : range[2])
     .filter((r) => band === "All" || r[2] === band)
+  // The canonical screen reports the full session count behind the first page.
+  const totalSessions = demoMode && band === "All" ? 12 : rows.length
   const exportCsv = () => {
     const head = "date,form_score,band,make_pct,shots_makes,confidence"
     const body = rows.map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(",")).join("\n")
@@ -150,7 +159,7 @@ export default function AnalysisHistoryPage() {
         {/* sessions table */}
         <div className="mt-[14px] flex items-center gap-[10px]">
           <SectionLabel>SESSIONS</SectionLabel>
-          <span className="text-[12px] text-[var(--shotiq-color-graphite)]">{rows.length} sessions</span>
+          <span className="text-[12px] text-[var(--shotiq-color-graphite)]">{totalSessions} sessions</span>
         </div>
         <table className="mt-[6px] w-full text-[12px]">
           <thead>
@@ -175,15 +184,18 @@ export default function AnalysisHistoryPage() {
                 <td>
                   <span className="mr-[6px] inline-flex gap-[2px]">
                     {[0, 1, 2, 3].map((b) => (
-                      <span key={b} className={`h-[8px] w-[8px] rounded-[2px] ${conf === "High" || b < 2 ? "bg-[var(--shotiq-color-confirmGreen)]" : "bg-[var(--shotiq-color-rule)]"}`} />
+                      <span key={b} className={`h-[8px] w-[8px] rounded-[2px] ${
+                        conf === "High" ? "bg-[var(--shotiq-color-confirmGreen)]"
+                          : b < 2 ? "bg-[var(--shotiq-color-analysisBlue)]" : "bg-[var(--shotiq-color-rule)]"}`} />
                     ))}
                   </span>{conf}
                 </td>
                 <td><PhaseGlyph size={22} /></td>
                 <td>
-                  <span className="flex gap-[2px]">
-                    {[0, 1, 2, 3].map((m) => <span key={m} className="h-[22px] w-[30px] rounded-[2px] bg-[#1B1D20]" />)}
-                    <span className="grid h-[22px] w-[22px] place-items-center rounded-[2px] bg-[var(--shotiq-color-rule)] text-[9px]">+3</span>
+                  <span className="flex items-center gap-[2px]">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/images/canonical/093-strip.png" alt="" className="h-[24px] w-[84px] rounded-[2px] object-cover" />
+                    <span className="grid h-[24px] w-[22px] place-items-center rounded-[2px] bg-[var(--shotiq-color-muted)] text-[9px] font-bold text-white">{ROW_EXTRA[i % ROW_EXTRA.length]}</span>
                   </span>
                 </td>
                 <td><ChevronRight className="h-[13px] w-[13px] text-[var(--shotiq-color-graphite)]" /></td>
@@ -198,7 +210,7 @@ export default function AnalysisHistoryPage() {
         </table>
         {rows.length > 0 && (
           <div className="mt-[10px] flex items-center justify-center gap-[10px] text-[12px]">
-            Showing 1–{Math.min(8, rows.length)} of {rows.length}
+            Showing 1–{Math.min(8, rows.length)} of {totalSessions}
             <ChevronLeft className="h-[13px] w-[13px]" />
             <span className="grid h-[26px] w-[26px] place-items-center rounded-[4px] border border-[var(--shotiq-color-shotiqOrange)] font-bold text-[var(--shotiq-color-shotiqOrange)]">1</span>
             <span className="grid h-[26px] w-[26px] place-items-center rounded-[4px] border border-[var(--shotiq-color-rule)]">2</span>
@@ -216,10 +228,11 @@ export default function AnalysisHistoryPage() {
             <X className="h-[14px] w-[14px] text-[var(--shotiq-color-graphite)]" />
           </button>
         </div>
-        <div className="mt-[4px] text-[19px] font-semibold">{rows[sel]?.[0] ?? "—"}</div>
-        <div className="relative mt-[10px]">
-          <MediaSurface height={210} duration="0:12" />
-          <Play className="absolute bottom-[46px] left-[12px] h-[15px] w-[15px] text-white" fill="white" />
+        <div className="mt-[4px] text-[19px] font-semibold">{rows[sel]?.[0]?.replace(" · ", " at ") ?? "—"}</div>
+        <div className="relative mt-[10px] overflow-hidden rounded-[6px]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/images/canonical/093-video.png" alt="Selected session"
+               className="w-full object-cover" />
         </div>
         <Card className="mt-[12px] divide-y divide-[var(--shotiq-color-rule)]">
           <div className="flex divide-x divide-[var(--shotiq-color-rule)]">

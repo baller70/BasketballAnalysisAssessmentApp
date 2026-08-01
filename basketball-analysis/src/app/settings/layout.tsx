@@ -2,12 +2,12 @@
 
 /**
  * Canonical shell wrapper for /settings.
- * Gives this route the canonical ShotIQ topbar and rail (sidecar contract)
- * while the page's existing domain logic renders inside region-main untouched.
+ * The canonical 096 screen paints its own SETTINGS sidebar inside the page,
+ * so the shell's icon rail is suppressed here (topbar only).
  */
 
 import { ShotIQShell } from "@/components/shotiq/ShotIQShell"
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  return <ShotIQShell active="Settings">{children}</ShotIQShell>
+  return <ShotIQShell active="Settings" sidebar={<></>}>{children}</ShotIQShell>
 }

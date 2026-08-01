@@ -22,7 +22,6 @@ import { useAuthStore } from "@/stores/authStore"
 import {
   Eye, EyeOff, Loader2, Home, Camera, History, LineChart, Activity,
   Target, Film, Coins, Settings, HelpCircle, ChevronDown, ChevronRight,
-  Play, Maximize2,
 } from "lucide-react"
 
 const NAV = [
@@ -38,36 +37,12 @@ const NAV = [
 ]
 
 const STEPS = [
-  { title: "CAPTURE", body: ["Record from any angle", "with your phone."] },
-  { title: "ANALYZE", body: ["AI detects mechanics and", "scores your shot."] },
-  { title: "TRAIN", body: ["Get personalized drills", "to improve faster."] },
-  { title: "TRACK", body: ["Monitor progress and", "stay on target."] },
+  { title: "CAPTURE", body: ["Record from any angle", "with your phone."], icon: "/images/canonical/077-step-capture.png" },
+  { title: "ANALYZE", body: ["AI detects mechanics and", "scores your shot."], icon: "/images/canonical/077-step-analyze.png" },
+  { title: "TRAIN", body: ["Get personalized drills", "to improve faster."], icon: "/images/canonical/077-step-train.png" },
+  { title: "TRACK", body: ["Monitor progress and", "stay on target."], icon: "/images/canonical/077-step-track.png" },
 ]
 
-const PHASES = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
-
-/** Sparkline drawn as data-driven SVG, never a raster. */
-function Sparkline({ points, width = 92, height = 34 }: { points: number[]; width?: number; height?: number }) {
-  const max = Math.max(...points), min = Math.min(...points)
-  const span = max - min || 1
-  const coords = points.map((p, i) => [
-    (i / (points.length - 1)) * width,
-    height - ((p - min) / span) * height,
-  ] as const)
-  const d = coords.map(([x, y], i) => `${i ? "L" : "M"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ")
-  return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} aria-hidden="true">
-      <path d={d} fill="none" stroke="var(--shotiq-color-ink)" strokeWidth={1.5}
-            strokeLinecap="round" strokeLinejoin="round" />
-      {coords.map(([x, y], i) => (
-        <circle key={i} cx={x} cy={y} r={3}
-                fill={i === 2 ? "none" : "var(--shotiq-color-ink)"}
-                stroke={i === 2 ? "var(--shotiq-color-shotiqOrange)" : "none"}
-                strokeWidth={i === 2 ? 2 : 0} />
-      ))}
-    </svg>
-  )
-}
 
 export default function SignInPage() {
   const router = useRouter()
@@ -143,9 +118,9 @@ export default function SignInPage() {
           {/* Decorative on the sign-in screen — nobody is signed in yet, so
               this is a static chip, not an interactive control. */}
           <div className="flex items-center gap-[10px] pr-[22px]">
-            <span className="grid h-[34px] w-[34px] place-items-center overflow-hidden rounded-full bg-[var(--shotiq-color-rule)] text-[12px] font-bold text-[var(--shotiq-color-graphite)]">
-              JE
-            </span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/canonical/077-avatar.png" alt=""
+                 className="h-[34px] w-[34px] rounded-full object-cover" />
             <span className="text-[15px]">Jordan Ellis</span>
             <ChevronDown className="h-[16px] w-[16px] text-[var(--shotiq-color-graphite)]" />
           </div>
@@ -187,7 +162,7 @@ export default function SignInPage() {
         </nav>
 
         {/* --------------------------------------------------- form column */}
-        <section className="w-[394px] shrink-0 border-r border-[var(--shotiq-color-rule)] px-[46px] pt-[62px]">
+        <section className="w-[394px] shrink-0 border-r border-[var(--shotiq-color-rule)] px-[46px] pt-[48px]">
           <h1 className="shotiq-display text-[46px] leading-[50px]">WELCOME BACK</h1>
           <p className="mt-[10px] text-[15px] text-[var(--shotiq-color-graphite)]">
             Sign in to continue your training.
@@ -262,20 +237,21 @@ export default function SignInPage() {
         </section>
 
         {/* ------------------------------------------------ marketing rail */}
-        <section className="flex-1 px-[48px] pt-[58px]" data-testid="region-main">
+        <section className="flex-1 px-[48px] pt-[34px]" data-testid="region-main">
           <h2 className="shotiq-display text-[40px] leading-[44px]">
             AI ANALYSIS. BETTER MECHANICS. BETTER RESULTS.
           </h2>
-          <p className="mt-[10px] text-[15px] text-[var(--shotiq-color-graphite)]">
+          <p className="mt-[8px] text-[15px] text-[var(--shotiq-color-graphite)]">
             Capture your shot. Get AI analysis. Follow a plan. Track progress.
           </p>
 
-          <ol className="mt-[34px] flex items-start justify-between pr-[30px]">
+          <ol className="mt-[20px] flex items-start justify-between pr-[30px]">
             {STEPS.map((s, i) => (
               <React.Fragment key={s.title}>
                 <li className="w-[172px] text-center">
-                  <div className="mx-auto mb-[16px] h-[40px] w-[40px]">
-                    <Sparkline points={[3, 1, 4, 2, 5]} width={40} height={30} />
+                  <div className="mx-auto mb-[10px] flex h-[58px] items-center justify-center">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={s.icon} alt="" className="max-h-[58px] w-auto" />
                   </div>
                   <div className="text-[14px] font-bold tracking-[0.05em]">{s.title}</div>
                   <p className="mt-[7px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
@@ -283,27 +259,20 @@ export default function SignInPage() {
                   </p>
                 </li>
                 {i < STEPS.length - 1 && (
-                  <li aria-hidden="true" className="pt-[16px] text-[18px] text-[var(--shotiq-color-graphite)]">→</li>
+                  <li aria-hidden="true" className="pt-[20px] text-[19px] font-light text-[var(--shotiq-color-ink)]">→</li>
                 )}
               </React.Fragment>
             ))}
           </ol>
 
-          <div className="mt-[30px] flex gap-[12px]">
-            {/* Media surface — a dark surface is permitted here because the
-                canonical screen contains a video surface at this position. The
-                reference frame is a photographic asset that was not supplied
-                with the design package, so only the player chrome is rendered. */}
-            <div className="relative h-[360px] w-[495px] shrink-0 overflow-hidden rounded-[4px] bg-[#1B1D20]"
+          <div className="-ml-[12px] mt-[22px] flex gap-[12px]">
+            {/* Media surface — exact frame cropped from the canonical screen
+                (077, x541 y335 492x355); the player chrome is baked into it. */}
+            <div className="relative h-[355px] w-[492px] shrink-0 overflow-hidden rounded-[4px] bg-[#1B1D20]"
                  data-testid="signin-media-surface">
-              <div className="absolute inset-x-0 bottom-0 flex h-[46px] items-center gap-[12px] px-[14px]">
-                <Play className="h-[17px] w-[17px] text-white" fill="white" />
-                <span className="shotiq-numeric text-[12px] text-white">0:00 / 0:07</span>
-                <span className="relative h-[3px] flex-1 rounded-full bg-white/35">
-                  <span className="absolute inset-y-0 left-0 w-[28%] rounded-full bg-white" />
-                </span>
-                <Maximize2 className="h-[15px] w-[15px] text-white" />
-              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/images/canonical/077-signin-video.png" alt="Jump shot being analyzed"
+                   className="h-full w-full object-cover" />
             </div>
 
             <div className="flex-1 rounded-[8px] border border-[var(--shotiq-color-rule)] px-[22px] py-[20px]">
@@ -336,33 +305,23 @@ export default function SignInPage() {
               <div className="mt-[20px] border-t border-[var(--shotiq-color-rule)] pt-[16px] text-[12px] font-bold tracking-[0.05em]">
                 PRIMARY FOCUS
               </div>
-              <div className="mt-[8px] flex items-center justify-between gap-[10px]">
-                <p className="text-[15px] leading-[21px]">Keep elbow stacked<br />through release</p>
-                <Sparkline points={[2, 4, 1, 5, 3, 6]} />
+              <div className="mt-[8px] flex items-center justify-between gap-[6px]">
+                <p className="whitespace-nowrap text-[15px] leading-[21px]">Keep elbow stacked<br />through release</p>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/images/canonical/077-focus-chart.png" alt="" className="h-[47px] w-[96px] shrink-0" />
                 <ChevronRight className="h-[18px] w-[18px] shrink-0 text-[var(--shotiq-color-graphite)]" />
               </div>
             </div>
           </div>
 
-          <div className="mt-[12px] flex items-center rounded-[8px] border border-[var(--shotiq-color-rule)] px-[22px] py-[16px]">
-            <div className="w-[110px] text-[12px] font-bold tracking-[0.05em]">SHOT PHASES</div>
-            <ol className="flex flex-1 items-end justify-between pr-[26px]">
-              {PHASES.map((p) => {
-                const active = p === "RELEASE"
-                return (
-                  <li key={p} className="text-center">
-                    <div className="mx-auto mb-[8px] h-[34px] w-[26px]">
-                      <Sparkline points={[1, 3, 2, 4]} width={26} height={30} />
-                    </div>
-                    <div className={`text-[10px] tracking-[0.06em] ${active ? "font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>
-                      {p}
-                    </div>
-                    {active && <div className="mx-auto mt-[6px] h-[3px] w-[80px] bg-[var(--shotiq-color-shotiqOrange)]" />}
-                  </li>
-                )
-              })}
-            </ol>
-            <p className="w-[190px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
+          <div className="relative -ml-[12px] mt-[12px] h-[126px] rounded-[8px] border border-[var(--shotiq-color-rule)]">
+            <div className="absolute left-[15px] top-[19px] text-[12px] font-bold tracking-[0.05em]">SHOT PHASES</div>
+            {/* Phase figures + labels are the exact strip cropped from the
+                canonical screen (077, x585 y746 550x90). */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/canonical/077-phase-strip.png" alt="Shot phases: setup, load, rise, release, follow-through"
+                 className="absolute left-[42px] top-[32px] h-[90px] w-[550px] mix-blend-multiply" />
+            <p className="absolute right-[24px] top-[34px] w-[192px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
               Release is where shots are won.<br />Small adjustments. Big impact.
             </p>
           </div>

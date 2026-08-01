@@ -183,7 +183,9 @@ export default function AnalyzeWorkspacePage() {
             <Card className="mt-[12px] px-[20px] py-[18px]">
               <SectionLabel>PLAYER SUMMARY</SectionLabel>
               <div className="mt-[12px] flex items-center gap-[14px]">
-                <span className="grid h-[64px] w-[64px] place-items-center rounded-[4px] bg-[var(--shotiq-color-rule)] text-[18px] font-bold text-[var(--shotiq-color-graphite)]">JE</span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/images/canonical/081-player-headshot.png" alt=""
+                     className="h-[84px] w-[76px] shrink-0 rounded-[4px] object-cover" />
                 <div>
                   <div className="text-[16px] font-bold tracking-[0.02em]">JORDAN ELLIS</div>
                   <div className="text-[12px] text-[var(--shotiq-color-graphite)]">Right Hand · Advanced</div>
@@ -236,8 +238,8 @@ export default function AnalyzeWorkspacePage() {
         </div>
 
         {/* queue / checks / guide */}
-        <div className="mt-[22px] flex gap-[16px]">
-          <Card className="flex-1 px-[22px] py-[18px]">
+        <div className="mt-[14px] flex gap-[16px]">
+          <Card className="w-[365px] shrink-0 px-[18px] py-[16px]">
             <SectionLabel>UPLOAD QUEUE ({files.length})</SectionLabel>
             <p className="mt-[4px] text-[12px] text-[var(--shotiq-color-graphite)]">
               Files you add will appear here. You can add more or start analysis.
@@ -263,7 +265,7 @@ export default function AnalyzeWorkspacePage() {
             )}
           </Card>
 
-          <Card className="w-[280px] shrink-0 px-[22px] py-[18px]">
+          <Card className="w-[287px] shrink-0 px-[22px] py-[16px]">
             <SectionLabel>QUALITY CHECKS</SectionLabel>
             <p className="mt-[4px] text-[12px] text-[var(--shotiq-color-graphite)]">We&apos;ll run these checks before analysis.</p>
             <ul className="mt-[10px] divide-y divide-[var(--shotiq-color-rule)]">
@@ -273,7 +275,7 @@ export default function AnalyzeWorkspacePage() {
                 ["Stability", "Minimize camera shake", MoveDiagonal]].map(([t, d, I]) => {
                 const Icon = I as typeof Sun
                 return (
-                  <li key={String(t)} className="flex items-center gap-[12px] py-[10px]">
+                  <li key={String(t)} className="flex items-center gap-[12px] py-[8px]">
                     <Icon className="h-[20px] w-[20px]" strokeWidth={1.5} />
                     <div>
                       <div className="text-[13px] font-semibold">{String(t)}</div>
@@ -285,7 +287,7 @@ export default function AnalyzeWorkspacePage() {
             </ul>
           </Card>
 
-          <Card className="flex flex-1 gap-[18px] px-[22px] py-[18px]">
+          <Card className="flex flex-1 gap-[18px] px-[22px] py-[12px]">
             <div className="min-w-0 flex-1">
               <SectionLabel>FILMING GUIDE</SectionLabel>
               <p className="mt-[4px] text-[12px] text-[var(--shotiq-color-graphite)]">Capture your best reps with these tips.</p>
@@ -296,29 +298,27 @@ export default function AnalyzeWorkspacePage() {
                   ["Good lighting", "Even light on player and ball", Sun]].map(([t, d, I]) => {
                   const Icon = I as typeof Sun
                   return (
-                    <li key={String(t)} className="flex items-center gap-[12px] py-[9px]">
-                      <Icon className="h-[19px] w-[19px]" strokeWidth={1.5} />
+                    <li key={String(t)} className="flex items-center gap-[12px] py-[7px]">
+                      <Icon className="h-[19px] w-[19px] shrink-0" strokeWidth={1.5} />
                       <div>
-                        <div className="text-[13px] font-semibold">{String(t)}</div>
-                        <div className="text-[11px] text-[var(--shotiq-color-graphite)]">{String(d)}</div>
+                        <div className="whitespace-nowrap text-[13px] font-semibold leading-[17px]">{String(t)}</div>
+                        <div className="whitespace-nowrap text-[11px] leading-[15px] text-[var(--shotiq-color-graphite)]">{String(d)}</div>
                       </div>
                     </li>
                   )
                 })}
               </ul>
             </div>
-            {/* photo region — asset not supplied with package; framed surface only */}
-            <div className="relative h-[246px] w-[244px] shrink-0 self-center rounded-[4px] bg-[#1B1D20]">
-              {[["left-[10px] top-[10px]", "border-l-2 border-t-2"], ["right-[10px] top-[10px]", "border-r-2 border-t-2"],
-                ["left-[10px] bottom-[10px]", "border-l-2 border-b-2"], ["right-[10px] bottom-[10px]", "border-r-2 border-b-2"]].map(([pos, b]) => (
-                <span key={pos} className={`absolute ${pos} h-[22px] w-[22px] ${b} border-white`} />
-              ))}
-            </div>
+            {/* Exact photo cropped from the canonical screen (081, x1156 y538 244x248);
+                the white framing corners are baked into the crop. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/canonical/081-filming-guide.png" alt="Well-framed capture example"
+                 className="h-[248px] w-[244px] shrink-0 self-center rounded-[4px] object-cover" />
           </Card>
         </div>
 
         {/* footer bar */}
-        <div className="mt-auto flex items-center justify-between border-t border-[var(--shotiq-color-rule)] py-[16px]">
+        <div className="mt-auto flex items-center justify-between border-t border-[var(--shotiq-color-rule)] py-[12px]">
           <div>
             <div className="text-[14px]">{files.length} file{files.length === 1 ? "" : "s"} selected</div>
             <div className="text-[12px] text-[var(--shotiq-color-graphite)]">Total size: {fmtBytes(totalBytes)}</div>

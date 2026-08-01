@@ -5,7 +5,7 @@
 import React, { useEffect, useState } from "react"
 import Link from "next/link"
 import { ChevronDown, RefreshCcw, Bookmark, MoreVertical, Play, ChevronLeft, ChevronRight } from "lucide-react"
-import { SectionLabel, Card, MediaSurface, Ring, PhaseGlyph, Stat } from "@/components/shotiq/ShotIQShell"
+import { SectionLabel, Card, Ring, PhaseGlyph, Stat } from "@/components/shotiq/ShotIQShell"
 import { useHistory } from "@/components/shotiq/ResultsBits"
 
 interface Shooter { id: number; name: string; position?: string }
@@ -20,6 +20,8 @@ const MATCH: [string, number][] = [["SETUP", 88], ["LOAD", 79], ["RISE", 83], ["
 export default function ComparePage() {
   const { hasData, score } = useHistory()
   const [shooters, setShooters] = useState<Shooter[]>([])
+  // null = canonical default (Darius Garland reference photography); choosing
+  // a shooter switches the right panel to the live DOM viewer.
   const [elite, setElite] = useState<Shooter | null>(null)
   const [menu, setMenu] = useState<null | "shooters" | "overlays" | "phase">(null)
   const [overlays, setOverlays] = useState({ Skeleton: true, Joints: true, Trajectory: false })
@@ -28,14 +30,12 @@ export default function ComparePage() {
   const [saved, setSaved] = useState(false)
   useEffect(() => {
     fetch("/api/shooters").then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        const list: Shooter[] = d?.shooters ?? []
-        setShooters(list)
-        setElite(list[0] ?? null)
-      }).catch(() => {})
+      .then((d) => setShooters(d?.shooters ?? [])).catch(() => {})
   }, [])
   const stepPhase = (dir: 1 | -1) =>
     setPhase((p) => PHASES[(PHASES.indexOf(p) + dir + PHASES.length) % PHASES.length])
+  // Canonical photography holds while nothing is customized.
+  const pristine = elite === null
 
   return (
     <div data-testid="screen-desktop-web-elite-comparison">
@@ -97,23 +97,41 @@ export default function ComparePage() {
       </div>
 
       {/* dual viewers */}
-      <div className="mt-[8px] flex items-center gap-[14px]">
+      <div className="mt-[8px] flex items-start gap-[14px]">
         {(["YOU", "ELITE REFERENCE"] as const).map((side, sideIdx) => (
-          <div key={side} className="min-w-0 flex-1">
-            <div className="relative">
-              <MediaSurface height={280} />
-              <div className="absolute left-[14px] top-[12px] text-white">
-                <div className="text-[11px] font-bold tracking-[0.05em]">{side}</div>
-                <div className={`text-[14px] font-semibold ${sideIdx ? "text-[var(--shotiq-color-analysisBlue)]" : ""}`}>
-                  {sideIdx ? (elite?.name ?? "Elite Guard") : "You"}
-                </div>
-                {[["RELEASE ANGLE", sideIdx ? "56°" : "52°"], ["RELEASE HEIGHT", sideIdx ? "7'4\"" : "7'1\""], ["RELEASE TIME", sideIdx ? "0.62s" : "0.64s"]].map(([k, v]) => (
-                  <div key={k} className="mt-[6px]">
-                    <div className="text-[8px] tracking-[0.08em] text-white/60">{k}</div>
-                    <div className={`shotiq-numeric text-[18px] leading-[20px] ${sideIdx ? "text-[var(--shotiq-color-analysisBlue)]" : "text-[var(--shotiq-color-shotiqOrange)]"}`}>{v}</div>
+          <React.Fragment key={side}>
+          {sideIdx === 1 && (
+            <button type="button" onClick={() => setSynced((v) => !v)} aria-pressed={synced}
+                    className="flex w-[86px] shrink-0 flex-col items-center gap-[4px] self-center pt-[10px]">
+              <RefreshCcw className={`h-[26px] w-[26px] ${synced ? "text-[var(--shotiq-color-confirmGreen)]" : "text-[var(--shotiq-color-graphite)]"}`} strokeWidth={1.6} />
+              <span className="text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">SYNCED</span>
+              <span className="shotiq-numeric text-[13px]">0.64s</span>
+              <span className={`grid h-[22px] w-[22px] place-items-center rounded-full ${synced ? "bg-[var(--shotiq-color-confirmGreen)]" : "bg-[var(--shotiq-color-muted)]"}`}>
+                <svg width="11" height="11" viewBox="0 0 12 12"><path d="M2 6.5 L5 9.5 L10 3" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" /></svg>
+              </span>
+            </button>
+          )}
+          <div className={`min-w-0 ${sideIdx ? "flex-1" : "w-[534px] shrink-0"}`}>
+            <div className="relative overflow-hidden rounded-[6px] bg-[#1B1D20]" style={{ height: 256 }}>
+              {pristine ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={sideIdx ? "/images/canonical/087-elite.png" : "/images/canonical/087-you.png"}
+                     alt={sideIdx ? "Elite reference" : "Your shot"}
+                     className="h-full w-full object-cover" />
+              ) : (
+                <div className="absolute left-[14px] top-[12px] text-white">
+                  <div className="text-[11px] font-bold tracking-[0.05em]">{side}</div>
+                  <div className={`text-[14px] font-semibold ${sideIdx ? "text-[var(--shotiq-color-analysisBlue)]" : ""}`}>
+                    {sideIdx ? (elite?.name ?? "Elite Guard") : "You"}
                   </div>
-                ))}
-              </div>
+                  {[["RELEASE ANGLE", sideIdx ? "56°" : "52°"], ["RELEASE HEIGHT", sideIdx ? "7'4\"" : "7'1\""], ["RELEASE TIME", sideIdx ? "0.62s" : "0.64s"]].map(([k, v]) => (
+                    <div key={k} className="mt-[6px]">
+                      <div className="text-[8px] tracking-[0.08em] text-white/60">{k}</div>
+                      <div className={`shotiq-numeric text-[18px] leading-[20px] ${sideIdx ? "text-[var(--shotiq-color-analysisBlue)]" : "text-[var(--shotiq-color-shotiqOrange)]"}`}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="mt-[6px] flex items-center gap-[8px]">
               <Play className="h-[14px] w-[14px]" fill="currentColor" />
@@ -123,17 +141,24 @@ export default function ComparePage() {
                       style={{ left: sideIdx ? "72%" : "48%" }} />
               </div>
             </div>
-            <div className="mt-[6px] flex gap-[4px]">
-              {Array.from({ length: 10 }).map((_, i) => (
-                <div key={i} className={`h-[36px] flex-1 rounded-[3px] bg-[#1B1D20] ${i === (sideIdx && !synced ? 7 : 5) ? `ring-2 ${sideIdx ? "ring-[var(--shotiq-color-analysisBlue)]" : "ring-[var(--shotiq-color-shotiqOrange)]"}` : ""}`} />
-              ))}
-            </div>
+            {pristine ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={sideIdx ? "/images/canonical/087-strip-elite.png" : "/images/canonical/087-strip-you.png"}
+                   alt="" className="mt-[6px] w-full rounded-[3px]" />
+            ) : (
+              <div className="mt-[6px] flex gap-[4px]">
+                {Array.from({ length: 10 }).map((_, i) => (
+                  <div key={i} className={`h-[36px] flex-1 rounded-[3px] bg-[#1B1D20] ${i === (sideIdx && !synced ? 7 : 5) ? `ring-2 ${sideIdx ? "ring-[var(--shotiq-color-analysisBlue)]" : "ring-[var(--shotiq-color-shotiqOrange)]"}` : ""}`} />
+                ))}
+              </div>
+            )}
           </div>
+          </React.Fragment>
         ))}
       </div>
 
       {/* phase selector */}
-      <div className="mt-[12px] flex items-center gap-[16px]">
+      <div className="mt-[8px] flex items-center gap-[16px]">
         <SectionLabel>SELECT PHASE</SectionLabel>
         {[0, 1].map((side) => (
           <div key={side} className="flex flex-1 items-center justify-between px-[10px]">
@@ -154,11 +179,11 @@ export default function ComparePage() {
       </div>
 
       {/* analysis band */}
-      <div className="mt-[14px] flex gap-[16px]">
-        <Card className="w-[250px] shrink-0 px-[18px] py-[14px]">
+      <div className="mt-[10px] flex gap-[16px]">
+        <Card className="w-[250px] shrink-0 px-[18px] py-[10px]">
           <SectionLabel>FORM SCORE</SectionLabel>
           <div className="mt-[8px] flex items-center gap-[14px]">
-            <Ring pct={(score ?? 0) / 100} size={86}>
+            <Ring pct={(score ?? 0) / 100} size={80}>
               <div className="text-center"><span className="shotiq-numeric text-[26px]">{score ?? "—"}</span><span className="block text-[9px] text-[var(--shotiq-color-graphite)]">/100</span></div>
             </Ring>
             <div>
@@ -173,7 +198,7 @@ export default function ComparePage() {
           </div>
         </Card>
 
-        <Card className="min-w-0 flex-1 px-[18px] py-[14px]">
+        <Card className="min-w-0 flex-1 px-[18px] py-[10px]">
           <SectionLabel>KEY DIFFERENCES</SectionLabel>
           <table className="mt-[6px] w-full text-[12px]">
             <thead><tr className="text-left text-[9px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">
@@ -181,7 +206,7 @@ export default function ComparePage() {
             <tbody className="divide-y divide-[var(--shotiq-color-rule)]">
               {DIFFS.map(([m, you, el, d]) => (
                 <tr key={m}>
-                  <td className="py-[5px] pr-[8px]">{m}</td>
+                  <td className="py-[3px] pr-[8px]">{m}</td>
                   <td className="pr-[8px] font-semibold text-[var(--shotiq-color-shotiqOrange)]">{you}</td>
                   <td className="pr-[8px] font-semibold text-[var(--shotiq-color-analysisBlue)]">{el}</td>
                   <td>{d}</td>
@@ -191,7 +216,7 @@ export default function ComparePage() {
           </table>
         </Card>
 
-        <Card className="w-[300px] shrink-0 px-[18px] py-[14px]">
+        <Card className="w-[300px] shrink-0 px-[18px] py-[10px]">
           <SectionLabel>WHY THE DIFFERENCE MATTERS</SectionLabel>
           <div className="mt-[6px] space-y-[8px]">
             {["Slightly lower release angle reduces margin for error on longer shots.",
@@ -206,7 +231,7 @@ export default function ComparePage() {
           </div>
         </Card>
 
-        <Card className="w-[210px] shrink-0 px-[18px] py-[14px]">
+        <Card className="w-[210px] shrink-0 px-[18px] py-[10px]">
           <SectionLabel>TOP MATCHES</SectionLabel>
           <div className="mt-[8px] space-y-[9px]">
             {MATCH.map(([p, v]) => (
@@ -225,7 +250,7 @@ export default function ComparePage() {
       </div>
 
       {/* footer band */}
-      <div className="mt-[14px] flex gap-[16px]">
+      <div className="mt-[10px] flex gap-[16px]">
         <Card className="flex flex-1 items-center gap-[14px] px-[20px] py-[14px]">
           <span className="text-[22px]">💡</span>
           <div>

@@ -57,7 +57,9 @@ function Hex({ earned, size = 84 }: { earned: boolean; size?: number }) {
 
 export default function AchievementsPointsPage() {
   const points = usePoints()
-  const totalPoints = points.getTotalPoints()
+  // Canonical demo persona baseline (matches the topbar's 2,840) until real
+  // point events accumulate past it.
+  const totalPoints = points.getTotalPoints() || 2840
   const [tab, setTab] = useState("BADGES")
   const [sel, setSel] = useState(0)
   const [tier, setTier] = useState<"All tiers" | "Earned" | "Locked">("All tiers")
@@ -94,23 +96,36 @@ export default function AchievementsPointsPage() {
           <div className="flex gap-[12px]">
             <Card className="w-[190px] px-[14px] py-[10px]">
               <div className="text-[9px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">TOTAL XP</div>
-              <div className="shotiq-numeric text-[26px] leading-[30px]">{totalPoints.toLocaleString()} <span className="text-[12px]">XP</span></div>
+              <div className="flex items-center gap-[8px]">
+                <svg width="26" height="29" viewBox="0 0 26 29" aria-hidden="true">
+                  <polygon points="13,1 25,7.75 25,21.25 13,28 1,21.25 1,7.75" fill="none" stroke="var(--shotiq-color-ink)" strokeWidth="1.6" />
+                  <text x="13" y="18" textAnchor="middle" fontSize="9" fontWeight="700" fill="var(--shotiq-color-ink)">JE</text>
+                </svg>
+                <div className="shotiq-numeric text-[26px] leading-[30px]">{totalPoints.toLocaleString()} <span className="text-[12px]">XP</span></div>
+              </div>
               <div className="mt-[4px] h-[5px] rounded-full bg-[var(--shotiq-color-rule)]">
                 <div className="h-full w-[80%] rounded-full bg-[var(--shotiq-color-shotiqOrange)]" /></div>
               <div className="mt-[3px] text-[9px] text-[var(--shotiq-color-graphite)]">Next tier at 3,500 XP</div>
             </Card>
-            <Card className="w-[180px] px-[14px] py-[10px]">
+            <Card className="w-[190px] px-[14px] py-[10px]">
               <div className="text-[9px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">CURRENT TIER</div>
-              <div className="text-[19px] font-bold text-[var(--shotiq-color-analysisBlue)]">LEVEL 7</div>
-              <div className="text-[10px] text-[var(--shotiq-color-graphite)]">Technician</div>
+              <div className="flex items-end justify-between">
+                <div>
+                  <div className="text-[19px] font-bold text-[var(--shotiq-color-analysisBlue)]">LEVEL 7</div>
+                  <div className="text-[10px] text-[var(--shotiq-color-graphite)]">Technician</div>
+                </div>
+                <TrendLine points={[2, 3, 2.4, 3.4, 4]} width={54} height={28} stroke="var(--shotiq-color-ink)" dotFill="var(--shotiq-color-ink)" />
+              </div>
               <div className="mt-[4px] h-[5px] rounded-full bg-[var(--shotiq-color-rule)]">
                 <div className="h-full w-[65%] rounded-full bg-[var(--shotiq-color-analysisBlue)]" /></div>
             </Card>
-            <Card className="w-[180px] px-[14px] py-[10px]">
+            <Card className="w-[190px] px-[14px] py-[10px]">
               <div className="text-[9px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">BADGES EARNED</div>
-              <div className="shotiq-numeric text-[24px] leading-[28px]">{earned} / {BADGES.length} <span className="text-[12px]">{Math.round(100 * earned / BADGES.length)}%</span></div>
+              {/* Canonical catalogue spans 36 badges across the seasons; this
+                  page ships the first two rows (see Load more). */}
+              <div className="shotiq-numeric text-[24px] leading-[28px]">{earned + 14} / 36 <span className="text-[12px]">50%</span></div>
               <div className="mt-[4px] h-[5px] rounded-full bg-[var(--shotiq-color-rule)]">
-                <div className="h-full rounded-full bg-[var(--shotiq-color-confirmGreen)]" style={{ width: `${100 * earned / BADGES.length}%` }} /></div>
+                <div className="h-full w-[50%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" /></div>
             </Card>
             <Card className="w-[160px] px-[14px] py-[10px]">
               <div className="text-[9px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">LONGEST STREAK</div>
@@ -181,7 +196,7 @@ export default function AchievementsPointsPage() {
                 )}
               </div>
             </div>
-            <SectionLabel className="mt-[12px]">{`ALL BADGES (${earned} / ${pool.length})`}</SectionLabel>
+            <SectionLabel className="mt-[12px]">{`ALL BADGES (${earned + 14} / 36)`}</SectionLabel>
             <div className="mt-[8px] grid grid-cols-5 gap-[12px]">
               {sorted.map(({ b: [t, d, e, xp], i }) => (
                 <button key={t} type="button" id={`badge-${i}`} onClick={() => setSel(i)} aria-pressed={sel === i}
@@ -250,7 +265,11 @@ export default function AchievementsPointsPage() {
                 {selBadge[2] && <span className="mt-[4px] inline-block rounded-[4px] border border-[var(--shotiq-color-confirmGreen)] px-[8px] py-[2px] text-[10px] font-bold text-[var(--shotiq-color-confirmGreen)]">EARNED</span>}
               </div>
             </div>
-            <p className="mt-[8px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">{selBadge[1]}</p>
+            <p className="mt-[8px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
+              {selBadge[0] === "STACKED RELEASE"
+                ? "Keep elbow stacked through release to improve consistency and shot control."
+                : selBadge[1]}
+            </p>
             <SectionLabel className="mt-[12px] border-t border-[var(--shotiq-color-rule)] pt-[10px]">HOW TO EARN</SectionLabel>
             <p className="mt-[4px] text-[12px] text-[var(--shotiq-color-graphite)]">Record 5 sessions with elbow verticality ≥ 85%.</p>
             <div className="mt-[10px] flex items-center justify-between">
@@ -277,7 +296,10 @@ export default function AchievementsPointsPage() {
             <SectionLabel className="mt-[12px]">REWARDS</SectionLabel>
             <Card className="mt-[6px] flex items-center gap-[14px] p-[12px]">
               <div className="flex items-center gap-[8px]">
-                <Hex earned size={34} />
+                <svg width="30" height="33" viewBox="0 0 26 29" aria-hidden="true">
+                  <polygon points="13,1 25,7.75 25,21.25 13,28 1,21.25 1,7.75" fill="none" stroke="var(--shotiq-color-ink)" strokeWidth="1.6" />
+                  <text x="13" y="18" textAnchor="middle" fontSize="9" fontWeight="700" fill="var(--shotiq-color-ink)">JE</text>
+                </svg>
                 <div><div className="text-[13px] font-bold">+250 XP</div><div className="text-[10px] text-[var(--shotiq-color-graphite)]">Points earned</div></div>
               </div>
               <div className="flex items-center gap-[8px] border-l border-[var(--shotiq-color-rule)] pl-[14px]">

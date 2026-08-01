@@ -45,7 +45,7 @@ fileprivate struct PlayerCardExportView: View {
                 Text("SHOTIQ").font(.system(size: 17, weight: .black).width(.condensed))
                 Spacer()
                 if let jersey {
-                    Text("#\(jersey)").font(.custom("DINCondensed-Bold", size: 18))
+                    Text("#\(jersey)").font(.custom("Tungsten-Semibold", size: 18))
                 }
                 Text("AI ANALYSIS").font(.system(size: 12, weight: .semibold)).kerning(3)
             }
@@ -60,7 +60,7 @@ fileprivate struct PlayerCardExportView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("FORM SCORE").font(.system(size: 10, weight: .semibold)).kerning(0.6)
                             .foregroundStyle(ShotIQColor.graphite)
-                        Text("82").font(.custom("DINCondensed-Bold", size: 52)).foregroundStyle(accent)
+                        Text("82").font(.custom("Tungsten-Semibold", size: 52)).foregroundStyle(accent)
                         ScoreBar(pct: 0.82, color: accent).frame(width: 96)
                     }
                     Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 56)
@@ -132,12 +132,12 @@ struct PlayerCardView: View {       // 048
                                 Text("FORM SCORE").font(.system(size: 12, weight: .semibold)).kerning(0.8)
                                     .foregroundStyle(ShotIQColor.ink)
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text("82").font(.custom("DINCondensed-Bold", size: 58))
+                                    Text("82").font(.custom("Tungsten-Semibold", size: 58))
                                         .foregroundStyle(ShotIQColor.shotiqOrange)
                                     ScoreBar(pct: 0.82).frame(width: 110)
                                 }
                                 VStack(alignment: .leading, spacing: 3) {
-                                    Text("GOOD").font(.custom("DINCondensed-Bold", size: 17))
+                                    Text("GOOD").font(.custom("Tungsten-Semibold", size: 17))
                                         .foregroundStyle(ShotIQColor.analysisBlue)
                                     Text("Keep building\nconsistency.").font(.system(size: 12))
                                         .foregroundStyle(ShotIQColor.graphite)
@@ -145,7 +145,7 @@ struct PlayerCardView: View {       // 048
                                 Spacer()
                                 Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 56)
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text("62.5%").font(.custom("DINCondensed-Bold", size: 26))
+                                    Text("62.5%").font(.custom("Tungsten-Semibold", size: 26))
                                         .foregroundStyle(ShotIQColor.ink)
                                     Text("MAKE %").font(.system(size: 10, weight: .medium)).kerning(0.5)
                                         .foregroundStyle(ShotIQColor.graphite)
@@ -298,7 +298,7 @@ struct PlayerCardView: View {       // 048
             Text(label).font(.system(size: 10, weight: .medium)).kerning(0.5)
                 .foregroundStyle(ShotIQColor.graphite)
                 .lineLimit(1).minimumScaleFactor(0.6)
-            Text(value).font(.custom("DINCondensed-Bold", size: 30)).foregroundStyle(ShotIQColor.ink)
+            Text(value).font(.custom("Tungsten-Semibold", size: 30)).foregroundStyle(ShotIQColor.ink)
             Text(metric).font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
         }
         .frame(maxWidth: .infinity)
@@ -309,7 +309,7 @@ struct PlayerCardView: View {       // 048
             Text(phase).font(.system(size: 8, weight: active ? .bold : .regular)).kerning(0.4)
                 .foregroundStyle(active ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
                 .lineLimit(1).minimumScaleFactor(0.6)
-            Text(score).font(.custom("DINCondensed-Bold", size: 20)).foregroundStyle(tint)
+            Text(score).font(.custom("Tungsten-Semibold", size: 20)).foregroundStyle(tint)
             if active {
                 Rectangle().fill(ShotIQColor.shotiqOrange).frame(width: 40, height: 3)
             }
@@ -393,10 +393,10 @@ struct CustomizePlayerCardView: View { // 049
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text("FORM SCORE").font(.system(size: 10, weight: .semibold)).kerning(0.6)
                                             .foregroundStyle(ShotIQColor.graphite)
-                                        Text("82").font(.custom("DINCondensed-Bold", size: 52))
+                                        Text("82").font(.custom("Tungsten-Semibold", size: 52))
                                             .foregroundStyle(bannerColor)
                                         ScoreBar(pct: 0.82, color: bannerColor).frame(width: 96)
-                                        Text("GOOD").font(.custom("DINCondensed-Bold", size: 16))
+                                        Text("GOOD").font(.custom("Tungsten-Semibold", size: 16))
                                             .foregroundStyle(ShotIQColor.analysisBlue).padding(.top, 4)
                                         Text("Keep elbow stacked\nthrough release.").font(.system(size: 11))
                                             .foregroundStyle(ShotIQColor.graphite)
@@ -451,7 +451,7 @@ struct CustomizePlayerCardView: View { // 049
                                             Image(systemName: "minus").font(.system(size: 13)).frame(width: 40, height: 38)
                                         }
                                         .buttonStyle(.plain)
-                                        Text("\(jersey)").font(.custom("DINCondensed-Bold", size: 20))
+                                        Text("\(jersey)").font(.custom("Tungsten-Semibold", size: 20))
                                             .frame(width: 40)
                                         Button { jersey += 1 } label: {
                                             Image(systemName: "plus").font(.system(size: 13)).frame(width: 40, height: 38)
@@ -660,7 +660,7 @@ struct EliteMatchView: View {       // 050
                                 VStack(spacing: 6) {
                                     Text("ELITE MATCH").font(.system(size: 12, weight: .bold)).kerning(0.8)
                                         .foregroundStyle(ShotIQColor.ink)
-                                    Text("89%").font(.custom("DINCondensed-Bold", size: 58))
+                                    Text("89%").font(.custom("Tungsten-Semibold", size: 58))
                                         .foregroundStyle(ShotIQColor.analysisBlue)
                                     Text("OVERALL\nSIMILARITY").font(.system(size: 10, weight: .medium)).kerning(0.6)
                                         .foregroundStyle(ShotIQColor.graphite)
@@ -673,7 +673,7 @@ struct EliteMatchView: View {       // 050
                                     }
                                     Text("SHARED MECHANICS").font(.system(size: 9, weight: .bold)).kerning(0.5)
                                         .foregroundStyle(ShotIQColor.ink).padding(.top, 4)
-                                    Text("5 OF 6").font(.custom("DINCondensed-Bold", size: 18))
+                                    Text("5 OF 6").font(.custom("Tungsten-Semibold", size: 18))
                                         .foregroundStyle(ShotIQColor.analysisBlue)
                                 }
                                 Spacer(minLength: 4)
@@ -683,7 +683,7 @@ struct EliteMatchView: View {       // 050
                                     Text(vm.shooters.first.map { "\($0.team) • \($0.position)" } ?? "Reference Profile")
                                         .font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
                                         .lineLimit(1).minimumScaleFactor(0.7)
-                                    Text("94").font(.custom("DINCondensed-Bold", size: 28))
+                                    Text("94").font(.custom("Tungsten-Semibold", size: 28))
                                         .foregroundStyle(ShotIQColor.analysisBlue).padding(.top, 6)
                                     Text("FORM SCORE").font(.system(size: 10, weight: .medium)).kerning(0.5)
                                         .foregroundStyle(ShotIQColor.graphite)
@@ -733,7 +733,7 @@ struct EliteMatchView: View {       // 050
                                     Text(unit).font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
                                 }
                                 .frame(width: 96, alignment: .leading)
-                                Text(you).font(.custom("DINCondensed-Bold", size: 17))
+                                Text(you).font(.custom("Tungsten-Semibold", size: 17))
                                     .foregroundStyle(ShotIQColor.shotiqOrange)
                                     .frame(width: 38, alignment: .trailing)
                                 GeometryReader { geo in
@@ -751,11 +751,11 @@ struct EliteMatchView: View {       // 050
                                     }
                                 }
                                 .frame(height: 24)
-                                Text(elite).font(.custom("DINCondensed-Bold", size: 17))
+                                Text(elite).font(.custom("Tungsten-Semibold", size: 17))
                                     .foregroundStyle(ShotIQColor.analysisBlue)
                                     .frame(width: 38, alignment: .leading)
                                 VStack(spacing: 0) {
-                                    Text(diff).font(.custom("DINCondensed-Bold", size: 16)).foregroundStyle(ShotIQColor.ink)
+                                    Text(diff).font(.custom("Tungsten-Semibold", size: 16)).foregroundStyle(ShotIQColor.ink)
                                     Text("DIFF").font(.system(size: 8, weight: .medium)).kerning(0.4)
                                         .foregroundStyle(ShotIQColor.graphite)
                                 }
@@ -770,7 +770,7 @@ struct EliteMatchView: View {       // 050
                             Text("RELEASE FRAME MATCH").shotiqDisplay(20)
                             Spacer()
                             Text("Average frame alignment").font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
-                            Text("±2°").font(.custom("DINCondensed-Bold", size: 16)).foregroundStyle(ShotIQColor.ink)
+                            Text("±2°").font(.custom("Tungsten-Semibold", size: 16)).foregroundStyle(ShotIQColor.ink)
                             Image(systemName: "checkmark.circle.fill").font(.system(size: 14))
                                 .foregroundStyle(ShotIQColor.confirmGreen)
                         }
@@ -800,7 +800,7 @@ struct EliteMatchView: View {       // 050
                                 Spacer()
                                 VStack(alignment: .trailing, spacing: 2) {
                                     HStack(spacing: 5) {
-                                        Text("ON TRACK").font(.custom("DINCondensed-Bold", size: 18))
+                                        Text("ON TRACK").font(.custom("Tungsten-Semibold", size: 18))
                                             .foregroundStyle(ShotIQColor.confirmGreen)
                                         Image(systemName: "checkmark.circle.fill").font(.system(size: 14))
                                             .foregroundStyle(ShotIQColor.confirmGreen)
@@ -906,7 +906,7 @@ struct PhotoComparisonView: View {  // 051
                                 Text("FORM SCORE").font(.system(size: 8, weight: .semibold)).kerning(0.4)
                                     .foregroundStyle(ShotIQColor.graphite).padding(.top, 2)
                                 HStack(spacing: 6) {
-                                    Text("82").font(.custom("DINCondensed-Bold", size: 24))
+                                    Text("82").font(.custom("Tungsten-Semibold", size: 24))
                                         .foregroundStyle(ShotIQColor.shotiqOrange)
                                     ScoreBar(pct: 0.82).frame(width: 58)
                                 }
@@ -923,7 +923,7 @@ struct PhotoComparisonView: View {  // 051
                                 Text("FORM SCORE").font(.system(size: 8, weight: .semibold)).kerning(0.4)
                                     .foregroundStyle(ShotIQColor.graphite).padding(.top, 2)
                                 HStack(spacing: 6) {
-                                    Text("94").font(.custom("DINCondensed-Bold", size: 24))
+                                    Text("94").font(.custom("Tungsten-Semibold", size: 24))
                                         .foregroundStyle(ShotIQColor.analysisBlue)
                                     ScoreBar(pct: 0.94, color: ShotIQColor.analysisBlue).frame(width: 58)
                                 }
@@ -985,16 +985,16 @@ struct PhotoComparisonView: View {  // 051
                                         .lineLimit(1).minimumScaleFactor(0.6)
                                 }
                                 .frame(width: 108, alignment: .leading)
-                                Text(you).font(.custom("DINCondensed-Bold", size: 26))
+                                Text(you).font(.custom("Tungsten-Semibold", size: 26))
                                     .foregroundStyle(ShotIQColor.shotiqOrange)
                                     .frame(maxWidth: .infinity)
                                 VStack(spacing: 0) {
-                                    Text(diff).font(.custom("DINCondensed-Bold", size: 17)).foregroundStyle(ShotIQColor.ink)
+                                    Text(diff).font(.custom("Tungsten-Semibold", size: 17)).foregroundStyle(ShotIQColor.ink)
                                     Text("DIFFERENCE").font(.system(size: 7, weight: .medium)).kerning(0.4)
                                         .foregroundStyle(ShotIQColor.graphite)
                                 }
                                 .frame(width: 62)
-                                Text(elite).font(.custom("DINCondensed-Bold", size: 26))
+                                Text(elite).font(.custom("Tungsten-Semibold", size: 26))
                                     .foregroundStyle(ShotIQColor.analysisBlue)
                                     .frame(maxWidth: .infinity)
                             }
@@ -1248,7 +1248,7 @@ struct EliteShootersView: View {    // 052
                                 Text("FG%").font(.system(size: 9, weight: .medium)).kerning(0.4)
                                     .foregroundStyle(ShotIQColor.graphite)
                                 Text(s.careerPct.map { String(format: "%.1f%%", $0) } ?? "—")
-                                    .font(.custom("DINCondensed-Bold", size: 22)).foregroundStyle(ShotIQColor.ink)
+                                    .font(.custom("Tungsten-Semibold", size: 22)).foregroundStyle(ShotIQColor.ink)
                             }
                             .frame(width: 58)
                             Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 36)
@@ -1256,7 +1256,7 @@ struct EliteShootersView: View {    // 052
                                 Text("WSI").font(.system(size: 9, weight: .medium)).kerning(0.4)
                                     .foregroundStyle(ShotIQColor.shotiqOrange)
                                 Text("\(max(70, 94 - rank * 2))")
-                                    .font(.custom("DINCondensed-Bold", size: 22)).foregroundStyle(ShotIQColor.shotiqOrange)
+                                    .font(.custom("Tungsten-Semibold", size: 22)).foregroundStyle(ShotIQColor.shotiqOrange)
                             }
                             .frame(width: 44)
                             Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 36)
@@ -1264,7 +1264,7 @@ struct EliteShootersView: View {    // 052
                                 Text("SIMILARITY").font(.system(size: 9, weight: .medium)).kerning(0.4)
                                     .foregroundStyle(ShotIQColor.graphite)
                                 Text("\(max(60, 91 - rank * 3))%")
-                                    .font(.custom("DINCondensed-Bold", size: 22)).foregroundStyle(ShotIQColor.analysisBlue)
+                                    .font(.custom("Tungsten-Semibold", size: 22)).foregroundStyle(ShotIQColor.analysisBlue)
                             }
                             .frame(width: 62)
                         }
@@ -1401,7 +1401,7 @@ struct EliteShooterDetailView: View { // 053
                                     VStack(spacing: 3) {
                                         Text("WSI TIER").font(.system(size: 10, weight: .medium)).kerning(0.5)
                                             .foregroundStyle(ShotIQColor.graphite)
-                                        Text("53").font(.custom("DINCondensed-Bold", size: 34))
+                                        Text("53").font(.custom("Tungsten-Semibold", size: 34))
                                             .foregroundStyle(ShotIQColor.shotiqOrange)
                                         Text((shooter.tier ?? "ELITE").uppercased())
                                             .font(.system(size: 10, weight: .medium)).kerning(0.5)
@@ -1415,9 +1415,9 @@ struct EliteShooterDetailView: View { // 053
                                 .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1).offset(y: -11), alignment: .top)
                             HStack(alignment: .top, spacing: 20) {
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text("82").font(.custom("DINCondensed-Bold", size: 54))
+                                    Text("82").font(.custom("Tungsten-Semibold", size: 54))
                                         .foregroundStyle(ShotIQColor.shotiqOrange)
-                                    Text("GOOD").font(.custom("DINCondensed-Bold", size: 17))
+                                    Text("GOOD").font(.custom("Tungsten-Semibold", size: 17))
                                         .foregroundStyle(ShotIQColor.analysisBlue)
                                     Text("High-level, repeatable form.").font(.system(size: 12))
                                         .foregroundStyle(ShotIQColor.graphite)
@@ -1562,7 +1562,7 @@ struct EliteShooterDetailView: View { // 053
             Text(label).font(.system(size: 10, weight: .medium)).kerning(0.5)
                 .foregroundStyle(ShotIQColor.graphite)
                 .lineLimit(1).minimumScaleFactor(0.6)
-            Text(value).font(.custom("DINCondensed-Bold", size: 24)).foregroundStyle(ShotIQColor.ink)
+            Text(value).font(.custom("Tungsten-Semibold", size: 24)).foregroundStyle(ShotIQColor.ink)
         }
         .frame(maxWidth: .infinity)
     }
@@ -1571,7 +1571,7 @@ struct EliteShooterDetailView: View { // 053
             PhaseGlyph(size: 26)
             Text(label).font(.system(size: 11)).foregroundStyle(ShotIQColor.ink)
                 .lineLimit(1).minimumScaleFactor(0.6)
-            Text(pct).font(.custom("DINCondensed-Bold", size: 24)).foregroundStyle(ShotIQColor.ink)
+            Text(pct).font(.custom("Tungsten-Semibold", size: 24)).foregroundStyle(ShotIQColor.ink)
             Text(shots).font(.system(size: 9, weight: .medium)).kerning(0.4)
                 .foregroundStyle(ShotIQColor.graphite)
         }
@@ -1583,7 +1583,7 @@ struct EliteShooterDetailView: View { // 053
                 .foregroundStyle(ShotIQColor.ink)
             Text(label).font(.system(size: 9)).foregroundStyle(ShotIQColor.graphite)
                 .lineLimit(1).minimumScaleFactor(0.6)
-            Text(value).font(.custom("DINCondensed-Bold", size: 17)).foregroundStyle(ShotIQColor.confirmGreen)
+            Text(value).font(.custom("Tungsten-Semibold", size: 17)).foregroundStyle(ShotIQColor.confirmGreen)
                 .lineLimit(1).minimumScaleFactor(0.6)
         }
         .frame(maxWidth: .infinity)
