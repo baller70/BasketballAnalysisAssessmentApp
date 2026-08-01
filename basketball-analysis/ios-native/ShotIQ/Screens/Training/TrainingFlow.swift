@@ -684,4 +684,326 @@ struct DrillDetailView: View {      // 057
     }
 }
 
-// APPEND-058
+struct MyDrillsView: View {         // 058
+    @EnvironmentObject var app: AppState
+    private let drills: [(String, String, String, Int, Int, String, String)] = [
+        ("Quick Release Builder", "Keep elbow stacked through release", "RELEASE", 24, 15, "62.5%", "May 10, 2025"),
+        ("Stationary Pound Dribble", "Build a strong handle with a stationary pound dribble focus", "LOAD", 18, 11, "61.1%", "May 8, 2025"),
+        ("Speed Dribble Combo", "Advance your handle with speed dribble combinations and counters", "RISE", 30, 21, "70.0%", "May 5, 2025"),
+        ("1-2 Step Finishing", "Finish at the rim using quick 1-2 step footwork and control", "RISE", 16, 12, "75.0%", "Apr 28, 2025")
+    ]
+    private let phases = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
+    var body: some View {
+        CanonicalScreen(testID: "screen-ios-my-drills") {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    TopBar()
+                    PlayerHeader(name: app.user?.displayName ?? "Jordan Ellis")
+                    VStack(alignment: .leading, spacing: 0) {
+                        NavigationLink { AnalyzeHubView() } label: {
+                            HStack(spacing: 10) {
+                                Image(systemName: "camera.viewfinder")
+                                Text("Analyze shot").font(.system(size: 17, weight: .medium))
+                            }
+                            .frame(maxWidth: .infinity).frame(height: 54)
+                            .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 8))
+                            .foregroundStyle(.white)
+                        }
+                        .padding(.top, 16)
+                        HStack(spacing: 0) {
+                            tabItem("figure.run", "TRAIN", "Drills & workouts", false)
+                            tabItem("point.3.connected.trianglepath.dotted", "MY DRILLS", "Saved for you", true)
+                            tabItem("scribble.variable", "ASSIGNED", "From coach", false)
+                        }
+                        .padding(.top, 18)
+                        HStack {
+                            SectionLabel(text: "5 DRILLS")
+                            Spacer()
+                            HStack(spacing: 4) {
+                                Text("Sort:").font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                                Text("Newest").font(.system(size: 12, weight: .semibold))
+                                Image(systemName: "chevron.down").font(.system(size: 8))
+                            }
+                            VRule(height: 14).padding(.horizontal, 8)
+                            HStack(spacing: 5) {
+                                Text("Filter").font(.system(size: 12))
+                                Image(systemName: "slider.horizontal.3").font(.system(size: 11))
+                            }
+                            .foregroundStyle(ShotIQColor.ink)
+                        }
+                        .padding(.top, 18)
+                        ForEach(drills, id: \.0) { d in
+                            drillCard(d)
+                                .padding(.top, 12)
+                        }
+                        ShotIQCard {
+                            HStack(spacing: 12) {
+                                PhotoThumb(width: 74, height: 74, icon: "viewfinder")
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("READY TO DISCOVER MORE DRILLS?").shotiqBody(13, weight: .bold)
+                                        .lineLimit(1).minimumScaleFactor(0.8)
+                                    Text("Find new drills tailored to your shooting mechanics and training goals.")
+                                        .font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                                Spacer(minLength: 6)
+                                NavigationLink { DiscoverDrillsView() } label: {
+                                    Text("Discover drills").font(.system(size: 12, weight: .semibold))
+                                        .padding(.horizontal, 11).padding(.vertical, 8)
+                                        .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.shotiqOrange))
+                                        .foregroundStyle(ShotIQColor.shotiqOrange)
+                                        .lineLimit(1).minimumScaleFactor(0.7)
+                                }
+                            }
+                            .padding(12)
+                        }
+                        .padding(.top, 14)
+                        PhaseStrip().padding(.top, 22)
+                        Spacer(minLength: 30)
+                    }
+                    .padding(.horizontal, 20)
+                }
+            }
+        }
+    }
+    private func tabItem(_ icon: String, _ title: String, _ caption: String, _ selected: Bool) -> some View {
+        VStack(spacing: 6) {
+            HStack(spacing: 6) {
+                Image(systemName: icon).font(.system(size: 14))
+                Text(title).font(.system(size: 12, weight: .bold)).kerning(0.5)
+                    .lineLimit(1).minimumScaleFactor(0.7)
+            }
+            .foregroundStyle(selected ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
+            Text(caption).font(.system(size: 10)).foregroundStyle(ShotIQColor.graphite)
+                .lineLimit(1).minimumScaleFactor(0.7)
+            Rectangle().fill(selected ? ShotIQColor.shotiqOrange : ShotIQColor.rule)
+                .frame(height: selected ? 2 : 1)
+        }
+        .frame(maxWidth: .infinity)
+    }
+    private func drillCard(_ d: (String, String, String, Int, Int, String, String)) -> some View {
+        ShotIQCard {
+            HStack(alignment: .top, spacing: 12) {
+                NavigationLink { DrillDetailView(name: d.0) } label: {
+                    PhotoThumb(width: 84, height: 150)
+                }
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(alignment: .top, spacing: 8) {
+                        NavigationLink { DrillDetailView(name: d.0) } label: {
+                            Text(d.0.uppercased()).shotiqDisplay(18)
+                                .multilineTextAlignment(.leading)
+                        }
+                        Spacer(minLength: 4)
+                        NavigationLink { DrillExecutionView(drillName: d.0) } label: {
+                            Text("Start drill").font(.system(size: 12, weight: .semibold))
+                                .padding(.horizontal, 11).padding(.vertical, 7)
+                                .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.shotiqOrange))
+                                .foregroundStyle(ShotIQColor.shotiqOrange)
+                        }
+                    }
+                    Text(d.1).font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                        .lineLimit(2).fixedSize(horizontal: false, vertical: true)
+                    HStack(spacing: 16) {
+                        ForEach(phases, id: \.self) { p in
+                            VStack(spacing: 3) {
+                                PhaseGlyph(active: p == d.2, size: 18)
+                                Rectangle().fill(p == d.2 ? ShotIQColor.shotiqOrange : .clear)
+                                    .frame(width: 18, height: 2)
+                            }
+                        }
+                    }
+                    HStack(spacing: 0) {
+                        miniStat("\(d.3)", "SHOTS")
+                        miniStat("\(d.4)", "MAKES")
+                        miniStat(d.5, "BEST ACCURACY")
+                        miniStat(d.6, "LAST COMPLETED")
+                    }
+                }
+                .padding(.vertical, 12).padding(.trailing, 12)
+            }
+        }
+    }
+    private func miniStat(_ value: String, _ label: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(value).font(.custom("DINCondensed-Bold", size: 17)).foregroundStyle(ShotIQColor.ink)
+                .lineLimit(1).minimumScaleFactor(0.6)
+            Text(label).font(.system(size: 7, weight: .medium)).kerning(0.3)
+                .foregroundStyle(ShotIQColor.graphite)
+                .lineLimit(1).minimumScaleFactor(0.7)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+struct WorkoutCalendarView: View {  // 059
+    @EnvironmentObject var app: AppState
+    @State private var selected = 7
+    private let completed: Set<Int> = [4, 5, 6, 9, 12, 15, 18]
+    private let missed: Set<Int> = [10, 17]
+    private let minutes: [Int: String] = [4: "18 min", 5: "17 min", 6: "20 min", 9: "15 min",
+                                          12: "17 min", 15: "15 min", 18: "18 min"]
+    private let weekdayNames = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"]
+    var body: some View {
+        CanonicalScreen(testID: "screen-ios-workout-calendar") {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    TopBar()
+                    PlayerHeader(name: app.user?.displayName ?? "Jordan Ellis")
+                    VStack(alignment: .leading, spacing: 0) {
+                        // Primary target strip
+                        HStack(spacing: 10) {
+                            PhaseGlyph(size: 28)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("PRIMARY TARGET").font(.system(size: 9, weight: .semibold)).kerning(0.6)
+                                    .foregroundStyle(ShotIQColor.graphite)
+                                Text("Keep elbow stacked through release")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .lineLimit(1).minimumScaleFactor(0.7)
+                            }
+                            Spacer(minLength: 6)
+                            stripStat("24", "SHOTS")
+                            stripStat("15", "MAKES")
+                            stripStat("62.5%", "FG%")
+                        }
+                        .padding(12)
+                        .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
+                        .padding(.top, 16)
+                        // Month header
+                        HStack {
+                            Button {} label: {
+                                Image(systemName: "chevron.left").font(.system(size: 17)).foregroundStyle(ShotIQColor.ink)
+                            }
+                            Spacer()
+                            Text("MAY 2025").shotiqDisplay(26)
+                            Spacer()
+                            Button {} label: {
+                                Image(systemName: "chevron.right").font(.system(size: 17)).foregroundStyle(ShotIQColor.ink)
+                            }
+                        }
+                        .padding(.top, 16)
+                        let cols = Array(repeating: GridItem(.flexible(), spacing: 2), count: 7)
+                        LazyVGrid(columns: cols, spacing: 2) {
+                            ForEach(["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"], id: \.self) { d in
+                                Text(d).font(.system(size: 9, weight: .bold)).kerning(0.4)
+                                    .foregroundStyle(ShotIQColor.graphite)
+                            }
+                            ForEach([27, 28, 29, 30], id: \.self) { d in adjacentCell(d) }
+                            ForEach(1...31, id: \.self) { d in dayCell(d) }
+                            ForEach(101...107, id: \.self) { d in adjacentCell(d - 100) }
+                        }
+                        .padding(.top, 10)
+                        // Legend
+                        HStack(spacing: 10) {
+                            legendItem("Completed") { Image(systemName: "checkmark.circle").font(.system(size: 11)).foregroundStyle(ShotIQColor.confirmGreen) }
+                            legendItem("Scheduled") { Circle().stroke(ShotIQColor.shotiqOrange, lineWidth: 1.4).frame(width: 10, height: 10) }
+                            legendItem("In Progress") { Circle().fill(ShotIQColor.shotiqOrange).frame(width: 10, height: 10) }
+                            legendItem("Missed") { Image(systemName: "xmark.circle").font(.system(size: 11)).foregroundStyle(ShotIQColor.reviewRed) }
+                            legendItem("No workout") { Text("24").font(.custom("DINCondensed-Bold", size: 12)).foregroundStyle(ShotIQColor.muted) }
+                        }
+                        .padding(.top, 12)
+                        // Selected day card
+                        ShotIQCard {
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack(spacing: 10) {
+                                    Text("\(weekdayNames[(4 + selected - 1) % 7]), MAY \(selected)")
+                                        .shotiqBody(15, weight: .bold)
+                                        .lineLimit(1).minimumScaleFactor(0.7)
+                                    Text("IN PROGRESS").font(.system(size: 9, weight: .bold)).kerning(0.4)
+                                        .padding(.horizontal, 7).padding(.vertical, 3)
+                                        .overlay(RoundedRectangle(cornerRadius: 4).stroke(ShotIQColor.shotiqOrange))
+                                        .foregroundStyle(ShotIQColor.shotiqOrange)
+                                    Spacer()
+                                    Image(systemName: "chevron.up").font(.system(size: 13)).foregroundStyle(ShotIQColor.ink)
+                                }
+                                HStack(alignment: .top, spacing: 12) {
+                                    PhotoThumb(width: 112, height: 128)
+                                    VStack(alignment: .leading, spacing: 6) {
+                                        Text("COMBO LADDER").shotiqDisplay(22)
+                                        HStack(spacing: 5) {
+                                            Image(systemName: "clock").font(.system(size: 11))
+                                            Text("Day 4 of 7 • 17 min").font(.system(size: 12, weight: .semibold))
+                                        }
+                                        Text("Layer catch-and-shoot reps with movement progressions to reinforce release timing and alignment under fatigue.")
+                                            .font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
+                                            .fixedSize(horizontal: false, vertical: true)
+                                        HStack(spacing: 12) {
+                                            ForEach(["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"], id: \.self) { p in
+                                                PhaseGlyph(active: p == "RELEASE", size: 16)
+                                            }
+                                        }
+                                    }
+                                }
+                                NavigationLink { DrillExecutionView(drillName: "Combo Ladder") } label: {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "camera.viewfinder")
+                                        Text("Open workout").font(.system(size: 16, weight: .medium))
+                                    }
+                                    .frame(maxWidth: .infinity).frame(height: 50)
+                                    .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 8))
+                                    .foregroundStyle(.white)
+                                }
+                            }
+                            .padding(14)
+                        }
+                        .padding(.top, 14)
+                        Spacer(minLength: 30)
+                    }
+                    .padding(.horizontal, 20)
+                }
+            }
+        }
+    }
+    private func stripStat(_ value: String, _ label: String) -> some View {
+        VStack(spacing: 1) {
+            Text(value).font(.custom("DINCondensed-Bold", size: 17)).foregroundStyle(ShotIQColor.ink)
+                .lineLimit(1).minimumScaleFactor(0.6)
+            Text(label).font(.system(size: 7, weight: .medium)).foregroundStyle(ShotIQColor.graphite)
+        }
+    }
+    private func adjacentCell(_ d: Int) -> some View {
+        Text("\(d)").font(.system(size: 13)).foregroundStyle(ShotIQColor.muted)
+            .frame(maxWidth: .infinity, minHeight: 54, alignment: .top)
+            .padding(.top, 4)
+    }
+    @ViewBuilder
+    private func dayCell(_ d: Int) -> some View {
+        Button { selected = d } label: {
+            VStack(spacing: 3) {
+                if d == selected {
+                    Text("\(d)").font(.system(size: 12, weight: .bold)).foregroundStyle(.white)
+                        .frame(width: 26, height: 26)
+                        .background(ShotIQColor.shotiqOrange, in: Circle())
+                    Text("In Progress").font(.system(size: 7, weight: .semibold))
+                        .foregroundStyle(ShotIQColor.shotiqOrange)
+                        .lineLimit(1).minimumScaleFactor(0.7)
+                } else {
+                    Text("\(d)").font(.system(size: 13, weight: .semibold)).foregroundStyle(ShotIQColor.ink)
+                    if completed.contains(d) {
+                        Image(systemName: "checkmark.circle").font(.system(size: 12))
+                            .foregroundStyle(ShotIQColor.confirmGreen)
+                        Text(minutes[d] ?? "").font(.system(size: 7)).foregroundStyle(ShotIQColor.graphite)
+                    } else if missed.contains(d) {
+                        Image(systemName: "xmark.circle").font(.system(size: 12))
+                            .foregroundStyle(ShotIQColor.reviewRed)
+                        Text("Missed").font(.system(size: 7)).foregroundStyle(ShotIQColor.reviewRed)
+                    } else if d >= 8 && d <= 30 {
+                        Circle().stroke(ShotIQColor.shotiqOrange, lineWidth: 1.3)
+                            .frame(width: 12, height: 12)
+                        Text("20 min").font(.system(size: 7)).foregroundStyle(ShotIQColor.graphite)
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, minHeight: 54, alignment: .top)
+            .padding(.top, 4)
+        }
+    }
+    private func legendItem(_ label: String, @ViewBuilder mark: () -> some View) -> some View {
+        HStack(spacing: 4) {
+            mark()
+            Text(label).font(.system(size: 8.5)).foregroundStyle(ShotIQColor.graphite)
+                .lineLimit(1).minimumScaleFactor(0.7)
+        }
+    }
+}
+
+// APPEND-060
