@@ -126,7 +126,15 @@ for (const app of APPS) {
   const compliance = build.attributes?.usesNonExemptEncryption
   console.log(`     usesNonExemptEncryption: ${compliance}`)
   // Missing export compliance is the classic reason a build uploads fine and
-  // then refuses to be installable from TestFlight.
+  // then refuses to be installable from TestFlight: Apple rejects the attach
+  // with "Build is not in an internally testable state" until the encryption
+  // question is answered. ShotIQ only uses standard HTTPS, so the answer is no.
+  if (compliance == null && confirm) {
+    await api('PATCH', `/v1/builds/${build.id}`, {
+      data: { type: 'builds', id: build.id, attributes: { usesNonExemptEncryption: false } },
+    })
+    console.log('     set usesNonExemptEncryption=false (standard HTTPS only)')
+  }
   try {
     const detail = await api('GET', `/v1/builds/${build.id}/betaAppReviewSubmission`)
     console.log(`     betaAppReviewSubmission: ${detail.data?.attributes?.betaReviewState ?? 'none'}`)
@@ -168,10 +176,21 @@ for (const app of APPS) {
   } else if (!confirm) {
     console.log('   WOULD ATTACH the build to this group (re-run with --confirm)')
   } else {
-    await api('POST', `/v1/betaGroups/${group.id}/relationships/builds`, {
-      data: [{ type: 'builds', id: build.id }],
-    })
-    console.log('   build attached')
+    // The testable state can lag a few seconds behind the compliance PATCH,
+    // so retry the attach instead of failing the whole run on the first 422.
+    for (let attempt = 1; ; attempt++) {
+      try {
+        await api('POST', `/v1/betaGroups/${group.id}/relationships/builds`, {
+          data: [{ type: 'builds', id: build.id }],
+        })
+        console.log('   build attached')
+        break
+      } catch (err) {
+        if (attempt >= 6 || !String(err.message).includes('422')) throw err
+        console.log(`   attach not accepted yet (attempt ${attempt}); retrying in 10s`)
+        await new Promise((resolve) => setTimeout(resolve, 10_000))
+      }
+    }
   }
 
   const testers = await api('GET', `/v1/betaGroups/${group.id}/betaTesters?limit=50`)
