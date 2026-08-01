@@ -265,7 +265,7 @@ struct ProfileView: View {          // 070
                     Text("PROFILE").shotiqDisplay(40).padding(.top, 24)
                     HStack(spacing: 16) {
                         Circle().fill(ShotIQColor.rule).frame(width: 74, height: 74)
-                            .overlay(Text("JE").font(.system(size: 22, weight: .bold)).foregroundStyle(ShotIQColor.graphite))
+                            .overlay(Text(shotiqInitials(app.user)).font(.system(size: 22, weight: .bold)).foregroundStyle(ShotIQColor.graphite))
                         VStack(alignment: .leading, spacing: 3) {
                             Text(app.user?.displayName ?? "Jordan Ellis").shotiqBody(18, weight: .semibold)
                             Text("Right Hand · Advanced · Guard").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)

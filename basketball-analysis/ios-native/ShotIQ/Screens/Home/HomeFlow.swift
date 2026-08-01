@@ -42,6 +42,7 @@ struct HomeView: View {
 
 struct HomeHeader: View {
     @Binding var showMenu: Bool
+    @EnvironmentObject var app: AppState
     var body: some View {
         HStack {
             Wordmark(size: 28)
@@ -50,7 +51,7 @@ struct HomeHeader: View {
             StatBlock(value: "2,840", label: "POINTS", valueSize: 20).padding(.leading, 14)
             Button { showMenu = true } label: {
                 Circle().fill(ShotIQColor.rule).frame(width: 38, height: 38)
-                    .overlay(Text("JE").font(.system(size: 12, weight: .bold)).foregroundStyle(ShotIQColor.graphite))
+                    .overlay(Text(shotiqInitials(app.user)).font(.system(size: 12, weight: .bold)).foregroundStyle(ShotIQColor.graphite))
             }
             .accessibilityLabel("Profile menu")
             .padding(.leading, 10)
