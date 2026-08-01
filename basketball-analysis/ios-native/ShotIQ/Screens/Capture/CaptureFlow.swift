@@ -5,80 +5,296 @@ import AVFoundation
 // Capture & upload flow — screens 021-035. PhotosUI for library import,
 // AVFoundation capture session for live camera (permission-gated).
 
+// MARK: - Shared canonical chrome for the capture screens
+
+/// TopBar + PlayerHeader stack shown at the top of most capture screens.
+private struct CaptureHeader: View {
+    @EnvironmentObject var app: AppState
+    var body: some View {
+        VStack(spacing: 0) {
+            TopBar()
+            PlayerHeader(name: app.user?.displayName ?? "Jordan Ellis")
+        }
+    }
+}
+
+/// Filled CTA label used inside NavigationLinks (orange by default).
+private func captureCTA(_ title: String, icon: String? = nil,
+                        color: Color = ShotIQColor.shotiqOrange) -> some View {
+    HStack(spacing: 10) {
+        if let icon { Image(systemName: icon).font(.system(size: 18, weight: .medium)) }
+        Text(title).font(.system(size: 17, weight: .semibold))
+    }
+    .frame(maxWidth: .infinity).frame(height: 56)
+    .background(color, in: RoundedRectangle(cornerRadius: 8))
+    .foregroundStyle(.white)
+    .lineLimit(1)
+    .minimumScaleFactor(0.7)
+}
+
+/// Bordered secondary label used inside NavigationLinks / plain buttons.
+private func captureOutline(_ title: String, icon: String? = nil) -> some View {
+    HStack(spacing: 10) {
+        if let icon { Image(systemName: icon).font(.system(size: 16)) }
+        Text(title).font(.system(size: 16))
+    }
+    .frame(maxWidth: .infinity).frame(height: 52)
+    .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+    .foregroundStyle(ShotIQColor.ink)
+    .lineLimit(1)
+    .minimumScaleFactor(0.7)
+}
+
+/// Dark camera / media placeholder (dark allowed only where the PNG shows video).
+private func captureDark(_ height: CGFloat, radius: CGFloat = 8) -> some View {
+    RoundedRectangle(cornerRadius: radius)
+        .fill(Color(red: 0.106, green: 0.114, blue: 0.125))
+        .frame(height: height)
+}
+
+/// PRIMARY COACHING TARGET row (canonical 026/028/030/031/032/034).
+private struct CaptureCoachingRow: View {
+    var boxed = false
+    var body: some View {
+        let row = VStack(alignment: .leading, spacing: 5) {
+            Text("PRIMARY COACHING TARGET")
+                .font(.system(size: 11, weight: .medium)).kerning(0.8)
+                .foregroundStyle(ShotIQColor.graphite)
+            HStack {
+                Text("Keep elbow stacked through release")
+                    .font(.system(size: 19, weight: .semibold)).foregroundStyle(ShotIQColor.ink)
+                    .lineLimit(1).minimumScaleFactor(0.7)
+                Spacer()
+                Image(systemName: "chevron.right").font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
+            }
+        }
+        Group {
+            if boxed {
+                ShotIQCard { row.padding(14) }
+            } else {
+                row.padding(.vertical, 12)
+                    .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .top)
+                    .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
+            }
+        }
+    }
+}
+
+/// LATEST SESSION stats strip: shots / makes / make % / trend delta.
+private struct CaptureSessionStats: View {
+    var body: some View {
+        HStack(alignment: .center, spacing: 18) {
+            StatBlock(value: "24", label: "SHOTS", valueSize: 30)
+            StatBlock(value: "15", label: "MAKES", valueSize: 30)
+            StatBlock(value: "62.5%", label: "MAKE %", valueSize: 30)
+            Spacer(minLength: 8)
+            VStack(alignment: .trailing, spacing: 3) {
+                TrendLine(points: [2, 3.1, 2.6, 4.2], stroke: ShotIQColor.confirmGreen)
+                    .frame(width: 86, height: 28)
+                HStack(spacing: 3) {
+                    Text("+8.1%").font(.system(size: 11, weight: .semibold)).foregroundStyle(ShotIQColor.confirmGreen)
+                    Text("vs last session").font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
+                }
+            }
+        }
+    }
+}
+
+/// One small centered stat used in horizontal stat strips.
+private func captureStat(_ value: String, _ label: String,
+                         color: Color = ShotIQColor.ink, size: CGFloat = 26) -> some View {
+    VStack(spacing: 2) {
+        Text(value).font(.custom("DINCondensed-Bold", size: size)).foregroundStyle(color)
+            .lineLimit(1).minimumScaleFactor(0.6)
+        Text(label).font(.system(size: 9, weight: .medium)).kerning(0.5)
+            .foregroundStyle(ShotIQColor.graphite)
+            .lineLimit(1).minimumScaleFactor(0.6)
+    }
+    .frame(maxWidth: .infinity)
+}
+
 struct AnalyzeHubView: View {       // 021
+    @EnvironmentObject var app: AppState
+    private let recents = [("0:06", "Today • 8:24 AM", "Free Throw"),
+                           ("0:04", "Today • 8:17 AM", "Catch & Shoot"),
+                           ("0:05", "Yesterday • 6:42 PM", "Pull-Up Jumper"),
+                           ("0:05", "Yesterday • 6:35 PM", "Off the Dribble")]
     var body: some View {
         CanonicalScreen(testID: "screen-ios-analyze-hub") {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("UPLOAD & ANALYZE").shotiqDisplay(40).padding(.top, 24)
-                    Text("Add your footage to get AI-powered shooting analysis.")
-                        .shotiqBody(15).foregroundStyle(ShotIQColor.graphite).padding(.top, 6)
-                    VStack(spacing: 14) {
-                        NavigationLink { PhotoUploadSourceView() } label: {
-                            hubCard("photo", "Upload photo", "Analyze a single shot frame", dashed: true)
+                    CaptureHeader()
+
+                    Text("ANALYZE YOUR SHOT").shotiqDisplay(40)
+                        .padding(.horizontal, 20).padding(.top, 26)
+                    Text("Choose how you want to capture your shot.")
+                        .font(.system(size: 15)).foregroundStyle(ShotIQColor.graphite)
+                        .padding(.horizontal, 20).padding(.top, 4)
+
+                    HStack(alignment: .top, spacing: 10) {
+                        NavigationLink { LiveCameraSetupView() } label: {
+                            hubOption("dot.radiowaves.left.and.right", "Live camera", "Record a new shot in real time.")
                         }
                         NavigationLink { VideoUploadView() } label: {
-                            hubCard("film", "Upload video", "Full-motion analysis of a rep")
+                            hubOption("film", "Upload video", "Analyze footage from your device.")
                         }
-                        NavigationLink { LiveCameraSetupView() } label: {
-                            hubCard("dot.radiowaves.left.and.right", "Live camera", "Real-time form feedback")
-                        }
-                        NavigationLink { UploadQueueView() } label: {
-                            hubCard("tray.full", "Upload queue", "Manage pending uploads")
+                        NavigationLink { PhotoUploadSourceView() } label: {
+                            hubOption("photo", "Upload image", "Analyze a single frame or photo.")
                         }
                     }
-                    .padding(.top, 22)
-                    SectionLabel(text: "FILMING GUIDE").padding(.top, 26)
-                    ForEach([("figure.stand", "Full body in frame"), ("arrow.left.and.right", "Side angle"),
-                             ("rectangle.dashed", "Neutral background"), ("sun.max", "Good lighting")], id: \.1) { icon, t in
+                    .padding(.horizontal, 20).padding(.top, 18)
+
+                    Button {} label: {
                         HStack(spacing: 12) {
-                            Image(systemName: icon).frame(width: 28)
-                            Text(t).shotiqBody(15)
+                            Image(systemName: "doc.text").font(.system(size: 19)).foregroundStyle(ShotIQColor.ink)
+                            Text("View capture guide").font(.system(size: 16, weight: .medium))
+                                .foregroundStyle(ShotIQColor.ink)
                             Spacer()
+                            Image(systemName: "chevron.right").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
                         }
-                        .padding(.vertical, 9)
+                        .padding(16)
+                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
                     }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, 20).padding(.top, 12)
+
+                    HStack {
+                        SectionLabel(text: "RECENT CAPTURES")
+                        Spacer()
+                        NavigationLink { UploadQueueView() } label: {
+                            HStack(spacing: 4) {
+                                Text("View all").font(.system(size: 13)).foregroundStyle(ShotIQColor.ink)
+                                Image(systemName: "chevron.right").font(.system(size: 10)).foregroundStyle(ShotIQColor.graphite)
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 20).padding(.top, 22)
+
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(alignment: .top, spacing: 10) {
+                            ForEach(recents, id: \.1) { dur, when, kind in
+                                VStack(alignment: .leading, spacing: 4) {
+                                    ZStack(alignment: .bottomTrailing) {
+                                        captureDark(128, radius: 4).frame(width: 104)
+                                        Text(dur).font(.custom("DINCondensed-Bold", size: 12)).foregroundStyle(.white)
+                                            .padding(.horizontal, 6).padding(.vertical, 3)
+                                            .background(.black.opacity(0.75), in: RoundedRectangle(cornerRadius: 3))
+                                            .padding(6)
+                                    }
+                                    Text(when).font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
+                                    Text(kind).font(.system(size: 12, weight: .medium)).foregroundStyle(ShotIQColor.ink)
+                                }
+                                .frame(width: 104)
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                    }
+                    .padding(.top, 10)
+
+                    HStack(alignment: .center, spacing: 14) {
+                        Image(systemName: "point.topleft.down.curvedto.point.bottomright.up")
+                            .font(.system(size: 24)).foregroundStyle(ShotIQColor.analysisBlue)
+                        Text("Film from the side at chest height, showing your full body from feet to fingertips with good lighting and a clear background.")
+                            .font(.system(size: 13)).foregroundStyle(ShotIQColor.ink)
+                    }
+                    .padding(14)
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+                    .padding(.horizontal, 20).padding(.top, 16)
+
+                    Text("YOUR SHOOTING SNAPSHOT")
+                        .font(.system(size: 11, weight: .bold)).kerning(0.8).foregroundStyle(ShotIQColor.ink)
+                        .padding(.horizontal, 20).padding(.top, 20)
+                    CaptureSessionStats().padding(.horizontal, 20).padding(.top, 8)
+
+                    CaptureCoachingRow().padding(.horizontal, 20).padding(.top, 16).padding(.bottom, 24)
                 }
-                .padding(.horizontal, 24)
             }
         }
         .navigationTitle("").toolbar(.hidden, for: .navigationBar)
     }
-    @ViewBuilder private func hubCard(_ icon: String, _ t: String, _ d: String, dashed: Bool = false) -> some View {
-        HStack(spacing: 16) {
-            Image(systemName: icon).font(.system(size: 26))
-                .foregroundStyle(dashed ? ShotIQColor.shotiqOrange : ShotIQColor.ink).frame(width: 42)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(t).shotiqBody(16, weight: .semibold)
-                    .foregroundStyle(dashed ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
-                Text(d).font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
-            }
-            Spacer()
-            Image(systemName: "chevron.right").foregroundStyle(ShotIQColor.graphite)
+
+    private func hubOption(_ icon: String, _ t: String, _ d: String) -> some View {
+        VStack(spacing: 8) {
+            Image(systemName: icon).font(.system(size: 26)).foregroundStyle(ShotIQColor.ink)
+                .frame(height: 44)
+            Text(t).font(.system(size: 14, weight: .semibold)).foregroundStyle(ShotIQColor.ink)
+                .lineLimit(1).minimumScaleFactor(0.7)
+            Text(d).font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
+                .multilineTextAlignment(.center)
+                .lineLimit(2).minimumScaleFactor(0.8)
         }
-        .padding(16)
-        .overlay(RoundedRectangle(cornerRadius: 8)
-            .stroke(dashed ? ShotIQColor.shotiqOrange : ShotIQColor.rule,
-                    style: StrokeStyle(lineWidth: dashed ? 2 : 1, dash: dashed ? [6, 5] : [])))
+        .padding(.vertical, 16).padding(.horizontal, 6)
+        .frame(maxWidth: .infinity, minHeight: 140, alignment: .top)
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
     }
 }
 
 struct PhotoUploadSourceView: View { // 022
+    @Environment(\.dismiss) private var dismiss
     @State private var pick: PhotosPickerItem?
     @State private var image: UIImage?
     @State private var goReview = false
     var body: some View {
         CanonicalScreen(testID: "screen-ios-photo-upload-source") {
-            VStack(spacing: 16) {
-                Text("ADD A SHOT PHOTO").shotiqDisplay(38).padding(.top, 30)
-                PhotosPicker(selection: $pick, matching: .images) {
-                    sourceRow("photo.on.rectangle", "Photo library", "Choose from your photos")
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    TopBar()
+
+                    Button { dismiss() } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "chevron.left").font(.system(size: 13, weight: .semibold))
+                            Text("ANALYZE SHOT").font(.system(size: 13, weight: .bold)).kerning(1)
+                        }
+                        .foregroundStyle(ShotIQColor.graphite)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, 20).padding(.top, 16)
+
+                    Text("PHOTO UPLOAD SOURCE").shotiqDisplay(38)
+                        .padding(.horizontal, 20).padding(.top, 8)
+                    Text("Upload a side or 45-degree angle video or photo for the most accurate analysis.")
+                        .font(.system(size: 15)).foregroundStyle(ShotIQColor.graphite)
+                        .padding(.horizontal, 20).padding(.top, 6)
+
+                    SectionLabel(text: "SUPPORTED FORMATS").padding(.horizontal, 20).padding(.top, 24)
+                    HStack(alignment: .center, spacing: 0) {
+                        formatCol("film", "MP4", "VIDEO")
+                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 44)
+                        formatCol("play.circle", "MOV", "VIDEO")
+                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 44)
+                        formatCol("photo", "JPG", "PHOTO")
+                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 44)
+                        formatCol("photo", "PNG", "PHOTO")
+                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 44)
+                        formatCol("photo", "HEIC", "PHOTO")
+                    }
+                    .padding(.horizontal, 20).padding(.top, 12)
+
+                    SectionLabel(text: "BEST ANGLE FOR ANALYSIS").padding(.horizontal, 20).padding(.top, 24)
+                    HStack(alignment: .top, spacing: 12) {
+                        angleCard("SIDE VIEW", "IDEAL", "Use this angle when possible.", ideal: true)
+                        angleCard("45° VIEW", "GOOD", "Use if side view isn't available.", ideal: false)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 12)
+
+                    SectionLabel(text: "CHOOSE UPLOAD SOURCE").padding(.horizontal, 20).padding(.top, 24)
+                    VStack(spacing: 12) {
+                        PhotosPicker(selection: $pick, matching: .images) {
+                            sourceRow("camera.metering.center.weighted", "Choose from library",
+                                      "Select a video or photo from your device.")
+                        }
+                        sourceRow("camera", "Take photo", "Capture a new photo using your camera.")
+                        Button { dismiss() } label: {
+                            Text("Cancel").font(.system(size: 16))
+                                .frame(maxWidth: .infinity).frame(height: 52)
+                                .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+                                .foregroundStyle(ShotIQColor.ink)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 12).padding(.bottom, 26)
                 }
-                sourceRow("camera", "Take photo", "Capture with the camera")
-                sourceRow("folder", "Browse files", "Import from Files")
-                Spacer()
             }
-            .padding(.horizontal, 24)
         }
         .onChange(of: pick) { _, item in
             Task {
@@ -88,103 +304,311 @@ struct PhotoUploadSourceView: View { // 022
         }
         .navigationDestination(isPresented: $goReview) { PhotoReviewCropView(image: image) }
     }
+
+    private func formatCol(_ icon: String, _ t: String, _ d: String) -> some View {
+        VStack(spacing: 4) {
+            Image(systemName: icon).font(.system(size: 20)).foregroundStyle(ShotIQColor.ink)
+            Text(t).font(.custom("DINCondensed-Bold", size: 17)).foregroundStyle(ShotIQColor.ink)
+            Text(d).font(.system(size: 9, weight: .medium)).kerning(0.5).foregroundStyle(ShotIQColor.graphite)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func angleCard(_ badge: String, _ verdict: String, _ d: String, ideal: Bool) -> some View {
+        VStack(spacing: 0) {
+            ZStack(alignment: .topLeading) {
+                captureDark(180, radius: 0)
+                Text(badge).font(.system(size: 12, weight: .bold)).foregroundStyle(.white)
+                    .padding(.horizontal, 10).padding(.vertical, 5)
+                    .background(ShotIQColor.analysisBlue, in: Capsule())
+                    .padding(8)
+            }
+            HStack(alignment: .top, spacing: 8) {
+                Image(systemName: "checkmark.circle").font(.system(size: 20))
+                    .foregroundStyle(ideal ? ShotIQColor.analysisBlue : ShotIQColor.graphite)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(verdict).font(.system(size: 13, weight: .heavy).width(.condensed)).kerning(0.5)
+                        .foregroundStyle(ideal ? ShotIQColor.analysisBlue : ShotIQColor.graphite)
+                    Text(d).font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(10)
+        }
+        .background(ShotIQColor.paper)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+    }
+
     private func sourceRow(_ icon: String, _ t: String, _ d: String) -> some View {
         HStack(spacing: 16) {
-            Image(systemName: icon).font(.system(size: 24)).frame(width: 40)
+            Image(systemName: icon).font(.system(size: 24)).foregroundStyle(ShotIQColor.shotiqOrange).frame(width: 40)
             VStack(alignment: .leading, spacing: 2) {
-                Text(t).shotiqBody(16, weight: .semibold)
+                Text(t).font(.system(size: 17, weight: .semibold)).foregroundStyle(ShotIQColor.ink)
                 Text(d).font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
             }
             Spacer()
             Image(systemName: "chevron.right").foregroundStyle(ShotIQColor.graphite)
         }
-        .padding(16).foregroundStyle(ShotIQColor.ink)
+        .padding(16)
         .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
     }
 }
 
 struct PhotoReviewCropView: View {  // 023
+    @Environment(\.dismiss) private var dismiss
     var image: UIImage?
     var body: some View {
         CanonicalScreen(testID: "screen-ios-photo-review-crop") {
-            VStack(spacing: 0) {
-                Text("REVIEW & CROP").shotiqDisplay(36).padding(.top, 22)
-                ZStack {
-                    if let image {
-                        Image(uiImage: image).resizable().scaledToFit()
-                    } else {
-                        MediaSurface(height: 420)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    // Centered wordmark bar with back arrow (canonical 023)
+                    ZStack {
+                        HStack {
+                            Button { dismiss() } label: {
+                                Image(systemName: "arrow.left").font(.system(size: 20)).foregroundStyle(ShotIQColor.ink)
+                            }
+                            .buttonStyle(.plain)
+                            Spacer()
+                        }
+                        VStack(spacing: 1) {
+                            Wordmark(size: 26)
+                            Text("AI ANALYSIS").font(.system(size: 11, weight: .medium)).kerning(2)
+                                .foregroundStyle(ShotIQColor.graphite)
+                        }
                     }
-                    // rule-of-thirds crop grid
-                    GeometryReader { geo in
-                        Path { p in
-                            for f in [1.0/3.0, 2.0/3.0] {
-                                p.move(to: CGPoint(x: geo.size.width * f, y: 0))
-                                p.addLine(to: CGPoint(x: geo.size.width * f, y: geo.size.height))
-                                p.move(to: CGPoint(x: 0, y: geo.size.height * f))
-                                p.addLine(to: CGPoint(x: geo.size.width, y: geo.size.height * f))
+                    .padding(.horizontal, 20).frame(height: 58)
+                    .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
+
+                    HStack(alignment: .top) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("PHOTO REVIEW").shotiqDisplay(36)
+                            Text("Adjust crop to include your full body from head to toe.")
+                                .font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                        }
+                        Spacer(minLength: 8)
+                        HeaderStat(icon: "film", value: "6", label: "DAY STREAK")
+                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 46)
+                        HeaderStat(icon: "circle.hexagongrid", value: "2,840", label: "POINTS")
+                    }
+                    .padding(.horizontal, 20).padding(.top, 14)
+
+                    ZStack(alignment: .topLeading) {
+                        Group {
+                            if let image {
+                                Image(uiImage: image).resizable().scaledToFill()
+                            } else {
+                                Color(red: 0.106, green: 0.114, blue: 0.125)
                             }
                         }
-                        .stroke(.white.opacity(0.6), lineWidth: 1)
-                    }
-                }
-                .frame(height: 420).clipped().padding(.horizontal, 20).padding(.top, 16)
-                HStack(spacing: 18) {
-                    ForEach(["crop", "rotate.right", "wand.and.stars", "slider.horizontal.3"], id: \.self) { i in
-                        Button {} label: {
-                            Image(systemName: i).font(.system(size: 20)).frame(width: 52, height: 44)
-                                .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.rule))
+                        .frame(height: 430).frame(maxWidth: .infinity).clipped()
+                        // rule-of-thirds crop grid + dashed frame
+                        GeometryReader { geo in
+                            Path { p in
+                                for f in [1.0 / 3.0, 2.0 / 3.0] {
+                                    p.move(to: CGPoint(x: geo.size.width * f, y: 0))
+                                    p.addLine(to: CGPoint(x: geo.size.width * f, y: geo.size.height))
+                                    p.move(to: CGPoint(x: 0, y: geo.size.height * f))
+                                    p.addLine(to: CGPoint(x: geo.size.width, y: geo.size.height * f))
+                                }
+                            }
+                            .stroke(.white.opacity(0.7), lineWidth: 1)
+                            Rectangle()
+                                .stroke(.white.opacity(0.85), style: StrokeStyle(lineWidth: 1.5, dash: [6, 5]))
+                                .padding(14)
                         }
-                        .foregroundStyle(ShotIQColor.ink)
+                        Text("3:4").font(.system(size: 13, weight: .semibold)).foregroundStyle(.white)
+                            .padding(.horizontal, 9).padding(.vertical, 5)
+                            .background(.black.opacity(0.7), in: RoundedRectangle(cornerRadius: 5))
+                            .padding(10)
                     }
+                    .frame(height: 430).clipped()
+                    .overlay(alignment: .bottom) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "info.circle").font(.system(size: 12))
+                            Text("Tip: Include your full body. Leave a little space above your head and below your feet.")
+                                .font(.system(size: 11))
+                                .lineLimit(2).minimumScaleFactor(0.8)
+                        }
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 12).padding(.vertical, 8)
+                        .background(.black.opacity(0.72), in: RoundedRectangle(cornerRadius: 6))
+                        .padding(10)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 14)
+
+                    // Rotation dial
+                    HStack(spacing: 14) {
+                        Button {} label: {
+                            Image(systemName: "arrow.counterclockwise").font(.system(size: 19)).foregroundStyle(ShotIQColor.ink)
+                        }
+                        .buttonStyle(.plain)
+                        VStack(spacing: 5) {
+                            HStack(spacing: 0) {
+                                ForEach(0..<21, id: \.self) { i in
+                                    Capsule().fill(i == 10 ? ShotIQColor.shotiqOrange : ShotIQColor.muted)
+                                        .frame(width: i == 10 ? 2 : 1, height: i % 5 == 0 ? 13 : 8)
+                                        .frame(maxWidth: .infinity)
+                                }
+                            }
+                            HStack {
+                                Text("-10°"); Spacer(); Text("-5°"); Spacer()
+                                Text("0°").foregroundStyle(ShotIQColor.shotiqOrange)
+                                Spacer(); Text("5°"); Spacer(); Text("10°")
+                            }
+                            .font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
+                        }
+                        Button {} label: {
+                            Image(systemName: "rotate.right").font(.system(size: 19)).foregroundStyle(ShotIQColor.ink)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 16)
+
+                    HStack(spacing: 10) {
+                        Button {} label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "camera").font(.system(size: 15))
+                                Text("RETAKE").font(.system(size: 13, weight: .heavy).width(.condensed)).kerning(0.5)
+                            }
+                            .frame(maxWidth: .infinity).frame(height: 52)
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+                            .foregroundStyle(ShotIQColor.ink)
+                        }
+                        .buttonStyle(.plain)
+                        Button {} label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "crop").font(.system(size: 15))
+                                Text("CROP").font(.system(size: 13, weight: .heavy).width(.condensed)).kerning(0.5)
+                            }
+                            .frame(maxWidth: .infinity).frame(height: 52)
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+                            .foregroundStyle(ShotIQColor.ink)
+                        }
+                        .buttonStyle(.plain)
+                        NavigationLink { UploadQualityCheckView() } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "checkmark").font(.system(size: 15, weight: .bold))
+                                Text("USE PHOTO").font(.system(size: 13, weight: .heavy).width(.condensed)).kerning(0.5)
+                            }
+                            .frame(maxWidth: .infinity).frame(height: 52)
+                            .background(ShotIQColor.confirmGreen, in: RoundedRectangle(cornerRadius: 8))
+                            .foregroundStyle(.white)
+                        }
+                    }
+                    .padding(.horizontal, 20).padding(.top, 18)
+
+                    PhaseStrip().padding(.horizontal, 20).padding(.top, 20).padding(.bottom, 24)
                 }
-                .padding(.top, 18)
-                Spacer()
-                NavigationLink { UploadQualityCheckView() } label: {
-                    Text("Use this photo").frame(maxWidth: .infinity).frame(height: 54)
-                        .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 6))
-                        .foregroundStyle(.white).font(.system(size: 17, weight: .medium))
-                }
-                .padding(.horizontal, 24).padding(.bottom, 26)
             }
         }
     }
 }
 
 struct UploadQualityCheckView: View { // 024
+    private let checks: [(String, String, String, Bool)] = [
+        ("Lighting", "Well-lit and clear.", "Good", true),
+        ("Full body visibility", "Entire body is visible.", "Good", true),
+        ("Video resolution", "High resolution.", "1080p", true),
+        ("Shooting hand visibility",
+         "Shooting hand is slightly cropped at the fingertips. Please reframe to show the full hand and ball.",
+         "Needs attention", false)]
     var body: some View {
         CanonicalScreen(testID: "screen-ios-upload-quality-check") {
-            VStack(alignment: .leading, spacing: 0) {
-                Text("QUALITY CHECK").shotiqDisplay(38).padding(.top, 26)
-                Text("We ran these checks before analysis.")
-                    .shotiqBody(15).foregroundStyle(ShotIQColor.graphite).padding(.top, 6)
-                VStack(spacing: 0) {
-                    ForEach([("Resolution", "1080p", true), ("Lighting", "Well lit", true),
-                             ("Full body visible", "Feet to head in frame", true),
-                             ("Stability", "Slight blur detected", false)], id: \.0) { t, d, ok in
-                        HStack(spacing: 14) {
-                            Image(systemName: ok ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
-                                .foregroundStyle(ok ? ShotIQColor.confirmGreen : ShotIQColor.shotiqOrange)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(t).shotiqBody(15, weight: .semibold)
-                                Text(d).font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
-                            }
-                            Spacer()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    CaptureHeader()
+
+                    // Compact profile stat strip (blue accents, canonical 024)
+                    HStack(alignment: .center, spacing: 0) {
+                        captureStat("82", "FORM SCORE", color: ShotIQColor.analysisBlue)
+                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 34)
+                        captureStat("24", "SHOTS")
+                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 34)
+                        captureStat("15", "MAKES")
+                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 34)
+                        captureStat("62.5%", "ACCURACY", color: ShotIQColor.analysisBlue)
+                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 34)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("PRIMARY TARGET").font(.system(size: 9, weight: .medium)).kerning(0.5)
+                                .foregroundStyle(ShotIQColor.graphite)
+                            Text("Keep elbow stacked through release")
+                                .font(.system(size: 11)).foregroundStyle(ShotIQColor.ink)
+                                .lineLimit(2).minimumScaleFactor(0.8)
                         }
-                        .padding(.vertical, 13)
-                        .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
+                        .frame(maxWidth: .infinity)
+                        .padding(.leading, 8)
                     }
+                    .padding(.horizontal, 16).padding(.vertical, 12)
+                    .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .top)
+                    .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
+                    .padding(.top, 12)
+
+                    HStack(spacing: 12) {
+                        Image(systemName: "square.and.arrow.up").font(.system(size: 24)).foregroundStyle(ShotIQColor.ink)
+                        Text("UPLOAD QUALITY CHECK").shotiqDisplay(34)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 20)
+                    Text("We'll check your video to make sure it's ready for the best analysis.")
+                        .font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                        .padding(.horizontal, 20).padding(.top, 4)
+
+                    ZStack(alignment: .topLeading) {
+                        MediaSurface(height: 250, duration: "0:04")
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text("IMG_4521.MOV").font(.system(size: 12, weight: .semibold))
+                            Text("00:04 • 1080p • 30fps").font(.system(size: 10))
+                        }
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 10).padding(.vertical, 6)
+                        .background(.black.opacity(0.72), in: RoundedRectangle(cornerRadius: 5))
+                        .padding(10)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 14)
+
+                    VStack(spacing: 0) {
+                        ForEach(checks, id: \.0) { t, d, status, ok in
+                            HStack(alignment: .top, spacing: 14) {
+                                Image(systemName: ok ? "checkmark.circle.fill" : "exclamationmark.circle")
+                                    .font(.system(size: 22))
+                                    .foregroundStyle(ok ? ShotIQColor.confirmGreen : ShotIQColor.shotiqOrange)
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(t).font(.system(size: 16, weight: .semibold)).foregroundStyle(ShotIQColor.ink)
+                                    Text(d).font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                                }
+                                Spacer()
+                                Text(status).font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(ok ? ShotIQColor.confirmGreen : ShotIQColor.shotiqOrange)
+                                    .lineLimit(1).minimumScaleFactor(0.7)
+                            }
+                            .padding(.vertical, 13)
+                            .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
+                        }
+                    }
+                    .padding(.horizontal, 20).padding(.top, 8)
+
+                    HStack(alignment: .center, spacing: 14) {
+                        PhaseGlyph(size: 30)
+                        Text("Best framing: side view, full body in frame, shooting hand and ball fully visible.")
+                            .font(.system(size: 13)).foregroundStyle(ShotIQColor.ink)
+                        Spacer()
+                        Image(systemName: "figure.basketball").font(.system(size: 22)).foregroundStyle(ShotIQColor.ink)
+                            .padding(8)
+                            .overlay(Rectangle().stroke(ShotIQColor.shotiqOrange, style: StrokeStyle(lineWidth: 1.5, dash: [4, 3])))
+                    }
+                    .padding(14)
+                    .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
+                    .padding(.horizontal, 20).padding(.top, 16)
+
+                    NavigationLink { AnalysisProcessingView() } label: {
+                        captureCTA("Continue to analysis", color: ShotIQColor.confirmGreen)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 18)
+                    Button {} label: { captureOutline("Choose another") }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal, 20).padding(.top, 10).padding(.bottom, 26)
                 }
-                .padding(.top, 18)
-                Spacer()
-                NavigationLink { AnalysisProcessingView() } label: {
-                    Text("Start analysis").frame(maxWidth: .infinity).frame(height: 54)
-                        .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 6))
-                        .foregroundStyle(.white).font(.system(size: 17, weight: .medium))
-                }
-                .padding(.bottom, 26)
             }
-            .padding(.horizontal, 24)
         }
     }
 }
@@ -196,27 +620,169 @@ struct UploadQueueView: View {      // 025
                                 Item(name: "transition-pullup.mov", pct: 0, state: "Queued")]
     var body: some View {
         CanonicalScreen(testID: "screen-ios-upload-queue") {
-            VStack(alignment: .leading, spacing: 0) {
-                Text("UPLOAD QUEUE").shotiqDisplay(38).padding(.top, 26)
-                Text("Uploads resume automatically, even after interruptions.")
-                    .shotiqBody(14).foregroundStyle(ShotIQColor.graphite).padding(.top, 6)
-                ForEach(items) { it in
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Image(systemName: "film").frame(width: 26)
-                            Text(it.name).shotiqBody(15, weight: .semibold)
-                            Spacer()
-                            Text(it.state).font(.system(size: 12, weight: .bold))
-                                .foregroundStyle(it.state == "Complete" ? ShotIQColor.confirmGreen : ShotIQColor.graphite)
-                        }
-                        ScoreBar(pct: it.pct, color: it.state == "Complete" ? ShotIQColor.confirmGreen : ShotIQColor.analysisBlue)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    CaptureHeader()
+
+                    HStack(alignment: .center, spacing: 0) {
+                        captureStat("82", "FORM SCORE")
+                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 36)
+                        captureStat("24", "SHOTS")
+                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 36)
+                        captureStat("15", "MAKES")
+                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 36)
+                        captureStat("62.5%", "SHOOTING %")
                     }
-                    .padding(.vertical, 12)
-                    .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
+                    .padding(.horizontal, 20).padding(.top, 14)
+
+                    HStack(alignment: .top) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("UPLOAD QUEUE").shotiqDisplay(38)
+                            Text("Review, upload, and analyze your shots.")
+                                .font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
+                        }
+                        Spacer()
+                        Button {} label: {
+                            VStack(spacing: 5) {
+                                Image(systemName: "plus.viewfinder").font(.system(size: 22)).foregroundStyle(ShotIQColor.ink)
+                                Text("Add media").font(.system(size: 13)).foregroundStyle(ShotIQColor.ink)
+                            }
+                            .padding(.horizontal, 16).padding(.vertical, 12)
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 20)
+
+                    HStack {
+                        SectionLabel(text: "QUEUE (\(items.count))")
+                        Spacer()
+                        Text(queueSummary).font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 20)
+
+                    ForEach(items) { it in
+                        queueCard(it).padding(.horizontal, 20).padding(.top, 12)
+                    }
+
+                    ShotIQCard {
+                        VStack(alignment: .leading, spacing: 0) {
+                            HStack(spacing: 14) {
+                                Image(systemName: "wifi").font(.system(size: 20)).foregroundStyle(ShotIQColor.analysisBlue)
+                                    .frame(width: 30)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Uploads will continue in the background")
+                                        .font(.system(size: 15, weight: .semibold)).foregroundStyle(ShotIQColor.ink)
+                                    Text("You can close ShotIQ and we'll finish uploading.")
+                                        .font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                                }
+                            }
+                            .padding(.bottom, 12)
+                            .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
+                            HStack(spacing: 14) {
+                                Image(systemName: "icloud.slash").font(.system(size: 20)).foregroundStyle(ShotIQColor.graphite)
+                                    .frame(width: 30)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Connection protection")
+                                        .font(.system(size: 15, weight: .semibold)).foregroundStyle(ShotIQColor.ink)
+                                    Text("We'll automatically resume if your connection drops.")
+                                        .font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                                }
+                            }
+                            .padding(.top, 12)
+                        }
+                        .padding(14)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 16)
+
+                    Button {} label: { captureCTA("Analyze selected (1)") }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal, 20).padding(.top, 16)
+                    Button {} label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "trash").font(.system(size: 14))
+                            Text("Remove completed").font(.system(size: 14))
+                        }
+                        .foregroundStyle(ShotIQColor.graphite)
+                        .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.top, 12).padding(.bottom, 26)
                 }
-                Spacer()
             }
-            .padding(.horizontal, 24)
+        }
+    }
+
+    private var queueSummary: String {
+        let up = items.filter { $0.state == "Uploading" }.count
+        let done = items.filter { $0.state == "Complete" }.count
+        return "\(up) uploading • \(done) completed"
+    }
+
+    private func queueCard(_ it: Item) -> some View {
+        ShotIQCard {
+            HStack(alignment: .top, spacing: 12) {
+                ZStack(alignment: .topLeading) {
+                    captureDark(104, radius: 4).frame(width: 118)
+                    Image(systemName: it.state == "Complete" ? "photo" : "play.circle")
+                        .font(.system(size: 15)).foregroundStyle(.white)
+                        .padding(6)
+                        .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 4))
+                        .padding(6)
+                }
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 6) {
+                        Image(systemName: it.state == "Complete" ? "checkmark.circle.fill" :
+                                (it.state == "Uploading" ? "arrow.up.circle.fill" : "clock"))
+                            .font(.system(size: 17))
+                            .foregroundStyle(it.state == "Complete" ? ShotIQColor.confirmGreen :
+                                (it.state == "Uploading" ? ShotIQColor.analysisBlue : ShotIQColor.graphite))
+                        Text(it.state == "Complete" ? "Image" : "Video")
+                            .font(.system(size: 16, weight: .semibold)).foregroundStyle(ShotIQColor.ink)
+                        Text("•").foregroundStyle(ShotIQColor.graphite)
+                        Text(it.state).font(.system(size: 14, weight: .medium))
+                            .foregroundStyle(it.state == "Complete" ? ShotIQColor.confirmGreen :
+                                (it.state == "Uploading" ? ShotIQColor.analysisBlue : ShotIQColor.graphite))
+                        Spacer()
+                        Image(systemName: "ellipsis").foregroundStyle(ShotIQColor.graphite)
+                    }
+                    Text("May 21, 2025 at 8:24 AM").font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                    Text(it.name).font(.system(size: 13, weight: .medium)).foregroundStyle(ShotIQColor.ink)
+                        .lineLimit(1).minimumScaleFactor(0.8)
+                    if it.state == "Complete" {
+                        Text("Ready to analyze").font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(ShotIQColor.confirmGreen)
+                        NavigationLink { AnalysisProcessingView() } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "camera.metering.center.weighted").font(.system(size: 14))
+                                Text("Analyze now").font(.system(size: 14, weight: .medium))
+                            }
+                            .foregroundStyle(ShotIQColor.shotiqOrange)
+                            .frame(maxWidth: .infinity).frame(height: 40)
+                            .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.shotiqOrange))
+                        }
+                    } else if it.state == "Uploading" {
+                        HStack(alignment: .firstTextBaseline) {
+                            Text("\(Int(it.pct * 100))%").font(.custom("DINCondensed-Bold", size: 28))
+                                .foregroundStyle(ShotIQColor.ink)
+                            Spacer()
+                            Text("18.7 MB / 32.1 MB").font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
+                        }
+                        ScoreBar(pct: it.pct, color: ShotIQColor.analysisBlue)
+                        HStack {
+                            Text("Uploading over Wi-Fi").font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                            Spacer()
+                            Image(systemName: "pause").font(.system(size: 13)).foregroundStyle(ShotIQColor.ink)
+                                .padding(8)
+                                .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.rule))
+                        }
+                    } else {
+                        Text("Waiting to upload").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                        ScoreBar(pct: it.pct, color: ShotIQColor.analysisBlue)
+                    }
+                }
+            }
+            .padding(12)
         }
     }
 }
@@ -226,73 +792,384 @@ struct VideoUploadView: View {      // 026
     @State private var go = false
     var body: some View {
         CanonicalScreen(testID: "screen-ios-video-upload") {
-            VStack(spacing: 0) {
-                Text("UPLOAD VIDEO").shotiqDisplay(38).padding(.top, 26)
-                Text("MP4, MOV or HEVC · up to 10GB")
-                    .shotiqBody(14).foregroundStyle(ShotIQColor.graphite).padding(.top, 6)
-                PhotosPicker(selection: $pick, matching: .videos) {
-                    VStack(spacing: 12) {
-                        Image(systemName: "square.and.arrow.up").font(.system(size: 30))
-                        Text("Choose a video").shotiqBody(16, weight: .semibold)
-                        Text("From your photo library").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    CaptureHeader()
+
+                    Text("VIDEO UPLOAD").shotiqDisplay(38).padding(.horizontal, 20).padding(.top, 24)
+                    Text("Upload a clear video of your shot for AI analysis.")
+                        .font(.system(size: 15)).foregroundStyle(ShotIQColor.graphite)
+                        .padding(.horizontal, 20).padding(.top, 4)
+
+                    PhotosPicker(selection: $pick, matching: .videos) {
+                        VStack(spacing: 8) {
+                            Image(systemName: "film").font(.system(size: 34)).foregroundStyle(ShotIQColor.ink)
+                            Text("Choose video").font(.system(size: 20, weight: .semibold))
+                                .foregroundStyle(ShotIQColor.shotiqOrange)
+                            Text("MP4 • 3–45 seconds").font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
+                            Text("Best results in portrait orientation.")
+                                .font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                        }
+                        .frame(maxWidth: .infinity).frame(height: 210)
+                        .overlay(RoundedRectangle(cornerRadius: 10)
+                            .stroke(ShotIQColor.muted, style: StrokeStyle(lineWidth: 1.5, dash: [7, 6])))
                     }
-                    .frame(maxWidth: .infinity).frame(height: 200)
-                    .overlay(RoundedRectangle(cornerRadius: 8)
-                        .stroke(ShotIQColor.shotiqOrange, style: StrokeStyle(lineWidth: 2, dash: [7, 6])))
-                    .foregroundStyle(ShotIQColor.ink)
+                    .padding(.horizontal, 20).padding(.top, 18)
+
+                    HStack(alignment: .top, spacing: 10) {
+                        Button {} label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: "camera.metering.center.weighted").font(.system(size: 22))
+                                    .foregroundStyle(ShotIQColor.shotiqOrange)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Record video").font(.system(size: 15, weight: .semibold)).foregroundStyle(ShotIQColor.ink)
+                                    Text("Use your camera").font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                                }
+                                Spacer(minLength: 0)
+                            }
+                            .padding(14)
+                            .frame(maxWidth: .infinity, minHeight: 76, alignment: .leading)
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+                        }
+                        .buttonStyle(.plain)
+                        Button {} label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: "point.topleft.down.curvedto.point.bottomright.up")
+                                    .font(.system(size: 22)).foregroundStyle(ShotIQColor.analysisBlue)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("View filming tips").font(.system(size: 15, weight: .semibold)).foregroundStyle(ShotIQColor.ink)
+                                    Text("Learn the best way to film your shot")
+                                        .font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                                }
+                                Spacer(minLength: 0)
+                                Image(systemName: "chevron.right").font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                            }
+                            .padding(14)
+                            .frame(maxWidth: .infinity, minHeight: 76, alignment: .leading)
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 12)
+
+                    SectionLabel(text: "FRAMING GUIDE").padding(.horizontal, 20).padding(.top, 22)
+                    Text("Full body in frame from feet to above release.")
+                        .font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                        .padding(.horizontal, 20).padding(.top, 2)
+                    HStack(spacing: 12) {
+                        framingCard("GOOD", good: true)
+                        framingCard("TOO CLOSE", good: false)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 10)
+
+                    // Profile summary (canonical warm panel)
+                    VStack(alignment: .leading, spacing: 0) {
+                        SectionLabel(text: "YOUR PROFILE SUMMARY").padding(.bottom, 10)
+                        HStack(alignment: .center, spacing: 0) {
+                            captureStat("24", "SHOTS", size: 30)
+                            Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 40)
+                            captureStat("15", "MAKES", size: 30)
+                            Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 40)
+                            captureStat("62.5%", "MAKE %", size: 30)
+                            Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 40)
+                            VStack(spacing: 3) {
+                                Text("82").font(.custom("DINCondensed-Bold", size: 30))
+                                    .foregroundStyle(ShotIQColor.shotiqOrange)
+                                Text("FORM SCORE").font(.system(size: 9, weight: .medium)).kerning(0.5)
+                                    .foregroundStyle(ShotIQColor.graphite)
+                                ScoreBar(pct: 0.82).frame(width: 64)
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
+                        .padding(.bottom, 14)
+                        .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("PRIMARY COACHING TARGET")
+                                .font(.system(size: 10, weight: .medium)).kerning(0.7)
+                                .foregroundStyle(ShotIQColor.graphite)
+                            HStack {
+                                Text("Keep elbow stacked through release")
+                                    .font(.system(size: 17, weight: .semibold)).foregroundStyle(ShotIQColor.ink)
+                                    .lineLimit(1).minimumScaleFactor(0.7)
+                                Spacer()
+                                Image(systemName: "chevron.right").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                            }
+                        }
+                        .padding(.top, 12)
+                    }
+                    .padding(16)
+                    .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
+                    .padding(.horizontal, 20).padding(.top, 18)
+
+                    PhaseStrip().padding(.horizontal, 20).padding(.top, 18).padding(.bottom, 26)
                 }
-                .padding(.horizontal, 24).padding(.top, 26)
-                Spacer()
             }
         }
         .onChange(of: pick) { _, v in if v != nil { go = true } }
         .navigationDestination(isPresented: $go) { VideoReviewView() }
     }
+
+    private func framingCard(_ badge: String, good: Bool) -> some View {
+        ZStack(alignment: .topLeading) {
+            captureDark(150, radius: 8)
+            Text(badge).font(.system(size: 11, weight: .bold)).foregroundStyle(.white)
+                .padding(.horizontal, 8).padding(.vertical, 4)
+                .background(good ? ShotIQColor.confirmGreen : ShotIQColor.shotiqOrange,
+                            in: RoundedRectangle(cornerRadius: 4))
+                .padding(8)
+        }
+        .overlay(alignment: .bottomTrailing) {
+            Image(systemName: good ? "checkmark.circle.fill" : "xmark.circle.fill")
+                .font(.system(size: 24))
+                .foregroundStyle(good ? ShotIQColor.confirmGreen : ShotIQColor.reviewRed)
+                .background(Circle().fill(.white).padding(2))
+                .padding(8)
+        }
+    }
 }
 
 struct VideoReviewView: View {      // 027
+    @Environment(\.dismiss) private var dismiss
     @State private var trimStart: Double = 0.1
     @State private var trimEnd: Double = 0.8
     var body: some View {
         CanonicalScreen(testID: "screen-ios-video-review") {
-            VStack(spacing: 0) {
-                Text("REVIEW VIDEO").shotiqDisplay(38).padding(.top, 24)
-                MediaSurface(height: 380).padding(.horizontal, 20).padding(.top, 16)
-                SectionLabel(text: "TRIM TO ONE REP").padding(.top, 20)
-                // trim scrubber
-                GeometryReader { geo in
-                    ZStack(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 4).fill(ShotIQColor.rule).frame(height: 44)
-                        RoundedRectangle(cornerRadius: 4)
-                            .stroke(ShotIQColor.shotiqOrange, lineWidth: 3)
-                            .frame(width: geo.size.width * (trimEnd - trimStart), height: 44)
-                            .offset(x: geo.size.width * trimStart)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    TopBar()
+
+                    HStack(alignment: .top) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Button { dismiss() } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "arrow.left").font(.system(size: 14, weight: .semibold))
+                                    Text("AI ANALYSIS").font(.system(size: 13, weight: .bold)).kerning(1)
+                                }
+                                .foregroundStyle(ShotIQColor.graphite)
+                            }
+                            .buttonStyle(.plain)
+                            Text("VIDEO REVIEW").shotiqDisplay(38)
+                            Text("Review your clip and adjust the range before we analyze.")
+                                .font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                        }
+                        Spacer(minLength: 8)
+                        HeaderStat(icon: "film", value: "6", label: "DAY STREAK")
+                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 46)
+                        HeaderStat(icon: "circle.hexagongrid", value: "2,840", label: "POINTS")
                     }
+                    .padding(.horizontal, 20).padding(.top, 14)
+
+                    HStack(alignment: .center, spacing: 0) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Jordan Ellis").font(.system(size: 15, weight: .semibold)).foregroundStyle(ShotIQColor.ink)
+                            Text("Right-handed • Advanced").font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        captureStat("82", "FORM SCORE", color: ShotIQColor.shotiqOrange, size: 24)
+                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 30)
+                        captureStat("24", "SHOTS", size: 24)
+                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 30)
+                        captureStat("15", "MAKES", size: 24)
+                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 30)
+                        captureStat("62.5%", "%", size: 24)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 14)
+
+                    HStack(alignment: .center, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("PRIMARY TARGET").font(.system(size: 10, weight: .medium)).kerning(0.7)
+                                .foregroundStyle(ShotIQColor.graphite)
+                            Text("Keep elbow stacked through release")
+                                .font(.system(size: 16, weight: .semibold)).foregroundStyle(ShotIQColor.ink)
+                                .lineLimit(1).minimumScaleFactor(0.7)
+                        }
+                        Spacer()
+                        TrendLine(points: [2, 3, 2.6, 3.6, 4.1], stroke: ShotIQColor.shotiqOrange)
+                            .frame(width: 76, height: 30)
+                    }
+                    .padding(14)
+                    .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
+                    .padding(.horizontal, 20).padding(.top, 12)
+
+                    MediaSurface(height: 300, duration: "0:06")
+                        .padding(.horizontal, 20).padding(.top, 14)
+
+                    Text("Drag the handles to trim your clip")
+                        .font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                        .padding(.horizontal, 20).padding(.top, 14)
+
+                    // Trim scrubber with orange handles
+                    GeometryReader { geo in
+                        let w = geo.size.width
+                        ZStack(alignment: .leading) {
+                            RoundedRectangle(cornerRadius: 6).fill(Color(red: 0.106, green: 0.114, blue: 0.125))
+                                .frame(height: 54)
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(ShotIQColor.shotiqOrange, lineWidth: 3)
+                                .frame(width: w * (trimEnd - trimStart), height: 54)
+                                .offset(x: w * trimStart)
+                            RoundedRectangle(cornerRadius: 5).fill(ShotIQColor.shotiqOrange)
+                                .frame(width: 18, height: 54)
+                                .overlay(Image(systemName: "pause").font(.system(size: 10, weight: .bold)).foregroundStyle(.white))
+                                .offset(x: w * trimStart - 9)
+                            RoundedRectangle(cornerRadius: 5).fill(ShotIQColor.shotiqOrange)
+                                .frame(width: 18, height: 54)
+                                .overlay(Image(systemName: "pause").font(.system(size: 10, weight: .bold)).foregroundStyle(.white))
+                                .offset(x: w * trimEnd - 9)
+                        }
+                    }
+                    .frame(height: 54).padding(.horizontal, 20).padding(.top, 8)
+
+                    HStack {
+                        Text("00:00.50").font(.custom("DINCondensed-Bold", size: 15)).foregroundStyle(ShotIQColor.graphite)
+                        Spacer()
+                        Text("00:06.00").font(.custom("DINCondensed-Bold", size: 15)).foregroundStyle(ShotIQColor.shotiqOrange)
+                        Spacer()
+                        Text("00:06.50").font(.custom("DINCondensed-Bold", size: 15)).foregroundStyle(ShotIQColor.graphite)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 6)
+
+                    SectionLabel(text: "VIDEO DETAILS").padding(.horizontal, 20).padding(.top, 20)
+                    HStack(alignment: .top, spacing: 0) {
+                        detailCol("clock", "00:06.00", "DURATION")
+                        detailCol("iphone", "1080 × 1920", "ORIENTATION")
+                        detailCol("doc", "24.8 MB", "FILE SIZE")
+                        detailCol("film", "60 FPS", "FRAME RATE")
+                    }
+                    .padding(.horizontal, 20).padding(.top, 10)
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("HOW SHOT DETECTION WORKS")
+                            .font(.system(size: 15, weight: .heavy).width(.condensed)).kerning(0.5)
+                            .foregroundStyle(ShotIQColor.ink)
+                        Text("ShotIQ identifies your shooting motion using pose tracking and ball flight to isolate each rep. You can review and adjust the range if needed.")
+                            .font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                    }
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
+                    .padding(.horizontal, 20).padding(.top, 16)
+
+                    NavigationLink { AnalysisProcessingView() } label: {
+                        captureCTA("Analyze video", icon: "camera.metering.center.weighted")
+                    }
+                    .padding(.horizontal, 20).padding(.top, 18)
+
+                    HStack(spacing: 10) {
+                        Button {} label: { captureOutline("Trim", icon: "crop") }.buttonStyle(.plain)
+                        Button {} label: { captureOutline("Change video", icon: "square.and.arrow.up") }.buttonStyle(.plain)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 10)
+
+                    Button {} label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "person").font(.system(size: 17)).foregroundStyle(ShotIQColor.ink)
+                            Text("Edit player profile").font(.system(size: 15)).foregroundStyle(ShotIQColor.ink)
+                            Spacer()
+                            Image(systemName: "chevron.right").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                        }
+                        .padding(14)
+                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, 20).padding(.top, 10).padding(.bottom, 26)
                 }
-                .frame(height: 44).padding(.horizontal, 24).padding(.top, 10)
-                Spacer()
-                NavigationLink { AnalysisProcessingView() } label: {
-                    Text("Analyze this rep").frame(maxWidth: .infinity).frame(height: 54)
-                        .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 6))
-                        .foregroundStyle(.white).font(.system(size: 17, weight: .medium))
-                }
-                .padding(.horizontal, 24).padding(.bottom, 26)
             }
         }
+    }
+
+    private func detailCol(_ icon: String, _ v: String, _ l: String) -> some View {
+        VStack(spacing: 4) {
+            Image(systemName: icon).font(.system(size: 18)).foregroundStyle(ShotIQColor.ink)
+            Text(v).font(.custom("DINCondensed-Bold", size: 17)).foregroundStyle(ShotIQColor.ink)
+                .lineLimit(1).minimumScaleFactor(0.6)
+            Text(l).font(.system(size: 9, weight: .medium)).kerning(0.5).foregroundStyle(ShotIQColor.graphite)
+        }
+        .frame(maxWidth: .infinity)
     }
 }
 
 struct LiveCameraSetupView: View {  // 028
     @State private var granted = AVCaptureDevice.authorizationStatus(for: .video) == .authorized
+    @State private var rightHanded = true
     var body: some View {
         CanonicalScreen(testID: "screen-ios-live-camera-setup") {
-            VStack(spacing: 0) {
-                Text("LIVE CAMERA SETUP").shotiqDisplay(38).padding(.top, 26)
-                Text("Position your phone so your full body and the hoop are visible.")
-                    .shotiqBody(15).foregroundStyle(ShotIQColor.graphite)
-                    .multilineTextAlignment(.center).padding(.horizontal, 30).padding(.top, 8)
-                MediaSurface(height: 360).padding(.horizontal, 20).padding(.top, 18)
-                    .overlay(alignment: .center) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    CaptureHeader()
+
+                    ShotIQCard {
+                        HStack(alignment: .center, spacing: 0) {
+                            VStack(spacing: 2) {
+                                Text("FORM SCORE").font(.system(size: 9, weight: .medium)).kerning(0.5)
+                                    .foregroundStyle(ShotIQColor.graphite)
+                                HStack(alignment: .firstTextBaseline, spacing: 2) {
+                                    Text("82").font(.custom("DINCondensed-Bold", size: 26))
+                                        .foregroundStyle(ShotIQColor.analysisBlue)
+                                    Text("/100").font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
+                                }
+                            }
+                            .frame(maxWidth: .infinity)
+                            Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 36)
+                            captureStat("24", "SHOTS", size: 24)
+                            Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 36)
+                            captureStat("15", "MAKES", size: 24)
+                            Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 36)
+                            captureStat("62.5%", "ACCURACY", size: 24)
+                            Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 36)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("PRIMARY TARGET").font(.system(size: 8, weight: .medium)).kerning(0.4)
+                                    .foregroundStyle(ShotIQColor.graphite)
+                                Text("Keep elbow stacked through release")
+                                    .font(.system(size: 10)).foregroundStyle(ShotIQColor.ink)
+                                    .lineLimit(2).minimumScaleFactor(0.8)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.leading, 6)
+                        }
+                        .padding(.vertical, 12).padding(.horizontal, 8)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 12)
+
+                    HStack(alignment: .top) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("LIVE CAMERA SETUP").shotiqDisplay(36)
+                            Text("Follow the checklist below for best AI analysis.")
+                                .font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                        }
+                        Spacer()
+                        Button {} label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "arrow.triangle.2.circlepath").font(.system(size: 15))
+                                Text("Switch camera").font(.system(size: 13, weight: .medium))
+                            }
+                            .foregroundStyle(ShotIQColor.ink)
+                            .padding(.horizontal, 12).padding(.vertical, 10)
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 18)
+
+                    // Camera preview with corner brackets + dashed crosshair
+                    ZStack {
+                        captureDark(300)
+                        GeometryReader { geo in
+                            let w = geo.size.width, h = geo.size.height
+                            Path { p in
+                                p.move(to: CGPoint(x: w / 2, y: 12)); p.addLine(to: CGPoint(x: w / 2, y: h - 12))
+                                p.move(to: CGPoint(x: 12, y: h * 0.55)); p.addLine(to: CGPoint(x: w - 12, y: h * 0.55))
+                            }
+                            .stroke(.white.opacity(0.8), style: StrokeStyle(lineWidth: 1.2, dash: [5, 5]))
+                            Path { p in
+                                let m: CGFloat = 16, l: CGFloat = 26
+                                p.move(to: CGPoint(x: m, y: m + l)); p.addLine(to: CGPoint(x: m, y: m)); p.addLine(to: CGPoint(x: m + l, y: m))
+                                p.move(to: CGPoint(x: w - m - l, y: m)); p.addLine(to: CGPoint(x: w - m, y: m)); p.addLine(to: CGPoint(x: w - m, y: m + l))
+                                p.move(to: CGPoint(x: m, y: h - m - l)); p.addLine(to: CGPoint(x: m, y: h - m)); p.addLine(to: CGPoint(x: m + l, y: h - m))
+                                p.move(to: CGPoint(x: w - m - l, y: h - m)); p.addLine(to: CGPoint(x: w - m, y: h - m)); p.addLine(to: CGPoint(x: w - m, y: h - m - l))
+                            }
+                            .stroke(.white, lineWidth: 3)
+                        }
                         if !granted {
                             VStack(spacing: 10) {
                                 Image(systemName: "camera").font(.system(size: 30)).foregroundStyle(.white)
@@ -306,79 +1183,263 @@ struct LiveCameraSetupView: View {  // 028
                             }
                         }
                     }
-                Spacer()
-                NavigationLink { HoopCalibrationView() } label: {
-                    Text("Continue to calibration").frame(maxWidth: .infinity).frame(height: 54)
-                        .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 6))
-                        .foregroundStyle(.white).font(.system(size: 17, weight: .medium))
+                    .frame(height: 300)
+                    .padding(.horizontal, 20).padding(.top, 14)
+
+                    ShotIQCard {
+                        VStack(spacing: 0) {
+                            setupRow("camera.metering.center.weighted", "STABLE PLACEMENT", "Phone is steady and on a flat surface.")
+                            setupRow("figure.stand", "FULL-BODY IN FRAME", "From head to shoes with space around.")
+                            setupRow("rectangle.dashed", "HOOP VISIBLE", "Backboard and rim clearly visible.")
+                            HStack(spacing: 14) {
+                                PhaseGlyph(size: 26).frame(width: 34)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("SHOOTING HAND").font(.system(size: 14, weight: .heavy).width(.condensed)).kerning(0.5)
+                                        .foregroundStyle(ShotIQColor.ink)
+                                    Text("Confirm your dominant shooting hand.")
+                                        .font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                                }
+                                Spacer()
+                                HStack(spacing: 0) {
+                                    Button { rightHanded = false } label: {
+                                        Text("LEFT").font(.system(size: 12, weight: .bold)).kerning(0.5)
+                                            .padding(.horizontal, 14).padding(.vertical, 9)
+                                            .background(rightHanded ? ShotIQColor.paper : ShotIQColor.shotiqOrange)
+                                            .foregroundStyle(rightHanded ? ShotIQColor.ink : .white)
+                                    }
+                                    .buttonStyle(.plain)
+                                    Button { rightHanded = true } label: {
+                                        Text("RIGHT").font(.system(size: 12, weight: .bold)).kerning(0.5)
+                                            .padding(.horizontal, 14).padding(.vertical, 9)
+                                            .background(rightHanded ? ShotIQColor.shotiqOrange : ShotIQColor.paper)
+                                            .foregroundStyle(rightHanded ? .white : ShotIQColor.ink)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                                .clipShape(RoundedRectangle(cornerRadius: 6))
+                                .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.rule))
+                            }
+                            .padding(.vertical, 12)
+                        }
+                        .padding(.horizontal, 14).padding(.vertical, 4)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 14)
+
+                    NavigationLink { HoopCalibrationView() } label: {
+                        captureCTA("Set up camera", icon: "camera.metering.center.weighted")
+                    }
+                    .padding(.horizontal, 20).padding(.top, 16)
+                    Button {} label: { captureOutline("Use uploaded video", icon: "square.and.arrow.up") }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal, 20).padding(.top, 10)
+
+                    PhaseStrip(active: "SETUP").padding(.horizontal, 20).padding(.top, 18).padding(.bottom, 26)
                 }
-                .padding(.horizontal, 24).padding(.bottom, 26)
             }
         }
+    }
+
+    private func setupRow(_ icon: String, _ t: String, _ d: String) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: icon).font(.system(size: 20)).foregroundStyle(ShotIQColor.ink).frame(width: 34)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(t).font(.system(size: 14, weight: .heavy).width(.condensed)).kerning(0.5)
+                    .foregroundStyle(ShotIQColor.ink)
+                Text(d).font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+            }
+            Spacer()
+            Image(systemName: "checkmark.circle").font(.system(size: 22)).foregroundStyle(ShotIQColor.confirmGreen)
+        }
+        .padding(.vertical, 12)
+        .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
     }
 }
 
 struct HoopCalibrationView: View {  // 029
-    @State private var hoopPos = CGPoint(x: 0.72, y: 0.28)
+    @State private var hoopPos = CGPoint(x: 0.5, y: 0.35)
     var body: some View {
         CanonicalScreen(testID: "screen-ios-hoop-calibration") {
-            VStack(spacing: 0) {
-                Text("HOOP CALIBRATION").shotiqDisplay(38).padding(.top, 26)
-                Text("Drag the marker onto the rim.")
-                    .shotiqBody(15).foregroundStyle(ShotIQColor.graphite).padding(.top, 6)
-                GeometryReader { geo in
-                    ZStack {
-                        MediaSurface(height: geo.size.height)
-                        Circle().stroke(ShotIQColor.shotiqOrange, lineWidth: 3)
-                            .frame(width: 54, height: 54)
-                            .position(x: hoopPos.x * geo.size.width, y: hoopPos.y * geo.size.height)
-                            .gesture(DragGesture().onChanged { v in
-                                hoopPos = CGPoint(x: v.location.x / geo.size.width,
-                                                  y: v.location.y / geo.size.height)
-                            })
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    TopBar()
+
+                    HStack(alignment: .top) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("HOOP CALIBRATION").shotiqDisplay(36)
+                            Text("Align the overlay with the hoop.")
+                                .font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                        }
+                        Spacer(minLength: 8)
+                        HeaderStat(icon: "film", value: "6", label: "DAY STREAK")
+                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 46)
+                        HeaderStat(icon: "circle.hexagongrid", value: "2,840", label: "POINTS")
                     }
+                    .padding(.horizontal, 20).padding(.top, 14)
+
+                    // Full-bleed camera area with crosshair + framing brackets
+                    GeometryReader { geo in
+                        let w = geo.size.width, h = geo.size.height
+                        let cx = hoopPos.x * w, cy = hoopPos.y * h
+                        ZStack {
+                            Rectangle().fill(Color(red: 0.106, green: 0.114, blue: 0.125))
+                            Path { p in
+                                p.move(to: CGPoint(x: cx, y: 0)); p.addLine(to: CGPoint(x: cx, y: h))
+                                p.move(to: CGPoint(x: 0, y: cy)); p.addLine(to: CGPoint(x: w, y: cy))
+                            }
+                            .stroke(.white, lineWidth: 1.6)
+                            Path { p in
+                                let bw: CGFloat = min(w, h) * 0.42, l: CGFloat = 22, r: CGFloat = 10
+                                let x0 = cx - bw, x1 = cx + bw
+                                let y0 = cy - bw * 0.7, y1 = cy + bw * 0.7
+                                p.move(to: CGPoint(x: x0, y: y0 + l))
+                                p.addArc(tangent1End: CGPoint(x: x0, y: y0), tangent2End: CGPoint(x: x0 + l, y: y0), radius: r)
+                                p.addLine(to: CGPoint(x: x0 + l, y: y0))
+                                p.move(to: CGPoint(x: x1 - l, y: y0))
+                                p.addArc(tangent1End: CGPoint(x: x1, y: y0), tangent2End: CGPoint(x: x1, y: y0 + l), radius: r)
+                                p.addLine(to: CGPoint(x: x1, y: y0 + l))
+                                p.move(to: CGPoint(x: x0, y: y1 - l))
+                                p.addArc(tangent1End: CGPoint(x: x0, y: y1), tangent2End: CGPoint(x: x0 + l, y: y1), radius: r)
+                                p.addLine(to: CGPoint(x: x0 + l, y: y1))
+                                p.move(to: CGPoint(x: x1 - l, y: y1))
+                                p.addArc(tangent1End: CGPoint(x: x1, y: y1), tangent2End: CGPoint(x: x1, y: y1 - l), radius: r)
+                                p.addLine(to: CGPoint(x: x1, y: y1 - l))
+                            }
+                            .stroke(.white, lineWidth: 5)
+                        }
+                        .contentShape(Rectangle())
+                        .gesture(DragGesture().onChanged { v in
+                            hoopPos = CGPoint(x: min(max(v.location.x / w, 0.15), 0.85),
+                                              y: min(max(v.location.y / h, 0.15), 0.85))
+                        })
+                        .overlay(alignment: .bottom) {
+                            HStack(spacing: 10) {
+                                PhaseGlyph(size: 26)
+                                Text("Center the hoop in the frame.\nAlign the rim with the crosshair.")
+                                    .font(.system(size: 14)).foregroundStyle(.white)
+                            }
+                            .padding(.horizontal, 14).padding(.vertical, 10)
+                            .background(.black.opacity(0.72), in: RoundedRectangle(cornerRadius: 8))
+                            .padding(.bottom, 18)
+                        }
+                    }
+                    .frame(height: 430)
+                    .padding(.top, 14)
+
+                    HStack(spacing: 10) {
+                        Button {} label: { captureOutline("Switch camera", icon: "arrow.triangle.2.circlepath") }
+                            .buttonStyle(.plain)
+                        NavigationLink { ReadinessCheckView() } label: {
+                            captureOutline("Skip calibration", icon: "viewfinder")
+                        }
+                    }
+                    .padding(.horizontal, 20).padding(.top, 16)
+
+                    NavigationLink { ReadinessCheckView() } label: {
+                        captureCTA("Confirm hoop", icon: "scope", color: ShotIQColor.confirmGreen)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 10)
+
+                    PhaseStrip().padding(.horizontal, 20).padding(.top, 18).padding(.bottom, 26)
                 }
-                .frame(height: 420).padding(.horizontal, 20).padding(.top, 16)
-                Spacer()
-                NavigationLink { ReadinessCheckView() } label: {
-                    Text("Lock calibration").frame(maxWidth: .infinity).frame(height: 54)
-                        .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 6))
-                        .foregroundStyle(.white).font(.system(size: 17, weight: .medium))
-                }
-                .padding(.horizontal, 24).padding(.bottom, 26)
             }
         }
     }
 }
 
 struct ReadinessCheckView: View {   // 030
+    @Environment(\.dismiss) private var dismiss
+    private let checks = [("Full body", "GOOD"), ("Lighting", "GOOD"), ("Stability", "GOOD"),
+                          ("Hoop visible", "GOOD"), ("Ball visible", "GOOD"), ("Pose confidence", "92%")]
     var body: some View {
         CanonicalScreen(testID: "screen-ios-readiness-check") {
-            VStack(alignment: .leading, spacing: 0) {
-                Text("READINESS CHECK").shotiqDisplay(38).padding(.top, 26)
-                VStack(spacing: 0) {
-                    ForEach([("Full body visible", true), ("Hoop calibrated", true),
-                             ("Lighting sufficient", true), ("Phone stable", true)], id: \.0) { t, ok in
-                        HStack {
-                            Image(systemName: ok ? "checkmark.circle.fill" : "xmark.circle.fill")
-                                .foregroundStyle(ok ? ShotIQColor.confirmGreen : ShotIQColor.reviewRed)
-                            Text(t).shotiqBody(16)
-                            Spacer()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    CaptureHeader()
+
+                    Button { dismiss() } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: "arrow.left").font(.system(size: 16, weight: .semibold))
+                            Text("AI ANALYSIS").font(.system(size: 13, weight: .bold)).kerning(1)
                         }
-                        .padding(.vertical, 14)
-                        .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
+                        .foregroundStyle(ShotIQColor.graphite)
                     }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, 20).padding(.top, 16)
+
+                    Text("READINESS CHECK").shotiqDisplay(38).padding(.horizontal, 20).padding(.top, 6)
+                    Text("Get everything green to capture your best analysis.")
+                        .font(.system(size: 15)).foregroundStyle(ShotIQColor.graphite)
+                        .padding(.horizontal, 20).padding(.top, 4)
+
+                    ZStack(alignment: .topLeading) {
+                        captureDark(400)
+                        HStack(spacing: 6) {
+                            Circle().fill(ShotIQColor.confirmGreen).frame(width: 8, height: 8)
+                            Text("LIVE").font(.system(size: 13, weight: .semibold)).foregroundStyle(.white)
+                        }
+                        .padding(.horizontal, 12).padding(.vertical, 7)
+                        .background(.black.opacity(0.72), in: RoundedRectangle(cornerRadius: 7))
+                        .padding(12)
+                    }
+                    .overlay(alignment: .trailing) {
+                        VStack(alignment: .leading, spacing: 0) {
+                            ForEach(checks, id: \.0) { name, value in
+                                HStack(spacing: 8) {
+                                    Image(systemName: "checkmark.circle.fill").font(.system(size: 16))
+                                        .foregroundStyle(ShotIQColor.confirmGreen)
+                                    VStack(alignment: .leading, spacing: 1) {
+                                        Text(name).font(.system(size: 12, weight: .semibold)).foregroundStyle(ShotIQColor.ink)
+                                        Text(value).font(.system(size: 10, weight: .bold)).kerning(0.5)
+                                            .foregroundStyle(ShotIQColor.confirmGreen)
+                                    }
+                                    Spacer(minLength: 0)
+                                }
+                                .padding(.vertical, 6)
+                                .overlay(alignment: .bottom) {
+                                    if name != "Pose confidence" { Rectangle().fill(ShotIQColor.rule).frame(height: 1) }
+                                }
+                            }
+                        }
+                        .padding(10)
+                        .frame(width: 168)
+                        .background(ShotIQColor.paper, in: RoundedRectangle(cornerRadius: 8))
+                        .padding(.trailing, 12)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 14)
+
+                    SectionLabel(text: "SHOT PHASE").padding(.horizontal, 20).padding(.top, 18)
+                    PhaseStrip().padding(.horizontal, 20).padding(.top, 8)
+
+                    HStack(alignment: .center, spacing: 14) {
+                        TrendLine(points: [1, 2.4, 3.4, 4], stroke: ShotIQColor.shotiqOrange)
+                            .frame(width: 52, height: 40)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("PRIMARY COACHING TARGET")
+                                .font(.system(size: 10, weight: .medium)).kerning(0.7)
+                                .foregroundStyle(ShotIQColor.graphite)
+                            Text("Keep elbow stacked through release")
+                                .font(.system(size: 18, weight: .semibold)).foregroundStyle(ShotIQColor.ink)
+                                .lineLimit(2).minimumScaleFactor(0.8)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right").font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
+                    }
+                    .padding(14)
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+                    .padding(.horizontal, 20).padding(.top, 16)
+
+                    NavigationLink { CaptureReadyView() } label: {
+                        captureCTA("Keep position", color: ShotIQColor.confirmGreen)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 16)
+
+                    HStack(spacing: 10) {
+                        Button {} label: { captureOutline("Camera help", icon: "camera") }.buttonStyle(.plain)
+                        Button { dismiss() } label: { captureOutline("Cancel") }.buttonStyle(.plain)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 10).padding(.bottom, 26)
                 }
-                .padding(.top, 16)
-                Spacer()
-                NavigationLink { CaptureReadyView() } label: {
-                    Text("I'm ready").frame(maxWidth: .infinity).frame(height: 54)
-                        .background(ShotIQColor.confirmGreen, in: RoundedRectangle(cornerRadius: 6))
-                        .foregroundStyle(.white).font(.system(size: 17, weight: .medium))
-                }
-                .padding(.bottom, 26)
             }
-            .padding(.horizontal, 24)
         }
     }
 }
@@ -386,15 +1447,82 @@ struct ReadinessCheckView: View {   // 030
 struct CaptureReadyView: View {     // 031
     @State private var count = 3
     @State private var go = false
+    private let readiness = [("Camera", "Positioned"), ("Full Body", "In Frame"), ("Lighting", "Good"),
+                             ("Space", "Clear"), ("Battery", "Sufficient")]
     var body: some View {
         CanonicalScreen(testID: "screen-ios-capture-ready") {
-            ZStack {
-                MediaSurface(height: 900).ignoresSafeArea()
-                VStack {
-                    Spacer()
-                    Text("\(count)").font(.custom("DINCondensed-Bold", size: 140)).foregroundStyle(.white)
-                    Text("GET SET").font(.system(size: 15, weight: .bold)).kerning(2).foregroundStyle(.white)
-                    Spacer()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    CaptureHeader()
+
+                    HStack(alignment: .center) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("CAPTURE READY").shotiqDisplay(38)
+                            Text("All readiness checks confirmed. You're good to go.")
+                                .font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                        }
+                        Spacer()
+                        Image(systemName: "checkmark.circle").font(.system(size: 38))
+                            .foregroundStyle(ShotIQColor.confirmGreen)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 18)
+
+                    HStack(alignment: .top, spacing: 0) {
+                        ForEach(readiness, id: \.0) { t, d in
+                            VStack(spacing: 3) {
+                                Image(systemName: "checkmark.circle.fill").font(.system(size: 16))
+                                    .foregroundStyle(ShotIQColor.confirmGreen)
+                                Text(t).font(.system(size: 12, weight: .semibold)).foregroundStyle(ShotIQColor.ink)
+                                    .lineLimit(1).minimumScaleFactor(0.6)
+                                Text(d).font(.system(size: 10)).foregroundStyle(ShotIQColor.graphite)
+                                    .lineLimit(1).minimumScaleFactor(0.6)
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
+                    }
+                    .padding(.horizontal, 20).padding(.top, 16)
+
+                    SectionLabel(text: "CAMERA PREVIEW").padding(.horizontal, 20).padding(.top, 20)
+                    ZStack(alignment: .bottomTrailing) {
+                        captureDark(260)
+                        Text("1080p • 60fps").font(.system(size: 12, weight: .medium)).foregroundStyle(.white)
+                            .padding(.horizontal, 10).padding(.vertical, 6)
+                            .background(.black.opacity(0.72), in: Capsule())
+                            .padding(10)
+                    }
+                    .overlay(alignment: .topTrailing) {
+                        Text("AUTO-START IN \(count)")
+                            .font(.system(size: 10, weight: .bold)).kerning(0.6).foregroundStyle(.white)
+                            .padding(.horizontal, 8).padding(.vertical, 5)
+                            .background(.black.opacity(0.6), in: RoundedRectangle(cornerRadius: 4))
+                            .padding(10)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 8)
+
+                    HStack(spacing: 6) {
+                        SectionLabel(text: "SHOT RAIL:")
+                        Text("SETUP").font(.system(size: 12, weight: .bold)).kerning(0.8)
+                            .foregroundStyle(ShotIQColor.analysisBlue)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 18)
+                    PhaseStrip(active: "RELEASE").padding(.horizontal, 20).padding(.top, 8)
+
+                    CaptureCoachingRow().padding(.horizontal, 20).padding(.top, 16)
+
+                    SectionLabel(text: "LATEST SESSION").padding(.horizontal, 20).padding(.top, 12)
+                    CaptureSessionStats().padding(.horizontal, 20).padding(.top, 8)
+
+                    Button { go = true } label: {
+                        captureCTA("Start recording", icon: "record.circle", color: ShotIQColor.confirmGreen)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, 20).padding(.top, 18)
+
+                    HStack(spacing: 10) {
+                        Button {} label: { captureOutline("Adjust setup", icon: "slider.horizontal.3") }.buttonStyle(.plain)
+                        Button {} label: { captureOutline("Cancel", icon: "xmark") }.buttonStyle(.plain)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 10).padding(.bottom, 26)
                 }
             }
         }
@@ -409,69 +1537,265 @@ struct CaptureReadyView: View {     // 031
 struct LiveRecordingView: View {    // 032
     @State private var seconds = 0
     @State private var timer: Timer?
+    private var clock: String { String(format: "%02d:%02d", seconds / 60, seconds % 60) }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-live-recording") {
-            ZStack {
-                MediaSurface(height: 900).ignoresSafeArea()
-                VStack {
-                    HStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    CaptureHeader()
+
+                    HStack(spacing: 8) {
+                        Circle().fill(ShotIQColor.shotiqOrange).frame(width: 9, height: 9)
+                        Text("LIVE RECORDING").font(.system(size: 16, weight: .heavy).width(.condensed)).kerning(0.8)
+                            .foregroundStyle(ShotIQColor.shotiqOrange)
+                        Text("Session time  \(clock)").font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
+                            .padding(.leading, 8)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 16)
+
+                    // Live camera surface with recording overlays
+                    ZStack(alignment: .topLeading) {
+                        captureDark(470)
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("CONFIDENCE").font(.system(size: 10, weight: .bold)).kerning(0.8)
+                                .foregroundStyle(.white)
+                            Text("92%").font(.custom("DINCondensed-Bold", size: 30))
+                                .foregroundStyle(ShotIQColor.confirmGreen)
+                            Capsule().fill(ShotIQColor.confirmGreen).frame(width: 64, height: 4)
+                        }
+                        .padding(14)
+                    }
+                    .overlay(alignment: .topTrailing) {
                         HStack(spacing: 7) {
                             Circle().fill(ShotIQColor.shotiqOrange).frame(width: 8, height: 8)
-                            Text("LIVE").font(.system(size: 12, weight: .bold)).foregroundStyle(.white)
+                            VStack(alignment: .leading, spacing: 0) {
+                                Text("REC").font(.system(size: 10, weight: .bold)).foregroundStyle(.white)
+                                Text(clock).font(.custom("DINCondensed-Bold", size: 20)).foregroundStyle(.white)
+                            }
                         }
-                        .padding(.horizontal, 10).padding(.vertical, 6)
-                        .background(.black.opacity(0.7), in: RoundedRectangle(cornerRadius: 4))
+                        .padding(.horizontal, 12).padding(.vertical, 8)
+                        .background(.black.opacity(0.66), in: RoundedRectangle(cornerRadius: 7))
+                        .padding(12)
+                    }
+                    .overlay(alignment: .trailing) {
+                        VStack(alignment: .leading, spacing: 12) {
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text("SHOTS").font(.system(size: 9, weight: .bold)).kerning(0.6).foregroundStyle(.white.opacity(0.85))
+                                Text("24").font(.custom("DINCondensed-Bold", size: 30)).foregroundStyle(.white)
+                            }
+                            Rectangle().fill(.white.opacity(0.5)).frame(width: 60, height: 1)
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text("MAKES").font(.system(size: 9, weight: .bold)).kerning(0.6).foregroundStyle(.white.opacity(0.85))
+                                Text("15").font(.custom("DINCondensed-Bold", size: 30)).foregroundStyle(.white)
+                            }
+                            Rectangle().fill(.white.opacity(0.5)).frame(width: 60, height: 1)
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text("MAKE %").font(.system(size: 9, weight: .bold)).kerning(0.6).foregroundStyle(.white.opacity(0.85))
+                                Text("62.5%").font(.custom("DINCondensed-Bold", size: 30)).foregroundStyle(.white)
+                            }
+                        }
+                        .padding(.trailing, 16)
+                    }
+                    .overlay(alignment: .bottom) {
+                        HStack(alignment: .top) {
+                            ForEach(["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"], id: \.self) { p in
+                                VStack(spacing: 3) {
+                                    Text(p).font(.system(size: 8, weight: p == "RELEASE" ? .bold : .regular)).kerning(0.4)
+                                        .foregroundStyle(p == "RELEASE" ? ShotIQColor.shotiqOrange : .white.opacity(0.85))
+                                        .lineLimit(1).minimumScaleFactor(0.6)
+                                    if p == "RELEASE" {
+                                        Rectangle().fill(ShotIQColor.shotiqOrange).frame(width: 34, height: 2)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity)
+                            }
+                        }
+                        .padding(.horizontal, 12).padding(.bottom, 12)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 12)
+
+                    CaptureCoachingRow(boxed: true).padding(.horizontal, 20).padding(.top, 14)
+
+                    ShotIQCard {
+                        HStack(alignment: .top, spacing: 0) {
+                            liveMetric("stopwatch", "REPS REMAINING", "00:42")
+                            Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 56)
+                            liveMetric("stopwatch", "ROUND TIMER", "00:42")
+                            Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 56)
+                            liveMetric("hand.raised", "QUALITY TOUCHES", "50")
+                            Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 56)
+                            VStack(spacing: 4) {
+                                TrendLine(points: [2, 2.8, 2.4, 3.6, 4], stroke: ShotIQColor.confirmGreen)
+                                    .frame(width: 56, height: 18)
+                                Text("CURRENT STREAK").font(.system(size: 8, weight: .medium)).kerning(0.4)
+                                    .foregroundStyle(ShotIQColor.graphite)
+                                    .lineLimit(1).minimumScaleFactor(0.6)
+                                Text("7").font(.custom("DINCondensed-Bold", size: 24)).foregroundStyle(ShotIQColor.ink)
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
+                        .padding(.vertical, 14).padding(.horizontal, 8)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 12)
+
+                    HStack(alignment: .top) {
                         Spacer()
-                        Text(String(format: "%02d:%02d", seconds / 60, seconds % 60))
-                            .font(.custom("DINCondensed-Bold", size: 22)).foregroundStyle(.white)
+                        VStack(spacing: 8) {
+                            Button {} label: {
+                                Circle().stroke(ShotIQColor.rule, lineWidth: 1.5).frame(width: 62, height: 62)
+                                    .overlay(Image(systemName: "pause.fill").font(.system(size: 20)).foregroundStyle(ShotIQColor.ink))
+                            }
+                            .buttonStyle(.plain)
+                            Text("PAUSE").font(.system(size: 10, weight: .medium)).kerning(0.6)
+                                .foregroundStyle(ShotIQColor.graphite)
+                        }
+                        Spacer()
+                        VStack(spacing: 8) {
+                            NavigationLink { LiveFormFeedbackView() } label: {
+                                Circle().fill(ShotIQColor.shotiqOrange).frame(width: 84, height: 84)
+                                    .overlay(RoundedRectangle(cornerRadius: 5).fill(.white).frame(width: 26, height: 26))
+                            }
+                            Text("STOP RECORDING").font(.system(size: 11, weight: .bold)).kerning(0.6)
+                                .foregroundStyle(ShotIQColor.shotiqOrange)
+                        }
+                        Spacer()
+                        VStack(spacing: 8) {
+                            Button {} label: {
+                                Circle().stroke(ShotIQColor.rule, lineWidth: 1.5).frame(width: 62, height: 62)
+                                    .overlay(Image(systemName: "flag.fill").font(.system(size: 19)).foregroundStyle(ShotIQColor.ink))
+                            }
+                            .buttonStyle(.plain)
+                            Text("END ROUND").font(.system(size: 10, weight: .medium)).kerning(0.6)
+                                .foregroundStyle(ShotIQColor.graphite)
+                        }
+                        Spacer()
                     }
-                    .padding(20)
-                    Spacer()
-                    NavigationLink { LiveFormFeedbackView() } label: {
-                        Circle().stroke(.white, lineWidth: 4).frame(width: 74, height: 74)
-                            .overlay(RoundedRectangle(cornerRadius: 6).fill(ShotIQColor.reviewRed).frame(width: 30, height: 30))
-                    }
-                    .padding(.bottom, 44)
+                    .padding(.top, 22).padding(.bottom, 28)
                 }
             }
         }
         .onAppear { timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in seconds += 1 } }
         .onDisappear { timer?.invalidate() }
     }
+
+    private func liveMetric(_ icon: String, _ label: String, _ value: String) -> some View {
+        VStack(spacing: 4) {
+            Image(systemName: icon).font(.system(size: 17)).foregroundStyle(ShotIQColor.ink)
+            Text(label).font(.system(size: 8, weight: .medium)).kerning(0.4)
+                .foregroundStyle(ShotIQColor.graphite)
+                .lineLimit(1).minimumScaleFactor(0.6)
+            Text(value).font(.custom("DINCondensed-Bold", size: 24)).foregroundStyle(ShotIQColor.ink)
+        }
+        .frame(maxWidth: .infinity)
+    }
 }
 
 struct LiveFormFeedbackView: View { // 033
     var body: some View {
         CanonicalScreen(testID: "screen-ios-live-form-feedback") {
-            ZStack {
-                MediaSurface(height: 900).ignoresSafeArea()
-                VStack {
-                    Spacer()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    CaptureHeader()
+
+                    HStack {
+                        SectionLabel(text: "LIVE FORM FEEDBACK")
+                        Spacer()
+                        HStack(spacing: 6) {
+                            Circle().fill(ShotIQColor.analysisBlue).frame(width: 8, height: 8)
+                            Text("Demo").font(.system(size: 14)).foregroundStyle(ShotIQColor.analysisBlue)
+                        }
+                    }
+                    .padding(.horizontal, 20).padding(.top, 18)
+
+                    ZStack(alignment: .topLeading) {
+                        captureDark(420)
+                        HStack(spacing: 6) {
+                            Circle().fill(ShotIQColor.shotiqOrange).frame(width: 8, height: 8)
+                            Text("LIVE").font(.system(size: 13, weight: .semibold)).foregroundStyle(.white)
+                        }
+                        .padding(.horizontal, 12).padding(.vertical, 7)
+                        .background(.black.opacity(0.72), in: RoundedRectangle(cornerRadius: 7))
+                        .padding(12)
+                    }
+                    .overlay(alignment: .trailing) {
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text("LATEST RESULT").font(.system(size: 10, weight: .bold)).kerning(0.7)
+                                .foregroundStyle(ShotIQColor.graphite)
+                            Text("FORM SCORE").font(.system(size: 11, weight: .bold)).kerning(0.7)
+                                .foregroundStyle(ShotIQColor.ink)
+                            Text("82").font(.custom("DINCondensed-Bold", size: 58))
+                                .foregroundStyle(ShotIQColor.shotiqOrange)
+                            ScoreBar(pct: 0.82).frame(width: 110)
+                            Text("GOOD").font(.system(size: 14, weight: .bold)).foregroundStyle(ShotIQColor.analysisBlue)
+                            Text("Keep building consistency.").font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
+                        }
+                        .padding(14)
+                        .frame(width: 160, alignment: .leading)
+                        .background(ShotIQColor.paper, in: RoundedRectangle(cornerRadius: 10))
+                        .padding(.trailing, 12)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 10)
+
                     ShotIQCard {
-                        VStack(alignment: .leading, spacing: 10) {
-                            SectionLabel(text: "LIVE FORM FEEDBACK")
-                            ForEach([("Keep elbow stacked", "GOOD", true),
-                                     ("Release at apex", "FOCUS", false),
-                                     ("Square shoulders", "GOOD", true)], id: \.0) { t, s, ok in
-                                HStack {
-                                    TrendLine(points: [2, 4, 3, 5, 4],
-                                              stroke: ok ? ShotIQColor.confirmGreen : ShotIQColor.shotiqOrange)
-                                        .frame(width: 40, height: 22)
-                                    Text(t).shotiqBody(14, weight: .semibold)
-                                    Spacer()
-                                    Text(s).font(.system(size: 10, weight: .bold))
-                                        .padding(.horizontal, 9).padding(.vertical, 3)
-                                        .overlay(Capsule().stroke(ok ? ShotIQColor.confirmGreen : ShotIQColor.analysisBlue))
-                                        .foregroundStyle(ok ? ShotIQColor.confirmGreen : ShotIQColor.analysisBlue)
+                        HStack(alignment: .center, spacing: 16) {
+                            PhaseGlyph(size: 54)
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("LIVE FEEDBACK").font(.system(size: 10, weight: .bold)).kerning(0.7)
+                                    .foregroundStyle(ShotIQColor.graphite)
+                                Text("Keep elbow stacked.")
+                                    .font(.system(size: 21, weight: .semibold)).foregroundStyle(ShotIQColor.ink)
+                                    .lineLimit(1).minimumScaleFactor(0.7)
+                                HStack(spacing: 0) {
+                                    VStack(alignment: .leading, spacing: 1) {
+                                        Text("CONFIDENCE").font(.system(size: 9, weight: .medium)).kerning(0.5)
+                                            .foregroundStyle(ShotIQColor.graphite)
+                                        Text("87%").font(.custom("DINCondensed-Bold", size: 20))
+                                            .foregroundStyle(ShotIQColor.shotiqOrange)
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 30)
+                                    VStack(alignment: .leading, spacing: 1) {
+                                        Text("DETECTED").font(.system(size: 9, weight: .medium)).kerning(0.5)
+                                            .foregroundStyle(ShotIQColor.graphite)
+                                        Text("Release").font(.system(size: 15, weight: .semibold))
+                                            .foregroundStyle(ShotIQColor.shotiqOrange)
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.leading, 12)
                                 }
-                            }
-                            NavigationLink { ShotDetectedView() } label: {
-                                Text("Simulate shot").font(.system(size: 13)).foregroundStyle(ShotIQColor.analysisBlue)
                             }
                         }
                         .padding(16)
                     }
-                    .padding(16)
+                    .padding(.horizontal, 20).padding(.top, 14)
+
+                    PhaseStrip().padding(.horizontal, 20).padding(.top, 16)
+
+                    HStack(alignment: .top) {
+                        Spacer()
+                        VStack(spacing: 8) {
+                            Button {} label: {
+                                Circle().stroke(ShotIQColor.rule, lineWidth: 1.5).frame(width: 62, height: 62)
+                                    .overlay(Image(systemName: "speaker.slash").font(.system(size: 19)).foregroundStyle(ShotIQColor.ink))
+                            }
+                            .buttonStyle(.plain)
+                            Text("Mute coaching").font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
+                        }
+                        Spacer()
+                        VStack(spacing: 8) {
+                            NavigationLink { ShotDetectedView() } label: {
+                                Circle().fill(ShotIQColor.confirmGreen).frame(width: 74, height: 74)
+                                    .overlay(RoundedRectangle(cornerRadius: 5).fill(.white).frame(width: 22, height: 22))
+                            }
+                            Text("Stop").font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
+                        }
+                        Spacer()
+                    }
+                    .padding(.top, 20)
+
+                    Button {} label: { captureCTA("Keep shooting", color: ShotIQColor.confirmGreen) }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal, 20).padding(.top, 18).padding(.bottom, 26)
                 }
             }
         }
@@ -479,22 +1803,147 @@ struct LiveFormFeedbackView: View { // 033
 }
 
 struct ShotDetectedView: View {     // 034
+    private let context = [("Catch & Shoot", "Off the Dribble"), ("Top of Key", "17.5 ft"),
+                           ("Release Height", "7.6 ft"), ("Defender", "4.2 ft Away")]
     var body: some View {
         CanonicalScreen(testID: "screen-ios-shot-detected") {
-            ZStack {
-                MediaSurface(height: 900).ignoresSafeArea()
-                VStack(spacing: 14) {
-                    Spacer()
-                    Image(systemName: "checkmark.circle.fill").font(.system(size: 62))
-                        .foregroundStyle(ShotIQColor.confirmGreen)
-                    Text("SHOT DETECTED").shotiqDisplay(34).foregroundStyle(.white)
-                    Text("Shot 24 · analyzing release…").font(.system(size: 14)).foregroundStyle(.white.opacity(0.8))
-                    NavigationLink { CaptureReviewView() } label: {
-                        Text("End session & review").frame(width: 260).frame(height: 52)
-                            .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 6))
-                            .foregroundStyle(.white).font(.system(size: 16, weight: .medium))
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    CaptureHeader()
+
+                    HStack(spacing: 8) {
+                        Text("ANALYSIS").font(.system(size: 12, weight: .bold)).kerning(1)
+                            .foregroundStyle(ShotIQColor.graphite)
+                        Image(systemName: "chevron.right").font(.system(size: 10)).foregroundStyle(ShotIQColor.graphite)
+                        Text("SHOT DETECTED").font(.system(size: 12, weight: .bold)).kerning(1)
+                            .foregroundStyle(ShotIQColor.ink)
                     }
-                    Spacer().frame(height: 70)
+                    .padding(.horizontal, 20).padding(.top, 16)
+
+                    ShotIQCard {
+                        VStack(alignment: .leading, spacing: 14) {
+                            HStack(spacing: 12) {
+                                Text("SHOT 12").shotiqDisplay(30)
+                                Text("SHOT DETECTED").font(.system(size: 11, weight: .bold)).kerning(0.6)
+                                    .foregroundStyle(ShotIQColor.shotiqOrange)
+                                    .padding(.horizontal, 10).padding(.vertical, 6)
+                                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.shotiqOrange))
+                                Spacer()
+                            }
+                            HStack(spacing: 0) {
+                                HStack(spacing: 10) {
+                                    Image(systemName: "clock").font(.system(size: 20)).foregroundStyle(ShotIQColor.ink)
+                                    VStack(alignment: .leading, spacing: 1) {
+                                        Text("8:24:10 AM").font(.custom("DINCondensed-Bold", size: 19)).foregroundStyle(ShotIQColor.ink)
+                                        Text("Today").font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 34)
+                                HStack(spacing: 10) {
+                                    Image(systemName: "waveform.path.ecg").font(.system(size: 20)).foregroundStyle(ShotIQColor.ink)
+                                    VStack(alignment: .leading, spacing: 1) {
+                                        Text("97%").font(.custom("DINCondensed-Bold", size: 19)).foregroundStyle(ShotIQColor.ink)
+                                        Text("CONFIDENCE").font(.system(size: 10, weight: .medium)).kerning(0.6)
+                                            .foregroundStyle(ShotIQColor.graphite)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.leading, 16)
+                            }
+                            captureDark(280, radius: 6)
+                            PhaseStrip()
+                            HStack(alignment: .top, spacing: 0) {
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Text("FORM SCORE").font(.system(size: 10, weight: .medium)).kerning(0.7)
+                                        .foregroundStyle(ShotIQColor.graphite)
+                                    HStack(alignment: .center, spacing: 10) {
+                                        Text("82").font(.custom("DINCondensed-Bold", size: 46))
+                                            .foregroundStyle(ShotIQColor.shotiqOrange)
+                                        VStack(alignment: .leading, spacing: 3) {
+                                            ScoreBar(pct: 0.82).frame(width: 80)
+                                            Text("GOOD").font(.system(size: 12, weight: .bold))
+                                                .foregroundStyle(ShotIQColor.analysisBlue)
+                                            Text("Keep building consistency.")
+                                                .font(.system(size: 10)).foregroundStyle(ShotIQColor.graphite)
+                                        }
+                                    }
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 66)
+                                HStack(alignment: .center, spacing: 8) {
+                                    VStack(alignment: .leading, spacing: 5) {
+                                        Text("PRIMARY COACHING TARGET").font(.system(size: 10, weight: .medium)).kerning(0.5)
+                                            .foregroundStyle(ShotIQColor.graphite)
+                                            .lineLimit(1).minimumScaleFactor(0.7)
+                                        Text("Keep elbow stacked through release")
+                                            .font(.system(size: 15, weight: .semibold)).foregroundStyle(ShotIQColor.ink)
+                                            .lineLimit(2).minimumScaleFactor(0.8)
+                                    }
+                                    Image(systemName: "chevron.right").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.leading, 14)
+                            }
+                        }
+                        .padding(16)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 12)
+
+                    SectionLabel(text: "CONFIRM THIS RESULT").padding(.horizontal, 20).padding(.top, 20)
+                    Text("Was this a shot attempt?").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                        .padding(.horizontal, 20).padding(.top, 2)
+
+                    HStack(alignment: .top, spacing: 10) {
+                        NavigationLink { CaptureReviewView() } label: {
+                            VStack(spacing: 8) {
+                                Image(systemName: "checkmark").font(.system(size: 18, weight: .bold))
+                                Text("CONFIRM MAKE").font(.system(size: 12, weight: .heavy).width(.condensed)).kerning(0.5)
+                                    .lineLimit(1).minimumScaleFactor(0.7)
+                            }
+                            .frame(maxWidth: .infinity).frame(height: 80)
+                            .background(ShotIQColor.confirmGreen, in: RoundedRectangle(cornerRadius: 8))
+                            .foregroundStyle(.white)
+                        }
+                        Button {} label: {
+                            VStack(spacing: 8) {
+                                Image(systemName: "xmark").font(.system(size: 18, weight: .semibold))
+                                Text("MARK MISS").font(.system(size: 12, weight: .heavy).width(.condensed)).kerning(0.5)
+                                    .lineLimit(1).minimumScaleFactor(0.7)
+                            }
+                            .frame(maxWidth: .infinity).frame(height: 80)
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+                            .foregroundStyle(ShotIQColor.ink)
+                        }
+                        .buttonStyle(.plain)
+                        Button {} label: {
+                            VStack(spacing: 8) {
+                                Image(systemName: "viewfinder").font(.system(size: 18))
+                                Text("NOT A SHOT").font(.system(size: 12, weight: .heavy).width(.condensed)).kerning(0.5)
+                                    .lineLimit(1).minimumScaleFactor(0.7)
+                            }
+                            .frame(maxWidth: .infinity).frame(height: 80)
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+                            .foregroundStyle(ShotIQColor.ink)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 12)
+
+                    SectionLabel(text: "SHOT CONTEXT").padding(.horizontal, 20).padding(.top, 20)
+                    HStack(alignment: .top, spacing: 0) {
+                        ForEach(context, id: \.0) { t, d in
+                            VStack(alignment: .center, spacing: 4) {
+                                PhaseGlyph(size: 22)
+                                Text(t).font(.system(size: 11, weight: .semibold)).foregroundStyle(ShotIQColor.ink)
+                                    .lineLimit(1).minimumScaleFactor(0.6)
+                                Text(d).font(.system(size: 10)).foregroundStyle(ShotIQColor.graphite)
+                                    .lineLimit(1).minimumScaleFactor(0.6)
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
+                    }
+                    .padding(.horizontal, 20).padding(.top, 10).padding(.bottom, 26)
                 }
             }
         }
@@ -502,38 +1951,142 @@ struct ShotDetectedView: View {     // 034
 }
 
 struct CaptureReviewView: View {    // 035
+    @Environment(\.dismiss) private var dismiss
+    private let flagged: [(Int, String, String, String, Double)] = [
+        (7, "Today • 8:05 AM", "Release", "00:03", 0.58),
+        (12, "Today • 8:09 AM", "Elbow angle", "00:05", 0.61),
+        (19, "Today • 8:16 AM", "Release timing", "00:06", 0.64)]
     var body: some View {
         CanonicalScreen(testID: "screen-ios-capture-review") {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("SESSION REVIEW").shotiqDisplay(38).padding(.top, 24)
-                    HStack(spacing: 24) {
-                        StatBlock(value: "24", label: "SHOTS", valueSize: 34)
-                        StatBlock(value: "15", label: "MAKES", color: ShotIQColor.confirmGreen, valueSize: 34)
-                        StatBlock(value: "9", label: "MISSES", color: ShotIQColor.reviewRed, valueSize: 34)
-                        StatBlock(value: "62.5%", label: "MAKE %", valueSize: 34)
+                    TopBar()
+
+                    Button { dismiss() } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: "arrow.left").font(.system(size: 15, weight: .semibold))
+                            Text("Back to session summary").font(.system(size: 15))
+                        }
+                        .foregroundStyle(ShotIQColor.ink)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, 20).padding(.top, 16)
+
+                    HStack(alignment: .top) {
+                        Text("CAPTURE REVIEW").shotiqDisplay(40)
+                        Spacer()
+                        HStack(spacing: 8) {
+                            Image(systemName: "film").font(.system(size: 17)).foregroundStyle(ShotIQColor.ink)
+                            Text("24").font(.custom("DINCondensed-Bold", size: 24)).foregroundStyle(ShotIQColor.ink)
+                            Text("SHOTS").font(.system(size: 9, weight: .medium)).kerning(0.5)
+                                .foregroundStyle(ShotIQColor.graphite)
+                        }
+                        .padding(.horizontal, 12).padding(.vertical, 10)
+                        .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
+                    }
+                    .padding(.horizontal, 20).padding(.top, 8)
+                    Text("We flagged 3 shots for review.\nConfirm, correct, or discard each shot.")
+                        .font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
+                        .padding(.horizontal, 20).padding(.top, 4)
+
+                    HStack(alignment: .top, spacing: 0) {
+                        captureStat("15", "MAKES", size: 30)
+                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 40)
+                        captureStat("62.5%", "MAKE %", size: 30)
+                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 40)
+                        captureStat("3", "NEED REVIEW", color: ShotIQColor.shotiqOrange, size: 30)
+                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 40)
+                        captureStat("6", "DISCARDED", size: 30)
+                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 40)
+                        captureStat("00:20:04", "PRACTICE TIME", size: 30)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 16)
+
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            filterChip("All (24)", selected: false)
+                            filterChip("Needs review (3)", selected: true)
+                            filterChip("Confirmed (15)", selected: false)
+                            filterChip("Discarded (6)", selected: false)
+                        }
+                        .padding(.horizontal, 20)
                     }
                     .padding(.top, 16)
-                    SectionLabel(text: "SHOTS").padding(.top, 22)
-                    ForEach(1..<7) { n in
-                        HStack(spacing: 14) {
-                            MediaSurface(height: 54).frame(width: 90)
-                            Text("Shot \(n)").shotiqBody(15, weight: .semibold)
-                            Spacer()
-                            Image(systemName: n % 3 == 0 ? "xmark.circle.fill" : "checkmark.circle.fill")
-                                .foregroundStyle(n % 3 == 0 ? ShotIQColor.reviewRed : ShotIQColor.confirmGreen)
+
+                    HStack {
+                        SectionLabel(text: "NEEDS REVIEW (3)")
+                        Spacer()
+                        Text("Review lowest confidence first").font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                        Image(systemName: "chevron.up.chevron.down").font(.system(size: 10)).foregroundStyle(ShotIQColor.graphite)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 20)
+
+                    ForEach(flagged, id: \.0) { n, when, flaw, dur, conf in
+                        ShotIQCard {
+                            HStack(alignment: .top, spacing: 14) {
+                                ZStack(alignment: .bottomLeading) {
+                                    captureDark(132, radius: 4).frame(width: 116)
+                                    Text(dur).font(.custom("DINCondensed-Bold", size: 12)).foregroundStyle(.white)
+                                        .padding(.horizontal, 6).padding(.vertical, 3)
+                                        .background(.black.opacity(0.75), in: RoundedRectangle(cornerRadius: 3))
+                                        .padding(6)
+                                }
+                                VStack(alignment: .leading, spacing: 5) {
+                                    Text("SHOT \(n)").shotiqDisplay(22)
+                                    Text(when).font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                                    HStack(spacing: 6) {
+                                        Image(systemName: "figure.basketball").font(.system(size: 12)).foregroundStyle(ShotIQColor.ink)
+                                        Text(flaw).font(.system(size: 12)).foregroundStyle(ShotIQColor.ink)
+                                    }
+                                    HStack(spacing: 6) {
+                                        Image(systemName: "gauge.with.needle").font(.system(size: 12)).foregroundStyle(ShotIQColor.ink)
+                                        Text("Low confidence").font(.system(size: 12)).foregroundStyle(ShotIQColor.ink)
+                                    }
+                                    HStack(spacing: 6) {
+                                        Image(systemName: "film").font(.system(size: 12)).foregroundStyle(ShotIQColor.ink)
+                                        Text(dur).font(.system(size: 12)).foregroundStyle(ShotIQColor.ink)
+                                    }
+                                }
+                                Spacer()
+                                VStack(spacing: 6) {
+                                    Ring(pct: conf, color: ShotIQColor.shotiqOrange, lineWidth: 5)
+                                        .frame(width: 48, height: 48)
+                                        .overlay(Text("\(Int(conf * 100))")
+                                            .font(.custom("DINCondensed-Bold", size: 19)).foregroundStyle(ShotIQColor.ink))
+                                    Text("CONFIDENCE").font(.system(size: 7, weight: .medium)).kerning(0.4)
+                                        .foregroundStyle(ShotIQColor.graphite)
+                                    Button {} label: {
+                                        Text("Review").font(.system(size: 13, weight: .medium))
+                                            .foregroundStyle(ShotIQColor.shotiqOrange)
+                                            .padding(.horizontal, 18).padding(.vertical, 8)
+                                            .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.shotiqOrange))
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                            .padding(12)
                         }
-                        .padding(.vertical, 8)
+                        .padding(.horizontal, 20).padding(.top, 12)
                     }
+
+                    Button {} label: { captureOutline("Discard session", icon: "trash") }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal, 20).padding(.top, 18)
+
                     NavigationLink { AnalysisProcessingView() } label: {
-                        Text("Analyze session").frame(maxWidth: .infinity).frame(height: 54)
-                            .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 6))
-                            .foregroundStyle(.white).font(.system(size: 17, weight: .medium))
+                        captureCTA("Analyze session", icon: "camera.metering.center.weighted")
                     }
-                    .padding(.vertical, 24)
+                    .padding(.horizontal, 20).padding(.top, 10).padding(.bottom, 26)
                 }
-                .padding(.horizontal, 24)
             }
         }
+    }
+
+    private func filterChip(_ t: String, selected: Bool) -> some View {
+        Text(t).font(.system(size: 13, weight: selected ? .semibold : .regular))
+            .foregroundStyle(selected ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
+            .padding(.horizontal, 14).padding(.vertical, 9)
+            .background(selected ? ShotIQColor.paper : ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(selected ? ShotIQColor.shotiqOrange : ShotIQColor.rule))
     }
 }
