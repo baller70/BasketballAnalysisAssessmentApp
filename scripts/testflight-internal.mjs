@@ -260,34 +260,24 @@ for (const app of APPS) {
       }
     }
 
-    const inGroup = (id) => (testers.data ?? []).some((t) => t.id === id)
     let tester = (testers.data ?? []).find(
       (t) => t.attributes?.email?.toLowerCase() === testerEmail.toLowerCase(),
     )
 
-    if (accepted && confirm) {
-      if (!inGroup(accepted.id)) {
-        await api('POST', `/v1/betaGroups/${group.id}/relationships/betaTesters`, {
-          data: [{ type: 'betaTesters', id: accepted.id }],
-        })
-        console.log(`   linked accepted tester record ${accepted.id} to the group`)
-      } else {
-        console.log(`   accepted tester record ${accepted.id} already in the group`)
-      }
-      // Drop the dud so App Store Connect doesn't show a phantom NOT_INVITED row.
-      if (tester && tester.id !== accepted.id) {
-        try {
-          await api('DELETE', `/v1/betaGroups/${group.id}/relationships/betaTesters`, {
-            data: [{ type: 'betaTesters', id: tester.id }],
-          })
-          console.log(`   removed stale NOT_INVITED record ${tester.id} from the group`)
-        } catch (err) {
-          console.log(`   could not remove stale record: ${err.message.slice(0, 150)}`)
-        }
-      }
-      tester = accepted
-    } else if (tester) {
-      console.log(`   ${testerEmail} is already a tester`)
+    // A tester record created while the build was not yet internally testable
+    // gets permanently stuck at NOT_INVITED: Apple never sends its email and
+    // refuses both betaTesterInvitations and cross-app record assignment
+    // (tester records are per-app). The cure is delete + recreate now that
+    // internalBuildState is IN_BETA_TESTING — creation with an installable
+    // build present is what fired the email for HoopTrack.
+    if (confirm && tester && tester.attributes?.state === 'NOT_INVITED' && tester.id !== accepted?.id) {
+      await api('DELETE', `/v1/betaTesters/${tester.id}`)
+      console.log(`   deleted stuck NOT_INVITED record ${tester.id}`)
+      tester = null
+    }
+
+    if (tester) {
+      console.log(`   ${testerEmail} is already a tester (state ${tester.attributes?.state})`)
     } else if (!confirm) {
       console.log(`   WOULD INVITE ${testerEmail} (re-run with --confirm)`)
     } else {
@@ -299,7 +289,10 @@ for (const app of APPS) {
         },
       })
       tester = created.data
-      console.log(`   added ${testerEmail} to the group`)
+      console.log(
+        `   invited ${testerEmail} (state ${tester?.attributes?.state ?? 'unknown'}) — ` +
+          'check the inbox, then open TestFlight on the phone',
+      )
     }
     // Creating the betaTester record does NOT make Apple send the invitation —
     // the tester sits at state NOT_INVITED with no email and no app in
