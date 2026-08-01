@@ -5,9 +5,9 @@
   "brokenLinks": [],
   "buttons": 13,
   "deadButtons": [
-   "#11"
+   "#8"
   ],
-  "consoleErrors": 6
+  "consoleErrors": 17
  },
  {
   "route": "/dashboard",
@@ -15,7 +15,7 @@
   "brokenLinks": [],
   "buttons": 3,
   "deadButtons": [],
-  "consoleErrors": 5
+  "consoleErrors": 3
  },
  {
   "route": "/analyze",
@@ -23,7 +23,7 @@
   "brokenLinks": [],
   "buttons": 8,
   "deadButtons": [],
-  "consoleErrors": 1
+  "consoleErrors": 0
  },
  {
   "route": "/media",
@@ -31,7 +31,7 @@
   "brokenLinks": [],
   "buttons": 20,
   "deadButtons": [],
-  "consoleErrors": 3
+  "consoleErrors": 2
  },
  {
   "route": "/profile",
@@ -43,9 +43,9 @@
  },
  {
   "route": "/settings",
-  "links": 18,
+  "links": 20,
   "brokenLinks": [],
-  "buttons": 12,
+  "buttons": 37,
   "deadButtons": [],
   "consoleErrors": 0
  },
@@ -79,7 +79,7 @@
   "brokenLinks": [],
   "buttons": 10,
   "deadButtons": [],
-  "consoleErrors": 12
+  "consoleErrors": 5
  },
  {
   "route": "/training/drills",

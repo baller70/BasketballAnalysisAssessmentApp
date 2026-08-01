@@ -141,10 +141,12 @@ export default function AnalysisOverviewPage() {
         </div>
       </div>
 
-      {/* bottom strip */}
-      <Card className="mt-[20px] flex items-center divide-x divide-[var(--shotiq-color-rule)] px-[8px] py-[14px]">
-        <div className="flex items-center gap-[24px] px-[16px]">
-          <SectionLabel>ANALYSIS SUMMARY</SectionLabel>
+      {/* bottom strip — a 3-column grid with minmax(0,…) tracks so the flaw
+          text can never be crushed into a sliver; stacks with row dividers
+          below xl. */}
+      <Card className="mt-[20px] grid grid-cols-1 divide-y divide-[var(--shotiq-color-rule)] px-[8px] py-[4px] xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,0.75fr)] xl:divide-x xl:divide-y-0 xl:py-[10px]">
+        <div className="flex items-center gap-[18px] px-[16px] py-[10px] xl:py-0">
+          <SectionLabel className="w-[74px] shrink-0 leading-[13px]">ANALYSIS SUMMARY</SectionLabel>
           <Stat value={hasData ? "24" : "0"} label="SHOTS" />
           <Stat value={hasData ? "15" : "0"} label="MAKES" />
           <Stat value={hasData ? "62.5%" : "—"} label="MAKE %" />
@@ -154,26 +156,28 @@ export default function AnalysisOverviewPage() {
             <TrendLine points={[3, 2.6, 3.3, 3, 4]} width={84} height={28} />
           </div>
         </div>
-        <div className="flex flex-1 items-center gap-[12px] px-[16px]">
-          <SectionLabel>TOP FLAW</SectionLabel>
+        <div className="flex items-center gap-[12px] px-[16px] py-[10px] xl:py-0">
+          <SectionLabel className="w-[54px] shrink-0 leading-[13px]">TOP FLAW</SectionLabel>
           <PhaseGlyph size={30} />
           <div className="min-w-0 flex-1">
-            <span className="text-[14px] font-semibold">Elbow flare at release </span>
-            <span className="rounded-[3px] border border-[var(--shotiq-color-reviewRed)] px-[6px] py-[1px] text-[9px] font-bold text-[var(--shotiq-color-reviewRed)]">HIGH IMPACT</span>
-            <p className="text-[12px] text-[var(--shotiq-color-graphite)]">Elbow moves outward slightly during release, reducing alignment.</p>
+            <div className="flex flex-wrap items-center gap-x-[8px] gap-y-[2px]">
+              <span className="whitespace-nowrap text-[14px] font-semibold">Elbow flare at release</span>
+              <span className="whitespace-nowrap rounded-[3px] border border-[var(--shotiq-color-reviewRed)] px-[6px] py-[1px] text-[9px] font-bold text-[var(--shotiq-color-reviewRed)]">HIGH IMPACT</span>
+            </div>
+            <p className="text-[12px] leading-[16px] text-[var(--shotiq-color-graphite)]">Elbow moves outward slightly during release, reducing alignment.</p>
           </div>
-          <Link href="/results/demo/flaws" aria-label="Open flaws">
+          <Link href="/results/demo/flaws" aria-label="Open flaws" className="shrink-0">
             <span className="text-[var(--shotiq-color-graphite)]">›</span>
           </Link>
         </div>
-        <div className="flex items-center gap-[12px] px-[16px]">
-          <SectionLabel>NEXT TRAINING</SectionLabel>
-          <span className="grid h-[42px] w-[42px] place-items-center rounded-full bg-[var(--shotiq-color-analysisBlue)] text-white">◎</span>
-          <div>
+        <div className="flex items-center gap-[12px] px-[16px] py-[10px] xl:py-0">
+          <SectionLabel className="w-[54px] shrink-0 leading-[13px]">NEXT TRAINING</SectionLabel>
+          <span className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-full bg-[var(--shotiq-color-analysisBlue)] text-white">◎</span>
+          <div className="min-w-0 flex-1">
             <div className="text-[14px] font-semibold">Quick Release Builder</div>
             <div className="text-[11px] text-[var(--shotiq-color-graphite)]">20 min · Form Focus</div>
           </div>
-          <Link href="/training/drills/quick-release-builder" aria-label="Start training">
+          <Link href="/training/drills/quick-release-builder" aria-label="Start training" className="shrink-0">
             <span className="text-[var(--shotiq-color-graphite)]">›</span>
           </Link>
         </div>
