@@ -4,7 +4,7 @@ Same pipeline as HoopTrack (baller70/hooptrack), adapted for the single
 ShotIQ app. A GitHub-hosted macOS runner archives, signs, uploads to
 App Store Connect, and can submit for review — no local Mac needed.
 
-- App: **ShotIQ** · bundle id `com.kevinhouston.shotiq` · team `DD9G8RP575`
+- App: **ShotIQ** · bundle id `com.baller70.shotiq` · team `DD9G8RP575`
 - Workflows: `.github/workflows/ios-appstore.yml` (release),
   `.github/workflows/ios-release-preflight.yml` (readiness check)
 - Scripts: `basketball-analysis/ios-native/release/`
@@ -22,7 +22,7 @@ App Store Connect, and can submit for review — no local Mac needed.
 
 2. **Create the app record in App Store Connect** (the API cannot):
    App Store Connect → Apps → “+” → New App → platform iOS,
-   name **ShotIQ**, bundle ID **com.kevinhouston.shotiq** (register it if it
+   name **ShotIQ**, bundle ID **com.baller70.shotiq** (register it if it
    isn't in the dropdown), SKU e.g. `shotiq-ios`.
 
 3. Run the **iOS Release Preflight** workflow (Actions tab → Run workflow).

@@ -57,7 +57,7 @@ stage="${1:-preflight}"; shift || true
 
 scheme="ShotIQ"
 project="ShotIQ.xcodeproj"
-bundle_id="com.kevinhouston.shotiq"
+bundle_id="com.baller70.shotiq"
 
 case "$stage" in
   preflight|archive|export|validate|upload|all) ;;
