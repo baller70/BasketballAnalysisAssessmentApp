@@ -21,6 +21,7 @@
 		BAEA068CA76742A517947F56 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3ABB946C8ACBA7946DBFC56 /* APIClient.swift */; };
 		D366CF3B9BB408E1674F1F8D /* GoalsAnalyticsMediaProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD1B7FFC873C50CC28C73611 /* GoalsAnalyticsMediaProfile.swift */; };
 		F70F48656AC9104E369FF1B9 /* CaptureFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DB88B746B85C662B864EB2E /* CaptureFlow.swift */; };
+		FCD17A4ED5735EB2FDD9AA14 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EBF36012146C626940DA84BF /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -57,6 +58,7 @@
 		D38018B275DB53F75E8FB92C /* ShotIQTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShotIQTokens.swift; sourceTree = "<group>"; };
 		D8EAB7AFA47FF810A708D966 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		D9D8AB9A2AA75D7231A3DF13 /* HomeFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeFlow.swift; sourceTree = "<group>"; };
+		EBF36012146C626940DA84BF /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		F46C7A0A6EBBC1A7CE81E129 /* ShotIQTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShotIQTests.swift; sourceTree = "<group>"; };
 		F4CFDF0EEC8E7460A19711DE /* TrainingFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingFlow.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -132,6 +134,7 @@
 		83CC3D5A92AEC4CF4373F5C4 /* App */ = {
 			isa = PBXGroup;
 			children = (
+				EBF36012146C626940DA84BF /* Assets.xcassets */,
 				D8EAB7AFA47FF810A708D966 /* Info.plist */,
 				38BCEA5007BFAFE4AA0C9F64 /* ShotIQApp.swift */,
 			);
@@ -256,6 +259,7 @@
 			buildConfigurationList = 40A25BA61F473E9595B53723 /* Build configuration list for PBXNativeTarget "ShotIQ" */;
 			buildPhases = (
 				CD419E9DFE4A51F529AF5C23 /* Sources */,
+				38A90E956CEE4900AC4E5554 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -306,6 +310,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		38A90E956CEE4900AC4E5554 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FCD17A4ED5735EB2FDD9AA14 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		59BC9F9350E5711566891892 /* Sources */ = {
