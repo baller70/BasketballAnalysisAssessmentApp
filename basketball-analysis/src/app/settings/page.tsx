@@ -106,6 +106,18 @@ export default function SettingsPage() {
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle")
   const [activeSection, setActiveSection] = useState<string>("notifications")
   const [deviceInfo, setDeviceInfo] = useState({ browser: "This browser", os: "" })
+  // Browser push permission (iOS 016 notification-primer counterpart).
+  const [notifPerm, setNotifPerm] = useState<"unsupported" | "default" | "granted" | "denied">("default")
+
+  useEffect(() => {
+    if (typeof Notification === "undefined") setNotifPerm("unsupported")
+    else setNotifPerm(Notification.permission)
+  }, [])
+
+  const requestNotifications = async () => {
+    if (typeof Notification === "undefined") return
+    try { setNotifPerm(await Notification.requestPermission()) } catch { /* dismissed */ }
+  }
 
   // Avatar
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
@@ -450,6 +462,29 @@ export default function SettingsPage() {
                                onToggle={() => setNotif("reminderPush", !notifications.reminderPush)} />
                   </div>
                 </div>
+              </div>
+              {/* Browser permission opt-in — iOS 016 counterpart. */}
+              <div className="mt-[10px] flex flex-wrap items-center gap-[10px] border-t border-[var(--shotiq-color-rule)] pt-[12px]">
+                <div className="min-w-0 flex-1">
+                  <div className="text-[13px] font-semibold">Browser notifications</div>
+                  <div className="text-[11px] text-[var(--shotiq-color-graphite)]">
+                    Let ShotIQ notify you here when reports and analyses are ready. Your browser will ask to confirm.
+                  </div>
+                </div>
+                {notifPerm === "granted" ? (
+                  <span className="flex items-center gap-[6px] text-[12px] font-semibold text-[var(--shotiq-color-confirmGreen)]">
+                    <CheckCircle2 className="h-[13px] w-[13px]" /> Enabled in this browser
+                  </span>
+                ) : notifPerm === "denied" ? (
+                  <span className="text-[12px] text-[var(--shotiq-color-graphite)]">Blocked — allow notifications in browser settings</span>
+                ) : notifPerm === "unsupported" ? (
+                  <span className="text-[12px] text-[var(--shotiq-color-graphite)]">Not supported in this browser</span>
+                ) : (
+                  <button type="button" onClick={requestNotifications} data-testid="enable-browser-notifications"
+                          className="h-[36px] shrink-0 rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-[12px] hover:border-[var(--shotiq-color-ink)]">
+                    Enable browser notifications
+                  </button>
+                )}
               </div>
             </Card>
 

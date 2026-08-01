@@ -268,9 +268,12 @@ test("points: tier filter, unlocked-only and load-more change the badge grid", a
   await expect(page.getByText("Daily streak bonus")).toBeVisible()
 })
 
-test("live capture: start/pause/stop and shot logging work with a camera", async ({ page }) => {
+test("live capture: primer, start/pause/stop, shot logging, and capture review", async ({ page }) => {
   await page.goto("/video-analysis")
   await page.getByTestId("capture-start").click()
+  // First run shows the camera-permission primer (iOS 014 counterpart).
+  await expect(page.getByTestId("camera-primer")).toBeVisible({ timeout: 5000 })
+  await page.getByTestId("camera-primer-enable").click()
   await expect(page.getByTestId("capture-stop")).toBeVisible({ timeout: 15000 })
   await page.getByTestId("rail-make").click()
   await expect(page.getByText(/1 \/ 1|Make/i).first()).toBeVisible()
@@ -278,6 +281,16 @@ test("live capture: start/pause/stop and shot logging work with a camera", async
   await expect(page.getByRole("button", { name: "Resume" })).toBeVisible()
   await page.getByTestId("capture-stop").click()
   await expect(page.getByTestId("capture-start")).toBeVisible({ timeout: 10000 })
+  // Stopping lands on the capture-review state (iOS 035 counterpart) with the
+  // recorded clip; discarding clears it.
+  await expect(page.getByTestId("capture-review")).toBeVisible({ timeout: 10000 })
+  await expect(page.getByTestId("capture-review-video")).toBeVisible()
+  await page.getByTestId("capture-review-discard").click()
+  await expect(page.getByTestId("capture-review")).not.toBeVisible()
+  // Second start skips the primer (primed flag persisted).
+  await page.getByTestId("capture-start").click()
+  await expect(page.getByTestId("capture-stop")).toBeVisible({ timeout: 15000 })
+  await page.getByTestId("capture-stop").click()
 })
 
 test("drill execution: make/miss marking updates the shot history and undo reverts", async ({ page }) => {

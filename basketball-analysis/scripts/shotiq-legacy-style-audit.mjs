@@ -26,6 +26,7 @@ const ROUTES = [
   '/results/demo/compare', '/results/demo/history', '/results/demo/player',
   '/results/demo/training', '/results/demo/goals', '/points', '/badges',
   '/guide', '/terms', '/privacy', '/forgot-password', '/reset-password',
+  '/verify-email',
 ]
 
 const browser = await chromium.launch({

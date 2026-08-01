@@ -318,5 +318,15 @@
   "bigRadius": 0,
   "gradients": 0,
   "legacyDark": 0
+ },
+ {
+  "route": "/verify-email",
+  "total": 0,
+  "legacyOrange": 0,
+  "slate": 0,
+  "legacyGray": 0,
+  "bigRadius": 0,
+  "gradients": 0,
+  "legacyDark": 0
  }
 ]

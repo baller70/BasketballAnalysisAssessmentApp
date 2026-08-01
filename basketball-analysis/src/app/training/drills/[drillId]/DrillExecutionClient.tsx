@@ -57,13 +57,38 @@ export default function DrillExecutionClient() {
   const [elapsed, setElapsed] = useState(0)
   const [paused, setPaused] = useState(false)
   const [muted, setMuted] = useState(false)
+  // Workout-complete summary (iOS 062 counterpart) — shown by "End workout".
+  const [completed, setCompleted] = useState(false)
+  const [shared, setShared] = useState(false)
   const shotN = useRef(0)
 
   useEffect(() => {
-    if (paused) return
+    if (paused || completed) return
     const t = setInterval(() => setElapsed((e) => e + 1), 1000)
     return () => clearInterval(t)
-  }, [paused])
+  }, [paused, completed])
+
+  useEffect(() => {
+    if (!completed) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setCompleted(false) }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [completed])
+
+  const shareProgress = async () => {
+    const makesNow = shots.filter((s) => s.made).length
+    const text = `${drillName} on ShotIQ — ${shots.length} shots, ${makesNow} makes${
+      shots.length ? ` (${Math.round((100 * makesNow) / shots.length)}%)` : ""}.`
+    try {
+      if (navigator.share) await navigator.share({ title: "ShotIQ workout", text, url: window.location.href })
+      else await navigator.clipboard.writeText(`${text} ${window.location.href}`)
+      setShared(true)
+      setTimeout(() => setShared(false), 2500)
+    } catch { /* user dismissed the share sheet */ }
+  }
+  const repeatDrill = () => {
+    setShots([]); setElapsed(0); setPaused(false); setCompleted(false); shotN.current = 0
+  }
 
   const mark = async (made: boolean) => {
     shotN.current += 1
@@ -191,7 +216,7 @@ export default function DrillExecutionClient() {
                 {paused ? <Play className="h-[15px] w-[15px]" /> : <Pause className="h-[15px] w-[15px]" />}
                 {paused ? "Resume workout" : "Pause workout"}
               </button>
-              <button type="button" onClick={() => router.push("/results/demo/training")}
+              <button type="button" onClick={() => setCompleted(true)} data-testid="end-workout"
                       className="flex h-[44px] items-center gap-[9px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[16px] text-[14px]">
                 <Square className="h-[13px] w-[13px]" fill="currentColor" /> End workout
               </button>
@@ -302,6 +327,88 @@ export default function DrillExecutionClient() {
             ))}
           </Card>
         </aside>
+
+        {/* Workout complete — iOS 062 counterpart. Real session stats, share,
+            repeat, and a next-drill recommendation. */}
+        {completed && (
+          <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/40 p-6"
+               onClick={() => setCompleted(false)}>
+            <Card data-testid="workout-complete" className="w-full max-w-[640px] p-[26px]"
+                  onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-end justify-between">
+                <div>
+                  <h2 className="shotiq-display text-[38px] leading-[40px]">WORKOUT COMPLETE</h2>
+                  <p className="mt-[2px] text-[13px] text-[var(--shotiq-color-graphite)]">Great session. Here&apos;s how it went.</p>
+                </div>
+                <span className="rounded-full border border-[var(--shotiq-color-rule)] px-[12px] py-[3px] text-[12px]">{drillName}</span>
+              </div>
+
+              <div className="mt-[16px] grid grid-cols-4 divide-x divide-[var(--shotiq-color-rule)] rounded-[6px] border border-[var(--shotiq-color-rule)] py-[12px]">
+                {[[String(shots.length), "SHOTS"], [String(makes), "MAKES"],
+                  [shots.length ? `${Math.round((100 * makes) / shots.length)}%` : "—", "ACCURACY"],
+                  [mmss(elapsed), "DURATION"]].map(([v, l]) => (
+                  <div key={l} className="text-center">
+                    <div className="shotiq-numeric text-[28px] leading-[32px]">{v}</div>
+                    <div className="text-[9px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">{l}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-[14px]">
+                <SectionLabel>PHASE BREAKDOWN</SectionLabel>
+                <div className="mt-[6px] flex justify-between">
+                  {PHASES.map((p) => (
+                    <div key={p} className="text-center">
+                      <PhaseGlyph active={p === "RELEASE"} size={26} />
+                      <div className={`text-[9px] tracking-[0.05em] ${p === "RELEASE" ? "font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-[14px] rounded-[6px] bg-[var(--shotiq-color-warmCanvas)] p-[12px]">
+                <SectionLabel>COACHING TAKEAWAY</SectionLabel>
+                <p className="mt-[2px] text-[13px] leading-[18px]">
+                  {shots.length === 0
+                    ? "No shots logged this session — mark makes and misses next time to track your accuracy."
+                    : makes / Math.max(1, shots.length) >= 0.6
+                      ? "Strong accuracy this session. Keep your release rhythm and push the tempo next time."
+                      : "Solid work. Slow the release down and focus on a full follow-through to raise your make rate."}
+                </p>
+              </div>
+
+              <Link href="/training/drills/elbow-stack-builder"
+                    className="mt-[12px] flex items-center gap-[12px] rounded-[6px] border border-[var(--shotiq-color-rule)] p-[12px] hover:border-[var(--shotiq-color-ink)]">
+                <span className="grid h-[38px] w-[38px] place-items-center rounded-full bg-[var(--shotiq-color-analysisBlue)] text-white">◎</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[10px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">NEXT RECOMMENDATION</span>
+                  <span className="block text-[14px] font-semibold">Elbow Stack Builder</span>
+                  <span className="block text-[11px] text-[var(--shotiq-color-graphite)]">15 min · Form Focus</span>
+                </span>
+                <ChevronRight className="h-[15px] w-[15px] shrink-0 text-[var(--shotiq-color-graphite)]" />
+              </Link>
+
+              <div className="mt-[16px] flex flex-wrap gap-[10px]">
+                <Link href="/results/demo/history"
+                      className="flex h-[44px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-reviewRed)] px-[16px] text-[13px] font-medium text-[var(--shotiq-color-reviewRed)]">
+                  Review shots
+                </Link>
+                <button type="button" onClick={shareProgress}
+                        className="flex h-[44px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-analysisBlue)] px-[16px] text-[13px] font-medium text-[var(--shotiq-color-analysisBlue)]">
+                  {shared ? "Copied ✓" : "Share progress"}
+                </button>
+                <button type="button" onClick={repeatDrill} data-testid="repeat-drill"
+                        className="flex h-[44px] items-center gap-[8px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] px-[18px] text-[13px] font-medium text-white">
+                  Repeat drill
+                </button>
+                <button type="button" onClick={() => router.push("/results/demo/training")}
+                        className="ml-auto flex h-[44px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[16px] text-[13px]">
+                  <LogOut className="h-[14px] w-[14px]" /> Back to training
+                </button>
+              </div>
+            </Card>
+          </div>
+        )}
       </div>
     </ShotIQShell>
   )

@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
 
   const userId = await consumeToken(token, "email_verify")
   if (!userId) {
-    return NextResponse.redirect(new URL("/signin?verified=invalid", base))
+    return NextResponse.redirect(new URL("/verify-email?status=invalid", base))
   }
 
   try {
@@ -27,8 +27,8 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error("Failed to mark email verified:", error)
-    return NextResponse.redirect(new URL("/signin?verified=error", base))
+    return NextResponse.redirect(new URL("/verify-email?status=error", base))
   }
 
-  return NextResponse.redirect(new URL("/signin?verified=success", base))
+  return NextResponse.redirect(new URL("/verify-email?status=success", base))
 }
