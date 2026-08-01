@@ -22,6 +22,12 @@ targets:
         NSUserNotificationsUsageDescription: ShotIQ reminds you about workouts and analysis results.
     settings:
       TARGETED_DEVICE_FAMILY: "1"
+      # Automatic signing so a personal (free) Apple ID team works out of the
+      # box: open the project, pick your Team once under Signing & Capabilities,
+      # and run on a plugged-in iPhone.
+      CODE_SIGN_STYLE: Automatic
+      # Unique-enough default; Xcode appends your team. Change if it collides.
+      PRODUCT_BUNDLE_IDENTIFIER: com.shotiq.app
   ShotIQTests:
     type: bundle.unit-test
     platform: iOS
