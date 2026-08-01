@@ -1,6 +1,22 @@
 import SwiftUI
+import UIKit
 
 // Canonical auth flow — screens 001-007.
+
+/// Opens the user's mail app: tries the Mail app scheme first, falls back to
+/// a mailto: compose sheet (which any configured mail client handles).
+@MainActor
+private func openMailApp() {
+    guard let mail = URL(string: "message://") else { return }
+    UIApplication.shared.open(mail, options: [:]) { ok in
+        if !ok, let fallback = URL(string: "mailto:") {
+            UIApplication.shared.open(fallback)
+        }
+    }
+}
+
+/// Help/guide page on the live web app (there is no dedicated support inbox).
+private let supportGuideURL = URL(string: "https://shotiq.194-146-12-139.sslip.io/guide")!
 
 // MARK: - Shared auth chrome
 
@@ -377,8 +393,16 @@ struct SignInView: View {          // 003 · ios.sign-in
 
                         OrDivider().padding(.top, 26)
 
-                        SecondaryButton(title: "Continue with Apple", icon: "apple.logo").padding(.top, 18)
-                        SecondaryButton(title: "Continue with Google", icon: "g.circle").padding(.top, 12)
+                        // Mirrors the web sign-in page: the backend is credentials-only
+                        // (see /api/auth/providers), so these surface the same inline notice.
+                        SecondaryButton(title: "Continue with Apple", icon: "apple.logo") {
+                            vm.error = "Apple sign-in isn't enabled on this server yet — use your email and password."
+                        }
+                        .padding(.top, 18)
+                        SecondaryButton(title: "Continue with Google", icon: "g.circle") {
+                            vm.error = "Google sign-in isn't enabled on this server yet — use your email and password."
+                        }
+                        .padding(.top, 12)
 
                         VStack(spacing: 10) {
                             Text("Don't have an account?")
@@ -403,6 +427,32 @@ struct CreateAccountView: View {   // 004 · ios.create-account
     @State private var lastName = ""; @State private var confirm = ""
     @State private var showPassword = false; @State private var showConfirm = false
     @State private var agreed = false
+    @State private var busy = false
+    @State private var error: String?
+    @State private var goVerify = false
+
+    @MainActor
+    private func createAccount() async {
+        guard password == confirm else { error = "Passwords do not match."; return }
+        guard password.count >= 8 else { error = "Use at least 8 characters for your password."; return }
+        busy = true; error = nil
+        struct SignupResp: Codable { var user: APIUser }
+        do {
+            let _: SignupResp = try await APIClient.shared.call(
+                "/api/auth/signup", method: "POST",
+                body: ["email": email, "password": password,
+                       "firstName": name, "lastName": lastName])
+            // Store mobile access/refresh tokens so the rest of the flow is authenticated.
+            _ = try? await APIClient.shared.signIn(email: email, password: password)
+            goVerify = true
+        } catch APIClient.APIError.http(400) {
+            error = "Could not create the account — that email may already be registered."
+        } catch {
+            self.error = "Could not create the account. Check your connection and try again."
+        }
+        busy = false
+    }
+
     var body: some View {
         CanonicalScreen(testID: "screen-ios-create-account") {
             ScrollView {
@@ -492,11 +542,20 @@ struct CreateAccountView: View {   // 004 · ios.create-account
                     .padding(.top, 22)
                     .accessibilityLabel("I agree to the Terms of Use and Privacy Policy")
 
-                    NavigationLink { VerifyEmailView(email: email) } label: {
-                        primaryLabel("Create account", icon: "camera.metering.center.weighted")
+                    if let error {
+                        Text(error)
+                            .font(.system(size: 14)).foregroundStyle(ShotIQColor.reviewRed)
+                            .padding(.top, 12)
+                            .accessibilityIdentifier("signup-error")
                     }
-                    .disabled(!agreed || email.isEmpty || password.isEmpty)
+
+                    Button { Task { await createAccount() } } label: {
+                        primaryLabel(busy ? "Creating account…" : "Create account",
+                                     icon: "camera.metering.center.weighted")
+                    }
+                    .disabled(!agreed || email.isEmpty || password.isEmpty || busy)
                     .padding(.top, 20)
+                    .navigationDestination(isPresented: $goVerify) { VerifyEmailView(email: email) }
 
                     OrDivider().padding(.top, 20)
 
@@ -514,6 +573,9 @@ struct CreateAccountView: View {   // 004 · ios.create-account
 struct VerifyEmailView: View {     // 005 · ios.verify-email
     var email: String = "you@example.com"
     @State private var code = ""
+    @State private var resendBusy = false
+    @State private var resendNote: String?
+    @State private var resendOK = false
     @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
 
@@ -522,6 +584,33 @@ struct VerifyEmailView: View {     // 005 · ios.verify-email
         ("clock", "Wait a few minutes and tap “Resend email”"),
         ("questionmark.circle", "Need help? Contact support")
     ]
+
+    /// POST /api/auth/resend-verification — re-issues the verify link for the
+    /// signed-in account (tokens were stored during signup).
+    @MainActor
+    private func resend() async {
+        guard !resendBusy else { return }
+        resendBusy = true; resendNote = nil
+        struct Resp: Codable { var success: Bool?; var alreadyVerified: Bool? }
+        do {
+            let r: Resp = try await APIClient.shared.call("/api/auth/resend-verification", method: "POST")
+            resendOK = true
+            resendNote = (r.alreadyVerified ?? false)
+                ? "Your email is already verified — you're all set."
+                : "Verification email sent — check your inbox."
+        } catch {
+            resendOK = false
+            resendNote = "Could not send the email. Try again shortly."
+        }
+        resendBusy = false
+    }
+
+    @MainActor
+    private func helpAction(_ text: String) {
+        if text.contains("spam") { openMailApp() }
+        else if text.contains("Resend") { Task { await resend() } }
+        else { UIApplication.shared.open(supportGuideURL) }
+    }
 
     var body: some View {
         CanonicalScreen(testID: "screen-ios-verify-email") {
@@ -588,13 +677,24 @@ struct VerifyEmailView: View {     // 005 · ios.verify-email
                             .font(.system(size: 17))
                             .padding(.top, 26)
 
-                        Button("Resend email") {}
+                        Button(resendBusy ? "Sending…" : "Resend email") { Task { await resend() } }
                             .font(.system(size: 17))
                             .foregroundStyle(ShotIQColor.shotiqOrange)
                             .underline()
+                            .disabled(resendBusy)
                             .padding(.top, 18)
 
+                        if let resendNote {
+                            Text(resendNote)
+                                .font(.system(size: 14))
+                                .foregroundStyle(resendOK ? ShotIQColor.confirmGreen : ShotIQColor.reviewRed)
+                                .multilineTextAlignment(.center)
+                                .padding(.top, 10)
+                        }
+
                         PrimaryButton(title: "Open email app", icon: "envelope") {
+                            openMailApp()
+                            // Continue into the app either way — verification is non-blocking.
                             app.signedIn(APIUser(email: email, profileComplete: false))
                         }
                         .padding(.top, 26)
@@ -616,19 +716,23 @@ struct VerifyEmailView: View {     // 005 · ios.verify-email
 
                         VStack(spacing: 0) {
                             ForEach(helpRows, id: \.1) { icon, text in
-                                HStack(spacing: 14) {
-                                    Image(systemName: icon)
-                                        .font(.system(size: 20))
-                                        .foregroundStyle(ShotIQColor.ink)
-                                        .frame(width: 32)
-                                    Text(text).font(.system(size: 16)).foregroundStyle(ShotIQColor.ink)
-                                    Spacer()
-                                    Image(systemName: "chevron.right")
-                                        .font(.system(size: 13))
-                                        .foregroundStyle(ShotIQColor.muted)
+                                Button { helpAction(text) } label: {
+                                    HStack(spacing: 14) {
+                                        Image(systemName: icon)
+                                            .font(.system(size: 20))
+                                            .foregroundStyle(ShotIQColor.ink)
+                                            .frame(width: 32)
+                                        Text(text).font(.system(size: 16)).foregroundStyle(ShotIQColor.ink)
+                                        Spacer()
+                                        Image(systemName: "chevron.right")
+                                            .font(.system(size: 13))
+                                            .foregroundStyle(ShotIQColor.muted)
+                                    }
+                                    .padding(.vertical, 16)
+                                    .contentShape(Rectangle())
+                                    .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
                                 }
-                                .padding(.vertical, 16)
-                                .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
+                                .buttonStyle(.plain)
                             }
                         }
                         .padding(.top, 4)
@@ -657,9 +761,26 @@ struct VerifyEmailView: View {     // 005 · ios.verify-email
 struct ForgotPasswordView: View {  // 006 · ios.forgot-password
     @State private var email = ""
     @State private var sent = false
+    @State private var busy = false
+    @State private var errorText: String?
     @Environment(\.dismiss) private var dismiss
 
     private var emailValid: Bool { email.contains("@") && email.contains(".") }
+
+    /// POST /api/auth/forgot-password — issues the reset token and emails the link.
+    @MainActor
+    private func sendReset() async {
+        busy = true; errorText = nil
+        struct Resp: Codable { var success: Bool?; var message: String? }
+        do {
+            let _: Resp = try await APIClient.shared.call(
+                "/api/auth/forgot-password", method: "POST", body: ["email": email])
+            sent = true
+        } catch {
+            errorText = "Could not send the reset link. Check your connection and try again."
+        }
+        busy = false
+    }
 
     var body: some View {
         CanonicalScreen(testID: "screen-ios-forgot-password") {
@@ -696,10 +817,10 @@ struct ForgotPasswordView: View {  // 006 · ios.forgot-password
                         }
                         .padding(.top, 8)
 
-                        Button { sent = true } label: {
+                        Button { Task { await sendReset() } } label: {
                             HStack(spacing: 10) {
                                 Image(systemName: "camera.metering.center.weighted")
-                                Text("SEND RESET LINK")
+                                Text(busy ? "SENDING…" : "SEND RESET LINK")
                                     .font(.system(size: 18, weight: .heavy).width(.condensed))
                                     .kerning(1.5)
                             }
@@ -707,7 +828,14 @@ struct ForgotPasswordView: View {  // 006 · ios.forgot-password
                             .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: ShotIQRadius.control))
                             .foregroundStyle(.white)
                         }
+                        .disabled(busy || !emailValid)
                         .padding(.top, 24)
+
+                        if let errorText {
+                            Text(errorText)
+                                .font(.system(size: 14)).foregroundStyle(ShotIQColor.reviewRed)
+                                .padding(.top, 10)
+                        }
 
                         if sent {
                             ShotIQCard {
@@ -747,7 +875,7 @@ struct ForgotPasswordView: View {  // 006 · ios.forgot-password
                         .frame(maxWidth: .infinity)
                         .padding(.top, 26)
 
-                        Button {} label: {
+                        Button { UIApplication.shared.open(supportGuideURL) } label: {
                             HStack(spacing: 8) {
                                 Image(systemName: "questionmark.circle").font(.system(size: 17))
                                 Text("Need help?").font(.system(size: 16)).underline()
@@ -765,9 +893,41 @@ struct ForgotPasswordView: View {  // 006 · ios.forgot-password
 }
 
 struct ResetPasswordView: View {   // 007 · ios.reset-password
+    /// Single-use token from the emailed reset link (deep link). Without it the
+    /// backend cannot reset — the UI directs the user to request a fresh link.
+    var token: String? = nil
     @State private var p1 = ""; @State private var p2 = ""
     @State private var show1 = false; @State private var show2 = false
+    @State private var busy = false
+    @State private var done = false
+    @State private var successText: String?
+    @State private var errorText: String?
+    @State private var showForgot = false
     @Environment(\.dismiss) private var dismiss
+
+    /// POST /api/auth/reset-password — consumes the emailed token and sets the
+    /// new password. Success does not auto-login; the user signs in afterwards.
+    @MainActor
+    private func resetPassword() async {
+        guard let token, !token.isEmpty else {
+            errorText = "This screen needs the reset link from your email. Request a new link below."
+            return
+        }
+        busy = true; errorText = nil
+        struct Resp: Codable { var success: Bool?; var message: String? }
+        do {
+            let r: Resp = try await APIClient.shared.call(
+                "/api/auth/reset-password", method: "POST",
+                body: ["token": token, "password": p1])
+            done = true
+            successText = r.message ?? "Your password has been reset. You can now sign in."
+        } catch APIClient.APIError.http(400) {
+            errorText = "This reset link is invalid or has expired. Request a new one below."
+        } catch {
+            errorText = "Something went wrong. Please try again."
+        }
+        busy = false
+    }
 
     private var checks: [(String, Bool)] {
         [("At least 8 characters long", p1.count >= 8),
@@ -890,9 +1050,29 @@ struct ResetPasswordView: View {   // 007 · ios.reset-password
                         .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
                         .padding(.top, 24)
 
-                        PrimaryButton(title: "Reset password", icon: "camera.metering.center.weighted")
-                            .disabled(p1.isEmpty || p1 != p2)
-                            .padding(.top, 24)
+                        if let successText {
+                            HStack(spacing: 10) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 18))
+                                    .foregroundStyle(ShotIQColor.confirmGreen)
+                                Text(successText)
+                                    .font(.system(size: 14)).foregroundStyle(ShotIQColor.confirmGreen)
+                                Spacer()
+                            }
+                            .padding(.top, 20)
+                        }
+                        if let errorText {
+                            Text(errorText)
+                                .font(.system(size: 14)).foregroundStyle(ShotIQColor.reviewRed)
+                                .padding(.top, 20)
+                        }
+
+                        PrimaryButton(title: busy ? "Resetting…" : done ? "Password reset" : "Reset password",
+                                      icon: "camera.metering.center.weighted") {
+                            Task { await resetPassword() }
+                        }
+                        .disabled(p1.isEmpty || p1 != p2 || busy || done)
+                        .padding(.top, 24)
 
                         Rectangle().fill(ShotIQColor.rule).frame(height: 1).padding(.top, 28)
 
@@ -906,7 +1086,7 @@ struct ResetPasswordView: View {   // 007 · ios.reset-password
                                     .foregroundStyle(ShotIQColor.ink)
                                 Text("For your security, reset links expire after 15 minutes.")
                                     .font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
-                                Button("Request a new reset link") {}
+                                Button("Request a new reset link") { showForgot = true }
                                     .font(.system(size: 14))
                                     .foregroundStyle(ShotIQColor.analysisBlue)
                             }
@@ -917,6 +1097,9 @@ struct ResetPasswordView: View {   // 007 · ios.reset-password
                     .padding(.horizontal, 24)
                 }
             }
+        }
+        .sheet(isPresented: $showForgot) {
+            NavigationStack { ForgotPasswordView() }
         }
     }
 }

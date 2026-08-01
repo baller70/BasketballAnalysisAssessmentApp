@@ -1,4 +1,8 @@
 import SwiftUI
+import UIKit
+import AVFoundation
+import Photos
+import UserNotifications
 
 // Canonical onboarding flow — screens 008-016. Data persists in the shared
 // OnboardingModel and is submitted once at review.
@@ -18,6 +22,48 @@ final class OnboardingModel: ObservableObject {
     @Published var styleArc = "Balanced"
     @Published var bio = ""
     @Published var name = ""
+    /// AI-enhanced bio returned by POST /api/enhance-bio (persisted separately).
+    @Published var enhancedBio = ""
+
+    // MARK: server payload (field names/values mirror src/app/api/profile/route.ts
+    // and the web profile store's canonical enum values)
+
+    struct ProfileSaveBody: Encodable {
+        var heightInches: Int
+        var weightLbs: Int
+        var wingspanInches: Int
+        var age: Int
+        var experienceLevel: String
+        var bodyType: String
+        var athleticAbility: Int
+        var dominantHand: String
+        var shootingStyle: String
+        var bio: String?
+        var enhancedBio: String?
+        var profileComplete: Bool
+    }
+
+    var saveBody: ProfileSaveBody {
+        // Web canonical values: bodyType is ectomorph/mesomorph/endomorph,
+        // athleticAbility is a 1-10 score, hand/experience are lowercase.
+        let bodyTypeMap = ["Slim": "ectomorph", "Athletic": "mesomorph",
+                           "Solid": "endomorph", "Big": "endomorph"]
+        let abilityMap = ["Developing": 4, "Advanced": 7, "Elite": 9]
+        return ProfileSaveBody(
+            heightInches: heightIn,
+            weightLbs: weightLb,
+            wingspanInches: wingspanIn,
+            age: ageYears,
+            experienceLevel: experience.lowercased(),
+            bodyType: bodyTypeMap[bodyType] ?? bodyType.lowercased(),
+            athleticAbility: abilityMap[ability] ?? 5,
+            dominantHand: hand.lowercased(),
+            shootingStyle: styleArc.lowercased().replacingOccurrences(of: " ", with: "_"),
+            bio: bio.isEmpty ? nil : bio,
+            enhancedBio: enhancedBio.isEmpty ? nil : enhancedBio,
+            profileComplete: true
+        )
+    }
 }
 
 struct OnboardingFlowView: View {
@@ -849,6 +895,32 @@ struct PlayerBioView: View {
     @EnvironmentObject var m: OnboardingModel
     @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
+    @State private var enhanceBusy = false
+    @State private var enhanceError: String?
+
+    /// POST /api/enhance-bio — AI-expands the bio; result lands in the preview card.
+    @MainActor
+    private func enhance() async {
+        let trimmed = m.bio.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count >= 20 else {
+            enhanceError = "Write at least 20 characters first so the AI has something to work with."
+            return
+        }
+        enhanceBusy = true; enhanceError = nil
+        struct Resp: Codable { var success: Bool?; var enhancedBio: String? }
+        do {
+            let r: Resp = try await APIClient.shared.call(
+                "/api/enhance-bio", method: "POST", body: ["bio": trimmed])
+            if let enhanced = r.enhancedBio, !enhanced.isEmpty {
+                m.enhancedBio = enhanced
+            } else {
+                enhanceError = "Could not enhance the bio. Try again shortly."
+            }
+        } catch {
+            enhanceError = "Could not enhance the bio. Try again shortly."
+        }
+        enhanceBusy = false
+    }
 
     var body: some View {
         CanonicalScreen(testID: "screen-ios-player-bio") {
@@ -947,32 +1019,52 @@ struct PlayerBioView: View {
                                         .font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
                                 }
                                 Spacer()
-                                Button {} label: {
+                                Button { Task { await enhance() } } label: {
                                     HStack(spacing: 6) {
-                                        Image(systemName: "sparkles").font(.system(size: 13))
-                                        Text("Enhance bio").font(.system(size: 14, weight: .medium))
+                                        if enhanceBusy {
+                                            ProgressView().controlSize(.small).tint(ShotIQColor.shotiqOrange)
+                                        } else {
+                                            Image(systemName: "sparkles").font(.system(size: 13))
+                                        }
+                                        Text(enhanceBusy ? "Enhancing…" : "Enhance bio")
+                                            .font(.system(size: 14, weight: .medium))
                                     }
                                     .foregroundStyle(ShotIQColor.shotiqOrange)
                                     .padding(.horizontal, 12).frame(height: 40)
                                     .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.shotiqOrange))
                                 }
+                                .disabled(enhanceBusy)
                             }
                             .padding(16)
                         }
                         .padding(.top, 16)
+
+                        if let enhanceError {
+                            Text(enhanceError)
+                                .font(.system(size: 14)).foregroundStyle(ShotIQColor.reviewRed)
+                                .padding(.top, 10)
+                        }
 
                         ShotIQCard {
                             VStack(alignment: .leading, spacing: 12) {
                                 Text("AI-ENHANCED PREVIEW")
                                     .font(.system(size: 12, weight: .bold)).kerning(0.8)
                                     .foregroundStyle(ShotIQColor.graphite)
-                                HStack(spacing: 14) {
-                                    Image(systemName: "circle.dashed")
-                                        .font(.system(size: 26))
-                                        .foregroundStyle(ShotIQColor.graphite)
-                                    Text("Your enhanced bio will appear here.\nReview and customize before saving.")
-                                        .font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
-                                    Spacer()
+                                if m.enhancedBio.isEmpty {
+                                    HStack(spacing: 14) {
+                                        Image(systemName: "circle.dashed")
+                                            .font(.system(size: 26))
+                                            .foregroundStyle(ShotIQColor.graphite)
+                                        Text("Your enhanced bio will appear here.\nReview and customize before saving.")
+                                            .font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
+                                        Spacer()
+                                    }
+                                } else {
+                                    Text(m.enhancedBio)
+                                        .font(.system(size: 14)).foregroundStyle(ShotIQColor.ink)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                    Text("Saved with your profile as your AI-enhanced bio.")
+                                        .font(.system(size: 12)).foregroundStyle(ShotIQColor.confirmGreen)
                                 }
                             }
                             .padding(16)
@@ -1001,6 +1093,32 @@ struct PlayerBioView: View {
 struct OnboardingReviewView: View {
     @EnvironmentObject var m: OnboardingModel
     @EnvironmentObject var app: AppState
+    @State private var saving = false
+    @State private var saveError: String?
+    @State private var goNext = false
+    @State private var focusExpanded = false
+
+    /// PUT /api/profile — persists every onboarding field (measurements,
+    /// experience, body type, hand, ability, style, bio) and marks the
+    /// profile complete, then advances to the permission primers.
+    @MainActor
+    private func completeProfile() async {
+        saving = true; saveError = nil
+        struct Resp: Codable { var success: Bool? }
+        do {
+            let r: Resp = try await APIClient.shared.call(
+                "/api/profile", method: "PUT", body: m.saveBody)
+            if r.success == false {
+                saveError = "Could not save your profile. Try again."
+            } else {
+                app.user?.profileComplete = true
+                goNext = true
+            }
+        } catch {
+            saveError = "Could not save your profile. Check your connection and try again."
+        }
+        saving = false
+    }
 
     private var summaryRows: [(String, String)] {
         [("Shooting Hand", m.hand),
@@ -1057,8 +1175,8 @@ struct OnboardingReviewView: View {
                             }
                             Spacer()
                             VStack(alignment: .trailing, spacing: 8) {
-                                editButton("figure.stand", "Edit measurements")
-                                editButton("point.3.connected.trianglepath.dotted", "Edit shooting profile")
+                                editLink("figure.stand", "Edit measurements") { PhysicalProfileView() }
+                                editLink("point.3.connected.trianglepath.dotted", "Edit shooting profile") { ShootingProfileView() }
                             }
                         }
                         .padding(.top, 18)
@@ -1091,21 +1209,32 @@ struct OnboardingReviewView: View {
                         .padding(.top, 18)
 
                         ShotIQCard {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 6) {
-                                    Text("COACHING FOCUS")
-                                        .font(.system(size: 12, weight: .bold)).kerning(0.8)
-                                        .foregroundStyle(ShotIQColor.graphite)
-                                    Text("Keep elbow stacked through release")
-                                        .font(.system(size: 19, weight: .semibold))
-                                        .foregroundStyle(ShotIQColor.ink)
+                            Button { withAnimation(.easeInOut(duration: 0.2)) { focusExpanded.toggle() } } label: {
+                                VStack(alignment: .leading, spacing: 0) {
+                                    HStack {
+                                        VStack(alignment: .leading, spacing: 6) {
+                                            Text("COACHING FOCUS")
+                                                .font(.system(size: 12, weight: .bold)).kerning(0.8)
+                                                .foregroundStyle(ShotIQColor.graphite)
+                                            Text("Keep elbow stacked through release")
+                                                .font(.system(size: 19, weight: .semibold))
+                                                .foregroundStyle(ShotIQColor.ink)
+                                        }
+                                        Spacer()
+                                        Image(systemName: focusExpanded ? "chevron.down" : "chevron.right")
+                                            .font(.system(size: 15))
+                                            .foregroundStyle(ShotIQColor.graphite)
+                                    }
+                                    if focusExpanded {
+                                        Text("Your coaching focus updates automatically as ShotIQ analyzes your shots. Track it from the Training tab once onboarding is complete.")
+                                            .font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
+                                            .padding(.top, 10)
+                                    }
                                 }
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 15))
-                                    .foregroundStyle(ShotIQColor.graphite)
+                                .padding(16)
+                                .contentShape(Rectangle())
                             }
-                            .padding(16)
+                            .buttonStyle(.plain)
                         }
                         .padding(.top, 12)
 
@@ -1140,10 +1269,31 @@ struct OnboardingReviewView: View {
                         }
                         .padding(.top, 12)
 
-                        NavigationLink { CameraPermissionPrimerView() } label: {
-                            primaryLabel("Complete profile", icon: "checkmark.circle")
+                        if let saveError {
+                            Text(saveError)
+                                .font(.system(size: 14)).foregroundStyle(ShotIQColor.reviewRed)
+                                .padding(.top, 16)
                         }
-                        .padding(.top, 20).padding(.bottom, 24)
+
+                        Button { Task { await completeProfile() } } label: {
+                            primaryLabel(saving ? "Saving profile…" : "Complete profile", icon: "checkmark.circle")
+                        }
+                        .disabled(saving)
+                        .padding(.top, 20)
+                        .navigationDestination(isPresented: $goNext) { CameraPermissionPrimerView() }
+
+                        if saveError != nil {
+                            Button { goNext = true } label: {
+                                Text("Continue without saving")
+                                    .font(.system(size: 15))
+                                    .foregroundStyle(ShotIQColor.graphite)
+                                    .underline()
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .padding(.top, 14)
+                        }
+
+                        Spacer().frame(height: 24)
                     }
                     .padding(.horizontal, 20)
                 }
@@ -1152,8 +1302,9 @@ struct OnboardingReviewView: View {
         }
     }
 
-    private func editButton(_ icon: String, _ label: String) -> some View {
-        Button {} label: {
+    private func editLink<D: View>(_ icon: String, _ label: String,
+                                   @ViewBuilder destination: @escaping () -> D) -> some View {
+        NavigationLink { destination() } label: {
             HStack(spacing: 6) {
                 Image(systemName: icon).font(.system(size: 13))
                 Text(label).font(.system(size: 12, weight: .medium))
@@ -1170,6 +1321,7 @@ struct OnboardingReviewView: View {
 struct CameraPermissionPrimerView: View {
     @EnvironmentObject var m: OnboardingModel
     @EnvironmentObject var app: AppState
+    @State private var goNext = false
 
     private let recordTiles: [(String, String, String)] = [
         ("figure.basketball", "Full-body motion", "Your movement from setup through follow-through."),
@@ -1312,10 +1464,18 @@ struct CameraPermissionPrimerView: View {
                         }
                         .padding(.top, 18)
 
-                        NavigationLink { PhotoLibraryPermissionView() } label: {
+                        // Continue actually raises the system camera prompt this
+                        // screen primes for, then advances.
+                        Button {
+                            Task {
+                                _ = await AVCaptureDevice.requestAccess(for: .video)
+                                goNext = true
+                            }
+                        } label: {
                             primaryLabel("Continue", color: ShotIQColor.confirmGreen)
                         }
                         .padding(.top, 20)
+                        .navigationDestination(isPresented: $goNext) { PhotoLibraryPermissionView() }
 
                         NavigationLink { PhotoLibraryPermissionView() } label: {
                             secondaryLabel("Not now", tint: ShotIQColor.confirmGreen, border: ShotIQColor.confirmGreen)
@@ -1360,6 +1520,21 @@ struct CameraPermissionPrimerView: View {
 struct PhotoLibraryPermissionView: View {
     @EnvironmentObject var m: OnboardingModel
     @EnvironmentObject var app: AppState
+    @State private var goNext = false
+
+    /// Raises the system photo-library prompt this screen primes for, then advances.
+    @MainActor
+    private func chooseAccess() async {
+        _ = await PHPhotoLibrary.requestAuthorization(for: .readWrite)
+        goNext = true
+    }
+
+    /// Camera path instead of the library: raises the camera prompt, then advances.
+    @MainActor
+    private func useCameraInstead() async {
+        _ = await AVCaptureDevice.requestAccess(for: .video)
+        goNext = true
+    }
 
     private let accessRows: [(String, String, String)] = [
         ("point.3.connected.trianglepath.dotted", "Selected photos only",
@@ -1449,32 +1624,38 @@ struct PhotoLibraryPermissionView: View {
                         .padding(.top, 6)
 
                         QuestionLabel(text: "OTHER WAYS TO ADD PHOTOS").padding(.top, 22)
-                        HStack(spacing: 16) {
-                            Image(systemName: "point.3.connected.trianglepath.dotted")
-                                .font(.system(size: 26))
-                                .foregroundStyle(ShotIQColor.analysisBlue)
-                                .frame(width: 44)
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text("Use camera instead").font(.system(size: 16, weight: .semibold))
-                                    .foregroundStyle(ShotIQColor.ink)
-                                Text("Open the camera to capture a new shot.")
-                                    .font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                        Button { Task { await useCameraInstead() } } label: {
+                            HStack(spacing: 16) {
+                                Image(systemName: "point.3.connected.trianglepath.dotted")
+                                    .font(.system(size: 26))
+                                    .foregroundStyle(ShotIQColor.analysisBlue)
+                                    .frame(width: 44)
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text("Use camera instead").font(.system(size: 16, weight: .semibold))
+                                        .foregroundStyle(ShotIQColor.ink)
+                                    Text("Open the camera to capture a new shot.")
+                                        .font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 14))
+                                    .foregroundStyle(ShotIQColor.graphite)
                             }
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 14))
-                                .foregroundStyle(ShotIQColor.graphite)
+                            .padding(.vertical, 14)
+                            .contentShape(Rectangle())
                         }
-                        .padding(.vertical, 14)
+                        .buttonStyle(.plain)
 
                         QuestionLabel(text: "CHOOSE HOW YOU'D LIKE TO PROCEED").padding(.top, 14)
 
-                        NavigationLink { NotificationPermissionPrimerView() } label: {
+                        // Raises the actual system photo prompt, then advances.
+                        Button { Task { await chooseAccess() } } label: {
                             primaryLabel("Choose access", icon: "camera.metering.center.weighted")
                         }
                         .padding(.top, 14)
+                        .navigationDestination(isPresented: $goNext) { NotificationPermissionPrimerView() }
 
-                        Button {} label: {
+                        Button { Task { await useCameraInstead() } } label: {
                             HStack(spacing: 10) {
                                 Image(systemName: "camera")
                                 Text("Use camera instead").font(.system(size: 17, weight: .medium))
@@ -1495,7 +1676,7 @@ struct PhotoLibraryPermissionView: View {
                                 .font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
                             Text("You can change this anytime in Settings.")
                                 .font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
-                            Button("Learn more") {}
+                            Button("Learn more") { CameraService.openSystemSettings() }
                                 .font(.system(size: 13))
                                 .foregroundStyle(ShotIQColor.analysisBlue)
                         }
@@ -1606,7 +1787,12 @@ struct NotificationPermissionPrimerView: View {
 
                         PrimaryButton(title: "Turn on notifications", icon: "bell.badge",
                                       color: ShotIQColor.confirmGreen) {
-                            app.onboardingComplete = true
+                            Task { @MainActor in
+                                // Raise the real system prompt; onboarding completes either way.
+                                _ = try? await UNUserNotificationCenter.current()
+                                    .requestAuthorization(options: [.alert, .badge, .sound])
+                                app.onboardingComplete = true
+                            }
                         }
                         .padding(.top, 22)
 
