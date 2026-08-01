@@ -99,8 +99,10 @@ struct GoalDTO: Codable, Identifiable {
 actor APIClient {
     static let shared = APIClient()
 
-    /// Same origin the web client talks to; override via Info.plist / env in CI.
-    var baseURL = URL(string: ProcessInfo.processInfo.environment["SHOTIQ_API"] ?? "https://app.shotiqai.com")!
+    /// Same origin the web client talks to (the live production deploy);
+    /// override with the SHOTIQ_API environment variable (Xcode scheme →
+    /// Run → Arguments → Environment Variables) for local/staging servers.
+    var baseURL = URL(string: ProcessInfo.processInfo.environment["SHOTIQ_API"] ?? "https://shotiq.194-146-12-139.sslip.io")!
 
     private var accessToken: String? { KeychainStore.read(key: "accessToken") }
 
