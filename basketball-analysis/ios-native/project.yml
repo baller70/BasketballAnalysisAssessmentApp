@@ -26,6 +26,9 @@ targets:
         NSUserNotificationsUsageDescription: ShotIQ reminds you about workouts and analysis results.
     settings:
       TARGETED_DEVICE_FAMILY: "1"
+      # App Store validation requires an asset-catalog app icon + CFBundleIconName;
+      # the compiler injects CFBundleIconName when this points at the AppIcon set.
+      ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
       # Automatic signing with Kevin's team (same team as HoopTrack), so both a
       # local Xcode run and the CI release pipeline sign without manual profiles.
       CODE_SIGN_STYLE: Automatic
