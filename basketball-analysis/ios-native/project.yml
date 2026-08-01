@@ -18,6 +18,9 @@ targets:
         # in every IPA and App Store Connect rejects it as a duplicate build.
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        # Standard HTTPS only — answers the export-compliance question at upload
+        # time so TestFlight can hand the build out without a manual step.
+        ITSAppUsesNonExemptEncryption: false
         UILaunchScreen: {}
         UIStatusBarHidden: true            # canonical screens hide the system status bar
         UIViewControllerBasedStatusBarAppearance: false
