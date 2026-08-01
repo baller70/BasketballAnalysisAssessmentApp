@@ -219,23 +219,46 @@ for (const app of APPS) {
   }
 
   if (testerEmail) {
-    // The same email can have several betaTester records at the team level —
-    // one legit ACCEPTED/INSTALLED record from earlier apps (HoopTrack) and a
-    // fresh NOT_INVITED dud. Only the accepted record can install internal
-    // builds, so find it and link IT to this group; the dud gets removed.
-    const teamRecords = await api(
-      'GET',
-      `/v1/betaTesters?filter[email]=${encodeURIComponent(testerEmail)}&limit=10`,
-    )
-    for (const record of teamRecords.data ?? []) {
-      console.log(
-        `   team-level tester record ${record.id}: state ${record.attributes?.state}` +
-          `, invite ${record.attributes?.inviteType}`,
-      )
+    // The same email has several betaTester records at the team level, and the
+    // team-wide listing hides their states. The one record that can install
+    // internal builds is the one already testing HoopTrack (proven working on
+    // the phone) — group-scoped listings DO expose states, so walk the donor
+    // apps' groups to find it.
+    const DONOR_BUNDLES = ['com.kevinhouston.hooptrackplayer', 'com.kevinhouston.hooptrackcoach']
+    let accepted = null
+    for (const donorBundle of DONOR_BUNDLES) {
+      if (accepted) break
+      try {
+        const donorApps = await api(
+          'GET',
+          `/v1/apps?filter[bundleId]=${encodeURIComponent(donorBundle)}&limit=1`,
+        )
+        const donorId = donorApps.data?.[0]?.id
+        if (!donorId) continue
+        const donorGroups = await api('GET', `/v1/apps/${donorId}/betaGroups?limit=10`)
+        for (const donorGroup of donorGroups.data ?? []) {
+          const donorTesters = await api(
+            'GET',
+            `/v1/betaGroups/${donorGroup.id}/betaTesters?limit=50`,
+          )
+          const match = (donorTesters.data ?? []).find(
+            (t) =>
+              t.attributes?.email?.toLowerCase() === testerEmail.toLowerCase() &&
+              ['ACCEPTED', 'INSTALLED'].includes(t.attributes?.state),
+          )
+          if (match) {
+            console.log(
+              `   donor record from ${donorBundle} group "${donorGroup.attributes?.name}": ` +
+                `${match.id} (state ${match.attributes?.state})`,
+            )
+            accepted = match
+            break
+          }
+        }
+      } catch (err) {
+        console.log(`   donor lookup ${donorBundle} failed: ${err.message.slice(0, 150)}`)
+      }
     }
-    const accepted = (teamRecords.data ?? []).find((t) =>
-      ['ACCEPTED', 'INSTALLED'].includes(t.attributes?.state),
-    )
 
     const inGroup = (id) => (testers.data ?? []).some((t) => t.id === id)
     let tester = (testers.data ?? []).find(
