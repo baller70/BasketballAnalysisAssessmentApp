@@ -122,8 +122,21 @@ export function ShotIQShell({
           SHOT<span className="text-[var(--shotiq-color-shotiqOrange)]">IQ</span>
         </Link>
 
-        {/* Per Kevin: single navigation surface — the unified sidebar. The
-            topbar keeps only brand + utilities, no menu. */}
+        {/* Canonical centre tab nav (079/080/081): active tab carries a 3px
+            orange underline at the bottom edge of the 65px topbar. */}
+        <nav aria-label="Primary tabs" className="flex h-full items-center gap-[44px]">
+          {TABS.map((t) => {
+            const is = t.label === active
+            return (
+              <Link key={t.label} href={t.href}
+                    aria-current={is ? "page" : undefined}
+                    className="relative flex h-full items-center text-[14px] text-[var(--shotiq-color-ink)]">
+                {t.label}
+                {is && <span className="absolute inset-x-0 bottom-0 h-[3px] bg-[var(--shotiq-color-shotiqOrange)]" />}
+              </Link>
+            )
+          })}
+        </nav>
 
         <div className="ml-auto flex h-full items-center">
           <button type="button" aria-label="Search" aria-expanded={panel === "search"}
@@ -159,9 +172,9 @@ export function ShotIQShell({
           <button type="button" aria-expanded={panel === "account"} aria-label="Account menu"
                   onClick={() => toggle("account")}
                   className="flex items-center gap-[10px] border-l border-[var(--shotiq-color-rule)] pl-[16px]">
-            <span className="grid h-[36px] w-[36px] place-items-center rounded-full bg-[var(--shotiq-color-rule)] text-[12px] font-bold text-[var(--shotiq-color-graphite)]">
-              {user.initials}
-            </span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/canonical/avatar-topbar.png" alt=""
+                 className="h-[36px] w-[36px] rounded-full object-cover" />
             <span className="text-[13px] font-bold tracking-[0.03em]">{user.name.toUpperCase()}</span>
             <ChevronDown className="h-[15px] w-[15px] text-[var(--shotiq-color-graphite)]" />
           </button>
@@ -251,8 +264,7 @@ export function ShotIQShell({
       )}
 
       <div className="flex min-h-0 flex-1">
-        <UnifiedSidebar />
-        {false && (sidebar ?? (
+        {sidebar ?? (
         <nav
           data-testid="region-sidebar"
           aria-label="Primary"
@@ -276,7 +288,7 @@ export function ShotIQShell({
             <span className="text-[9px] font-bold tracking-[0.08em]">SETTINGS</span>
           </Link>
         </nav>
-        ))}
+        )}
 
         {/* ---------------------------------------------------- screen body */}
         <div data-testid="region-main" className="min-w-0 flex-1">
@@ -399,7 +411,7 @@ export function WideSidebar({ sections }: {
           {sec.items.map((it) => (
             <Link key={it.label} href={it.href}
                   aria-current={it.active ? "page" : undefined}
-                  className={`relative flex h-[44px] items-center gap-[12px] px-[24px] text-[14px] ${
+                  className={`relative flex h-[44px] items-center gap-[10px] whitespace-nowrap px-[22px] text-[14px] ${
                     it.active
                       ? "bg-[var(--shotiq-color-warmCanvas)] font-semibold text-[var(--shotiq-color-shotiqOrange)]"
                       : "text-[var(--shotiq-color-ink)]"}`}>

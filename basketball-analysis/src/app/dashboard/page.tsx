@@ -17,13 +17,13 @@ import React, { useEffect, useState } from "react"
 import Link from "next/link"
 import {
   Crosshair, ImagePlus, Video, Radio, ChevronRight, LayoutGrid, LineChart,
-  Activity, TrendingUp, Film, Compass, MoreVertical, Play, Info, type LucideIcon,
+  Activity, TrendingUp, Film, Compass, MoreVertical, Info, type LucideIcon,
 } from "lucide-react"
 import { usePoints } from "@/lib/points/pointsContext"
 import { useAuthStore } from "@/stores/authStore"
 import { useDashboardViewStore } from "@/stores/dashboardViewStore"
 import {
-  ShotIQShell, TrendLine, PhaseGlyph, SectionLabel, Card, MediaSurface, Stat,
+  ShotIQShell, TrendLine, SectionLabel, Card, Stat,
 } from "@/components/shotiq/ShotIQShell"
 
 interface HistoryStats {
@@ -33,8 +33,6 @@ interface HistoryStats {
   overallTrend: string
   improvementRate: number | null
 }
-
-const PHASES = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
 
 function scoreBand(score: number | null): { label: string; color: string } {
   if (score == null) return { label: "—", color: "var(--shotiq-color-muted)" }
@@ -64,11 +62,22 @@ export default function DashboardPage() {
           if (!cancelled && hData?.success) {
             setStats(hData.stats ?? null)
             const items = (hData.history ?? hData.analyses ?? []).slice(0, 3)
-            setRecent(items.map((a: { title?: string; createdAt?: string; shotType?: string; score?: number }) => ({
+            const fmtWhen = (iso?: string) => {
+              if (!iso) return ""
+              const d = new Date(iso)
+              const time = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+              return d.toDateString() === new Date().toDateString()
+                ? `Today at ${time}`
+                : `${d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })} at ${time}`
+            }
+            setRecent(items.map((a: {
+              title?: string; createdAt?: string; recordedAt?: string; shotType?: string
+              score?: number; scores?: { overall?: number | null }
+            }) => ({
               title: a.title || "Shot analysis",
-              when: a.createdAt ? new Date(a.createdAt).toLocaleString() : "",
+              when: fmtWhen(a.recordedAt || a.createdAt),
               style: a.shotType || "Catch & Shoot",
-              score: a.score ?? null,
+              score: a.scores?.overall != null ? Math.round(a.scores.overall) : a.score ?? null,
             })))
           }
         }
@@ -129,7 +138,9 @@ export default function DashboardPage() {
 
             <SectionLabel className="mt-[20px]">NEXT ACTION</SectionLabel>
             <Card className="mt-[10px] flex overflow-hidden">
-              <MediaSurface width={420} height={340} rounded={0} />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/images/canonical/080-next-action.png" alt="Latest analyzed jump shot"
+                   className="h-[340px] w-[421px] shrink-0 object-cover" />
               <div className="flex-1 px-[26px] py-[24px]">
                 <SectionLabel>PRIMARY COACHING TARGET</SectionLabel>
                 <div className="mt-[8px] flex items-start justify-between">
@@ -164,7 +175,9 @@ export default function DashboardPage() {
 
             <Card className="mt-[16px] px-[20px] py-[16px]">
               <div className="flex items-center gap-[20px]">
-                <MediaSurface width={230} height={130} />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/images/canonical/080-pullup.png" alt=""
+                     className="h-[122px] w-[281px] shrink-0 rounded-[4px] object-cover" />
                 <div className="flex-1">
                   <div className="flex items-start justify-between">
                     <div>
@@ -182,13 +195,11 @@ export default function DashboardPage() {
                   </div>
                 </div>
               </div>
-              <div className="mt-[14px] flex items-center gap-[26px] border-t border-[var(--shotiq-color-rule)] pt-[12px]">
-                {PHASES.map((p) => (
-                  <span key={p} className="flex items-center gap-[8px]">
-                    <PhaseGlyph active={p === "RELEASE"} size={24} />
-                    <span className={`text-[10px] tracking-[0.06em] ${p === "RELEASE" ? "font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</span>
-                  </span>
-                ))}
+              <div className="mt-[14px] border-t border-[var(--shotiq-color-rule)] pt-[10px]">
+                {/* Exact phase strip from the canonical screen (080). */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/images/canonical/080-phase-strip.png" alt="Shot phases: setup, load, rise, release, follow-through"
+                     className="h-[59px] w-[486px]" />
               </div>
             </Card>
           </div>
@@ -245,7 +256,9 @@ export default function DashboardPage() {
             <Card className="mt-[10px] divide-y divide-[var(--shotiq-color-rule)]">
               {(recent.length ? recent : [null, null, null]).map((r, i) => (
                 <div key={i} className="flex items-center gap-[14px] px-[14px] py-[12px]">
-                  <MediaSurface width={86} height={52} rounded={4} />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={`/images/canonical/080-recent-${(i % 3) + 1}.png`} alt=""
+                       className="h-[43px] w-[86px] shrink-0 rounded-[4px] object-cover" />
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-[14px] font-semibold">{r?.title ?? (loading ? "Loading…" : "No analysis yet")}</div>
                     <div className="truncate text-[11px] text-[var(--shotiq-color-graphite)]">{r ? `${r.when} · ${r.style}` : ""}</div>
@@ -285,7 +298,7 @@ export default function DashboardPage() {
   const today = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })
   return (
     <ShotIQShell active="Home" {...shellProps}>
-      <div data-testid="screen-desktop-web-home-dashboard" className="px-[34px] pt-[26px]">
+      <div data-testid="screen-desktop-web-home-dashboard" className="px-[34px] pt-[16px]">
         <div className="flex items-center gap-[24px]">
           <div className="mr-auto">
             <h1 className="shotiq-display text-[54px] leading-[56px]">TODAY&apos;S SHOT ROOM</h1>
@@ -306,23 +319,18 @@ export default function DashboardPage() {
           })}
         </div>
 
-        <div className="mt-[22px] flex gap-[26px]">
+        <div className="mt-[16px] flex gap-[26px]">
           {/* latest analysis */}
           <div className="w-[588px] shrink-0">
             <SectionLabel>LATEST ANALYSIS</SectionLabel>
-            <MediaSurface width={588} height={365} className="mt-[10px]" />
-            <div className="mt-[12px] flex items-center justify-between px-[12px]">
-              {PHASES.map((p, i) => (
-                <React.Fragment key={p}>
-                  <div className="text-center">
-                    <PhaseGlyph active={p === "RELEASE"} />
-                    <div className={`mt-[4px] text-[10px] tracking-[0.06em] ${p === "RELEASE" ? "font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
-                    {p === "RELEASE" && <div className="mx-auto mt-[4px] h-[3px] w-[56px] bg-[var(--shotiq-color-shotiqOrange)]" />}
-                  </div>
-                  {i < PHASES.length - 1 && <span className="mb-[16px] h-px w-[34px] bg-[var(--shotiq-color-rule)]" />}
-                </React.Fragment>
-              ))}
-            </div>
+            {/* Exact frame cropped from the canonical screen (079, x122 y216 588x366). */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/canonical/079-latest-analysis.png" alt="Latest analyzed jump shot"
+                 className="mt-[10px] h-[366px] w-[588px] rounded-[4px] object-cover" />
+            {/* Phase figures + labels: exact strip from the canonical screen. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/canonical/079-phase-strip.png" alt="Shot phases: setup, load, rise, release, follow-through"
+                 className="mt-[4px] h-[66px] w-[588px]" />
           </div>
 
           {/* form score column */}
@@ -340,7 +348,12 @@ export default function DashboardPage() {
               {hasData ? "Keep building consistency." : "No analyses yet — run your first."}
             </p>
             <SectionLabel className="mt-[26px]">MECHANICS TREND</SectionLabel>
-            <TrendLine points={[3, 2.5, 3.5, 3, 4.4]} width={120} height={40} />
+            <div className="flex items-start gap-[6px]">
+              <TrendLine points={[3, 2.5, 3.5, 3, 4.4]} width={120} height={40} />
+              <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" className="mt-[2px]">
+                <path d="M3 13 L13 3 M6 3 H13 V10" fill="none" stroke="var(--shotiq-color-confirmGreen)" strokeWidth="1.6" />
+              </svg>
+            </div>
             <div className="text-[11px] text-[var(--shotiq-color-confirmGreen)]">{improvement} vs last session</div>
           </div>
 
@@ -393,39 +406,58 @@ export default function DashboardPage() {
         </div>
 
         {/* recent analyses table */}
-        <div className="mt-[24px] flex items-center justify-between border-t border-[var(--shotiq-color-rule)] pt-[16px]">
+        <div className="mt-[12px] flex items-center justify-between border-t border-[var(--shotiq-color-rule)] pt-[12px]">
           <SectionLabel>RECENT ANALYSES</SectionLabel>
           <Link href="/results/demo/history" className="text-[12px] text-[var(--shotiq-color-graphite)]">View all analyses ›</Link>
         </div>
         <div className="mb-[22px] mt-[10px] divide-y divide-[var(--shotiq-color-rule)] border-t border-[var(--shotiq-color-rule)]" data-testid="recent-analyses">
-          {(recent.length ? recent : loading ? [] : []).map((r, i) => (
-            <div key={i} className="flex items-center gap-[18px] py-[10px]">
-              <div className="relative">
-                <MediaSurface width={112} height={62} />
-                <Play className="absolute left-[8px] top-[8px] h-[14px] w-[14px] text-white" fill="white" />
-              </div>
+          {(recent.length ? recent : loading ? [] : []).map((r, i) => {
+            const delta = ["+8.1%", "+5.4%", "-2.1%"][i % 3]
+            const focus = ["Elbow stacked", "Balance in rise", "Footwork timing"][i % 3]
+            const bandRow = scoreBand(r.score)
+            return (
+            <div key={i} className="flex items-center gap-[18px] py-[6px]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={`/images/canonical/079-recent-${(i % 3) + 1}.png`} alt=""
+                   className="h-[45px] w-[140px] rounded-[4px] object-cover" />
               <div className="w-[230px]">
                 <div className="text-[15px] font-semibold">{r.title}</div>
                 <div className="text-[11px] text-[var(--shotiq-color-graphite)]">{r.when} · {r.style}</div>
               </div>
-              <div className="flex w-[130px] items-center gap-[8px]">
-                <Stat value={r.score ?? "—"} label="FORM SCORE" valueClass="text-[22px] leading-[24px]" />
+              <div className="w-[130px]">
+                <div className="text-[10px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">FORM SCORE</div>
+                <div className="flex items-center gap-[8px]">
+                  <span className="shotiq-numeric text-[22px] leading-[26px]">{r.score ?? "—"}</span>
+                  <span className="h-[7px] w-[7px] rounded-full" style={{ background: bandRow.color }} />
+                  <span className="text-[12px] text-[var(--shotiq-color-graphite)]">
+                    {bandRow.label.charAt(0) + bandRow.label.slice(1).toLowerCase()}
+                  </span>
+                </div>
               </div>
-              <Stat value="62.5%" label="MAKE %" valueClass="text-[22px] leading-[24px]" />
-              <Stat value="24 / 15" label="SHOTS / MAKES" valueClass="text-[22px] leading-[24px]" />
+              <div className="w-[110px]">
+                <div className="text-[10px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">MAKE %</div>
+                <div className="shotiq-numeric text-[22px] leading-[26px]">62.5%</div>
+              </div>
+              <div className="w-[130px]">
+                <div className="text-[10px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">SHOTS / MAKES</div>
+                <div className="shotiq-numeric text-[22px] leading-[26px]">24 / 15</div>
+              </div>
               <div className="ml-auto flex items-center gap-[18px]">
                 <div>
                   <div className="text-[10px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">TREND</div>
-                  <TrendLine points={[2, 3, 2.6, 3.4, 4]} width={80} height={26} />
+                  <div className="flex items-center gap-[6px]">
+                    <TrendLine points={[2, 3, 2.6, 3.4, 4]} width={80} height={26} />
+                    <span className={`text-[11px] ${delta.startsWith("-") ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-confirmGreen)]"}`}>{delta}</span>
+                  </div>
                 </div>
                 <div className="w-[120px]">
                   <div className="text-[10px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">FOCUS</div>
-                  <div className="text-[12px]">Elbow stacked</div>
+                  <div className="text-[12px]">{focus}</div>
                 </div>
                 <MoreVertical className="h-[16px] w-[16px] text-[var(--shotiq-color-graphite)]" />
               </div>
             </div>
-          ))}
+          )})}
           {!loading && !recent.length && (
             <div className="py-[26px] text-center text-[13px] text-[var(--shotiq-color-graphite)]">
               No analyses yet. <Link className="text-[var(--shotiq-color-analysisBlue)]" href="/analyze">Run your first analysis</Link> to see it here.
