@@ -60,8 +60,16 @@ test-results/
 integrations/
 docs/
 tests/
-scripts/
+# scripts/* (not scripts/) so a single script can be re-included below:
+# git cannot un-ignore a file whose parent DIRECTORY is excluded.
+scripts/*
 config/
+
+# The simulator screenshot + click-test harness is source-controlled — the
+# broker's simshots mode runs it from a fresh clone.
+!scripts/simulator-screenshots.sh
+!scripts/simshots-pick-device.py
+!scripts/simshots-export-attachments.py
 
 # ShotIQ product specifications and automated tests are source-controlled.
 !basketball-analysis/docs/

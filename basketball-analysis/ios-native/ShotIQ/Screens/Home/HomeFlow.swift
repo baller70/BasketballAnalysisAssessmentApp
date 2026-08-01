@@ -10,6 +10,14 @@ final class HomeViewModel: ObservableObject {
     @Published var loading = true
     func load() async {
         defer { loading = false }
+        // Test-only: deterministic history so 018/019 render their populated
+        // state without a signed-in account or a network round trip.
+        if UITestHooks.demoData {
+            stats = HistoryStats(totalAnalyses: 12, averageScore: 79, latestScore: 82,
+                                 overallTrend: "improving", improvementRate: 8.1)
+            recent = []
+            return
+        }
         if let r = try? await APIClient.shared.history() {
             stats = r.stats; recent = Array(r.items.prefix(3))
         }
@@ -25,7 +33,15 @@ struct HomeView: View {
 
     var body: some View {
         Group {
-            if vm.loading {
+            // Test-only: pin one of the three canonical home states so the
+            // screenshot harness can capture 017, 018 and 019 deterministically.
+            if let forced = UITestHooks.homeVariant {
+                switch forced {
+                case "new": HomeNewPlayerView(vm: vm, showMenu: $showMenu)
+                case "standard": HomeStandardView(vm: vm, showMenu: $showMenu)
+                default: HomeProfessionalView(vm: vm, showMenu: $showMenu)
+                }
+            } else if vm.loading {
                 ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if !vm.hasData {
                 HomeNewPlayerView(vm: vm, showMenu: $showMenu)

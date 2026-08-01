@@ -50,6 +50,17 @@
                ReferencedContainer = "container:ShotIQ.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "61D088B97261E3ACDECB780C"
+               BuildableName = "ShotIQUITests.xctest"
+               BlueprintName = "ShotIQUITests"
+               ReferencedContainer = "container:ShotIQ.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
       <CommandLineArguments>
       </CommandLineArguments>

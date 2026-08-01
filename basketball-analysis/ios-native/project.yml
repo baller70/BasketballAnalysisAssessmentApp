@@ -71,6 +71,8 @@ schemes:
       config: Debug
     test:
       config: Debug
-      targets: [ShotIQTests]
+      # ShotIQUITests carries CanonicalScreenshotTests — the screenshot +
+      # click-test walk driven by scripts/simulator-screenshots.sh.
+      targets: [ShotIQTests, ShotIQUITests]
     archive:
       config: Release

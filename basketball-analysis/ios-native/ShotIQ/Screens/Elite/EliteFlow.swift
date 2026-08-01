@@ -597,6 +597,16 @@ final class EliteViewModel: ObservableObject {
     @Published var loading = true
     func load() async {
         defer { loading = false }
+        // Test-only: one canned shooter so 052/053 have a row to open without
+        // reaching /api/shooters.
+        if UITestHooks.demoData {
+            shooters = [EliteShooterDTO(id: 1, name: "Klay Thompson", team: "Warriors",
+                                        league: "NBA", era: "Modern", tier: "Elite",
+                                        position: "SG", height: 78, weight: 215,
+                                        careerPct: 0.459, careerFreeThrowPct: 0.855,
+                                        approvedFormImages: nil)]
+            return
+        }
         shooters = (try? await APIClient.shared.shooters()) ?? []
     }
 }
