@@ -5,31 +5,35 @@ import SwiftUI
 
 // MARK: - Typography helpers bound to the sidecar token roles
 
+/// Wilson X Connect body face for a requested weight. Font.Weight is not
+/// Comparable, so the mapping is an explicit switch.
+func shotiqBoxedFace(_ weight: Font.Weight) -> String {
+    switch weight {
+    case .black, .heavy, .bold: return "BoxedHeavy"
+    case .semibold, .medium: return "BoxedSemibold"
+    default: return "BoxedMedium"
+    }
+}
+
 extension View {
-    /// Canonical display face. Bebas Neue is NOT an iOS system font — asking
-    /// for it fell back to full-width SF at the raw sidecar pixel size, which
-    /// is what shattered every page title on device. The system condensed
-    /// width at ~0.8x reproduces the canonical narrow-caps look, and the
-    /// scale factor absorbs any title that would still overflow.
+    /// Canonical display face: Wilson X Connect "Tungsten Bold", bundled in
+    /// the app via UIAppFonts. The scale factor absorbs any title that would
+    /// still overflow its line.
     func shotiqDisplay(_ size: CGFloat) -> some View {
-        // Wilson X Connect display face (Tungsten Bold), bundled via UIAppFonts.
         font(.custom("Tungsten-Bold", size: size * 0.86))
             .foregroundStyle(ShotIQColor.ink)
             .lineLimit(2)
             .minimumScaleFactor(0.5)
     }
+    /// Wilson X numerals (Tungsten Semibold), replacing DIN Condensed.
     func shotiqNumeric(_ size: CGFloat) -> some View {
-        // DIN Condensed ships with iOS as "Tungsten-Semibold", so unlike web the
-        // canonical numeric face is available natively. Numerals never wrap.
-        // Wilson X numerals (Tungsten Semibold) replace DIN Condensed.
         font(.custom("Tungsten-Semibold", size: size)).foregroundStyle(ShotIQColor.ink)
             .lineLimit(1)
             .minimumScaleFactor(0.6)
     }
+    /// Wilson X body face (Boxed): Medium / Semibold / Heavy by weight.
     func shotiqBody(_ size: CGFloat = 16, weight: Font.Weight = .regular) -> some View {
-        // Wilson X body face (Boxed): Medium / Semibold / Heavy by weight.
-        let face = weight >= .bold ? "BoxedHeavy" : (weight >= .semibold ? "BoxedSemibold" : "BoxedMedium")
-        return font(.custom(face, size: size)).foregroundStyle(ShotIQColor.ink)
+        font(.custom(shotiqBoxedFace(weight), size: size)).foregroundStyle(ShotIQColor.ink)
     }
 }
 
