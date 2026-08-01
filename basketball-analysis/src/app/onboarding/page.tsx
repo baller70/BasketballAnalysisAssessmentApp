@@ -178,6 +178,15 @@ export default function OnboardingPage() {
               </div>
             </div>
           </div>
+          {/* Player bio — iOS 012-player-bio counterpart; persisted with the profile. */}
+          <div className="mt-[16px]">
+            <div className={lbl}>PLAYER BIO (OPTIONAL) <Info className="h-[10px] w-[10px]" /></div>
+            <textarea value={store.bio ?? ""} onChange={(e) => store.setBio(e.target.value)}
+                      data-testid="onboarding-bio" rows={3} maxLength={400}
+                      placeholder="Tell us about your game — playing style, teams, what you're working on…"
+                      className="mt-[6px] w-full resize-none rounded-[5px] border border-[var(--shotiq-color-rule)] p-[12px] text-[14px] leading-[20px] outline-none focus:border-[var(--shotiq-color-ink)]" />
+            <div className="mt-[2px] text-right text-[10px] text-[var(--shotiq-color-muted)]">{(store.bio ?? "").length}/400</div>
+          </div>
         </Card>
 
         <div className="mt-[14px] flex items-center justify-between">

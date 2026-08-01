@@ -40,7 +40,10 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
   const [videoFile, setVideoFile] = useState<File | null>(null)
   const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [, setAnalysisProgress] = useState<string>("")
+  const [analysisProgress, setAnalysisProgress] = useState<string>("")
+  // Elapsed processing time drives the "taking longer than expected" state
+  // (iOS 037 counterpart).
+  const [analysisElapsed, setAnalysisElapsed] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<VideoAnalysisResult | null>(null)
   const [videoDimensions, setVideoDimensions] = useState({ width: 0, height: 0 })
@@ -59,6 +62,13 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
     setMediaType,
     setVideoAnalysisData,
   } = useAnalysisStore()
+
+  // Processing clock for the analysis overlay (iOS 036/037 counterpart).
+  useEffect(() => {
+    if (!isAnalyzing) { setAnalysisElapsed(0); return }
+    const t = setInterval(() => setAnalysisElapsed((s) => s + 1), 1000)
+    return () => clearInterval(t)
+  }, [isAnalyzing])
 
   // Auto-play frames
   useEffect(() => {
@@ -566,10 +576,62 @@ export function VideoUpload({ onAnalysisComplete }: VideoUploadProps) {
           </div>
         )}
 
-        {/* Error Display */}
-        {error && (
-          <div className="text-xs text-red-400 bg-red-500/10 border border-red-500/30 rounded-md p-3">
-            {error}
+        {/* Analysis error — iOS 040 counterpart: explain + recover. */}
+        {error && !isAnalyzing && (
+          <div data-testid="analysis-error"
+               className="rounded-[6px] border border-[var(--shotiq-color-reviewRed)] bg-white p-[14px]">
+            <div className="flex items-center gap-[8px]">
+              <AlertTriangle className="h-[16px] w-[16px] shrink-0 text-[var(--shotiq-color-reviewRed)]" />
+              <span className="text-[13px] font-semibold text-[var(--shotiq-color-reviewRed)]">Analysis failed</span>
+            </div>
+            <p className="mt-[4px] text-[12px] leading-[16px] text-[var(--shotiq-color-graphite)]">{error}</p>
+            <div className="mt-[10px] flex gap-[8px]">
+              <button type="button" onClick={analyzeVideo}
+                      className="h-[36px] rounded-[5px] bg-[var(--shotiq-color-shotiqOrange)] px-[14px] text-[12px] font-medium text-white">
+                Try again
+              </button>
+              <button type="button" onClick={clearVideo}
+                      className="h-[36px] rounded-[5px] border border-[var(--shotiq-color-rule)] px-[14px] text-[12px]">
+                Choose a different video
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Analysis processing — iOS 036/037 counterpart: staged progress with
+            a taking-longer state after 15s. */}
+        {isAnalyzing && (
+          <div data-testid="analysis-processing"
+               className="rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white p-[16px]">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">ANALYZING YOUR SHOT</span>
+              <span className="shotiq-numeric text-[13px]">
+                {String(Math.floor(analysisElapsed / 60)).padStart(2, "0")}:{String(analysisElapsed % 60).padStart(2, "0")}
+              </span>
+            </div>
+            <div className="mt-[10px] space-y-[7px]">
+              {["Uploading video...", "Analyzing frames...", "Processing results...", "Saving session...", "Loading results..."].map((stage) => {
+                const stages = ["Uploading video...", "Analyzing frames...", "Processing results...", "Saving session...", "Loading results..."]
+                const cur = stages.indexOf(analysisProgress)
+                const idx = stages.indexOf(stage)
+                const state = cur < 0 ? "pending" : idx < cur ? "done" : idx === cur ? "active" : "pending"
+                return (
+                  <div key={stage} className="flex items-center gap-[8px] text-[12px]">
+                    {state === "done" ? <span className="grid h-[14px] w-[14px] place-items-center rounded-full bg-[var(--shotiq-color-confirmGreen)] text-[9px] font-bold text-white">✓</span>
+                      : state === "active" ? <Loader2 className="h-[14px] w-[14px] animate-spin text-[var(--shotiq-color-shotiqOrange)]" />
+                      : <span className="h-[14px] w-[14px] rounded-full border border-[var(--shotiq-color-rule)]" />}
+                    <span className={state === "pending" ? "text-[var(--shotiq-color-muted)]" : state === "active" ? "font-semibold" : ""}>
+                      {stage.replace(/\.\.\.$/, "")}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+            {analysisElapsed >= 15 && (
+              <p className="mt-[10px] rounded-[5px] bg-[var(--shotiq-color-warmCanvas)] p-[8px] text-[11px] leading-[15px] text-[var(--shotiq-color-graphite)]">
+                Taking longer than expected — longer videos can take a minute or two. Keep this tab open; your analysis is still running.
+              </p>
+            )}
           </div>
         )}
       </div>

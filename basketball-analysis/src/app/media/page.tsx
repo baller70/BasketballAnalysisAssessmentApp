@@ -4,7 +4,7 @@
 
 import React, { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
-import { Search, Upload, SlidersHorizontal, ChevronDown, Trash2, Calendar } from "lucide-react"
+import { Search, Upload, SlidersHorizontal, ChevronDown, Trash2, Calendar, Share2, X, ChevronRight } from "lucide-react"
 import { SectionLabel, Card, MediaSurface, PhaseGlyph } from "@/components/shotiq/ShotIQShell"
 
 interface MediaItem { id: string; title: string; time: string; style: string; score: number | null; status: string; len: string }
@@ -92,6 +92,37 @@ export default function MediaLibraryPage() {
     })
     setSelected(new Set())
   }
+  // Media detail — iOS 069 counterpart. `detailDay` keeps the capture-day
+  // caption; deleteOne mirrors the bulk-delete path for a single item.
+  const [detail, setDetail] = useState<{ item: MediaItem; day: string } | null>(null)
+  const [detailShared, setDetailShared] = useState(false)
+  const deleteOne = (id: string) => {
+    setGroups((g) => {
+      const next: Record<string, MediaItem[]> = {}
+      for (const [day, items] of Object.entries(g)) {
+        const keep = items.filter((m) => m.id !== id)
+        if (keep.length) next[day] = keep
+      }
+      if (!Object.keys(next).length) setEmpty(true)
+      return next
+    })
+    setDetail(null)
+  }
+  const shareDetail = async (m: MediaItem) => {
+    const text = `${m.title} on ShotIQ${m.score != null ? ` — form score ${m.score}` : ""}.`
+    try {
+      if (navigator.share) await navigator.share({ title: "ShotIQ media", text, url: window.location.href })
+      else await navigator.clipboard.writeText(`${text} ${window.location.href}`)
+      setDetailShared(true)
+      setTimeout(() => setDetailShared(false), 2500)
+    } catch { /* user dismissed the share sheet */ }
+  }
+  useEffect(() => {
+    if (!detail) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setDetail(null) }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [detail])
   const statusColor = (s: string) =>
     s === "Analyzed" ? "var(--shotiq-color-confirmGreen)" : s === "Review" ? "var(--shotiq-color-shotiqOrange)" : "var(--shotiq-color-muted)"
 
@@ -211,12 +242,16 @@ export default function MediaLibraryPage() {
                 <Card key={m.id} className="overflow-hidden">
                   <div className="relative">
                     <MediaSurface height={120} rounded={0} />
-                    <button type="button" onClick={() => toggle(m.id)} aria-label="select"
+                    <button type="button" onClick={() => setDetail({ item: m, day })} aria-label={`Open ${m.title}`}
+                            data-testid={`media-open-${m.id}`}
+                            className="absolute inset-0" />
+                    <button type="button" onClick={(e) => { e.stopPropagation(); toggle(m.id) }} aria-label="select"
                             className={`absolute left-[7px] top-[7px] h-[15px] w-[15px] rounded-[3px] border-2 ${selected.has(m.id) ? "border-[var(--shotiq-color-shotiqOrange)] bg-[var(--shotiq-color-shotiqOrange)]" : "border-white"}`} />
                     <span className="absolute right-[7px] top-[7px] grid h-[20px] w-[20px] place-items-center rounded-[4px] bg-white/90"><PhaseGlyph size={13} /></span>
                     <span className="absolute bottom-[6px] right-[7px] rounded-[3px] bg-black/75 px-[4px] py-[1px] text-[9px] font-bold text-white">{m.len}</span>
                   </div>
-                  <div className="p-[9px]">
+                  <button type="button" onClick={() => setDetail({ item: m, day })}
+                          className="block w-full p-[9px] text-left hover:bg-[var(--shotiq-color-warmCanvas)]">
                     <div className="truncate text-[12px] font-semibold">{m.title}</div>
                     <div className="truncate text-[10px] text-[var(--shotiq-color-graphite)]">{m.time} · {m.style}</div>
                     <div className="mt-[4px] flex items-center gap-[5px] text-[10px]">
@@ -224,13 +259,78 @@ export default function MediaLibraryPage() {
                       <span className="shotiq-numeric text-[13px]">{m.score ?? "—"}</span>
                       <span className={m.status === "Analyzed" ? "text-[var(--shotiq-color-analysisBlue)]" : "text-[var(--shotiq-color-graphite)]"}>{m.status}</span>
                     </div>
-                  </div>
+                  </button>
                 </Card>
               ))}
             </div>
           </div>
         ))}
       </div>
+
+      {/* Media detail — iOS 069 counterpart: full preview, capture details,
+          linked analysis, and real share/delete actions. */}
+      {detail && (
+        <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/40 p-6"
+             onClick={() => setDetail(null)}>
+          <Card data-testid="media-detail" className="w-full max-w-[620px] p-[22px]" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between">
+              <div>
+                <SectionLabel>MEDIA DETAIL</SectionLabel>
+                <div className="text-[20px] font-semibold leading-[26px]">{detail.item.title}</div>
+              </div>
+              <button type="button" onClick={() => setDetail(null)} aria-label="Close" data-testid="media-detail-close"
+                      className="grid h-[32px] w-[32px] place-items-center rounded-[5px] border border-[var(--shotiq-color-rule)]">
+                <X className="h-[15px] w-[15px]" />
+              </button>
+            </div>
+
+            <div className="relative mt-[12px] overflow-hidden rounded-[6px]">
+              <MediaSurface height={260} rounded={0} />
+              <span className="absolute bottom-[8px] right-[9px] rounded-[3px] bg-black/75 px-[6px] py-[2px] text-[10px] font-bold text-white">{detail.item.len}</span>
+            </div>
+
+            <div className="mt-[12px]">
+              <SectionLabel>CAPTURE DETAILS</SectionLabel>
+              <div className="text-[14px] font-semibold">{detail.day.replace(/^[A-Z]+ · /, "")} · {detail.item.time}</div>
+              <div className="text-[12px] text-[var(--shotiq-color-graphite)]">{detail.item.style} · {detail.item.len} clip · Web capture</div>
+            </div>
+
+            <div className="mt-[12px] flex items-center gap-[12px] rounded-[6px] border border-[var(--shotiq-color-rule)] p-[12px]">
+              <span className="h-[10px] w-[10px] shrink-0 rounded-full" style={{ background: statusColor(detail.item.status) }} />
+              <div className="min-w-0 flex-1">
+                <div className="text-[10px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">LINKED ANALYSIS</div>
+                <div className="text-[13px] font-semibold">
+                  {detail.item.status === "Not analyzed" ? "Not analyzed yet" : `${detail.item.status} · Form score ${detail.item.score ?? "—"}`}
+                </div>
+              </div>
+              {detail.item.status === "Not analyzed" ? (
+                <Link href="/upload" className="flex items-center gap-[4px] text-[12px] font-medium text-[var(--shotiq-color-shotiqOrange)]">
+                  Analyze now <ChevronRight className="h-[12px] w-[12px]" />
+                </Link>
+              ) : (
+                <Link href="/results/demo/analysis" className="flex items-center gap-[4px] text-[12px] font-medium text-[var(--shotiq-color-analysisBlue)]">
+                  Open analysis <ChevronRight className="h-[12px] w-[12px]" />
+                </Link>
+              )}
+            </div>
+
+            <div className="mt-[14px] flex flex-wrap gap-[10px]">
+              <button type="button" onClick={() => shareDetail(detail.item)}
+                      className="flex h-[40px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[16px] text-[13px]">
+                <Share2 className="h-[14px] w-[14px]" /> {detailShared ? "Copied ✓" : "Share"}
+              </button>
+              <button type="button" onClick={() => deleteOne(detail.item.id)} data-testid="media-detail-delete"
+                      className="flex h-[40px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-reviewRed)] px-[16px] text-[13px] text-[var(--shotiq-color-reviewRed)]">
+                <Trash2 className="h-[14px] w-[14px]" /> Delete media
+              </button>
+              <button type="button" onClick={() => setDetail(null)}
+                      className="ml-auto flex h-[40px] items-center rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] px-[18px] text-[13px] font-medium text-white">
+                Done
+              </button>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }

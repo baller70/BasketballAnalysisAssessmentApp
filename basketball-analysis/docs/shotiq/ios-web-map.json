@@ -1,0 +1,439 @@
+{
+ "generated": "2026-08-01",
+ "purpose": "iOS (001-072) to web-app mapping. Every iOS screen has a web counterpart; 'built-this-pass' rows were created because no equivalent existed.",
+ "builtThisPass": 13,
+ "screens": [
+  {
+   "iosScreen": "001-splash",
+   "webRoute": "/",
+   "status": "existing",
+   "note": "Landing page is the web entry surface; splash is a native-app concept."
+  },
+  {
+   "iosScreen": "002-welcome",
+   "webRoute": "/",
+   "status": "existing",
+   "note": "Landing hero carries the welcome content with sign-in/sign-up CTAs."
+  },
+  {
+   "iosScreen": "003-sign-in",
+   "webRoute": "/signin",
+   "status": "existing",
+   "note": "Canonical sign-in form."
+  },
+  {
+   "iosScreen": "004-create-account",
+   "webRoute": "/signup",
+   "status": "existing",
+   "note": "Canonical create-account form (built from iOS 004)."
+  },
+  {
+   "iosScreen": "005-verify-email",
+   "webRoute": "/verify-email",
+   "status": "built-this-pass",
+   "note": "NEW \u2014 built this pass: status + resend with cooldown + help list; link-based verification via /api/auth/verify-email, resend via new /api/auth/resend-verification."
+  },
+  {
+   "iosScreen": "006-forgot-password",
+   "webRoute": "/forgot-password",
+   "status": "existing",
+   "note": "Canonical request form, CSRF POST flow."
+  },
+  {
+   "iosScreen": "007-reset-password",
+   "webRoute": "/reset-password",
+   "status": "existing",
+   "note": "Canonical reset form, token from query string."
+  },
+  {
+   "iosScreen": "008-onboarding-intro",
+   "webRoute": "/onboarding",
+   "status": "existing",
+   "note": "Step rail ONBOARDING."
+  },
+  {
+   "iosScreen": "009-physical-profile",
+   "webRoute": "/onboarding",
+   "status": "existing",
+   "note": "Height/weight measurements in the onboarding form."
+  },
+  {
+   "iosScreen": "010-experience-body-type",
+   "webRoute": "/onboarding",
+   "status": "existing",
+   "note": "Playing level / years playing / position fields."
+  },
+  {
+   "iosScreen": "011-shooting-profile",
+   "webRoute": "/onboarding",
+   "status": "existing",
+   "note": "Dominant hand + primary goal fields."
+  },
+  {
+   "iosScreen": "012-player-bio",
+   "webRoute": "/onboarding",
+   "status": "built-this-pass",
+   "note": "NEW \u2014 built this pass: PLAYER BIO textarea persisted via profile store to /api/profile."
+  },
+  {
+   "iosScreen": "013-onboarding-review",
+   "webRoute": "/onboarding",
+   "status": "existing",
+   "note": "REVIEW step + Finish (saves to server)."
+  },
+  {
+   "iosScreen": "014-camera-permission-primer",
+   "webRoute": "/video-analysis",
+   "status": "built-this-pass",
+   "note": "NEW \u2014 built this pass: primer modal shown before the browser camera prompt (once per browser)."
+  },
+  {
+   "iosScreen": "015-photo-library-permission",
+   "webRoute": "/upload",
+   "status": "existing",
+   "note": "Browser file picker needs no permission primer; upload source screen covers the flow."
+  },
+  {
+   "iosScreen": "016-notification-permission-primer",
+   "webRoute": "/settings",
+   "status": "built-this-pass",
+   "note": "NEW \u2014 built this pass: 'Enable browser notifications' opt-in row (Notification.requestPermission) in the Notifications card."
+  },
+  {
+   "iosScreen": "017-home-new-player",
+   "webRoute": "/dashboard",
+   "status": "existing",
+   "note": "Dashboard empty state for new accounts."
+  },
+  {
+   "iosScreen": "018-home-standard",
+   "webRoute": "/dashboard",
+   "status": "existing",
+   "note": "Standard dashboard."
+  },
+  {
+   "iosScreen": "019-home-professional",
+   "webRoute": "/dashboard",
+   "status": "existing",
+   "note": "Same dashboard; tier data drives the numbers."
+  },
+  {
+   "iosScreen": "020-profile-menu",
+   "webRoute": "topbar account menu",
+   "status": "existing",
+   "note": "ShotIQShell account menu (profile/settings/help/sign out)."
+  },
+  {
+   "iosScreen": "021-analyze-hub",
+   "webRoute": "/analyze",
+   "status": "existing",
+   "note": "Analyze hub."
+  },
+  {
+   "iosScreen": "022-photo-upload-source",
+   "webRoute": "/upload",
+   "status": "existing",
+   "note": "Upload source + mode selection (?mode=image|video)."
+  },
+  {
+   "iosScreen": "023-photo-review-crop",
+   "webRoute": "/upload",
+   "status": "existing",
+   "note": "Post-selection review state: thumbnails, validation, quality score, proceed/retake. (Cropping is server-side.)"
+  },
+  {
+   "iosScreen": "024-upload-quality-check",
+   "webRoute": "/upload",
+   "status": "existing",
+   "note": "UploadQualityScore + PreUploadValidation components."
+  },
+  {
+   "iosScreen": "025-upload-queue",
+   "webRoute": "global + /analyze",
+   "status": "existing",
+   "note": "UploadQueueManager floating panel (global) + UPLOAD QUEUE list on /analyze."
+  },
+  {
+   "iosScreen": "026-video-upload",
+   "webRoute": "/video-analysis/upload",
+   "status": "existing",
+   "note": "Video upload flow."
+  },
+  {
+   "iosScreen": "027-video-review",
+   "webRoute": "/video-analysis/upload",
+   "status": "existing",
+   "note": "Video preview with hoop-calibration overlay before Analyze."
+  },
+  {
+   "iosScreen": "028-live-camera-setup",
+   "webRoute": "/video-analysis",
+   "status": "existing",
+   "note": "Live capture setup with real getUserMedia."
+  },
+  {
+   "iosScreen": "029-hoop-calibration",
+   "webRoute": "/video-analysis",
+   "status": "built-this-pass",
+   "note": "NEW WIRING \u2014 built this pass: Calibrate-hoop toggle renders HoopCalibrationOverlay on the live stream (persisted per camera)."
+  },
+  {
+   "iosScreen": "030-readiness-check",
+   "webRoute": "/video-analysis",
+   "status": "existing",
+   "note": "CAPTURE READINESS card with four checks."
+  },
+  {
+   "iosScreen": "031-capture-ready",
+   "webRoute": "/video-analysis",
+   "status": "existing",
+   "note": "Idle-with-camera state before recording."
+  },
+  {
+   "iosScreen": "032-live-recording",
+   "webRoute": "/video-analysis",
+   "status": "existing",
+   "note": "Recording state: timer, pause/resume, stop."
+  },
+  {
+   "iosScreen": "033-live-form-feedback",
+   "webRoute": "/video-analysis",
+   "status": "existing",
+   "note": "LIVE COACHING CUE card + phase strip."
+  },
+  {
+   "iosScreen": "034-shot-detected",
+   "webRoute": "/video-analysis",
+   "status": "existing",
+   "note": "Shot rail with make/miss marking (POST /api/shot-events)."
+  },
+  {
+   "iosScreen": "035-capture-review",
+   "webRoute": "/video-analysis",
+   "status": "built-this-pass",
+   "note": "NEW \u2014 built this pass: stop now lands on CAPTURE REVIEW (recorded clip playback, save-to-history via /api/save-analysis, download, discard)."
+  },
+  {
+   "iosScreen": "036-analysis-processing",
+   "webRoute": "/video-analysis/upload",
+   "status": "built-this-pass",
+   "note": "NEW \u2014 built this pass: staged processing panel (upload/analyze/process/save/load) with elapsed clock."
+  },
+  {
+   "iosScreen": "037-analysis-taking-longer",
+   "webRoute": "/video-analysis/upload",
+   "status": "built-this-pass",
+   "note": "NEW \u2014 built this pass: taking-longer notice appears after 15s of processing."
+  },
+  {
+   "iosScreen": "038-analysis-result-overview",
+   "webRoute": "/results/demo",
+   "status": "existing",
+   "note": "Analysis overview tab."
+  },
+  {
+   "iosScreen": "039-no-analysis-yet",
+   "webRoute": "/results/demo",
+   "status": "existing",
+   "note": "Empty state before the first analysis."
+  },
+  {
+   "iosScreen": "040-analysis-error",
+   "webRoute": "/video-analysis/upload",
+   "status": "built-this-pass",
+   "note": "NEW \u2014 built this pass: canonical error panel with Try again / choose different video."
+  },
+  {
+   "iosScreen": "041-shot-breakdown",
+   "webRoute": "/results/demo/analysis",
+   "status": "existing",
+   "note": "Shot breakdown workspace."
+  },
+  {
+   "iosScreen": "042-frame-detail-skeleton",
+   "webRoute": "/results/demo/biomechanics",
+   "status": "existing",
+   "note": "Frame viewer with skeleton/joints overlays."
+  },
+  {
+   "iosScreen": "043-annotation-toolbar",
+   "webRoute": "/results/demo/biomechanics",
+   "status": "built-this-pass",
+   "note": "NEW \u2014 built this pass: ANNOTATE toolbar (pen/line/colors/clear) drawing on a real canvas over the frame."
+  },
+  {
+   "iosScreen": "044-form-score",
+   "webRoute": "/results/demo/analysis",
+   "status": "existing",
+   "note": "Form score panel."
+  },
+  {
+   "iosScreen": "045-metric-detail",
+   "webRoute": "/results/demo/biomechanics",
+   "status": "built-this-pass",
+   "note": "NEW \u2014 built this pass: measurement rows open a METRIC DETAIL view (value, ideal, trend, coaching copy)."
+  },
+  {
+   "iosScreen": "046-flaws-overview",
+   "webRoute": "/results/demo/flaws",
+   "status": "existing",
+   "note": "Flaws overview list."
+  },
+  {
+   "iosScreen": "047-flaw-detail",
+   "webRoute": "/results/demo/flaws",
+   "status": "existing",
+   "note": "Selecting a flaw drives the detail region (comparison, frames, corrections, drill)."
+  },
+  {
+   "iosScreen": "048-player-card",
+   "webRoute": "/results/demo/player",
+   "status": "existing",
+   "note": "Player card."
+  },
+  {
+   "iosScreen": "049-customize-player-card",
+   "webRoute": "/results/demo/player",
+   "status": "existing",
+   "note": "CUSTOMIZE CARD panel: style, accent color, badge/stat toggles."
+  },
+  {
+   "iosScreen": "050-elite-match",
+   "webRoute": "/results/demo/compare",
+   "status": "existing",
+   "note": "Elite match comparison."
+  },
+  {
+   "iosScreen": "051-photo-comparison",
+   "webRoute": "/results/demo/compare",
+   "status": "existing",
+   "note": "Side-by-side comparison."
+  },
+  {
+   "iosScreen": "052-elite-shooters",
+   "webRoute": "/elite-shooters",
+   "status": "existing",
+   "note": "Elite shooters database (328 seeded)."
+  },
+  {
+   "iosScreen": "053-elite-shooter-detail",
+   "webRoute": "/elite-shooters/[id]",
+   "status": "existing",
+   "note": "Shooter detail with BIO tab."
+  },
+  {
+   "iosScreen": "054-training-home",
+   "webRoute": "/results/demo/training",
+   "status": "existing",
+   "note": "Training hub."
+  },
+  {
+   "iosScreen": "055-quick-start",
+   "webRoute": "/results/demo/training",
+   "status": "existing",
+   "note": "Quick-start card linking to /training/drills/quick-start."
+  },
+  {
+   "iosScreen": "056-discover-drills",
+   "webRoute": "/training/drills?tab=Discover",
+   "status": "existing",
+   "note": "Drill library Discover tab."
+  },
+  {
+   "iosScreen": "057-drill-detail",
+   "webRoute": "/training/drills/[drillId]",
+   "status": "existing",
+   "note": "Drill detail/execution page."
+  },
+  {
+   "iosScreen": "058-my-drills",
+   "webRoute": "/training/drills?tab=My drills",
+   "status": "existing",
+   "note": "My drills tab incl. created custom drills."
+  },
+  {
+   "iosScreen": "059-workout-calendar",
+   "webRoute": "/training/calendar",
+   "status": "existing",
+   "note": "Calendar with Day/Week/Month/3/6/12-month views."
+  },
+  {
+   "iosScreen": "060-drill-execution",
+   "webRoute": "/training/drills/[drillId]",
+   "status": "existing",
+   "note": "Canonical drill execution (091 desktop)."
+  },
+  {
+   "iosScreen": "061-shot-tracker",
+   "webRoute": "/training/drills/[drillId]",
+   "status": "existing",
+   "note": "Shot tracker card: make %, last-24, counts."
+  },
+  {
+   "iosScreen": "062-workout-completion",
+   "webRoute": "/training/drills/[drillId]",
+   "status": "built-this-pass",
+   "note": "NEW \u2014 built this pass: WORKOUT COMPLETE summary (stats, phase breakdown, takeaway, next drill, share/repeat)."
+  },
+  {
+   "iosScreen": "063-goals",
+   "webRoute": "/results/demo/goals",
+   "status": "existing",
+   "note": "Goals list + primary goal."
+  },
+  {
+   "iosScreen": "064-create-goal",
+   "webRoute": "/results/demo/goals",
+   "status": "existing",
+   "note": "Create-goal modal (persists via API)."
+  },
+  {
+   "iosScreen": "065-goal-detail",
+   "webRoute": "/results/demo/goals",
+   "status": "existing",
+   "note": "Primary-goal detail card: progress, trend, edit/log/mark-complete."
+  },
+  {
+   "iosScreen": "066-analytics-cards",
+   "webRoute": "/results/demo/history",
+   "status": "existing",
+   "note": "Analytics history cards."
+  },
+  {
+   "iosScreen": "067-analytics-detailed",
+   "webRoute": "/results/demo/history",
+   "status": "existing",
+   "note": "Detailed history incl. CSV export."
+  },
+  {
+   "iosScreen": "068-my-media",
+   "webRoute": "/media",
+   "status": "existing",
+   "note": "Media library with search/filter/sort/delete."
+  },
+  {
+   "iosScreen": "069-media-detail",
+   "webRoute": "/media",
+   "status": "built-this-pass",
+   "note": "NEW \u2014 built this pass: MEDIA DETAIL modal (preview, capture details, linked analysis, share/delete)."
+  },
+  {
+   "iosScreen": "070-profile",
+   "webRoute": "/profile",
+   "status": "existing",
+   "note": "Profile & account (canonical 096)."
+  },
+  {
+   "iosScreen": "071-settings-hub",
+   "webRoute": "/settings",
+   "status": "existing",
+   "note": "Canonical settings hub (rail + cards, auto-persisting rows)."
+  },
+  {
+   "iosScreen": "072-share-results",
+   "webRoute": "/results/demo/player",
+   "status": "existing",
+   "note": "SHARE (navigator.share/clipboard) + DOWNLOAD on the player card; biomechanics has Export report."
+  }
+ ]
+}
