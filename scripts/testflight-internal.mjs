@@ -141,6 +141,18 @@ for (const app of APPS) {
   } catch {
     console.log('     betaAppReviewSubmission: none (internal testing needs none)')
   }
+  // internalBuildState is what actually gates "installable": a VALID build with
+  // compliance set can still sit in PROCESSING here for a few minutes, and a
+  // tester invite during that window fails with NO_INSTALLABLE_BUILDS.
+  try {
+    const beta = await api('GET', `/v1/builds/${build.id}/buildBetaDetail`)
+    console.log(
+      `     internalBuildState: ${beta.data?.attributes?.internalBuildState}` +
+        `, externalBuildState: ${beta.data?.attributes?.externalBuildState}`,
+    )
+  } catch (err) {
+    console.log(`     buildBetaDetail unavailable: ${err.message.slice(0, 120)}`)
+  }
   if (state !== 'VALID') {
     console.log('   not VALID yet; TestFlight cannot hand out a build still processing')
     continue
@@ -230,16 +242,22 @@ for (const app of APPS) {
     // TestFlight until a betaTesterInvitations POST actually fires it.
     const testerState = tester?.attributes?.state
     if (confirm && tester && testerState !== 'ACCEPTED' && testerState !== 'INSTALLED') {
-      await api('POST', '/v1/betaTesterInvitations', {
-        data: {
-          type: 'betaTesterInvitations',
-          relationships: {
-            betaTester: { data: { type: 'betaTesters', id: tester.id } },
-            app: { data: { type: 'apps', id: appId } },
+      try {
+        await api('POST', '/v1/betaTesterInvitations', {
+          data: {
+            type: 'betaTesterInvitations',
+            relationships: {
+              betaTester: { data: { type: 'betaTesters', id: tester.id } },
+              app: { data: { type: 'apps', id: appId } },
+            },
           },
-        },
-      })
-      console.log(`   invitation email sent to ${testerEmail} — open it on the phone, then TestFlight`)
+        })
+        console.log(`   invitation email sent to ${testerEmail} — open it on the phone, then TestFlight`)
+      } catch (err) {
+        // Don't fail the whole run: the states printed above say why (usually
+        // internalBuildState still PROCESSING). Re-run once it settles.
+        console.log(`   invitation not sent yet: ${err.message.slice(0, 300)}`)
+      }
     }
   }
 }
