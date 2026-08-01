@@ -76,7 +76,7 @@ export default function FlawsPage() {
     <ShotIQShell active="Analyze" sidebar={<FlawsSidebar />}>
     <div data-testid="screen-desktop-web-flaws-history" className="px-[22px] pt-[14px]">
       <div className="flex items-start justify-between gap-[12px]">
-        <div className="w-[400px] shrink-0">
+        <div className="w-[380px] shrink-0">
           <h1 className="shotiq-display text-[46px] leading-[48px]">FLAWS &amp; CORRECTIONS</h1>
           <p className="mt-[4px] whitespace-nowrap text-[14px] text-[var(--shotiq-color-graphite)]">
             Identify weaknesses. Focus your fixes. Track your progress.
@@ -101,7 +101,7 @@ export default function FlawsPage() {
             </div>
           ))}
           <div className="border-l border-[var(--shotiq-color-rule)] pl-[12px] text-center">
-            <svg width="86" height="34" viewBox="0 0 86 34" aria-hidden="true">
+            <svg width="78" height="34" viewBox="0 0 86 34" aria-hidden="true">
               <path d="M4,22 L16,26 L28,14 L40,18 L52,10 L64,16 L76,6" fill="none" stroke="var(--shotiq-color-graphite)" strokeWidth="1.5" />
               {[[4, 22], [16, 26], [28, 14], [40, 18], [52, 10], [64, 16], [76, 6]].map(([x, y], i) => (
                 <circle key={i} cx={x} cy={y} r="2.4" fill={i >= 5 ? "var(--shotiq-color-confirmGreen)" : "var(--shotiq-color-graphite)"} />
@@ -111,7 +111,7 @@ export default function FlawsPage() {
               <span className="text-[var(--shotiq-color-graphite)]">vs last session</span></div>
           </div>
         </Card>
-        <div className="w-[252px] shrink-0 pt-[4px]">
+        <div className="w-[246px] shrink-0 pt-[4px] pr-[4px]">
           <div className="flex items-center justify-between">
             <SectionLabel>PRIMARY COACHING TARGET</SectionLabel>
             <ChevronRight className="h-[14px] w-[14px] text-[var(--shotiq-color-graphite)]" />

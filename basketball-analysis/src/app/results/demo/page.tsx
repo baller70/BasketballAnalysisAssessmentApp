@@ -116,7 +116,7 @@ export default function ResultsOverviewPage() {
   return (
     <ShotIQShell active="Analyze"
       sidebar={<OverviewRail onShare={share} onExport={doExport} shared={shared} />}>
-    <div data-testid="screen-results-overview" className="pl-[21px] pr-[24px] pt-[10px]">
+    <div data-testid="screen-results-overview" className="pl-[21px] pr-[24px] pt-[16px]">
       {/* header */}
       <div className="flex items-start">
         <button type="button" aria-label="Back" onClick={() => router.push("/dashboard")}
@@ -162,7 +162,7 @@ export default function ResultsOverviewPage() {
         </Card>
       ) : (
       <>
-      <div className="mt-[10px] flex gap-[24px]">
+      <div className="mt-[14px] flex gap-[24px]">
         {/* media column */}
         <div className="w-[573px] shrink-0">
           <div className="relative">
@@ -255,7 +255,7 @@ export default function ResultsOverviewPage() {
             </Link>
             <span className="mt-[8px] inline-block rounded-[5px] border border-[var(--shotiq-color-confirmGreen)] px-[10px] py-[3px] text-[11px] font-bold tracking-[0.05em] text-[var(--shotiq-color-confirmGreen)]">ACTIVE GOAL</span>
             <p className="mt-[8px] text-[13px] text-[var(--shotiq-color-graphite)]">Improve release consistency and arm alignment</p>
-            <div className="mt-[6px] flex items-center gap-[10px]">
+            <div className="mt-[6px] flex items-center gap-[10px] pr-[4px]">
               <div className="h-[6px] flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
                 <div className="h-full w-[72%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" />
               </div>
@@ -293,8 +293,8 @@ export default function ResultsOverviewPage() {
       </div>
 
       {/* bottom strip */}
-      <div className="mt-[12px] mb-[14px] flex gap-[16px]">
-        <Card className="flex h-[138px] w-[590px] shrink-0 flex-col px-[18px] pt-[12px]">
+      <div className="mt-[18px] mb-[14px] flex gap-[16px]">
+        <Card className="flex h-[145px] w-[590px] shrink-0 flex-col px-[18px] pt-[12px]">
           <SectionLabel>ANALYSIS SUMMARY</SectionLabel>
           <div className="mt-[12px] flex flex-1 items-start">
             {[["24", "SHOTS"], ["15", "MAKES"], ["62.5%", "MAKE %"], ["82", "FORM SCORE"]].map(([v, l], i) => (
@@ -319,7 +319,7 @@ export default function ResultsOverviewPage() {
           </div>
         </Card>
 
-        <Card className="h-[138px] min-w-0 flex-1 px-[16px] pt-[12px]">
+        <Card className="h-[145px] min-w-0 flex-1 px-[16px] pt-[12px]">
           <SectionLabel>TOP FLAW</SectionLabel>
           <Link href="/results/demo/flaws" className="mt-[6px] flex items-center gap-[10px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -337,7 +337,7 @@ export default function ResultsOverviewPage() {
           </Link>
         </Card>
 
-        <Card className="h-[138px] w-[370px] shrink-0 px-[18px] pt-[12px]">
+        <Card className="h-[145px] w-[370px] shrink-0 px-[18px] pt-[12px]">
           <SectionLabel>NEXT TRAINING</SectionLabel>
           <Link href="/results/demo/training" className="mt-[10px] flex items-center gap-[14px]">
             <span className="grid h-[50px] w-[50px] shrink-0 place-items-center rounded-full bg-[var(--shotiq-color-analysisBlue)]">

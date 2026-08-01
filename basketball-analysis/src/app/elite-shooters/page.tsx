@@ -161,10 +161,11 @@ export default function EliteShootersPage() {
   const headCell = "text-[9px] font-bold tracking-[0.07em] text-[var(--shotiq-color-graphite)]"
 
   return (
-    <div data-testid="screen-desktop-web-elite-shooters-database" className="flex min-h-full flex-col">
-      <div className="flex min-h-0 flex-1">
+    <div data-testid="screen-desktop-web-elite-shooters-database"
+         className={`flex flex-col ${pair.length >= 2 ? "h-[835px]" : "min-h-full"}`}>
+      <div className="flex min-h-0 flex-1 overflow-hidden">
         {/* ------------------------------------------------ filters sidebar */}
-        <aside className="w-[209px] shrink-0 border-r border-[var(--shotiq-color-rule)] px-[21px] pb-[16px] pt-[16px]">
+        <aside className="w-[209px] shrink-0 overflow-hidden border-r border-[var(--shotiq-color-rule)] px-[21px] pb-[10px] pt-[14px]">
           <div className="flex items-center justify-between">
             <span className="shotiq-display text-[19px] leading-[20px]">FILTERS</span>
             <button type="button" onClick={resetFilters}
