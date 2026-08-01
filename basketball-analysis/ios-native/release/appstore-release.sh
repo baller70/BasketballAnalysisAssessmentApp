@@ -350,15 +350,28 @@ run_export() {
   fi
 }
 
+# altool sometimes exits 0 while printing ERROR: lines (e.g. duplicate
+# CFBundleVersion) — a run must not go green on that, so scan the output.
+run_altool_checked() {
+  local label="$1"; shift
+  local out
+  out="$("$@" 2>&1)" || { printf '%s\n' "$out"; die "${label} failed"; }
+  printf '%s\n' "$out"
+  if printf '%s' "$out" | grep -q 'ERROR:'; then
+    die "${label} reported errors (see above)"
+  fi
+}
+
 run_validate() {
   step "Validate with App Store Connect — ${scheme}"
   [ -f "$ipa_path" ] || die "no IPA at ${ipa_path} — run the export stage first"
   require_asc_credentials
-  xcrun altool --validate-app \
-    --type ios \
-    --file "$ipa_path" \
-    --apiKey "$ASC_KEY_ID" \
-    --apiIssuer "$ASC_ISSUER_ID"
+  run_altool_checked "altool validate" \
+    xcrun altool --validate-app \
+      --type ios \
+      --file "$ipa_path" \
+      --apiKey "$ASC_KEY_ID" \
+      --apiIssuer "$ASC_ISSUER_ID"
   note "Validation passed."
 }
 
@@ -366,11 +379,12 @@ run_upload() {
   step "Upload to App Store Connect — ${scheme}"
   [ -f "$ipa_path" ] || die "no IPA at ${ipa_path} — run the export stage first"
   require_asc_credentials
-  xcrun altool --upload-app \
-    --type ios \
-    --file "$ipa_path" \
-    --apiKey "$ASC_KEY_ID" \
-    --apiIssuer "$ASC_ISSUER_ID"
+  run_altool_checked "altool upload" \
+    xcrun altool --upload-app \
+      --type ios \
+      --file "$ipa_path" \
+      --apiKey "$ASC_KEY_ID" \
+      --apiIssuer "$ASC_ISSUER_ID"
   note "Uploaded. Processing takes 5-30 minutes before the build appears in TestFlight."
 }
 
