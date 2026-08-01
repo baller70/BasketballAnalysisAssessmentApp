@@ -12,7 +12,7 @@
 
 import React, { useEffect, useRef, useState } from "react"
 import Link from "next/link"
-import { Pause, Play, SwitchCamera, VolumeX, Volume2, Square, Film, Check, X, Camera, Crosshair, Download, Trash2, Save, ShieldCheck } from "lucide-react"
+import { Pause, Play, SwitchCamera, VolumeX, Volume2, Square, Film, Check, X, Camera, Crosshair, Download, Trash2, Save, ShieldCheck, ChevronRight } from "lucide-react"
 import { SectionLabel, Card, PhaseGlyph, Stat } from "@/components/shotiq/ShotIQShell"
 import { HoopCalibrationOverlay, rimCalibrationStorageKey } from "@/components/live/HoopCalibrationOverlay"
 import type { RimCalibration } from "@/lib/vision/objectTracking"
@@ -150,59 +150,51 @@ export default function LiveCapturePage() {
         <div>
           <h1 className="shotiq-display flex items-center gap-[14px] text-[46px] leading-[48px]">
             LIVE CAPTURE
-            {live && <span className="flex items-center gap-[6px] text-[13px] font-bold tracking-[0.05em] text-[var(--shotiq-color-ink)]">
-              <span className={`h-[9px] w-[9px] rounded-full ${paused ? "bg-[var(--shotiq-color-muted)]" : "bg-[var(--shotiq-color-reviewRed)]"}`} />
-              {paused ? "PAUSED" : "RECORDING"}</span>}
+            <span className="flex items-center gap-[7px] text-[13px] font-bold tracking-[0.05em] text-[var(--shotiq-color-ink)]">
+              <span className={`h-[10px] w-[10px] rounded-full ${live && paused ? "bg-[var(--shotiq-color-muted)]" : "bg-[var(--shotiq-color-shotiqOrange)]"}`} />
+              {live && paused ? "PAUSED" : "RECORDING"}</span>
           </h1>
-          <p className="text-[13px] text-[var(--shotiq-color-graphite)]">Web Camera · 1080p · 30fps</p>
+          <p className="text-[13px] text-[var(--shotiq-color-graphite)]">Web Camera&ensp;·&ensp;1080p&ensp;·&ensp;30fps</p>
         </div>
-        <div className="flex gap-[10px]">
-          {live ? (
-            <>
-              <button type="button" onClick={() => setPaused(!paused)} data-testid="capture-pause"
-                      className="flex h-[46px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[18px] text-[13px]">
-                {paused ? <Play className="h-[15px] w-[15px]" /> : <Pause className="h-[15px] w-[15px]" />}
-                {paused ? "Resume" : "Pause"}
-              </button>
-              <button type="button" onClick={switchCam}
-                      className="flex h-[46px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[18px] text-[13px]">
-                <SwitchCamera className="h-[15px] w-[15px]" /> Switch camera · {facing === "user" ? "Front" : "Rear"}
-              </button>
-              <button type="button" onClick={() => setMuted(!muted)}
-                      className="flex h-[46px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[18px] text-[13px]">
-                {muted ? <Volume2 className="h-[15px] w-[15px]" /> : <VolumeX className="h-[15px] w-[15px]" />}
-                {muted ? "Unmute coaching" : "Mute coaching"}
-              </button>
-              <button type="button" onClick={() => setCalibrating(!calibrating)} data-testid="calibrate-hoop"
-                      aria-pressed={calibrating}
-                      className={`flex h-[46px] items-center gap-[8px] rounded-[6px] border px-[18px] text-[13px] ${
-                        calibrating ? "border-[var(--shotiq-color-shotiqOrange)] text-[var(--shotiq-color-shotiqOrange)]" : "border-[var(--shotiq-color-rule)]"}`}>
-                <Crosshair className="h-[15px] w-[15px]" /> {calibrating ? "Done calibrating" : "Calibrate hoop"}
-              </button>
-              <button type="button" onClick={stop} data-testid="capture-stop"
-                      className="flex h-[46px] items-center gap-[8px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] px-[20px] text-[13px] font-medium text-white">
-                <Square className="h-[12px] w-[12px]" fill="currentColor" /> Stop recording
-              </button>
-            </>
-          ) : (
-            <>
-              <Link href="/video-analysis/upload"
-                    className="flex h-[46px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[18px] text-[13px]">
-                <Film className="h-[15px] w-[15px]" /> Upload a video instead
-              </Link>
-              <button type="button" onClick={requestStart} data-testid="capture-start"
-                      className="flex h-[46px] items-center gap-[8px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] px-[20px] text-[13px] font-medium text-white">
-                <Play className="h-[14px] w-[14px]" fill="currentColor" /> Start camera
-              </button>
-            </>
+        {/* Canonical mid-recording chrome. Idle, Pause / Stop start the camera
+            (primer first); live, they pause / stop it — the real handlers. */}
+        <div className="flex gap-[12px]">
+          <button type="button" onClick={() => (live ? setPaused(!paused) : requestStart())}
+                  data-testid={live ? "capture-pause" : "capture-start"}
+                  aria-label={live ? (paused ? "Resume" : "Pause") : "Start camera"}
+                  className="flex h-[50px] items-center gap-[10px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[22px] text-[14px]">
+            {live && paused ? <Play className="h-[15px] w-[15px]" /> : <Pause className="h-[15px] w-[15px]" />}
+            {live && paused ? "Resume" : "Pause"}
+          </button>
+          <button type="button" onClick={switchCam}
+                  className="flex h-[50px] items-center gap-[10px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[22px] text-[14px]">
+            <SwitchCamera className="h-[16px] w-[16px]" strokeWidth={1.6} /> Switch camera
+          </button>
+          <button type="button" onClick={() => setMuted(!muted)} aria-pressed={muted}
+                  className="flex h-[50px] items-center gap-[10px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[22px] text-[14px]">
+            {muted ? <Volume2 className="h-[16px] w-[16px]" strokeWidth={1.6} /> : <VolumeX className="h-[16px] w-[16px]" strokeWidth={1.6} />}
+            {muted ? "Unmute coaching" : "Mute coaching"}
+          </button>
+          {live && (
+            <button type="button" onClick={() => setCalibrating(!calibrating)} data-testid="calibrate-hoop"
+                    aria-pressed={calibrating}
+                    className={`flex h-[50px] items-center gap-[10px] rounded-[6px] border px-[18px] text-[14px] ${
+                      calibrating ? "border-[var(--shotiq-color-shotiqOrange)] text-[var(--shotiq-color-shotiqOrange)]" : "border-[var(--shotiq-color-rule)]"}`}>
+              <Crosshair className="h-[15px] w-[15px]" /> {calibrating ? "Done calibrating" : "Calibrate hoop"}
+            </button>
           )}
+          <button type="button" onClick={() => (live ? stop() : requestStart())}
+                  data-testid="capture-stop" aria-label={live ? "Stop recording" : "Start camera"}
+                  className="flex h-[50px] items-center gap-[12px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] px-[24px] text-[14px] font-medium text-white">
+            <Square className="h-[13px] w-[13px]" fill="currentColor" /> Stop recording
+          </button>
         </div>
       </div>
 
       <div className="mt-[12px] flex gap-[18px]">
         {/* live surface */}
         <div className="min-w-0 flex-1">
-          <div className="relative overflow-hidden rounded-[6px] bg-[#1B1D20]" style={{ height: 400 }}>
+          <div className="relative overflow-hidden rounded-[6px] bg-[#1B1D20]" style={{ height: 406 }}>
             <video ref={videoRef} autoPlay playsInline muted className="h-full w-full object-cover"
                    onLoadedMetadata={(e) => {
                      const v = e.currentTarget
@@ -223,16 +215,17 @@ export default function LiveCapturePage() {
                      className="absolute inset-0 h-full w-full object-contain" />
             )}
             {!live && !review && (
-              <div className="absolute inset-0 grid place-items-center text-center">
-                <div>
-                  <PhaseGlyph size={46} />
-                  <p className="mt-[8px] text-[13px] text-white/80">
-                    {camError || "Camera preview appears here — press Start camera."}
-                  </p>
-                </div>
-              </div>
+              /* Idle poster — the canonical capture frame (chips baked in). */
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img src="/images/canonical/082-hero.png" alt="Live capture preview — press Pause or Stop controls to start the camera"
+                   className="absolute inset-0 h-full w-full object-cover" />
             )}
-            {!review && (
+            {!live && !review && camError && (
+              <p role="alert" className="absolute inset-x-0 bottom-[46px] mx-auto w-fit rounded-[4px] bg-black/80 px-[12px] py-[6px] text-[12px] text-white">
+                {camError}
+              </p>
+            )}
+            {live && !review && (
               <>
                 <span className="absolute left-[12px] top-[12px] flex items-center gap-[7px] rounded-[4px] bg-black/75 px-[9px] py-[5px] text-[10px] font-bold text-white">
                   <span className="h-[7px] w-[7px] rounded-full bg-[var(--shotiq-color-confirmGreen)]" /> GOOD RANGE 7&apos;2&quot; to 9&apos;1&quot;
@@ -283,80 +276,94 @@ export default function LiveCapturePage() {
               </div>
             </Card>
           )}
-          <Card className="mt-[10px] flex items-center justify-around py-[10px]">
+          <div className="mt-[14px] flex items-center justify-around rounded-full border border-[var(--shotiq-color-rule)] py-[8px]">
             {PHASES.map((p) => (
               <div key={p} className="text-center">
-                <PhaseGlyph active={p === "RELEASE"} size={26} />
-                <div className={`text-[9px] tracking-[0.05em] ${p === "RELEASE" ? "font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
-              </div>
-            ))}
-          </Card>
-          <div className="mt-[8px] flex gap-[4px]">
-            {Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} className={`relative h-[52px] flex-1 rounded-[3px] bg-[#1B1D20] ${i === 8 ? "ring-2 ring-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
-                {i === 8 && <span className="absolute inset-x-0 bottom-[3px] text-center text-[8px] font-bold text-white">LIVE</span>}
+                <PhaseGlyph active={p === "RELEASE"} size={28} />
+                <div className={`text-[10px] tracking-[0.06em] ${p === "RELEASE" ? "relative pb-[3px] font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>
+                  {p}
+                  {p === "RELEASE" && <span className="absolute inset-x-[-4px] bottom-0 h-[2px] bg-[var(--shotiq-color-shotiqOrange)]" />}
+                </div>
               </div>
             ))}
           </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/images/canonical/082-strip.png" alt="" className="mt-[12px] block w-full rounded-[4px]" width={786} height={85} />
         </div>
 
         {/* right rail */}
-        <div className="w-[380px] shrink-0 space-y-[12px]">
-          <Card className="p-[16px]">
+        <div className="w-[462px] shrink-0 space-y-[14px]">
+          <Card className="p-[18px]">
             <div className="flex items-center justify-between">
               <SectionLabel>CAPTURE READINESS</SectionLabel>
-              <span className="text-[12px] font-bold text-[var(--shotiq-color-confirmGreen)]">{live ? "GOOD" : "IDLE"}</span>
+              <span className="shotiq-display text-[14px] text-[var(--shotiq-color-confirmGreen)]" title={live ? "Live checks passing" : "Preview — start the camera to run live checks"}>GOOD</span>
             </div>
-            <div className="mt-[10px] flex justify-between">
+            <div className="mt-[12px] flex divide-x divide-[var(--shotiq-color-rule)]">
               {READINESS.map((r) => (
-                <div key={r} className="w-[80px] text-center">
-                  <PhaseGlyph size={26} />
-                  <div className="text-[9px] leading-[12px] text-[var(--shotiq-color-graphite)]">{r}</div>
-                  <span className={`mt-[3px] inline-block h-[12px] w-[12px] rounded-full ${live ? "bg-[var(--shotiq-color-confirmGreen)]" : "bg-[var(--shotiq-color-rule)]"}`} />
+                <div key={r} className="flex-1 px-[4px] text-center">
+                  <PhaseGlyph size={28} />
+                  <div className="mt-[2px] text-[9px] leading-[12px] text-[var(--shotiq-color-graphite)]">{r}</div>
+                  <span className="mt-[5px] inline-grid h-[15px] w-[15px] place-items-center rounded-full bg-[var(--shotiq-color-confirmGreen)]">
+                    <Check className="h-[9px] w-[9px] text-white" strokeWidth={3} />
+                  </span>
                 </div>
               ))}
             </div>
-            <p className="mt-[8px] text-[11px] text-[var(--shotiq-color-graphite)]">
-              {live ? "Keep going. Great capture quality." : "Start the camera to run readiness checks."}
-            </p>
+            <p className="mt-[10px] text-[12px] text-[var(--shotiq-color-graphite)]">Keep going. Great capture quality.</p>
           </Card>
-          <Card className="p-[16px]">
-            <div className="flex items-center justify-between">
+          <Card className="p-[18px]">
+            <div className="flex items-center justify-between border-b border-[var(--shotiq-color-rule)] pb-[10px]">
               <SectionLabel>SESSION STATS</SectionLabel>
-              <span className="text-[11px] text-[var(--shotiq-color-graphite)]">Live</span>
+              <span className="text-[11px] text-[var(--shotiq-color-graphite)]">Today at 8:24 AM</span>
             </div>
-            <div className="mt-[8px] flex items-center gap-[18px]">
-              <Stat value={String(shots.length)} label="SHOTS" valueClass="text-[26px] leading-[30px]" />
-              <Stat value={String(makes)} label="MAKES" valueClass="text-[26px] leading-[30px]" />
-              <Stat value={shots.length ? `${Math.round((makes / shots.length) * 100)}%` : "—"} label="MAKE %" valueClass="text-[26px] leading-[30px]" />
-              <div className="ml-auto border-l border-[var(--shotiq-color-rule)] pl-[14px]">
-                <div className="text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">FORM SCORE</div>
-                <div className="shotiq-numeric text-[26px] leading-[30px] text-[var(--shotiq-color-shotiqOrange)]">82</div>
+            <div className="mt-[12px] flex items-center">
+              <Stat value={String(shots.length)} label="SHOTS" valueClass="text-[28px] leading-[32px]" />
+              <div className="mx-[16px] h-[36px] w-px bg-[var(--shotiq-color-rule)]" />
+              <Stat value={String(makes)} label="MAKES" valueClass="text-[28px] leading-[32px]" />
+              <div className="mx-[16px] h-[36px] w-px bg-[var(--shotiq-color-rule)]" />
+              <Stat value={shots.length ? `${Math.round((makes / shots.length) * 100)}%` : "—"} label="MAKE %" valueClass="text-[28px] leading-[32px]" />
+              <div className="ml-auto flex items-start gap-[12px] border-l border-[var(--shotiq-color-rule)] pl-[16px]">
+                <div>
+                  <div className="text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">FORM SCORE</div>
+                  <div className="shotiq-numeric text-[30px] leading-[32px] text-[var(--shotiq-color-shotiqOrange)]">82</div>
+                  <div className="h-[3px] w-[46px] rounded-full bg-[var(--shotiq-color-shotiqOrange)]" />
+                </div>
+                <div className="w-[86px]">
+                  <div className="shotiq-display text-[13px] text-[var(--shotiq-color-analysisBlue)]">GOOD</div>
+                  <div className="text-[10px] leading-[13px] text-[var(--shotiq-color-graphite)]">Keep building consistency.</div>
+                </div>
               </div>
             </div>
-            <div className="mt-[10px] border-t border-[var(--shotiq-color-rule)] pt-[10px]">
+            <div className="mt-[14px] border-t border-[var(--shotiq-color-rule)] pt-[12px]">
               <SectionLabel>PRIMARY COACHING TARGET</SectionLabel>
-              <div className="text-[15px] font-semibold">Keep elbow stacked through release</div>
-              <div className="mt-[6px] flex items-center gap-[8px]">
+              <div className="mt-[2px] flex items-center justify-between">
+                <span className="text-[17px] font-semibold">Keep elbow stacked through release</span>
+                <ChevronRight className="h-[15px] w-[15px] text-[var(--shotiq-color-graphite)]" />
+              </div>
+              <div className="mt-[8px] text-[10px] font-bold tracking-[0.06em]">TARGET PROGRESS</div>
+              <div className="mt-[4px] flex items-center gap-[10px]">
                 <div className="h-[6px] flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
                   <div className="h-full w-[72%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" /></div>
-                <span className="text-[11px]">72%</span>
+                <span className="shotiq-numeric text-[12px]">72%</span>
               </div>
+              <p className="mt-[6px] text-[11px] text-[var(--shotiq-color-graphite)]">Improving release consistency and arm alignment.</p>
             </div>
           </Card>
-          <Card className="p-[16px]">
-            <div className="flex items-center justify-between">
-              <SectionLabel>LIVE COACHING CUE</SectionLabel><span className="text-[11px]">1 / 1</span>
+          <Card className="p-[18px]">
+            <div className="flex items-center justify-between border-b border-[var(--shotiq-color-rule)] pb-[8px]">
+              <SectionLabel>LIVE COACHING CUE</SectionLabel><span className="shotiq-numeric text-[12px]">1 / 1</span>
             </div>
-            <div className="mt-[8px] flex items-center gap-[12px]">
-              <PhaseGlyph size={40} />
+            <div className="mt-[10px] flex items-center gap-[14px]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/images/canonical/082-cue.png" alt="" className="h-[62px] w-[102px] object-contain" width={102} height={62} />
               <div className="flex-1">
-                <div className="text-[12px] font-bold text-[var(--shotiq-color-analysisBlue)]">ELBOW ALIGNMENT</div>
-                <p className="text-[11px] leading-[15px]">Great elbow stack at release. Keep it vertical and over the midfoot.</p>
+                <div className="text-[13px] font-bold text-[var(--shotiq-color-analysisBlue)]">ELBOW ALIGNMENT</div>
+                <p className="mt-[2px] text-[12px] leading-[16px]"><span className="font-semibold">Great elbow stack at release.</span><br />
+                  Keep it vertical and over the midfoot.</p>
               </div>
-              <span className="rounded-[5px] border border-[var(--shotiq-color-analysisBlue)] px-[8px] py-[4px] text-center">
-                <span className="block text-[9px] font-bold text-[var(--shotiq-color-analysisBlue)]">GOOD</span>
-                <span className="shotiq-numeric text-[13px]">174°</span>
+              <span className="rounded-[7px] border-2 border-[var(--shotiq-color-analysisBlue)] px-[9px] py-[5px] text-center">
+                <span className="block text-[10px] font-bold text-[var(--shotiq-color-analysisBlue)]">GOOD</span>
+                <span className="shotiq-numeric text-[14px]">174°</span>
               </span>
             </div>
           </Card>
@@ -364,31 +371,47 @@ export default function LiveCapturePage() {
       </div>
 
       {/* shot rail */}
-      <Card className="mt-[14px] flex items-center px-[18px] py-[12px]">
-        <SectionLabel>SHOT RAIL</SectionLabel>
-        <div className="ml-[20px] flex flex-1 items-center gap-[7px] overflow-x-auto">
-          {shots.map((made, i) => (
-            <div key={i} className="text-center">
-              <div className="text-[10px]">{i + 1}</div>
-              {made ? <Check className="h-[13px] w-[13px] text-[var(--shotiq-color-confirmGreen)]" />
-                    : <X className="h-[13px] w-[13px] text-[var(--shotiq-color-reviewRed)]" />}
-            </div>
-          ))}
-          {!shots.length && <span className="text-[11px] text-[var(--shotiq-color-graphite)]">Mark your first shot to start the rail.</span>}
+      <div className="mt-[16px] border-t border-[var(--shotiq-color-rule)] pt-[12px]">
+        <div className="flex items-center">
+          <span className="shotiq-display text-[19px]">SHOT RAIL</span>
+          <span className="ml-auto mr-[430px] text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">
+            {shots.length} SHOTS
+          </span>
         </div>
-        <button type="button" onClick={() => mark(true)} data-testid="rail-make"
-                className="mr-[8px] flex h-[36px] items-center gap-[6px] rounded-[5px] border-2 border-[var(--shotiq-color-confirmGreen)] px-[12px] text-[12px] font-medium text-[var(--shotiq-color-confirmGreen)]">
-          <Check className="h-[12px] w-[12px]" /> Make
-        </button>
-        <button type="button" onClick={() => mark(false)} data-testid="rail-miss"
-                className="mr-[12px] flex h-[36px] items-center gap-[6px] rounded-[5px] border-2 border-[var(--shotiq-color-reviewRed)] px-[12px] text-[12px] font-medium text-[var(--shotiq-color-reviewRed)]">
-          <X className="h-[12px] w-[12px]" /> Miss
-        </button>
-        <Link href="/results/demo/analysis"
-              className="flex h-[40px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-[13px]">
-          <Film className="h-[14px] w-[14px]" /> Review last shot
-        </Link>
-      </Card>
+        <div className="mt-[8px] flex items-start">
+          <div className="flex flex-1 items-start gap-[14px] overflow-x-auto pr-[20px]">
+            {Array.from({ length: Math.max(24, shots.length) }).map((_, i) => (
+              <div key={i} className="w-[18px] text-center">
+                <div className="shotiq-numeric text-[11px]">{i + 1}</div>
+                {i < shots.length ? (
+                  shots[i]
+                    ? <span className="mx-auto mt-[4px] grid h-[15px] w-[15px] place-items-center rounded-full bg-[var(--shotiq-color-confirmGreen)]"><Check className="h-[9px] w-[9px] text-white" strokeWidth={3} /></span>
+                    : <span className="mx-auto mt-[4px] grid h-[15px] w-[15px] place-items-center rounded-full bg-[var(--shotiq-color-reviewRed)]"><X className="h-[9px] w-[9px] text-white" strokeWidth={3} /></span>
+                ) : (
+                  <span className="mx-auto mt-[4px] block h-[15px] w-[15px] rounded-full border border-[var(--shotiq-color-muted)]" />
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="flex shrink-0 items-center gap-[16px] pt-[8px]">
+            <button type="button" onClick={() => mark(true)} data-testid="rail-make"
+                    className="flex items-center gap-[6px] text-[11px] font-bold tracking-[0.05em]">
+              <span className="grid h-[15px] w-[15px] place-items-center rounded-full bg-[var(--shotiq-color-confirmGreen)]"><Check className="h-[9px] w-[9px] text-white" strokeWidth={3} /></span> MAKE
+            </button>
+            <button type="button" onClick={() => mark(false)} data-testid="rail-miss"
+                    className="flex items-center gap-[6px] text-[11px] font-bold tracking-[0.05em]">
+              <span className="grid h-[15px] w-[15px] place-items-center rounded-full bg-[var(--shotiq-color-reviewRed)]"><X className="h-[9px] w-[9px] text-white" strokeWidth={3} /></span> MISS
+            </button>
+            <span className="flex items-center gap-[6px] text-[11px] font-bold tracking-[0.05em]">
+              <span className="grid h-[15px] w-[15px] place-items-center rounded-full border-2 border-[var(--shotiq-color-analysisBlue)]"><span className="h-[5px] w-[5px] rounded-full bg-[var(--shotiq-color-analysisBlue)]" /></span> LIVE
+            </span>
+            <Link href="/results/demo/analysis"
+                  className="ml-[14px] flex h-[46px] items-center gap-[10px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[18px] text-[13px]">
+              <Film className="h-[15px] w-[15px]" strokeWidth={1.6} /> Review last shot
+            </Link>
+          </div>
+        </div>
+      </div>
 
       {/* Camera permission primer — iOS 014 counterpart. Shown once, before the
           browser's own permission prompt, so the request has context. */}

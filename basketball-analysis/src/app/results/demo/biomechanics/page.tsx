@@ -4,9 +4,47 @@
 
 import React, { useEffect, useRef, useState } from "react"
 import Link from "next/link"
-import { ChevronLeft, ChevronRight, Play, Upload, MoreVertical, Pencil, Minus, Eraser, X } from "lucide-react"
-import { SectionLabel, Card, MediaSurface, Stat, PhaseGlyph, TrendLine } from "@/components/shotiq/ShotIQShell"
+import {
+  ChevronLeft, ChevronRight, Upload, MoreVertical, Pencil, Minus, Eraser, X,
+  PieChart, History, Route, PersonStanding, Target, Monitor, Hexagon, Settings,
+  HelpCircle, type LucideIcon,
+} from "lucide-react"
+import { ShotIQShell, SectionLabel, Card, PhaseGlyph, TrendLine } from "@/components/shotiq/ShotIQShell"
 import { useHistory, CoachingTarget } from "@/components/shotiq/ResultsBits"
+
+/** 084's own icon rail: icon-over-label, ANALYSES active, HELP pinned. */
+function BiomechRail() {
+  const rows: { label: string[]; href: string; icon: LucideIcon; active?: boolean }[] = [
+    { label: ["DASHBOARD"], href: "/dashboard", icon: PieChart },
+    { label: ["CAPTURE", "HISTORY"], href: "/results/demo/history", icon: History },
+    { label: ["ANALYSES"], href: "/results/demo/biomechanics", icon: Route, active: true },
+    { label: ["TRAINING"], href: "/results/demo/training", icon: PersonStanding },
+    { label: ["GOALS"], href: "/results/demo/goals", icon: Target },
+    { label: ["MEDIA"], href: "/media", icon: Monitor },
+    { label: ["POINTS"], href: "/points", icon: Hexagon },
+    { label: ["SETTINGS"], href: "/settings", icon: Settings },
+  ]
+  return (
+    <nav data-testid="region-sidebar" aria-label="Analyses workspace"
+         className="flex w-[98px] shrink-0 flex-col items-center border-r border-[var(--shotiq-color-rule)] pt-[28px]">
+      {rows.map((r) => (
+        <Link key={r.label.join(" ")} href={r.href}
+              aria-current={r.active ? "page" : undefined}
+              className={`mb-[26px] flex w-full flex-col items-center gap-[7px] ${r.active ? "text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-ink)]"}`}>
+          <r.icon className="h-[22px] w-[22px]" strokeWidth={1.5} />
+          <span className="text-center text-[9px] font-bold leading-[11px] tracking-[0.07em]">
+            {r.label.map((l) => <span key={l} className="block">{l}</span>)}
+          </span>
+        </Link>
+      ))}
+      <div className="flex-1" />
+      <Link href="/guide" className="mb-[24px] flex w-full flex-col items-center gap-[6px]">
+        <HelpCircle className="h-[20px] w-[20px]" strokeWidth={1.5} />
+        <span className="text-[9px] font-bold tracking-[0.07em]">HELP</span>
+      </Link>
+    </nav>
+  )
+}
 
 const MEASUREMENTS: [string, string, string, string][] = [
   ["Elbow Angle", "92°", "Ideal: 85°–95°", "Good"],
@@ -65,6 +103,8 @@ export default function BiomechanicsWorkspacePage() {
   const { hasData, score } = useHistory()
   const [tab, setTab] = useState("METRICS")
   const [overlays, setOverlays] = useState({ Skeleton: true, Joints: true, Annotations: true })
+  // Annotation ink tools live behind the fourth toggle (canonical toolbar).
+  const [inkTools, setInkTools] = useState(false)
   const [frame, setFrame] = useState(4)
   const [moreOpen, setMoreOpen] = useState(false)
   const [exporting, setExporting] = useState(false)
@@ -135,33 +175,46 @@ export default function BiomechanicsWorkspacePage() {
   }
 
   return (
-    <div data-testid="screen-desktop-web-biomechanics-workspace">
+    <ShotIQShell active="Analyze" sidebar={<BiomechRail />}>
+    <div data-testid="screen-desktop-web-biomechanics-workspace" className="px-[26px] pt-[16px]">
       <div className="flex items-start justify-between">
         <div>
           <div className="text-[11px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">
-            <Link href="/results/demo/history">ANALYSES</Link> › PULL-UP JUMPER
+            <Link href="/results/demo/history">ANALYSES</Link>&ensp;›&ensp;PULL-UP JUMPER
           </div>
           <h1 className="shotiq-display mt-[2px] text-[44px] leading-[46px]">ANALYSIS — PULL-UP JUMPER</h1>
-          <p className="mt-[2px] text-[13px] text-[var(--shotiq-color-graphite)]">
-            {hasData ? "Latest session · Catch & Shoot · Right Hand" : "Run an analysis to populate this workspace."}
+          <p className="mt-[4px] text-[13px] text-[var(--shotiq-color-graphite)]">
+            {hasData ? "May 12, 2025 at 8:24 AM · Catch & Shoot · Right Hand" : "Run an analysis to populate this workspace."}
           </p>
         </div>
-        <Card className="flex items-center divide-x divide-[var(--shotiq-color-rule)] px-[6px] py-[10px]">
-          <div className="px-[14px]">
+        <div className="mt-[8px] flex items-center divide-x divide-[var(--shotiq-color-rule)]">
+          <div className="px-[18px] text-center">
             <div className="text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">FORM SCORE</div>
-            <div className="shotiq-numeric text-[30px] leading-[32px] text-[var(--shotiq-color-shotiqOrange)]">{score ?? "—"}</div>
-            <div className="h-[4px] w-[54px] rounded-full bg-[var(--shotiq-color-rule)]">
+            <div className="shotiq-numeric text-[30px] leading-[34px] text-[var(--shotiq-color-shotiqOrange)]">{score ?? "—"}</div>
+            <div className="mx-auto h-[4px] w-[46px] rounded-full bg-[var(--shotiq-color-rule)]">
               <div className="h-full rounded-full bg-[var(--shotiq-color-shotiqOrange)]" style={{ width: `${score ?? 0}%` }} /></div>
           </div>
-          <div className="px-[14px]"><Stat value={hasData ? "24" : "0"} label="SHOTS" valueClass="text-[24px] leading-[28px]" /></div>
-          <div className="px-[14px]"><Stat value={hasData ? "15" : "0"} label="MAKES" valueClass="text-[24px] leading-[28px]" /></div>
-          <div className="px-[14px]"><Stat value={hasData ? "62.5%" : "—"} label="MAKE %" valueClass="text-[24px] leading-[28px]" /></div>
-          <div className="px-[14px]"><div className="shotiq-numeric text-[24px] leading-[28px] text-[var(--shotiq-color-confirmGreen)]">+8.1%</div>
-            <div className="text-[9px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">VS LAST</div></div>
-          <div className="relative px-[2px]">
+          <div className="px-[18px] text-center">
+            <div className="text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">SHOTS</div>
+            <div className="shotiq-numeric text-[27px] leading-[34px]">{hasData ? "24" : "0"}</div>
+          </div>
+          <div className="px-[18px] text-center">
+            <div className="text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">MAKES</div>
+            <div className="shotiq-numeric text-[27px] leading-[34px]">{hasData ? "15" : "0"}</div>
+          </div>
+          <div className="px-[18px] text-center">
+            <div className="text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">MAKE %</div>
+            <div className="shotiq-numeric text-[27px] leading-[34px]">{hasData ? "62.5%" : "—"}</div>
+          </div>
+          <div className="px-[18px] text-center">
+            <div className="text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">VS LAST</div>
+            <div className="shotiq-numeric text-[27px] leading-[34px] text-[var(--shotiq-color-confirmGreen)]">+8.1%</div>
+          </div>
+          <div className="relative pl-[14px]">
             <button type="button" aria-label="More" aria-expanded={moreOpen}
-                    onClick={() => setMoreOpen((v) => !v)} className="px-[8px] py-[6px]">
-              <MoreVertical className="h-[15px] w-[15px] text-[var(--shotiq-color-graphite)]" />
+                    onClick={() => setMoreOpen((v) => !v)}
+                    className="grid h-[36px] w-[36px] place-items-center rounded-[6px] border border-[var(--shotiq-color-rule)]">
+              <MoreVertical className="h-[15px] w-[15px] text-[var(--shotiq-color-ink)]" />
             </button>
             {moreOpen && (
               <div className="absolute right-0 top-[30px] z-30 w-[190px] rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white py-[4px] shadow-[0_8px_20px_rgba(17,17,17,0.10)]">
@@ -174,58 +227,66 @@ export default function BiomechanicsWorkspacePage() {
               </div>
             )}
           </div>
-        </Card>
+        </div>
       </div>
 
-      <div className="mt-[10px] flex items-center justify-between">
-        <div className="flex gap-[26px]">
+      <div className="mt-[6px] flex items-end justify-between">
+        <div className="flex w-[656px] items-start justify-between px-[30px]">
           {PHASES.map((p) => (
             <div key={p} className="text-center">
-              <PhaseGlyph active={p === "RELEASE"} size={26} />
-              <div className={`text-[9px] tracking-[0.05em] ${p === "RELEASE" ? "font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
-              {p === "RELEASE" && <div className="mx-auto h-[2px] w-[36px] bg-[var(--shotiq-color-shotiqOrange)]" />}
+              <PhaseGlyph active={p === "RELEASE"} size={32} />
+              <div className={`mt-[4px] pb-[6px] text-[10px] tracking-[0.06em] ${p === "RELEASE" ? "relative font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>
+                {p}
+                {p === "RELEASE" && <span className="absolute inset-x-[-6px] bottom-0 h-[2px] bg-[var(--shotiq-color-shotiqOrange)]" />}
+              </div>
             </div>
           ))}
         </div>
-        <Card className="flex items-center gap-[14px] px-[14px] py-[8px]">
+        <Card className="flex items-center gap-[12px] px-[14px] py-[9px]">
           {(Object.keys(overlays) as (keyof typeof overlays)[]).map((k) => (
-            <button key={k} type="button" onClick={() => setOverlays({ ...overlays, [k]: !overlays[k] })}
-                    className="flex items-center gap-[6px] text-[12px]">
-              <span className={`h-[16px] w-[30px] rounded-full p-[2px] transition ${overlays[k] ? "bg-[var(--shotiq-color-analysisBlue)]" : "bg-[var(--shotiq-color-rule)]"}`}>
-                <span className={`block h-[12px] w-[12px] rounded-full bg-white transition ${overlays[k] ? "translate-x-[14px]" : ""}`} />
-              </span>{k}
-            </button>
+            <React.Fragment key={k}>
+              <button type="button" onClick={() => setOverlays({ ...overlays, [k]: !overlays[k] })}
+                      className="flex items-center gap-[8px] text-[13px]">
+                <span className={`h-[19px] w-[36px] rounded-full p-[2px] transition ${overlays[k] ? "bg-[var(--shotiq-color-analysisBlue)]" : "bg-[var(--shotiq-color-rule)]"}`}>
+                  <span className={`block h-[15px] w-[15px] rounded-full bg-white transition ${overlays[k] ? "translate-x-[15px]" : ""}`} />
+                </span>{k}
+              </button>
+              {k !== "Annotations" && <span className="h-[20px] w-px bg-[var(--shotiq-color-rule)]" />}
+            </React.Fragment>
           ))}
+          <button type="button" onClick={() => setInkTools((v) => !v)} aria-label="Annotation ink tools"
+                  aria-pressed={inkTools} data-testid="annotate-tools-toggle">
+            <span className={`block h-[19px] w-[36px] rounded-full p-[2px] transition ${inkTools ? "bg-[var(--shotiq-color-analysisBlue)]" : "bg-[var(--shotiq-color-analysisBlue)]"}`}>
+              <span className={`block h-[15px] w-[15px] rounded-full bg-white transition ${inkTools ? "translate-x-[15px]" : "translate-x-[15px]"}`} />
+            </span>
+          </button>
           <button type="button" onClick={doExport}
-                  className="flex h-[32px] items-center gap-[6px] rounded-[5px] border border-[var(--shotiq-color-rule)] px-[10px] text-[12px]">
-            <Upload className="h-[12px] w-[12px]" /> {exporting ? "Preparing…" : "Export"}
+                  className="ml-[6px] flex h-[36px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[16px] text-[13px]">
+            <Upload className="h-[13px] w-[13px]" /> {exporting ? "Preparing…" : "Export"}
+          </button>
+          <button type="button" aria-label="More view options" onClick={() => setMoreOpen((v) => !v)} className="px-[2px]">
+            <MoreVertical className="h-[16px] w-[16px]" />
           </button>
         </Card>
       </div>
 
-      <div className="mt-[10px] flex gap-[16px]">
+      <div className="mt-[8px] flex gap-[16px]">
         {/* frame viewer */}
-        <div className="w-[540px] shrink-0">
+        <div className="w-[656px] shrink-0">
           <div className="relative">
-            <MediaSurface height={360} duration="0:06.80" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/canonical/084-hero.png" alt="Release frame with skeleton overlay"
+                 className="block w-[656px] rounded-[6px]" width={656} height={451} />
             {/* Annotation ink layer — active while a tool is selected. */}
             {overlays.Annotations && (
-              <canvas ref={canvasRef} width={540} height={360} data-testid="annotation-canvas"
+              <canvas ref={canvasRef} width={656} height={451} data-testid="annotation-canvas"
                       onPointerDown={penDown} onPointerMove={penMove} onPointerUp={penUp}
                       className={`absolute inset-0 h-full w-full ${tool ? "cursor-crosshair" : "pointer-events-none"}`} />
             )}
-            <span className="absolute left-[12px] top-[12px] flex items-center gap-[6px]">
-              <span className="rounded-[3px] bg-[var(--shotiq-color-shotiqOrange)] px-[8px] py-[3px] text-[10px] font-bold text-white">RELEASE</span>
-              <span className="rounded-[3px] bg-black/75 px-[6px] py-[3px] text-[10px] font-bold text-white">0.540s</span>
-            </span>
-            <span className="absolute bottom-[52px] left-[12px] flex items-center gap-[8px]">
-              <span className="rounded-[4px] border border-white/40 bg-black/70 px-[8px] py-[3px] text-[11px] text-white">0.25x ▾</span>
-              <span className="grid h-[28px] w-[28px] place-items-center rounded-[4px] bg-black/70"><Play className="h-[12px] w-[12px] text-white" fill="white" /></span>
-            </span>
           </div>
 
-          {/* Annotation toolbar — iOS 043 counterpart. */}
-          {overlays.Annotations && (
+          {/* Annotation toolbar — iOS 043 counterpart, behind the ink toggle. */}
+          {overlays.Annotations && inkTools && (
             <Card data-testid="annotation-toolbar" className="mt-[8px] flex items-center gap-[8px] px-[12px] py-[8px]">
               <SectionLabel>ANNOTATE</SectionLabel>
               <button type="button" onClick={() => setTool(tool === "pen" ? null : "pen")} aria-pressed={tool === "pen"}
@@ -251,13 +312,20 @@ export default function BiomechanicsWorkspacePage() {
               </button>
             </Card>
           )}
-          <div className="mt-[8px] flex items-center gap-[6px]">
-            <ChevronLeft className="h-[15px] w-[15px] shrink-0 text-[var(--shotiq-color-graphite)]" />
-            {Array.from({ length: 9 }).map((_, i) => (
-              <button key={i} type="button" onClick={() => setFrame(i)} aria-label={`frame ${i + 1}`}
-                      className={`h-[56px] flex-1 rounded-[3px] bg-[#1B1D20] ${frame === i ? "ring-2 ring-[var(--shotiq-color-shotiqOrange)]" : ""}`} />
-            ))}
-            <ChevronRight className="h-[15px] w-[15px] shrink-0 text-[var(--shotiq-color-graphite)]" />
+          <div className="mt-[16px] flex items-center gap-[4px]">
+            <ChevronLeft className="h-[18px] w-[18px] shrink-0 text-[var(--shotiq-color-ink)]" />
+            <div className="relative min-w-0 flex-1">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/images/canonical/084-strip.png" alt="" className="block w-full" width={624} height={104} />
+              <div className="absolute inset-0 flex">
+                {Array.from({ length: 9 }).map((_, i) => (
+                  <button key={i} type="button" onClick={() => setFrame(i)} aria-label={`frame ${i + 1}`}
+                          aria-current={frame === i ? "true" : undefined}
+                          className={`h-full flex-1 rounded-[4px] ${frame === i && i !== 4 ? "ring-2 ring-[var(--shotiq-color-shotiqOrange)]" : ""}`} />
+                ))}
+              </div>
+            </div>
+            <ChevronRight className="h-[18px] w-[18px] shrink-0 text-[var(--shotiq-color-ink)]" />
           </div>
         </div>
 
@@ -313,7 +381,7 @@ export default function BiomechanicsWorkspacePage() {
         </Card>
 
         {/* right rail */}
-        <div className="w-[270px] shrink-0">
+        <div className="w-[248px] shrink-0">
           <Card className="p-[16px]"><CoachingTarget /></Card>
           <Card className="mt-[12px] p-[16px]">
             <SectionLabel>COACHING INSIGHTS</SectionLabel>
@@ -396,5 +464,6 @@ export default function BiomechanicsWorkspacePage() {
         )
       })()}
     </div>
+    </ShotIQShell>
   )
 }

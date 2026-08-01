@@ -9,13 +9,15 @@ import { SectionLabel, Card, MediaSurface, TrendLine, Stat } from "@/components/
 import { useHistory } from "@/components/shotiq/ResultsBits"
 
 const RECOMMENDED = [
-  { len: "05:28", title: "Footwork Into Release", meta: "5:30 · Advanced · Footwork", desc: "Build rhythm from the catch into a balanced, stacked release." },
-  { len: "06:12", title: "Elbow Stack Holds", meta: "6:15 · Intermediate · Shooting", desc: "Train elbow alignment and forearm verticality through the lift." },
-  { len: "06:58", title: "High Elbow Release", meta: "7:02 · Advanced · Shooting", desc: "Reinforce a high elbow path for a clean, consistent release." },
+  { len: "05:28", title: "Footwork Into Release", meta: "5:30 · Advanced · Footwork", desc: "Build rhythm from the catch into a balanced, stacked release.", img: "/images/canonical/090-rec-1.png" },
+  { len: "06:12", title: "Elbow Stack Holds", meta: "6:15 · Intermediate · Shooting", desc: "Train elbow alignment and forearm verticality through the lift.", img: "/images/canonical/090-rec-2.png" },
+  { len: "06:58", title: "High Elbow Release", meta: "7:02 · Advanced · Shooting", desc: "Reinforce a high elbow path for a clean, consistent release.", img: "/images/canonical/090-rec-3.png" },
 ]
 const LIBRARY = [
-  ["06:38", "Catch & Set Series", "Intermediate · Shooting"], ["04:42", "One Dribble Pull-Up", "Beginner · Scoring"],
-  ["05:19", "Transition Pull-Up", "Advanced · Scoring"], ["06:01", "Sideline Elevation", "Intermediate · Shooting"],
+  ["06:38", "Catch & Set Series", "Intermediate · Shooting", "/images/canonical/090-lib-1.png"],
+  ["04:42", "One Dribble Pull-Up", "Beginner · Scoring", "/images/canonical/090-lib-2.png"],
+  ["05:19", "Transition Pull-Up", "Advanced · Scoring", "/images/canonical/090-lib-3.png"],
+  ["06:01", "Sideline Elevation", "Intermediate · Shooting", "/images/canonical/090-lib-4.png"],
 ]
 const WEEK: [string, string, boolean][] = [
   ["MON", "28 min", true], ["TUE", "30 min", false], ["WED", "25 min", false], ["THU", "35 min", false],
@@ -66,7 +68,8 @@ export default function TrainingHubPage() {
           {RECOMMENDED.map((r) => (
             <Card key={r.title} className="overflow-hidden">
               <div className="relative">
-                <MediaSurface height={150} rounded={0} />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={r.img} alt="" className="h-[150px] w-full object-cover" />
                 <span className="absolute left-[8px] top-[8px] rounded-[3px] bg-black/75 px-[6px] py-[2px] text-[10px] font-bold text-white">{r.len}</span>
                 <button type="button" aria-pressed={saved.has(r.title)} onClick={() => toggleSave(r.title)}
                         aria-label={saved.has(r.title) ? "Remove from my drills" : "Save drill"}

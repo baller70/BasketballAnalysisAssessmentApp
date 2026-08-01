@@ -4,8 +4,11 @@
 
 import React, { useEffect, useState } from "react"
 import Link from "next/link"
-import { Pencil, MoreVertical, Check, ChevronRight, X } from "lucide-react"
-import { SectionLabel, Card, MediaSurface, TrendLine, PhaseGlyph, Stat } from "@/components/shotiq/ShotIQShell"
+import {
+  Pencil, MoreVertical, Check, ChevronRight, X,
+  PieChart, Scan, PersonStanding, TrendingUp, Film, Compass,
+} from "lucide-react"
+import { ShotIQShell, SectionLabel, Card, TrendLine, PhaseGlyph, Stat } from "@/components/shotiq/ShotIQShell"
 import { useHistory } from "@/components/shotiq/ResultsBits"
 import { csrfFetch } from "@/lib/api/csrfFetch"
 
@@ -15,7 +18,7 @@ interface ApiGoal { id: string; name: string; description?: string; currentValue
 const DEMO_GOAL: Goal = { id: "demo", title: "Keep elbow stacked through release", progress: 0.72 }
 
 export default function GoalsPlanPage() {
-  const { hasData, score } = useHistory()
+  const { hasData } = useHistory()
   const [goals, setGoals] = useState<Goal[]>([])
   const [modal, setModal] = useState<null | "create" | "edit" | "log">(null)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -85,7 +88,15 @@ export default function GoalsPlanPage() {
     { completedAt: new Date().toISOString(), currentValue: 100 }, { ...primary, progress: 1 }, "Goal marked complete")
 
   return (
-    <div data-testid="screen-desktop-web-goals-plan">
+    <ShotIQShell active="Progress" railOverride={[
+      { label: "DASHBOARD", href: "/dashboard", icon: PieChart, active: false },
+      { label: "ANALYSES", href: "/results/demo", icon: Scan, active: false },
+      { label: "TRAINING", href: "/results/demo/training", icon: PersonStanding, active: false },
+      { label: "PROGRESS", href: "/results/demo/goals", icon: TrendingUp, active: true },
+      { label: "MEDIA", href: "/media", icon: Film, active: false },
+      { label: "EXPLORE", href: "/elite-shooters", icon: Compass, active: false },
+    ]}>
+    <div data-testid="screen-desktop-web-goals-plan" className="px-[26px] py-[18px]">
       <div className="flex items-start justify-between">
         <div>
           <h1 className="shotiq-display text-[48px] leading-[50px]">GOALS &amp; PLAN</h1>
@@ -129,7 +140,13 @@ export default function GoalsPlanPage() {
           </div>
           <SectionLabel className="mt-[12px] border-t border-[var(--shotiq-color-rule)] pt-[12px]">PROGRESS TREND</SectionLabel>
           <div className="flex items-center gap-[12px]">
-            <TrendLine points={[2, 2.6, 2.2, 3, 2.7, 3.4, 3.2, 4]} width={230} height={70} />
+            <div>
+              <TrendLine points={[2, 2.6, 2.2, 3, 2.7, 3.4, 3.2, 4]} width={230} height={70} />
+              <div className="flex justify-between pr-[6px] text-[9px] tracking-[0.03em] text-[var(--shotiq-color-graphite)]">
+                {["Apr 13", "Apr 20", "Apr 27", "May 4", "May 11"].map((d) => <span key={d}>{d}</span>)}
+                <span className="font-bold text-[var(--shotiq-color-confirmGreen)]">TODAY</span>
+              </div>
+            </div>
             <div className="text-right">
               <div className="text-[16px] font-bold text-[var(--shotiq-color-confirmGreen)]">+8.1%</div>
               <div className="text-[9px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">VS LAST SESSION</div>
@@ -183,10 +200,12 @@ export default function GoalsPlanPage() {
               <Link href="/results/demo/history" className="text-[11px] text-[var(--shotiq-color-graphite)]">View all</Link>
             </div>
             <div className="mt-[4px] divide-y divide-[var(--shotiq-color-rule)]">
-              {[["Pull-Up Jumper", "May 12, 2025 at 8:24 AM", "82"], ["Spot-Up Three", "May 11, 2025 at 6:15 PM", "78"], ["Transition Pull-Up", "May 10, 2025 at 4:02 PM", "75"]].map(([t, d, s]) => (
+              {[["Pull-Up Jumper", "May 12, 2025 at 8:24 AM", "82", "1"], ["Spot-Up Three", "May 11, 2025 at 6:15 PM", "78", "2"], ["Transition Pull-Up", "May 10, 2025 at 4:02 PM", "75", "3"]].map(([t, d, s, img]) => (
                 <Link key={String(t)} href="/results/demo/history"
                       className="flex items-center gap-[12px] py-[9px] hover:bg-[var(--shotiq-color-warmCanvas)]">
-                  <MediaSurface width={92} height={54} />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={`/images/canonical/092-thumb-${img}.png`} alt=""
+                       className="h-[93px] w-[104px] shrink-0 rounded-[4px] object-cover" width={104} height={93} />
                   <div className="min-w-0 flex-1">
                     <div className="text-[14px] font-semibold">{t}</div>
                     <div className="text-[10px] text-[var(--shotiq-color-graphite)]">{d}</div>
@@ -251,7 +270,7 @@ export default function GoalsPlanPage() {
             <div className="mt-[4px] divide-y divide-[var(--shotiq-color-rule)]">
               {[["+5% Make Percentage", "Achieved May 11, 2025", "62.5%", "done"],
                 ["3 Sessions Logged", "Achieved May 11, 2025", "3/3", "done"],
-                ["75+ Form Score Average", "In progress", score != null ? String(score) : "—", "active"],
+                ["75+ Form Score Average", "In progress", hasData ? "78" : "—", "active"],
                 ["10 Consecutive Sessions", "0 / 10", "0/10", "open"],
                 ["65% Make Percentage", "In progress", "62.5%", "open"]].map(([t, d, v, st]) => (
                 <div key={String(t)} className="flex items-center gap-[12px] py-[9px]">
@@ -262,7 +281,10 @@ export default function GoalsPlanPage() {
                     <div className="text-[13px] font-semibold">{t}</div>
                     <div className="text-[10px] text-[var(--shotiq-color-graphite)]">{d}</div>
                   </div>
-                  <span className={`shotiq-numeric w-[52px] shrink-0 text-right text-[15px] tabular-nums ${st === "done" ? "text-[var(--shotiq-color-confirmGreen)]" : st === "active" ? "text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>{v}</span>
+                  <span className="w-[52px] shrink-0 text-right">
+                    <span className={`shotiq-numeric block text-[15px] tabular-nums ${st === "done" ? "text-[var(--shotiq-color-confirmGreen)]" : st === "active" ? "text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>{v}</span>
+                    {st === "active" && <span className="block text-[9px] text-[var(--shotiq-color-graphite)]">Current</span>}
+                  </span>
                 </div>
               ))}
             </div>
@@ -324,5 +346,6 @@ export default function GoalsPlanPage() {
         </div>
       )}
     </div>
+    </ShotIQShell>
   )
 }

@@ -171,7 +171,10 @@ export default function DrillExecutionClient() {
           </div>
 
           {/* live surface */}
-          <div className="relative mt-[14px] h-[330px] overflow-hidden rounded-[6px] bg-[#1B1D20]" data-testid="live-surface">
+          <div className="relative mt-[14px] h-[335px] overflow-hidden rounded-[6px] bg-[#1B1D20]" data-testid="live-surface">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/canonical/091-hero.png" alt="Live drill camera frame"
+                 className="absolute inset-0 h-full w-full object-cover" />
             <span className="absolute left-[14px] top-[14px] flex items-center gap-[7px] rounded-[4px] bg-black/80 px-[10px] py-[5px] text-[11px] font-bold text-white">
               <span className="h-[7px] w-[7px] rounded-full bg-[var(--shotiq-color-shotiqOrange)]" /> LIVE
             </span>
@@ -236,6 +239,8 @@ export default function DrillExecutionClient() {
               return (
                 <div key={`${s.n}-${i}`}
                      className={`relative h-[76px] w-[86px] shrink-0 overflow-hidden rounded-[4px] bg-[#1B1D20] ${live ? "ring-2 ring-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/images/canonical/091-thumb.png" alt="" className="absolute inset-0 h-full w-full object-cover" />
                   <span className="absolute left-[6px] top-[6px] text-[11px] font-bold text-white">{s.n}</span>
                   <span className="absolute right-[5px] top-[5px]">
                     {s.made
