@@ -19,7 +19,7 @@ import process from 'node:process'
 import { execFileSync } from 'node:child_process'
 
 const APPS = [
-  { key: 'shotiq', bundleId: 'com.kevinhouston.shotiq', name: 'ShotIQ' },
+  { key: 'shotiq', bundleId: 'com.baller70.shotiq', name: 'ShotIQ' },
 ]
 
 const argv = process.argv.slice(2)

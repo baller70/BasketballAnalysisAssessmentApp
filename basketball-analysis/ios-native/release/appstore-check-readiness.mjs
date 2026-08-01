@@ -14,7 +14,7 @@ import process from 'node:process'
 import { SignJWT, importPKCS8 } from 'jose'
 
 const APPS = [
-  { key: 'shotiq', bundleId: 'com.kevinhouston.shotiq', name: 'ShotIQ' },
+  { key: 'shotiq', bundleId: 'com.baller70.shotiq', name: 'ShotIQ' },
 ]
 
 const keyId = process.env.ASC_KEY_ID
