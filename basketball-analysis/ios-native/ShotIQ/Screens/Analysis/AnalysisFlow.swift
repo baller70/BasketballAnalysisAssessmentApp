@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import UserNotifications
 
 // Analysis flow — screens 036-047. Pose overlays and gauges are Canvas/Path.
@@ -505,18 +506,21 @@ struct AnalysisResultOverviewView: View { // 038
     private func metricRow(_ row: [(String, String, String, String, Bool)]) -> some View {
         HStack(spacing: 0) {
             ForEach(row, id: \.1) { icon, label, value, verdict, excellent in
-                VStack(spacing: 5) {
-                    Image(systemName: icon).font(.system(size: 22, weight: .light))
-                        .foregroundStyle(ShotIQColor.ink).frame(height: 30)
-                    Text(label).font(.system(size: 8, weight: .semibold)).kerning(0.4)
-                        .foregroundStyle(ShotIQColor.graphite)
-                        .lineLimit(1).minimumScaleFactor(0.6)
-                    Text(value).font(.custom("DINCondensed-Bold", size: 26)).foregroundStyle(ShotIQColor.ink)
-                    Text(verdict).font(.system(size: 9, weight: .bold)).kerning(0.4)
-                        .foregroundStyle(excellent ? ShotIQColor.confirmGreen : ShotIQColor.analysisBlue)
+                NavigationLink { MetricDetailView(metric: label.capitalized) } label: {
+                    VStack(spacing: 5) {
+                        Image(systemName: icon).font(.system(size: 22, weight: .light))
+                            .foregroundStyle(ShotIQColor.ink).frame(height: 30)
+                        Text(label).font(.system(size: 8, weight: .semibold)).kerning(0.4)
+                            .foregroundStyle(ShotIQColor.graphite)
+                            .lineLimit(1).minimumScaleFactor(0.6)
+                        Text(value).font(.custom("DINCondensed-Bold", size: 26)).foregroundStyle(ShotIQColor.ink)
+                        Text(verdict).font(.system(size: 9, weight: .bold)).kerning(0.4)
+                            .foregroundStyle(excellent ? ShotIQColor.confirmGreen : ShotIQColor.analysisBlue)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
+                .buttonStyle(.plain)
                 if label != row.last?.1 {
                     Rectangle().fill(ShotIQColor.rule).frame(width: 1).padding(.vertical, 10)
                 }
@@ -1495,7 +1499,9 @@ struct FormScoreView: View {        // 044
                             .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
                             HStack(spacing: 6) {
                                 Text("FORM SCORE").shotiqDisplay(24)
-                                Image(systemName: "info.circle").font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
+                                infoButton("Form score",
+                                           "A 0–100 grade of your shooting mechanics, weighted across form, balance, elbow, power and consistency.",
+                                           size: 14)
                             }
                             .padding(.top, 18)
                             HStack(alignment: .top, spacing: 14) {
@@ -1562,7 +1568,8 @@ struct FormScoreView: View {        // 044
                             .padding(.top, 8)
                             HStack(spacing: 6) {
                                 SectionLabel(text: "CONFIDENCE")
-                                Image(systemName: "info.circle").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                                infoButton("Confidence",
+                                           "How reliably the AI could track your body and the ball in this clip. Higher confidence means more trustworthy metrics.")
                             }
                             .padding(.top, 22)
                             HStack(alignment: .center, spacing: 14) {
@@ -1602,7 +1609,8 @@ struct FormScoreView: View {        // 044
                             .padding(.top, 8)
                             HStack(spacing: 6) {
                                 SectionLabel(text: "METRIC DETAILS")
-                                Image(systemName: "info.circle").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                                infoButton("Metric details",
+                                           "Each metric's score, what it measures, and how strongly it impacts your overall form score. Tap a row to drill in.")
                             }
                             .padding(.top, 22)
                             HStack {
@@ -1647,7 +1655,8 @@ struct FormScoreView: View {        // 044
                             .padding(.top, 16)
                             HStack(spacing: 6) {
                                 SectionLabel(text: "SESSION SUMMARY")
-                                Image(systemName: "info.circle").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                                infoButton("Session summary",
+                                           "Totals from the session this analysis belongs to: shots taken, makes, make percentage and the trend versus your previous session.")
                             }
                             .padding(.top, 20)
                             SessionStatsStrip().padding(.top, 8).padding(.bottom, 10)
@@ -1659,6 +1668,12 @@ struct FormScoreView: View {        // 044
             }
         }
         .analysisInfoAlert($info)
+    }
+    private func infoButton(_ title: String, _ message: String, size: CGFloat = 13) -> some View {
+        Button { info = AnalysisInfoNote(title: title, message: message) } label: {
+            Image(systemName: "info.circle").font(.system(size: size)).foregroundStyle(ShotIQColor.graphite)
+        }
+        .buttonStyle(.plain)
     }
     private func linkRow(_ icon: String, _ title: String) -> some View {
         HStack {
@@ -1825,18 +1840,53 @@ struct MetricDetailView: View {     // 045
                         .padding(.top, 12)
                         ShotIQCard {
                             VStack(spacing: 0) {
-                                detailRow("film", "View frame", "See this rep at release")
+                                NavigationLink { FrameDetailSkeletonView() } label: {
+                                    detailRow("film", "View frame", "See this rep at release")
+                                }
+                                .buttonStyle(.plain)
                                 Rectangle().fill(ShotIQColor.rule).frame(height: 1)
-                                detailRow("point.bottomleft.forward.to.point.topright.scurvepath", "Compare elite range", "See how you stack up")
+                                NavigationLink { EliteMatchView() } label: {
+                                    detailRow("point.bottomleft.forward.to.point.topright.scurvepath", "Compare elite range", "See how you stack up")
+                                }
+                                .buttonStyle(.plain)
                             }
                         }
                         .padding(.top, 12)
-                        PrimaryButton(title: "Add to training plan").padding(.top, 16)
+                        PrimaryButton(title: addedPlan ? "Added to training plan" : "Add to training plan") {
+                            addToTrainingPlan()
+                        }
+                        .disabled(addingPlan || addedPlan)
+                        .opacity(addingPlan ? 0.6 : 1)
+                        .padding(.top, 16)
+                        if let planError {
+                            Text(planError).font(.system(size: 12)).foregroundStyle(ShotIQColor.reviewRed)
+                                .padding(.top, 6)
+                        }
                         PhaseStrip().padding(.top, 18).padding(.bottom, 24)
                     }
                     .padding(.horizontal, 20)
                 }
             }
+        }
+    }
+    /// "Training plan" maps to the web app's saved workouts (POST /api/saved-workouts).
+    private func addToTrainingPlan() {
+        guard !addingPlan, !addedPlan else { return }
+        addingPlan = true
+        planError = nil
+        Task {
+            struct Body: Encodable { let name: String; let drillCount: Int; let drillIds: [String] }
+            struct Resp: Decodable { let success: Bool }
+            do {
+                let _: Resp = try await APIClient.shared.call(
+                    "/api/saved-workouts", method: "POST",
+                    body: Body(name: "\(metric) correction plan", drillCount: 1,
+                               drillIds: ["towel-elbow-stack"]))
+                addedPlan = true
+            } catch {
+                planError = "Couldn't add to your training plan. Check your connection and try again."
+            }
+            addingPlan = false
         }
     }
     private func cueFigure(_ icon: String, _ label: String, _ tint: Color) -> some View {
@@ -1877,6 +1927,10 @@ struct FlawsOverviewView: View {    // 046
          "Follow-through finishes below eye level, limiting rotation and hold.",
          "58%", "View history", ShotIQColor.muted),
     ]
+    @Environment(\.dismiss) private var dismiss
+    @State private var addingAll = false
+    @State private var addedAll = false
+    @State private var addAllError: String?
     var body: some View {
         CanonicalScreen(testID: "screen-ios-flaws-overview") {
             VStack(spacing: 0) {
@@ -1885,11 +1939,14 @@ struct FlawsOverviewView: View {    // 046
                     VStack(alignment: .leading, spacing: 0) {
                         HStack(alignment: .center, spacing: 12) {
                             VStack(alignment: .leading, spacing: 4) {
-                                HStack(spacing: 8) {
-                                    Image(systemName: "chevron.left").font(.system(size: 13, weight: .semibold))
-                                    Text("ANALYSIS").font(.system(size: 12, weight: .semibold)).kerning(0.8)
+                                Button { dismiss() } label: {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "chevron.left").font(.system(size: 13, weight: .semibold))
+                                        Text("ANALYSIS").font(.system(size: 12, weight: .semibold)).kerning(0.8)
+                                    }
+                                    .foregroundStyle(ShotIQColor.graphite)
                                 }
-                                .foregroundStyle(ShotIQColor.graphite)
+                                .buttonStyle(.plain)
                                 Text("FLAWS OVERVIEW").shotiqDisplay(36)
                             }
                             Spacer(minLength: 8)
@@ -1898,9 +1955,11 @@ struct FlawsOverviewView: View {    // 046
                             HeaderStat(icon: "circle.hexagongrid", value: "2,840", label: "POINTS")
                         }
                         .padding(.top, 14)
-                        CoachTargetCard(bordered: false)
-                            .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
-                            .padding(.top, 14)
+                        NavigationLink { FlawDetailView(title: "ELBOW FLARE", severity: "HIGH IMPACT") } label: {
+                            CoachTargetCard(bordered: false)
+                                .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
+                        }
+                        .padding(.top, 14)
                         Text("AI analysis detected 3 priority flaws impacting your shot efficiency.")
                             .font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
                             .padding(.top, 14)
@@ -1920,22 +1979,56 @@ struct FlawsOverviewView: View {    // 046
                                     .font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
                             }
                             Spacer()
-                            HStack(spacing: 6) {
-                                Text("Add all to plan").font(.system(size: 14, weight: .semibold))
-                                Image(systemName: "chevron.right").font(.system(size: 11, weight: .semibold))
+                            Button { addAllToPlan() } label: {
+                                HStack(spacing: 6) {
+                                    if addingAll {
+                                        ProgressView().tint(.white).scaleEffect(0.8)
+                                    }
+                                    Text(addedAll ? "Added to plan" : "Add all to plan")
+                                        .font(.system(size: 14, weight: .semibold))
+                                    Image(systemName: addedAll ? "checkmark" : "chevron.right")
+                                        .font(.system(size: 11, weight: .semibold))
+                                }
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 14).padding(.vertical, 11)
+                                .background(addedAll ? ShotIQColor.confirmGreen : ShotIQColor.analysisBlue,
+                                            in: RoundedRectangle(cornerRadius: 8))
                             }
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 14).padding(.vertical, 11)
-                            .background(ShotIQColor.analysisBlue, in: RoundedRectangle(cornerRadius: 8))
+                            .buttonStyle(.plain)
+                            .disabled(addingAll || addedAll)
                         }
                         .padding(14)
                         .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
                         .padding(.top, 14)
+                        if let addAllError {
+                            Text(addAllError).font(.system(size: 12)).foregroundStyle(ShotIQColor.reviewRed)
+                                .padding(.top, 6)
+                        }
                         Spacer(minLength: 24)
                     }
                     .padding(.horizontal, 20)
                 }
             }
+        }
+    }
+    /// "Training plan" maps to the web app's saved workouts (POST /api/saved-workouts).
+    private func addAllToPlan() {
+        guard !addingAll, !addedAll else { return }
+        addingAll = true
+        addAllError = nil
+        Task {
+            struct Body: Encodable { let name: String; let drillCount: Int; let drillIds: [String] }
+            struct Resp: Decodable { let success: Bool }
+            do {
+                let _: Resp = try await APIClient.shared.call(
+                    "/api/saved-workouts", method: "POST",
+                    body: Body(name: "Flaw correction plan", drillCount: flaws.count,
+                               drillIds: flaws.map { $0.1.lowercased().replacingOccurrences(of: " ", with: "-") }))
+                addedAll = true
+            } catch {
+                addAllError = "Couldn't add flaws to your plan. Check your connection and try again."
+            }
+            addingAll = false
         }
     }
     private func flawCard(_ rank: Int, _ title: String, _ impact: String, _ desc: String,
@@ -2000,17 +2093,28 @@ struct FlawsOverviewView: View {    // 046
 
 struct FlawDetailView: View {       // 047
     var title = "Elbow flare at release"; var severity = "HIGH IMPACT"
+    @Environment(\.dismiss) private var dismiss
+    @State private var addingGoal = false
+    @State private var addedGoal = false
+    @State private var goalError: String?
+    @State private var goFrames = false
+    @State private var goDrill = false
     private let frames = ["LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH", "RESET"]
     var body: some View {
         CanonicalScreen(testID: "screen-ios-flaw-detail") {
             VStack(spacing: 0) {
                 HStack {
-                    Image(systemName: "arrow.left").font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(ShotIQColor.ink)
+                    Button { dismiss() } label: {
+                        Image(systemName: "arrow.left").font(.system(size: 18, weight: .semibold))
+                            .foregroundStyle(ShotIQColor.ink)
+                    }
+                    .buttonStyle(.plain)
                     Spacer()
                     Wordmark(size: 30)
                     Spacer()
-                    Image(systemName: "square.and.arrow.up").font(.system(size: 18)).foregroundStyle(ShotIQColor.ink)
+                    ShareLink(item: "Working on my shot: fixing \(title.lowercased()) with ShotIQ AI analysis. 🏀") {
+                        Image(systemName: "square.and.arrow.up").font(.system(size: 18)).foregroundStyle(ShotIQColor.ink)
+                    }
                 }
                 .padding(.horizontal, 20).frame(height: 52)
                 .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
@@ -2128,18 +2232,61 @@ struct FlawDetailView: View {       // 047
                             }
                             .padding(.top, 8)
                             HStack(spacing: 12) {
-                                SecondaryButton(title: "Add to goals", icon: "bookmark")
-                                SecondaryButton(title: "View affected frames", icon: "film")
+                                SecondaryButton(title: addedGoal ? "Added to goals" : "Add to goals",
+                                                icon: addedGoal ? "bookmark.fill" : "bookmark") {
+                                    addToGoals()
+                                }
+                                .disabled(addingGoal || addedGoal)
+                                .opacity(addingGoal ? 0.6 : 1)
+                                SecondaryButton(title: "View affected frames", icon: "film") {
+                                    goFrames = true
+                                }
                             }
                             .padding(.top, 14)
-                            PrimaryButton(title: "Start recommended drill", icon: "figure.basketball")
-                                .padding(.top, 10)
+                            if let goalError {
+                                Text(goalError).font(.system(size: 12)).foregroundStyle(ShotIQColor.reviewRed)
+                                    .padding(.top, 6)
+                            }
+                            PrimaryButton(title: "Start recommended drill", icon: "figure.basketball") {
+                                goDrill = true
+                            }
+                            .padding(.top, 10)
                             Spacer(minLength: 24)
                         }
                         .padding(.horizontal, 20)
                     }
                 }
             }
+        }
+        .navigationDestination(isPresented: $goFrames) { FrameDetailSkeletonView() }
+        .navigationDestination(isPresented: $goDrill) { DrillExecutionView(drillName: "Towel Elbow Stack") }
+    }
+    /// Goals live on the web backend — POST /api/goals (name is the only required field).
+    private func addToGoals() {
+        guard !addingGoal, !addedGoal else { return }
+        addingGoal = true
+        goalError = nil
+        Task {
+            struct Body: Encodable {
+                let name: String
+                let description: String
+                let category: String
+                let targetValue: Int
+                let unit: String
+                let xpReward: Int
+            }
+            struct Resp: Decodable { let success: Bool }
+            do {
+                let _: Resp = try await APIClient.shared.call(
+                    "/api/goals", method: "POST",
+                    body: Body(name: "Fix \(title.lowercased())",
+                               description: "Correct \(title.lowercased()) identified by shot analysis.",
+                               category: "form", targetValue: 100, unit: "%", xpReward: 150))
+                addedGoal = true
+            } catch {
+                goalError = "Couldn't save the goal. Check your connection and try again."
+            }
+            addingGoal = false
         }
     }
     private func metaItem(_ icon: String, _ label: String) -> some View {
