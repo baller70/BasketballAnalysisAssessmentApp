@@ -219,10 +219,51 @@ for (const app of APPS) {
   }
 
   if (testerEmail) {
+    // The same email can have several betaTester records at the team level —
+    // one legit ACCEPTED/INSTALLED record from earlier apps (HoopTrack) and a
+    // fresh NOT_INVITED dud. Only the accepted record can install internal
+    // builds, so find it and link IT to this group; the dud gets removed.
+    const teamRecords = await api(
+      'GET',
+      `/v1/betaTesters?filter[email]=${encodeURIComponent(testerEmail)}&limit=10`,
+    )
+    for (const record of teamRecords.data ?? []) {
+      console.log(
+        `   team-level tester record ${record.id}: state ${record.attributes?.state}` +
+          `, invite ${record.attributes?.inviteType}`,
+      )
+    }
+    const accepted = (teamRecords.data ?? []).find((t) =>
+      ['ACCEPTED', 'INSTALLED'].includes(t.attributes?.state),
+    )
+
+    const inGroup = (id) => (testers.data ?? []).some((t) => t.id === id)
     let tester = (testers.data ?? []).find(
       (t) => t.attributes?.email?.toLowerCase() === testerEmail.toLowerCase(),
     )
-    if (tester) {
+
+    if (accepted && confirm) {
+      if (!inGroup(accepted.id)) {
+        await api('POST', `/v1/betaGroups/${group.id}/relationships/betaTesters`, {
+          data: [{ type: 'betaTesters', id: accepted.id }],
+        })
+        console.log(`   linked accepted tester record ${accepted.id} to the group`)
+      } else {
+        console.log(`   accepted tester record ${accepted.id} already in the group`)
+      }
+      // Drop the dud so App Store Connect doesn't show a phantom NOT_INVITED row.
+      if (tester && tester.id !== accepted.id) {
+        try {
+          await api('DELETE', `/v1/betaGroups/${group.id}/relationships/betaTesters`, {
+            data: [{ type: 'betaTesters', id: tester.id }],
+          })
+          console.log(`   removed stale NOT_INVITED record ${tester.id} from the group`)
+        } catch (err) {
+          console.log(`   could not remove stale record: ${err.message.slice(0, 150)}`)
+        }
+      }
+      tester = accepted
+    } else if (tester) {
       console.log(`   ${testerEmail} is already a tester`)
     } else if (!confirm) {
       console.log(`   WOULD INVITE ${testerEmail} (re-run with --confirm)`)
