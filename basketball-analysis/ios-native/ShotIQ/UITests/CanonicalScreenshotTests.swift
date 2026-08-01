@@ -79,14 +79,14 @@ final class CanonicalScreenshotTests: XCTestCase {
     }
 
     /// Does a view carrying this canonical `accessibilityIdentifier` exist?
-    private func screenExists(_ id: String, timeout: TimeInterval = 10) -> Bool {
+    private func screenExists(_ id: String, timeout: TimeInterval = 6) -> Bool {
         app.descendants(matching: .any).matching(identifier: id).firstMatch
             .waitForExistence(timeout: timeout)
     }
 
     /// Assert we are on a canonical screen, and capture it.
     @discardableResult
-    private func expectScreen(_ id: String, timeout: TimeInterval = 12,
+    private func expectScreen(_ id: String, timeout: TimeInterval = 8,
                               capture: Bool = true, required: Bool = true,
                               context: String = "") -> Bool {
         if screenExists(id, timeout: timeout) {
@@ -104,7 +104,7 @@ final class CanonicalScreenshotTests: XCTestCase {
 
     /// Find a tappable control whose label (or identifier) contains `text`,
     /// scrolling the current screen if it is below the fold.
-    private func findControl(_ text: String, index: Int = 0, maxSwipes: Int = 10) -> XCUIElement? {
+    private func findControl(_ text: String, index: Int = 0, maxSwipes: Int = 5) -> XCUIElement? {
         let predicate = NSPredicate(format: "label CONTAINS[c] %@ OR identifier == %@", text, text)
         for attempt in 0...maxSwipes {
             for query in [app.buttons, app.staticTexts, app.images, app.otherElements] {
@@ -132,7 +132,7 @@ final class CanonicalScreenshotTests: XCTestCase {
     @discardableResult
     private func tapAndExpect(_ control: String, _ destination: String,
                               from source: String, index: Int = 0,
-                              timeout: TimeInterval = 12,
+                              timeout: TimeInterval = 8,
                               required: Bool = true, capture: Bool = true) -> Bool {
         guard let element = findControl(control, index: index) else {
             note("MISSING CONTROL — “\(control)” was not on \(source); cannot verify it opens \(destination)",
@@ -151,7 +151,7 @@ final class CanonicalScreenshotTests: XCTestCase {
     /// Tab bar buttons carry the canonical short labels.
     private func selectTab(_ label: String) {
         let button = app.buttons[label]
-        if button.waitForExistence(timeout: 10) { tap(button) }
+        if button.waitForExistence(timeout: 8) { tap(button) }
     }
 
     /// Cheap navigation reset: leaving a tab tears its NavigationStack down, so
@@ -159,7 +159,7 @@ final class CanonicalScreenshotTests: XCTestCase {
     private func resetTab(_ label: String, root: String) {
         selectTab(label == "Progress" ? "Home" : "Progress")
         selectTab(label)
-        _ = screenExists(root, timeout: 10)
+        _ = screenExists(root, timeout: 8)
     }
 
     // MARK: - 001-007 · auth

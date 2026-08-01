@@ -54,10 +54,11 @@ export default function OnboardingPage() {
   const next = () => (step < STEPS.length ? setStep(step + 1) : finish())
 
   const lbl = "flex items-center gap-[4px] text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]"
-  const box = "h-[46px] rounded-[5px] border border-[var(--shotiq-color-rule)] px-[12px] text-[14px] outline-none focus:border-[var(--shotiq-color-ink)]"
+  const box = "h-[46px] rounded-[5px] border border-[var(--shotiq-color-rule)] bg-white px-[12px] text-[14px] outline-none focus:border-[var(--shotiq-color-ink)]"
 
   return (
-    <div data-testid="screen-desktop-web-onboarding" className="flex">
+    <div data-testid="screen-desktop-web-onboarding" className="flex min-h-full flex-col">
+     <div className="flex flex-1">
       {/* step rail */}
       <aside className="flex w-[200px] shrink-0 flex-col border-r border-[var(--shotiq-color-rule)] pt-[14px]">
         {STEPS.map((s, i) => (
@@ -208,7 +209,9 @@ export default function OnboardingPage() {
 
       {/* why it matters rail */}
       <aside className="w-[380px] shrink-0 border-l border-[var(--shotiq-color-rule)] px-[22px] py-[20px]">
-        <MediaSurface height={220} />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/images/canonical/078-hero.png" alt="Shooter at release with elbow flex and release angle called out"
+             className="h-[220px] w-full rounded-[6px] object-cover" width={466} height={322} />
         <SectionLabel className="mt-[14px]">WHY IT MATTERS</SectionLabel>
         <p className="mt-[6px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
           Measuring your profile helps ShotIQ benchmark your mechanics and build feedback that&apos;s tailored to you.
@@ -226,22 +229,28 @@ export default function OnboardingPage() {
             </div>
           ))}
         </div>
-        <div className="mt-[16px] flex items-center justify-between border-t border-[var(--shotiq-color-rule)] pt-[12px]">
+      </aside>
+     </div>
+
+      {/* Canonical 078 runs the phase strip as a full-width footer band with the
+          "One profile. Everywhere." note beside it, not inside the right rail. */}
+      <div className="flex shrink-0 items-center border-t border-[var(--shotiq-color-rule)] px-[26px] py-[14px]">
+        <div className="flex flex-1 items-center justify-around pr-[26px]">
           {PHASES.map((p) => (
             <div key={p} className="text-center">
-              <PhaseGlyph size={24} active={p === "RELEASE"} />
-              <div className={`text-[8px] tracking-[0.05em] ${p === "RELEASE" ? "font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
+              <PhaseGlyph size={30} active={p === "RELEASE"} />
+              <div className={`mt-[2px] text-[9px] tracking-[0.05em] ${p === "RELEASE" ? "font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
             </div>
           ))}
         </div>
-        <div className="mt-[12px] flex items-center gap-[10px]">
+        <div className="flex w-[430px] shrink-0 items-center gap-[12px] border-l border-[var(--shotiq-color-rule)] pl-[26px]">
           <PhaseGlyph size={34} active />
           <p className="text-[11px] leading-[15px] text-[var(--shotiq-color-graphite)]">
             <span className="font-semibold text-[var(--shotiq-color-ink)]">One profile. Everywhere.</span><br />
             Your profile, captures, analyses, training, goals, media, points, and settings sync across web and iOS.
           </p>
         </div>
-      </aside>
+      </div>
     </div>
   )
 }

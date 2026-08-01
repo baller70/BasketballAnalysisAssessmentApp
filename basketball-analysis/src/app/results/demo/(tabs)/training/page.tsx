@@ -152,7 +152,7 @@ export default function TrainingHubPage() {
           </div>
         </div>
 
-        <div className="mt-[18px] flex items-center justify-between border-t border-[var(--shotiq-color-rule)] pt-[14px]">
+        <div className="mt-[12px] flex items-center justify-between border-t border-[var(--shotiq-color-rule)] pt-[10px]">
           <SectionLabel>TODAY&apos;S SNAPSHOT</SectionLabel>
           <span className="text-[11px] text-[var(--shotiq-color-graphite)]">Today</span>
         </div>
@@ -166,7 +166,7 @@ export default function TrainingHubPage() {
           </div>
         </div>
 
-        <SectionLabel className="mt-[18px] border-t border-[var(--shotiq-color-rule)] pt-[14px]">UP NEXT</SectionLabel>
+        <SectionLabel className="mt-[12px] border-t border-[var(--shotiq-color-rule)] pt-[10px]">UP NEXT</SectionLabel>
         <Card className="mt-[8px] p-[14px]">
           <Link href="/training/drills/quick-start-workout" className="flex items-center gap-[12px]">
             <TrendLine points={[2, 4, 3, 5]} width={44} height={30} stroke="var(--shotiq-color-shotiqOrange)" dotFill="var(--shotiq-color-shotiqOrange)" />
@@ -182,17 +182,17 @@ export default function TrainingHubPage() {
           </Link>
         </Card>
 
-        <div className="mt-[16px] flex items-center justify-between">
+        <div className="mt-[12px] flex items-center justify-between">
           <SectionLabel>THIS WEEK&apos;S PLAN</SectionLabel>
           <Link href="/training/calendar" className="text-[11px] text-[var(--shotiq-color-analysisBlue)]">View calendar</Link>
         </div>
         <Card className="mt-[8px] p-[12px]">
-          <div className="flex gap-[6px]">
+          <div className="flex gap-[4px]">
             {WEEK.map(([d, len, active]) => (
               <Link key={d} href="/training/calendar"
-                    className={`flex-1 rounded-[5px] border p-[6px] text-center ${active ? "border-2 border-[var(--shotiq-color-shotiqOrange)]" : "border-[var(--shotiq-color-rule)]"}`}>
+                    className={`min-w-0 flex-1 rounded-[5px] border p-[4px] text-center ${active ? "border-2 border-[var(--shotiq-color-shotiqOrange)]" : "border-[var(--shotiq-color-rule)]"}`}>
                 <div className="text-[9px] font-bold">{d}</div>
-                <TrendLine points={[2, 3, 2.4, 3.6]} width={30} height={18}
+                <TrendLine points={[2, 3, 2.4, 3.6]} width={24} height={17}
                            stroke={len === "Rest" ? "var(--shotiq-color-muted)" : "var(--shotiq-color-ink)"} dotFill={len === "Rest" ? "var(--shotiq-color-muted)" : "var(--shotiq-color-ink)"} />
                 <div className="text-[8px] text-[var(--shotiq-color-graphite)]">{len}</div>
               </Link>
@@ -208,7 +208,7 @@ export default function TrainingHubPage() {
           </div>
         </Card>
 
-        <div className="mt-[16px] flex items-center justify-between">
+        <div className="mt-[12px] flex items-center justify-between">
           <SectionLabel>RECENT PERFORMANCE</SectionLabel>
           <Link href="/results/demo/history" className="text-[11px] text-[var(--shotiq-color-graphite)]">View all analyses ›</Link>
         </div>
@@ -216,8 +216,8 @@ export default function TrainingHubPage() {
           {[["Pull-Up Jumper", "Today at 8:24 AM · Catch & Shoot", "82", "62.5%", "24 / 15"],
             ["Spot-Up Three", "May 11, 6:15 PM · Catch & Shoot", "78", "58.3%", "12 / 7"],
             ["Transition Pull-Up", "May 10, 4:02 PM · Off the Dribble", "75", "54.5%", "11 / 6"]].map(([t, d, fs, mk, sm]) => (
-            <Link key={String(t)} href="/results/demo/history" className="flex items-center gap-[10px] py-[9px] hover:bg-[var(--shotiq-color-warmCanvas)]">
-              <TrendLine points={[2, 3.4, 2.6, 4]} width={38} height={26} stroke="var(--shotiq-color-shotiqOrange)" dotFill="var(--shotiq-color-shotiqOrange)" />
+            <Link key={String(t)} href="/results/demo/history" className="flex items-center gap-[7px] py-[7px] hover:bg-[var(--shotiq-color-warmCanvas)]">
+              <TrendLine points={[2, 3.4, 2.6, 4]} width={30} height={24} stroke="var(--shotiq-color-shotiqOrange)" dotFill="var(--shotiq-color-shotiqOrange)" />
               <div className="min-w-0 flex-1">
                 <div className="truncate text-[13px] font-semibold">{t}</div>
                 <div className="truncate text-[10px] text-[var(--shotiq-color-graphite)]">{d}</div>

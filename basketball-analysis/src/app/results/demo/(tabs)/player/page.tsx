@@ -197,22 +197,22 @@ export default function PlayerCardPage() {
           <Card id="customize-card"
                 className={`px-[20px] py-[16px] transition ${pulse ? "ring-2 ring-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
             <SectionLabel>CUSTOMIZE YOUR CARD</SectionLabel>
-            <div className="mt-[12px] flex gap-[22px]">
+            <div className="mt-[12px] flex gap-[16px]">
               <div>
                 <div className="text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">CARD STYLE</div>
-                <div className="mt-[10px] flex gap-[10px]">
-                  {styleSwatch(0, "h-[131px] w-[62px]",
+                <div className="mt-[10px] flex shrink-0 gap-[8px]">
+                  {styleSwatch(0, "h-[118px] w-[56px]",
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src="/images/canonical/086-style-1.png" alt="" className="h-full w-full object-cover" />)}
-                  <div className="grid grid-cols-2 gap-[10px]">
-                    {styleSwatch(1, "h-[60px] w-[47px]",
+                  <div className="grid shrink-0 grid-cols-2 gap-[8px]">
+                    {styleSwatch(1, "h-[54px] w-[42px]",
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src="/images/canonical/086-style-2.png" alt="" className="h-full w-full object-cover" />)}
-                    {styleSwatch(2, "h-[60px] w-[47px]",
+                    {styleSwatch(2, "h-[54px] w-[42px]",
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src="/images/canonical/086-style-3.png" alt="" className="h-full w-full object-cover" />)}
-                    {styleSwatch(3, "h-[60px] w-[47px] bg-white")}
-                    {styleSwatch(4, "h-[60px] w-[47px]",
+                    {styleSwatch(3, "h-[54px] w-[42px] bg-white")}
+                    {styleSwatch(4, "h-[54px] w-[42px]",
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src="/images/canonical/086-style-5.png" alt="" className="h-full w-full object-cover" />)}
                   </div>
@@ -223,7 +223,7 @@ export default function PlayerCardPage() {
                 <div className="mt-[10px] flex gap-[10px]">
                   {ACCENT_SWATCH.map((c, i) => (
                     <button key={c} type="button" onClick={() => setAccent(i)} aria-label={`accent ${i}`} aria-pressed={accent === i}
-                            className={`grid h-[34px] w-[34px] place-items-center rounded-[8px] ${accent === i ? "ring-2 ring-offset-2 ring-[var(--shotiq-color-shotiqOrange)]" : ""}`}
+                            className={`grid h-[30px] w-[30px] shrink-0 place-items-center rounded-[8px] ${accent === i ? "ring-2 ring-offset-2 ring-[var(--shotiq-color-shotiqOrange)]" : ""}`}
                             style={{ background: c }}>
                       {accent === i && (
                         <span className="grid h-[18px] w-[18px] place-items-center rounded-full bg-white">
@@ -234,13 +234,13 @@ export default function PlayerCardPage() {
                   ))}
                 </div>
               </div>
-              <div className="min-w-0">
+              <div className="shrink-0">
                 <div className="text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">SHOW ON CARD</div>
                 <div className="mt-[6px] space-y-[5px]">
                   {TOGGLES.map((t) => (
-                    <button key={t} type="button" onClick={() => toggle(t)} className="flex w-[150px] items-center gap-[8px]">
+                    <button key={t} type="button" onClick={() => toggle(t)} className="flex w-[138px] items-center gap-[8px]">
                       <span className="flex-1 whitespace-nowrap text-left text-[12px]">{t}</span>
-                      <span className={`h-[18px] w-[32px] rounded-full p-[2px] transition ${on.has(t) ? "bg-[var(--shotiq-color-confirmGreen)]" : "bg-[var(--shotiq-color-rule)]"}`}>
+                      <span className={`h-[18px] w-[32px] shrink-0 rounded-full p-[2px] transition ${on.has(t) ? "bg-[var(--shotiq-color-confirmGreen)]" : "bg-[var(--shotiq-color-rule)]"}`}>
                         <span className={`block h-[14px] w-[14px] rounded-full bg-white transition ${on.has(t) ? "translate-x-[14px]" : ""}`} />
                       </span>
                     </button>
@@ -251,7 +251,7 @@ export default function PlayerCardPage() {
                 <div className="text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">BACKGROUND</div>
                 <div className="mt-[8px] space-y-[10px]">
                   <button type="button" onClick={() => setBgChoice("photo")} aria-pressed={bgChoice === "photo"}
-                          className={`relative block w-[146px] rounded-[7px] p-[4px] text-left ${bgChoice === "photo" ? "border-2 border-[var(--shotiq-color-shotiqOrange)]" : "border border-[var(--shotiq-color-rule)]"}`}>
+                          className={`relative block w-[132px] rounded-[7px] p-[4px] text-left ${bgChoice === "photo" ? "border-2 border-[var(--shotiq-color-shotiqOrange)]" : "border border-[var(--shotiq-color-rule)]"}`}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src="/images/canonical/086-bg-court.png" alt="" className="h-[52px] w-full rounded-[4px] object-cover" />
                     {bgChoice === "photo" && (
@@ -262,7 +262,7 @@ export default function PlayerCardPage() {
                     <div className="mt-[4px] px-[2px] pb-[2px] text-[12px] font-semibold">Court photo</div>
                   </button>
                   <button type="button" onClick={() => setBgChoice("clean")} aria-pressed={bgChoice === "clean"}
-                          className={`block w-[146px] rounded-[7px] p-[4px] text-left ${bgChoice === "clean" ? "border-2 border-[var(--shotiq-color-shotiqOrange)]" : "border border-[var(--shotiq-color-rule)]"}`}>
+                          className={`block w-[132px] rounded-[7px] p-[4px] text-left ${bgChoice === "clean" ? "border-2 border-[var(--shotiq-color-shotiqOrange)]" : "border border-[var(--shotiq-color-rule)]"}`}>
                     <div className="h-[52px] w-full rounded-[4px] bg-white" />
                     <div className="px-[2px] pb-[2px] text-[12px]">Clean</div>
                   </button>

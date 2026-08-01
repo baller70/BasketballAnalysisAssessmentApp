@@ -294,7 +294,7 @@ export default function ResultsOverviewPage() {
 
       {/* bottom strip */}
       <div className="mt-[18px] mb-[14px] flex gap-[16px]">
-        <Card className="flex h-[145px] w-[590px] shrink-0 flex-col px-[18px] pt-[12px]">
+        <Card className="flex h-[145px] w-[509px] shrink-0 flex-col px-[18px] pt-[12px]">
           <SectionLabel>ANALYSIS SUMMARY</SectionLabel>
           <div className="mt-[12px] flex flex-1 items-start">
             {[["24", "SHOTS"], ["15", "MAKES"], ["62.5%", "MAKE %"], ["82", "FORM SCORE"]].map(([v, l], i) => (
@@ -327,7 +327,7 @@ export default function ResultsOverviewPage() {
             <span className="min-w-0 flex-1">
               <span className="flex items-center gap-[8px]">
                 <span className="whitespace-nowrap text-[13px] font-semibold">Elbow flare at release</span>
-                <span className="rounded-[4px] border border-[var(--shotiq-color-shotiqOrange)] px-[6px] py-[2px] text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-shotiqOrange)]">HIGH IMPACT</span>
+                <span className="shrink-0 whitespace-nowrap rounded-[4px] border border-[var(--shotiq-color-shotiqOrange)] px-[6px] py-[2px] text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-shotiqOrange)]">HIGH IMPACT</span>
               </span>
               <span className="mt-[6px] block text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
                 Elbow moves outward slightly during release, reducing alignment.
