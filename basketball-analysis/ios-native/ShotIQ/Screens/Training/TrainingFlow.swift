@@ -1006,4 +1006,574 @@ struct WorkoutCalendarView: View {  // 059
     }
 }
 
-// APPEND-060
+@MainActor
+final class DrillSessionModel: ObservableObject {
+    @Published var shots: [(n: Int, made: Bool)] = []
+    @Published var elapsed = 0
+    @Published var paused = false
+    private var n = 0
+    private var timer: Timer?
+    var makes: Int { shots.filter(\.made).count }
+    var pct: Double { shots.isEmpty ? 0 : Double(makes) / Double(shots.count) }
+
+    func start() {
+        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            Task { @MainActor in if let self, !self.paused { self.elapsed += 1 } }
+        }
+    }
+    func stop() { timer?.invalidate() }
+    func mark(_ made: Bool, drillId: String) {
+        n += 1; shots.append((n, made))
+        Task { await APIClient.shared.recordShotEvent(drillId: drillId, made: made) }
+    }
+    func undo() { if !shots.isEmpty { shots.removeLast() } }
+}
+
+struct DrillExecutionView: View {   // 060
+    @EnvironmentObject var app: AppState
+    var drillName = "Pound Crossover Foundation"
+    @StateObject private var m = DrillSessionModel()
+    private let target = 15
+    var body: some View {
+        CanonicalScreen(testID: "screen-ios-drill-execution") {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    TopBar()
+                    PlayerHeader(name: app.user?.displayName ?? "Jordan Ellis")
+                    VStack(alignment: .leading, spacing: 0) {
+                        HStack(alignment: .center, spacing: 10) {
+                            Text("DRILL EXECUTION").shotiqDisplay(30)
+                            Text("Set 2 of 5").font(.system(size: 12, weight: .medium))
+                                .padding(.horizontal, 10).padding(.vertical, 5)
+                                .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.rule))
+                            Spacer()
+                            VStack(alignment: .trailing, spacing: 2) {
+                                Text("TARGET").font(.system(size: 10, weight: .semibold)).kerning(0.6)
+                                    .foregroundStyle(ShotIQColor.graphite)
+                                Text("\(target) makes").shotiqBody(16, weight: .semibold)
+                            }
+                        }
+                        .padding(.top, 14)
+                        ShotIQCard {
+                            HStack(alignment: .center, spacing: 12) {
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Text("COACHING CUE").font(.system(size: 11, weight: .bold)).kerning(0.7)
+                                        .foregroundStyle(ShotIQColor.analysisBlue)
+                                    Text("Keep elbow stacked through release").shotiqBody(17, weight: .bold)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                                Spacer(minLength: 4)
+                                VRule(height: 58)
+                                PhaseGlyph(size: 40)
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text("FOCUS AREA").font(.system(size: 9, weight: .semibold)).kerning(0.5)
+                                        .foregroundStyle(ShotIQColor.graphite)
+                                    Text("Elbow alignment at release").font(.system(size: 12, weight: .medium))
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                                .frame(width: 84)
+                            }
+                            .padding(14)
+                        }
+                        .padding(.top, 12)
+                        ShotIQCard {
+                            HStack(spacing: 0) {
+                                execStat("\(m.makes)", "MAKES")
+                                VRule(height: 40)
+                                execStat("\(m.shots.count)", "SHOTS")
+                                VRule(height: 40)
+                                execStat(String(format: "%.1f%%", m.pct * 100), "MAKE %")
+                                Spacer(minLength: 8)
+                                VStack(spacing: 6) {
+                                    HStack(spacing: 5) {
+                                        ForEach(0..<6, id: \.self) { i in
+                                            Circle()
+                                                .fill(i < min(6, m.makes * 6 / target)
+                                                      ? ShotIQColor.confirmGreen : ShotIQColor.rule)
+                                                .frame(width: 11, height: 11)
+                                        }
+                                    }
+                                    Text("\(max(target - m.makes, 0)) to target")
+                                        .font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
+                                }
+                            }
+                            .padding(14)
+                        }
+                        .padding(.top, 10)
+                        ZStack(alignment: .top) {
+                            MediaSurface(height: 290)
+                            HStack {
+                                HStack(spacing: 5) {
+                                    Text("FRONT VIEW").font(.system(size: 10, weight: .bold)).kerning(0.5)
+                                    Image(systemName: "chevron.down").font(.system(size: 8))
+                                }
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 10).padding(.vertical, 6)
+                                .background(.black.opacity(0.75), in: RoundedRectangle(cornerRadius: 5))
+                                Spacer()
+                                HStack(spacing: 6) {
+                                    Circle().fill(ShotIQColor.shotiqOrange).frame(width: 7, height: 7)
+                                    Text(String(format: "%02d:%02d", m.elapsed / 60, m.elapsed % 60))
+                                        .font(.custom("DINCondensed-Bold", size: 14)).foregroundStyle(.white)
+                                }
+                                .padding(.horizontal, 9).padding(.vertical, 5)
+                                .background(.black.opacity(0.75), in: RoundedRectangle(cornerRadius: 5))
+                            }
+                            .padding(10)
+                        }
+                        .padding(.top, 12)
+                        PhaseStrip().padding(.top, 16)
+                        HStack(spacing: 10) {
+                            Button { m.mark(true, drillId: drillName) } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "checkmark.circle")
+                                    Text("Mark make").font(.system(size: 15, weight: .semibold))
+                                }
+                                .frame(maxWidth: .infinity).frame(height: 52)
+                                .background(ShotIQColor.confirmGreen, in: RoundedRectangle(cornerRadius: 8))
+                                .foregroundStyle(.white)
+                            }
+                            .accessibilityIdentifier("mark-make")
+                            Button { m.mark(false, drillId: drillName) } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "xmark.circle")
+                                    Text("Mark miss").font(.system(size: 15, weight: .semibold))
+                                }
+                                .frame(maxWidth: .infinity).frame(height: 52)
+                                .background(ShotIQColor.reviewRed, in: RoundedRectangle(cornerRadius: 8))
+                                .foregroundStyle(.white)
+                            }
+                            .accessibilityIdentifier("mark-miss")
+                        }
+                        .padding(.top, 16)
+                        HStack(spacing: 10) {
+                            Button { m.undo() } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "arrow.uturn.backward")
+                                    Text("Undo").font(.system(size: 15))
+                                }
+                                .frame(maxWidth: .infinity).frame(height: 48)
+                                .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+                                .foregroundStyle(ShotIQColor.ink)
+                            }
+                            .accessibilityLabel("Undo last shot")
+                            Button { m.paused.toggle() } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: m.paused ? "play" : "pause")
+                                    Text(m.paused ? "Resume" : "Pause").font(.system(size: 15))
+                                }
+                                .frame(maxWidth: .infinity).frame(height: 48)
+                                .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+                                .foregroundStyle(ShotIQColor.ink)
+                            }
+                        }
+                        .padding(.top, 10)
+                        NavigationLink { WorkoutCompletionView(shots: m.shots.count, makes: m.makes) } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "stop.circle")
+                                Text("End workout").font(.system(size: 16, weight: .medium))
+                            }
+                            .frame(maxWidth: .infinity).frame(height: 52)
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+                            .foregroundStyle(ShotIQColor.shotiqOrange)
+                        }
+                        .padding(.top, 10)
+                        Spacer(minLength: 30)
+                    }
+                    .padding(.horizontal, 20)
+                }
+            }
+        }
+        .onAppear { m.start() }
+        .onDisappear { m.stop() }
+    }
+    private func execStat(_ value: String, _ label: String) -> some View {
+        VStack(spacing: 2) {
+            Text(value).font(.custom("DINCondensed-Bold", size: 30)).foregroundStyle(ShotIQColor.ink)
+                .lineLimit(1).minimumScaleFactor(0.6)
+            Text(label).font(.system(size: 9, weight: .medium)).kerning(0.5)
+                .foregroundStyle(ShotIQColor.graphite)
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
+struct ShotTrackerView: View {      // 061
+    @EnvironmentObject var app: AppState
+    @StateObject private var m = DrillSessionModel()
+    private let baseShots = 24, baseMakes = 15, sessionTarget = 25
+    private let baseMisses: Set<Int> = [2, 4, 5, 8, 11, 14, 17, 20, 21]
+    private var shots: Int { baseShots + m.shots.count }
+    private var makes: Int { baseMakes + m.makes }
+    private var pct: Double { shots == 0 ? 0 : Double(makes) / Double(shots) }
+    var body: some View {
+        CanonicalScreen(testID: "screen-ios-shot-tracker") {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    TopBar()
+                    PlayerHeader(name: app.user?.displayName ?? "Jordan Ellis")
+                    // Session bar
+                    HStack(spacing: 10) {
+                        Text("20-MINUTE TRAINING SESSION").shotiqBody(14, weight: .bold)
+                            .lineLimit(1).minimumScaleFactor(0.7)
+                        Spacer(minLength: 6)
+                        Image(systemName: "stopwatch").font(.system(size: 13))
+                        VStack(alignment: .leading, spacing: 0) {
+                            Text("03:18").font(.custom("DINCondensed-Bold", size: 17))
+                            Text("REMAINING").font(.system(size: 7, weight: .medium)).kerning(0.4)
+                                .foregroundStyle(ShotIQColor.graphite)
+                        }
+                        VRule(height: 26)
+                        Button { m.paused.toggle() } label: {
+                            HStack(spacing: 5) {
+                                Image(systemName: m.paused ? "play.fill" : "pause.fill").font(.system(size: 10))
+                                Text(m.paused ? "RESUME" : "PAUSE WORKOUT")
+                                    .font(.system(size: 10, weight: .bold)).kerning(0.4)
+                                    .lineLimit(1).minimumScaleFactor(0.7)
+                            }
+                            .foregroundStyle(ShotIQColor.shotiqOrange)
+                        }
+                    }
+                    .padding(.horizontal, 20).padding(.vertical, 12)
+                    .overlay(HRule(), alignment: .bottom)
+                    VStack(alignment: .leading, spacing: 0) {
+                        HStack(alignment: .top, spacing: 14) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    SectionLabel(text: "SHOT TRACKER")
+                                    Spacer()
+                                    Text("\(shots) OF \(sessionTarget)")
+                                        .font(.custom("DINCondensed-Bold", size: 16))
+                                }
+                                ZStack(alignment: .topLeading) {
+                                    MediaSurface(height: 268)
+                                    VStack(alignment: .leading, spacing: 1) {
+                                        Text("SHOT \(shots)").font(.system(size: 10, weight: .bold)).kerning(0.4)
+                                        Text("JUST NOW").font(.system(size: 7)).opacity(0.8)
+                                    }
+                                    .foregroundStyle(.white)
+                                    .padding(8)
+                                    .background(.black.opacity(0.75), in: RoundedRectangle(cornerRadius: 4))
+                                    .padding(10)
+                                }
+                            }
+                            .frame(maxWidth: .infinity)
+                            VStack(alignment: .leading, spacing: 9) {
+                                MicroLabel(text: "MAKE PERCENTAGE")
+                                Text(String(format: "%.1f%%", pct * 100))
+                                    .font(.custom("DINCondensed-Bold", size: 36))
+                                    .foregroundStyle(ShotIQColor.ink)
+                                    .lineLimit(1).minimumScaleFactor(0.6)
+                                Text("\(makes) OF \(shots)").font(.custom("DINCondensed-Bold", size: 14))
+                                    .foregroundStyle(ShotIQColor.graphite)
+                                Ring(pct: pct, color: ShotIQColor.confirmGreen, lineWidth: 7)
+                                    .frame(width: 54, height: 54)
+                                HRule()
+                                MicroLabel(text: "CURRENT STREAK")
+                                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                                    Text("3").font(.custom("DINCondensed-Bold", size: 26))
+                                        .foregroundStyle(ShotIQColor.confirmGreen)
+                                    Text("MAKES").font(.system(size: 8, weight: .bold))
+                                        .foregroundStyle(ShotIQColor.confirmGreen)
+                                }
+                                HRule()
+                                MicroLabel(text: "QUICK CORRECTION")
+                                correction("Elbow Height", "Raise elbow")
+                                correction("Shooting Pocket", "Tighten pocket")
+                                correction("Release Arc", "Less forward tilt")
+                                Button {} label: {
+                                    HStack(spacing: 6) {
+                                        Image(systemName: "list.bullet").font(.system(size: 10))
+                                        Text("VIEW ANALYSIS").font(.system(size: 9, weight: .bold)).kerning(0.4)
+                                    }
+                                    .frame(maxWidth: .infinity).frame(height: 34)
+                                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.rule))
+                                    .foregroundStyle(ShotIQColor.ink)
+                                }
+                            }
+                            .frame(width: 128)
+                        }
+                        .padding(.top, 16)
+                        SectionLabel(text: "SET PROGRESS").padding(.top, 20)
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(1...sessionTarget, id: \.self) { i in
+                                    VStack(spacing: 3) {
+                                        if i <= shots {
+                                            let made = i <= baseShots
+                                                ? !baseMisses.contains(i)
+                                                : (m.shots.indices.contains(i - baseShots - 1)
+                                                   ? m.shots[i - baseShots - 1].made : true)
+                                            Image(systemName: made ? "checkmark.circle.fill" : "xmark.circle")
+                                                .font(.system(size: 18))
+                                                .foregroundStyle(made ? ShotIQColor.confirmGreen : ShotIQColor.reviewRed)
+                                        } else {
+                                            Circle().stroke(ShotIQColor.rule, lineWidth: 1.4)
+                                                .frame(width: 17, height: 17)
+                                        }
+                                        Text("\(i)").font(.system(size: 9)).foregroundStyle(ShotIQColor.graphite)
+                                    }
+                                }
+                            }
+                            .padding(.vertical, 2)
+                        }
+                        .padding(.top, 8)
+                        HStack(spacing: 16) {
+                            Spacer()
+                            HStack(spacing: 5) {
+                                Image(systemName: "checkmark.circle.fill").font(.system(size: 11))
+                                    .foregroundStyle(ShotIQColor.confirmGreen)
+                                Text("MAKE").font(.system(size: 9, weight: .bold))
+                            }
+                            HStack(spacing: 5) {
+                                Image(systemName: "xmark.circle").font(.system(size: 11))
+                                    .foregroundStyle(ShotIQColor.reviewRed)
+                                Text("MISS").font(.system(size: 9, weight: .bold))
+                            }
+                            Spacer()
+                        }
+                        .padding(.top, 8)
+                        SectionLabel(text: "SHOT RAIL").padding(.top, 20)
+                        HStack(alignment: .top) {
+                            ForEach([("SETUP", "100%"), ("LOAD", "100%"), ("RISE", "100%"),
+                                     ("RELEASE", "98%"), ("FOLLOW-THROUGH", "100%")], id: \.0) { p in
+                                VStack(spacing: 3) {
+                                    PhaseGlyph(active: p.0 == "RELEASE", size: 26)
+                                    Text(p.0).font(.system(size: 8, weight: p.0 == "RELEASE" ? .bold : .regular))
+                                        .kerning(0.3)
+                                        .foregroundStyle(p.0 == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
+                                        .lineLimit(1).minimumScaleFactor(0.6)
+                                    Text(p.1).font(.custom("DINCondensed-Bold", size: 12))
+                                        .foregroundStyle(p.0 == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
+                                }
+                                .frame(maxWidth: .infinity)
+                            }
+                        }
+                        .padding(.top, 8)
+                        ScoreBar(pct: 0.96).padding(.top, 8)
+                        HStack(spacing: 8) {
+                            Button { m.mark(true, drillId: "shot-tracker") } label: {
+                                trackerButton("checkmark.circle", "MARK MAKE", .white, ShotIQColor.confirmGreen)
+                            }
+                            Button { m.mark(false, drillId: "shot-tracker") } label: {
+                                trackerButton("xmark.circle", "MARK MISS", .white, ShotIQColor.shotiqOrange)
+                            }
+                            Button { m.undo() } label: {
+                                trackerButton("arrow.uturn.backward", "UNDO", ShotIQColor.ink, nil)
+                            }
+                            NavigationLink { WorkoutCompletionView(shots: shots, makes: makes) } label: {
+                                trackerButton("stop.circle", "END WORKOUT", ShotIQColor.ink, nil)
+                            }
+                        }
+                        .padding(.top, 18)
+                        Spacer(minLength: 30)
+                    }
+                    .padding(.horizontal, 20)
+                }
+            }
+        }
+    }
+    private func correction(_ title: String, _ caption: String) -> some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(title).font(.system(size: 11, weight: .semibold))
+                .lineLimit(1).minimumScaleFactor(0.7)
+            Text(caption).font(.system(size: 9)).foregroundStyle(ShotIQColor.graphite)
+                .lineLimit(1).minimumScaleFactor(0.7)
+        }
+        .padding(.horizontal, 8).padding(.vertical, 6)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.rule))
+    }
+    private func trackerButton(_ icon: String, _ label: String, _ fg: Color, _ bg: Color?) -> some View {
+        HStack(spacing: 5) {
+            Image(systemName: icon).font(.system(size: 11))
+            Text(label).font(.system(size: 10, weight: .bold)).kerning(0.3)
+                .lineLimit(1).minimumScaleFactor(0.6)
+        }
+        .frame(maxWidth: .infinity).frame(height: 50)
+        .background(bg ?? .clear, in: RoundedRectangle(cornerRadius: 8))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(bg == nil ? ShotIQColor.rule : .clear))
+        .foregroundStyle(fg)
+    }
+}
+
+struct WorkoutCompletionView: View { // 062
+    @EnvironmentObject var app: AppState
+    var shots = 24; var makes = 15
+    private var accuracy: String {
+        shots > 0 ? String(format: "%.1f%%", Double(makes) / Double(shots) * 100) : "—"
+    }
+    var body: some View {
+        CanonicalScreen(testID: "screen-ios-workout-completion") {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    TopBar()
+                    HStack(alignment: .center, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("WORKOUT COMPLETE").shotiqDisplay(34)
+                            Text("Great session, \(app.user?.firstName ?? "Jordan").")
+                                .font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
+                        }
+                        Spacer(minLength: 8)
+                        HeaderStat(icon: "film", value: "6", label: "DAY STREAK")
+                        VRule(height: 46)
+                        HeaderStat(icon: "circle.hexagongrid", value: "2,840", label: "POINTS")
+                    }
+                    .padding(.horizontal, 20).padding(.top, 14)
+                    VStack(alignment: .leading, spacing: 0) {
+                        ShotIQCard {
+                            HStack(spacing: 0) {
+                                completionStat("scope", "\(shots)", "SHOTS", ShotIQColor.ink)
+                                VRule(height: 54)
+                                completionStat("target", "\(makes)", "MAKES", ShotIQColor.ink)
+                                VRule(height: 54)
+                                completionStat("gauge", accuracy, "ACCURACY", ShotIQColor.ink)
+                                VRule(height: 54)
+                                completionStat("chart.line.uptrend.xyaxis", "+210", "POINTS EARNED", ShotIQColor.ink)
+                            }
+                            .padding(.vertical, 16)
+                        }
+                        .padding(.top, 16)
+                        ShotIQCard {
+                            HStack(spacing: 0) {
+                                PhotoThumb(width: 200, height: 210)
+                                VStack(alignment: .leading, spacing: 6) {
+                                    MicroLabel(text: "FORM SCORE")
+                                    Text("82").font(.custom("DINCondensed-Bold", size: 58))
+                                        .foregroundStyle(ShotIQColor.shotiqOrange)
+                                    ScoreBar(pct: 0.82).frame(width: 96)
+                                    Text("GOOD").font(.system(size: 13, weight: .bold))
+                                        .foregroundStyle(ShotIQColor.analysisBlue)
+                                    Text("Keep building consistency.")
+                                        .font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                                .padding(14)
+                                Spacer(minLength: 0)
+                            }
+                        }
+                        .padding(.top, 12)
+                        SectionLabel(text: "PHASE BREAKDOWN").padding(.top, 20)
+                        HStack(alignment: .top) {
+                            ForEach([("SETUP", "80"), ("LOAD", "78"), ("RISE", "84"),
+                                     ("RELEASE", "82"), ("FOLLOW-THROUGH", "85")], id: \.0) { p in
+                                VStack(spacing: 4) {
+                                    PhaseGlyph(active: p.0 == "RELEASE", size: 28)
+                                    Text(p.0).font(.system(size: 8, weight: p.0 == "RELEASE" ? .bold : .regular))
+                                        .kerning(0.3)
+                                        .foregroundStyle(p.0 == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
+                                        .lineLimit(1).minimumScaleFactor(0.6)
+                                    Text(p.1).font(.custom("DINCondensed-Bold", size: 16))
+                                        .foregroundStyle(p.0 == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
+                                }
+                                .frame(maxWidth: .infinity)
+                            }
+                        }
+                        .padding(.top, 10)
+                        ShotIQCard {
+                            HStack(spacing: 14) {
+                                PhaseGlyph(size: 38)
+                                    .padding(10)
+                                    .overlay(Circle().stroke(ShotIQColor.rule))
+                                VStack(alignment: .leading, spacing: 6) {
+                                    MicroLabel(text: "PRIMARY TARGET")
+                                    Text("Keep elbow stacked through release").shotiqBody(15, weight: .bold)
+                                        .lineLimit(1).minimumScaleFactor(0.8)
+                                    HStack(spacing: 10) {
+                                        ScoreBar(pct: 0.8, color: ShotIQColor.confirmGreen)
+                                        Text("8 / 10").font(.custom("DINCondensed-Bold", size: 16))
+                                            .foregroundStyle(ShotIQColor.confirmGreen)
+                                    }
+                                    Text("Progress this session").font(.system(size: 11))
+                                        .foregroundStyle(ShotIQColor.graphite)
+                                }
+                            }
+                            .padding(14)
+                        }
+                        .padding(.top, 16)
+                        ShotIQCard {
+                            HStack(alignment: .top, spacing: 12) {
+                                Image(systemName: "viewfinder").font(.system(size: 22))
+                                    .foregroundStyle(ShotIQColor.shotiqOrange)
+                                VStack(alignment: .leading, spacing: 5) {
+                                    MicroLabel(text: "COACHING TAKEAWAY")
+                                    Text("Nice arc and balance. Your release path is clean. Focus on keeping your elbow in line on fatigue.")
+                                        .font(.system(size: 12)).foregroundStyle(ShotIQColor.ink)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                            }
+                            .padding(14)
+                        }
+                        .padding(.top, 10)
+                        NavigationLink { DrillDetailView(name: "Elbow Stack Builder") } label: {
+                            ShotIQCard {
+                                HStack(spacing: 12) {
+                                    Circle().fill(ShotIQColor.analysisBlue).frame(width: 44, height: 44)
+                                        .overlay(Image(systemName: "point.3.connected.trianglepath.dotted")
+                                            .font(.system(size: 16)).foregroundStyle(.white))
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        MicroLabel(text: "NEXT RECOMMENDATION")
+                                        Text("Elbow Stack Builder").shotiqBody(15, weight: .semibold)
+                                        Text("15 min • Form Focus — Build alignment and repeatable release.")
+                                            .font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
+                                            .lineLimit(1).minimumScaleFactor(0.8)
+                                    }
+                                    Spacer(minLength: 4)
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                                }
+                                .padding(14)
+                            }
+                        }
+                        .padding(.top, 10)
+                        HStack(spacing: 10) {
+                            Button {} label: {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "doc.text").font(.system(size: 12))
+                                    Text("Review shots").font(.system(size: 13, weight: .semibold))
+                                        .lineLimit(1).minimumScaleFactor(0.7)
+                                }
+                                .frame(maxWidth: .infinity).frame(height: 50)
+                                .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.shotiqOrange))
+                                .foregroundStyle(ShotIQColor.shotiqOrange)
+                            }
+                            ShareLink(item: "ShotIQ workout complete — \(makes)/\(shots) makes (\(accuracy)). 🏀") {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "point.3.connected.trianglepath.dotted").font(.system(size: 12))
+                                    Text("Share progress").font(.system(size: 13, weight: .semibold))
+                                        .lineLimit(1).minimumScaleFactor(0.7)
+                                }
+                                .frame(maxWidth: .infinity).frame(height: 50)
+                                .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.analysisBlue))
+                                .foregroundStyle(ShotIQColor.analysisBlue)
+                            }
+                            Button {} label: {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "arrow.clockwise").font(.system(size: 12))
+                                    Text("Repeat drill").font(.system(size: 13, weight: .semibold))
+                                        .lineLimit(1).minimumScaleFactor(0.7)
+                                }
+                                .frame(maxWidth: .infinity).frame(height: 50)
+                                .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 8))
+                                .foregroundStyle(.white)
+                            }
+                        }
+                        .padding(.vertical, 20)
+                    }
+                    .padding(.horizontal, 20)
+                }
+            }
+        }
+    }
+    private func completionStat(_ icon: String, _ value: String, _ label: String, _ color: Color) -> some View {
+        VStack(spacing: 4) {
+            Image(systemName: icon).font(.system(size: 16)).foregroundStyle(ShotIQColor.ink)
+            Text(value).font(.custom("DINCondensed-Bold", size: 28)).foregroundStyle(color)
+                .lineLimit(1).minimumScaleFactor(0.6)
+            Text(label).font(.system(size: 8, weight: .medium)).kerning(0.4)
+                .foregroundStyle(ShotIQColor.graphite)
+                .lineLimit(1).minimumScaleFactor(0.7)
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
