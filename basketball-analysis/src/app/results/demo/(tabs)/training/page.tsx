@@ -119,7 +119,40 @@ export default function TrainingHubPage() {
 
       {/* right rail */}
       <aside className="w-[340px] shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[18px]">
-        <div className="flex items-center justify-between">
+        {/* Coaching target and form score used to live in this screen's bespoke
+            left sidebar. Navigation is now uniform app-wide, so the cards moved
+            here rather than being dropped. */}
+        <SectionLabel className="text-[var(--shotiq-color-graphite)]">COACHING TARGET</SectionLabel>
+        <Link href="/results/demo/goals" className="mt-[8px] flex items-start justify-between gap-[6px]">
+          <span className="text-[16px] font-semibold leading-[21px]">Keep elbow stacked through release</span>
+          <ChevronRight className="mt-[3px] h-[14px] w-[14px] shrink-0 text-[var(--shotiq-color-graphite)]" />
+        </Link>
+        <div className="mt-[8px] flex items-center gap-[12px]">
+          <span className="inline-block rounded-[3px] border border-[var(--shotiq-color-confirmGreen)] px-[7px] py-[2px] text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-confirmGreen)]">
+            ACTIVE GOAL
+          </span>
+          <span className="text-[11px] text-[var(--shotiq-color-graphite)]">Improve release consistency and arm alignment</span>
+          <span className="shotiq-numeric ml-auto text-[12px]">72%</span>
+        </div>
+        <div className="mt-[4px] h-[5px] rounded-full bg-[var(--shotiq-color-rule)]">
+          <div className="h-full w-[72%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" />
+        </div>
+
+        <div className="mt-[14px] flex items-end gap-[14px] border-t border-[var(--shotiq-color-rule)] pt-[14px]">
+          <div>
+            <div className="text-[11px] text-[var(--shotiq-color-graphite)]">Form score</div>
+            <div className="shotiq-numeric text-[40px] leading-[44px] text-[var(--shotiq-color-shotiqOrange)]">82</div>
+            <div className="h-[6px] w-[100px] rounded-full bg-[var(--shotiq-color-rule)]">
+              <div className="h-full w-[82%] rounded-full bg-[var(--shotiq-color-shotiqOrange)]" />
+            </div>
+          </div>
+          <div className="pb-[4px]">
+            <div className="text-[12px] font-semibold text-[var(--shotiq-color-analysisBlue)]">Good</div>
+            <div className="text-[10px] text-[var(--shotiq-color-graphite)]">Keep building consistency.</div>
+          </div>
+        </div>
+
+        <div className="mt-[18px] flex items-center justify-between border-t border-[var(--shotiq-color-rule)] pt-[14px]">
           <SectionLabel>TODAY&apos;S SNAPSHOT</SectionLabel>
           <span className="text-[11px] text-[var(--shotiq-color-graphite)]">Today</span>
         </div>
