@@ -180,6 +180,28 @@ for (const app of APPS) {
     console.log(`   created internal group ${group.id}`)
   }
   console.log(`   internal group "${group.attributes?.name}" (${group.id})`)
+  console.log(
+    `     isInternalGroup: ${group.attributes?.isInternalGroup}` +
+      `, hasAccessToAllBuilds: ${group.attributes?.hasAccessToAllBuilds}`,
+  )
+  // An API-created internal group can come up with hasAccessToAllBuilds=false;
+  // internal testers then compute "no installable builds" even with a build
+  // explicitly attached, and every invitation 409s. Flip it on.
+  if (confirm && group.attributes?.isInternalGroup && group.attributes?.hasAccessToAllBuilds !== true) {
+    try {
+      const patched = await api('PATCH', `/v1/betaGroups/${group.id}`, {
+        data: {
+          type: 'betaGroups',
+          id: group.id,
+          attributes: { hasAccessToAllBuilds: true },
+        },
+      })
+      group = patched.data ?? group
+      console.log(`     set hasAccessToAllBuilds=true`)
+    } catch (err) {
+      console.log(`     could not set hasAccessToAllBuilds: ${err.message.slice(0, 200)}`)
+    }
+  }
 
   const groupBuilds = await api('GET', `/v1/betaGroups/${group.id}/builds?limit=20`)
   const already = (groupBuilds.data ?? []).some((b) => b.id === build.id)
@@ -299,21 +321,29 @@ for (const app of APPS) {
     // TestFlight until a betaTesterInvitations POST actually fires it.
     const testerState = tester?.attributes?.state
     if (confirm && tester && testerState !== 'ACCEPTED' && testerState !== 'INSTALLED') {
-      try {
-        await api('POST', '/v1/betaTesterInvitations', {
-          data: {
-            type: 'betaTesterInvitations',
-            relationships: {
-              betaTester: { data: { type: 'betaTesters', id: tester.id } },
-              app: { data: { type: 'apps', id: appId } },
+      // Group membership and the hasAccessToAllBuilds flip propagate
+      // asynchronously on Apple's side, so give the invite a few tries.
+      for (let attempt = 1; attempt <= 4; attempt++) {
+        try {
+          await api('POST', '/v1/betaTesterInvitations', {
+            data: {
+              type: 'betaTesterInvitations',
+              relationships: {
+                betaTester: { data: { type: 'betaTesters', id: tester.id } },
+                app: { data: { type: 'apps', id: appId } },
+              },
             },
-          },
-        })
-        console.log(`   invitation email sent to ${testerEmail} — open it on the phone, then TestFlight`)
-      } catch (err) {
-        // Don't fail the whole run: the states printed above say why (usually
-        // internalBuildState still PROCESSING). Re-run once it settles.
-        console.log(`   invitation not sent yet: ${err.message.slice(0, 300)}`)
+          })
+          console.log(`   invitation email sent to ${testerEmail} — open it on the phone, then TestFlight`)
+          break
+        } catch (err) {
+          if (attempt === 4) {
+            console.log(`   invitation still refused: ${err.message.slice(0, 300)}`)
+          } else {
+            console.log(`   invite attempt ${attempt} refused; retrying in 15s`)
+            await new Promise((resolve) => setTimeout(resolve, 15_000))
+          }
+        }
       }
     }
   }
