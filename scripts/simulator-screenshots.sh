@@ -74,6 +74,69 @@ step 'Choosing a simulator'
 xcrun simctl list runtimes 2>&1 | tee "${work_dir}/simctl-runtimes.txt" | sed 's/^/  /' || true
 xcrun simctl list devices 2>&1 | tee "${work_dir}/simctl-devices.txt" >/dev/null || true
 
+# CoreSimulator stores every device under ~/Library/Developer/CoreSimulator/Devices.
+# On this runner that path is redirected to an offload folder the account cannot
+# write, so *every* `simctl create` dies with "Device was allocated but was stuck
+# in creation state" and the machine ends up with zero simulators. Repair it —
+# in place if we own the folder, otherwise by pointing the set at a directory the
+# runner definitely owns.
+writable_dir() {
+  local dir="$1" probe
+  [ -d "$dir" ] || return 1
+  probe="${dir}/.simshots-probe.$$"
+  if mkdir "$probe" 2>/dev/null; then rmdir "$probe"; return 0; fi
+  return 1
+}
+
+restart_coresimulator() {
+  xcrun simctl shutdown all >/dev/null 2>&1 || true
+  killall -9 com.apple.CoreSimulator.CoreSimulatorService >/dev/null 2>&1 || true
+  killall -9 Simulator >/dev/null 2>&1 || true
+  sleep 8
+  xcrun simctl list devices >/dev/null 2>&1 || true
+}
+
+# Move the device set back onto the boot volume. A plain mkdir succeeds on the
+# offload volume, so a write probe is not enough to detect this — CoreSimulator
+# fails later, when it clones the runtime's sample content, with EPERM. Only a
+# real local directory is known to work.
+force_local_device_set() {
+  local root="${HOME}/Library/Developer/CoreSimulator"
+  local devices="${root}/Devices"
+  local local_set="${root}/Devices.simshots"
+
+  if [ -d "$devices" ] && [ ! -L "$devices" ]; then
+    note 'The device set is already a real directory on the boot volume — nothing to repoint'
+    return 1
+  fi
+
+  local current=""
+  [ -L "$devices" ] && current="$(readlink "$devices")"
+  mkdir -p "$local_set" 2>/dev/null || true
+  writable_dir "$local_set" || { note "cannot create ${local_set}"; return 1; }
+
+  local stamp backup
+  stamp="$(date +%Y%m%d-%H%M%S)"
+  backup="${devices}.simshots-backup-${stamp}"
+  if [ -e "$devices" ] || [ -L "$devices" ]; then
+    mv "$devices" "$backup" 2>/dev/null || rm -f "$devices" || { note 'could not move the device set aside'; return 1; }
+  fi
+  ln -s "$local_set" "$devices" || { note 'could not repoint the device set'; return 1; }
+
+  {
+    echo 'simshots repointed the CoreSimulator device set onto the boot volume'
+    echo "  was:     ${current:-<real directory>}"
+    echo "  now:     ${local_set}"
+    echo "  restore: rm '${devices}' && mv '${backup}' '${devices}'"
+    echo '  reason:  CoreSimulator cannot clone runtime sample content onto the'
+    echo '           offload volume (EPERM), so every simctl create failed.'
+    df -h "$HOME" 2>&1 | head -3
+  } | tee "${work_dir}/coresimulator-device-set.txt" | sed 's/^/  /'
+
+  restart_coresimulator
+  return 0
+}
+
 udid=""
 sim_label=""
 
@@ -111,18 +174,20 @@ select_simulator() {
 select_simulator
 
 if [ -z "$udid" ]; then
-  # "Device was allocated but was stuck in creation state" is what CoreSimulator
-  # says when its daemon is still bound to a different Xcode than DEVELOPER_DIR
-  # — which is exactly this runner, whose Xcode lives on an external volume.
-  # Killing the service makes launchd restart it against the current Xcode.
+  # "Device was allocated but was stuck in creation state" also shows up when the
+  # daemon is still bound to a different Xcode than DEVELOPER_DIR. Killing the
+  # service makes launchd restart it against the current one.
   step 'Resetting CoreSimulator and retrying'
   sed 's/^/    /' "${work_dir}/simctl-create.log" 2>/dev/null | tail -12 || true
-  xcrun simctl shutdown all >/dev/null 2>&1 || true
-  killall -9 com.apple.CoreSimulator.CoreSimulatorService >/dev/null 2>&1 || true
-  killall -9 Simulator >/dev/null 2>&1 || true
-  sleep 8
-  xcrun simctl list devices >/dev/null 2>&1 || true
+  restart_coresimulator
   select_simulator
+fi
+
+if [ -z "$udid" ]; then
+  step 'Moving the simulator device set onto the boot volume and retrying'
+  if force_local_device_set; then
+    select_simulator
+  fi
 fi
 
 if [ -z "$udid" ]; then
@@ -132,6 +197,20 @@ if [ -z "$udid" ]; then
   sed 's/^/    /' "${work_dir}/simctl-runtimes.txt" 2>/dev/null | tail -20 || true
   note 'known devices:'
   sed 's/^/    /' "${work_dir}/simctl-devices.txt" 2>/dev/null | tail -30 || true
+
+  step 'CoreSimulator diagnostics'
+  {
+    echo "--- whoami / HOME"; whoami; echo "HOME=${HOME}"
+    echo "--- xcode-select -p"; xcode-select -p 2>&1
+    echo "--- DEVELOPER_DIR=${DEVELOPER_DIR:-<unset>}"
+    echo "--- simctl runtime list"; xcrun simctl runtime list -v 2>&1 | head -60
+    echo "--- CoreSimulator dir"; ls -la "${HOME}/Library/Developer/CoreSimulator/" 2>&1 | head -20
+    echo "--- Devices dir"; ls -la "${HOME}/Library/Developer/CoreSimulator/Devices" 2>&1 | head -20
+    echo "--- free space"; df -h "${HOME}" 2>&1 | head -5
+    echo "--- CoreSimulator.log tail"
+    tail -80 "${HOME}/Library/Logs/CoreSimulator/CoreSimulator.log" 2>&1
+  } 2>&1 | tee "${work_dir}/coresimulator-diagnostics.txt" | sed 's/^/    /'
+
   die 'no iOS simulator is available and none could be created'
 fi
 note "Simulator: ${sim_label:-unknown} (${udid})"
@@ -163,6 +242,11 @@ set -e
 [ "$build_status" -eq 0 ] || die "build-for-testing failed (see simshots-xcodebuild-build.log)"
 
 step 'Running the canonical screenshot + click-test walk'
+# Hard deadline. A UI walk that wedges on one screen must not eat the whole CI
+# job: kill it and export whatever the result bundle already holds, so a slow or
+# stuck screen still produces evidence instead of a bare timeout.
+test_deadline="${SIMSHOTS_TEST_DEADLINE:-2400}"
+test_log="${work_dir}/xcodebuild-test.log"
 set +e
 xcodebuild test-without-building \
   -project "$project" \
@@ -173,11 +257,30 @@ xcodebuild test-without-building \
   -resultBundlePath "$result_bundle" \
   -only-testing:"$ui_test_class" \
   -test-timeouts-enabled YES \
-  -maximum-test-execution-time-allowance 1800 \
+  -maximum-test-execution-time-allowance 420 \
   CODE_SIGNING_ALLOWED=NO \
-  2>&1 | tee "${work_dir}/xcodebuild-test.log" | tail -80
-test_status="${PIPESTATUS[0]}"
+  >"$test_log" 2>&1 &
+xcodebuild_pid=$!
+
+test_timed_out=0
+deadline_at=$(( $(date +%s) + test_deadline ))
+while kill -0 "$xcodebuild_pid" 2>/dev/null; do
+  if [ "$(date +%s)" -ge "$deadline_at" ]; then
+    note "the walk passed its ${test_deadline}s deadline — stopping it so the screenshots still get exported"
+    kill -TERM "$xcodebuild_pid" 2>/dev/null || true
+    sleep 15
+    kill -9 "$xcodebuild_pid" 2>/dev/null || true
+    pkill -9 -f 'xctest|testmanagerd|XCTRunner' 2>/dev/null || true
+    test_timed_out=1
+    break
+  fi
+  sleep 10
+done
+wait "$xcodebuild_pid"
+test_status=$?
 set -e
+[ "$test_timed_out" -eq 1 ] && test_status=124
+tail -80 "$test_log" || true
 note "xcodebuild test exit status: ${test_status}"
 
 xcrun simctl shutdown "$udid" >/dev/null 2>&1 || true
