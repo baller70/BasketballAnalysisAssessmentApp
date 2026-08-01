@@ -52,9 +52,14 @@ def usable(d):
     # or disconnected as unusable, and even then only for ranking.
     return not state_of(d).startswith(('unavailable', 'disconnected'))
 
+def is_iphone(d):
+    # The Mac also has a paired iPad; the deliverable goes on the PHONE.
+    product = (d.get('hardwareProperties', {}) or {}).get('productType', '')
+    return product.startswith('iPhone') or 'iphone' in name_of(d).lower()
+
 candidates = [d for d in devices if not wanted or udid_of(d) == wanted]
-usable_ones = [d for d in candidates if usable(d)]
-chosen = (usable_ones or candidates or [None])[0]
+ranked = sorted(candidates, key=lambda d: (not is_iphone(d), not usable(d)))
+chosen = (ranked or [None])[0]
 
 if chosen is None:
     print('  ')
