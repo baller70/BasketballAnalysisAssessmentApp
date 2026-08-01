@@ -232,7 +232,7 @@ export default function EliteShooterDetailClient() {
                   <td className="py-[5px] pr-[8px] text-[9px] font-bold tracking-[0.04em] text-[var(--shotiq-color-graphite)]">
                     {i === 0 || rows[i - 1][0] !== phase ? phase : ""}
                   </td>
-                  <td className="pr-[8px] pt-[5px] align-top">{metric}</td>
+                  <td className="whitespace-nowrap pr-[8px] pt-[5px] align-top">{metric}</td>
                   <td className="whitespace-nowrap pr-[8px] pt-[5px] align-top font-semibold">{val}</td>
                   <td className="whitespace-nowrap pr-[8px] pt-[5px] align-top text-[var(--shotiq-color-graphite)]">{range}</td>
                   <td className="whitespace-nowrap pr-[8px] pt-[5px] align-top">{you}</td>
@@ -318,7 +318,7 @@ export default function EliteShooterDetailClient() {
               </div>
             ))}
           </div>
-          <div className="mt-[10px] flex gap-[12px] border-t border-[var(--shotiq-color-rule)] pt-[10px] text-[12px] font-semibold">
+          <div className="mt-[10px] flex gap-[10px] whitespace-nowrap border-t border-[var(--shotiq-color-rule)] pt-[10px] text-[11px] font-semibold">
             <span>4× NBA Champion</span><span className="text-[var(--shotiq-color-rule)]">|</span>
             <span>2× MVP</span><span className="text-[var(--shotiq-color-rule)]">|</span>
             <span>10× All-Star</span><span className="text-[var(--shotiq-color-rule)]">|</span>

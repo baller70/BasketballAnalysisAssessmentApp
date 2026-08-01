@@ -97,10 +97,22 @@ export default function ComparePage() {
       </div>
 
       {/* dual viewers */}
-      <div className="mt-[8px] flex items-center gap-[14px]">
+      <div className="mt-[8px] flex items-start gap-[14px]">
         {(["YOU", "ELITE REFERENCE"] as const).map((side, sideIdx) => (
-          <div key={side} className={`min-w-0 ${sideIdx ? "flex-[1.2]" : "flex-1"}`}>
-            <div className="relative overflow-hidden rounded-[6px] bg-[#1B1D20]" style={{ height: 252 }}>
+          <React.Fragment key={side}>
+          {sideIdx === 1 && (
+            <button type="button" onClick={() => setSynced((v) => !v)} aria-pressed={synced}
+                    className="flex w-[86px] shrink-0 flex-col items-center gap-[4px] self-center pt-[10px]">
+              <RefreshCcw className={`h-[26px] w-[26px] ${synced ? "text-[var(--shotiq-color-confirmGreen)]" : "text-[var(--shotiq-color-graphite)]"}`} strokeWidth={1.6} />
+              <span className="text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">SYNCED</span>
+              <span className="shotiq-numeric text-[13px]">0.64s</span>
+              <span className={`grid h-[22px] w-[22px] place-items-center rounded-full ${synced ? "bg-[var(--shotiq-color-confirmGreen)]" : "bg-[var(--shotiq-color-muted)]"}`}>
+                <svg width="11" height="11" viewBox="0 0 12 12"><path d="M2 6.5 L5 9.5 L10 3" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" /></svg>
+              </span>
+            </button>
+          )}
+          <div className={`min-w-0 ${sideIdx ? "flex-1" : "w-[534px] shrink-0"}`}>
+            <div className="relative overflow-hidden rounded-[6px] bg-[#1B1D20]" style={{ height: 256 }}>
               {pristine ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={sideIdx ? "/images/canonical/087-elite.png" : "/images/canonical/087-you.png"}
@@ -141,11 +153,12 @@ export default function ComparePage() {
               </div>
             )}
           </div>
+          </React.Fragment>
         ))}
       </div>
 
       {/* phase selector */}
-      <div className="mt-[12px] flex items-center gap-[16px]">
+      <div className="mt-[8px] flex items-center gap-[16px]">
         <SectionLabel>SELECT PHASE</SectionLabel>
         {[0, 1].map((side) => (
           <div key={side} className="flex flex-1 items-center justify-between px-[10px]">
@@ -166,11 +179,11 @@ export default function ComparePage() {
       </div>
 
       {/* analysis band */}
-      <div className="mt-[14px] flex gap-[16px]">
-        <Card className="w-[250px] shrink-0 px-[18px] py-[14px]">
+      <div className="mt-[10px] flex gap-[16px]">
+        <Card className="w-[250px] shrink-0 px-[18px] py-[10px]">
           <SectionLabel>FORM SCORE</SectionLabel>
           <div className="mt-[8px] flex items-center gap-[14px]">
-            <Ring pct={(score ?? 0) / 100} size={86}>
+            <Ring pct={(score ?? 0) / 100} size={80}>
               <div className="text-center"><span className="shotiq-numeric text-[26px]">{score ?? "—"}</span><span className="block text-[9px] text-[var(--shotiq-color-graphite)]">/100</span></div>
             </Ring>
             <div>
@@ -185,7 +198,7 @@ export default function ComparePage() {
           </div>
         </Card>
 
-        <Card className="min-w-0 flex-1 px-[18px] py-[14px]">
+        <Card className="min-w-0 flex-1 px-[18px] py-[10px]">
           <SectionLabel>KEY DIFFERENCES</SectionLabel>
           <table className="mt-[6px] w-full text-[12px]">
             <thead><tr className="text-left text-[9px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">
@@ -193,7 +206,7 @@ export default function ComparePage() {
             <tbody className="divide-y divide-[var(--shotiq-color-rule)]">
               {DIFFS.map(([m, you, el, d]) => (
                 <tr key={m}>
-                  <td className="py-[5px] pr-[8px]">{m}</td>
+                  <td className="py-[3px] pr-[8px]">{m}</td>
                   <td className="pr-[8px] font-semibold text-[var(--shotiq-color-shotiqOrange)]">{you}</td>
                   <td className="pr-[8px] font-semibold text-[var(--shotiq-color-analysisBlue)]">{el}</td>
                   <td>{d}</td>
@@ -203,7 +216,7 @@ export default function ComparePage() {
           </table>
         </Card>
 
-        <Card className="w-[300px] shrink-0 px-[18px] py-[14px]">
+        <Card className="w-[300px] shrink-0 px-[18px] py-[10px]">
           <SectionLabel>WHY THE DIFFERENCE MATTERS</SectionLabel>
           <div className="mt-[6px] space-y-[8px]">
             {["Slightly lower release angle reduces margin for error on longer shots.",
@@ -218,7 +231,7 @@ export default function ComparePage() {
           </div>
         </Card>
 
-        <Card className="w-[210px] shrink-0 px-[18px] py-[14px]">
+        <Card className="w-[210px] shrink-0 px-[18px] py-[10px]">
           <SectionLabel>TOP MATCHES</SectionLabel>
           <div className="mt-[8px] space-y-[9px]">
             {MATCH.map(([p, v]) => (
@@ -237,7 +250,7 @@ export default function ComparePage() {
       </div>
 
       {/* footer band */}
-      <div className="mt-[14px] flex gap-[16px]">
+      <div className="mt-[10px] flex gap-[16px]">
         <Card className="flex flex-1 items-center gap-[14px] px-[20px] py-[14px]">
           <span className="text-[22px]">💡</span>
           <div>

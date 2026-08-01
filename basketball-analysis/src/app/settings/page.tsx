@@ -360,7 +360,7 @@ export default function SettingsPage() {
     onClick: () => void; testid?: string
   }) => (
     <button type="button" onClick={onClick} data-testid={testid}
-            className="flex w-full items-center justify-between py-[8px] text-left text-[13px] hover:bg-[var(--shotiq-color-warmCanvas)]">
+            className="flex w-full items-center justify-between py-[6px] text-left text-[13px] hover:bg-[var(--shotiq-color-warmCanvas)]">
       <span>{label}</span>
       <span className={`flex items-center gap-[5px] text-[12px] font-medium ${
         tone === "green" ? "text-[var(--shotiq-color-confirmGreen)]"
@@ -500,7 +500,7 @@ export default function SettingsPage() {
                 </div>
               </div>
             </div>
-            <div className="mt-[14px] flex items-center justify-between border-t border-[var(--shotiq-color-rule)] pt-[12px]">
+            <div className="mt-[10px] flex items-center justify-between border-t border-[var(--shotiq-color-rule)] pt-[10px]">
               <span className="flex items-center gap-[6px] text-[12px] text-[var(--shotiq-color-confirmGreen)]">
                 <CheckCircle2 className="h-[14px] w-[14px]" /> {profileSaved ? "Saved" : "Profile looks good"}
               </span>
@@ -545,7 +545,7 @@ export default function SettingsPage() {
                 </div>
               </div>
             </div>
-            <div className="mt-[16px] flex items-center justify-around border-t border-[var(--shotiq-color-rule)] pt-[14px]">
+            <div className="mt-[12px] flex items-center justify-around border-t border-[var(--shotiq-color-rule)] pt-[12px]">
               <div className="flex items-center gap-[10px]">
                 <span className="shotiq-numeric text-[24px]">6</span>
                 <Film className="h-[22px] w-[22px]" strokeWidth={1.5} />
@@ -561,7 +561,7 @@ export default function SettingsPage() {
         </div>
 
         {/* summary cards — every row is a live, persisted control */}
-        <div className="mt-[16px] grid grid-cols-3 gap-[16px]">
+        <div className="mt-[12px] grid grid-cols-3 gap-[16px]">
           <Card id="section-notifications" className="scroll-mt-[76px] p-[16px]">
             <div className="flex items-center gap-[10px]">
               <Bell className="h-[24px] w-[24px]" strokeWidth={1.4} />
@@ -628,7 +628,7 @@ export default function SettingsPage() {
         </div>
 
         {/* data actions band */}
-        <Card className="mt-[16px] flex items-center divide-x divide-[var(--shotiq-color-rule)] px-[8px] py-[16px]">
+        <Card className="mt-[12px] flex items-center divide-x divide-[var(--shotiq-color-rule)] px-[8px] py-[12px]">
           <div className="w-[250px] px-[16px]">
             <span className="shotiq-display text-[17px] leading-[18px]">DATA ACTIONS</span>
             <div className="mt-[2px] text-[11px] text-[var(--shotiq-color-graphite)]">Manage your data and analysis history.</div>

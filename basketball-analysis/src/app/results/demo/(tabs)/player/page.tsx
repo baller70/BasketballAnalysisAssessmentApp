@@ -172,7 +172,7 @@ export default function PlayerCardPage() {
                   {FILM.map((src, i) => (
                     <button key={src} type="button" onClick={() => setFilm(Math.min(i, 4))}
                             aria-label={`Frame ${i + 1}`}
-                            className={`relative h-[89px] w-[76px] shrink-0 overflow-hidden rounded-[4px] ${i === film ? "ring-2" : ""}`}
+                            className={`relative h-[91px] w-[80px] shrink-0 overflow-hidden rounded-[4px] ${i === film ? "ring-2" : ""}`}
                             style={i === film ? { boxShadow: `0 0 0 2px ${accentColor}` } : undefined}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={src} alt="" className="h-full w-full object-cover" />
@@ -181,7 +181,7 @@ export default function PlayerCardPage() {
                 </div>
                 <div className="mt-[8px] flex justify-between gap-[6px] px-[6px]">
                   {FILM.map((src, i) => (
-                    <span key={src} className="flex h-[6px] w-[76px] items-center justify-center">
+                    <span key={src} className="flex h-[6px] w-[80px] items-center justify-center">
                       <span className={`h-[6px] w-[6px] rounded-full ${i === film ? "" : "bg-white/35"}`}
                             style={i === film ? { background: accentColor } : undefined} />
                     </span>
@@ -197,7 +197,7 @@ export default function PlayerCardPage() {
           <Card id="customize-card"
                 className={`px-[20px] py-[16px] transition ${pulse ? "ring-2 ring-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
             <SectionLabel>CUSTOMIZE YOUR CARD</SectionLabel>
-            <div className="mt-[12px] flex gap-[36px]">
+            <div className="mt-[12px] flex gap-[22px]">
               <div>
                 <div className="text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">CARD STYLE</div>
                 <div className="mt-[10px] flex gap-[10px]">
@@ -223,7 +223,7 @@ export default function PlayerCardPage() {
                 <div className="mt-[10px] flex gap-[10px]">
                   {ACCENT_SWATCH.map((c, i) => (
                     <button key={c} type="button" onClick={() => setAccent(i)} aria-label={`accent ${i}`} aria-pressed={accent === i}
-                            className={`grid h-[38px] w-[38px] place-items-center rounded-[8px] ${accent === i ? "ring-2 ring-offset-2 ring-[var(--shotiq-color-shotiqOrange)]" : ""}`}
+                            className={`grid h-[34px] w-[34px] place-items-center rounded-[8px] ${accent === i ? "ring-2 ring-offset-2 ring-[var(--shotiq-color-shotiqOrange)]" : ""}`}
                             style={{ background: c }}>
                       {accent === i && (
                         <span className="grid h-[18px] w-[18px] place-items-center rounded-full bg-white">
@@ -238,7 +238,7 @@ export default function PlayerCardPage() {
                 <div className="text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">SHOW ON CARD</div>
                 <div className="mt-[6px] space-y-[5px]">
                   {TOGGLES.map((t) => (
-                    <button key={t} type="button" onClick={() => toggle(t)} className="flex w-[170px] items-center gap-[10px]">
+                    <button key={t} type="button" onClick={() => toggle(t)} className="flex w-[150px] items-center gap-[8px]">
                       <span className="flex-1 whitespace-nowrap text-left text-[12px]">{t}</span>
                       <span className={`h-[18px] w-[32px] rounded-full p-[2px] transition ${on.has(t) ? "bg-[var(--shotiq-color-confirmGreen)]" : "bg-[var(--shotiq-color-rule)]"}`}>
                         <span className={`block h-[14px] w-[14px] rounded-full bg-white transition ${on.has(t) ? "translate-x-[14px]" : ""}`} />
@@ -251,9 +251,9 @@ export default function PlayerCardPage() {
                 <div className="text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">BACKGROUND</div>
                 <div className="mt-[8px] space-y-[10px]">
                   <button type="button" onClick={() => setBgChoice("photo")} aria-pressed={bgChoice === "photo"}
-                          className={`relative block w-[156px] rounded-[7px] p-[4px] text-left ${bgChoice === "photo" ? "border-2 border-[var(--shotiq-color-shotiqOrange)]" : "border border-[var(--shotiq-color-rule)]"}`}>
+                          className={`relative block w-[146px] rounded-[7px] p-[4px] text-left ${bgChoice === "photo" ? "border-2 border-[var(--shotiq-color-shotiqOrange)]" : "border border-[var(--shotiq-color-rule)]"}`}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="/images/canonical/086-bg-court.png" alt="" className="h-[64px] w-full rounded-[4px] object-cover" />
+                    <img src="/images/canonical/086-bg-court.png" alt="" className="h-[52px] w-full rounded-[4px] object-cover" />
                     {bgChoice === "photo" && (
                       <span className="absolute right-[8px] top-[8px] grid h-[18px] w-[18px] place-items-center rounded-full bg-[var(--shotiq-color-shotiqOrange)]">
                         <Check className="h-[11px] w-[11px] text-white" strokeWidth={3.2} />
@@ -262,7 +262,7 @@ export default function PlayerCardPage() {
                     <div className="mt-[4px] px-[2px] pb-[2px] text-[12px] font-semibold">Court photo</div>
                   </button>
                   <button type="button" onClick={() => setBgChoice("clean")} aria-pressed={bgChoice === "clean"}
-                          className={`block w-[156px] rounded-[7px] p-[4px] text-left ${bgChoice === "clean" ? "border-2 border-[var(--shotiq-color-shotiqOrange)]" : "border border-[var(--shotiq-color-rule)]"}`}>
+                          className={`block w-[146px] rounded-[7px] p-[4px] text-left ${bgChoice === "clean" ? "border-2 border-[var(--shotiq-color-shotiqOrange)]" : "border border-[var(--shotiq-color-rule)]"}`}>
                     <div className="h-[52px] w-full rounded-[4px] bg-white" />
                     <div className="px-[2px] pb-[2px] text-[12px]">Clean</div>
                   </button>

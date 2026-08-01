@@ -64,9 +64,9 @@ function DualSlider({ min, max, lo, hi, onLo, onHi, loLabel, hiLabel, label }: {
 }) {
   const pct = (v: number) => ((v - min) / (max - min)) * 100
   return (
-    <div className="mt-[16px]">
-      <div className="text-[13px] font-semibold">{label}</div>
-      <div className="relative mt-[10px] h-[12px]">
+    <div className="mt-[7px]">
+      <div className="text-[12px] font-semibold">{label}</div>
+      <div className="relative mt-[7px] h-[12px]">
         <div className="absolute inset-x-0 top-[5px] h-[2px] rounded-full bg-[var(--shotiq-color-rule)]" />
         <div className="absolute top-[5px] h-[2px] bg-[var(--shotiq-color-ink)]"
              style={{ left: `${pct(lo)}%`, right: `${100 - pct(hi)}%` }} />
@@ -79,7 +79,7 @@ function DualSlider({ min, max, lo, hi, onLo, onHi, loLabel, hiLabel, label }: {
                onChange={(e) => onHi(Math.max(Number(e.target.value), lo))}
                className="pointer-events-auto absolute inset-x-0 top-[-6px] h-[10px] w-full cursor-pointer opacity-0" />
       </div>
-      <div className="mt-[4px] flex justify-between text-[11px] text-[var(--shotiq-color-graphite)]">
+      <div className="mt-[2px] flex justify-between text-[10px] text-[var(--shotiq-color-graphite)]">
         <span>{loLabel}</span><span>{hiLabel}</span>
       </div>
     </div>
@@ -165,7 +165,7 @@ export default function EliteShootersPage() {
          className={`flex flex-col ${pair.length >= 2 ? "h-[835px]" : "min-h-full"}`}>
       <div className="flex min-h-0 flex-1 overflow-hidden">
         {/* ------------------------------------------------ filters sidebar */}
-        <aside className="w-[209px] shrink-0 overflow-hidden border-r border-[var(--shotiq-color-rule)] px-[21px] pb-[10px] pt-[14px]">
+        <aside className="w-[209px] shrink-0 overflow-hidden border-r border-[var(--shotiq-color-rule)] px-[21px] pb-[8px] pt-[12px]">
           <div className="flex items-center justify-between">
             <span className="shotiq-display text-[19px] leading-[20px]">FILTERS</span>
             <button type="button" onClick={resetFilters}
@@ -173,7 +173,7 @@ export default function EliteShootersPage() {
           </div>
 
           {RADIO_GROUPS.map((g) => (
-            <div key={g.id} className="mt-[14px] border-t border-[var(--shotiq-color-rule)] pt-[12px]">
+            <div key={g.id} className="mt-[7px] border-t border-[var(--shotiq-color-rule)] pt-[6px]">
               <button type="button" onClick={() => toggleGroup(g.id, openGroups, setOpenGroups)}
                       aria-expanded={openGroups.has(g.id)}
                       className="flex w-full items-center justify-between text-[14px] font-semibold">
@@ -183,9 +183,9 @@ export default function EliteShootersPage() {
                   : <ChevronDown className="h-[13px] w-[13px] text-[var(--shotiq-color-graphite)]" />}
               </button>
               {openGroups.has(g.id) && (
-                <div className="mt-[8px] space-y-[8px]">
+                <div className="mt-[5px] space-y-[4px]">
                   {g.options.map((o) => (
-                    <label key={o} className="flex cursor-pointer items-center gap-[10px] text-[13px]">
+                    <label key={o} className="flex cursor-pointer items-center gap-[10px] text-[12px]">
                       <input type="radio" name={`filter-${g.id}`} className="sr-only"
                              checked={radios[g.id] === o}
                              onChange={() => setRadios((r) => ({ ...r, [g.id]: o }))} />
@@ -198,7 +198,7 @@ export default function EliteShootersPage() {
             </div>
           ))}
 
-          <div className="mt-[14px] border-t border-[var(--shotiq-color-rule)] pt-[2px]">
+          <div className="mt-[7px] border-t border-[var(--shotiq-color-rule)] pt-[1px]">
             <DualSlider min={100} max={10000} lo={attempts[0]} hi={attempts[1]}
                         onLo={(v) => setAttempts(([, h]) => [v, h])} onHi={(v) => setAttempts(([l]) => [l, v])}
                         loLabel="100" hiLabel="10,000+"
@@ -210,7 +210,7 @@ export default function EliteShootersPage() {
 
           <div className="mt-[14px] border-t border-[var(--shotiq-color-rule)]">
             {EXTRA_FILTERS.map((g) => (
-              <div key={g.id} className="border-b border-[var(--shotiq-color-rule)] py-[10px]">
+              <div key={g.id} className="border-b border-[var(--shotiq-color-rule)] py-[5px]">
                 <button type="button" onClick={() => toggleGroup(g.id, extraOpen, setExtraOpen)}
                         aria-expanded={extraOpen.has(g.id)}
                         className="flex w-full items-center gap-[9px] text-[12px]">
@@ -235,7 +235,7 @@ export default function EliteShootersPage() {
               </div>
             ))}
             <button type="button" onClick={resetFilters}
-                    className="mt-[10px] flex items-center gap-[9px] text-[12px] text-[var(--shotiq-color-graphite)] hover:text-[var(--shotiq-color-ink)]">
+                    className="mt-[6px] flex items-center gap-[9px] text-[12px] text-[var(--shotiq-color-graphite)] hover:text-[var(--shotiq-color-ink)]">
               <RotateCcw className="h-[12px] w-[12px]" /> Reset filters
             </button>
           </div>
@@ -334,30 +334,30 @@ export default function EliteShootersPage() {
             <div className="mt-[10px]">
               {/* group header band */}
               <div className="flex border-b border-[var(--shotiq-color-rule)] pb-[2px]">
-                <div className="w-[615px]" />
-                <div className={`w-[240px] border-l border-[var(--shotiq-color-rule)] text-center ${headCell}`}>MECHANICS SUMMARY</div>
-                <div className={`w-[215px] border-l border-[var(--shotiq-color-rule)] text-center ${headCell}`}>SIMILARITY TO YOU</div>
+                <div className="w-[588px]" />
+                <div className={`w-[234px] border-l border-[var(--shotiq-color-rule)] text-center ${headCell}`}>MECHANICS SUMMARY</div>
+                <div className={`w-[204px] border-l border-[var(--shotiq-color-rule)] text-center ${headCell}`}>SIMILARITY TO YOU</div>
                 <div className="min-w-0 flex-1 border-l border-[var(--shotiq-color-rule)]" />
               </div>
               {/* column headers */}
               <div className="flex items-center border-b border-[var(--shotiq-color-rule)] py-[7px]">
                 <span className="w-[30px]"><span className="block h-[14px] w-[14px] rounded-[3px] border border-[var(--shotiq-color-muted)]" /></span>
-                <span className={`w-[172px] pl-[62px] ${headCell}`}>SHOOTER</span>
-                <span className={`w-[48px] text-center ${headCell}`}>HAND</span>
-                <span className={`w-[52px] text-center ${headCell}`}>LEVEL</span>
-                <span className={`w-[42px] text-center ${headCell}`}>HT</span>
-                <span className={`w-[42px] text-center ${headCell}`}>AGE</span>
+                <span className={`w-[258px] pl-[62px] ${headCell}`}>SHOOTER</span>
+                <span className={`w-[44px] text-center ${headCell}`}>HAND</span>
+                <span className={`w-[48px] text-center ${headCell}`}>LEVEL</span>
+                <span className={`w-[40px] text-center ${headCell}`}>HT</span>
+                <span className={`w-[38px] text-center ${headCell}`}>AGE</span>
                 <span className={`w-[74px] text-center ${headCell}`}>CAREER</span>
-                <span className={`flex w-[62px] items-center justify-center gap-[3px] ${headCell}`}>
+                <span className={`flex w-[56px] items-center justify-center gap-[3px] ${headCell}`}>
                   WSI <HelpCircle className="h-[10px] w-[10px]" /> <ChevronDown className="h-[10px] w-[10px]" />
                 </span>
-                <span className={`w-[80px] text-center ${headCell}`}>RELEASE HEIGHT</span>
-                <span className={`w-[80px] text-center ${headCell}`}>RELEASE TIME</span>
-                <span className={`w-[80px] text-center ${headCell}`}>ELBOW ALIGNMENT</span>
-                <span className={`flex w-[105px] items-center justify-center gap-[3px] ${headCell}`}>
+                <span className={`w-[78px] whitespace-nowrap text-center text-[8px] ${headCell}`}>RELEASE HEIGHT</span>
+                <span className={`w-[78px] whitespace-nowrap text-center text-[8px] ${headCell}`}>RELEASE TIME</span>
+                <span className={`w-[78px] whitespace-nowrap text-center text-[8px] ${headCell}`}>ELBOW ALIGNMENT</span>
+                <span className={`flex w-[100px] items-center justify-center gap-[3px] ${headCell}`}>
                   OVERALL <HelpCircle className="h-[10px] w-[10px]" />
                 </span>
-                <span className={`w-[110px] text-center ${headCell}`}>KEY MATCH</span>
+                <span className={`w-[104px] text-center ${headCell}`}>KEY MATCH</span>
                 <span className={`min-w-0 flex-1 text-center ${headCell}`}>ACTION</span>
               </div>
 
@@ -371,7 +371,7 @@ export default function EliteShootersPage() {
                       {selected.has(r.name) && <Check className="h-[10px] w-[10px] text-white" strokeWidth={3.2} />}
                     </button>
                   </span>
-                  <span className="flex w-[172px] items-center gap-[12px]">
+                  <span className="flex w-[258px] items-center gap-[10px]">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={r.thumb} alt="" className="h-[55px] w-[102px] shrink-0 rounded-[5px] object-cover" />
                     <span className="min-w-0">
@@ -379,34 +379,34 @@ export default function EliteShootersPage() {
                       <span className="block text-[11px] text-[var(--shotiq-color-graphite)]">{fmt(r.attempts)} attempts</span>
                     </span>
                   </span>
-                  <span className="w-[48px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.hand}</span>
-                  <span className="w-[52px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.level}</span>
-                  <span className="w-[42px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.ht}</span>
-                  <span className="w-[42px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.age}</span>
+                  <span className="w-[44px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.hand}</span>
+                  <span className="w-[48px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.level}</span>
+                  <span className="w-[40px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.ht}</span>
+                  <span className="w-[38px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.age}</span>
                   <span className="w-[74px] text-center">
                     <span className="block text-[14px] font-bold">{r.careerPct.toFixed(1)}%</span>
                     <span className="block text-[10px] text-[var(--shotiq-color-graphite)]">{fmt(r.makes)} / {fmt(r.attempts)}</span>
                   </span>
-                  <span className="shotiq-numeric w-[62px] text-center text-[24px] leading-[26px] text-[var(--shotiq-color-analysisBlue)]">{r.wsi}</span>
-                  <span className="w-[80px] text-center">
+                  <span className="shotiq-numeric w-[56px] text-center text-[24px] leading-[26px] text-[var(--shotiq-color-analysisBlue)]">{r.wsi}</span>
+                  <span className="w-[78px] text-center">
                     <span className="block text-[14px] font-bold">{r.relH}</span>
                     <span className="block text-[10px] text-[var(--shotiq-color-graphite)]">{r.relHBand}</span>
                   </span>
-                  <span className="w-[80px] text-center">
+                  <span className="w-[78px] text-center">
                     <span className="block text-[14px] font-bold">{r.relT}</span>
                     <span className="block text-[10px] text-[var(--shotiq-color-graphite)]">Quick</span>
                   </span>
-                  <span className="w-[80px] text-center">
+                  <span className="w-[78px] text-center">
                     <span className="block text-[14px] font-bold">{r.elbow}</span>
                     <span className="block text-[10px] text-[var(--shotiq-color-graphite)]">Stacked</span>
                   </span>
-                  <span className="w-[105px] px-[14px] text-center">
+                  <span className="w-[100px] px-[12px] text-center">
                     <span className="block text-[15px] font-bold">{r.overall}%</span>
                     <span className="mx-auto mt-[3px] block h-[3px] w-[70px] rounded-full bg-[var(--shotiq-color-rule)]">
                       <span className="block h-full rounded-full bg-[var(--shotiq-color-analysisBlue)]" style={{ width: `${r.overall}%` }} />
                     </span>
                   </span>
-                  <span className="w-[110px] border-l border-[var(--shotiq-color-rule)] text-center">
+                  <span className="w-[104px] border-l border-[var(--shotiq-color-rule)] text-center">
                     <span className="block text-[12px]">{r.keyMatch[0]}</span>
                     <span className="block text-[12px] font-semibold">{r.keyMatch[1]}</span>
                   </span>
@@ -451,7 +451,7 @@ export default function EliteShootersPage() {
       {pair.length >= 2 && (
         <div data-testid="comparison-tray" className="border-t border-[var(--shotiq-color-rule)] bg-white">
           {/* selection cards + metric deltas */}
-          <div className="flex items-stretch gap-[10px] px-[10px] pt-[6px]">
+          <div className="flex items-stretch gap-[10px] px-[10px] pt-[4px]">
             <span className="my-[8px] w-[4px] shrink-0 rounded-full bg-[var(--shotiq-color-analysisBlue)]" />
             <div className="shrink-0 pt-[2px]">
               <div className="flex items-center gap-[12px]">
@@ -522,7 +522,7 @@ export default function EliteShootersPage() {
           </div>
 
           {/* phase strips + takeaways */}
-          <div className="flex gap-[10px] px-[10px] pb-[10px] pt-[6px]">
+          <div className="flex gap-[10px] px-[10px] pb-[6px] pt-[4px]">
             <div className="flex min-w-0 flex-1 gap-[12px] rounded-[8px] border border-[var(--shotiq-color-rule)] px-[8px] py-[6px]">
               <div className="flex w-[86px] shrink-0 flex-col justify-around">
                 {pair.map((r) => (
@@ -538,8 +538,8 @@ export default function EliteShootersPage() {
                 ["RISE", "088-strip-rise-1", "088-strip-rise-2", false],
                 ["RELEASE", "088-strip-release-1", "088-strip-release-2", true],
                 ["FOLLOW-THROUGH", "088-strip-ft-1", "088-strip-ft-2", false],
-              ] as const).map(([label, r1, r2, hot]) => (
-                <div key={label} className="min-w-0 flex-1">
+              ] as const).map(([label, r1, r2, hot], ci) => (
+                <div key={label} className="min-w-0" style={{ flexGrow: [212, 212, 205, 219, 158][ci], flexBasis: 0 }}>
                   <div className={`text-center text-[10px] font-bold tracking-[0.05em] ${hot ? "text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>{label}</div>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={`/images/canonical/${r1}.png`} alt="" className="mt-[3px] w-full rounded-[3px] object-cover" />

@@ -49,8 +49,11 @@ export default function AnalysisHistoryPage() {
         (a.score ?? 0) >= 70 ? "Good" : "Fair", "—", "—", "High",
       ] as [string, string, string, string, string, string])
     : hasData || items.length ? DEMO_ROWS : []
-  const rows = allRows.slice(0, items.length ? undefined : range[2])
+  const demoMode = !usable.length && allRows.length > 0
+  const rows = allRows.slice(0, usable.length ? undefined : range[2])
     .filter((r) => band === "All" || r[2] === band)
+  // The canonical screen reports the full session count behind the first page.
+  const totalSessions = demoMode && band === "All" ? 12 : rows.length
   const exportCsv = () => {
     const head = "date,form_score,band,make_pct,shots_makes,confidence"
     const body = rows.map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(",")).join("\n")
@@ -156,7 +159,7 @@ export default function AnalysisHistoryPage() {
         {/* sessions table */}
         <div className="mt-[14px] flex items-center gap-[10px]">
           <SectionLabel>SESSIONS</SectionLabel>
-          <span className="text-[12px] text-[var(--shotiq-color-graphite)]">{rows.length} sessions</span>
+          <span className="text-[12px] text-[var(--shotiq-color-graphite)]">{totalSessions} sessions</span>
         </div>
         <table className="mt-[6px] w-full text-[12px]">
           <thead>
@@ -207,7 +210,7 @@ export default function AnalysisHistoryPage() {
         </table>
         {rows.length > 0 && (
           <div className="mt-[10px] flex items-center justify-center gap-[10px] text-[12px]">
-            Showing 1–{Math.min(8, rows.length)} of {rows.length}
+            Showing 1–{Math.min(8, rows.length)} of {totalSessions}
             <ChevronLeft className="h-[13px] w-[13px]" />
             <span className="grid h-[26px] w-[26px] place-items-center rounded-[4px] border border-[var(--shotiq-color-shotiqOrange)] font-bold text-[var(--shotiq-color-shotiqOrange)]">1</span>
             <span className="grid h-[26px] w-[26px] place-items-center rounded-[4px] border border-[var(--shotiq-color-rule)]">2</span>

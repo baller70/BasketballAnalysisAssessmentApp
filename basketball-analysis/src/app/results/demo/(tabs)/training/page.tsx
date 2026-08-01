@@ -70,7 +70,6 @@ export default function TrainingHubPage() {
               <div className="relative">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={r.img} alt="" className="h-[150px] w-full object-cover" />
-                <span className="absolute left-[8px] top-[8px] rounded-[3px] bg-black/75 px-[6px] py-[2px] text-[10px] font-bold text-white">{r.len}</span>
                 <button type="button" aria-pressed={saved.has(r.title)} onClick={() => toggleSave(r.title)}
                         aria-label={saved.has(r.title) ? "Remove from my drills" : "Save drill"}
                         className="absolute right-[6px] top-[6px] grid h-[24px] w-[24px] place-items-center rounded-[4px] bg-black/40">
@@ -100,8 +99,7 @@ export default function TrainingHubPage() {
               <Card className="overflow-hidden">
                 <div className="relative">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={String(img)} alt="" className="h-[110px] w-full object-cover" />
-                  <span className="absolute left-[8px] top-[8px] rounded-[3px] bg-black/75 px-[5px] py-[1px] text-[9px] font-bold text-white">{len}</span>
+                  <img src={String(img)} alt="" className="h-[113px] w-full object-cover" />
                   <button type="button" aria-pressed={saved.has(String(t))}
                           aria-label={saved.has(String(t)) ? "Remove from my drills" : "Save drill"}
                           onClick={(e) => { e.preventDefault(); toggleSave(String(t)) }}
