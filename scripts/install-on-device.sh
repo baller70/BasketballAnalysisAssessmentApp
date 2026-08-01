@@ -182,6 +182,15 @@ unset signing_password
 note "Signing into ${signing_keychain}"
 note 'xcodebuild will create a development certificate here through the API key.'
 
+# A previous device build's certificate has its private key in a deleted
+# throwaway keychain; Apple refuses to mint a new one while that orphan
+# exists ("Revoke certificate: ... private key is not installed"). Revoke
+# stale Development certs so -allowProvisioningUpdates can create a fresh
+# one. Distribution certs (TestFlight / App Store) are untouched.
+step 'Revoking orphaned development certificates'
+node_bin="$(command -v node || echo /opt/homebrew/bin/node)"
+"$node_bin" "${repo_root}/scripts/revoke-stale-dev-cert.mjs" --confirm || true
+
 # ------------------------------------------------------------------ install --
 
 cd "${repo_root}/${project_dir}"
