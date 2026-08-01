@@ -153,8 +153,20 @@ run_preflight() {
 asc_key_path=""
 
 # altool searches these directories by name; xcodebuild wants an explicit path.
+# ASC_KEY_PATH short-circuits the search — that is how App Factory's worker
+# passes the key, and its .p8 does not live in any of altool's search dirs.
 locate_asc_key() {
   asc_key_path=""
+  if [ -n "${ASC_KEY_PATH:-}" ] && [ -f "$ASC_KEY_PATH" ]; then
+    asc_key_path="$ASC_KEY_PATH"
+    if [ -z "${ASC_KEY_ID:-}" ]; then
+      local base="${asc_key_path##*/}"
+      base="${base%.p8}"
+      ASC_KEY_ID="${base#AuthKey_}"
+      export ASC_KEY_ID
+    fi
+    return 0
+  fi
   [ -n "${ASC_KEY_ID:-}" ] || return 1
   local dir
   for dir in "./private_keys" "${HOME}/private_keys" "${HOME}/.private_keys" "${HOME}/.appstoreconnect/private_keys"; do
@@ -166,10 +178,24 @@ locate_asc_key() {
   return 1
 }
 
+# altool takes --apiKey by *id* and then goes looking for the file itself, so a
+# key held anywhere else has to be staged into one of its search directories.
+stage_key_for_altool() {
+  locate_asc_key || return 1
+  case "$asc_key_path" in
+    ./private_keys/*|"${HOME}/private_keys/"*|"${HOME}/.private_keys/"*|"${HOME}/.appstoreconnect/private_keys/"*)
+      return 0 ;;
+  esac
+  mkdir -p "${HOME}/.appstoreconnect/private_keys"
+  cp "$asc_key_path" "${HOME}/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
+  chmod 600 "${HOME}/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8"
+  note "Staged the API key where altool looks for it."
+}
+
 require_asc_credentials() {
-  [ -n "${ASC_KEY_ID:-}" ]    || die "ASC_KEY_ID is not set"
   [ -n "${ASC_ISSUER_ID:-}" ] || die "ASC_ISSUER_ID is not set"
-  locate_asc_key || die "AuthKey_${ASC_KEY_ID}.p8 not found in ~/.appstoreconnect/private_keys/ (or ./private_keys, ~/private_keys, ~/.private_keys)"
+  locate_asc_key || die "no App Store Connect key: set ASC_KEY_PATH, or put AuthKey_\${ASC_KEY_ID}.p8 in ~/.appstoreconnect/private_keys/ (or ./private_keys, ~/private_keys, ~/.private_keys)"
+  stage_key_for_altool || true
 }
 
 # Is there a usable App Store Connect API key? Both the key file and the issuer
