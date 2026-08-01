@@ -71,6 +71,65 @@ struct Wordmark: View {
     }
 }
 
+// MARK: - Canonical top chrome (screens 017-072): wordmark bar + player header
+
+struct TopBar: View {
+    var onSettings: () -> Void = {}
+    var body: some View {
+        HStack {
+            Wordmark(size: 30)
+            Spacer()
+            Button(action: onSettings) {
+                Image(systemName: "gearshape").font(.system(size: 20)).foregroundStyle(ShotIQColor.ink)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Settings")
+        }
+        .padding(.horizontal, 20)
+        .frame(height: 52)
+        .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
+    }
+}
+
+/// One stat in the header strip: small line icon, DIN numeral, tiny caps label.
+struct HeaderStat: View {
+    var icon: String
+    var value: String
+    var label: String
+    var body: some View {
+        VStack(spacing: 3) {
+            Image(systemName: icon).font(.system(size: 17)).foregroundStyle(ShotIQColor.ink)
+            Text(value).font(.custom("DINCondensed-Bold", size: 24)).foregroundStyle(ShotIQColor.ink)
+                .lineLimit(1).minimumScaleFactor(0.7)
+            Text(label).font(.system(size: 9, weight: .medium)).kerning(0.6)
+                .foregroundStyle(ShotIQColor.graphite)
+        }
+    }
+}
+
+/// Canonical player header: condensed-caps name + gray subtitle on the left,
+/// streak/points stats separated by hairlines on the right.
+struct PlayerHeader: View {
+    var name: String
+    var subtitle: String = "Right-handed • Advanced"
+    var streak: String = "6"
+    var points: String = "2,840"
+    var body: some View {
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(name.uppercased()).shotiqDisplay(38)
+                Text(subtitle).font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
+            }
+            Spacer(minLength: 8)
+            HeaderStat(icon: "film", value: streak, label: "DAY STREAK")
+            Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 46)
+            HeaderStat(icon: "circle.hexagongrid", value: points, label: "POINTS")
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 14)
+    }
+}
+
 // MARK: - Buttons
 
 struct PrimaryButton: View {
