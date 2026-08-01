@@ -82,6 +82,7 @@ struct CameraPhotoCaptureView: View {
             .padding(.bottom, 34)
         }
         .onAppear { camera.lastPhoto = nil; camera.start() }
+        .onDisappear { camera.stop() }
         .onChange(of: camera.lastPhoto) { _, data in
             if let data, let img = UIImage(data: data) {
                 onCapture(img)
@@ -1209,18 +1210,23 @@ struct VideoUploadView: View {      // 026
                         }
                         .padding(.bottom, 14)
                         .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("PRIMARY COACHING TARGET")
-                                .font(.system(size: 10, weight: .medium)).kerning(0.7)
-                                .foregroundStyle(ShotIQColor.graphite)
-                            HStack {
-                                Text("Keep elbow stacked through release")
-                                    .font(.system(size: 17, weight: .semibold)).foregroundStyle(ShotIQColor.ink)
-                                    .lineLimit(1).minimumScaleFactor(0.7)
-                                Spacer()
-                                Image(systemName: "chevron.right").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                        NavigationLink {
+                            FlawDetailView(title: "Keep elbow stacked through release", severity: "PRIMARY TARGET")
+                        } label: {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("PRIMARY COACHING TARGET")
+                                    .font(.system(size: 10, weight: .medium)).kerning(0.7)
+                                    .foregroundStyle(ShotIQColor.graphite)
+                                HStack {
+                                    Text("Keep elbow stacked through release")
+                                        .font(.system(size: 17, weight: .semibold)).foregroundStyle(ShotIQColor.ink)
+                                        .lineLimit(1).minimumScaleFactor(0.7)
+                                    Spacer()
+                                    Image(systemName: "chevron.right").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                                }
                             }
                         }
+                        .buttonStyle(.plain)
                         .padding(.top, 12)
                     }
                     .padding(16)
@@ -1338,11 +1344,20 @@ struct VideoReviewView: View {      // 027
                                 .frame(width: 18, height: 54)
                                 .overlay(Image(systemName: "pause").font(.system(size: 10, weight: .bold)).foregroundStyle(.white))
                                 .offset(x: w * trimStart - 9)
+                                .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .named("trimTrack"))
+                                    .onChanged { v in
+                                        trimStart = min(max(0, v.location.x / w), trimEnd - 0.08)
+                                    })
                             RoundedRectangle(cornerRadius: 5).fill(ShotIQColor.shotiqOrange)
                                 .frame(width: 18, height: 54)
                                 .overlay(Image(systemName: "pause").font(.system(size: 10, weight: .bold)).foregroundStyle(.white))
                                 .offset(x: w * trimEnd - 9)
+                                .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .named("trimTrack"))
+                                    .onChanged { v in
+                                        trimEnd = max(min(1, v.location.x / w), trimStart + 0.08)
+                                    })
                         }
+                        .coordinateSpace(name: "trimTrack")
                     }
                     .frame(height: 54).padding(.horizontal, 20).padding(.top, 8)
 
@@ -1382,12 +1397,15 @@ struct VideoReviewView: View {      // 027
                     .padding(.horizontal, 20).padding(.top, 18)
 
                     HStack(spacing: 10) {
-                        Button {} label: { captureOutline("Trim", icon: "crop") }.buttonStyle(.plain)
-                        Button {} label: { captureOutline("Change video", icon: "square.and.arrow.up") }.buttonStyle(.plain)
+                        Button {
+                            // Snap the handles back to the AI-detected shot window.
+                            withAnimation(.easeInOut(duration: 0.25)) { trimStart = 0.1; trimEnd = 0.8 }
+                        } label: { captureOutline("Trim", icon: "crop") }.buttonStyle(.plain)
+                        Button { dismiss() } label: { captureOutline("Change video", icon: "square.and.arrow.up") }.buttonStyle(.plain)
                     }
                     .padding(.horizontal, 20).padding(.top, 10)
 
-                    Button {} label: {
+                    NavigationLink { ProfileView() } label: {
                         HStack(spacing: 12) {
                             Image(systemName: "person").font(.system(size: 17)).foregroundStyle(ShotIQColor.ink)
                             Text("Edit player profile").font(.system(size: 15)).foregroundStyle(ShotIQColor.ink)
@@ -1416,7 +1434,7 @@ struct VideoReviewView: View {      // 027
 }
 
 struct LiveCameraSetupView: View {  // 028
-    @State private var granted = AVCaptureDevice.authorizationStatus(for: .video) == .authorized
+    @ObservedObject private var camera = CameraService.live
     @State private var rightHanded = true
     var body: some View {
         CanonicalScreen(testID: "screen-ios-live-camera-setup") {
@@ -1464,7 +1482,7 @@ struct LiveCameraSetupView: View {  // 028
                                 .font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
                         }
                         Spacer()
-                        Button {} label: {
+                        Button { camera.flipCamera() } label: {
                             HStack(spacing: 8) {
                                 Image(systemName: "arrow.triangle.2.circlepath").font(.system(size: 15))
                                 Text("Switch camera").font(.system(size: 13, weight: .medium))
@@ -1477,9 +1495,10 @@ struct LiveCameraSetupView: View {  // 028
                     }
                     .padding(.horizontal, 20).padding(.top, 18)
 
-                    // Camera preview with corner brackets + dashed crosshair
+                    // Live camera preview with corner brackets + dashed crosshair
                     ZStack {
                         captureDark(300)
+                        LiveViewfinder(camera: camera)
                         GeometryReader { geo in
                             let w = geo.size.width, h = geo.size.height
                             Path { p in
@@ -1496,16 +1515,12 @@ struct LiveCameraSetupView: View {  // 028
                             }
                             .stroke(.white, lineWidth: 3)
                         }
-                        if !granted {
+                        if camera.status == .unknown {
                             VStack(spacing: 10) {
                                 Image(systemName: "camera").font(.system(size: 30)).foregroundStyle(.white)
                                 Text("Camera permission needed").font(.system(size: 14)).foregroundStyle(.white)
-                                Button("Allow camera") {
-                                    AVCaptureDevice.requestAccess(for: .video) { ok in
-                                        DispatchQueue.main.async { granted = ok }
-                                    }
-                                }
-                                .font(.system(size: 14, weight: .semibold)).foregroundStyle(ShotIQColor.shotiqOrange)
+                                Button("Allow camera") { camera.start() }
+                                    .font(.system(size: 14, weight: .semibold)).foregroundStyle(ShotIQColor.shotiqOrange)
                             }
                         }
                     }
@@ -1555,9 +1570,11 @@ struct LiveCameraSetupView: View {  // 028
                         captureCTA("Set up camera", icon: "camera.metering.center.weighted")
                     }
                     .padding(.horizontal, 20).padding(.top, 16)
-                    Button {} label: { captureOutline("Use uploaded video", icon: "square.and.arrow.up") }
-                        .buttonStyle(.plain)
-                        .padding(.horizontal, 20).padding(.top, 10)
+                    NavigationLink { VideoUploadView() } label: {
+                        captureOutline("Use uploaded video", icon: "square.and.arrow.up")
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, 20).padding(.top, 10)
 
                     PhaseStrip(active: "SETUP").padding(.horizontal, 20).padding(.top, 18).padding(.bottom, 26)
                 }
@@ -1582,6 +1599,7 @@ struct LiveCameraSetupView: View {  // 028
 }
 
 struct HoopCalibrationView: View {  // 029
+    @ObservedObject private var camera = CameraService.live
     @State private var hoopPos = CGPoint(x: 0.5, y: 0.35)
     var body: some View {
         CanonicalScreen(testID: "screen-ios-hoop-calibration") {
@@ -1608,6 +1626,7 @@ struct HoopCalibrationView: View {  // 029
                         let cx = hoopPos.x * w, cy = hoopPos.y * h
                         ZStack {
                             Rectangle().fill(Color(red: 0.106, green: 0.114, blue: 0.125))
+                            LiveViewfinder(camera: camera, radius: 0)
                             Path { p in
                                 p.move(to: CGPoint(x: cx, y: 0)); p.addLine(to: CGPoint(x: cx, y: h))
                                 p.move(to: CGPoint(x: 0, y: cy)); p.addLine(to: CGPoint(x: w, y: cy))
@@ -1652,7 +1671,7 @@ struct HoopCalibrationView: View {  // 029
                     .padding(.top, 14)
 
                     HStack(spacing: 10) {
-                        Button {} label: { captureOutline("Switch camera", icon: "arrow.triangle.2.circlepath") }
+                        Button { camera.flipCamera() } label: { captureOutline("Switch camera", icon: "arrow.triangle.2.circlepath") }
                             .buttonStyle(.plain)
                         NavigationLink { ReadinessCheckView() } label: {
                             captureOutline("Skip calibration", icon: "viewfinder")
@@ -1674,6 +1693,7 @@ struct HoopCalibrationView: View {  // 029
 
 struct ReadinessCheckView: View {   // 030
     @Environment(\.dismiss) private var dismiss
+    @ObservedObject private var camera = CameraService.live
     private let checks = [("Full body", "GOOD"), ("Lighting", "GOOD"), ("Stability", "GOOD"),
                           ("Hoop visible", "GOOD"), ("Ball visible", "GOOD"), ("Pose confidence", "92%")]
     var body: some View {
@@ -1699,6 +1719,7 @@ struct ReadinessCheckView: View {   // 030
 
                     ZStack(alignment: .topLeading) {
                         captureDark(400)
+                        LiveViewfinder(camera: camera).frame(height: 400)
                         HStack(spacing: 6) {
                             Circle().fill(ShotIQColor.confirmGreen).frame(width: 8, height: 8)
                             Text("LIVE").font(.system(size: 13, weight: .semibold)).foregroundStyle(.white)
@@ -1736,22 +1757,27 @@ struct ReadinessCheckView: View {   // 030
                     SectionLabel(text: "SHOT PHASE").padding(.horizontal, 20).padding(.top, 18)
                     PhaseStrip().padding(.horizontal, 20).padding(.top, 8)
 
-                    HStack(alignment: .center, spacing: 14) {
-                        TrendLine(points: [1, 2.4, 3.4, 4], stroke: ShotIQColor.shotiqOrange)
-                            .frame(width: 52, height: 40)
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("PRIMARY COACHING TARGET")
-                                .font(.system(size: 10, weight: .medium)).kerning(0.7)
-                                .foregroundStyle(ShotIQColor.graphite)
-                            Text("Keep elbow stacked through release")
-                                .font(.system(size: 18, weight: .semibold)).foregroundStyle(ShotIQColor.ink)
-                                .lineLimit(2).minimumScaleFactor(0.8)
+                    NavigationLink {
+                        FlawDetailView(title: "Keep elbow stacked through release", severity: "PRIMARY TARGET")
+                    } label: {
+                        HStack(alignment: .center, spacing: 14) {
+                            TrendLine(points: [1, 2.4, 3.4, 4], stroke: ShotIQColor.shotiqOrange)
+                                .frame(width: 52, height: 40)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("PRIMARY COACHING TARGET")
+                                    .font(.system(size: 10, weight: .medium)).kerning(0.7)
+                                    .foregroundStyle(ShotIQColor.graphite)
+                                Text("Keep elbow stacked through release")
+                                    .font(.system(size: 18, weight: .semibold)).foregroundStyle(ShotIQColor.ink)
+                                    .lineLimit(2).minimumScaleFactor(0.8)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right").font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
                         }
-                        Spacer()
-                        Image(systemName: "chevron.right").font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
+                        .padding(14)
+                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
                     }
-                    .padding(14)
-                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+                    .buttonStyle(.plain)
                     .padding(.horizontal, 20).padding(.top, 16)
 
                     NavigationLink { CaptureReadyView() } label: {
@@ -1760,7 +1786,8 @@ struct ReadinessCheckView: View {   // 030
                     .padding(.horizontal, 20).padding(.top, 16)
 
                     HStack(spacing: 10) {
-                        Button {} label: { captureOutline("Camera help", icon: "camera") }.buttonStyle(.plain)
+                        NavigationLink { CaptureGuideView() } label: { captureOutline("Camera help", icon: "camera") }
+                            .buttonStyle(.plain)
                         Button { dismiss() } label: { captureOutline("Cancel") }.buttonStyle(.plain)
                     }
                     .padding(.horizontal, 20).padding(.top, 10).padding(.bottom, 26)
@@ -1771,8 +1798,11 @@ struct ReadinessCheckView: View {   // 030
 }
 
 struct CaptureReadyView: View {     // 031
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject private var camera = CameraService.live
     @State private var count = 3
     @State private var go = false
+    @State private var cancelled = false
     private let readiness = [("Camera", "Positioned"), ("Full Body", "In Frame"), ("Lighting", "Good"),
                              ("Space", "Clear"), ("Battery", "Sufficient")]
     var body: some View {
@@ -1811,6 +1841,7 @@ struct CaptureReadyView: View {     // 031
                     SectionLabel(text: "CAMERA PREVIEW").padding(.horizontal, 20).padding(.top, 20)
                     ZStack(alignment: .bottomTrailing) {
                         captureDark(260)
+                        LiveViewfinder(camera: camera).frame(height: 260)
                         Text("1080p • 60fps").font(.system(size: 12, weight: .medium)).foregroundStyle(.white)
                             .padding(.horizontal, 10).padding(.vertical, 6)
                             .background(.black.opacity(0.72), in: Capsule())
@@ -1845,24 +1876,40 @@ struct CaptureReadyView: View {     // 031
                     .padding(.horizontal, 20).padding(.top, 18)
 
                     HStack(spacing: 10) {
-                        Button {} label: { captureOutline("Adjust setup", icon: "slider.horizontal.3") }.buttonStyle(.plain)
-                        Button {} label: { captureOutline("Cancel", icon: "xmark") }.buttonStyle(.plain)
+                        Button {
+                            cancelled = true
+                            dismiss() // back to the readiness/setup screens
+                        } label: { captureOutline("Adjust setup", icon: "slider.horizontal.3") }.buttonStyle(.plain)
+                        Button {
+                            cancelled = true
+                            CameraService.live.stop()
+                            dismiss()
+                        } label: { captureOutline("Cancel", icon: "xmark") }.buttonStyle(.plain)
                     }
                     .padding(.horizontal, 20).padding(.top, 10).padding(.bottom, 26)
                 }
             }
         }
         .task {
-            while count > 1 { try? await Task.sleep(for: .seconds(1)); count -= 1 }
-            try? await Task.sleep(for: .seconds(1)); go = true
+            while count > 1 {
+                try? await Task.sleep(for: .seconds(1))
+                if cancelled { return }
+                count -= 1
+            }
+            try? await Task.sleep(for: .seconds(1))
+            if !cancelled { go = true }
         }
         .navigationDestination(isPresented: $go) { LiveRecordingView() }
     }
 }
 
 struct LiveRecordingView: View {    // 032
+    @ObservedObject private var camera = CameraService.live
     @State private var seconds = 0
     @State private var timer: Timer?
+    @State private var paused = false
+    @State private var goFeedback = false
+    @State private var goDetected = false
     private var clock: String { String(format: "%02d:%02d", seconds / 60, seconds % 60) }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-live-recording") {
@@ -1882,6 +1929,7 @@ struct LiveRecordingView: View {    // 032
                     // Live camera surface with recording overlays
                     ZStack(alignment: .topLeading) {
                         captureDark(470)
+                        LiveViewfinder(camera: camera).frame(height: 470)
                         VStack(alignment: .leading, spacing: 3) {
                             Text("CONFIDENCE").font(.system(size: 10, weight: .bold)).kerning(0.8)
                                 .foregroundStyle(.white)
@@ -1967,26 +2015,42 @@ struct LiveRecordingView: View {    // 032
                     HStack(alignment: .top) {
                         Spacer()
                         VStack(spacing: 8) {
-                            Button {} label: {
+                            Button {
+                                paused.toggle()
+                                if paused {
+                                    camera.stopRecording()
+                                } else if camera.status == .ready {
+                                    camera.startRecording()
+                                }
+                            } label: {
                                 Circle().stroke(ShotIQColor.rule, lineWidth: 1.5).frame(width: 62, height: 62)
-                                    .overlay(Image(systemName: "pause.fill").font(.system(size: 20)).foregroundStyle(ShotIQColor.ink))
+                                    .overlay(Image(systemName: paused ? "play.fill" : "pause.fill")
+                                        .font(.system(size: 20)).foregroundStyle(ShotIQColor.ink))
                             }
                             .buttonStyle(.plain)
-                            Text("PAUSE").font(.system(size: 10, weight: .medium)).kerning(0.6)
+                            Text(paused ? "RESUME" : "PAUSE").font(.system(size: 10, weight: .medium)).kerning(0.6)
                                 .foregroundStyle(ShotIQColor.graphite)
                         }
                         Spacer()
                         VStack(spacing: 8) {
-                            NavigationLink { LiveFormFeedbackView() } label: {
+                            Button {
+                                camera.stopRecording()
+                                goFeedback = true
+                            } label: {
                                 Circle().fill(ShotIQColor.shotiqOrange).frame(width: 84, height: 84)
                                     .overlay(RoundedRectangle(cornerRadius: 5).fill(.white).frame(width: 26, height: 26))
                             }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("Stop recording")
                             Text("STOP RECORDING").font(.system(size: 11, weight: .bold)).kerning(0.6)
                                 .foregroundStyle(ShotIQColor.shotiqOrange)
                         }
                         Spacer()
                         VStack(spacing: 8) {
-                            Button {} label: {
+                            Button {
+                                camera.stopRecording()
+                                goDetected = true
+                            } label: {
                                 Circle().stroke(ShotIQColor.rule, lineWidth: 1.5).frame(width: 62, height: 62)
                                     .overlay(Image(systemName: "flag.fill").font(.system(size: 19)).foregroundStyle(ShotIQColor.ink))
                             }
@@ -2000,8 +2064,16 @@ struct LiveRecordingView: View {    // 032
                 }
             }
         }
-        .onAppear { timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in seconds += 1 } }
+        .onAppear { timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in if !paused { seconds += 1 } } }
         .onDisappear { timer?.invalidate() }
+        .task {
+            // Roll for real: spin the shared session up, then start the movie file output.
+            camera.start()
+            try? await Task.sleep(for: .seconds(0.6))
+            if camera.status == .ready && !camera.isRecording && !paused { camera.startRecording() }
+        }
+        .navigationDestination(isPresented: $goFeedback) { LiveFormFeedbackView() }
+        .navigationDestination(isPresented: $goDetected) { ShotDetectedView() }
     }
 
     private func liveMetric(_ icon: String, _ label: String, _ value: String) -> some View {
@@ -2017,6 +2089,9 @@ struct LiveRecordingView: View {    // 032
 }
 
 struct LiveFormFeedbackView: View { // 033
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject private var camera = CameraService.live
+    @State private var muted = false
     var body: some View {
         CanonicalScreen(testID: "screen-ios-live-form-feedback") {
             ScrollView {
@@ -2035,6 +2110,7 @@ struct LiveFormFeedbackView: View { // 033
 
                     ZStack(alignment: .topLeading) {
                         captureDark(420)
+                        LiveViewfinder(camera: camera).frame(height: 420)
                         HStack(spacing: 6) {
                             Circle().fill(ShotIQColor.shotiqOrange).frame(width: 8, height: 8)
                             Text("LIVE").font(.system(size: 13, weight: .semibold)).foregroundStyle(.white)
@@ -2100,12 +2176,16 @@ struct LiveFormFeedbackView: View { // 033
                     HStack(alignment: .top) {
                         Spacer()
                         VStack(spacing: 8) {
-                            Button {} label: {
-                                Circle().stroke(ShotIQColor.rule, lineWidth: 1.5).frame(width: 62, height: 62)
-                                    .overlay(Image(systemName: "speaker.slash").font(.system(size: 19)).foregroundStyle(ShotIQColor.ink))
+                            Button { muted.toggle() } label: {
+                                Circle().stroke(muted ? ShotIQColor.shotiqOrange : ShotIQColor.rule, lineWidth: 1.5)
+                                    .frame(width: 62, height: 62)
+                                    .overlay(Image(systemName: muted ? "speaker.wave.2" : "speaker.slash")
+                                        .font(.system(size: 19))
+                                        .foregroundStyle(muted ? ShotIQColor.shotiqOrange : ShotIQColor.ink))
                             }
                             .buttonStyle(.plain)
-                            Text("Mute coaching").font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
+                            Text(muted ? "Unmute coaching" : "Mute coaching")
+                                .font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
                         }
                         Spacer()
                         VStack(spacing: 8) {
@@ -2119,7 +2199,7 @@ struct LiveFormFeedbackView: View { // 033
                     }
                     .padding(.top, 20)
 
-                    Button {} label: { captureCTA("Keep shooting", color: ShotIQColor.confirmGreen) }
+                    Button { dismiss() } label: { captureCTA("Keep shooting", color: ShotIQColor.confirmGreen) }
                         .buttonStyle(.plain)
                         .padding(.horizontal, 20).padding(.top, 18).padding(.bottom, 26)
                 }
@@ -2129,8 +2209,19 @@ struct LiveFormFeedbackView: View { // 033
 }
 
 struct ShotDetectedView: View {     // 034
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject private var camera = CameraService.live
+    @State private var goReview = false
     private let context = [("Catch & Shoot", "Off the Dribble"), ("Top of Key", "17.5 ft"),
                            ("Release Height", "7.6 ft"), ("Defender", "4.2 ft Away")]
+
+    /// Shared by CONFIRM MAKE / MARK MISS: record the real shot event, then
+    /// move on to the capture review.
+    private func record(made: Bool) {
+        Task { await APIClient.shared.recordShotEvent(drillId: "live-capture", made: made) }
+        goReview = true
+    }
+
     var body: some View {
         CanonicalScreen(testID: "screen-ios-shot-detected") {
             ScrollView {
@@ -2177,7 +2268,14 @@ struct ShotDetectedView: View {     // 034
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.leading, 16)
                             }
-                            captureDark(280, radius: 6)
+                            // The just-recorded clip flows straight into review.
+                            if let url = camera.lastVideoURL {
+                                VideoPlayer(player: AVPlayer(url: url))
+                                    .frame(height: 280)
+                                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                            } else {
+                                captureDark(280, radius: 6)
+                            }
                             PhaseStrip()
                             HStack(alignment: .top, spacing: 0) {
                                 VStack(alignment: .leading, spacing: 6) {
@@ -2197,17 +2295,22 @@ struct ShotDetectedView: View {     // 034
                                 }
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 66)
-                                HStack(alignment: .center, spacing: 8) {
-                                    VStack(alignment: .leading, spacing: 5) {
-                                        Text("PRIMARY COACHING TARGET").font(.system(size: 10, weight: .medium)).kerning(0.5)
-                                            .foregroundStyle(ShotIQColor.graphite)
-                                            .lineLimit(1).minimumScaleFactor(0.7)
-                                        Text("Keep elbow stacked through release")
-                                            .font(.system(size: 15, weight: .semibold)).foregroundStyle(ShotIQColor.ink)
-                                            .lineLimit(2).minimumScaleFactor(0.8)
+                                NavigationLink {
+                                    FlawDetailView(title: "Keep elbow stacked through release", severity: "PRIMARY TARGET")
+                                } label: {
+                                    HStack(alignment: .center, spacing: 8) {
+                                        VStack(alignment: .leading, spacing: 5) {
+                                            Text("PRIMARY COACHING TARGET").font(.system(size: 10, weight: .medium)).kerning(0.5)
+                                                .foregroundStyle(ShotIQColor.graphite)
+                                                .lineLimit(1).minimumScaleFactor(0.7)
+                                            Text("Keep elbow stacked through release")
+                                                .font(.system(size: 15, weight: .semibold)).foregroundStyle(ShotIQColor.ink)
+                                                .lineLimit(2).minimumScaleFactor(0.8)
+                                        }
+                                        Image(systemName: "chevron.right").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
                                     }
-                                    Image(systemName: "chevron.right").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
                                 }
+                                .buttonStyle(.plain)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.leading, 14)
                             }
@@ -2221,7 +2324,7 @@ struct ShotDetectedView: View {     // 034
                         .padding(.horizontal, 20).padding(.top, 2)
 
                     HStack(alignment: .top, spacing: 10) {
-                        NavigationLink { CaptureReviewView() } label: {
+                        Button { record(made: true) } label: {
                             VStack(spacing: 8) {
                                 Image(systemName: "checkmark").font(.system(size: 18, weight: .bold))
                                 Text("CONFIRM MAKE").font(.system(size: 12, weight: .heavy).width(.condensed)).kerning(0.5)
@@ -2231,7 +2334,8 @@ struct ShotDetectedView: View {     // 034
                             .background(ShotIQColor.confirmGreen, in: RoundedRectangle(cornerRadius: 8))
                             .foregroundStyle(.white)
                         }
-                        Button {} label: {
+                        .buttonStyle(.plain)
+                        Button { record(made: false) } label: {
                             VStack(spacing: 8) {
                                 Image(systemName: "xmark").font(.system(size: 18, weight: .semibold))
                                 Text("MARK MISS").font(.system(size: 12, weight: .heavy).width(.condensed)).kerning(0.5)
@@ -2242,7 +2346,7 @@ struct ShotDetectedView: View {     // 034
                             .foregroundStyle(ShotIQColor.ink)
                         }
                         .buttonStyle(.plain)
-                        Button {} label: {
+                        Button { dismiss() } label: {
                             VStack(spacing: 8) {
                                 Image(systemName: "viewfinder").font(.system(size: 18))
                                 Text("NOT A SHOT").font(.system(size: 12, weight: .heavy).width(.condensed)).kerning(0.5)
@@ -2273,15 +2377,24 @@ struct ShotDetectedView: View {     // 034
                 }
             }
         }
+        .navigationDestination(isPresented: $goReview) { CaptureReviewView() }
     }
 }
 
 struct CaptureReviewView: View {    // 035
     @Environment(\.dismiss) private var dismiss
+    @State private var filter = "Needs review (3)"
+    @State private var lowestFirst = true
+    @State private var confirmDiscard = false
+    private let filters = ["All (24)", "Needs review (3)", "Confirmed (15)", "Discarded (6)"]
     private let flagged: [(Int, String, String, String, Double)] = [
         (7, "Today • 8:05 AM", "Release", "00:03", 0.58),
         (12, "Today • 8:09 AM", "Elbow angle", "00:05", 0.61),
         (19, "Today • 8:16 AM", "Release timing", "00:06", 0.64)]
+    private var visibleFlagged: [(Int, String, String, String, Double)] {
+        guard filter == "All (24)" || filter == "Needs review (3)" else { return [] }
+        return flagged.sorted { lowestFirst ? $0.4 < $1.4 : $0.4 > $1.4 }
+    }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-capture-review") {
             ScrollView {
@@ -2330,24 +2443,38 @@ struct CaptureReviewView: View {    // 035
 
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
-                            filterChip("All (24)", selected: false)
-                            filterChip("Needs review (3)", selected: true)
-                            filterChip("Confirmed (15)", selected: false)
-                            filterChip("Discarded (6)", selected: false)
+                            ForEach(filters, id: \.self) { f in
+                                Button { withAnimation { filter = f } } label: {
+                                    filterChip(f, selected: filter == f)
+                                }
+                                .buttonStyle(.plain)
+                            }
                         }
                         .padding(.horizontal, 20)
                     }
                     .padding(.top, 16)
 
                     HStack {
-                        SectionLabel(text: "NEEDS REVIEW (3)")
+                        SectionLabel(text: filter.uppercased())
                         Spacer()
-                        Text("Review lowest confidence first").font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
-                        Image(systemName: "chevron.up.chevron.down").font(.system(size: 10)).foregroundStyle(ShotIQColor.graphite)
+                        Button { withAnimation { lowestFirst.toggle() } } label: {
+                            HStack(spacing: 6) {
+                                Text(lowestFirst ? "Review lowest confidence first" : "Review highest confidence first")
+                                    .font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                                Image(systemName: "chevron.up.chevron.down").font(.system(size: 10)).foregroundStyle(ShotIQColor.graphite)
+                            }
+                        }
+                        .buttonStyle(.plain)
                     }
                     .padding(.horizontal, 20).padding(.top, 20)
 
-                    ForEach(flagged, id: \.0) { n, when, flaw, dur, conf in
+                    if visibleFlagged.isEmpty {
+                        Text("Nothing to review in this view. Switch filters to see other shots.")
+                            .font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                            .padding(.horizontal, 20).padding(.top, 12)
+                    }
+
+                    ForEach(visibleFlagged, id: \.0) { n, when, flaw, dur, conf in
                         ShotIQCard {
                             HStack(alignment: .top, spacing: 14) {
                                 ZStack(alignment: .bottomLeading) {
@@ -2381,7 +2508,7 @@ struct CaptureReviewView: View {    // 035
                                             .font(.custom("DINCondensed-Bold", size: 19)).foregroundStyle(ShotIQColor.ink))
                                     Text("CONFIDENCE").font(.system(size: 7, weight: .medium)).kerning(0.4)
                                         .foregroundStyle(ShotIQColor.graphite)
-                                    Button {} label: {
+                                    NavigationLink { ShotBreakdownView() } label: {
                                         Text("Review").font(.system(size: 13, weight: .medium))
                                             .foregroundStyle(ShotIQColor.shotiqOrange)
                                             .padding(.horizontal, 18).padding(.vertical, 8)
@@ -2395,7 +2522,7 @@ struct CaptureReviewView: View {    // 035
                         .padding(.horizontal, 20).padding(.top, 12)
                     }
 
-                    Button {} label: { captureOutline("Discard session", icon: "trash") }
+                    Button { confirmDiscard = true } label: { captureOutline("Discard session", icon: "trash") }
                         .buttonStyle(.plain)
                         .padding(.horizontal, 20).padding(.top, 18)
 
@@ -2405,6 +2532,14 @@ struct CaptureReviewView: View {    // 035
                     .padding(.horizontal, 20).padding(.top, 10).padding(.bottom, 26)
                 }
             }
+        }
+        // End of the live flow — release the shared camera.
+        .onAppear { CameraService.live.stop() }
+        .alert("Discard this session?", isPresented: $confirmDiscard) {
+            Button("Discard", role: .destructive) { dismiss() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("All 24 captured shots from this session will be deleted.")
         }
     }
 
