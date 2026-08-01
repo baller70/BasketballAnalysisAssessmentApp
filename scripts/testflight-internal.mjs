@@ -207,22 +207,39 @@ for (const app of APPS) {
   }
 
   if (testerEmail) {
-    const existing = (testers.data ?? []).find(
+    let tester = (testers.data ?? []).find(
       (t) => t.attributes?.email?.toLowerCase() === testerEmail.toLowerCase(),
     )
-    if (existing) {
+    if (tester) {
       console.log(`   ${testerEmail} is already a tester`)
     } else if (!confirm) {
       console.log(`   WOULD INVITE ${testerEmail} (re-run with --confirm)`)
     } else {
-      await api('POST', '/v1/betaTesters', {
+      const created = await api('POST', '/v1/betaTesters', {
         data: {
           type: 'betaTesters',
           attributes: { email: testerEmail, firstName: 'Kevin', lastName: 'Houston' },
           relationships: { betaGroups: { data: [{ type: 'betaGroups', id: group.id }] } },
         },
       })
-      console.log(`   invited ${testerEmail} — check that inbox, then open TestFlight on the phone`)
+      tester = created.data
+      console.log(`   added ${testerEmail} to the group`)
+    }
+    // Creating the betaTester record does NOT make Apple send the invitation —
+    // the tester sits at state NOT_INVITED with no email and no app in
+    // TestFlight until a betaTesterInvitations POST actually fires it.
+    const testerState = tester?.attributes?.state
+    if (confirm && tester && testerState !== 'ACCEPTED' && testerState !== 'INSTALLED') {
+      await api('POST', '/v1/betaTesterInvitations', {
+        data: {
+          type: 'betaTesterInvitations',
+          relationships: {
+            betaTester: { data: { type: 'betaTesters', id: tester.id } },
+            app: { data: { type: 'apps', id: appId } },
+          },
+        },
+      })
+      console.log(`   invitation email sent to ${testerEmail} — open it on the phone, then TestFlight`)
     }
   }
 }
