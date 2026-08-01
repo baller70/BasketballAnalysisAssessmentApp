@@ -856,7 +856,7 @@ struct GoalDetailView: View {       // 065
                 Text("of \(targetValue) \(goal.unit ?? "")").font(.system(size: 13))
                     .foregroundStyle(ShotIQColor.graphite)
             }
-            Slider(value: $logValue, in: 0...Double(targetValue), step: 1)
+            Slider(value: $logValue, in: 0...Double(max(targetValue, 1)), step: 1)
                 .tint(ShotIQColor.shotiqOrange)
             PrimaryButton(title: busy ? "Saving…" : "Save progress") {
                 patch(GoalPatchBody(currentValue: Int(logValue))) {

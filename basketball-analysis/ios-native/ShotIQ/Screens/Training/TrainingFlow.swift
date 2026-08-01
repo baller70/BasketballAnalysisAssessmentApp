@@ -433,13 +433,17 @@ struct DiscoverDrillsView: View {   // 056
                                         .stroke(ShotIQColor.rule, style: StrokeStyle(lineWidth: 1, dash: [4])))
                                 VStack(alignment: .leading, spacing: 10) {
                                     MicroLabel(text: "PRIMARY COACHING TARGET")
-                                    HStack {
-                                        Text("Keep elbow stacked through release").shotiqBody(15, weight: .semibold)
-                                            .lineLimit(1).minimumScaleFactor(0.8)
-                                        Spacer()
-                                        Image(systemName: "chevron.right")
-                                            .font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                                    NavigationLink { GoalsView() } label: {
+                                        HStack {
+                                            Text("Keep elbow stacked through release").shotiqBody(15, weight: .semibold)
+                                                .foregroundStyle(ShotIQColor.ink)
+                                                .lineLimit(1).minimumScaleFactor(0.8)
+                                            Spacer()
+                                            Image(systemName: "chevron.right")
+                                                .font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                                        }
                                     }
+                                    .buttonStyle(.plain)
                                     HRule()
                                     MicroLabel(text: "RELATED FLAWS DETECTED")
                                     HStack(spacing: 14) {
