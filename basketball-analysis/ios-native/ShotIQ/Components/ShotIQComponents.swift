@@ -6,17 +6,44 @@ import SwiftUI
 // MARK: - Typography helpers bound to the sidecar token roles
 
 extension View {
+    /// Canonical display face. Bebas Neue is NOT an iOS system font — asking
+    /// for it fell back to full-width SF at the raw sidecar pixel size, which
+    /// is what shattered every page title on device. The system condensed
+    /// width at ~0.8x reproduces the canonical narrow-caps look, and the
+    /// scale factor absorbs any title that would still overflow.
     func shotiqDisplay(_ size: CGFloat) -> some View {
-        font(.custom("BebasNeue-Regular", size: size)).foregroundStyle(ShotIQColor.ink)
+        font(.system(size: size * 0.8, weight: .heavy).width(.condensed))
+            .foregroundStyle(ShotIQColor.ink)
+            .lineLimit(2)
+            .minimumScaleFactor(0.5)
     }
     func shotiqNumeric(_ size: CGFloat) -> some View {
         // DIN Condensed ships with iOS as "DINCondensed-Bold", so unlike web the
-        // canonical numeric face is available natively.
+        // canonical numeric face is available natively. Numerals never wrap.
         font(.custom("DINCondensed-Bold", size: size)).foregroundStyle(ShotIQColor.ink)
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
     }
     func shotiqBody(_ size: CGFloat = 16, weight: Font.Weight = .regular) -> some View {
         font(.system(size: size, weight: weight)).foregroundStyle(ShotIQColor.ink)
     }
+}
+
+/// Initials for the signed-in player (canonical player-card / Profile-tab badge).
+/// The mockups show "JE" for the placeholder player Jordan Ellis — real builds
+/// derive from the account.
+func shotiqInitials(_ user: APIUser?) -> String {
+    let first = user?.firstName ?? ""
+    let last = user?.lastName ?? ""
+    let combo = "\(first.prefix(1))\(last.prefix(1))"
+    if !combo.isEmpty { return combo.uppercased() }
+    if let name = user?.displayName, !name.isEmpty {
+        let parts = name.split(separator: " ")
+        let combo = parts.prefix(2).map { String($0.prefix(1)) }.joined()
+        if !combo.isEmpty { return combo.uppercased() }
+    }
+    if let email = user?.email, let c = email.first { return String(c).uppercased() }
+    return "SI"
 }
 
 struct SectionLabel: View {
@@ -35,10 +62,71 @@ struct Wordmark: View {
     var size: CGFloat = 30
     var body: some View {
         HStack(spacing: 0) {
-            Text("SHOT").font(.custom("BebasNeue-Regular", size: size)).foregroundStyle(ShotIQColor.ink)
-            Text("IQ").font(.custom("BebasNeue-Regular", size: size)).foregroundStyle(ShotIQColor.shotiqOrange)
+            Text("SHOT").font(.system(size: size * 0.8, weight: .black).width(.condensed)).foregroundStyle(ShotIQColor.ink)
+            Text("IQ").font(.system(size: size * 0.8, weight: .black).width(.condensed)).foregroundStyle(ShotIQColor.shotiqOrange)
         }
+        .lineLimit(1)
+        .fixedSize()
         .accessibilityLabel("ShotIQ")
+    }
+}
+
+// MARK: - Canonical top chrome (screens 017-072): wordmark bar + player header
+
+struct TopBar: View {
+    var onSettings: () -> Void = {}
+    var body: some View {
+        HStack {
+            Wordmark(size: 30)
+            Spacer()
+            Button(action: onSettings) {
+                Image(systemName: "gearshape").font(.system(size: 20)).foregroundStyle(ShotIQColor.ink)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Settings")
+        }
+        .padding(.horizontal, 20)
+        .frame(height: 52)
+        .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
+    }
+}
+
+/// One stat in the header strip: small line icon, DIN numeral, tiny caps label.
+struct HeaderStat: View {
+    var icon: String
+    var value: String
+    var label: String
+    var body: some View {
+        VStack(spacing: 3) {
+            Image(systemName: icon).font(.system(size: 17)).foregroundStyle(ShotIQColor.ink)
+            Text(value).font(.custom("DINCondensed-Bold", size: 24)).foregroundStyle(ShotIQColor.ink)
+                .lineLimit(1).minimumScaleFactor(0.7)
+            Text(label).font(.system(size: 9, weight: .medium)).kerning(0.6)
+                .foregroundStyle(ShotIQColor.graphite)
+        }
+    }
+}
+
+/// Canonical player header: condensed-caps name + gray subtitle on the left,
+/// streak/points stats separated by hairlines on the right.
+struct PlayerHeader: View {
+    var name: String
+    var subtitle: String = "Right-handed • Advanced"
+    var streak: String = "6"
+    var points: String = "2,840"
+    var body: some View {
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(name.uppercased()).shotiqDisplay(38)
+                Text(subtitle).font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
+            }
+            Spacer(minLength: 8)
+            HeaderStat(icon: "film", value: streak, label: "DAY STREAK")
+            Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 46)
+            HeaderStat(icon: "circle.hexagongrid", value: points, label: "POINTS")
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 14)
     }
 }
 
@@ -269,7 +357,9 @@ struct CanonicalScreen<Content: View>: View {
 // MARK: - Bottom tab bar (canonical 5-tab layout)
 
 enum RootTab: String, CaseIterable {
-    case home = "Home", analyze = "Analyze", training = "Training", progress = "Progress", profile = "Profile"
+    // Canonical tab labels are single short words (018/054/066: Home,
+    // Capture, Train, Progress, Profile) so nothing ever wraps.
+    case home = "Home", analyze = "Analyze", training = "Train", progress = "Progress", profile = "Profile"
     var icon: String {
         switch self {
         case .home: "house"; case .analyze: "chart.xyaxis.line"; case .training: "figure.run"
@@ -286,11 +376,16 @@ struct ShotIQTabBar: View {
                 Button { tab = t } label: {
                     VStack(spacing: 5) {
                         Image(systemName: t.icon).font(.system(size: 21))
-                        Text(t.rawValue).font(.system(size: 10, weight: tab == t ? .bold : .regular))
+                        Text(t.rawValue)
+                            .font(.system(size: 10, weight: tab == t ? .bold : .regular))
+                            .lineLimit(1)
                     }
                     .frame(maxWidth: .infinity, minHeight: 44)
                     .foregroundStyle(tab == t ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
                 }
+                // Explicitly plain: the iOS 26 default button treatment washes
+                // buttons with the app tint — the salmon capsules on device.
+                .buttonStyle(.plain)
                 .accessibilityLabel(t.rawValue)
             }
         }

@@ -10,6 +10,7 @@ struct ShotIQApp: App {
     var body: some Scene {
         WindowGroup {
             RootView()
+                .buttonStyle(.plain) // iOS 26 default style tint-washes every Button into a salmon capsule
                 .environmentObject(app)
                 .tint(ShotIQColor.shotiqOrange)
                 .preferredColorScheme(.light) // canonical white interface

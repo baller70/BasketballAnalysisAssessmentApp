@@ -40,22 +40,79 @@ struct HomeView: View {
     }
 }
 
+/// Canonical top chrome for the home screens: TopBar (wordmark + gear) above
+/// the PlayerHeader (name + streak/points), exactly as in canonical 017-019.
 struct HomeHeader: View {
     @Binding var showMenu: Bool
+    @EnvironmentObject var app: AppState
     var body: some View {
-        HStack {
-            Wordmark(size: 28)
-            Spacer()
-            StatBlock(value: "6", label: "STREAK", valueSize: 20)
-            StatBlock(value: "2,840", label: "POINTS", valueSize: 20).padding(.leading, 14)
-            Button { showMenu = true } label: {
-                Circle().fill(ShotIQColor.rule).frame(width: 38, height: 38)
-                    .overlay(Text("JE").font(.system(size: 12, weight: .bold)).foregroundStyle(ShotIQColor.graphite))
-            }
-            .accessibilityLabel("Profile menu")
-            .padding(.leading, 10)
+        VStack(spacing: 0) {
+            TopBar(onSettings: { showMenu = true })
+            PlayerHeader(name: app.user?.displayName ?? "Jordan Ellis")
         }
-        .padding(.horizontal, 20).padding(.top, 16)
+    }
+}
+
+/// Orange filled CTA label used inside NavigationLinks (canonical primary CTA).
+private func homeCTALabel(_ title: String, icon: String = "camera.metering.center.weighted") -> some View {
+    HStack(spacing: 10) {
+        Image(systemName: icon).font(.system(size: 19, weight: .medium))
+        Text(title).font(.system(size: 18, weight: .semibold))
+    }
+    .frame(maxWidth: .infinity).frame(height: 58)
+    .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 8))
+    .foregroundStyle(.white)
+    .lineLimit(1)
+    .minimumScaleFactor(0.7)
+}
+
+/// Small dark media placeholder (canonical thumbnails are video frames).
+private func homeMediaThumb(height: CGFloat, icon: String = "play.fill") -> some View {
+    RoundedRectangle(cornerRadius: 4)
+        .fill(Color(red: 0.106, green: 0.114, blue: 0.125))
+        .frame(height: height)
+        .overlay(Image(systemName: icon).font(.system(size: 16)).foregroundStyle(.white.opacity(0.85)))
+}
+
+/// LATEST SESSION stats strip: shots / makes / make % / trend + delta (018/019).
+private struct HomeSessionStats: View {
+    var body: some View {
+        HStack(alignment: .center, spacing: 18) {
+            StatBlock(value: "24", label: "SHOTS", valueSize: 30)
+            StatBlock(value: "15", label: "MAKES", valueSize: 30)
+            StatBlock(value: "62.5%", label: "MAKE %", valueSize: 30)
+            Spacer(minLength: 8)
+            VStack(alignment: .trailing, spacing: 3) {
+                TrendLine(points: [2, 3.1, 2.6, 4.2], stroke: ShotIQColor.confirmGreen)
+                    .frame(width: 86, height: 28)
+                HStack(spacing: 3) {
+                    Text("+8.1%").font(.system(size: 11, weight: .semibold)).foregroundStyle(ShotIQColor.confirmGreen)
+                    Text("vs last session").font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
+                }
+            }
+        }
+    }
+}
+
+/// PRIMARY COACHING TARGET row (canonical 018/019/021).
+private struct HomeCoachingTargetRow: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text("PRIMARY COACHING TARGET")
+                .font(.system(size: 11, weight: .medium)).kerning(0.8)
+                .foregroundStyle(ShotIQColor.graphite)
+            HStack {
+                Text("Keep elbow stacked through release")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(ShotIQColor.ink)
+                    .lineLimit(1).minimumScaleFactor(0.7)
+                Spacer()
+                Image(systemName: "chevron.right").font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
+            }
+        }
+        .padding(.vertical, 14)
+        .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .top)
+        .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
     }
 }
 
@@ -67,44 +124,124 @@ struct HomeNewPlayerView: View {   // 017
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     HomeHeader(showMenu: $showMenu)
-                    Text("WELCOME TO SHOTIQ").shotiqDisplay(40).padding(.horizontal, 20).padding(.top, 24)
-                    Text("Run your first analysis to unlock your Shot Room.")
-                        .shotiqBody(15).foregroundStyle(ShotIQColor.graphite)
-                        .padding(.horizontal, 20).padding(.top, 6)
+
+                    NavigationLink { AnalyzeHubView() } label: {
+                        homeCTALabel("Analyze your first shot")
+                    }
+                    .padding(.horizontal, 20).padding(.top, 18)
+                    Text("See how your mechanics perform in minutes.")
+                        .font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 10)
+
                     ShotIQCard {
-                        VStack(spacing: 14) {
-                            PhaseStrip()
-                            Text("No analyses yet").shotiqBody(17, weight: .semibold)
-                            Text("Capture or upload a shot to see your form score, flaws and elite comparison.")
+                        VStack(alignment: .leading, spacing: 0) {
+                            SectionLabel(text: "START HERE").padding(.bottom, 4)
+                            startRow("camera.metering.center.weighted", "1.  CAPTURE YOUR SHOT",
+                                     "Record from the side to analyze your form.", rule: true)
+                            startRow("film", "2.  GET AI ANALYSIS",
+                                     "Our AI breaks down your mechanics.", rule: true)
+                            startRow("waveform.path.ecg", "3.  IMPROVE & TRACK",
+                                     "Apply feedback and watch your progress.", rule: false)
+                        }
+                        .padding(16)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 16)
+
+                    ShotIQCard {
+                        VStack(alignment: .leading, spacing: 12) {
+                            SectionLabel(text: "CAPTURE YOUR SHOT")
+                            HStack(alignment: .top, spacing: 10) {
+                                captureThumb("UPLOAD IMAGE", "From your library")
+                                captureThumb("UPLOAD VIDEO", "From your library")
+                                captureThumb("LIVE CAMERA", "Record in real time")
+                            }
+                        }
+                        .padding(16)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 14)
+
+                    ShotIQCard {
+                        VStack(alignment: .leading, spacing: 0) {
+                            HStack {
+                                SectionLabel(text: "SETUP CHECKLIST")
+                                Spacer()
+                                Text("0 OF 4 COMPLETE").font(.system(size: 10, weight: .medium)).kerning(0.6)
+                                    .foregroundStyle(ShotIQColor.graphite)
+                            }
+                            .padding(.bottom, 4)
+                            checklistRow("video", "CAMERA POSITION", "Place camera at hip height, 15–20 ft away", rule: true)
+                            checklistRow("gearshape", "ENVIRONMENT", "Good lighting, clear background", rule: true)
+                            checklistRow("figure.basketball", "SHOOTING ROUTINE", "Use your normal pre-shot routine", rule: true)
+                            checklistRow("chart.line.uptrend.xyaxis", "WHAT TO CAPTURE", "Side view from catch to follow-through", rule: false)
+                        }
+                        .padding(16)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 14)
+
+                    ShotIQCard {
+                        VStack(alignment: .leading, spacing: 10) {
+                            HStack {
+                                SectionLabel(text: "YOUR PRIMARY TARGET")
+                                Spacer()
+                                Text("See capture guide").font(.system(size: 13))
+                                    .foregroundStyle(ShotIQColor.analysisBlue)
+                                Image(systemName: "chevron.right").font(.system(size: 11))
+                                    .foregroundStyle(ShotIQColor.graphite)
+                            }
+                            Text("Keep elbow stacked through release.")
                                 .font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
-                                .multilineTextAlignment(.center)
-                            NavigationLink { AnalyzeHubView() } label: {
-                                Text("Analyze my first shot").frame(maxWidth: .infinity).frame(height: 52)
-                                    .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 6))
-                                    .foregroundStyle(.white).font(.system(size: 16, weight: .medium))
-                            }
+                            PhaseStrip()
                         }
-                        .padding(20)
+                        .padding(16)
                     }
-                    .padding(20)
-                    SectionLabel(text: "HOW IT WORKS").padding(.horizontal, 20)
-                    ForEach([("camera", "Capture", "Record from any angle with your phone."),
-                             ("chart.xyaxis.line", "Analyze", "AI detects mechanics and scores your shot."),
-                             ("figure.run", "Train", "Get personalized drills to improve faster."),
-                             ("chart.line.uptrend.xyaxis", "Track", "Monitor progress and stay on target.")], id: \.1) { icon, t, d in
-                        HStack(spacing: 14) {
-                            Image(systemName: icon).font(.system(size: 22)).frame(width: 36)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(t).shotiqBody(15, weight: .semibold)
-                                Text(d).font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
-                            }
-                            Spacer()
-                        }
-                        .padding(.horizontal, 20).padding(.vertical, 10)
-                    }
+                    .padding(.horizontal, 20).padding(.top, 14).padding(.bottom, 28)
                 }
             }
         }
+    }
+
+    private func startRow(_ icon: String, _ title: String, _ d: String, rule: Bool) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: icon).font(.system(size: 24)).foregroundStyle(ShotIQColor.ink).frame(width: 42)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title).font(.system(size: 15, weight: .heavy).width(.condensed)).kerning(0.5)
+                    .foregroundStyle(ShotIQColor.ink)
+                Text(d).font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+            }
+            Spacer()
+            Image(systemName: "chevron.right").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+        }
+        .padding(.vertical, 12)
+        .overlay(alignment: .bottom) { if rule { Rectangle().fill(ShotIQColor.rule).frame(height: 1) } }
+    }
+
+    private func captureThumb(_ title: String, _ d: String) -> some View {
+        VStack(spacing: 6) {
+            homeMediaThumb(height: 96, icon: "figure.basketball")
+            Text(title).font(.system(size: 11, weight: .heavy).width(.condensed)).kerning(0.5)
+                .foregroundStyle(ShotIQColor.ink)
+            Text(d).font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
+        }
+        .frame(maxWidth: .infinity)
+        .lineLimit(1)
+        .minimumScaleFactor(0.7)
+    }
+
+    private func checklistRow(_ icon: String, _ title: String, _ d: String, rule: Bool) -> some View {
+        HStack(spacing: 12) {
+            Circle().stroke(ShotIQColor.rule, lineWidth: 1.5).frame(width: 20, height: 20)
+            Image(systemName: icon).font(.system(size: 17)).foregroundStyle(ShotIQColor.ink).frame(width: 28)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).font(.system(size: 13, weight: .heavy).width(.condensed)).kerning(0.5)
+                    .foregroundStyle(ShotIQColor.ink)
+                Text(d).font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+            }
+            Spacer()
+            Image(systemName: "chevron.right").font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+        }
+        .padding(.vertical, 10)
+        .overlay(alignment: .bottom) { if rule { Rectangle().fill(ShotIQColor.rule).frame(height: 1) } }
     }
 }
 
@@ -116,136 +253,425 @@ struct HomeStandardView: View {    // 018
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     HomeHeader(showMenu: $showMenu)
-                    Text("DASHBOARD").shotiqDisplay(42).padding(.horizontal, 20).padding(.top, 22)
+
+                    NavigationLink { AnalyzeHubView() } label: {
+                        homeCTALabel("Analyze shot")
+                    }
+                    .padding(.horizontal, 20).padding(.top, 18)
+
+                    HStack(spacing: 10) {
+                        NavigationLink { PhotoUploadSourceView() } label: { optionCard("photo", "Upload image") }
+                        NavigationLink { VideoUploadView() } label: { optionCard("film", "Upload video") }
+                        NavigationLink { LiveCameraSetupView() } label: { optionCard("dot.radiowaves.left.and.right", "Live camera") }
+                    }
+                    .padding(.horizontal, 20).padding(.top, 14)
+
+                    NavigationLink { AnalysisResultOverviewView() } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "doc.text").font(.system(size: 19)).foregroundStyle(ShotIQColor.ink)
+                            Text("View latest analysis").font(.system(size: 16, weight: .medium))
+                                .foregroundStyle(ShotIQColor.ink)
+                            Spacer()
+                            Image(systemName: "chevron.right").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                        }
+                        .padding(16)
+                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+                    }
+                    .padding(.horizontal, 20).padding(.top, 12)
+
+                    HStack {
+                        SectionLabel(text: "LATEST ANALYSIS")
+                        Spacer()
+                        Text("Today at 8:24 AM").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 22)
+
+                    HStack(alignment: .center, spacing: 14) {
+                        homeMediaThumb(height: 250)
+                            .frame(maxWidth: .infinity)
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text("FORM SCORE").font(.system(size: 11, weight: .bold)).kerning(0.8)
+                                .foregroundStyle(ShotIQColor.graphite)
+                            Text("\(vm.score ?? 82)")
+                                .font(.custom("DINCondensed-Bold", size: 66))
+                                .foregroundStyle(ShotIQColor.shotiqOrange)
+                                .lineLimit(1).minimumScaleFactor(0.6)
+                            ScoreBar(pct: Double(vm.score ?? 82) / 100).frame(width: 96)
+                            Text("GOOD").font(.system(size: 14, weight: .bold))
+                                .foregroundStyle(ShotIQColor.analysisBlue)
+                            Text("Keep building consistency.")
+                                .font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
+                        }
+                        .frame(width: 108, alignment: .leading)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 10)
+
+                    PhaseStrip().padding(.horizontal, 20).padding(.top, 18)
+
+                    HomeCoachingTargetRow().padding(.horizontal, 20).padding(.top, 16)
+
+                    SectionLabel(text: "LATEST SESSION").padding(.horizontal, 20).padding(.top, 14)
+                    HomeSessionStats().padding(.horizontal, 20).padding(.top, 8)
+
+                    Text("NEXT WORKOUT").font(.system(size: 11, weight: .bold)).kerning(0.8)
+                        .foregroundStyle(ShotIQColor.ink)
+                        .padding(.horizontal, 20).padding(.top, 18)
                     ShotIQCard {
-                        VStack(alignment: .leading, spacing: 10) {
-                            SectionLabel(text: "FORM SCORE")
-                            HStack(alignment: .bottom) {
-                                Text("\(vm.score ?? 0)")
-                                    .font(.custom("DINCondensed-Bold", size: 64))
-                                    .foregroundStyle(ShotIQColor.shotiqOrange)
-                                Spacer()
-                                TrendLine(points: [3, 2.5, 3.6, 3, 4.4]).frame(width: 110, height: 40)
-                            }
-                            ScoreBar(pct: Double(vm.score ?? 0) / 100)
-                            Text("GOOD — keep building consistency.")
-                                .font(.system(size: 13)).foregroundStyle(ShotIQColor.analysisBlue)
-                        }
-                        .padding(18)
-                    }
-                    .padding(20)
-                    SectionLabel(text: "RECENT ANALYSES").padding(.horizontal, 20)
-                    ForEach(vm.recent) { a in
-                        NavigationLink { AnalysisResultOverviewView() } label: {
-                            HStack(spacing: 14) {
-                                MediaSurface(height: 56).frame(width: 92)
-                                VStack(alignment: .leading, spacing: 3) {
-                                    Text(a.title ?? "Shot analysis").shotiqBody(15, weight: .semibold)
-                                    Text(a.shotType ?? "Catch & Shoot").font(.system(size: 12))
-                                        .foregroundStyle(ShotIQColor.graphite)
-                                }
-                                Spacer()
-                                Text("\(Int(a.score ?? 0))").font(.custom("DINCondensed-Bold", size: 26))
+                        HStack(spacing: 14) {
+                            Circle().fill(ShotIQColor.analysisBlue).frame(width: 52, height: 52)
+                                .overlay(Image(systemName: "point.topleft.down.curvedto.point.bottomright.up")
+                                    .font(.system(size: 20)).foregroundStyle(.white))
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Quick Release Builder").font(.system(size: 16, weight: .semibold))
                                     .foregroundStyle(ShotIQColor.ink)
+                                Text("20 min  •  Form Focus").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                                Text("Improve release speed and consistency.")
+                                    .font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
                             }
-                            .padding(.horizontal, 20).padding(.vertical, 8)
+                            Spacer()
+                            Image(systemName: "chevron.right").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
                         }
+                        .padding(14)
                     }
+                    .padding(.horizontal, 20).padding(.top, 8).padding(.bottom, 24)
                 }
             }
         }
+    }
+
+    private func optionCard(_ icon: String, _ title: String) -> some View {
+        VStack(spacing: 10) {
+            Image(systemName: icon).font(.system(size: 26)).foregroundStyle(ShotIQColor.ink)
+            Text(title).font(.system(size: 14, weight: .medium)).foregroundStyle(ShotIQColor.ink)
+                .lineLimit(1).minimumScaleFactor(0.7)
+        }
+        .frame(maxWidth: .infinity).frame(height: 96)
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
     }
 }
 
 struct HomeProfessionalView: View { // 019
     @ObservedObject var vm: HomeViewModel
     @Binding var showMenu: Bool
+
+    private let phaseScores = [("SETUP", "84"), ("LOAD", "78"), ("RISE", "80"),
+                               ("RELEASE", "82"), ("FOLLOW-THROUGH", "85")]
+    private let trends: [(String, String, String, Bool)] = [
+        ("RELEASE HEIGHT", "7'6\"", "+0.6\"", true), ("RELEASE ANGLE", "49°", "+3°", true),
+        ("ELBOW STACK", "91%", "+7%", true), ("SHOT SPEED", "4.2", "−0.1", false),
+        ("CONSISTENCY", "83%", "+6%", true)]
+
     var body: some View {
         CanonicalScreen(testID: "screen-ios-home-professional") {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     HomeHeader(showMenu: $showMenu)
-                    Text("TODAY'S SHOT ROOM").shotiqDisplay(40).padding(.horizontal, 20).padding(.top, 22)
-                    Text(Date.now.formatted(date: .complete, time: .omitted))
-                        .font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite).padding(.horizontal, 20)
-                    MediaSurface(height: 220).padding(20)
-                    PhaseStrip().padding(.horizontal, 20)
-                    HStack(spacing: 22) {
-                        StatBlock(value: "\(vm.score ?? 0)", label: "FORM SCORE",
-                                  color: ShotIQColor.shotiqOrange, valueSize: 44)
-                        StatBlock(value: "24", label: "SHOTS", valueSize: 30)
-                        StatBlock(value: "15", label: "MAKES", valueSize: 30)
-                        StatBlock(value: "62.5%", label: "MAKE %", valueSize: 30)
-                    }
-                    .padding(20)
-                    ShotIQCard {
-                        VStack(alignment: .leading, spacing: 8) {
-                            SectionLabel(text: "PRIMARY COACHING TARGET")
-                            Text("Keep elbow stacked through release").shotiqBody(17, weight: .semibold)
-                            HStack {
-                                Text("ACTIVE GOAL").font(.system(size: 10, weight: .bold))
-                                    .padding(.horizontal, 8).padding(.vertical, 3)
-                                    .overlay(RoundedRectangle(cornerRadius: 4).stroke(ShotIQColor.confirmGreen))
-                                    .foregroundStyle(ShotIQColor.confirmGreen)
-                                Spacer()
-                                Text("72%").font(.custom("DINCondensed-Bold", size: 18))
-                            }
-                            ScoreBar(pct: 0.72, color: ShotIQColor.confirmGreen)
-                        }
-                        .padding(16)
-                    }
-                    .padding(.horizontal, 20)
+
                     NavigationLink { AnalyzeHubView() } label: {
-                        Text("Analyze shot").frame(maxWidth: .infinity).frame(height: 54)
-                            .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 6))
-                            .foregroundStyle(.white).font(.system(size: 17, weight: .medium))
+                        homeCTALabel("Open analysis workspace")
                     }
-                    .padding(20)
+                    .padding(.horizontal, 20).padding(.top, 18)
+
+                    HStack(spacing: 10) {
+                        NavigationLink { AnalyzeHubView() } label: { quickAction("figure.basketball", "New capture") }
+                        NavigationLink { AnalysisResultOverviewView() } label: { quickAction("film", "View history") }
+                    }
+                    .padding(.horizontal, 20).padding(.top, 12)
+
+                    HStack {
+                        SectionLabel(text: "FORM OVERVIEW")
+                        Spacer()
+                        Text("Today at 8:24 AM").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 22)
+
+                    HStack(alignment: .center, spacing: 14) {
+                        homeMediaThumb(height: 250)
+                            .frame(maxWidth: .infinity)
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text("FORM SCORE").font(.system(size: 11, weight: .bold)).kerning(0.8)
+                                .foregroundStyle(ShotIQColor.graphite)
+                            Text("\(vm.score ?? 82)")
+                                .font(.custom("DINCondensed-Bold", size: 66))
+                                .foregroundStyle(ShotIQColor.shotiqOrange)
+                                .lineLimit(1).minimumScaleFactor(0.6)
+                            ScoreBar(pct: Double(vm.score ?? 82) / 100).frame(width: 96)
+                            Text("GOOD").font(.system(size: 14, weight: .bold))
+                                .foregroundStyle(ShotIQColor.analysisBlue)
+                            Text("Keep building consistency.")
+                                .font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
+                        }
+                        .frame(width: 108, alignment: .leading)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 10)
+
+                    // Phase strip with per-phase scores (canonical 019)
+                    HStack(alignment: .top) {
+                        ForEach(phaseScores, id: \.0) { p, v in
+                            VStack(spacing: 4) {
+                                PhaseGlyph(active: p == "RELEASE", size: 28)
+                                Text(p).font(.system(size: 9, weight: p == "RELEASE" ? .bold : .regular)).kerning(0.5)
+                                    .foregroundStyle(p == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
+                                    .lineLimit(1).minimumScaleFactor(0.6)
+                                Text(v).font(.custom("DINCondensed-Bold", size: 17))
+                                    .foregroundStyle(p == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
+                                if p == "RELEASE" {
+                                    Rectangle().fill(ShotIQColor.shotiqOrange).frame(width: 40, height: 3)
+                                }
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
+                    }
+                    .padding(.horizontal, 20).padding(.top, 16)
+
+                    HStack(alignment: .center) {
+                        SectionLabel(text: "MECHANICS TRENDS")
+                        Spacer()
+                        HStack(spacing: 8) {
+                            Image(systemName: "arrowtriangle.up.fill").font(.system(size: 8))
+                                .foregroundStyle(ShotIQColor.confirmGreen)
+                            Text("Improved").font(.system(size: 10)).foregroundStyle(ShotIQColor.graphite)
+                            Text("—").font(.system(size: 10)).foregroundStyle(ShotIQColor.graphite)
+                            Text("Stable").font(.system(size: 10)).foregroundStyle(ShotIQColor.graphite)
+                            Image(systemName: "arrowtriangle.down.fill").font(.system(size: 8))
+                                .foregroundStyle(ShotIQColor.reviewRed)
+                            Text("Needs work").font(.system(size: 10)).foregroundStyle(ShotIQColor.graphite)
+                        }
+                    }
+                    .padding(.horizontal, 20).padding(.top, 22)
+
+                    HStack(alignment: .top, spacing: 4) {
+                        ForEach(trends, id: \.0) { label, value, delta, up in
+                            VStack(spacing: 4) {
+                                PhaseGlyph(size: 22)
+                                Text(label).font(.system(size: 8, weight: .medium)).kerning(0.4)
+                                    .foregroundStyle(ShotIQColor.graphite)
+                                    .lineLimit(1).minimumScaleFactor(0.6)
+                                Text(value).font(.custom("DINCondensed-Bold", size: 22))
+                                    .foregroundStyle(ShotIQColor.ink)
+                                HStack(spacing: 2) {
+                                    Text(delta).font(.system(size: 11, weight: .semibold))
+                                    Image(systemName: up ? "arrow.up.right" : "arrow.down.right").font(.system(size: 8))
+                                }
+                                .foregroundStyle(up ? ShotIQColor.confirmGreen : ShotIQColor.reviewRed)
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
+                    }
+                    .padding(.horizontal, 20).padding(.top, 12)
+
+                    HStack {
+                        SectionLabel(text: "RECENT SESSIONS")
+                        Spacer()
+                        Text("View all").font(.system(size: 13)).foregroundStyle(ShotIQColor.ink)
+                    }
+                    .padding(.horizontal, 20).padding(.top, 24)
+
+                    NavigationLink { AnalysisResultOverviewView() } label: {
+                        ShotIQCard {
+                            HStack(alignment: .center, spacing: 14) {
+                                homeMediaThumb(height: 92).frame(width: 128)
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text("Today at 8:24 AM").font(.system(size: 13)).foregroundStyle(ShotIQColor.ink)
+                                    HStack(spacing: 16) {
+                                        StatBlock(value: "24", label: "SHOTS", valueSize: 22)
+                                        StatBlock(value: "15", label: "MAKES", valueSize: 22)
+                                        StatBlock(value: "62.5%", label: "MAKE %", valueSize: 22)
+                                    }
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right").font(.system(size: 13))
+                                    .foregroundStyle(ShotIQColor.graphite)
+                            }
+                            .padding(12)
+                        }
+                    }
+                    .padding(.horizontal, 20).padding(.top, 8)
+
+                    HomeCoachingTargetRow().padding(.horizontal, 20).padding(.top, 16)
+
+                    HomeSessionStats().padding(.horizontal, 20).padding(.top, 12).padding(.bottom, 24)
                 }
             }
         }
+    }
+
+    private func quickAction(_ icon: String, _ title: String) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon).font(.system(size: 19)).foregroundStyle(ShotIQColor.ink)
+            Text(title).font(.system(size: 15, weight: .medium)).foregroundStyle(ShotIQColor.ink)
+                .lineLimit(1).minimumScaleFactor(0.7)
+        }
+        .frame(maxWidth: .infinity).frame(height: 56)
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
     }
 }
 
 struct ProfileMenuView: View {      // 020
     @EnvironmentObject var app: AppState
     @Environment(\.dismiss) private var dismiss
+    @State private var dashboardMode = "Analysis"
+
+    private let menuRows = [
+        ("camera.metering.center.weighted", "MY MEDIA", "View and manage your captured content"),
+        ("figure.basketball", "ELITE SHOOTERS", "Study top shooters and their mechanics"),
+        ("flag", "ACHIEVEMENTS", "Track milestones and personal bests"),
+        ("circle.hexagongrid", "POINTS SYSTEM", "Learn how points work and how to earn more"),
+        ("gearshape", "SETTINGS", "Customize your app experience")]
+
     var body: some View {
         CanonicalScreen(testID: "screen-ios-profile-menu") {
-            VStack(alignment: .leading, spacing: 0) {
-                HStack(spacing: 14) {
-                    Circle().fill(ShotIQColor.rule).frame(width: 54, height: 54)
-                        .overlay(Text("JE").font(.system(size: 16, weight: .bold)).foregroundStyle(ShotIQColor.graphite))
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(app.user?.displayName ?? "Jordan Ellis").shotiqBody(17, weight: .semibold)
-                        Text(app.user?.email ?? "").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
-                    }
-                    Spacer()
-                }
-                .padding(20)
-                ForEach([("person.crop.square", "Player card"), ("gearshape", "Settings"),
-                         ("photo.stack", "My media"), ("trophy", "Achievements"),
-                         ("square.and.arrow.up", "Share results")], id: \.1) { icon, t in
-                    HStack(spacing: 14) {
-                        Image(systemName: icon).frame(width: 30)
-                        Text(t).shotiqBody(16)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack {
+                        Wordmark(size: 30)
                         Spacer()
-                        Image(systemName: "chevron.right").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                        Button { dismiss() } label: {
+                            Image(systemName: "xmark").font(.system(size: 19)).foregroundStyle(ShotIQColor.ink)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Close")
                     }
-                    .padding(.horizontal, 20).padding(.vertical, 14)
-                    .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
-                }
-                Button {
-                    dismiss(); app.signOut()
-                } label: {
+                    .padding(.horizontal, 20).frame(height: 52)
+
+                    HStack(alignment: .center, spacing: 16) {
+                        Circle().fill(ShotIQColor.rule).frame(width: 88, height: 88)
+                            .overlay(Text(shotiqInitials(app.user)).font(.system(size: 26, weight: .bold))
+                                .foregroundStyle(ShotIQColor.graphite))
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text((app.user?.displayName ?? "Jordan Ellis").uppercased()).shotiqDisplay(30)
+                            Text("Right-handed • Advanced").font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
+                            Button {} label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "camera.metering.center.weighted").font(.system(size: 14))
+                                    Text("View profile").font(.system(size: 14, weight: .medium))
+                                    Image(systemName: "chevron.right").font(.system(size: 10))
+                                }
+                                .foregroundStyle(ShotIQColor.shotiqOrange)
+                                .padding(.horizontal, 12).padding(.vertical, 8)
+                                .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(20)
+
+                    HStack(alignment: .top, spacing: 0) {
+                        HeaderStat(icon: "film", value: "6", label: "DAY STREAK").frame(maxWidth: .infinity)
+                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 48)
+                        HeaderStat(icon: "circle.hexagongrid", value: "2,840", label: "POINTS").frame(maxWidth: .infinity)
+                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 48)
+                        HeaderStat(icon: "camera.metering.center.weighted", value: "82", label: "FORM SCORE").frame(maxWidth: .infinity)
+                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 48)
+                        VStack(spacing: 3) {
+                            Image(systemName: "arrow.up.right").font(.system(size: 15)).foregroundStyle(ShotIQColor.confirmGreen)
+                            Text("+8.1%").font(.custom("DINCondensed-Bold", size: 24))
+                                .foregroundStyle(ShotIQColor.confirmGreen)
+                                .lineLimit(1).minimumScaleFactor(0.7)
+                            Text("VS LAST SESSION").font(.system(size: 9, weight: .medium)).kerning(0.4)
+                                .foregroundStyle(ShotIQColor.graphite)
+                                .lineLimit(1).minimumScaleFactor(0.6)
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                    .padding(.horizontal, 12).padding(.top, 4)
+
+                    HStack(spacing: 0) {
+                        VStack(spacing: 2) {
+                            Text("24").font(.custom("DINCondensed-Bold", size: 24)).foregroundStyle(ShotIQColor.ink)
+                            Text("SHOTS").font(.system(size: 9, weight: .medium)).kerning(0.6)
+                                .foregroundStyle(ShotIQColor.graphite)
+                        }.frame(maxWidth: .infinity)
+                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 36)
+                        VStack(spacing: 2) {
+                            Text("15").font(.custom("DINCondensed-Bold", size: 24)).foregroundStyle(ShotIQColor.ink)
+                            Text("MAKES").font(.system(size: 9, weight: .medium)).kerning(0.6)
+                                .foregroundStyle(ShotIQColor.graphite)
+                        }.frame(maxWidth: .infinity)
+                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 36)
+                        VStack(spacing: 2) {
+                            Text("62.5%").font(.custom("DINCondensed-Bold", size: 24)).foregroundStyle(ShotIQColor.ink)
+                            Text("ACCURACY").font(.system(size: 9, weight: .medium)).kerning(0.6)
+                                .foregroundStyle(ShotIQColor.graphite)
+                        }.frame(maxWidth: .infinity)
+                    }
+                    .padding(.horizontal, 40).padding(.top, 18)
+
+                    // DASHBOARD MODE selector
                     HStack(spacing: 14) {
-                        Image(systemName: "rectangle.portrait.and.arrow.right").frame(width: 30)
-                        Text("Sign out").shotiqBody(16)
+                        Image(systemName: "camera.metering.center.weighted").font(.system(size: 24))
+                            .foregroundStyle(ShotIQColor.ink)
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("DASHBOARD MODE").font(.system(size: 14, weight: .heavy).width(.condensed)).kerning(0.5)
+                                .foregroundStyle(ShotIQColor.ink)
+                            Text("Choose what you see first when you open ShotIQ.")
+                                .font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
+                        }
+                        Spacer()
+                        HStack(spacing: 0) {
+                            ForEach(["Analysis", "Training"], id: \.self) { mode in
+                                Button { dashboardMode = mode } label: {
+                                    Text(mode).font(.system(size: 13, weight: .semibold))
+                                        .padding(.horizontal, 12).padding(.vertical, 8)
+                                        .background(dashboardMode == mode ? ShotIQColor.shotiqOrange : ShotIQColor.paper)
+                                        .foregroundStyle(dashboardMode == mode ? .white : ShotIQColor.ink)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
                     }
-                    .foregroundStyle(ShotIQColor.reviewRed)
-                    .padding(.horizontal, 20).padding(.vertical, 16)
+                    .padding(14)
+                    .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
+                    .padding(.horizontal, 20).padding(.top, 22)
+
+                    ShotIQCard {
+                        VStack(spacing: 0) {
+                            ForEach(menuRows, id: \.1) { icon, t, d in
+                                HStack(spacing: 16) {
+                                    Image(systemName: icon).font(.system(size: 22))
+                                        .foregroundStyle(ShotIQColor.ink).frame(width: 36)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(t).font(.system(size: 17, weight: .heavy).width(.condensed)).kerning(0.5)
+                                            .foregroundStyle(ShotIQColor.ink)
+                                        Text(d).font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                                    }
+                                    Spacer()
+                                    Image(systemName: "chevron.right").font(.system(size: 13))
+                                        .foregroundStyle(ShotIQColor.graphite)
+                                }
+                                .padding(.horizontal, 16).padding(.vertical, 14)
+                                .overlay(alignment: .bottom) {
+                                    if t != "SETTINGS" { Rectangle().fill(ShotIQColor.rule).frame(height: 1).padding(.horizontal, 16) }
+                                }
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 20).padding(.top, 14)
+
+                    Button {
+                        dismiss(); app.signOut()
+                    } label: {
+                        HStack(spacing: 16) {
+                            Image(systemName: "rectangle.portrait.and.arrow.right").font(.system(size: 22))
+                                .foregroundStyle(ShotIQColor.reviewRed).frame(width: 36)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("SIGN OUT").font(.system(size: 17, weight: .heavy).width(.condensed)).kerning(0.5)
+                                    .foregroundStyle(ShotIQColor.ink)
+                                Text("Sign out of your ShotIQ account")
+                                    .font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right").font(.system(size: 13))
+                                .foregroundStyle(ShotIQColor.graphite)
+                        }
+                        .padding(16)
+                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, 20).padding(.top, 14).padding(.bottom, 28)
                 }
-                Spacer()
             }
         }
     }
