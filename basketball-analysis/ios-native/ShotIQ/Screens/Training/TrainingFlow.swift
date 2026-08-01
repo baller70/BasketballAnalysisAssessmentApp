@@ -187,7 +187,7 @@ struct TrainingHomeView: View {     // 054
                                     VStack(alignment: .leading, spacing: 3) {
                                         Text("FORM SCORE").font(.system(size: 9, weight: .semibold)).kerning(0.6)
                                             .foregroundStyle(ShotIQColor.graphite)
-                                        Text("82").font(.custom("DINCondensed-Bold", size: 44))
+                                        Text("82").font(.custom("Tungsten-Semibold", size: 44))
                                             .foregroundStyle(ShotIQColor.shotiqOrange)
                                         ScoreBar(pct: 0.82).frame(width: 60)
                                     }
@@ -239,7 +239,7 @@ struct QuickStartView: View {       // 055
                             PhotoThumb(height: 190).frame(maxWidth: .infinity)
                             VStack(alignment: .leading, spacing: 6) {
                                 MicroLabel(text: "FORM SCORE")
-                                Text("82").font(.custom("DINCondensed-Bold", size: 52))
+                                Text("82").font(.custom("Tungsten-Semibold", size: 52))
                                     .foregroundStyle(ShotIQColor.shotiqOrange)
                                 ScoreBar(pct: 0.82).frame(width: 96)
                                 Text("GOOD").font(.system(size: 13, weight: .bold))
@@ -634,7 +634,7 @@ struct DrillDetailView: View {      // 057
                                     VStack(spacing: 2) {
                                         Text("FORM SCORE").font(.system(size: 7, weight: .semibold)).kerning(0.5)
                                             .foregroundStyle(ShotIQColor.graphite)
-                                        Text("82").font(.custom("DINCondensed-Bold", size: 26))
+                                        Text("82").font(.custom("Tungsten-Semibold", size: 26))
                                             .foregroundStyle(ShotIQColor.shotiqOrange)
                                         Rectangle().fill(ShotIQColor.shotiqOrange).frame(width: 28, height: 3)
                                     }
@@ -682,7 +682,7 @@ struct DrillDetailView: View {      // 057
                                     VStack(alignment: .leading, spacing: 6) {
                                         PhotoThumb(width: 104, height: 104)
                                             .overlay(alignment: .topLeading) {
-                                                Text("\(i + 1)").font(.custom("DINCondensed-Bold", size: 15))
+                                                Text("\(i + 1)").font(.custom("Tungsten-Semibold", size: 15))
                                                     .foregroundStyle(.white)
                                                     .frame(width: 22, height: 22)
                                                     .background(ShotIQColor.shotiqOrange, in: Circle())
@@ -996,7 +996,7 @@ struct MyDrillsView: View {         // 058
     }
     private func miniStat(_ value: String, _ label: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(value).font(.custom("DINCondensed-Bold", size: 17)).foregroundStyle(ShotIQColor.ink)
+            Text(value).font(.custom("Tungsten-Semibold", size: 17)).foregroundStyle(ShotIQColor.ink)
                 .lineLimit(1).minimumScaleFactor(0.6)
             Text(label).font(.system(size: 7, weight: .medium)).kerning(0.3)
                 .foregroundStyle(ShotIQColor.graphite)
@@ -1083,7 +1083,7 @@ struct WorkoutCalendarView: View {  // 059
                             legendItem("Scheduled") { Circle().stroke(ShotIQColor.shotiqOrange, lineWidth: 1.4).frame(width: 10, height: 10) }
                             legendItem("In Progress") { Circle().fill(ShotIQColor.shotiqOrange).frame(width: 10, height: 10) }
                             legendItem("Missed") { Image(systemName: "xmark.circle").font(.system(size: 11)).foregroundStyle(ShotIQColor.reviewRed) }
-                            legendItem("No workout") { Text("24").font(.custom("DINCondensed-Bold", size: 12)).foregroundStyle(ShotIQColor.muted) }
+                            legendItem("No workout") { Text("24").font(.custom("Tungsten-Semibold", size: 12)).foregroundStyle(ShotIQColor.muted) }
                         }
                         .padding(.top, 12)
                         // Selected day card
@@ -1146,7 +1146,7 @@ struct WorkoutCalendarView: View {  // 059
     }
     private func stripStat(_ value: String, _ label: String) -> some View {
         VStack(spacing: 1) {
-            Text(value).font(.custom("DINCondensed-Bold", size: 17)).foregroundStyle(ShotIQColor.ink)
+            Text(value).font(.custom("Tungsten-Semibold", size: 17)).foregroundStyle(ShotIQColor.ink)
                 .lineLimit(1).minimumScaleFactor(0.6)
             Text(label).font(.system(size: 7, weight: .medium)).foregroundStyle(ShotIQColor.graphite)
         }
@@ -1367,7 +1367,7 @@ struct DrillExecutionView: View {   // 060
                                 HStack(spacing: 6) {
                                     Circle().fill(ShotIQColor.shotiqOrange).frame(width: 7, height: 7)
                                     Text(String(format: "%02d:%02d", m.elapsed / 60, m.elapsed % 60))
-                                        .font(.custom("DINCondensed-Bold", size: 14)).foregroundStyle(.white)
+                                        .font(.custom("Tungsten-Semibold", size: 14)).foregroundStyle(.white)
                                 }
                                 .padding(.horizontal, 9).padding(.vertical, 5)
                                 .background(.black.opacity(0.75), in: RoundedRectangle(cornerRadius: 5))
@@ -1452,7 +1452,7 @@ struct DrillExecutionView: View {   // 060
     }
     private func execStat(_ value: String, _ label: String) -> some View {
         VStack(spacing: 2) {
-            Text(value).font(.custom("DINCondensed-Bold", size: 30)).foregroundStyle(ShotIQColor.ink)
+            Text(value).font(.custom("Tungsten-Semibold", size: 30)).foregroundStyle(ShotIQColor.ink)
                 .lineLimit(1).minimumScaleFactor(0.6)
             Text(label).font(.system(size: 9, weight: .medium)).kerning(0.5)
                 .foregroundStyle(ShotIQColor.graphite)
@@ -1483,7 +1483,7 @@ struct ShotTrackerView: View {      // 061
                         Spacer(minLength: 6)
                         Image(systemName: "stopwatch").font(.system(size: 13))
                         VStack(alignment: .leading, spacing: 0) {
-                            Text("03:18").font(.custom("DINCondensed-Bold", size: 17))
+                            Text("03:18").font(.custom("Tungsten-Semibold", size: 17))
                             Text("REMAINING").font(.system(size: 7, weight: .medium)).kerning(0.4)
                                 .foregroundStyle(ShotIQColor.graphite)
                         }
@@ -1507,7 +1507,7 @@ struct ShotTrackerView: View {      // 061
                                     SectionLabel(text: "SHOT TRACKER")
                                     Spacer()
                                     Text("\(shots) OF \(sessionTarget)")
-                                        .font(.custom("DINCondensed-Bold", size: 16))
+                                        .font(.custom("Tungsten-Semibold", size: 16))
                                 }
                                 ZStack(alignment: .topLeading) {
                                     MediaSurface(height: 268)
@@ -1525,17 +1525,17 @@ struct ShotTrackerView: View {      // 061
                             VStack(alignment: .leading, spacing: 9) {
                                 MicroLabel(text: "MAKE PERCENTAGE")
                                 Text(String(format: "%.1f%%", pct * 100))
-                                    .font(.custom("DINCondensed-Bold", size: 36))
+                                    .font(.custom("Tungsten-Semibold", size: 36))
                                     .foregroundStyle(ShotIQColor.ink)
                                     .lineLimit(1).minimumScaleFactor(0.6)
-                                Text("\(makes) OF \(shots)").font(.custom("DINCondensed-Bold", size: 14))
+                                Text("\(makes) OF \(shots)").font(.custom("Tungsten-Semibold", size: 14))
                                     .foregroundStyle(ShotIQColor.graphite)
                                 Ring(pct: pct, color: ShotIQColor.confirmGreen, lineWidth: 7)
                                     .frame(width: 54, height: 54)
                                 HRule()
                                 MicroLabel(text: "CURRENT STREAK")
                                 HStack(alignment: .firstTextBaseline, spacing: 4) {
-                                    Text("3").font(.custom("DINCondensed-Bold", size: 26))
+                                    Text("3").font(.custom("Tungsten-Semibold", size: 26))
                                         .foregroundStyle(ShotIQColor.confirmGreen)
                                     Text("MAKES").font(.system(size: 8, weight: .bold))
                                         .foregroundStyle(ShotIQColor.confirmGreen)
@@ -1607,7 +1607,7 @@ struct ShotTrackerView: View {      // 061
                                         .kerning(0.3)
                                         .foregroundStyle(p.0 == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
                                         .lineLimit(1).minimumScaleFactor(0.6)
-                                    Text(p.1).font(.custom("DINCondensed-Bold", size: 12))
+                                    Text(p.1).font(.custom("Tungsten-Semibold", size: 12))
                                         .foregroundStyle(p.0 == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
                                 }
                                 .frame(maxWidth: .infinity)
@@ -1721,7 +1721,7 @@ struct WorkoutCompletionView: View { // 062
                                 PhotoThumb(width: 200, height: 210)
                                 VStack(alignment: .leading, spacing: 6) {
                                     MicroLabel(text: "FORM SCORE")
-                                    Text("82").font(.custom("DINCondensed-Bold", size: 58))
+                                    Text("82").font(.custom("Tungsten-Semibold", size: 58))
                                         .foregroundStyle(ShotIQColor.shotiqOrange)
                                     ScoreBar(pct: 0.82).frame(width: 96)
                                     Text("GOOD").font(.system(size: 13, weight: .bold))
@@ -1745,7 +1745,7 @@ struct WorkoutCompletionView: View { // 062
                                         .kerning(0.3)
                                         .foregroundStyle(p.0 == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
                                         .lineLimit(1).minimumScaleFactor(0.6)
-                                    Text(p.1).font(.custom("DINCondensed-Bold", size: 16))
+                                    Text(p.1).font(.custom("Tungsten-Semibold", size: 16))
                                         .foregroundStyle(p.0 == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
                                 }
                                 .frame(maxWidth: .infinity)
@@ -1763,7 +1763,7 @@ struct WorkoutCompletionView: View { // 062
                                         .lineLimit(1).minimumScaleFactor(0.8)
                                     HStack(spacing: 10) {
                                         ScoreBar(pct: 0.8, color: ShotIQColor.confirmGreen)
-                                        Text("8 / 10").font(.custom("DINCondensed-Bold", size: 16))
+                                        Text("8 / 10").font(.custom("Tungsten-Semibold", size: 16))
                                             .foregroundStyle(ShotIQColor.confirmGreen)
                                     }
                                     Text("Progress this session").font(.system(size: 11))
@@ -1850,7 +1850,7 @@ struct WorkoutCompletionView: View { // 062
     private func completionStat(_ icon: String, _ value: String, _ label: String, _ color: Color) -> some View {
         VStack(spacing: 4) {
             Image(systemName: icon).font(.system(size: 16)).foregroundStyle(ShotIQColor.ink)
-            Text(value).font(.custom("DINCondensed-Bold", size: 28)).foregroundStyle(color)
+            Text(value).font(.custom("Tungsten-Semibold", size: 28)).foregroundStyle(color)
                 .lineLimit(1).minimumScaleFactor(0.6)
             Text(label).font(.system(size: 8, weight: .medium)).kerning(0.4)
                 .foregroundStyle(ShotIQColor.graphite)

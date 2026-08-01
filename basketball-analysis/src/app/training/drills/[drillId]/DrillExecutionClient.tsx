@@ -175,9 +175,6 @@ export default function DrillExecutionClient() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/images/canonical/091-hero.png" alt="Live drill camera frame"
                  className="absolute inset-0 h-full w-full object-cover" />
-            <span className="absolute left-[14px] top-[14px] flex items-center gap-[7px] rounded-[4px] bg-black/80 px-[10px] py-[5px] text-[11px] font-bold text-white">
-              <span className="h-[7px] w-[7px] rounded-full bg-[var(--shotiq-color-shotiqOrange)]" /> LIVE
-            </span>
             <Maximize className="absolute bottom-[12px] right-[12px] h-[17px] w-[17px] text-white" />
           </div>
 

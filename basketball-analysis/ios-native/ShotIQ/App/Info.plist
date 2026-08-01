@@ -28,6 +28,16 @@
 	<string>ShotIQ imports shot photos and videos for analysis.</string>
 	<key>NSUserNotificationsUsageDescription</key>
 	<string>ShotIQ reminds you about workouts and analysis results.</string>
+	<key>UIAppFonts</key>
+	<array>
+		<string>boxedmedium.otf</string>
+		<string>boxedsemibold.otf</string>
+		<string>boxedheavy.otf</string>
+		<string>tungsten_medium.otf</string>
+		<string>tungsten_semibold.otf</string>
+		<string>tungsten_bold.otf</string>
+		<string>tungsten_black.otf</string>
+	</array>
 	<key>UILaunchScreen</key>
 	<dict/>
 	<key>UIStatusBarHidden</key>

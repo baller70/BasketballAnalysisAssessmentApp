@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		17D66724B6DE42A8B812C14A /* tungsten_semibold.otf in Resources */ = {isa = PBXBuildFile; fileRef = 868BDC6C6FC52670A10F9CD3 /* tungsten_semibold.otf */; };
 		19A14ABDC8E02B386C9A714C /* CameraService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2C7558F26B7588AA0972272 /* CameraService.swift */; };
 		1E79D017333BFCCC91057A30 /* ShotIQComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1082AE3FE8912AE6B47969 /* ShotIQComponents.swift */; };
 		36F3277E8B2C123CBABE7D98 /* ShotIQApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38BCEA5007BFAFE4AA0C9F64 /* ShotIQApp.swift */; };
@@ -14,13 +15,19 @@
 		494D3F0BB975462D2C699BB0 /* TrainingFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4CFDF0EEC8E7460A19711DE /* TrainingFlow.swift */; };
 		4A9E83E6C305639F91F88F6C /* EliteFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFD80AB08FF5E5D07D90CCFB /* EliteFlow.swift */; };
 		4B8B9E9003777D6A4B234B5F /* AnalysisFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03A277539C261467FFECE8 /* AnalysisFlow.swift */; };
+		519A38CD0839ADD0F0214188 /* boxedsemibold.otf in Resources */ = {isa = PBXBuildFile; fileRef = D6DF21163E007DAC625258DE /* boxedsemibold.otf */; };
 		59EAA017D3EA28E9825519B0 /* ShotIQUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B80E348AC504802FBFCEE2BE /* ShotIQUITests.swift */; };
 		71060C0C6C15EF00043BDC4C /* ShotIQTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = D38018B275DB53F75E8FB92C /* ShotIQTokens.swift */; };
 		7A0A5793869314120915A127 /* OnboardingFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10550E1AD3597AE434E97DFB /* OnboardingFlow.swift */; };
 		881767E47EDBF3F5B38CC679 /* HomeFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9D8AB9A2AA75D7231A3DF13 /* HomeFlow.swift */; };
+		A8A844B65564DDBBCFB71D30 /* tungsten_medium.otf in Resources */ = {isa = PBXBuildFile; fileRef = 4AA480AA2A56A7F5DD4D495C /* tungsten_medium.otf */; };
+		ABEC9459F6FBA7FC1292117C /* boxedmedium.otf in Resources */ = {isa = PBXBuildFile; fileRef = FD571752957BF2990F80DC2C /* boxedmedium.otf */; };
+		AF255EAEE75CB55ABA2B10C0 /* tungsten_bold.otf in Resources */ = {isa = PBXBuildFile; fileRef = ED1132515D54BB1F7C7EB36F /* tungsten_bold.otf */; };
 		B9E8CDA3D4FF7A5D803BFA28 /* ShotIQTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F46C7A0A6EBBC1A7CE81E129 /* ShotIQTests.swift */; };
 		BAEA068CA76742A517947F56 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3ABB946C8ACBA7946DBFC56 /* APIClient.swift */; };
+		BF4ED790459362F42F3BA027 /* tungsten_black.otf in Resources */ = {isa = PBXBuildFile; fileRef = 173C9C7C27E9EFDB40D8A184 /* tungsten_black.otf */; };
 		D366CF3B9BB408E1674F1F8D /* GoalsAnalyticsMediaProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD1B7FFC873C50CC28C73611 /* GoalsAnalyticsMediaProfile.swift */; };
+		D94A28C690FB79B9467D8EA4 /* boxedheavy.otf in Resources */ = {isa = PBXBuildFile; fileRef = 7DFDB038721B489270DBA1A5 /* boxedheavy.otf */; };
 		F70F48656AC9104E369FF1B9 /* CaptureFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DB88B746B85C662B864EB2E /* CaptureFlow.swift */; };
 		FCD17A4ED5735EB2FDD9AA14 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EBF36012146C626940DA84BF /* Assets.xcassets */; };
 /* End PBXBuildFile section */
@@ -45,12 +52,16 @@
 /* Begin PBXFileReference section */
 		0A1082AE3FE8912AE6B47969 /* ShotIQComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShotIQComponents.swift; sourceTree = "<group>"; };
 		10550E1AD3597AE434E97DFB /* OnboardingFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingFlow.swift; sourceTree = "<group>"; };
+		173C9C7C27E9EFDB40D8A184 /* tungsten_black.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = tungsten_black.otf; sourceTree = "<group>"; };
 		1E03A277539C261467FFECE8 /* AnalysisFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisFlow.swift; sourceTree = "<group>"; };
 		38BCEA5007BFAFE4AA0C9F64 /* ShotIQApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShotIQApp.swift; sourceTree = "<group>"; };
 		3DB88B746B85C662B864EB2E /* CaptureFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureFlow.swift; sourceTree = "<group>"; };
+		4AA480AA2A56A7F5DD4D495C /* tungsten_medium.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = tungsten_medium.otf; sourceTree = "<group>"; };
 		5C2F2EBE799B4DF14007CD1D /* ShotIQ.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = ShotIQ.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		74D31DBB08E9FCD85484D07E /* ShotIQTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = ShotIQTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7BB7B15B7EDDE5D44B98B1E4 /* ShotIQUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = ShotIQUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		7DFDB038721B489270DBA1A5 /* boxedheavy.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = boxedheavy.otf; sourceTree = "<group>"; };
+		868BDC6C6FC52670A10F9CD3 /* tungsten_semibold.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = tungsten_semibold.otf; sourceTree = "<group>"; };
 		90F9DD369D1CDE90145B5003 /* AuthFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthFlow.swift; sourceTree = "<group>"; };
 		A3ABB946C8ACBA7946DBFC56 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		B80E348AC504802FBFCEE2BE /* ShotIQUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShotIQUITests.swift; sourceTree = "<group>"; };
@@ -58,11 +69,14 @@
 		BFD80AB08FF5E5D07D90CCFB /* EliteFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EliteFlow.swift; sourceTree = "<group>"; };
 		D2C7558F26B7588AA0972272 /* CameraService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraService.swift; sourceTree = "<group>"; };
 		D38018B275DB53F75E8FB92C /* ShotIQTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShotIQTokens.swift; sourceTree = "<group>"; };
+		D6DF21163E007DAC625258DE /* boxedsemibold.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = boxedsemibold.otf; sourceTree = "<group>"; };
 		D8EAB7AFA47FF810A708D966 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		D9D8AB9A2AA75D7231A3DF13 /* HomeFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeFlow.swift; sourceTree = "<group>"; };
 		EBF36012146C626940DA84BF /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		ED1132515D54BB1F7C7EB36F /* tungsten_bold.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = tungsten_bold.otf; sourceTree = "<group>"; };
 		F46C7A0A6EBBC1A7CE81E129 /* ShotIQTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShotIQTests.swift; sourceTree = "<group>"; };
 		F4CFDF0EEC8E7460A19711DE /* TrainingFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingFlow.swift; sourceTree = "<group>"; };
+		FD571752957BF2990F80DC2C /* boxedmedium.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = boxedmedium.otf; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -139,6 +153,7 @@
 				EBF36012146C626940DA84BF /* Assets.xcassets */,
 				D8EAB7AFA47FF810A708D966 /* Info.plist */,
 				38BCEA5007BFAFE4AA0C9F64 /* ShotIQApp.swift */,
+				E75D391A383DC6D79F41BF9B /* Fonts */,
 			);
 			name = App;
 			path = ShotIQ/App;
@@ -208,6 +223,20 @@
 			);
 			name = UITests;
 			path = ShotIQ/UITests;
+			sourceTree = "<group>";
+		};
+		E75D391A383DC6D79F41BF9B /* Fonts */ = {
+			isa = PBXGroup;
+			children = (
+				7DFDB038721B489270DBA1A5 /* boxedheavy.otf */,
+				FD571752957BF2990F80DC2C /* boxedmedium.otf */,
+				D6DF21163E007DAC625258DE /* boxedsemibold.otf */,
+				173C9C7C27E9EFDB40D8A184 /* tungsten_black.otf */,
+				ED1132515D54BB1F7C7EB36F /* tungsten_bold.otf */,
+				4AA480AA2A56A7F5DD4D495C /* tungsten_medium.otf */,
+				868BDC6C6FC52670A10F9CD3 /* tungsten_semibold.otf */,
+			);
+			path = Fonts;
 			sourceTree = "<group>";
 		};
 		EE8EA4343AD17785F7A52006 /* Training */ = {
@@ -320,6 +349,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				FCD17A4ED5735EB2FDD9AA14 /* Assets.xcassets in Resources */,
+				D94A28C690FB79B9467D8EA4 /* boxedheavy.otf in Resources */,
+				ABEC9459F6FBA7FC1292117C /* boxedmedium.otf in Resources */,
+				519A38CD0839ADD0F0214188 /* boxedsemibold.otf in Resources */,
+				BF4ED790459362F42F3BA027 /* tungsten_black.otf in Resources */,
+				AF255EAEE75CB55ABA2B10C0 /* tungsten_bold.otf in Resources */,
+				A8A844B65564DDBBCFB71D30 /* tungsten_medium.otf in Resources */,
+				17D66724B6DE42A8B812C14A /* tungsten_semibold.otf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

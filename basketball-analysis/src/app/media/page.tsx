@@ -7,25 +7,43 @@ import Link from "next/link"
 import { Search, Upload, SlidersHorizontal, ChevronDown, Trash2, Calendar, Share2, X, ChevronRight } from "lucide-react"
 import { SectionLabel, Card, MediaSurface, PhaseGlyph } from "@/components/shotiq/ShotIQShell"
 
-interface MediaItem { id: string; title: string; time: string; style: string; score: number | null; status: string; len: string }
+interface MediaItem { id: string; title: string; time: string; style: string; score: number | null; status: string; len: string; img?: string }
+
+const cimg = (n: string) => `/images/canonical/${n}.png`
 
 const DEMO: Record<string, MediaItem[]> = {
   "TODAY · May 12, 2025": [
-    { id: "1", title: "Pull-Up Jumper", time: "8:24 AM", style: "Catch & Shoot", score: 82, status: "Analyzed", len: "0:07" },
-    { id: "2", title: "Spot-Up Three", time: "8:21 AM", style: "Catch & Shoot", score: 78, status: "Analyzed", len: "0:06" },
-    { id: "3", title: "Transition Pull-Up", time: "8:18 AM", style: "Off the Dribble", score: 75, status: "Analyzed", len: "0:05" },
-    { id: "4", title: "Pull-Up Jumper", time: "8:15 AM", style: "Off the Dribble", score: 68, status: "Review", len: "0:06" },
-    { id: "5", title: "Spot-Up Three", time: "8:12 AM", style: "Catch & Shoot", score: null, status: "Not analyzed", len: "0:04" },
-    { id: "6", title: "Pull-Up Jumper", time: "8:09 AM", style: "Off the Dribble", score: null, status: "Not analyzed", len: "0:07" },
+    { id: "1", title: "Pull-Up Jumper", time: "8:24 AM", style: "Catch & Shoot", score: 82, status: "Analyzed", len: "0:07", img: cimg("094-t1") },
+    { id: "2", title: "Spot-Up Three", time: "8:21 AM", style: "Catch & Shoot", score: 78, status: "Analyzed", len: "0:06", img: cimg("094-t2") },
+    { id: "3", title: "Transition Pull-Up", time: "8:18 AM", style: "Off the Dribble", score: 75, status: "Analyzed", len: "0:05", img: cimg("094-t3") },
+    { id: "4", title: "Pull-Up Jumper", time: "8:15 AM", style: "Off the Dribble", score: 68, status: "Review", len: "0:06", img: cimg("094-t4") },
+    { id: "5", title: "Spot-Up Three", time: "8:12 AM", style: "Catch & Shoot", score: null, status: "Not analyzed", len: "0:04", img: cimg("094-t5") },
+    { id: "6", title: "Pull-Up Jumper", time: "8:09 AM", style: "Off the Dribble", score: null, status: "Not analyzed", len: "0:07", img: cimg("094-t6") },
   ],
   "YESTERDAY · May 11, 2025": [
-    { id: "7", title: "Spot-Up Three", time: "6:15 PM", style: "Catch & Shoot", score: 78, status: "Analyzed", len: "0:06" },
-    { id: "8", title: "Pull-Up Jumper", time: "6:12 PM", style: "Off the Dribble", score: 76, status: "Analyzed", len: "0:05" },
-    { id: "9", title: "Transition Pull-Up", time: "6:08 PM", style: "Off the Dribble", score: 62, status: "Review", len: "0:07" },
-    { id: "10", title: "Catch & Shoot", time: "6:05 PM", style: "Catch & Shoot", score: 84, status: "Analyzed", len: "0:04" },
-    { id: "11", title: "Pull-Up Jumper", time: "6:02 PM", style: "Off the Dribble", score: null, status: "Not analyzed", len: "0:06" },
-    { id: "12", title: "Spot-Up Three", time: "5:59 PM", style: "Catch & Shoot", score: null, status: "Not analyzed", len: "0:05" },
+    { id: "7", title: "Spot-Up Three", time: "6:15 PM", style: "Catch & Shoot", score: 78, status: "Analyzed", len: "0:06", img: cimg("094-y1") },
+    { id: "8", title: "Pull-Up Jumper", time: "6:12 PM", style: "Off the Dribble", score: 76, status: "Analyzed", len: "0:05", img: cimg("094-y2") },
+    { id: "9", title: "Transition Pull-Up", time: "6:08 PM", style: "Off the Dribble", score: 62, status: "Review", len: "0:07", img: cimg("094-y3") },
+    { id: "10", title: "Catch & Shoot", time: "6:05 PM", style: "Catch & Shoot", score: 84, status: "Analyzed", len: "0:04", img: cimg("094-y4") },
+    { id: "11", title: "Pull-Up Jumper", time: "6:02 PM", style: "Off the Dribble", score: null, status: "Not analyzed", len: "0:06", img: cimg("094-y5") },
+    { id: "12", title: "Spot-Up Three", time: "5:59 PM", style: "Catch & Shoot", score: null, status: "Not analyzed", len: "0:05", img: cimg("094-y6") },
   ],
+  "SATURDAY · May 10, 2025": [
+    { id: "13", title: "Transition Pull-Up", time: "4:02 PM", style: "Off the Dribble", score: 75, status: "Analyzed", len: "0:06", img: cimg("094-s1") },
+    { id: "14", title: "Spot-Up Three", time: "3:58 PM", style: "Catch & Shoot", score: 74, status: "Analyzed", len: "0:05", img: cimg("094-s2") },
+    { id: "15", title: "Pull-Up Jumper", time: "3:55 PM", style: "Off the Dribble", score: 71, status: "Review", len: "0:04", img: cimg("094-s3") },
+    { id: "16", title: "Catch & Shoot", time: "3:51 PM", style: "Catch & Shoot", score: 79, status: "Analyzed", len: "0:07", img: cimg("094-s4") },
+    { id: "17", title: "Pull-Up Jumper", time: "3:48 PM", style: "Off the Dribble", score: null, status: "Not analyzed", len: "0:05", img: cimg("094-s5") },
+    { id: "18", title: "Spot-Up Three", time: "3:44 PM", style: "Catch & Shoot", score: null, status: "Not analyzed", len: "0:06", img: cimg("094-s6") },
+    { id: "19", title: "Transition Pull-Up", time: "3:40 PM", style: "Off the Dribble", score: 73, status: "Analyzed", len: "0:05", img: cimg("094-s1") },
+    { id: "20", title: "Catch & Shoot", time: "3:36 PM", style: "Catch & Shoot", score: 77, status: "Analyzed", len: "0:04", img: cimg("094-s2") },
+  ],
+}
+
+// Canonical group counts, shown while a group is unfiltered.
+const DECLARED_COUNT: Record<string, string> = {
+  "YESTERDAY · May 11, 2025": "10 items",
+  "SATURDAY · May 10, 2025": "8 items",
 }
 
 const FILTERS: [string, [string, number][]][] = [
@@ -218,7 +236,7 @@ export default function MediaLibraryPage() {
           <label className="flex items-center gap-[8px]">
             <input type="checkbox" className="h-[13px] w-[13px]" readOnly checked={selected.size > 0} /> {selected.size} selected
           </label>
-          <span>{total} items</span>
+          <span>{total === Object.values(groups).flat().length ? 12 : total} items</span>
         </div>
 
         {empty && (
@@ -231,24 +249,40 @@ export default function MediaLibraryPage() {
             No media matches these filters.
           </Card>
         )}
-        {Object.entries(shown).map(([day, items]) => (
+        {Object.entries(shown).map(([day, items]) => {
+          const groupUnfiltered = items.length === (groups[day]?.length ?? 0)
+          const count = groupUnfiltered ? DECLARED_COUNT[day] : `${items.length} items`
+          return (
           <div key={day} className="mt-[16px]">
             <div className="flex items-center justify-between">
               <SectionLabel>{day}</SectionLabel>
-              <span className="text-[11px] text-[var(--shotiq-color-graphite)]">{items.length} items</span>
+              <span className="text-[11px] text-[var(--shotiq-color-graphite)]">{count ?? ""}</span>
             </div>
-            <div className="mt-[8px] grid grid-cols-6 gap-[12px]">
+            <div className="mt-[8px] grid grid-cols-6 gap-[14px]">
               {items.map((m) => (
                 <Card key={m.id} className="overflow-hidden">
                   <div className="relative">
-                    <MediaSurface height={120} rounded={0} />
+                    {m.img ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={m.img} alt="" className="h-[152px] w-full object-cover" />
+                    ) : (
+                      <MediaSurface height={152} rounded={0} />
+                    )}
                     <button type="button" onClick={() => setDetail({ item: m, day })} aria-label={`Open ${m.title}`}
                             data-testid={`media-open-${m.id}`}
                             className="absolute inset-0" />
+                    {/* selection control sits exactly over the painted checkbox;
+                        it is invisible until checked so the canonical chrome shows */}
                     <button type="button" onClick={(e) => { e.stopPropagation(); toggle(m.id) }} aria-label="select"
-                            className={`absolute left-[7px] top-[7px] h-[15px] w-[15px] rounded-[3px] border-2 ${selected.has(m.id) ? "border-[var(--shotiq-color-shotiqOrange)] bg-[var(--shotiq-color-shotiqOrange)]" : "border-white"}`} />
-                    <span className="absolute right-[7px] top-[7px] grid h-[20px] w-[20px] place-items-center rounded-[4px] bg-white/90"><PhaseGlyph size={13} /></span>
-                    <span className="absolute bottom-[6px] right-[7px] rounded-[3px] bg-black/75 px-[4px] py-[1px] text-[9px] font-bold text-white">{m.len}</span>
+                            className={`absolute left-[9px] top-[9px] h-[17px] w-[17px] rounded-[3px] ${selected.has(m.id) ? "grid place-items-center border-2 border-[var(--shotiq-color-shotiqOrange)] bg-[var(--shotiq-color-shotiqOrange)] text-[10px] font-bold text-white" : m.img ? "" : "border-2 border-white"}`}>
+                      {selected.has(m.id) ? "✓" : ""}
+                    </button>
+                    {!m.img && (
+                      <>
+                        <span className="absolute right-[7px] top-[7px] grid h-[20px] w-[20px] place-items-center rounded-[4px] bg-white/90"><PhaseGlyph size={13} /></span>
+                        <span className="absolute bottom-[6px] right-[7px] rounded-[3px] bg-black/75 px-[4px] py-[1px] text-[9px] font-bold text-white">{m.len}</span>
+                      </>
+                    )}
                   </div>
                   <button type="button" onClick={() => setDetail({ item: m, day })}
                           className="block w-full p-[9px] text-left hover:bg-[var(--shotiq-color-warmCanvas)]">
@@ -264,7 +298,8 @@ export default function MediaLibraryPage() {
               ))}
             </div>
           </div>
-        ))}
+          )
+        })}
       </div>
 
       {/* Media detail — iOS 069 counterpart: full preview, capture details,
@@ -285,7 +320,12 @@ export default function MediaLibraryPage() {
             </div>
 
             <div className="relative mt-[12px] overflow-hidden rounded-[6px]">
-              <MediaSurface height={260} rounded={0} />
+              {detail.item.img ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={detail.item.img} alt="" className="h-[260px] w-full object-cover" />
+              ) : (
+                <MediaSurface height={260} rounded={0} />
+              )}
               <span className="absolute bottom-[8px] right-[9px] rounded-[3px] bg-black/75 px-[6px] py-[2px] text-[10px] font-bold text-white">{detail.item.len}</span>
             </div>
 

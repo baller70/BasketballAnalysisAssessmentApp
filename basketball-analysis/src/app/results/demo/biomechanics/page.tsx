@@ -331,10 +331,10 @@ export default function BiomechanicsWorkspacePage() {
 
         {/* metrics panel */}
         <Card className="min-w-0 flex-1 px-[18px] py-[12px]">
-          <nav className="flex gap-[22px] border-b border-[var(--shotiq-color-rule)]">
+          <nav className="flex gap-[18px] border-b border-[var(--shotiq-color-rule)]">
             {["METRICS", "COACHING TARGET", "NOTES", "HISTORY"].map((t) => (
               <button key={t} type="button" onClick={() => setTab(t)} aria-current={tab === t ? "true" : undefined}
-                      className={`relative pb-[8px] text-[11px] font-bold tracking-[0.05em] ${tab === t ? "" : "text-[var(--shotiq-color-graphite)]"}`}>
+                      className={`relative whitespace-nowrap pb-[8px] text-[11px] font-bold tracking-[0.05em] ${tab === t ? "" : "text-[var(--shotiq-color-graphite)]"}`}>
                 {t}
                 {tab === t && <span className="absolute inset-x-0 bottom-0 h-[3px] bg-[var(--shotiq-color-shotiqOrange)]" />}
               </button>

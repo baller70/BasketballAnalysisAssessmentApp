@@ -275,7 +275,7 @@ private struct CaptureSessionStats: View {
 private func captureStat(_ value: String, _ label: String,
                          color: Color = ShotIQColor.ink, size: CGFloat = 26) -> some View {
     VStack(spacing: 2) {
-        Text(value).font(.custom("DINCondensed-Bold", size: size)).foregroundStyle(color)
+        Text(value).font(.custom("Tungsten-Semibold", size: size)).foregroundStyle(color)
             .lineLimit(1).minimumScaleFactor(0.6)
         Text(label).font(.system(size: 9, weight: .medium)).kerning(0.5)
             .foregroundStyle(ShotIQColor.graphite)
@@ -348,7 +348,7 @@ struct AnalyzeHubView: View {       // 021
                                     VStack(alignment: .leading, spacing: 4) {
                                         ZStack(alignment: .bottomTrailing) {
                                             captureDark(128, radius: 4).frame(width: 104)
-                                            Text(dur).font(.custom("DINCondensed-Bold", size: 12)).foregroundStyle(.white)
+                                            Text(dur).font(.custom("Tungsten-Semibold", size: 12)).foregroundStyle(.white)
                                                 .padding(.horizontal, 6).padding(.vertical, 3)
                                                 .background(.black.opacity(0.75), in: RoundedRectangle(cornerRadius: 3))
                                                 .padding(6)
@@ -491,7 +491,7 @@ struct PhotoUploadSourceView: View { // 022
     private func formatCol(_ icon: String, _ t: String, _ d: String) -> some View {
         VStack(spacing: 4) {
             Image(systemName: icon).font(.system(size: 20)).foregroundStyle(ShotIQColor.ink)
-            Text(t).font(.custom("DINCondensed-Bold", size: 17)).foregroundStyle(ShotIQColor.ink)
+            Text(t).font(.custom("Tungsten-Semibold", size: 17)).foregroundStyle(ShotIQColor.ink)
             Text(d).font(.system(size: 9, weight: .medium)).kerning(0.5).foregroundStyle(ShotIQColor.graphite)
         }
         .frame(maxWidth: .infinity)
@@ -1080,7 +1080,7 @@ struct UploadQueueView: View {      // 025
                         }
                     } else if it.state == "Uploading" || it.state == "Paused" {
                         HStack(alignment: .firstTextBaseline) {
-                            Text("\(Int(it.pct * 100))%").font(.custom("DINCondensed-Bold", size: 28))
+                            Text("\(Int(it.pct * 100))%").font(.custom("Tungsten-Semibold", size: 28))
                                 .foregroundStyle(ShotIQColor.ink)
                             Spacer()
                             Text("18.7 MB / 32.1 MB").font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
@@ -1200,7 +1200,7 @@ struct VideoUploadView: View {      // 026
                             captureStat("62.5%", "MAKE %", size: 30)
                             Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 40)
                             VStack(spacing: 3) {
-                                Text("82").font(.custom("DINCondensed-Bold", size: 30))
+                                Text("82").font(.custom("Tungsten-Semibold", size: 30))
                                     .foregroundStyle(ShotIQColor.shotiqOrange)
                                 Text("FORM SCORE").font(.system(size: 9, weight: .medium)).kerning(0.5)
                                     .foregroundStyle(ShotIQColor.graphite)
@@ -1362,11 +1362,11 @@ struct VideoReviewView: View {      // 027
                     .frame(height: 54).padding(.horizontal, 20).padding(.top, 8)
 
                     HStack {
-                        Text("00:00.50").font(.custom("DINCondensed-Bold", size: 15)).foregroundStyle(ShotIQColor.graphite)
+                        Text("00:00.50").font(.custom("Tungsten-Semibold", size: 15)).foregroundStyle(ShotIQColor.graphite)
                         Spacer()
-                        Text("00:06.00").font(.custom("DINCondensed-Bold", size: 15)).foregroundStyle(ShotIQColor.shotiqOrange)
+                        Text("00:06.00").font(.custom("Tungsten-Semibold", size: 15)).foregroundStyle(ShotIQColor.shotiqOrange)
                         Spacer()
-                        Text("00:06.50").font(.custom("DINCondensed-Bold", size: 15)).foregroundStyle(ShotIQColor.graphite)
+                        Text("00:06.50").font(.custom("Tungsten-Semibold", size: 15)).foregroundStyle(ShotIQColor.graphite)
                     }
                     .padding(.horizontal, 20).padding(.top, 6)
 
@@ -1425,7 +1425,7 @@ struct VideoReviewView: View {      // 027
     private func detailCol(_ icon: String, _ v: String, _ l: String) -> some View {
         VStack(spacing: 4) {
             Image(systemName: icon).font(.system(size: 18)).foregroundStyle(ShotIQColor.ink)
-            Text(v).font(.custom("DINCondensed-Bold", size: 17)).foregroundStyle(ShotIQColor.ink)
+            Text(v).font(.custom("Tungsten-Semibold", size: 17)).foregroundStyle(ShotIQColor.ink)
                 .lineLimit(1).minimumScaleFactor(0.6)
             Text(l).font(.system(size: 9, weight: .medium)).kerning(0.5).foregroundStyle(ShotIQColor.graphite)
         }
@@ -1448,7 +1448,7 @@ struct LiveCameraSetupView: View {  // 028
                                 Text("FORM SCORE").font(.system(size: 9, weight: .medium)).kerning(0.5)
                                     .foregroundStyle(ShotIQColor.graphite)
                                 HStack(alignment: .firstTextBaseline, spacing: 2) {
-                                    Text("82").font(.custom("DINCondensed-Bold", size: 26))
+                                    Text("82").font(.custom("Tungsten-Semibold", size: 26))
                                         .foregroundStyle(ShotIQColor.analysisBlue)
                                     Text("/100").font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
                                 }
@@ -1933,7 +1933,7 @@ struct LiveRecordingView: View {    // 032
                         VStack(alignment: .leading, spacing: 3) {
                             Text("CONFIDENCE").font(.system(size: 10, weight: .bold)).kerning(0.8)
                                 .foregroundStyle(.white)
-                            Text("92%").font(.custom("DINCondensed-Bold", size: 30))
+                            Text("92%").font(.custom("Tungsten-Semibold", size: 30))
                                 .foregroundStyle(ShotIQColor.confirmGreen)
                             Capsule().fill(ShotIQColor.confirmGreen).frame(width: 64, height: 4)
                         }
@@ -1944,7 +1944,7 @@ struct LiveRecordingView: View {    // 032
                             Circle().fill(ShotIQColor.shotiqOrange).frame(width: 8, height: 8)
                             VStack(alignment: .leading, spacing: 0) {
                                 Text("REC").font(.system(size: 10, weight: .bold)).foregroundStyle(.white)
-                                Text(clock).font(.custom("DINCondensed-Bold", size: 20)).foregroundStyle(.white)
+                                Text(clock).font(.custom("Tungsten-Semibold", size: 20)).foregroundStyle(.white)
                             }
                         }
                         .padding(.horizontal, 12).padding(.vertical, 8)
@@ -1955,17 +1955,17 @@ struct LiveRecordingView: View {    // 032
                         VStack(alignment: .leading, spacing: 12) {
                             VStack(alignment: .leading, spacing: 1) {
                                 Text("SHOTS").font(.system(size: 9, weight: .bold)).kerning(0.6).foregroundStyle(.white.opacity(0.85))
-                                Text("24").font(.custom("DINCondensed-Bold", size: 30)).foregroundStyle(.white)
+                                Text("24").font(.custom("Tungsten-Semibold", size: 30)).foregroundStyle(.white)
                             }
                             Rectangle().fill(.white.opacity(0.5)).frame(width: 60, height: 1)
                             VStack(alignment: .leading, spacing: 1) {
                                 Text("MAKES").font(.system(size: 9, weight: .bold)).kerning(0.6).foregroundStyle(.white.opacity(0.85))
-                                Text("15").font(.custom("DINCondensed-Bold", size: 30)).foregroundStyle(.white)
+                                Text("15").font(.custom("Tungsten-Semibold", size: 30)).foregroundStyle(.white)
                             }
                             Rectangle().fill(.white.opacity(0.5)).frame(width: 60, height: 1)
                             VStack(alignment: .leading, spacing: 1) {
                                 Text("MAKE %").font(.system(size: 9, weight: .bold)).kerning(0.6).foregroundStyle(.white.opacity(0.85))
-                                Text("62.5%").font(.custom("DINCondensed-Bold", size: 30)).foregroundStyle(.white)
+                                Text("62.5%").font(.custom("Tungsten-Semibold", size: 30)).foregroundStyle(.white)
                             }
                         }
                         .padding(.trailing, 16)
@@ -2004,7 +2004,7 @@ struct LiveRecordingView: View {    // 032
                                 Text("CURRENT STREAK").font(.system(size: 8, weight: .medium)).kerning(0.4)
                                     .foregroundStyle(ShotIQColor.graphite)
                                     .lineLimit(1).minimumScaleFactor(0.6)
-                                Text("7").font(.custom("DINCondensed-Bold", size: 24)).foregroundStyle(ShotIQColor.ink)
+                                Text("7").font(.custom("Tungsten-Semibold", size: 24)).foregroundStyle(ShotIQColor.ink)
                             }
                             .frame(maxWidth: .infinity)
                         }
@@ -2082,7 +2082,7 @@ struct LiveRecordingView: View {    // 032
             Text(label).font(.system(size: 8, weight: .medium)).kerning(0.4)
                 .foregroundStyle(ShotIQColor.graphite)
                 .lineLimit(1).minimumScaleFactor(0.6)
-            Text(value).font(.custom("DINCondensed-Bold", size: 24)).foregroundStyle(ShotIQColor.ink)
+            Text(value).font(.custom("Tungsten-Semibold", size: 24)).foregroundStyle(ShotIQColor.ink)
         }
         .frame(maxWidth: .infinity)
     }
@@ -2125,7 +2125,7 @@ struct LiveFormFeedbackView: View { // 033
                                 .foregroundStyle(ShotIQColor.graphite)
                             Text("FORM SCORE").font(.system(size: 11, weight: .bold)).kerning(0.7)
                                 .foregroundStyle(ShotIQColor.ink)
-                            Text("82").font(.custom("DINCondensed-Bold", size: 58))
+                            Text("82").font(.custom("Tungsten-Semibold", size: 58))
                                 .foregroundStyle(ShotIQColor.shotiqOrange)
                             ScoreBar(pct: 0.82).frame(width: 110)
                             Text("GOOD").font(.system(size: 14, weight: .bold)).foregroundStyle(ShotIQColor.analysisBlue)
@@ -2151,7 +2151,7 @@ struct LiveFormFeedbackView: View { // 033
                                     VStack(alignment: .leading, spacing: 1) {
                                         Text("CONFIDENCE").font(.system(size: 9, weight: .medium)).kerning(0.5)
                                             .foregroundStyle(ShotIQColor.graphite)
-                                        Text("87%").font(.custom("DINCondensed-Bold", size: 20))
+                                        Text("87%").font(.custom("Tungsten-Semibold", size: 20))
                                             .foregroundStyle(ShotIQColor.shotiqOrange)
                                     }
                                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -2251,7 +2251,7 @@ struct ShotDetectedView: View {     // 034
                                 HStack(spacing: 10) {
                                     Image(systemName: "clock").font(.system(size: 20)).foregroundStyle(ShotIQColor.ink)
                                     VStack(alignment: .leading, spacing: 1) {
-                                        Text("8:24:10 AM").font(.custom("DINCondensed-Bold", size: 19)).foregroundStyle(ShotIQColor.ink)
+                                        Text("8:24:10 AM").font(.custom("Tungsten-Semibold", size: 19)).foregroundStyle(ShotIQColor.ink)
                                         Text("Today").font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
                                     }
                                 }
@@ -2260,7 +2260,7 @@ struct ShotDetectedView: View {     // 034
                                 HStack(spacing: 10) {
                                     Image(systemName: "waveform.path.ecg").font(.system(size: 20)).foregroundStyle(ShotIQColor.ink)
                                     VStack(alignment: .leading, spacing: 1) {
-                                        Text("97%").font(.custom("DINCondensed-Bold", size: 19)).foregroundStyle(ShotIQColor.ink)
+                                        Text("97%").font(.custom("Tungsten-Semibold", size: 19)).foregroundStyle(ShotIQColor.ink)
                                         Text("CONFIDENCE").font(.system(size: 10, weight: .medium)).kerning(0.6)
                                             .foregroundStyle(ShotIQColor.graphite)
                                     }
@@ -2282,7 +2282,7 @@ struct ShotDetectedView: View {     // 034
                                     Text("FORM SCORE").font(.system(size: 10, weight: .medium)).kerning(0.7)
                                         .foregroundStyle(ShotIQColor.graphite)
                                     HStack(alignment: .center, spacing: 10) {
-                                        Text("82").font(.custom("DINCondensed-Bold", size: 46))
+                                        Text("82").font(.custom("Tungsten-Semibold", size: 46))
                                             .foregroundStyle(ShotIQColor.shotiqOrange)
                                         VStack(alignment: .leading, spacing: 3) {
                                             ScoreBar(pct: 0.82).frame(width: 80)
@@ -2416,7 +2416,7 @@ struct CaptureReviewView: View {    // 035
                         Spacer()
                         HStack(spacing: 8) {
                             Image(systemName: "film").font(.system(size: 17)).foregroundStyle(ShotIQColor.ink)
-                            Text("24").font(.custom("DINCondensed-Bold", size: 24)).foregroundStyle(ShotIQColor.ink)
+                            Text("24").font(.custom("Tungsten-Semibold", size: 24)).foregroundStyle(ShotIQColor.ink)
                             Text("SHOTS").font(.system(size: 9, weight: .medium)).kerning(0.5)
                                 .foregroundStyle(ShotIQColor.graphite)
                         }
@@ -2479,7 +2479,7 @@ struct CaptureReviewView: View {    // 035
                             HStack(alignment: .top, spacing: 14) {
                                 ZStack(alignment: .bottomLeading) {
                                     captureDark(132, radius: 4).frame(width: 116)
-                                    Text(dur).font(.custom("DINCondensed-Bold", size: 12)).foregroundStyle(.white)
+                                    Text(dur).font(.custom("Tungsten-Semibold", size: 12)).foregroundStyle(.white)
                                         .padding(.horizontal, 6).padding(.vertical, 3)
                                         .background(.black.opacity(0.75), in: RoundedRectangle(cornerRadius: 3))
                                         .padding(6)
@@ -2505,7 +2505,7 @@ struct CaptureReviewView: View {    // 035
                                     Ring(pct: conf, color: ShotIQColor.shotiqOrange, lineWidth: 5)
                                         .frame(width: 48, height: 48)
                                         .overlay(Text("\(Int(conf * 100))")
-                                            .font(.custom("DINCondensed-Bold", size: 19)).foregroundStyle(ShotIQColor.ink))
+                                            .font(.custom("Tungsten-Semibold", size: 19)).foregroundStyle(ShotIQColor.ink))
                                     Text("CONFIDENCE").font(.system(size: 7, weight: .medium)).kerning(0.4)
                                         .foregroundStyle(ShotIQColor.graphite)
                                     NavigationLink { ShotBreakdownView() } label: {

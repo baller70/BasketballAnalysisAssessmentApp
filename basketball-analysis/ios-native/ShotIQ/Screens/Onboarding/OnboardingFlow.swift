@@ -163,7 +163,7 @@ private struct StatRow: View {
         HStack(spacing: 0) {
             ForEach(Array(stats.enumerated()), id: \.offset) { i, s in
                 VStack(spacing: 2) {
-                    Text(s.0).font(.custom("DINCondensed-Bold", size: 26)).foregroundStyle(s.2)
+                    Text(s.0).font(.custom("Tungsten-Semibold", size: 26)).foregroundStyle(s.2)
                         .lineLimit(1).minimumScaleFactor(0.7)
                     Text(s.1).font(.system(size: 10, weight: .medium)).kerning(0.6)
                         .foregroundStyle(ShotIQColor.graphite)
@@ -311,7 +311,7 @@ private struct MeasurementRow: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Decrease \(label.lowercased())")
-                    Text(value).font(.custom("DINCondensed-Bold", size: 36))
+                    Text(value).font(.custom("Tungsten-Semibold", size: 36))
                         .foregroundStyle(ShotIQColor.ink)
                         .lineLimit(1).minimumScaleFactor(0.6)
                     Button(action: onPlus) {
@@ -471,7 +471,7 @@ struct OnboardingIntroView: View {
                             VStack(spacing: 3) {
                                 Image(systemName: "scope").font(.system(size: 17))
                                     .foregroundStyle(ShotIQColor.shotiqOrange)
-                                Text("82").font(.custom("DINCondensed-Bold", size: 24))
+                                Text("82").font(.custom("Tungsten-Semibold", size: 24))
                                     .foregroundStyle(ShotIQColor.shotiqOrange)
                                 Text("FORM SCORE").font(.system(size: 9, weight: .medium)).kerning(0.6)
                                     .foregroundStyle(ShotIQColor.graphite)
@@ -979,7 +979,7 @@ struct PlayerBioView: View {
                                 .foregroundStyle(ShotIQColor.ink)
                             Spacer()
                             Text("\(m.bio.count) / 160")
-                                .font(.custom("DINCondensed-Bold", size: 20))
+                                .font(.custom("Tungsten-Semibold", size: 20))
                                 .foregroundStyle(ShotIQColor.graphite)
                         }
                         .padding(.top, 18)
@@ -1196,7 +1196,7 @@ struct OnboardingReviewView: View {
                                     Image(systemName: "arrow.up.right")
                                         .font(.system(size: 15))
                                         .foregroundStyle(ShotIQColor.confirmGreen)
-                                    Text("+8.1%").font(.custom("DINCondensed-Bold", size: 24))
+                                    Text("+8.1%").font(.custom("Tungsten-Semibold", size: 24))
                                         .foregroundStyle(ShotIQColor.confirmGreen)
                                     Text("VS LAST SESSION")
                                         .font(.system(size: 9, weight: .medium)).kerning(0.6)
@@ -1772,7 +1772,7 @@ struct NotificationPermissionPrimerView: View {
                                     .font(.system(size: 12, weight: .bold)).kerning(0.8)
                                     .foregroundStyle(ShotIQColor.ink)
                                 Text("82")
-                                    .font(.custom("DINCondensed-Bold", size: 62))
+                                    .font(.custom("Tungsten-Semibold", size: 62))
                                     .foregroundStyle(ShotIQColor.shotiqOrange)
                                 ScoreBar(pct: 0.82)
                                 Text("GOOD")

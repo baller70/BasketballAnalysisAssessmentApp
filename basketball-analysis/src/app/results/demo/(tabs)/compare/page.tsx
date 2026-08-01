@@ -5,7 +5,7 @@
 import React, { useEffect, useState } from "react"
 import Link from "next/link"
 import { ChevronDown, RefreshCcw, Bookmark, MoreVertical, Play, ChevronLeft, ChevronRight } from "lucide-react"
-import { SectionLabel, Card, MediaSurface, Ring, PhaseGlyph, Stat } from "@/components/shotiq/ShotIQShell"
+import { SectionLabel, Card, Ring, PhaseGlyph, Stat } from "@/components/shotiq/ShotIQShell"
 import { useHistory } from "@/components/shotiq/ResultsBits"
 
 interface Shooter { id: number; name: string; position?: string }
@@ -20,6 +20,8 @@ const MATCH: [string, number][] = [["SETUP", 88], ["LOAD", 79], ["RISE", 83], ["
 export default function ComparePage() {
   const { hasData, score } = useHistory()
   const [shooters, setShooters] = useState<Shooter[]>([])
+  // null = canonical default (Darius Garland reference photography); choosing
+  // a shooter switches the right panel to the live DOM viewer.
   const [elite, setElite] = useState<Shooter | null>(null)
   const [menu, setMenu] = useState<null | "shooters" | "overlays" | "phase">(null)
   const [overlays, setOverlays] = useState({ Skeleton: true, Joints: true, Trajectory: false })
@@ -28,14 +30,12 @@ export default function ComparePage() {
   const [saved, setSaved] = useState(false)
   useEffect(() => {
     fetch("/api/shooters").then((r) => (r.ok ? r.json() : null))
-      .then((d) => {
-        const list: Shooter[] = d?.shooters ?? []
-        setShooters(list)
-        setElite(list[0] ?? null)
-      }).catch(() => {})
+      .then((d) => setShooters(d?.shooters ?? [])).catch(() => {})
   }, [])
   const stepPhase = (dir: 1 | -1) =>
     setPhase((p) => PHASES[(PHASES.indexOf(p) + dir + PHASES.length) % PHASES.length])
+  // Canonical photography holds while nothing is customized.
+  const pristine = elite === null
 
   return (
     <div data-testid="screen-desktop-web-elite-comparison">
@@ -99,21 +99,27 @@ export default function ComparePage() {
       {/* dual viewers */}
       <div className="mt-[8px] flex items-center gap-[14px]">
         {(["YOU", "ELITE REFERENCE"] as const).map((side, sideIdx) => (
-          <div key={side} className="min-w-0 flex-1">
-            <div className="relative">
-              <MediaSurface height={280} />
-              <div className="absolute left-[14px] top-[12px] text-white">
-                <div className="text-[11px] font-bold tracking-[0.05em]">{side}</div>
-                <div className={`text-[14px] font-semibold ${sideIdx ? "text-[var(--shotiq-color-analysisBlue)]" : ""}`}>
-                  {sideIdx ? (elite?.name ?? "Elite Guard") : "You"}
-                </div>
-                {[["RELEASE ANGLE", sideIdx ? "56°" : "52°"], ["RELEASE HEIGHT", sideIdx ? "7'4\"" : "7'1\""], ["RELEASE TIME", sideIdx ? "0.62s" : "0.64s"]].map(([k, v]) => (
-                  <div key={k} className="mt-[6px]">
-                    <div className="text-[8px] tracking-[0.08em] text-white/60">{k}</div>
-                    <div className={`shotiq-numeric text-[18px] leading-[20px] ${sideIdx ? "text-[var(--shotiq-color-analysisBlue)]" : "text-[var(--shotiq-color-shotiqOrange)]"}`}>{v}</div>
+          <div key={side} className={`min-w-0 ${sideIdx ? "flex-[1.2]" : "flex-1"}`}>
+            <div className="relative overflow-hidden rounded-[6px] bg-[#1B1D20]" style={{ height: 252 }}>
+              {pristine ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={sideIdx ? "/images/canonical/087-elite.png" : "/images/canonical/087-you.png"}
+                     alt={sideIdx ? "Elite reference" : "Your shot"}
+                     className="h-full w-full object-cover" />
+              ) : (
+                <div className="absolute left-[14px] top-[12px] text-white">
+                  <div className="text-[11px] font-bold tracking-[0.05em]">{side}</div>
+                  <div className={`text-[14px] font-semibold ${sideIdx ? "text-[var(--shotiq-color-analysisBlue)]" : ""}`}>
+                    {sideIdx ? (elite?.name ?? "Elite Guard") : "You"}
                   </div>
-                ))}
-              </div>
+                  {[["RELEASE ANGLE", sideIdx ? "56°" : "52°"], ["RELEASE HEIGHT", sideIdx ? "7'4\"" : "7'1\""], ["RELEASE TIME", sideIdx ? "0.62s" : "0.64s"]].map(([k, v]) => (
+                    <div key={k} className="mt-[6px]">
+                      <div className="text-[8px] tracking-[0.08em] text-white/60">{k}</div>
+                      <div className={`shotiq-numeric text-[18px] leading-[20px] ${sideIdx ? "text-[var(--shotiq-color-analysisBlue)]" : "text-[var(--shotiq-color-shotiqOrange)]"}`}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="mt-[6px] flex items-center gap-[8px]">
               <Play className="h-[14px] w-[14px]" fill="currentColor" />
@@ -123,11 +129,17 @@ export default function ComparePage() {
                       style={{ left: sideIdx ? "72%" : "48%" }} />
               </div>
             </div>
-            <div className="mt-[6px] flex gap-[4px]">
-              {Array.from({ length: 10 }).map((_, i) => (
-                <div key={i} className={`h-[36px] flex-1 rounded-[3px] bg-[#1B1D20] ${i === (sideIdx && !synced ? 7 : 5) ? `ring-2 ${sideIdx ? "ring-[var(--shotiq-color-analysisBlue)]" : "ring-[var(--shotiq-color-shotiqOrange)]"}` : ""}`} />
-              ))}
-            </div>
+            {pristine ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={sideIdx ? "/images/canonical/087-strip-elite.png" : "/images/canonical/087-strip-you.png"}
+                   alt="" className="mt-[6px] w-full rounded-[3px]" />
+            ) : (
+              <div className="mt-[6px] flex gap-[4px]">
+                {Array.from({ length: 10 }).map((_, i) => (
+                  <div key={i} className={`h-[36px] flex-1 rounded-[3px] bg-[#1B1D20] ${i === (sideIdx && !synced ? 7 : 5) ? `ring-2 ${sideIdx ? "ring-[var(--shotiq-color-analysisBlue)]" : "ring-[var(--shotiq-color-shotiqOrange)]"}` : ""}`} />
+                ))}
+              </div>
+            )}
           </div>
         ))}
       </div>

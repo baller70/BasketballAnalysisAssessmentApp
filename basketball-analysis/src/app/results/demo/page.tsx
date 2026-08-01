@@ -116,28 +116,28 @@ export default function ResultsOverviewPage() {
   return (
     <ShotIQShell active="Analyze"
       sidebar={<OverviewRail onShare={share} onExport={doExport} shared={shared} />}>
-    <div data-testid="screen-results-overview" className="pl-[21px] pr-[24px] pt-[16px]">
+    <div data-testid="screen-results-overview" className="pl-[21px] pr-[24px] pt-[10px]">
       {/* header */}
       <div className="flex items-start">
         <button type="button" aria-label="Back" onClick={() => router.push("/dashboard")}
-                className="mt-[26px] mr-[16px]">
+                className="mt-[22px] mr-[16px]">
           <ArrowLeft className="h-[22px] w-[22px]" strokeWidth={2} />
         </button>
         <div className="mr-auto">
-          <h1 className="shotiq-display text-[46px] leading-[50px]">ANALYSIS OVERVIEW</h1>
+          <h1 className="shotiq-display text-[46px] leading-[48px]">ANALYSIS OVERVIEW</h1>
           <p className="mt-[2px] text-[13px] text-[var(--shotiq-color-graphite)]">
             May 12, 2025&ensp;·&ensp;8:24 AM&ensp;·&ensp;Catch &amp; Shoot&ensp;·&ensp;Right Hand
           </p>
         </div>
-        <div className="mt-[24px] flex items-center gap-[18px]">
+        <div className="mt-[18px] flex items-center gap-[18px]">
           <button type="button" data-testid="overview-prev"
                   onClick={() => setIndex((i) => Math.max(1, i - 1))}
                   className="flex h-[34px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[16px] text-[12px] font-bold tracking-[0.05em]">
             <ChevronLeft className="h-[13px] w-[13px]" /> PREV
           </button>
-          <div className="w-[86px] text-center">
+          <div className="w-[110px] text-center">
             <div className="text-[14px] font-bold tracking-[0.04em]"><span className="shotiq-numeric">{index}</span> OF <span className="shotiq-numeric">{total}</span></div>
-            <Link href="/results/demo/history" className="mt-[6px] block text-[12px] text-[var(--shotiq-color-graphite)]">View all analyses</Link>
+            <Link href="/results/demo/history" className="mt-[4px] block whitespace-nowrap text-[12px] text-[var(--shotiq-color-graphite)]">View all analyses</Link>
           </div>
           <button type="button" data-testid="overview-next"
                   onClick={() => setIndex((i) => Math.min(total, i + 1))}
@@ -187,22 +187,22 @@ export default function ResultsOverviewPage() {
             </button>
           </div>
           {/* phase strip */}
-          <div className="mt-[22px] flex items-start">
+          <div className="mt-[14px] flex items-start">
             {PHASES.map((p, i) => {
               const active = p.label === "RELEASE"
               return (
                 <React.Fragment key={p.label}>
                   {i > 0 && (
-                    <div className="mt-[16px] flex flex-1 items-center gap-[4px] px-[6px]">
+                    <div className="mt-[15px] flex flex-1 items-center gap-[4px] px-[4px]">
                       <span className={`h-px flex-1 border-t ${i === 3 || i === 4 ? "border-[var(--shotiq-color-shotiqOrange)]" : "border-dashed border-[var(--shotiq-color-muted)]"}`} />
                       <span className={`h-[8px] w-[8px] rounded-full ${i === 3 || i === 4 ? "bg-[var(--shotiq-color-shotiqOrange)]" : "bg-[var(--shotiq-color-muted)]"}`} />
                       <span className={`h-px flex-1 border-t ${i === 3 || i === 4 ? "border-[var(--shotiq-color-shotiqOrange)]" : "border-dashed border-[var(--shotiq-color-muted)]"}`} />
                     </div>
                   )}
-                  <div className="w-[86px] shrink-0 text-center">
-                    <PhaseGlyph active={active} size={34} />
-                    <div className={`mt-[6px] text-[11px] font-bold tracking-[0.05em] ${active ? "text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>{p.label}</div>
-                    <div className="shotiq-numeric mt-[2px] text-[10px] text-[var(--shotiq-color-graphite)]">{p.time}</div>
+                  <div className="shrink-0 text-center" style={{ width: i === 4 ? 108 : 78 }}>
+                    <PhaseGlyph active={active} size={32} />
+                    <div className={`mt-[4px] whitespace-nowrap text-[10px] font-bold tracking-[0.04em] ${active ? "text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>{p.label}</div>
+                    <div className="shotiq-numeric mt-[1px] whitespace-nowrap text-[10px] text-[var(--shotiq-color-graphite)]">{p.time}</div>
                   </div>
                 </React.Fragment>
               )
@@ -215,33 +215,33 @@ export default function ResultsOverviewPage() {
           {/* form score + mechanics */}
           <div className="w-[290px] shrink-0 border-r border-[var(--shotiq-color-rule)] px-[17px] pt-[16px]">
             <SectionLabel>FORM SCORE</SectionLabel>
-            <div className="mt-[6px] flex items-end gap-[6px]">
-              <span className="shotiq-numeric text-[64px] leading-[58px] text-[var(--shotiq-color-shotiqOrange)]">82</span>
-              <span className="shotiq-numeric text-[20px] text-[var(--shotiq-color-muted)]">/100</span>
+            <div className="mt-[4px] flex items-end gap-[6px]">
+              <span className="shotiq-numeric text-[60px] leading-[54px] text-[var(--shotiq-color-shotiqOrange)]">82</span>
+              <span className="shotiq-numeric text-[19px] text-[var(--shotiq-color-muted)]">/100</span>
             </div>
-            <div className="mt-[12px] h-[9px] w-full rounded-full bg-[var(--shotiq-color-rule)]">
+            <div className="mt-[10px] h-[9px] w-full rounded-full bg-[var(--shotiq-color-rule)]">
               <div className="h-full w-[82%] rounded-full bg-[var(--shotiq-color-shotiqOrange)]" />
             </div>
-            <div className="shotiq-display mt-[16px] text-[19px] text-[var(--shotiq-color-analysisBlue)]">GOOD</div>
-            <p className="mt-[4px] w-[110px] text-[13px] leading-[19px] text-[var(--shotiq-color-graphite)]">Keep building consistency.</p>
+            <div className="shotiq-display mt-[10px] text-[18px] text-[var(--shotiq-color-analysisBlue)]">GOOD</div>
+            <p className="mt-[2px] w-[110px] text-[13px] leading-[18px] text-[var(--shotiq-color-graphite)]">Keep building consistency.</p>
 
-            <SectionLabel className="mt-[26px]">MECHANICS AT RELEASE</SectionLabel>
-            <div className="mt-[4px]">
+            <SectionLabel className="mt-[14px]">MECHANICS AT RELEASE</SectionLabel>
+            <div className="mt-[2px]">
               {MECHANICS.map((m) => (
-                <div key={m.name} className="flex items-center border-b border-[var(--shotiq-color-rule)] py-[7px] last:border-b-0">
+                <div key={m.name} className="flex items-center border-b border-[var(--shotiq-color-rule)] py-[5px] last:border-b-0">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={m.icon} alt="" className="h-[32px] w-[30px] object-contain" />
+                  <img src={m.icon} alt="" className="h-[30px] w-[28px] object-contain" />
                   <span className="ml-[8px] w-[92px] text-[12px]">{m.name}</span>
                   <span className="shotiq-numeric ml-auto text-[20px]">{m.value}</span>
                   <span className="ml-[12px] w-[62px] text-right">
-                    <span className="block text-[11px] font-bold text-[var(--shotiq-color-confirmGreen)]">IDEAL</span>
-                    <span className="shotiq-numeric block text-[10px] text-[var(--shotiq-color-graphite)]">{m.ideal}</span>
+                    <span className="block text-[11px] font-bold leading-[13px] text-[var(--shotiq-color-confirmGreen)]">IDEAL</span>
+                    <span className="shotiq-numeric block text-[10px] leading-[12px] text-[var(--shotiq-color-graphite)]">{m.ideal}</span>
                   </span>
                 </div>
               ))}
             </div>
             <Link href="/results/demo/biomechanics"
-                  className="mt-[8px] mb-[10px] block text-center text-[13px] font-medium text-[var(--shotiq-color-analysisBlue)]">
+                  className="mt-[6px] mb-[8px] block text-center text-[13px] font-medium text-[var(--shotiq-color-analysisBlue)]">
               View all mechanics&ensp;›
             </Link>
           </div>
@@ -249,37 +249,37 @@ export default function ResultsOverviewPage() {
           {/* coaching target / key insight / elite match */}
           <div className="min-w-0 flex-1 px-[20px] pt-[16px]">
             <SectionLabel>PRIMARY COACHING TARGET</SectionLabel>
-            <Link href="/results/demo/goals" className="mt-[4px] flex items-center justify-between">
-              <span className="text-[19px] font-semibold">Keep elbow stacked through release</span>
-              <ChevronRight className="h-[17px] w-[17px] text-[var(--shotiq-color-graphite)]" />
+            <Link href="/results/demo/goals" className="mt-[2px] flex items-center justify-between">
+              <span className="whitespace-nowrap text-[18px] font-semibold">Keep elbow stacked through release</span>
+              <ChevronRight className="h-[17px] w-[17px] shrink-0 text-[var(--shotiq-color-graphite)]" />
             </Link>
-            <span className="mt-[12px] inline-block rounded-[5px] border border-[var(--shotiq-color-confirmGreen)] px-[10px] py-[4px] text-[11px] font-bold tracking-[0.05em] text-[var(--shotiq-color-confirmGreen)]">ACTIVE GOAL</span>
-            <p className="mt-[10px] text-[13px] text-[var(--shotiq-color-graphite)]">Improve release consistency and arm alignment</p>
-            <div className="mt-[8px] flex items-center gap-[10px]">
+            <span className="mt-[8px] inline-block rounded-[5px] border border-[var(--shotiq-color-confirmGreen)] px-[10px] py-[3px] text-[11px] font-bold tracking-[0.05em] text-[var(--shotiq-color-confirmGreen)]">ACTIVE GOAL</span>
+            <p className="mt-[8px] text-[13px] text-[var(--shotiq-color-graphite)]">Improve release consistency and arm alignment</p>
+            <div className="mt-[6px] flex items-center gap-[10px]">
               <div className="h-[6px] flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
                 <div className="h-full w-[72%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" />
               </div>
               <span className="shotiq-numeric text-[13px]">72%</span>
             </div>
 
-            <div className="mt-[16px] border-t border-[var(--shotiq-color-rule)] pt-[14px]">
+            <div className="mt-[12px] border-t border-[var(--shotiq-color-rule)] pt-[10px]">
               <SectionLabel>KEY INSIGHT</SectionLabel>
-              <p className="mt-[6px] text-[13px] leading-[20px] text-[var(--shotiq-color-graphite)]">
+              <p className="mt-[4px] text-[13px] leading-[19px] text-[var(--shotiq-color-graphite)]">
                 Your elbow is slightly flaring late in release. Keeping it stacked will help improve consistency and shot accuracy.
               </p>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/images/canonical/083-insight.png" alt="Current 172 degrees versus ideal 180 degrees elbow position"
-                   className="mx-auto mt-[4px] block h-[140px] w-[320px]" width={320} height={140} />
+                   className="mx-auto mt-[2px] block h-[128px] w-[293px]" width={293} height={128} />
             </div>
 
-            <div className="mt-[10px] border-t border-[var(--shotiq-color-rule)] pt-[12px]">
+            <div className="mt-[6px] border-t border-[var(--shotiq-color-rule)] pt-[10px]">
               <div className="flex items-start justify-between">
                 <div>
                   <SectionLabel>ELITE MATCH</SectionLabel>
-                  <div className="mt-[8px] text-[17px] font-semibold">Trae Young</div>
+                  <div className="mt-[6px] text-[17px] font-semibold">Trae Young</div>
                   <div className="mt-[2px] text-[13px] font-medium text-[var(--shotiq-color-confirmGreen)]">92% Similarity</div>
                   <Link href="/results/demo/compare"
-                        className="mt-[14px] inline-block text-[13px] font-medium text-[var(--shotiq-color-analysisBlue)]">
+                        className="mt-[10px] inline-block text-[13px] font-medium text-[var(--shotiq-color-analysisBlue)]">
                     View comparison&ensp;›
                   </Link>
                 </div>
@@ -293,8 +293,8 @@ export default function ResultsOverviewPage() {
       </div>
 
       {/* bottom strip */}
-      <div className="mt-[16px] mb-[18px] flex gap-[16px]">
-        <Card className="flex h-[143px] w-[590px] shrink-0 flex-col px-[18px] pt-[14px]">
+      <div className="mt-[12px] mb-[14px] flex gap-[16px]">
+        <Card className="flex h-[138px] w-[590px] shrink-0 flex-col px-[18px] pt-[12px]">
           <SectionLabel>ANALYSIS SUMMARY</SectionLabel>
           <div className="mt-[12px] flex flex-1 items-start">
             {[["24", "SHOTS"], ["15", "MAKES"], ["62.5%", "MAKE %"], ["82", "FORM SCORE"]].map(([v, l], i) => (
@@ -319,14 +319,14 @@ export default function ResultsOverviewPage() {
           </div>
         </Card>
 
-        <Card className="h-[143px] min-w-0 flex-1 px-[18px] pt-[14px]">
+        <Card className="h-[138px] min-w-0 flex-1 px-[16px] pt-[12px]">
           <SectionLabel>TOP FLAW</SectionLabel>
-          <Link href="/results/demo/flaws" className="mt-[8px] flex items-center gap-[14px]">
+          <Link href="/results/demo/flaws" className="mt-[6px] flex items-center gap-[10px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/canonical/083-flaw-glyph.png" alt="" className="h-[86px] w-[62px] object-contain" />
+            <img src="/images/canonical/083-flaw-glyph.png" alt="" className="h-[80px] w-[50px] object-contain" />
             <span className="min-w-0 flex-1">
               <span className="flex items-center gap-[8px]">
-                <span className="text-[14px] font-semibold">Elbow flare at release</span>
+                <span className="whitespace-nowrap text-[13px] font-semibold">Elbow flare at release</span>
                 <span className="rounded-[4px] border border-[var(--shotiq-color-shotiqOrange)] px-[6px] py-[2px] text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-shotiqOrange)]">HIGH IMPACT</span>
               </span>
               <span className="mt-[6px] block text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
@@ -337,9 +337,9 @@ export default function ResultsOverviewPage() {
           </Link>
         </Card>
 
-        <Card className="h-[143px] w-[370px] shrink-0 px-[18px] pt-[14px]">
+        <Card className="h-[138px] w-[370px] shrink-0 px-[18px] pt-[12px]">
           <SectionLabel>NEXT TRAINING</SectionLabel>
-          <Link href="/results/demo/training" className="mt-[12px] flex items-center gap-[14px]">
+          <Link href="/results/demo/training" className="mt-[10px] flex items-center gap-[14px]">
             <span className="grid h-[50px] w-[50px] shrink-0 place-items-center rounded-full bg-[var(--shotiq-color-analysisBlue)]">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.6" aria-hidden="true">
                 <circle cx="7" cy="15" r="2.4" /><circle cx="15" cy="7" r="2.4" /><circle cx="17" cy="16" r="1.7" />

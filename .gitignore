@@ -126,3 +126,4 @@ ship-shotiq.sh
 # ShotIQ visual proof artifacts (renders/diffs) and uncommitted reference PNGs
 .shotiq-proof/
 .shotiq-reference/
+.next-r2a/

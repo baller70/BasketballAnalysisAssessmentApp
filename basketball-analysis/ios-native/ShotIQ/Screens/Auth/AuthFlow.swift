@@ -649,7 +649,7 @@ struct VerifyEmailView: View {     // 005 · ios.verify-email
                                             .stroke(i == code.count ? ShotIQColor.shotiqOrange : ShotIQColor.rule)
                                         if i < code.count {
                                             Text(String(Array(code)[i]))
-                                                .font(.custom("DINCondensed-Bold", size: 34))
+                                                .font(.custom("Tungsten-Semibold", size: 34))
                                                 .foregroundStyle(ShotIQColor.ink)
                                         } else if i == code.count {
                                             Rectangle().fill(ShotIQColor.shotiqOrange)

@@ -2,12 +2,12 @@
 
 /**
  * Canonical shell wrapper for /media.
- * Gives this route the canonical ShotIQ topbar and rail (sidecar contract)
- * while the page's existing domain logic renders inside region-main untouched.
+ * The canonical 094 screen paints its own FILTERS sidebar inside the page,
+ * so the shell's icon rail is suppressed here (topbar only).
  */
 
 import { ShotIQShell } from "@/components/shotiq/ShotIQShell"
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  return <ShotIQShell active="Media">{children}</ShotIQShell>
+  return <ShotIQShell active="Media" sidebar={<></>}>{children}</ShotIQShell>
 }

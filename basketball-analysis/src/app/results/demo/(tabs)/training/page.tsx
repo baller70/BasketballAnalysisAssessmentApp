@@ -5,7 +5,7 @@
 import React, { useState } from "react"
 import Link from "next/link"
 import { Bookmark, ChevronRight, Check } from "lucide-react"
-import { SectionLabel, Card, MediaSurface, TrendLine, Stat } from "@/components/shotiq/ShotIQShell"
+import { SectionLabel, Card, TrendLine, Stat } from "@/components/shotiq/ShotIQShell"
 import { useHistory } from "@/components/shotiq/ResultsBits"
 
 const RECOMMENDED = [
@@ -95,11 +95,12 @@ export default function TrainingHubPage() {
           <Link href="/training/drills?tab=saved" className="text-[12px] text-[var(--shotiq-color-analysisBlue)]">View all drills ›</Link>
         </div>
         <div className="mt-[8px] grid grid-cols-4 gap-[12px]">
-          {LIBRARY.map(([len, t, meta]) => (
+          {LIBRARY.map(([len, t, meta, img]) => (
             <Link key={String(t)} href={`/training/drills/${slug(String(t))}`}>
               <Card className="overflow-hidden">
                 <div className="relative">
-                  <MediaSurface height={110} rounded={0} />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={String(img)} alt="" className="h-[110px] w-full object-cover" />
                   <span className="absolute left-[8px] top-[8px] rounded-[3px] bg-black/75 px-[5px] py-[1px] text-[9px] font-bold text-white">{len}</span>
                   <button type="button" aria-pressed={saved.has(String(t))}
                           aria-label={saved.has(String(t)) ? "Remove from my drills" : "Save drill"}

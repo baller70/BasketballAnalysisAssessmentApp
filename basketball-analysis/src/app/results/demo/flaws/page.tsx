@@ -75,15 +75,15 @@ export default function FlawsPage() {
   return (
     <ShotIQShell active="Analyze" sidebar={<FlawsSidebar />}>
     <div data-testid="screen-desktop-web-flaws-history" className="px-[22px] pt-[14px]">
-      <div className="flex items-start justify-between gap-[18px]">
-        <div>
+      <div className="flex items-start justify-between gap-[12px]">
+        <div className="w-[400px] shrink-0">
           <h1 className="shotiq-display text-[46px] leading-[48px]">FLAWS &amp; CORRECTIONS</h1>
-          <p className="mt-[4px] text-[14px] text-[var(--shotiq-color-graphite)]">
+          <p className="mt-[4px] whitespace-nowrap text-[14px] text-[var(--shotiq-color-graphite)]">
             Identify weaknesses. Focus your fixes. Track your progress.
           </p>
         </div>
-        <Card className="flex h-[96px] items-center px-[20px]">
-          <div className="w-[128px]">
+        <Card className="flex h-[96px] items-center px-[16px]">
+          <div className="w-[118px]">
             <div className="text-[10px] font-bold tracking-[0.07em] text-[var(--shotiq-color-graphite)]">FORM SCORE</div>
             <div className="shotiq-numeric text-[38px] leading-[40px] text-[var(--shotiq-color-shotiqOrange)]">{score ?? "—"}<span className="text-[22px]">.</span></div>
             <div className="h-[5px] w-[100px] rounded-full bg-[var(--shotiq-color-rule)]">
@@ -95,12 +95,12 @@ export default function FlawsPage() {
             <p className="text-[11px] leading-[14px] text-[var(--shotiq-color-graphite)]">Keep building consistency.</p>
           </div>
           {[["24", "SHOTS"], ["15", "MAKES"], ["62.5%", "MAKE %"]].map(([v, l]) => (
-            <div key={l} className="border-l border-[var(--shotiq-color-rule)] px-[16px] text-center">
+            <div key={l} className="border-l border-[var(--shotiq-color-rule)] px-[12px] text-center">
               <div className="shotiq-numeric text-[24px] leading-[28px]">{hasData ? v : "—"}</div>
               <div className="text-[9px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">{l}</div>
             </div>
           ))}
-          <div className="border-l border-[var(--shotiq-color-rule)] pl-[16px] text-center">
+          <div className="border-l border-[var(--shotiq-color-rule)] pl-[12px] text-center">
             <svg width="86" height="34" viewBox="0 0 86 34" aria-hidden="true">
               <path d="M4,22 L16,26 L28,14 L40,18 L52,10 L64,16 L76,6" fill="none" stroke="var(--shotiq-color-graphite)" strokeWidth="1.5" />
               {[[4, 22], [16, 26], [28, 14], [40, 18], [52, 10], [64, 16], [76, 6]].map(([x, y], i) => (
@@ -119,9 +119,9 @@ export default function FlawsPage() {
           <div className="mt-[4px] text-[15px] font-semibold leading-[20px]">Keep elbow stacked through release</div>
           <span className="mt-[6px] inline-block rounded-[4px] border border-[var(--shotiq-color-confirmGreen)] px-[7px] py-[2px] text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-confirmGreen)]">ACTIVE GOAL</span>
           <div className="mt-[8px] flex items-center gap-[8px]">
-            <div className="h-[5px] flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
+            <div className="h-[5px] min-w-0 flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
               <div className="h-full w-[72%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" /></div>
-            <span className="shotiq-numeric text-[11px]">72%</span>
+            <span className="shotiq-numeric shrink-0 text-[11px]">72%</span>
           </div>
         </div>
       </div>
@@ -169,19 +169,19 @@ export default function FlawsPage() {
           <div className="mt-[7px] flex gap-[2px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/images/canonical/085-your-shot.png" alt="Your shot at release, 118 degree elbow angle"
-                 className="block h-auto w-[50.5%] rounded-l-[6px]" width={318} height={339} />
+                 className="block rounded-l-[6px]" width={318} height={339} />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/images/canonical/085-model-ref.png" alt="Model reference at release, 152 degree elbow angle"
-                 className="block h-auto w-[49.5%] rounded-r-[6px]" width={312} height={339} />
+                 className="block rounded-r-[6px]" width={312} height={339} />
           </div>
           <SectionLabel className="mt-[12px]">AFFECTED FRAMES (15)</SectionLabel>
           <div className="mt-[7px] flex items-center gap-[5px]">
             <ChevronLeft className="h-[15px] w-[15px] shrink-0 text-[var(--shotiq-color-ink)]" />
-            <div className="min-w-0 flex-1">
+            <div className="shrink-0">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/images/canonical/085-frames.png" alt="" className="block w-full" width={587} height={70} />
+              <img src="/images/canonical/085-frames.png" alt="" className="block" width={587} height={70} />
               <div className="mt-[3px] text-center text-[10px] font-bold tracking-[0.08em] text-[var(--shotiq-color-shotiqOrange)]"
-                   style={{ paddingRight: "26%" }}>RELEASE</div>
+                   style={{ paddingRight: "23%" }}>RELEASE</div>
             </div>
             <ChevronRight className="mb-[16px] h-[15px] w-[15px] shrink-0 text-[var(--shotiq-color-ink)]" />
           </div>
