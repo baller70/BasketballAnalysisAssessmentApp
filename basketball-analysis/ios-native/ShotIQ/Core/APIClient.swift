@@ -106,12 +106,35 @@ actor APIClient {
 
     private var accessToken: String? { KeychainStore.read(key: "accessToken") }
 
+    /// Double-submit CSRF token. The backend rejects every state-changing
+    /// request (signin/signup included) unless the `csrf-token` cookie set by
+    /// GET /api/auth/csrf is echoed back in the `x-csrf-token` header —
+    /// URLSession stores the cookie automatically; this caches the header value.
+    private var csrfToken: String?
+
     enum APIError: Error { case http(Int), decode, network }
 
-    private func request<T: Decodable>(_ path: String, method: String = "GET", body: Encodable? = nil) async throws -> T {
+    private func ensureCsrfToken(force: Bool = false) async throws {
+        if csrfToken != nil && !force { return }
+        struct Resp: Codable { var csrfToken: String }
+        var req = URLRequest(url: baseURL.appending(path: "/api/auth/csrf"))
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let (data, resp) = try await URLSession.shared.data(for: req)
+        guard (resp as? HTTPURLResponse)?.statusCode == 200,
+              let decoded = try? JSONDecoder().decode(Resp.self, from: data) else {
+            throw APIError.network
+        }
+        csrfToken = decoded.csrfToken
+    }
+
+    private func request<T: Decodable>(_ path: String, method: String = "GET", body: Encodable? = nil, retriedCsrf: Bool = false) async throws -> T {
+        if method != "GET" { try await ensureCsrfToken() }
         var req = URLRequest(url: baseURL.appending(path: path))
         req.httpMethod = method
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        if method != "GET", let csrf = csrfToken {
+            req.setValue(csrf, forHTTPHeaderField: "x-csrf-token")
+        }
         if let token = accessToken {
             req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
@@ -121,6 +144,11 @@ actor APIClient {
         let (data, resp) = try await URLSession.shared.data(for: req)
         guard let http = resp as? HTTPURLResponse else { throw APIError.network }
         if http.statusCode == 401 { try await refreshTokens(); return try await request(path, method: method, body: body) }
+        // A stale/expired CSRF pair comes back as 403 — fetch a fresh token once.
+        if http.statusCode == 403 && method != "GET" && !retriedCsrf {
+            try await ensureCsrfToken(force: true)
+            return try await request(path, method: method, body: body, retriedCsrf: true)
+        }
         guard (200..<300).contains(http.statusCode) else { throw APIError.http(http.statusCode) }
         do { return try JSONDecoder().decode(T.self, from: data) } catch { throw APIError.decode }
     }
