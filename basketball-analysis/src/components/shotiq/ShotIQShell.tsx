@@ -3,13 +3,13 @@
 /**
  * Canonical ShotIQ desktop application shell.
  *
- * Topbar and left rail exactly as painted on the canonical screens
- * (079-web-home-dashboard and siblings): SHOTIQ wordmark, centre tab nav,
- * search, day-streak, points, bell and avatar on the topbar; icon-over-label
- * rail on the left with Settings pinned to the bottom.
+ * Topbar carries identity and status only, as painted on the canonical screens
+ * (079-web-home-dashboard and siblings): SHOTIQ wordmark, search, day-streak,
+ * points, bell and avatar. It deliberately has no tab row — navigation lives in
+ * exactly one place, the sidebar (see UnifiedSidebar below).
  *
  * Geometry derives from the HoopTrackLayoutSidecar contract (1440x900 canvas,
- * 87px rail, 65px topbar). Colour/typography come from the shared token CSS.
+ * 65px topbar, 196px sidebar). Colour/typography come from the shared token CSS.
  */
 
 import React from "react"
@@ -19,7 +19,8 @@ import {
   Search, Bell, ChevronDown, Home, LineChart, Activity, TrendingUp,
   Film, Compass, Settings, Video, Upload, Gauge, PersonStanding,
   AlertTriangle, GitCompare, CreditCard, Dumbbell, ListChecks,
-  CalendarDays, Target, Trophy, User, HelpCircle, type LucideIcon,
+  CalendarDays, Target, Trophy, User, HelpCircle, FileVideo, Award,
+  SlidersHorizontal, Rocket, type LucideIcon,
 } from "lucide-react"
 import { useAuthStore } from "@/stores/authStore"
 
@@ -33,7 +34,8 @@ const SEARCH_DESTINATIONS: { label: string; href: string; group: string }[] = [
   { label: "Dashboard", href: "/dashboard", group: "MAIN" },
   { label: "Analyze", href: "/analyze", group: "MAIN" },
   { label: "Live Capture", href: "/video-analysis", group: "MAIN" },
-  { label: "Upload Video", href: "/video-analysis/upload", group: "MAIN" },
+  { label: "Upload", href: "/upload", group: "MAIN" },
+  { label: "Video Upload", href: "/video-analysis/upload", group: "MAIN" },
   { label: "Results Overview", href: "/results/demo", group: "RESULTS" },
   { label: "Analysis", href: "/results/demo/analysis", group: "RESULTS" },
   { label: "Biomechanics", href: "/results/demo/biomechanics", group: "RESULTS" },
@@ -48,9 +50,14 @@ const SEARCH_DESTINATIONS: { label: string; href: string; group: string }[] = [
   { label: "Media", href: "/media", group: "LIBRARY" },
   { label: "Elite Shooters", href: "/elite-shooters", group: "LIBRARY" },
   { label: "Achievements", href: "/points", group: "LIBRARY" },
+  { label: "Badges", href: "/badges", group: "LIBRARY" },
+  { label: "Shooting Forms", href: "/admin/shooting-forms", group: "ADMIN" },
   { label: "Profile", href: "/profile", group: "ACCOUNT" },
+  { label: "Onboarding", href: "/onboarding", group: "ACCOUNT" },
   { label: "Settings", href: "/settings", group: "ACCOUNT" },
   { label: "Help & Guide", href: "/guide", group: "ACCOUNT" },
+  { label: "Privacy Policy", href: "/privacy", group: "LEGAL" },
+  { label: "Terms of Use", href: "/terms", group: "LEGAL" },
 ]
 
 const TOPBAR_NOTICES = [
@@ -413,7 +420,8 @@ const SIDEBAR_GROUPS: {
     { label: "Dashboard", href: "/dashboard", icon: Home },
     { label: "Analyze", href: "/analyze", icon: LineChart },
     { label: "Live Capture", href: "/video-analysis", icon: Video },
-    { label: "Upload", href: "/video-analysis/upload", icon: Upload },
+    { label: "Upload", href: "/upload", icon: Upload },
+    { label: "Video Upload", href: "/video-analysis/upload", icon: FileVideo },
   ]},
   { heading: "RESULTS", items: [
     { label: "Overview", href: "/results/demo", icon: Gauge },
@@ -434,13 +442,25 @@ const SIDEBAR_GROUPS: {
     { label: "Media", href: "/media", icon: Film },
     { label: "Elite Shooters", href: "/elite-shooters", icon: Compass },
     { label: "Achievements", href: "/points", icon: Trophy },
+    { label: "Badges", href: "/badges", icon: Award },
+  ]},
+  { heading: "ADMIN", items: [
+    { label: "Shooting Forms", href: "/admin/shooting-forms", icon: SlidersHorizontal },
   ]},
 ]
 
 const SIDEBAR_FOOTER: { label: string; href: string; icon: IconType }[] = [
   { label: "Profile", href: "/profile", icon: User },
+  { label: "Onboarding", href: "/onboarding", icon: Rocket },
   { label: "Settings", href: "/settings", icon: Settings },
   { label: "Help", href: "/guide", icon: HelpCircle },
+]
+
+/** Legal pages are real routes but not tabs; they sit in a compact footer line
+ *  so every destination is reachable without eating a full nav row. */
+const SIDEBAR_LEGAL: { label: string; href: string }[] = [
+  { label: "Privacy", href: "/privacy" },
+  { label: "Terms", href: "/terms" },
 ]
 
 export function UnifiedSidebar() {
@@ -473,19 +493,30 @@ export function UnifiedSidebar() {
 
   return (
     <nav data-testid="region-sidebar" aria-label="Primary"
-         className="flex w-[196px] shrink-0 flex-col border-r border-[var(--shotiq-color-rule)] pt-[12px]">
+         className="flex w-[196px] shrink-0 flex-col border-r border-[var(--shotiq-color-rule)] pt-[8px]">
       <div className="min-h-0 flex-1 overflow-y-auto">
         {SIDEBAR_GROUPS.map((g) => (
-          <div key={g.heading} className="mb-[8px]">
-            <div className="px-[20px] pb-[3px] text-[10px] font-bold tracking-[0.08em] text-[var(--shotiq-color-graphite)]">
+          <div key={g.heading} className="mb-[4px]">
+            <div className="px-[20px] pb-[2px] text-[10px] font-bold leading-[14px] tracking-[0.08em] text-[var(--shotiq-color-graphite)]">
               {g.heading}
             </div>
-            {g.items.map((it) => row(it, "h-[32px]"))}
+            {g.items.map((it) => row(it, "h-[27px]"))}
           </div>
         ))}
       </div>
-      <div className="border-t border-[var(--shotiq-color-rule)] py-[6px]">
-        {SIDEBAR_FOOTER.map((it) => row(it, "h-[32px]"))}
+      <div className="border-t border-[var(--shotiq-color-rule)] pt-[4px]">
+        {SIDEBAR_FOOTER.map((it) => row(it, "h-[27px]"))}
+        <div className="flex items-center gap-[10px] px-[20px] pb-[8px] pt-[6px] text-[11px] text-[var(--shotiq-color-graphite)]">
+          {SIDEBAR_LEGAL.map((l) => (
+            <Link key={l.href} href={l.href}
+                  aria-current={isActive(l.href) ? "page" : undefined}
+                  className={isActive(l.href)
+                    ? "font-semibold text-[var(--shotiq-color-shotiqOrange)]"
+                    : "hover:text-[var(--shotiq-color-ink)]"}>
+              {l.label}
+            </Link>
+          ))}
+        </div>
       </div>
     </nav>
   )
