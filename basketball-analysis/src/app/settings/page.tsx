@@ -1,81 +1,59 @@
 "use client"
 
-import React, { useState, useEffect, useRef } from "react"
+/**
+ * /settings — canonical settings hub in the 096-web-profile-settings design
+ * language (left settings rail + white cards with uppercase section labels,
+ * Enabled/Disabled rows, 5–8px radii).
+ *
+ * Every row is real: toggles and selects persist to Postgres through
+ * PUT /api/settings the moment they change (no dead switches), the avatar
+ * uploads through the same endpoint, and the data actions hit the live
+ * history APIs. Profile fields (name, handedness, measurements) are edited
+ * on /profile — the rail's "Profile & account" entry links there.
+ */
+
+import React, { useCallback, useEffect, useRef, useState } from "react"
+import Link from "next/link"
 import Image from "next/image"
-import { 
-  Settings, 
-  Bell, 
-  Mail, 
-  Clock, 
-  Database, 
-  RefreshCw, 
-  Shield, 
-  Calendar,
-  Trophy,
-  Lightbulb,
-  TrendingUp,
-  Users,
-  Smartphone,
-  Save,
-  Check,
-  X,
-  ChevronRight,
-  Info,
-  User,
-  Camera,
-  Upload,
-  Trash2
+import {
+  User, Bell, Clock, Shield, MonitorSmartphone, SlidersHorizontal,
+  Upload, Trash2, LogOut, ChevronRight, Info, CheckCircle2,
 } from "lucide-react"
+import { SectionLabel, Card } from "@/components/shotiq/ShotIQShell"
 import { useAuthStore } from "@/stores/authStore"
 import { csrfFetch } from "@/lib/api/csrfFetch"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
 
-// ============================================
-// PHASE 10: SETTINGS & NOTIFICATION PREFERENCES
-// ============================================
+// ── Server-backed settings shapes (mirrors /api/settings defaults) ────────────
 
 interface NotificationSettings {
-  // Email notifications
   weeklyReportEmail: boolean
   monthlyReportEmail: boolean
   coachAlertEmail: boolean
   milestoneEmail: boolean
   improvementAlertEmail: boolean
-  
-  // Push notifications
   milestonePush: boolean
   coachingTipsPush: boolean
   improvementAlertPush: boolean
   motivationalMessagesPush: boolean
   reminderPush: boolean
-  
-  // Frequency settings
-  coachingTipsFrequency: 'daily' | '2x_week' | '3x_week' | 'weekly'
-  motivationalFrequency: '1x_week' | '2x_week' | 'daily'
-  reminderTime: string // HH:MM format
-  
-  // Report preferences
-  reportFormat: 'detailed' | 'summary'
+  coachingTipsFrequency: "daily" | "2x_week" | "3x_week" | "weekly"
+  motivationalFrequency: "1x_week" | "2x_week" | "daily"
+  reminderTime: string
+  reportFormat: "detailed" | "summary"
   includeCharts: boolean
   includeComparison: boolean
 }
 
 interface AutomationSettings {
-  // Daily tasks
   analyticsRefreshEnabled: boolean
   analyticsRefreshTime: string
   dataBackupEnabled: boolean
   dataBackupTime: string
   modelUpdateEnabled: boolean
-  
-  // Weekly tasks
   weeklyReportEnabled: boolean
-  weeklyReportDay: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday'
+  weeklyReportDay: string
   weeklyReportTime: string
   coachAlertsEnabled: boolean
-  
-  // Monthly tasks
   monthlyAnalysisEnabled: boolean
   milestoneNotificationsEnabled: boolean
 }
@@ -86,271 +64,170 @@ interface PrivacySettings {
   shareProgressWithCoach: boolean
 }
 
-const DEFAULT_PRIVACY_SETTINGS: PrivacySettings = {
-  allowAnonymousAnalytics: true,
-  includeInPeerComparisons: true,
+const DEFAULT_NOTIFICATIONS: NotificationSettings = {
+  weeklyReportEmail: true, monthlyReportEmail: true, coachAlertEmail: true,
+  milestoneEmail: true, improvementAlertEmail: true, milestonePush: true,
+  coachingTipsPush: true, improvementAlertPush: true,
+  motivationalMessagesPush: true, reminderPush: false,
+  coachingTipsFrequency: "2x_week", motivationalFrequency: "2x_week",
+  reminderTime: "18:00", reportFormat: "detailed",
+  includeCharts: true, includeComparison: true,
+}
+
+const DEFAULT_AUTOMATION: AutomationSettings = {
+  analyticsRefreshEnabled: true, analyticsRefreshTime: "02:00",
+  dataBackupEnabled: true, dataBackupTime: "03:00", modelUpdateEnabled: true,
+  weeklyReportEnabled: true, weeklyReportDay: "monday", weeklyReportTime: "08:00",
+  coachAlertsEnabled: true, monthlyAnalysisEnabled: true,
+  milestoneNotificationsEnabled: true,
+}
+
+const DEFAULT_PRIVACY: PrivacySettings = {
+  allowAnonymousAnalytics: true, includeInPeerComparisons: true,
   shareProgressWithCoach: true,
 }
 
-const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
-  weeklyReportEmail: true,
-  monthlyReportEmail: true,
-  coachAlertEmail: true,
-  milestoneEmail: true,
-  improvementAlertEmail: true,
-  milestonePush: true,
-  coachingTipsPush: true,
-  improvementAlertPush: true,
-  motivationalMessagesPush: true,
-  reminderPush: false,
-  coachingTipsFrequency: '2x_week',
-  motivationalFrequency: '2x_week',
-  reminderTime: '18:00',
-  reportFormat: 'detailed',
-  includeCharts: true,
-  includeComparison: true
-}
+// ── Rail + section registry ───────────────────────────────────────────────────
 
-const DEFAULT_AUTOMATION_SETTINGS: AutomationSettings = {
-  analyticsRefreshEnabled: true,
-  analyticsRefreshTime: '02:00',
-  dataBackupEnabled: true,
-  dataBackupTime: '03:00',
-  modelUpdateEnabled: true,
-  weeklyReportEnabled: true,
-  weeklyReportDay: 'monday',
-  weeklyReportTime: '08:00',
-  coachAlertsEnabled: true,
-  monthlyAnalysisEnabled: true,
-  milestoneNotificationsEnabled: true
-}
+const SECTIONS = [
+  { id: "notifications", label: "Notifications", icon: Bell },
+  { id: "automation", label: "Automation", icon: Clock },
+  { id: "privacy", label: "Data & privacy", icon: Shield },
+  { id: "devices", label: "Connected devices", icon: MonitorSmartphone },
+  { id: "preferences", label: "Preferences", icon: SlidersHorizontal },
+] as const
 
 export default function SettingsPage() {
-  const router = useRouter()
-  const [activeSection, setActiveSection] = useState<'profile' | 'notifications' | 'automation' | 'account' | 'about'>('profile')
-  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(DEFAULT_NOTIFICATION_SETTINGS)
-  const [automationSettings, setAutomationSettings] = useState<AutomationSettings>(DEFAULT_AUTOMATION_SETTINGS)
-  const [privacySettings, setPrivacySettings] = useState<PrivacySettings>(DEFAULT_PRIVACY_SETTINGS)
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
-  const [hasChanges, setHasChanges] = useState(false)
-
-  // Data & privacy action states
-  const [exportStatus, setExportStatus] = useState<'idle' | 'working' | 'error'>('idle')
-  const [clearStatus, setClearStatus] = useState<'idle' | 'working' | 'cleared' | 'error'>('idle')
-
-  // Avatar state
   const { user, updateUser } = useAuthStore()
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
-  // Data-URL of a freshly-selected avatar awaiting upload; null when unchanged.
-  const [pendingAvatarData, setPendingAvatarData] = useState<string | null>(null)
-  const [pendingAvatarRemove, setPendingAvatarRemove] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [notifications, setNotifications] = useState(DEFAULT_NOTIFICATIONS)
+  const [automation, setAutomation] = useState(DEFAULT_AUTOMATION)
+  const [privacy, setPrivacy] = useState(DEFAULT_PRIVACY)
+  const [loaded, setLoaded] = useState(false)
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle")
+  const [activeSection, setActiveSection] = useState<string>("notifications")
+  const [deviceInfo, setDeviceInfo] = useState({ browser: "This browser", os: "" })
 
-  // Load all settings (notifications/privacy/automation/avatar) from the server.
-  // Postgres is the source of truth; there is no localStorage fallback so the
-  // same settings follow the user across devices.
+  // Avatar
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const avatarInputRef = useRef<HTMLInputElement>(null)
+
+  // Data actions
+  const [exporting, setExporting] = useState<"idle" | "working" | "done" | "error">("idle")
+  const [clearing, setClearing] = useState<"idle" | "confirm" | "working" | "done" | "error">("idle")
+
   useEffect(() => {
     let cancelled = false
     ;(async () => {
       try {
-        const res = await fetch('/api/settings', { credentials: 'include' })
+        const res = await fetch("/api/settings", { credentials: "include" })
         if (!res.ok) return
         const data = await res.json()
         if (cancelled || !data?.success || !data.settings) return
         const s = data.settings
-        if (s.notifications) {
-          setNotificationSettings(prev => ({ ...prev, ...s.notifications }))
-        }
-        if (s.automation) {
-          setAutomationSettings(prev => ({ ...prev, ...s.automation }))
-        }
-        if (s.privacy) {
-          setPrivacySettings(prev => ({ ...prev, ...s.privacy }))
-        }
+        if (s.notifications) setNotifications((p) => ({ ...p, ...s.notifications }))
+        if (s.automation) setAutomation((p) => ({ ...p, ...s.automation }))
+        if (s.privacy) setPrivacy((p) => ({ ...p, ...s.privacy }))
         if (s.avatarUrl) {
-          setAvatarPreview(s.avatarUrl)
+          setAvatarUrl(s.avatarUrl)
           updateUser({ avatarUrl: s.avatarUrl })
-          // Mirror the uploaded URL (NOT base64) into the legacy display cache
-          // key the Header/nav still reads, so the avatar shows everywhere.
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('user_avatar', s.avatarUrl)
-          }
         }
       } catch (e) {
-        console.error('Error loading settings:', e)
+        console.error("Error loading settings:", e)
+      } finally {
+        if (!cancelled) setLoaded(true)
       }
     })()
-    return () => {
-      cancelled = true
+    return () => { cancelled = true }
+  }, [updateUser])
+
+  useEffect(() => {
+    const ua = navigator.userAgent
+    const browser = /edg/i.test(ua) ? "Microsoft Edge" : /chrome|crios/i.test(ua) ? "Chrome"
+      : /firefox/i.test(ua) ? "Firefox" : /safari/i.test(ua) ? "Safari" : "This browser"
+    const os = /windows/i.test(ua) ? "Windows" : /mac os/i.test(ua) ? "macOS"
+      : /android/i.test(ua) ? "Android" : /iphone|ipad|ios/i.test(ua) ? "iOS"
+      : /linux/i.test(ua) ? "Linux" : ""
+    setDeviceInfo({ browser, os })
+  }, [])
+
+  // Persist the CURRENT full settings state (plus any avatar change) to the
+  // server. Called on every mutation so no switch is ever a dead control.
+  const persist = useCallback(async (
+    next: { notifications: NotificationSettings; automation: AutomationSettings; privacy: PrivacySettings },
+    avatar?: { data?: string; remove?: boolean },
+  ) => {
+    setSaveState("saving")
+    try {
+      const payload: Record<string, unknown> = { ...next }
+      if (avatar?.data) payload.avatarData = avatar.data
+      if (avatar?.remove) payload.removeAvatar = true
+      const res = await csrfFetch("/api/settings", { method: "PUT", body: JSON.stringify(payload) })
+      const data = await res.json()
+      if (!res.ok || !data?.success) throw new Error(data?.error || "Save failed")
+      if (avatar) {
+        const url = data.settings?.avatarUrl ?? null
+        setAvatarUrl(url)
+        updateUser({ avatarUrl: url ?? undefined })
+        if (typeof window !== "undefined") {
+          if (url) localStorage.setItem("user_avatar", url)
+          else localStorage.removeItem("user_avatar")
+        }
+      }
+      setSaveState("saved")
+      setTimeout(() => setSaveState("idle"), 2000)
+    } catch (e) {
+      console.error("Error saving settings:", e)
+      setSaveState("error")
+      setTimeout(() => setSaveState("idle"), 3000)
     }
   }, [updateUser])
 
-  // Handle avatar file selection — converts to a data URL for preview and
-  // queues it for upload on save (uploaded via the server, never persisted as
-  // base64 in localStorage).
-  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        alert('Please select an image file')
-        return
-      }
+  const setNotif = <K extends keyof NotificationSettings>(key: K, value: NotificationSettings[K]) => {
+    const next = { ...notifications, [key]: value }
+    setNotifications(next)
+    void persist({ notifications: next, automation, privacy })
+  }
+  const setAuto = <K extends keyof AutomationSettings>(key: K, value: AutomationSettings[K]) => {
+    const next = { ...automation, [key]: value }
+    setAutomation(next)
+    void persist({ notifications, automation: next, privacy })
+  }
+  const setPriv = <K extends keyof PrivacySettings>(key: K, value: PrivacySettings[K]) => {
+    const next = { ...privacy, [key]: value }
+    setPrivacy(next)
+    void persist({ notifications, automation, privacy: next })
+  }
 
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Image must be less than 5MB')
-        return
-      }
-
-      // Read and convert to base64 (data URL) for preview + upload payload.
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        const base64 = e.target?.result as string
-        setAvatarPreview(base64)
-        setPendingAvatarData(base64)
-        setPendingAvatarRemove(false)
-        setHasChanges(true)
-      }
-      reader.readAsDataURL(file)
+  const onAvatarPick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith("image/")) { alert("Please select an image file"); return }
+    if (file.size > 5 * 1024 * 1024) { alert("Image must be less than 5MB"); return }
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      const data = ev.target?.result as string
+      setAvatarUrl(data)
+      void persist({ notifications, automation, privacy }, { data })
     }
+    reader.readAsDataURL(file)
   }
 
-  // Remove avatar
-  const handleRemoveAvatar = () => {
-    setAvatarPreview(null)
-    setPendingAvatarData(null)
-    setPendingAvatarRemove(true)
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
-    }
-    setHasChanges(true)
+  const removeAvatar = () => {
+    setAvatarUrl(null)
+    if (avatarInputRef.current) avatarInputRef.current.value = ""
+    void persist({ notifications, automation, privacy }, { remove: true })
   }
 
-  // Get user initials for fallback avatar
-  const getUserInitials = () => {
-    if (user?.firstName && user?.lastName) {
-      return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
-    }
-    if (user?.displayName) {
-      const names = user.displayName.split(' ')
-      if (names.length >= 2) {
-        return `${names[0][0]}${names[1][0]}`.toUpperCase()
-      }
-      return user.displayName.substring(0, 2).toUpperCase()
-    }
-    if (user?.email) {
-      return user.email.substring(0, 2).toUpperCase()
-    }
-    return 'U'
-  }
-
-  // Real counts of the user's enabled automation preferences (replaces the
-  // former hardcoded 3/2/2 mock).
-  const dailyTasksEnabled = [
-    automationSettings.analyticsRefreshEnabled,
-    automationSettings.dataBackupEnabled,
-    automationSettings.modelUpdateEnabled,
-  ].filter(Boolean).length
-  const weeklyTasksEnabled = [
-    automationSettings.weeklyReportEnabled,
-    automationSettings.coachAlertsEnabled,
-  ].filter(Boolean).length
-  const monthlyTasksEnabled = [
-    automationSettings.monthlyAnalysisEnabled,
-    automationSettings.milestoneNotificationsEnabled,
-  ].filter(Boolean).length
-
-  // Persist settings to the server (Postgres via /api/settings). Includes the
-  // pending avatar, which the server uploads to object storage and returns the
-  // URL for — no base64 is ever stored client-side.
-  const saveSettings = async () => {
-    setSaveStatus('saving')
-
-    try {
-      const payload: Record<string, unknown> = {
-        notifications: notificationSettings,
-        automation: automationSettings,
-        privacy: privacySettings,
-      }
-      if (pendingAvatarData) {
-        payload.avatarData = pendingAvatarData
-      } else if (pendingAvatarRemove) {
-        payload.removeAvatar = true
-      }
-
-      const res = await csrfFetch('/api/settings', {
-        method: 'PUT',
-        body: JSON.stringify(payload),
-      })
-      const data = await res.json()
-
-      if (!res.ok || !data?.success) {
-        throw new Error(data?.error || 'Failed to save settings')
-      }
-
-      // Reflect the canonical server state (notably the uploaded avatar URL).
-      if (data.settings) {
-        if (data.settings.avatarUrl) {
-          setAvatarPreview(data.settings.avatarUrl)
-          updateUser({ avatarUrl: data.settings.avatarUrl })
-          // Update the legacy display-cache key the Header/nav reads (URL only).
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('user_avatar', data.settings.avatarUrl)
-          }
-        } else {
-          updateUser({ avatarUrl: undefined })
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('user_avatar')
-          }
-        }
-      }
-
-      setPendingAvatarData(null)
-      setPendingAvatarRemove(false)
-      setSaveStatus('saved')
-      setHasChanges(false)
-      setTimeout(() => setSaveStatus('idle'), 2000)
-    } catch (e) {
-      console.error('Error saving settings:', e)
-      setSaveStatus('error')
-      setTimeout(() => setSaveStatus('idle'), 3000)
-    }
-  }
-
-  // Update notification setting
-  const updateNotification = <K extends keyof NotificationSettings>(key: K, value: NotificationSettings[K]) => {
-    setNotificationSettings(prev => ({ ...prev, [key]: value }))
-    setHasChanges(true)
-  }
-
-  // Update automation setting
-  const updateAutomation = <K extends keyof AutomationSettings>(key: K, value: AutomationSettings[K]) => {
-    setAutomationSettings(prev => ({ ...prev, [key]: value }))
-    setHasChanges(true)
-  }
-
-  // Update privacy setting
-  const updatePrivacy = <K extends keyof PrivacySettings>(key: K, value: PrivacySettings[K]) => {
-    setPrivacySettings(prev => ({ ...prev, [key]: value }))
-    setHasChanges(true)
-  }
-
-  // Export all of the user's data (settings + full analysis history) as a JSON
-  // download. Pulls from the server, never from localStorage.
-  const handleExportData = async () => {
-    setExportStatus('working')
+  const exportData = async () => {
+    setExporting("working")
     try {
       const [settingsRes, historyRes] = await Promise.all([
-        fetch('/api/settings', { credentials: 'include' }),
-        fetch('/api/analysis-history?includeAnalysis=true&limit=1000', {
-          credentials: 'include',
-        }),
+        fetch("/api/settings", { credentials: "include" }),
+        fetch("/api/analysis-history?includeAnalysis=true&limit=1000", { credentials: "include" }),
       ])
       const settingsData = settingsRes.ok ? await settingsRes.json() : null
       const historyData = historyRes.ok ? await historyRes.json() : null
-
-      const exportPayload = {
+      const payload = {
         exportedAt: new Date().toISOString(),
         profile: {
           email: user?.email ?? null,
@@ -361,984 +238,367 @@ export default function SettingsPage() {
         analysisHistory: historyData?.history ?? [],
         stats: historyData?.stats ?? null,
       }
-
-      const blob = new Blob([JSON.stringify(exportPayload, null, 2)], {
-        type: 'application/json',
-      })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
+      const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }))
+      const a = document.createElement("a")
       a.href = url
-      a.download = `basketball-analysis-export-${new Date()
-        .toISOString()
-        .slice(0, 10)}.json`
+      a.download = `shotiq-export-${new Date().toISOString().slice(0, 10)}.json`
       document.body.appendChild(a)
       a.click()
-      document.body.removeChild(a)
+      a.remove()
       URL.revokeObjectURL(url)
-
-      setExportStatus('idle')
+      setExporting("done")
     } catch (e) {
-      console.error('Error exporting data:', e)
-      setExportStatus('error')
-      setTimeout(() => setExportStatus('idle'), 3000)
+      console.error("Error exporting data:", e)
+      setExporting("error")
     }
+    setTimeout(() => setExporting("idle"), 2500)
   }
 
-  // Clear all of the user's analysis history from the server. Deletes each
-  // caller-owned history row (the DELETE endpoint is scoped per-id).
-  const handleClearHistory = async () => {
-    if (
-      typeof window !== 'undefined' &&
-      !window.confirm(
-        'Delete ALL of your analysis history? This cannot be undone.'
-      )
-    ) {
-      return
-    }
-    setClearStatus('working')
+  const clearHistory = async () => {
+    if (clearing === "idle") { setClearing("confirm"); return }
+    if (clearing !== "confirm") return
+    setClearing("working")
     try {
-      const res = await fetch('/api/analysis-history?limit=1000', {
-        credentials: 'include',
-      })
+      const res = await fetch("/api/analysis-history?limit=1000", { credentials: "include" })
       const data = res.ok ? await res.json() : null
       const ids: string[] = Array.isArray(data?.history)
-        ? data.history.map((h: { id: string }) => h.id).filter(Boolean)
-        : []
-
+        ? data.history.map((h: { id: string }) => h.id).filter(Boolean) : []
       for (const id of ids) {
-        await csrfFetch(`/api/analysis-history?id=${encodeURIComponent(id)}`, {
-          method: 'DELETE',
-        })
+        await csrfFetch(`/api/analysis-history?id=${encodeURIComponent(id)}`, { method: "DELETE" })
       }
-
-      setClearStatus('cleared')
-      setTimeout(() => setClearStatus('idle'), 2500)
+      setClearing("done")
     } catch (e) {
-      console.error('Error clearing history:', e)
-      setClearStatus('error')
-      setTimeout(() => setClearStatus('idle'), 3000)
+      console.error("Error clearing history:", e)
+      setClearing("error")
     }
+    setTimeout(() => setClearing("idle"), 2500)
   }
 
-    return (
-    <main data-testid="screen-desktop-web-settings-hub" className="px-[26px] py-[18px]">
-      <div className="container mx-auto max-w-6xl">
-        {/* Header — canonical per iOS 071-settings-hub */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="shotiq-display text-[48px] leading-[50px]">SETTINGS</h1>
-            <p className="mt-[4px] text-[14px] text-[var(--shotiq-color-graphite)]">Manage your account, preferences, and app experience.</p>
-          </div>
-            
-          {/* Save Button */}
-              <button
-                onClick={saveSettings}
-            disabled={!hasChanges || saveStatus === 'saving'}
-            className={`flex items-center gap-2 px-6 py-3 rounded-[8px] font-bold transition-all whitespace-nowrap shadow-lg shadow-[var(--shotiq-color-shotiqOrange)]/20 ${
-              hasChanges 
-                ? 'bg-[var(--shotiq-color-shotiqOrange)] text-white hover:bg-[var(--shotiq-color-shotiqOrange)]' 
-                : 'bg-[var(--shotiq-color-warmCanvas)] text-[var(--shotiq-color-muted)] cursor-not-allowed shadow-none'
-            }`}
-              >
-                {saveStatus === 'saving' ? (
-              <>
-                <RefreshCw className="w-5 h-5 animate-spin" />
-                Saving
-              </>
-                ) : saveStatus === 'saved' ? (
-              <>
-                <Check className="w-5 h-5" />
-                Saved
-              </>
-            ) : saveStatus === 'error' ? (
-              <>
-                <X className="w-5 h-5" />
-                Error
-              </>
-            ) : (
-              <>
-                <Save className="w-5 h-5" />
-                Save
-              </>
-            )}
-              </button>
-          </div>
-          
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Sidebar Navigation */}
-          <div className="lg:col-span-1">
-            <div className="bg-white shadow-sm rounded-[8px] p-4 border border-[var(--shotiq-color-rule)] sticky top-24">
-              <nav className="space-y-2">
-                <button
-                  onClick={() => setActiveSection('profile')}
-                  aria-current={activeSection === 'profile' ? 'true' : undefined}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-[8px] transition-all ${
-                    activeSection === 'profile'
-                      ? 'bg-[var(--shotiq-color-shotiqOrange)]/10 text-[var(--shotiq-color-shotiqOrange)] font-bold border-l-4 border-[var(--shotiq-color-shotiqOrange)]'
-                      : 'text-[var(--shotiq-color-graphite)] hover:bg-[var(--shotiq-color-warmCanvas)] hover:text-[var(--shotiq-color-ink)] font-medium border-l-4 border-transparent'
-                  }`}
-                >
-                  <User className="w-5 h-5" />
-                  <span className="font-medium">Profile & Avatar</span>
-                  <ChevronRight className="w-4 h-4 ml-auto" />
-                </button>
-                
-                <button
-                  onClick={() => setActiveSection('notifications')}
-                  aria-current={activeSection === 'notifications' ? 'true' : undefined}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-[8px] transition-all ${
-                    activeSection === 'notifications'
-                      ? 'bg-[var(--shotiq-color-shotiqOrange)]/10 text-[var(--shotiq-color-shotiqOrange)] font-bold border-l-4 border-[var(--shotiq-color-shotiqOrange)]'
-                      : 'text-[var(--shotiq-color-graphite)] hover:bg-[var(--shotiq-color-warmCanvas)] hover:text-[var(--shotiq-color-ink)] font-medium border-l-4 border-transparent'
-                  }`}
-                >
-                  <Bell className="w-5 h-5" />
-                  <span className="font-medium">Notifications</span>
-                  <ChevronRight className="w-4 h-4 ml-auto" />
-                </button>
-                
-                <button
-                  onClick={() => setActiveSection('automation')}
-                  aria-current={activeSection === 'automation' ? 'true' : undefined}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-[8px] transition-all ${
-                    activeSection === 'automation'
-                      ? 'bg-[var(--shotiq-color-shotiqOrange)]/10 text-[var(--shotiq-color-shotiqOrange)] font-bold border-l-4 border-[var(--shotiq-color-shotiqOrange)]'
-                      : 'text-[var(--shotiq-color-graphite)] hover:bg-[var(--shotiq-color-warmCanvas)] hover:text-[var(--shotiq-color-ink)] font-medium border-l-4 border-transparent'
-                  }`}
-                >
-                  <Clock className="w-5 h-5" />
-                  <span className="font-medium">Automation</span>
-                  <ChevronRight className="w-4 h-4 ml-auto" />
-                </button>
-                
-                <button
-                  onClick={() => setActiveSection('account')}
-                  aria-current={activeSection === 'account' ? 'true' : undefined}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-[8px] transition-all ${
-                    activeSection === 'account'
-                      ? 'bg-[var(--shotiq-color-shotiqOrange)]/10 text-[var(--shotiq-color-shotiqOrange)] font-bold border-l-4 border-[var(--shotiq-color-shotiqOrange)]'
-                      : 'text-[var(--shotiq-color-graphite)] hover:bg-[var(--shotiq-color-warmCanvas)] hover:text-[var(--shotiq-color-ink)] font-medium border-l-4 border-transparent'
-                  }`}
-                >
-                  <Shield className="w-5 h-5" />
-                  <span className="font-medium">Data & Privacy</span>
-                  <ChevronRight className="w-4 h-4 ml-auto" />
-                </button>
+  const signOut = async () => {
+    useAuthStore.getState().signOut()
+    try {
+      const { getCsrfToken } = await import("@/lib/api/csrfFetch")
+      await fetch("/api/auth/signout", {
+        method: "POST", credentials: "include",
+        headers: { "x-csrf-token": await getCsrfToken() },
+      })
+    } catch { /* cookie may already be gone */ }
+    window.location.assign("/signin")
+  }
 
-                <Link href="/guide"
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-[8px] text-[var(--shotiq-color-graphite)] hover:bg-[var(--shotiq-color-warmCanvas)] hover:text-[var(--shotiq-color-ink)] font-medium border-l-4 border-transparent transition-all"
-                >
-                  <Info className="w-5 h-5" />
-                  <span className="font-medium">Help & Support</span>
-                  <ChevronRight className="w-4 h-4 ml-auto" />
-                </Link>
+  const goTo = (id: string) => {
+    setActiveSection(id)
+    document.getElementById(`section-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }
 
-                <button
-                  onClick={() => setActiveSection('about')}
-                  aria-current={activeSection === 'about' ? 'true' : undefined}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-[8px] transition-all ${
-                    activeSection === 'about'
-                      ? 'bg-[var(--shotiq-color-shotiqOrange)]/10 text-[var(--shotiq-color-shotiqOrange)] font-bold border-l-4 border-[var(--shotiq-color-shotiqOrange)]'
-                      : 'text-[var(--shotiq-color-graphite)] hover:bg-[var(--shotiq-color-warmCanvas)] hover:text-[var(--shotiq-color-ink)] font-medium border-l-4 border-transparent'
-                  }`}
-                >
-                  <Smartphone className="w-5 h-5" />
-                  <span className="font-medium">About ShotIQ</span>
-                  <ChevronRight className="w-4 h-4 ml-auto" />
-                </button>
+  const initials = (user?.displayName || user?.email || "You").slice(0, 2).toUpperCase()
+  const lbl = "text-[9px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]"
 
-                <button
-                  onClick={async () => {
-                    useAuthStore.getState().signOut()
-                    try {
-                      const { getCsrfToken } = await import('@/lib/api/csrfFetch')
-                      await fetch('/api/auth/signout', {
-                        method: 'POST', credentials: 'include',
-                        headers: { 'x-csrf-token': await getCsrfToken() },
-                      })
-                    } catch { /* cookie may already be gone */ }
-                    window.location.assign('/signin')
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-[8px] text-[var(--shotiq-color-reviewRed)] hover:bg-[var(--shotiq-color-warmCanvas)] font-medium border-l-4 border-transparent transition-all"
-                >
-                  <X className="w-5 h-5" />
-                  <span className="font-medium">Sign Out</span>
-                  <ChevronRight className="w-4 h-4 ml-auto" />
-                </button>
-              </nav>
-        </div>
-      </div>
-
-          {/* Main Content */}
-          <div className="lg:col-span-3 space-y-6">
-            {/* Profile & Avatar Section */}
-        {activeSection === 'profile' && (
-              <>
-                {/* Avatar Upload */}
-                <div className="bg-white shadow-sm rounded-[8px] p-6 border border-[var(--shotiq-color-rule)]">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-lg bg-[var(--shotiq-color-shotiqOrange)]/10 flex items-center justify-center border border-[var(--shotiq-color-shotiqOrange)]/20">
-                      <Camera className="w-5 h-5 text-[var(--shotiq-color-shotiqOrange)]" />
-                    </div>
-                  <div>
-                      <h2 className="text-lg font-bold text-[var(--shotiq-color-ink)]">Profile Picture</h2>
-                      <p className="text-sm text-[var(--shotiq-color-graphite)]">Upload a photo to personalize your profile</p>
-                  </div>
-                </div>
-                  
-                  <div className="flex flex-col sm:flex-row items-center gap-6">
-                    {/* Avatar Preview */}
-                    <div className="relative">
-                      <div className="w-32 h-32 rounded-full overflow-hidden bg-[var(--shotiq-color-shotiqOrange)] flex items-center justify-center shadow-lg shadow-[var(--shotiq-color-shotiqOrange)]/20 ring-4 ring-slate-100">
-                        {avatarPreview ? (
-                          <Image
-                            src={avatarPreview}
-                            alt="Profile"
-                            width={128}
-                            height={128}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <span className="text-[var(--shotiq-color-ink)] font-bold text-4xl">{getUserInitials()}</span>
-                        )}
-                      </div>
-                      
-                      {/* Camera overlay button */}
-                <button
-                        onClick={() => fileInputRef.current?.click()}
-                        className="absolute bottom-0 right-0 w-10 h-10 rounded-full bg-[var(--shotiq-color-shotiqOrange)] hover:bg-[#e55a2b] flex items-center justify-center shadow-lg transition-colors"
-                      >
-                        <Camera className="w-5 h-5 text-white" />
-                </button>
-            </div>
-
-                    {/* Upload Controls */}
-                    <div className="flex-1 space-y-4">
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        onChange={handleAvatarChange}
-                        className="hidden"
-                      />
-                      
-                      <div className="space-y-2">
-                        <button
-                          onClick={() => fileInputRef.current?.click()}
-                          className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-[var(--shotiq-color-shotiqOrange)] hover:bg-[#e55a2b] text-white rounded-lg font-semibold transition-colors whitespace-nowrap shadow-md shadow-[var(--shotiq-color-shotiqOrange)]/20"
-                        >
-                          <Upload className="w-5 h-5" />
-                          Upload
-                        </button>
-                        
-                        {avatarPreview && (
-                          <button
-                            onClick={handleRemoveAvatar}
-                            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg font-semibold transition-colors border border-red-500/30 whitespace-nowrap"
-                          >
-                            <Trash2 className="w-5 h-5" />
-                            Remove
-                          </button>
-                        )}
-                        </div>
-                      
-                      <p className="text-xs text-[var(--shotiq-color-muted)]">
-                        Recommended: Square image, at least 200x200 pixels. Max file size: 5MB.
-                        <br />
-                        Supported formats: JPG, PNG, GIF, WebP
-                      </p>
-                        </div>
-                      </div>
-                    </div>
-                
-                {/* Profile Info */}
-                <div className="bg-white shadow-sm rounded-[8px] p-6 border border-[var(--shotiq-color-rule)]">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center border border-blue-100">
-                      <User className="w-5 h-5 text-blue-500" />
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-bold text-[var(--shotiq-color-ink)]">Profile Information</h2>
-                      <p className="text-sm text-[var(--shotiq-color-graphite)]">Your account details</p>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <div className="bg-[var(--shotiq-color-warmCanvas)] rounded-lg p-4 border border-[var(--shotiq-color-rule)]">
-                      <label className="block text-xs text-[var(--shotiq-color-graphite)] mb-1">Display Name</label>
-                      <p className="text-[var(--shotiq-color-ink)] font-medium">{user?.displayName || user?.firstName || 'Not set'}</p>
-                    </div>
-                    
-                    <div className="bg-[var(--shotiq-color-warmCanvas)] rounded-lg p-4 border border-[var(--shotiq-color-rule)]">
-                      <label className="block text-xs text-[var(--shotiq-color-graphite)] mb-1">Email</label>
-                      <p className="text-[var(--shotiq-color-ink)] font-medium">{user?.email || 'Not set'}</p>
-                    </div>
-                    
-                    <div className="bg-[var(--shotiq-color-warmCanvas)] rounded-lg p-4 border border-[var(--shotiq-color-rule)]">
-                      <label className="block text-xs text-[var(--shotiq-color-graphite)] mb-1">Member Since</label>
-                      <p className="text-[var(--shotiq-color-ink)] font-medium">
-                        {user?.createdAt 
-                          ? new Date(user.createdAt).toLocaleDateString('en-US', { 
-                              year: 'numeric', 
-                              month: 'long', 
-                              day: 'numeric' 
-                            })
-                          : 'Unknown'
-                        }
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-4 p-3 bg-blue-500/10 rounded-lg border border-blue-500/30">
-                    <p className="text-sm text-blue-600 flex items-start gap-2">
-                      <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                      Your profile picture will appear in the navigation menu and throughout the app.
-                    </p>
-                  </div>
-                    </div>
-                  </>
-            )}
-            
-            {/* Notifications Section */}
-            {activeSection === 'notifications' && (
-              <>
-                {/* Email Notifications */}
-                <div className="bg-white shadow-sm rounded-[8px] p-6 border border-[var(--shotiq-color-rule)]">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center border border-blue-100">
-                      <Mail className="w-5 h-5 text-blue-500" />
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-bold text-[var(--shotiq-color-ink)]">Email Notifications</h2>
-                      <p className="text-sm text-[var(--shotiq-color-graphite)]">Choose which emails you want to receive</p>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <ToggleSetting
-                      label="Weekly Performance Reports"
-                      description="Receive a summary of your progress every Monday"
-                      icon={<Calendar className="w-5 h-5" />}
-                      enabled={notificationSettings.weeklyReportEmail}
-                      onChange={(v) => updateNotification('weeklyReportEmail', v)}
-                    />
-                    
-                    <ToggleSetting
-                      label="Monthly Comprehensive Analysis"
-                      description="Detailed monthly report with trends and predictions"
-                      icon={<TrendingUp className="w-5 h-5" />}
-                      enabled={notificationSettings.monthlyReportEmail}
-                      onChange={(v) => updateNotification('monthlyReportEmail', v)}
-                    />
-                    
-                    <ToggleSetting
-                      label="Coach Alerts"
-                      description="Notifications when your coach provides feedback"
-                      icon={<Users className="w-5 h-5" />}
-                      enabled={notificationSettings.coachAlertEmail}
-                      onChange={(v) => updateNotification('coachAlertEmail', v)}
-                    />
-                    
-                    <ToggleSetting
-                      label="Milestone Achievements"
-                      description="Celebrate when you reach new achievements"
-                      icon={<Trophy className="w-5 h-5" />}
-                      enabled={notificationSettings.milestoneEmail}
-                      onChange={(v) => updateNotification('milestoneEmail', v)}
-                    />
-                    
-                    <ToggleSetting
-                      label="Improvement Alerts"
-                      description="Get notified when you make significant progress"
-                      icon={<TrendingUp className="w-5 h-5" />}
-                      enabled={notificationSettings.improvementAlertEmail}
-                      onChange={(v) => updateNotification('improvementAlertEmail', v)}
-                      />
-                    </div>
-                    </div>
-
-                {/* Push Notifications */}
-                <div className="bg-white shadow-sm rounded-[8px] p-6 border border-[var(--shotiq-color-rule)]">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center border border-purple-100">
-                      <Smartphone className="w-5 h-5 text-purple-500" />
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-bold text-[var(--shotiq-color-ink)]">Push Notifications</h2>
-                      <p className="text-sm text-[var(--shotiq-color-graphite)]">Real-time alerts on your device</p>
-              </div>
-                  </div>
-                  
-              <div className="space-y-4">
-                    <ToggleSetting
-                      label="Milestone Achievements"
-                      description="Instant notification when you earn a badge"
-                      icon={<Trophy className="w-5 h-5" />}
-                      enabled={notificationSettings.milestonePush}
-                      onChange={(v) => updateNotification('milestonePush', v)}
-                    />
-                    
-                    <ToggleSetting
-                      label="Coaching Tips"
-                      description="Personalized training advice based on your form"
-                      icon={<Lightbulb className="w-5 h-5" />}
-                      enabled={notificationSettings.coachingTipsPush}
-                      onChange={(v) => updateNotification('coachingTipsPush', v)}
-                    />
-                    
-                    <ToggleSetting
-                      label="Improvement Alerts"
-                      description="Celebrate your progress in real-time"
-                      icon={<TrendingUp className="w-5 h-5" />}
-                      enabled={notificationSettings.improvementAlertPush}
-                      onChange={(v) => updateNotification('improvementAlertPush', v)}
-                    />
-                    
-                    <ToggleSetting
-                      label="Motivational Messages"
-                      description="Encouraging messages to keep you motivated"
-                      icon={<Bell className="w-5 h-5" />}
-                      enabled={notificationSettings.motivationalMessagesPush}
-                      onChange={(v) => updateNotification('motivationalMessagesPush', v)}
-                    />
-                    
-                    <ToggleSetting
-                      label="Training Reminders"
-                      description="Remind you to analyze your shooting form"
-                      icon={<Clock className="w-5 h-5" />}
-                      enabled={notificationSettings.reminderPush}
-                      onChange={(v) => updateNotification('reminderPush', v)}
-                    />
-                  </div>
-                </div>
-
-                {/* Notification Frequency */}
-                <div className="bg-white shadow-sm rounded-[8px] p-6 border border-[var(--shotiq-color-rule)]">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center border border-emerald-100">
-                      <Clock className="w-5 h-5 text-emerald-500" />
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-bold text-[var(--shotiq-color-ink)]">Notification Frequency</h2>
-                      <p className="text-sm text-[var(--shotiq-color-graphite)]">How often you want to receive notifications</p>
-                      </div>
-                    </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                      <label className="block text-sm font-medium text-[var(--shotiq-color-ink)] mb-2">Coaching Tips Frequency</label>
-                        <select
-                        value={notificationSettings.coachingTipsFrequency}
-                        onChange={(e) => updateNotification('coachingTipsFrequency', e.target.value as NotificationSettings['coachingTipsFrequency'])}
-                        className="w-full bg-[var(--shotiq-color-warmCanvas)] border border-[var(--shotiq-color-rule)] rounded-lg px-4 py-3 text-[var(--shotiq-color-ink)] focus:border-[var(--shotiq-color-shotiqOrange)] focus:outline-none"
-                      >
-                        <option value="daily">Daily</option>
-                        <option value="3x_week">3 times per week</option>
-                        <option value="2x_week">2 times per week</option>
-                        <option value="weekly">Weekly</option>
-                        </select>
-                      </div>
-                    
-                      <div>
-                      <label className="block text-sm font-medium text-[var(--shotiq-color-ink)] mb-2">Motivational Messages Frequency</label>
-                        <select
-                        value={notificationSettings.motivationalFrequency}
-                        onChange={(e) => updateNotification('motivationalFrequency', e.target.value as NotificationSettings['motivationalFrequency'])}
-                        className="w-full bg-[var(--shotiq-color-warmCanvas)] border border-[var(--shotiq-color-rule)] rounded-lg px-4 py-3 text-[var(--shotiq-color-ink)] focus:border-[var(--shotiq-color-shotiqOrange)] focus:outline-none"
-                      >
-                        <option value="daily">Daily</option>
-                        <option value="2x_week">2 times per week</option>
-                        <option value="1x_week">Once per week</option>
-                        </select>
-                      </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-[var(--shotiq-color-ink)] mb-2">Training Reminder Time</label>
-                      <input
-                        type="time"
-                        value={notificationSettings.reminderTime}
-                        onChange={(e) => updateNotification('reminderTime', e.target.value)}
-                        className="w-full bg-[var(--shotiq-color-warmCanvas)] border border-[var(--shotiq-color-rule)] rounded-lg px-4 py-3 text-[var(--shotiq-color-ink)] focus:border-[var(--shotiq-color-shotiqOrange)] focus:outline-none"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-[var(--shotiq-color-ink)] mb-2">Report Format</label>
-                      <select
-                        value={notificationSettings.reportFormat}
-                        onChange={(e) => updateNotification('reportFormat', e.target.value as NotificationSettings['reportFormat'])}
-                        className="w-full bg-[var(--shotiq-color-warmCanvas)] border border-[var(--shotiq-color-rule)] rounded-lg px-4 py-3 text-[var(--shotiq-color-ink)] focus:border-[var(--shotiq-color-shotiqOrange)] focus:outline-none"
-                      >
-                        <option value="detailed">Detailed Report</option>
-                        <option value="summary">Quick Summary</option>
-                      </select>
-                        </div>
-                  </div>
-                  
-                  <div className="mt-6 space-y-3">
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={notificationSettings.includeCharts}
-                        onChange={(e) => updateNotification('includeCharts', e.target.checked)}
-                        className="w-5 h-5 rounded border-[var(--shotiq-color-rule)] bg-[var(--shotiq-color-warmCanvas)] text-[var(--shotiq-color-shotiqOrange)] focus:ring-[var(--shotiq-color-shotiqOrange)]"
-                      />
-                      <span className="text-[var(--shotiq-color-ink)]">Include progress charts in reports</span>
-                    </label>
-                    
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={notificationSettings.includeComparison}
-                        onChange={(e) => updateNotification('includeComparison', e.target.checked)}
-                        className="w-5 h-5 rounded border-[var(--shotiq-color-rule)] bg-[var(--shotiq-color-warmCanvas)] text-[var(--shotiq-color-shotiqOrange)] focus:ring-[var(--shotiq-color-shotiqOrange)]"
-                      />
-                      <span className="text-[var(--shotiq-color-ink)]">Include peer comparison in reports</span>
-                    </label>
-                        </div>
-                    </div>
-                  </>
-            )}
-
-            {/* Automation Section */}
-            {activeSection === 'automation' && (
-              <>
-                {/* Daily Tasks */}
-                <div className="bg-white shadow-sm rounded-[8px] p-6 border border-[var(--shotiq-color-rule)]">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-lg bg-[var(--shotiq-color-shotiqOrange)]/10 flex items-center justify-center border border-[var(--shotiq-color-shotiqOrange)]/20">
-                      <RefreshCw className="w-5 h-5 text-[var(--shotiq-color-shotiqOrange)]" />
-                    </div>
-                <div>
-                      <h2 className="text-lg font-bold text-[var(--shotiq-color-ink)]">Daily Automated Tasks</h2>
-                      <p className="text-sm text-[var(--shotiq-color-graphite)]">Background tasks that run automatically every day</p>
-                  </div>
-                </div>
-                
-                  <div className="space-y-6">
-                    <div className="bg-[var(--shotiq-color-warmCanvas)] rounded-lg p-4 border border-[var(--shotiq-color-rule)]">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <TrendingUp className="w-5 h-5 text-blue-400" />
-                <div>
-                            <h3 className="font-medium text-[var(--shotiq-color-ink)]">Analytics Refresh</h3>
-                            <p className="text-xs text-[var(--shotiq-color-graphite)]">Updates all performance metrics and statistics</p>
-                  </div>
-                </div>
-                        <ToggleSwitch
-                          enabled={automationSettings.analyticsRefreshEnabled}
-                          onChange={(v) => updateAutomation('analyticsRefreshEnabled', v)}
-                        />
-              </div>
-                      {automationSettings.analyticsRefreshEnabled && (
-                        <div className="flex items-center gap-3 mt-3 pl-8">
-                          <span className="text-sm text-[var(--shotiq-color-graphite)]">Run at:</span>
-                          <input
-                            type="time"
-                            value={automationSettings.analyticsRefreshTime}
-                            onChange={(e) => updateAutomation('analyticsRefreshTime', e.target.value)}
-                            className="bg-white shadow-sm border border-[var(--shotiq-color-rule)] rounded-lg px-3 py-1 text-[var(--shotiq-color-ink)] text-sm focus:border-[var(--shotiq-color-shotiqOrange)] focus:outline-none"
-                          />
-                          <span className="text-xs text-[var(--shotiq-color-muted)]">UTC</span>
-          </div>
-        )}
-                    </div>
-                    
-                    <div className="bg-[var(--shotiq-color-warmCanvas)] rounded-lg p-4 border border-[var(--shotiq-color-rule)]">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <Database className="w-5 h-5 text-green-400" />
-                <div>
-                            <h3 className="font-medium text-[var(--shotiq-color-ink)]">Data Backup</h3>
-                            <p className="text-xs text-[var(--shotiq-color-graphite)]">Protects all your analysis data and results</p>
-                          </div>
-                        </div>
-                        <ToggleSwitch
-                          enabled={automationSettings.dataBackupEnabled}
-                          onChange={(v) => updateAutomation('dataBackupEnabled', v)}
-                        />
-                      </div>
-                      {automationSettings.dataBackupEnabled && (
-                        <div className="flex items-center gap-3 mt-3 pl-8">
-                          <span className="text-sm text-[var(--shotiq-color-graphite)]">Run at:</span>
-                  <input
-                            type="time"
-                            value={automationSettings.dataBackupTime}
-                            onChange={(e) => updateAutomation('dataBackupTime', e.target.value)}
-                            className="bg-white shadow-sm border border-[var(--shotiq-color-rule)] rounded-lg px-3 py-1 text-[var(--shotiq-color-ink)] text-sm focus:border-[var(--shotiq-color-shotiqOrange)] focus:outline-none"
-                          />
-                          <span className="text-xs text-[var(--shotiq-color-muted)]">UTC</span>
-                        </div>
-                      )}
-                </div>
-                
-                    <div className="bg-[var(--shotiq-color-warmCanvas)] rounded-lg p-4 border border-[var(--shotiq-color-rule)]">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <RefreshCw className="w-5 h-5 text-purple-400" />
-                <div>
-                            <h3 className="font-medium text-[var(--shotiq-color-ink)]">Model Updates</h3>
-                            <p className="text-xs text-[var(--shotiq-color-graphite)]">Keeps the shooting form detection model accurate</p>
-                          </div>
-                        </div>
-                        <ToggleSwitch
-                          enabled={automationSettings.modelUpdateEnabled}
-                          onChange={(v) => updateAutomation('modelUpdateEnabled', v)}
-                        />
-                      </div>
-                  </div>
-                </div>
-
-                  <div className="mt-4 p-3 bg-blue-500/10 rounded-lg border border-blue-500/30">
-                    <p className="text-sm text-blue-600 flex items-start gap-2">
-                      <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                      Daily tasks run during low-traffic hours (2-4 AM UTC) to ensure optimal performance.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Weekly Tasks */}
-                <div className="bg-white shadow-sm rounded-[8px] p-6 border border-[var(--shotiq-color-rule)]">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center border border-blue-100">
-                      <Calendar className="w-5 h-5 text-blue-500" />
-                    </div>
-                <div>
-                      <h2 className="text-lg font-bold text-[var(--shotiq-color-ink)]">Weekly Automated Tasks</h2>
-                      <p className="text-sm text-[var(--shotiq-color-graphite)]">Reports and alerts generated every week</p>
-                  </div>
-                </div>
-                  
-                  <div className="space-y-6">
-                    <div className="bg-[var(--shotiq-color-warmCanvas)] rounded-lg p-4 border border-[var(--shotiq-color-rule)]">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <Mail className="w-5 h-5 text-blue-400" />
-                          <div>
-                            <h3 className="font-medium text-[var(--shotiq-color-ink)]">Weekly Performance Reports</h3>
-                            <p className="text-xs text-[var(--shotiq-color-graphite)]">Comprehensive summary of your weekly progress</p>
-              </div>
-          </div>
-                        <ToggleSwitch
-                          enabled={automationSettings.weeklyReportEnabled}
-                          onChange={(v) => updateAutomation('weeklyReportEnabled', v)}
-                        />
-              </div>
-                      {automationSettings.weeklyReportEnabled && (
-                        <div className="flex flex-wrap items-center gap-3 mt-3 pl-8">
-                          <span className="text-sm text-[var(--shotiq-color-graphite)]">Send on:</span>
-                          <select
-                            value={automationSettings.weeklyReportDay}
-                            onChange={(e) => updateAutomation('weeklyReportDay', e.target.value as AutomationSettings['weeklyReportDay'])}
-                            className="bg-white shadow-sm border border-[var(--shotiq-color-rule)] rounded-lg px-3 py-1 text-[var(--shotiq-color-ink)] text-sm focus:border-[var(--shotiq-color-shotiqOrange)] focus:outline-none"
-                          >
-                            <option value="monday">Monday</option>
-                            <option value="tuesday">Tuesday</option>
-                            <option value="wednesday">Wednesday</option>
-                            <option value="thursday">Thursday</option>
-                            <option value="friday">Friday</option>
-                            <option value="saturday">Saturday</option>
-                            <option value="sunday">Sunday</option>
-                          </select>
-                          <span className="text-sm text-[var(--shotiq-color-graphite)]">at</span>
-                          <input
-                            type="time"
-                            value={automationSettings.weeklyReportTime}
-                            onChange={(e) => updateAutomation('weeklyReportTime', e.target.value)}
-                            className="bg-white shadow-sm border border-[var(--shotiq-color-rule)] rounded-lg px-3 py-1 text-[var(--shotiq-color-ink)] text-sm focus:border-[var(--shotiq-color-shotiqOrange)] focus:outline-none"
-                          />
-          </div>
-        )}
-                    </div>
-                    
-                    <div className="bg-[var(--shotiq-color-warmCanvas)] rounded-lg p-4 border border-[var(--shotiq-color-rule)]">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <Users className="w-5 h-5 text-green-400" />
-                          <div>
-                            <h3 className="font-medium text-[var(--shotiq-color-ink)]">Coach Alerts</h3>
-                            <p className="text-xs text-[var(--shotiq-color-graphite)]">Notify coaches about significant player changes</p>
-                  </div>
-                        </div>
-                        <ToggleSwitch
-                          enabled={automationSettings.coachAlertsEnabled}
-                          onChange={(v) => updateAutomation('coachAlertsEnabled', v)}
-                        />
-                  </div>
-                </div>
-              </div>
-                </div>
-
-                {/* Monthly Tasks */}
-                <div className="bg-white shadow-sm rounded-[8px] p-6 border border-[var(--shotiq-color-rule)]">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
-                      <TrendingUp className="w-5 h-5 text-[var(--shotiq-color-ink)]" />
-              </div>
-                    <div>
-                      <h2 className="text-lg font-bold text-[var(--shotiq-color-ink)]">Monthly Automated Tasks</h2>
-                      <p className="text-sm text-[var(--shotiq-color-graphite)]">Deep analysis and milestone tracking</p>
-          </div>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <ToggleSetting
-                      label="Monthly Comprehensive Analysis"
-                      description="Deep dive into long-term trends and predictions"
-                      icon={<TrendingUp className="w-5 h-5" />}
-                      enabled={automationSettings.monthlyAnalysisEnabled}
-                      onChange={(v) => updateAutomation('monthlyAnalysisEnabled', v)}
-                    />
-                    
-                    <ToggleSetting
-                      label="Milestone Celebrations"
-                      description="Automatic recognition when you achieve milestones"
-                      icon={<Trophy className="w-5 h-5" />}
-                      enabled={automationSettings.milestoneNotificationsEnabled}
-                      onChange={(v) => updateAutomation('milestoneNotificationsEnabled', v)}
-                />
-              </div>
-                </div>
-
-                {/* Enabled-task summary — reflects the user's actual saved
-                    preferences (no fake "running on schedule" claim). */}
-                <div className="bg-white shadow-sm rounded-[8px] p-6 border border-[var(--shotiq-color-rule)]">
-                  <div className="flex items-center gap-3 mb-4">
-                    <Clock className="w-5 h-5 text-[var(--shotiq-color-shotiqOrange)]" />
-                    <h3 className="font-bold text-[var(--shotiq-color-ink)]">Your Automation Preferences</h3>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-[var(--shotiq-color-shotiqOrange)]">{dailyTasksEnabled}</p>
-                      <p className="text-xs text-[var(--shotiq-color-graphite)]">Daily Enabled</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-[var(--shotiq-color-shotiqOrange)]">{weeklyTasksEnabled}</p>
-                      <p className="text-xs text-[var(--shotiq-color-graphite)]">Weekly Enabled</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-[var(--shotiq-color-shotiqOrange)]">{monthlyTasksEnabled}</p>
-                      <p className="text-xs text-[var(--shotiq-color-graphite)]">Monthly Enabled</p>
-                    </div>
-                  </div>
-
-                  <p className="mt-4 text-xs text-[var(--shotiq-color-muted)]">
-                    These preferences are saved to your account and applied to the
-                    reports and notifications you receive.
-                  </p>
-                </div>
-              </>
-            )}
-
-            {/* Data & Privacy Section */}
-            {activeSection === 'account' && (
-              <>
-                <div className="bg-white shadow-sm rounded-[8px] p-6 border border-[var(--shotiq-color-rule)]">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center">
-                      <Database className="w-5 h-5 text-[var(--shotiq-color-ink)]" />
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-bold text-[var(--shotiq-color-ink)]">Data Management</h2>
-                      <p className="text-sm text-[var(--shotiq-color-graphite)]">Manage your analysis data and history</p>
-                    </div>
-                  </div>
-                  
-              <div className="space-y-4">
-                    <div className="bg-[var(--shotiq-color-warmCanvas)] rounded-lg p-4 border border-[var(--shotiq-color-rule)]">
-                      <div className="flex items-center justify-between">
-                <div>
-                          <h3 className="font-medium text-[var(--shotiq-color-ink)]">Export All Data</h3>
-                          <p className="text-xs text-[var(--shotiq-color-graphite)]">Download all your analysis data as JSON</p>
-                        </div>
-                        <button
-                          onClick={handleExportData}
-                          disabled={exportStatus === 'working'}
-                          className="px-4 py-2 bg-[var(--shotiq-color-rule)] hover:bg-slate-300 text-[var(--shotiq-color-ink)] rounded-lg text-sm font-medium transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                        >
-                          {exportStatus === 'working'
-                            ? 'Exporting…'
-                            : exportStatus === 'error'
-                            ? 'Failed'
-                            : 'Export'}
-                        </button>
-                  </div>
-                </div>
-
-                    <div className="bg-[var(--shotiq-color-warmCanvas)] rounded-lg p-4 border border-[var(--shotiq-color-rule)]">
-                      <div className="flex items-center justify-between">
-                <div>
-                          <h3 className="font-medium text-[var(--shotiq-color-ink)]">Clear Analysis History</h3>
-                          <p className="text-xs text-[var(--shotiq-color-graphite)]">Remove all past analysis sessions</p>
-                        </div>
-                        <button
-                          onClick={handleClearHistory}
-                          disabled={clearStatus === 'working'}
-                          className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-sm font-medium transition-colors border border-red-500/30 whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed"
-                        >
-                          {clearStatus === 'working'
-                            ? 'Clearing…'
-                            : clearStatus === 'cleared'
-                            ? 'Cleared'
-                            : clearStatus === 'error'
-                            ? 'Failed'
-                            : 'Clear'}
-                    </button>
-                  </div>
-                </div>
-                    
-                    <div className="bg-[var(--shotiq-color-warmCanvas)] rounded-lg p-4 border border-[var(--shotiq-color-rule)]">
-                      <div className="flex items-center justify-between">
-                <div>
-                          <h3 className="font-medium text-[var(--shotiq-color-ink)]">Reset All Settings</h3>
-                          <p className="text-xs text-[var(--shotiq-color-graphite)]">Restore default notification and automation settings</p>
-                        </div>
-                      <button
-                        onClick={() => {
-                            setNotificationSettings(DEFAULT_NOTIFICATION_SETTINGS)
-                            setAutomationSettings(DEFAULT_AUTOMATION_SETTINGS)
-                          setHasChanges(true)
-                        }}
-                          className="px-4 py-2 bg-orange-500/20 hover:bg-orange-500/30 text-orange-400 rounded-lg text-sm font-medium transition-colors border border-orange-500/30"
-                        >
-                          Reset
-                      </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="bg-white shadow-sm rounded-[8px] p-6 border border-[var(--shotiq-color-rule)]">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
-                      <Shield className="w-5 h-5 text-[var(--shotiq-color-ink)]" />
-                </div>
-                    <div>
-                      <h2 className="text-lg font-bold text-[var(--shotiq-color-ink)]">Privacy</h2>
-                      <p className="text-sm text-[var(--shotiq-color-graphite)]">Control how your data is used</p>
-              </div>
-          </div>
-                  
-                  <div className="space-y-4">
-                    <ToggleSetting
-                      label="Allow Anonymous Analytics"
-                      description="Help improve the app by sharing anonymous usage data"
-                      icon={<TrendingUp className="w-5 h-5" />}
-                      enabled={privacySettings.allowAnonymousAnalytics}
-                      onChange={(v) => updatePrivacy('allowAnonymousAnalytics', v)}
-                    />
-
-                    <ToggleSetting
-                      label="Include in Peer Comparisons"
-                      description="Allow your scores to be used in anonymous comparisons"
-                      icon={<Users className="w-5 h-5" />}
-                      enabled={privacySettings.includeInPeerComparisons}
-                      onChange={(v) => updatePrivacy('includeInPeerComparisons', v)}
-                    />
-
-                    <ToggleSetting
-                      label="Share Progress with Coach"
-                      description="Allow assigned coaches to view your analysis data"
-                      icon={<Users className="w-5 h-5" />}
-                      enabled={privacySettings.shareProgressWithCoach}
-                      onChange={(v) => updatePrivacy('shareProgressWithCoach', v)}
-                />
-              </div>
-          </div>
-
-                {/* Storage info — settings and analysis data are stored on your
-                    account in the cloud, synced across devices. */}
-                <div className="bg-white shadow-sm rounded-[8px] p-6 border border-[var(--shotiq-color-rule)]">
-                  <div className="flex items-center gap-3 mb-2">
-                    <Database className="w-5 h-5 text-[var(--shotiq-color-shotiqOrange)]" />
-                    <h3 className="font-bold text-[var(--shotiq-color-ink)]">Data Storage</h3>
-                  </div>
-                  <p className="text-sm text-[var(--shotiq-color-graphite)]">
-                    Your settings, profile, and analysis history are securely
-                    stored on your account and synced across your devices. Use
-                    Export above to download a copy of your data at any time.
-                  </p>
-                </div>
-              </>
-            )}
-                  </div>
-                  {/* About Section — version, terms, privacy (iOS 071 hub row) */}
-            {activeSection === 'about' && (
-              <div className="bg-white shadow-sm rounded-[8px] p-6 border border-[var(--shotiq-color-rule)]">
-                <h2 className="text-[15px] font-bold tracking-[0.04em] text-[var(--shotiq-color-ink)]">ABOUT SHOTIQ</h2>
-                <p className="mt-2 text-sm text-[var(--shotiq-color-graphite)]">Version, terms, and app information.</p>
-                <div className="mt-4 divide-y divide-[var(--shotiq-color-rule)] text-sm">
-                  <div className="flex items-center justify-between py-3">
-                    <span>App version</span><span className="font-semibold">1.0.0 (web)</span>
-                  </div>
-                  <div className="flex items-center justify-between py-3">
-                    <span>Design system</span><span className="font-semibold">ShotIQ canonical (white court)</span>
-                  </div>
-                  <Link href="/terms" className="flex items-center justify-between py-3 text-[var(--shotiq-color-analysisBlue)]">
-                    Terms of Use <ChevronRight className="w-4 h-4" />
-                  </Link>
-                  <Link href="/privacy" className="flex items-center justify-between py-3 text-[var(--shotiq-color-analysisBlue)]">
-                    Privacy Policy <ChevronRight className="w-4 h-4" />
-                  </Link>
-                  <Link href="/guide" className="flex items-center justify-between py-3 text-[var(--shotiq-color-analysisBlue)]">
-                    How to use ShotIQ <ChevronRight className="w-4 h-4" />
-                  </Link>
-                </div>
-              </div>
-            )}
-        </div>
-      </div>
-    </main>
+  // A canonical Enabled/Disabled row (096 language): label left, state +
+  // chevron right, whole row toggles and persists.
+  const ToggleRow = ({ label, value, onToggle, testid }: {
+    label: string; value: boolean; onToggle: () => void; testid?: string
+  }) => (
+    <button type="button" onClick={onToggle} data-testid={testid} aria-pressed={value ? undefined : "false"}
+            className="flex w-full items-center justify-between py-[9px] text-left text-[13px] hover:bg-[var(--shotiq-color-warmCanvas)]">
+      <span>{label}</span>
+      <span className={`flex items-center gap-[6px] text-[12px] font-semibold ${value ? "text-[var(--shotiq-color-confirmGreen)]" : "text-[var(--shotiq-color-graphite)]"}`}>
+        {value ? "Enabled" : "Disabled"} <ChevronRight className="h-[12px] w-[12px]" />
+      </span>
+    </button>
   )
-}
 
-// ============================================
-// HELPER COMPONENTS
-// ============================================
+  const SelectRow = ({ label, value, options, onChange }: {
+    label: string; value: string; options: [string, string][]; onChange: (v: string) => void
+  }) => (
+    <div className="flex items-center justify-between py-[7px] text-[13px]">
+      <span>{label}</span>
+      <select value={value} onChange={(e) => onChange(e.target.value)}
+              className="h-[32px] rounded-[5px] border border-[var(--shotiq-color-rule)] bg-white px-[8px] text-[12px] outline-none focus:border-[var(--shotiq-color-ink)]">
+        {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+      </select>
+    </div>
+  )
 
-interface ToggleSettingProps {
-  label: string
-  description: string
-  icon: React.ReactNode
-  enabled: boolean
-  onChange: (enabled: boolean) => void
-}
+  const railItem = "flex w-full items-center gap-[10px] rounded-[5px] px-[10px] py-[8px] text-left text-[13px] transition-colors"
 
-function ToggleSetting({ label, description, icon, enabled, onChange }: ToggleSettingProps) {
   return (
-    <div className="flex items-center justify-between py-3 border-b border-[var(--shotiq-color-rule)] last:border-0">
-        <div className="flex items-center gap-3">
-        <div className="text-[var(--shotiq-color-graphite)]">{icon}</div>
+    <div data-testid="screen-desktop-web-settings-hub" className="flex">
+      <div className="min-w-0 flex-1 px-[24px] py-[18px]">
+        <div className="flex items-end justify-between">
           <div>
-          <h3 className="font-medium text-[var(--shotiq-color-ink)]">{label}</h3>
-          <p className="text-xs text-[var(--shotiq-color-graphite)]">{description}</p>
+            <h1 className="shotiq-display text-[46px] leading-[48px]">SETTINGS</h1>
+            <p className="mt-[2px] text-[13px] text-[var(--shotiq-color-graphite)]">Manage your account, preferences, and app experience.</p>
+          </div>
+          <span aria-live="polite" className={`pb-[6px] text-[12px] ${saveState === "error" ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-graphite)]"}`}>
+            {saveState === "saving" ? "Saving…" : saveState === "saved" ? "All changes saved ✓"
+              : saveState === "error" ? "Save failed — try again" : loaded ? "Changes save automatically" : ""}
+          </span>
+        </div>
+
+        <div className="mt-[14px] flex items-start gap-[16px]">
+          {/* Settings rail — 096 language */}
+          <div className="w-[210px] shrink-0 rounded-[8px] border border-[var(--shotiq-color-rule)] bg-white p-[10px] lg:sticky lg:top-[76px]">
+            <SectionLabel className="px-[10px]">SETTINGS</SectionLabel>
+            <nav className="mt-[6px] space-y-[2px]">
+              <Link href="/profile" className={`${railItem} text-[var(--shotiq-color-graphite)] hover:bg-[var(--shotiq-color-warmCanvas)] hover:text-[var(--shotiq-color-ink)]`}>
+                <User className="h-[16px] w-[16px]" /> Profile &amp; account
+              </Link>
+              {SECTIONS.map(({ id, label, icon: IconEl }) => (
+                <button key={id} type="button" onClick={() => goTo(id)}
+                        aria-current={activeSection === id ? "true" : undefined}
+                        className={`${railItem} ${activeSection === id
+                          ? "border-l-[3px] border-[var(--shotiq-color-shotiqOrange)] bg-[var(--shotiq-color-warmCanvas)] font-semibold text-[var(--shotiq-color-shotiqOrange)]"
+                          : "border-l-[3px] border-transparent text-[var(--shotiq-color-graphite)] hover:bg-[var(--shotiq-color-warmCanvas)] hover:text-[var(--shotiq-color-ink)]"}`}>
+                  <IconEl className="h-[16px] w-[16px]" /> {label}
+                </button>
+              ))}
+            </nav>
+            <div className="my-[10px] border-t border-[var(--shotiq-color-rule)]" />
+            <SectionLabel className="px-[10px]">QUICK ACTIONS</SectionLabel>
+            <nav className="mt-[6px] space-y-[2px]">
+              <button type="button" onClick={exportData} className={`${railItem} text-[var(--shotiq-color-graphite)] hover:bg-[var(--shotiq-color-warmCanvas)] hover:text-[var(--shotiq-color-ink)]`}>
+                <Upload className="h-[16px] w-[16px]" /> Export all data
+              </button>
+              <button type="button" onClick={clearHistory} className={`${railItem} text-[var(--shotiq-color-graphite)] hover:bg-[var(--shotiq-color-warmCanvas)] hover:text-[var(--shotiq-color-ink)]`}>
+                <Trash2 className="h-[16px] w-[16px]" /> Clear history
+              </button>
+              <Link href="/guide" className={`${railItem} text-[var(--shotiq-color-graphite)] hover:bg-[var(--shotiq-color-warmCanvas)] hover:text-[var(--shotiq-color-ink)]`}>
+                <Info className="h-[16px] w-[16px]" /> Help &amp; guide
+              </Link>
+              <button type="button" onClick={signOut} className={`${railItem} text-[var(--shotiq-color-reviewRed)] hover:bg-[var(--shotiq-color-warmCanvas)]`}>
+                <LogOut className="h-[16px] w-[16px]" /> Sign out
+              </button>
+            </nav>
+          </div>
+
+          {/* Content */}
+          <div className="min-w-0 flex-1 space-y-[16px]">
+            {/* Account summary + avatar */}
+            <Card className="flex items-center gap-[18px] p-[18px]">
+              <div className="grid h-[74px] w-[74px] shrink-0 place-items-center overflow-hidden rounded-full bg-[var(--shotiq-color-rule)]">
+                {avatarUrl ? (
+                  <Image src={avatarUrl} alt="Profile photo" width={74} height={74} className="h-full w-full object-cover" unoptimized />
+                ) : (
+                  <span className="text-[22px] font-bold text-[var(--shotiq-color-graphite)]">{initials}</span>
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <SectionLabel>ACCOUNT</SectionLabel>
+                <div className="truncate text-[16px] font-semibold">{user?.displayName || "Your name"}</div>
+                <div className="truncate text-[12px] text-[var(--shotiq-color-graphite)]">{user?.email || ""}</div>
+                <div className="mt-[2px] text-[11px] text-[var(--shotiq-color-graphite)]">
+                  Square image, at least 200×200px. Max 5MB — JPG, PNG, GIF, WebP.
+                </div>
+              </div>
+              <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={onAvatarPick} />
+              <div className="flex shrink-0 flex-col items-end gap-[6px]">
+                <div className="flex gap-[8px]">
+                  <button type="button"
+                          onClick={() => { if (avatarInputRef.current) { avatarInputRef.current.dataset.opened = String(Date.now()); avatarInputRef.current.click() } }}
+                          className="h-[36px] rounded-[5px] border border-[var(--shotiq-color-rule)] px-[14px] text-[12px] hover:border-[var(--shotiq-color-ink)]">
+                    Change photo
+                  </button>
+                  <button type="button" onClick={removeAvatar} disabled={!avatarUrl}
+                          className="h-[36px] rounded-[5px] px-[10px] text-[12px] text-[var(--shotiq-color-reviewRed)] disabled:opacity-40">
+                    Remove
+                  </button>
+                </div>
+                <Link href="/profile" className="flex items-center gap-[4px] text-[12px] font-medium text-[var(--shotiq-color-shotiqOrange)]">
+                  Edit profile details <ChevronRight className="h-[12px] w-[12px]" />
+                </Link>
+              </div>
+            </Card>
+
+            {/* Notifications */}
+            <Card id="section-notifications" className="scroll-mt-[76px] p-[18px]">
+              <div className="flex items-center gap-[10px]">
+                <Bell className="h-[18px] w-[18px] text-[var(--shotiq-color-shotiqOrange)]" />
+                <div>
+                  <SectionLabel>NOTIFICATIONS</SectionLabel>
+                  <div className="text-[11px] text-[var(--shotiq-color-graphite)]">Control how and when you receive updates.</div>
+                </div>
+              </div>
+              <div className="mt-[10px] grid gap-x-[28px] md:grid-cols-2">
+                <div>
+                  <div className={`${lbl} border-b border-[var(--shotiq-color-rule)] pb-[6px]`}>EMAIL</div>
+                  <div className="divide-y divide-[var(--shotiq-color-rule)]">
+                    <ToggleRow label="Weekly progress summary" testid="setting-weeklyReportEmail"
+                               value={notifications.weeklyReportEmail} onToggle={() => setNotif("weeklyReportEmail", !notifications.weeklyReportEmail)} />
+                    <ToggleRow label="Monthly report" value={notifications.monthlyReportEmail}
+                               onToggle={() => setNotif("monthlyReportEmail", !notifications.monthlyReportEmail)} />
+                    <ToggleRow label="Coach alerts" value={notifications.coachAlertEmail}
+                               onToggle={() => setNotif("coachAlertEmail", !notifications.coachAlertEmail)} />
+                    <ToggleRow label="Goal & milestone updates" value={notifications.milestoneEmail}
+                               onToggle={() => setNotif("milestoneEmail", !notifications.milestoneEmail)} />
+                    <ToggleRow label="Improvement alerts" value={notifications.improvementAlertEmail}
+                               onToggle={() => setNotif("improvementAlertEmail", !notifications.improvementAlertEmail)} />
+                  </div>
+                </div>
+                <div>
+                  <div className={`${lbl} border-b border-[var(--shotiq-color-rule)] pb-[6px]`}>PUSH</div>
+                  <div className="divide-y divide-[var(--shotiq-color-rule)]">
+                    <ToggleRow label="Milestones reached" value={notifications.milestonePush}
+                               onToggle={() => setNotif("milestonePush", !notifications.milestonePush)} />
+                    <ToggleRow label="Coaching tips" value={notifications.coachingTipsPush}
+                               onToggle={() => setNotif("coachingTipsPush", !notifications.coachingTipsPush)} />
+                    <ToggleRow label="New analysis ready" value={notifications.improvementAlertPush}
+                               onToggle={() => setNotif("improvementAlertPush", !notifications.improvementAlertPush)} />
+                    <ToggleRow label="Motivational messages" value={notifications.motivationalMessagesPush}
+                               onToggle={() => setNotif("motivationalMessagesPush", !notifications.motivationalMessagesPush)} />
+                    <ToggleRow label="Training reminders" value={notifications.reminderPush}
+                               onToggle={() => setNotif("reminderPush", !notifications.reminderPush)} />
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {/* Automation */}
+            <Card id="section-automation" className="scroll-mt-[76px] p-[18px]">
+              <div className="flex items-center gap-[10px]">
+                <Clock className="h-[18px] w-[18px] text-[var(--shotiq-color-shotiqOrange)]" />
+                <div>
+                  <SectionLabel>AUTOMATION</SectionLabel>
+                  <div className="text-[11px] text-[var(--shotiq-color-graphite)]">Manage automated analysis and insights.</div>
+                </div>
+              </div>
+              <div className="mt-[10px] grid gap-x-[28px] md:grid-cols-2">
+                <div className="divide-y divide-[var(--shotiq-color-rule)]">
+                  <ToggleRow label="Auto-refresh analytics" value={automation.analyticsRefreshEnabled}
+                             onToggle={() => setAuto("analyticsRefreshEnabled", !automation.analyticsRefreshEnabled)} />
+                  <ToggleRow label="Daily data backup" value={automation.dataBackupEnabled}
+                             onToggle={() => setAuto("dataBackupEnabled", !automation.dataBackupEnabled)} />
+                  <ToggleRow label="Form model updates" value={automation.modelUpdateEnabled}
+                             onToggle={() => setAuto("modelUpdateEnabled", !automation.modelUpdateEnabled)} />
+                  <ToggleRow label="Weekly report generation" value={automation.weeklyReportEnabled}
+                             onToggle={() => setAuto("weeklyReportEnabled", !automation.weeklyReportEnabled)} />
+                </div>
+                <div className="divide-y divide-[var(--shotiq-color-rule)]">
+                  <ToggleRow label="Technique alerts" value={automation.coachAlertsEnabled}
+                             onToggle={() => setAuto("coachAlertsEnabled", !automation.coachAlertsEnabled)} />
+                  <ToggleRow label="Monthly deep analysis" value={automation.monthlyAnalysisEnabled}
+                             onToggle={() => setAuto("monthlyAnalysisEnabled", !automation.monthlyAnalysisEnabled)} />
+                  <ToggleRow label="Goal progress tracking" value={automation.milestoneNotificationsEnabled}
+                             onToggle={() => setAuto("milestoneNotificationsEnabled", !automation.milestoneNotificationsEnabled)} />
+                </div>
+              </div>
+            </Card>
+
+            {/* Data & privacy */}
+            <Card id="section-privacy" className="scroll-mt-[76px] p-[18px]">
+              <div className="flex items-center gap-[10px]">
+                <Shield className="h-[18px] w-[18px] text-[var(--shotiq-color-shotiqOrange)]" />
+                <div>
+                  <SectionLabel>DATA &amp; PRIVACY</SectionLabel>
+                  <div className="text-[11px] text-[var(--shotiq-color-graphite)]">Control your data and privacy preferences.</div>
+                </div>
+              </div>
+              <div className="mt-[10px] divide-y divide-[var(--shotiq-color-rule)]">
+                <ToggleRow label="Anonymous analytics (product improvement)" value={privacy.allowAnonymousAnalytics}
+                           onToggle={() => setPriv("allowAnonymousAnalytics", !privacy.allowAnonymousAnalytics)} />
+                <ToggleRow label="Include me in peer comparisons" value={privacy.includeInPeerComparisons}
+                           onToggle={() => setPriv("includeInPeerComparisons", !privacy.includeInPeerComparisons)} />
+                <ToggleRow label="Share progress with my coach" value={privacy.shareProgressWithCoach}
+                           onToggle={() => setPriv("shareProgressWithCoach", !privacy.shareProgressWithCoach)} />
+              </div>
+              <div className="mt-[12px] flex flex-wrap items-center gap-[12px] border-t border-[var(--shotiq-color-rule)] pt-[12px]">
+                <div className="flex min-w-[260px] flex-1 items-center gap-[12px]">
+                  <Upload className="h-[18px] w-[18px]" />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[13px] font-semibold">Export all data</div>
+                    <div className="text-[11px] text-[var(--shotiq-color-graphite)]">Download a copy of your shots, analyses, sessions, and account data.</div>
+                  </div>
+                  <button type="button" onClick={exportData} disabled={exporting === "working"}
+                          className="h-[36px] shrink-0 rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-[12px] disabled:opacity-60">
+                    {exporting === "working" ? "Exporting…" : exporting === "done" ? "Downloaded ✓" : exporting === "error" ? "Failed — retry" : "Export all data"}
+                  </button>
+                </div>
+                <div className="flex min-w-[260px] flex-1 items-center gap-[12px]">
+                  <Trash2 className="h-[18px] w-[18px] text-[var(--shotiq-color-reviewRed)]" />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[13px] font-semibold">Clear history</div>
+                    <div className="text-[11px] text-[var(--shotiq-color-graphite)]">Permanently delete all shots, analyses, and session history.</div>
+                  </div>
+                  <button type="button" onClick={clearHistory} disabled={clearing === "working"}
+                          className="h-[36px] shrink-0 rounded-[6px] border border-[var(--shotiq-color-reviewRed)] px-[14px] text-[12px] text-[var(--shotiq-color-reviewRed)] disabled:opacity-60">
+                    {clearing === "confirm" ? "Click again to confirm" : clearing === "working" ? "Clearing…"
+                      : clearing === "done" ? "History cleared" : clearing === "error" ? "Failed — retry" : "Clear history"}
+                  </button>
+                </div>
+              </div>
+            </Card>
+
+            {/* Connected devices */}
+            <Card id="section-devices" className="scroll-mt-[76px] p-[18px]">
+              <div className="flex items-center gap-[10px]">
+                <MonitorSmartphone className="h-[18px] w-[18px] text-[var(--shotiq-color-shotiqOrange)]" />
+                <div>
+                  <SectionLabel>CONNECTED DEVICES</SectionLabel>
+                  <div className="text-[11px] text-[var(--shotiq-color-graphite)]">Where you&apos;re signed in right now.</div>
+                </div>
+              </div>
+              <div className="mt-[10px] flex items-center justify-between py-[9px] text-[13px]">
+                <span className="flex items-center gap-[10px]">
+                  <MonitorSmartphone className="h-[16px] w-[16px] text-[var(--shotiq-color-graphite)]" />
+                  {deviceInfo.browser}{deviceInfo.os ? ` on ${deviceInfo.os}` : ""}
+                </span>
+                <span className="flex items-center gap-[6px] text-[12px] font-semibold text-[var(--shotiq-color-confirmGreen)]">
+                  <CheckCircle2 className="h-[13px] w-[13px]" /> Active now — this device
+                </span>
+              </div>
+              <div className="mt-[6px] border-t border-[var(--shotiq-color-rule)] pt-[10px] text-[11px] text-[var(--shotiq-color-graphite)]">
+                Signing out ends the session on this device. Sessions on other devices expire automatically after 30 days.
+              </div>
+            </Card>
+
+            {/* Preferences */}
+            <Card id="section-preferences" className="scroll-mt-[76px] p-[18px]">
+              <div className="flex items-center gap-[10px]">
+                <SlidersHorizontal className="h-[18px] w-[18px] text-[var(--shotiq-color-shotiqOrange)]" />
+                <div>
+                  <SectionLabel>PREFERENCES</SectionLabel>
+                  <div className="text-[11px] text-[var(--shotiq-color-graphite)]">Reports, coaching cadence, and reminders.</div>
+                </div>
+              </div>
+              <div className="mt-[10px] grid gap-x-[28px] md:grid-cols-2">
+                <div className="divide-y divide-[var(--shotiq-color-rule)]">
+                  <SelectRow label="Report format" value={notifications.reportFormat}
+                             options={[["detailed", "Detailed"], ["summary", "Summary"]]}
+                             onChange={(v) => setNotif("reportFormat", v as NotificationSettings["reportFormat"])} />
+                  <ToggleRow label="Include charts in reports" value={notifications.includeCharts}
+                             onToggle={() => setNotif("includeCharts", !notifications.includeCharts)} />
+                  <ToggleRow label="Include elite comparisons" value={notifications.includeComparison}
+                             onToggle={() => setNotif("includeComparison", !notifications.includeComparison)} />
+                </div>
+                <div className="divide-y divide-[var(--shotiq-color-rule)]">
+                  <SelectRow label="Coaching tips frequency" value={notifications.coachingTipsFrequency}
+                             options={[["daily", "Daily"], ["2x_week", "2× a week"], ["3x_week", "3× a week"], ["weekly", "Weekly"]]}
+                             onChange={(v) => setNotif("coachingTipsFrequency", v as NotificationSettings["coachingTipsFrequency"])} />
+                  <div className="flex items-center justify-between py-[7px] text-[13px]">
+                    <span>Training reminder time</span>
+                    <input type="time" value={notifications.reminderTime}
+                           onChange={(e) => setNotif("reminderTime", e.target.value)}
+                           className="h-[32px] rounded-[5px] border border-[var(--shotiq-color-rule)] bg-white px-[8px] text-[12px] outline-none focus:border-[var(--shotiq-color-ink)]" />
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {/* About */}
+            <Card className="flex items-center divide-x divide-[var(--shotiq-color-rule)] px-[8px] py-[14px]">
+              <div className="px-[16px]">
+                <SectionLabel>ABOUT SHOTIQ</SectionLabel>
+                <div className="text-[11px] text-[var(--shotiq-color-graphite)]">Version 1.0 · AI-powered shooting analysis.</div>
+              </div>
+              <div className="flex flex-1 items-center justify-end gap-[18px] px-[16px] text-[13px]">
+                <Link href="/guide" className="text-[var(--shotiq-color-analysisBlue)]">Help &amp; guide</Link>
+                <Link href="/terms" className="text-[var(--shotiq-color-graphite)] hover:text-[var(--shotiq-color-ink)]">Terms</Link>
+                <Link href="/privacy" className="text-[var(--shotiq-color-graphite)] hover:text-[var(--shotiq-color-ink)]">Privacy</Link>
+              </div>
+            </Card>
           </div>
         </div>
-      <ToggleSwitch enabled={enabled} onChange={onChange} />
+      </div>
     </div>
   )
 }
-
-interface ToggleSwitchProps {
-  enabled: boolean
-  onChange: (enabled: boolean) => void
-}
-
-function ToggleSwitch({ enabled, onChange }: ToggleSwitchProps) {
-  return (
-      <button
-        onClick={() => onChange(!enabled)}
-      className={`relative w-12 h-6 rounded-full transition-colors ${
-        enabled ? 'bg-[var(--shotiq-color-shotiqOrange)]' : 'bg-[var(--shotiq-color-rule)]'
-        }`}
-      >
-        <div
-        className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${
-          enabled ? 'translate-x-7' : 'translate-x-1'
-          }`}
-        />
-      </button>
-  )
-}
-

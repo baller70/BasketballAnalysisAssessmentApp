@@ -292,30 +292,34 @@ test("drill execution: make/miss marking updates the shot history and undo rever
   await expect.poll(() => chips.count(), { timeout: 5000 }).toBeLessThan(before)
 })
 
-test("guide: category filter narrows the deck and navigation moves cards", async ({ page }) => {
+test("guide: canonical sections render and quick actions navigate", async ({ page }) => {
   await page.goto("/guide")
-  const counter = () => page.locator("text=/\\d+ of \\d+/").innerText()
-  const before = await counter()
-  await page.getByRole("button", { name: "Video", exact: true }).click()
-  await expect.poll(counter).not.toBe(before)
-  await page.getByRole("button", { name: "Next", exact: true }).click()
-  await expect.poll(counter).toContain("2 of")
+  await expect(page.getByText("UPLOAD DO'S")).toBeVisible({ timeout: 10000 })
+  await expect(page.getByText("UPLOAD DON'TS")).toBeVisible()
+  await expect(page.getByText("CORRECT FORM")).toBeVisible()
+  await expect(page.getByText("COMMON MISTAKES")).toBeVisible()
+  await page.getByRole("button", { name: "Upload video", exact: true }).click()
+  await page.waitForURL("**/upload?mode=video", { timeout: 15000 })
 })
 
 test("settings: a toggled preference persists across reload", async ({ page }) => {
+  const state = (loc: import("@playwright/test").Locator) =>
+    loc.innerText().then((t) => (t.includes("Disabled") ? "Disabled" : "Enabled"))
   await page.goto("/settings")
-  await page.locator("div.sticky nav").getByRole("button", { name: "Notifications" }).click()
-  // The toggle switches are the w-12 rounded-full buttons inside the section.
-  const firstToggle = page.locator("button.w-12.rounded-full").first()
-  await expect(firstToggle).toBeVisible({ timeout: 10000 })
-  await firstToggle.click()
-  const save = page.getByRole("button", { name: /^Save/ })
-  await expect(save).toBeEnabled({ timeout: 5000 })
-  await save.click()
-  await expect(page.getByRole("button", { name: /Saved/ })).toBeVisible({ timeout: 10000 })
-  // server persistence: reload and confirm the switch kept its new state
-  const cls = await firstToggle.getAttribute("class")
+  const row = page.getByTestId("setting-weeklyReportEmail")
+  await expect(row).toBeVisible({ timeout: 10000 })
+  // Wait for the server-loaded state before reading (status line appears once loaded).
+  await expect(page.getByText(/Changes save automatically|All changes saved/)).toBeVisible({ timeout: 10000 })
+  const before = await state(row)
+  await row.click()
+  // Rows persist immediately — wait for the server ack.
+  await expect(page.getByText("All changes saved ✓")).toBeVisible({ timeout: 10000 })
+  const after = await state(row)
+  expect(after).not.toBe(before)
+  // Server persistence: reload and confirm the row kept its new state.
   await page.reload()
-  await page.locator("div.sticky nav").getByRole("button", { name: "Notifications" }).click()
-  await expect(page.locator("button.w-12.rounded-full").first()).toHaveClass(cls!, { timeout: 10000 })
+  const rowAfter = page.getByTestId("setting-weeklyReportEmail")
+  await expect(rowAfter).toBeVisible({ timeout: 10000 })
+  await expect(page.getByText(/Changes save automatically|All changes saved/)).toBeVisible({ timeout: 10000 })
+  await expect.poll(() => state(rowAfter), { timeout: 10000 }).toBe(after)
 })
