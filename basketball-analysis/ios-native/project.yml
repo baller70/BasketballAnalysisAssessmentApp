@@ -3,7 +3,7 @@
 # then open ShotIQ.xcodeproj and run on an iPhone simulator.
 name: ShotIQ
 options:
-  bundleIdPrefix: com.shotiq
+  bundleIdPrefix: com.kevinhouston
   deploymentTarget:
     iOS: "17.0"
 targets:
@@ -22,12 +22,13 @@ targets:
         NSUserNotificationsUsageDescription: ShotIQ reminds you about workouts and analysis results.
     settings:
       TARGETED_DEVICE_FAMILY: "1"
-      # Automatic signing so a personal (free) Apple ID team works out of the
-      # box: open the project, pick your Team once under Signing & Capabilities,
-      # and run on a plugged-in iPhone.
+      # Automatic signing with Kevin's team (same team as HoopTrack), so both a
+      # local Xcode run and the CI release pipeline sign without manual profiles.
       CODE_SIGN_STYLE: Automatic
-      # Unique-enough default; Xcode appends your team. Change if it collides.
-      PRODUCT_BUNDLE_IDENTIFIER: com.shotiq.app
+      DEVELOPMENT_TEAM: DD9G8RP575
+      PRODUCT_BUNDLE_IDENTIFIER: com.kevinhouston.shotiq
+      MARKETING_VERSION: "1.0"
+      CURRENT_PROJECT_VERSION: "1"
   ShotIQTests:
     type: bundle.unit-test
     platform: iOS
@@ -38,3 +39,18 @@ targets:
     platform: iOS
     sources: [ShotIQ/UITests]
     dependencies: [{target: ShotIQ}]
+
+# Explicit shared scheme so xcodebuild -scheme ShotIQ works headlessly on CI
+# (the release script requires xcshareddata/xcschemes/ShotIQ.xcscheme).
+schemes:
+  ShotIQ:
+    build:
+      targets:
+        ShotIQ: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets: [ShotIQTests]
+    archive:
+      config: Release
