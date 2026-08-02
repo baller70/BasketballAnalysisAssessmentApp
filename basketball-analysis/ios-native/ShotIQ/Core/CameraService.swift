@@ -9,20 +9,8 @@ final class CameraService: NSObject, ObservableObject {
     enum Status { case unknown, unauthorized, ready, failed }
     @Published var status: Status = .unknown
     @Published var isRecording = false
-
-    /// True only when a real capture session is feeding the preview layer.
-    ///
-    /// The canonical camera screens (028-031, 042) ship the design's finished
-    /// viewfinder — framing brackets, readiness card, pose skeleton and HUD are
-    /// all baked into the photograph. Those crops back the preview whenever no
-    /// camera is available, which is always the case in the Simulator. Drawing
-    /// the app's own chrome on top of them renders every element twice, so the
-    /// viewfinder overlays are gated on this: live feed gets the live chrome,
-    /// the canonical still already contains its own.
     @Published var lastPhoto: Data?
     @Published var lastVideoURL: URL?
-
-    var isLive: Bool { status == .ready && session.isRunning }
 
     let session = AVCaptureSession()
     private let photoOutput = AVCapturePhotoOutput()
