@@ -90,6 +90,17 @@ private func homeMediaThumb(height: CGFloat, icon: String = "play.fill") -> some
         .overlay(Image(systemName: icon).font(.system(size: 16)).foregroundStyle(.white.opacity(0.85)))
 }
 
+/// Large media frame carrying the canonical photograph. The canonical crop is
+/// the athlete cut-out, which is far taller than the box, so it is fitted over
+/// the same dark surface the box used before — the frame, corner radius and
+/// position are untouched, only the content changes.
+private func homeCanonicalFrame(_ key: String, height: CGFloat) -> some View {
+    RoundedRectangle(cornerRadius: 4)
+        .fill(Color(red: 0.106, green: 0.114, blue: 0.125))
+        .frame(height: height)
+        .overlay(CanonicalPhoto(key, height: height, cornerRadius: 4, contentMode: .fit))
+}
+
 /// LATEST SESSION stats strip: shots / makes / make % / trend + delta (018/019).
 private struct HomeSessionStats: View {
     var body: some View {
@@ -185,7 +196,7 @@ struct HomeNewPlayerView: View {   // 017
                             SectionLabel(text: "CAPTURE YOUR SHOT")
                             HStack(alignment: .top, spacing: 10) {
                                 NavigationLink { PhotoUploadSourceView() } label: {
-                                    captureThumb("UPLOAD IMAGE", "From your library")
+                                    captureThumb("UPLOAD IMAGE", "From your library", photo: "017-visual-002")
                                 }
                                 .buttonStyle(.plain)
                                 NavigationLink { VideoUploadView() } label: {
@@ -193,7 +204,7 @@ struct HomeNewPlayerView: View {   // 017
                                 }
                                 .buttonStyle(.plain)
                                 NavigationLink { LiveCameraSetupView() } label: {
-                                    captureThumb("LIVE CAMERA", "Record in real time")
+                                    captureThumb("LIVE CAMERA", "Record in real time", photo: "017-visual-001")
                                 }
                                 .buttonStyle(.plain)
                             }
@@ -262,9 +273,13 @@ struct HomeNewPlayerView: View {   // 017
         .overlay(alignment: .bottom) { if rule { Rectangle().fill(ShotIQColor.rule).frame(height: 1) } }
     }
 
-    private func captureThumb(_ title: String, _ d: String) -> some View {
+    private func captureThumb(_ title: String, _ d: String, photo: String? = nil) -> some View {
         VStack(spacing: 6) {
-            homeMediaThumb(height: 96, icon: "figure.basketball")
+            if let photo {
+                CanonicalPhoto(photo, height: 96, cornerRadius: 4)
+            } else {
+                homeMediaThumb(height: 96, icon: "figure.basketball")
+            }
             Text(title).font(.system(size: 11, weight: .heavy).width(.condensed)).kerning(0.5)
                 .foregroundStyle(ShotIQColor.ink)
             Text(d).font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
@@ -348,7 +363,7 @@ struct HomeStandardView: View {    // 018
 
                     NavigationLink { AnalysisResultOverviewView() } label: {
                         HStack(alignment: .center, spacing: 14) {
-                            homeMediaThumb(height: 250)
+                            homeCanonicalFrame("018-visual-001", height: 250)
                                 .frame(maxWidth: .infinity)
                             VStack(alignment: .leading, spacing: 5) {
                                 Text("FORM SCORE").font(.system(size: 11, weight: .bold)).kerning(0.8)
@@ -453,7 +468,7 @@ struct HomeProfessionalView: View { // 019
 
                     NavigationLink { AnalysisResultOverviewView() } label: {
                         HStack(alignment: .center, spacing: 14) {
-                            homeMediaThumb(height: 250)
+                            homeCanonicalFrame("019-visual-001", height: 250)
                                 .frame(maxWidth: .infinity)
                             VStack(alignment: .leading, spacing: 5) {
                                 Text("FORM SCORE").font(.system(size: 11, weight: .bold)).kerning(0.8)
@@ -626,9 +641,17 @@ struct ProfileMenuView: View {      // 020
                     .padding(.horizontal, 20).frame(height: 52)
 
                     HStack(alignment: .center, spacing: 16) {
-                        Circle().fill(ShotIQColor.rule).frame(width: 88, height: 88)
-                            .overlay(Text(shotiqInitials(app.user)).font(.system(size: 26, weight: .bold))
-                                .foregroundStyle(ShotIQColor.graphite))
+                        // Canonical 020 paints a circular portrait here; users
+                        // without one keep the initials disc.
+                        if UIImage(named: "photo-020-visual-001") != nil {
+                            CanonicalPhoto("020-visual-001", width: 88, height: 88, cornerRadius: 44)
+                                .frame(width: 88, height: 88)
+                                .clipShape(Circle())
+                        } else {
+                            Circle().fill(ShotIQColor.rule).frame(width: 88, height: 88)
+                                .overlay(Text(shotiqInitials(app.user)).font(.system(size: 26, weight: .bold))
+                                    .foregroundStyle(ShotIQColor.graphite))
+                        }
                         VStack(alignment: .leading, spacing: 6) {
                             Text((app.user?.displayName ?? "Jordan Ellis").uppercased()).shotiqDisplay(30)
                             Text("Right-handed • Advanced").font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)

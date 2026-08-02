@@ -286,10 +286,13 @@ private func captureStat(_ value: String, _ label: String,
 
 struct AnalyzeHubView: View {       // 021
     @EnvironmentObject var app: AppState
-    private let recents = [("0:06", "Today • 8:24 AM", "Free Throw"),
-                           ("0:04", "Today • 8:17 AM", "Catch & Shoot"),
-                           ("0:05", "Yesterday • 6:42 PM", "Pull-Up Jumper"),
-                           ("0:05", "Yesterday • 6:35 PM", "Off the Dribble")]
+    // Fourth field is the canonical crop for that thumbnail; only the 2nd and 4th
+    // captures have a frame bundled (021-visual-003 / -004 in the sidecar).
+    private let recents: [(String, String, String, String?)] = [
+        ("0:06", "Today • 8:24 AM", "Free Throw", nil),
+        ("0:04", "Today • 8:17 AM", "Catch & Shoot", "021-visual-003"),
+        ("0:05", "Yesterday • 6:42 PM", "Pull-Up Jumper", nil),
+        ("0:05", "Yesterday • 6:35 PM", "Off the Dribble", "021-visual-004")]
     var body: some View {
         CanonicalScreen(testID: "screen-ios-analyze-hub") {
             ScrollView {
@@ -343,11 +346,15 @@ struct AnalyzeHubView: View {       // 021
 
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(alignment: .top, spacing: 10) {
-                            ForEach(recents, id: \.1) { dur, when, kind in
+                            ForEach(recents, id: \.1) { dur, when, kind, photo in
                                 NavigationLink { MediaDetailView() } label: {
                                     VStack(alignment: .leading, spacing: 4) {
                                         ZStack(alignment: .bottomTrailing) {
-                                            captureDark(128, radius: 4).frame(width: 104)
+                                            if let photo {
+                                                CanonicalPhoto(photo, width: 104, height: 128, cornerRadius: 4)
+                                            } else {
+                                                captureDark(128, radius: 4).frame(width: 104)
+                                            }
                                             Text(dur).font(.custom("Tungsten-Semibold", size: 12)).foregroundStyle(.white)
                                                 .padding(.horizontal, 6).padding(.vertical, 3)
                                                 .background(.black.opacity(0.75), in: RoundedRectangle(cornerRadius: 3))
@@ -449,8 +456,10 @@ struct PhotoUploadSourceView: View { // 022
 
                     SectionLabel(text: "BEST ANGLE FOR ANALYSIS").padding(.horizontal, 20).padding(.top, 24)
                     HStack(alignment: .top, spacing: 12) {
-                        angleCard("SIDE VIEW", "IDEAL", "Use this angle when possible.", ideal: true)
-                        angleCard("45° VIEW", "GOOD", "Use if side view isn't available.", ideal: false)
+                        angleCard("SIDE VIEW", "IDEAL", "Use this angle when possible.",
+                                  photo: "022-visual-001", ideal: true)
+                        angleCard("45° VIEW", "GOOD", "Use if side view isn't available.",
+                                  photo: "022-visual-003", ideal: false)
                     }
                     .padding(.horizontal, 20).padding(.top, 12)
 
@@ -497,10 +506,11 @@ struct PhotoUploadSourceView: View { // 022
         .frame(maxWidth: .infinity)
     }
 
-    private func angleCard(_ badge: String, _ verdict: String, _ d: String, ideal: Bool) -> some View {
+    private func angleCard(_ badge: String, _ verdict: String, _ d: String,
+                           photo: String, ideal: Bool) -> some View {
         VStack(spacing: 0) {
             ZStack(alignment: .topLeading) {
-                captureDark(180, radius: 0)
+                CanonicalPhoto(photo, height: 180, cornerRadius: 0)
                 Text(badge).font(.system(size: 12, weight: .bold)).foregroundStyle(.white)
                     .padding(.horizontal, 10).padding(.vertical, 5)
                     .background(ShotIQColor.analysisBlue, in: Capsule())
@@ -583,7 +593,8 @@ struct PhotoReviewCropView: View {  // 023
                             if let image {
                                 Image(uiImage: image).resizable().scaledToFill()
                             } else {
-                                Color(red: 0.106, green: 0.114, blue: 0.125)
+                                // Nothing picked yet — show the canonical review frame.
+                                CanonicalPhoto("023-visual-001", cornerRadius: 0)
                             }
                         }
                         .frame(height: 430).frame(maxWidth: .infinity).clipped()
@@ -1185,7 +1196,7 @@ struct VideoUploadView: View {      // 026
                         .padding(.horizontal, 20).padding(.top, 2)
                     HStack(spacing: 12) {
                         framingCard("GOOD", good: true)
-                        framingCard("TOO CLOSE", good: false)
+                        framingCard("TOO CLOSE", photo: "026-visual-001", good: false)
                     }
                     .padding(.horizontal, 20).padding(.top, 10)
 
@@ -1241,9 +1252,13 @@ struct VideoUploadView: View {      // 026
         .navigationDestination(isPresented: $go) { VideoReviewView() }
     }
 
-    private func framingCard(_ badge: String, good: Bool) -> some View {
+    private func framingCard(_ badge: String, photo: String? = nil, good: Bool) -> some View {
         ZStack(alignment: .topLeading) {
-            captureDark(150, radius: 8)
+            if let photo {
+                CanonicalPhoto(photo, height: 150, cornerRadius: 8)
+            } else {
+                captureDark(150, radius: 8)
+            }
             Text(badge).font(.system(size: 11, weight: .bold)).foregroundStyle(.white)
                 .padding(.horizontal, 8).padding(.vertical, 4)
                 .background(good ? ShotIQColor.confirmGreen : ShotIQColor.shotiqOrange,
@@ -1323,7 +1338,7 @@ struct VideoReviewView: View {      // 027
                     .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
                     .padding(.horizontal, 20).padding(.top, 12)
 
-                    MediaSurface(height: 300, duration: "0:06")
+                    CanonicalMediaSurface(key: "027-visual-001", height: 300, duration: "0:06")
                         .padding(.horizontal, 20).padding(.top, 14)
 
                     Text("Drag the handles to trim your clip")
@@ -2391,6 +2406,9 @@ struct CaptureReviewView: View {    // 035
         (7, "Today • 8:05 AM", "Release", "00:03", 0.58),
         (12, "Today • 8:09 AM", "Elbow angle", "00:05", 0.61),
         (19, "Today • 8:16 AM", "Release timing", "00:06", 0.64)]
+    /// Canonical thumbnail per flagged shot — only shot 12's frame is bundled
+    /// (035-visual-002); the other two rows keep the dark surface until cropped.
+    private let shotThumbs: [Int: String] = [12: "035-visual-002"]
     private var visibleFlagged: [(Int, String, String, String, Double)] {
         guard filter == "All (24)" || filter == "Needs review (3)" else { return [] }
         return flagged.sorted { lowestFirst ? $0.4 < $1.4 : $0.4 > $1.4 }
@@ -2478,7 +2496,11 @@ struct CaptureReviewView: View {    // 035
                         ShotIQCard {
                             HStack(alignment: .top, spacing: 14) {
                                 ZStack(alignment: .bottomLeading) {
-                                    captureDark(132, radius: 4).frame(width: 116)
+                                    if let key = shotThumbs[n] {
+                                        CanonicalPhoto(key, width: 116, height: 132, cornerRadius: 4)
+                                    } else {
+                                        captureDark(132, radius: 4).frame(width: 116)
+                                    }
                                     Text(dur).font(.custom("Tungsten-Semibold", size: 12)).foregroundStyle(.white)
                                         .padding(.horizontal, 6).padding(.vertical, 3)
                                         .background(.black.opacity(0.75), in: RoundedRectangle(cornerRadius: 3))

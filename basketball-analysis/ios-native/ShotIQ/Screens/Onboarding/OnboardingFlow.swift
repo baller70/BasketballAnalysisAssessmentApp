@@ -221,16 +221,22 @@ private struct OptionCard: View {
 private struct StyleCard: View {
     var label: String
     var caption: String
+    /// Canonical frame shown in the card's media slot (nil = no crop bundled yet).
+    var photoKey: String? = nil
     var selected: Bool
     var action: () -> Void
     var body: some View {
         Button(action: action) {
             VStack(spacing: 8) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 6).fill(ShotIQColor.warmCanvas)
-                    Image(systemName: "figure.basketball")
-                        .font(.system(size: 30, weight: .light))
-                        .foregroundStyle(ShotIQColor.graphite)
+                    if let photoKey {
+                        CanonicalPhoto(photoKey, height: 96, cornerRadius: 6)
+                    } else {
+                        RoundedRectangle(cornerRadius: 6).fill(ShotIQColor.warmCanvas)
+                        Image(systemName: "figure.basketball")
+                            .font(.system(size: 30, weight: .light))
+                            .foregroundStyle(ShotIQColor.graphite)
+                    }
                 }
                 .frame(height: 96)
                 HStack(spacing: 6) {
@@ -828,10 +834,12 @@ struct ShootingProfileView: View {
                         sectionHeader("SHOOTING STYLE", "Pick the style that best matches your shot.")
                         HStack(alignment: .top, spacing: 10) {
                             StyleCard(label: "COMPACT", caption: "Quick, efficient release",
+                                      photoKey: "011-visual-004",
                                       selected: m.styleArc == "Compact") { m.styleArc = "Compact" }
                             StyleCard(label: "BALANCED", caption: "Versatile all-around approach",
                                       selected: m.styleArc == "Balanced") { m.styleArc = "Balanced" }
                             StyleCard(label: "HIGH ARC", caption: "Higher release, maximum arc",
+                                      photoKey: "011-visual-003",
                                       selected: m.styleArc == "High Arc") { m.styleArc = "High Arc" }
                         }
                         .padding(.top, 12)
@@ -1760,13 +1768,7 @@ struct NotificationPermissionPrimerView: View {
                         .padding(.top, 8)
 
                         HStack(alignment: .top, spacing: 16) {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 8).fill(ShotIQColor.warmCanvas)
-                                Image(systemName: "figure.basketball")
-                                    .font(.system(size: 48, weight: .light))
-                                    .foregroundStyle(ShotIQColor.graphite)
-                            }
-                            .frame(height: 190)
+                            CanonicalPhoto("016-visual-001", height: 190, cornerRadius: 8)
                             VStack(alignment: .leading, spacing: 6) {
                                 Text("FORM SCORE")
                                     .font(.system(size: 12, weight: .bold)).kerning(0.8)

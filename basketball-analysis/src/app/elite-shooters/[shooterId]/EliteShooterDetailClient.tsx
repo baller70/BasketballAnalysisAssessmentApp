@@ -210,7 +210,7 @@ export default function EliteShooterDetailClient() {
         </div>
 
         {/* mechanics breakdown */}
-        <Card className="min-w-0 flex-1 px-[18px] py-[12px]">
+        <Card className="min-w-0 flex-1 px-[16px] py-[10px]">
           <div className="flex items-center justify-between">
             <SectionLabel>MECHANICS BREAKDOWN</SectionLabel>
             <div className="flex items-center gap-[14px] text-[11px] text-[var(--shotiq-color-graphite)]">
@@ -247,7 +247,7 @@ export default function EliteShooterDetailClient() {
         </Card>
 
         {/* form gallery */}
-        <Card className="w-[452px] shrink-0 px-[18px] py-[12px]">
+        <Card className="w-[452px] shrink-0 px-[18px] py-[10px]">
           <div className="flex items-center justify-between">
             <SectionLabel>SHOOTING FORM GALLERY</SectionLabel>
             <button type="button" onClick={() => setTab("FORM GALLERY")}
@@ -300,8 +300,8 @@ export default function EliteShooterDetailClient() {
       </div>
 
       {/* bottom band */}
-      <div className="mb-[20px] mt-[12px] flex gap-[14px]">
-        <Card className="w-[400px] shrink-0 px-[18px] py-[12px]">
+      <div className="mb-[12px] mt-[10px] flex gap-[12px]">
+        <Card className="w-[355px] shrink-0 px-[16px] py-[10px]">
           <div className="flex items-center justify-between">
             <SectionLabel>CAREER SHOOTING STATS</SectionLabel>
             <button type="button" onClick={() => setTab("CAREER STATS")}
@@ -326,9 +326,9 @@ export default function EliteShooterDetailClient() {
           </div>
         </Card>
 
-        <Card className="min-w-0 flex-1 px-[18px] py-[12px]">
+        <Card className="min-w-0 flex-1 px-[16px] py-[10px]">
           <SectionLabel>STRENGTHS</SectionLabel>
-          <ul className="mt-[8px] space-y-[7px] text-[12px]">
+          <ul className="mt-[6px] space-y-[5px] text-[12px]">
             {(shooter.strengths?.length ? shooter.strengths : [
               "Elite release consistency and speed", "Excellent balance and body control",
               "High, repeatable release point", "Outstanding shooting range and accuracy",
@@ -340,9 +340,9 @@ export default function EliteShooterDetailClient() {
           </ul>
         </Card>
 
-        <Card className="min-w-0 flex-1 px-[18px] py-[12px]">
+        <Card className="min-w-0 flex-1 px-[16px] py-[10px]">
           <SectionLabel>OPPORTUNITIES</SectionLabel>
-          <ul className="mt-[8px] space-y-[7px] text-[12px]">
+          <ul className="mt-[6px] space-y-[5px] text-[12px]">
             {(shooter.weaknesses?.length ? shooter.weaknesses : [
               "Slight loss of balance on long range", "Front foot alignment can drift",
               "Lower hold time in follow-through", "Maintain elbow stack on fatigue",
@@ -354,7 +354,7 @@ export default function EliteShooterDetailClient() {
           </ul>
         </Card>
 
-        <Card className="w-[290px] shrink-0 px-[18px] py-[12px]">
+        <Card className="w-[275px] shrink-0 px-[16px] py-[10px]">
           <SectionLabel>ABOUT {shooter.name.toUpperCase()}</SectionLabel>
           <p className="mt-[6px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
             {shooter.description ?? `Revolutionized the game with unmatched shooting range, quick release, and elite shot-making off the dribble. Known for conditioning, work ethic, and relentless pursuit of improvement.`}

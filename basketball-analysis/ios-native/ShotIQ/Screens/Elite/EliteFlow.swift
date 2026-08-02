@@ -384,12 +384,10 @@ struct CustomizePlayerCardView: View { // 049
                                     HeaderStat(icon: "circle.hexagongrid", value: "2,840", label: "POINTS")
                                 }
                                 HStack(alignment: .top, spacing: 14) {
-                                    ZStack {
-                                        RoundedRectangle(cornerRadius: 4)
-                                            .fill(Color(red: 0.106, green: 0.114, blue: 0.125))
-                                        SkeletonPreviewOverlay()
-                                    }
-                                    .frame(maxWidth: .infinity).frame(height: 250)
+                                    // Canonical card frame — the pose overlay is already
+                                    // burned into the crop.
+                                    CanonicalPhoto("049-visual-001", height: 250, cornerRadius: 4)
+                                        .frame(maxWidth: .infinity)
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text("FORM SCORE").font(.system(size: 10, weight: .semibold)).kerning(0.6)
                                             .foregroundStyle(ShotIQColor.graphite)
@@ -697,8 +695,9 @@ struct EliteMatchView: View {       // 050
                                         .foregroundStyle(ShotIQColor.analysisBlue).padding(.top, 6)
                                     Text("FORM SCORE").font(.system(size: 10, weight: .medium)).kerning(0.5)
                                         .foregroundStyle(ShotIQColor.graphite)
-                                    RoundedRectangle(cornerRadius: 4).fill(ShotIQColor.rule)
-                                        .frame(width: 88, height: 96).padding(.top, 6)
+                                    // Elite reference shooter frame from the canonical render.
+                                    CanonicalPhoto("050-visual-002", width: 88, height: 96, cornerRadius: 4)
+                                        .padding(.top, 6)
                                 }
                             }
                             .padding(14)
@@ -955,8 +954,8 @@ struct PhotoComparisonView: View {  // 051
                         HStack(spacing: 2) {
                             ZStack(alignment: .topLeading) {
                                 ZStack {
-                                    MediaSurface(height: 330)
-                                    SkeletonOverlay()
+                                    // Your canonical frame; its own pose overlay is baked in.
+                                    CanonicalMediaSurface(key: "051-visual-003", height: 330)
                                     if overlaySkeletons {
                                         // Elite skeleton overlaid on your frame for direct comparison.
                                         SkeletonOverlay(boneColor: ShotIQColor.analysisBlue,
@@ -968,7 +967,7 @@ struct PhotoComparisonView: View {  // 051
                                 mediaTag(ShotIQColor.shotiqOrange, overlaySkeletons ? "YOU + ELITE" : "YOU")
                             }
                             ZStack(alignment: .topLeading) {
-                                ZStack { MediaSurface(height: 330); SkeletonOverlay() }
+                                CanonicalMediaSurface(key: "051-visual-001", height: 330)
                                 mediaTag(ShotIQColor.analysisBlue, "ELITE REFERENCE")
                             }
                         }
@@ -1072,6 +1071,11 @@ struct PhotoComparisonView: View {  // 051
 }
 
 struct EliteShootersView: View {    // 052
+    /// Canonical list-row crops, in the top-to-bottom order they appear on the
+    /// 853x1844 render. The fifth row is cut off there, so it has no crop.
+    private static let cardPhotoKeys = [
+        "052-visual-001", "052-visual-002", "052-visual-004", "052-visual-003",
+    ]
     @StateObject private var vm = EliteViewModel()
     @State private var query = ""
     @State private var level = "All Levels"
@@ -1236,11 +1240,16 @@ struct EliteShootersView: View {    // 052
     private func shooterCard(_ s: EliteShooterDTO, rank: Int) -> some View {
         ShotIQCard {
             HStack(alignment: .top, spacing: 14) {
-                // Photos aren't bundled — neutral gray placeholder keeps the layout.
-                RoundedRectangle(cornerRadius: 4).fill(ShotIQColor.rule)
-                    .frame(width: 104, height: 148)
-                    .overlay(Text(String(s.name.prefix(1)))
-                        .font(.system(size: 28, weight: .bold)).foregroundStyle(ShotIQColor.graphite))
+                if rank < Self.cardPhotoKeys.count {
+                    // Canonical shooter frame for this row of the list.
+                    CanonicalPhoto(Self.cardPhotoKeys[rank], width: 104, height: 148, cornerRadius: 4)
+                } else {
+                    // Beyond the canonical rows no crop exists — neutral gray keeps the layout.
+                    RoundedRectangle(cornerRadius: 4).fill(ShotIQColor.rule)
+                        .frame(width: 104, height: 148)
+                        .overlay(Text(String(s.name.prefix(1)))
+                            .font(.system(size: 28, weight: .bold)).foregroundStyle(ShotIQColor.graphite))
+                }
                 VStack(alignment: .leading, spacing: 0) {
                     HStack(alignment: .top, spacing: 8) {
                         VStack(alignment: .leading, spacing: 3) {
@@ -1343,10 +1352,8 @@ struct EliteShooterDetailView: View { // 053
                             }
                             .padding(.leading, 20)
                             Spacer(minLength: 10)
-                            // No raster photos ship — neutral gray placeholder keeps the layout.
-                            Rectangle().fill(ShotIQColor.rule)
-                                .frame(width: 170, height: 210)
-                                .overlay(SkeletonOverlay().opacity(0.7))
+                            // Canonical reference-shooter frame; pose overlay is baked in.
+                            CanonicalPhoto("053-visual-001", width: 170, height: 210, cornerRadius: 0)
                         }
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 26) {
