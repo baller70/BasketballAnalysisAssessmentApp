@@ -11,7 +11,7 @@ import {
 } from "lucide-react"
 import { ShotIQShell, SectionLabel, Card } from "@/components/shotiq/ShotIQShell"
 import { FlawFigure, MechanicGlyph, CorrectionGlyph, WorkoutGlyph, type FlawKind } from "@/components/shotiq/Glyphs"
-import { useHistory } from "@/components/shotiq/ResultsBits"
+import { useHistory, FormScoreCell, formatDelta, formatMakePct } from "@/components/shotiq/ResultsBits"
 
 // Every flaw card carries its own pose diagram, with the faulty segment picked
 // out in the alert colour — the ~60px figure canonical prints on each card.
@@ -71,7 +71,7 @@ function FlawsSidebar() {
 }
 
 export default function FlawsPage() {
-  const { hasData, score } = useHistory()
+  const { hasData, score, shots, makes, delta } = useHistory()
   const [sel, setSel] = useState(0)
   const [showLower, setShowLower] = useState(false)
   const visible = hasData ? (showLower ? [...FLAWS, ...LOWER_FLAWS] : FLAWS) : []
@@ -89,19 +89,11 @@ export default function FlawsPage() {
           </p>
         </div>
         <Card className="flex h-[96px] min-w-0 flex-1 items-center pl-[14px]">
-          <div className="w-[112px] shrink-0">
-            <div className="text-[10px] font-bold tracking-[0.07em] text-[var(--shotiq-color-graphite)]">FORM SCORE</div>
-            <div className="shotiq-numeric text-[38px] leading-[40px] text-[var(--shotiq-color-shotiqOrange)]">{score ?? "—"}<span className="text-[22px]">.</span></div>
-            <div className="h-[5px] w-[100px] rounded-full bg-[var(--shotiq-color-rule)]">
-              <div className="h-full rounded-full bg-[var(--shotiq-color-shotiqOrange)]" style={{ width: `${score ?? 0}%` }} />
-            </div>
-          </div>
-          <div className="w-[96px] shrink-0">
-            <div className="shotiq-display text-[15px] text-[var(--shotiq-color-analysisBlue)]">GOOD</div>
-            <p className="text-[11px] leading-[14px] text-[var(--shotiq-color-graphite)]">Keep building consistency.</p>
-          </div>
-          {[["24", "SHOTS"], ["15", "MAKES"], ["62.5%", "MAKE %"]].map(([v, l]) => (
-            <div key={l} className="w-[66px] shrink-0 border-l border-[var(--shotiq-color-rule)] px-[6px] text-center">
+          {/* The one shared form-score module (see FormScoreCell) — short bar
+              under the numeral, left-aligned verdict beside it. */}
+          <FormScoreCell score={score} size={38} className="w-[214px] shrink-0 pr-[10px]" />
+          {[[shots ?? "—", "SHOTS"], [makes ?? "—", "MAKES"], [formatMakePct(shots, makes), "MAKE %"]].map(([v, l]) => (
+            <div key={String(l)} className="w-[66px] shrink-0 border-l border-[var(--shotiq-color-rule)] px-[6px] text-center">
               <div className="shotiq-numeric text-[24px] leading-[28px]">{hasData ? v : "—"}</div>
               <div className="text-[9px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">{l}</div>
             </div>
@@ -113,7 +105,9 @@ export default function FlawsPage() {
                 <circle key={i} cx={x} cy={y} r="2.4" fill={i >= 5 ? "var(--shotiq-color-confirmGreen)" : "var(--shotiq-color-graphite)"} />
               ))}
             </svg>
-            <div className="text-[10px] leading-[12px]"><span className="font-bold text-[var(--shotiq-color-confirmGreen)]">+8.1%</span><br />
+            {/* Computed session-over-session delta — the same figure every
+                other screen prints; this was a hard-coded +8.1%. */}
+            <div className="text-[10px] leading-[12px]"><span className={`font-bold ${delta != null && delta < 0 ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-confirmGreen)]"}`}>{formatDelta(delta)}</span><br />
               <span className="text-[var(--shotiq-color-graphite)]">vs last session</span></div>
           </div>
           <div className="ml-[10px] flex min-w-0 flex-1 flex-col justify-center self-stretch border-l border-[var(--shotiq-color-rule)] py-[10px] pl-[14px] pr-[14px]">

@@ -141,6 +141,64 @@ export function PoseGlyph({
   )
 }
 
+/* ------------------------------------------------ canonical pose crops */
+
+/**
+ * The shot-phase figures, taken as pixels out of the canonical render rather
+ * than redrawn.
+ *
+ * `PoseGlyph` above is an approximation of a mark the canonical renders already
+ * contain, and three rounds of review said so. Screen 078 prints the strip at
+ * its largest and cleanest (a 47px band of pure white paper), so all five poses
+ * are cropped from there once — `public/images/canonical/078-phase-*.png` — and
+ * reused everywhere the strip appears. The four variants per pose are the same
+ * canonical pixels re-hued through their recovered alpha: ink/orange on white
+ * paper for the light screens, white/orange on the #101113 bar for the dark
+ * player card. Canonical only ever draws RELEASE active, so the neutral release
+ * and the four active figures are the cross-tinted ones.
+ *
+ * Keep `PoseGlyph` for the places a crop cannot go: a pose over live video, or
+ * one that has to take a user-chosen accent colour.
+ */
+const PHASE_FIGURE: Record<ShotPhase, { w: number; h: number }> = {
+  setup: { w: 58, h: 94 },
+  load: { w: 58, h: 94 },
+  rise: { w: 66, h: 94 },
+  release: { w: 56, h: 94 },
+  follow: { w: 50, h: 94 },
+}
+
+export function PoseFigure({
+  phase, active = false, tone = "light", height = 40, className = "", alt = "",
+}: {
+  phase: ShotPhase | string
+  active?: boolean
+  /** Which canonical treatment the crop carries: white paper, the dark
+   *  player-card bar, or 087's blue elite side. */
+  tone?: "light" | "dark" | "elite"
+  /** Rendered height in CSS px; the crops are 2x so they stay crisp. */
+  height?: number
+  className?: string
+  alt?: string
+}) {
+  const p = typeof phase === "string" && !(phase in PHASE_FIGURE)
+    ? toShotPhase(phase) : (phase as ShotPhase)
+  const { w, h } = PHASE_FIGURE[p]
+  const variant = tone === "elite"
+    ? (active ? "-elite" : "")
+    : `${active ? "-active" : ""}${tone === "dark" ? "-dark" : ""}`
+  const src = `/images/canonical/078-phase-${p}${variant}.png`
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src} alt={alt} aria-hidden={alt ? undefined : "true"}
+      width={w} height={h}
+      style={{ height, width: Math.round((height * w) / h) }}
+      className={`block max-w-none ${className}`}
+    />
+  )
+}
+
 /* ------------------------------------------------- measurement diagrams */
 
 export type MechanicKind =

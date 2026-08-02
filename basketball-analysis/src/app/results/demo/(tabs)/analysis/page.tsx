@@ -6,9 +6,10 @@ import React from "react"
 import Link from "next/link"
 import { ArrowLeft, ChevronLeft, ChevronRight, Play, Maximize2 } from "lucide-react"
 import { SectionLabel, Card, Stat, TrendLine } from "@/components/shotiq/ShotIQShell"
-import { PoseGlyph, FlawFigure, WorkoutGlyph, type FlawKind } from "@/components/shotiq/Glyphs"
+import { PoseFigure, WorkoutGlyph } from "@/components/shotiq/Glyphs"
 import {
   useHistory, CoachingTarget, scoreSeries, sessionDelta, formatDelta,
+  FormScoreCell, formatMakePct,
 } from "@/components/shotiq/ResultsBits"
 
 const PHASES: [string, string][] = [
@@ -18,16 +19,18 @@ const PHASES: [string, string][] = [
 // Canonical marks each release mechanic with a side-on figure whose measured
 // segment is picked out, not with an abstract measurement diagram — one figure
 // per mechanic, none repeated.
-const MECHANICS: [string, string, string, FlawKind][] = [
-  ["Elbow Angle", "172°", "160° – 180°", "elbow"], ["Wrist Angle", "21°", "15° – 30°", "wrist"],
-  ["Release Height", "8'6\"", "7'8\" – 8'8\"", "release"], ["Body Alignment", "2°", "-5° – 5°", "base"],
+// Row diagrams are the canonical 083 crops, not redrawn line art.
+const MECHANICS: [string, string, string, string][] = [
+  ["Elbow Angle", "172°", "160° – 180°", "083-mech-1"], ["Wrist Angle", "21°", "15° – 30°", "083-mech-2"],
+  ["Release Height", "8'6\"", "7'8\" – 8'8\"", "083-mech-3"], ["Body Alignment", "2°", "-5° – 5°", "083-mech-4"],
 ]
 
 export default function AnalysisOverviewPage() {
-  const { hasData, score, items } = useHistory()
+  const { hasData, score, items, shots, makes } = useHistory()
   const trend = scoreSeries(items, 6)
   const delta = sessionDelta(items)
-  const total = hasData ? 24 : 0
+  // "N OF M" counts real analyses, not a literal.
+  const total = items.length
   // Canonical opens on analysis 3 of 24 with film frame 4 scrubbed in; the two
   // are independent (analysis counter vs. frame scrubber).
   const [shot, setShot] = React.useState(3)
@@ -122,7 +125,7 @@ export default function AnalysisOverviewPage() {
                     </div>
                   )}
                   <div className="shrink-0 text-center">
-                    <PoseGlyph phase={p} active={active} />
+                    <PoseFigure phase={p} active={active} height={41} className="mx-auto" />
                     <div className={`mt-[3px] text-[10px] tracking-[0.05em] ${active ? "font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
                     <div className="text-[9px] text-[var(--shotiq-color-graphite)]">{t}</div>
                   </div>
@@ -132,24 +135,22 @@ export default function AnalysisOverviewPage() {
           </div>
         </div>
 
+        {/* Canonical wraps the form score, mechanics and coaching rail in ONE
+            bordered card. The app drew them as bare columns, which left the
+            block floating in ~130px of dead space with no container edge. */}
+        <Card className="flex min-w-0 flex-1 divide-x divide-[var(--shotiq-color-rule)]">
         {/* form score + mechanics */}
-        <div className="w-[250px] shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[20px]">
-          <SectionLabel>FORM SCORE</SectionLabel>
-          <div className="flex items-end gap-[6px]">
-            <span className="shotiq-numeric text-[58px] leading-[62px] text-[var(--shotiq-color-shotiqOrange)]">{score ?? "—"}</span>
-            <span className="pb-[10px] text-[15px] text-[var(--shotiq-color-muted)]">/100</span>
-          </div>
-          <div className="h-[7px] rounded-full bg-[var(--shotiq-color-rule)]">
-            <div className="h-full rounded-full bg-[var(--shotiq-color-shotiqOrange)]" style={{ width: `${score ?? 0}%` }} />
-          </div>
-          <div className="mt-[8px] text-[14px] font-bold text-[var(--shotiq-color-analysisBlue)]">{score != null ? "GOOD" : "—"}</div>
-          <p className="text-[12px] text-[var(--shotiq-color-graphite)]">{score != null ? "Keep building consistency." : "No analysis yet."}</p>
+        <div className="w-[268px] shrink-0 px-[18px] py-[14px]">
+          {/* The one shared form-score module (see FormScoreCell). */}
+          <FormScoreCell score={score} size={56} layout="below" suffix="/100" />
 
-          <SectionLabel className="mt-[20px] border-t border-[var(--shotiq-color-rule)] pt-[14px]">MECHANICS AT RELEASE</SectionLabel>
+          <SectionLabel className="mt-[14px] border-t border-[var(--shotiq-color-rule)] pt-[12px]">MECHANICS AT RELEASE</SectionLabel>
           <div className="mt-[6px] divide-y divide-[var(--shotiq-color-rule)]">
             {MECHANICS.map(([m, v, range, glyph]) => (
               <div key={m} className="flex items-center gap-[8px] py-[9px]">
-                <FlawFigure kind={glyph} size={24} accent="var(--shotiq-color-graphite)" className="shrink-0" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={`/images/canonical/${glyph}.png`} alt="" aria-hidden="true"
+                     className="block h-[26px] w-[24px] max-w-none shrink-0 object-contain" />
                 <span className="flex-1 whitespace-nowrap text-[13px]">{m}</span>
                 <span className="shotiq-numeric text-[18px]">{hasData ? v : "—"}</span>
                 <span className="w-[58px] shrink-0 text-right">
@@ -163,7 +164,7 @@ export default function AnalysisOverviewPage() {
         </div>
 
         {/* right rail */}
-        <div className="min-w-0 flex-1 border-l border-[var(--shotiq-color-rule)] pl-[20px]">
+        <div className="min-w-0 flex-1 px-[18px] py-[14px]">
           <CoachingTarget />
           <SectionLabel className="mt-[20px] border-t border-[var(--shotiq-color-rule)] pt-[14px]">KEY INSIGHT</SectionLabel>
           <p className="mt-[6px] text-[13px] leading-[19px] text-[var(--shotiq-color-graphite)]">
@@ -175,13 +176,17 @@ export default function AnalysisOverviewPage() {
               shrunk to a size where the flared elbow is no longer readable. */}
           <div className="mt-[12px] flex items-center justify-center gap-[30px]">
             <div className="text-center">
-              <FlawFigure kind="elbow" size={88} accent="var(--shotiq-color-reviewRed)" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/images/canonical/083-insight-current.png" alt="" aria-hidden="true"
+                   className="mx-auto block h-[95px] w-auto max-w-none" />
               <div className="shotiq-numeric text-[18px]">172°</div>
               <div className="text-[9px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">CURRENT</div>
             </div>
             <span className="text-[18px] text-[var(--shotiq-color-graphite)]">→</span>
             <div className="text-center">
-              <FlawFigure kind="elbow" size={88} accent="var(--shotiq-color-confirmGreen)" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/images/canonical/083-insight-ideal.png" alt="" aria-hidden="true"
+                   className="mx-auto block h-[95px] w-auto max-w-none" />
               <div className="shotiq-numeric text-[18px]">180°</div>
               <div className="text-[9px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">IDEAL</div>
             </div>
@@ -198,6 +203,7 @@ export default function AnalysisOverviewPage() {
                  className="block h-auto w-[130px] shrink-0 rounded-[4px]" width={151} height={106} />
           </div>
         </div>
+        </Card>
       </div>
 
       {/* Bottom strip — one bordered container split by internal hairlines, with
@@ -207,11 +213,12 @@ export default function AnalysisOverviewPage() {
       <Card className="mt-[20px] grid grid-cols-1 divide-y divide-[var(--shotiq-color-rule)] px-[8px] py-[4px] xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.95fr)_minmax(0,0.85fr)] xl:divide-x xl:divide-y-0 xl:py-[10px]">
         <div className="px-[16px] py-[10px] xl:py-[4px]">
           <SectionLabel>ANALYSIS SUMMARY</SectionLabel>
-          <div className="mt-[8px] flex items-start">
-            <div className="flex-1"><Stat value={hasData ? "24" : "0"} label="SHOTS" /></div>
-            <div className="flex-1"><Stat value={hasData ? "15" : "0"} label="MAKES" /></div>
-            <div className="flex-1"><Stat value={hasData ? "62.5%" : "—"} label="MAKE %" /></div>
-            <div className="flex-1">
+          {/* Canonical rules every cell off with a hairline. */}
+          <div className="mt-[8px] flex items-start divide-x divide-[var(--shotiq-color-rule)]">
+            <div className="min-w-0 flex-1 pr-[14px]"><Stat value={hasData ? shots ?? "—" : "0"} label="SHOTS" /></div>
+            <div className="min-w-0 flex-1 px-[14px]"><Stat value={hasData ? makes ?? "—" : "0"} label="MAKES" /></div>
+            <div className="min-w-0 flex-1 px-[14px]"><Stat value={hasData ? formatMakePct(shots, makes) : "—"} label="MAKE %" /></div>
+            <div className="min-w-0 flex-1 px-[14px]">
               <Stat value={score != null ? String(score) : "—"} label="FORM SCORE" />
               {score != null && (
                 <div className="mt-[3px] flex items-center gap-[6px] text-[12px] text-[var(--shotiq-color-graphite)]">
@@ -219,7 +226,7 @@ export default function AnalysisOverviewPage() {
                 </div>
               )}
             </div>
-            <div className="flex-1 text-right">
+            <div className="min-w-0 flex-[1.3] pl-[14px] text-right">
               <div className="text-[10px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">TREND</div>
               <div className="flex items-center justify-end gap-[8px]">
                 <TrendLine points={trend} width={78} height={28} />
@@ -235,7 +242,9 @@ export default function AnalysisOverviewPage() {
         <div className="px-[16px] py-[10px] xl:py-[4px]">
           <SectionLabel>TOP FLAW</SectionLabel>
           <div className="mt-[8px] flex items-center gap-[12px]">
-            <FlawFigure kind="elbow" size={48} className="shrink-0" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/canonical/083-flaw-glyph.png" alt="" aria-hidden="true"
+                 className="block h-[56px] w-[35px] max-w-none shrink-0 object-contain" />
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-x-[8px] gap-y-[2px]">
                 <span className="whitespace-nowrap text-[14px] font-semibold">Elbow flare at release</span>

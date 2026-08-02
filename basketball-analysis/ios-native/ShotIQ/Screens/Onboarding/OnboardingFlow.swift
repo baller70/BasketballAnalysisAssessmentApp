@@ -84,7 +84,7 @@ private func primaryLabel(_ title: String, icon: String? = nil, color: Color = S
         if let icon { Image(systemName: icon) }
         Text(title).font(.system(size: 17, weight: .medium))
     }
-    .frame(maxWidth: .infinity).frame(height: 54)
+    .frame(maxWidth: .infinity).frame(height: ShotIQType.controlHeight)
     .background(color, in: RoundedRectangle(cornerRadius: ShotIQRadius.control))
     .foregroundStyle(.white)
 }
@@ -93,7 +93,7 @@ private func primaryLabel(_ title: String, icon: String? = nil, color: Color = S
 @ViewBuilder
 private func secondaryLabel(_ title: String, tint: Color = ShotIQColor.ink, border: Color = ShotIQColor.rule) -> some View {
     Text(title).font(.system(size: 17))
-        .frame(maxWidth: .infinity).frame(height: 54)
+        .frame(maxWidth: .infinity).frame(height: ShotIQType.controlHeight)
         .overlay(RoundedRectangle(cornerRadius: ShotIQRadius.control).stroke(border))
         .foregroundStyle(tint)
 }
@@ -277,7 +277,13 @@ private struct UnitToggle: View {
     }
     private func seg(_ label: String, on: Bool, tap: @escaping () -> Void) -> some View {
         Button(action: tap) {
+            // The segment had no intrinsic width, so the measurement row's
+            // trailing column absorbed every point the name column wanted and
+            // "YEARS" / "MONTHS" broke mid-word into "YEAR S" / "MONT HS" on
+            // 009. fixedSize pins each segment to its own text.
             Text(label).font(.system(size: 11, weight: .bold)).kerning(0.5)
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
                 .foregroundStyle(on ? .white : ShotIQColor.graphite)
                 .padding(.horizontal, 12).frame(height: 30)
                 .background(on ? ShotIQColor.analysisBlue : ShotIQColor.paper)

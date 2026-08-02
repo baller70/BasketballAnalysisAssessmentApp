@@ -26,7 +26,7 @@ import {
 import {
   ShotIQShell, WideSidebar, SectionLabel, Card,
 } from "@/components/shotiq/ShotIQShell"
-import { PoseGlyph, CueGlyph, WorkoutGlyph, type CueKind } from "@/components/shotiq/Glyphs"
+import { PoseFigure, WorkoutGlyph } from "@/components/shotiq/Glyphs"
 
 const PHASES = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
 const SET_SECONDS = 360 // 06:00 per set
@@ -133,12 +133,12 @@ export default function DrillExecutionClient() {
 
   // Each cue carries its own node diagram — canonical never repeats one down
   // this list (peak, apex, shoulder frame, extended arm, planted base).
-  const cues: [string, string, "GOOD" | "FOCUS", CueKind][] = [
-    ["Keep elbow stacked", "Elbow under ball at release", "GOOD", "peak"],
-    ["Release at apex", "Release at the highest point", "FOCUS", "apex"],
-    ["Square shoulders", "Shoulders aligned to target", "GOOD", "shoulders"],
-    ["Follow through long", "Full extension and soft wrist", "FOCUS", "extension"],
-    ["Balance & landing", "Stay balanced on landing", "FOCUS", "base"],
+  const cues: [string, string, "GOOD" | "FOCUS", string][] = [
+    ["Keep elbow stacked", "Elbow under ball at release", "GOOD", "091-cue-elbow"],
+    ["Release at apex", "Release at the highest point", "FOCUS", "091-cue-apex"],
+    ["Square shoulders", "Shoulders aligned to target", "GOOD", "091-cue-shoulders"],
+    ["Follow through long", "Full extension and soft wrist", "FOCUS", "091-cue-follow"],
+    ["Balance & landing", "Stay balanced on landing", "FOCUS", "091-cue-balance"],
   ]
 
   return (
@@ -208,7 +208,7 @@ export default function DrillExecutionClient() {
             <div className="flex justify-between">
               {PHASES.map((p) => (
                 <div key={p} className="w-[80px] text-center">
-                  <PoseGlyph phase={p} active={p === "RELEASE"} size={26} />
+                  <PoseFigure phase={p} active={p === "RELEASE"} height={36} className="mx-auto" />
                   <div className={`mt-[2px] whitespace-nowrap text-[10px] tracking-[0.05em] ${p === "RELEASE" ? "font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
                 </div>
               ))}
@@ -353,8 +353,9 @@ export default function DrillExecutionClient() {
           <Card className="mt-[8px] divide-y divide-[var(--shotiq-color-rule)]" data-testid="coaching-cues">
             {cues.map(([t, d, state, glyph]) => (
               <div key={t} className="flex items-center gap-[14px] px-[16px] py-[12px]">
-                <CueGlyph kind={glyph} size={34} className="shrink-0"
-                          accent={state === "GOOD" ? "var(--shotiq-color-confirmGreen)" : "var(--shotiq-color-shotiqOrange)"} />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={`/images/canonical/${glyph}.png`} alt="" aria-hidden="true"
+                     className="block h-[38px] w-auto max-w-none shrink-0" />
                 <div className="min-w-0 flex-1 border-l border-[var(--shotiq-color-rule)] pl-[14px]">
                   <div className="text-[14px] font-semibold">{t}</div>
                   <div className="text-[12px] text-[var(--shotiq-color-graphite)]">{d}</div>
@@ -399,7 +400,7 @@ export default function DrillExecutionClient() {
                 <div className="mt-[6px] flex justify-between">
                   {PHASES.map((p) => (
                     <div key={p} className="text-center">
-                      <PoseGlyph phase={p} active={p === "RELEASE"} size={26} />
+                      <PoseFigure phase={p} active={p === "RELEASE"} height={36} className="mx-auto" />
                       <div className={`text-[9px] tracking-[0.05em] whitespace-nowrap ${p === "RELEASE" ? "font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
                     </div>
                   ))}

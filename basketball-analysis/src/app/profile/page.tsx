@@ -8,11 +8,17 @@ import {
   ChevronRight, CheckCircle2, Upload, Trash2, Bell,
   Workflow, ShieldCheck, Film, Hexagon, type LucideIcon,
 } from "lucide-react"
-import { SectionLabel, Card, TrendLine, Stat } from "@/components/shotiq/ShotIQShell"
+import { SectionLabel, Card, TrendLine } from "@/components/shotiq/ShotIQShell"
 import { useAuthStore } from "@/stores/authStore"
+import {
+  useHistory, FormScoreCell, StatStrip, TrendDelta, formatMakePct, scoreSeries,
+} from "@/components/shotiq/ResultsBits"
 
 export default function ProfileAccountPage() {
   const { user } = useAuthStore()
+  // Score, shot counts and the session-over-session delta all come from the one
+  // shared history hook.
+  const { items, score, shots, makes, delta } = useHistory()
   const [form, setForm] = useState({ name: "", email: "", hand: "Right", level: "Advanced", height: "6' 4\"", weight: "195 lbs", wingspan: "6' 8\"", pref: "Catch & Shoot" })
   const [saved, setSaved] = useState(false)
   const [avatar, setAvatar] = useState<string | null>(null)
@@ -125,8 +131,10 @@ export default function ProfileAccountPage() {
                 <button type="button"
                         onClick={() => { if (avatarInputRef.current) { avatarInputRef.current.dataset.opened = String(Date.now()); avatarInputRef.current.click() } }}
                         className="mt-[8px] h-[32px] w-full rounded-[5px] border border-[var(--shotiq-color-rule)] text-[12px]">Change photo</button>
-                <button type="button" onClick={() => setAvatar(null)} disabled={!avatar}
-                        className="mt-[4px] text-[11px] text-[var(--shotiq-color-reviewRed)] disabled:opacity-40">Remove photo</button>
+                {/* Destructive, so it is set in the alert colour at full strength —
+                    the disabled 40% opacity rendered it as near-invisible pink. */}
+                <button type="button" onClick={() => setAvatar(null)}
+                        className="mt-[4px] text-[11px] font-semibold text-[var(--shotiq-color-reviewRed)] hover:underline">Remove photo</button>
               </div>
               <div className="min-w-0 flex-1">
                 <div className={lbl}>FULL NAME</div>
@@ -165,14 +173,10 @@ export default function ProfileAccountPage() {
 
           <Card className="w-[420px] shrink-0 p-[18px]">
             <SectionLabel>PERFORMANCE SUMMARY</SectionLabel>
-            <div className="mt-[10px] flex gap-[18px]">
-              <div className="w-[110px] shrink-0 border-r border-[var(--shotiq-color-rule)] pr-[14px]">
-                <div className={lbl}>FORM SCORE</div>
-                <div className="shotiq-numeric text-[46px] leading-[50px] text-[var(--shotiq-color-shotiqOrange)]">82</div>
-                <div className="h-[6px] rounded-full bg-[var(--shotiq-color-rule)]"><div className="h-full w-[82%] rounded-full bg-[var(--shotiq-color-shotiqOrange)]" /></div>
-                <div className="mt-[6px] text-[13px] font-bold text-[var(--shotiq-color-analysisBlue)]">GOOD</div>
-                <div className="text-[10px] text-[var(--shotiq-color-graphite)]">Keep building consistency.</div>
-              </div>
+            <div className="mt-[8px] flex gap-[18px]">
+              {/* The one shared form-score module (see FormScoreCell). */}
+              <FormScoreCell score={score} size={44} layout="below"
+                             className="w-[112px] shrink-0 border-r border-[var(--shotiq-color-rule)] pr-[14px]" />
               <div className="min-w-0 flex-1">
                 <div className={lbl}>PRIMARY COACHING TARGET</div>
                 <div className="flex items-center justify-between">
@@ -184,11 +188,19 @@ export default function ProfileAccountPage() {
                   <div className="h-[5px] flex-1 rounded-full bg-[var(--shotiq-color-rule)]"><div className="h-full w-[72%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" /></div>
                   <span className="text-[11px]">72%</span>
                 </div>
-                <div className="mt-[10px] flex items-center gap-[14px]">
-                  <Stat value="24" label="SHOTS" valueClass="text-[20px] leading-[24px]" />
-                  <Stat value="15" label="MAKES" valueClass="text-[20px] leading-[24px]" />
-                  <Stat value="62.5%" label="MAKE %" valueClass="text-[20px] leading-[24px]" />
-                  <TrendLine points={[3, 2.5, 3.4, 3, 4]} width={70} height={30} />
+                {/* Hairline-ruled and evenly distributed, as canonical sets it. */}
+                <div className="mt-[8px] flex items-start divide-x divide-[var(--shotiq-color-rule)]">
+                  <StatStrip className="min-w-0 flex-1" valueClass="text-[20px] leading-[24px]"
+                             cells={[
+                               { value: shots ?? "—", label: "SHOTS" },
+                               { value: makes ?? "—", label: "MAKES" },
+                               { value: formatMakePct(shots, makes), label: "MAKE %" },
+                             ]} />
+                  <div className="w-[122px] shrink-0 pl-[12px] text-center">
+                    <TrendLine points={scoreSeries(items, 5).length >= 2 ? scoreSeries(items, 5) : [3, 2.5, 3.4, 3, 4]} width={74} height={28} />
+                    <TrendDelta delta={delta} note="VS LAST SESSION" className="text-[9px] font-bold"
+                                noteClass="tracking-[0.05em] text-[var(--shotiq-color-graphite)]" />
+                  </div>
                 </div>
               </div>
             </div>

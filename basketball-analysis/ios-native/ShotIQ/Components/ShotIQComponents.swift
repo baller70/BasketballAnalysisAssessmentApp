@@ -33,6 +33,39 @@ enum ShotIQType {
     /// body line in the same typeface on 003/018, so the role is derived rather
     /// than looked up.
     static let button: CGFloat = 15.5
+
+    /// All-caps micro-label ("DAY STREAK", "SHOTS", "FOLLOW-THROUGH").
+    ///
+    /// Measured off canonical 018 and 031: cap height 6.45pt, "DAY STREAK"
+    /// 45.1pt wide. The shipped role was 7.4pt SF at 0.6 tracking — a 5.3pt cap
+    /// smeared across 51.9pt, i.e. ~50% more tracking at a *smaller* cap height
+    /// than canonical, which is what tips "FOLLOW-THROUGH" and "PRACTICE TIME"
+    /// into the ellipsis. 9pt on the condensed width gives a 6.48pt cap at
+    /// essentially the same advance, so the label gets taller without getting
+    /// wider. Use via `shotiqMicroCaps()`.
+    static let microLabel: CGFloat = 9
+
+    /// Tracking for `microLabel`, cut by a third from the shipped 0.6. The
+    /// generated token table (ShotIQTokens.ShotIQTypography.label/.caption)
+    /// carries `letterSpacing: 0` — the tracking on these labels was never in
+    /// the design system to begin with.
+    static let microTracking: CGFloat = 0.4
+
+    /// Section heading ("LATEST ANALYSIS", "SHOT RAIL:", "MEASUREMENTS").
+    ///
+    /// Canonical draws these in the bundled condensed display face, not in the
+    /// body face: "LATEST ANALYSIS" measures 84.3pt wide at a 12.0pt cap on
+    /// canonical 018. Tungsten-Bold advances 4.896em for that string at a
+    /// 0.70em cap height, so 16pt lands at 78.3pt / 11.2pt cap — versus the
+    /// shipped 127.3pt / 9.67pt cap in SF Bold at 0.8 tracking.
+    static let sectionLabel: CGFloat = 16
+    static let sectionTracking: CGFloat = 0.5
+
+    /// Canonical control height. Measured on canonical 018 the primary CTA is
+    /// 46.1pt tall (45.1 on 017, 47.9 on 003); the shipped buttons ran 54pt,
+    /// and the home CTA 58pt — ~23% over, on the screens that then lost their
+    /// footer modules off the bottom.
+    static let controlHeight: CGFloat = 47
 }
 
 /// Wilson X Connect body face for a requested weight. Font.Weight is not
@@ -68,6 +101,22 @@ extension View {
     func shotiqBody(_ size: CGFloat = ShotIQType.body, weight: Font.Weight = .regular) -> some View {
         font(.custom(shotiqBoxedFace(weight), size: size)).foregroundStyle(ShotIQColor.ink)
     }
+
+    /// Canonical all-caps micro-label: condensed width, canonical cap height,
+    /// tracking cut by a third. See `ShotIQType.microLabel`.
+    ///
+    /// The condensed width is the half of this that stops the truncation —
+    /// raising the cap height on the standard width would have made
+    /// "FOLLOW-THROUGH", "PRACTICE TIME" and "BEST ACCURACY LAST COMPLETED"
+    /// ellipsize harder, not less.
+    func shotiqMicroCaps(_ size: CGFloat = ShotIQType.microLabel,
+                         weight: Font.Weight = .medium,
+                         tracking: CGFloat = ShotIQType.microTracking) -> some View {
+        font(.system(size: size, weight: weight).width(.condensed))
+            .kerning(tracking)
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
+    }
 }
 
 /// Initials for the signed-in player (canonical player-card / Profile-tab badge).
@@ -87,13 +136,20 @@ func shotiqInitials(_ user: APIUser?) -> String {
     return "SI"
 }
 
+/// Canonical section heading. Condensed display face, canonical cap height,
+/// near-zero tracking — see `ShotIQType.sectionLabel`. Because the face is
+/// ~34% narrower than the SF Bold it replaces, every row that pairs a section
+/// label with a trailing control ("LATEST ANALYSIS" + "Today at 8:24 AM",
+/// "QUEUE (3)" + "1 uploading • 1 completed") gets that width back.
 struct SectionLabel: View {
     let text: String
     var body: some View {
         Text(text)
-            .font(.system(size: ShotIQType.h4, weight: .bold))
-            .kerning(0.8)
+            .font(.custom("Tungsten-Bold", size: ShotIQType.sectionLabel))
+            .kerning(ShotIQType.sectionTracking)
             .foregroundStyle(ShotIQColor.ink)
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
     }
 }
 
@@ -176,7 +232,7 @@ struct HeaderStat: View {
             Text(value).font(.custom("Tungsten-Semibold", size: ShotIQType.numeric))
                 .foregroundStyle(ShotIQColor.ink)
                 .lineLimit(1).minimumScaleFactor(0.7)
-            Text(label).font(.system(size: ShotIQType.caption, weight: .medium)).kerning(0.6)
+            Text(label).shotiqMicroCaps()
                 .foregroundStyle(ShotIQColor.graphite)
         }
     }
@@ -219,7 +275,7 @@ struct PrimaryButton: View {
                 if let icon { Image(systemName: icon) }
                 Text(title).font(.system(size: ShotIQType.button, weight: .medium))
             }
-            .frame(maxWidth: .infinity).frame(height: 54)
+            .frame(maxWidth: .infinity).frame(height: ShotIQType.controlHeight)
             .background(color, in: RoundedRectangle(cornerRadius: ShotIQRadius.control))
             .foregroundStyle(.white)
         }
@@ -237,7 +293,7 @@ struct SecondaryButton: View {
                 if let icon { Image(systemName: icon) }
                 Text(title).font(.system(size: ShotIQType.button))
             }
-            .frame(maxWidth: .infinity).frame(height: 54)
+            .frame(maxWidth: .infinity).frame(height: ShotIQType.controlHeight)
             .background(RoundedRectangle(cornerRadius: ShotIQRadius.control).stroke(ShotIQColor.rule))
             .foregroundStyle(ShotIQColor.ink)
         }
@@ -422,11 +478,18 @@ struct PhaseStrip: View {
                 let on = ShotPhase(label: active) == phase
                 VStack(spacing: 4) {
                     PhaseGlyph(phase: phase, active: on, size: 28)
+                    // "FOLLOW-THROUGH" is the longest label in the app and the
+                    // rail gives it ~64pt. On the standard SF width at 0.5
+                    // tracking it needed ~92pt, so it bottomed out on the 0.7
+                    // scale floor and *still* ellipsized to "FOLLOW-THRO…" on
+                    // 019/031/034/043/049/052/055/066. The condensed width plus
+                    // the reduced tracking brings it inside the cell; canonical
+                    // shrinks that one cell the same way (55.7pt at a 6.45pt
+                    // cap while SETUP stays full size).
                     Text(phase.title)
-                        .font(.system(size: 9, weight: on ? .bold : .regular))
-                        .kerning(0.5)
+                        .shotiqMicroCaps(weight: on ? .bold : .regular,
+                                         tracking: ShotIQType.microTracking - 0.05)
                         .foregroundStyle(on ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
-                        .lineLimit(1).minimumScaleFactor(0.7)
                     if on {
                         Rectangle().fill(ShotIQColor.shotiqOrange).frame(width: 40, height: 3)
                     }
@@ -475,7 +538,7 @@ struct StatBlock: View {
         VStack(alignment: .leading, spacing: 2) {
             Text(value).font(.custom("Tungsten-Semibold", size: valueSize)).foregroundStyle(color)
                 .lineLimit(1).minimumScaleFactor(0.7)
-            Text(label).font(.system(size: ShotIQType.caption, weight: .medium)).kerning(0.7)
+            Text(label).shotiqMicroCaps()
                 .foregroundStyle(ShotIQColor.graphite)
         }
     }
@@ -500,6 +563,21 @@ struct CanonicalScreen<Content: View>: View {
         // screen height instead of canonical's 1.5%. That lost row is what
         // pushed the primary CTA off the bottom of most screens.
         .toolbar(.hidden, for: .navigationBar)
+        // …and hiding the bar was only half of it. `statusBarHidden(true)`
+        // stops the clock and the battery from drawing, but it does NOT
+        // collapse the top safe-area inset: on the Dynamic Island devices the
+        // window keeps reporting 59pt of sensor housing, and every screen laid
+        // its content out below it. Measured on the r3 captures (1178x2556, 3x,
+        // iPhone 15 Pro) the SHOTIQ wordmark's cap top sat at 74.3pt on every
+        // single screen — 59pt of inset plus the ~15pt the wordmark sits down
+        // inside the 52pt bar — against 12.4pt on canonical 017, 13.4pt on
+        // canonical 018 and 9.2pt on canonical 066. The background already
+        // ignored the inset, so the 59pt read as plain dead white above the
+        // lockup and pushed a card's worth of content past the fold. Canonical
+        // draws its own chrome from y=0, so the content has to as well; the
+        // wordmark and gear sit outboard of the island cutout, exactly as the
+        // renders show them.
+        .ignoresSafeArea(.container, edges: .top)
         .accessibilityIdentifier(testID)
     }
 }

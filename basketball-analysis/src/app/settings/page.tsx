@@ -19,10 +19,11 @@ import React, { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import {
-  User, Bell, Clock, Shield, MonitorSmartphone, SlidersHorizontal,
-  Upload, Trash2, LogOut, ChevronRight, CheckCircle2, Film, Hexagon,
+  User, Bell, Clock, MonitorSmartphone, SlidersHorizontal,
+  ChevronRight, CheckCircle2, Film, Hexagon,
 } from "lucide-react"
 import { SectionLabel, Card, TrendLine, Stat } from "@/components/shotiq/ShotIQShell"
+import { useHistory, formatDelta, formatMakePct } from "@/components/shotiq/ResultsBits"
 import { useAuthStore } from "@/stores/authStore"
 import { csrfFetch } from "@/lib/api/csrfFetch"
 
@@ -101,6 +102,9 @@ const NAV_SECTIONS = [
 
 export default function SettingsPage() {
   const { user, updateUser } = useAuthStore()
+  // Shot counts and the session-over-session delta come from the one shared
+  // history hook — this panel used to print a hard-coded +8.1%.
+  const { shots, makes, delta } = useHistory()
   const [notifications, setNotifications] = useState(DEFAULT_NOTIFICATIONS)
   const [automation, setAutomation] = useState(DEFAULT_AUTOMATION)
   const [privacy, setPrivacy] = useState(DEFAULT_PRIVACY)
@@ -416,17 +420,23 @@ export default function SettingsPage() {
         <nav className="mt-[8px]" aria-label="Quick actions">
           <button type="button" onClick={exportData}
                   className="flex w-full items-center gap-[13px] px-[21px] py-[12px] text-left text-[13px] hover:bg-[var(--shotiq-color-warmCanvas)]">
-            <Upload className="h-[18px] w-[18px]" strokeWidth={1.5} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/canonical/096-quick-export.png" alt="" aria-hidden="true"
+                 className="block h-[32px] w-[31px] max-w-none shrink-0 object-contain" />
             {exporting === "working" ? "Exporting…" : exporting === "done" ? "Downloaded ✓" : "Export all data"}
           </button>
           <button type="button" onClick={clearHistory}
                   className="flex w-full items-center gap-[13px] px-[21px] py-[12px] text-left text-[13px] hover:bg-[var(--shotiq-color-warmCanvas)]">
-            <Trash2 className="h-[18px] w-[18px]" strokeWidth={1.5} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/canonical/096-quick-clear.png" alt="" aria-hidden="true"
+                 className="block h-[33px] w-[30px] max-w-none shrink-0 object-contain" />
             {clearing === "confirm" ? "Confirm clear?" : clearing === "working" ? "Clearing…" : clearing === "done" ? "History cleared" : "Clear history"}
           </button>
           <button type="button" onClick={signOut}
                   className="flex w-full items-center gap-[13px] px-[21px] py-[12px] text-left text-[13px] hover:bg-[var(--shotiq-color-warmCanvas)]">
-            <LogOut className="h-[18px] w-[18px]" strokeWidth={1.5} /> Sign out
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/canonical/096-quick-signout.png" alt="" aria-hidden="true"
+                 className="block h-[32px] w-[30px] max-w-none shrink-0 object-contain" /> Sign out
           </button>
         </nav>
       </aside>
@@ -535,12 +545,13 @@ export default function SettingsPage() {
                   <span className="text-[11px]">72%</span>
                 </div>
                 <div className="mt-[14px] flex items-center gap-[8px] divide-x divide-[var(--shotiq-color-rule)]">
-                  <Stat value="24" label="SHOTS" valueClass="text-[22px] leading-[26px]" />
-                  <div className="pl-[14px]"><Stat value="15" label="MAKES" valueClass="text-[22px] leading-[26px]" /></div>
-                  <div className="pl-[14px]"><Stat value="62.5%" label="MAKE %" valueClass="text-[22px] leading-[26px]" /></div>
+                  <Stat value={shots ?? "—"} label="SHOTS" valueClass="text-[22px] leading-[26px]" />
+                  <div className="pl-[14px]"><Stat value={makes ?? "—"} label="MAKES" valueClass="text-[22px] leading-[26px]" /></div>
+                  <div className="pl-[14px]"><Stat value={formatMakePct(shots, makes)} label="MAKE %" valueClass="text-[22px] leading-[26px]" /></div>
                   <div className="pl-[14px] text-right">
                     <TrendLine points={[3, 2.5, 3.4, 3, 4]} width={80} height={28} />
-                    <div className="text-[9px] text-[var(--shotiq-color-confirmGreen)]">+8.1% vs last session</div>
+                    {/* Shared computed delta, not a hand-written +8.1%. */}
+                    <div className={`text-[9px] ${delta != null && delta < 0 ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-confirmGreen)]"}`}>{formatDelta(delta)} vs last session</div>
                   </div>
                 </div>
               </div>
@@ -564,7 +575,9 @@ export default function SettingsPage() {
         <div className="mt-[12px] grid grid-cols-3 gap-[16px]">
           <Card id="section-notifications" className="scroll-mt-[76px] p-[16px]">
             <div className="flex items-center gap-[10px]">
-              <Bell className="h-[24px] w-[24px]" strokeWidth={1.4} />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/images/canonical/096-mark-notifications.png" alt="" aria-hidden="true"
+                   className="block h-[34px] w-[31px] max-w-none shrink-0 object-contain" />
               <div>
                 <SectionLabel>NOTIFICATIONS</SectionLabel>
                 <div className="text-[11px] text-[var(--shotiq-color-graphite)]">Control how and when you receive updates.</div>
@@ -586,7 +599,9 @@ export default function SettingsPage() {
 
           <Card id="section-automation" className="scroll-mt-[76px] p-[16px]">
             <div className="flex items-center gap-[10px]">
-              <Clock className="h-[24px] w-[24px]" strokeWidth={1.4} />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/images/canonical/096-mark-automation.png" alt="" aria-hidden="true"
+                   className="block h-[34px] w-[31px] max-w-none shrink-0 object-contain" />
               <div>
                 <SectionLabel>AUTOMATION</SectionLabel>
                 <div className="text-[11px] text-[var(--shotiq-color-graphite)]">Manage automated analysis and insights.</div>
@@ -608,7 +623,9 @@ export default function SettingsPage() {
 
           <Card id="section-privacy" className="scroll-mt-[76px] p-[16px]">
             <div className="flex items-center gap-[10px]">
-              <Shield className="h-[24px] w-[24px]" strokeWidth={1.4} />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/images/canonical/096-mark-privacy.png" alt="" aria-hidden="true"
+                   className="block h-[34px] w-[29px] max-w-none shrink-0 object-contain" />
               <div>
                 <SectionLabel>DATA &amp; PRIVACY</SectionLabel>
                 <div className="text-[11px] text-[var(--shotiq-color-graphite)]">Control your data and privacy preferences.</div>
@@ -634,7 +651,9 @@ export default function SettingsPage() {
             <div className="mt-[2px] text-[11px] text-[var(--shotiq-color-graphite)]">Manage your data and analysis history.</div>
           </div>
           <div className="flex flex-1 items-center gap-[14px] px-[18px]">
-            <Upload className="h-[26px] w-[26px]" strokeWidth={1.4} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/canonical/096-action-export.png" alt="" aria-hidden="true"
+                 className="block h-[45px] w-[41px] max-w-none shrink-0 object-contain" />
             <div className="min-w-0 flex-1">
               <div className="text-[13px] font-semibold">Export all data</div>
               <div className="text-[11px] text-[var(--shotiq-color-graphite)]">Download a copy of all your shots, analyses, sessions, and account data.</div>
@@ -645,7 +664,9 @@ export default function SettingsPage() {
             </button>
           </div>
           <div className="flex flex-1 items-center gap-[14px] px-[18px]">
-            <Trash2 className="h-[26px] w-[26px] text-[var(--shotiq-color-reviewRed)]" strokeWidth={1.4} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/canonical/096-action-clear.png" alt="" aria-hidden="true"
+                 className="block h-[46px] w-[40px] max-w-none shrink-0 object-contain" />
             <div className="min-w-0 flex-1">
               <div className="text-[13px] font-semibold">Clear history</div>
               <div className="text-[11px] text-[var(--shotiq-color-graphite)]">Permanently delete all shots, analyses, and session history.</div>

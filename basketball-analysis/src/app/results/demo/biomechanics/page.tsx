@@ -10,7 +10,7 @@ import {
   HelpCircle, type LucideIcon,
 } from "lucide-react"
 import { ShotIQShell, SectionLabel, Card, TrendLine } from "@/components/shotiq/ShotIQShell"
-import { PoseGlyph, MechanicGlyph, type MechanicKind } from "@/components/shotiq/Glyphs"
+import { PoseFigure } from "@/components/shotiq/Glyphs"
 import { useHistory, CoachingTarget, sessionDelta, formatDelta } from "@/components/shotiq/ResultsBits"
 
 /** 084's own icon rail: icon-over-label, ANALYSES active, HELP pinned. */
@@ -49,13 +49,13 @@ function BiomechRail() {
 
 // One bespoke diagram per measured quantity — canonical never repeats a glyph
 // down this list (angle, height ruler, distance tape, lift, ball arc, midline).
-const MEASUREMENTS: [string, string, string, string, MechanicKind][] = [
-  ["Elbow Angle", "92°", "Ideal: 85°–95°", "Good", "angle"],
-  ["Release Height", "8'10\"", "Ideal: 8'6\"–9'2\"", "Good", "height"],
-  ["Release Distance", "16.2\"", "Ideal: 14\"–16\"", "Slightly High", "distance"],
-  ["Vertical Jump", "24.6\"", "Ideal: 20\"–28\"", "Good", "jump"],
-  ["Shooting Arc", "52°", "Ideal: 45°–55°", "Good", "arc"],
-  ["Centerline Deviation", "1.8°", "Ideal: < 3°", "Good", "centerline"],
+const MEASUREMENTS: [string, string, string, string, string][] = [
+  ["Elbow Angle", "92°", "Ideal: 85°–95°", "Good", "084-metric-elbow"],
+  ["Release Height", "8'10\"", "Ideal: 8'6\"–9'2\"", "Good", "084-metric-height"],
+  ["Release Distance", "16.2\"", "Ideal: 14\"–16\"", "Slightly High", "084-metric-distance"],
+  ["Vertical Jump", "24.6\"", "Ideal: 20\"–28\"", "Good", "084-metric-jump"],
+  ["Shooting Arc", "52°", "Ideal: 45°–55°", "Good", "084-metric-arc"],
+  ["Centerline Deviation", "1.8°", "Ideal: < 3°", "Good", "084-metric-centerline"],
 ]
 
 // Metric drill-down copy for the detail view (iOS 045 counterpart).
@@ -118,7 +118,7 @@ export default function BiomechanicsWorkspacePage() {
   const [metric, setMetric] = useState<string | null>(null)
   // Annotation drawing tools (iOS 043 counterpart) — a real canvas overlay.
   const [tool, setTool] = useState<"pen" | "line" | null>(null)
-  const [inkColor, setInkColor] = useState("#FF5A1F")
+  const [inkColor, setInkColor] = useState("#FD3701")
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const drawing = useRef<{ x: number; y: number } | null>(null)
   // Visible state change first, then the browser print dialog (the export path).
@@ -247,7 +247,7 @@ export default function BiomechanicsWorkspacePage() {
             <React.Fragment key={p}>
               {i > 0 && <span className="mt-[16px] h-px min-w-[16px] flex-1 bg-[var(--shotiq-color-rule)]" />}
               <div className="shrink-0 px-[6px] text-center">
-                <PoseGlyph phase={p} active={p === "RELEASE"} size={32} />
+                <PoseFigure phase={p} active={p === "RELEASE"} height={37} className="mx-auto" />
                 <div className={`mt-[4px] pb-[6px] text-[10px] tracking-[0.06em] ${p === "RELEASE" ? "relative font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>
                   {p}
                   {p === "RELEASE" && <span className="absolute inset-x-[-6px] bottom-0 h-[2px] bg-[var(--shotiq-color-shotiqOrange)]" />}
@@ -315,7 +315,7 @@ export default function BiomechanicsWorkspacePage() {
                 <Minus className="h-[13px] w-[13px]" /> Line
               </button>
               <span className="mx-[2px] h-[20px] w-px bg-[var(--shotiq-color-rule)]" />
-              {["#FF5A1F", "#2D6CDF", "#168A55"].map((c) => (
+              {["#FD3701", "#2D6CDF", "#168A55"].map((c) => (
                 <button key={c} type="button" onClick={() => setInkColor(c)} aria-label={`ink ${c}`}
                         className={`h-[18px] w-[18px] rounded-full ${inkColor === c ? "ring-2 ring-[var(--shotiq-color-ink)] ring-offset-1" : ""}`}
                         style={{ background: c }} />
@@ -361,7 +361,9 @@ export default function BiomechanicsWorkspacePage() {
                 {MEASUREMENTS.map(([m, v, ideal, band, glyph]) => (
                   <button key={m} type="button" onClick={() => setMetric(m)} data-testid={`metric-${m.toLowerCase().replace(/\s+/g, "-")}`}
                           className="flex w-full items-center gap-[8px] py-[12px] text-left hover:bg-[var(--shotiq-color-warmCanvas)]">
-                    <MechanicGlyph kind={glyph} size={22} className="shrink-0" />
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={`/images/canonical/${glyph}.png`} alt="" aria-hidden="true"
+                         className="block h-[28px] w-[26px] max-w-none shrink-0 object-contain" />
                     <div className="min-w-0 flex-1">
                       <div className="whitespace-nowrap text-[13px] font-semibold">{m}</div>
                       <div className="text-[10px] text-[var(--shotiq-color-graphite)]">{ideal}</div>
@@ -428,9 +430,10 @@ export default function BiomechanicsWorkspacePage() {
               <div className="mt-[10px] flex items-center gap-[12px]">
                 {/* Canonical rings this one large: the ball's path drifting off
                     the centerline. */}
-                <span className="grid h-[62px] w-[62px] shrink-0 place-items-center rounded-full border border-[var(--shotiq-color-rule)]">
-                  <MechanicGlyph kind="drift" size={36} />
-                </span>
+                {/* Canonical rings this mark itself, so the crop carries the ring. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/images/canonical/084-focus-mark.png" alt="" aria-hidden="true"
+                     className="block h-[62px] w-[62px] max-w-none shrink-0" />
                 <div className="min-w-0 flex-1">
                   <div className="text-[13px] font-semibold">Tighten Elbow Path</div>
                   <p className="mt-[2px] text-[11px] leading-[15px] text-[var(--shotiq-color-graphite)]">

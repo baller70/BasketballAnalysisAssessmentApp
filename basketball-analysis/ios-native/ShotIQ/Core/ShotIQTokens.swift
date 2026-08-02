@@ -23,7 +23,7 @@ public enum ShotIQColor {
     /// #D9D9D4
     public static let rule = Color(red: 0.850980, green: 0.850980, blue: 0.831373)
     /// #FF5A1F
-    public static let shotiqOrange = Color(red: 1.000000, green: 0.352941, blue: 0.121569)
+    public static let shotiqOrange = Color(red: 0.992157, green: 0.215686, blue: 0.003922)
     /// #F7F7F4
     public static let warmCanvas = Color(red: 0.968627, green: 0.968627, blue: 0.956863)
 }

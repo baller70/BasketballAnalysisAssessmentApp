@@ -137,7 +137,9 @@ private func captureCTA(_ title: String, icon: String? = nil,
         if let icon { Image(systemName: icon).font(.system(size: 18, weight: .medium)) }
         Text(title).font(.system(size: 17, weight: .semibold))
     }
-    .frame(maxWidth: .infinity).frame(height: 56)
+    // Was 56 — the same over-height primary CTA the review measured at 58pt on
+    // 018. Shares the canonical control height with PrimaryButton.
+    .frame(maxWidth: .infinity).frame(height: ShotIQType.controlHeight)
     .background(color, in: RoundedRectangle(cornerRadius: 8))
     .foregroundStyle(.white)
     .lineLimit(1)
@@ -150,7 +152,7 @@ private func captureOutline(_ title: String, icon: String? = nil) -> some View {
         if let icon { Image(systemName: icon).font(.system(size: 16)) }
         Text(title).font(.system(size: 16))
     }
-    .frame(maxWidth: .infinity).frame(height: 52)
+    .frame(maxWidth: .infinity).frame(height: ShotIQType.controlHeight)
     .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
     .foregroundStyle(ShotIQColor.ink)
     .lineLimit(1)
@@ -277,9 +279,8 @@ private func captureStat(_ value: String, _ label: String,
     VStack(spacing: 2) {
         Text(value).font(.custom("Tungsten-Semibold", size: size)).foregroundStyle(color)
             .lineLimit(1).minimumScaleFactor(0.6)
-        Text(label).font(.system(size: 9, weight: .medium)).kerning(0.5)
+        Text(label).shotiqMicroCaps()
             .foregroundStyle(ShotIQColor.graphite)
-            .lineLimit(1).minimumScaleFactor(0.6)
     }
     .frame(maxWidth: .infinity)
 }
@@ -1080,8 +1081,14 @@ struct UploadQueueView: View {      // 025
                                 (it.state == "Uploading" ? ShotIQColor.analysisBlue : ShotIQColor.graphite))
                         Text(it.state == "Complete" ? "Image" : "Video")
                             .font(.system(size: 16, weight: .semibold)).foregroundStyle(ShotIQColor.ink)
+                            .lineLimit(1).fixedSize()
                         Text("•").foregroundStyle(ShotIQColor.graphite)
+                        // The trailing overflow Menu and the Spacer left this
+                        // status word compressible, so "Uploading" and "Complete"
+                        // broke inside the word — "Uploadin g" / "Complet e" on
+                        // 025. It is a single token; it never wraps.
                         Text(it.state).font(.system(size: 14, weight: .medium))
+                            .lineLimit(1).fixedSize()
                             .foregroundStyle(it.state == "Complete" ? ShotIQColor.confirmGreen :
                                 (it.state == "Uploading" ? ShotIQColor.analysisBlue : ShotIQColor.graphite))
                         Spacer()
@@ -2566,23 +2573,32 @@ struct CaptureReviewView: View {    // 035
                                         .background(.black.opacity(0.75), in: RoundedRectangle(cornerRadius: 3))
                                         .padding(6)
                                 }
+                                // Thumb (116) + confidence ring column both hold a
+                                // fixed width, so this middle column was the only
+                                // compressible one and the meta lines broke
+                                // mid-word — "Low confidenc e" on 035. Pinning
+                                // them to their own text gives the column a floor.
                                 VStack(alignment: .leading, spacing: 5) {
                                     Text("SHOT \(n)").shotiqDisplay(22)
                                     Text(when).font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                                        .lineLimit(1).minimumScaleFactor(0.8)
                                     HStack(spacing: 6) {
                                         Image(systemName: "figure.basketball").font(.system(size: 12)).foregroundStyle(ShotIQColor.ink)
                                         Text(flaw).font(.system(size: 12)).foregroundStyle(ShotIQColor.ink)
+                                            .lineLimit(1).fixedSize()
                                     }
                                     HStack(spacing: 6) {
                                         Image(systemName: "gauge.with.needle").font(.system(size: 12)).foregroundStyle(ShotIQColor.ink)
                                         Text("Low confidence").font(.system(size: 12)).foregroundStyle(ShotIQColor.ink)
+                                            .lineLimit(1).fixedSize()
                                     }
                                     HStack(spacing: 6) {
                                         Image(systemName: "film").font(.system(size: 12)).foregroundStyle(ShotIQColor.ink)
                                         Text(dur).font(.system(size: 12)).foregroundStyle(ShotIQColor.ink)
+                                            .lineLimit(1).fixedSize()
                                     }
                                 }
-                                Spacer()
+                                Spacer(minLength: 4)
                                 VStack(spacing: 6) {
                                     Ring(pct: conf, color: ShotIQColor.shotiqOrange, lineWidth: 5)
                                         .frame(width: 48, height: 48)

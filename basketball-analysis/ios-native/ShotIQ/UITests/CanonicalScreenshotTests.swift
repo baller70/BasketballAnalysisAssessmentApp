@@ -165,9 +165,17 @@ final class CanonicalScreenshotTests: XCTestCase {
     // MARK: - 001-007 · auth
 
     func test01AuthScreens() {
-        launch([])
-        // The splash auto-advances after ~1.2s, so grab it straight away.
-        expectScreen("screen-ios-splash", timeout: 6)
+        // Screen 001 cannot be caught on a timer. XCUITest does not issue its
+        // first accessibility query until 15-30s after `launch()` on the CI Mac
+        // — in the run that reported this, the app started at t=1.09s and the
+        // splash query went out at t=22.63s, 11.1s of which was the runner's own
+        // "wait for the app to idle". Any brand hold short enough to ship (1.2s,
+        // then 2.5s) is long gone by then, which is why this screen "never
+        // appeared" twice. `-uiTestHoldSplash` makes the app hold screen 001
+        // until it is tapped instead, so the assertion below means what it says.
+        launch(["-uiTestHoldSplash"])
+        expectScreen("screen-ios-splash", timeout: 30)
+        app.tap() // release the hold — SplashView advances on tap
         expectScreen("screen-ios-welcome", timeout: 15)
 
         tapAndExpect("Sign in", "screen-ios-sign-in", from: "welcome")

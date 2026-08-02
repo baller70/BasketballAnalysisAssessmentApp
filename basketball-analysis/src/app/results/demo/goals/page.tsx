@@ -8,9 +8,11 @@ import {
   Pencil, MoreVertical, Check, ChevronRight, X,
   PieChart, Scan, PersonStanding, TrendingUp, Film, Compass,
 } from "lucide-react"
-import { ShotIQShell, SectionLabel, Card, TrendLine, Stat } from "@/components/shotiq/ShotIQShell"
-import { MechanicGlyph, WorkoutGlyph, CueGlyph, type WorkoutKind } from "@/components/shotiq/Glyphs"
-import { useHistory } from "@/components/shotiq/ResultsBits"
+import { ShotIQShell, SectionLabel, Card, TrendLine } from "@/components/shotiq/ShotIQShell"
+import { WorkoutGlyph, type WorkoutKind } from "@/components/shotiq/Glyphs"
+import {
+  useHistory, StatStrip, formatDelta, formatMakePct, scoreSeries,
+} from "@/components/shotiq/ResultsBits"
 import { csrfFetch } from "@/lib/api/csrfFetch"
 
 interface Goal { id: string; title: string; description?: string; progress?: number }
@@ -19,7 +21,7 @@ interface ApiGoal { id: string; name: string; description?: string; currentValue
 const DEMO_GOAL: Goal = { id: "demo", title: "Keep elbow stacked through release", progress: 0.72 }
 
 export default function GoalsPlanPage() {
-  const { hasData } = useHistory()
+  const { hasData, items, shots, makes, delta } = useHistory()
   const [goals, setGoals] = useState<Goal[]>([])
   const [modal, setModal] = useState<null | "create" | "edit" | "log">(null)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -132,30 +134,37 @@ export default function GoalsPlanPage() {
             </div>
             <span className="text-[13px]">{pct}%</span>
           </div>
-          <div className="mt-[12px] flex gap-[18px] border-t border-[var(--shotiq-color-rule)] pt-[12px]">
-            <Stat value={hasData ? "24" : "0"} label="SHOTS" valueClass="text-[20px] leading-[22px]" />
-            <Stat value={hasData ? "15" : "0"} label="MAKES" valueClass="text-[20px] leading-[22px]" />
-            <Stat value={hasData ? "62.5%" : "—"} label="MAKE %" valueClass="text-[20px] leading-[22px]" />
-            <div><div className="shotiq-numeric text-[20px] leading-[22px] text-[var(--shotiq-color-confirmGreen)]">+8.1%</div>
-              <div className="text-[9px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">VS LAST SESSION</div></div>
-          </div>
+          {/* Hairline-ruled and evenly distributed, as canonical sets it — the
+              cells used to sit in a left-clustered gap row with no rules. */}
+          <StatStrip className="mt-[10px] border-t border-[var(--shotiq-color-rule)] pt-[10px]"
+                     valueClass="text-[20px] leading-[22px]"
+                     cells={[
+                       { value: hasData ? shots ?? "—" : "0", label: "SHOTS" },
+                       { value: hasData ? makes ?? "—" : "0", label: "MAKES" },
+                       { value: hasData ? formatMakePct(shots, makes) : "—", label: "MAKE %" },
+                       { value: formatDelta(delta), label: "VS LAST SESSION",
+                         accent: delta != null && delta < 0
+                           ? "var(--shotiq-color-reviewRed)" : "var(--shotiq-color-confirmGreen)" },
+                     ]} />
           <SectionLabel className="mt-[12px] border-t border-[var(--shotiq-color-rule)] pt-[12px]">PROGRESS TREND</SectionLabel>
           <div className="flex items-center gap-[12px]">
             <div>
-              <TrendLine points={[2, 2.6, 2.2, 3, 2.7, 3.4, 3.2, 4]} width={230} height={70} />
+              <TrendLine points={scoreSeries(items, 8).length >= 2 ? scoreSeries(items, 8) : [2, 2.6, 2.2, 3, 2.7, 3.4, 3.2, 4]} width={230} height={62} />
               <div className="flex justify-between pr-[6px] text-[9px] tracking-[0.03em] text-[var(--shotiq-color-graphite)]">
                 {["Apr 13", "Apr 20", "Apr 27", "May 4", "May 11"].map((d) => <span key={d}>{d}</span>)}
                 <span className="font-bold text-[var(--shotiq-color-confirmGreen)]">TODAY</span>
               </div>
             </div>
             <div className="text-right">
-              <div className="text-[16px] font-bold text-[var(--shotiq-color-confirmGreen)]">+8.1%</div>
+              <div className={`text-[16px] font-bold ${delta != null && delta < 0 ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-confirmGreen)]"}`}>{formatDelta(delta)}</div>
               <div className="text-[9px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">VS LAST SESSION</div>
             </div>
           </div>
           <SectionLabel className="mt-[10px] border-t border-[var(--shotiq-color-rule)] pt-[12px]">KEY MECHANIC FOCUS</SectionLabel>
           <div className="mt-[6px] flex items-center gap-[12px]">
-            <MechanicGlyph kind="angle" size={40} className="shrink-0" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/canonical/092-key-mechanic.png" alt="" aria-hidden="true"
+                 className="block h-[62px] w-auto max-w-none shrink-0" />
             <div className="flex-1">
               <div className="text-[14px] font-semibold">Elbow vertical at release</div>
               <p className="text-[11px] text-[var(--shotiq-color-graphite)]">Maintain a stacked arm position to improve consistency and accuracy.</p>
@@ -260,7 +269,9 @@ export default function GoalsPlanPage() {
             </div>
             <Link href="/results/demo/training"
                   className="mt-[8px] flex h-[38px] w-full items-center justify-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] text-[13px]">
-              <WorkoutGlyph kind="release" size={16} /> Add drill
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/images/canonical/092-add-drill.png" alt="" aria-hidden="true"
+                   className="block h-[24px] w-auto max-w-none" /> Add drill
             </Link>
           </Card>
         </div>
@@ -301,7 +312,9 @@ export default function GoalsPlanPage() {
             </p>
             <div className="mt-[10px] flex gap-[14px]">
               <div className="grid h-[86px] w-[86px] shrink-0 place-items-center rounded-[8px] border-2 border-dashed border-[var(--shotiq-color-rule)]">
-                <CueGlyph kind="tree" size={50} accent="var(--shotiq-color-shotiqOrange)" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/images/canonical/092-create-goal.png" alt="" aria-hidden="true"
+                     className="block h-[52px] w-auto max-w-none" />
               </div>
               <ul className="space-y-[8px] text-[12px]">
                 {["Focus on the right mechanics", "Track progress with AI analysis", "Stay accountable and improve"].map((t) => (

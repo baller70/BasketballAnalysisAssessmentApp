@@ -14,7 +14,7 @@ import React, { useState } from "react"
 import Link from "next/link"
 import { Pencil, Share2, Download, Check, ChevronRight } from "lucide-react"
 import { SectionLabel, Card, TrendLine } from "@/components/shotiq/ShotIQShell"
-import { PoseGlyph, toShotPhase } from "@/components/shotiq/Glyphs"
+import { PoseGlyph, PoseFigure, toShotPhase } from "@/components/shotiq/Glyphs"
 import { useHistory } from "@/components/shotiq/ResultsBits"
 import { useAuthStore } from "@/stores/authStore"
 
@@ -164,10 +164,17 @@ export default function PlayerCardPage() {
               {PHASES.map((p, i) => (
                 <button key={p} type="button" onClick={() => setFilm(i)}
                         className="relative z-[1] min-w-0 flex-1 text-center">
-                  <span className="inline-flex"
-                        style={{ color: i === film ? accentColor : dark ? "#FFFFFF" : "var(--shotiq-color-ink)" }}>
-                    <PoseGlyph phase={toShotPhase(p)} size={26} />
-                  </span>
+                  {/* Canonical crop wherever the card is in a canonical colour
+                      way; the SVG stays for a user-picked accent, which no crop
+                      can follow. */}
+                  {i !== film || accent === 0 ? (
+                    <PoseFigure phase={toShotPhase(p)} active={i === film}
+                                tone={dark ? "dark" : "light"} height={30} className="mx-auto" />
+                  ) : (
+                    <span className="inline-flex" style={{ color: accentColor }}>
+                      <PoseGlyph phase={toShotPhase(p)} size={26} />
+                    </span>
+                  )}
                   <div className={`text-[8px] tracking-[0.06em] ${i === film ? "font-bold" : dark ? "text-white/70" : "text-[var(--shotiq-color-graphite)]"}`}
                        style={i === film ? { color: accentColor } : undefined}>{p}</div>
                   <span className={`mx-auto mt-[5px] block h-[7px] w-[7px] rounded-full ${i === film ? "" : dark ? "bg-white" : "bg-[var(--shotiq-color-graphite)]"}`}

@@ -27,31 +27,31 @@ import {
   ShotIQShell, WideSidebar, TrendLine, SectionLabel, Card, Stat,
 } from "@/components/shotiq/ShotIQShell"
 import {
-  QualityGlyph, FilmingGlyph, type QualityKind, type FilmingKind,
-} from "@/components/shotiq/Glyphs"
-import { useHistory, scoreSeries, sessionDelta, formatDelta } from "@/components/shotiq/ResultsBits"
+  useHistory, scoreSeries, sessionDelta, formatDelta, FormScoreCell, formatMakePct,
+} from "@/components/shotiq/ResultsBits"
 
 const ACCEPT = ".mp4,.mov,.hevc,.jpg,.jpeg,.png"
 const isVideo = (f: File) => /video|\.mp4$|\.mov$|\.hevc$/i.test(`${f.type} ${f.name}`)
 
 // Pre-flight checks and filming advice each get their own bespoke mark, the way
 // canonical draws them — no generic icon does duty for two different ideas.
-const CHECKS: [string, string, QualityKind][] = [
-  ["Resolution", "Minimum 720p recommended", "resolution"],
-  ["Lighting", "Well-lit subject and background", "lighting"],
-  ["Frame rate", "30–60 FPS recommended", "framerate"],
-  ["Stability", "Minimize camera shake", "stability"],
+// The eight marks are cropped out of canonical 081.
+const CHECKS: [string, string, string][] = [
+  ["Resolution", "Minimum 720p recommended", "081-quality-resolution"],
+  ["Lighting", "Well-lit subject and background", "081-quality-lighting"],
+  ["Frame rate", "30–60 FPS recommended", "081-quality-framerate"],
+  ["Stability", "Minimize camera shake", "081-quality-stability"],
 ]
-const FILMING: [string, string, FilmingKind][] = [
-  ["Full body in frame", "From feet to above head", "fullBody"],
-  ["Side angle", "Camera perpendicular to shooter", "sideAngle"],
-  ["Neutral background", "Avoid clutter and distractions", "background"],
-  ["Good lighting", "Even light on player and ball", "light"],
+const FILMING: [string, string, string][] = [
+  ["Full body in frame", "From feet to above head", "081-filming-fullbody"],
+  ["Side angle", "Camera perpendicular to shooter", "081-filming-sideangle"],
+  ["Neutral background", "Avoid clutter and distractions", "081-filming-background"],
+  ["Good lighting", "Even light on player and ball", "081-filming-light"],
 ]
 
 export default function AnalyzeWorkspacePage() {
   const router = useRouter()
-  const { items, score } = useHistory()
+  const { items, score, shots, makes } = useHistory()
   const trend = scoreSeries(items, 6)
   const delta = sessionDelta(items)
   const { uploadedFile, uploadedImageBase64 } = useAnalysisStore()
@@ -138,7 +138,7 @@ export default function AnalyzeWorkspacePage() {
           { label: "Shooting Tips", href: "/guide", icon: PlayCircle },
         ]},
       ]} />}>
-      <div data-testid="screen-desktop-web-analyze-workspace" className="flex min-h-full flex-col px-[28px] pt-[24px]">
+      <div data-testid="screen-desktop-web-analyze-workspace" className="flex min-h-full flex-col px-[28px] pt-[16px]">
         <div className="flex">
           <div className="min-w-0 flex-1 pr-[26px]">
             <h1 className="shotiq-display text-[50px] leading-[52px]">UPLOAD &amp; ANALYZE</h1>
@@ -215,19 +215,10 @@ export default function AnalyzeWorkspacePage() {
                 </div>
               </div>
               <div className="mt-[16px] flex divide-x divide-[var(--shotiq-color-rule)] border-t border-[var(--shotiq-color-rule)] pt-[14px]">
-                <div className="flex-1 pr-[14px]">
-                  <SectionLabel>FORM SCORE</SectionLabel>
-                  <div className="flex items-end gap-[10px]">
-                    <div className="shotiq-numeric text-[44px] leading-[48px] text-[var(--shotiq-color-shotiqOrange)]">{score ?? "—"}</div>
-                    <div className="pb-[6px]">
-                      <div className="text-[12px] font-bold text-[var(--shotiq-color-analysisBlue)]">GOOD</div>
-                      <div className="text-[10px] leading-[13px] text-[var(--shotiq-color-graphite)]">Keep building<br />consistency.</div>
-                    </div>
-                  </div>
-                  <div className="mt-[6px] h-[6px] rounded-full bg-[var(--shotiq-color-rule)]">
-                    <div className="h-full rounded-full bg-[var(--shotiq-color-shotiqOrange)]" style={{ width: `${score ?? 0}%` }} />
-                  </div>
-                </div>
+                {/* The one shared form-score module (see FormScoreCell): the bar
+                    used to stretch the whole cell instead of sitting under the
+                    numeral. */}
+                <FormScoreCell score={score} size={44} className="flex-1 pr-[14px]" />
                 <div className="flex-1 pl-[14px]">
                   <SectionLabel>PRIMARY TARGET</SectionLabel>
                   <div className="mt-[4px] flex items-start justify-between">
@@ -248,9 +239,9 @@ export default function AnalyzeWorkspacePage() {
                 {/* Hairline-ruled and spread across the card, as canonical draws
                     it; the trend plots the real score history. */}
                 <div className="mt-[8px] flex items-center divide-x divide-[var(--shotiq-color-rule)]">
-                  <div className="flex-1 pr-[12px]"><Stat value="24" label="SHOTS" valueClass="text-[20px] leading-[24px]" /></div>
-                  <div className="flex-1 px-[12px]"><Stat value="15" label="MAKES" valueClass="text-[20px] leading-[24px]" /></div>
-                  <div className="flex-1 px-[12px]"><Stat value="62.5%" label="MAKE %" valueClass="text-[20px] leading-[24px]" /></div>
+                  <div className="flex-1 pr-[12px]"><Stat value={shots ?? "—"} label="SHOTS" valueClass="text-[20px] leading-[24px]" /></div>
+                  <div className="flex-1 px-[12px]"><Stat value={makes ?? "—"} label="MAKES" valueClass="text-[20px] leading-[24px]" /></div>
+                  <div className="flex-1 px-[12px]"><Stat value={formatMakePct(shots, makes)} label="MAKE %" valueClass="text-[20px] leading-[24px]" /></div>
                   <div className="shrink-0 pl-[12px] text-right">
                     <TrendLine points={trend} width={84} height={30} />
                     <div className={`text-[10px] ${delta != null && delta < 0 ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-confirmGreen)]"}`}>
@@ -299,7 +290,9 @@ export default function AnalyzeWorkspacePage() {
               <ul className="mt-[10px] divide-y divide-[var(--shotiq-color-rule)]">
                 {CHECKS.map(([t, d, kind]) => (
                   <li key={t} className="flex items-center gap-[12px] py-[8px]">
-                    <QualityGlyph kind={kind} size={22} className="shrink-0" />
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={`/images/canonical/${kind}.png`} alt="" aria-hidden="true"
+                         className="block h-[26px] w-[38px] max-w-none shrink-0 object-contain" />
                     <div>
                       <div className="whitespace-nowrap text-[13px] font-semibold">{t}</div>
                       <div className="whitespace-nowrap text-[11px] text-[var(--shotiq-color-graphite)]">{d}</div>
@@ -317,7 +310,9 @@ export default function AnalyzeWorkspacePage() {
               <ul className="mt-[10px] divide-y divide-[var(--shotiq-color-rule)]">
                 {FILMING.map(([t, d, kind]) => (
                   <li key={t} className="flex items-center gap-[12px] py-[7px]">
-                    <FilmingGlyph kind={kind} size={22} className="shrink-0" />
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={`/images/canonical/${kind}.png`} alt="" aria-hidden="true"
+                         className="block h-[28px] w-[30px] max-w-none shrink-0 object-contain" />
                     <div>
                       <div className="whitespace-nowrap text-[13px] font-semibold leading-[17px]">{t}</div>
                       <div className="whitespace-nowrap text-[11px] leading-[15px] text-[var(--shotiq-color-graphite)]">{d}</div>

@@ -10,9 +10,55 @@ export interface HistoryStats {
   averageScore: number | null
   latestScore: number | null
   improvementRate: number | null
+  /** Shots/makes summed over every session that has a capture behind it. */
+  totalShots: number | null
+  totalMakes: number | null
+  makePct: number | null
 }
 
-export interface HistoryItem { title: string; when: string; style: string; score: number | null }
+export interface HistoryItem {
+  title: string
+  when: string
+  style: string
+  score: number | null
+  /** Attempts detected in the capture session behind this analysis. */
+  shots: number | null
+  /** Attempts scored as a make, after human corrections. */
+  makes: number | null
+}
+
+/**
+ * The one date format the whole app prints: `Mon D, YYYY • H:MM AM`.
+ *
+ * 079, 083 and 093 each rolled their own before this — `toLocaleString`
+ * defaults put a comma before the time, and the demo tables used a middot —
+ * so the same session was dated three different ways on three screens.
+ */
+export function formatSessionDate(value: string | number | Date | null | undefined): string {
+  if (value == null || value === "") return ""
+  const d = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(d.getTime())) return ""
+  const day = d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+  const time = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+  return `${day} • ${time}`
+}
+
+/** Make percentage from a shots/makes pair, or null when either is missing. */
+export function makePct(shots: number | null, makes: number | null): number | null {
+  if (shots == null || makes == null || shots <= 0) return null
+  return (makes / shots) * 100
+}
+
+/** `62.5%`, or an em-dash when the session carries no shot data. */
+export function formatMakePct(shots: number | null, makes: number | null): string {
+  const p = makePct(shots, makes)
+  return p == null ? "—" : `${p.toFixed(1)}%`
+}
+
+/** `24 / 15`, or an em-dash when the session carries no shot data. */
+export function formatShotsMakes(shots: number | null, makes: number | null): string {
+  return shots == null || makes == null ? "—" : `${shots} / ${makes}`
+}
 
 /**
  * Chronological (oldest → newest) score series behind a newest-first history.
@@ -53,19 +99,21 @@ function loadHistory() {
           items: ((d.history ?? []) as {
             title?: string; createdAt?: string; recordedAt?: string; shotType?: string
             mediaType?: string; score?: number; scores?: { overall?: number | null }
+            shots?: number | null; makes?: number | null
           }[]).map((a) => {
             const iso = a.recordedAt || a.createdAt
             const overall = a.scores?.overall ?? a.score ?? null
             return {
               title: a.title || "Shot analysis",
-              when: iso
-                ? new Date(iso).toLocaleString("en-US", {
-                    month: "short", day: "numeric", year: "numeric",
-                    hour: "numeric", minute: "2-digit",
-                  })
-                : "",
+              // One shared formatter, so 079/083/093 can never disagree about
+              // how the same session is dated.
+              when: formatSessionDate(iso),
               style: a.shotType || "Catch & Shoot",
               score: overall != null ? Math.round(overall) : null,
+              // Counted from the shot events of the capture session behind the
+              // analysis; null when the analysis has no capture behind it.
+              shots: a.shots ?? null,
+              makes: a.makes ?? null,
             }
           }),
         }
@@ -99,7 +147,157 @@ export function useHistory() {
   }, [])
   const hasData = (stats?.totalAnalyses ?? 0) > 0
   const score = hasData ? Math.round(stats!.latestScore ?? stats!.averageScore ?? 0) : null
-  return { stats, items, loading, hasData, score }
+  // ONE session-over-session delta for the whole app. Every screen that prints
+  // a "vs last session" figure reads it from here; nine screens used to carry a
+  // hand-written +8.1% that disagreed with the five that computed the number.
+  const delta = sessionDelta(items)
+  const latest = items[0] ?? null
+  return {
+    stats, items, loading, hasData, score, delta,
+    deltaLabel: formatDelta(delta),
+    /** Shots/makes for the newest session (null when it has no capture). */
+    shots: latest?.shots ?? null,
+    makes: latest?.makes ?? null,
+  }
+}
+
+/** Verdict band for a 0-100 form score, in canonical's wording. */
+export function scoreVerdict(score: number | null): string {
+  if (score == null) return "—"
+  if (score >= 90) return "EXCELLENT"
+  if (score >= 70) return "GOOD"
+  if (score >= 55) return "FAIR"
+  return "NEEDS WORK"
+}
+
+/**
+ * THE form-score module — `82` + short bar + verdict + caption.
+ *
+ * It appears on 081, 082, 083, 090, 092, 093 and 096, and every one of them
+ * had drawn it by hand: undersized numerals, a progress bar stretched across
+ * the whole cell instead of sitting under the numeral, and a right-aligned
+ * verdict. One component now owns the geometry:
+ *
+ *  - the numeral is the dominant mark and sizes off `size`;
+ *  - the track sits directly under the numeral at the numeral's own width, so
+ *    it can never stretch to the container;
+ *  - the verdict and its caption are a left-aligned block, either beside the
+ *    numeral (compact rails) or under it (`layout="below"`, the 083 column).
+ */
+export function FormScoreCell({
+  score, size = 40, label = "FORM SCORE", caption = "Keep building consistency.",
+  layout = "beside", suffix, className = "",
+}: {
+  score: number | null
+  /** Numeral font size in px; the bar and verdict scale off it. */
+  size?: number
+  /** Section label above the numeral. Pass null to drop it. */
+  label?: React.ReactNode | null
+  caption?: React.ReactNode
+  layout?: "beside" | "below"
+  /** e.g. `/100` on 083. */
+  suffix?: React.ReactNode
+  className?: string
+}) {
+  const verdict = scoreVerdict(score)
+  // Canonical's track is roughly twice the numeral's width and never wider.
+  const barWidth = Math.round(size * 2.3)
+  const barHeight = Math.max(4, Math.round(size / 7))
+  const verdictSize = Math.max(11, Math.round(size * 0.33))
+  const captionSize = Math.max(10, Math.round(size * 0.27))
+
+  const numeral = (
+    <div style={{ width: layout === "below" ? undefined : barWidth }}>
+      <div className="flex items-end gap-[5px]">
+        <span className="shotiq-numeric text-[var(--shotiq-color-shotiqOrange)]"
+              style={{ fontSize: size, lineHeight: `${Math.round(size * 1.08)}px` }}>
+          {score ?? "—"}
+        </span>
+        {suffix != null && (
+          <span className="text-[var(--shotiq-color-muted)]"
+                style={{ fontSize: verdictSize, paddingBottom: Math.round(size * 0.16) }}>
+            {suffix}
+          </span>
+        )}
+      </div>
+      <div className="rounded-full bg-[var(--shotiq-color-rule)]"
+           style={{ width: barWidth, height: barHeight }}>
+        <div className="h-full rounded-full bg-[var(--shotiq-color-shotiqOrange)]"
+             style={{ width: `${Math.max(0, Math.min(100, score ?? 0))}%` }} />
+      </div>
+    </div>
+  )
+
+  const verdictBlock = (
+    <div className="min-w-0 text-left">
+      <div className="font-bold text-[var(--shotiq-color-analysisBlue)]"
+           style={{ fontSize: verdictSize, lineHeight: `${verdictSize + 3}px` }}>
+        {score != null ? verdict : "—"}
+      </div>
+      {caption != null && (
+        <div className="text-[var(--shotiq-color-graphite)]"
+             style={{ fontSize: captionSize, lineHeight: `${captionSize + 3}px` }}>
+          {score != null ? caption : "No analysis yet."}
+        </div>
+      )}
+    </div>
+  )
+
+  return (
+    <div className={className}>
+      {label != null && <SectionLabel className="text-[var(--shotiq-color-graphite)]">{label}</SectionLabel>}
+      {layout === "beside" ? (
+        <div className="mt-[2px] flex items-start gap-[12px]">
+          {numeral}
+          {verdictBlock}
+        </div>
+      ) : (
+        <div className="mt-[2px]">
+          {numeral}
+          <div className="mt-[7px]">{verdictBlock}</div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/**
+ * Stat strip with canonical's vertical hairlines.
+ *
+ * Canonical separates every cell with a rule and distributes the cells evenly
+ * across the container; the screens that hand-rolled this dropped the rules and
+ * let the values bunch up against the left edge.
+ */
+export function StatStrip({
+  cells, valueClass, className = "", cellClass = "",
+}: {
+  cells: { value: React.ReactNode; label: string; accent?: string }[]
+  valueClass?: string
+  className?: string
+  cellClass?: string
+}) {
+  return (
+    <div className={`flex items-start divide-x divide-[var(--shotiq-color-rule)] ${className}`}>
+      {cells.map((c) => (
+        <div key={c.label} className={`min-w-0 flex-1 px-[14px] first:pl-0 last:pr-0 ${cellClass}`}>
+          <Stat value={c.value} label={c.label} accent={c.accent}
+                {...(valueClass ? { valueClass } : {})} />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/** `+3.8% vs last session`, coloured by direction. Never a hand-written figure. */
+export function TrendDelta({
+  delta, note = "vs last session", className = "", noteClass = "",
+}: { delta: number | null; note?: React.ReactNode; className?: string; noteClass?: string }) {
+  const down = delta != null && delta < 0
+  return (
+    <span className={`${down ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-confirmGreen)]"} ${className}`}>
+      {formatDelta(delta)}{note ? <span className={noteClass}> {note}</span> : null}
+    </span>
+  )
 }
 
 /**
@@ -110,26 +308,21 @@ export function useHistory() {
  * score history rather than a decorative rising series.
  */
 export function ScoreBand({ score }: { score: number | null }) {
-  const { items } = useHistory()
+  const { items, shots, makes } = useHistory()
   const series = scoreSeries(items, 6)
   const delta = sessionDelta(items)
   const down = delta != null && delta < 0
   return (
     <Card className="flex items-center px-[22px] py-[14px]">
       <div className="shrink-0 pr-[24px]">
-        <SectionLabel>FORM SCORE</SectionLabel>
-        <div className="flex items-end gap-[8px]">
-          <span className="shotiq-numeric text-[40px] leading-[44px] text-[var(--shotiq-color-shotiqOrange)]">{score ?? "—"}</span>
-          <span className="pb-[8px] text-[13px] font-bold text-[var(--shotiq-color-analysisBlue)]">{score != null ? "GOOD" : ""}</span>
-        </div>
-        <div className="h-[6px] w-[130px] rounded-full bg-[var(--shotiq-color-rule)]">
-          <div className="h-full rounded-full bg-[var(--shotiq-color-shotiqOrange)]" style={{ width: `${score ?? 0}%` }} />
-        </div>
+        <FormScoreCell score={score} size={40} />
       </div>
       <div className="flex min-w-0 flex-1 items-center divide-x divide-[var(--shotiq-color-rule)] border-l border-[var(--shotiq-color-rule)]">
-        <div className="flex-1 px-[20px]"><Stat value="24" label="SHOTS" /></div>
-        <div className="flex-1 px-[20px]"><Stat value="15" label="MAKES" /></div>
-        <div className="flex-1 px-[20px]"><Stat value="62.5%" label="MAKE %" /></div>
+        <StatStrip className="min-w-0 flex-1 px-[6px]" cells={[
+          { value: shots ?? "—", label: "SHOTS" },
+          { value: makes ?? "—", label: "MAKES" },
+          { value: formatMakePct(shots, makes), label: "MAKE %" },
+        ]} />
         <div className="shrink-0 pl-[20px] text-right">
           <TrendLine points={series} width={92} height={32} />
           <div className={`text-[10px] ${down ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-confirmGreen)]"}`}>

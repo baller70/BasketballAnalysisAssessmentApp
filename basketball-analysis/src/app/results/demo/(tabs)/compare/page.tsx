@@ -4,9 +4,9 @@
 
 import React, { useEffect, useState } from "react"
 import Link from "next/link"
-import { ChevronDown, RefreshCcw, Bookmark, MoreVertical, Play, ChevronLeft, ChevronRight, Users, Layers, Lightbulb } from "lucide-react"
+import { ChevronDown, RefreshCcw, Bookmark, MoreVertical, Play, ChevronLeft, ChevronRight, Users, Layers } from "lucide-react"
 import { SectionLabel, Card, Ring, Stat } from "@/components/shotiq/ShotIQShell"
-import { PoseGlyph, MechanicGlyph, WorkoutGlyph, toShotPhase, type MechanicKind } from "@/components/shotiq/Glyphs"
+import { PoseFigure, WorkoutGlyph, toShotPhase } from "@/components/shotiq/Glyphs"
 import { useHistory } from "@/components/shotiq/ResultsBits"
 
 interface Shooter { id: number; name: string; position?: string }
@@ -59,7 +59,7 @@ export default function ComparePage() {
                     selected phase pose. */}
                 {key === "shooters" && <Users className="h-[15px] w-[15px]" strokeWidth={1.6} />}
                 {key === "overlays" && <Layers className="h-[15px] w-[15px]" strokeWidth={1.6} />}
-                {key === "phase" && <PoseGlyph phase={toShotPhase(phase)} size={17} />}
+                {key === "phase" && <PoseFigure phase={toShotPhase(phase)} height={20} className="shrink-0" />}
                 {label} <ChevronDown className="h-[13px] w-[13px] text-[var(--shotiq-color-graphite)]" />
               </button>
               {menu === key && (
@@ -184,7 +184,8 @@ export default function ComparePage() {
               <React.Fragment key={p}>
                 {i > 0 && <span aria-hidden="true" className="mb-[13px] h-[1px] min-w-[10px] flex-1 bg-[var(--shotiq-color-rule)]" />}
                 <button type="button" onClick={() => setPhase(p)} aria-pressed={p === phase} className="shrink-0 text-center">
-                  <PoseGlyph phase={p} active={p === phase} size={24} />
+                  <PoseFigure phase={p} active={p === phase} height={42}
+                              tone={side ? "elite" : "light"} className="mx-auto" />
                   <div className={`text-[9px] tracking-[0.04em] ${p === phase ? (side ? "font-bold text-[var(--shotiq-color-analysisBlue)]" : "font-bold text-[var(--shotiq-color-shotiqOrange)]") : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
                 </button>
               </React.Fragment>
@@ -240,12 +241,14 @@ export default function ComparePage() {
         <div className="w-[292px] shrink-0 border-l border-[var(--shotiq-color-rule)] px-[18px] py-[8px]">
           <SectionLabel>WHY THE DIFFERENCE MATTERS</SectionLabel>
           <div className="mt-[6px] space-y-[8px]">
-            {([["Slightly lower release angle reduces margin for error on longer shots.", "arc"],
-              ["More open elbow improves line to target and repeatability.", "angle"],
-              ["Increased wrist flexion adds backspin and softens the shot.", "wrist"],
-              ["Elite balance helps maintain consistency under fatigue.", "balance"]] as [string, MechanicKind][]).map(([t, glyph]) => (
+            {([["Slightly lower release angle reduces margin for error on longer shots.", "087-insight-1"],
+              ["More open elbow improves line to target and repeatability.", "087-insight-2"],
+              ["Increased wrist flexion adds backspin and softens the shot.", "087-insight-3"],
+              ["Elite balance helps maintain consistency under fatigue.", "087-insight-4"]] as [string, string][]).map(([t, glyph]) => (
               <div key={t} className="flex gap-[10px]">
-                <MechanicGlyph kind={glyph} size={22} className="shrink-0" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={`/images/canonical/${glyph}.png`} alt="" aria-hidden="true"
+                     className="block h-[31px] w-[34px] max-w-none shrink-0 object-contain" />
                 <p className="text-[12px] leading-[16px]">{t}</p>
               </div>
             ))}
@@ -273,7 +276,9 @@ export default function ComparePage() {
       {/* footer band — one container, internal hairline, per canonical */}
       <Card className="mb-[8px] mt-[6px] flex">
         <div className="flex flex-1 items-center gap-[14px] px-[20px] py-[10px]">
-          <Lightbulb className="h-[26px] w-[26px] shrink-0" strokeWidth={1.5} />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/images/canonical/087-focus-mark.png" alt="" aria-hidden="true"
+               className="block h-[43px] w-auto max-w-none shrink-0" />
           <div>
             <SectionLabel>FOCUS RECOMMENDATION</SectionLabel>
             <p className="text-[13px] text-[var(--shotiq-color-graphite)]">Keep elbow stacked through release to improve your release angle and consistency.</p>

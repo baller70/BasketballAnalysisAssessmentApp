@@ -128,13 +128,22 @@ struct PlayerCardView: View {       // 048
                         }
                         .padding(.top, 16)
                         ShotIQCard {
+                            // Five columns in ~319pt. Every text column here was
+                            // compressible and the bar was not, so the copy took
+                            // the hit: "Keep buildin g / consist ency." and
+                            // "62.5 / %" on 048. Each column is pinned to its own
+                            // intrinsic width now, the over-tracked SF caps label
+                            // is on the canonical condensed face (~35pt narrower),
+                            // and the score bar is the one elastic element.
                             HStack(alignment: .center, spacing: 16) {
-                                Text("FORM SCORE").font(.system(size: 12, weight: .semibold)).kerning(0.8)
+                                Text("FORM SCORE").shotiqMicroCaps(12, weight: .semibold)
                                     .foregroundStyle(ShotIQColor.ink)
+                                    .fixedSize(horizontal: true, vertical: false)
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text("82").font(.custom("Tungsten-Semibold", size: 58))
                                         .foregroundStyle(ShotIQColor.shotiqOrange)
-                                    ScoreBar(pct: 0.82).frame(width: 110)
+                                        .lineLimit(1).fixedSize()
+                                    ScoreBar(pct: 0.82).frame(maxWidth: 110)
                                 }
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text("GOOD").font(.custom("Tungsten-Semibold", size: 17))
@@ -142,15 +151,19 @@ struct PlayerCardView: View {       // 048
                                     Text("Keep building\nconsistency.").font(.system(size: 12))
                                         .foregroundStyle(ShotIQColor.graphite)
                                 }
-                                Spacer()
+                                .fixedSize(horizontal: true, vertical: false)
+                                Spacer(minLength: 0)
                                 Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 56)
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text("62.5%").font(.custom("Tungsten-Semibold", size: 26))
                                         .foregroundStyle(ShotIQColor.ink)
-                                    Text("MAKE %").font(.system(size: 10, weight: .medium)).kerning(0.5)
+                                        .lineLimit(1)
+                                    Text("MAKE %").shotiqMicroCaps()
                                         .foregroundStyle(ShotIQColor.graphite)
                                     Text("15 / 24").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                                        .lineLimit(1)
                                 }
+                                .fixedSize(horizontal: true, vertical: false)
                             }
                             .padding(16)
                         }
@@ -916,10 +929,16 @@ struct PhotoComparisonView: View {  // 051
                                 Text("You • Right • Advanced").font(.system(size: 10)).foregroundStyle(ShotIQColor.graphite)
                                 Text("FORM SCORE").font(.system(size: 8, weight: .semibold)).kerning(0.4)
                                     .foregroundStyle(ShotIQColor.graphite).padding(.top, 2)
+                                // The compare columns are ~80pt wide. A rigid
+                                // 58pt bar took its width first and left the
+                                // score 16pt, so "82" wrapped to "8" over "2".
+                                // The number is rigid now and the bar flexes.
                                 HStack(spacing: 6) {
                                     Text("82").font(.custom("Tungsten-Semibold", size: 24))
                                         .foregroundStyle(ShotIQColor.shotiqOrange)
-                                    ScoreBar(pct: 0.82).frame(width: 58)
+                                        .lineLimit(1)
+                                        .fixedSize(horizontal: true, vertical: false)
+                                    ScoreBar(pct: 0.82).frame(maxWidth: 58)
                                 }
                             }
                             Spacer(minLength: 2)
@@ -936,7 +955,10 @@ struct PhotoComparisonView: View {  // 051
                                 HStack(spacing: 6) {
                                     Text("94").font(.custom("Tungsten-Semibold", size: 24))
                                         .foregroundStyle(ShotIQColor.analysisBlue)
-                                    ScoreBar(pct: 0.94, color: ShotIQColor.analysisBlue).frame(width: 58)
+                                        .lineLimit(1)
+                                        .fixedSize(horizontal: true, vertical: false)
+                                    ScoreBar(pct: 0.94, color: ShotIQColor.analysisBlue)
+                                        .frame(maxWidth: 58)
                                 }
                             }
                             Circle().fill(ShotIQColor.rule).frame(width: 52, height: 52)
@@ -1263,40 +1285,52 @@ struct EliteShootersView: View {    // 052
                 }
                 VStack(alignment: .leading, spacing: 0) {
                     HStack(alignment: .top, spacing: 8) {
+                        // The stat block took 166pt of the 233pt row on its fixed
+                        // frames, leaving the name column ~59pt — which is why
+                        // "Right-handed • Guard" bottomed out on its scale floor
+                        // and still ellipsized to "Right-h…". The three captions
+                        // are on the condensed micro-caps role now (SIMILARITY
+                        // alone was ~9pt wider than its column), the frames are
+                        // sized to what they actually hold, and the meta lines
+                        // step down to the 10pt canonical draws them at.
                         VStack(alignment: .leading, spacing: 3) {
                             Text(s.name.uppercased()).shotiqDisplay(20)
-                            Text("Right-handed • \(s.position)").font(.system(size: 12))
+                            Text("Right-handed • \(s.position)").font(.system(size: 10))
                                 .foregroundStyle(ShotIQColor.graphite)
                                 .lineLimit(1).minimumScaleFactor(0.7)
-                            Text(s.team).font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                            Text(s.team).font(.system(size: 10)).foregroundStyle(ShotIQColor.graphite)
                                 .lineLimit(1).minimumScaleFactor(0.7)
-                            Text(s.league).font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                            Text(s.league).font(.system(size: 10)).foregroundStyle(ShotIQColor.graphite)
+                                .lineLimit(1)
                         }
-                        Spacer()
+                        Spacer(minLength: 4)
                         HStack(spacing: 0) {
                             VStack(spacing: 3) {
-                                Text("FG%").font(.system(size: 9, weight: .medium)).kerning(0.4)
+                                Text("FG%").shotiqMicroCaps()
                                     .foregroundStyle(ShotIQColor.graphite)
                                 Text(s.careerPct.map { String(format: "%.1f%%", $0) } ?? "—")
                                     .font(.custom("Tungsten-Semibold", size: 22)).foregroundStyle(ShotIQColor.ink)
+                                    .lineLimit(1).minimumScaleFactor(0.7)
                             }
-                            .frame(width: 58)
+                            .frame(width: 52)
                             Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 36)
                             VStack(spacing: 3) {
-                                Text("WSI").font(.system(size: 9, weight: .medium)).kerning(0.4)
+                                Text("WSI").shotiqMicroCaps()
                                     .foregroundStyle(ShotIQColor.shotiqOrange)
                                 Text("\(max(70, 94 - rank * 2))")
                                     .font(.custom("Tungsten-Semibold", size: 22)).foregroundStyle(ShotIQColor.shotiqOrange)
+                                    .lineLimit(1)
                             }
-                            .frame(width: 44)
+                            .frame(width: 40)
                             Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 36)
                             VStack(spacing: 3) {
-                                Text("SIMILARITY").font(.system(size: 9, weight: .medium)).kerning(0.4)
+                                Text("SIMILARITY").shotiqMicroCaps()
                                     .foregroundStyle(ShotIQColor.graphite)
                                 Text("\(max(60, 91 - rank * 3))%")
                                     .font(.custom("Tungsten-Semibold", size: 22)).foregroundStyle(ShotIQColor.analysisBlue)
+                                    .lineLimit(1).minimumScaleFactor(0.7)
                             }
-                            .frame(width: 62)
+                            .frame(width: 54)
                         }
                     }
                     Spacer(minLength: 8)
