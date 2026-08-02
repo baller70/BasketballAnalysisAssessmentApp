@@ -6,46 +6,10 @@ import React, { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import {
   ChevronLeft, ChevronRight, Upload, MoreVertical, Pencil, Minus, Eraser, X,
-  PieChart, History, Route, PersonStanding, Target, Monitor, Hexagon, Settings,
-  HelpCircle, type LucideIcon,
 } from "lucide-react"
 import { ShotIQShell, SectionLabel, Card, TrendLine } from "@/components/shotiq/ShotIQShell"
 import { PoseFigure } from "@/components/shotiq/Glyphs"
 import { useHistory, CoachingTarget, sessionDelta, formatDelta } from "@/components/shotiq/ResultsBits"
-
-/** 084's own icon rail: icon-over-label, ANALYSES active, HELP pinned. */
-function BiomechRail() {
-  const rows: { label: string[]; href: string; icon: LucideIcon; active?: boolean }[] = [
-    { label: ["DASHBOARD"], href: "/dashboard", icon: PieChart },
-    { label: ["CAPTURE", "HISTORY"], href: "/results/demo/history", icon: History },
-    { label: ["ANALYSES"], href: "/results/demo/biomechanics", icon: Route, active: true },
-    { label: ["TRAINING"], href: "/results/demo/training", icon: PersonStanding },
-    { label: ["GOALS"], href: "/results/demo/goals", icon: Target },
-    { label: ["MEDIA"], href: "/media", icon: Monitor },
-    { label: ["POINTS"], href: "/points", icon: Hexagon },
-    { label: ["SETTINGS"], href: "/settings", icon: Settings },
-  ]
-  return (
-    <nav data-testid="region-sidebar" aria-label="Analyses workspace"
-         className="flex w-[98px] shrink-0 flex-col items-center border-r border-[var(--shotiq-color-rule)] pt-[28px]">
-      {rows.map((r) => (
-        <Link key={r.label.join(" ")} href={r.href}
-              aria-current={r.active ? "page" : undefined}
-              className={`mb-[26px] flex w-full flex-col items-center gap-[7px] ${r.active ? "text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-ink)]"}`}>
-          <r.icon className="h-[22px] w-[22px]" strokeWidth={1.5} />
-          <span className="text-center text-[9px] font-bold leading-[11px] tracking-[0.07em]">
-            {r.label.map((l) => <span key={l} className="block">{l}</span>)}
-          </span>
-        </Link>
-      ))}
-      <div className="flex-1" />
-      <Link href="/guide" className="mb-[24px] flex w-full flex-col items-center gap-[6px]">
-        <HelpCircle className="h-[20px] w-[20px]" strokeWidth={1.5} />
-        <span className="text-[9px] font-bold tracking-[0.07em]">HELP</span>
-      </Link>
-    </nav>
-  )
-}
 
 // One bespoke diagram per measured quantity — canonical never repeats a glyph
 // down this list (angle, height ruler, distance tape, lift, ball arc, midline).
@@ -181,7 +145,7 @@ export default function BiomechanicsWorkspacePage() {
   }
 
   return (
-    <ShotIQShell active="Analyze" sidebar={<BiomechRail />}>
+    <ShotIQShell active="Analyze">
     <div data-testid="screen-desktop-web-biomechanics-workspace" className="px-[26px] pt-[16px]">
       <div className="flex items-start justify-between">
         <div>

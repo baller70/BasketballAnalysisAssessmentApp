@@ -73,23 +73,18 @@ export function ShotIQShell({
   user = { name: "Jordan Ellis", initials: "JE" },
   points = "2,840",
   streak = "6",
-  railOverride,
-  sidebar,
 }: {
   active: ShotIQTab
   children: React.ReactNode
   user?: { name: string; initials: string }
   points?: string
   streak?: string
-  /** @deprecated Ignored. One sidebar serves every screen; see UnifiedSidebar. */
-  railOverride?: { label: string; href: string; icon: IconType; active?: boolean }[]
-  /** @deprecated Ignored. One sidebar serves every screen; see UnifiedSidebar. */
-  sidebar?: React.ReactNode
 }) {
-  // `active`, `railOverride` and `sidebar` are retained so existing call sites
-  // keep type-checking, but the navigation is now uniform: active state comes
-  // from the pathname inside UnifiedSidebar, never from a per-screen prop.
-  void active; void railOverride; void sidebar
+  // `active` is kept for call-site readability only. Navigation is uniform:
+  // the active row is derived from the pathname inside UnifiedSidebar, never
+  // from a per-screen prop. There is deliberately no `sidebar` or
+  // `railOverride` escape hatch — a screen cannot ship its own menu.
+  void active
   const router = useRouter()
   const [panel, setPanel] = React.useState<null | "search" | "bell" | "account">(null)
   const [query, setQuery] = React.useState("")
@@ -402,39 +397,6 @@ export function Stat({ value, label, valueClass = "text-[24px] leading-[28px]", 
       <div className={`shotiq-numeric ${valueClass}`} style={accent ? { color: accent } : undefined}>{value}</div>
       <div className="mt-[2px] text-[10px] tracking-[0.07em] text-[var(--shotiq-color-graphite)]">{label}</div>
     </div>
-  )
-}
-
-/** Wide text sidebar used by workspace screens (081 analyze, 084 biomechanics).
- *  190px, grouped by tracked-caps section labels, active row in orange with a
- *  left indicator bar. */
-export function WideSidebar({ sections }: {
-  sections: { heading: string; items: { label: string; href: string; icon: IconType; active?: boolean }[] }[]
-}) {
-  return (
-    <nav data-testid="region-sidebar" aria-label="Workspace"
-         className="w-[190px] shrink-0 border-r border-[var(--shotiq-color-rule)] pt-[24px]">
-      {sections.map((sec) => (
-        <div key={sec.heading} className="mb-[18px]">
-          <div className="px-[24px] pb-[8px] text-[11px] font-bold tracking-[0.08em] text-[var(--shotiq-color-graphite)]">
-            {sec.heading}
-          </div>
-          {sec.items.map((it) => (
-            <Link key={it.label} href={it.href}
-                  aria-current={it.active ? "page" : undefined}
-                  className={`relative flex h-[44px] items-center gap-[10px] whitespace-nowrap px-[22px] text-[14px] ${
-                    it.active
-                      ? "bg-[var(--shotiq-color-warmCanvas)] font-semibold text-[var(--shotiq-color-shotiqOrange)]"
-                      : "text-[var(--shotiq-color-ink)]"}`}>
-              {it.active && <span className="absolute inset-y-0 right-0 w-[3px] bg-[var(--shotiq-color-shotiqOrange)]" />}
-              <it.icon className="h-[17px] w-[17px]" strokeWidth={1.6} />
-              {it.label}
-            </Link>
-          ))}
-          <div className="mx-[24px] mt-[14px] border-b border-[var(--shotiq-color-rule)]" />
-        </div>
-      ))}
-    </nav>
   )
 }
 

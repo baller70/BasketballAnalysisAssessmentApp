@@ -11,28 +11,12 @@
  */
 
 import React, { useState, useRef } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useAuthStore } from "@/stores/authStore"
-import {
-  Eye, EyeOff, Loader2, Home, Camera, History, LineChart, Activity,
-  Target, Film, Coins, Settings, HelpCircle, ChevronDown,
-} from "lucide-react"
-
-const NAV = [
-  { label: "Home", icon: Home, href: "/dashboard" },
-  { label: "Capture", icon: Camera, href: "/video-analysis" },
-  { label: "History", icon: History, href: "/results/demo/history" },
-  { label: "Analysis", icon: LineChart, href: "/results/demo/analysis" },
-  { label: "Training", icon: Activity, href: "/results/demo/training" },
-  { label: "Goals", icon: Target, href: "/results/demo/goals" },
-  { label: "Media", icon: Film, href: "/media" },
-  { label: "Points", icon: Coins, href: "/points" },
-  { label: "Settings", icon: Settings, href: "/settings" },
-]
+import { UnifiedSidebar } from "@/components/shotiq/ShotIQShell"
+import { Eye, EyeOff, Loader2, ChevronDown } from "lucide-react"
 
 export default function SignUpPage() {
-  const router = useRouter()
   const { signUp, isLoading } = useAuthStore()
 
   const [formData, setFormData] = useState({
@@ -117,22 +101,9 @@ export default function SignUpPage() {
       </header>
 
       <div className="flex flex-1">
-        <nav className="flex w-[112px] shrink-0 flex-col border-r border-[var(--shotiq-color-rule)] pt-[26px]"
-             data-testid="region-sidebar" aria-label="Primary">
-          {NAV.map(({ label: l, icon: Icon, href }) => (
-            <Link key={l} href={href}
-                  className="flex h-[48px] items-center gap-[12px] pl-[18px] text-[13px] text-[var(--shotiq-color-ink)]">
-              <Icon className="h-[18px] w-[18px]" strokeWidth={1.6} />
-              <span>{l}</span>
-            </Link>
-          ))}
-          <div className="flex-1" />
-          <Link href="/guide"
-                className="mb-[26px] flex h-[48px] items-center gap-[12px] pl-[18px] text-[13px] text-[var(--shotiq-color-ink)]">
-            <HelpCircle className="h-[18px] w-[18px]" strokeWidth={1.6} />
-            <span>Help</span>
-          </Link>
-        </nav>
+        {/* One menu sidebar app-wide — this screen used to draw its own 10-item
+            112px rail. See the same note on /signin. */}
+        <UnifiedSidebar />
 
         <section className="w-[430px] shrink-0 border-r border-[var(--shotiq-color-rule)] px-[46px] pb-[40px] pt-[48px]"
                  data-testid="region-main">

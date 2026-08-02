@@ -16,8 +16,8 @@
 import React, { useEffect, useState } from "react"
 import Link from "next/link"
 import {
-  Crosshair, ImagePlus, Video, Radio, ChevronRight, LayoutGrid, LineChart,
-  Activity, TrendingUp, Film, Compass, MoreVertical, Info, type LucideIcon,
+  Crosshair, ImagePlus, Video, Radio, ChevronRight, LineChart,
+  Activity, MoreVertical, Info, type LucideIcon,
 } from "lucide-react"
 import { usePoints } from "@/lib/points/pointsContext"
 import { useAuthStore } from "@/stores/authStore"
@@ -25,7 +25,9 @@ import { useDashboardViewStore } from "@/stores/dashboardViewStore"
 import {
   ShotIQShell, TrendLine, SectionLabel, Card, Stat,
 } from "@/components/shotiq/ShotIQShell"
-import { scoreSeries, sessionDelta, formatDelta } from "@/components/shotiq/ResultsBits"
+import {
+  scoreSeries, sessionDelta, formatDelta, FormScoreCell, formatMakePct, formatSessionDate,
+} from "@/components/shotiq/ResultsBits"
 
 interface HistoryStats {
   totalAnalyses: number
@@ -33,6 +35,10 @@ interface HistoryStats {
   latestScore: number | null
   overallTrend: string
   improvementRate: number | null
+  /** Summed across every session with a capture behind it. */
+  totalShots: number | null
+  totalMakes: number | null
+  makePct: number | null
 }
 
 function scoreBand(score: number | null): { label: string; color: string } {
@@ -84,24 +90,20 @@ export default function DashboardPage() {
             const all = (hData.history ?? hData.analyses ?? []) as {
               title?: string; createdAt?: string; recordedAt?: string; shotType?: string
               score?: number; scores?: { overall?: number | null }
+              shots?: number | null; makes?: number | null
               shotCount?: number; makeCount?: number
             }[]
             setHistory(all.map((a) => ({
               score: a.scores?.overall != null ? Math.round(a.scores.overall) : a.score ?? null,
             })))
             const items = all.slice(0, 3)
-            const fmtWhen = (iso?: string) => {
-              if (!iso) return ""
-              const d = new Date(iso)
-              const time = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
-              return d.toDateString() === new Date().toDateString()
-                ? `Today at ${time}`
-                : `${d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} · ${time}`
-            }
+            // One shared formatter app-wide (Mon D, YYYY • H:MM AM); this
+            // screen used to date the same session differently from 083/093.
+            const fmtWhen = (iso?: string) => formatSessionDate(iso)
             setRecent(items.map((a, i: number) => {
               const fb = RECENT_FALLBACK[i % RECENT_FALLBACK.length]
-              const shotsN = a.shotCount ?? fb.shots
-              const makesN = a.makeCount ?? fb.makes
+              const shotsN = a.shots ?? a.shotCount ?? fb.shots
+              const makesN = a.makes ?? a.makeCount ?? fb.makes
               return {
                 title: a.title || fb.title,
                 when: fmtWhen(a.recordedAt || a.createdAt),
@@ -128,6 +130,11 @@ export default function DashboardPage() {
   const hasData = !!stats && stats.totalAnalyses > 0
   const score = hasData ? Math.round(stats!.latestScore ?? stats!.averageScore ?? 0) : null
   const band = scoreBand(score)
+  // Latest-session shot counts, projected by /api/analysis-history from the
+  // capture session behind the analysis (they used to be 24 / 15 literals).
+  const latestShots = recent[0]?.shots ?? null
+  const latestMakes = recent[0]?.makes ?? null
+  const latestMakePct = formatMakePct(latestShots, latestMakes)
 
   /* One delta, computed one way, printed everywhere on the page. The screen
      used to mix the API's lifetime improvementRate (+67.0% on a three-session
@@ -156,15 +163,7 @@ export default function DashboardPage() {
   /* ------------------------------------------- 080 standard variant ------ */
   if (view === "standard" || view === "basic") {
     return (
-      <ShotIQShell active="Home" {...shellProps}
-        railOverride={[
-          { label: "DASHBOARD", href: "/dashboard", icon: LayoutGrid, active: true },
-          { label: "ANALYSES", href: "/analyze", icon: LineChart },
-          { label: "TRAINING", href: "/results/demo/training", icon: Activity },
-          { label: "PROGRESS", href: "/results/demo/history", icon: TrendingUp },
-          { label: "MEDIA", href: "/media", icon: Film },
-          { label: "EXPLORE", href: "/elite-shooters", icon: Compass },
-        ]}>
+      <ShotIQShell active="Home" {...shellProps}>
         <div data-testid="screen-desktop-web-standard-dashboard" className="flex">
           <div className="min-w-0 flex-1 px-[28px] pt-[24px]">
             <div className="flex items-start justify-between">
@@ -243,9 +242,9 @@ export default function DashboardPage() {
                       lifetime analysis count. Ruled off from each other and
                       spread across the row, as canonical draws them. */}
                   <div className="mt-[14px] flex divide-x divide-[var(--shotiq-color-rule)]">
-                    <div className="flex-1 pr-[16px]"><Stat value={hasData ? "24" : "0"} label="SHOTS" /></div>
-                    <div className="flex-1 px-[16px]"><Stat value={hasData ? "15" : "0"} label="MAKES" /></div>
-                    <div className="flex-1 px-[16px]"><Stat value={hasData ? "62.5%" : "—"} label="MAKE %" /></div>
+                    <div className="flex-1 pr-[16px]"><Stat value={hasData ? latestShots ?? "—" : "0"} label="SHOTS" /></div>
+                    <div className="flex-1 px-[16px]"><Stat value={hasData ? latestMakes ?? "—" : "0"} label="MAKES" /></div>
+                    <div className="flex-1 px-[16px]"><Stat value={hasData ? latestMakePct : "—"} label="MAKE %" /></div>
                     <div className="flex-1 pl-[16px]">
                       <Stat value={score ?? "—"} label="FORM SCORE" />
                       {score != null && (
@@ -274,7 +273,7 @@ export default function DashboardPage() {
               {[
                 [hasData ? String(stats!.totalAnalyses) : "0", "TOTAL ANALYSES", "All time", "var(--shotiq-color-ink)"],
                 [score != null ? String(score) : "—", "AVG. FORM SCORE", band.label.toLowerCase(), "var(--shotiq-color-analysisBlue)"],
-                [hasData ? String(stats!.totalAnalyses * 24) : "0", "TOTAL SHOTS", "All time", "var(--shotiq-color-ink)"],
+                [hasData ? String(stats!.totalShots ?? "—") : "0", "TOTAL SHOTS", "All time", "var(--shotiq-color-ink)"],
                 [improvement, "IMPROVEMENT", "vs last 30 days",
                  deltaPct != null && deltaPct < 0 ? "var(--shotiq-color-reviewRed)" : "var(--shotiq-color-confirmGreen)"],
               ].map(([v, l, sub, c]) => (
@@ -291,9 +290,9 @@ export default function DashboardPage() {
 
             <SectionLabel className="mt-[14px]">SHOT SUMMARY (LATEST SESSION)</SectionLabel>
             <Card className="mt-[10px] flex items-center divide-x divide-[var(--shotiq-color-rule)] px-[20px] py-[18px]">
-              <div className="flex-1 pr-[14px]"><Stat value={hasData ? "24" : "0"} label="SHOTS" /></div>
-              <div className="flex-1 px-[14px]"><Stat value={hasData ? "15" : "0"} label="MAKES" /></div>
-              <div className="flex-1 px-[14px]"><Stat value={hasData ? "62.5%" : "—"} label="MAKE %" /></div>
+              <div className="flex-1 pr-[14px]"><Stat value={hasData ? latestShots ?? "—" : "0"} label="SHOTS" /></div>
+              <div className="flex-1 px-[14px]"><Stat value={hasData ? latestMakes ?? "—" : "0"} label="MAKES" /></div>
+              <div className="flex-1 px-[14px]"><Stat value={hasData ? latestMakePct : "—"} label="MAKE %" /></div>
               <div className="shrink-0 pl-[14px] text-right">
                 <TrendLine points={trend} width={96} height={34} />
                 <div className={`text-[10px] ${improvementTone}`}>{improvement} vs last session</div>
@@ -429,15 +428,9 @@ export default function DashboardPage() {
             <div className="text-right text-[12px] text-[var(--shotiq-color-graphite)]">
               {recent[0]?.when ? recent[0].when : ""}
             </div>
-            <SectionLabel className="mt-[18px]">FORM SCORE</SectionLabel>
-            <div className="shotiq-numeric text-[74px] leading-[78px] text-[var(--shotiq-color-shotiqOrange)]">{score ?? "—"}</div>
-            <div className="h-[7px] w-full rounded-full bg-[var(--shotiq-color-rule)]">
-              <div className="h-full rounded-full bg-[var(--shotiq-color-shotiqOrange)]" style={{ width: `${score ?? 0}%` }} />
-            </div>
-            <div className="mt-[14px] text-[16px] font-bold" style={{ color: band.color }}>{band.label.charAt(0) + band.label.slice(1).toLowerCase().replace("_", " ")}</div>
-            <p className="mt-[4px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
-              {hasData ? "Keep building consistency." : "No analyses yet — run your first."}
-            </p>
+            {/* The one shared form-score module; canonical sets this verdict in
+                caps ("GOOD"), unlike the inline mentions elsewhere. */}
+            <FormScoreCell score={score} size={70} className="mt-[14px]" layout="below" />
             <SectionLabel className="mt-[26px]">MECHANICS TREND</SectionLabel>
             <div className="flex items-start gap-[6px]">
               <TrendLine points={trend} width={108} height={40} />
@@ -475,9 +468,9 @@ export default function DashboardPage() {
             {/* Canonical rules the session stats off from one another and spreads
                 them across the rail, with the trend mark in its own compartment. */}
             <div className="mt-[10px] flex items-center divide-x divide-[var(--shotiq-color-rule)]">
-              <div className="flex-1 pr-[14px]"><Stat value={hasData ? "24" : "0"} label="SHOTS" /></div>
-              <div className="flex-1 px-[14px]"><Stat value={hasData ? "15" : "0"} label="MAKES" /></div>
-              <div className="flex-1 px-[14px]"><Stat value={hasData ? "62.5%" : "—"} label="MAKE %" /></div>
+              <div className="flex-1 pr-[14px]"><Stat value={hasData ? latestShots ?? "—" : "0"} label="SHOTS" /></div>
+              <div className="flex-1 px-[14px]"><Stat value={hasData ? latestMakes ?? "—" : "0"} label="MAKES" /></div>
+              <div className="flex-1 px-[14px]"><Stat value={hasData ? latestMakePct : "—"} label="MAKE %" /></div>
               <div className="shrink-0 pl-[14px] text-right">
                 <TrendLine points={trend} width={92} height={34} />
                 <div className={`text-[10px] ${improvementTone}`}>{improvement} vs last session</div>

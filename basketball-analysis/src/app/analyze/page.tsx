@@ -17,14 +17,13 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
   Image as ImageIcon, Film, Upload, FolderUp, ChevronRight, HelpCircle,
-  ArrowLeft, LayoutGrid, History, GitCompare, Crosshair, BookOpen, PlayCircle,
-  ScanLine,
+  ArrowLeft, Crosshair, ScanLine,
 } from "lucide-react"
 import { PoseAnalysis } from "@/components/analysis/PoseAnalysis"
 import { useAnalysisStore } from "@/stores/analysisStore"
 import { enqueueVideoUpload, uploadQueueStorage } from "@/lib/upload/uploadQueue"
 import {
-  ShotIQShell, WideSidebar, TrendLine, SectionLabel, Card, Stat,
+  ShotIQShell, TrendLine, SectionLabel, Card, Stat,
 } from "@/components/shotiq/ShotIQShell"
 import {
   useHistory, scoreSeries, sessionDelta, formatDelta, FormScoreCell, formatMakePct,
@@ -122,22 +121,7 @@ export default function AnalyzeWorkspacePage() {
   }
 
   return (
-    <ShotIQShell active="Analyze"
-      sidebar={<WideSidebar sections={[
-        { heading: "ANALYZE", items: [
-          { label: "Overview", href: "/results/demo/analysis", icon: LayoutGrid },
-          { label: "Upload", href: "/analyze", icon: Upload, active: true },
-          { label: "History", href: "/results/demo/history", icon: History },
-          { label: "Compare", href: "/results/demo/compare", icon: GitCompare },
-        ]},
-        { heading: "FOCUS", items: [
-          { label: "Coaching Targets", href: "/results/demo/goals", icon: Crosshair },
-        ]},
-        { heading: "RESOURCES", items: [
-          { label: "Capture Guide", href: "/guide", icon: BookOpen },
-          { label: "Shooting Tips", href: "/guide", icon: PlayCircle },
-        ]},
-      ]} />}>
+    <ShotIQShell active="Analyze">
       <div data-testid="screen-desktop-web-analyze-workspace" className="flex min-h-full flex-col px-[28px] pt-[16px]">
         <div className="flex">
           <div className="min-w-0 flex-1 pr-[26px]">
@@ -150,7 +134,7 @@ export default function AnalyzeWorkspacePage() {
             <div className="mt-[20px] grid grid-cols-4 gap-[16px]">
               <button type="button" data-testid="choose-media"
                       onClick={() => { if (inputRef.current) { inputRef.current.accept = ACCEPT; inputRef.current.click() } }}
-                      className="flex h-[132px] flex-col items-center justify-center gap-[12px] rounded-[8px] border-2 border-dashed border-[var(--shotiq-color-shotiqOrange)] text-[var(--shotiq-color-shotiqOrange)]">
+                      className="flex h-[116px] flex-col items-center justify-center gap-[10px] rounded-[8px] border-2 border-dashed border-[var(--shotiq-color-shotiqOrange)] text-[var(--shotiq-color-shotiqOrange)]">
                 <FolderUp className="h-[34px] w-[34px]" strokeWidth={1.4} />
                 <span className="text-[14px] font-medium">Choose media</span>
               </button>
@@ -164,7 +148,7 @@ export default function AnalyzeWorkspacePage() {
                 const Icon = I as typeof ImageIcon
                 return (
                   <button key={String(t)} type="button" onClick={fn as () => void}
-                          className="flex h-[132px] flex-col items-center justify-center gap-[12px] rounded-[8px] border border-[var(--shotiq-color-rule)]">
+                          className="flex h-[116px] flex-col items-center justify-center gap-[10px] rounded-[8px] border border-[var(--shotiq-color-rule)]">
                     <Icon className="h-[32px] w-[32px]" strokeWidth={1.3} />
                     <span className="text-[14px]">{String(t)}</span>
                   </button>
@@ -179,7 +163,7 @@ export default function AnalyzeWorkspacePage() {
               onDragLeave={() => setDragOver(false)}
               onDrop={onDrop}
               onClick={() => inputRef.current?.click()}
-              className={`mt-[16px] flex h-[160px] cursor-pointer flex-col items-center justify-center rounded-[8px] border-2 border-dashed ${dragOver ? "border-[var(--shotiq-color-shotiqOrange)] bg-[var(--shotiq-color-warmCanvas)]" : "border-[var(--shotiq-color-rule)]"}`}
+              className={`mt-[12px] flex h-[148px] cursor-pointer flex-col items-center justify-center rounded-[8px] border-2 border-dashed ${dragOver ? "border-[var(--shotiq-color-shotiqOrange)] bg-[var(--shotiq-color-warmCanvas)]" : "border-[var(--shotiq-color-rule)]"}`}
             >
               <Upload className="h-[26px] w-[26px]" strokeWidth={1.5} />
               <div className="mt-[10px] text-[16px] font-semibold">Drag and drop your files here</div>
@@ -202,9 +186,9 @@ export default function AnalyzeWorkspacePage() {
                 <HelpCircle className="h-[15px] w-[15px]" /> How it works
               </Link>
             </div>
-            <Card className="mt-[12px] px-[20px] py-[18px]">
+            <Card className="mt-[10px] px-[18px] py-[12px]">
               <SectionLabel>PLAYER SUMMARY</SectionLabel>
-              <div className="mt-[12px] flex items-center gap-[14px]">
+              <div className="mt-[8px] flex items-center gap-[14px]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/images/canonical/081-player-headshot.png" alt=""
                      className="h-[84px] w-[76px] shrink-0 rounded-[4px] object-cover" />
@@ -214,7 +198,7 @@ export default function AnalyzeWorkspacePage() {
                   <Link href="/profile" className="text-[12px] text-[var(--shotiq-color-analysisBlue)]">View profile</Link>
                 </div>
               </div>
-              <div className="mt-[16px] flex divide-x divide-[var(--shotiq-color-rule)] border-t border-[var(--shotiq-color-rule)] pt-[14px]">
+              <div className="mt-[10px] flex divide-x divide-[var(--shotiq-color-rule)] border-t border-[var(--shotiq-color-rule)] pt-[10px]">
                 {/* The one shared form-score module (see FormScoreCell): the bar
                     used to stretch the whole cell instead of sitting under the
                     numeral. */}
@@ -234,7 +218,7 @@ export default function AnalyzeWorkspacePage() {
                   </div>
                 </div>
               </div>
-              <div className="mt-[14px] border-t border-[var(--shotiq-color-rule)] pt-[12px]">
+              <div className="mt-[10px] border-t border-[var(--shotiq-color-rule)] pt-[10px]">
                 <SectionLabel>LATEST SESSION</SectionLabel>
                 {/* Hairline-ruled and spread across the card, as canonical draws
                     it; the trend plots the real score history. */}
@@ -256,7 +240,7 @@ export default function AnalyzeWorkspacePage() {
 
         {/* Queue and checks are one bordered container split by an internal
             hairline — canonical never gutters these two apart. */}
-        <div className="mt-[14px] flex gap-[16px]">
+        <div className="mt-[12px] flex gap-[16px]">
           <Card className="flex w-[600px] shrink-0 divide-x divide-[var(--shotiq-color-rule)]">
             <div className="w-[318px] shrink-0 px-[18px] py-[16px]">
               <SectionLabel>UPLOAD QUEUE ({files.length})</SectionLabel>

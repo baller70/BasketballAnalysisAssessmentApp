@@ -6,7 +6,6 @@ import React, { useEffect, useState } from "react"
 import Link from "next/link"
 import {
   Pencil, MoreVertical, Check, ChevronRight, X,
-  PieChart, Scan, PersonStanding, TrendingUp, Film, Compass,
 } from "lucide-react"
 import { ShotIQShell, SectionLabel, Card, TrendLine } from "@/components/shotiq/ShotIQShell"
 import { WorkoutGlyph, type WorkoutKind } from "@/components/shotiq/Glyphs"
@@ -91,18 +90,11 @@ export default function GoalsPlanPage() {
     { completedAt: new Date().toISOString(), currentValue: 100 }, { ...primary, progress: 1 }, "Goal marked complete")
 
   return (
-    <ShotIQShell active="Progress" railOverride={[
-      { label: "DASHBOARD", href: "/dashboard", icon: PieChart, active: false },
-      { label: "ANALYSES", href: "/results/demo", icon: Scan, active: false },
-      { label: "TRAINING", href: "/results/demo/training", icon: PersonStanding, active: false },
-      { label: "PROGRESS", href: "/results/demo/goals", icon: TrendingUp, active: true },
-      { label: "MEDIA", href: "/media", icon: Film, active: false },
-      { label: "EXPLORE", href: "/elite-shooters", icon: Compass, active: false },
-    ]}>
+    <ShotIQShell active="Progress">
     <div data-testid="screen-desktop-web-goals-plan" className="px-[26px] py-[18px]">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="shotiq-display text-[48px] leading-[50px]">GOALS &amp; PLAN</h1>
+          <h1 className="shotiq-display text-[44px] leading-[46px]">GOALS &amp; PLAN</h1>
           <p className="mt-[4px] text-[14px] text-[var(--shotiq-color-graphite)]">Stay focused. Track progress. Build better mechanics.</p>
         </div>
         <div className="flex items-center gap-[12px]">
@@ -118,9 +110,9 @@ export default function GoalsPlanPage() {
         </div>
       </div>
 
-      <div className="mt-[16px] grid grid-cols-3 gap-[16px]">
+      <div className="mt-[8px] grid grid-cols-3 gap-[16px]">
         {/* primary goal */}
-        <Card className="p-[18px]">
+        <Card className="p-[16px]">
           <div className="text-[11px] font-bold tracking-[0.06em] text-[var(--shotiq-color-confirmGreen)]">PRIMARY GOAL</div>
           <h2 className="mt-[6px] text-[22px] font-semibold leading-[28px]">{primary.title}</h2>
           <div className="mt-[8px] flex items-center gap-[10px] text-[12px] text-[var(--shotiq-color-graphite)]">
@@ -146,10 +138,10 @@ export default function GoalsPlanPage() {
                          accent: delta != null && delta < 0
                            ? "var(--shotiq-color-reviewRed)" : "var(--shotiq-color-confirmGreen)" },
                      ]} />
-          <SectionLabel className="mt-[12px] border-t border-[var(--shotiq-color-rule)] pt-[12px]">PROGRESS TREND</SectionLabel>
+          <SectionLabel className="mt-[10px] border-t border-[var(--shotiq-color-rule)] pt-[10px]">PROGRESS TREND</SectionLabel>
           <div className="flex items-center gap-[12px]">
             <div>
-              <TrendLine points={scoreSeries(items, 8).length >= 2 ? scoreSeries(items, 8) : [2, 2.6, 2.2, 3, 2.7, 3.4, 3.2, 4]} width={230} height={62} />
+              <TrendLine points={scoreSeries(items, 8).length >= 2 ? scoreSeries(items, 8) : [2, 2.6, 2.2, 3, 2.7, 3.4, 3.2, 4]} width={230} height={50} />
               <div className="flex justify-between pr-[6px] text-[9px] tracking-[0.03em] text-[var(--shotiq-color-graphite)]">
                 {["Apr 13", "Apr 20", "Apr 27", "May 4", "May 11"].map((d) => <span key={d}>{d}</span>)}
                 <span className="font-bold text-[var(--shotiq-color-confirmGreen)]">TODAY</span>
@@ -160,7 +152,7 @@ export default function GoalsPlanPage() {
               <div className="text-[9px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">VS LAST SESSION</div>
             </div>
           </div>
-          <SectionLabel className="mt-[10px] border-t border-[var(--shotiq-color-rule)] pt-[12px]">KEY MECHANIC FOCUS</SectionLabel>
+          <SectionLabel className="mt-[8px] border-t border-[var(--shotiq-color-rule)] pt-[10px]">KEY MECHANIC FOCUS</SectionLabel>
           <div className="mt-[6px] flex items-center gap-[12px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/images/canonical/092-key-mechanic.png" alt="" aria-hidden="true"
@@ -176,7 +168,7 @@ export default function GoalsPlanPage() {
               <div className="shotiq-numeric text-[13px]">7/10</div>
             </div>
           </div>
-          <div className="mt-[12px] flex gap-[10px]">
+          <div className="mt-[8px] flex gap-[10px]">
             <button type="button"
                     onClick={() => { setForm({ title: primary.title, description: primary.description ?? "" }); setModal("edit") }}
                     className="flex h-[42px] flex-1 items-center justify-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] text-[13px]">

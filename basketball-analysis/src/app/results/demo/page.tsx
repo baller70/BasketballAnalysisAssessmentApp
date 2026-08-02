@@ -16,8 +16,8 @@ import React, { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
-  ArrowLeft, ChevronLeft, ChevronRight, Crosshair, Maximize, Scan, Diamond,
-  User, Columns, Route, Smile, Share2, Download, Settings, Check,
+  ArrowLeft, ChevronLeft, ChevronRight, Crosshair, Maximize,
+  Share2, Download, Check,
 } from "lucide-react"
 import { SectionLabel, Card, TrendLine } from "@/components/shotiq/ShotIQShell"
 import { PoseFigure } from "@/components/shotiq/Glyphs"
@@ -45,47 +45,6 @@ const MECHANICS = [
   { icon: "/images/canonical/083-mech-3.png", name: "Release Height", value: "8’6”", ideal: "7’8” – 8’8”" },
   { icon: "/images/canonical/083-mech-4.png", name: "Body Alignment", value: "2°", ideal: "−5° – 5°" },
 ]
-
-/** 083's own left rail: icon + tracked-caps label rows, Settings pinned. */
-function OverviewRail({ onShare, onExport, shared }: {
-  onShare: () => void; onExport: () => void; shared: boolean
-}) {
-  const rows: { label: string; icon: React.ElementType; href?: string; onClick?: () => void }[] = [
-    { label: "ANALYSIS", icon: Scan, href: "/results/demo/analysis" },
-    { label: "FLAWS", icon: Diamond, href: "/results/demo/flaws" },
-    { label: "PLAYER", icon: User, href: "/results/demo/player" },
-    { label: "COMPARE", icon: Columns, href: "/results/demo/compare" },
-    { label: "TRAINING", icon: Route, href: "/results/demo/training" },
-    { label: "GOALS", icon: Smile, href: "/results/demo/goals" },
-  ]
-  const item = "flex h-[24px] items-center gap-[20px] pl-[28px] text-[11px] font-bold tracking-[0.09em] text-[var(--shotiq-color-ink)]"
-  return (
-    <nav data-testid="region-sidebar" aria-label="Analysis workspace"
-         className="flex w-[124px] shrink-0 flex-col border-r border-[var(--shotiq-color-rule)] pt-[40px]">
-      {rows.map((r) => (
-        <Link key={r.label} href={r.href!} className={`${item} mb-[36px]`}>
-          <r.icon className="h-[21px] w-[21px] shrink-0" strokeWidth={1.5} />
-          {r.label}
-        </Link>
-      ))}
-      <div className="mx-[20px] mb-[34px] border-t border-[var(--shotiq-color-rule)]" />
-      <button type="button" onClick={onShare} data-testid="overview-share" className={`${item} mb-[36px]`}>
-        {shared ? <Check className="h-[21px] w-[21px] shrink-0 text-[var(--shotiq-color-confirmGreen)]" strokeWidth={1.7} />
-                : <Share2 className="h-[21px] w-[21px] shrink-0" strokeWidth={1.5} />}
-        {shared ? "COPIED" : "SHARE"}
-      </button>
-      <button type="button" onClick={onExport} data-testid="overview-export" className={item}>
-        <Download className="h-[21px] w-[21px] shrink-0" strokeWidth={1.5} />
-        EXPORT
-      </button>
-      <div className="flex-1" />
-      <Link href="/settings" className={`${item} mb-[28px]`}>
-        <Settings className="h-[21px] w-[21px] shrink-0" strokeWidth={1.5} />
-        SETTINGS
-      </Link>
-    </nav>
-  )
-}
 
 export default function ResultsOverviewPage() {
   const router = useRouter()
@@ -119,8 +78,7 @@ export default function ResultsOverviewPage() {
   const doExport = () => { window.print() }
 
   return (
-    <ShotIQShell active="Analyze"
-      sidebar={<OverviewRail onShare={share} onExport={doExport} shared={shared} />}>
+    <ShotIQShell active="Analyze">
     <div data-testid="screen-results-overview" className="pl-[21px] pr-[24px] pt-[16px]">
       {/* header */}
       <div className="flex items-start">
@@ -135,6 +93,23 @@ export default function ResultsOverviewPage() {
           </p>
         </div>
         <div className="mt-[18px] flex items-center gap-[18px]">
+          {/* Share and Export used to live in this screen's own left rail. That
+              rail is gone (one menu sidebar app-wide), so the two actions moved
+              into the header action row — they are the only place either one is
+              reachable from. */}
+          <button type="button" onClick={share} data-testid="overview-share"
+                  className="flex h-[34px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[16px] text-[12px] font-bold tracking-[0.05em]">
+            {shared
+              ? <Check className="h-[13px] w-[13px] text-[var(--shotiq-color-confirmGreen)]" strokeWidth={2.2} />
+              : <Share2 className="h-[13px] w-[13px]" strokeWidth={1.8} />}
+            {shared ? "COPIED" : "SHARE"}
+          </button>
+          <button type="button" onClick={doExport} data-testid="overview-export"
+                  className="flex h-[34px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[16px] text-[12px] font-bold tracking-[0.05em]">
+            <Download className="h-[13px] w-[13px]" strokeWidth={1.8} />
+            EXPORT
+          </button>
+          <span className="h-[24px] w-px bg-[var(--shotiq-color-rule)]" />
           <button type="button" data-testid="overview-prev"
                   onClick={() => setIndex((i) => Math.max(1, i - 1))}
                   className="flex h-[34px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[16px] text-[12px] font-bold tracking-[0.05em]">

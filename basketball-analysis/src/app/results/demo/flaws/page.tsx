@@ -4,11 +4,7 @@
 
 import React, { useState } from "react"
 import Link from "next/link"
-import {
-  LayoutGrid, Crosshair, Diamond, GitCompare, History as HistoryIcon, Filter,
-  Target, Dumbbell, UserCog, Settings2, ChevronRight, ChevronLeft, ArrowDown,
-  type LucideIcon,
-} from "lucide-react"
+import { ChevronRight, ChevronLeft, ArrowDown } from "lucide-react"
 import { ShotIQShell, SectionLabel, Card } from "@/components/shotiq/ShotIQShell"
 import { FlawFigure, WorkoutGlyph, type FlawKind } from "@/components/shotiq/Glyphs"
 import { useHistory, FormScoreCell, formatDelta, formatMakePct } from "@/components/shotiq/ResultsBits"
@@ -31,57 +27,13 @@ const LOWER_FLAWS: Flaw[] = [
   { n: 5, title: "Guide-hand thumb flick", impact: "LOW IMPACT", desc: "Occasional off-hand thumb movement at release.", affects: "AFFECTS 9% OF SHOTS", delta: "-0.8% IMPACT", glyph: "guide" },
 ]
 
-/** 085's own grouped sidebar (left-bar active state, per the canonical). */
-function FlawsSidebar() {
-  const groups: { heading: string; items: { label: string; href: string; icon: LucideIcon; active?: boolean }[] }[] = [
-    { heading: "ANALYZE", items: [
-      { label: "Overview", href: "/results/demo", icon: LayoutGrid },
-      { label: "Shots", href: "/results/demo/analysis", icon: Crosshair },
-      { label: "Flaws", href: "/results/demo/flaws", icon: Diamond, active: true },
-      { label: "Compare", href: "/results/demo/compare", icon: GitCompare },
-    ]},
-    { heading: "SESSIONS", items: [
-      { label: "History", href: "/results/demo/history", icon: HistoryIcon },
-      { label: "Filter", href: "/results/demo/history", icon: Filter },
-    ]},
-    { heading: "TOOLS", items: [
-      { label: "Goals", href: "/results/demo/goals", icon: Target },
-      { label: "Drills", href: "/training/drills", icon: Dumbbell },
-    ]},
-    { heading: "SETTINGS", items: [
-      { label: "Profile", href: "/profile", icon: UserCog },
-      { label: "Preferences", href: "/settings", icon: Settings2 },
-    ]},
-  ]
-  return (
-    <nav data-testid="region-sidebar" aria-label="Flaws workspace"
-         className="w-[165px] shrink-0 border-r border-[var(--shotiq-color-rule)] pt-[22px]">
-      {groups.map((g, gi) => (
-        <div key={g.heading}>
-          {gi > 0 && <div className="mx-[24px] my-[14px] border-t border-[var(--shotiq-color-rule)]" />}
-          <div className="px-[24px] pb-[6px] text-[10px] font-bold tracking-[0.09em] text-[var(--shotiq-color-graphite)]">{g.heading}</div>
-          {g.items.map((it) => (
-            <Link key={it.label} href={it.href} aria-current={it.active ? "page" : undefined}
-                  className={`relative flex h-[38px] items-center gap-[11px] px-[24px] text-[13px] ${
-                    it.active ? "font-semibold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-ink)]"}`}>
-              {it.active && <span className="absolute inset-y-[3px] left-0 w-[4px] bg-[var(--shotiq-color-shotiqOrange)]" />}
-              <it.icon className="h-[15px] w-[15px]" strokeWidth={1.6} />
-              {it.label}
-            </Link>
-          ))}
-        </div>
-      ))}
-    </nav>
-  )
-}
-
 export default function FlawsPage() {
   const { hasData, score, shots, makes, delta } = useHistory()
   const [sel, setSel] = useState(0)
   const [showLower, setShowLower] = useState(false)
   const visible = hasData ? (showLower ? [...FLAWS, ...LOWER_FLAWS] : FLAWS) : []
   return (
-    <ShotIQShell active="Analyze" sidebar={<FlawsSidebar />}>
+    <ShotIQShell active="Analyze">
     <div data-testid="screen-desktop-web-flaws-history" className="px-[22px] pt-[14px]">
       {/* Canonical draws the score, session stats and the coaching target as one
           bordered container split by vertical hairlines — not a card plus a
@@ -253,8 +205,10 @@ export default function FlawsPage() {
         </div>
       </div>
 
-      {/* bottom strip */}
-      <div className="mt-[8px] mb-[8px] flex gap-[24px] border-t border-[var(--shotiq-color-rule)] pt-[8px]">
+      {/* bottom strip — no bottom margin: this is the last block on the screen
+          and 8px of trailing margin pushed the page past the 900px fold once
+          the rail widened from 165px to the unified 196px. */}
+      <div className="mt-[4px] flex gap-[24px] border-t border-[var(--shotiq-color-rule)] pt-[6px]">
         <div className="w-[500px] shrink-0">
           <SectionLabel>FLAW HISTORY</SectionLabel>
           <div className="mt-[4px] flex">

@@ -18,13 +18,12 @@ import React, { useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import {
-  CalendarCheck, Dumbbell, Library, Wrench, CircleCheckBig, History,
-  GitCompare, TrendingUp, CircleCheck, CircleX, Undo2, Pause, Play, Square,
+  CircleCheck, CircleX, Undo2, Pause, Play, Square,
   VolumeX, Volume2, LogOut, ChevronRight, ChevronDown, Maximize,
   Globe, SignalHigh, Clock, Pen, type LucideIcon,
 } from "lucide-react"
 import {
-  ShotIQShell, WideSidebar, SectionLabel, Card,
+  ShotIQShell, SectionLabel, Card,
 } from "@/components/shotiq/ShotIQShell"
 import { PoseFigure, WorkoutGlyph } from "@/components/shotiq/Glyphs"
 
@@ -142,34 +141,7 @@ export default function DrillExecutionClient() {
   ]
 
   return (
-    <ShotIQShell active="Training"
-      sidebar={
-        <div className="flex w-[190px] shrink-0 flex-col border-r border-[var(--shotiq-color-rule)]">
-          <WideSidebar sections={[
-            { heading: "TRAINING", items: [
-              { label: "Today's Plan", href: "/results/demo/training", icon: CalendarCheck },
-              { label: "Workouts", href: "/results/demo/training", icon: Dumbbell, active: true },
-              { label: "Drill Library", href: "/results/demo/training", icon: Library },
-              { label: "Custom Drills", href: "/results/demo/training", icon: Wrench },
-              { label: "Active Goals", href: "/results/demo/goals", icon: CircleCheckBig },
-            ]},
-            { heading: "ANALYSIS", items: [
-              { label: "Recent Analyses", href: "/results/demo/history", icon: History },
-              { label: "Comparisons", href: "/results/demo/compare", icon: GitCompare },
-              { label: "Form Trends", href: "/results/demo/history", icon: TrendingUp },
-            ]},
-          ]} />
-          <Card className="mx-[14px] mb-[20px] mt-auto px-[16px] py-[14px]">
-            <SectionLabel>FORM SCORE</SectionLabel>
-            <div className="shotiq-numeric text-[40px] leading-[44px] text-[var(--shotiq-color-shotiqOrange)]">82</div>
-            <div className="h-[6px] rounded-full bg-[var(--shotiq-color-rule)]">
-              <div className="h-full w-[70%] rounded-full bg-[var(--shotiq-color-shotiqOrange)]" />
-            </div>
-            <div className="mt-[6px] text-[13px] font-bold text-[var(--shotiq-color-analysisBlue)]">GOOD</div>
-            <div className="text-[11px] leading-[15px] text-[var(--shotiq-color-graphite)]">Keep building consistency.</div>
-          </Card>
-        </div>
-      }>
+    <ShotIQShell active="Training">
       <div data-testid="screen-desktop-web-drill-execution" className="flex">
         <div className="min-w-0 flex-1 px-[26px] pt-[18px]">
           <div className="text-[12px] text-[var(--shotiq-color-graphite)]">
