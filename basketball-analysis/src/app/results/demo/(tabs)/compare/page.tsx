@@ -44,8 +44,8 @@ export default function ComparePage() {
     <div data-testid="screen-desktop-web-elite-comparison">
       <div className="flex items-start justify-between gap-[14px]">
         <div>
-          <h1 className="shotiq-display text-[46px] leading-[48px]">ELITE COMPARISON</h1>
-          <p className="mt-[4px] text-[14px] text-[var(--shotiq-color-graphite)]">See how your mechanics compare to elite-level form.</p>
+          <h1 className="shotiq-display text-[42px] leading-[44px]">ELITE COMPARISON</h1>
+          <p className="mt-[2px] text-[14px] text-[var(--shotiq-color-graphite)]">See how your mechanics compare to elite-level form.</p>
         </div>
         <div className="flex gap-[10px] pt-[4px]">
           {([["shooters", elite ? `Shooter: ${elite.name}` : "Choose shooters"],

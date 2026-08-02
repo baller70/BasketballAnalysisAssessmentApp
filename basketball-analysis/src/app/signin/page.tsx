@@ -18,22 +18,8 @@
 import React, { useRef, useState } from "react"
 import Link from "next/link"
 import { useAuthStore } from "@/stores/authStore"
-import {
-  Eye, EyeOff, Loader2, Home, Camera, History, LineChart, Activity,
-  Target, Film, Coins, Settings, HelpCircle, ChevronDown, ChevronRight,
-} from "lucide-react"
-
-const NAV = [
-  { label: "Home", icon: Home, href: "/dashboard" },
-  { label: "Capture", icon: Camera, href: "/video-analysis" },
-  { label: "History", icon: History, href: "/results/demo/history" },
-  { label: "Analysis", icon: LineChart, href: "/results/demo/analysis" },
-  { label: "Training", icon: Activity, href: "/results/demo/training" },
-  { label: "Goals", icon: Target, href: "/results/demo/goals" },
-  { label: "Media", icon: Film, href: "/media" },
-  { label: "Points", icon: Coins, href: "/points" },
-  { label: "Settings", icon: Settings, href: "/settings" },
-]
+import { UnifiedSidebar } from "@/components/shotiq/ShotIQShell"
+import { Eye, EyeOff, Loader2, ChevronDown, ChevronRight } from "lucide-react"
 
 const STEPS = [
   { title: "CAPTURE", body: ["Record from any angle", "with your phone."], icon: "/images/canonical/077-step-capture.png" },
@@ -159,28 +145,13 @@ export default function SignInPage() {
       </header>
 
       <div className="flex flex-1">
-        {/* ------------------------------------------------------- sidebar */}
-        <nav
-          className="flex w-[112px] shrink-0 flex-col border-r border-[var(--shotiq-color-rule)] pt-[26px]"
-          data-testid="region-sidebar"
-          aria-label="Primary"
-        >
-          {/* Real links: auth-gated routes bounce to sign-in via middleware,
-              which is app behaviour, not a dead control. */}
-          {NAV.map(({ label: l, icon: Icon, href }) => (
-            <Link key={l} href={href}
-                  className="flex h-[48px] items-center gap-[12px] pl-[18px] text-[13px] text-[var(--shotiq-color-ink)]">
-              <Icon className="h-[18px] w-[18px]" strokeWidth={1.6} />
-              <span>{l}</span>
-            </Link>
-          ))}
-          <div className="flex-1" />
-          <Link href="/guide"
-                className="mb-[26px] flex h-[48px] items-center gap-[12px] pl-[18px] text-[13px] text-[var(--shotiq-color-ink)]">
-            <HelpCircle className="h-[18px] w-[18px]" strokeWidth={1.6} />
-            <span>Help</span>
-          </Link>
-        </nav>
+        {/* ------------------------------------------------------- sidebar
+            The product owner's ruling is one menu sidebar for the whole app —
+            no per-screen rail variants. This screen used to draw its own
+            10-item 112px rail; it now renders the same `UnifiedSidebar` every
+            other screen does. Auth-gated destinations bounce back here via
+            middleware, which is app behaviour, not a dead control. */}
+        <UnifiedSidebar />
 
         {/* --------------------------------------------------- form column */}
         <section className="w-[394px] shrink-0 border-r border-[var(--shotiq-color-rule)] px-[46px] pt-[48px]">
@@ -258,8 +229,13 @@ export default function SignInPage() {
           </p>
         </section>
 
-        {/* ------------------------------------------------ marketing rail */}
-        <section className="flex-1 px-[48px] pt-[34px]" data-testid="region-main">
+        {/* ------------------------------------------------ marketing rail
+            The unified rail is 196px where this screen's own rail was 112px,
+            so this column lost 84px. The loss is absorbed by the gutters and
+            the media surface (below) rather than by the FORM SCORE card, which
+            keeps its canonical 346px width — the card is the dense element and
+            is the one that breaks first when squeezed. */}
+        <section className="flex-1 px-[32px] pt-[34px]" data-testid="region-main">
           <h2 className="shotiq-display text-[40px] leading-[44px]">
             AI ANALYSIS. BETTER MECHANICS. BETTER RESULTS.
           </h2>
@@ -289,8 +265,10 @@ export default function SignInPage() {
 
           <div className="-ml-[12px] mt-[22px] flex gap-[12px]">
             {/* Media surface — exact frame cropped from the canonical screen
-                (077, x541 y335 492x355); the player chrome is baked into it. */}
-            <div className="relative h-[355px] w-[492px] shrink-0 overflow-hidden rounded-[4px] bg-[#1B1D20]"
+                (077, x541 y335 492x355); the player chrome is baked into it.
+                Scaled to 440x317 (same 1.386 aspect) so the FORM SCORE card
+                beside it keeps its canonical width under the wider rail. */}
+            <div className="relative h-[317px] w-[440px] shrink-0 overflow-hidden rounded-[4px] bg-[#1B1D20]"
                  data-testid="signin-media-surface">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/images/canonical/077-signin-video.png" alt="Jump shot being analyzed"
@@ -341,10 +319,11 @@ export default function SignInPage() {
           <div className="relative -ml-[12px] mt-[12px] h-[126px] rounded-[8px] border border-[var(--shotiq-color-rule)]">
             <div className="absolute left-[15px] top-[19px] text-[12px] font-bold tracking-[0.05em]">SHOT PHASES</div>
             {/* Phase figures + labels are the exact strip cropped from the
-                canonical screen (077, x585 y746 550x90). */}
+                canonical screen (077, x585 y746 550x90), scaled to 510x83 so
+                it clears the copy block at the right under the wider rail. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/images/canonical/077-phase-strip.png" alt="Shot phases: setup, load, rise, release, follow-through"
-                 className="absolute left-[42px] top-[32px] h-[90px] w-[550px] mix-blend-multiply" />
+                 className="absolute left-[36px] top-[34px] h-[83px] w-[510px] mix-blend-multiply" />
             <p className="absolute right-[24px] top-[34px] w-[192px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
               Release is where shots are won.<br />Small adjustments. Big impact.
             </p>

@@ -1,10 +1,6 @@
 "use client"
 
-/**
- * Canonical shell wrapper for /settings.
- * The canonical 096 screen paints its own SETTINGS sidebar inside the page,
- * so the shell's icon rail is suppressed here (topbar only).
- */
+/** See the note on /privacy's layout — the menu links here, so the menu stays. */
 
 import { ShotIQShell } from "@/components/shotiq/ShotIQShell"
 

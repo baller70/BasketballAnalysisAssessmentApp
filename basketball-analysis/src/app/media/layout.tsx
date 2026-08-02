@@ -9,5 +9,5 @@
 import { ShotIQShell } from "@/components/shotiq/ShotIQShell"
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  return <ShotIQShell active="Media" sidebar={<></>}>{children}</ShotIQShell>
+  return <ShotIQShell active="Media">{children}</ShotIQShell>
 }

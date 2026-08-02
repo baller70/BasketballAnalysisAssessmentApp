@@ -66,7 +66,7 @@ export default function MediaLibraryPage() {
   const [range, setRange] = useState(RANGES[0])
   const [sort, setSort] = useState<(typeof SORTS)[number]>("Newest")
   const [menu, setMenu] = useState<null | "range" | "sort">(null)
-  const [railOpen, setRailOpen] = useState(true)
+  const [railOpen, setRailOpen] = useState(false)
   const [query, setQuery] = useState("")
   useEffect(() => {
     fetch("/api/media", { credentials: "include" }).then((r) => (r.ok ? r.json() : null))
@@ -145,51 +145,9 @@ export default function MediaLibraryPage() {
     s === "Analyzed" ? "var(--shotiq-color-confirmGreen)" : s === "Review" ? "var(--shotiq-color-shotiqOrange)" : "var(--shotiq-color-muted)"
 
   return (
-    <div data-testid="screen-desktop-web-media-library" className="flex">
-      {/* filters rail */}
-      {railOpen && (
-      <aside className="w-[200px] shrink-0 border-r border-[var(--shotiq-color-rule)] px-[18px] py-[18px]">
-        <div className="flex items-center justify-between">
-          <SectionLabel>FILTERS</SectionLabel>
-          <button type="button" onClick={clearAll} className="text-[11px] text-[var(--shotiq-color-shotiqOrange)]">Clear all</button>
-        </div>
-        <div className="mt-[12px] text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">DATE RANGE</div>
-        <div className="relative">
-          <button type="button" aria-expanded={menu === "range"}
-                  onClick={() => setMenu((m) => (m === "range" ? null : "range"))}
-                  className="mt-[6px] flex h-[36px] w-full items-center gap-[6px] rounded-[5px] border border-[var(--shotiq-color-rule)] px-[8px] text-[11px]">
-            <Calendar className="h-[12px] w-[12px]" /> {range[1]} <ChevronDown className="ml-auto h-[11px] w-[11px]" />
-          </button>
-          {menu === "range" && (
-            <div className="absolute left-0 top-[42px] z-30 w-full rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white py-[4px] shadow-[0_8px_20px_rgba(17,17,17,0.10)]">
-              {RANGES.map((r) => (
-                <button key={r[0]} type="button" onClick={() => { setRange(r); setMenu(null) }}
-                        className={`flex h-[28px] w-full items-center px-[8px] text-[11px] hover:bg-[var(--shotiq-color-warmCanvas)] ${range[0] === r[0] ? "font-semibold text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
-                  {r[1]}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-        {FILTERS.map(([head, opts]) => (
-          <div key={head} className="mt-[14px]">
-            <div className="text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">{head}</div>
-            {opts.map(([label, n]) => (
-              <label key={String(label)} className="mt-[6px] flex items-center gap-[8px] text-[12px]">
-                <input type="checkbox" checked={checked[head] === String(label)}
-                       onChange={() => setChecked((c) => ({ ...c, [head]: String(label) }))}
-                       className="h-[13px] w-[13px] accent-[var(--shotiq-color-shotiqOrange)]" />
-                <span className="flex-1">{label}</span>
-                {n >= 0 && <span className="text-[11px] text-[var(--shotiq-color-graphite)]">{n}</span>}
-              </label>
-            ))}
-          </div>
-        ))}
-      </aside>
-      )}
-
+    <div data-testid="screen-desktop-web-media-library" className="flex h-[835px] flex-col">
       {/* content */}
-      <div className="min-w-0 flex-1 px-[24px] py-[18px]">
+      <div className="flex min-h-0 flex-1 flex-col px-[24px] py-[16px]">
         <div className="flex items-start justify-between">
           <div>
             <h1 className="shotiq-display text-[44px] leading-[46px]">MEDIA LIBRARY</h1>
@@ -206,7 +164,7 @@ export default function MediaLibraryPage() {
               <Upload className="h-[14px] w-[14px]" /> Upload
             </Link>
             <button type="button" aria-expanded={railOpen} onClick={() => setRailOpen((v) => !v)}
-                    className={`flex h-[42px] items-center gap-[8px] rounded-[6px] border px-[14px] text-[13px] ${railOpen ? "border-[var(--shotiq-color-rule)]" : "border-[var(--shotiq-color-shotiqOrange)] text-[var(--shotiq-color-shotiqOrange)]"}`}>
+                    className={`flex h-[42px] items-center gap-[8px] rounded-[6px] border px-[14px] text-[13px] ${railOpen ? "border-[var(--shotiq-color-shotiqOrange)] text-[var(--shotiq-color-shotiqOrange)]" : "border-[var(--shotiq-color-rule)]"}`}>
               <SlidersHorizontal className="h-[14px] w-[14px]" /> Filter
             </button>
             <div className="relative">
@@ -226,12 +184,60 @@ export default function MediaLibraryPage() {
                 </div>
               )}
             </div>
+            {/* Destructive. The 50% disabled opacity washed the alert colour out
+                to a near-invisible pink; disabled now reads as graphite. */}
             <button type="button" disabled={!selected.size} onClick={deleteSelected}
-                    className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-reviewRed)] px-[14px] text-[13px] text-[var(--shotiq-color-reviewRed)] disabled:opacity-50">
+                    className="flex h-[42px] items-center gap-[8px] rounded-[6px] border px-[14px] text-[13px] font-semibold border-[var(--shotiq-color-reviewRed)] text-[var(--shotiq-color-reviewRed)] disabled:border-[var(--shotiq-color-rule)] disabled:text-[var(--shotiq-color-graphite)] disabled:font-normal">
               <Trash2 className="h-[14px] w-[14px]" /> Delete
             </button>
           </div>
         </div>
+
+        {/* Filters live in the content column, opened from the Filter button.
+            They used to stand as a SECOND full-height rail beside the one nav
+            rail, which cost ~200px of the 1440px canvas before any content. */}
+        {railOpen && (
+          <Card className="mt-[10px] flex items-start gap-[20px] px-[16px] py-[12px]">
+            <div className="w-[150px] shrink-0">
+              <div className="flex items-center justify-between">
+                <SectionLabel>FILTERS</SectionLabel>
+                <button type="button" onClick={clearAll} className="text-[11px] text-[var(--shotiq-color-shotiqOrange)]">Clear all</button>
+              </div>
+              <div className="mt-[8px] text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">DATE RANGE</div>
+              <div className="relative">
+                <button type="button" aria-expanded={menu === "range"}
+                        onClick={() => setMenu((m) => (m === "range" ? null : "range"))}
+                        className="mt-[6px] flex h-[32px] w-full items-center gap-[6px] rounded-[5px] border border-[var(--shotiq-color-rule)] px-[8px] text-[11px]">
+                  <Calendar className="h-[12px] w-[12px]" /> {range[1]} <ChevronDown className="ml-auto h-[11px] w-[11px]" />
+                </button>
+                {menu === "range" && (
+                  <div className="absolute left-0 top-[38px] z-30 w-full rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white py-[4px] shadow-[0_8px_20px_rgba(17,17,17,0.10)]">
+                    {RANGES.map((r) => (
+                      <button key={r[0]} type="button" onClick={() => { setRange(r); setMenu(null) }}
+                              className={`flex h-[28px] w-full items-center px-[8px] text-[11px] hover:bg-[var(--shotiq-color-warmCanvas)] ${range[0] === r[0] ? "font-semibold text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
+                        {r[1]}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+            {FILTERS.map(([head, opts]) => (
+              <div key={head} className="min-w-0 flex-1">
+                <div className="text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">{head}</div>
+                {opts.map(([label, n]) => (
+                  <label key={String(label)} className="mt-[5px] flex items-center gap-[8px] text-[12px]">
+                    <input type="checkbox" checked={checked[head] === String(label)}
+                           onChange={() => setChecked((c) => ({ ...c, [head]: String(label) }))}
+                           className="h-[13px] w-[13px] accent-[var(--shotiq-color-shotiqOrange)]" />
+                    <span className="flex-1 truncate">{label}</span>
+                    {n >= 0 && <span className="text-[11px] text-[var(--shotiq-color-graphite)]">{n}</span>}
+                  </label>
+                ))}
+              </div>
+            ))}
+          </Card>
+        )}
         <div className="mt-[10px] flex items-center justify-between border-b border-[var(--shotiq-color-rule)] pb-[8px] text-[12px] text-[var(--shotiq-color-graphite)]">
           <label className="flex items-center gap-[8px]">
             <input type="checkbox" className="h-[13px] w-[13px]" readOnly checked={selected.size > 0} /> {selected.size} selected
@@ -239,6 +245,9 @@ export default function MediaLibraryPage() {
           <span>{total === Object.values(groups).flat().length ? 12 : total} items</span>
         </div>
 
+        {/* Canonical fills the fold and clips the last group at the viewport
+            edge; the groups scroll here so the page is exactly 900px tall. */}
+        <div className="min-h-0 flex-1 overflow-y-auto pb-[8px]">
         {empty && (
           <Card className="mt-[20px] p-[30px] text-center text-[14px] text-[var(--shotiq-color-graphite)]">
             No media yet — captures and uploads will appear here.
@@ -306,6 +315,7 @@ export default function MediaLibraryPage() {
           </div>
           )
         })}
+        </div>
       </div>
 
       {/* Media detail — iOS 069 counterpart: full preview, capture details,
