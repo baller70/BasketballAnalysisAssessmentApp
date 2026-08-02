@@ -13,10 +13,10 @@ import React, { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import {
   ChevronLeft, ChevronDown, ArrowRight, Save, Info, Ruler, SlidersHorizontal,
-  ClipboardList, Crosshair, Dumbbell, TrendingUp, MonitorSmartphone, type LucideIcon,
+  ClipboardList, type LucideIcon,
 } from "lucide-react"
 import { SectionLabel, Card } from "@/components/shotiq/ShotIQShell"
-import { PoseGlyph, CueGlyph } from "@/components/shotiq/Glyphs"
+import { PoseGlyph, CueGlyph, type ShotPhase } from "@/components/shotiq/Glyphs"
 import { useAuthStore } from "@/stores/authStore"
 import { useProfileStore } from "@/stores/profileStore"
 
@@ -26,6 +26,12 @@ const STEPS: [string, LucideIcon | null][] = [
   ["Onboarding", null], ["Measurements", Ruler], ["Preferences", SlidersHorizontal], ["Review", ClipboardList],
 ]
 const PHASES = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
+// Canonical gives each benefit its own pose figure rather than a generic icon.
+const BENEFITS: [string, string, ShotPhase][] = [
+  ["Accurate feedback", "AI analysis calibrated to your body and style.", "setup"],
+  ["Smarter training", "Drills and plans that target what moves your score.", "rise"],
+  ["Track what matters", "See progress where it counts, session after session.", "follow"],
+]
 const GOALS = [
   "Keep elbow stacked through release", "Raise make percentage", "Quicker release",
   "Better balance and footwork",
@@ -72,6 +78,12 @@ export default function OnboardingPage() {
   }
   const next = () => (step < STEPS.length ? setStep(step + 1) : finish())
 
+  // Canonical reports the step being worked, not the tab being viewed: the
+  // welcome form is already behind you, so the flow reads "Step 2 of 4 —
+  // Measurements" while this card is on screen.
+  const progressStep = Math.min(step + 1, STEPS.length)
+  const progressName = STEPS[Math.min(step, STEPS.length - 1)][0]
+
   const lbl = "flex items-center gap-[4px] text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]"
   const box = "h-[46px] rounded-[5px] border border-[var(--shotiq-color-rule)] bg-white px-[12px] text-[14px] outline-none focus:border-[var(--shotiq-color-ink)]"
 
@@ -100,10 +112,10 @@ export default function OnboardingPage() {
             </button>
           ))}
           <div className="ml-auto flex items-center gap-[10px] pb-[8px]">
-            <span className="text-[11px] text-[var(--shotiq-color-graphite)]">Step {step} of {STEPS.length}</span>
+            <span className="text-[11px] text-[var(--shotiq-color-graphite)]">Step {progressStep} of {STEPS.length}</span>
             <span className="block h-[6px] w-[120px] rounded-full bg-[var(--shotiq-color-rule)]">
               <span className="block h-full rounded-full bg-[var(--shotiq-color-shotiqOrange)]"
-                    style={{ width: `${(step / STEPS.length) * 100}%` }} />
+                    style={{ width: `${(progressStep / STEPS.length) * 100}%` }} />
             </span>
           </div>
         </div>
@@ -217,47 +229,82 @@ export default function OnboardingPage() {
             </button>
           </div>
         </div>
+
       </div>
 
-      {/* why it matters rail */}
-      <aside className="w-[430px] shrink-0 border-l border-[var(--shotiq-color-rule)] px-[22px] py-[20px]">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/images/canonical/078-hero.png" alt="Shooter at release with elbow flex and release angle called out"
-             className="h-[300px] w-full rounded-[6px] object-cover" width={466} height={322} />
-        <SectionLabel className="mt-[14px]">WHY IT MATTERS</SectionLabel>
-        <p className="mt-[6px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
-          Measuring your profile helps ShotIQ benchmark your mechanics and build feedback that&apos;s tailored to you.
-        </p>
-        <div className="mt-[10px] space-y-[12px]">
-          {([["Accurate feedback", "AI analysis calibrated to your body and style.", Crosshair],
-            ["Smarter training", "Drills and plans that target what moves your score.", Dumbbell],
-            ["Track what matters", "See progress where it counts, session after session.", TrendingUp]] as [string, string, LucideIcon][]).map(([t, d, Icon]) => (
-            <div key={t} className="flex gap-[12px] border-l border-[var(--shotiq-color-rule)] pl-[12px]">
-              <Icon className="h-[28px] w-[28px] shrink-0" strokeWidth={1.4} />
-              <div>
-                <div className="text-[13px] font-semibold">{t}</div>
-                <div className="text-[11px] text-[var(--shotiq-color-graphite)]">{d}</div>
-              </div>
+      {/* why it matters rail — canonical draws the hero and the copy inside one
+          bordered container, not loose on the paper. */}
+      <aside className="w-[430px] shrink-0 border-l border-[var(--shotiq-color-rule)] px-[22px] py-[16px]">
+        <Card className="overflow-hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/images/canonical/078-hero.png" alt="Shooter at release with elbow flex and release angle called out"
+               className="h-[252px] w-full object-cover" width={466} height={322} />
+          <div className="border-t border-[var(--shotiq-color-rule)] px-[18px] py-[14px]">
+            <SectionLabel>WHY IT MATTERS</SectionLabel>
+            <p className="mt-[6px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
+              Measuring your profile helps ShotIQ benchmark your mechanics and build feedback that&apos;s tailored to you.
+            </p>
+            <div className="mt-[10px] space-y-[10px]">
+              {BENEFITS.map(([t, d, pose]) => (
+                <div key={t} className="flex items-start gap-[12px] border-l border-[var(--shotiq-color-rule)] pl-[12px]">
+                  <PoseGlyph phase={pose} size={30} className="shrink-0" />
+                  <div>
+                    <div className="text-[13px] font-semibold">{t}</div>
+                    <div className="text-[11px] text-[var(--shotiq-color-graphite)]">{d}</div>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
+        </Card>
+          {/* Canonical's "Your progress" card — the flow position, the step it
+              names, its bar, why the questions are asked, and the escape hatch. */}
+          <Card data-testid="onboarding-progress" className="mt-[12px] px-[16px] py-[12px]">
+            <div className="text-[13px]">Your progress</div>
+            <div className="mt-[4px] text-[12px] text-[var(--shotiq-color-graphite)]">
+              Step {progressStep} of {STEPS.length}
+            </div>
+            <div className="mt-[2px] text-[13px] font-semibold">{progressName}</div>
+            <div className="mt-[8px] h-[6px] rounded-full bg-[var(--shotiq-color-rule)]">
+              <div className="h-full rounded-full bg-[var(--shotiq-color-shotiqOrange)]"
+                   style={{ width: `${(progressStep / STEPS.length) * 100}%` }} />
+            </div>
+            <p className="mt-[8px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
+              Questions help ShotIQ personalize your analysis, feedback, and training.
+            </p>
+            <button type="button" onClick={finish}
+                    className="mt-[10px] flex items-center gap-[8px] border-t border-[var(--shotiq-color-rule)] pt-[10px] text-[13px]">
+              <Save className="h-[14px] w-[14px]" /> Save and finish later
+            </button>
+          </Card>
       </aside>
      </div>
 
       {/* Canonical 078 runs the phase strip as a full-width footer band with the
           "One profile. Everywhere." note beside it, not inside the right rail. */}
       <div className="flex shrink-0 items-center border-t border-[var(--shotiq-color-rule)] px-[26px] py-[14px]">
-        <div className="flex flex-1 items-center justify-around pr-[26px]">
+        {/* Canonical threads a dotted connector track with a stage dot per phase
+            between the figures and their labels. */}
+        <div className="grid flex-1 pr-[26px]" style={{ gridTemplateColumns: `repeat(${PHASES.length}, minmax(0, 1fr))` }}>
           {PHASES.map((p) => (
-            <div key={p} className="text-center">
+            <div key={p} className="flex flex-col items-center">
               <PoseGlyph phase={p} size={30} active={p === "RELEASE"} />
-              <div className={`mt-[2px] text-[9px] tracking-[0.05em] ${p === "RELEASE" ? "font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
             </div>
+          ))}
+          {PHASES.map((p, i) => (
+            <div key={`t-${p}`} className="relative flex h-[12px] items-center justify-center">
+              {i > 0 && <span className="absolute right-1/2 top-1/2 w-full border-t border-dotted border-[var(--shotiq-color-rule)]" />}
+              {i < PHASES.length - 1 && <span className="absolute left-1/2 top-1/2 w-full border-t border-dotted border-[var(--shotiq-color-rule)]" />}
+              <span className={`relative h-[6px] w-[6px] rounded-full ${p === "RELEASE" ? "bg-[var(--shotiq-color-shotiqOrange)]" : "bg-[var(--shotiq-color-graphite)]"}`} />
+            </div>
+          ))}
+          {PHASES.map((p) => (
+            <div key={`l-${p}`} className={`text-center text-[9px] tracking-[0.05em] ${p === "RELEASE" ? "font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
           ))}
         </div>
         <div className="flex w-[430px] shrink-0 items-center gap-[12px] border-l border-[var(--shotiq-color-rule)] pl-[26px]">
           <span className="grid h-[44px] w-[44px] shrink-0 place-items-center rounded-full border border-[var(--shotiq-color-rule)]">
-            <MonitorSmartphone className="h-[22px] w-[22px]" strokeWidth={1.5} />
+            <CueGlyph kind="tree" size={24} accent="var(--shotiq-color-shotiqOrange)" />
           </span>
           <p className="text-[11px] leading-[15px] text-[var(--shotiq-color-graphite)]">
             <span className="font-semibold text-[var(--shotiq-color-ink)]">One profile. Everywhere.</span><br />

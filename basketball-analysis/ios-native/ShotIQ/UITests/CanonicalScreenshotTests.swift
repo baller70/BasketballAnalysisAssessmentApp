@@ -252,15 +252,15 @@ final class CanonicalScreenshotTests: XCTestCase {
 
     func test04CaptureScreens() {
         launch(Self.mainArgs)
-        selectTab("Analyze")
+        selectTab("Capture")
         guard expectScreen("screen-ios-analyze-hub", timeout: 20) else { return }
 
         tapAndExpect("Upload image", "screen-ios-photo-upload-source", from: "analyze-hub")
-        resetTab("Analyze", root: "screen-ios-analyze-hub")
+        resetTab("Capture", root: "screen-ios-analyze-hub")
         tapAndExpect("Upload video", "screen-ios-video-upload", from: "analyze-hub")
-        resetTab("Analyze", root: "screen-ios-analyze-hub")
+        resetTab("Capture", root: "screen-ios-analyze-hub")
         tapAndExpect("Free Throw", "screen-ios-media-detail", from: "analyze-hub")
-        resetTab("Analyze", root: "screen-ios-analyze-hub")
+        resetTab("Capture", root: "screen-ios-analyze-hub")
 
         // Live capture chain: setup → calibration → readiness → ready →
         // recording (auto-starts) → live feedback.
@@ -273,7 +273,7 @@ final class CanonicalScreenshotTests: XCTestCase {
         tapAndExpect("Stop recording", "screen-ios-live-form-feedback", from: "live-recording")
 
         // Second pass down the same chain for the "end round" branch.
-        resetTab("Analyze", root: "screen-ios-analyze-hub")
+        resetTab("Capture", root: "screen-ios-analyze-hub")
         tapAndExpect("Live camera", "screen-ios-live-camera-setup", from: "analyze-hub", capture: false)
         tapAndExpect("Skip calibration", "screen-ios-readiness-check", from: "live-camera-setup",
                      required: false, capture: false)
@@ -288,7 +288,7 @@ final class CanonicalScreenshotTests: XCTestCase {
         }
 
         // Upload queue → processing → results.
-        resetTab("Analyze", root: "screen-ios-analyze-hub")
+        resetTab("Capture", root: "screen-ios-analyze-hub")
         tapAndExpect("View all", "screen-ios-upload-queue", from: "analyze-hub")
         tapAndExpect("Analyze now", "screen-ios-analysis-processing", from: "upload-queue")
         // AnalysisProcessingView auto-advances when its progress task finishes.

@@ -18,7 +18,7 @@ import { useRouter } from "next/navigation"
 import {
   Image as ImageIcon, Film, Upload, FolderUp, ChevronRight, HelpCircle,
   ArrowLeft, LayoutGrid, History, GitCompare, Crosshair, BookOpen, PlayCircle,
-  ScanLine, Sun, Gauge, Focus, PersonStanding, MoveDiagonal, Grid2x2,
+  ScanLine,
 } from "lucide-react"
 import { PoseAnalysis } from "@/components/analysis/PoseAnalysis"
 import { useAnalysisStore } from "@/stores/analysisStore"
@@ -26,12 +26,34 @@ import { enqueueVideoUpload, uploadQueueStorage } from "@/lib/upload/uploadQueue
 import {
   ShotIQShell, WideSidebar, TrendLine, SectionLabel, Card, Stat,
 } from "@/components/shotiq/ShotIQShell"
+import {
+  QualityGlyph, FilmingGlyph, type QualityKind, type FilmingKind,
+} from "@/components/shotiq/Glyphs"
+import { useHistory, scoreSeries, sessionDelta, formatDelta } from "@/components/shotiq/ResultsBits"
 
 const ACCEPT = ".mp4,.mov,.hevc,.jpg,.jpeg,.png"
 const isVideo = (f: File) => /video|\.mp4$|\.mov$|\.hevc$/i.test(`${f.type} ${f.name}`)
 
+// Pre-flight checks and filming advice each get their own bespoke mark, the way
+// canonical draws them — no generic icon does duty for two different ideas.
+const CHECKS: [string, string, QualityKind][] = [
+  ["Resolution", "Minimum 720p recommended", "resolution"],
+  ["Lighting", "Well-lit subject and background", "lighting"],
+  ["Frame rate", "30–60 FPS recommended", "framerate"],
+  ["Stability", "Minimize camera shake", "stability"],
+]
+const FILMING: [string, string, FilmingKind][] = [
+  ["Full body in frame", "From feet to above head", "fullBody"],
+  ["Side angle", "Camera perpendicular to shooter", "sideAngle"],
+  ["Neutral background", "Avoid clutter and distractions", "background"],
+  ["Good lighting", "Even light on player and ball", "light"],
+]
+
 export default function AnalyzeWorkspacePage() {
   const router = useRouter()
+  const { items, score } = useHistory()
+  const trend = scoreSeries(items, 6)
+  const delta = sessionDelta(items)
   const { uploadedFile, uploadedImageBase64 } = useAnalysisStore()
   const inputRef = useRef<HTMLInputElement>(null)
   const [files, setFiles] = useState<File[]>([])
@@ -196,14 +218,14 @@ export default function AnalyzeWorkspacePage() {
                 <div className="flex-1 pr-[14px]">
                   <SectionLabel>FORM SCORE</SectionLabel>
                   <div className="flex items-end gap-[10px]">
-                    <div className="shotiq-numeric text-[44px] leading-[48px] text-[var(--shotiq-color-shotiqOrange)]">82</div>
+                    <div className="shotiq-numeric text-[44px] leading-[48px] text-[var(--shotiq-color-shotiqOrange)]">{score ?? "—"}</div>
                     <div className="pb-[6px]">
                       <div className="text-[12px] font-bold text-[var(--shotiq-color-analysisBlue)]">GOOD</div>
                       <div className="text-[10px] leading-[13px] text-[var(--shotiq-color-graphite)]">Keep building<br />consistency.</div>
                     </div>
                   </div>
                   <div className="mt-[6px] h-[6px] rounded-full bg-[var(--shotiq-color-rule)]">
-                    <div className="h-full w-[62%] rounded-full bg-[var(--shotiq-color-shotiqOrange)]" />
+                    <div className="h-full rounded-full bg-[var(--shotiq-color-shotiqOrange)]" style={{ width: `${score ?? 0}%` }} />
                   </div>
                 </div>
                 <div className="flex-1 pl-[14px]">
@@ -223,13 +245,17 @@ export default function AnalyzeWorkspacePage() {
               </div>
               <div className="mt-[14px] border-t border-[var(--shotiq-color-rule)] pt-[12px]">
                 <SectionLabel>LATEST SESSION</SectionLabel>
-                <div className="mt-[8px] flex items-center gap-[22px]">
-                  <Stat value="24" label="SHOTS" valueClass="text-[20px] leading-[24px]" />
-                  <Stat value="15" label="MAKES" valueClass="text-[20px] leading-[24px]" />
-                  <Stat value="62.5%" label="MAKE %" valueClass="text-[20px] leading-[24px]" />
-                  <div className="ml-auto text-right">
-                    <TrendLine points={[3, 2, 4, 3.4, 5]} width={84} height={30} />
-                    <div className="text-[10px] text-[var(--shotiq-color-confirmGreen)]">+8.1% vs last session</div>
+                {/* Hairline-ruled and spread across the card, as canonical draws
+                    it; the trend plots the real score history. */}
+                <div className="mt-[8px] flex items-center divide-x divide-[var(--shotiq-color-rule)]">
+                  <div className="flex-1 pr-[12px]"><Stat value="24" label="SHOTS" valueClass="text-[20px] leading-[24px]" /></div>
+                  <div className="flex-1 px-[12px]"><Stat value="15" label="MAKES" valueClass="text-[20px] leading-[24px]" /></div>
+                  <div className="flex-1 px-[12px]"><Stat value="62.5%" label="MAKE %" valueClass="text-[20px] leading-[24px]" /></div>
+                  <div className="shrink-0 pl-[12px] text-right">
+                    <TrendLine points={trend} width={84} height={30} />
+                    <div className={`text-[10px] ${delta != null && delta < 0 ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-confirmGreen)]"}`}>
+                      {formatDelta(delta)} vs last session
+                    </div>
                   </div>
                 </div>
               </div>
@@ -237,83 +263,74 @@ export default function AnalyzeWorkspacePage() {
           </aside>
         </div>
 
-        {/* queue / checks / guide */}
+        {/* Queue and checks are one bordered container split by an internal
+            hairline — canonical never gutters these two apart. */}
         <div className="mt-[14px] flex gap-[16px]">
-          <Card className="w-[365px] shrink-0 px-[18px] py-[16px]">
-            <SectionLabel>UPLOAD QUEUE ({files.length})</SectionLabel>
-            <p className="mt-[4px] text-[12px] text-[var(--shotiq-color-graphite)]">
-              Files you add will appear here. You can add more or start analysis.
-            </p>
-            {files.length === 0 ? (
-              <div className="mt-[14px] flex h-[150px] flex-col items-center justify-center rounded-[8px] border-2 border-dashed border-[var(--shotiq-color-rule)]">
-                <TrendLine points={[2, 4, 3, 5]} width={70} height={30}
-                           stroke="var(--shotiq-color-analysisBlue)" dotFill="var(--shotiq-color-analysisBlue)" />
-                <div className="mt-[8px] text-[15px] font-semibold">No media added yet</div>
-                <div className="mt-[3px] text-[12px] text-[var(--shotiq-color-graphite)]">
-                  Choose media or drag files above to get started.
+          <Card className="flex w-[600px] shrink-0 divide-x divide-[var(--shotiq-color-rule)]">
+            <div className="w-[318px] shrink-0 px-[18px] py-[16px]">
+              <SectionLabel>UPLOAD QUEUE ({files.length})</SectionLabel>
+              <p className="mt-[4px] text-[12px] text-[var(--shotiq-color-graphite)]">
+                Files you add will appear here. You can add more or start analysis.
+              </p>
+              {files.length === 0 ? (
+                <div className="mt-[14px] flex h-[150px] flex-col items-center justify-center rounded-[8px] border-2 border-dashed border-[var(--shotiq-color-rule)]">
+                  <TrendLine points={[3, 1.6, 2.4, 4]} width={70} height={30}
+                             stroke="var(--shotiq-color-analysisBlue)" dotFill="var(--shotiq-color-analysisBlue)" />
+                  <div className="mt-[8px] text-[15px] font-semibold">No media added yet</div>
+                  <div className="mt-[3px] text-[12px] text-[var(--shotiq-color-graphite)]">
+                    Choose media or drag files above to get started.
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <ul className="mt-[14px] max-h-[150px] divide-y divide-[var(--shotiq-color-rule)] overflow-auto" data-testid="upload-queue-list">
-                {files.map((f, i) => (
-                  <li key={`${f.name}-${i}`} className="flex items-center justify-between py-[8px] text-[13px]">
-                    <span className="truncate pr-[10px]">{f.name}</span>
-                    <span className="shrink-0 text-[11px] text-[var(--shotiq-color-graphite)]">{fmtBytes(f.size)}</span>
+              ) : (
+                <ul className="mt-[14px] max-h-[150px] divide-y divide-[var(--shotiq-color-rule)] overflow-auto" data-testid="upload-queue-list">
+                  {files.map((f, i) => (
+                    <li key={`${f.name}-${i}`} className="flex items-center justify-between py-[8px] text-[13px]">
+                      <span className="truncate pr-[10px]">{f.name}</span>
+                      <span className="shrink-0 text-[11px] text-[var(--shotiq-color-graphite)]">{fmtBytes(f.size)}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div className="min-w-0 flex-1 px-[20px] py-[16px]">
+              <SectionLabel>QUALITY CHECKS</SectionLabel>
+              <p className="mt-[4px] text-[12px] text-[var(--shotiq-color-graphite)]">We&apos;ll run these checks before analysis.</p>
+              <ul className="mt-[10px] divide-y divide-[var(--shotiq-color-rule)]">
+                {CHECKS.map(([t, d, kind]) => (
+                  <li key={t} className="flex items-center gap-[12px] py-[8px]">
+                    <QualityGlyph kind={kind} size={22} className="shrink-0" />
+                    <div>
+                      <div className="whitespace-nowrap text-[13px] font-semibold">{t}</div>
+                      <div className="whitespace-nowrap text-[11px] text-[var(--shotiq-color-graphite)]">{d}</div>
+                    </div>
                   </li>
                 ))}
               </ul>
-            )}
+            </div>
           </Card>
 
-          <Card className="w-[287px] shrink-0 px-[22px] py-[16px]">
-            <SectionLabel>QUALITY CHECKS</SectionLabel>
-            <p className="mt-[4px] text-[12px] text-[var(--shotiq-color-graphite)]">We&apos;ll run these checks before analysis.</p>
-            <ul className="mt-[10px] divide-y divide-[var(--shotiq-color-rule)]">
-              {[["Resolution", "Minimum 720p recommended", Focus],
-                ["Lighting", "Well-lit subject and background", Sun],
-                ["Frame rate", "30–60 FPS recommended", Gauge],
-                ["Stability", "Minimize camera shake", MoveDiagonal]].map(([t, d, I]) => {
-                const Icon = I as typeof Sun
-                return (
-                  <li key={String(t)} className="flex items-center gap-[12px] py-[8px]">
-                    <Icon className="h-[20px] w-[20px]" strokeWidth={1.5} />
-                    <div>
-                      <div className="text-[13px] font-semibold">{String(t)}</div>
-                      <div className="text-[11px] text-[var(--shotiq-color-graphite)]">{String(d)}</div>
-                    </div>
-                  </li>
-                )
-              })}
-            </ul>
-          </Card>
-
-          <Card className="flex flex-1 gap-[18px] px-[22px] py-[12px]">
+          <Card className="flex min-w-0 flex-1 gap-[14px] px-[18px] py-[12px]">
             <div className="min-w-0 flex-1">
               <SectionLabel>FILMING GUIDE</SectionLabel>
-              <p className="mt-[4px] text-[12px] text-[var(--shotiq-color-graphite)]">Capture your best reps with these tips.</p>
+              <p className="mt-[4px] whitespace-nowrap text-[12px] text-[var(--shotiq-color-graphite)]">Capture your best reps with these tips.</p>
               <ul className="mt-[10px] divide-y divide-[var(--shotiq-color-rule)]">
-                {[["Full body in frame", "From feet to above head", PersonStanding],
-                  ["Side angle", "Camera perpendicular to shooter", MoveDiagonal],
-                  ["Neutral background", "Avoid clutter and distractions", Grid2x2],
-                  ["Good lighting", "Even light on player and ball", Sun]].map(([t, d, I]) => {
-                  const Icon = I as typeof Sun
-                  return (
-                    <li key={String(t)} className="flex items-center gap-[12px] py-[7px]">
-                      <Icon className="h-[19px] w-[19px] shrink-0" strokeWidth={1.5} />
-                      <div>
-                        <div className="whitespace-nowrap text-[13px] font-semibold leading-[17px]">{String(t)}</div>
-                        <div className="whitespace-nowrap text-[11px] leading-[15px] text-[var(--shotiq-color-graphite)]">{String(d)}</div>
-                      </div>
-                    </li>
-                  )
-                })}
+                {FILMING.map(([t, d, kind]) => (
+                  <li key={t} className="flex items-center gap-[12px] py-[7px]">
+                    <FilmingGlyph kind={kind} size={22} className="shrink-0" />
+                    <div>
+                      <div className="whitespace-nowrap text-[13px] font-semibold leading-[17px]">{t}</div>
+                      <div className="whitespace-nowrap text-[11px] leading-[15px] text-[var(--shotiq-color-graphite)]">{d}</div>
+                    </div>
+                  </li>
+                ))}
               </ul>
             </div>
             {/* Exact photo cropped from the canonical screen (081, x1156 y538 244x248);
                 the white framing corners are baked into the crop. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/images/canonical/081-filming-guide.png" alt="Well-framed capture example"
-                 className="h-[248px] w-[244px] shrink-0 self-center rounded-[4px] object-cover" />
+                 className="h-[218px] w-[214px] shrink-0 self-center rounded-[4px] object-cover" />
           </Card>
         </div>
 
@@ -328,9 +345,11 @@ export default function AnalyzeWorkspacePage() {
             <span className="text-[var(--shotiq-color-analysisBlue)]">Privacy Policy</span>.
             {notice && <span className="ml-[10px] text-[var(--shotiq-color-reviewRed)]">{notice}</span>}
           </p>
+          {/* Canonical paints this button at full strength with an empty queue —
+              dimming it to 60% made the primary action read as broken. */}
           <button type="button" onClick={analyzeSelected} disabled={!files.length || busy}
                   data-testid="analyze-selected"
-                  className="flex h-[54px] items-center gap-[10px] rounded-[6px] bg-[var(--shotiq-color-analysisBlue)] px-[30px] text-[15px] font-medium text-white disabled:opacity-60">
+                  className="flex h-[54px] items-center gap-[10px] rounded-[6px] bg-[var(--shotiq-color-analysisBlue)] px-[30px] text-[15px] font-medium text-white disabled:cursor-not-allowed">
             <Crosshair className="h-[17px] w-[17px]" /> {busy ? "Queueing…" : "Analyze selected"}
           </button>
         </div>

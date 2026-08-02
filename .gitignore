@@ -135,3 +135,7 @@ ship-shotiq.sh
 .shotiq-proof/
 .shotiq-reference/
 .next-r2a/
+
+# Agent scratch build dirs (never commit — an 80-408MB cache broke a push before)
+.next-*/
+basketball-analysis/.next-*/

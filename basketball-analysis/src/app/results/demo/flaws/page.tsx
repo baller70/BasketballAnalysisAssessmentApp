@@ -78,32 +78,35 @@ export default function FlawsPage() {
   return (
     <ShotIQShell active="Analyze" sidebar={<FlawsSidebar />}>
     <div data-testid="screen-desktop-web-flaws-history" className="px-[22px] pt-[14px]">
-      <div className="flex items-start justify-between gap-[12px]">
-        <div className="w-[380px] shrink-0">
+      {/* Canonical draws the score, session stats and the coaching target as one
+          bordered container split by vertical hairlines — not a card plus a
+          loose block beside it. */}
+      <div className="flex items-start gap-[16px]">
+        <div className="w-[374px] shrink-0">
           <h1 className="shotiq-display text-[46px] leading-[48px]">FLAWS &amp; CORRECTIONS</h1>
           <p className="mt-[4px] whitespace-nowrap text-[14px] text-[var(--shotiq-color-graphite)]">
             Identify weaknesses. Focus your fixes. Track your progress.
           </p>
         </div>
-        <Card className="flex h-[96px] items-center px-[16px]">
-          <div className="w-[118px]">
+        <Card className="flex h-[96px] min-w-0 flex-1 items-center pl-[14px]">
+          <div className="w-[112px] shrink-0">
             <div className="text-[10px] font-bold tracking-[0.07em] text-[var(--shotiq-color-graphite)]">FORM SCORE</div>
             <div className="shotiq-numeric text-[38px] leading-[40px] text-[var(--shotiq-color-shotiqOrange)]">{score ?? "—"}<span className="text-[22px]">.</span></div>
             <div className="h-[5px] w-[100px] rounded-full bg-[var(--shotiq-color-rule)]">
               <div className="h-full rounded-full bg-[var(--shotiq-color-shotiqOrange)]" style={{ width: `${score ?? 0}%` }} />
             </div>
           </div>
-          <div className="w-[104px]">
+          <div className="w-[96px] shrink-0">
             <div className="shotiq-display text-[15px] text-[var(--shotiq-color-analysisBlue)]">GOOD</div>
             <p className="text-[11px] leading-[14px] text-[var(--shotiq-color-graphite)]">Keep building consistency.</p>
           </div>
           {[["24", "SHOTS"], ["15", "MAKES"], ["62.5%", "MAKE %"]].map(([v, l]) => (
-            <div key={l} className="border-l border-[var(--shotiq-color-rule)] px-[12px] text-center">
+            <div key={l} className="w-[66px] shrink-0 border-l border-[var(--shotiq-color-rule)] px-[6px] text-center">
               <div className="shotiq-numeric text-[24px] leading-[28px]">{hasData ? v : "—"}</div>
               <div className="text-[9px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">{l}</div>
             </div>
           ))}
-          <div className="border-l border-[var(--shotiq-color-rule)] pl-[12px] text-center">
+          <div className="w-[92px] shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[8px] text-center">
             <svg width="78" height="34" viewBox="0 0 86 34" aria-hidden="true">
               <path d="M4,22 L16,26 L28,14 L40,18 L52,10 L64,16 L76,6" fill="none" stroke="var(--shotiq-color-graphite)" strokeWidth="1.5" />
               {[[4, 22], [16, 26], [28, 14], [40, 18], [52, 10], [64, 16], [76, 6]].map(([x, y], i) => (
@@ -113,20 +116,20 @@ export default function FlawsPage() {
             <div className="text-[10px] leading-[12px]"><span className="font-bold text-[var(--shotiq-color-confirmGreen)]">+8.1%</span><br />
               <span className="text-[var(--shotiq-color-graphite)]">vs last session</span></div>
           </div>
+          <div className="ml-[10px] flex min-w-0 flex-1 flex-col justify-center self-stretch border-l border-[var(--shotiq-color-rule)] py-[10px] pl-[14px] pr-[14px]">
+            <div className="flex items-center justify-between gap-[8px]">
+              <SectionLabel>PRIMARY COACHING TARGET</SectionLabel>
+              <ChevronRight className="h-[14px] w-[14px] shrink-0 text-[var(--shotiq-color-graphite)]" />
+            </div>
+            <div className="mt-[2px] whitespace-nowrap text-[15px] font-semibold leading-[20px]">Keep elbow stacked through release</div>
+            <div className="mt-[5px] flex items-center gap-[10px]">
+              <span className="shrink-0 rounded-[4px] border border-[var(--shotiq-color-confirmGreen)] px-[7px] py-[2px] text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-confirmGreen)]">ACTIVE GOAL</span>
+              <div className="h-[5px] min-w-0 flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
+                <div className="h-full w-[72%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" /></div>
+              <span className="shrink-0 text-[13px] font-semibold">72%</span>
+            </div>
+          </div>
         </Card>
-        <div className="w-[246px] shrink-0 pt-[4px] pr-[4px]">
-          <div className="flex items-center justify-between">
-            <SectionLabel>PRIMARY COACHING TARGET</SectionLabel>
-            <ChevronRight className="h-[14px] w-[14px] text-[var(--shotiq-color-graphite)]" />
-          </div>
-          <div className="mt-[4px] text-[15px] font-semibold leading-[20px]">Keep elbow stacked through release</div>
-          <span className="mt-[6px] inline-block rounded-[4px] border border-[var(--shotiq-color-confirmGreen)] px-[7px] py-[2px] text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-confirmGreen)]">ACTIVE GOAL</span>
-          <div className="mt-[8px] flex items-center gap-[8px]">
-            <div className="h-[5px] min-w-0 flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
-              <div className="h-full w-[72%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" /></div>
-            <span className="shotiq-numeric shrink-0 text-[11px]">72%</span>
-          </div>
-        </div>
       </div>
 
       <div className="mt-[10px] flex gap-[24px]">
@@ -213,14 +216,16 @@ export default function FlawsPage() {
           {/* Canonical labels this section in type alone — the Target mark here
               was a second use of the Goals nav glyph. */}
           <SectionLabel className="mt-[12px]">CORRECTIONS</SectionLabel>
-          <div className="mt-[7px] space-y-[6px]">
+          {/* One bordered container with hairline dividers, as canonical draws
+              it — not three individually bordered pills. */}
+          <Card className="mt-[7px] divide-y divide-[var(--shotiq-color-rule)]">
             {([["Stack elbow over shooting hip.", "stack"], ["Create a 90° angle at set point.", "square"],
                ["Drive straight up through release.", "drive"]] as const).map(([t, glyph]) => (
-              <div key={t} className="flex items-center gap-[10px] rounded-[6px] bg-[var(--shotiq-color-warmCanvas)] px-[10px] py-[9px]">
+              <div key={t} className="flex items-center gap-[10px] px-[11px] py-[9px]">
                 <CorrectionGlyph kind={glyph} size={20} className="shrink-0" /><span className="text-[12px]">{t}</span>
               </div>
             ))}
-          </div>
+          </Card>
           <SectionLabel className="mt-[12px]">RECOMMENDED DRILLS</SectionLabel>
           <Card className="mt-[7px] p-[12px]">
             <div className="flex items-center gap-[10px]">
@@ -246,9 +251,11 @@ export default function FlawsPage() {
         <div className="w-[500px] shrink-0">
           <SectionLabel>FLAW HISTORY</SectionLabel>
           <div className="mt-[4px] flex">
-            <div className="grid place-items-center pb-[16px] pr-[2px] text-[8px] tracking-[0.05em] text-[var(--shotiq-color-graphite)] [writing-mode:vertical-rl]"
+            {/* Canonical sets the axis caption horizontally on two lines; a
+                90°-rotated label is not what the screen prints. */}
+            <div className="grid w-[66px] shrink-0 place-items-center pb-[16px] pr-[6px] text-[9px] leading-[12px] tracking-[0.04em] text-[var(--shotiq-color-graphite)]"
                  aria-hidden="true">
-              <span className="rotate-180">IMPACT ON MAKE %</span>
+              <span>IMPACT<br />ON MAKE %</span>
             </div>
             <div className="flex flex-col justify-between pb-[16px] pr-[6px] pt-[2px] text-right text-[9px] text-[var(--shotiq-color-graphite)]">
               <span>-0%</span><span>-5%</span><span>-10%</span><span>-15%</span>

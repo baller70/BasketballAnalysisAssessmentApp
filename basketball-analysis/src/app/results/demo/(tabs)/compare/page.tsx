@@ -27,7 +27,9 @@ export default function ComparePage() {
   const [menu, setMenu] = useState<null | "shooters" | "overlays" | "phase">(null)
   const [overlays, setOverlays] = useState({ Skeleton: true, Joints: true, Trajectory: false })
   const [phase, setPhase] = useState("RELEASE")
-  const [synced, setSynced] = useState(false)
+  // Canonical ships this screen with the two clips already aligned on the
+  // release frame — the status tick is a filled green check, not a grey one.
+  const [synced, setSynced] = useState(true)
   const [saved, setSaved] = useState(false)
   useEffect(() => {
     fetch("/api/shooters").then((r) => (r.ok ? r.json() : null))
@@ -88,8 +90,8 @@ export default function ComparePage() {
             </div>
           ))}
           <button type="button" onClick={() => setSynced((v) => !v)} aria-pressed={synced}
-                  className={`flex h-[42px] items-center gap-[8px] rounded-[6px] px-[16px] text-[13px] font-medium text-white ${synced ? "bg-[var(--shotiq-color-analysisBlue)]" : "bg-[var(--shotiq-color-confirmGreen)]"}`}>
-            <RefreshCcw className="h-[14px] w-[14px]" /> {synced ? "Release frames synced" : "Sync release frames"}
+                  className={`flex h-[42px] items-center gap-[8px] rounded-[6px] px-[16px] text-[13px] font-medium text-white ${synced ? "bg-[var(--shotiq-color-confirmGreen)]" : "bg-[var(--shotiq-color-analysisBlue)]"}`}>
+            <RefreshCcw className="h-[14px] w-[14px]" /> {synced ? "Sync release frames" : "Re-sync release frames"}
           </button>
         </div>
       </div>
@@ -172,15 +174,20 @@ export default function ComparePage() {
       <div className="mt-[6px] flex items-center gap-[16px]">
         <SectionLabel>SELECT PHASE</SectionLabel>
         {[0, 1].map((side) => (
-          <div key={side} className="flex flex-1 items-center justify-between px-[10px]">
+          <div key={side} className="flex flex-1 items-center gap-[6px] px-[10px]">
             <button type="button" aria-label="Previous phase" onClick={() => stepPhase(-1)}>
               <ChevronLeft className="h-[14px] w-[14px] text-[var(--shotiq-color-graphite)]" />
             </button>
-            {PHASES.map((p) => (
-              <button key={p} type="button" onClick={() => setPhase(p)} aria-pressed={p === phase} className="text-center">
-                <PoseGlyph phase={p} active={p === phase} size={24} />
-                <div className={`text-[9px] tracking-[0.04em] ${p === phase ? (side ? "font-bold text-[var(--shotiq-color-analysisBlue)]" : "font-bold text-[var(--shotiq-color-shotiqOrange)]") : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
-              </button>
+            {/* Canonical runs a connector track between the phase poses so the
+                row reads as one timeline, not five loose marks. */}
+            {PHASES.map((p, i) => (
+              <React.Fragment key={p}>
+                {i > 0 && <span aria-hidden="true" className="mb-[13px] h-[1px] min-w-[10px] flex-1 bg-[var(--shotiq-color-rule)]" />}
+                <button type="button" onClick={() => setPhase(p)} aria-pressed={p === phase} className="shrink-0 text-center">
+                  <PoseGlyph phase={p} active={p === phase} size={24} />
+                  <div className={`text-[9px] tracking-[0.04em] ${p === phase ? (side ? "font-bold text-[var(--shotiq-color-analysisBlue)]" : "font-bold text-[var(--shotiq-color-shotiqOrange)]") : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
+                </button>
+              </React.Fragment>
             ))}
             <button type="button" aria-label="Next phase" onClick={() => stepPhase(1)}>
               <ChevronRight className="h-[14px] w-[14px] text-[var(--shotiq-color-graphite)]" />
@@ -189,9 +196,10 @@ export default function ComparePage() {
         ))}
       </div>
 
-      {/* analysis band */}
-      <div className="mt-[8px] flex gap-[16px]">
-        <Card className="w-[250px] shrink-0 px-[18px] py-[8px]">
+      {/* analysis band — canonical draws these four panels inside one bordered
+          container split by vertical hairlines. */}
+      <Card className="mt-[8px] flex">
+        <div className="w-[250px] shrink-0 px-[18px] py-[8px]">
           <SectionLabel>FORM SCORE</SectionLabel>
           <div className="mt-[8px] flex items-center gap-[14px]">
             <Ring pct={(score ?? 0) / 100} size={80}>
@@ -202,14 +210,16 @@ export default function ComparePage() {
               <div className="text-[11px] text-[var(--shotiq-color-graphite)]">Keep building consistency.</div>
             </div>
           </div>
-          <div className="mt-[12px] flex gap-[18px] border-t border-[var(--shotiq-color-rule)] pt-[10px]">
+          {/* Stat row: hairline-divided and evenly distributed across the
+              panel, as canonical sets it. */}
+          <div className="mt-[12px] grid grid-cols-3 divide-x divide-[var(--shotiq-color-rule)] border-t border-[var(--shotiq-color-rule)] pt-[10px] text-center">
             <Stat value={hasData ? "24" : "0"} label="SHOTS" valueClass="text-[20px] leading-[22px]" />
             <Stat value={hasData ? "15" : "0"} label="MAKES" valueClass="text-[20px] leading-[22px]" />
             <Stat value={hasData ? "62.5%" : "—"} label="MAKE %" valueClass="text-[20px] leading-[22px]" />
           </div>
-        </Card>
+        </div>
 
-        <Card className="min-w-0 flex-1 px-[18px] py-[8px]">
+        <div className="min-w-0 flex-1 border-l border-[var(--shotiq-color-rule)] px-[18px] py-[8px]">
           <SectionLabel>KEY DIFFERENCES</SectionLabel>
           <table className="mt-[6px] w-full text-[12px]">
             <thead><tr className="text-left text-[9px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">
@@ -225,9 +235,9 @@ export default function ComparePage() {
               ))}
             </tbody>
           </table>
-        </Card>
+        </div>
 
-        <Card className="w-[300px] shrink-0 px-[18px] py-[8px]">
+        <div className="w-[292px] shrink-0 border-l border-[var(--shotiq-color-rule)] px-[18px] py-[8px]">
           <SectionLabel>WHY THE DIFFERENCE MATTERS</SectionLabel>
           <div className="mt-[6px] space-y-[8px]">
             {([["Slightly lower release angle reduces margin for error on longer shots.", "arc"],
@@ -240,36 +250,36 @@ export default function ComparePage() {
               </div>
             ))}
           </div>
-        </Card>
+        </div>
 
-        <Card className="w-[210px] shrink-0 px-[18px] py-[8px]">
+        <div className="w-[238px] shrink-0 border-l border-[var(--shotiq-color-rule)] px-[14px] py-[8px]">
           <SectionLabel>TOP MATCHES</SectionLabel>
-          <div className="mt-[8px] space-y-[9px]">
+          {/* Label, bar and percentage each own a column, so the figure never
+              lands on top of the end of its own bar. */}
+          <div className="mt-[10px] space-y-[10px]">
             {MATCH.map(([p, v]) => (
-              <div key={p}>
-                <div className="flex justify-between text-[10px]">
-                  <span className={`font-bold tracking-[0.04em] ${p === "RELEASE" ? "text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</span>
-                  <span className="shotiq-numeric">{v}%</span>
-                </div>
-                <div className="mt-[2px] h-[4px] rounded-full bg-[var(--shotiq-color-rule)]">
-                  <div className={`h-full rounded-full ${p === "RELEASE" ? "bg-[var(--shotiq-color-shotiqOrange)]" : "bg-[var(--shotiq-color-analysisBlue)]"}`} style={{ width: `${v}%` }} />
-                </div>
+              <div key={p} className="flex items-center gap-[8px]">
+                <span className={`w-[98px] shrink-0 whitespace-nowrap text-[10px] font-bold tracking-[0.02em] ${p === "RELEASE" ? "text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</span>
+                <span className="h-[4px] min-w-0 flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
+                  <span className={`block h-full rounded-full ${p === "RELEASE" ? "bg-[var(--shotiq-color-shotiqOrange)]" : "bg-[var(--shotiq-color-analysisBlue)]"}`} style={{ width: `${v}%` }} />
+                </span>
+                <span className={`w-[30px] shrink-0 text-right text-[12px] font-semibold ${p === "RELEASE" ? "text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>{v}%</span>
               </div>
             ))}
           </div>
-        </Card>
-      </div>
+        </div>
+      </Card>
 
-      {/* footer band */}
-      <div className="mb-[8px] mt-[6px] flex gap-[16px]">
-        <Card className="flex flex-1 items-center gap-[14px] px-[20px] py-[10px]">
+      {/* footer band — one container, internal hairline, per canonical */}
+      <Card className="mb-[8px] mt-[6px] flex">
+        <div className="flex flex-1 items-center gap-[14px] px-[20px] py-[10px]">
           <Lightbulb className="h-[26px] w-[26px] shrink-0" strokeWidth={1.5} />
           <div>
             <SectionLabel>FOCUS RECOMMENDATION</SectionLabel>
             <p className="text-[13px] text-[var(--shotiq-color-graphite)]">Keep elbow stacked through release to improve your release angle and consistency.</p>
           </div>
-        </Card>
-        <Card className="flex w-[420px] shrink-0 items-center gap-[14px] px-[20px] py-[10px]">
+        </div>
+        <div className="flex w-[420px] shrink-0 items-center gap-[14px] border-l border-[var(--shotiq-color-rule)] px-[20px] py-[10px]">
           <span className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-full bg-[var(--shotiq-color-analysisBlue)] text-white">
             <WorkoutGlyph kind="release" size={22} />
           </span>
@@ -279,8 +289,8 @@ export default function ComparePage() {
             <div className="text-[11px] text-[var(--shotiq-color-graphite)]">20 min · Form Focus</div>
           </div>
           <Link href="/training/drills/quick-release-builder" aria-label="Open workout">›</Link>
-        </Card>
-      </div>
+        </div>
+      </Card>
     </div>
   )
 }

@@ -953,11 +953,20 @@ struct PhotoComparisonView: View {  // 051
                         }
                         .padding(.top, 10)
                         .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1).offset(y: -5), alignment: .top)
+                        // Two equal panes. Each `CanonicalMediaSurface` now reports the
+                        // width this row offers it (see CanonicalPhoto) instead of the
+                        // width its crop's aspect ratio wanted at 330pt tall — which is
+                        // what collapsed this row into one over-wide head crop with the
+                        // elite pane shoved past the right edge. 272pt is the canonical
+                        // pane height, and it keeps the 176x272 pane proportion.
                         HStack(spacing: 2) {
                             ZStack(alignment: .topLeading) {
                                 ZStack {
                                     // Your canonical frame; its own pose overlay is baked in.
-                                    CanonicalMediaSurface(key: "051-visual-003", height: 330)
+                                    // The crop sits hard against its right edge, so the pane
+                                    // is anchored there rather than centred on empty wall.
+                                    CanonicalMediaSurface(key: "051-visual-003", height: 272,
+                                                          alignment: .trailing)
                                     if overlaySkeletons {
                                         // Elite skeleton overlaid on your frame for direct comparison.
                                         SkeletonOverlay(boneColor: ShotIQColor.analysisBlue,
@@ -969,7 +978,7 @@ struct PhotoComparisonView: View {  // 051
                                 mediaTag(ShotIQColor.shotiqOrange, overlaySkeletons ? "YOU + ELITE" : "YOU")
                             }
                             ZStack(alignment: .topLeading) {
-                                CanonicalMediaSurface(key: "051-visual-001", height: 330)
+                                CanonicalMediaSurface(key: "051-visual-001", height: 272)
                                 mediaTag(ShotIQColor.analysisBlue, "ELITE REFERENCE")
                             }
                         }

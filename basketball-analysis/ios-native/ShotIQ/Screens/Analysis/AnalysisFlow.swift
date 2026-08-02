@@ -1309,7 +1309,7 @@ struct AnnotationToolbarView: View { // 043
                             Spacer()
                             Text("Frame 43 / 96").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
                         }
-                        .padding(.horizontal, 20).frame(height: 44)
+                        .padding(.horizontal, 20).frame(height: 38)
                         .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
                         PlayerHeader(name: "Jordan Ellis")
                         VStack(alignment: .leading, spacing: 0) {
@@ -1322,7 +1322,7 @@ struct AnnotationToolbarView: View { // 043
                                 Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 34)
                                 annotStat("%", "62.5%")
                             }
-                            .padding(.top, 6)
+                            .padding(.top, 4)
                             HStack(spacing: 12) {
                                 CorrectionGlyph(kind: .stack, size: 34).foregroundStyle(ShotIQColor.ink)
                                 VStack(alignment: .leading, spacing: 3) {
@@ -1333,14 +1333,22 @@ struct AnnotationToolbarView: View { // 043
                                 }
                                 Spacer(minLength: 0)
                             }
-                            .padding(14)
+                            .padding(.horizontal, 14).padding(.vertical, 9)
                             .background(ShotIQColor.warmCanvas, in: RoundedRectangle(cornerRadius: 8))
-                            .padding(.top, 12)
+                            .padding(.top, 8)
                             ZStack(alignment: .topLeading) {
                                 ZStack {
                                     // Canonical annotation frame — release-angle callout and
                                     // pose overlay are already burned into the crop.
-                                    CanonicalMediaSurface(key: "043-visual-001", height: 430)
+                                    //
+                                    // At 430pt this frame alone overran the fold and left the
+                                    // ANNOTATION TOOLS palette and the Save CTA — the entire
+                                    // point of this screen — unreachable in a screenshot. The
+                                    // frame, the chrome above it, the palette and the CTA all
+                                    // have to share the ~686pt between the notch and the tab
+                                    // bar, so the frame is sized to what is left once the
+                                    // other three are placed; canonical shows all four at once.
+                                    CanonicalMediaSurface(key: "043-visual-001", height: 175)
                                     annotationCanvas
                                 }
                                 .contentShape(Rectangle())
@@ -1379,9 +1387,9 @@ struct AnnotationToolbarView: View { // 043
                                 .background(.black.opacity(0.6), in: RoundedRectangle(cornerRadius: 8))
                                 .padding(12)
                             }
-                            .padding(.top, 14)
-                            PhaseStrip().padding(.top, 16)
-                            Text("ANNOTATION TOOLS").shotiqDisplay(20).padding(.top, 18)
+                            .padding(.top, 10)
+                            PhaseStrip().padding(.top, 10)
+                            Text("ANNOTATION TOOLS").shotiqDisplay(20).padding(.top, 8)
                             HStack(spacing: 8) {
                                 ForEach(tools, id: \.0) { name, icon in
                                     Button { activate(name) } label: {
@@ -1393,7 +1401,7 @@ struct AnnotationToolbarView: View { // 043
                                                 .foregroundStyle(toolDisabled(name) ? ShotIQColor.muted : ShotIQColor.ink)
                                                 .lineLimit(1).minimumScaleFactor(0.6)
                                         }
-                                        .frame(maxWidth: .infinity).frame(height: 62)
+                                        .frame(maxWidth: .infinity).frame(height: 52)
                                         .overlay(RoundedRectangle(cornerRadius: 8)
                                             .stroke(tool == name ? ShotIQColor.shotiqOrange : ShotIQColor.rule))
                                     }
@@ -1401,17 +1409,17 @@ struct AnnotationToolbarView: View { // 043
                                     .disabled(toolDisabled(name))
                                 }
                             }
-                            .padding(.top, 10)
+                            .padding(.top, 8)
                             PrimaryButton(title: "Save annotations", color: ShotIQColor.confirmGreen) {
                                 showSaved = true
                             }
-                            .padding(.top, 16)
+                            .padding(.top, 12)
                             .alert("Annotations saved", isPresented: $showSaved) {
                                 Button("OK", role: .cancel) {}
                             } message: {
                                 Text("\(annotations.count) annotation\(annotations.count == 1 ? "" : "s") saved to frame 43.")
                             }
-                            Spacer(minLength: 24)
+                            Spacer(minLength: 12)
                         }
                         .padding(.horizontal, 20)
                     }

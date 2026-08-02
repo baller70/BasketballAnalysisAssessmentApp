@@ -5,10 +5,11 @@
 import React, { useState } from "react"
 import Link from "next/link"
 import {
-  Bookmark, ChevronRight, Check, Zap, ListChecks, Compass, CalendarCheck,
-  Clock, SignalHigh, Waypoints, type LucideIcon,
+  Bookmark, ChevronRight, Check, CalendarCheck,
+  Clock, SignalHigh, Waypoints,
 } from "lucide-react"
 import { SectionLabel, Card, TrendLine, Stat } from "@/components/shotiq/ShotIQShell"
+import { CueGlyph, type CueKind } from "@/components/shotiq/Glyphs"
 import { useHistory } from "@/components/shotiq/ResultsBits"
 
 const RECOMMENDED = [
@@ -23,11 +24,12 @@ const LIBRARY: [string, string, string, string, string][] = [
   ["06:01", "Sideline Elevation", "Intermediate", "Shooting", "/images/canonical/090-lib-4.png"],
 ]
 
-/** Canonical fronts each quick action with its own mark — none is repeated. */
-const QUICK_ACTIONS: [string, string, string, LucideIcon][] = [
-  ["My drills", "View and manage your saved drills.", "/training/drills?tab=saved", ListChecks],
-  ["Discover", "Find drills that match your goals.", "/training/drills?tab=discover", Compass],
-  ["Calendar", "Plan your week and stay consistent.", "/training/calendar", CalendarCheck],
+/** Canonical fronts each quick action with its own node diagram — none is
+ *  repeated, and none is a stock UI icon. */
+const QUICK_ACTIONS: [string, string, string, CueKind | "calendar"][] = [
+  ["My drills", "View and manage your saved drills.", "/training/drills?tab=saved", "apex"],
+  ["Discover", "Find drills that match your goals.", "/training/drills?tab=discover", "peak"],
+  ["Calendar", "Plan your week and stay consistent.", "/training/calendar", "calendar"],
 ]
 
 /** Drill meta line: duration, difficulty, focus area — a mark each. */
@@ -64,15 +66,17 @@ export default function TrainingHubPage() {
 
         <div className="mt-[14px] grid grid-cols-4 gap-[12px]">
           <Link href="/training/drills/quick-start" className="flex items-center gap-[10px] rounded-[8px] bg-[var(--shotiq-color-shotiqOrange)] p-[14px] text-white">
-            <Zap className="h-[22px] w-[22px] shrink-0" strokeWidth={1.6} />
+            <CueGlyph kind="shoulders" size={26} accent="#FFFFFF" className="shrink-0" />
             <div className="min-w-0 flex-1"><div className="text-[15px] font-semibold">Quick start</div>
               <div className="text-[11px] opacity-90">Get a personalized workout in under 60 seconds.</div></div>
             <ChevronRight className="h-[16px] w-[16px] shrink-0" />
           </Link>
-          {QUICK_ACTIONS.map(([t, d, href, Icon]) => (
+          {QUICK_ACTIONS.map(([t, d, href, mark]) => (
             <Link key={t} href={href}
                   className="flex items-center gap-[10px] rounded-[8px] border border-[var(--shotiq-color-rule)] bg-white p-[14px] hover:border-[var(--shotiq-color-graphite)]">
-              <Icon className="h-[22px] w-[22px] shrink-0" strokeWidth={1.6} />
+              {mark === "calendar"
+                ? <CalendarCheck className="h-[24px] w-[24px] shrink-0" strokeWidth={1.5} />
+                : <CueGlyph kind={mark} size={26} accent="var(--shotiq-color-shotiqOrange)" className="shrink-0" />}
               <div className="min-w-0 flex-1"><div className="text-[15px] font-semibold">{t}</div>
                 <div className="text-[11px] text-[var(--shotiq-color-graphite)]">{d}</div></div>
               <ChevronRight className="h-[16px] w-[16px] shrink-0 text-[var(--shotiq-color-graphite)]" />
@@ -111,8 +115,15 @@ export default function TrainingHubPage() {
             </Card>
           ))}
         </div>
+        {/* Canonical prints the carousel position under the recommended row. */}
+        <div className="mt-[8px] flex justify-center gap-[6px]" aria-hidden="true">
+          {[0, 1, 2, 3].map((i) => (
+            <span key={i}
+                  className={`h-[6px] w-[6px] rounded-full ${i === 0 ? "bg-[var(--shotiq-color-shotiqOrange)]" : "bg-[var(--shotiq-color-rule)]"}`} />
+          ))}
+        </div>
 
-        <div className="mt-[16px] flex items-center justify-between">
+        <div className="mt-[14px] flex items-center justify-between">
           <SectionLabel>SAVED LIBRARY</SectionLabel>
           <Link href="/training/drills?tab=saved" className="text-[12px] text-[var(--shotiq-color-analysisBlue)]">View all drills ›</Link>
         </div>
@@ -161,8 +172,8 @@ export default function TrainingHubPage() {
           <span className="shrink-0 rounded-[3px] border border-[var(--shotiq-color-confirmGreen)] px-[6px] py-[1px] text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-confirmGreen)]">
             ACTIVE GOAL
           </span>
-          <span className="truncate text-[10px] text-[var(--shotiq-color-graphite)]">Improve release consistency</span>
-          <span className="shotiq-numeric ml-auto shrink-0 text-[11px]">72%</span>
+          <span className="truncate text-[11px] text-[var(--shotiq-color-graphite)]">Improve release consistency</span>
+          <span className="ml-auto shrink-0 text-[13px] font-semibold">72%</span>
         </div>
         <div className="mt-[4px] h-[5px] rounded-full bg-[var(--shotiq-color-rule)]">
           <div className="h-full w-[72%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" />
@@ -172,18 +183,21 @@ export default function TrainingHubPage() {
           <SectionLabel>TODAY&apos;S SNAPSHOT</SectionLabel>
           <span className="text-[11px] text-[var(--shotiq-color-graphite)]">Today</span>
         </div>
-        <div className="mt-[8px] flex items-center gap-[20px]">
-          <Stat value={hasData ? "24" : "0"} label="SHOTS" />
-          <Stat value={hasData ? "15" : "0"} label="MAKES" />
-          <Stat value={hasData ? "62.5%" : "—"} label="MAKE %" />
-          <div className="ml-auto text-right">
-            <TrendLine points={[3, 2.6, 3.5, 3, 4.3]} width={86} height={32} />
+        {/* Hairline-divided and evenly distributed, as canonical sets it. */}
+        <div className="mt-[8px] flex divide-x divide-[var(--shotiq-color-rule)]">
+          {([["24", "SHOTS"], ["15", "MAKES"], ["62.5%", "MAKE %"]] as const).map(([v, l], i) => (
+            <div key={l} className={`min-w-0 flex-1 ${i === 0 ? "pr-[8px]" : "px-[8px]"}`}>
+              <Stat value={hasData ? v : i === 2 ? "—" : "0"} label={l} />
+            </div>
+          ))}
+          <div className="w-[124px] shrink-0 pl-[8px] text-center">
+            <TrendLine points={[3, 2.6, 3.5, 3, 4.3]} width={84} height={32} />
             <div className="text-[10px] text-[var(--shotiq-color-confirmGreen)]">{hasData ? "+8.1% vs last session" : ""}</div>
           </div>
         </div>
 
         <SectionLabel className="mt-[12px] border-t border-[var(--shotiq-color-rule)] pt-[10px]">UP NEXT</SectionLabel>
-        <Card className="mt-[8px] p-[14px]">
+        <Card className="mt-[8px] p-[12px]">
           <Link href="/training/drills/quick-start-workout" className="flex items-center gap-[12px]">
             <TrendLine points={[2, 4, 3, 5]} width={44} height={30} stroke="var(--shotiq-color-shotiqOrange)" dotFill="var(--shotiq-color-shotiqOrange)" />
             <div className="flex-1">
@@ -202,7 +216,7 @@ export default function TrainingHubPage() {
           <SectionLabel>THIS WEEK&apos;S PLAN</SectionLabel>
           <Link href="/training/calendar" className="text-[11px] text-[var(--shotiq-color-analysisBlue)]">View calendar</Link>
         </div>
-        <Card className="mt-[8px] p-[12px]">
+        <Card className="mt-[8px] p-[10px]">
           <div className="flex gap-[4px]">
             {WEEK.map(([d, len, active]) => (
               <Link key={d} href="/training/calendar"
@@ -228,33 +242,38 @@ export default function TrainingHubPage() {
           <SectionLabel>RECENT PERFORMANCE</SectionLabel>
           <Link href="/results/demo/history" className="text-[11px] text-[var(--shotiq-color-graphite)]">View all analyses ›</Link>
         </div>
-        {/* Canonical heads each column with the full tracked-caps label and sets
-            the value beneath it at ~19px — not an abbreviated label under a
-            shrunken number. */}
+        {/* The rail is too narrow to seat the identity and three metric columns
+            on one line, so the metrics restack under the title rather than
+            shrinking their labels to 6px and truncating them. */}
         <div className="mt-[4px] divide-y divide-[var(--shotiq-color-rule)]">
           {([["Pull-Up Jumper", "Today at 8:24 AM · Catch & Shoot", "82", "62.5%", "24 / 15"],
             ["Spot-Up Three", "May 11, 6:15 PM · Catch & Shoot", "78", "58.3%", "12 / 7"],
             ["Transition Pull-Up", "May 10, 4:02 PM · Off the Dribble", "75", "54.5%", "11 / 6"]] as const).map(([t, d, fs, mk, sm]) => (
-            <Link key={t} href="/results/demo/history" className="flex items-center gap-[6px] py-[8px] hover:bg-[var(--shotiq-color-warmCanvas)]">
-              <TrendLine points={[2, 3.4, 2.6, 4]} width={26} height={24} stroke="var(--shotiq-color-shotiqOrange)" dotFill="var(--shotiq-color-shotiqOrange)" />
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-[13px] font-semibold">{t}</div>
-                <div className="truncate text-[10px] text-[var(--shotiq-color-graphite)]">{d}</div>
-              </div>
-              <div className="shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[6px]">
-                <div className="text-[8px] tracking-[0.04em] text-[var(--shotiq-color-graphite)]">FORM SCORE</div>
-                <div className="flex items-baseline gap-[4px]">
-                  <span className="shotiq-numeric text-[19px] leading-[21px]">{hasData ? fs : "—"}</span>
-                  <span className="text-[9px] text-[var(--shotiq-color-analysisBlue)]">Good</span>
+            <Link key={t} href="/results/demo/history" className="block py-[7px] hover:bg-[var(--shotiq-color-warmCanvas)]">
+              <div className="flex items-center gap-[8px]">
+                <TrendLine points={[2, 3.4, 2.6, 4]} width={30} height={26} stroke="var(--shotiq-color-shotiqOrange)" dotFill="var(--shotiq-color-shotiqOrange)" />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[13px] font-semibold">{t}</div>
+                  <div className="truncate text-[11px] text-[var(--shotiq-color-graphite)]">{d}</div>
                 </div>
+                <ChevronRight className="h-[14px] w-[14px] shrink-0 text-[var(--shotiq-color-graphite)]" />
               </div>
-              <div className="shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[6px]">
-                <div className="text-[8px] tracking-[0.04em] text-[var(--shotiq-color-graphite)]">MAKE %</div>
-                <div className="shotiq-numeric text-[19px] leading-[21px]">{hasData ? mk : "—"}</div>
-              </div>
-              <div className="shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[6px]">
-                <div className="text-[8px] tracking-[0.04em] text-[var(--shotiq-color-graphite)]">SHOTS / MAKES</div>
-                <div className="shotiq-numeric text-[19px] leading-[21px]">{hasData ? sm : "—"}</div>
+              <div className="mt-[4px] grid grid-cols-3 divide-x divide-[var(--shotiq-color-rule)]">
+                <div className="pr-[10px]">
+                  <div className="text-[9px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">FORM SCORE</div>
+                  <div className="flex items-baseline gap-[5px]">
+                    <span className="shotiq-numeric text-[18px] leading-[20px]">{hasData ? fs : "—"}</span>
+                    <span className="text-[10px] text-[var(--shotiq-color-analysisBlue)]">● Good</span>
+                  </div>
+                </div>
+                <div className="px-[10px]">
+                  <div className="text-[9px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">MAKE %</div>
+                  <div className="shotiq-numeric text-[18px] leading-[20px]">{hasData ? mk : "—"}</div>
+                </div>
+                <div className="pl-[10px]">
+                  <div className="whitespace-nowrap text-[9px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">SHOTS / MAKES</div>
+                  <div className="shotiq-numeric text-[18px] leading-[20px]">{hasData ? sm : "—"}</div>
+                </div>
               </div>
             </Link>
           ))}
