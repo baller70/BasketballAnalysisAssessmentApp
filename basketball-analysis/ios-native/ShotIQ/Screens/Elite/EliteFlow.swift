@@ -64,9 +64,9 @@ fileprivate struct PlayerCardExportView: View {
                         ScoreBar(pct: 0.82, color: accent).frame(width: 96)
                     }
                     Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 56)
-                    StatBlock(value: "24", label: "SHOTS", valueSize: 26)
-                    StatBlock(value: "15", label: "MAKES", valueSize: 26)
-                    StatBlock(value: "62.5%", label: "MAKE %", valueSize: 26)
+                    StatBlock(value: "24", label: "SHOTS", valueSize: ShotIQType.numeric)
+                    StatBlock(value: "15", label: "MAKES", valueSize: ShotIQType.numeric)
+                    StatBlock(value: "62.5%", label: "MAKE %", valueSize: ShotIQType.numeric)
                 }
                 PhaseStrip()
             }
@@ -187,11 +187,11 @@ struct PlayerCardView: View {       // 048
                         .padding(.top, 18)
                         .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1).offset(y: -9), alignment: .top)
                         HStack(spacing: 0) {
-                            StatBlock(value: "24", label: "SHOTS", valueSize: 30).frame(maxWidth: .infinity, alignment: .leading)
+                            StatBlock(value: "24", label: "SHOTS", valueSize: ShotIQType.numeric).frame(maxWidth: .infinity, alignment: .leading)
                             Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 40)
-                            StatBlock(value: "15", label: "MAKES", valueSize: 30).frame(maxWidth: .infinity)
+                            StatBlock(value: "15", label: "MAKES", valueSize: ShotIQType.numeric).frame(maxWidth: .infinity)
                             Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 40)
-                            StatBlock(value: "62.5%", label: "MAKE %", valueSize: 30).frame(maxWidth: .infinity)
+                            StatBlock(value: "62.5%", label: "MAKE %", valueSize: ShotIQType.numeric).frame(maxWidth: .infinity)
                             Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 40)
                             VStack(spacing: 3) {
                                 TrendLine(points: [58, 66, 61, 70]).frame(width: 84, height: 24)
@@ -402,13 +402,13 @@ struct CustomizePlayerCardView: View { // 049
                                             .foregroundStyle(ShotIQColor.graphite)
                                         Rectangle().fill(ShotIQColor.rule).frame(height: 1).padding(.vertical, 8)
                                         HStack(spacing: 0) {
-                                            StatBlock(value: "24", label: "SHOTS", valueSize: 22)
+                                            StatBlock(value: "24", label: "SHOTS", valueSize: ShotIQType.numeric)
                                                 .frame(maxWidth: .infinity, alignment: .leading)
                                             Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 30)
-                                            StatBlock(value: "15", label: "MAKES", valueSize: 22)
+                                            StatBlock(value: "15", label: "MAKES", valueSize: ShotIQType.numeric)
                                                 .frame(maxWidth: .infinity, alignment: .trailing)
                                         }
-                                        StatBlock(value: "62.5%", label: "ACCURACY", valueSize: 22)
+                                        StatBlock(value: "62.5%", label: "ACCURACY", valueSize: ShotIQType.numeric)
                                             .padding(.top, 4)
                                     }
                                     .frame(width: 130)
@@ -660,11 +660,11 @@ struct EliteMatchView: View {       // 050
                                     Text("JORDAN ELLIS").shotiqDisplay(22)
                                     Text("Right-handed • Advanced").font(.system(size: 11))
                                         .foregroundStyle(ShotIQColor.graphite)
-                                    StatBlock(value: "82", label: "FORM SCORE", color: ShotIQColor.shotiqOrange, valueSize: 28)
+                                    StatBlock(value: "82", label: "FORM SCORE", color: ShotIQColor.shotiqOrange, valueSize: ShotIQType.numeric)
                                         .padding(.top, 6)
-                                    StatBlock(value: "24", label: "SHOTS", valueSize: 22)
-                                    StatBlock(value: "15", label: "MAKES", valueSize: 22)
-                                    StatBlock(value: "62.5%", label: "SHOOTING %", valueSize: 22)
+                                    StatBlock(value: "24", label: "SHOTS", valueSize: ShotIQType.numeric)
+                                    StatBlock(value: "15", label: "MAKES", valueSize: ShotIQType.numeric)
+                                    StatBlock(value: "62.5%", label: "SHOOTING %", valueSize: ShotIQType.numeric)
                                 }
                                 Spacer(minLength: 4)
                                 VStack(spacing: 6) {
@@ -943,13 +943,13 @@ struct PhotoComparisonView: View {  // 051
                         }
                         .padding(.top, 14)
                         HStack(spacing: 0) {
-                            StatBlock(value: "24", label: "SHOTS", valueSize: 22).frame(maxWidth: .infinity, alignment: .leading)
-                            StatBlock(value: "15", label: "MAKES", valueSize: 22).frame(maxWidth: .infinity, alignment: .leading)
-                            StatBlock(value: "62.5%", label: "ACCURACY", valueSize: 22).frame(maxWidth: .infinity, alignment: .leading)
+                            StatBlock(value: "24", label: "SHOTS", valueSize: ShotIQType.numeric).frame(maxWidth: .infinity, alignment: .leading)
+                            StatBlock(value: "15", label: "MAKES", valueSize: ShotIQType.numeric).frame(maxWidth: .infinity, alignment: .leading)
+                            StatBlock(value: "62.5%", label: "ACCURACY", valueSize: ShotIQType.numeric).frame(maxWidth: .infinity, alignment: .leading)
                             Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 34)
-                            StatBlock(value: "—", label: "SHOTS", valueSize: 22).frame(maxWidth: .infinity, alignment: .center)
-                            StatBlock(value: "—", label: "MAKES", valueSize: 22).frame(maxWidth: .infinity, alignment: .center)
-                            StatBlock(value: "—", label: "ACCURACY", valueSize: 22).frame(maxWidth: .infinity, alignment: .trailing)
+                            StatBlock(value: "—", label: "SHOTS", valueSize: ShotIQType.numeric).frame(maxWidth: .infinity, alignment: .center)
+                            StatBlock(value: "—", label: "MAKES", valueSize: ShotIQType.numeric).frame(maxWidth: .infinity, alignment: .center)
+                            StatBlock(value: "—", label: "ACCURACY", valueSize: ShotIQType.numeric).frame(maxWidth: .infinity, alignment: .trailing)
                         }
                         .padding(.top, 10)
                         .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1).offset(y: -5), alignment: .top)

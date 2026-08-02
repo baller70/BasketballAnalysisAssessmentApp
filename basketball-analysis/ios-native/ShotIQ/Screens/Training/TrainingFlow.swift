@@ -183,9 +183,9 @@ struct TrainingHomeView: View {     // 054
                                         Text("Quick Release Builder").shotiqBody(15, weight: .semibold)
                                             .lineLimit(1).minimumScaleFactor(0.8)
                                         HStack(spacing: 14) {
-                                            StatBlock(value: "24", label: "SHOTS", valueSize: 22)
-                                            StatBlock(value: "15", label: "MAKES", valueSize: 22)
-                                            StatBlock(value: "62.5%", label: "MAKE %", valueSize: 22)
+                                            StatBlock(value: "24", label: "SHOTS", valueSize: ShotIQType.numeric)
+                                            StatBlock(value: "15", label: "MAKES", valueSize: ShotIQType.numeric)
+                                            StatBlock(value: "62.5%", label: "MAKE %", valueSize: ShotIQType.numeric)
                                         }
                                         HStack(spacing: 7) {
                                             Text("GOOD").font(.system(size: 10, weight: .bold))
@@ -312,7 +312,7 @@ struct QuickStartView: View {       // 055
         VStack(alignment: .leading, spacing: 8) {
             MicroLabel(text: label)
             HStack(alignment: .top) {
-                StatBlock(value: "\(value.wrappedValue)", label: unit, valueSize: 38)
+                StatBlock(value: "\(value.wrappedValue)", label: unit, valueSize: ShotIQType.numeric * 1.4)
                 Spacer()
                 Image(systemName: icon).font(.system(size: 24)).foregroundStyle(ShotIQColor.graphite)
             }

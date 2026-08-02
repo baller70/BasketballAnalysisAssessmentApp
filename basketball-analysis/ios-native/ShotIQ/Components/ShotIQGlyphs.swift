@@ -142,36 +142,27 @@ struct ShotIQGlyph: View {
 
     var body: some View {
         let lineWidth = shotiqGlyphStrokeWidth(size)
+        let drawn = marks
+        let tint = accent
         Canvas { ctx, box in
             let k = min(box.width, box.height) / 24
             ctx.scaleBy(x: k, y: k)
-            let w = lineWidth
-            for m in marks {
-                let shading: GraphicsContext.Shading = m.accent ? .color(accent) : .foreground
+            for m in drawn {
+                let shading: GraphicsContext.Shading = m.accent ? .color(tint) : .foreground
                 if m.filled {
                     ctx.fill(m.path, with: shading)
                     continue
                 }
                 if m.knockout { ctx.fill(m.path, with: .color(ShotIQColor.paper)) }
                 ctx.stroke(m.path, with: shading,
-                           style: StrokeStyle(lineWidth: w, lineCap: .round, lineJoin: .round,
-                                              dash: m.dash))
+                           style: StrokeStyle(lineWidth: lineWidth, lineCap: .round,
+                                              lineJoin: .round, dash: m.dash))
             }
         }
         .frame(width: size, height: size)
-        .modifier(ShotIQGlyphLabel(label: label))
-    }
-}
-
-/// Glyphs are decoration unless the caller names them.
-private struct ShotIQGlyphLabel: ViewModifier {
-    var label: String?
-    func body(content: Content) -> some View {
-        if let label {
-            content.accessibilityLabel(label)
-        } else {
-            content.accessibilityHidden(true)
-        }
+        // Glyphs are decoration unless the caller names them.
+        .accessibilityLabel(label ?? "")
+        .accessibilityHidden(label == nil)
     }
 }
 

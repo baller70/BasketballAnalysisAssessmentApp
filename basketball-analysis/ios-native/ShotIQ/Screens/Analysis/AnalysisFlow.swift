@@ -60,11 +60,11 @@ fileprivate struct CoachTargetCard: View {
 fileprivate struct SessionStatsStrip: View {
     var body: some View {
         HStack(spacing: 0) {
-            StatBlock(value: "24", label: "SHOTS", valueSize: 28).frame(maxWidth: .infinity, alignment: .leading)
+            StatBlock(value: "24", label: "SHOTS", valueSize: ShotIQType.numeric).frame(maxWidth: .infinity, alignment: .leading)
             Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 36)
-            StatBlock(value: "15", label: "MAKES", valueSize: 28).frame(maxWidth: .infinity)
+            StatBlock(value: "15", label: "MAKES", valueSize: ShotIQType.numeric).frame(maxWidth: .infinity)
             Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 36)
-            StatBlock(value: "62.5%", label: "MAKE %", valueSize: 28).frame(maxWidth: .infinity)
+            StatBlock(value: "62.5%", label: "MAKE %", valueSize: ShotIQType.numeric).frame(maxWidth: .infinity)
             Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 36)
             VStack(spacing: 3) {
                 TrendLine(points: [58, 66, 61, 70]).frame(width: 74, height: 22)
@@ -1217,11 +1217,11 @@ struct FrameDetailSkeletonView: View { // 042
                                         .foregroundStyle(ShotIQColor.analysisBlue)
                                 }
                                 Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 40).padding(.horizontal, 10)
-                                StatBlock(value: "24", label: "SHOTS", valueSize: 24)
+                                StatBlock(value: "24", label: "SHOTS", valueSize: ShotIQType.numeric)
                                 Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 40).padding(.horizontal, 10)
-                                StatBlock(value: "15", label: "MAKES", valueSize: 24)
+                                StatBlock(value: "15", label: "MAKES", valueSize: ShotIQType.numeric)
                                 Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 40).padding(.horizontal, 10)
-                                StatBlock(value: "62.5%", label: "MAKE %", valueSize: 24)
+                                StatBlock(value: "62.5%", label: "MAKE %", valueSize: ShotIQType.numeric)
                                 Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 40).padding(.horizontal, 10)
                                 NavigationLink { FlawsOverviewView() } label: {
                                     HStack(spacing: 0) {
@@ -1797,11 +1797,11 @@ struct MetricDetailView: View {     // 045
                         .padding(.vertical, 12)
                         .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
                         HStack(alignment: .center, spacing: 0) {
-                            StatBlock(value: "24", label: "SHOTS", valueSize: 28).frame(maxWidth: .infinity, alignment: .leading)
+                            StatBlock(value: "24", label: "SHOTS", valueSize: ShotIQType.numeric).frame(maxWidth: .infinity, alignment: .leading)
                             Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 36)
-                            StatBlock(value: "15", label: "MAKES", valueSize: 28).frame(maxWidth: .infinity)
+                            StatBlock(value: "15", label: "MAKES", valueSize: ShotIQType.numeric).frame(maxWidth: .infinity)
                             Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 36)
-                            StatBlock(value: "62.5%", label: "SHOOTING %", valueSize: 28).frame(maxWidth: .infinity)
+                            StatBlock(value: "62.5%", label: "SHOOTING %", valueSize: ShotIQType.numeric).frame(maxWidth: .infinity)
                             ShotIQCard {
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text("FORM SCORE").font(.system(size: 9, weight: .semibold)).kerning(0.5)
