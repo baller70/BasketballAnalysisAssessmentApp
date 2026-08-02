@@ -191,7 +191,7 @@ export default function EliteShooterDetailClient() {
       <div className="mt-[10px] flex gap-[14px]">
         {/* hero media + phases */}
         <div className="w-[326px] shrink-0">
-          <div className="relative h-[288px] overflow-hidden rounded-[6px] bg-[#1B1D20]">
+          <div className="relative h-[254px] overflow-hidden rounded-[6px] bg-[#1B1D20]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={heroFrame} alt={`${shooter.name} form frame`} className="h-full w-full object-cover" />
             <span className="absolute bottom-[10px] left-[10px] grid h-[34px] w-[34px] place-items-center rounded-full bg-black/70">
@@ -221,7 +221,7 @@ export default function EliteShooterDetailClient() {
           <table className="mt-[6px] w-full text-[12px]" data-testid="mechanics-table">
             <thead>
               <tr className="text-left text-[10px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">
-                <th className="py-[4px] font-bold">PHASE</th><th className="font-bold">METRIC</th>
+                <th className="py-[2px] font-bold">PHASE</th><th className="font-bold">METRIC</th>
                 <th className="font-bold">{shooter.name.split(" ").pop()?.toUpperCase()}</th>
                 <th className="whitespace-nowrap font-bold">ELITE RANGE</th><th className="font-bold">YOU</th><th className="font-bold">DIFF</th>
               </tr>
@@ -229,14 +229,14 @@ export default function EliteShooterDetailClient() {
             <tbody className="divide-y divide-[var(--shotiq-color-rule)]">
               {rows.map(([phase, metric, val, range, you, diff], i) => (
                 <tr key={i}>
-                  <td className="py-[3px] pr-[8px] text-[9px] font-bold tracking-[0.04em] text-[var(--shotiq-color-graphite)]">
+                  <td className="py-[2px] pr-[8px] text-[9px] font-bold tracking-[0.04em] text-[var(--shotiq-color-graphite)]">
                     {i === 0 || rows[i - 1][0] !== phase ? phase : ""}
                   </td>
-                  <td className="whitespace-nowrap pr-[8px] pt-[3px] align-top">{metric}</td>
-                  <td className="whitespace-nowrap pr-[8px] pt-[3px] align-top font-semibold">{val}</td>
-                  <td className="whitespace-nowrap pr-[8px] pt-[3px] align-top text-[var(--shotiq-color-graphite)]">{range}</td>
-                  <td className="whitespace-nowrap pr-[8px] pt-[3px] align-top">{you}</td>
-                  <td className={`whitespace-nowrap pt-[3px] align-top ${diff.startsWith("+") ? "text-[var(--shotiq-color-confirmGreen)]" : diff === "—" ? "" : "text-[var(--shotiq-color-reviewRed)]"}`}>{diff}</td>
+                  <td className="whitespace-nowrap pr-[8px] pt-[2px] align-top">{metric}</td>
+                  <td className="whitespace-nowrap pr-[8px] pt-[2px] align-top font-semibold">{val}</td>
+                  <td className="whitespace-nowrap pr-[8px] pt-[2px] align-top text-[var(--shotiq-color-graphite)]">{range}</td>
+                  <td className="whitespace-nowrap pr-[8px] pt-[2px] align-top">{you}</td>
+                  <td className={`whitespace-nowrap pt-[2px] align-top ${diff.startsWith("+") ? "text-[var(--shotiq-color-confirmGreen)]" : diff === "—" ? "" : "text-[var(--shotiq-color-reviewRed)]"}`}>{diff}</td>
                 </tr>
               ))}
             </tbody>
@@ -260,7 +260,7 @@ export default function EliteShooterDetailClient() {
             </button>
             {PHASES.map((p, i) => (
               <button key={p} type="button" onClick={() => setFrame(i)}
-                      className={`relative h-[158px] w-[76px] overflow-hidden rounded-[6px] bg-[#1B1D20] ${frame === i ? "ring-2 ring-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
+                      className={`relative h-[134px] w-[76px] overflow-hidden rounded-[6px] bg-[#1B1D20] ${frame === i ? "ring-2 ring-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={galleryFor(i)} alt={p} className="h-full w-full object-cover" />
               </button>
@@ -300,8 +300,8 @@ export default function EliteShooterDetailClient() {
       </div>
 
       {/* bottom band */}
-      <div className="mb-[10px] mt-[8px] flex gap-[12px]">
-        <Card className="w-[382px] shrink-0 px-[16px] py-[10px]">
+      <div className="mb-[8px] mt-[6px] flex gap-[12px]">
+        <Card className="w-[382px] shrink-0 px-[16px] py-[6px]">
           <div className="flex items-center justify-between">
             <SectionLabel>CAREER SHOOTING STATS</SectionLabel>
             <button type="button" onClick={() => setTab("CAREER STATS")}
@@ -326,9 +326,9 @@ export default function EliteShooterDetailClient() {
           </div>
         </Card>
 
-        <Card className="min-w-0 flex-1 px-[16px] py-[10px]">
+        <Card className="min-w-0 flex-1 px-[16px] py-[6px]">
           <SectionLabel>STRENGTHS</SectionLabel>
-          <ul className="mt-[6px] space-y-[5px] text-[12px]">
+          <ul className="mt-[6px] space-y-[4px] text-[12px]">
             {(shooter.strengths?.length ? shooter.strengths : [
               "Elite release consistency and speed", "Excellent balance and body control",
               "High, repeatable release point", "Outstanding shooting range and accuracy",
@@ -340,9 +340,9 @@ export default function EliteShooterDetailClient() {
           </ul>
         </Card>
 
-        <Card className="min-w-0 flex-1 px-[16px] py-[10px]">
+        <Card className="min-w-0 flex-1 px-[16px] py-[6px]">
           <SectionLabel>OPPORTUNITIES</SectionLabel>
-          <ul className="mt-[6px] space-y-[5px] text-[12px]">
+          <ul className="mt-[6px] space-y-[4px] text-[12px]">
             {(shooter.weaknesses?.length ? shooter.weaknesses : [
               "Slight loss of balance on long range", "Front foot alignment can drift",
               "Lower hold time in follow-through", "Maintain elbow stack on fatigue",
@@ -354,7 +354,7 @@ export default function EliteShooterDetailClient() {
           </ul>
         </Card>
 
-        <Card className="w-[268px] shrink-0 px-[16px] py-[10px]">
+        <Card className="w-[268px] shrink-0 px-[16px] py-[6px]">
           <SectionLabel>ABOUT {shooter.name.toUpperCase()}</SectionLabel>
           <p className="mt-[6px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
             {shooter.description ?? `Revolutionized the game with unmatched shooting range, quick release, and elite shot-making off the dribble. Known for conditioning, work ethic, and relentless pursuit of improvement.`}

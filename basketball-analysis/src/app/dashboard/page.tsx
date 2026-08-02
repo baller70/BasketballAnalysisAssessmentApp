@@ -168,7 +168,7 @@ export default function DashboardPage() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/images/canonical/080-next-action.png" alt="Latest analyzed jump shot"
                    className="h-[318px] w-[398px] shrink-0 object-cover" />
-              <div className="flex-1 px-[26px] py-[24px]">
+              <div className="flex-1 px-[26px] py-[18px]">
                 <SectionLabel>PRIMARY COACHING TARGET</SectionLabel>
                 <div className="mt-[8px] flex items-start justify-between">
                   <h2 className="text-[26px] font-semibold leading-[32px]">
@@ -200,7 +200,7 @@ export default function DashboardPage() {
               </div>
             </Card>
 
-            <Card className="mt-[12px] px-[20px] py-[12px]">
+            <Card className="mt-[8px] px-[20px] py-[8px]">
               <div className="flex items-center gap-[20px]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/images/canonical/080-pullup.png" alt=""
@@ -230,7 +230,7 @@ export default function DashboardPage() {
                 {/* Exact phase strip from the canonical screen (080). */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/images/canonical/080-phase-strip.png" alt="Shot phases: setup, load, rise, release, follow-through"
-                     className="h-[59px] w-[486px]" />
+                     className="h-[50px] w-[412px]" />
               </div>
             </Card>
           </div>
@@ -303,7 +303,7 @@ export default function DashboardPage() {
         </div>
 
         {/* bottom trends strip */}
-        <div className="mx-[28px] mb-[12px] mt-[10px]">
+        <div className="mx-[28px] mb-[10px] mt-[6px]">
           <Card className="flex items-center divide-x divide-[var(--shotiq-color-rule)] px-[10px] py-[12px]">
             <div className="w-[130px] px-[12px] text-[12px] font-bold leading-[16px] tracking-[0.05em]">YOUR RECENT<br />TRENDS</div>
             {[["Form Score", score ?? "—", improvement], ["Shooting Consistency", hasData ? "62.5%" : "—", "+6.4%"],

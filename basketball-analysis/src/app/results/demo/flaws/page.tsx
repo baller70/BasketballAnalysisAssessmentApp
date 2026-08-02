@@ -242,7 +242,7 @@ export default function FlawsPage() {
       </div>
 
       {/* bottom strip */}
-      <div className="mt-[10px] mb-[10px] flex gap-[24px] border-t border-[var(--shotiq-color-rule)] pt-[10px]">
+      <div className="mt-[8px] mb-[8px] flex gap-[24px] border-t border-[var(--shotiq-color-rule)] pt-[8px]">
         <div className="w-[500px] shrink-0">
           <SectionLabel>FLAW HISTORY</SectionLabel>
           <div className="mt-[4px] flex">

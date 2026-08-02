@@ -41,10 +41,21 @@ export default function OnboardingPage() {
   const [goal, setGoal] = useState(GOALS[0])
   const [saving, setSaving] = useState(false)
 
+  // On a hard load the persisted auth store can still be rehydrating when this
+  // effect first runs, so a signed-in user read as signed-out and got bounced
+  // to /signin — which the middleware then forwarded to the dashboard, leaving
+  // /onboarding unreachable. Re-read the store once before redirecting.
+  const [signedOut, setSignedOut] = useState(false)
   useEffect(() => {
-    if (!isAuthenticated) router.push("/signin")
+    if (isAuthenticated) { setSignedOut(false); return }
+    const t = setTimeout(() => {
+      if (useAuthStore.getState().isAuthenticated) return
+      setSignedOut(true)
+      router.push("/signin")
+    }, 250)
+    return () => clearTimeout(t)
   }, [isAuthenticated, router])
-  if (!isAuthenticated) return null
+  if (signedOut) return null
 
   const first = (user?.firstName || user?.displayName || "Shooter").split(" ")[0]
   const h = store.heightInches ?? 74

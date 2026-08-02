@@ -191,7 +191,7 @@ export default function ComparePage() {
 
       {/* analysis band */}
       <div className="mt-[8px] flex gap-[16px]">
-        <Card className="w-[250px] shrink-0 px-[18px] py-[10px]">
+        <Card className="w-[250px] shrink-0 px-[18px] py-[8px]">
           <SectionLabel>FORM SCORE</SectionLabel>
           <div className="mt-[8px] flex items-center gap-[14px]">
             <Ring pct={(score ?? 0) / 100} size={80}>
@@ -209,7 +209,7 @@ export default function ComparePage() {
           </div>
         </Card>
 
-        <Card className="min-w-0 flex-1 px-[18px] py-[10px]">
+        <Card className="min-w-0 flex-1 px-[18px] py-[8px]">
           <SectionLabel>KEY DIFFERENCES</SectionLabel>
           <table className="mt-[6px] w-full text-[12px]">
             <thead><tr className="text-left text-[9px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">
@@ -217,7 +217,7 @@ export default function ComparePage() {
             <tbody className="divide-y divide-[var(--shotiq-color-rule)]">
               {DIFFS.map(([m, you, el, d]) => (
                 <tr key={m}>
-                  <td className="py-[3px] pr-[8px]">{m}</td>
+                  <td className="py-[2px] pr-[8px]">{m}</td>
                   <td className="pr-[8px] font-semibold text-[var(--shotiq-color-shotiqOrange)]">{you}</td>
                   <td className="pr-[8px] font-semibold text-[var(--shotiq-color-analysisBlue)]">{el}</td>
                   <td>{d}</td>
@@ -227,7 +227,7 @@ export default function ComparePage() {
           </table>
         </Card>
 
-        <Card className="w-[300px] shrink-0 px-[18px] py-[10px]">
+        <Card className="w-[300px] shrink-0 px-[18px] py-[8px]">
           <SectionLabel>WHY THE DIFFERENCE MATTERS</SectionLabel>
           <div className="mt-[6px] space-y-[8px]">
             {([["Slightly lower release angle reduces margin for error on longer shots.", "arc"],
@@ -242,7 +242,7 @@ export default function ComparePage() {
           </div>
         </Card>
 
-        <Card className="w-[210px] shrink-0 px-[18px] py-[10px]">
+        <Card className="w-[210px] shrink-0 px-[18px] py-[8px]">
           <SectionLabel>TOP MATCHES</SectionLabel>
           <div className="mt-[8px] space-y-[9px]">
             {MATCH.map(([p, v]) => (
@@ -261,7 +261,7 @@ export default function ComparePage() {
       </div>
 
       {/* footer band */}
-      <div className="mb-[10px] mt-[8px] flex gap-[16px]">
+      <div className="mb-[8px] mt-[6px] flex gap-[16px]">
         <Card className="flex flex-1 items-center gap-[14px] px-[20px] py-[10px]">
           <Lightbulb className="h-[26px] w-[26px] shrink-0" strokeWidth={1.5} />
           <div>
