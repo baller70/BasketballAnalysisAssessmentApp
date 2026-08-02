@@ -180,15 +180,21 @@ final class CanonicalScreenshotTests: XCTestCase {
 
         tapAndExpect("Sign in", "screen-ios-sign-in", from: "welcome")
         tapAndExpect("Forgot password?", "screen-ios-forgot-password", from: "sign-in")
+        // ForgotPasswordView does carry an in-app route into 007 ("I already
+        // have a reset link", identifier "Enter your new password"). It lands on
+        // the *unverified* screen — no token, empty checklist — so the canonical
+        // 007 capture comes from the staged launch in test08 instead; this only
+        // click-tests the link.
+        tapAndExpect("Enter your new password", "screen-ios-reset-password",
+                     from: "forgot-password", required: false, capture: false)
 
         launch([])
         guard expectScreen("screen-ios-welcome", timeout: 15, capture: false) else { return }
         tapAndExpect("Create account", "screen-ios-create-account", from: "welcome")
 
-        // 005 verify-email needs a real sign-up round trip; 007 reset-password
-        // has no inbound navigation in the app at all.
-        Self.skipped.append("screen-ios-verify-email — only reachable after a successful network sign-up")
-        Self.skipped.append("screen-ios-reset-password — no screen in the app navigates to ResetPasswordView")
+        // 005 verify-email and 007 reset-password are captured by test08 through
+        // `-uiTestStage`: one needs a real network sign-up, the other a token
+        // that only arrives in an email.
     }
 
     // MARK: - 008-016 · onboarding
@@ -302,7 +308,9 @@ final class CanonicalScreenshotTests: XCTestCase {
         // AnalysisProcessingView auto-advances when its progress task finishes.
         expectScreen("screen-ios-analysis-result-overview", timeout: 30)
 
-        Self.skipped.append("screen-ios-photo-review-crop / screen-ios-upload-quality-check — need a real photo picked from the simulator library")
+        // 023 photo-review-crop, 024 upload-quality-check and 027 video-review
+        // all sit behind a PhotosPicker selection this harness cannot make;
+        // test08 stages them instead.
     }
 
     // MARK: - 036-053 · analysis + elite
@@ -346,8 +354,9 @@ final class CanonicalScreenshotTests: XCTestCase {
             tapAndExpect("Share analysis", "screen-ios-share-results", from: "analysis-result-overview")
         }
 
-        Self.skipped.append("screen-ios-analysis-taking-longer — nothing in the app ever sets AnalysisProcessingView's `long` flag")
-        Self.skipped.append("screen-ios-analysis-error — AnalysisErrorView has no inbound navigation anywhere in the app")
+        // 037 analysis-taking-longer and 040 analysis-error are the slow and
+        // failed states of a pipeline that always succeeds against demo data;
+        // test08 stages both.
     }
 
     // MARK: - 054-062 · training
@@ -411,6 +420,42 @@ final class CanonicalScreenshotTests: XCTestCase {
 
         resetTab("Profile", root: "screen-ios-profile")
         tapAndExpect("Share results", "screen-ios-share-results", from: "profile", capture: false)
+    }
+
+    // MARK: - 005/007/023/024/027/037/040 · staged screens
+
+    /// The seven canonical screens whose *state*, not whose navigation, is what
+    /// the walk cannot produce: a real account (005), a token from an emailed
+    /// link (007), a photo or video picked out of the library (023/024/027), and
+    /// the slow and failed states of an analysis that always succeeds offline
+    /// (037/040).
+    ///
+    /// `-uiTestStage <slug>` roots the app at each one (see `UITestHooks.stage`
+    /// in ShotIQApp.swift). The slug *is* the canonical slug, so the attachment
+    /// name each capture gets is the same `NNN-<slug>` the pairing script
+    /// expects for every other screen. The two auth slugs root the signed-out
+    /// stack; the other five root the signed-in tab shell, so they keep the tab
+    /// bar their canonical renders show.
+    func test08StagedScreens() {
+        // 005 — the code screen the sign-up flow pushes after a successful POST
+        // /api/auth/signup. Staged with the canonical address and half-typed code.
+        launch(["-uiTestStage", "verify-email"])
+        expectScreen("screen-ios-verify-email", timeout: 25)
+
+        // 007 — the screen behind the emailed reset link. Staged with a token,
+        // so it renders the "RESET LINK VERIFIED" state canonical 007 shows.
+        launch(["-uiTestStage", "reset-password"])
+        expectScreen("screen-ios-reset-password", timeout: 25)
+
+        // The five that live in the tab shell. Each renders its no-media state,
+        // which is exactly what the canonical designs draw: the canonical review
+        // frame on 023, the 00:04 1080p clip card on 024, the canonical clip on
+        // 027, and the queue/error panels on 037/040.
+        for slug in ["photo-review-crop", "upload-quality-check", "video-review",
+                     "analysis-taking-longer", "analysis-error"] {
+            launch(Self.mainArgs + ["-uiTestStage", slug])
+            expectScreen("screen-ios-\(slug)", timeout: 25)
+        }
     }
 
     // MARK: - manifest + verdict
