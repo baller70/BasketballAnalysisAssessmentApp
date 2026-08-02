@@ -400,7 +400,7 @@ struct MechanicGlyph: View {
                 // Rise arrow beside the tracked hip/head nodes.
                 p.line(5, 20.5, 5, 4.5)
                 p.arrowHead(at: CGPoint(x: 5, y: 4.2), from: CGPoint(x: 5, y: 8.4))
-                p.line(14, 10, 14, 14, dash: [1.4, 1.6], accent: true)
+                p.line(14, 10, 14, 14, accent: true, dash: [1.4, 1.6])
                 p.node(14, 8.2, r: 2, accent: true)
                 p.node(14, 15.4, r: 2)
                 p.line(9.5, 20.5, 19.5, 20.5)
@@ -433,7 +433,7 @@ struct MechanicGlyph: View {
                 p.line(9.6, 12, 17.4, 12, accent: true)
                 p.arrowHead(at: CGPoint(x: 17.6, y: 12), from: CGPoint(x: 14, y: 12), accent: true)
                 p.node(18.5, 7, r: 1.5, accent: true)
-                p.line(18.5, 8.5, 18.5, 17, dash: [1.6, 1.8], accent: true)
+                p.line(18.5, 8.5, 18.5, 17, accent: true, dash: [1.6, 1.8])
             case .impact:
                 // Effect landing on the tracked outcome node.
                 p.line(12, 3.5, 12, 11.5, accent: true)
