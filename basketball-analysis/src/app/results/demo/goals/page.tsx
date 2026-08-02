@@ -91,7 +91,7 @@ export default function GoalsPlanPage() {
 
   return (
     <ShotIQShell active="Progress">
-    <div data-testid="screen-desktop-web-goals-plan" className="px-[26px] py-[18px]">
+    <div data-testid="screen-desktop-web-goals-plan" className="px-[26px] pb-[14px] pt-[18px]">
       <div className="flex items-start justify-between">
         <div>
           <h1 className="shotiq-display text-[44px] leading-[46px]">GOALS &amp; PLAN</h1>
