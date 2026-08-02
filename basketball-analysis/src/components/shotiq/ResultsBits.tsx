@@ -71,6 +71,12 @@ function loadHistory() {
         }
       })
       .catch(() => null)
+      .then((d) => {
+        // Never memoize a failure: a single 401 during sign-in used to pin the
+        // whole session to an empty history and every screen to its zero state.
+        if (!d) historyRequest = null
+        return d
+      })
   }
   return historyRequest
 }
