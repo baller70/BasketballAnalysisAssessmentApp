@@ -141,7 +141,7 @@ export default function FlawsPage() {
             <img src="/images/canonical/085-model-ref.png" alt="Model reference at release, 152 degree elbow angle"
                  className="block rounded-r-[6px]" width={312} height={339} />
           </div>
-          <SectionLabel className="mt-[12px]">AFFECTED FRAMES (15)</SectionLabel>
+          <SectionLabel className="mt-[8px]">AFFECTED FRAMES (15)</SectionLabel>
           <div className="mt-[7px] flex items-center gap-[5px]">
             <ChevronLeft className="h-[15px] w-[15px] shrink-0 text-[var(--shotiq-color-ink)]" />
             <div className="shrink-0">
@@ -172,7 +172,7 @@ export default function FlawsPage() {
           </Card>
           {/* Canonical labels this section in type alone — the Target mark here
               was a second use of the Goals nav glyph. */}
-          <SectionLabel className="mt-[12px]">CORRECTIONS</SectionLabel>
+          <SectionLabel className="mt-[8px]">CORRECTIONS</SectionLabel>
           {/* One bordered container with hairline dividers, as canonical draws
               it — not three individually bordered pills. */}
           <Card className="mt-[7px] divide-y divide-[var(--shotiq-color-rule)]">
@@ -185,7 +185,7 @@ export default function FlawsPage() {
               </div>
             ))}
           </Card>
-          <SectionLabel className="mt-[12px]">RECOMMENDED DRILLS</SectionLabel>
+          <SectionLabel className="mt-[8px]">RECOMMENDED DRILLS</SectionLabel>
           <Card className="mt-[7px] p-[12px]">
             <div className="flex items-center gap-[10px]">
               <span className="grid h-[38px] w-[38px] place-items-center rounded-full bg-[var(--shotiq-color-analysisBlue)]">
@@ -208,7 +208,7 @@ export default function FlawsPage() {
       {/* bottom strip — no bottom margin: this is the last block on the screen
           and 8px of trailing margin pushed the page past the 900px fold once
           the rail widened from 165px to the unified 196px. */}
-      <div className="mt-[4px] flex gap-[24px] border-t border-[var(--shotiq-color-rule)] pt-[6px]">
+      <div className="mt-[2px] flex gap-[24px] border-t border-[var(--shotiq-color-rule)] pt-[4px]">
         <div className="w-[500px] shrink-0">
           <SectionLabel>FLAW HISTORY</SectionLabel>
           <div className="mt-[4px] flex">

@@ -341,9 +341,22 @@ export function PhaseGlyph({ active = false, size = 30 }: { active?: boolean; si
 }
 
 /** Section label — 12px bold tracked caps used across canonical screens. */
+/**
+ * The card eyebrow — one label style shared by ~130 call sites.
+ *
+ * Measured off the desktop sidecars rather than eyeballed: across the 20
+ * canonical screens there are 17 clean all-caps `caption` elements, and they
+ * are unanimous on weight (500) and near-unanimous on colour (graphite, 16 of
+ * 17), with a median font size of 14px. This shipped as 12px bold in ink,
+ * which read as a heading rather than an eyebrow on every screen at once.
+ *
+ * `letterSpacing` is deliberately not taken from the sidecars: the field reads
+ * 0 on all 638 text elements, so it is not measured and carries no signal. The
+ * existing 0.06em tracking stands.
+ */
 export function SectionLabel({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`text-[12px] font-bold tracking-[0.06em] ${className}`}>{children}</div>
+    <div className={`text-[14px] font-medium tracking-[0.06em] text-[var(--shotiq-color-graphite)] ${className}`}>{children}</div>
   )
 }
 

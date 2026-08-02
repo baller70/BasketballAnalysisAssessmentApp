@@ -274,7 +274,7 @@ export default function ComparePage() {
       </Card>
 
       {/* footer band — one container, internal hairline, per canonical */}
-      <Card className="mb-[8px] mt-[6px] flex">
+      <Card className="mb-[4px] mt-[4px] flex">
         <div className="flex flex-1 items-center gap-[14px] px-[20px] py-[10px]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/images/canonical/087-focus-mark.png" alt="" aria-hidden="true"
