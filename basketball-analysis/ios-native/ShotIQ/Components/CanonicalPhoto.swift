@@ -13,38 +13,60 @@ import SwiftUI
 ///
 ///     CanonicalPhoto("018-visual-001", height: 148)
 ///
-/// The imagesets are single-scale and unscaled; every call site is `.resizable`
-/// inside a fixed frame, so intrinsic size never matters.
+/// ## Why the image is painted into an overlay rather than sized directly
+///
+/// `Image.resizable().aspectRatio(contentMode: .fill)` does not accept the
+/// width it is offered — it *reports* the width its aspect ratio demands once a
+/// height is pinned. With `.frame(width: nil, height: h)` (which is how most
+/// call sites ask for a photo) that reported width becomes the frame's width,
+/// so a landscape crop in a 190pt-tall slot claims ~316pt inside a 217pt
+/// column. Nothing clips it: the row grows, the enclosing `VStack` grows, the
+/// `ScrollView` reports the oversized content width, and the whole screen ends
+/// up wider than the 393pt viewport and centred inside it — clipped off *both*
+/// edges, header wordmark and tab bar included. `.frame(maxWidth: .infinity)`
+/// does not rescue it either: a flexible frame reports
+/// `max(childWidth, proposedWidth)`, so an oversized child still wins.
+///
+/// Sizing a `Color.clear` spacer — which always takes exactly the size it is
+/// offered — and painting the image into its `overlay` inverts that: the layout
+/// width is whatever the row offered, and the surplus image is cropped by the
+/// `clipShape`, which is what `.fill` is supposed to mean.
 struct CanonicalPhoto: View {
     let key: String
     var width: CGFloat?
     var height: CGFloat?
     var cornerRadius: CGFloat = 4
     var contentMode: ContentMode = .fill
+    /// Which part of an over-large crop survives the clip. Canonical frames are
+    /// centred unless the subject sits at one edge.
+    var alignment: Alignment = .center
 
     init(_ key: String, width: CGFloat? = nil, height: CGFloat? = nil,
-         cornerRadius: CGFloat = 4, contentMode: ContentMode = .fill) {
+         cornerRadius: CGFloat = 4, contentMode: ContentMode = .fill,
+         alignment: Alignment = .center) {
         self.key = key
         self.width = width
         self.height = height
         self.cornerRadius = cornerRadius
         self.contentMode = contentMode
+        self.alignment = alignment
     }
 
     var body: some View {
-        Group {
-            if let ui = UIImage(named: "photo-\(key)") {
-                Image(uiImage: ui)
-                    .resizable()
-                    .aspectRatio(contentMode: contentMode)
-            } else {
-                // A missing crop must never punch a white hole in the layout;
-                // fall back to the same dark surface the app used before.
-                Rectangle().fill(Color(red: 0.106, green: 0.114, blue: 0.125))
+        Color.clear
+            .frame(width: width, height: height)
+            .overlay(alignment: alignment) {
+                if let ui = UIImage(named: "photo-\(key)") {
+                    Image(uiImage: ui)
+                        .resizable()
+                        .aspectRatio(contentMode: contentMode)
+                } else {
+                    // A missing crop must never punch a white hole in the layout;
+                    // fall back to the same dark surface the app used before.
+                    Rectangle().fill(Color(red: 0.106, green: 0.114, blue: 0.125))
+                }
             }
-        }
-        .frame(width: width, height: height)
-        .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
     }
 }
 
@@ -55,10 +77,12 @@ struct CanonicalMediaSurface: View {
     var height: CGFloat
     var duration = "0:07"
     var progress: Double = 0.28
+    /// Passed through to `CanonicalPhoto` — see its note on cropping.
+    var alignment: Alignment = .center
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            CanonicalPhoto(key, height: height, cornerRadius: 4)
+            CanonicalPhoto(key, height: height, cornerRadius: 4, alignment: alignment)
             LinearGradient(colors: [.clear, .black.opacity(0.55)],
                            startPoint: .center, endPoint: .bottom)
             HStack(spacing: 10) {
