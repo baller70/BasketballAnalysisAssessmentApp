@@ -234,17 +234,17 @@ export default function OnboardingPage() {
 
       {/* why it matters rail — canonical draws the hero and the copy inside one
           bordered container, not loose on the paper. */}
-      <aside className="w-[430px] shrink-0 border-l border-[var(--shotiq-color-rule)] px-[22px] py-[20px]">
+      <aside className="w-[430px] shrink-0 border-l border-[var(--shotiq-color-rule)] px-[22px] py-[16px]">
         <Card className="overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/images/canonical/078-hero.png" alt="Shooter at release with elbow flex and release angle called out"
-               className="h-[300px] w-full object-cover" width={466} height={322} />
+               className="h-[252px] w-full object-cover" width={466} height={322} />
           <div className="border-t border-[var(--shotiq-color-rule)] px-[18px] py-[14px]">
             <SectionLabel>WHY IT MATTERS</SectionLabel>
             <p className="mt-[6px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
               Measuring your profile helps ShotIQ benchmark your mechanics and build feedback that&apos;s tailored to you.
             </p>
-            <div className="mt-[10px] space-y-[12px]">
+            <div className="mt-[10px] space-y-[10px]">
               {BENEFITS.map(([t, d, pose]) => (
                 <div key={t} className="flex items-start gap-[12px] border-l border-[var(--shotiq-color-rule)] pl-[12px]">
                   <PoseGlyph phase={pose} size={30} className="shrink-0" />
@@ -259,7 +259,7 @@ export default function OnboardingPage() {
         </Card>
           {/* Canonical's "Your progress" card — the flow position, the step it
               names, its bar, why the questions are asked, and the escape hatch. */}
-          <Card data-testid="onboarding-progress" className="mt-[14px] p-[16px]">
+          <Card data-testid="onboarding-progress" className="mt-[12px] px-[16px] py-[12px]">
             <div className="text-[13px]">Your progress</div>
             <div className="mt-[4px] text-[12px] text-[var(--shotiq-color-graphite)]">
               Step {progressStep} of {STEPS.length}
@@ -269,11 +269,11 @@ export default function OnboardingPage() {
               <div className="h-full rounded-full bg-[var(--shotiq-color-shotiqOrange)]"
                    style={{ width: `${(progressStep / STEPS.length) * 100}%` }} />
             </div>
-            <p className="mt-[10px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
+            <p className="mt-[8px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
               Questions help ShotIQ personalize your analysis, feedback, and training.
             </p>
             <button type="button" onClick={finish}
-                    className="mt-[12px] flex items-center gap-[8px] border-t border-[var(--shotiq-color-rule)] pt-[12px] text-[13px]">
+                    className="mt-[10px] flex items-center gap-[8px] border-t border-[var(--shotiq-color-rule)] pt-[10px] text-[13px]">
               <Save className="h-[14px] w-[14px]" /> Save and finish later
             </button>
           </Card>

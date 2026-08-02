@@ -543,8 +543,10 @@ export default function DashboardPage() {
               <div className="ml-auto flex items-center gap-[18px]">
                 <div>
                   <div className="text-[10px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">TREND</div>
-                  <div className="flex items-center gap-[6px]">
-                    <TrendLine points={rowTrend(i)} width={80} height={26} />
+                  <div className="flex h-[26px] items-center gap-[6px]">
+                    {/* The oldest row has nothing behind it to compare against;
+                        an orphan two-point rule would only read as a bug. */}
+                    {rowTrend(i).length >= 2 && <TrendLine points={rowTrend(i)} width={80} height={26} />}
                     <span className={`text-[11px] ${rowPct != null && rowPct < 0 ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-confirmGreen)]"}`}>{delta}</span>
                   </div>
                 </div>

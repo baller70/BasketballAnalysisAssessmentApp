@@ -329,7 +329,7 @@ export default function EliteShooterDetailClient() {
 
       {/* bottom band */}
       <div className="mb-[8px] mt-[6px] flex gap-[10px]">
-        <Card className="flex w-[352px] shrink-0 flex-col px-[14px] py-[6px]">
+        <Card className="flex w-[372px] shrink-0 flex-col px-[14px] py-[6px]">
           <div className="flex items-center justify-between">
             <SectionLabel>CAREER SHOOTING STATS</SectionLabel>
             <button type="button" onClick={() => setTab("CAREER STATS")}
@@ -350,7 +350,7 @@ export default function EliteShooterDetailClient() {
           </div>
           {/* Pinned to the foot of the card so the panel fills its height
               instead of leaving ~90px of dead space under the stat row. */}
-          <div className="mt-auto flex flex-wrap items-center gap-x-[6px] gap-y-[2px] border-t border-[var(--shotiq-color-rule)] pb-[6px] pt-[12px] text-[11px] font-semibold">
+          <div className="mt-auto flex flex-wrap items-center gap-x-[5px] gap-y-[2px] border-t border-[var(--shotiq-color-rule)] pb-[6px] pt-[12px] text-[11px] font-semibold">
             <span className="whitespace-nowrap">4× NBA Champion</span><span className="text-[var(--shotiq-color-rule)]">|</span>
             <span className="whitespace-nowrap">2× MVP</span><span className="text-[var(--shotiq-color-rule)]">|</span>
             <span className="whitespace-nowrap">10× All-Star</span><span className="text-[var(--shotiq-color-rule)]">|</span>
@@ -394,7 +394,7 @@ export default function EliteShooterDetailClient() {
           </div>
         </Card>
 
-        <Card className="w-[268px] shrink-0 px-[14px] py-[6px]">
+        <Card className="w-[248px] shrink-0 px-[14px] py-[6px]">
           <SectionLabel>ABOUT {shooter.name.toUpperCase()}</SectionLabel>
           <p className="mt-[6px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
             {shooter.description ?? `Revolutionized the game with unmatched shooting range, quick release, and elite shot-making off the dribble. Known for conditioning, work ethic, and relentless pursuit of improvement.`}
