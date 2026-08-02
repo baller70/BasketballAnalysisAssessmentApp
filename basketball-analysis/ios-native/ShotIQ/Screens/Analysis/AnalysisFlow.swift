@@ -620,8 +620,11 @@ struct SkeletonOverlay: View {
                     if deg > 180 { deg = 360 - deg }
                     ctx.stroke(Path(ellipseIn: CGRect(x: b.x - 12, y: b.y - 12, width: 24, height: 24)),
                                with: .color(ShotIQColor.shotiqOrange.opacity(0.7)), lineWidth: 1.5)
+                    // Canvas text must stay a `Text`: GraphicsContext.draw has no
+                    // overload for `some View`, so the brand face is applied with
+                    // `.font(_:)` (Text -> Text) rather than the shotiq* helpers.
                     ctx.draw(Text("\(Int(deg))°")
-                        .shotiqBody(11, weight: .bold)
+                        .font(.custom(shotiqBoxedFace(.bold), size: 11))
                         .foregroundColor(ShotIQColor.shotiqOrange),
                              at: CGPoint(x: b.x + 20, y: b.y - 14))
                 }
@@ -1530,10 +1533,10 @@ struct AnnotationToolbarView: View { // 043
             p.addLine(to: last)
             ctx.stroke(p, with: .color(color), style: StrokeStyle(lineWidth: 2.5, dash: [6, 4]))
             let deg = abs(atan2(last.y - first.y, last.x - first.x)) * 180 / .pi
-            ctx.draw(Text("\(Int(deg))°").shotiqBody(12, weight: .bold).foregroundColor(color),
+            ctx.draw(Text("\(Int(deg))°").font(.custom(shotiqBoxedFace(.bold), size: 12)).foregroundColor(color),
                      at: CGPoint(x: (first.x + last.x) / 2, y: (first.y + last.y) / 2 - 12))
         default: // Label
-            ctx.draw(Text("NOTE").shotiqBody(11, weight: .bold).foregroundColor(.white),
+            ctx.draw(Text("NOTE").font(.custom(shotiqBoxedFace(.bold), size: 11)).foregroundColor(.white),
                      at: last)
             ctx.stroke(Path(roundedRect: CGRect(x: last.x - 24, y: last.y - 12, width: 48, height: 24), cornerRadius: 5),
                        with: .color(color), lineWidth: 1.5)

@@ -621,7 +621,12 @@ struct PhotoReviewCropView: View {  // 023
                             }
                         }
                         .frame(height: 430).frame(maxWidth: .infinity).clipped()
-                        // rule-of-thirds crop grid + dashed frame
+                        // Rule-of-thirds crop grid + dashed frame, drawn only over a
+                        // real picked photo. The canonical fallback frame has the grid,
+                        // the dashed border, the 3:4 badge and the tip caption baked
+                        // into the image, so drawing them again over it rendered each
+                        // one twice.
+                        if image != nil {
                         GeometryReader { geo in
                             Path { p in
                                 for f in [1.0 / 3.0, 2.0 / 3.0] {
@@ -640,9 +645,11 @@ struct PhotoReviewCropView: View {  // 023
                             .padding(.horizontal, 9).padding(.vertical, 5)
                             .background(.black.opacity(0.7), in: RoundedRectangle(cornerRadius: 5))
                             .padding(10)
+                        }
                     }
                     .frame(height: 430).clipped()
                     .overlay(alignment: .bottom) {
+                        if image != nil {
                         HStack(spacing: 8) {
                             Image(systemName: "info.circle").font(.system(size: 12))
                             Text("Tip: Include your full body. Leave a little space above your head and below your feet.")
@@ -653,6 +660,7 @@ struct PhotoReviewCropView: View {  // 023
                         .padding(.horizontal, 12).padding(.vertical, 8)
                         .background(.black.opacity(0.72), in: RoundedRectangle(cornerRadius: 6))
                         .padding(10)
+                        }
                     }
                     .padding(.horizontal, 20).padding(.top, 14)
 
