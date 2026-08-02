@@ -179,14 +179,20 @@ export default function LiveCapturePage() {
     : shots.length ? `${Math.round((makes / shots.length) * 100)}%` : "—"
 
   return (
-    <div data-testid="screen-desktop-web-live-capture" className="px-[26px] py-[12px]">
+    <div data-testid="screen-desktop-web-live-capture" className="px-[26px] pb-[8px] pt-[12px]">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="shotiq-display flex items-center gap-[14px] text-[46px] leading-[48px]">
             LIVE CAPTURE
+            {/* The status has to agree with the CTA beside it. This read
+                "● RECORDING" in the orange live colour even while the camera
+                was off and the primary button said "Start camera" — canonical
+                depicts a mid-recording take, but painting that state
+                unconditionally makes the screen assert something false. */}
             <span className="flex items-center gap-[7px] text-[13px] font-bold tracking-[0.05em] text-[var(--shotiq-color-ink)]">
-              <span className={`h-[10px] w-[10px] rounded-full ${live && paused ? "bg-[var(--shotiq-color-muted)]" : "bg-[var(--shotiq-color-shotiqOrange)]"}`} />
-              {live && paused ? "PAUSED" : "RECORDING"}</span>
+              <span className={`h-[10px] w-[10px] rounded-full ${
+                live && !paused ? "bg-[var(--shotiq-color-shotiqOrange)]" : "bg-[var(--shotiq-color-muted)]"}`} />
+              {!live ? "READY" : paused ? "PAUSED" : "RECORDING"}</span>
           </h1>
           <p className="text-[13px] text-[var(--shotiq-color-graphite)]">Web Camera&ensp;·&ensp;1080p&ensp;·&ensp;30fps</p>
         </div>
