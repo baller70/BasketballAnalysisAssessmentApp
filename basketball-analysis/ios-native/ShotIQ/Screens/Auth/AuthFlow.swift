@@ -852,6 +852,22 @@ struct ForgotPasswordView: View {  // 006 · ios.forgot-password
                             .padding(.top, 24)
                         }
 
+                        // Canonical 007 is the second half of this flow: once the
+                        // link is out (or if the player already has one) they set
+                        // the new password here.
+                        NavigationLink { ResetPasswordView() } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "key").font(.system(size: 15))
+                                Text(sent ? "Enter your new password" : "I already have a reset link")
+                                    .font(.system(size: 15, weight: .medium))
+                            }
+                            .foregroundStyle(ShotIQColor.shotiqOrange)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityIdentifier("Enter your new password")
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 20)
+
                         OrDivider().padding(.top, 34)
 
                         Button { dismiss() } label: {

@@ -717,7 +717,10 @@ struct UploadQualityCheckView: View { // 024
     @Environment(\.dismiss) private var dismiss
     @State private var busy = false
     @State private var uploadError: String?
-    @State private var goAnalysis = false
+    /// One route out of this screen: analysis processing on success, the
+    /// canonical analysis-error screen (040) when the upload/analyze call fails.
+    enum UploadRoute: Hashable { case processing, failed }
+    @State private var route: UploadRoute?
     private let checks: [(String, String, String, Bool)] = [
         ("Lighting", "Well-lit and clear.", "Good", true),
         ("Full body visibility", "Entire body is visible.", "Good", true),
@@ -844,7 +847,12 @@ struct UploadQualityCheckView: View { // 024
                 }
             }
         }
-        .navigationDestination(isPresented: $goAnalysis) { AnalysisProcessingView() }
+        .navigationDestination(item: $route) { r in
+            switch r {
+            case .processing: AnalysisProcessingView()
+            case .failed: AnalysisErrorView()
+            }
+        }
     }
 
     /// Mirrors the web upload flow: multipart POST /api/upload, then
@@ -852,7 +860,7 @@ struct UploadQualityCheckView: View { // 024
     /// to persist the session — before showing the processing screen.
     private func analyze() async {
         guard let jpeg = image?.jpegData(compressionQuality: 0.7) else {
-            goAnalysis = true // nothing picked (placeholder path) — just proceed
+            route = .processing // nothing picked (placeholder path) — just proceed
             return
         }
         busy = true
@@ -915,9 +923,12 @@ struct UploadQualityCheckView: View { // 024
                                imageUrl: imageUrl,
                                overallScore: overallScore,
                                coachingNotes: coachingNotes))
-            goAnalysis = true
+            route = .processing
         } catch {
+            // Canonical 040: a failed analyze/upload round trip opens the
+            // analysis-error screen, which offers retry / another frame / support.
             uploadError = "Couldn't reach the analysis service. Check your connection and try again."
+            route = .failed
         }
     }
 }
@@ -1080,7 +1091,11 @@ struct UploadQueueView: View {      // 025
                     if it.state == "Complete" {
                         Text("Ready to analyze").font(.system(size: 13, weight: .medium))
                             .foregroundStyle(ShotIQColor.confirmGreen)
-                        NavigationLink { AnalysisProcessingView() } label: {
+                        // Shares the screen's one route to processing with
+                        // "Analyze selected" — a second NavigationLink to the same
+                        // destination competed with the screen's
+                        // navigationDestination and the tap went nowhere.
+                        Button { goAnalyze = true } label: {
                             HStack(spacing: 8) {
                                 Image(systemName: "camera.metering.center.weighted").font(.system(size: 14))
                                 Text("Analyze now").font(.system(size: 14, weight: .medium))
@@ -1089,6 +1104,8 @@ struct UploadQueueView: View {      // 025
                             .frame(maxWidth: .infinity).frame(height: 40)
                             .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.shotiqOrange))
                         }
+                        .buttonStyle(.plain)
+                        .accessibilityIdentifier("Analyze now")
                     } else if it.state == "Uploading" || it.state == "Paused" {
                         HStack(alignment: .firstTextBaseline) {
                             Text("\(Int(it.pct * 100))%").font(.custom("Tungsten-Semibold", size: 28))
@@ -1666,11 +1683,25 @@ struct HoopCalibrationView: View {  // 029
                             }
                             .stroke(.white, lineWidth: 5)
                         }
+                        .coordinateSpace(name: "hoopArea")
                         .contentShape(Rectangle())
-                        .gesture(DragGesture().onChanged { v in
-                            hoopPos = CGPoint(x: min(max(v.location.x / w, 0.15), 0.85),
-                                              y: min(max(v.location.y / h, 0.15), 0.85))
-                        })
+                        // Press-and-hold, then drag, to move the reticle. A plain
+                        // full-surface DragGesture swallowed the enclosing
+                        // ScrollView's pan, so this screen could not be scrolled at
+                        // all and its "Confirm hoop" CTA — below the fold on a
+                        // phone — was unreachable. A long press does not compete
+                        // with a scroll flick, so both gestures now work.
+                        .gesture(
+                            LongPressGesture(minimumDuration: 0.25)
+                                .sequenced(before: DragGesture(minimumDistance: 0,
+                                                               coordinateSpace: .named("hoopArea")))
+                                .onChanged { value in
+                                    guard case .second(true, let drag?) = value else { return }
+                                    hoopPos = CGPoint(x: min(max(drag.location.x / w, 0.15), 0.85),
+                                                      y: min(max(drag.location.y / h, 0.15), 0.85))
+                                }
+                        )
+                        .accessibilityLabel("Hoop calibration viewfinder — press and hold, then drag, to move the crosshair")
                         .overlay(alignment: .bottom) {
                             HStack(spacing: 10) {
                                 PhaseGlyph(size: 26)
@@ -1697,6 +1728,8 @@ struct HoopCalibrationView: View {  // 029
                     NavigationLink { ReadinessCheckView() } label: {
                         captureCTA("Confirm hoop", icon: "scope", color: ShotIQColor.confirmGreen)
                     }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("Confirm hoop")
                     .padding(.horizontal, 20).padding(.top, 10)
 
                     PhaseStrip().padding(.horizontal, 20).padding(.top, 18).padding(.bottom, 26)
@@ -1798,6 +1831,8 @@ struct ReadinessCheckView: View {   // 030
                     NavigationLink { CaptureReadyView() } label: {
                         captureCTA("Keep position", color: ShotIQColor.confirmGreen)
                     }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("Keep position")
                     .padding(.horizontal, 20).padding(.top, 16)
 
                     HStack(spacing: 10) {
@@ -1923,8 +1958,11 @@ struct LiveRecordingView: View {    // 032
     @State private var seconds = 0
     @State private var timer: Timer?
     @State private var paused = false
-    @State private var goFeedback = false
-    @State private var goDetected = false
+    /// Single item-based route out of recording: two
+    /// `navigationDestination(isPresented:)` modifiers on one view conflict and
+    /// only the last one presents, which left "Stop recording" going nowhere.
+    enum RecordingRoute: Hashable { case feedback, detected }
+    @State private var route: RecordingRoute?
     private var clock: String { String(format: "%02d:%02d", seconds / 60, seconds % 60) }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-live-recording") {
@@ -2029,50 +2067,57 @@ struct LiveRecordingView: View {    // 032
 
                     HStack(alignment: .top) {
                         Spacer()
-                        VStack(spacing: 8) {
-                            Button {
-                                paused.toggle()
-                                if paused {
-                                    camera.stopRecording()
-                                } else if camera.status == .ready {
-                                    camera.startRecording()
-                                }
-                            } label: {
+                        // Each transport control is one Button covering its glyph AND
+                        // its caption — the captions used to be loose Text siblings,
+                        // so tapping the visible word did nothing.
+                        Button {
+                            paused.toggle()
+                            if paused {
+                                camera.stopRecording()
+                            } else if camera.status == .ready {
+                                camera.startRecording()
+                            }
+                        } label: {
+                            VStack(spacing: 8) {
                                 Circle().stroke(ShotIQColor.rule, lineWidth: 1.5).frame(width: 62, height: 62)
                                     .overlay(Image(systemName: paused ? "play.fill" : "pause.fill")
                                         .font(.system(size: 20)).foregroundStyle(ShotIQColor.ink))
+                                Text(paused ? "RESUME" : "PAUSE").font(.system(size: 10, weight: .medium)).kerning(0.6)
+                                    .foregroundStyle(ShotIQColor.graphite)
                             }
-                            .buttonStyle(.plain)
-                            Text(paused ? "RESUME" : "PAUSE").font(.system(size: 10, weight: .medium)).kerning(0.6)
-                                .foregroundStyle(ShotIQColor.graphite)
                         }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(paused ? "Resume recording" : "Pause recording")
                         Spacer()
-                        VStack(spacing: 8) {
-                            Button {
-                                camera.stopRecording()
-                                goFeedback = true
-                            } label: {
+                        Button {
+                            camera.stopRecording()
+                            route = .feedback
+                        } label: {
+                            VStack(spacing: 8) {
                                 Circle().fill(ShotIQColor.shotiqOrange).frame(width: 84, height: 84)
                                     .overlay(RoundedRectangle(cornerRadius: 5).fill(.white).frame(width: 26, height: 26))
+                                Text("STOP RECORDING").font(.system(size: 11, weight: .bold)).kerning(0.6)
+                                    .foregroundStyle(ShotIQColor.shotiqOrange)
                             }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel("Stop recording")
-                            Text("STOP RECORDING").font(.system(size: 11, weight: .bold)).kerning(0.6)
-                                .foregroundStyle(ShotIQColor.shotiqOrange)
                         }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Stop recording")
+                        .accessibilityIdentifier("Stop recording")
                         Spacer()
-                        VStack(spacing: 8) {
-                            Button {
-                                camera.stopRecording()
-                                goDetected = true
-                            } label: {
+                        Button {
+                            camera.stopRecording()
+                            route = .detected
+                        } label: {
+                            VStack(spacing: 8) {
                                 Circle().stroke(ShotIQColor.rule, lineWidth: 1.5).frame(width: 62, height: 62)
                                     .overlay(Image(systemName: "flag.fill").font(.system(size: 19)).foregroundStyle(ShotIQColor.ink))
+                                Text("END ROUND").font(.system(size: 10, weight: .medium)).kerning(0.6)
+                                    .foregroundStyle(ShotIQColor.graphite)
                             }
-                            .buttonStyle(.plain)
-                            Text("END ROUND").font(.system(size: 10, weight: .medium)).kerning(0.6)
-                                .foregroundStyle(ShotIQColor.graphite)
                         }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("END ROUND")
+                        .accessibilityIdentifier("END ROUND")
                         Spacer()
                     }
                     .padding(.top, 22).padding(.bottom, 28)
@@ -2087,8 +2132,12 @@ struct LiveRecordingView: View {    // 032
             try? await Task.sleep(for: .seconds(0.6))
             if camera.status == .ready && !camera.isRecording && !paused { camera.startRecording() }
         }
-        .navigationDestination(isPresented: $goFeedback) { LiveFormFeedbackView() }
-        .navigationDestination(isPresented: $goDetected) { ShotDetectedView() }
+        .navigationDestination(item: $route) { r in
+            switch r {
+            case .feedback: LiveFormFeedbackView()
+            case .detected: ShotDetectedView()
+            }
+        }
     }
 
     private func liveMetric(_ icon: String, _ label: String, _ value: String) -> some View {

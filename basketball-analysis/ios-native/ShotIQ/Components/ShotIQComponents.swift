@@ -82,12 +82,19 @@ struct Wordmark: View {
 // MARK: - Canonical top chrome (screens 017-072): wordmark bar + player header
 
 struct TopBar: View {
-    var onSettings: () -> Void = {}
+    /// Screens that own a settings destination pass one in. Screens that don't
+    /// used to leave the gear inert (`{}`) — it now opens the profile menu
+    /// sheet, the same surface the home screens' gear opens.
+    var onSettings: (() -> Void)?
+    @State private var showMenu = false
+
+    init(onSettings: (() -> Void)? = nil) { self.onSettings = onSettings }
+
     var body: some View {
         HStack {
             Wordmark(size: 30)
             Spacer()
-            Button(action: onSettings) {
+            Button { if let onSettings { onSettings() } else { showMenu = true } } label: {
                 Image(systemName: "gearshape").font(.system(size: 20)).foregroundStyle(ShotIQColor.ink)
             }
             .buttonStyle(.plain)
@@ -96,6 +103,7 @@ struct TopBar: View {
         .padding(.horizontal, 20)
         .frame(height: 52)
         .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
+        .sheet(isPresented: $showMenu) { ProfileMenuView() }
     }
 }
 

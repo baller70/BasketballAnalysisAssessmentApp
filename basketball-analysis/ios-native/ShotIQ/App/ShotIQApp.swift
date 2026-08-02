@@ -69,7 +69,9 @@ final class AppState: ObservableObject {
             phase = .main
             return
         }
-        try? await Task.sleep(for: .seconds(1.2))
+        // Canonical 001 is a real screen, not a flash: hold the brand moment long
+        // enough to be seen (and screenshotted) before the phase switch.
+        try? await Task.sleep(for: .seconds(2.5))
         // A stored access token means a returning user.
         if KeychainStore.read(key: "accessToken") != nil {
             phase = .main
