@@ -358,6 +358,14 @@ struct CanonicalScreen<Content: View>: View {
             content
         }
         .statusBarHidden(true) // sidecar contract: no system status icons
+        // Every canonical screen paints its own header and its own back
+        // affordance ("< ANALYZE", "BACK TO SIGN IN"). Without this the
+        // NavigationStack also draws the system bar on every pushed screen,
+        // which stacked a second back chevron above the ShotIQ lockup and ate
+        // ~100pt: measured against the renders, content began at 13.3% of
+        // screen height instead of canonical's 1.5%. That lost row is what
+        // pushed the primary CTA off the bottom of most screens.
+        .toolbar(.hidden, for: .navigationBar)
         .accessibilityIdentifier(testID)
     }
 }
@@ -367,10 +375,12 @@ struct CanonicalScreen<Content: View>: View {
 enum RootTab: String, CaseIterable {
     // Canonical tab labels are single short words (018/054/066: Home,
     // Capture, Train, Progress, Profile) so nothing ever wraps.
-    case home = "Home", analyze = "Analyze", training = "Train", progress = "Progress", profile = "Profile"
+    case home = "Home", analyze = "Capture", training = "Train", progress = "Progress", profile = "Profile"
     var icon: String {
         switch self {
-        case .home: "house"; case .analyze: "chart.xyaxis.line"; case .training: "figure.run"
+        // Canonical draws a capture reticle for tab 2, not a line chart, and a
+        // target frame for Home rather than a filled house.
+        case .home: "viewfinder"; case .analyze: "camera.viewfinder"; case .training: "figure.run"
         case .progress: "chart.line.uptrend.xyaxis"; case .profile: "person.crop.circle"
         }
     }
