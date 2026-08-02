@@ -75,7 +75,7 @@ private func homeCTALabel(_ title: String, icon: String = "camera.metering.cente
         // Canonical prints its capture reticle on the primary CTA, not a
         // metering symbol.
         CaptureReticleGlyph(size: 19)
-        Text(title).font(.system(size: ShotIQType.button + 1, weight: .semibold))
+        Text(title).shotiqBody(ShotIQType.button + 1, weight: .semibold)
     }
     // 58pt against canonical 018's measured 46.1pt — this is the CTA the review
     // clocked at ~23% over. It shares the canonical control height with
@@ -95,15 +95,18 @@ private func homeMediaThumb(height: CGFloat, icon: String = "play.fill") -> some
         .overlay(Image(systemName: icon).font(.system(size: 16)).foregroundStyle(.white.opacity(0.85)))
 }
 
-/// Large media frame carrying the canonical photograph. The canonical crop is
-/// the athlete cut-out, which is far taller than the box, so it is fitted over
-/// the same dark surface the box used before — the frame, corner radius and
-/// position are untouched, only the content changes.
+/// Large media frame carrying the canonical photograph (018/019 LATEST
+/// ANALYSIS). The crops are now cut from the photograph's own frame — the wide
+/// gym interior, 572x459 and 548x406 — not from the athlete's body box, so they
+/// fill this landscape slot. `.fill` (the `CanonicalPhoto` default) crops the
+/// surplus; the earlier `.fit` letterboxed the tall body cut-out and left the
+/// dark surface showing as side bars. The dark rectangle stays as the backdrop
+/// for a missing asset; the frame, corner radius and position are untouched.
 private func homeCanonicalFrame(_ key: String, height: CGFloat) -> some View {
     RoundedRectangle(cornerRadius: 4)
         .fill(Color(red: 0.106, green: 0.114, blue: 0.125))
         .frame(height: height)
-        .overlay(CanonicalPhoto(key, height: height, cornerRadius: 4, contentMode: .fit))
+        .overlay(CanonicalPhoto(key, height: height, cornerRadius: 4))
 }
 
 /// LATEST SESSION stats strip: shots / makes / make % / trend + delta (018/019).
@@ -118,8 +121,8 @@ private struct HomeSessionStats: View {
                 TrendLine(points: [2, 3.1, 2.6, 4.2], stroke: ShotIQColor.confirmGreen)
                     .frame(width: 86, height: 28)
                 HStack(spacing: 3) {
-                    Text("+8.1%").font(.system(size: 11, weight: .semibold)).foregroundStyle(ShotIQColor.confirmGreen)
-                    Text("vs last session").font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
+                    Text("+8.1%").shotiqBody(11, weight: .semibold).foregroundStyle(ShotIQColor.confirmGreen)
+                    Text("vs last session").shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
                 }
             }
         }
@@ -135,11 +138,11 @@ private struct HomeCoachingTargetRow: View {
         } label: {
             VStack(alignment: .leading, spacing: 5) {
                 Text("PRIMARY COACHING TARGET")
-                    .font(.system(size: 11, weight: .medium)).kerning(0.8)
+                    .shotiqBody(11, weight: .medium).kerning(0.8)
                     .foregroundStyle(ShotIQColor.graphite)
                 HStack {
                     Text("Keep elbow stacked through release")
-                        .font(.system(size: 20, weight: .semibold))
+                        .shotiqBody(20, weight: .semibold)
                         .foregroundStyle(ShotIQColor.ink)
                         .lineLimit(1).minimumScaleFactor(0.7)
                     Spacer()
@@ -169,7 +172,7 @@ struct HomeNewPlayerView: View {   // 017
                     }
                     .padding(.horizontal, 20).padding(.top, 18)
                     Text("See how your mechanics perform in minutes.")
-                        .font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
+                        .shotiqBody(14).foregroundStyle(ShotIQColor.graphite)
                         .frame(maxWidth: .infinity)
                         .padding(.top, 10)
 
@@ -223,7 +226,7 @@ struct HomeNewPlayerView: View {   // 017
                             HStack {
                                 SectionLabel(text: "SETUP CHECKLIST")
                                 Spacer()
-                                Text("\(checkedSetup.count) OF 4 COMPLETE").font(.system(size: 10, weight: .medium)).kerning(0.6)
+                                Text("\(checkedSetup.count) OF 4 COMPLETE").shotiqBody(10, weight: .medium).kerning(0.6)
                                     .foregroundStyle(checkedSetup.count == 4 ? ShotIQColor.confirmGreen : ShotIQColor.graphite)
                             }
                             .padding(.bottom, 4)
@@ -243,7 +246,7 @@ struct HomeNewPlayerView: View {   // 017
                                 Spacer()
                                 NavigationLink { CaptureGuideView() } label: {
                                     HStack(spacing: 4) {
-                                        Text("See capture guide").font(.system(size: 13))
+                                        Text("See capture guide").shotiqBody(13)
                                             .foregroundStyle(ShotIQColor.analysisBlue)
                                         Image(systemName: "chevron.right").font(.system(size: 11))
                                             .foregroundStyle(ShotIQColor.graphite)
@@ -252,7 +255,7 @@ struct HomeNewPlayerView: View {   // 017
                                 .buttonStyle(.plain)
                             }
                             Text("Keep elbow stacked through release.")
-                                .font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                                .shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
                             PhaseStrip()
                         }
                         .padding(16)
@@ -265,11 +268,15 @@ struct HomeNewPlayerView: View {   // 017
 
     private func startRow(_ icon: String, _ title: String, _ d: String, rule: Bool) -> some View {
         HStack(spacing: 14) {
-            Image(systemName: icon).font(.system(size: 24)).foregroundStyle(ShotIQColor.ink).frame(width: 42)
+            // START HERE draws three unrelated marks in canonical 017; the
+            // shipped row led with `camera.metering...` for step 1 and reused it
+            // on six other screens for six other things.
+            ShotIQConceptGlyph(concept: title, fallback: icon, size: 26)
+                .foregroundStyle(ShotIQColor.ink).frame(width: 42)
             VStack(alignment: .leading, spacing: 3) {
-                Text(title).font(.system(size: 15, weight: .heavy).width(.condensed)).kerning(0.5)
+                Text(title).shotiqCondensed(15, weight: .heavy).kerning(0.5)
                     .foregroundStyle(ShotIQColor.ink)
-                Text(d).font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                Text(d).shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
             }
             Spacer()
             Image(systemName: "chevron.right").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
@@ -285,9 +292,9 @@ struct HomeNewPlayerView: View {   // 017
             } else {
                 homeMediaThumb(height: 96, icon: "figure.basketball")
             }
-            Text(title).font(.system(size: 11, weight: .heavy).width(.condensed)).kerning(0.5)
+            Text(title).shotiqCondensed(11, weight: .heavy).kerning(0.5)
                 .foregroundStyle(ShotIQColor.ink)
-            Text(d).font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
+            Text(d).shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
         }
         .frame(maxWidth: .infinity)
         .lineLimit(1)
@@ -309,11 +316,12 @@ struct HomeNewPlayerView: View {   // 017
                 } else {
                     Circle().stroke(ShotIQColor.rule, lineWidth: 1.5).frame(width: 20, height: 20)
                 }
-                Image(systemName: icon).font(.system(size: 17)).foregroundStyle(ShotIQColor.ink).frame(width: 28)
+                ShotIQConceptGlyph(concept: title, fallback: icon, size: 19)
+                    .foregroundStyle(ShotIQColor.ink).frame(width: 28)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(title).font(.system(size: 13, weight: .heavy).width(.condensed)).kerning(0.5)
+                    Text(title).shotiqCondensed(13, weight: .heavy).kerning(0.5)
                         .foregroundStyle(ShotIQColor.ink)
-                    Text(d).font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                    Text(d).shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
                 }
                 Spacer()
                 Image(systemName: "chevron.right").font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
@@ -349,7 +357,7 @@ struct HomeStandardView: View {    // 018
                     NavigationLink { AnalysisResultOverviewView() } label: {
                         HStack(spacing: 12) {
                             Image(systemName: "doc.text").font(.system(size: 19)).foregroundStyle(ShotIQColor.ink)
-                            Text("View latest analysis").font(.system(size: 16, weight: .medium))
+                            Text("View latest analysis").shotiqBody(16, weight: .medium)
                                 .foregroundStyle(ShotIQColor.ink)
                             Spacer()
                             Image(systemName: "chevron.right").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
@@ -362,7 +370,7 @@ struct HomeStandardView: View {    // 018
                     HStack {
                         SectionLabel(text: "LATEST ANALYSIS")
                         Spacer()
-                        Text("Today at 8:24 AM").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                        Text("Today at 8:24 AM").shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
                     }
                     .padding(.horizontal, 20).padding(.top, 22)
 
@@ -371,17 +379,17 @@ struct HomeStandardView: View {    // 018
                             homeCanonicalFrame("018-visual-001", height: 250)
                                 .frame(maxWidth: .infinity)
                             VStack(alignment: .leading, spacing: 5) {
-                                Text("FORM SCORE").font(.system(size: 11, weight: .bold)).kerning(0.8)
+                                Text("FORM SCORE").shotiqBody(11, weight: .bold).kerning(0.8)
                                     .foregroundStyle(ShotIQColor.graphite)
                                 Text("\(vm.score ?? 82)")
                                     .font(.custom("Tungsten-Semibold", size: 66))
                                     .foregroundStyle(ShotIQColor.shotiqOrange)
                                     .lineLimit(1).minimumScaleFactor(0.6)
                                 ScoreBar(pct: Double(vm.score ?? 82) / 100).frame(width: 96)
-                                Text("GOOD").font(.system(size: 14, weight: .bold))
+                                Text("GOOD").shotiqBody(14, weight: .bold)
                                     .foregroundStyle(ShotIQColor.analysisBlue)
                                 Text("Keep building consistency.")
-                                    .font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
+                                    .shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
                             }
                             .frame(width: 108, alignment: .leading)
                         }
@@ -396,7 +404,7 @@ struct HomeStandardView: View {    // 018
                     SectionLabel(text: "LATEST SESSION").padding(.horizontal, 20).padding(.top, 14)
                     HomeSessionStats().padding(.horizontal, 20).padding(.top, 8)
 
-                    Text("NEXT WORKOUT").font(.system(size: 11, weight: .bold)).kerning(0.8)
+                    Text("NEXT WORKOUT").shotiqBody(11, weight: .bold).kerning(0.8)
                         .foregroundStyle(ShotIQColor.ink)
                         .padding(.horizontal, 20).padding(.top, 18)
                     NavigationLink { DrillDetailView(name: "Quick Release Builder") } label: {
@@ -406,11 +414,11 @@ struct HomeStandardView: View {    // 018
                                     .overlay(WorkoutGlyph(kind: .init(drillName: "Quick Release Builder"), size: 22)
                                         .foregroundStyle(.white))
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text("Quick Release Builder").font(.system(size: 16, weight: .semibold))
+                                    Text("Quick Release Builder").shotiqBody(16, weight: .semibold)
                                         .foregroundStyle(ShotIQColor.ink)
-                                    Text("20 min  •  Form Focus").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                                    Text("20 min  •  Form Focus").shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
                                     Text("Improve release speed and consistency.")
-                                        .font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                                        .shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
                                 }
                                 Spacer()
                                 Image(systemName: "chevron.right").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
@@ -435,7 +443,7 @@ struct HomeStandardView: View {    // 018
                 }
             }
             .foregroundStyle(ShotIQColor.ink)
-            Text(title).font(.system(size: 14, weight: .medium)).foregroundStyle(ShotIQColor.ink)
+            Text(title).shotiqBody(14, weight: .medium).foregroundStyle(ShotIQColor.ink)
                 .lineLimit(1).minimumScaleFactor(0.7)
         }
         .frame(maxWidth: .infinity).frame(height: 96)
@@ -474,7 +482,7 @@ struct HomeProfessionalView: View { // 019
                     HStack {
                         SectionLabel(text: "FORM OVERVIEW")
                         Spacer()
-                        Text("Today at 8:24 AM").font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                        Text("Today at 8:24 AM").shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
                     }
                     .padding(.horizontal, 20).padding(.top, 22)
 
@@ -483,17 +491,17 @@ struct HomeProfessionalView: View { // 019
                             homeCanonicalFrame("019-visual-001", height: 250)
                                 .frame(maxWidth: .infinity)
                             VStack(alignment: .leading, spacing: 5) {
-                                Text("FORM SCORE").font(.system(size: 11, weight: .bold)).kerning(0.8)
+                                Text("FORM SCORE").shotiqBody(11, weight: .bold).kerning(0.8)
                                     .foregroundStyle(ShotIQColor.graphite)
                                 Text("\(vm.score ?? 82)")
                                     .font(.custom("Tungsten-Semibold", size: 66))
                                     .foregroundStyle(ShotIQColor.shotiqOrange)
                                     .lineLimit(1).minimumScaleFactor(0.6)
                                 ScoreBar(pct: Double(vm.score ?? 82) / 100).frame(width: 96)
-                                Text("GOOD").font(.system(size: 14, weight: .bold))
+                                Text("GOOD").shotiqBody(14, weight: .bold)
                                     .foregroundStyle(ShotIQColor.analysisBlue)
                                 Text("Keep building consistency.")
-                                    .font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
+                                    .shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
                             }
                             .frame(width: 108, alignment: .leading)
                         }
@@ -506,7 +514,7 @@ struct HomeProfessionalView: View { // 019
                         ForEach(phaseScores, id: \.0) { p, v in
                             VStack(spacing: 4) {
                                 PhaseGlyph(phase: p, active: p == "RELEASE", size: 28)
-                                Text(p).font(.system(size: 9, weight: p == "RELEASE" ? .bold : .regular)).kerning(0.5)
+                                Text(p).shotiqBody(9, weight: p == "RELEASE" ? .bold : .regular).kerning(0.5)
                                     .foregroundStyle(p == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
                                     .lineLimit(1).minimumScaleFactor(0.6)
                                 Text(v).font(.custom("Tungsten-Semibold", size: 17))
@@ -526,12 +534,12 @@ struct HomeProfessionalView: View { // 019
                         HStack(spacing: 8) {
                             Image(systemName: "arrowtriangle.up.fill").font(.system(size: 8))
                                 .foregroundStyle(ShotIQColor.confirmGreen)
-                            Text("Improved").font(.system(size: 10)).foregroundStyle(ShotIQColor.graphite)
-                            Text("—").font(.system(size: 10)).foregroundStyle(ShotIQColor.graphite)
-                            Text("Stable").font(.system(size: 10)).foregroundStyle(ShotIQColor.graphite)
+                            Text("Improved").shotiqBody(10).foregroundStyle(ShotIQColor.graphite)
+                            Text("—").shotiqBody(10).foregroundStyle(ShotIQColor.graphite)
+                            Text("Stable").shotiqBody(10).foregroundStyle(ShotIQColor.graphite)
                             Image(systemName: "arrowtriangle.down.fill").font(.system(size: 8))
                                 .foregroundStyle(ShotIQColor.reviewRed)
-                            Text("Needs work").font(.system(size: 10)).foregroundStyle(ShotIQColor.graphite)
+                            Text("Needs work").shotiqBody(10).foregroundStyle(ShotIQColor.graphite)
                         }
                     }
                     .padding(.horizontal, 20).padding(.top, 22)
@@ -541,13 +549,13 @@ struct HomeProfessionalView: View { // 019
                             VStack(spacing: 4) {
                                 MechanicGlyph(kind: .init(metricLabel: label), size: 22)
                                     .foregroundStyle(ShotIQColor.ink)
-                                Text(label).font(.system(size: 8, weight: .medium)).kerning(0.4)
+                                Text(label).shotiqBody(8, weight: .medium).kerning(0.4)
                                     .foregroundStyle(ShotIQColor.graphite)
                                     .lineLimit(1).minimumScaleFactor(0.6)
                                 Text(value).font(.custom("Tungsten-Semibold", size: 22))
                                     .foregroundStyle(ShotIQColor.ink)
                                 HStack(spacing: 2) {
-                                    Text(delta).font(.system(size: 11, weight: .semibold))
+                                    Text(delta).shotiqBody(11, weight: .semibold)
                                     Image(systemName: up ? "arrow.up.right" : "arrow.down.right").font(.system(size: 8))
                                 }
                                 .foregroundStyle(up ? ShotIQColor.confirmGreen : ShotIQColor.reviewRed)
@@ -561,7 +569,7 @@ struct HomeProfessionalView: View { // 019
                         SectionLabel(text: "RECENT SESSIONS")
                         Spacer()
                         NavigationLink { AnalyticsDetailedView() } label: {
-                            Text("View all").font(.system(size: 13)).foregroundStyle(ShotIQColor.ink)
+                            Text("View all").shotiqBody(13).foregroundStyle(ShotIQColor.ink)
                         }
                         .buttonStyle(.plain)
                     }
@@ -572,7 +580,7 @@ struct HomeProfessionalView: View { // 019
                             HStack(alignment: .center, spacing: 14) {
                                 homeMediaThumb(height: 92).frame(width: 128)
                                 VStack(alignment: .leading, spacing: 8) {
-                                    Text("Today at 8:24 AM").font(.system(size: 13)).foregroundStyle(ShotIQColor.ink)
+                                    Text("Today at 8:24 AM").shotiqBody(13).foregroundStyle(ShotIQColor.ink)
                                     HStack(spacing: 16) {
                                         StatBlock(value: "24", label: "SHOTS", valueSize: ShotIQType.numeric)
                                         StatBlock(value: "15", label: "MAKES", valueSize: ShotIQType.numeric)
@@ -601,14 +609,12 @@ struct HomeProfessionalView: View { // 019
             Group {
                 if title.lowercased().contains("capture") {
                     CaptureReticleGlyph(size: 19)
-                } else if let source = CaptureSource(sourceLabel: title) {
-                    CaptureSourceGlyph(source: source, size: 19)
                 } else {
-                    Image(systemName: icon).font(.system(size: 19))
+                    ShotIQConceptGlyph(concept: title, fallback: icon, size: 19)
                 }
             }
             .foregroundStyle(ShotIQColor.ink)
-            Text(title).font(.system(size: 15, weight: .medium)).foregroundStyle(ShotIQColor.ink)
+            Text(title).shotiqBody(15, weight: .medium).foregroundStyle(ShotIQColor.ink)
                 .lineLimit(1).minimumScaleFactor(0.7)
         }
         .frame(maxWidth: .infinity).frame(height: 56)
@@ -671,19 +677,19 @@ struct ProfileMenuView: View {      // 020
                                 .clipShape(Circle())
                         } else {
                             Circle().fill(ShotIQColor.rule).frame(width: 88, height: 88)
-                                .overlay(Text(shotiqInitials(app.user)).font(.system(size: 26, weight: .bold))
+                                .overlay(Text(shotiqInitials(app.user)).shotiqBody(26, weight: .bold)
                                     .foregroundStyle(ShotIQColor.graphite))
                         }
                         VStack(alignment: .leading, spacing: 6) {
                             Text((app.user?.displayName ?? "Jordan Ellis").uppercased()).shotiqDisplay(30)
-                            Text("Right-handed • Advanced").font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
+                            Text("Right-handed • Advanced").shotiqBody(14).foregroundStyle(ShotIQColor.graphite)
                             Button {
                                 dismiss()
                                 app.tab = .profile
                             } label: {
                                 HStack(spacing: 8) {
                                     Image(systemName: "camera.metering.center.weighted").font(.system(size: 14))
-                                    Text("View profile").font(.system(size: 14, weight: .medium))
+                                    Text("View profile").shotiqBody(14, weight: .medium)
                                     Image(systemName: "chevron.right").font(.system(size: 10))
                                 }
                                 .foregroundStyle(ShotIQColor.shotiqOrange)
@@ -740,10 +746,10 @@ struct ProfileMenuView: View {      // 020
                         Image(systemName: "camera.metering.center.weighted").font(.system(size: 24))
                             .foregroundStyle(ShotIQColor.ink)
                         VStack(alignment: .leading, spacing: 3) {
-                            Text("DASHBOARD MODE").font(.system(size: 14, weight: .heavy).width(.condensed)).kerning(0.5)
+                            Text("DASHBOARD MODE").shotiqCondensed(14, weight: .heavy).kerning(0.5)
                                 .foregroundStyle(ShotIQColor.ink)
                             Text("Choose what you see first when you open ShotIQ.")
-                                .font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
+                                .shotiqBody(11).foregroundStyle(ShotIQColor.graphite)
                         }
                         Spacer()
                         HStack(spacing: 0) {
@@ -762,7 +768,7 @@ struct ProfileMenuView: View {      // 020
                                     // the HStack squeezes, and "Analysis" /
                                     // "Training" broke mid-word into
                                     // "Analy sis" / "Traini ng" on 020.
-                                    Text(mode).font(.system(size: 13, weight: .semibold))
+                                    Text(mode).shotiqBody(13, weight: .semibold)
                                         .lineLimit(1)
                                         .fixedSize(horizontal: true, vertical: false)
                                         .padding(.horizontal, 12).padding(.vertical, 8)
@@ -787,9 +793,9 @@ struct ProfileMenuView: View {      // 020
                                         Image(systemName: icon).font(.system(size: 22))
                                             .foregroundStyle(ShotIQColor.ink).frame(width: 36)
                                         VStack(alignment: .leading, spacing: 2) {
-                                            Text(t).font(.system(size: 17, weight: .heavy).width(.condensed)).kerning(0.5)
+                                            Text(t).shotiqCondensed(17, weight: .heavy).kerning(0.5)
                                                 .foregroundStyle(ShotIQColor.ink)
-                                            Text(d).font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                                            Text(d).shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
                                         }
                                         Spacer()
                                         Image(systemName: "chevron.right").font(.system(size: 13))
@@ -813,10 +819,10 @@ struct ProfileMenuView: View {      // 020
                             Image(systemName: "rectangle.portrait.and.arrow.right").font(.system(size: 22))
                                 .foregroundStyle(ShotIQColor.reviewRed).frame(width: 36)
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("SIGN OUT").font(.system(size: 17, weight: .heavy).width(.condensed)).kerning(0.5)
+                                Text("SIGN OUT").shotiqCondensed(17, weight: .heavy).kerning(0.5)
                                     .foregroundStyle(ShotIQColor.ink)
                                 Text("Sign out of your ShotIQ account")
-                                    .font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                                    .shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
                             }
                             Spacer()
                             Image(systemName: "chevron.right").font(.system(size: 13))
@@ -852,7 +858,7 @@ struct PointsSystemView: View {
                     Text("POINTS SYSTEM").shotiqDisplay(38)
                         .padding(.horizontal, 20).padding(.top, 24)
                     Text("Earn points for every rep you put in.")
-                        .font(.system(size: 15)).foregroundStyle(ShotIQColor.graphite)
+                        .shotiqBody(15).foregroundStyle(ShotIQColor.graphite)
                         .padding(.horizontal, 20).padding(.top, 4)
 
                     ShotIQCard {
@@ -860,7 +866,7 @@ struct PointsSystemView: View {
                             Image(systemName: "circle.hexagongrid").font(.system(size: 28))
                                 .foregroundStyle(ShotIQColor.shotiqOrange)
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("TOTAL POINTS").font(.system(size: 10, weight: .medium)).kerning(0.6)
+                                Text("TOTAL POINTS").shotiqBody(10, weight: .medium).kerning(0.6)
                                     .foregroundStyle(ShotIQColor.graphite)
                                 Text(totalPoints.map { "\($0)" } ?? "2,840")
                                     .font(.custom("Tungsten-Semibold", size: 34))
@@ -868,7 +874,7 @@ struct PointsSystemView: View {
                             }
                             Spacer()
                             if let tier {
-                                Text(tier.uppercased()).font(.system(size: 11, weight: .bold)).kerning(0.6)
+                                Text(tier.uppercased()).shotiqBody(11, weight: .bold).kerning(0.6)
                                     .foregroundStyle(ShotIQColor.shotiqOrange)
                                     .padding(.horizontal, 10).padding(.vertical, 6)
                                     .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.shotiqOrange))
@@ -886,9 +892,9 @@ struct PointsSystemView: View {
                                     Image(systemName: icon).font(.system(size: 20))
                                         .foregroundStyle(ShotIQColor.ink).frame(width: 34)
                                     VStack(alignment: .leading, spacing: 2) {
-                                        Text(t).font(.system(size: 14, weight: .heavy).width(.condensed)).kerning(0.5)
+                                        Text(t).shotiqCondensed(14, weight: .heavy).kerning(0.5)
                                             .foregroundStyle(ShotIQColor.ink)
-                                        Text(d).font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
+                                        Text(d).shotiqBody(12).foregroundStyle(ShotIQColor.graphite)
                                     }
                                     Spacer()
                                 }

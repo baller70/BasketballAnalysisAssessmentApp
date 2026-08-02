@@ -227,7 +227,7 @@ export default function ResultsOverviewPage() {
           </div>
 
           {/* coaching target / key insight / elite match */}
-          <div className="min-w-0 flex-1 px-[20px] pt-[16px]">
+          <div className="min-w-0 flex-1 px-[17px] pt-[16px]">
             <SectionLabel>PRIMARY COACHING TARGET</SectionLabel>
             <Link href="/results/demo/goals" className="mt-[2px] flex items-center justify-between">
               <span className="whitespace-nowrap text-[18px] font-semibold">Keep elbow stacked through release</span>

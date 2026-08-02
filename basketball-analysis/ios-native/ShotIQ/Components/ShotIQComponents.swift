@@ -78,19 +78,38 @@ func shotiqBoxedFace(_ weight: Font.Weight) -> String {
     }
 }
 
+/// Wilson X Connect condensed display face (Tungsten) for a requested weight.
+/// The four cuts are all listed in `UIAppFonts`; PostScript names verified from
+/// the OTF name tables.
+func shotiqTungstenFace(_ weight: Font.Weight) -> String {
+    switch weight {
+    case .black: return "Tungsten-Black"
+    case .heavy, .bold: return "Tungsten-Bold"
+    case .semibold: return "Tungsten-Semibold"
+    default: return "Tungsten-Medium"
+    }
+}
+
 extension View {
     /// Canonical display face: Wilson X Connect "Tungsten Bold", bundled in
     /// the app via UIAppFonts. The scale factor absorbs any title that would
     /// still overflow its line.
+    ///
+    /// None of the four type helpers set a foreground colour any more. They
+    /// used to hard-code `ShotIQColor.ink`, and for `Text` the *innermost*
+    /// `foregroundStyle` wins — so a call site written
+    /// `.shotiqBody(13).foregroundStyle(ShotIQColor.graphite)` rendered ink and
+    /// silently lost its secondary colour. Ink is now the inherited default,
+    /// set once at the `CanonicalScreen` root, which every call site's own
+    /// `foregroundStyle` can override exactly as its author intended.
     func shotiqDisplay(_ size: CGFloat) -> some View {
         font(.custom("Tungsten-Bold", size: size * 0.86))
-            .foregroundStyle(ShotIQColor.ink)
             .lineLimit(2)
             .minimumScaleFactor(0.5)
     }
     /// Wilson X numerals (Tungsten Semibold), replacing DIN Condensed.
     func shotiqNumeric(_ size: CGFloat = ShotIQType.numeric) -> some View {
-        font(.custom("Tungsten-Semibold", size: size)).foregroundStyle(ShotIQColor.ink)
+        font(.custom("Tungsten-Semibold", size: size))
             .lineLimit(1)
             .minimumScaleFactor(0.6)
     }
@@ -98,8 +117,14 @@ extension View {
     /// Defaulted to the canonical `body` role — it used to default to 16pt
     /// against a 12pt target, which is the upstream cause of most of the
     /// mid-word wrapping, truncation and clipped CTAs on the shipped screens.
+    ///
+    /// This is the helper the bulk of the screens route through: the shipped
+    /// build set ~900 text runs in `.system(size:)`, i.e. SF Pro, at the right
+    /// point sizes but the wrong advance widths. Sizes are carried over
+    /// unchanged — the measured median literal is 12.0pt against a 12.0pt body
+    /// target, so there was never anything wrong with the sizes.
     func shotiqBody(_ size: CGFloat = ShotIQType.body, weight: Font.Weight = .regular) -> some View {
-        font(.custom(shotiqBoxedFace(weight), size: size)).foregroundStyle(ShotIQColor.ink)
+        font(.custom(shotiqBoxedFace(weight), size: size))
     }
 
     /// Canonical all-caps micro-label: condensed width, canonical cap height,
@@ -109,13 +134,28 @@ extension View {
     /// raising the cap height on the standard width would have made
     /// "FOLLOW-THROUGH", "PRACTICE TIME" and "BEST ACCURACY LAST COMPLETED"
     /// ellipsize harder, not less.
+    ///
+    /// The width now comes from the bundled condensed face rather than from
+    /// SF Pro's `.width(.condensed)` axis. The point size is unchanged: the
+    /// 9pt figure was derived from a 0.72em SF cap against canonical's 6.45pt,
+    /// and Tungsten-Medium's cap is 0.70em, so 9pt still lands at 6.3pt of cap
+    /// — within a tenth of the canonical label — while advancing narrower than
+    /// SF Condensed, which can only reduce the truncation this role suffers.
     func shotiqMicroCaps(_ size: CGFloat = ShotIQType.microLabel,
                          weight: Font.Weight = .medium,
                          tracking: CGFloat = ShotIQType.microTracking) -> some View {
-        font(.system(size: size, weight: weight).width(.condensed))
+        font(.custom(shotiqTungstenFace(weight), size: size))
             .kerning(tracking)
             .lineLimit(1)
             .minimumScaleFactor(0.6)
+    }
+
+    /// Condensed brand face at a caller-chosen size, and nothing else — the
+    /// face-only sibling of `shotiqMicroCaps`, for the call sites that already
+    /// set their own kerning, line limit or scale factor and would have had
+    /// those overridden. Same face, same point size, no other modifiers.
+    func shotiqCondensed(_ size: CGFloat, weight: Font.Weight = .medium) -> some View {
+        font(.custom(shotiqTungstenFace(weight), size: size))
     }
 }
 
@@ -210,16 +250,12 @@ struct HeaderStat: View {
     /// Explicit override when the label alone is ambiguous.
     var mark: StatMarkKind? = nil
 
-    /// Maps a canonical stat label onto its bespoke mark.
+    /// Maps a canonical stat label onto its bespoke mark. The mapping itself
+    /// lives on `StatMarkGlyph` so that every stat strip in the app — this
+    /// header, 062's completion row, 069's media strip — resolves through one
+    /// table and cannot drift into printing one mark for two statistics.
     private var resolvedMark: StatMarkKind? {
-        if let mark { return mark }
-        let k = label.uppercased()
-        if k.contains("STREAK") { return .dayStreak }
-        if k.contains("POINT") { return .points }
-        if k.contains("FORM SCORE") || k.contains("SCORE") { return .formScore }
-        if k.contains("MAKE") || k.contains("SHOOTING") || k.contains("ACCURACY") { return .accuracy }
-        if k.contains("SHOT") || k.contains("ATTEMPT") || k.contains("REP") { return .volume }
-        return nil
+        mark ?? StatMarkGlyph.kind(forStatLabel: label)
     }
 
     var body: some View {
@@ -249,7 +285,7 @@ struct PlayerHeader: View {
         HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(name.uppercased()).shotiqDisplay(38)   // 38 x 0.86 = 32.7pt vs h1 32.3
-                Text(subtitle).font(.system(size: ShotIQType.body))
+                Text(subtitle).shotiqBody(ShotIQType.body)
                     .foregroundStyle(ShotIQColor.graphite)
             }
             Spacer(minLength: 8)
@@ -273,7 +309,7 @@ struct PrimaryButton: View {
         Button(action: action) {
             HStack(spacing: 10) {
                 if let icon { Image(systemName: icon) }
-                Text(title).font(.system(size: ShotIQType.button, weight: .medium))
+                Text(title).shotiqBody(ShotIQType.button, weight: .medium)
             }
             .frame(maxWidth: .infinity).frame(height: ShotIQType.controlHeight)
             .background(color, in: RoundedRectangle(cornerRadius: ShotIQRadius.control))
@@ -291,7 +327,7 @@ struct SecondaryButton: View {
         Button(action: action) {
             HStack(spacing: 10) {
                 if let icon { Image(systemName: icon) }
-                Text(title).font(.system(size: ShotIQType.button))
+                Text(title).shotiqBody(ShotIQType.button)
             }
             .frame(maxWidth: .infinity).frame(height: ShotIQType.controlHeight)
             .background(RoundedRectangle(cornerRadius: ShotIQRadius.control).stroke(ShotIQColor.rule))
@@ -402,7 +438,7 @@ struct TrendLine: View {
 
                 ForEach(yLabels.indices, id: \.self) { i in
                     Text(yLabels[i])
-                        .font(.system(size: ShotIQType.caption, weight: .medium))
+                        .shotiqBody(ShotIQType.caption, weight: .medium)
                         .foregroundStyle(ShotIQColor.graphite)
                         .frame(width: gutterLeft - 4, alignment: .trailing)
                         .position(x: (gutterLeft - 4) / 2,
@@ -411,7 +447,7 @@ struct TrendLine: View {
 
                 ForEach(xLabels.indices, id: \.self) { i in
                     Text(xLabels[i])
-                        .font(.system(size: ShotIQType.caption, weight: .medium))
+                        .shotiqBody(ShotIQType.caption, weight: .medium)
                         .foregroundStyle(ShotIQColor.graphite)
                         .fixedSize()
                         .position(x: plot.minX + plot.width * CGFloat(i) / CGFloat(max(xLabels.count - 1, 1)),
@@ -554,6 +590,13 @@ struct CanonicalScreen<Content: View>: View {
             ShotIQColor.paper.ignoresSafeArea()
             content
         }
+        // Ink is the inherited default for the whole screen. It used to be
+        // stamped inside `shotiqBody` / `shotiqNumeric` / `shotiqDisplay`,
+        // which for `Text` beat any `foregroundStyle` the call site added
+        // afterwards — the innermost one wins. Setting it here keeps every
+        // uncoloured run at ink while letting a row that asks for graphite,
+        // orange, green or white actually get it.
+        .foregroundStyle(ShotIQColor.ink)
         .statusBarHidden(true) // sidecar contract: no system status icons
         // Every canonical screen paints its own header and its own back
         // affordance ("< ANALYZE", "BACK TO SIGN IN"). Without this the
@@ -620,7 +663,7 @@ struct ShotIQTabBar: View {
                             InitialsMark(initials: shotiqInitials(app.user), size: 21, active: tab == t)
                         }
                         Text(t.rawValue)
-                            .font(.system(size: 10, weight: tab == t ? .bold : .regular))
+                            .shotiqBody(10, weight: tab == t ? .bold : .regular)
                             .lineLimit(1)
                     }
                     .frame(maxWidth: .infinity, minHeight: 44)

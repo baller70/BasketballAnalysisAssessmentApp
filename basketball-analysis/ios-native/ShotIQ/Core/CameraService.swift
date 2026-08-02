@@ -137,10 +137,10 @@ struct CameraDeniedView: View {
             Image(systemName: "video.slash").font(.system(size: 30)).foregroundStyle(ShotIQColor.graphite)
             Text("Camera access is off").shotiqBody(16, weight: .semibold)
             Text("ShotIQ needs the camera to record your shot. Turn it on in Settings.")
-                .font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                .shotiqBody(13).foregroundStyle(ShotIQColor.graphite)
                 .multilineTextAlignment(.center)
             Button { CameraService.openSystemSettings() } label: {
-                Text("Open Settings").font(.system(size: 15, weight: .semibold))
+                Text("Open Settings").shotiqBody(15, weight: .semibold)
                     .frame(maxWidth: .infinity).frame(height: 46)
                     .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 8))
                     .foregroundStyle(.white)
