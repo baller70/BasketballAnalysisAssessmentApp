@@ -376,7 +376,11 @@ struct HomeStandardView: View {    // 018
 
                     NavigationLink { AnalysisResultOverviewView() } label: {
                         HStack(alignment: .center, spacing: 14) {
-                            homeCanonicalFrame("018-visual-001", height: 250)
+                            // Canonical 018 sets this frame at 205pt (sidecar
+                            // visual-001, y=338 h=205 on the 850pt screen). At 250 it
+                            // pushed the coaching target, session stats and next
+                            // workout off the bottom of the screen.
+                            homeCanonicalFrame("018-visual-001", height: 205)
                                 .frame(maxWidth: .infinity)
                             VStack(alignment: .leading, spacing: 5) {
                                 Text("FORM SCORE").shotiqBody(11, weight: .bold).kerning(0.8)
@@ -488,7 +492,7 @@ struct HomeProfessionalView: View { // 019
 
                     NavigationLink { AnalysisResultOverviewView() } label: {
                         HStack(alignment: .center, spacing: 14) {
-                            homeCanonicalFrame("019-visual-001", height: 250)
+                            homeCanonicalFrame("019-visual-001", height: 205)
                                 .frame(maxWidth: .infinity)
                             VStack(alignment: .leading, spacing: 5) {
                                 Text("FORM SCORE").shotiqBody(11, weight: .bold).kerning(0.8)
