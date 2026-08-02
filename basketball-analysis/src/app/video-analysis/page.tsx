@@ -179,7 +179,7 @@ export default function LiveCapturePage() {
     : shots.length ? `${Math.round((makes / shots.length) * 100)}%` : "—"
 
   return (
-    <div data-testid="screen-desktop-web-live-capture" className="px-[26px] py-[18px]">
+    <div data-testid="screen-desktop-web-live-capture" className="px-[26px] py-[12px]">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="shotiq-display flex items-center gap-[14px] text-[46px] leading-[48px]">
@@ -228,7 +228,7 @@ export default function LiveCapturePage() {
         </div>
       </div>
 
-      <div className="mt-[12px] flex gap-[18px]">
+      <div className="mt-[10px] flex gap-[18px]">
         {/* live surface */}
         <div className="min-w-0 flex-1">
           {/* The idle poster carries the canonical FPS badge and session timer
@@ -407,7 +407,7 @@ export default function LiveCapturePage() {
       </div>
 
       {/* shot rail */}
-      <div className="mt-[16px] border-t border-[var(--shotiq-color-rule)] pt-[12px]">
+      <div className="mt-[10px] border-t border-[var(--shotiq-color-rule)] pt-[8px]">
         <div className="flex items-center">
           <span className="shotiq-display text-[19px]">SHOT RAIL</span>
           <span className="ml-auto mr-[430px] text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">

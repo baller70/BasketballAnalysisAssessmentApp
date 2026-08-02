@@ -15,7 +15,7 @@ import Link from "next/link"
 import { Pencil, Share2, Download, Check, ChevronRight } from "lucide-react"
 import { SectionLabel, Card, TrendLine } from "@/components/shotiq/ShotIQShell"
 import { PoseGlyph, PoseFigure, toShotPhase } from "@/components/shotiq/Glyphs"
-import { useHistory } from "@/components/shotiq/ResultsBits"
+import { useHistory, formatMakePct } from "@/components/shotiq/ResultsBits"
 import { useAuthStore } from "@/stores/authStore"
 
 const TOGGLES = ["Form score", "Shot totals", "Make percentage", "Day streak", "Points", "Coaching target"]
@@ -29,7 +29,7 @@ const PHASES = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
 const FILM = [1, 2, 3, 4, 5, 6].map((i) => `/images/canonical/086-film-${i}.png`)
 
 export default function PlayerCardPage() {
-  const { hasData, score } = useHistory()
+  const { hasData, score, items, shots, makes } = useHistory()
   const authUser = useAuthStore((s) => s.user)
   const name = (authUser?.displayName || authUser?.firstName || "Jordan Ellis").toUpperCase()
   const [accent, setAccent] = useState(0)
@@ -39,7 +39,7 @@ export default function PlayerCardPage() {
   const [film, setFilm] = useState(3)
   const [shareMsg, setShareMsg] = useState("")
   const [pulse, setPulse] = useState(false)
-  const toggle = (t: string) => setOn((s) => { const n = new Set(s); n.has(t) ? n.delete(t) : n.add(t); return n })
+  const toggle = (t: string) => setOn((s) => { const n = new Set(s); if (n.has(t)) n.delete(t); else n.add(t); return n })
   const dark = cardStyle !== 3
   const accentColor = ACCENTS[accent]
   const sub = dark ? "text-white/60" : "text-[var(--shotiq-color-graphite)]"
@@ -112,6 +112,12 @@ export default function PlayerCardPage() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/images/canonical/086-card-full.png" alt=""
                    className="absolute inset-0 h-full w-full object-cover" />
+              {/* The hero photograph is a brightly lit gym wall; without a scrim
+                  the white name and the right-hand stat column fall below the
+                  contrast floor. Canonical darkens the top and bottom of the
+                  frame, so the type sits on a dark ground everywhere. */}
+              <div aria-hidden="true" className="absolute inset-0"
+                   style={{ background: "linear-gradient(180deg, rgba(8,9,11,0.84) 0%, rgba(8,9,11,0.58) 30%, rgba(8,9,11,0.42) 55%, rgba(8,9,11,0.70) 85%, rgba(8,9,11,0.88) 100%)" }} />
               <div className="absolute left-[24px] top-[18px]">
                 <div className="shotiq-display text-[30px] leading-[32px]">{name}</div>
                 <div className="mt-[2px] text-[11px] font-bold tracking-[0.08em] text-[var(--shotiq-color-shotiqOrange)]">
@@ -120,7 +126,7 @@ export default function PlayerCardPage() {
               </div>
             </div>
           ) : (
-            <div className="flex h-[483px] gap-[14px] p-[22px]">
+            <div className="relative flex h-[483px] gap-[14px] p-[22px]">
               <div className="min-w-0 flex-1">
                 <div className="shotiq-display text-[30px] leading-[32px]">{name}</div>
                 <div className="text-[11px] font-bold tracking-[0.08em]" style={{ color: accentColor }}>RIGHT-HANDED SHOOTER</div>
@@ -141,8 +147,8 @@ export default function PlayerCardPage() {
                            stroke={dark ? "#FFFFFF" : "#111111"} dotFill={dark ? "#FFFFFF" : "#111111"} />
               </div>
               <div className="w-[130px] shrink-0 space-y-[12px] text-right">
-                {([["SHOTS", hasData ? "24" : "0", "Shot totals"], ["MAKES", hasData ? "15" : "0", "Shot totals"],
-                   ["MAKE %", hasData ? "62.5%" : "—", "Make percentage"], ["DAY STREAK", "6", "Day streak"],
+                {([["SHOTS", hasData ? String(shots ?? "—") : "0", "Shot totals"], ["MAKES", hasData ? String(makes ?? "—") : "0", "Shot totals"],
+                   ["MAKE %", hasData ? formatMakePct(shots, makes) : "—", "Make percentage"], ["DAY STREAK", "6", "Day streak"],
                    ["POINTS", "2,840", "Points"]] as const).filter(([, , t]) => on.has(t)).map(([k, v]) => (
                   <div key={k}>
                     <div className={`text-[9px] tracking-[0.08em] ${sub}`}>{k}</div>
@@ -296,9 +302,9 @@ export default function PlayerCardPage() {
             </div>
             <div className="mt-[10px] grid grid-cols-4 divide-x divide-[var(--shotiq-color-rule)]">
               {[["FORM SCORE", score != null ? String(score) : "—", "+6 vs last 7 days", [72, 75, 74, 78, 80, 82], "Good"],
-                ["MAKE %", hasData ? "62.5%" : "—", "+4.2% vs last 7 days", [52, 56, 54, 58, 60, 62], ""],
-                ["SHOTS / SESSION", hasData ? "24" : "0", "+3 vs last 7 days", [18, 20, 19, 22, 23, 24], ""],
-                ["MAKES / SESSION", hasData ? "15" : "0", "+2 vs last 7 days", [10, 12, 11, 13, 14, 15], ""]].map(([k, v, d, pts, band]) => (
+                ["MAKE %", hasData ? formatMakePct(shots, makes) : "—", "+4.2% vs last 7 days", [52, 56, 54, 58, 60, 62], ""],
+                ["SHOTS / SESSION", hasData ? String(shots ?? "—") : "0", "+3 vs last 7 days", [18, 20, 19, 22, 23, 24], ""],
+                ["MAKES / SESSION", hasData ? String(makes ?? "—") : "0", "+2 vs last 7 days", [10, 12, 11, 13, 14, 15], ""]].map(([k, v, d, pts, band]) => (
                 <div key={String(k)} className="px-[14px] first:pl-0">
                   <div className="text-[10px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">{String(k)}</div>
                   <div className="flex items-center gap-[8px]">
@@ -342,9 +348,12 @@ export default function PlayerCardPage() {
                 <Link href="/results/demo/history" className="text-[11px] font-bold text-[var(--shotiq-color-analysisBlue)]">VIEW ALL</Link>
               </div>
               <div className="mt-[6px] divide-y divide-[var(--shotiq-color-rule)]">
-                {[["Pull-Up Jumper", "May 12, 2025 · 8:24 AM", "82", "/images/canonical/086-recent-1.png"],
-                  ["Spot-Up Three", "May 11, 2025 · 6:15 PM", "78", "/images/canonical/086-recent-2.png"],
-                  ["Transition Pull-Up", "May 10, 2025 · 4:02 PM", "75", "/images/canonical/086-recent-3.png"]].map(([t, d, s, img]) => (
+                {/* Real sessions, dated by the one shared formatter. */}
+                {(items.length
+                  ? items.slice(0, 3).map((a, i) => [a.title, a.when, a.score != null ? String(a.score) : "—", `/images/canonical/086-recent-${i + 1}.png`])
+                  : [["Pull-Up Jumper", "May 12, 2025 • 8:24 AM", "82", "/images/canonical/086-recent-1.png"],
+                     ["Spot-Up Three", "May 11, 2025 • 6:15 PM", "78", "/images/canonical/086-recent-2.png"],
+                     ["Transition Pull-Up", "May 10, 2025 • 4:02 PM", "75", "/images/canonical/086-recent-3.png"]]).map(([t, d, s, img]) => (
                   <Link key={String(t)} href="/results/demo/history" className="flex items-center gap-[10px] py-[8px] hover:bg-[var(--shotiq-color-warmCanvas)]">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={String(img)} alt="" className="h-[40px] w-[72px] shrink-0 rounded-[4px] object-cover" />

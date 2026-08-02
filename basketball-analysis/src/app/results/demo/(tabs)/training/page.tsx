@@ -72,12 +72,12 @@ export default function TrainingHubPage() {
   return (
     <div data-testid="screen-desktop-web-training-hub" className="flex gap-[20px]">
       <div className="min-w-0 flex-1">
-        <h1 className="shotiq-display text-[48px] leading-[50px]">TRAINING HUB</h1>
+        <h1 className="shotiq-display text-[44px] leading-[46px]">TRAINING HUB</h1>
         <p className="mt-[4px] text-[14px] text-[var(--shotiq-color-graphite)]">
           Turn your analysis into better reps. Targeted drills. Smarter workouts. Real progress.
         </p>
 
-        <div className="mt-[14px] grid grid-cols-4 gap-[12px]">
+        <div className="mt-[12px] grid grid-cols-4 gap-[12px]">
           <Link href="/training/drills/quick-start" className="flex items-center gap-[10px] rounded-[8px] bg-[var(--shotiq-color-shotiqOrange)] p-[14px] text-white">
             <CueGlyph kind="shoulders" size={26} accent="#FFFFFF" className="shrink-0" />
             <div className="min-w-0 flex-1"><div className="text-[15px] font-semibold">Quick start</div>
@@ -97,7 +97,7 @@ export default function TrainingHubPage() {
           ))}
         </div>
 
-        <div className="mt-[18px] flex items-center justify-between">
+        <div className="mt-[14px] flex items-center justify-between">
           <div>
             <SectionLabel>RECOMMENDED FOR YOUR GOAL</SectionLabel>
             <div className="text-[12px]">Based on <span className="font-semibold text-[var(--shotiq-color-confirmGreen)]">Keep elbow stacked through release</span></div>
@@ -136,7 +136,7 @@ export default function TrainingHubPage() {
           ))}
         </div>
 
-        <div className="mt-[14px] flex items-center justify-between">
+        <div className="mt-[12px] flex items-center justify-between">
           <SectionLabel>SAVED LIBRARY</SectionLabel>
           <Link href="/training/drills?tab=saved" className="text-[12px] text-[var(--shotiq-color-analysisBlue)]">View all drills ›</Link>
         </div>
@@ -173,7 +173,7 @@ export default function TrainingHubPage() {
           <SectionLabel className="text-[var(--shotiq-color-graphite)]">COACHING TARGET</SectionLabel>
           {/* The one shared form-score module rather than a hand-set numeral +
               verdict pair (see FormScoreCell). */}
-          <FormScoreCell score={score} size={22} label="FORM" caption={null} className="shrink-0" />
+          <FormScoreCell score={score} size={22} label={null} caption={null} className="shrink-0" />
         </div>
         <Link href="/results/demo/goals" className="mt-[4px] flex items-center justify-between gap-[6px]">
           <span className="truncate text-[14px] font-semibold leading-[18px]">Keep elbow stacked through release</span>
@@ -190,7 +190,7 @@ export default function TrainingHubPage() {
           <div className="h-full w-[72%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" />
         </div>
 
-        <div className="mt-[12px] flex items-center justify-between border-t border-[var(--shotiq-color-rule)] pt-[10px]">
+        <div className="mt-[8px] flex items-center justify-between border-t border-[var(--shotiq-color-rule)] pt-[8px]">
           <SectionLabel>TODAY&apos;S SNAPSHOT</SectionLabel>
           <span className="text-[11px] text-[var(--shotiq-color-graphite)]">Today</span>
         </div>
@@ -209,7 +209,7 @@ export default function TrainingHubPage() {
           </div>
         </div>
 
-        <SectionLabel className="mt-[12px] border-t border-[var(--shotiq-color-rule)] pt-[10px]">UP NEXT</SectionLabel>
+        <SectionLabel className="mt-[8px] border-t border-[var(--shotiq-color-rule)] pt-[8px]">UP NEXT</SectionLabel>
         <Card className="mt-[8px] p-[12px]">
           <Link href="/training/drills/quick-start-workout" className="flex items-center gap-[12px]">
             <TrendLine points={[2, 4, 3, 5]} width={44} height={30} stroke="var(--shotiq-color-shotiqOrange)" dotFill="var(--shotiq-color-shotiqOrange)" />
@@ -225,7 +225,7 @@ export default function TrainingHubPage() {
           </Link>
         </Card>
 
-        <div className="mt-[12px] flex items-center justify-between">
+        <div className="mt-[8px] flex items-center justify-between">
           <SectionLabel>THIS WEEK&apos;S PLAN</SectionLabel>
           <Link href="/training/calendar" className="text-[11px] text-[var(--shotiq-color-analysisBlue)]">View calendar</Link>
         </div>
@@ -251,7 +251,7 @@ export default function TrainingHubPage() {
           </div>
         </Card>
 
-        <div className="mt-[12px] flex items-center justify-between">
+        <div className="mt-[8px] flex items-center justify-between">
           <SectionLabel>RECENT PERFORMANCE</SectionLabel>
           <Link href="/results/demo/history" className="text-[11px] text-[var(--shotiq-color-graphite)]">View all analyses ›</Link>
         </div>
@@ -260,7 +260,7 @@ export default function TrainingHubPage() {
             shrinking their labels to 6px and truncating them. */}
         <div className="mt-[4px] divide-y divide-[var(--shotiq-color-rule)]">
           {(recent as readonly (readonly [string, string, string, string, string])[]).map(([t, d, fs, mk, sm]) => (
-            <Link key={t} href="/results/demo/history" className="block py-[7px] hover:bg-[var(--shotiq-color-warmCanvas)]">
+            <Link key={t} href="/results/demo/history" className="block py-[5px] hover:bg-[var(--shotiq-color-warmCanvas)]">
               <div className="flex items-center gap-[8px]">
                 <TrendLine points={[2, 3.4, 2.6, 4]} width={30} height={26} stroke="var(--shotiq-color-shotiqOrange)" dotFill="var(--shotiq-color-shotiqOrange)" />
                 <div className="min-w-0 flex-1">

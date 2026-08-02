@@ -14,7 +14,7 @@ import React, { useMemo, useState } from "react"
 import Link from "next/link"
 import {
   Search, ChevronDown, ChevronUp, HelpCircle, GitCompare, X, Check,
-  LayoutGrid, List, RotateCcw, CalendarClock,
+  LayoutGrid, List, RotateCcw, CalendarClock, SlidersHorizontal,
 } from "lucide-react"
 import { MechanicGlyph, type MechanicKind } from "@/components/shotiq/Glyphs"
 
@@ -110,15 +110,17 @@ export default function EliteShootersPage() {
   const [view, setView] = useState<(typeof VIEWS)[number]>("Career")
   const [menu, setMenu] = useState<null | "sort" | "view" | "wsi">(null)
   const [layout, setLayout] = useState<"list" | "grid">("list")
+  // Filters open in the content column instead of standing as a second rail.
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(() => new Set(["Klay Thompson", "Kyrie Irving"]))
 
   const toggleGroup = (id: string, set: Set<string>, setter: (s: Set<string>) => void) => {
-    const n = new Set(set); n.has(id) ? n.delete(id) : n.add(id); setter(n)
+    const n = new Set(set); if (n.has(id)) n.delete(id); else n.add(id); setter(n)
   }
   const toggleExtraCheck = (gid: string, opt: string) =>
     setExtraChecks((c) => {
       const cur = new Set(c[gid] ?? [])
-      cur.has(opt) ? cur.delete(opt) : cur.add(opt)
+      if (cur.has(opt)) cur.delete(opt); else cur.add(opt)
       return { ...c, [gid]: cur }
     })
   const resetFilters = () => {
@@ -153,7 +155,7 @@ export default function EliteShootersPage() {
 
   const unfiltered = filtered.length === ROWS.length
   const toggleRow = (name: string) =>
-    setSelected((s) => { const n = new Set(s); n.has(name) ? n.delete(name) : n.add(name); return n })
+    setSelected((s) => { const n = new Set(s); if (n.has(name)) n.delete(name); else n.add(name); return n })
   const pair = ROWS.filter((r) => selected.has(r.name)).slice(0, 2)
   const trayImg: Record<string, string> = {
     "Klay Thompson": "/images/canonical/088-tray-klay.png",
@@ -166,14 +168,23 @@ export default function EliteShootersPage() {
     <div data-testid="screen-desktop-web-elite-shooters-database"
          className={`flex flex-col ${pair.length >= 2 ? "h-[835px]" : "min-h-full"}`}>
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        {/* ------------------------------------------------ filters sidebar */}
-        <aside className="w-[176px] shrink-0 overflow-hidden border-r border-[var(--shotiq-color-rule)] px-[14px] pb-[6px] pt-[8px]">
-          <div className="flex items-center justify-between">
-            <span className="shotiq-display text-[19px] leading-[20px]">FILTERS</span>
-            <button type="button" onClick={resetFilters}
-                    className="text-[11px] font-medium text-[var(--shotiq-color-shotiqOrange)]">Clear all</button>
-          </div>
-
+        {/* ------------------------------------------------------ main table */}
+        <div className="relative min-w-0 flex-1 px-[20px] pt-[12px]">
+          {/* Filters open as a panel inside the content column. They used to
+              stand as a SECOND full-height rail beside the one nav rail, which
+              spent ~176px of the 1440px canvas before any data was shown. */}
+          {filtersOpen && (
+            <>
+            <button type="button" aria-label="Close filters" onClick={() => setFiltersOpen(false)}
+                    className="fixed inset-0 z-30 cursor-default bg-transparent" />
+            <div data-testid="elite-filters"
+                 className="absolute left-[20px] top-[92px] z-40 w-[660px] rounded-[8px] border border-[var(--shotiq-color-rule)] bg-white p-[16px] shadow-[0_10px_28px_rgba(17,17,17,0.12)]">
+              <div className="flex items-center justify-between pb-[8px]">
+                <span className="shotiq-display text-[19px] leading-[20px]">FILTERS</span>
+                <button type="button" onClick={resetFilters}
+                        className="text-[11px] font-medium text-[var(--shotiq-color-shotiqOrange)]">Clear all</button>
+              </div>
+              <div className="grid grid-cols-3 gap-x-[22px]">
           {RADIO_GROUPS.map((g) => (
             <div key={g.id} className="mt-[3px] border-t border-[var(--shotiq-color-rule)] pt-[3px]">
               <button type="button" onClick={() => toggleGroup(g.id, openGroups, setOpenGroups)}
@@ -243,10 +254,10 @@ export default function EliteShootersPage() {
               <RotateCcw className="h-[12px] w-[12px]" /> Reset filters
             </button>
           </div>
-        </aside>
-
-        {/* ------------------------------------------------------ main table */}
-        <div className="min-w-0 flex-1 px-[10px] pt-[12px]">
+              </div>
+            </div>
+            </>
+          )}
           <div className="flex items-start justify-between">
             <div>
               <h1 className="shotiq-display text-[40px] leading-[42px]">ELITE SHOOTERS DATABASE</h1>
@@ -277,6 +288,11 @@ export default function EliteShootersPage() {
           </div>
 
           <div className="mt-[12px] flex items-center">
+            <button type="button" aria-expanded={filtersOpen} data-testid="elite-filters-toggle"
+                    onClick={() => setFiltersOpen((v) => !v)}
+                    className={`mr-[12px] flex h-[36px] items-center gap-[8px] rounded-[6px] border px-[14px] text-[13px] ${filtersOpen ? "border-[var(--shotiq-color-shotiqOrange)] text-[var(--shotiq-color-shotiqOrange)]" : "border-[var(--shotiq-color-rule)]"}`}>
+              <SlidersHorizontal className="h-[14px] w-[14px]" /> Filters
+            </button>
             <div className="flex h-[36px] w-[384px] items-center gap-[9px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[12px]">
               <Search className="h-[13px] w-[13px] text-[var(--shotiq-color-graphite)]" />
               <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search shooters..."
@@ -357,14 +373,14 @@ export default function EliteShootersPage() {
                 </span>
                 {/* Width recovered from the filter rail and the page gutters so
                     these labels sit on one line, as canonical prints them. */}
-                <span className={`w-[84px] whitespace-nowrap px-[2px] text-center text-[9px] tracking-[0.03em] ${headCell}`}>RELEASE HEIGHT</span>
+                <span className={`w-[84px] self-stretch whitespace-nowrap border-l border-[var(--shotiq-color-rule)] px-[2px] text-center text-[9px] tracking-[0.03em] ${headCell}`}>RELEASE HEIGHT</span>
                 <span className={`w-[84px] whitespace-nowrap px-[2px] text-center text-[9px] tracking-[0.03em] ${headCell}`}>RELEASE TIME</span>
                 <span className={`w-[84px] whitespace-nowrap px-[2px] text-center text-[9px] tracking-[0.03em] ${headCell}`}>ELBOW ALIGNMENT</span>
-                <span className={`flex w-[84px] items-center justify-center gap-[3px] ${headCell}`}>
+                <span className={`flex w-[84px] self-stretch items-center justify-center gap-[3px] border-l border-[var(--shotiq-color-rule)] ${headCell}`}>
                   OVERALL <HelpCircle className="h-[10px] w-[10px]" />
                 </span>
                 <span className={`w-[96px] text-center ${headCell}`}>KEY MATCH</span>
-                <span className={`w-[116px] shrink-0 text-center ${headCell}`}>ACTION</span>
+                <span className={`w-[116px] shrink-0 self-stretch border-l border-[var(--shotiq-color-rule)] text-center ${headCell}`}>ACTION</span>
               </div>
 
               {filtered.map((r) => (
@@ -394,7 +410,7 @@ export default function EliteShootersPage() {
                     <span className="block whitespace-nowrap text-[10px] text-[var(--shotiq-color-graphite)]">{fmt(r.makes)} / {fmt(r.attempts)}</span>
                   </span>
                   <span className="shotiq-numeric w-[48px] text-center text-[22px] leading-[26px] text-[var(--shotiq-color-analysisBlue)]">{r.wsi}</span>
-                  <span className="w-[84px] text-center">
+                  <span className="w-[84px] self-stretch border-l border-[var(--shotiq-color-rule)] text-center">
                     <span className="block text-[14px] font-bold">{r.relH}</span>
                     <span className="block text-[10px] text-[var(--shotiq-color-graphite)]">{r.relHBand}</span>
                   </span>
@@ -406,17 +422,17 @@ export default function EliteShootersPage() {
                     <span className="block text-[14px] font-bold">{r.elbow}</span>
                     <span className="block text-[10px] text-[var(--shotiq-color-graphite)]">Stacked</span>
                   </span>
-                  <span className="w-[84px] px-[6px] text-center">
+                  <span className="w-[84px] self-stretch border-l border-[var(--shotiq-color-rule)] px-[6px] text-center">
                     <span className="block text-[15px] font-bold">{r.overall}%</span>
                     <span className="mx-auto mt-[3px] block h-[3px] w-[62px] rounded-full bg-[var(--shotiq-color-rule)]">
                       <span className="block h-full rounded-full bg-[var(--shotiq-color-analysisBlue)]" style={{ width: `${r.overall}%` }} />
                     </span>
                   </span>
-                  <span className="w-[96px] border-l border-[var(--shotiq-color-rule)] text-center">
+                  <span className="w-[96px] text-center">
                     <span className="block whitespace-nowrap text-[12px]">{r.keyMatch[0]}</span>
                     <span className="block text-[12px] font-semibold">{r.keyMatch[1]}</span>
                   </span>
-                  <span className="w-[116px] shrink-0 text-center">
+                  <span className="w-[116px] shrink-0 self-stretch border-l border-[var(--shotiq-color-rule)] text-center">
                     <Link href={`/elite-shooters/${r.slug}`}
                           className="inline-flex h-[29px] w-[108px] items-center justify-center rounded-[5px] border border-[var(--shotiq-color-shotiqOrange)] text-[12px] text-[var(--shotiq-color-shotiqOrange)] hover:bg-[var(--shotiq-color-shotiqOrange)] hover:text-white">
                       View shooter

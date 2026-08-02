@@ -159,7 +159,7 @@ export default function AnalysisHistoryPage() {
         {/* summary strip */}
         {/* Canonical rules every cell off with a hairline and distributes them
             across the strip; the cells used to bunch against the left edge. */}
-        <div className="mt-[12px] flex items-stretch divide-x divide-[var(--shotiq-color-rule)] border-b border-[var(--shotiq-color-rule)] pb-[14px] pt-[6px]">
+        <div className="mt-[10px] flex items-stretch divide-x divide-[var(--shotiq-color-rule)] border-b border-[var(--shotiq-color-rule)] pb-[10px] pt-[4px]">
           <div className="min-w-0 flex-1 pr-[16px]">
             <div className="text-[11px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">AVERAGE FORM SCORE</div>
             <div className="shotiq-numeric text-[40px] leading-[44px]">{score ?? "—"}</div>
@@ -194,7 +194,7 @@ export default function AnalysisHistoryPage() {
         </div>
 
         {/* sessions table */}
-        <div className="mt-[14px] flex items-center gap-[10px]">
+        <div className="mt-[10px] flex items-center gap-[10px]">
           <SectionLabel>SESSIONS</SectionLabel>
           <span className="text-[12px] text-[var(--shotiq-color-graphite)]">{totalSessions} sessions</span>
         </div>
@@ -210,7 +210,7 @@ export default function AnalysisHistoryPage() {
             {rows.map(([d, fs, band, mk, sm, conf], i) => (
               <tr key={i} onClick={() => setSel(i)}
                   className={`cursor-pointer ${sel === i ? "outline outline-1 outline-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
-                <td className="py-[16px]">
+                <td className="py-[9px]">
                   <span className={`mr-[8px] inline-block h-[12px] w-[12px] rounded-full border-2 align-middle ${sel === i ? "border-[var(--shotiq-color-shotiqOrange)] bg-[var(--shotiq-color-shotiqOrange)]" : "border-[var(--shotiq-color-rule)]"}`} />
                   {d}
                 </td>

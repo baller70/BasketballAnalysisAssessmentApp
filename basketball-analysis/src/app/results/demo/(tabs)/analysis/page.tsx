@@ -72,12 +72,12 @@ export default function AnalysisOverviewPage() {
         </div>
       </div>
 
-      <div className="mt-[16px] flex gap-[20px]">
+      <div className="mt-[12px] flex gap-[20px]">
         {/* media + scrubber + phases */}
         <div className="w-[520px] shrink-0">
           {/* Canonical release frame with the pose overlay and the 172° call-out;
               the scrub line rides the padding box so it can never clip out. */}
-          <div className="relative overflow-hidden rounded-[4px] bg-[#1B1D20]" style={{ height: 335 }}>
+          <div className="relative overflow-hidden rounded-[4px] bg-[#1B1D20]" style={{ height: 322 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/images/canonical/083-hero.png"
                  alt="Analyzed release frame with pose skeleton and a 172 degree elbow call-out"
@@ -210,7 +210,7 @@ export default function AnalysisOverviewPage() {
           each panel's label set above its content the way canonical does. The
           labels used to sit beside the content in a 54-74px column, which broke
           all three of them onto two lines and squeezed the stats leftward. */}
-      <Card className="mt-[20px] grid grid-cols-1 divide-y divide-[var(--shotiq-color-rule)] px-[8px] py-[4px] xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.95fr)_minmax(0,0.85fr)] xl:divide-x xl:divide-y-0 xl:py-[10px]">
+      <Card className="mt-[12px] grid grid-cols-1 divide-y divide-[var(--shotiq-color-rule)] px-[8px] py-[4px] xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.95fr)_minmax(0,0.85fr)] xl:divide-x xl:divide-y-0 xl:py-[10px]">
         <div className="px-[16px] py-[10px] xl:py-[4px]">
           <SectionLabel>ANALYSIS SUMMARY</SectionLabel>
           {/* Canonical rules every cell off with a hairline. */}

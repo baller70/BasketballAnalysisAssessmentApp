@@ -138,7 +138,7 @@ export default function EliteShooterDetailClient() {
   }
 
   return (
-    <div data-testid="screen-desktop-web-elite-shooter-detail" className="px-[16px] pt-[12px]">
+    <div data-testid="screen-desktop-web-elite-shooter-detail" className="px-[16px] pt-[6px]">
       {/* header row */}
       <div className="flex items-center justify-between">
         <Link href="/elite-shooters" className="flex items-center gap-[6px] text-[13px] text-[var(--shotiq-color-graphite)]">
@@ -199,7 +199,7 @@ export default function EliteShooterDetailClient() {
       </div>
 
       {/* detail tabs */}
-      <nav className="mt-[8px] flex gap-[30px] border-b border-[var(--shotiq-color-rule)]" aria-label="Shooter detail">
+      <nav className="mt-[4px] flex gap-[30px] border-b border-[var(--shotiq-color-rule)]" aria-label="Shooter detail">
         {DETAIL_TABS.map((t) => (
           <button key={t} type="button" onClick={() => setTab(t)} aria-current={tab === t ? "true" : undefined}
                   className={`relative pb-[7px] text-[12px] font-bold tracking-[0.05em] ${tab === t ? "text-[var(--shotiq-color-analysisBlue)]" : "text-[var(--shotiq-color-graphite)]"}`}>
@@ -210,7 +210,7 @@ export default function EliteShooterDetailClient() {
       </nav>
 
       {/* body */}
-      <div className="mt-[10px] flex gap-[14px]">
+      <div className="mt-[6px] flex gap-[14px]">
         {/* hero media + phases */}
         <div className="w-[326px] shrink-0">
           <div className="relative h-[254px] overflow-hidden rounded-[6px] bg-[#1B1D20]">
@@ -365,7 +365,7 @@ export default function EliteShooterDetailClient() {
 
         {/* One bordered container, internal hairline — canonical does not draw
             STRENGTHS and OPPORTUNITIES as two detached cards. */}
-        <Card className="flex min-w-0 flex-1">
+        <Card className="flex min-w-0 flex-1 divide-x divide-[var(--shotiq-color-rule)]">
           <div className="min-w-0 flex-1 px-[14px] py-[6px]">
             <SectionLabel>STRENGTHS</SectionLabel>
             <ul className="mt-[6px] space-y-[5px] text-[12px]">
