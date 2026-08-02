@@ -10,18 +10,23 @@ import {
   type LucideIcon,
 } from "lucide-react"
 import { ShotIQShell, SectionLabel, Card } from "@/components/shotiq/ShotIQShell"
-import { FlawFigure, MechanicGlyph, CorrectionGlyph, WorkoutGlyph, type FlawKind } from "@/components/shotiq/Glyphs"
+import { FlawFigure, WorkoutGlyph, type FlawKind } from "@/components/shotiq/Glyphs"
 import { useHistory, FormScoreCell, formatDelta, formatMakePct } from "@/components/shotiq/ResultsBits"
 
 // Every flaw card carries its own pose diagram, with the faulty segment picked
 // out in the alert colour — the ~60px figure canonical prints on each card.
-const FLAWS: { n: number; title: string; impact: string; desc: string; affects: string; delta: string; glyph: FlawKind }[] = [
-  { n: 1, title: "Elbow not stacked at release", impact: "HIGH IMPACT", desc: "Elbow drifts forward causing inconsistent release point.", affects: "AFFECTS 62% OF SHOTS", delta: "-8.3% IMPACT", glyph: "elbow" },
-  { n: 2, title: "Slight wrist roll to the left", impact: "MEDIUM IMPACT", desc: "Ball rotates slightly left on release affecting accuracy.", affects: "AFFECTS 38% OF SHOTS", delta: "-4.1% IMPACT", glyph: "wrist" },
-  { n: 3, title: "Release point too low", impact: "MEDIUM IMPACT", desc: "Release height below optimal window reduces arc.", affects: "AFFECTS 26% OF SHOTS", delta: "-3.1% IMPACT", glyph: "release" },
+type Flaw = { n: number; title: string; impact: string; desc: string; affects: string; delta: string; glyph: FlawKind; mark?: string }
+
+// Canonical prints the three top flaws with their own figures; `mark` is the
+// crop taken from 085. The two lower-impact flaws sit behind a disclosure that
+// canonical never opens, so they have no source and keep the drawn figure.
+const FLAWS: Flaw[] = [
+  { n: 1, title: "Elbow not stacked at release", impact: "HIGH IMPACT", desc: "Elbow drifts forward causing inconsistent release point.", affects: "AFFECTS 62% OF SHOTS", delta: "-8.3% IMPACT", glyph: "elbow", mark: "085-flaw-1" },
+  { n: 2, title: "Slight wrist roll to the left", impact: "MEDIUM IMPACT", desc: "Ball rotates slightly left on release affecting accuracy.", affects: "AFFECTS 38% OF SHOTS", delta: "-4.1% IMPACT", glyph: "wrist", mark: "085-flaw-2" },
+  { n: 3, title: "Release point too low", impact: "MEDIUM IMPACT", desc: "Release height below optimal window reduces arc.", affects: "AFFECTS 26% OF SHOTS", delta: "-3.1% IMPACT", glyph: "release", mark: "085-flaw-3" },
 ]
 
-const LOWER_FLAWS: typeof FLAWS = [
+const LOWER_FLAWS: Flaw[] = [
   { n: 4, title: "Narrow base on catch", impact: "LOW IMPACT", desc: "Feet slightly inside shoulder width on the catch.", affects: "AFFECTS 14% OF SHOTS", delta: "-1.2% IMPACT", glyph: "base" },
   { n: 5, title: "Guide-hand thumb flick", impact: "LOW IMPACT", desc: "Occasional off-hand thumb movement at release.", affects: "AFFECTS 9% OF SHOTS", delta: "-0.8% IMPACT", glyph: "guide" },
 ]
@@ -147,7 +152,11 @@ export default function FlawsPage() {
                   <span className={`mt-[7px] inline-block rounded-[3px] px-[6px] py-[2px] text-[9px] font-bold text-white ${f.impact === "HIGH IMPACT" ? "bg-[var(--shotiq-color-reviewRed)]" : f.impact === "LOW IMPACT" ? "bg-[var(--shotiq-color-graphite)]" : "bg-[var(--shotiq-color-shotiqOrange)]"}`}>{f.impact}</span>
                   <p className="mt-[6px] text-[12px] leading-[16px] text-[var(--shotiq-color-graphite)]">{f.desc}</p>
                 </div>
-                <FlawFigure kind={f.glyph} size={56} className="mt-[6px] shrink-0" />
+                {f.mark
+                  // eslint-disable-next-line @next/next/no-img-element
+                  ? <img src={`/images/canonical/${f.mark}.png`} alt="" aria-hidden="true"
+                         className="mt-[6px] block h-[68px] w-auto max-w-none shrink-0" />
+                  : <FlawFigure kind={f.glyph} size={56} className="mt-[6px] shrink-0" />}
               </div>
               <div className="mt-[9px] flex justify-between border-t border-[var(--shotiq-color-rule)] pt-[7px] text-[9px] tracking-[0.04em] text-[var(--shotiq-color-graphite)]">
                 <span>{f.affects}</span><span>{f.delta}</span>
@@ -197,11 +206,13 @@ export default function FlawsPage() {
         <div className="w-[250px] shrink-0">
           <SectionLabel>FLAW INSIGHTS</SectionLabel>
           <Card className="mt-[8px] divide-y divide-[var(--shotiq-color-rule)]">
-            {([["Your elbow angle at release averages 118°.", "Goal range: 145° – 165°", "angle"],
-              ["Elbow drift moves release point forward by 2.6\" on average.", "Goal: Keep elbow over hip.", "drift"],
-              ["Impact: -8.3% to make % on affected shots.", "", "impact"]] as const).map(([t, goal, glyph], i) => (
+            {([["Your elbow angle at release averages 118°.", "Goal range: 145° – 165°", "085-insight-1"],
+              ["Elbow drift moves release point forward by 2.6\" on average.", "Goal: Keep elbow over hip.", "085-insight-2"],
+              ["Impact: -8.3% to make % on affected shots.", "", "085-insight-3"]] as const).map(([t, goal, glyph], i) => (
               <div key={i} className="flex gap-[10px] p-[11px]">
-                <MechanicGlyph kind={glyph} size={26} className="shrink-0" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={`/images/canonical/${glyph}.png`} alt="" aria-hidden="true"
+                     className="block h-[44px] w-[42px] max-w-none shrink-0 object-contain" />
                 <p className="text-[12px] leading-[16px]">{t}
                   {goal && <span className="block text-[var(--shotiq-color-confirmGreen)]">{goal}</span>}</p>
               </div>
@@ -213,10 +224,12 @@ export default function FlawsPage() {
           {/* One bordered container with hairline dividers, as canonical draws
               it — not three individually bordered pills. */}
           <Card className="mt-[7px] divide-y divide-[var(--shotiq-color-rule)]">
-            {([["Stack elbow over shooting hip.", "stack"], ["Create a 90° angle at set point.", "square"],
-               ["Drive straight up through release.", "drive"]] as const).map(([t, glyph]) => (
+            {([["Stack elbow over shooting hip.", "085-correction-1"], ["Create a 90° angle at set point.", "085-correction-2"],
+               ["Drive straight up through release.", "085-correction-3"]] as const).map(([t, glyph]) => (
               <div key={t} className="flex items-center gap-[10px] px-[11px] py-[9px]">
-                <CorrectionGlyph kind={glyph} size={20} className="shrink-0" /><span className="text-[12px]">{t}</span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={`/images/canonical/${glyph}.png`} alt="" aria-hidden="true"
+                     className="block h-[26px] w-[21px] max-w-none shrink-0 object-contain" /><span className="text-[12px]">{t}</span>
               </div>
             ))}
           </Card>

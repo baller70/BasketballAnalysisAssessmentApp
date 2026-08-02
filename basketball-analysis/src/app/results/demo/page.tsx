@@ -19,7 +19,8 @@ import {
   ArrowLeft, ChevronLeft, ChevronRight, Crosshair, Maximize, Scan, Diamond,
   User, Columns, Route, Smile, Share2, Download, Settings, Check,
 } from "lucide-react"
-import { SectionLabel, Card, PhaseGlyph, TrendLine } from "@/components/shotiq/ShotIQShell"
+import { SectionLabel, Card, TrendLine } from "@/components/shotiq/ShotIQShell"
+import { PoseFigure } from "@/components/shotiq/Glyphs"
 import { ShotIQShell } from "@/components/shotiq/ShotIQShell"
 import { useHistory, formatDelta, formatMakePct } from "@/components/shotiq/ResultsBits"
 
@@ -154,7 +155,7 @@ export default function ResultsOverviewPage() {
       {!hasData && !loading ? (
         <Card data-testid="analysis-empty-state"
               className="mt-[16px] flex h-[420px] flex-col items-center justify-center px-[40px] text-center">
-          <PhaseGlyph size={56} />
+          <PoseFigure phase="release" height={64} />
           <div className="mt-[16px] text-[20px] font-semibold">No analyses yet</div>
           <p className="mt-[6px] text-[14px] leading-[20px] text-[var(--shotiq-color-graphite)]">
             Upload or capture a shot and your form score, flaws and elite comparison will live here.
@@ -204,7 +205,7 @@ export default function ResultsOverviewPage() {
                     </div>
                   )}
                   <div className="shrink-0 text-center" style={{ width: i === 4 ? 108 : 78 }}>
-                    <PhaseGlyph active={active} size={32} />
+                    <PoseFigure phase={p.label} active={active} height={41} className="mx-auto" />
                     <div className={`mt-[4px] whitespace-nowrap text-[10px] font-bold tracking-[0.04em] ${active ? "text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>{p.label}</div>
                     <div className="shotiq-numeric mt-[1px] whitespace-nowrap text-[10px] text-[var(--shotiq-color-graphite)]">{p.time}</div>
                   </div>
