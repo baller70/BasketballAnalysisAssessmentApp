@@ -439,12 +439,15 @@ export default function DashboardPage() {
             </p>
             <SectionLabel className="mt-[26px]">MECHANICS TREND</SectionLabel>
             <div className="flex items-start gap-[6px]">
-              <TrendLine points={[3, 2.5, 3.5, 3, 4.4]} width={120} height={40} />
-              <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" className="mt-[2px]">
-                <path d="M3 13 L13 3 M6 3 H13 V10" fill="none" stroke="var(--shotiq-color-confirmGreen)" strokeWidth="1.6" />
+              <TrendLine points={trend} width={108} height={40} />
+              <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" className="mt-[2px]"
+                   style={{ transform: deltaPct != null && deltaPct < 0 ? "scaleY(-1)" : undefined }}>
+                <path d="M3 13 L13 3 M6 3 H13 V10" fill="none"
+                      stroke={deltaPct != null && deltaPct < 0 ? "var(--shotiq-color-reviewRed)" : "var(--shotiq-color-confirmGreen)"}
+                      strokeWidth="1.6" />
               </svg>
             </div>
-            <div className="text-[11px] text-[var(--shotiq-color-confirmGreen)]">{improvement} vs last session</div>
+            <div className={`text-[11px] ${improvementTone}`}>{improvement} vs last session</div>
           </div>
 
           {/* right column */}
@@ -468,13 +471,15 @@ export default function DashboardPage() {
             </div>
 
             <SectionLabel className="mt-[24px] border-t border-[var(--shotiq-color-rule)] pt-[18px]">LATEST SESSION</SectionLabel>
-            <div className="mt-[10px] flex items-center gap-[30px]">
-              <Stat value={hasData ? "24" : "0"} label="SHOTS" />
-              <Stat value={hasData ? "15" : "0"} label="MAKES" />
-              <Stat value={hasData ? "62.5%" : "—"} label="MAKE %" />
-              <div className="ml-auto text-right">
-                <TrendLine points={[3, 2, 4, 3, 5, 6]} width={100} height={36} />
-                <div className="text-[10px] text-[var(--shotiq-color-confirmGreen)]">{improvement} vs last session</div>
+            {/* Canonical rules the session stats off from one another and spreads
+                them across the rail, with the trend mark in its own compartment. */}
+            <div className="mt-[10px] flex items-center divide-x divide-[var(--shotiq-color-rule)]">
+              <div className="flex-1 pr-[14px]"><Stat value={hasData ? "24" : "0"} label="SHOTS" /></div>
+              <div className="flex-1 px-[14px]"><Stat value={hasData ? "15" : "0"} label="MAKES" /></div>
+              <div className="flex-1 px-[14px]"><Stat value={hasData ? "62.5%" : "—"} label="MAKE %" /></div>
+              <div className="shrink-0 pl-[14px] text-right">
+                <TrendLine points={trend} width={92} height={34} />
+                <div className={`text-[10px] ${improvementTone}`}>{improvement} vs last session</div>
               </div>
             </div>
 
@@ -502,7 +507,10 @@ export default function DashboardPage() {
         </div>
         <div className="mb-[12px] mt-[6px] divide-y divide-[var(--shotiq-color-rule)] border-t border-[var(--shotiq-color-rule)]" data-testid="recent-analyses">
           {(recent.length ? recent : loading ? [] : []).map((r, i) => {
-            const delta = ["+8.1%", "+5.4%", "-2.1%"][i % 3]
+            // Per-row delta and per-row shape, both read off this row's own
+            // slice of history: the row that fell draws a falling line.
+            const rowPct = rowDelta(i)
+            const delta = formatDelta(rowPct)
             const focus = ["Elbow stacked", "Balance in rise", "Footwork timing"][i % 3]
             const bandRow = scoreBand(r.score)
             return (
@@ -536,8 +544,8 @@ export default function DashboardPage() {
                 <div>
                   <div className="text-[10px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">TREND</div>
                   <div className="flex items-center gap-[6px]">
-                    <TrendLine points={[2, 3, 2.6, 3.4, 4]} width={80} height={26} />
-                    <span className={`text-[11px] ${delta.startsWith("-") ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-confirmGreen)]"}`}>{delta}</span>
+                    <TrendLine points={rowTrend(i)} width={80} height={26} />
+                    <span className={`text-[11px] ${rowPct != null && rowPct < 0 ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-confirmGreen)]"}`}>{delta}</span>
                   </div>
                 </div>
                 <div className="w-[120px]">

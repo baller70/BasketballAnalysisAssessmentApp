@@ -4,24 +4,29 @@
 
 import React from "react"
 import Link from "next/link"
-import { ChevronLeft, ChevronRight, Play, Maximize2 } from "lucide-react"
+import { ArrowLeft, ChevronLeft, ChevronRight, Play, Maximize2 } from "lucide-react"
 import { SectionLabel, Card, Stat, TrendLine } from "@/components/shotiq/ShotIQShell"
-import { PoseGlyph, MechanicGlyph, FlawFigure, WorkoutGlyph, type MechanicKind } from "@/components/shotiq/Glyphs"
-import { useHistory, CoachingTarget } from "@/components/shotiq/ResultsBits"
+import { PoseGlyph, FlawFigure, WorkoutGlyph, type FlawKind } from "@/components/shotiq/Glyphs"
+import {
+  useHistory, CoachingTarget, scoreSeries, sessionDelta, formatDelta,
+} from "@/components/shotiq/ResultsBits"
 
 const PHASES: [string, string][] = [
   ["SETUP", "0:00 – 0:02"], ["LOAD", "0:02 – 0:04"], ["RISE", "0:04 – 0:06"],
   ["RELEASE", "0:06 – 0:07"], ["FOLLOW-THROUGH", "0:07 – 0:10"],
 ]
-// A distinct diagram per mechanic: joint angle, wrist flexion, height ruler,
-// body midline — canonical draws no two of these alike.
-const MECHANICS: [string, string, string, MechanicKind][] = [
-  ["Elbow Angle", "172°", "160° – 180°", "angle"], ["Wrist Angle", "21°", "15° – 30°", "wrist"],
-  ["Release Height", "8'6\"", "7'8\" – 8'8\"", "height"], ["Body Alignment", "2°", "-5° – 5°", "centerline"],
+// Canonical marks each release mechanic with a side-on figure whose measured
+// segment is picked out, not with an abstract measurement diagram — one figure
+// per mechanic, none repeated.
+const MECHANICS: [string, string, string, FlawKind][] = [
+  ["Elbow Angle", "172°", "160° – 180°", "elbow"], ["Wrist Angle", "21°", "15° – 30°", "wrist"],
+  ["Release Height", "8'6\"", "7'8\" – 8'8\"", "release"], ["Body Alignment", "2°", "-5° – 5°", "base"],
 ]
 
 export default function AnalysisOverviewPage() {
-  const { hasData, score } = useHistory()
+  const { hasData, score, items } = useHistory()
+  const trend = scoreSeries(items, 6)
+  const delta = sessionDelta(items)
   const total = hasData ? 24 : 0
   // Canonical opens on analysis 3 of 24 with film frame 4 scrubbed in; the two
   // are independent (analysis counter vs. frame scrubber).
@@ -30,11 +35,21 @@ export default function AnalysisOverviewPage() {
   return (
     <div data-testid="screen-desktop-web-analysis-overview">
       <div className="flex items-start justify-between">
-        <div>
-          <h1 className="shotiq-display text-[48px] leading-[50px]">ANALYSIS OVERVIEW</h1>
-          <p className="mt-[4px] text-[13px] text-[var(--shotiq-color-graphite)]">
-            {hasData ? "Latest analysis · Catch & Shoot · Right Hand" : "Run an analysis to populate this view."}
-          </p>
+        {/* Canonical leads the title with a back affordance and dates the
+            analysis in the subtitle. */}
+        <div className="flex items-start gap-[14px]">
+          <Link href="/results/demo/history" aria-label="Back to analyses"
+                className="mt-[10px] shrink-0 text-[var(--shotiq-color-ink)]">
+            <ArrowLeft className="h-[22px] w-[22px]" strokeWidth={1.7} />
+          </Link>
+          <div>
+            <h1 className="shotiq-display text-[48px] leading-[50px]">ANALYSIS OVERVIEW</h1>
+            <p className="mt-[4px] text-[13px] text-[var(--shotiq-color-graphite)]">
+              {hasData
+                ? `${items[0]?.when || "Latest analysis"} · ${items[0]?.style || "Catch & Shoot"} · Right Hand`
+                : "Run an analysis to populate this view."}
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-[12px]">
           <button type="button" disabled={shot <= 1}
@@ -89,14 +104,31 @@ export default function AnalysisOverviewPage() {
             <span className="shotiq-numeric shrink-0 text-[13px]">0:07 / 0:24</span>
             <Maximize2 className="h-[15px] w-[15px] shrink-0 text-[var(--shotiq-color-graphite)]" />
           </div>
-          <div className="mt-[14px] flex items-start justify-between">
-            {PHASES.map(([p, t]) => (
-              <div key={p} className="text-center">
-                <PoseGlyph phase={p} active={p === "RELEASE"} />
-                <div className={`mt-[3px] text-[10px] tracking-[0.05em] ${p === "RELEASE" ? "font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
-                <div className="text-[9px] text-[var(--shotiq-color-graphite)]">{t}</div>
-              </div>
-            ))}
+          {/* Canonical runs a connector track with a stage dot between each pair
+              of phase figures; the dots either side of the current phase are
+              picked out in orange. */}
+          <div className="mt-[14px] flex items-start">
+            {PHASES.map(([p, t], i) => {
+              const active = p === "RELEASE"
+              const reached = active || PHASES[i - 1]?.[0] === "RELEASE"
+              return (
+                <React.Fragment key={p}>
+                  {i > 0 && (
+                    <div className="mt-[14px] flex min-w-0 flex-1 items-center px-[4px]">
+                      <span className="h-px flex-1 bg-[var(--shotiq-color-rule)]" />
+                      <span className={`h-[7px] w-[7px] shrink-0 rounded-full ${
+                        active || reached ? "bg-[var(--shotiq-color-shotiqOrange)]" : "bg-[var(--shotiq-color-muted)]"}`} />
+                      <span className="h-px flex-1 bg-[var(--shotiq-color-rule)]" />
+                    </div>
+                  )}
+                  <div className="shrink-0 text-center">
+                    <PoseGlyph phase={p} active={active} />
+                    <div className={`mt-[3px] text-[10px] tracking-[0.05em] ${active ? "font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
+                    <div className="text-[9px] text-[var(--shotiq-color-graphite)]">{t}</div>
+                  </div>
+                </React.Fragment>
+              )
+            })}
           </div>
         </div>
 
@@ -116,11 +148,11 @@ export default function AnalysisOverviewPage() {
           <SectionLabel className="mt-[20px] border-t border-[var(--shotiq-color-rule)] pt-[14px]">MECHANICS AT RELEASE</SectionLabel>
           <div className="mt-[6px] divide-y divide-[var(--shotiq-color-rule)]">
             {MECHANICS.map(([m, v, range, glyph]) => (
-              <div key={m} className="flex items-center gap-[10px] py-[9px]">
-                <MechanicGlyph kind={glyph} size={20} className="shrink-0" />
-                <span className="flex-1 text-[13px]">{m}</span>
+              <div key={m} className="flex items-center gap-[8px] py-[9px]">
+                <FlawFigure kind={glyph} size={24} accent="var(--shotiq-color-graphite)" className="shrink-0" />
+                <span className="flex-1 whitespace-nowrap text-[13px]">{m}</span>
                 <span className="shotiq-numeric text-[18px]">{hasData ? v : "—"}</span>
-                <span className="w-[64px] text-right">
+                <span className="w-[58px] shrink-0 text-right">
                   <span className="block text-[10px] font-bold text-[var(--shotiq-color-confirmGreen)]">IDEAL</span>
                   <span className="block text-[9px] text-[var(--shotiq-color-graphite)]">{range}</span>
                 </span>
@@ -139,16 +171,18 @@ export default function AnalysisOverviewPage() {
               ? "Your elbow is slightly flaring late in release. Keeping it stacked will help improve consistency and shot accuracy."
               : "Insights appear after your first analysis."}
           </p>
-          <div className="mt-[12px] flex items-center justify-center gap-[26px]">
+          {/* Canonical prints this current-vs-ideal pair at ~90px; they had been
+              shrunk to a size where the flared elbow is no longer readable. */}
+          <div className="mt-[12px] flex items-center justify-center gap-[30px]">
             <div className="text-center">
-              <FlawFigure kind="elbow" size={54} accent="var(--shotiq-color-reviewRed)" />
-              <div className="shotiq-numeric text-[15px]">172°</div>
+              <FlawFigure kind="elbow" size={88} accent="var(--shotiq-color-reviewRed)" />
+              <div className="shotiq-numeric text-[18px]">172°</div>
               <div className="text-[9px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">CURRENT</div>
             </div>
             <span className="text-[18px] text-[var(--shotiq-color-graphite)]">→</span>
             <div className="text-center">
-              <FlawFigure kind="elbow" size={54} accent="var(--shotiq-color-confirmGreen)" />
-              <div className="shotiq-numeric text-[15px]">180°</div>
+              <FlawFigure kind="elbow" size={88} accent="var(--shotiq-color-confirmGreen)" />
+              <div className="shotiq-numeric text-[18px]">180°</div>
               <div className="text-[9px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">IDEAL</div>
             </div>
           </div>
@@ -166,47 +200,70 @@ export default function AnalysisOverviewPage() {
         </div>
       </div>
 
-      {/* bottom strip — a 3-column grid with minmax(0,…) tracks so the flaw
-          text can never be crushed into a sliver; stacks with row dividers
-          below xl. */}
-      <Card className="mt-[20px] grid grid-cols-1 divide-y divide-[var(--shotiq-color-rule)] px-[8px] py-[4px] xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,0.75fr)] xl:divide-x xl:divide-y-0 xl:py-[10px]">
-        <div className="flex items-center gap-[18px] px-[16px] py-[10px] xl:py-0">
-          <SectionLabel className="w-[74px] shrink-0 leading-[13px]">ANALYSIS SUMMARY</SectionLabel>
-          <Stat value={hasData ? "24" : "0"} label="SHOTS" />
-          <Stat value={hasData ? "15" : "0"} label="MAKES" />
-          <Stat value={hasData ? "62.5%" : "—"} label="MAKE %" />
-          <Stat value={score != null ? String(score) : "—"} label="FORM SCORE" />
-          <div>
-            <div className="text-[10px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">TREND</div>
-            <TrendLine points={[3, 2.6, 3.3, 3, 4]} width={84} height={28} />
-          </div>
-        </div>
-        <div className="flex items-center gap-[12px] px-[16px] py-[10px] xl:py-0">
-          <SectionLabel className="w-[54px] shrink-0 leading-[13px]">TOP FLAW</SectionLabel>
-          <FlawFigure kind="elbow" size={30} className="shrink-0" />
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-x-[8px] gap-y-[2px]">
-              <span className="whitespace-nowrap text-[14px] font-semibold">Elbow flare at release</span>
-              <span className="whitespace-nowrap rounded-[3px] border border-[var(--shotiq-color-reviewRed)] px-[6px] py-[1px] text-[9px] font-bold text-[var(--shotiq-color-reviewRed)]">HIGH IMPACT</span>
+      {/* Bottom strip — one bordered container split by internal hairlines, with
+          each panel's label set above its content the way canonical does. The
+          labels used to sit beside the content in a 54-74px column, which broke
+          all three of them onto two lines and squeezed the stats leftward. */}
+      <Card className="mt-[20px] grid grid-cols-1 divide-y divide-[var(--shotiq-color-rule)] px-[8px] py-[4px] xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.95fr)_minmax(0,0.85fr)] xl:divide-x xl:divide-y-0 xl:py-[10px]">
+        <div className="px-[16px] py-[10px] xl:py-[4px]">
+          <SectionLabel>ANALYSIS SUMMARY</SectionLabel>
+          <div className="mt-[8px] flex items-start">
+            <div className="flex-1"><Stat value={hasData ? "24" : "0"} label="SHOTS" /></div>
+            <div className="flex-1"><Stat value={hasData ? "15" : "0"} label="MAKES" /></div>
+            <div className="flex-1"><Stat value={hasData ? "62.5%" : "—"} label="MAKE %" /></div>
+            <div className="flex-1">
+              <Stat value={score != null ? String(score) : "—"} label="FORM SCORE" />
+              {score != null && (
+                <div className="mt-[3px] flex items-center gap-[6px] text-[12px] text-[var(--shotiq-color-graphite)]">
+                  <span className="h-[8px] w-[8px] rounded-full bg-[var(--shotiq-color-analysisBlue)]" /> Good
+                </div>
+              )}
             </div>
-            <p className="text-[12px] leading-[16px] text-[var(--shotiq-color-graphite)]">Elbow moves outward slightly during release, reducing alignment.</p>
+            <div className="flex-1 text-right">
+              <div className="text-[10px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">TREND</div>
+              <div className="flex items-center justify-end gap-[8px]">
+                <TrendLine points={trend} width={78} height={28} />
+                <span className={`text-[12px] ${delta != null && delta < 0 ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-confirmGreen)]"}`}>
+                  {formatDelta(delta)}
+                </span>
+              </div>
+              <div className="text-[10px] text-[var(--shotiq-color-graphite)]">vs last session</div>
+            </div>
           </div>
-          <Link href="/results/demo/flaws" aria-label="Open flaws" className="shrink-0">
-            <span className="text-[var(--shotiq-color-graphite)]">›</span>
-          </Link>
         </div>
-        <div className="flex items-center gap-[12px] px-[16px] py-[10px] xl:py-0">
-          <SectionLabel className="w-[54px] shrink-0 leading-[13px]">NEXT TRAINING</SectionLabel>
-          <span className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-full bg-[var(--shotiq-color-analysisBlue)] text-white">
-            <WorkoutGlyph kind="release" size={22} />
-          </span>
-          <div className="min-w-0 flex-1">
-            <div className="text-[14px] font-semibold">Quick Release Builder</div>
-            <div className="text-[11px] text-[var(--shotiq-color-graphite)]">20 min · Form Focus</div>
+
+        <div className="px-[16px] py-[10px] xl:py-[4px]">
+          <SectionLabel>TOP FLAW</SectionLabel>
+          <div className="mt-[8px] flex items-center gap-[12px]">
+            <FlawFigure kind="elbow" size={48} className="shrink-0" />
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-x-[8px] gap-y-[2px]">
+                <span className="whitespace-nowrap text-[14px] font-semibold">Elbow flare at release</span>
+                <span className="whitespace-nowrap rounded-[3px] border border-[var(--shotiq-color-reviewRed)] px-[6px] py-[1px] text-[9px] font-bold text-[var(--shotiq-color-reviewRed)]">HIGH IMPACT</span>
+              </div>
+              <p className="text-[12px] leading-[16px] text-[var(--shotiq-color-graphite)]">Elbow moves outward slightly during release, reducing alignment.</p>
+            </div>
+            <Link href="/results/demo/flaws" aria-label="Open flaws" className="shrink-0">
+              <span className="text-[var(--shotiq-color-graphite)]">›</span>
+            </Link>
           </div>
-          <Link href="/training/drills/quick-release-builder" aria-label="Start training" className="shrink-0">
-            <span className="text-[var(--shotiq-color-graphite)]">›</span>
-          </Link>
+        </div>
+
+        <div className="px-[16px] py-[10px] xl:py-[4px]">
+          <SectionLabel>NEXT TRAINING</SectionLabel>
+          <div className="mt-[8px] flex items-center gap-[12px]">
+            <span className="grid h-[48px] w-[48px] shrink-0 place-items-center rounded-full bg-[var(--shotiq-color-analysisBlue)] text-white">
+              <WorkoutGlyph kind="release" size={24} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="text-[14px] font-semibold">Quick Release Builder</div>
+              <div className="text-[11px] text-[var(--shotiq-color-graphite)]">20 min · Form Focus</div>
+              <div className="text-[11px] text-[var(--shotiq-color-graphite)]">Improve release speed and consistency.</div>
+            </div>
+            <Link href="/training/drills/quick-release-builder" aria-label="Start training" className="shrink-0">
+              <span className="text-[var(--shotiq-color-graphite)]">›</span>
+            </Link>
+          </div>
         </div>
       </Card>
     </div>

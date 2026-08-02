@@ -11,7 +11,7 @@ import {
 } from "lucide-react"
 import { ShotIQShell, SectionLabel, Card, TrendLine } from "@/components/shotiq/ShotIQShell"
 import { PoseGlyph, MechanicGlyph, type MechanicKind } from "@/components/shotiq/Glyphs"
-import { useHistory, CoachingTarget } from "@/components/shotiq/ResultsBits"
+import { useHistory, CoachingTarget, sessionDelta, formatDelta } from "@/components/shotiq/ResultsBits"
 
 /** 084's own icon rail: icon-over-label, ANALYSES active, HELP pinned. */
 function BiomechRail() {
@@ -103,7 +103,10 @@ const CONFIDENCE: [string, number][] = [
 const PHASES = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
 
 export default function BiomechanicsWorkspacePage() {
-  const { hasData, score } = useHistory()
+  const { hasData, score, items } = useHistory()
+  // Same session-over-session delta the rest of the app prints — this readout
+  // used to be a hard-coded +8.1%.
+  const delta = sessionDelta(items)
   const [tab, setTab] = useState("METRICS")
   const [overlays, setOverlays] = useState({ Skeleton: true, Joints: true, Annotations: true })
   // Annotation ink tools live behind the fourth toggle (canonical toolbar).
@@ -211,7 +214,10 @@ export default function BiomechanicsWorkspacePage() {
           </div>
           <div className="px-[18px] text-center">
             <div className="text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">VS LAST</div>
-            <div className="shotiq-numeric text-[27px] leading-[34px] text-[var(--shotiq-color-confirmGreen)]">+8.1%</div>
+            <div className={`shotiq-numeric text-[27px] leading-[34px] ${
+              delta != null && delta < 0 ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-confirmGreen)]"}`}>
+              {hasData ? formatDelta(delta) : "—"}
+            </div>
           </div>
           <div className="relative pl-[14px]">
             <button type="button" aria-label="More" aria-expanded={moreOpen}
@@ -234,15 +240,20 @@ export default function BiomechanicsWorkspacePage() {
       </div>
 
       <div className="mt-[6px] flex items-end justify-between">
-        <div className="flex w-[656px] items-start justify-between px-[30px]">
-          {PHASES.map((p) => (
-            <div key={p} className="text-center">
-              <PoseGlyph phase={p} active={p === "RELEASE"} size={32} />
-              <div className={`mt-[4px] pb-[6px] text-[10px] tracking-[0.06em] ${p === "RELEASE" ? "relative font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>
-                {p}
-                {p === "RELEASE" && <span className="absolute inset-x-[-6px] bottom-0 h-[2px] bg-[var(--shotiq-color-shotiqOrange)]" />}
+        {/* Canonical threads a hairline connector track between the phase
+            figures rather than letting them float free. */}
+        <div className="flex w-[656px] items-start px-[24px]">
+          {PHASES.map((p, i) => (
+            <React.Fragment key={p}>
+              {i > 0 && <span className="mt-[16px] h-px min-w-[16px] flex-1 bg-[var(--shotiq-color-rule)]" />}
+              <div className="shrink-0 px-[6px] text-center">
+                <PoseGlyph phase={p} active={p === "RELEASE"} size={32} />
+                <div className={`mt-[4px] pb-[6px] text-[10px] tracking-[0.06em] ${p === "RELEASE" ? "relative font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>
+                  {p}
+                  {p === "RELEASE" && <span className="absolute inset-x-[-6px] bottom-0 h-[2px] bg-[var(--shotiq-color-shotiqOrange)]" />}
+                </div>
               </div>
-            </div>
+            </React.Fragment>
           ))}
         </div>
         <Card className="flex items-center gap-[12px] px-[14px] py-[9px]">
@@ -349,7 +360,7 @@ export default function BiomechanicsWorkspacePage() {
               <div className="divide-y divide-[var(--shotiq-color-rule)]">
                 {MEASUREMENTS.map(([m, v, ideal, band, glyph]) => (
                   <button key={m} type="button" onClick={() => setMetric(m)} data-testid={`metric-${m.toLowerCase().replace(/\s+/g, "-")}`}
-                          className="flex w-full items-center gap-[8px] py-[8px] text-left hover:bg-[var(--shotiq-color-warmCanvas)]">
+                          className="flex w-full items-center gap-[8px] py-[12px] text-left hover:bg-[var(--shotiq-color-warmCanvas)]">
                     <MechanicGlyph kind={glyph} size={22} className="shrink-0" />
                     <div className="min-w-0 flex-1">
                       <div className="whitespace-nowrap text-[13px] font-semibold">{m}</div>
@@ -369,15 +380,17 @@ export default function BiomechanicsWorkspacePage() {
                   </button>
                 ))}
               </div>
-              <SectionLabel className="mt-[8px] border-t border-[var(--shotiq-color-rule)] pt-[10px]">SEGMENT CONFIDENCE</SectionLabel>
-              <div className="mt-[4px] space-y-[7px]">
+              <SectionLabel className="mt-[10px] border-t border-[var(--shotiq-color-rule)] pt-[12px]">SEGMENT CONFIDENCE</SectionLabel>
+              {/* Canonical fills this panel to the card's foot; the rows were
+                  packed tight enough to leave ~90px of dead white below them. */}
+              <div className="mt-[8px] space-y-[13px]">
                 {CONFIDENCE.map(([m, v]) => (
                   <div key={m} className="flex items-center gap-[10px]">
-                    <span className="w-[112px] shrink-0 text-[12px]">{m}</span>
-                    <div className="h-[5px] flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
+                    <span className="w-[118px] shrink-0 text-[12px]">{m}</span>
+                    <div className="h-[6px] flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
                       <div className="h-full rounded-full bg-[var(--shotiq-color-analysisBlue)]" style={{ width: `${v}%` }} />
                     </div>
-                    <span className="shotiq-numeric w-[36px] text-right text-[13px]">{v}%</span>
+                    <span className="shotiq-numeric w-[38px] text-right text-[13px]">{v}%</span>
                   </div>
                 ))}
               </div>
@@ -394,41 +407,46 @@ export default function BiomechanicsWorkspacePage() {
         {/* right rail */}
         <div className="w-[235px] shrink-0">
           <Card className="p-[16px]"><CoachingTarget /></Card>
-          <Card className="mt-[12px] p-[16px]">
-            <SectionLabel>COACHING INSIGHTS</SectionLabel>
-            <div className="mt-[6px] space-y-[8px]">
-              {[["✓", "Solid alignment at release. Elbow tracking is in a good range.", "var(--shotiq-color-confirmGreen)"],
-                ["!", "Slightly high release distance. Focus on keeping ball closer to centerline.", "var(--shotiq-color-shotiqOrange)"],
-                ["i", "Continue to maintain vertical lift and balanced posture.", "var(--shotiq-color-analysisBlue)"]].map(([ic, t, c]) => (
-                <div key={String(t)} className="flex gap-[8px]">
-                  <span className="grid h-[16px] w-[16px] shrink-0 place-items-center rounded-full text-[10px] font-bold text-white" style={{ background: String(c) }}>{ic}</span>
-                  <p className="text-[11px] leading-[15px]">{t}</p>
-                </div>
-              ))}
-            </div>
-          </Card>
-          <Card className="mt-[12px] p-[16px]">
-            <SectionLabel>SUGGESTED FOCUS</SectionLabel>
-            <div className="mt-[8px] flex items-center gap-[10px]">
-              {/* Canonical rings this one: the ball's path drifting off the centerline. */}
-              <span className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-full border border-[var(--shotiq-color-rule)]">
-                <MechanicGlyph kind="drift" size={24} />
-              </span>
-              <div>
-                <div className="text-[13px] font-semibold">Tighten Elbow Path</div>
-                <p className="text-[10px] leading-[14px] text-[var(--shotiq-color-graphite)]">
-                  Work on keeping the ball closer to your centerline through the release.
-                </p>
+          {/* Insights and the suggested focus are one container divided by a
+              hairline — canonical never gutters this pair apart. */}
+          <Card className="mt-[12px] divide-y divide-[var(--shotiq-color-rule)]">
+            <div className="p-[16px]">
+              <SectionLabel>COACHING INSIGHTS</SectionLabel>
+              <div className="mt-[8px] space-y-[10px]">
+                {[["✓", "Solid alignment at release. Elbow tracking is in a good range.", "var(--shotiq-color-confirmGreen)"],
+                  ["!", "Slightly high release distance. Focus on keeping ball closer to centerline.", "var(--shotiq-color-shotiqOrange)"],
+                  ["i", "Continue to maintain vertical lift and balanced posture.", "var(--shotiq-color-analysisBlue)"]].map(([ic, t, c]) => (
+                  <div key={String(t)} className="flex gap-[9px]">
+                    <span className="grid h-[18px] w-[18px] shrink-0 place-items-center rounded-full text-[11px] font-bold text-white" style={{ background: String(c) }}>{ic}</span>
+                    <p className="text-[11px] leading-[16px]">{t}</p>
+                  </div>
+                ))}
               </div>
             </div>
-            <Link href="/results/demo/goals"
-                  className="mt-[10px] flex h-[38px] items-center justify-center rounded-[5px] bg-[var(--shotiq-color-shotiqOrange)] text-[12px] font-bold text-white">
-              Add target to training ↗
-            </Link>
-            <Link href="/results/demo/training"
-                  className="mt-[6px] flex h-[34px] items-center justify-center rounded-[5px] border border-[var(--shotiq-color-rule)] text-[12px]">
-              View related drills ›
-            </Link>
+            <div className="p-[16px]">
+              <SectionLabel>SUGGESTED FOCUS</SectionLabel>
+              <div className="mt-[10px] flex items-center gap-[12px]">
+                {/* Canonical rings this one large: the ball's path drifting off
+                    the centerline. */}
+                <span className="grid h-[62px] w-[62px] shrink-0 place-items-center rounded-full border border-[var(--shotiq-color-rule)]">
+                  <MechanicGlyph kind="drift" size={36} />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[13px] font-semibold">Tighten Elbow Path</div>
+                  <p className="mt-[2px] text-[11px] leading-[15px] text-[var(--shotiq-color-graphite)]">
+                    Work on keeping the ball closer to your centerline through the release.
+                  </p>
+                </div>
+              </div>
+              <Link href="/results/demo/goals"
+                    className="mt-[12px] flex h-[38px] items-center justify-center rounded-[5px] bg-[var(--shotiq-color-shotiqOrange)] text-[12px] font-bold text-white">
+                Add target to training ↗
+              </Link>
+              <Link href="/results/demo/training"
+                    className="mt-[6px] flex h-[34px] items-center justify-center rounded-[5px] border border-[var(--shotiq-color-rule)] text-[12px]">
+                View related drills ›
+              </Link>
+            </div>
           </Card>
         </div>
       </div>

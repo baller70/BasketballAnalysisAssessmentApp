@@ -44,16 +44,30 @@ function loadHistory() {
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (!d?.success) return null
+        // /api/analysis-history returns the score under `scores.overall` and
+        // the timestamp as `recordedAt`; reading a top-level `score`/`createdAt`
+        // silently produced a list of nulls, which is why the trend marks here
+        // had nothing to plot and fell back to placeholders.
         return {
           stats: (d.stats ?? null) as HistoryStats | null,
           items: ((d.history ?? []) as {
-            title?: string; createdAt?: string; shotType?: string; score?: number
-          }[]).map((a) => ({
-            title: a.title || "Shot analysis",
-            when: a.createdAt ? new Date(a.createdAt).toLocaleString() : "",
-            style: a.shotType || "Catch & Shoot",
-            score: a.score ?? null,
-          })),
+            title?: string; createdAt?: string; recordedAt?: string; shotType?: string
+            mediaType?: string; score?: number; scores?: { overall?: number | null }
+          }[]).map((a) => {
+            const iso = a.recordedAt || a.createdAt
+            const overall = a.scores?.overall ?? a.score ?? null
+            return {
+              title: a.title || "Shot analysis",
+              when: iso
+                ? new Date(iso).toLocaleString("en-US", {
+                    month: "short", day: "numeric", year: "numeric",
+                    hour: "numeric", minute: "2-digit",
+                  })
+                : "",
+              style: a.shotType || "Catch & Shoot",
+              score: overall != null ? Math.round(overall) : null,
+            }
+          }),
         }
       })
       .catch(() => null)

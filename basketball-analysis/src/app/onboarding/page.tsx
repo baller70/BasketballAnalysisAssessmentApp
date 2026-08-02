@@ -230,26 +230,6 @@ export default function OnboardingPage() {
           </div>
         </div>
 
-        {/* Canonical's "Your progress" card — the flow position, the step it
-            names, its bar, why the questions are asked, and the escape hatch. */}
-        <Card data-testid="onboarding-progress" className="mt-[16px] w-[268px] p-[16px]">
-          <div className="text-[13px]">Your progress</div>
-          <div className="mt-[4px] text-[12px] text-[var(--shotiq-color-graphite)]">
-            Step {progressStep} of {STEPS.length}
-          </div>
-          <div className="mt-[2px] text-[13px] font-semibold">{progressName}</div>
-          <div className="mt-[8px] h-[6px] rounded-full bg-[var(--shotiq-color-rule)]">
-            <div className="h-full rounded-full bg-[var(--shotiq-color-shotiqOrange)]"
-                 style={{ width: `${(progressStep / STEPS.length) * 100}%` }} />
-          </div>
-          <p className="mt-[10px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
-            Questions help ShotIQ personalize your analysis, feedback, and training.
-          </p>
-          <button type="button" onClick={finish}
-                  className="mt-[12px] flex items-center gap-[8px] border-t border-[var(--shotiq-color-rule)] pt-[12px] text-[13px]">
-            <Save className="h-[14px] w-[14px]" /> Save and finish later
-          </button>
-        </Card>
       </div>
 
       {/* why it matters rail — canonical draws the hero and the copy inside one
@@ -277,6 +257,26 @@ export default function OnboardingPage() {
             </div>
           </div>
         </Card>
+          {/* Canonical's "Your progress" card — the flow position, the step it
+              names, its bar, why the questions are asked, and the escape hatch. */}
+          <Card data-testid="onboarding-progress" className="mt-[14px] p-[16px]">
+            <div className="text-[13px]">Your progress</div>
+            <div className="mt-[4px] text-[12px] text-[var(--shotiq-color-graphite)]">
+              Step {progressStep} of {STEPS.length}
+            </div>
+            <div className="mt-[2px] text-[13px] font-semibold">{progressName}</div>
+            <div className="mt-[8px] h-[6px] rounded-full bg-[var(--shotiq-color-rule)]">
+              <div className="h-full rounded-full bg-[var(--shotiq-color-shotiqOrange)]"
+                   style={{ width: `${(progressStep / STEPS.length) * 100}%` }} />
+            </div>
+            <p className="mt-[10px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
+              Questions help ShotIQ personalize your analysis, feedback, and training.
+            </p>
+            <button type="button" onClick={finish}
+                    className="mt-[12px] flex items-center gap-[8px] border-t border-[var(--shotiq-color-rule)] pt-[12px] text-[13px]">
+              <Save className="h-[14px] w-[14px]" /> Save and finish later
+            </button>
+          </Card>
       </aside>
      </div>
 

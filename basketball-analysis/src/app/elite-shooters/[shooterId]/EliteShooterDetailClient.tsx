@@ -17,7 +17,8 @@ import { useParams } from "next/navigation"
 import {
   ChevronLeft, ChevronRight, Bookmark, GitCompare, Check, Play,
 } from "lucide-react"
-import { TrendLine, SectionLabel, Card, Stat, PhaseGlyph } from "@/components/shotiq/ShotIQShell"
+import { TrendLine, SectionLabel, Card, Stat } from "@/components/shotiq/ShotIQShell"
+import { PoseGlyph, MechanicGlyph, toShotPhase, type MechanicKind } from "@/components/shotiq/Glyphs"
 
 interface Measurements {
   shoulderAngle: number; elbowAngle: number; hipAngle: number; kneeAngle: number
@@ -57,6 +58,9 @@ const BIO_FACTS: Record<string, { born: string; college: string }> = {
 const CANON_HEADSHOT = "/images/canonical/089-headshot.png"
 const CANON_VIDEO = "/images/canonical/089-video.png"
 const CANON_GALLERY = [1, 2, 3, 4, 5].map((i) => `/images/canonical/089-gal-${i}.png`)
+
+/** One distinct diagram per opportunity row, drawn in the alert colour. */
+const OPPORTUNITY_GLYPHS: MechanicKind[] = ["balance", "centerline", "wrist", "angle", "drift"]
 
 export default function EliteShooterDetailClient() {
   const params = useParams<{ shooterId: string }>()
@@ -120,9 +124,17 @@ export default function EliteShooterDetailClient() {
     ["FOLLOW-THROUGH", "Arm Extension", `${Math.round(m.entryAngle) < 160 ? 174 : Math.round(m.entryAngle)}°`, "170° – 180°", "165°", "-9°"],
     ["FOLLOW-THROUGH", "Hold Time", "1.1 sec", "0.8 – 1.4", "0.7 sec", "-0.4"],
   ]
+  // Canonical groups the breakdown by phase and heads each group with its own
+  // pose diagram in the PHASE column.
+  const groups: { phase: string; items: typeof rows }[] = []
+  for (const r of rows) {
+    const last = groups[groups.length - 1]
+    if (last && last.phase === r[0]) last.items.push(r)
+    else groups.push({ phase: r[0], items: [r] })
+  }
 
   return (
-    <div data-testid="screen-desktop-web-elite-shooter-detail" className="px-[24px] pt-[12px]">
+    <div data-testid="screen-desktop-web-elite-shooter-detail" className="px-[16px] pt-[12px]">
       {/* header row */}
       <div className="flex items-center justify-between">
         <Link href="/elite-shooters" className="flex items-center gap-[6px] text-[13px] text-[var(--shotiq-color-graphite)]">
@@ -156,7 +168,7 @@ export default function EliteShooterDetailClient() {
             <span className="rounded-[4px] border border-[var(--shotiq-color-confirmGreen)] px-[10px] py-[3px] text-[12px] text-[var(--shotiq-color-confirmGreen)]">Active</span>
           </div>
         </div>
-        <div className="ml-[10px] border-l border-[var(--shotiq-color-rule)] pl-[24px]">
+        <div className="ml-[10px] w-[212px] shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[20px]">
           <SectionLabel>FORM SCORE</SectionLabel>
           <div className="shotiq-numeric text-[46px] leading-[50px] text-[var(--shotiq-color-analysisBlue)]">82</div>
           <div className="h-[7px] w-[150px] rounded-full bg-[var(--shotiq-color-rule)]">
@@ -165,11 +177,15 @@ export default function EliteShooterDetailClient() {
           <div className="mt-[4px] text-[13px] font-bold text-[var(--shotiq-color-analysisBlue)]">ELITE</div>
           <div className="text-[11px] text-[var(--shotiq-color-graphite)]">Consistent, efficient, repeatable.</div>
         </div>
-        <div className="flex items-center gap-[32px] border-l border-[var(--shotiq-color-rule)] pl-[28px]">
-          <Stat value="24" label="SHOTS" valueClass="text-[26px] leading-[30px]" />
-          <Stat value="15" label="MAKES" valueClass="text-[26px] leading-[30px]" />
-          <Stat value="62.5%" label="MAKE %" valueClass="text-[26px] leading-[30px]" />
-          <div className="text-right">
+        {/* Stat row: one hairline per stat, evenly distributed to the right
+            edge instead of bunched behind the form score. */}
+        <div className="flex min-w-0 flex-1 items-center">
+          {([["24", "SHOTS"], ["15", "MAKES"], ["62.5%", "MAKE %"]] as const).map(([v, l]) => (
+            <div key={l} className="min-w-0 flex-1 border-l border-[var(--shotiq-color-rule)] px-[14px]">
+              <Stat value={v} label={l} valueClass="text-[26px] leading-[30px]" />
+            </div>
+          ))}
+          <div className="min-w-0 flex-1 border-l border-[var(--shotiq-color-rule)] pl-[14px] text-center">
             <TrendLine points={[3, 2.4, 3.6, 3, 4.4]} width={110} height={40} />
             <div className="text-[11px] text-[var(--shotiq-color-confirmGreen)]">+8.1% vs last session</div>
           </div>
@@ -201,7 +217,8 @@ export default function EliteShooterDetailClient() {
           <div className="mt-[8px] flex items-center justify-between px-[4px]">
             {PHASES.map((p) => (
               <div key={p} className="text-center">
-                <PhaseGlyph active={p === "RELEASE"} size={22} />
+                <PoseGlyph phase={toShotPhase(p)} active={p === "RELEASE"} size={22}
+                           className={p === "RELEASE" ? "" : "text-[var(--shotiq-color-ink)]"} />
                 <div className={`mt-[2px] text-[8px] tracking-[0.05em] ${p === "RELEASE" ? "font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
                 {p === "RELEASE" && <div className="mx-auto mt-[2px] h-[2px] w-[36px] bg-[var(--shotiq-color-shotiqOrange)]" />}
               </div>
@@ -226,19 +243,30 @@ export default function EliteShooterDetailClient() {
                 <th className="whitespace-nowrap font-bold">ELITE RANGE</th><th className="font-bold">YOU</th><th className="font-bold">DIFF</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[var(--shotiq-color-rule)]">
-              {rows.map(([phase, metric, val, range, you, diff], i) => (
-                <tr key={i}>
-                  <td className="py-[2px] pr-[8px] text-[9px] font-bold tracking-[0.04em] text-[var(--shotiq-color-graphite)]">
-                    {i === 0 || rows[i - 1][0] !== phase ? phase : ""}
-                  </td>
-                  <td className="whitespace-nowrap pr-[8px] pt-[2px] align-top">{metric}</td>
-                  <td className="whitespace-nowrap pr-[8px] pt-[2px] align-top font-semibold">{val}</td>
-                  <td className="whitespace-nowrap pr-[8px] pt-[2px] align-top text-[var(--shotiq-color-graphite)]">{range}</td>
-                  <td className="whitespace-nowrap pr-[8px] pt-[2px] align-top">{you}</td>
-                  <td className={`whitespace-nowrap pt-[2px] align-top ${diff.startsWith("+") ? "text-[var(--shotiq-color-confirmGreen)]" : diff === "—" ? "" : "text-[var(--shotiq-color-reviewRed)]"}`}>{diff}</td>
-                </tr>
-              ))}
+            <tbody>
+              {groups.map((g, gi) => g.items.map(([phase, metric, val, range, you, diff], ri) => {
+                const top = gi > 0 && ri === 0 ? "border-t border-[var(--shotiq-color-rule)]" : ""
+                const hot = phase === "RELEASE"
+                return (
+                  <tr key={`${phase}-${metric}`}>
+                    {ri === 0 && (
+                      <td rowSpan={g.items.length}
+                          className={`w-[62px] py-[4px] pr-[8px] align-middle ${top}`}>
+                        <span className="flex flex-col items-center"
+                              style={{ color: hot ? "var(--shotiq-color-shotiqOrange)" : "var(--shotiq-color-graphite)" }}>
+                          <PoseGlyph phase={toShotPhase(phase)} size={24} />
+                          <span className={`mt-[1px] text-center text-[9px] font-bold leading-[10px] tracking-[0.04em] ${hot ? "text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{phase}</span>
+                        </span>
+                      </td>
+                    )}
+                    <td className={`whitespace-nowrap pr-[8px] pt-[2px] align-top ${top}`}>{metric}</td>
+                    <td className={`whitespace-nowrap pr-[8px] pt-[2px] align-top font-semibold ${top}`}>{val}</td>
+                    <td className={`whitespace-nowrap pr-[8px] pt-[2px] align-top text-[var(--shotiq-color-graphite)] ${top}`}>{range}</td>
+                    <td className={`whitespace-nowrap pr-[8px] pt-[2px] align-top ${top}`}>{you}</td>
+                    <td className={`whitespace-nowrap pt-[2px] align-top ${top} ${diff.startsWith("+") ? "text-[var(--shotiq-color-confirmGreen)]" : diff === "—" ? "" : "text-[var(--shotiq-color-reviewRed)]"}`}>{diff}</td>
+                  </tr>
+                )
+              }))}
             </tbody>
           </table>
           <Link href="/results/demo/biomechanics" className="mt-[6px] flex items-center justify-between text-[13px] text-[var(--shotiq-color-analysisBlue)]">
@@ -300,25 +328,29 @@ export default function EliteShooterDetailClient() {
       </div>
 
       {/* bottom band */}
-      <div className="mb-[8px] mt-[6px] flex gap-[12px]">
-        <Card className="w-[382px] shrink-0 px-[16px] py-[6px]">
+      <div className="mb-[8px] mt-[6px] flex gap-[10px]">
+        <Card className="flex w-[352px] shrink-0 flex-col px-[14px] py-[6px]">
           <div className="flex items-center justify-between">
             <SectionLabel>CAREER SHOOTING STATS</SectionLabel>
             <button type="button" onClick={() => setTab("CAREER STATS")}
                     className="text-[12px] text-[var(--shotiq-color-analysisBlue)]">View all</button>
           </div>
-          <div className="mt-[8px] grid grid-cols-6 divide-x divide-[var(--shotiq-color-rule)] text-center">
+          {/* Canonical sets these figures large enough to fill the panel —
+              the shrunken version left ~90px of dead space under them. */}
+          <div className="mt-[12px] grid grid-cols-6 divide-x divide-[var(--shotiq-color-rule)] pb-[10px] text-center">
             {[["3P%", shooter.careerPct != null ? `${shooter.careerPct.toFixed(1)}%` : "—"],
               ["3PM", "3,748"], ["3PA", "8,760"],
               ["FT%", `${shooter.careerFreeThrowPct.toFixed(1)}%`], ["eFG%", "60.6%"], ["TS%", "66.2%"]].map(([k, v]) => (
-              <div key={k} className="px-[4px]">
-                <div className="text-[10px] font-bold text-[var(--shotiq-color-graphite)]">{k}</div>
-                <div className="shotiq-numeric text-[18px]">{v}</div>
-                <div className="text-[9px] text-[var(--shotiq-color-graphite)]">Career</div>
+              <div key={k} className="px-[3px]">
+                <div className="text-[11px] text-[var(--shotiq-color-graphite)]">{k}</div>
+                <div className="shotiq-numeric mt-[6px] text-[23px] leading-[26px]">{v}</div>
+                <div className="mt-[4px] text-[11px] text-[var(--shotiq-color-graphite)]">Career</div>
               </div>
             ))}
           </div>
-          <div className="mt-[10px] flex flex-wrap items-center gap-x-[7px] gap-y-[2px] border-t border-[var(--shotiq-color-rule)] pt-[10px] text-[10px] font-semibold">
+          {/* Pinned to the foot of the card so the panel fills its height
+              instead of leaving ~90px of dead space under the stat row. */}
+          <div className="mt-auto flex flex-wrap items-center gap-x-[6px] gap-y-[2px] border-t border-[var(--shotiq-color-rule)] pb-[6px] pt-[12px] text-[11px] font-semibold">
             <span className="whitespace-nowrap">4× NBA Champion</span><span className="text-[var(--shotiq-color-rule)]">|</span>
             <span className="whitespace-nowrap">2× MVP</span><span className="text-[var(--shotiq-color-rule)]">|</span>
             <span className="whitespace-nowrap">10× All-Star</span><span className="text-[var(--shotiq-color-rule)]">|</span>
@@ -326,48 +358,58 @@ export default function EliteShooterDetailClient() {
           </div>
         </Card>
 
-        <Card className="min-w-0 flex-1 px-[16px] py-[6px]">
-          <SectionLabel>STRENGTHS</SectionLabel>
-          <ul className="mt-[6px] space-y-[4px] text-[12px]">
-            {(shooter.strengths?.length ? shooter.strengths : [
-              "Elite release consistency and speed", "Excellent balance and body control",
-              "High, repeatable release point", "Outstanding shooting range and accuracy",
-              "Quick load and efficient energy transfer"]).slice(0, 5).map((s) => (
-              <li key={s} className="flex items-start gap-[10px] [&>svg]:mt-[2px] [&>svg]:shrink-0">
-                <Check className="h-[14px] w-[14px] shrink-0 text-[var(--shotiq-color-confirmGreen)]" /> {s}
-              </li>
-            ))}
-          </ul>
+        {/* One bordered container, internal hairline — canonical does not draw
+            STRENGTHS and OPPORTUNITIES as two detached cards. */}
+        <Card className="flex min-w-0 flex-1">
+          <div className="min-w-0 flex-1 px-[14px] py-[6px]">
+            <SectionLabel>STRENGTHS</SectionLabel>
+            <ul className="mt-[6px] space-y-[5px] text-[12px]">
+              {(shooter.strengths?.length ? shooter.strengths : [
+                "Elite release consistency and speed", "Excellent balance and body control",
+                "High, repeatable release point", "Outstanding shooting range and accuracy",
+                "Quick load and efficient energy transfer"]).slice(0, 5).map((s) => (
+                <li key={s} className="flex items-start gap-[8px]">
+                  <Check className="mt-[2px] h-[14px] w-[14px] shrink-0 text-[var(--shotiq-color-confirmGreen)]" /> {s}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="min-w-0 flex-1 border-l border-[var(--shotiq-color-rule)] px-[14px] py-[6px]">
+            <SectionLabel>OPPORTUNITIES</SectionLabel>
+            {/* Canonical marks each opportunity with its own orange diagram —
+                one shape per issue, never a repeated black figure. */}
+            <ul className="mt-[6px] space-y-[5px] text-[12px]">
+              {(shooter.weaknesses?.length ? shooter.weaknesses : [
+                "Slight loss of balance on long range", "Front foot alignment can drift",
+                "Lower hold time in follow-through", "Maintain elbow stack on fatigue",
+                "Improve reset consistency in transitions"]).slice(0, 5).map((s, i) => (
+                <li key={s} className="flex items-start gap-[8px]">
+                  <span className="mt-[1px] shrink-0 text-[var(--shotiq-color-shotiqOrange)]">
+                    <MechanicGlyph kind={OPPORTUNITY_GLYPHS[i % OPPORTUNITY_GLYPHS.length]} size={15} />
+                  </span>
+                  {s}
+                </li>
+              ))}
+            </ul>
+          </div>
         </Card>
 
-        <Card className="min-w-0 flex-1 px-[16px] py-[6px]">
-          <SectionLabel>OPPORTUNITIES</SectionLabel>
-          <ul className="mt-[6px] space-y-[4px] text-[12px]">
-            {(shooter.weaknesses?.length ? shooter.weaknesses : [
-              "Slight loss of balance on long range", "Front foot alignment can drift",
-              "Lower hold time in follow-through", "Maintain elbow stack on fatigue",
-              "Improve reset consistency in transitions"]).slice(0, 5).map((s) => (
-              <li key={s} className="flex items-start gap-[10px] [&>svg]:mt-[2px] [&>svg]:shrink-0">
-                <PhaseGlyph size={15} /> {s}
-              </li>
-            ))}
-          </ul>
-        </Card>
-
-        <Card className="w-[268px] shrink-0 px-[16px] py-[6px]">
+        <Card className="w-[268px] shrink-0 px-[14px] py-[6px]">
           <SectionLabel>ABOUT {shooter.name.toUpperCase()}</SectionLabel>
           <p className="mt-[6px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
             {shooter.description ?? `Revolutionized the game with unmatched shooting range, quick release, and elite shot-making off the dribble. Known for conditioning, work ethic, and relentless pursuit of improvement.`}
           </p>
-          <div className="mt-[8px] grid grid-cols-[auto_1fr_auto_1fr] gap-x-[8px] gap-y-[5px] border-t border-[var(--shotiq-color-rule)] pt-[8px] text-[12px]">
-            <span className="text-[var(--shotiq-color-graphite)]">Height</span><span className="font-semibold">{heightLabel}</span>
-            <span className="text-[var(--shotiq-color-graphite)]">Weight</span><span className="font-semibold">{shooter.weight} lbs</span>
+          {/* Bold label, plain value — and tight enough gutters that
+              "March 14, 1988" stays on one line. */}
+          <div className="mt-[8px] grid grid-cols-[auto_1fr_auto_1fr] gap-x-[6px] gap-y-[6px] border-t border-[var(--shotiq-color-rule)] pt-[8px] text-[12px]">
+            <span className="font-semibold">Height</span><span className="whitespace-nowrap">{heightLabel}</span>
+            <span className="font-semibold">Weight</span><span className="whitespace-nowrap">{shooter.weight} lbs</span>
             {facts ? (<>
-              <span className="text-[var(--shotiq-color-graphite)]">Born</span><span className="font-semibold">{facts.born}</span>
-              <span className="text-[var(--shotiq-color-graphite)]">College</span><span className="font-semibold">{facts.college}</span>
+              <span className="font-semibold">Born</span><span className="whitespace-nowrap">{facts.born}</span>
+              <span className="font-semibold">College</span><span className="whitespace-nowrap">{facts.college}</span>
             </>) : (<>
-              <span className="text-[var(--shotiq-color-graphite)]">Era</span><span className="font-semibold">{shooter.era}</span>
-              <span className="text-[var(--shotiq-color-graphite)]">League</span><span className="font-semibold">{shooter.league}</span>
+              <span className="font-semibold">Era</span><span className="whitespace-nowrap">{shooter.era}</span>
+              <span className="font-semibold">League</span><span className="whitespace-nowrap">{shooter.league}</span>
             </>)}
           </div>
           <button type="button" onClick={() => setTab("BIO")} aria-current={tab === "BIO" ? "true" : undefined}

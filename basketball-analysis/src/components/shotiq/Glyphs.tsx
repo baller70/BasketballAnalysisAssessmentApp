@@ -63,51 +63,51 @@ const POSES: Record<ShotPhase, React.ReactNode> = {
   // Upright, ball carried at the hip — the address position.
   setup: (
     <>
-      <circle cx="9.8" cy="4.4" r="2" />
+      <circle cx="9.8" cy="4.4" r="2.35" />
       <path d="M9.8 6.4 L10.4 13.4" />
       <path d="M10.4 13.4 L8.4 17.4 L8 21.4" />
       <path d="M10.4 13.4 L12.6 17.4 L13.2 21.4" />
       <path d="M10 8.4 L12.6 11.4" />
-      <circle cx="14.8" cy="12.8" r="2.2" />
+      <circle cx="14.8" cy="12.8" r="2.55" />
     </>
   ),
   // Deep knee bend, ball low and in front — gathering.
   load: (
     <>
-      <circle cx="8.6" cy="6.4" r="2" />
+      <circle cx="8.6" cy="6.4" r="2.35" />
       <path d="M8.6 8.4 L10.8 13" />
       <path d="M10.8 13 L7.8 16.2 L8.6 21.4" />
       <path d="M10.8 13 L13.6 16.4 L13.6 21.4" />
       <path d="M9.5 10.4 L12.2 12.4" />
-      <circle cx="14.4" cy="13.6" r="2.2" />
+      <circle cx="14.4" cy="13.6" r="2.55" />
     </>
   ),
   // Extending upward, ball at the forehead — the lift.
   rise: (
     <>
-      <circle cx="10.6" cy="5.6" r="2" />
+      <circle cx="10.6" cy="5.6" r="2.35" />
       <path d="M10.6 7.6 L10.6 13.6" />
       <path d="M10.6 13.6 L8.2 17.4 L8.6 21.4" />
       <path d="M10.6 13.6 L12.8 17.2 L13.8 20.8" />
       <path d="M10.6 9 L12.8 7.2" />
-      <circle cx="15.4" cy="6" r="2.2" />
+      <circle cx="15.4" cy="6" r="2.55" />
     </>
   ),
   // Full extension, ball leaving the hand overhead.
   release: (
     <>
-      <circle cx="9.6" cy="8" r="2" />
+      <circle cx="9.6" cy="8" r="2.35" />
       <path d="M9.6 10 L10.4 15.2" />
       <path d="M10.4 15.2 L8.4 18.6 L8 21.6" />
       <path d="M10.4 15.2 L12.8 18.4 L13.8 21.4" />
       <path d="M9.9 11 L12.4 7.8 L13.2 5.4" />
-      <circle cx="14.4" cy="2.8" r="2.2" />
+      <circle cx="14.4" cy="2.8" r="2.55" />
     </>
   ),
   // Arm held out long with the wrist relaxed — the ball is gone.
   follow: (
     <>
-      <circle cx="9.6" cy="7" r="2" />
+      <circle cx="9.6" cy="7" r="2.35" />
       <path d="M9.6 9 L10.4 14.8" />
       <path d="M10.4 14.8 L8.4 18.6 L8 21.4" />
       <path d="M10.4 14.8 L13 18.4 L14 21.2" />
@@ -120,13 +120,14 @@ const POSES: Record<ShotPhase, React.ReactNode> = {
 /**
  * Shot-phase pose. Five genuinely different figures, one per phase.
  *
- * Canonical prints these as solid body silhouettes, not hairline stick figures,
- * so the pose family alone carries a much heavier weight than the measurement
- * diagrams and the head/ball nodes are filled rather than outlined. Limbs are
- * drawn as round-capped strokes at that weight, which reads as a filled body at
+ * Canonical prints these as solid body silhouettes, not the hairline stick
+ * figures both reviewers picked up on, so the pose family alone carries a much
+ * heavier stroke than the measurement diagrams: limbs read as filled mass at
  * every size the screens use (16px rail marks up to 34px timeline figures).
+ * The head and ball radii are opened up to match, so they stay legible rings at
+ * that weight instead of closing into blobs.
  */
-const POSE_WEIGHT = 1.9
+const POSE_WEIGHT = 1.6
 
 export function PoseGlyph({
   phase, active = false, size = 26, className = "", title,

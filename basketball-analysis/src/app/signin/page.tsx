@@ -16,7 +16,6 @@
  */
 
 import React, { useRef, useState } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useAuthStore } from "@/stores/authStore"
 import {
@@ -68,7 +67,6 @@ function GoogleMark() {
 }
 
 export default function SignInPage() {
-  const router = useRouter()
   const { signIn, isLoading } = useAuthStore()
 
   const [formData, setFormData] = useState({ email: "", password: "" })

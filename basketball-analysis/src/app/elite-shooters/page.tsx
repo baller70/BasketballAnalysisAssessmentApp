@@ -14,8 +14,9 @@ import React, { useMemo, useState } from "react"
 import Link from "next/link"
 import {
   Search, ChevronDown, ChevronUp, HelpCircle, GitCompare, X, Check,
-  LayoutGrid, List, RotateCcw, MoveVertical, User as UserIcon, Ruler, CalendarClock,
+  LayoutGrid, List, RotateCcw, CalendarClock,
 } from "lucide-react"
+import { MechanicGlyph, type MechanicKind } from "@/components/shotiq/Glyphs"
 
 interface Row {
   name: string; slug: string; attempts: number; hand: string; level: string
@@ -46,11 +47,12 @@ const RADIO_GROUPS: { id: "hand" | "pos" | "level"; label: string; options: stri
   { id: "level", label: "Level", options: ["All", "NBA", "College", "International"] },
 ]
 
-const EXTRA_FILTERS: { id: string; label: string; icon: React.ElementType; options: string[] }[] = [
-  { id: "style", label: "Shooting Style", icon: MoveVertical, options: ["Catch & Shoot", "Off the Dribble"] },
-  { id: "relh", label: "Release Height", icon: UserIcon, options: ["High", "Very High"] },
-  { id: "height", label: "Height", icon: Ruler, options: ["Under 6'4\"", "6'4\" and above"] },
-  { id: "age", label: "Age", icon: CalendarClock, options: ["Under 34", "34 and above"] },
+// Each facet carries the bespoke diagram for the quantity it filters on.
+const EXTRA_FILTERS: { id: string; label: string; mark: MechanicKind | "age"; options: string[] }[] = [
+  { id: "style", label: "Shooting Style", mark: "arc", options: ["Catch & Shoot", "Off the Dribble"] },
+  { id: "relh", label: "Release Height", mark: "jump", options: ["High", "Very High"] },
+  { id: "height", label: "Height", mark: "height", options: ["Under 6'4\"", "6'4\" and above"] },
+  { id: "age", label: "Age", mark: "age", options: ["Under 34", "34 and above"] },
 ]
 
 const SORTS = ["WSI", "Career %", "Attempts", "Name A–Z"] as const
@@ -64,9 +66,9 @@ function DualSlider({ min, max, lo, hi, onLo, onHi, loLabel, hiLabel, label }: {
 }) {
   const pct = (v: number) => ((v - min) / (max - min)) * 100
   return (
-    <div className="mt-[7px]">
+    <div className="mt-[5px]">
       <div className="text-[12px] font-semibold">{label}</div>
-      <div className="relative mt-[7px] h-[12px]">
+      <div className="relative mt-[6px] h-[12px]">
         <div className="absolute inset-x-0 top-[5px] h-[2px] rounded-full bg-[var(--shotiq-color-rule)]" />
         <div className="absolute top-[5px] h-[2px] bg-[var(--shotiq-color-ink)]"
              style={{ left: `${pct(lo)}%`, right: `${100 - pct(hi)}%` }} />
@@ -165,7 +167,7 @@ export default function EliteShootersPage() {
          className={`flex flex-col ${pair.length >= 2 ? "h-[835px]" : "min-h-full"}`}>
       <div className="flex min-h-0 flex-1 overflow-hidden">
         {/* ------------------------------------------------ filters sidebar */}
-        <aside className="w-[209px] shrink-0 overflow-hidden border-r border-[var(--shotiq-color-rule)] px-[21px] pb-[8px] pt-[12px]">
+        <aside className="w-[176px] shrink-0 overflow-hidden border-r border-[var(--shotiq-color-rule)] px-[14px] pb-[6px] pt-[8px]">
           <div className="flex items-center justify-between">
             <span className="shotiq-display text-[19px] leading-[20px]">FILTERS</span>
             <button type="button" onClick={resetFilters}
@@ -173,7 +175,7 @@ export default function EliteShootersPage() {
           </div>
 
           {RADIO_GROUPS.map((g) => (
-            <div key={g.id} className="mt-[5px] border-t border-[var(--shotiq-color-rule)] pt-[4px]">
+            <div key={g.id} className="mt-[3px] border-t border-[var(--shotiq-color-rule)] pt-[3px]">
               <button type="button" onClick={() => toggleGroup(g.id, openGroups, setOpenGroups)}
                       aria-expanded={openGroups.has(g.id)}
                       className="flex w-full items-center justify-between text-[14px] font-semibold">
@@ -183,7 +185,7 @@ export default function EliteShootersPage() {
                   : <ChevronDown className="h-[13px] w-[13px] text-[var(--shotiq-color-graphite)]" />}
               </button>
               {openGroups.has(g.id) && (
-                <div className="mt-[4px] space-y-[3px]">
+                <div className="mt-[3px] space-y-[2px]">
                   {g.options.map((o) => (
                     <label key={o} className="flex cursor-pointer items-center gap-[10px] text-[12px]">
                       <input type="radio" name={`filter-${g.id}`} className="sr-only"
@@ -198,7 +200,7 @@ export default function EliteShootersPage() {
             </div>
           ))}
 
-          <div className="mt-[7px] border-t border-[var(--shotiq-color-rule)] pt-[1px]">
+          <div className="mt-[5px] border-t border-[var(--shotiq-color-rule)] pt-[1px]">
             <DualSlider min={100} max={10000} lo={attempts[0]} hi={attempts[1]}
                         onLo={(v) => setAttempts(([, h]) => [v, h])} onHi={(v) => setAttempts(([l]) => [l, v])}
                         loLabel="100" hiLabel="10,000+"
@@ -208,13 +210,15 @@ export default function EliteShootersPage() {
                         loLabel="0" hiLabel="100" label="WSI Range" />
           </div>
 
-          <div className="mt-[8px] border-t border-[var(--shotiq-color-rule)]">
+          <div className="mt-[6px] border-t border-[var(--shotiq-color-rule)]">
             {EXTRA_FILTERS.map((g) => (
-              <div key={g.id} className="border-b border-[var(--shotiq-color-rule)] py-[3px]">
+              <div key={g.id} className="border-b border-[var(--shotiq-color-rule)] py-[2px]">
                 <button type="button" onClick={() => toggleGroup(g.id, extraOpen, setExtraOpen)}
                         aria-expanded={extraOpen.has(g.id)}
                         className="flex w-full items-center gap-[9px] text-[12px]">
-                  <g.icon className="h-[13px] w-[13px] text-[var(--shotiq-color-graphite)]" strokeWidth={1.7} />
+                  {g.mark === "age"
+                    ? <CalendarClock className="h-[13px] w-[13px] shrink-0 text-[var(--shotiq-color-graphite)]" strokeWidth={1.7} />
+                    : <span className="shrink-0 text-[var(--shotiq-color-graphite)]"><MechanicGlyph kind={g.mark} size={14} /></span>}
                   <span className="flex-1 text-left">{g.label}</span>
                   {extraOpen.has(g.id)
                     ? <ChevronUp className="h-[12px] w-[12px] text-[var(--shotiq-color-graphite)]" />
@@ -235,14 +239,14 @@ export default function EliteShootersPage() {
               </div>
             ))}
             <button type="button" onClick={resetFilters}
-                    className="mt-[6px] flex items-center gap-[9px] text-[12px] text-[var(--shotiq-color-graphite)] hover:text-[var(--shotiq-color-ink)]">
+                    className="mt-[5px] flex items-center gap-[9px] text-[12px] text-[var(--shotiq-color-graphite)] hover:text-[var(--shotiq-color-ink)]">
               <RotateCcw className="h-[12px] w-[12px]" /> Reset filters
             </button>
           </div>
         </aside>
 
         {/* ------------------------------------------------------ main table */}
-        <div className="min-w-0 flex-1 px-[16px] pt-[12px]">
+        <div className="min-w-0 flex-1 px-[10px] pt-[12px]">
           <div className="flex items-start justify-between">
             <div>
               <h1 className="shotiq-display text-[40px] leading-[42px]">ELITE SHOOTERS DATABASE</h1>
@@ -334,9 +338,9 @@ export default function EliteShootersPage() {
             <div className="mt-[10px]">
               {/* group header band */}
               <div className="flex border-b border-[var(--shotiq-color-rule)] pb-[2px]">
-                <div className="w-[588px]" />
-                <div className={`w-[234px] border-l border-[var(--shotiq-color-rule)] text-center ${headCell}`}>MECHANICS SUMMARY</div>
-                <div className={`w-[204px] border-l border-[var(--shotiq-color-rule)] text-center ${headCell}`}>SIMILARITY TO YOU</div>
+                <div className="w-[482px]" />
+                <div className={`w-[252px] border-l border-[var(--shotiq-color-rule)] text-center ${headCell}`}>MECHANICS SUMMARY</div>
+                <div className={`w-[180px] border-l border-[var(--shotiq-color-rule)] text-center ${headCell}`}>SIMILARITY TO YOU</div>
                 <div className="min-w-0 flex-1 border-l border-[var(--shotiq-color-rule)]" />
               </div>
               {/* column headers */}
@@ -347,21 +351,20 @@ export default function EliteShootersPage() {
                 <span className={`w-[34px] text-center ${headCell}`}>LEVEL</span>
                 <span className={`w-[34px] text-center ${headCell}`}>HT</span>
                 <span className={`w-[32px] text-center ${headCell}`}>AGE</span>
-                <span className={`w-[66px] text-center ${headCell}`}>CAREER</span>
+                <span className={`w-[76px] text-center ${headCell}`}>CAREER</span>
                 <span className={`flex w-[48px] items-center justify-center gap-[3px] ${headCell}`}>
                   WSI <HelpCircle className="h-[10px] w-[10px]" /> <ChevronDown className="h-[10px] w-[10px]" />
                 </span>
-                {/* These three labels are wider than their 66px columns, so
-                    nowrap ran them into each other; wrap inside the column
-                    instead of bleeding past it. */}
-                <span className={`w-[66px] px-[3px] text-center text-[8px] leading-[10px] ${headCell}`}>RELEASE HEIGHT</span>
-                <span className={`w-[66px] px-[3px] text-center text-[8px] leading-[10px] ${headCell}`}>RELEASE TIME</span>
-                <span className={`w-[66px] px-[3px] text-center text-[8px] leading-[10px] ${headCell}`}>ELBOW ALIGNMENT</span>
+                {/* Width recovered from the filter rail and the page gutters so
+                    these labels sit on one line, as canonical prints them. */}
+                <span className={`w-[84px] whitespace-nowrap px-[2px] text-center text-[9px] tracking-[0.03em] ${headCell}`}>RELEASE HEIGHT</span>
+                <span className={`w-[84px] whitespace-nowrap px-[2px] text-center text-[9px] tracking-[0.03em] ${headCell}`}>RELEASE TIME</span>
+                <span className={`w-[84px] whitespace-nowrap px-[2px] text-center text-[9px] tracking-[0.03em] ${headCell}`}>ELBOW ALIGNMENT</span>
                 <span className={`flex w-[84px] items-center justify-center gap-[3px] ${headCell}`}>
                   OVERALL <HelpCircle className="h-[10px] w-[10px]" />
                 </span>
-                <span className={`w-[92px] text-center ${headCell}`}>KEY MATCH</span>
-                <span className={`min-w-0 flex-1 text-center ${headCell}`}>ACTION</span>
+                <span className={`w-[96px] text-center ${headCell}`}>KEY MATCH</span>
+                <span className={`w-[116px] shrink-0 text-center ${headCell}`}>ACTION</span>
               </div>
 
               {filtered.map((r) => (
@@ -386,20 +389,20 @@ export default function EliteShootersPage() {
                   <span className="w-[34px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.level}</span>
                   <span className="w-[34px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.ht}</span>
                   <span className="w-[32px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.age}</span>
-                  <span className="w-[66px] text-center">
+                  <span className="w-[76px] text-center">
                     <span className="block text-[14px] font-bold">{r.careerPct.toFixed(1)}%</span>
-                    <span className="block text-[10px] text-[var(--shotiq-color-graphite)]">{fmt(r.makes)} / {fmt(r.attempts)}</span>
+                    <span className="block whitespace-nowrap text-[10px] text-[var(--shotiq-color-graphite)]">{fmt(r.makes)} / {fmt(r.attempts)}</span>
                   </span>
                   <span className="shotiq-numeric w-[48px] text-center text-[22px] leading-[26px] text-[var(--shotiq-color-analysisBlue)]">{r.wsi}</span>
-                  <span className="w-[66px] text-center">
+                  <span className="w-[84px] text-center">
                     <span className="block text-[14px] font-bold">{r.relH}</span>
                     <span className="block text-[10px] text-[var(--shotiq-color-graphite)]">{r.relHBand}</span>
                   </span>
-                  <span className="w-[66px] text-center">
+                  <span className="w-[84px] text-center">
                     <span className="block text-[14px] font-bold">{r.relT}</span>
                     <span className="block text-[10px] text-[var(--shotiq-color-graphite)]">Quick</span>
                   </span>
-                  <span className="w-[66px] text-center">
+                  <span className="w-[84px] text-center">
                     <span className="block text-[14px] font-bold">{r.elbow}</span>
                     <span className="block text-[10px] text-[var(--shotiq-color-graphite)]">Stacked</span>
                   </span>
@@ -409,11 +412,11 @@ export default function EliteShootersPage() {
                       <span className="block h-full rounded-full bg-[var(--shotiq-color-analysisBlue)]" style={{ width: `${r.overall}%` }} />
                     </span>
                   </span>
-                  <span className="w-[92px] border-l border-[var(--shotiq-color-rule)] text-center">
-                    <span className="block text-[12px]">{r.keyMatch[0]}</span>
+                  <span className="w-[96px] border-l border-[var(--shotiq-color-rule)] text-center">
+                    <span className="block whitespace-nowrap text-[12px]">{r.keyMatch[0]}</span>
                     <span className="block text-[12px] font-semibold">{r.keyMatch[1]}</span>
                   </span>
-                  <span className="min-w-0 flex-1 text-center">
+                  <span className="w-[116px] shrink-0 text-center">
                     <Link href={`/elite-shooters/${r.slug}`}
                           className="inline-flex h-[29px] w-[108px] items-center justify-center rounded-[5px] border border-[var(--shotiq-color-shotiqOrange)] text-[12px] text-[var(--shotiq-color-shotiqOrange)] hover:bg-[var(--shotiq-color-shotiqOrange)] hover:text-white">
                       View shooter
