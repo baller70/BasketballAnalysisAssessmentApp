@@ -18,7 +18,8 @@ import {
   ChevronLeft, ChevronRight, Bookmark, GitCompare, Check, Play,
 } from "lucide-react"
 import { TrendLine, SectionLabel, Card, Stat } from "@/components/shotiq/ShotIQShell"
-import { PoseGlyph, MechanicGlyph, toShotPhase, type MechanicKind } from "@/components/shotiq/Glyphs"
+import { useHistory, formatDelta, formatMakePct } from "@/components/shotiq/ResultsBits"
+import { PoseFigure, toShotPhase } from "@/components/shotiq/Glyphs"
 
 interface Measurements {
   shoulderAngle: number; elbowAngle: number; hipAngle: number; kneeAngle: number
@@ -60,10 +61,13 @@ const CANON_VIDEO = "/images/canonical/089-video.png"
 const CANON_GALLERY = [1, 2, 3, 4, 5].map((i) => `/images/canonical/089-gal-${i}.png`)
 
 /** One distinct diagram per opportunity row, drawn in the alert colour. */
-const OPPORTUNITY_GLYPHS: MechanicKind[] = ["balance", "centerline", "wrist", "angle", "drift"]
+const OPPORTUNITY_GLYPHS = [1, 2, 3, 4, 5].map((i) => `/images/canonical/089-opportunity-${i}.png`)
 
 export default function EliteShooterDetailClient() {
   const params = useParams<{ shooterId: string }>()
+  // "Your" numbers on this comparison strip are the signed-in user's, read from
+  // the one shared history hook rather than written into the markup.
+  const { shots: myShots, makes: myMakes, delta: myDelta } = useHistory()
   const [shooters, setShooters] = useState<ApiShooter[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState("OVERVIEW")
@@ -180,14 +184,16 @@ export default function EliteShooterDetailClient() {
         {/* Stat row: one hairline per stat, evenly distributed to the right
             edge instead of bunched behind the form score. */}
         <div className="flex min-w-0 flex-1 items-center">
-          {([["24", "SHOTS"], ["15", "MAKES"], ["62.5%", "MAKE %"]] as const).map(([v, l]) => (
+          {([[myShots ?? "—", "SHOTS"], [myMakes ?? "—", "MAKES"],
+             [formatMakePct(myShots, myMakes), "MAKE %"]] as const).map(([v, l]) => (
             <div key={l} className="min-w-0 flex-1 border-l border-[var(--shotiq-color-rule)] px-[14px]">
               <Stat value={v} label={l} valueClass="text-[26px] leading-[30px]" />
             </div>
           ))}
           <div className="min-w-0 flex-1 border-l border-[var(--shotiq-color-rule)] pl-[14px] text-center">
             <TrendLine points={[3, 2.4, 3.6, 3, 4.4]} width={110} height={40} />
-            <div className="text-[11px] text-[var(--shotiq-color-confirmGreen)]">+8.1% vs last session</div>
+            {/* The shared computed delta; this was a hard-coded +8.1%. */}
+            <div className={`text-[11px] ${myDelta != null && myDelta < 0 ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-confirmGreen)]"}`}>{formatDelta(myDelta)} vs last session</div>
           </div>
         </div>
       </div>
@@ -217,8 +223,7 @@ export default function EliteShooterDetailClient() {
           <div className="mt-[8px] flex items-center justify-between px-[4px]">
             {PHASES.map((p) => (
               <div key={p} className="text-center">
-                <PoseGlyph phase={toShotPhase(p)} active={p === "RELEASE"} size={22}
-                           className={p === "RELEASE" ? "" : "text-[var(--shotiq-color-ink)]"} />
+                <PoseFigure phase={toShotPhase(p)} active={p === "RELEASE"} height={29} className="mx-auto" />
                 <div className={`mt-[2px] text-[8px] tracking-[0.05em] ${p === "RELEASE" ? "font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
                 {p === "RELEASE" && <div className="mx-auto mt-[2px] h-[2px] w-[36px] bg-[var(--shotiq-color-shotiqOrange)]" />}
               </div>
@@ -254,7 +259,7 @@ export default function EliteShooterDetailClient() {
                           className={`w-[62px] py-[4px] pr-[8px] align-middle ${top}`}>
                         <span className="flex flex-col items-center"
                               style={{ color: hot ? "var(--shotiq-color-shotiqOrange)" : "var(--shotiq-color-graphite)" }}>
-                          <PoseGlyph phase={toShotPhase(phase)} size={24} />
+                          <PoseFigure phase={toShotPhase(phase)} active={hot} height={28} />
                           <span className={`mt-[1px] text-center text-[9px] font-bold leading-[10px] tracking-[0.04em] ${hot ? "text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{phase}</span>
                         </span>
                       </td>
@@ -384,9 +389,9 @@ export default function EliteShooterDetailClient() {
                 "Lower hold time in follow-through", "Maintain elbow stack on fatigue",
                 "Improve reset consistency in transitions"]).slice(0, 5).map((s, i) => (
                 <li key={s} className="flex items-start gap-[8px]">
-                  <span className="mt-[1px] shrink-0 text-[var(--shotiq-color-shotiqOrange)]">
-                    <MechanicGlyph kind={OPPORTUNITY_GLYPHS[i % OPPORTUNITY_GLYPHS.length]} size={15} />
-                  </span>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={OPPORTUNITY_GLYPHS[i % OPPORTUNITY_GLYPHS.length]} alt="" aria-hidden="true"
+                       className="mt-[3px] block h-[13px] w-[15px] max-w-none shrink-0 object-contain" />
                   {s}
                 </li>
               ))}

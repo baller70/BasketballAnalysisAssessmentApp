@@ -59,9 +59,22 @@ export async function GET(request: NextRequest) {
       })
     }
 
+    // Shot counts live on ShotEvent, keyed by the capture session an analysis
+    // was produced from — they were simply never projected here, which is why
+    // every MAKE % and SHOTS / MAKES readout on 093 rendered as an em-dash.
+    const tally = await shotTally(
+      userProfileId,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      history.map((h: any) => h.analysis?.captureSessionId).filter((id: unknown): id is string => typeof id === "string" && id.length > 0),
+    )
+
     // Calculate statistics
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const scores = history.map((h: any) => Number(h.overallScore)).filter((s: number) => !isNaN(s))
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const counted = history.map((h: any) => tally.get(h.analysis?.captureSessionId ?? "")).filter(Boolean) as { shots: number; makes: number }[]
+    const totalShots = counted.reduce((a, c) => a + c.shots, 0)
+    const totalMakes = counted.reduce((a, c) => a + c.makes, 0)
     const stats = {
       totalAnalyses: history.length,
       averageScore: scores.length > 0
@@ -72,6 +85,13 @@ export async function GET(request: NextRequest) {
       latestScore: scores[0] ?? null,
       overallTrend: calculateTrend(history),
       improvementRate: calculateImprovementRate(history),
+      // Null rather than zero when nothing in the range has a capture behind
+      // it, so the UI can say "—" instead of claiming the user took no shots.
+      totalShots: counted.length ? totalShots : null,
+      totalMakes: counted.length ? totalMakes : null,
+      makePct: counted.length && totalShots > 0
+        ? Math.round((totalMakes / totalShots) * 1000) / 10
+        : null,
     }
 
     // Format history entries
@@ -82,6 +102,8 @@ export async function GET(request: NextRequest) {
       clientSessionId: entry.analysis?.clientSessionId ?? null,
       mediaType: entry.analysis?.mediaType ?? null,
       captureSessionId: entry.analysis?.captureSessionId ?? null,
+      shots: tally.get(entry.analysis?.captureSessionId ?? "")?.shots ?? null,
+      makes: tally.get(entry.analysis?.captureSessionId ?? "")?.makes ?? null,
       recordedAt: entry.analysisDate,
       scores: {
         overall: entry.overallScore != null ? Number(entry.overallScore) : null,
@@ -113,6 +135,58 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
+}
+
+/**
+ * Attempts and makes per capture session, from the detector's ShotEvent rows.
+ *
+ * `ShotEventCorrection` is append-only human review, so it wins over the
+ * detector: a `false_shot` correction drops the attempt entirely and a
+ * `make_miss` correction replaces `detectedResult`. Only the caller's own rows
+ * are read (the profile comes from the session), so this cannot leak another
+ * user's session counts.
+ */
+async function shotTally(userProfileId: string, captureSessionIds: string[]) {
+  const tally = new Map<string, { shots: number; makes: number }>()
+  const ids = Array.from(new Set(captureSessionIds))
+  if (ids.length === 0) return tally
+
+  const events = await prisma.shotEvent.findMany({
+    where: { userProfileId, captureSessionId: { in: ids } },
+    select: {
+      captureSessionId: true,
+      detected: true,
+      detectedResult: true,
+      corrections: {
+        where: { kind: { in: ["false_shot", "make_miss"] } },
+        orderBy: { createdAt: "asc" },
+        select: { kind: true, value: true },
+      },
+    },
+  })
+
+  for (const id of ids) tally.set(id, { shots: 0, makes: 0 })
+  for (const event of events) {
+    const bucket = tally.get(event.captureSessionId ?? "")
+    if (!bucket) continue
+
+    let dropped = event.detected === false
+    let result = event.detectedResult ?? null
+    for (const correction of event.corrections) {
+      if (correction.kind === "false_shot") dropped = correction.value !== false
+      else if (correction.kind === "make_miss" && (correction.value === "make" || correction.value === "miss")) {
+        result = correction.value
+      }
+    }
+    if (dropped) continue
+    bucket.shots += 1
+    if (result === "make") bucket.makes += 1
+  }
+
+  // A capture session that produced no usable attempt has nothing to report;
+  // drop it so the UI shows "—" rather than a fabricated 0 / 0.
+  for (const [id, bucket] of tally) if (bucket.shots === 0) tally.delete(id)
+  return tally
 }
 
 /**

@@ -21,6 +21,7 @@ import {
 } from "lucide-react"
 import { SectionLabel, Card, PhaseGlyph, TrendLine } from "@/components/shotiq/ShotIQShell"
 import { ShotIQShell } from "@/components/shotiq/ShotIQShell"
+import { useHistory, formatDelta, formatMakePct } from "@/components/shotiq/ResultsBits"
 
 interface HistoryStats {
   totalAnalyses: number
@@ -87,6 +88,9 @@ function OverviewRail({ onShare, onExport, shared }: {
 
 export default function ResultsOverviewPage() {
   const router = useRouter()
+  // Session-over-session delta and shot counts come from the shared history
+  // hook, so this screen can never disagree with the dashboard.
+  const { shots: liveShots, makes: liveMakes, delta, score: liveScore } = useHistory()
   const [stats, setStats] = useState<HistoryStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [index, setIndex] = useState(3) // canonical "3 OF 24"
@@ -297,7 +301,9 @@ export default function ResultsOverviewPage() {
         <Card className="flex h-[145px] w-[509px] shrink-0 flex-col px-[18px] pt-[12px]">
           <SectionLabel>ANALYSIS SUMMARY</SectionLabel>
           <div className="mt-[12px] flex flex-1 items-start">
-            {[["24", "SHOTS"], ["15", "MAKES"], ["62.5%", "MAKE %"], ["82", "FORM SCORE"]].map(([v, l], i) => (
+            {([[String(liveShots ?? "—"), "SHOTS"], [String(liveMakes ?? "—"), "MAKES"],
+               [formatMakePct(liveShots, liveMakes), "MAKE %"],
+               [liveScore != null ? String(liveScore) : "—", "FORM SCORE"]] as const).map(([v, l], i) => (
               <div key={l} className={`pr-[20px] text-center ${i > 0 ? "border-l border-[var(--shotiq-color-rule)] pl-[20px]" : ""}`}>
                 <div className="shotiq-numeric text-[27px] leading-[30px]">{v}</div>
                 <div className="mt-[4px] text-[10px] tracking-[0.07em] text-[var(--shotiq-color-graphite)]">{l}</div>
@@ -312,7 +318,7 @@ export default function ResultsOverviewPage() {
               <div className="text-[10px] font-bold tracking-[0.07em]">TREND</div>
               <div className="flex items-end gap-[6px]">
                 <TrendLine points={[2.2, 2.0, 2.8, 2.4, 3.4]} width={104} height={40} stroke="var(--shotiq-color-ink)" />
-                <span className="pb-[4px] text-[12px] font-medium text-[var(--shotiq-color-confirmGreen)]">+8.1%</span>
+                <span className={`pb-[4px] text-[12px] font-medium ${delta != null && delta < 0 ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-confirmGreen)]"}`}>{formatDelta(delta)}</span>
               </div>
               <div className="text-[11px] text-[var(--shotiq-color-graphite)]">vs last session</div>
             </div>

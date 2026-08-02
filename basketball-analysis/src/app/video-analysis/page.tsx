@@ -14,15 +14,17 @@ import React, { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { Pause, Play, SwitchCamera, VolumeX, Volume2, Square, Film, Check, X, Camera, Crosshair, Download, Trash2, Save, ShieldCheck, ChevronRight } from "lucide-react"
 import { SectionLabel, Card, Stat } from "@/components/shotiq/ShotIQShell"
-import { PoseGlyph, ReadinessGlyph, type ReadinessKind } from "@/components/shotiq/Glyphs"
+import { FormScoreCell, useHistory } from "@/components/shotiq/ResultsBits"
+import { PoseGlyph, PoseFigure } from "@/components/shotiq/Glyphs"
 import { HoopCalibrationOverlay, rimCalibrationStorageKey } from "@/components/live/HoopCalibrationOverlay"
 import type { RimCalibration } from "@/lib/vision/objectTracking"
 
 const PHASES = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
-// Canonical draws a bracketed framing mark per check — never one glyph four times.
-const READINESS: [string, ReadinessKind][] = [
-  ["Athlete detected", "athlete"], ["Full body in frame", "framing"],
-  ["Good lighting", "lighting"], ["Stable camera", "stability"],
+// Canonical draws a bracketed framing mark per check — never one glyph four
+// times. The four marks are cropped straight out of 082.
+const READINESS: [string, string][] = [
+  ["Athlete detected", "082-readiness-athlete"], ["Full body in frame", "082-readiness-framing"],
+  ["Good lighting", "082-readiness-lighting"], ["Stable camera", "082-readiness-stability"],
 ]
 const PRIMER_KEY = "shotiq_camera_primed"
 
@@ -43,6 +45,8 @@ const DEMO_RAIL: ("make" | "live" | "pending")[] = [
 type CaptureReview = { url: string; seconds: number; shots: boolean[] }
 
 export default function LiveCapturePage() {
+  // Form score comes from the shared history hook, like every other screen.
+  const { score } = useHistory()
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const recorderRef = useRef<MediaRecorder | null>(null)
@@ -215,8 +219,11 @@ export default function LiveCapturePage() {
           )}
           <button type="button" onClick={() => (live ? stop() : requestStart())}
                   data-testid="capture-stop" aria-label={live ? "Stop recording" : "Start camera"}
-                  className="flex h-[50px] items-center gap-[12px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] px-[24px] text-[14px] font-medium text-white">
-            <Square className="h-[13px] w-[13px]" fill="currentColor" /> Stop recording
+                  className={`flex h-[50px] items-center gap-[12px] rounded-[6px] px-[24px] text-[14px] font-medium text-white ${
+                    // Destructive: it ends the take. It must not share the
+                    // primary hue with "Analyze"/"Create goal" style actions.
+                    live ? "bg-[var(--shotiq-color-reviewRed)]" : "bg-[var(--shotiq-color-shotiqOrange)]"}`}>
+            <Square className="h-[13px] w-[13px]" fill="currentColor" /> {live ? "Stop recording" : "Start camera"}
           </button>
         </div>
       </div>
@@ -312,7 +319,7 @@ export default function LiveCapturePage() {
           <div className="mt-[14px] flex items-center justify-around rounded-full border border-[var(--shotiq-color-rule)] py-[8px]">
             {PHASES.map((p) => (
               <div key={p} className="text-center">
-                <PoseGlyph phase={p} active={p === "RELEASE"} size={28} />
+                <PoseFigure phase={p} active={p === "RELEASE"} height={38} className="mx-auto" />
                 <div className={`text-[10px] tracking-[0.06em] ${p === "RELEASE" ? "relative pb-[3px] font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>
                   {p}
                   {p === "RELEASE" && <span className="absolute inset-x-[-4px] bottom-0 h-[2px] bg-[var(--shotiq-color-shotiqOrange)]" />}
@@ -334,7 +341,9 @@ export default function LiveCapturePage() {
             <div className="mt-[12px] flex divide-x divide-[var(--shotiq-color-rule)]">
               {READINESS.map(([r, glyph]) => (
                 <div key={r} className="flex-1 px-[4px] text-center">
-                  <ReadinessGlyph kind={glyph} size={28} className="mx-auto" />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={`/images/canonical/${glyph}.png`} alt="" aria-hidden="true"
+                       className="mx-auto block h-[33px] w-auto max-w-none" />
                   <div className="mt-[2px] text-[9px] leading-[12px] text-[var(--shotiq-color-graphite)]">{r}</div>
                   <span className="mt-[5px] inline-grid h-[15px] w-[15px] place-items-center rounded-full bg-[var(--shotiq-color-confirmGreen)]">
                     <Check className="h-[9px] w-[9px] text-white" strokeWidth={3} />
@@ -355,17 +364,11 @@ export default function LiveCapturePage() {
               <Stat value={String(statMakes)} label="MAKES" valueClass="text-[28px] leading-[32px]" />
               <div className="mx-[16px] h-[36px] w-px bg-[var(--shotiq-color-rule)]" />
               <Stat value={statPct} label="MAKE %" valueClass="text-[28px] leading-[32px]" />
-              <div className="ml-auto flex items-start gap-[12px] border-l border-[var(--shotiq-color-rule)] pl-[16px]">
-                <div>
-                  <div className="text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">FORM SCORE</div>
-                  <div className="shotiq-numeric text-[30px] leading-[32px] text-[var(--shotiq-color-shotiqOrange)]">82</div>
-                  <div className="h-[3px] w-[46px] rounded-full bg-[var(--shotiq-color-shotiqOrange)]" />
-                </div>
-                <div className="w-[86px]">
-                  <div className="shotiq-display text-[13px] text-[var(--shotiq-color-analysisBlue)]">GOOD</div>
-                  <div className="text-[10px] leading-[13px] text-[var(--shotiq-color-graphite)]">Keep building consistency.</div>
-                </div>
-              </div>
+              {/* The one shared form-score module (see FormScoreCell): the
+                  numeral was undersized and the verdict block squeezed into an
+                  86px column beside it. */}
+              <FormScoreCell score={score} size={34}
+                             className="ml-auto shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[16px]" />
             </div>
             <div className="mt-[14px] border-t border-[var(--shotiq-color-rule)] pt-[12px]">
               <SectionLabel>PRIMARY COACHING TARGET</SectionLabel>

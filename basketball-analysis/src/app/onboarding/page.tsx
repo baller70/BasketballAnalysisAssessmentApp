@@ -16,7 +16,7 @@ import {
   ClipboardList, type LucideIcon,
 } from "lucide-react"
 import { SectionLabel, Card } from "@/components/shotiq/ShotIQShell"
-import { PoseGlyph, CueGlyph, type ShotPhase } from "@/components/shotiq/Glyphs"
+import { PoseFigure } from "@/components/shotiq/Glyphs"
 import { useAuthStore } from "@/stores/authStore"
 import { useProfileStore } from "@/stores/profileStore"
 
@@ -26,11 +26,12 @@ const STEPS: [string, LucideIcon | null][] = [
   ["Onboarding", null], ["Measurements", Ruler], ["Preferences", SlidersHorizontal], ["Review", ClipboardList],
 ]
 const PHASES = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
-// Canonical gives each benefit its own pose figure rather than a generic icon.
-const BENEFITS: [string, string, ShotPhase][] = [
-  ["Accurate feedback", "AI analysis calibrated to your body and style.", "setup"],
-  ["Smarter training", "Drills and plans that target what moves your score.", "rise"],
-  ["Track what matters", "See progress where it counts, session after session.", "follow"],
+// Canonical gives each benefit its own figure — three poses that appear nowhere
+// else, cropped out of 078 rather than approximated.
+const BENEFITS: [string, string, string][] = [
+  ["Accurate feedback", "AI analysis calibrated to your body and style.", "078-benefit-1"],
+  ["Smarter training", "Drills and plans that target what moves your score.", "078-benefit-2"],
+  ["Track what matters", "See progress where it counts, session after session.", "078-benefit-3"],
 ]
 const GOALS = [
   "Keep elbow stacked through release", "Raise make percentage", "Quicker release",
@@ -106,7 +107,7 @@ export default function OnboardingPage() {
                       step === i + 1 ? "text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>
               {Icon
                 ? <Icon className="h-[16px] w-[16px] shrink-0" strokeWidth={1.6} />
-                : <PoseGlyph phase="setup" size={16} active={step === i + 1} />}
+                : <PoseFigure phase="setup" height={18} active={step === i + 1} className="shrink-0" />}
               {s.toUpperCase()}
               {step === i + 1 && <span className="absolute inset-x-0 bottom-0 h-[3px] bg-[var(--shotiq-color-shotiqOrange)]" />}
             </button>
@@ -203,7 +204,9 @@ export default function OnboardingPage() {
             <div className={lbl}>PRIMARY GOAL (CHOOSE ONE) <Info className="h-[10px] w-[10px]" /></div>
             <div className="relative mt-[6px]">
               <div className={`${box} flex w-full items-center gap-[12px]`}>
-                <CueGlyph kind="peak" size={24} accent="var(--shotiq-color-shotiqOrange)" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/images/canonical/078-goal-mark.png" alt="" aria-hidden="true"
+                     className="block h-[30px] w-auto max-w-none shrink-0" />
                 <select value={goal} onChange={(e) => setGoal(e.target.value)}
                         className="h-full flex-1 appearance-none bg-transparent outline-none">
                   {GOALS.map((g) => <option key={g}>{g}</option>)}
@@ -245,9 +248,11 @@ export default function OnboardingPage() {
               Measuring your profile helps ShotIQ benchmark your mechanics and build feedback that&apos;s tailored to you.
             </p>
             <div className="mt-[10px] space-y-[10px]">
-              {BENEFITS.map(([t, d, pose]) => (
+              {BENEFITS.map(([t, d, mark]) => (
                 <div key={t} className="flex items-start gap-[12px] border-l border-[var(--shotiq-color-rule)] pl-[12px]">
-                  <PoseGlyph phase={pose} size={30} className="shrink-0" />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={`/images/canonical/${mark}.png`} alt="" aria-hidden="true"
+                       className="block h-[34px] w-auto max-w-none shrink-0" />
                   <div>
                     <div className="text-[13px] font-semibold">{t}</div>
                     <div className="text-[11px] text-[var(--shotiq-color-graphite)]">{d}</div>
@@ -288,7 +293,7 @@ export default function OnboardingPage() {
         <div className="grid flex-1 pr-[26px]" style={{ gridTemplateColumns: `repeat(${PHASES.length}, minmax(0, 1fr))` }}>
           {PHASES.map((p) => (
             <div key={p} className="flex flex-col items-center">
-              <PoseGlyph phase={p} size={30} active={p === "RELEASE"} />
+              <PoseFigure phase={p} height={47} active={p === "RELEASE"} />
             </div>
           ))}
           {PHASES.map((p, i) => (
@@ -303,9 +308,10 @@ export default function OnboardingPage() {
           ))}
         </div>
         <div className="flex w-[430px] shrink-0 items-center gap-[12px] border-l border-[var(--shotiq-color-rule)] pl-[26px]">
-          <span className="grid h-[44px] w-[44px] shrink-0 place-items-center rounded-full border border-[var(--shotiq-color-rule)]">
-            <CueGlyph kind="tree" size={24} accent="var(--shotiq-color-shotiqOrange)" />
-          </span>
+          {/* Canonical draws the ring as part of the mark, so the crop carries it. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/images/canonical/078-sync-mark.png" alt="" aria-hidden="true"
+               className="block h-[52px] w-[52px] max-w-none shrink-0" />
           <p className="text-[11px] leading-[15px] text-[var(--shotiq-color-graphite)]">
             <span className="font-semibold text-[var(--shotiq-color-ink)]">One profile. Everywhere.</span><br />
             Your profile, captures, analyses, training, goals, media, points, and settings sync across web and iOS.

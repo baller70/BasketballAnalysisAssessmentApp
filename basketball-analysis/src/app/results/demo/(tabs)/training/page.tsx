@@ -10,7 +10,9 @@ import {
 } from "lucide-react"
 import { SectionLabel, Card, TrendLine, Stat } from "@/components/shotiq/ShotIQShell"
 import { CueGlyph, type CueKind } from "@/components/shotiq/Glyphs"
-import { useHistory } from "@/components/shotiq/ResultsBits"
+import {
+  useHistory, FormScoreCell, formatDelta, formatMakePct, formatShotsMakes, scoreSeries,
+} from "@/components/shotiq/ResultsBits"
 
 const RECOMMENDED = [
   { len: "05:28", title: "Footwork Into Release", time: "5:30", level: "Advanced", focus: "Footwork", desc: "Build rhythm from the catch into a balanced, stacked release.", img: "/images/canonical/090-rec-1.png" },
@@ -50,8 +52,19 @@ const WEEK: [string, string, boolean][] = [
 ]
 
 export default function TrainingHubPage() {
-  const { hasData } = useHistory()
+  const { hasData, items, score, shots, makes, delta } = useHistory()
   const slug = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, "-")
+  // The three most recent sessions, dated by the one shared formatter and
+  // carrying their real shot counts; these used to be written into the markup.
+  const recent = items.length
+    ? items.slice(0, 3).map((a) => [
+        a.title, `${a.when} · ${a.style}`,
+        a.score != null ? String(a.score) : "—",
+        formatMakePct(a.shots, a.makes), formatShotsMakes(a.shots, a.makes),
+      ] as [string, string, string, string, string])
+    : ([["Pull-Up Jumper", "May 12, 2025 • 8:24 AM · Catch & Shoot", "82", "62.5%", "24 / 15"],
+        ["Spot-Up Three", "May 11, 2025 • 6:15 PM · Catch & Shoot", "78", "58.3%", "12 / 7"],
+        ["Transition Pull-Up", "May 10, 2025 • 4:02 PM · Off the Dribble", "75", "54.5%", "11 / 6"]] as [string, string, string, string, string][])
   const [saved, setSaved] = useState<Set<string>>(
     () => new Set([...RECOMMENDED.map((r) => r.title), ...LIBRARY.map(([, t]) => t)]))
   const toggleSave = (t: string) =>
@@ -158,11 +171,9 @@ export default function TrainingHubPage() {
             rather than being dropped — compact, so the rail still fits the fold. */}
         <div className="flex items-start justify-between gap-[10px]">
           <SectionLabel className="text-[var(--shotiq-color-graphite)]">COACHING TARGET</SectionLabel>
-          <div className="flex shrink-0 items-baseline gap-[6px]">
-            <span className="text-[9px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">FORM</span>
-            <span className="shotiq-numeric text-[20px] leading-[20px] text-[var(--shotiq-color-shotiqOrange)]">82</span>
-            <span className="text-[10px] font-semibold text-[var(--shotiq-color-analysisBlue)]">Good</span>
-          </div>
+          {/* The one shared form-score module rather than a hand-set numeral +
+              verdict pair (see FormScoreCell). */}
+          <FormScoreCell score={score} size={22} label="FORM" caption={null} className="shrink-0" />
         </div>
         <Link href="/results/demo/goals" className="mt-[4px] flex items-center justify-between gap-[6px]">
           <span className="truncate text-[14px] font-semibold leading-[18px]">Keep elbow stacked through release</span>
@@ -185,14 +196,16 @@ export default function TrainingHubPage() {
         </div>
         {/* Hairline-divided and evenly distributed, as canonical sets it. */}
         <div className="mt-[8px] flex divide-x divide-[var(--shotiq-color-rule)]">
-          {([["24", "SHOTS"], ["15", "MAKES"], ["62.5%", "MAKE %"]] as const).map(([v, l], i) => (
+          {([[shots ?? "—", "SHOTS"], [makes ?? "—", "MAKES"],
+             [formatMakePct(shots, makes), "MAKE %"]] as const).map(([v, l], i) => (
             <div key={l} className={`min-w-0 flex-1 ${i === 0 ? "pr-[8px]" : "px-[8px]"}`}>
               <Stat value={hasData ? v : i === 2 ? "—" : "0"} label={l} />
             </div>
           ))}
           <div className="w-[124px] shrink-0 pl-[8px] text-center">
-            <TrendLine points={[3, 2.6, 3.5, 3, 4.3]} width={84} height={32} />
-            <div className="text-[10px] text-[var(--shotiq-color-confirmGreen)]">{hasData ? "+8.1% vs last session" : ""}</div>
+            <TrendLine points={scoreSeries(items, 5).length >= 2 ? scoreSeries(items, 5) : [3, 2.6, 3.5, 3, 4.3]} width={84} height={32} />
+            {/* Shared computed delta, not a hand-written +8.1%. */}
+            <div className={`text-[10px] ${delta != null && delta < 0 ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-confirmGreen)]"}`}>{hasData ? `${formatDelta(delta)} vs last session` : ""}</div>
           </div>
         </div>
 
@@ -246,9 +259,7 @@ export default function TrainingHubPage() {
             on one line, so the metrics restack under the title rather than
             shrinking their labels to 6px and truncating them. */}
         <div className="mt-[4px] divide-y divide-[var(--shotiq-color-rule)]">
-          {([["Pull-Up Jumper", "Today at 8:24 AM · Catch & Shoot", "82", "62.5%", "24 / 15"],
-            ["Spot-Up Three", "May 11, 6:15 PM · Catch & Shoot", "78", "58.3%", "12 / 7"],
-            ["Transition Pull-Up", "May 10, 4:02 PM · Off the Dribble", "75", "54.5%", "11 / 6"]] as const).map(([t, d, fs, mk, sm]) => (
+          {(recent as readonly (readonly [string, string, string, string, string])[]).map(([t, d, fs, mk, sm]) => (
             <Link key={t} href="/results/demo/history" className="block py-[7px] hover:bg-[var(--shotiq-color-warmCanvas)]">
               <div className="flex items-center gap-[8px]">
                 <TrendLine points={[2, 3.4, 2.6, 4]} width={30} height={26} stroke="var(--shotiq-color-shotiqOrange)" dotFill="var(--shotiq-color-shotiqOrange)" />
