@@ -30,7 +30,7 @@ export default function TrainingHubPage() {
   const [saved, setSaved] = useState<Set<string>>(
     () => new Set([...RECOMMENDED.map((r) => r.title), ...LIBRARY.map(([, t]) => String(t))]))
   const toggleSave = (t: string) =>
-    setSaved((s) => { const n = new Set(s); n.has(t) ? n.delete(t) : n.add(t); return n })
+    setSaved((s) => { const n = new Set(s); if (n.has(t)) n.delete(t); else n.add(t); return n })
   return (
     <div data-testid="screen-desktop-web-training-hub" className="flex gap-[20px]">
       <div className="min-w-0 flex-1">
@@ -94,7 +94,7 @@ export default function TrainingHubPage() {
           <Link href="/training/drills?tab=saved" className="text-[12px] text-[var(--shotiq-color-analysisBlue)]">View all drills ›</Link>
         </div>
         <div className="mt-[8px] grid grid-cols-4 gap-[12px]">
-          {LIBRARY.map(([len, t, meta, img]) => (
+          {LIBRARY.map(([, t, meta, img]) => (
             <Link key={String(t)} href={`/training/drills/${slug(String(t))}`}>
               <Card className="overflow-hidden">
                 <div className="relative">
@@ -120,36 +120,29 @@ export default function TrainingHubPage() {
       {/* right rail */}
       <aside className="w-[340px] shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[18px]">
         {/* Coaching target and form score used to live in this screen's bespoke
-            left sidebar. Navigation is now uniform app-wide, so the cards moved
-            here rather than being dropped. */}
-        <SectionLabel className="text-[var(--shotiq-color-graphite)]">COACHING TARGET</SectionLabel>
-        <Link href="/results/demo/goals" className="mt-[8px] flex items-start justify-between gap-[6px]">
-          <span className="text-[16px] font-semibold leading-[21px]">Keep elbow stacked through release</span>
-          <ChevronRight className="mt-[3px] h-[14px] w-[14px] shrink-0 text-[var(--shotiq-color-graphite)]" />
+            left sidebar. Navigation is now uniform app-wide, so they moved here
+            rather than being dropped — compact, so the rail still fits the fold. */}
+        <div className="flex items-start justify-between gap-[10px]">
+          <SectionLabel className="text-[var(--shotiq-color-graphite)]">COACHING TARGET</SectionLabel>
+          <div className="flex shrink-0 items-baseline gap-[6px]">
+            <span className="text-[9px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">FORM</span>
+            <span className="shotiq-numeric text-[20px] leading-[20px] text-[var(--shotiq-color-shotiqOrange)]">82</span>
+            <span className="text-[10px] font-semibold text-[var(--shotiq-color-analysisBlue)]">Good</span>
+          </div>
+        </div>
+        <Link href="/results/demo/goals" className="mt-[4px] flex items-center justify-between gap-[6px]">
+          <span className="truncate text-[14px] font-semibold leading-[18px]">Keep elbow stacked through release</span>
+          <ChevronRight className="h-[13px] w-[13px] shrink-0 text-[var(--shotiq-color-graphite)]" />
         </Link>
-        <div className="mt-[8px] flex items-center gap-[12px]">
-          <span className="inline-block rounded-[3px] border border-[var(--shotiq-color-confirmGreen)] px-[7px] py-[2px] text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-confirmGreen)]">
+        <div className="mt-[6px] flex items-center gap-[8px]">
+          <span className="shrink-0 rounded-[3px] border border-[var(--shotiq-color-confirmGreen)] px-[6px] py-[1px] text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-confirmGreen)]">
             ACTIVE GOAL
           </span>
-          <span className="text-[11px] text-[var(--shotiq-color-graphite)]">Improve release consistency and arm alignment</span>
-          <span className="shotiq-numeric ml-auto text-[12px]">72%</span>
+          <span className="truncate text-[10px] text-[var(--shotiq-color-graphite)]">Improve release consistency</span>
+          <span className="shotiq-numeric ml-auto shrink-0 text-[11px]">72%</span>
         </div>
         <div className="mt-[4px] h-[5px] rounded-full bg-[var(--shotiq-color-rule)]">
           <div className="h-full w-[72%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" />
-        </div>
-
-        <div className="mt-[14px] flex items-end gap-[14px] border-t border-[var(--shotiq-color-rule)] pt-[14px]">
-          <div>
-            <div className="text-[11px] text-[var(--shotiq-color-graphite)]">Form score</div>
-            <div className="shotiq-numeric text-[40px] leading-[44px] text-[var(--shotiq-color-shotiqOrange)]">82</div>
-            <div className="h-[6px] w-[100px] rounded-full bg-[var(--shotiq-color-rule)]">
-              <div className="h-full w-[82%] rounded-full bg-[var(--shotiq-color-shotiqOrange)]" />
-            </div>
-          </div>
-          <div className="pb-[4px]">
-            <div className="text-[12px] font-semibold text-[var(--shotiq-color-analysisBlue)]">Good</div>
-            <div className="text-[10px] text-[var(--shotiq-color-graphite)]">Keep building consistency.</div>
-          </div>
         </div>
 
         <div className="mt-[12px] flex items-center justify-between border-t border-[var(--shotiq-color-rule)] pt-[10px]">
