@@ -245,12 +245,12 @@ final class CanonicalScreenshotTests: XCTestCase {
         // The gear in the top bar opens the profile menu sheet.
         launch(Self.mainArgs + ["-uiTestHomeVariant", "pro"])
         _ = screenExists("screen-ios-home-professional", timeout: 20)
-        tapAndExpect("Settings", "screen-ios-profile-menu", from: "home-professional")
+        tapAndExpect("Menu", "screen-ios-profile-menu", from: "home-professional")
         tapAndExpect("POINTS SYSTEM", "screen-ios-points-system", from: "profile-menu")
 
         launch(Self.mainArgs + ["-uiTestHomeVariant", "pro"])
         _ = screenExists("screen-ios-home-professional", timeout: 20)
-        tapAndExpect("Settings", "screen-ios-profile-menu", from: "home-professional", capture: false)
+        tapAndExpect("Menu", "screen-ios-profile-menu", from: "home-professional", capture: false)
         tapAndExpect("ELITE SHOOTERS", "screen-ios-elite-shooters", from: "profile-menu")
         tapAndExpect("Klay Thompson", "screen-ios-elite-shooter-detail", from: "elite-shooters")
         tapAndExpect("Compare with my shot", "screen-ios-photo-comparison", from: "elite-shooter-detail")

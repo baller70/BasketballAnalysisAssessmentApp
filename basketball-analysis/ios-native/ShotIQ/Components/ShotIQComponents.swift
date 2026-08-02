@@ -227,7 +227,14 @@ struct TopBar: View {
                 Image(systemName: "gearshape").font(.system(size: 20)).foregroundStyle(ShotIQColor.ink)
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Settings")
+            // "Menu", not "Settings": this gear opens the profile menu (021),
+            // while the profile screen has its own "Settings" row that opens the
+            // settings hub (071). Both were called "Settings", so a search for
+            // that name hit this header button first on every screen — which is
+            // why tapping Settings on the profile screen opened the menu instead
+            // and read as a dead tap. It also meant VoiceOver announced two
+            // different destinations under one name.
+            .accessibilityLabel("Menu")
         }
         .padding(.horizontal, 20)
         .frame(height: 52)
