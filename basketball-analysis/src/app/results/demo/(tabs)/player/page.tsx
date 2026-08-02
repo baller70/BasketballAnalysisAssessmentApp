@@ -13,7 +13,8 @@
 import React, { useState } from "react"
 import Link from "next/link"
 import { Pencil, Share2, Download, Check, ChevronRight } from "lucide-react"
-import { SectionLabel, Card, TrendLine, PhaseGlyph } from "@/components/shotiq/ShotIQShell"
+import { SectionLabel, Card, TrendLine } from "@/components/shotiq/ShotIQShell"
+import { PoseGlyph, toShotPhase } from "@/components/shotiq/Glyphs"
 import { useHistory } from "@/components/shotiq/ResultsBits"
 import { useAuthStore } from "@/stores/authStore"
 
@@ -154,14 +155,22 @@ export default function PlayerCardPage() {
 
           {/* phase row + film strip */}
           <div className={`border-t px-[10px] pb-[12px] pt-[8px] ${dark ? "border-white/15 bg-[#101113]" : "border-[var(--shotiq-color-rule)]"}`}>
-            <div className="flex justify-around px-[16px]">
+            {/* Canonical runs a hairline connector through the stage dots and
+                sets a distinct pose figure per phase — five different
+                silhouettes, not one repeated mark. */}
+            <div className="relative flex px-[16px]">
+              <span aria-hidden="true"
+                    className={`pointer-events-none absolute inset-x-0 bottom-[3px] h-[1px] ${dark ? "bg-white/60" : "bg-[var(--shotiq-color-rule)]"}`} />
               {PHASES.map((p, i) => (
-                <button key={p} type="button" onClick={() => setFilm(i)} className="text-center">
-                  <span style={i === film ? { color: accentColor } : undefined}
-                        className={i === film ? "" : dark ? "text-white" : ""}><PhaseGlyph active={i === film} size={26} /></span>
+                <button key={p} type="button" onClick={() => setFilm(i)}
+                        className="relative z-[1] min-w-0 flex-1 text-center">
+                  <span className="inline-flex"
+                        style={{ color: i === film ? accentColor : dark ? "#FFFFFF" : "var(--shotiq-color-ink)" }}>
+                    <PoseGlyph phase={toShotPhase(p)} size={26} />
+                  </span>
                   <div className={`text-[8px] tracking-[0.06em] ${i === film ? "font-bold" : dark ? "text-white/70" : "text-[var(--shotiq-color-graphite)]"}`}
                        style={i === film ? { color: accentColor } : undefined}>{p}</div>
-                  <span className={`mx-auto mt-[4px] block h-[6px] w-[6px] rounded-full ${i === film ? "" : "bg-white/40"}`}
+                  <span className={`mx-auto mt-[5px] block h-[7px] w-[7px] rounded-full ${i === film ? "" : dark ? "bg-white" : "bg-[var(--shotiq-color-graphite)]"}`}
                         style={i === film ? { background: accentColor } : undefined} />
                 </button>
               ))}
@@ -179,10 +188,12 @@ export default function PlayerCardPage() {
                     </button>
                   ))}
                 </div>
-                <div className="mt-[8px] flex justify-between gap-[6px] px-[6px]">
+                <div className="relative mt-[8px] flex justify-between gap-[6px] px-[6px]">
+                  <span aria-hidden="true"
+                        className={`pointer-events-none absolute inset-x-0 top-[3px] h-[1px] ${dark ? "bg-white/60" : "bg-[var(--shotiq-color-rule)]"}`} />
                   {FILM.map((src, i) => (
-                    <span key={src} className="flex h-[6px] w-[80px] items-center justify-center">
-                      <span className={`h-[6px] w-[6px] rounded-full ${i === film ? "" : "bg-white/35"}`}
+                    <span key={src} className="relative z-[1] flex h-[7px] w-[80px] items-center justify-center">
+                      <span className={`h-[7px] w-[7px] rounded-full ${i === film ? "" : dark ? "bg-white" : "bg-[var(--shotiq-color-graphite)]"}`}
                             style={i === film ? { background: accentColor } : undefined} />
                     </span>
                   ))}
@@ -295,8 +306,10 @@ export default function PlayerCardPage() {
             </div>
           </Card>
 
-          <div className="flex gap-[16px]">
-            <Card className="w-[292px] shrink-0 px-[20px] py-[16px]">
+          {/* Canonical draws EARNED BADGES and RECENT ANALYSES as one bordered
+              container split by an internal hairline, not two detached cards. */}
+          <Card className="flex">
+            <div className="w-[292px] shrink-0 px-[20px] py-[16px]">
               <div className="flex items-center justify-between">
                 <SectionLabel>EARNED BADGES</SectionLabel>
                 <Link href="/points" className="text-[11px] font-bold text-[var(--shotiq-color-analysisBlue)]">VIEW ALL</Link>
@@ -315,8 +328,8 @@ export default function PlayerCardPage() {
                   </div>
                 ))}
               </div>
-            </Card>
-            <Card className="min-w-0 flex-1 px-[20px] py-[16px]">
+            </div>
+            <div className="min-w-0 flex-1 border-l border-[var(--shotiq-color-rule)] px-[20px] py-[16px]">
               <div className="flex items-center justify-between">
                 <SectionLabel>RECENT ANALYSES</SectionLabel>
                 <Link href="/results/demo/history" className="text-[11px] font-bold text-[var(--shotiq-color-analysisBlue)]">VIEW ALL</Link>
@@ -343,8 +356,8 @@ export default function PlayerCardPage() {
                   </Link>
                 ))}
               </div>
-            </Card>
-          </div>
+            </div>
+          </Card>
         </div>
       </div>
     </div>

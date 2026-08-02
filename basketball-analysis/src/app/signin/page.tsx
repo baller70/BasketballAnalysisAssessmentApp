@@ -317,9 +317,11 @@ export default function SignInPage() {
               <div className="mt-[22px] border-t border-[var(--shotiq-color-rule)] pt-[16px] text-[12px] font-bold tracking-[0.05em]">
                 KEY METRICS
               </div>
-              <dl className="mt-[10px] flex">
+              {/* Canonical rules each metric off from the next and spreads the
+                  three across the card rather than bunching them left. */}
+              <dl className="mt-[10px] flex divide-x divide-[var(--shotiq-color-rule)]">
                 {[["24", "SHOTS"], ["15", "MAKES"], ["62.5%", "MAKE %"]].map(([v, k]) => (
-                  <div key={k} className="flex-1">
+                  <div key={k} className="flex-1 px-[16px] first:pl-0 last:pr-0">
                     <dd className="shotiq-numeric text-[24px] leading-[28px]">{v}</dd>
                     <dt className="mt-[2px] text-[10px] tracking-[0.07em] text-[var(--shotiq-color-graphite)]">{k}</dt>
                   </div>

@@ -23,6 +23,7 @@ import {
   SlidersHorizontal, Rocket, type LucideIcon,
 } from "lucide-react"
 import { useAuthStore } from "@/stores/authStore"
+import { PoseGlyph } from "@/components/shotiq/Glyphs"
 
 export type IconType = LucideIcon
 
@@ -255,39 +256,93 @@ export function ShotIQShell({
   )
 }
 
-/** Data-driven sparkline/trend SVG shared by canonical screens. Never a raster. */
+/**
+ * Data-driven scatter-plus-connector trend mark. Never a raster, and never a
+ * decorative curve: the drawn shape is the supplied series, so a row whose
+ * delta is negative draws a falling line (canonical 079 RECENT ANALYSES).
+ *
+ * Canonical's mark is a thin graphite connector with a filled node dot on every
+ * sample; nodes that improved on the previous sample are picked out in the
+ * confirm-green accent, and a series whose net direction is flat or down draws
+ * every node in the base colour. 092 adds a dotted grid behind the plot and a
+ * dashed projection tail past the last real sample — both opt-in here.
+ */
+const TREND_BASE = "var(--shotiq-color-graphite)"
+
 export function TrendLine({
-  points, width = 100, height = 36, stroke = "var(--shotiq-color-confirmGreen)",
-  dotFill = "var(--shotiq-color-confirmGreen)",
-}: { points: number[]; width?: number; height?: number; stroke?: string; dotFill?: string }) {
-  const max = Math.max(...points), min = Math.min(...points)
+  points, width = 100, height = 36, stroke = TREND_BASE, dotFill = TREND_BASE,
+  dotAccent, dots = true, grid = false, projection, className,
+}: {
+  points: number[]
+  width?: number
+  height?: number
+  stroke?: string
+  dotFill?: string
+  /** Colour for improving nodes. Defaults to confirm-green on an un-themed mark. */
+  dotAccent?: string
+  dots?: boolean
+  /** Dotted horizontal guides behind the plot (canonical 092). */
+  grid?: boolean
+  /** Projected sample(s) drawn as a dashed tail past the last real node (092). */
+  projection?: number | number[]
+  className?: string
+}) {
+  // A one-point (or empty) series has no shape; hold it on the mid-line rather
+  // than dividing by zero and painting NaN.
+  const series = points.length >= 2 ? points : [points[0] ?? 0, points[0] ?? 0]
+  const tail = projection == null ? [] : Array.isArray(projection) ? projection : [projection]
+  const all = [...series, ...tail]
+  const max = Math.max(...all), min = Math.min(...all)
   const span = max - min || 1
-  const pad = 4
-  const cs = points.map((p, i) => [
-    pad + (i / (points.length - 1)) * (width - 2 * pad),
-    height - pad - ((p - min) / span) * (height - 2 * pad),
-  ] as const)
-  const d = cs.map(([x, y], i) => `${i ? "L" : "M"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ")
+  const pad = Math.max(3, Math.min(6, height / 7))
+  const step = (width - 2 * pad) / Math.max(1, all.length - 1)
+  const xy = (v: number, i: number): [number, number] => [
+    pad + i * step,
+    height - pad - ((v - min) / span) * (height - 2 * pad),
+  ]
+  const cs = series.map(xy)
+  const ts = tail.map((v, i) => xy(v, series.length + i))
+  const path = (list: [number, number][]) =>
+    list.map(([x, y], i) => `${i ? "L" : "M"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ")
+
+  const r = Math.max(1.9, Math.min(4.6, height / 9))
+  // Accent only an un-themed mark: a caller that picked its own dot colour
+  // (white on an orange button, ink on a light chip) wants one flat colour.
+  const accent = dotAccent ?? (dotFill === TREND_BASE ? "var(--shotiq-color-confirmGreen)" : dotFill)
+  const netUp = series[series.length - 1] > series[0]
+
   return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} aria-hidden="true">
-      <path d={d} fill="none" stroke={stroke} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" />
-      {cs.map(([x, y], i) => <circle key={i} cx={x} cy={y} r={2.6} fill={dotFill} />)}
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className={className} aria-hidden="true">
+      {grid && [0.28, 0.64, 1].map((f) => (
+        <line key={f} x1={0} x2={width} y1={pad + f * (height - 2 * pad)} y2={pad + f * (height - 2 * pad)}
+              stroke="var(--shotiq-color-rule)" strokeWidth={1} strokeDasharray="2 4" />
+      ))}
+      <path d={path(cs)} fill="none" stroke={stroke} strokeWidth={1.3}
+            strokeLinecap="round" strokeLinejoin="round" />
+      {ts.length > 0 && (
+        <path d={path([cs[cs.length - 1], ...ts])} fill="none" stroke={stroke} strokeWidth={1.3}
+              strokeDasharray="3 3" strokeOpacity={0.5} strokeLinecap="round" strokeLinejoin="round" />
+      )}
+      {dots && cs.map(([x, y], i) => (
+        <circle key={i} cx={x} cy={y} r={r}
+                fill={netUp && i > 0 && series[i] > series[i - 1] ? accent : dotFill} />
+      ))}
+      {dots && ts.map(([x, y], i) => (
+        <circle key={`p${i}`} cx={x} cy={y} r={r} fill="var(--shotiq-color-paper)"
+                stroke={stroke} strokeWidth={1.2} strokeOpacity={0.6} />
+      ))}
     </svg>
   )
 }
 
-/** Small pose glyph used for shot phases; parametric SVG, recolourable by token. */
+/**
+ * Small pose mark used where a screen needs "a shot pose" without naming a
+ * phase. It delegates to the one pose family in Glyphs.tsx so the release
+ * figure here can never drift from the release figure on the phase timelines —
+ * including the filled-silhouette weight canonical draws them at.
+ */
 export function PhaseGlyph({ active = false, size = 30 }: { active?: boolean; size?: number }) {
-  const c = active ? "var(--shotiq-color-shotiqOrange)" : "var(--shotiq-color-ink)"
-  return (
-    <svg width={size} height={size} viewBox="0 0 30 30" aria-hidden="true">
-      <g stroke={c} strokeWidth={1.6} strokeLinecap="round" fill="none">
-        <circle cx="17" cy="5" r="2.6" />
-        <path d="M17 8 L15 15 L11 21 M15 15 L18 21 M17 9.5 L22 7 M22 7 L24 3" />
-        <circle cx="25" cy="2.5" r="1.8" fill={active ? c : "none"} stroke={c} />
-      </g>
-    </svg>
-  )
+  return <PoseGlyph phase="release" active={active} size={size} />
 }
 
 /** Section label — 12px bold tracked caps used across canonical screens. */

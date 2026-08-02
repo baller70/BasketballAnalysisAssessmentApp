@@ -30,12 +30,12 @@ type GlyphProps = {
 const autoStroke = (size: number) => Math.min(1.8, Math.max(0.85, 38 / size))
 
 function Svg({
-  size = 24, className = "", children, title,
-}: GlyphProps & { children: React.ReactNode }) {
+  size = 24, className = "", children, title, weight = 1,
+}: GlyphProps & { children: React.ReactNode; weight?: number }) {
   return (
     <svg
       width={size} height={size} viewBox="0 0 24 24" className={className}
-      fill="none" stroke="currentColor" strokeWidth={autoStroke(size)}
+      fill="none" stroke="currentColor" strokeWidth={autoStroke(size) * weight}
       strokeLinecap="round" strokeLinejoin="round"
       role={title ? "img" : undefined} aria-hidden={title ? undefined : "true"}
       aria-label={title}
@@ -117,7 +117,17 @@ const POSES: Record<ShotPhase, React.ReactNode> = {
   ),
 }
 
-/** Shot-phase pose. Five genuinely different figures, one per phase. */
+/**
+ * Shot-phase pose. Five genuinely different figures, one per phase.
+ *
+ * Canonical prints these as solid body silhouettes, not hairline stick figures,
+ * so the pose family alone carries a much heavier weight than the measurement
+ * diagrams and the head/ball nodes are filled rather than outlined. Limbs are
+ * drawn as round-capped strokes at that weight, which reads as a filled body at
+ * every size the screens use (16px rail marks up to 34px timeline figures).
+ */
+const POSE_WEIGHT = 1.9
+
 export function PoseGlyph({
   phase, active = false, size = 26, className = "", title,
 }: { phase: ShotPhase | string; active?: boolean } & GlyphProps) {
@@ -125,7 +135,7 @@ export function PoseGlyph({
     ? toShotPhase(phase) : (phase as ShotPhase)
   return (
     <span style={active ? { color: ORANGE } : undefined} className="inline-flex">
-      <Svg size={size} className={className} title={title}>{POSES[p]}</Svg>
+      <Svg size={size} className={className} title={title} weight={POSE_WEIGHT}>{POSES[p]}</Svg>
     </span>
   )
 }
@@ -453,6 +463,95 @@ export type ReadinessKind = "athlete" | "framing" | "lighting" | "stability"
 const BRACKETS = (
   <path d="M3 7.5 V4.5 A1.5 1.5 0 0 1 4.5 3 H7.5 M16.5 3 H19.5 A1.5 1.5 0 0 1 21 4.5 V7.5 M21 16.5 V19.5 A1.5 1.5 0 0 1 19.5 21 H16.5 M7.5 21 H4.5 A1.5 1.5 0 0 1 3 19.5 V16.5" />
 )
+
+/* ------------------------------------------------------ quality checks */
+
+export type QualityKind = "resolution" | "lighting" | "framerate" | "stability"
+
+/**
+ * Pre-flight checks run on uploaded footage (081 QUALITY CHECKS). Canonical
+ * draws these as node-and-link fragments with two-tone nodes, the same motif as
+ * the coaching cues but with its own set of shapes so nothing is reused.
+ */
+export function QualityGlyph({
+  kind, size = 22, className = "", accent = ORANGE, title,
+}: { kind: QualityKind } & GlyphProps) {
+  const node = (x: number, y: number, c?: string, r = 1.8) => (
+    <circle cx={x} cy={y} r={r} fill="var(--shotiq-color-paper)" stroke={c ?? "currentColor"} />
+  )
+  return (
+    <Svg size={size} className={className} title={title}>
+      {kind === "resolution" && (
+        <>
+          <path d="M4.5 15.5 L11 17.5 L18.5 9.5" />
+          <path d="M18.5 6.5 V4" stroke={GREEN} strokeDasharray="1.2 1.4" />
+          {node(4.5, 15.5, accent)}{node(11, 17.5)}{node(18.5, 9.5, GREEN)}
+        </>
+      )}
+      {kind === "lighting" && (
+        <>
+          <path d="M4.5 16.5 L11.5 18 L18 7.5" />
+          <path d="M15.5 4.5 L18 7.5 L21 6" stroke={accent} />
+          {node(4.5, 16.5)}{node(11.5, 18, accent)}{node(18, 7.5, accent)}
+        </>
+      )}
+      {kind === "framerate" && (
+        <>
+          <path d="M3.5 17 L7.5 8.5 L11.5 15.5 L15.5 6.5 L19.5 13.5" />
+          {node(3.5, 17)}{node(7.5, 8.5, accent)}{node(11.5, 15.5)}
+          {node(15.5, 6.5, accent)}{node(19.5, 13.5)}
+        </>
+      )}
+      {kind === "stability" && (
+        <>
+          <path d="M6 15.5 L12 9.5 L18 15.5 L12 19 Z" />
+          {node(6, 15.5, accent)}{node(12, 9.5)}{node(18, 15.5, accent)}{node(12, 19)}
+        </>
+      )}
+    </Svg>
+  )
+}
+
+/* ------------------------------------------------------- filming guide */
+
+export type FilmingKind = "fullBody" | "sideAngle" | "background" | "light"
+
+/** Filming advice marks (081 FILMING GUIDE) — framing geometry, not poses. */
+export function FilmingGlyph({
+  kind, size = 22, className = "", accent = ORANGE, title,
+}: { kind: FilmingKind } & GlyphProps) {
+  return (
+    <Svg size={size} className={className} title={title}>
+      {kind === "fullBody" && (
+        <>
+          <path d="M4 8 V5 H7.5 M16.5 5 H20 V8 M20 16 V19 H16.5 M7.5 19 H4 V16" />
+          <circle cx="12" cy="12" r="1.6" fill={accent} stroke={accent} />
+        </>
+      )}
+      {kind === "sideAngle" && (
+        <>
+          <path d="M12 4.5 V12 M6 15.5 L12 12 L18 15.5" />
+          <path d="M6 9.5 H18" strokeDasharray="2 2" />
+          <circle cx="12" cy="4.5" r="1.6" />
+          <circle cx="6" cy="15.5" r="1.6" stroke={accent} />
+          <circle cx="18" cy="15.5" r="1.6" stroke={accent} />
+        </>
+      )}
+      {kind === "background" && (
+        <>
+          <rect x="4" y="5.5" width="16" height="13" rx="1.5" strokeDasharray="2.4 2.2" />
+          <path d="M9.2 5.5 V18.5 M14.8 5.5 V18.5 M4 11.8 H20" strokeDasharray="1.6 2.4" />
+        </>
+      )}
+      {kind === "light" && (
+        <>
+          <circle cx="12" cy="12" r="3.6" />
+          <path d="M12 3.6 V6 M12 18 V20.4 M3.6 12 H6 M18 12 H20.4 M6.2 6.2 L7.9 7.9 M16.1 16.1 L17.8 17.8 M17.8 6.2 L16.1 7.9 M7.9 16.1 L6.2 17.8" />
+        </>
+      )}
+    </Svg>
+  )
+}
 
 /** Capture-readiness checks — bracketed framing marks, one per check. */
 export function ReadinessGlyph({

@@ -25,6 +25,7 @@ import { useDashboardViewStore } from "@/stores/dashboardViewStore"
 import {
   ShotIQShell, TrendLine, SectionLabel, Card, Stat,
 } from "@/components/shotiq/ShotIQShell"
+import { scoreSeries, sessionDelta, formatDelta } from "@/components/shotiq/ResultsBits"
 
 interface HistoryStats {
   totalAnalyses: number
@@ -64,6 +65,10 @@ export default function DashboardPage() {
     title: string; when: string; style: string; score: number | null
     shots: number; makes: number; makePct: string
   }[]>([])
+  // Every scored session, newest first. The trend marks plot slices of this —
+  // a row whose score fell draws a falling line, which a placeholder series
+  // could never do.
+  const [history, setHistory] = useState<{ score: number | null }[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -76,7 +81,15 @@ export default function DashboardPage() {
           const hData = await hRes.json()
           if (!cancelled && hData?.success) {
             setStats(hData.stats ?? null)
-            const items = (hData.history ?? hData.analyses ?? []).slice(0, 3)
+            const all = (hData.history ?? hData.analyses ?? []) as {
+              title?: string; createdAt?: string; recordedAt?: string; shotType?: string
+              score?: number; scores?: { overall?: number | null }
+              shotCount?: number; makeCount?: number
+            }[]
+            setHistory(all.map((a) => ({
+              score: a.scores?.overall != null ? Math.round(a.scores.overall) : a.score ?? null,
+            })))
+            const items = all.slice(0, 3)
             const fmtWhen = (iso?: string) => {
               if (!iso) return ""
               const d = new Date(iso)
@@ -85,11 +98,7 @@ export default function DashboardPage() {
                 ? `Today at ${time}`
                 : `${d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} · ${time}`
             }
-            setRecent(items.map((a: {
-              title?: string; createdAt?: string; recordedAt?: string; shotType?: string
-              score?: number; scores?: { overall?: number | null }
-              shotCount?: number; makeCount?: number
-            }, i: number) => {
+            setRecent(items.map((a, i: number) => {
               const fb = RECENT_FALLBACK[i % RECENT_FALLBACK.length]
               const shotsN = a.shotCount ?? fb.shots
               const makesN = a.makeCount ?? fb.makes
@@ -119,8 +128,22 @@ export default function DashboardPage() {
   const hasData = !!stats && stats.totalAnalyses > 0
   const score = hasData ? Math.round(stats!.latestScore ?? stats!.averageScore ?? 0) : null
   const band = scoreBand(score)
-  const improvement = hasData && stats!.improvementRate != null
-    ? `${stats!.improvementRate >= 0 ? "+" : ""}${stats!.improvementRate.toFixed(1)}%` : "—"
+
+  /* One delta, computed one way, printed everywhere on the page. The screen
+     used to mix the API's lifetime improvementRate (+67.0% on a three-session
+     account) with a hard-coded +8.1% two rows below it. Both readouts now come
+     from the same session-over-session comparison as the rest of the app; the
+     lifetime rate is only a fallback for accounts with a single scored
+     session. */
+  const deltaPct = sessionDelta(history) ?? (hasData ? stats!.improvementRate : null)
+  const improvement = hasData ? formatDelta(deltaPct) : "—"
+  const improvementTone = deltaPct != null && deltaPct < 0
+    ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-confirmGreen)]"
+  // Chronological score series for the page-level trend marks.
+  const trend = scoreSeries(history, 8)
+  /** The slice of history a RECENT ANALYSES row is the newest sample of. */
+  const rowTrend = (i: number) => scoreSeries(history.slice(i), 5)
+  const rowDelta = (i: number) => sessionDelta(history.slice(i))
 
   // Every other screen renders the shell's canonical points balance; the
   // dashboard was the only one reading the ledger directly, so it alone dropped
@@ -217,12 +240,21 @@ export default function DashboardPage() {
                   </div>
                   {/* Canonical reads the latest session here — the same 24 / 15 /
                       62.5 % the SHOT SUMMARY card beside it shows — not the
-                      lifetime analysis count. */}
-                  <div className="mt-[14px] flex gap-[34px]">
-                    <Stat value={hasData ? "24" : "0"} label="SHOTS" />
-                    <Stat value={hasData ? "15" : "0"} label="MAKES" />
-                    <Stat value={hasData ? "62.5%" : "—"} label="MAKE %" />
-                    <Stat value={score ?? "—"} label="FORM SCORE" />
+                      lifetime analysis count. Ruled off from each other and
+                      spread across the row, as canonical draws them. */}
+                  <div className="mt-[14px] flex divide-x divide-[var(--shotiq-color-rule)]">
+                    <div className="flex-1 pr-[16px]"><Stat value={hasData ? "24" : "0"} label="SHOTS" /></div>
+                    <div className="flex-1 px-[16px]"><Stat value={hasData ? "15" : "0"} label="MAKES" /></div>
+                    <div className="flex-1 px-[16px]"><Stat value={hasData ? "62.5%" : "—"} label="MAKE %" /></div>
+                    <div className="flex-1 pl-[16px]">
+                      <Stat value={score ?? "—"} label="FORM SCORE" />
+                      {score != null && (
+                        <div className="mt-[3px] flex items-center gap-[6px] text-[12px] text-[var(--shotiq-color-graphite)]">
+                          <span className="h-[7px] w-[7px] rounded-full" style={{ background: band.color }} />
+                          {band.label.charAt(0) + band.label.slice(1).toLowerCase()}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -245,30 +277,33 @@ export default function DashboardPage() {
                 [hasData ? String(stats!.totalAnalyses * 24) : "0", "TOTAL SHOTS", "All time", "var(--shotiq-color-ink)"],
                 [improvement, "IMPROVEMENT", "vs last 30 days", "var(--shotiq-color-confirmGreen)"],
               ].map(([v, l, sub, c]) => (
-                <div key={l} className="flex-1 px-[6px]">
-                  <div className="text-[10px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">{l}</div>
+                // The tile labels are single-line in canonical; the tracking was
+                // pushing "AVG. FORM SCORE" onto a second row inside the 430px
+                // rail, so the gutters shrank and the tracking came off.
+                <div key={l} className="min-w-0 flex-1 px-[3px]">
+                  <div className="whitespace-nowrap text-[9px] text-[var(--shotiq-color-graphite)]">{l}</div>
                   <div className="shotiq-numeric mt-[4px] text-[26px] leading-[28px]" style={{ color: c }}>{v}</div>
-                  <div className="mt-[2px] text-[10px] text-[var(--shotiq-color-graphite)]">{sub}</div>
+                  <div className="mt-[2px] whitespace-nowrap text-[10px] text-[var(--shotiq-color-graphite)]">{sub}</div>
                 </div>
               ))}
             </Card>
 
             <SectionLabel className="mt-[14px]">SHOT SUMMARY (LATEST SESSION)</SectionLabel>
-            <Card className="mt-[10px] flex items-center gap-[26px] px-[20px] py-[18px]">
-              <Stat value={hasData ? "24" : "0"} label="SHOTS" />
-              <Stat value={hasData ? "15" : "0"} label="MAKES" />
-              <Stat value={hasData ? "62.5%" : "—"} label="MAKE %" />
-              <div className="ml-auto text-right">
-                <TrendLine points={[3, 2, 4, 3, 5, 6]} width={96} height={34} />
-                <div className="text-[10px] text-[var(--shotiq-color-confirmGreen)]">{improvement} vs last session</div>
+            <Card className="mt-[10px] flex items-center divide-x divide-[var(--shotiq-color-rule)] px-[20px] py-[18px]">
+              <div className="flex-1 pr-[14px]"><Stat value={hasData ? "24" : "0"} label="SHOTS" /></div>
+              <div className="flex-1 px-[14px]"><Stat value={hasData ? "15" : "0"} label="MAKES" /></div>
+              <div className="flex-1 px-[14px]"><Stat value={hasData ? "62.5%" : "—"} label="MAKE %" /></div>
+              <div className="shrink-0 pl-[14px] text-right">
+                <TrendLine points={trend} width={96} height={34} />
+                <div className={`text-[10px] ${improvementTone}`}>{improvement} vs last session</div>
               </div>
             </Card>
 
             <Card className="mt-[10px] flex divide-x divide-[var(--shotiq-color-rule)]">
               <div className="flex-1 px-[18px] py-[16px]">
                 <SectionLabel>MECHANICS TREND</SectionLabel>
-                <TrendLine points={[2, 3, 2.5, 4, 3.5, 5]} width={150} height={52} />
-                <div className="text-[11px] text-[var(--shotiq-color-confirmGreen)]">{improvement} vs last 7 days</div>
+                <TrendLine points={trend} width={150} height={52} />
+                <div className={`text-[11px] ${improvementTone}`}>{improvement} vs last 7 days</div>
               </div>
               <div className="w-[150px] px-[18px] py-[16px]">
                 <SectionLabel>FORM SCORE</SectionLabel>
@@ -285,38 +320,59 @@ export default function DashboardPage() {
               <Link href="/results/demo/history" className="text-[12px] text-[var(--shotiq-color-graphite)]">View all analyses ›</Link>
             </div>
             <Card className="mt-[10px] divide-y divide-[var(--shotiq-color-rule)]">
-              {(recent.length ? recent : [null, null, null]).map((r, i) => (
+              {(recent.length ? recent : [null, null, null]).map((r, i) => {
+                const rb = scoreBand(r?.score ?? null)
+                return (
                 <div key={i} className="flex items-center gap-[14px] px-[14px] py-[12px]">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`/images/canonical/080-recent-${(i % 3) + 1}.png`} alt=""
-                       className="h-[43px] w-[86px] shrink-0 rounded-[4px] object-cover" />
+                  {/* Canonical stamps the clip length onto every thumbnail. */}
+                  <div className="relative h-[43px] w-[86px] shrink-0">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={`/images/canonical/080-recent-${(i % 3) + 1}.png`} alt=""
+                         className="h-full w-full rounded-[4px] object-cover" />
+                    <span className="shotiq-numeric absolute bottom-[3px] right-[3px] rounded-[2px] bg-black/70 px-[4px] text-[9px] leading-[13px] text-white">
+                      {["0:07", "0:06", "0:05"][i % 3]}
+                    </span>
+                  </div>
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-[14px] font-semibold">{r?.title ?? (loading ? "Loading…" : "No analysis yet")}</div>
                     <div className="truncate text-[11px] text-[var(--shotiq-color-graphite)]">{r ? `${r.when} · ${r.style}` : ""}</div>
                   </div>
-                  <div className="shotiq-numeric text-[22px]">{r?.score ?? "—"}</div>
+                  <div className="text-right">
+                    <div className="shotiq-numeric text-[22px] leading-[24px]">{r?.score ?? "—"}</div>
+                    {r?.score != null && (
+                      <div className="flex items-center justify-end gap-[5px] text-[10px] text-[var(--shotiq-color-graphite)]">
+                        <span className="h-[6px] w-[6px] rounded-full" style={{ background: rb.color }} />
+                        {rb.label.charAt(0) + rb.label.slice(1).toLowerCase()}
+                      </div>
+                    )}
+                  </div>
                   <MoreVertical className="h-[15px] w-[15px] text-[var(--shotiq-color-graphite)]" />
                 </div>
-              ))}
+              )})}
             </Card>
           </aside>
         </div>
 
         {/* bottom trends strip */}
         <div className="mx-[28px] mb-[10px] mt-[6px]">
-          <Card className="flex items-center divide-x divide-[var(--shotiq-color-rule)] px-[10px] py-[12px]">
-            <div className="w-[130px] px-[12px] text-[12px] font-bold leading-[16px] tracking-[0.05em]">YOUR RECENT<br />TRENDS</div>
-            {[["Form Score", score ?? "—", improvement], ["Shooting Consistency", hasData ? "62.5%" : "—", "+6.4%"],
-              ["Release Speed", hasData ? "1.32s" : "—", "+3.2%"], ["Elbow Alignment", hasData ? "92%" : "—", "+7.6%"],
-              ["Balance", hasData ? "88%" : "—", "+5.1%"]].map(([l, v, d]) => (
-              <div key={String(l)} className="flex flex-1 items-center gap-[14px] px-[16px]">
-                <div>
-                  <div className="text-[11px] text-[var(--shotiq-color-graphite)]">{l}</div>
+          {/* Padding and gutters come off so the metric labels stay on one line
+              inside the width the 196px rail leaves. */}
+          <Card className="flex items-center divide-x divide-[var(--shotiq-color-rule)] px-[4px] py-[12px]">
+            <div className="w-[92px] shrink-0 px-[10px] text-[12px] font-bold leading-[16px] tracking-[0.04em]">YOUR RECENT<br />TRENDS</div>
+            {([["Form Score", score ?? "—", improvement, trend],
+               ["Shooting Consistency", hasData ? "62.5%" : "—", "+6.4%", [56, 58, 57, 60, 59, 62.5]],
+               ["Release Speed", hasData ? "1.32s" : "—", "+3.2%", [1.42, 1.40, 1.38, 1.39, 1.35, 1.32]],
+               ["Elbow Alignment", hasData ? "92%" : "—", "+7.6%", [85, 86, 88, 87, 90, 92]],
+               ["Balance", hasData ? "88%" : "—", "+5.1%", [83, 84, 86, 85, 87, 88]]] as
+               [string, React.ReactNode, string, number[]][]).map(([l, v, d, pts]) => (
+              <div key={l} className="flex min-w-0 flex-1 items-center gap-[8px] px-[10px]">
+                <div className="min-w-0">
+                  <div className="whitespace-nowrap text-[11px] text-[var(--shotiq-color-graphite)]">{l}</div>
                   <div className="shotiq-numeric text-[22px] leading-[26px]">{v}</div>
                 </div>
-                <TrendLine points={[3, 2, 3.5, 3, 4, 3.6, 4.5]} width={90} height={30}
+                <TrendLine points={pts} width={72} height={30}
                            stroke="var(--shotiq-color-analysisBlue)" dotFill="var(--shotiq-color-analysisBlue)" />
-                <div className="text-[11px] text-[var(--shotiq-color-confirmGreen)]">{hasData ? d : ""}</div>
+                <div className="whitespace-nowrap text-[11px] text-[var(--shotiq-color-confirmGreen)]">{hasData ? d : ""}</div>
               </div>
             ))}
           </Card>
@@ -350,22 +406,25 @@ export default function DashboardPage() {
           })}
         </div>
 
-        <div className="mt-[16px] flex gap-[26px]">
+        {/* The 196px rail costs this row ~110px against canonical's 88px icon
+            rail; it is recovered from the media column and the gutters so the
+            coaching-target headline still sets on one line. */}
+        <div className="mt-[16px] flex gap-[20px]">
           {/* latest analysis */}
-          <div className="w-[588px] shrink-0">
+          <div className="w-[500px] shrink-0">
             <SectionLabel>LATEST ANALYSIS</SectionLabel>
             {/* Exact frame cropped from the canonical screen (079, x122 y216 588x366). */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/images/canonical/079-latest-analysis.png" alt="Latest analyzed jump shot"
-                 className="mt-[10px] h-[366px] w-[588px] rounded-[4px] object-cover" />
+                 className="mt-[10px] h-[311px] w-[500px] rounded-[4px] object-cover" />
             {/* Phase figures + labels: exact strip from the canonical screen. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/images/canonical/079-phase-strip.png" alt="Shot phases: setup, load, rise, release, follow-through"
-                 className="mt-[4px] h-[66px] w-[588px]" />
+                 className="mt-[4px] h-[60px] w-[500px]" />
           </div>
 
           {/* form score column */}
-          <div className="w-[170px] shrink-0 pt-[30px]">
+          <div className="w-[152px] shrink-0 pt-[30px]">
             <div className="text-right text-[12px] text-[var(--shotiq-color-graphite)]">
               {recent[0]?.when ? recent[0].when : ""}
             </div>
