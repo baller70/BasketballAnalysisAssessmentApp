@@ -502,6 +502,12 @@ struct AnalysisResultOverviewView: View { // 038
                                 }
                                 .foregroundStyle(ShotIQColor.ink)
                                 .padding(.horizontal, 16).frame(height: 52)
+                                // Outline row, no fill: without a content shape
+                                // only the glyph, the words and the chevron are
+                                // touchable and the Spacer's gap between them —
+                                // which is where the middle of the row is — is a
+                                // hole that swallows the tap.
+                                .contentShape(Rectangle())
                                 .overlay(RoundedRectangle(cornerRadius: ShotIQRadius.control).stroke(ShotIQColor.rule))
                             }
                             .buttonStyle(.plain)
@@ -909,9 +915,17 @@ struct ShotBreakdownView: View {    // 041
                                     Text("FORM SCORE").font(.system(size: 12, weight: .semibold)).kerning(0.8)
                                         .foregroundStyle(ShotIQColor.graphite)
                                     HStack(alignment: .center, spacing: 14) {
+                                        // A 62pt numeral with no line limit next
+                                        // to a rigid 110pt bar: the card ran out
+                                        // of width and the score wrapped between
+                                        // its own digits — "8" over "2" on 041.
+                                        // The numeral is now unbreakable and the
+                                        // bar is the elastic half of the row.
                                         Text("82").font(.custom("Tungsten-Semibold", size: 62))
                                             .foregroundStyle(ShotIQColor.shotiqOrange)
-                                        ScoreBar(pct: 0.82).frame(width: 110)
+                                            .lineLimit(1)
+                                            .fixedSize(horizontal: true, vertical: false)
+                                        ScoreBar(pct: 0.82).frame(maxWidth: 110)
                                     }
                                 }
                                 Spacer()
@@ -1514,9 +1528,13 @@ struct AnnotationToolbarView: View { // 043
     }
     private func annotStat(_ label: String, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(label).font(.system(size: 10, weight: .medium)).kerning(0.5)
+            // Four labels across the width, the longest of which is "MAKE %":
+            // at 10pt SF with 0.5 tracking it did not fit its quarter and broke
+            // to "MAKE" / "%" on 043.
+            Text(label).shotiqMicroCaps()
                 .foregroundStyle(ShotIQColor.graphite)
             Text(value).font(.custom("Tungsten-Semibold", size: 24)).foregroundStyle(ShotIQColor.ink)
+                .lineLimit(1).minimumScaleFactor(0.7)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.leading, 4)

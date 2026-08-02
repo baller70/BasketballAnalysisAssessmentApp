@@ -30,15 +30,24 @@ struct PhotoThumb: View {
 }
 
 /// Small gray capsule chip (canonical drill meta tags).
+/// Drill metadata pill ("20 min", "Form Focus", "Intermediate").
+///
+/// `lineLimit(1)` alone let the pill be squeezed to whatever the row had left,
+/// so the label ellipsized inside the capsule — "Form…", "Inter…", "All Le…" on
+/// 054/058. Canonical fits three of these in the ~164pt the drill row leaves
+/// (12 min 28.6pt, Game Speed 44.2pt, All Levels 37.8pt); the condensed width,
+/// the 9pt step and the tighter inset bring the app's three inside the same
+/// budget, and `fixedSize` stops the row from taking it back.
 struct TagChip: View {
     let text: String
     var body: some View {
         Text(text)
-            .font(.system(size: 10, weight: .medium))
+            .font(.system(size: 9, weight: .medium).width(.condensed))
             .foregroundStyle(ShotIQColor.graphite)
-            .padding(.horizontal, 8).padding(.vertical, 4)
-            .background(ShotIQColor.warmCanvas, in: Capsule())
             .lineLimit(1)
+            .fixedSize(horizontal: true, vertical: false)
+            .padding(.horizontal, 6).padding(.vertical, 4)
+            .background(ShotIQColor.warmCanvas, in: Capsule())
     }
 }
 
@@ -47,8 +56,7 @@ struct MicroLabel: View {
     let text: String
     var body: some View {
         Text(text)
-            .font(.system(size: 10, weight: .semibold))
-            .kerning(0.7)
+            .shotiqMicroCaps(10, weight: .semibold)
             .foregroundStyle(ShotIQColor.graphite)
     }
 }
@@ -140,7 +148,10 @@ struct TrainingHomeView: View {     // 054
                             VStack(spacing: 0) {
                                 ForEach(Array(savedDrills.enumerated()), id: \.offset) { i, d in
                                     NavigationLink { DrillDetailView(name: d.0) } label: {
-                                        HStack(spacing: 10) {
+                                        // 8 rather than 10 across four gutters:
+                                        // the three metadata pills need ~164pt and
+                                        // the row was leaving them 166.
+                                        HStack(spacing: 8) {
                                             PhotoThumb(width: 84, height: 76,
                                                        photo: i < savedDrillPhotos.count ? savedDrillPhotos[i] : nil)
                                             WorkoutGlyph(kind: .init(drillName: d.0), size: 28)
@@ -148,7 +159,7 @@ struct TrainingHomeView: View {     // 054
                                             VStack(alignment: .leading, spacing: 5) {
                                                 Text(d.0).shotiqBody(15, weight: .semibold)
                                                     .lineLimit(1).minimumScaleFactor(0.8)
-                                                HStack(spacing: 6) {
+                                                HStack(spacing: 5) {
                                                     ForEach(d.1, id: \.self) { TagChip(text: $0) }
                                                 }
                                                 Text(d.2).font(.system(size: 11))
@@ -459,14 +470,21 @@ struct DiscoverDrillsView: View {   // 056
                                     .buttonStyle(.plain)
                                     HRule()
                                     MicroLabel(text: "RELATED FLAWS DETECTED")
-                                    HStack(spacing: 14) {
+                                    // Three labelled flaw marks share the ~250pt
+                                    // this card's text column has left. At 11pt
+                                    // with 14pt gutters the longest one bottomed
+                                    // out on its scale floor and still ellipsized
+                                    // — "Early wrist b…" on 056. One step down the
+                                    // ramp plus tighter gutters puts all three
+                                    // inside the column at full size.
+                                    HStack(spacing: 8) {
                                         ForEach(["Elbow flare", "Early wrist bend", "Left lean"], id: \.self) { f in
                                             HStack(spacing: 5) {
                                                 FlawFigure(kind: .init(flawLabel: f), size: 16,
                                                            accent: ShotIQColor.reviewRed)
                                                     .foregroundStyle(ShotIQColor.graphite)
-                                                Text(f).font(.system(size: 11)).foregroundStyle(ShotIQColor.ink)
-                                                    .lineLimit(1).minimumScaleFactor(0.7)
+                                                Text(f).font(.system(size: 10)).foregroundStyle(ShotIQColor.ink)
+                                                    .lineLimit(1).minimumScaleFactor(0.6)
                                             }
                                         }
                                     }

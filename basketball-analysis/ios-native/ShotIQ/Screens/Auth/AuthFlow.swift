@@ -163,6 +163,14 @@ struct SplashView: View {          // 001 · ios.splash
                 Spacer()
             }
         }
+        // Tapping the brand moment moves on immediately. In the shipped app that
+        // is just an impatient user skipping a 2.5s hold; under
+        // -uiTestHoldSplash it is the only thing that ends the hold, which is
+        // what lets the screenshot harness see screen 001 at all (its first
+        // accessibility query lands 15-30s after launch — see
+        // UITestHooks.holdSplash).
+        .contentShape(Rectangle())
+        .onTapGesture { app.leaveSplash() }
         .task { await app.boot() }
     }
 }

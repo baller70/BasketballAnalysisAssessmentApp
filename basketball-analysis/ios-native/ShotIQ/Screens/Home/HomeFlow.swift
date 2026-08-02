@@ -77,7 +77,10 @@ private func homeCTALabel(_ title: String, icon: String = "camera.metering.cente
         CaptureReticleGlyph(size: 19)
         Text(title).font(.system(size: ShotIQType.button + 1, weight: .semibold))
     }
-    .frame(maxWidth: .infinity).frame(height: 58)
+    // 58pt against canonical 018's measured 46.1pt — this is the CTA the review
+    // clocked at ~23% over. It shares the canonical control height with
+    // PrimaryButton now.
+    .frame(maxWidth: .infinity).frame(height: ShotIQType.controlHeight)
     .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 8))
     .foregroundStyle(.white)
     .lineLimit(1)
@@ -704,9 +707,8 @@ struct ProfileMenuView: View {      // 020
                             Text("+8.1%").font(.custom("Tungsten-Semibold", size: 24))
                                 .foregroundStyle(ShotIQColor.confirmGreen)
                                 .lineLimit(1).minimumScaleFactor(0.7)
-                            Text("VS LAST SESSION").font(.system(size: 9, weight: .medium)).kerning(0.4)
+                            Text("VS LAST SESSION").shotiqMicroCaps()
                                 .foregroundStyle(ShotIQColor.graphite)
-                                .lineLimit(1).minimumScaleFactor(0.6)
                         }
                         .frame(maxWidth: .infinity)
                     }
@@ -715,19 +717,19 @@ struct ProfileMenuView: View {      // 020
                     HStack(spacing: 0) {
                         VStack(spacing: 2) {
                             Text("24").font(.custom("Tungsten-Semibold", size: 24)).foregroundStyle(ShotIQColor.ink)
-                            Text("SHOTS").font(.system(size: 9, weight: .medium)).kerning(0.6)
+                            Text("SHOTS").shotiqMicroCaps()
                                 .foregroundStyle(ShotIQColor.graphite)
                         }.frame(maxWidth: .infinity)
                         Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 36)
                         VStack(spacing: 2) {
                             Text("15").font(.custom("Tungsten-Semibold", size: 24)).foregroundStyle(ShotIQColor.ink)
-                            Text("MAKES").font(.system(size: 9, weight: .medium)).kerning(0.6)
+                            Text("MAKES").shotiqMicroCaps()
                                 .foregroundStyle(ShotIQColor.graphite)
                         }.frame(maxWidth: .infinity)
                         Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 36)
                         VStack(spacing: 2) {
                             Text("62.5%").font(.custom("Tungsten-Semibold", size: 24)).foregroundStyle(ShotIQColor.ink)
-                            Text("ACCURACY").font(.system(size: 9, weight: .medium)).kerning(0.6)
+                            Text("ACCURACY").shotiqMicroCaps()
                                 .foregroundStyle(ShotIQColor.graphite)
                         }.frame(maxWidth: .infinity)
                     }
@@ -755,7 +757,14 @@ struct ProfileMenuView: View {      // 020
                                             body: ["automation": ["dashboardMode": mode.lowercased()]])
                                     }
                                 } label: {
+                                    // Without a fixed intrinsic width the row's
+                                    // trailing segmented control is the thing
+                                    // the HStack squeezes, and "Analysis" /
+                                    // "Training" broke mid-word into
+                                    // "Analy sis" / "Traini ng" on 020.
                                     Text(mode).font(.system(size: 13, weight: .semibold))
+                                        .lineLimit(1)
+                                        .fixedSize(horizontal: true, vertical: false)
                                         .padding(.horizontal, 12).padding(.vertical, 8)
                                         .background(dashboardMode == mode ? ShotIQColor.shotiqOrange : ShotIQColor.paper)
                                         .foregroundStyle(dashboardMode == mode ? .white : ShotIQColor.ink)

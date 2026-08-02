@@ -1890,7 +1890,14 @@ struct MediaDetailView: View {      // 069
                                 PhotoThumb(width: 62, height: 48, icon: "chart.xyaxis.line")
                                 VStack(alignment: .leading, spacing: 3) {
                                     HStack(spacing: 4) {
+                                        // The date and the "Open analysis" pill
+                                        // took the row's width first, so the title
+                                        // broke inside its own word — "Shot
+                                        // Analysi / s" on 069. The title is the
+                                        // fixed part of this row; the date is the
+                                        // part that may abbreviate.
                                         Text("Shot Analysis").font(.system(size: 14, weight: .bold))
+                                            .lineLimit(1).fixedSize()
                                         Text("• May 21, 2025").font(.system(size: 11))
                                             .foregroundStyle(ShotIQColor.graphite)
                                             .lineLimit(1).minimumScaleFactor(0.7)
@@ -2345,6 +2352,11 @@ struct ProfileView: View {          // 070
                 Image(systemName: "chevron.right").foregroundStyle(ShotIQColor.graphite)
             }
             .padding(.vertical, 14).foregroundStyle(ShotIQColor.ink)
+            // The row paints no background, so without this only the glyph, the
+            // word and the chevron are touchable — the wide gap the Spacer opens
+            // between them is a hole. Which of those a tap lands in decides
+            // whether the row responds at all.
+            .contentShape(Rectangle())
             .overlay(HRule(), alignment: .bottom)
         }
         .buttonStyle(.plain)
@@ -2730,14 +2742,17 @@ struct SettingsHubView: View {      // 071
     }
 }
 
-struct ShareResultsView: View {     // 072
-    @EnvironmentObject var app: AppState
-    @State private var renderedCard: UIImage?
-    @State private var copied = false
-    private let shareText = "My ShotIQ form score: 82 (GOOD) — 62.5% make rate, trending +8.1%. 🏀"
-
-    /// Compact share-card rendered off-screen for the image share options.
-    private var snapshotCard: some View {
+/// Compact share card rasterised for the image share options.
+///
+/// This is a standalone view taking a plain `String`, deliberately mirroring
+/// `PlayerCardExportView`: `ImageRenderer` hosts its content in a detached view
+/// graph, so the thing it renders must not close over the screen that owns it.
+/// The previous shape — a `snapshotCard` computed property on `ShareResultsView`
+/// itself — handed the renderer a view value that captured the screen's own
+/// `@State` and `@EnvironmentObject` boxes.
+private struct ShareCardExportView: View {
+    let name: String
+    var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 0) {
                 Text("SHOT").font(.system(size: 16, weight: .black).width(.condensed))
@@ -2747,7 +2762,7 @@ struct ShareResultsView: View {     // 072
                 Text("SHOTIQ.COM").font(.system(size: 9, weight: .semibold))
                     .foregroundStyle(ShotIQColor.graphite)
             }
-            Text((app.user?.displayName ?? "Jordan Ellis").uppercased())
+            Text(name.uppercased())
                 .font(.system(size: 24, weight: .heavy).width(.condensed))
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text("82").font(.custom("Tungsten-Semibold", size: 54))
@@ -2767,12 +2782,21 @@ struct ShareResultsView: View {     // 072
         .background(.white)
         .overlay(Rectangle().stroke(ShotIQColor.rule))
     }
-    /// Renders the share card once. Without the guard this re-assigned state
-    /// that the share row's own `if let renderedCard` branch depends on, so the
-    /// `.task` attached to that row re-fired and the screen re-rendered forever.
+}
+
+struct ShareResultsView: View {     // 072
+    @EnvironmentObject var app: AppState
+    @State private var renderedCard: UIImage?
+    @State private var copied = false
+    private let shareText = "My ShotIQ form score: 82 (GOOD) — 62.5% make rate, trending +8.1%. 🏀"
+
+    /// Rasterises the share card once, on demand. Nothing on this screen runs it
+    /// on appear any more: a full synchronous `ImageRenderer` pass at scale 3 was
+    /// the one thing this destination did that no other pushed screen does, and
+    /// nothing here displays the bitmap until the reader asks to share it.
     @MainActor private func renderCard() {
         guard renderedCard == nil else { return }
-        let renderer = ImageRenderer(content: snapshotCard)
+        let renderer = ImageRenderer(content: ShareCardExportView(name: app.user?.displayName ?? "Jordan Ellis"))
         renderer.scale = 3
         renderedCard = renderer.uiImage
     }
@@ -2878,23 +2902,8 @@ struct ShareResultsView: View {     // 072
                     Text("SHARE PREVIEW").font(.system(size: 11, weight: .bold)).kerning(0.8)
                         .padding(.top, 20)
                     HStack(spacing: 10) {
-                        if let renderedCard {
-                            ShareLink(item: Image(uiImage: renderedCard),
-                                      preview: SharePreview("ShotIQ results", image: Image(uiImage: renderedCard))) {
-                                shareOption("square.and.arrow.up", "Share image", ShotIQColor.shotiqOrange)
-                            }
-                            ShareLink(item: Image(uiImage: renderedCard),
-                                      preview: SharePreview("ShotIQ results", image: Image(uiImage: renderedCard))) {
-                                shareOption("arrow.down.to.line", "Save image", ShotIQColor.ink)
-                            }
-                        } else {
-                            ShareLink(item: shareText) {
-                                shareOption("square.and.arrow.up", "Share image", ShotIQColor.shotiqOrange)
-                            }
-                            Button { renderCard() } label: {
-                                shareOption("arrow.down.to.line", "Save image", ShotIQColor.ink)
-                            }
-                        }
+                        imageShareControl("square.and.arrow.up", "Share image", ShotIQColor.shotiqOrange)
+                        imageShareControl("arrow.down.to.line", "Save image", ShotIQColor.ink)
                         Button {
                             UIPasteboard.general.string = shareText
                             copied = true
@@ -2916,10 +2925,23 @@ struct ShareResultsView: View {     // 072
                     .padding(.horizontal, 20)
                     .padding(.top, 14).padding(.bottom, 30)
                 }
-                // Rendered once for the whole screen, not from inside the share
-                // row whose contents depend on the rendered image.
-                .task { renderCard() }
             }
+        }
+    }
+    /// "Share image" / "Save image". Both hand the reader the rendered card;
+    /// until it exists the control rasterises it and the ShareLink takes over,
+    /// which is exactly how PlayerCardView's download control behaves.
+    @ViewBuilder
+    private func imageShareControl(_ icon: String, _ label: String, _ tint: Color) -> some View {
+        if let renderedCard {
+            ShareLink(item: Image(uiImage: renderedCard),
+                      preview: SharePreview("ShotIQ results", image: Image(uiImage: renderedCard))) {
+                shareOption(icon, label, tint)
+            }
+            .buttonStyle(.plain)
+        } else {
+            Button { renderCard() } label: { shareOption(icon, label, tint) }
+                .buttonStyle(.plain)
         }
     }
     private func shareStat(_ icon: String, _ value: String, _ label: String) -> some View {
