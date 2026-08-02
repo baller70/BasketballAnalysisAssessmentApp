@@ -169,7 +169,7 @@ export default function ComparePage() {
       </div>
 
       {/* phase selector */}
-      <div className="mt-[8px] flex items-center gap-[16px]">
+      <div className="mt-[6px] flex items-center gap-[16px]">
         <SectionLabel>SELECT PHASE</SectionLabel>
         {[0, 1].map((side) => (
           <div key={side} className="flex flex-1 items-center justify-between px-[10px]">
@@ -190,7 +190,7 @@ export default function ComparePage() {
       </div>
 
       {/* analysis band */}
-      <div className="mt-[10px] flex gap-[16px]">
+      <div className="mt-[8px] flex gap-[16px]">
         <Card className="w-[250px] shrink-0 px-[18px] py-[10px]">
           <SectionLabel>FORM SCORE</SectionLabel>
           <div className="mt-[8px] flex items-center gap-[14px]">
@@ -261,15 +261,15 @@ export default function ComparePage() {
       </div>
 
       {/* footer band */}
-      <div className="mt-[10px] flex gap-[16px]">
-        <Card className="flex flex-1 items-center gap-[14px] px-[20px] py-[14px]">
+      <div className="mb-[10px] mt-[8px] flex gap-[16px]">
+        <Card className="flex flex-1 items-center gap-[14px] px-[20px] py-[10px]">
           <Lightbulb className="h-[26px] w-[26px] shrink-0" strokeWidth={1.5} />
           <div>
             <SectionLabel>FOCUS RECOMMENDATION</SectionLabel>
             <p className="text-[13px] text-[var(--shotiq-color-graphite)]">Keep elbow stacked through release to improve your release angle and consistency.</p>
           </div>
         </Card>
-        <Card className="flex w-[420px] shrink-0 items-center gap-[14px] px-[20px] py-[14px]">
+        <Card className="flex w-[420px] shrink-0 items-center gap-[14px] px-[20px] py-[10px]">
           <span className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-full bg-[var(--shotiq-color-analysisBlue)] text-white">
             <WorkoutGlyph kind="release" size={22} />
           </span>

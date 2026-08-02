@@ -67,41 +67,35 @@ export default function OnboardingPage() {
   return (
     <div data-testid="screen-desktop-web-onboarding" className="flex min-h-full flex-col">
      <div className="flex flex-1">
-      {/* step rail */}
-      <aside className="flex w-[200px] shrink-0 flex-col border-r border-[var(--shotiq-color-rule)] pt-[14px]">
-        {STEPS.map(([s, Icon], i) => (
-          <button key={s} type="button" onClick={() => setStep(i + 1)} aria-current={step === i + 1 ? "true" : undefined}
-                  className={`relative flex h-[44px] items-center gap-[10px] px-[20px] text-left text-[12px] font-bold tracking-[0.05em] ${
-                    step === i + 1 ? "bg-[var(--shotiq-color-warmCanvas)] text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
-            {step === i + 1 && <span className="absolute inset-y-0 left-0 w-[3px] bg-[var(--shotiq-color-shotiqOrange)]" />}
-            {Icon
-              ? <Icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.6} />
-              : <PoseGlyph phase="setup" size={18} active={step === i + 1} />}
-            {s.toUpperCase()}
-          </button>
-        ))}
-        <Card className="mx-[14px] mb-[16px] mt-auto p-[12px]">
-          <div className="text-[12px]">Your progress</div>
-          <div className="text-[12px] font-semibold">Step {step} of {STEPS.length}</div>
-          <div className="text-[11px] text-[var(--shotiq-color-graphite)]">{STEPS[step - 1][0]}</div>
-          <div className="mt-[6px] h-[6px] rounded-full bg-[var(--shotiq-color-rule)]">
-            <div className="h-full rounded-full bg-[var(--shotiq-color-shotiqOrange)]" style={{ width: `${(step / STEPS.length) * 100}%` }} />
-          </div>
-          <p className="mt-[8px] text-[10px] leading-[14px] text-[var(--shotiq-color-graphite)]">
-            Questions help ShotIQ personalize your analysis, feedback, and training.
-          </p>
-          <button type="button" onClick={finish} className="mt-[8px] flex items-center gap-[6px] text-[11px]">
-            <Save className="h-[12px] w-[12px]" /> Save and finish later
-          </button>
-        </Card>
-      </aside>
-
-      {/* form */}
-      <div className="min-w-0 flex-1 px-[30px] py-[20px]">
+      {/* form — the wizard steps ride a horizontal bar above the card rather
+          than a second vertical rail stacked on the app rail, which cost the
+          form and the WHY IT MATTERS hero ~200px of width between them. */}
+      <div className="min-w-0 flex-1 px-[30px] py-[18px]">
         <h1 className="shotiq-display text-[52px] leading-[54px]">WELCOME, {first.toUpperCase()}</h1>
-        <p className="mt-[4px] max-w-[460px] text-[14px] text-[var(--shotiq-color-graphite)]">
+        <p className="mt-[4px] max-w-[560px] text-[14px] text-[var(--shotiq-color-graphite)]">
           Let&apos;s measure your baseline so ShotIQ can deliver personalized analysis and training that match your game.
         </p>
+
+        <div className="mt-[12px] flex items-end gap-[26px] border-b border-[var(--shotiq-color-rule)]">
+          {STEPS.map(([s, Icon], i) => (
+            <button key={s} type="button" onClick={() => setStep(i + 1)} aria-current={step === i + 1 ? "true" : undefined}
+                    className={`relative flex items-center gap-[8px] pb-[9px] text-[12px] font-bold tracking-[0.05em] ${
+                      step === i + 1 ? "text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>
+              {Icon
+                ? <Icon className="h-[16px] w-[16px] shrink-0" strokeWidth={1.6} />
+                : <PoseGlyph phase="setup" size={16} active={step === i + 1} />}
+              {s.toUpperCase()}
+              {step === i + 1 && <span className="absolute inset-x-0 bottom-0 h-[3px] bg-[var(--shotiq-color-shotiqOrange)]" />}
+            </button>
+          ))}
+          <div className="ml-auto flex items-center gap-[10px] pb-[8px]">
+            <span className="text-[11px] text-[var(--shotiq-color-graphite)]">Step {step} of {STEPS.length}</span>
+            <span className="block h-[6px] w-[120px] rounded-full bg-[var(--shotiq-color-rule)]">
+              <span className="block h-full rounded-full bg-[var(--shotiq-color-shotiqOrange)]"
+                    style={{ width: `${(step / STEPS.length) * 100}%` }} />
+            </span>
+          </div>
+        </div>
 
         <Card className="mt-[14px] p-[22px]">
           <div className="flex items-center justify-between">
@@ -112,13 +106,18 @@ export default function OnboardingPage() {
             <div>
               <div className={lbl}>DOMINANT HAND <Info className="h-[10px] w-[10px]" /></div>
               <div className="mt-[6px] flex overflow-hidden rounded-[5px] border border-[var(--shotiq-color-rule)]">
-                {(["left", "right"] as const).map((h) => (
-                  <button key={h} type="button" onClick={() => store.setDominantHand(h)} data-testid={`hand-${h}`}
-                          aria-pressed={store.dominantHand === h}
-                          className={`h-[46px] flex-1 text-[14px] capitalize ${store.dominantHand === h ? "bg-[var(--shotiq-color-shotiqOrange)] font-medium text-white" : ""}`}>
-                    {h}
-                  </button>
-                ))}
+                {(["left", "right"] as const).map((hnd) => {
+                  // Canonical ships this control already answered (Right filled);
+                  // an unset store used to leave both halves blank.
+                  const on = (store.dominantHand ?? "right") === hnd
+                  return (
+                    <button key={hnd} type="button" onClick={() => store.setDominantHand(hnd)} data-testid={`hand-${hnd}`}
+                            aria-pressed={on}
+                            className={`h-[46px] flex-1 text-[14px] capitalize ${on ? "bg-[var(--shotiq-color-shotiqOrange)] font-medium text-white" : ""}`}>
+                      {hnd}
+                    </button>
+                  )
+                })}
               </div>
             </div>
             <div>
@@ -190,15 +189,6 @@ export default function OnboardingPage() {
               </div>
             </div>
           </div>
-          {/* Player bio — iOS 012-player-bio counterpart; persisted with the profile. */}
-          <div className="mt-[16px]">
-            <div className={lbl}>PLAYER BIO (OPTIONAL) <Info className="h-[10px] w-[10px]" /></div>
-            <textarea value={store.bio ?? ""} onChange={(e) => store.setBio(e.target.value)}
-                      data-testid="onboarding-bio" rows={3} maxLength={400}
-                      placeholder="Tell us about your game — playing style, teams, what you're working on…"
-                      className="mt-[6px] w-full resize-none rounded-[5px] border border-[var(--shotiq-color-rule)] p-[12px] text-[14px] leading-[20px] outline-none focus:border-[var(--shotiq-color-ink)]" />
-            <div className="mt-[2px] text-right text-[10px] text-[var(--shotiq-color-muted)]">{(store.bio ?? "").length}/400</div>
-          </div>
         </Card>
 
         <div className="mt-[14px] flex items-center justify-between">
@@ -219,10 +209,10 @@ export default function OnboardingPage() {
       </div>
 
       {/* why it matters rail */}
-      <aside className="w-[380px] shrink-0 border-l border-[var(--shotiq-color-rule)] px-[22px] py-[20px]">
+      <aside className="w-[430px] shrink-0 border-l border-[var(--shotiq-color-rule)] px-[22px] py-[20px]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/images/canonical/078-hero.png" alt="Shooter at release with elbow flex and release angle called out"
-             className="h-[220px] w-full rounded-[6px] object-cover" width={466} height={322} />
+             className="h-[300px] w-full rounded-[6px] object-cover" width={466} height={322} />
         <SectionLabel className="mt-[14px]">WHY IT MATTERS</SectionLabel>
         <p className="mt-[6px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
           Measuring your profile helps ShotIQ benchmark your mechanics and build feedback that&apos;s tailored to you.

@@ -141,7 +141,7 @@ export default function TrainingHubPage() {
       </div>
 
       {/* right rail */}
-      <aside className="w-[340px] shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[18px]">
+      <aside className="w-[368px] shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[18px]">
         {/* Coaching target and form score used to live in this screen's bespoke
             left sidebar. Navigation is now uniform app-wide, so they moved here
             rather than being dropped — compact, so the rail still fits the fold. */}
@@ -235,26 +235,26 @@ export default function TrainingHubPage() {
           {([["Pull-Up Jumper", "Today at 8:24 AM · Catch & Shoot", "82", "62.5%", "24 / 15"],
             ["Spot-Up Three", "May 11, 6:15 PM · Catch & Shoot", "78", "58.3%", "12 / 7"],
             ["Transition Pull-Up", "May 10, 4:02 PM · Off the Dribble", "75", "54.5%", "11 / 6"]] as const).map(([t, d, fs, mk, sm]) => (
-            <Link key={t} href="/results/demo/history" className="flex items-center gap-[8px] py-[8px] hover:bg-[var(--shotiq-color-warmCanvas)]">
-              <TrendLine points={[2, 3.4, 2.6, 4]} width={30} height={24} stroke="var(--shotiq-color-shotiqOrange)" dotFill="var(--shotiq-color-shotiqOrange)" />
+            <Link key={t} href="/results/demo/history" className="flex items-center gap-[6px] py-[8px] hover:bg-[var(--shotiq-color-warmCanvas)]">
+              <TrendLine points={[2, 3.4, 2.6, 4]} width={26} height={24} stroke="var(--shotiq-color-shotiqOrange)" dotFill="var(--shotiq-color-shotiqOrange)" />
               <div className="min-w-0 flex-1">
                 <div className="truncate text-[13px] font-semibold">{t}</div>
                 <div className="truncate text-[10px] text-[var(--shotiq-color-graphite)]">{d}</div>
               </div>
-              <div className="shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[8px]">
-                <div className="text-[8px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">FORM SCORE</div>
+              <div className="shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[6px]">
+                <div className="text-[8px] tracking-[0.04em] text-[var(--shotiq-color-graphite)]">FORM SCORE</div>
                 <div className="flex items-baseline gap-[4px]">
-                  <span className="shotiq-numeric text-[19px] leading-[22px]">{hasData ? fs : "—"}</span>
-                  <span className="text-[10px] text-[var(--shotiq-color-analysisBlue)]">Good</span>
+                  <span className="shotiq-numeric text-[19px] leading-[21px]">{hasData ? fs : "—"}</span>
+                  <span className="text-[9px] text-[var(--shotiq-color-analysisBlue)]">Good</span>
                 </div>
               </div>
-              <div className="shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[8px]">
-                <div className="text-[8px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">MAKE %</div>
-                <div className="shotiq-numeric text-[19px] leading-[22px]">{hasData ? mk : "—"}</div>
+              <div className="shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[6px]">
+                <div className="text-[8px] tracking-[0.04em] text-[var(--shotiq-color-graphite)]">MAKE %</div>
+                <div className="shotiq-numeric text-[19px] leading-[21px]">{hasData ? mk : "—"}</div>
               </div>
-              <div className="shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[8px]">
-                <div className="text-[8px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">SHOTS / MAKES</div>
-                <div className="shotiq-numeric text-[19px] leading-[22px]">{hasData ? sm : "—"}</div>
+              <div className="shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[6px]">
+                <div className="text-[8px] tracking-[0.04em] text-[var(--shotiq-color-graphite)]">SHOTS / MAKES</div>
+                <div className="shotiq-numeric text-[19px] leading-[21px]">{hasData ? sm : "—"}</div>
               </div>
             </Link>
           ))}

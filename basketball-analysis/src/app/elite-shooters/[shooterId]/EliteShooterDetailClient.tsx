@@ -141,7 +141,7 @@ export default function EliteShooterDetailClient() {
       </div>
 
       {/* identity + form score band */}
-      <div className="mt-[8px] flex items-center gap-[24px]">
+      <div className="mt-[6px] flex items-center gap-[24px]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={headshot} alt={shooter.name}
              className="h-[137px] w-[102px] shrink-0 rounded-[4px] object-cover" />
@@ -177,10 +177,10 @@ export default function EliteShooterDetailClient() {
       </div>
 
       {/* detail tabs */}
-      <nav className="mt-[10px] flex gap-[30px] border-b border-[var(--shotiq-color-rule)]" aria-label="Shooter detail">
+      <nav className="mt-[8px] flex gap-[30px] border-b border-[var(--shotiq-color-rule)]" aria-label="Shooter detail">
         {DETAIL_TABS.map((t) => (
           <button key={t} type="button" onClick={() => setTab(t)} aria-current={tab === t ? "true" : undefined}
-                  className={`relative pb-[9px] text-[12px] font-bold tracking-[0.05em] ${tab === t ? "text-[var(--shotiq-color-analysisBlue)]" : "text-[var(--shotiq-color-graphite)]"}`}>
+                  className={`relative pb-[7px] text-[12px] font-bold tracking-[0.05em] ${tab === t ? "text-[var(--shotiq-color-analysisBlue)]" : "text-[var(--shotiq-color-graphite)]"}`}>
             {t}
             {tab === t && <span className="absolute inset-x-0 bottom-0 h-[3px] bg-[var(--shotiq-color-analysisBlue)]" />}
           </button>
@@ -188,10 +188,10 @@ export default function EliteShooterDetailClient() {
       </nav>
 
       {/* body */}
-      <div className="mt-[12px] flex gap-[14px]">
+      <div className="mt-[10px] flex gap-[14px]">
         {/* hero media + phases */}
         <div className="w-[326px] shrink-0">
-          <div className="relative h-[300px] overflow-hidden rounded-[6px] bg-[#1B1D20]">
+          <div className="relative h-[288px] overflow-hidden rounded-[6px] bg-[#1B1D20]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={heroFrame} alt={`${shooter.name} form frame`} className="h-full w-full object-cover" />
             <span className="absolute bottom-[10px] left-[10px] grid h-[34px] w-[34px] place-items-center rounded-full bg-black/70">
@@ -214,7 +214,7 @@ export default function EliteShooterDetailClient() {
           <div className="flex items-center justify-between">
             <SectionLabel>MECHANICS BREAKDOWN</SectionLabel>
             <div className="flex items-center gap-[14px] text-[11px] text-[var(--shotiq-color-graphite)]">
-              <span className="flex items-center gap-[5px]"><span className="h-[9px] w-[9px] rounded-[2px] bg-[var(--shotiq-color-analysisBlue)]/30" /> Elite Range</span>
+              <span className="flex items-center gap-[5px]"><span className="h-[9px] w-[9px] rounded-[2px]" style={{ background: "rgba(45,108,223,0.30)" }} /> Elite Range</span>
               <span className="flex items-center gap-[5px]"><span className="h-[9px] w-[9px] rounded-[2px] bg-[var(--shotiq-color-shotiqOrange)]" /> You</span>
             </div>
           </div>
@@ -229,14 +229,14 @@ export default function EliteShooterDetailClient() {
             <tbody className="divide-y divide-[var(--shotiq-color-rule)]">
               {rows.map(([phase, metric, val, range, you, diff], i) => (
                 <tr key={i}>
-                  <td className="py-[5px] pr-[8px] text-[9px] font-bold tracking-[0.04em] text-[var(--shotiq-color-graphite)]">
+                  <td className="py-[3px] pr-[8px] text-[9px] font-bold tracking-[0.04em] text-[var(--shotiq-color-graphite)]">
                     {i === 0 || rows[i - 1][0] !== phase ? phase : ""}
                   </td>
-                  <td className="whitespace-nowrap pr-[8px] pt-[5px] align-top">{metric}</td>
-                  <td className="whitespace-nowrap pr-[8px] pt-[5px] align-top font-semibold">{val}</td>
-                  <td className="whitespace-nowrap pr-[8px] pt-[5px] align-top text-[var(--shotiq-color-graphite)]">{range}</td>
-                  <td className="whitespace-nowrap pr-[8px] pt-[5px] align-top">{you}</td>
-                  <td className={`whitespace-nowrap pt-[5px] align-top ${diff.startsWith("+") ? "text-[var(--shotiq-color-confirmGreen)]" : diff === "—" ? "" : "text-[var(--shotiq-color-reviewRed)]"}`}>{diff}</td>
+                  <td className="whitespace-nowrap pr-[8px] pt-[3px] align-top">{metric}</td>
+                  <td className="whitespace-nowrap pr-[8px] pt-[3px] align-top font-semibold">{val}</td>
+                  <td className="whitespace-nowrap pr-[8px] pt-[3px] align-top text-[var(--shotiq-color-graphite)]">{range}</td>
+                  <td className="whitespace-nowrap pr-[8px] pt-[3px] align-top">{you}</td>
+                  <td className={`whitespace-nowrap pt-[3px] align-top ${diff.startsWith("+") ? "text-[var(--shotiq-color-confirmGreen)]" : diff === "—" ? "" : "text-[var(--shotiq-color-reviewRed)]"}`}>{diff}</td>
                 </tr>
               ))}
             </tbody>
@@ -260,7 +260,7 @@ export default function EliteShooterDetailClient() {
             </button>
             {PHASES.map((p, i) => (
               <button key={p} type="button" onClick={() => setFrame(i)}
-                      className={`relative h-[168px] w-[76px] overflow-hidden rounded-[6px] bg-[#1B1D20] ${frame === i ? "ring-2 ring-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
+                      className={`relative h-[158px] w-[76px] overflow-hidden rounded-[6px] bg-[#1B1D20] ${frame === i ? "ring-2 ring-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={galleryFor(i)} alt={p} className="h-full w-full object-cover" />
               </button>
@@ -300,8 +300,8 @@ export default function EliteShooterDetailClient() {
       </div>
 
       {/* bottom band */}
-      <div className="mb-[12px] mt-[10px] flex gap-[12px]">
-        <Card className="w-[355px] shrink-0 px-[16px] py-[10px]">
+      <div className="mb-[10px] mt-[8px] flex gap-[12px]">
+        <Card className="w-[382px] shrink-0 px-[16px] py-[10px]">
           <div className="flex items-center justify-between">
             <SectionLabel>CAREER SHOOTING STATS</SectionLabel>
             <button type="button" onClick={() => setTab("CAREER STATS")}
@@ -318,11 +318,11 @@ export default function EliteShooterDetailClient() {
               </div>
             ))}
           </div>
-          <div className="mt-[10px] flex gap-[10px] whitespace-nowrap border-t border-[var(--shotiq-color-rule)] pt-[10px] text-[11px] font-semibold">
-            <span>4× NBA Champion</span><span className="text-[var(--shotiq-color-rule)]">|</span>
-            <span>2× MVP</span><span className="text-[var(--shotiq-color-rule)]">|</span>
-            <span>10× All-Star</span><span className="text-[var(--shotiq-color-rule)]">|</span>
-            <span>All-Time 3PM Leader</span>
+          <div className="mt-[10px] flex flex-wrap items-center gap-x-[7px] gap-y-[2px] border-t border-[var(--shotiq-color-rule)] pt-[10px] text-[10px] font-semibold">
+            <span className="whitespace-nowrap">4× NBA Champion</span><span className="text-[var(--shotiq-color-rule)]">|</span>
+            <span className="whitespace-nowrap">2× MVP</span><span className="text-[var(--shotiq-color-rule)]">|</span>
+            <span className="whitespace-nowrap">10× All-Star</span><span className="text-[var(--shotiq-color-rule)]">|</span>
+            <span className="whitespace-nowrap">All-Time 3PM Leader</span>
           </div>
         </Card>
 
@@ -354,12 +354,12 @@ export default function EliteShooterDetailClient() {
           </ul>
         </Card>
 
-        <Card className="w-[275px] shrink-0 px-[16px] py-[10px]">
+        <Card className="w-[268px] shrink-0 px-[16px] py-[10px]">
           <SectionLabel>ABOUT {shooter.name.toUpperCase()}</SectionLabel>
           <p className="mt-[6px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
             {shooter.description ?? `Revolutionized the game with unmatched shooting range, quick release, and elite shot-making off the dribble. Known for conditioning, work ethic, and relentless pursuit of improvement.`}
           </p>
-          <div className="mt-[8px] grid grid-cols-2 gap-y-[5px] border-t border-[var(--shotiq-color-rule)] pt-[8px] text-[12px]">
+          <div className="mt-[8px] grid grid-cols-[auto_1fr_auto_1fr] gap-x-[8px] gap-y-[5px] border-t border-[var(--shotiq-color-rule)] pt-[8px] text-[12px]">
             <span className="text-[var(--shotiq-color-graphite)]">Height</span><span className="font-semibold">{heightLabel}</span>
             <span className="text-[var(--shotiq-color-graphite)]">Weight</span><span className="font-semibold">{shooter.weight} lbs</span>
             {facts ? (<>

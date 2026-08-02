@@ -129,7 +129,7 @@ export default function FlawsPage() {
         </div>
       </div>
 
-      <div className="mt-[14px] flex gap-[24px]">
+      <div className="mt-[10px] flex gap-[24px]">
         {/* flaw list */}
         <div className="w-[274px] shrink-0">
           <div className="flex items-center gap-[6px]">
@@ -242,7 +242,7 @@ export default function FlawsPage() {
       </div>
 
       {/* bottom strip */}
-      <div className="mt-[14px] mb-[16px] flex gap-[24px] border-t border-[var(--shotiq-color-rule)] pt-[12px]">
+      <div className="mt-[10px] mb-[10px] flex gap-[24px] border-t border-[var(--shotiq-color-rule)] pt-[10px]">
         <div className="w-[500px] shrink-0">
           <SectionLabel>FLAW HISTORY</SectionLabel>
           <div className="mt-[4px] flex">
@@ -294,7 +294,7 @@ export default function FlawsPage() {
           </div>
           <div className="mt-[2px] divide-y divide-[var(--shotiq-color-rule)]">
             {[["Today at 8:24 AM", "24 shots", "-8.3%"], ["May 10, 2025 at 6:15 PM", "22 shots", "-9.6%"], ["May 7, 2025 at 5:02 PM", "25 shots", "-11.2%"]].map(([d, s, v]) => (
-              <Link key={d} href="/results/demo/history" className="flex items-center py-[10px] text-[12px]">
+              <Link key={d} href="/results/demo/history" className="flex items-center py-[8px] text-[12px]">
                 <span className="w-[170px]">{d}</span>
                 <span className="text-[var(--shotiq-color-graphite)]">{s}</span>
                 <span className="ml-auto font-bold text-[var(--shotiq-color-reviewRed)]">{v}</span>

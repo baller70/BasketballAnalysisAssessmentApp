@@ -262,12 +262,12 @@ export default function DrillExecutionClient() {
 
           {/* shot history */}
           <SectionLabel className="mt-[18px]">SHOT HISTORY</SectionLabel>
-          <div className="mb-[16px] mt-[8px] flex items-center gap-[8px] overflow-x-auto" data-testid="shot-history">
+          <div className="mb-[16px] mt-[8px] flex items-center gap-[6px] overflow-x-auto" data-testid="shot-history">
             {historyStrip.map((s, i) => {
               const live = i === historyStrip.length - 1
               return (
                 <div key={`${s.n}-${i}`}
-                     className={`relative h-[92px] w-[82px] shrink-0 overflow-hidden rounded-[4px] bg-[#1B1D20] ${live ? "ring-2 ring-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
+                     className={`relative h-[92px] w-[76px] shrink-0 overflow-hidden rounded-[4px] bg-[#1B1D20] ${live ? "ring-2 ring-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src="/images/canonical/091-thumb.png" alt="" className="absolute inset-0 h-full w-full object-cover" />
                   <span className="absolute left-[6px] top-[6px] text-[11px] font-bold text-white">{s.n}</span>

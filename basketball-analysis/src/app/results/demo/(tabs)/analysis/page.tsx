@@ -25,7 +25,7 @@ export default function AnalysisOverviewPage() {
   const total = hasData ? 24 : 0
   // Canonical opens on analysis 3 of 24 with film frame 4 scrubbed in; the two
   // are independent (analysis counter vs. frame scrubber).
-  const [shot, setShot] = React.useState(hasData ? 3 : 1)
+  const [shot, setShot] = React.useState(3)
   const [frame, setFrame] = React.useState(4)
   return (
     <div data-testid="screen-desktop-web-analysis-overview">

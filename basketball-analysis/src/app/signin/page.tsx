@@ -44,6 +44,29 @@ const STEPS = [
 ]
 
 
+/** Apple wordmark glyph, drawn inline (canonical 077 leads each SSO button
+ *  with the provider's own mark). */
+function AppleMark() {
+  return (
+    <svg width="17" height="20" viewBox="0 0 17 20" aria-hidden="true" className="shrink-0">
+      <path fill="#111111" d="M13.9 10.6c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.9-3.5.9-.7 0-1.8-.9-3-.8-1.5 0-2.9.9-3.7 2.3-1.6 2.7-.4 6.8 1.1 9 .8 1.1 1.7 2.3 2.9 2.3 1.2 0 1.6-.7 3-.7s1.8.7 3 .7c1.2 0 2-1.1 2.8-2.2.9-1.3 1.2-2.5 1.3-2.6-.1 0-2.5-1-2.5-3.6Z"/>
+      <path fill="#111111" d="M11.6 3.8c.6-.8 1.1-1.9 1-3-.9 0-2.1.6-2.7 1.4-.6.7-1.2 1.8-1 2.9 1 .1 2.1-.5 2.7-1.3Z"/>
+    </svg>
+  )
+}
+
+/** Google "G", four-colour, drawn inline. */
+function GoogleMark() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true" className="shrink-0">
+      <path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-2.8-.4-4H24v7.5h12.1c-.2 1.9-1.6 4.8-4.5 6.8l-.1.3 6.5 5 .5.1c4.1-3.8 6.6-9.4 6.6-15.7Z"/>
+      <path fill="#34A853" d="M24 46c5.9 0 10.9-1.9 14.5-5.3l-6.9-5.4c-1.8 1.3-4.3 2.2-7.6 2.2-5.8 0-10.7-3.8-12.5-9.1l-.3.02-6.7 5.2-.1.3C7.9 41 15.4 46 24 46Z"/>
+      <path fill="#FBBC05" d="M11.5 28.4c-.5-1.4-.7-2.9-.7-4.4 0-1.5.3-3 .7-4.4v-.3l-6.8-5.3-.2.1A22 22 0 0 0 2 24c0 3.5.9 6.9 2.5 9.9l7-5.5Z"/>
+      <path fill="#EA4335" d="M24 9.5c4.1 0 6.9 1.8 8.5 3.3l6.2-6C34.9 3.4 29.9 1 24 1 15.4 1 7.9 6 4.5 14.1l7 5.5c1.8-5.3 6.7-9.1 12.5-9.1Z"/>
+    </svg>
+  )
+}
+
 export default function SignInPage() {
   const router = useRouter()
   const { signIn, isLoading } = useAuthStore()
@@ -219,13 +242,14 @@ export default function SignInPage() {
             <span className="h-px flex-1 bg-[var(--shotiq-color-rule)]" />
           </div>
 
-          {["Continue with Apple", "Continue with Google"].map((t, i) => (
+          {(["Continue with Apple", "Continue with Google"] as const).map((t, i) => (
             <button key={t} type="button"
                     onClick={() => {
                       setError(`${t.replace("Continue with ", "")} sign-in isn't enabled on this server yet — use your email and password.`)
                       emailRef.current?.focus()
                     }}
                     className={`${i ? "mt-[14px]" : "mt-[20px]"} flex h-[46px] w-full items-center justify-center gap-[11px] rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white text-[15px]`}>
+              {i ? <GoogleMark /> : <AppleMark />}
               {t}
             </button>
           ))}

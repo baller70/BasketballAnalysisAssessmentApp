@@ -356,7 +356,15 @@ export default function BiomechanicsWorkspacePage() {
                       <div className="text-[10px] text-[var(--shotiq-color-graphite)]">{ideal}</div>
                     </div>
                     <span className="shotiq-numeric shrink-0 text-[19px]">{hasData ? v : "—"}</span>
-                    <span className={`shrink-0 whitespace-nowrap rounded-[4px] px-[6px] py-[2px] text-[10px] font-bold ${band === "Good" ? "bg-[var(--shotiq-color-confirmGreen)]/10 text-[var(--shotiq-color-confirmGreen)]" : "bg-[var(--shotiq-color-shotiqOrange)]/10 text-[var(--shotiq-color-shotiqOrange)]"}`}>{band}</span>
+                    {/* Tailwind's /10 opacity modifier does not apply to a raw
+                        var() colour, so these pills were rendering as bare text
+                        with no fill or border. */}
+                    <span className="shrink-0 whitespace-nowrap rounded-[4px] border px-[7px] py-[2px] text-[10px] font-bold"
+                          style={band === "Good"
+                            ? { background: "rgba(22,138,85,0.10)", borderColor: "rgba(22,138,85,0.35)", color: "var(--shotiq-color-confirmGreen)" }
+                            : { background: "rgba(255,90,31,0.10)", borderColor: "rgba(255,90,31,0.40)", color: "var(--shotiq-color-shotiqOrange)" }}>
+                      {band}
+                    </span>
                     <ChevronRight className="h-[13px] w-[13px] text-[var(--shotiq-color-muted)]" />
                   </button>
                 ))}
@@ -448,7 +456,12 @@ export default function BiomechanicsWorkspacePage() {
                 <div>
                   <div className="text-[9px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">CURRENT</div>
                   <div className="shotiq-numeric text-[38px] leading-[42px] text-[var(--shotiq-color-shotiqOrange)]">{hasData ? v : "—"}</div>
-                  <span className={`mt-[2px] inline-block rounded-[4px] px-[8px] py-[2px] text-[10px] font-bold ${band === "Good" ? "bg-[var(--shotiq-color-confirmGreen)]/10 text-[var(--shotiq-color-confirmGreen)]" : "bg-[var(--shotiq-color-shotiqOrange)]/10 text-[var(--shotiq-color-shotiqOrange)]"}`}>{band}</span>
+                  <span className="mt-[2px] inline-block rounded-[4px] border px-[8px] py-[2px] text-[10px] font-bold"
+                        style={band === "Good"
+                          ? { background: "rgba(22,138,85,0.10)", borderColor: "rgba(22,138,85,0.35)", color: "var(--shotiq-color-confirmGreen)" }
+                          : { background: "rgba(255,90,31,0.10)", borderColor: "rgba(255,90,31,0.40)", color: "var(--shotiq-color-shotiqOrange)" }}>
+                    {band}
+                  </span>
                 </div>
                 <div className="text-right">
                   <div className="text-[9px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">{ideal.toUpperCase()}</div>
