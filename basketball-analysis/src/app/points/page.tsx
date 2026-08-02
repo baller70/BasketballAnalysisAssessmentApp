@@ -196,7 +196,7 @@ export default function AchievementsPointsPage() {
                     <div className="absolute left-0 top-[40px] z-30 w-[160px] rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white py-[4px] shadow-[0_8px_20px_rgba(17,17,17,0.10)]">
                       {(key === "tier" ? ["All tiers", "Earned", "Locked"] : ["All categories", "Technique", "Consistency", "Volume"]).map((o) => (
                         <button key={o} type="button"
-                                onClick={() => { key === "tier" ? setTier(o as typeof tier) : setCategory(o); setMenu(null); setSel(0) }}
+                                onClick={() => { if (key === "tier") setTier(o as typeof tier); else setCategory(o); setMenu(null); setSel(0) }}
                                 className={`flex h-[30px] w-full items-center px-[12px] text-[12px] hover:bg-[var(--shotiq-color-warmCanvas)] ${label === o ? "font-semibold text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
                           {o}
                         </button>
@@ -318,12 +318,14 @@ export default function AchievementsPointsPage() {
             <Card className="mt-[12px] p-[12px]">
               <div className="text-[10px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">LATEST MATCH</div>
               <div className="text-[12px]">May 12, 2025 at 8:24 AM</div>
-              <div className="mt-[8px] flex divide-x divide-[var(--shotiq-color-rule)]">
-                <div className="pr-[14px]"><Stat value="24" label="SHOTS" valueClass="text-[20px] leading-[24px]" /></div>
-                <div className="px-[14px]"><Stat value="15" label="MAKES" valueClass="text-[20px] leading-[24px]" /></div>
-                <div className="px-[14px]"><Stat value="62.5%" label="MAKE %" valueClass="text-[20px] leading-[24px]" /></div>
-                <div className="pl-[14px]"><div className="shotiq-numeric text-[20px] leading-[24px] text-[var(--shotiq-color-analysisBlue)]">82</div>
-                  <div className="text-[9px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">FORM SCORE</div></div>
+              {/* Canonical runs this row at ~24px — it is the headline of the
+                  badge panel, not a footnote. */}
+              <div className="mt-[8px] flex divide-x divide-[var(--shotiq-color-rule)] text-center">
+                <div className="flex-1 pr-[10px]"><Stat value="24" label="SHOTS" valueClass="text-[26px] leading-[30px]" /></div>
+                <div className="flex-1 px-[10px]"><Stat value="15" label="MAKES" valueClass="text-[26px] leading-[30px]" /></div>
+                <div className="flex-1 px-[10px]"><Stat value="62.5%" label="MAKE %" valueClass="text-[26px] leading-[30px]" /></div>
+                <div className="flex-1 pl-[10px]"><div className="shotiq-numeric text-[26px] leading-[30px] text-[var(--shotiq-color-analysisBlue)]">82</div>
+                  <div className="mt-[2px] text-[10px] tracking-[0.07em] text-[var(--shotiq-color-graphite)]">FORM SCORE</div></div>
               </div>
             </Card>
             <SectionLabel className="mt-[12px]">REWARDS</SectionLabel>

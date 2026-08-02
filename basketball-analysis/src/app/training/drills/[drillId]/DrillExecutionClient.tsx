@@ -21,14 +21,31 @@ import {
   CalendarCheck, Dumbbell, Library, Wrench, CircleCheckBig, History,
   GitCompare, TrendingUp, CircleCheck, CircleX, Undo2, Pause, Play, Square,
   VolumeX, Volume2, LogOut, ChevronRight, ChevronDown, Maximize,
+  Globe, SignalHigh, Clock, Pen, type LucideIcon,
 } from "lucide-react"
 import {
-  ShotIQShell, WideSidebar, SectionLabel, Card, PhaseGlyph, TrendLine,
+  ShotIQShell, WideSidebar, SectionLabel, Card,
 } from "@/components/shotiq/ShotIQShell"
+import { PoseGlyph, CueGlyph, WorkoutGlyph, type CueKind } from "@/components/shotiq/Glyphs"
 
 const PHASES = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
 const SET_SECONDS = 360 // 06:00 per set
 const TOTAL_SETS = 3
+
+/**
+ * Canonical 091 opens mid-set, not empty: 02:24 elapsed into set 1, 24 shots
+ * logged, 15 makes / 9 misses (62.5%), and the last nine frames on the history
+ * strip with the newest ringed LIVE. This is seeded demo state — the same log
+ * the live handlers write to, so Mark make / Mark miss / Undo keep working from
+ * here rather than from zero.
+ */
+const SEEDED_RESULTS = [
+  true, true, false, true, false, true, false, true,
+  false, true, false, true, false, true, false,
+  true, true, false, true, true, false, true, true, true,
+] // 15 makes / 9 misses = 62.5%
+const SEEDED_SHOTS = SEEDED_RESULTS.map((made, i) => ({ n: i + 1, made }))
+const SEEDED_ELAPSED = 144 // 02:24
 
 function Ring({ pct, size = 96, stroke = 8, color = "var(--shotiq-color-shotiqOrange)", children }: {
   pct: number; size?: number; stroke?: number; color?: string; children?: React.ReactNode
@@ -53,14 +70,14 @@ export default function DrillExecutionClient() {
   const drillName = decodeURIComponent(params?.drillId ?? "drill")
     .replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase()) || "Pound Crossover Foundation"
 
-  const [shots, setShots] = useState<{ n: number; made: boolean }[]>([])
-  const [elapsed, setElapsed] = useState(0)
+  const [shots, setShots] = useState<{ n: number; made: boolean }[]>(SEEDED_SHOTS)
+  const [elapsed, setElapsed] = useState(SEEDED_ELAPSED)
   const [paused, setPaused] = useState(false)
   const [muted, setMuted] = useState(false)
   // Workout-complete summary (iOS 062 counterpart) — shown by "End workout".
   const [completed, setCompleted] = useState(false)
   const [shared, setShared] = useState(false)
-  const shotN = useRef(0)
+  const shotN = useRef(SEEDED_SHOTS.length)
 
   useEffect(() => {
     if (paused || completed) return
@@ -111,14 +128,18 @@ export default function DrillExecutionClient() {
   const setsCompleted = Math.min(TOTAL_SETS, Math.floor(elapsed / SET_SECONDS))
   const mmss = (s: number) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`
   const last24 = useMemo(() => shots.slice(-24), [shots])
+  // Canonical paints nine frames on the history strip with the newest ringed LIVE.
+  const historyStrip = useMemo(() => shots.slice(-9), [shots])
 
-  const cues = [
-    ["Keep elbow stacked", "Elbow under ball at release", "GOOD"],
-    ["Release at apex", "Release at the highest point", "FOCUS"],
-    ["Square shoulders", "Shoulders aligned to target", "GOOD"],
-    ["Follow through long", "Full extension and soft wrist", "FOCUS"],
-    ["Balance & landing", "Stay balanced on landing", "FOCUS"],
-  ] as const
+  // Each cue carries its own node diagram — canonical never repeats one down
+  // this list (peak, apex, shoulder frame, extended arm, planted base).
+  const cues: [string, string, "GOOD" | "FOCUS", CueKind][] = [
+    ["Keep elbow stacked", "Elbow under ball at release", "GOOD", "peak"],
+    ["Release at apex", "Release at the highest point", "FOCUS", "apex"],
+    ["Square shoulders", "Shoulders aligned to target", "GOOD", "shoulders"],
+    ["Follow through long", "Full extension and soft wrist", "FOCUS", "extension"],
+    ["Balance & landing", "Stay balanced on landing", "FOCUS", "base"],
+  ]
 
   return (
     <ShotIQShell active="Training"
@@ -165,8 +186,12 @@ export default function DrillExecutionClient() {
             </button>
           </div>
           <div className="mt-[8px] flex gap-[10px]">
-            {["Ball Handling", "Beginner", "6 min", "Right Hand"].map((c) => (
-              <span key={c} className="rounded-full border border-[var(--shotiq-color-rule)] px-[12px] py-[4px] text-[12px]">{c}</span>
+            {/* Canonical marks each chip: category, difficulty, duration, hand. */}
+            {([["Ball Handling", Globe], ["Beginner", SignalHigh], ["6 min", Clock],
+               ["Right Hand", Pen]] as [string, LucideIcon][]).map(([c, Icon]) => (
+              <span key={c} className="flex items-center gap-[7px] rounded-full border border-[var(--shotiq-color-rule)] px-[12px] py-[4px] text-[12px]">
+                <Icon className="h-[13px] w-[13px]" strokeWidth={1.6} />{c}
+              </span>
             ))}
           </div>
 
@@ -183,7 +208,7 @@ export default function DrillExecutionClient() {
             <div className="flex justify-between">
               {PHASES.map((p) => (
                 <div key={p} className="w-[80px] text-center">
-                  <PhaseGlyph active={p === "RELEASE"} size={26} />
+                  <PoseGlyph phase={p} active={p === "RELEASE"} size={26} />
                   <div className={`mt-[2px] whitespace-nowrap text-[10px] tracking-[0.05em] ${p === "RELEASE" ? "font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
                 </div>
               ))}
@@ -237,12 +262,12 @@ export default function DrillExecutionClient() {
 
           {/* shot history */}
           <SectionLabel className="mt-[18px]">SHOT HISTORY</SectionLabel>
-          <div className="mb-[20px] mt-[8px] flex items-center gap-[8px] overflow-x-auto" data-testid="shot-history">
-            {(last24.length ? last24 : []).map((s, i) => {
-              const live = i === last24.length - 1
+          <div className="mb-[16px] mt-[8px] flex items-center gap-[8px] overflow-x-auto" data-testid="shot-history">
+            {historyStrip.map((s, i) => {
+              const live = i === historyStrip.length - 1
               return (
                 <div key={`${s.n}-${i}`}
-                     className={`relative h-[76px] w-[86px] shrink-0 overflow-hidden rounded-[4px] bg-[#1B1D20] ${live ? "ring-2 ring-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
+                     className={`relative h-[92px] w-[82px] shrink-0 overflow-hidden rounded-[4px] bg-[#1B1D20] ${live ? "ring-2 ring-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src="/images/canonical/091-thumb.png" alt="" className="absolute inset-0 h-full w-full object-cover" />
                   <span className="absolute left-[6px] top-[6px] text-[11px] font-bold text-white">{s.n}</span>
@@ -251,16 +276,23 @@ export default function DrillExecutionClient() {
                       ? <CircleCheck className="h-[15px] w-[15px] text-[var(--shotiq-color-confirmGreen)]" fill="white" />
                       : <CircleX className="h-[15px] w-[15px] text-[var(--shotiq-color-reviewRed)]" fill="white" />}
                   </span>
-                  {live && <span className="absolute bottom-[4px] left-1/2 -translate-x-1/2 text-[9px] font-bold text-[var(--shotiq-color-shotiqOrange)]">◆ LIVE</span>}
+                  {/* per-frame dot track, canonical bottom rail of each card */}
+                  <span className="absolute inset-x-[6px] bottom-[5px] flex justify-between">
+                    {Array.from({ length: 8 }).map((_, d) => (
+                      <span key={d} className={`h-[3px] w-[3px] rounded-full ${
+                        d === 3 ? "bg-[var(--shotiq-color-shotiqOrange)]" : "bg-white/55"}`} />
+                    ))}
+                  </span>
+                  {live && <span className="absolute bottom-[12px] left-1/2 -translate-x-1/2 text-[9px] font-bold text-[var(--shotiq-color-shotiqOrange)]">◆ LIVE</span>}
                 </div>
               )
             })}
-            {!last24.length && (
-              <div className="flex h-[76px] w-full items-center justify-center rounded-[4px] border border-dashed border-[var(--shotiq-color-rule)] text-[12px] text-[var(--shotiq-color-graphite)]">
+            {!historyStrip.length && (
+              <div className="flex h-[92px] w-full items-center justify-center rounded-[4px] border border-dashed border-[var(--shotiq-color-rule)] text-[12px] text-[var(--shotiq-color-graphite)]">
                 Mark your first make or miss to start the history strip.
               </div>
             )}
-            {last24.length > 0 && <ChevronRight className="h-[17px] w-[17px] shrink-0 text-[var(--shotiq-color-graphite)]" />}
+            {historyStrip.length > 0 && <ChevronRight className="h-[17px] w-[17px] shrink-0 text-[var(--shotiq-color-graphite)]" />}
           </div>
         </div>
 
@@ -319,11 +351,10 @@ export default function DrillExecutionClient() {
             <span className="text-[12px] font-bold text-[var(--shotiq-color-analysisBlue)]">AI COACH</span>
           </div>
           <Card className="mt-[8px] divide-y divide-[var(--shotiq-color-rule)]" data-testid="coaching-cues">
-            {cues.map(([t, d, state]) => (
+            {cues.map(([t, d, state, glyph]) => (
               <div key={t} className="flex items-center gap-[14px] px-[16px] py-[12px]">
-                <TrendLine points={[2, 4, 3, 5, 4]} width={44} height={26}
-                           stroke={state === "GOOD" ? "var(--shotiq-color-confirmGreen)" : "var(--shotiq-color-shotiqOrange)"}
-                           dotFill={state === "GOOD" ? "var(--shotiq-color-confirmGreen)" : "var(--shotiq-color-shotiqOrange)"} />
+                <CueGlyph kind={glyph} size={34} className="shrink-0"
+                          accent={state === "GOOD" ? "var(--shotiq-color-confirmGreen)" : "var(--shotiq-color-shotiqOrange)"} />
                 <div className="min-w-0 flex-1 border-l border-[var(--shotiq-color-rule)] pl-[14px]">
                   <div className="text-[14px] font-semibold">{t}</div>
                   <div className="text-[12px] text-[var(--shotiq-color-graphite)]">{d}</div>
@@ -368,7 +399,7 @@ export default function DrillExecutionClient() {
                 <div className="mt-[6px] flex justify-between">
                   {PHASES.map((p) => (
                     <div key={p} className="text-center">
-                      <PhaseGlyph active={p === "RELEASE"} size={26} />
+                      <PoseGlyph phase={p} active={p === "RELEASE"} size={26} />
                       <div className={`text-[9px] tracking-[0.05em] whitespace-nowrap ${p === "RELEASE" ? "font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
                     </div>
                   ))}
@@ -388,7 +419,9 @@ export default function DrillExecutionClient() {
 
               <Link href="/training/drills/elbow-stack-builder"
                     className="mt-[12px] flex items-center gap-[12px] rounded-[6px] border border-[var(--shotiq-color-rule)] p-[12px] hover:border-[var(--shotiq-color-ink)]">
-                <span className="grid h-[38px] w-[38px] place-items-center rounded-full bg-[var(--shotiq-color-analysisBlue)] text-white">◎</span>
+                <span className="grid h-[38px] w-[38px] shrink-0 place-items-center rounded-full bg-[var(--shotiq-color-analysisBlue)] text-white">
+                  <WorkoutGlyph kind="release" size={20} />
+                </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-[10px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">NEXT RECOMMENDATION</span>
                   <span className="block text-[14px] font-semibold">Elbow Stack Builder</span>

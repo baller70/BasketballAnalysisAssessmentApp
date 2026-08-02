@@ -4,8 +4,9 @@
 
 import React, { useEffect, useState } from "react"
 import Link from "next/link"
-import { ChevronDown, RefreshCcw, Bookmark, MoreVertical, Play, ChevronLeft, ChevronRight } from "lucide-react"
-import { SectionLabel, Card, Ring, PhaseGlyph, Stat } from "@/components/shotiq/ShotIQShell"
+import { ChevronDown, RefreshCcw, Bookmark, MoreVertical, Play, ChevronLeft, ChevronRight, Users, Layers, Lightbulb } from "lucide-react"
+import { SectionLabel, Card, Ring, Stat } from "@/components/shotiq/ShotIQShell"
+import { PoseGlyph, MechanicGlyph, WorkoutGlyph, toShotPhase, type MechanicKind } from "@/components/shotiq/Glyphs"
 import { useHistory } from "@/components/shotiq/ResultsBits"
 
 interface Shooter { id: number; name: string; position?: string }
@@ -52,6 +53,11 @@ export default function ComparePage() {
               <button type="button" aria-expanded={menu === key}
                       onClick={() => setMenu((m) => (m === key ? null : key))}
                       className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[16px] text-[13px]">
+                {/* Canonical marks each control: shooters, skeleton overlays, the
+                    selected phase pose. */}
+                {key === "shooters" && <Users className="h-[15px] w-[15px]" strokeWidth={1.6} />}
+                {key === "overlays" && <Layers className="h-[15px] w-[15px]" strokeWidth={1.6} />}
+                {key === "phase" && <PoseGlyph phase={toShotPhase(phase)} size={17} />}
                 {label} <ChevronDown className="h-[13px] w-[13px] text-[var(--shotiq-color-graphite)]" />
               </button>
               {menu === key && (
@@ -111,13 +117,18 @@ export default function ComparePage() {
               </span>
             </button>
           )}
-          <div className={`min-w-0 ${sideIdx ? "flex-1" : "w-[534px] shrink-0"}`}>
-            <div className="relative overflow-hidden rounded-[6px] bg-[#1B1D20]" style={{ height: 256 }}>
+          {/* Both crops carry their identity overlay painted inside their own
+              left edge, so each viewer keeps its crop's aspect ratio and the
+              pair shares width proportionally — cover-cropping the elite panel
+              sheared "ELITE REFERENCE / Darius Garland" off its left edge. */}
+          <div className="min-w-0 flex-1" style={{ flexGrow: sideIdx ? 595 : 534, flexBasis: 0 }}>
+            <div className="relative overflow-hidden rounded-[6px] bg-[#1B1D20]"
+                 style={{ aspectRatio: sideIdx ? "595 / 256" : "534 / 256" }}>
               {pristine ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={sideIdx ? "/images/canonical/087-elite.png" : "/images/canonical/087-you.png"}
                      alt={sideIdx ? "Elite reference" : "Your shot"}
-                     className="h-full w-full object-cover" />
+                     className="absolute inset-0 h-full w-full object-cover" />
               ) : (
                 <div className="absolute left-[14px] top-[12px] text-white">
                   <div className="text-[11px] font-bold tracking-[0.05em]">{side}</div>
@@ -167,7 +178,7 @@ export default function ComparePage() {
             </button>
             {PHASES.map((p) => (
               <button key={p} type="button" onClick={() => setPhase(p)} aria-pressed={p === phase} className="text-center">
-                <PhaseGlyph active={p === phase} size={24} />
+                <PoseGlyph phase={p} active={p === phase} size={24} />
                 <div className={`text-[9px] tracking-[0.04em] ${p === phase ? (side ? "font-bold text-[var(--shotiq-color-analysisBlue)]" : "font-bold text-[var(--shotiq-color-shotiqOrange)]") : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
               </button>
             ))}
@@ -219,12 +230,12 @@ export default function ComparePage() {
         <Card className="w-[300px] shrink-0 px-[18px] py-[10px]">
           <SectionLabel>WHY THE DIFFERENCE MATTERS</SectionLabel>
           <div className="mt-[6px] space-y-[8px]">
-            {["Slightly lower release angle reduces margin for error on longer shots.",
-              "More open elbow improves line to target and repeatability.",
-              "Increased wrist flexion adds backspin and softens the shot.",
-              "Elite balance helps maintain consistency under fatigue."].map((t) => (
+            {([["Slightly lower release angle reduces margin for error on longer shots.", "arc"],
+              ["More open elbow improves line to target and repeatability.", "angle"],
+              ["Increased wrist flexion adds backspin and softens the shot.", "wrist"],
+              ["Elite balance helps maintain consistency under fatigue.", "balance"]] as [string, MechanicKind][]).map(([t, glyph]) => (
               <div key={t} className="flex gap-[10px]">
-                <PhaseGlyph size={22} />
+                <MechanicGlyph kind={glyph} size={22} className="shrink-0" />
                 <p className="text-[12px] leading-[16px]">{t}</p>
               </div>
             ))}
@@ -252,14 +263,16 @@ export default function ComparePage() {
       {/* footer band */}
       <div className="mt-[10px] flex gap-[16px]">
         <Card className="flex flex-1 items-center gap-[14px] px-[20px] py-[14px]">
-          <span className="text-[22px]">💡</span>
+          <Lightbulb className="h-[26px] w-[26px] shrink-0" strokeWidth={1.5} />
           <div>
             <SectionLabel>FOCUS RECOMMENDATION</SectionLabel>
             <p className="text-[13px] text-[var(--shotiq-color-graphite)]">Keep elbow stacked through release to improve your release angle and consistency.</p>
           </div>
         </Card>
         <Card className="flex w-[420px] shrink-0 items-center gap-[14px] px-[20px] py-[14px]">
-          <span className="grid h-[42px] w-[42px] place-items-center rounded-full bg-[var(--shotiq-color-analysisBlue)] text-white">◎</span>
+          <span className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-full bg-[var(--shotiq-color-analysisBlue)] text-white">
+            <WorkoutGlyph kind="release" size={22} />
+          </span>
           <div className="flex-1">
             <SectionLabel>NEXT BEST WORKOUT</SectionLabel>
             <div className="text-[14px] font-semibold">Quick Release Builder</div>

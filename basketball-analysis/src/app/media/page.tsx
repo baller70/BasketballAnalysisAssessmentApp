@@ -93,7 +93,7 @@ export default function MediaLibraryPage() {
     return out
   }, [groups, statusFilter, workoutFilter, range, sort, query])
   const total = Object.values(shown).flat().length
-  const toggle = (id: string) => setSelected((s) => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
+  const toggle = (id: string) => setSelected((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n })
   const clearAll = () => {
     setChecked(Object.fromEntries(FILTERS.map(([head, opts]) => [head, String(opts[0][0])])))
     setRange(RANGES[0]); setSort("Newest"); setSelected(new Set())
@@ -261,12 +261,16 @@ export default function MediaLibraryPage() {
             <div className="mt-[8px] grid grid-cols-6 gap-[14px]">
               {items.map((m) => (
                 <Card key={m.id} className="overflow-hidden">
-                  <div className="relative">
+                  {/* The canonical tile crops carry the selection checkbox, the
+                      shot-type badge and the duration chip painted into their
+                      own edges, so the frame keeps the crop's aspect ratio —
+                      object-cover in a narrower column sheared all three off. */}
+                  <div className="relative" style={{ aspectRatio: "179 / 152" }}>
                     {m.img ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={m.img} alt="" className="h-[152px] w-full object-cover" />
+                      <img src={m.img} alt="" className="absolute inset-0 h-full w-full object-contain" />
                     ) : (
-                      <MediaSurface height={152} rounded={0} />
+                      <MediaSurface height="100%" rounded={0} />
                     )}
                     <button type="button" onClick={() => setDetail({ item: m, day })} aria-label={`Open ${m.title}`}
                             data-testid={`media-open-${m.id}`}
@@ -288,9 +292,11 @@ export default function MediaLibraryPage() {
                           className="block w-full p-[9px] text-left hover:bg-[var(--shotiq-color-warmCanvas)]">
                     <div className="truncate text-[12px] font-semibold">{m.title}</div>
                     <div className="truncate text-[10px] text-[var(--shotiq-color-graphite)]">{m.time} · {m.style}</div>
-                    <div className="mt-[4px] flex items-center gap-[5px] text-[10px]">
+                    {/* Canonical sets the form score at ~17px so it leads the
+                        card's status line. */}
+                    <div className="mt-[4px] flex items-center gap-[6px] text-[11px]">
                       <span className="h-[7px] w-[7px] rounded-full" style={{ background: statusColor(m.status) }} />
-                      <span className="shotiq-numeric text-[13px]">{m.score ?? "—"}</span>
+                      <span className="shotiq-numeric text-[17px] leading-[19px]">{m.score ?? "—"}</span>
                       <span className={m.status === "Analyzed" ? "text-[var(--shotiq-color-analysisBlue)]" : "text-[var(--shotiq-color-graphite)]"}>{m.status}</span>
                     </div>
                   </button>

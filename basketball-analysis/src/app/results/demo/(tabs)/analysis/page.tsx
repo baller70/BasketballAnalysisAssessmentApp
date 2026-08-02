@@ -5,7 +5,7 @@
 import React from "react"
 import Link from "next/link"
 import { ChevronLeft, ChevronRight, Play, Maximize2 } from "lucide-react"
-import { SectionLabel, Card, MediaSurface, Stat, TrendLine } from "@/components/shotiq/ShotIQShell"
+import { SectionLabel, Card, Stat, TrendLine } from "@/components/shotiq/ShotIQShell"
 import { PoseGlyph, MechanicGlyph, FlawFigure, WorkoutGlyph, type MechanicKind } from "@/components/shotiq/Glyphs"
 import { useHistory, CoachingTarget } from "@/components/shotiq/ResultsBits"
 
@@ -23,7 +23,10 @@ const MECHANICS: [string, string, string, MechanicKind][] = [
 export default function AnalysisOverviewPage() {
   const { hasData, score } = useHistory()
   const total = hasData ? 24 : 0
-  const [shot, setShot] = React.useState(1)
+  // Canonical opens on analysis 3 of 24 with film frame 4 scrubbed in; the two
+  // are independent (analysis counter vs. frame scrubber).
+  const [shot, setShot] = React.useState(hasData ? 3 : 1)
+  const [frame, setFrame] = React.useState(4)
   return (
     <div data-testid="screen-desktop-web-analysis-overview">
       <div className="flex items-start justify-between">
@@ -54,20 +57,37 @@ export default function AnalysisOverviewPage() {
       <div className="mt-[16px] flex gap-[20px]">
         {/* media + scrubber + phases */}
         <div className="w-[520px] shrink-0">
-          <MediaSurface width={520} height={335} />
-          <div className="mt-[8px] flex items-center gap-[10px]">
-            <span className="grid h-[34px] w-[34px] place-items-center rounded-[4px] border border-[var(--shotiq-color-rule)]">
-              <Play className="h-[14px] w-[14px]" fill="currentColor" />
+          {/* Canonical release frame with the pose overlay and the 172° call-out;
+              the scrub line rides the padding box so it can never clip out. */}
+          <div className="relative overflow-hidden rounded-[4px] bg-[#1B1D20]" style={{ height: 335 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/canonical/083-hero.png"
+                 alt="Analyzed release frame with pose skeleton and a 172 degree elbow call-out"
+                 className="absolute inset-0 h-full w-full object-cover" width={573} height={369} />
+            <span className="absolute inset-x-[10px] bottom-[8px] h-[3px] rounded-full bg-white/40">
+              <span className="absolute inset-y-0 left-0 w-[52%] rounded-full bg-white" />
+              <span className="absolute -top-[4px] left-[52%] h-[11px] w-[11px] -translate-x-1/2 rounded-full bg-white" />
             </span>
-            <div className="flex h-[42px] flex-1 gap-[3px] overflow-hidden rounded-[4px]">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <button key={i} type="button" aria-label={`Jump to segment ${i + 1}`} aria-pressed={i === (shot - 1) % 8}
-                        onClick={() => setShot(i + 1)}
-                        className={`flex-1 bg-[#1B1D20] ${i === (shot - 1) % 8 ? "ring-2 ring-inset ring-[var(--shotiq-color-shotiqOrange)]" : ""}`} />
-              ))}
+          </div>
+          <div className="mt-[8px] flex items-center gap-[10px]">
+            <button type="button" aria-label="Play"
+                    className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-[4px] border border-[var(--shotiq-color-rule)]">
+              <Play className="h-[14px] w-[14px]" fill="currentColor" />
+            </button>
+            <div className="relative min-w-0 flex-1 overflow-hidden rounded-[4px]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/images/canonical/083-filmstrip.png" alt="" className="block h-auto w-full"
+                   width={425} height={41} />
+              <div className="absolute inset-0 flex">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <button key={i} type="button" aria-label={`Jump to segment ${i + 1}`}
+                          aria-pressed={i === (frame - 1) % 8} onClick={() => setFrame(i + 1)}
+                          className="flex-1" />
+                ))}
+              </div>
             </div>
-            <span className="shotiq-numeric text-[13px]">0:07 / 0:24</span>
-            <Maximize2 className="h-[15px] w-[15px] text-[var(--shotiq-color-graphite)]" />
+            <span className="shotiq-numeric shrink-0 text-[13px]">0:07 / 0:24</span>
+            <Maximize2 className="h-[15px] w-[15px] shrink-0 text-[var(--shotiq-color-graphite)]" />
           </div>
           <div className="mt-[14px] flex items-start justify-between">
             {PHASES.map(([p, t]) => (
@@ -139,7 +159,9 @@ export default function AnalysisOverviewPage() {
               <div className="text-[12px] font-semibold text-[var(--shotiq-color-confirmGreen)]">92% Similarity</div>
               <Link href="/results/demo/compare" className="text-[12px] text-[var(--shotiq-color-analysisBlue)]">View comparison ›</Link>
             </div>
-            <MediaSurface width={130} height={78} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/canonical/083-elite.png" alt="Trae Young shooting form with pose overlay"
+                 className="block h-auto w-[130px] shrink-0 rounded-[4px]" width={151} height={106} />
           </div>
         </div>
       </div>

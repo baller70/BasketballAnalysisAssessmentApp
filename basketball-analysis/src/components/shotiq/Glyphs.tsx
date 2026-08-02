@@ -25,13 +25,17 @@ type GlyphProps = {
   title?: string
 }
 
+/** Keeps the drawn stroke ~1.6 device px whatever box the glyph is set in, so a
+ *  56px flaw diagram doesn't render as a blob next to a 20px row mark. */
+const autoStroke = (size: number) => Math.min(1.8, Math.max(0.85, 38 / size))
+
 function Svg({
   size = 24, className = "", children, title,
 }: GlyphProps & { children: React.ReactNode }) {
   return (
     <svg
       width={size} height={size} viewBox="0 0 24 24" className={className}
-      fill="none" stroke="currentColor" strokeWidth={1.5}
+      fill="none" stroke="currentColor" strokeWidth={autoStroke(size)}
       strokeLinecap="round" strokeLinejoin="round"
       role={title ? "img" : undefined} aria-hidden={title ? undefined : "true"}
       aria-label={title}
@@ -59,56 +63,56 @@ const POSES: Record<ShotPhase, React.ReactNode> = {
   // Upright, ball carried at the hip — the address position.
   setup: (
     <>
-      <circle cx="10.5" cy="4.2" r="2" />
-      <path d="M10.5 6.2 L11 13" />
-      <path d="M11 13 L8.6 18 L8.2 21" />
-      <path d="M11 13 L13.6 18 L14.2 21" />
-      <path d="M10.7 8 L13.6 10.8" />
-      <circle cx="15.6" cy="12" r="2.1" />
+      <circle cx="9.8" cy="4.4" r="2" />
+      <path d="M9.8 6.4 L10.4 13.4" />
+      <path d="M10.4 13.4 L8.4 17.4 L8 21.4" />
+      <path d="M10.4 13.4 L12.6 17.4 L13.2 21.4" />
+      <path d="M10 8.4 L12.6 11.4" />
+      <circle cx="14.8" cy="12.8" r="2.2" />
     </>
   ),
   // Deep knee bend, ball low and in front — gathering.
   load: (
     <>
-      <circle cx="9.4" cy="5.6" r="2" />
-      <path d="M9.4 7.6 L11.2 12.8" />
-      <path d="M11.2 12.8 L7.8 15.6 L8.8 20.6" />
-      <path d="M11.2 12.8 L14.6 15.4 L14.8 20.6" />
-      <path d="M10.2 9.4 L13.4 11.6" />
-      <circle cx="15.3" cy="13" r="2.1" />
+      <circle cx="8.6" cy="6.4" r="2" />
+      <path d="M8.6 8.4 L10.8 13" />
+      <path d="M10.8 13 L7.8 16.2 L8.6 21.4" />
+      <path d="M10.8 13 L13.6 16.4 L13.6 21.4" />
+      <path d="M9.5 10.4 L12.2 12.4" />
+      <circle cx="14.4" cy="13.6" r="2.2" />
     </>
   ),
   // Extending upward, ball at the forehead — the lift.
   rise: (
     <>
-      <circle cx="11.6" cy="6" r="2" />
-      <path d="M11.6 8 L11 13.4" />
-      <path d="M11 13.4 L8.4 17.6 L8.8 21" />
-      <path d="M11 13.4 L13.4 17.4 L14.4 20.6" />
-      <path d="M11.4 9.4 L13.8 7.4" />
-      <circle cx="15.6" cy="5.6" r="2.1" />
+      <circle cx="10.6" cy="5.6" r="2" />
+      <path d="M10.6 7.6 L10.6 13.6" />
+      <path d="M10.6 13.6 L8.2 17.4 L8.6 21.4" />
+      <path d="M10.6 13.6 L12.8 17.2 L13.8 20.8" />
+      <path d="M10.6 9 L12.8 7.2" />
+      <circle cx="15.4" cy="6" r="2.2" />
     </>
   ),
   // Full extension, ball leaving the hand overhead.
   release: (
     <>
-      <circle cx="10.4" cy="7.4" r="2" />
-      <path d="M10.4 9.4 L10.8 15" />
-      <path d="M10.8 15 L8.6 18.8 L8.2 21.4" />
-      <path d="M10.8 15 L13.4 18.6 L14.4 21" />
-      <path d="M10.6 10.6 L12.8 7.6" />
-      <circle cx="14.2" cy="4.6" r="2.1" />
+      <circle cx="9.6" cy="8" r="2" />
+      <path d="M9.6 10 L10.4 15.2" />
+      <path d="M10.4 15.2 L8.4 18.6 L8 21.6" />
+      <path d="M10.4 15.2 L12.8 18.4 L13.8 21.4" />
+      <path d="M9.9 11 L12.4 7.8 L13.2 5.4" />
+      <circle cx="14.4" cy="2.8" r="2.2" />
     </>
   ),
   // Arm held out long with the wrist relaxed — the ball is gone.
   follow: (
     <>
-      <circle cx="10.4" cy="6.6" r="2" />
-      <path d="M10.4 8.6 L11 14.4" />
-      <path d="M11 14.4 L9 18.6 L8.6 21.2" />
-      <path d="M11 14.4 L13.8 18.4 L14.8 21" />
-      <path d="M10.6 9.8 L13.6 6.2 L16.4 5" />
-      <path d="M16.4 5 L17 7.2" />
+      <circle cx="9.6" cy="7" r="2" />
+      <path d="M9.6 9 L10.4 14.8" />
+      <path d="M10.4 14.8 L8.4 18.6 L8 21.4" />
+      <path d="M10.4 14.8 L13 18.4 L14 21.2" />
+      <path d="M9.9 10.2 L13.2 6.4 L16.6 4.8" />
+      <path d="M16.6 4.8 L17.2 7.2" />
     </>
   ),
 }
@@ -165,19 +169,19 @@ const MECHANICS: Record<MechanicKind, (a: string) => React.ReactNode> = {
   // Tape measure laid along the floor.
   distance: () => (
     <>
-      <path d="M3 12.5 H19.5 L17.8 10.6 M19.5 12.5 L17.8 14.4" />
-      <path d="M5.5 12.5 V9.6 M8.5 12.5 V10.6 M11.5 12.5 V9.6 M14.5 12.5 V10.6" />
-      <path d="M3 17.5 H21" strokeDasharray="2 2" />
+      <path d="M3 13 H20 L17.8 10.8 M20 13 L17.8 15.2" />
+      <path d="M6 13 V8.6 M10 13 V10 M14 13 V8.6" />
+      <path d="M3 18.5 H21" strokeDasharray="2.5 2.5" />
     </>
   ),
   // Rise arrow beside the tracked hip/head nodes.
   jump: () => (
     <>
-      <path d="M5 20 V5 M3.4 6.8 L5 4.8 L6.6 6.8" />
-      <path d="M14 8.6 V13.4" />
-      <path d="M14 7 L15.8 8.6 L14 10.2 L12.2 8.6 Z" />
-      <path d="M14 13.4 L15.6 15 L14 16.6 L12.4 15 Z" />
-      <path d="M9.5 20 H19" />
+      <path d="M5 20.5 V4.5 M3.2 6.4 L5 4.2 L6.8 6.4" />
+      <path d="M14 10 V14" />
+      <path d="M14 5.6 L16.6 8.2 L14 10.8 L11.4 8.2 Z" />
+      <path d="M14 13.4 L16 15.4 L14 17.4 L12 15.4 Z" />
+      <path d="M9.5 20.5 H19.5" />
     </>
   ),
   // Ball flight: dotted parabola with launch and landing nodes.

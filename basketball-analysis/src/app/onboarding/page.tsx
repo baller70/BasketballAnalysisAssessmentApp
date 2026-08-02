@@ -11,12 +11,20 @@
 
 import React, { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { ChevronLeft, ChevronDown, ArrowRight, Save, Info } from "lucide-react"
-import { SectionLabel, Card, MediaSurface, PhaseGlyph } from "@/components/shotiq/ShotIQShell"
+import {
+  ChevronLeft, ChevronDown, ArrowRight, Save, Info, Ruler, SlidersHorizontal,
+  ClipboardList, Crosshair, Dumbbell, TrendingUp, MonitorSmartphone, type LucideIcon,
+} from "lucide-react"
+import { SectionLabel, Card } from "@/components/shotiq/ShotIQShell"
+import { PoseGlyph, CueGlyph } from "@/components/shotiq/Glyphs"
 import { useAuthStore } from "@/stores/authStore"
 import { useProfileStore } from "@/stores/profileStore"
 
-const STEPS = ["Onboarding", "Measurements", "Preferences", "Review"]
+// Canonical gives each step its own mark: the athlete, a ruler, preference
+// sliders, a review sheet.
+const STEPS: [string, LucideIcon | null][] = [
+  ["Onboarding", null], ["Measurements", Ruler], ["Preferences", SlidersHorizontal], ["Review", ClipboardList],
+]
 const PHASES = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
 const GOALS = [
   "Keep elbow stacked through release", "Raise make percentage", "Quicker release",
@@ -61,18 +69,21 @@ export default function OnboardingPage() {
      <div className="flex flex-1">
       {/* step rail */}
       <aside className="flex w-[200px] shrink-0 flex-col border-r border-[var(--shotiq-color-rule)] pt-[14px]">
-        {STEPS.map((s, i) => (
+        {STEPS.map(([s, Icon], i) => (
           <button key={s} type="button" onClick={() => setStep(i + 1)} aria-current={step === i + 1 ? "true" : undefined}
                   className={`relative flex h-[44px] items-center gap-[10px] px-[20px] text-left text-[12px] font-bold tracking-[0.05em] ${
                     step === i + 1 ? "bg-[var(--shotiq-color-warmCanvas)] text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
             {step === i + 1 && <span className="absolute inset-y-0 left-0 w-[3px] bg-[var(--shotiq-color-shotiqOrange)]" />}
-            <PhaseGlyph size={18} active={step === i + 1} /> {s.toUpperCase()}
+            {Icon
+              ? <Icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.6} />
+              : <PoseGlyph phase="setup" size={18} active={step === i + 1} />}
+            {s.toUpperCase()}
           </button>
         ))}
         <Card className="mx-[14px] mb-[16px] mt-auto p-[12px]">
           <div className="text-[12px]">Your progress</div>
           <div className="text-[12px] font-semibold">Step {step} of {STEPS.length}</div>
-          <div className="text-[11px] text-[var(--shotiq-color-graphite)]">{STEPS[step - 1]}</div>
+          <div className="text-[11px] text-[var(--shotiq-color-graphite)]">{STEPS[step - 1][0]}</div>
           <div className="mt-[6px] h-[6px] rounded-full bg-[var(--shotiq-color-rule)]">
             <div className="h-full rounded-full bg-[var(--shotiq-color-shotiqOrange)]" style={{ width: `${(step / STEPS.length) * 100}%` }} />
           </div>
@@ -170,7 +181,7 @@ export default function OnboardingPage() {
             <div className={lbl}>PRIMARY GOAL (CHOOSE ONE) <Info className="h-[10px] w-[10px]" /></div>
             <div className="relative mt-[6px]">
               <div className={`${box} flex w-full items-center gap-[12px]`}>
-                <PhaseGlyph size={24} active />
+                <CueGlyph kind="peak" size={24} accent="var(--shotiq-color-shotiqOrange)" />
                 <select value={goal} onChange={(e) => setGoal(e.target.value)}
                         className="h-full flex-1 appearance-none bg-transparent outline-none">
                   {GOALS.map((g) => <option key={g}>{g}</option>)}
@@ -217,11 +228,11 @@ export default function OnboardingPage() {
           Measuring your profile helps ShotIQ benchmark your mechanics and build feedback that&apos;s tailored to you.
         </p>
         <div className="mt-[10px] space-y-[12px]">
-          {[["Accurate feedback", "AI analysis calibrated to your body and style."],
-            ["Smarter training", "Drills and plans that target what moves your score."],
-            ["Track what matters", "See progress where it counts, session after session."]].map(([t, d]) => (
-            <div key={String(t)} className="flex gap-[12px] border-l border-[var(--shotiq-color-rule)] pl-[12px]">
-              <PhaseGlyph size={28} />
+          {([["Accurate feedback", "AI analysis calibrated to your body and style.", Crosshair],
+            ["Smarter training", "Drills and plans that target what moves your score.", Dumbbell],
+            ["Track what matters", "See progress where it counts, session after session.", TrendingUp]] as [string, string, LucideIcon][]).map(([t, d, Icon]) => (
+            <div key={t} className="flex gap-[12px] border-l border-[var(--shotiq-color-rule)] pl-[12px]">
+              <Icon className="h-[28px] w-[28px] shrink-0" strokeWidth={1.4} />
               <div>
                 <div className="text-[13px] font-semibold">{t}</div>
                 <div className="text-[11px] text-[var(--shotiq-color-graphite)]">{d}</div>
@@ -238,13 +249,15 @@ export default function OnboardingPage() {
         <div className="flex flex-1 items-center justify-around pr-[26px]">
           {PHASES.map((p) => (
             <div key={p} className="text-center">
-              <PhaseGlyph size={30} active={p === "RELEASE"} />
+              <PoseGlyph phase={p} size={30} active={p === "RELEASE"} />
               <div className={`mt-[2px] text-[9px] tracking-[0.05em] ${p === "RELEASE" ? "font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
             </div>
           ))}
         </div>
         <div className="flex w-[430px] shrink-0 items-center gap-[12px] border-l border-[var(--shotiq-color-rule)] pl-[26px]">
-          <PhaseGlyph size={34} active />
+          <span className="grid h-[44px] w-[44px] shrink-0 place-items-center rounded-full border border-[var(--shotiq-color-rule)]">
+            <MonitorSmartphone className="h-[22px] w-[22px]" strokeWidth={1.5} />
+          </span>
           <p className="text-[11px] leading-[15px] text-[var(--shotiq-color-graphite)]">
             <span className="font-semibold text-[var(--shotiq-color-ink)]">One profile. Everywhere.</span><br />
             Your profile, captures, analyses, training, goals, media, points, and settings sync across web and iOS.

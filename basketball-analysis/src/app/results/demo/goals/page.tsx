@@ -8,7 +8,8 @@ import {
   Pencil, MoreVertical, Check, ChevronRight, X,
   PieChart, Scan, PersonStanding, TrendingUp, Film, Compass,
 } from "lucide-react"
-import { ShotIQShell, SectionLabel, Card, TrendLine, PhaseGlyph, Stat } from "@/components/shotiq/ShotIQShell"
+import { ShotIQShell, SectionLabel, Card, TrendLine, Stat } from "@/components/shotiq/ShotIQShell"
+import { MechanicGlyph, WorkoutGlyph, CueGlyph, type WorkoutKind } from "@/components/shotiq/Glyphs"
 import { useHistory } from "@/components/shotiq/ResultsBits"
 import { csrfFetch } from "@/lib/api/csrfFetch"
 
@@ -154,7 +155,7 @@ export default function GoalsPlanPage() {
           </div>
           <SectionLabel className="mt-[10px] border-t border-[var(--shotiq-color-rule)] pt-[12px]">KEY MECHANIC FOCUS</SectionLabel>
           <div className="mt-[6px] flex items-center gap-[12px]">
-            <PhaseGlyph size={40} />
+            <MechanicGlyph kind="angle" size={40} className="shrink-0" />
             <div className="flex-1">
               <div className="text-[14px] font-semibold">Elbow vertical at release</div>
               <p className="text-[11px] text-[var(--shotiq-color-graphite)]">Maintain a stacked arm position to improve consistency and accuracy.</p>
@@ -209,9 +210,11 @@ export default function GoalsPlanPage() {
                   <div className="min-w-0 flex-1">
                     <div className="text-[14px] font-semibold">{t}</div>
                     <div className="text-[10px] text-[var(--shotiq-color-graphite)]">{d}</div>
-                    <div className="text-[10px] text-[var(--shotiq-color-graphite)]">Form Score
-                      <span className="ml-[6px] shotiq-numeric text-[16px] text-[var(--shotiq-color-analysisBlue)]">{hasData ? s : "—"}</span>
-                      <span className="ml-[4px] text-[10px] text-[var(--shotiq-color-analysisBlue)]">● Good</span></div>
+                    <div className="mt-[4px] text-[10px] text-[var(--shotiq-color-graphite)]">Form Score</div>
+                    <div className="flex items-baseline gap-[6px]">
+                      <span className="shotiq-numeric text-[26px] leading-[28px] text-[var(--shotiq-color-analysisBlue)]">{hasData ? s : "—"}</span>
+                      <span className="text-[11px] text-[var(--shotiq-color-analysisBlue)]">● Good</span>
+                    </div>
                   </div>
                   <ChevronRight className="h-[14px] w-[14px] text-[var(--shotiq-color-graphite)]" />
                 </Link>
@@ -224,11 +227,13 @@ export default function GoalsPlanPage() {
               <Link href="/results/demo/training" className="text-[11px] text-[var(--shotiq-color-analysisBlue)]">View all</Link>
             </div>
             <div className="mt-[4px] divide-y divide-[var(--shotiq-color-rule)]">
-              {[["Quick Release Builder", "20 min · Form Focus · Today at 5:00 PM", "Speed & Consistency"],
-                ["Combo Control Ladder", "18 min · Control Focus · Tomorrow at 11:00 AM", "Control & Timing"],
-                ["Handle to Release Flow", "22 min · Game Speed · May 15 at 4:30 PM", "Flow & Integration"]].map(([t, d, f]) => (
-                <div key={String(t)} className="relative flex items-center gap-[12px] py-[9px]">
-                  <span className="grid h-[36px] w-[36px] place-items-center rounded-[8px] bg-[var(--shotiq-color-analysisBlue)] text-white">◎</span>
+              {([["Quick Release Builder", "20 min · Form Focus · Today at 5:00 PM", "Speed & Consistency", "release"],
+                ["Combo Control Ladder", "18 min · Control Focus · Tomorrow at 11:00 AM", "Control & Timing", "ladder"],
+                ["Handle to Release Flow", "22 min · Game Speed · May 15 at 4:30 PM", "Flow & Integration", "flow"]] as [string, string, string, WorkoutKind][]).map(([t, d, f, glyph]) => (
+                <div key={t} className="relative flex items-center gap-[12px] py-[9px]">
+                  <span className="grid h-[36px] w-[36px] shrink-0 place-items-center rounded-[8px] bg-[var(--shotiq-color-analysisBlue)] text-white">
+                    <WorkoutGlyph kind={glyph} size={20} />
+                  </span>
                   <div className="min-w-0 flex-1">
                     <div className="text-[14px] font-semibold">{t}</div>
                     <div className="text-[10px] text-[var(--shotiq-color-graphite)]">{d}</div>
@@ -238,13 +243,13 @@ export default function GoalsPlanPage() {
                     <div className="text-[10px] leading-[13px]">{f}</div>
                   </div>
                   <button type="button" aria-label={`Options for ${t}`}
-                          onClick={() => setWorkoutMenu((m) => (m === t ? null : String(t)))}
+                          onClick={() => setWorkoutMenu((m) => (m === t ? null : t))}
                           className="grid h-[24px] w-[24px] place-items-center rounded-[4px] hover:bg-[var(--shotiq-color-warmCanvas)]">
                     <MoreVertical className="h-[13px] w-[13px] text-[var(--shotiq-color-graphite)]" />
                   </button>
                   {workoutMenu === t && (
                     <div className="absolute right-0 top-[42px] z-30 w-[170px] rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white py-[4px] shadow-[0_8px_20px_rgba(17,17,17,0.10)]">
-                      <Link href={`/training/drills/${String(t).toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
+                      <Link href={`/training/drills/${t.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
                             className="flex h-[30px] w-full items-center px-[12px] text-[12px] hover:bg-[var(--shotiq-color-warmCanvas)]">Open drill</Link>
                       <Link href="/training/calendar"
                             className="flex h-[30px] w-full items-center px-[12px] text-[12px] hover:bg-[var(--shotiq-color-warmCanvas)]">View in calendar</Link>
@@ -255,7 +260,7 @@ export default function GoalsPlanPage() {
             </div>
             <Link href="/results/demo/training"
                   className="mt-[8px] flex h-[38px] w-full items-center justify-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] text-[13px]">
-              <PhaseGlyph size={16} /> Add drill
+              <WorkoutGlyph kind="release" size={16} /> Add drill
             </Link>
           </Card>
         </div>
@@ -282,7 +287,7 @@ export default function GoalsPlanPage() {
                     <div className="text-[10px] text-[var(--shotiq-color-graphite)]">{d}</div>
                   </div>
                   <span className="w-[52px] shrink-0 text-right">
-                    <span className={`shotiq-numeric block text-[15px] tabular-nums ${st === "done" ? "text-[var(--shotiq-color-confirmGreen)]" : st === "active" ? "text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>{v}</span>
+                    <span className={`shotiq-numeric block text-[18px] leading-[21px] tabular-nums ${st === "done" ? "text-[var(--shotiq-color-confirmGreen)]" : st === "active" ? "text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>{v}</span>
                     {st === "active" && <span className="block text-[9px] text-[var(--shotiq-color-graphite)]">Current</span>}
                   </span>
                 </div>
@@ -296,7 +301,7 @@ export default function GoalsPlanPage() {
             </p>
             <div className="mt-[10px] flex gap-[14px]">
               <div className="grid h-[86px] w-[86px] shrink-0 place-items-center rounded-[8px] border-2 border-dashed border-[var(--shotiq-color-rule)]">
-                <TrendLine points={[2, 4, 1.6, 3.4]} width={50} height={36} stroke="var(--shotiq-color-shotiqOrange)" dotFill="var(--shotiq-color-shotiqOrange)" />
+                <CueGlyph kind="tree" size={50} accent="var(--shotiq-color-shotiqOrange)" />
               </div>
               <ul className="space-y-[8px] text-[12px]">
                 {["Focus on the right mechanics", "Track progress with AI analysis", "Stay accountable and improve"].map((t) => (

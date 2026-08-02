@@ -13,13 +13,32 @@
 import React, { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { Pause, Play, SwitchCamera, VolumeX, Volume2, Square, Film, Check, X, Camera, Crosshair, Download, Trash2, Save, ShieldCheck, ChevronRight } from "lucide-react"
-import { SectionLabel, Card, PhaseGlyph, Stat } from "@/components/shotiq/ShotIQShell"
+import { SectionLabel, Card, Stat } from "@/components/shotiq/ShotIQShell"
+import { PoseGlyph, ReadinessGlyph, type ReadinessKind } from "@/components/shotiq/Glyphs"
 import { HoopCalibrationOverlay, rimCalibrationStorageKey } from "@/components/live/HoopCalibrationOverlay"
 import type { RimCalibration } from "@/lib/vision/objectTracking"
 
 const PHASES = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
-const READINESS = ["Athlete detected", "Full body in frame", "Good lighting", "Stable camera"]
+// Canonical draws a bracketed framing mark per check — never one glyph four times.
+const READINESS: [string, ReadinessKind][] = [
+  ["Athlete detected", "athlete"], ["Full body in frame", "framing"],
+  ["Good lighting", "lighting"], ["Stable camera", "stability"],
+]
 const PRIMER_KEY = "shotiq_camera_primed"
+
+/**
+ * Canonical 082 opens on a session already under way rather than on zeros:
+ * SESSION STATS 24 / 15 / 62.5 %, and a shot rail carrying 19 logged makes, the
+ * live shot, and four still to come. This is seeded demo state; the moment the
+ * camera actually starts — or the user marks a shot — the rail and the stats
+ * switch over to the live log.
+ */
+const DEMO_SESSION = { shots: 24, makes: 15, pct: "62.5%" }
+const DEMO_RAIL: ("make" | "live" | "pending")[] = [
+  ...Array.from({ length: 19 }, () => "make" as const),
+  "live",
+  ...Array.from({ length: 4 }, () => "pending" as const),
+]
 
 type CaptureReview = { url: string; seconds: number; shots: boolean[] }
 
@@ -143,6 +162,17 @@ export default function LiveCapturePage() {
   }
   const makes = shots.filter(Boolean).length
   const mmss = (s: number) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`
+  // Seeded until the camera runs or the user logs a shot of their own.
+  const demo = !live && !review && shots.length === 0
+  const railStates: ("make" | "miss" | "live" | "pending")[] = demo
+    ? DEMO_RAIL
+    : Array.from({ length: Math.max(24, shots.length) }, (_, i) =>
+        i < shots.length ? (shots[i] ? "make" : "miss") : "pending")
+  const statShots = demo ? DEMO_SESSION.shots : shots.length
+  const statMakes = demo ? DEMO_SESSION.makes : makes
+  const statPct = demo
+    ? DEMO_SESSION.pct
+    : shots.length ? `${Math.round((makes / shots.length) * 100)}%` : "—"
 
   return (
     <div data-testid="screen-desktop-web-live-capture" className="px-[26px] py-[18px]">
@@ -194,7 +224,10 @@ export default function LiveCapturePage() {
       <div className="mt-[12px] flex gap-[18px]">
         {/* live surface */}
         <div className="min-w-0 flex-1">
-          <div className="relative overflow-hidden rounded-[6px] bg-[#1B1D20]" style={{ height: 406 }}>
+          {/* The idle poster carries the canonical FPS badge and session timer
+              baked into its right edge, so the surface keeps the crop's exact
+              aspect ratio — object-cover in a narrower box sheared them off. */}
+          <div className="relative overflow-hidden rounded-[6px] bg-[#1B1D20]" style={{ aspectRatio: "786 / 406" }}>
             <video ref={videoRef} autoPlay playsInline muted className="h-full w-full object-cover"
                    onLoadedMetadata={(e) => {
                      const v = e.currentTarget
@@ -234,7 +267,7 @@ export default function LiveCapturePage() {
                   <span className="block text-[8px] tracking-[0.08em]">FPS</span><span className="shotiq-numeric text-[15px]">30</span>
                 </span>
                 <span className="absolute bottom-[12px] left-[12px] flex items-center gap-[6px] rounded-[4px] bg-black/75 px-[9px] py-[5px] text-[10px] font-bold text-white">
-                  <PhaseGlyph size={14} /> RIGHT HANDED
+                  <PoseGlyph phase="setup" size={14} /> RIGHT HANDED
                 </span>
                 <span className="absolute bottom-[12px] right-[12px] rounded-[4px] bg-black/75 px-[9px] py-[5px] text-[12px] text-white">
                   {mmss(sec)} / 20:00
@@ -279,7 +312,7 @@ export default function LiveCapturePage() {
           <div className="mt-[14px] flex items-center justify-around rounded-full border border-[var(--shotiq-color-rule)] py-[8px]">
             {PHASES.map((p) => (
               <div key={p} className="text-center">
-                <PhaseGlyph active={p === "RELEASE"} size={28} />
+                <PoseGlyph phase={p} active={p === "RELEASE"} size={28} />
                 <div className={`text-[10px] tracking-[0.06em] ${p === "RELEASE" ? "relative pb-[3px] font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>
                   {p}
                   {p === "RELEASE" && <span className="absolute inset-x-[-4px] bottom-0 h-[2px] bg-[var(--shotiq-color-shotiqOrange)]" />}
@@ -299,9 +332,9 @@ export default function LiveCapturePage() {
               <span className="shotiq-display text-[14px] text-[var(--shotiq-color-confirmGreen)]" title={live ? "Live checks passing" : "Preview — start the camera to run live checks"}>GOOD</span>
             </div>
             <div className="mt-[12px] flex divide-x divide-[var(--shotiq-color-rule)]">
-              {READINESS.map((r) => (
+              {READINESS.map(([r, glyph]) => (
                 <div key={r} className="flex-1 px-[4px] text-center">
-                  <PhaseGlyph size={28} />
+                  <ReadinessGlyph kind={glyph} size={28} className="mx-auto" />
                   <div className="mt-[2px] text-[9px] leading-[12px] text-[var(--shotiq-color-graphite)]">{r}</div>
                   <span className="mt-[5px] inline-grid h-[15px] w-[15px] place-items-center rounded-full bg-[var(--shotiq-color-confirmGreen)]">
                     <Check className="h-[9px] w-[9px] text-white" strokeWidth={3} />
@@ -317,11 +350,11 @@ export default function LiveCapturePage() {
               <span className="text-[11px] text-[var(--shotiq-color-graphite)]">Today at 8:24 AM</span>
             </div>
             <div className="mt-[12px] flex items-center">
-              <Stat value={String(shots.length)} label="SHOTS" valueClass="text-[28px] leading-[32px]" />
+              <Stat value={String(statShots)} label="SHOTS" valueClass="text-[28px] leading-[32px]" />
               <div className="mx-[16px] h-[36px] w-px bg-[var(--shotiq-color-rule)]" />
-              <Stat value={String(makes)} label="MAKES" valueClass="text-[28px] leading-[32px]" />
+              <Stat value={String(statMakes)} label="MAKES" valueClass="text-[28px] leading-[32px]" />
               <div className="mx-[16px] h-[36px] w-px bg-[var(--shotiq-color-rule)]" />
-              <Stat value={shots.length ? `${Math.round((makes / shots.length) * 100)}%` : "—"} label="MAKE %" valueClass="text-[28px] leading-[32px]" />
+              <Stat value={statPct} label="MAKE %" valueClass="text-[28px] leading-[32px]" />
               <div className="ml-auto flex items-start gap-[12px] border-l border-[var(--shotiq-color-rule)] pl-[16px]">
                 <div>
                   <div className="text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">FORM SCORE</div>
@@ -375,19 +408,24 @@ export default function LiveCapturePage() {
         <div className="flex items-center">
           <span className="shotiq-display text-[19px]">SHOT RAIL</span>
           <span className="ml-auto mr-[430px] text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">
-            {shots.length} SHOTS
+            {statShots} SHOTS
           </span>
         </div>
         <div className="mt-[8px] flex items-start">
           <div className="flex flex-1 items-start gap-[14px] overflow-x-auto pr-[20px]">
-            {Array.from({ length: Math.max(24, shots.length) }).map((_, i) => (
+            {railStates.map((state, i) => (
               <div key={i} className="w-[18px] text-center">
-                <div className="shotiq-numeric text-[11px]">{i + 1}</div>
-                {i < shots.length ? (
-                  shots[i]
-                    ? <span className="mx-auto mt-[4px] grid h-[15px] w-[15px] place-items-center rounded-full bg-[var(--shotiq-color-confirmGreen)]"><Check className="h-[9px] w-[9px] text-white" strokeWidth={3} /></span>
-                    : <span className="mx-auto mt-[4px] grid h-[15px] w-[15px] place-items-center rounded-full bg-[var(--shotiq-color-reviewRed)]"><X className="h-[9px] w-[9px] text-white" strokeWidth={3} /></span>
-                ) : (
+                <div className={`shotiq-numeric text-[11px] ${state === "live" ? "text-[var(--shotiq-color-analysisBlue)]" : ""}`}>{i + 1}</div>
+                {state === "make" && (
+                  <span className="mx-auto mt-[4px] grid h-[15px] w-[15px] place-items-center rounded-full bg-[var(--shotiq-color-confirmGreen)]"><Check className="h-[9px] w-[9px] text-white" strokeWidth={3} /></span>
+                )}
+                {state === "miss" && (
+                  <span className="mx-auto mt-[4px] grid h-[15px] w-[15px] place-items-center rounded-full bg-[var(--shotiq-color-reviewRed)]"><X className="h-[9px] w-[9px] text-white" strokeWidth={3} /></span>
+                )}
+                {state === "live" && (
+                  <span className="mx-auto mt-[4px] grid h-[15px] w-[15px] place-items-center rounded-full bg-[var(--shotiq-color-analysisBlue)]"><Check className="h-[9px] w-[9px] text-white" strokeWidth={3} /></span>
+                )}
+                {state === "pending" && (
                   <span className="mx-auto mt-[4px] block h-[15px] w-[15px] rounded-full border border-[var(--shotiq-color-muted)]" />
                 )}
               </div>
