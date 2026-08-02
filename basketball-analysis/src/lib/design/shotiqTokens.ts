@@ -13,8 +13,8 @@ export const shotiqColors = {
   "reviewRed": "#D92D20",
   "rule": "#D9D9D4",
   // Kept in lockstep with --shotiq-color-shotiqOrange in styles/shotiq-tokens.css.
-  // The emitted #FF5A1F was a yellow-shifted approximation; the canonical desktop
-  // renders measure a redder #FD3701 for the flat primary fill.
+  // The previously emitted #FF5A1F was a yellow-shifted approximation; the canonical
+  // desktop renders measure a redder #FD3701 for the flat primary fill.
   "shotiqOrange": "#FD3701",
   "warmCanvas": "#F7F7F4"
 } as const

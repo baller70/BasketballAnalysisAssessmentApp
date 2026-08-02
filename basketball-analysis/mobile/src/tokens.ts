@@ -7,7 +7,7 @@ export const color = {
   ink: '#111111',
   graphite: '#5F646B',
   rule: '#D9D9D4',
-  shotiqOrange: '#FF5A1F',
+  shotiqOrange: '#FD3701',
   analysisBlue: '#2D6CDF',
   confirmGreen: '#168A55',
   reviewRed: '#D92D20',

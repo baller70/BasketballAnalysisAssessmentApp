@@ -375,7 +375,7 @@ export default function BiomechanicsWorkspacePage() {
                     <span className="shrink-0 whitespace-nowrap rounded-[4px] border px-[7px] py-[2px] text-[10px] font-bold"
                           style={band === "Good"
                             ? { background: "rgba(22,138,85,0.10)", borderColor: "rgba(22,138,85,0.35)", color: "var(--shotiq-color-confirmGreen)" }
-                            : { background: "rgba(255,90,31,0.10)", borderColor: "rgba(255,90,31,0.40)", color: "var(--shotiq-color-shotiqOrange)" }}>
+                            : { background: "rgba(253, 55, 1,0.10)", borderColor: "rgba(253, 55, 1,0.40)", color: "var(--shotiq-color-shotiqOrange)" }}>
                       {band}
                     </span>
                     <ChevronRight className="h-[13px] w-[13px] text-[var(--shotiq-color-muted)]" />
@@ -480,7 +480,7 @@ export default function BiomechanicsWorkspacePage() {
                   <span className="mt-[2px] inline-block rounded-[4px] border px-[8px] py-[2px] text-[10px] font-bold"
                         style={band === "Good"
                           ? { background: "rgba(22,138,85,0.10)", borderColor: "rgba(22,138,85,0.35)", color: "var(--shotiq-color-confirmGreen)" }
-                          : { background: "rgba(255,90,31,0.10)", borderColor: "rgba(255,90,31,0.40)", color: "var(--shotiq-color-shotiqOrange)" }}>
+                          : { background: "rgba(253, 55, 1,0.10)", borderColor: "rgba(253, 55, 1,0.40)", color: "var(--shotiq-color-shotiqOrange)" }}>
                     {band}
                   </span>
                 </div>
