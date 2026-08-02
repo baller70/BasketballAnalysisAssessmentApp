@@ -5,16 +5,19 @@
 import React from "react"
 import Link from "next/link"
 import { ChevronLeft, ChevronRight, Play, Maximize2 } from "lucide-react"
-import { SectionLabel, Card, MediaSurface, Stat, TrendLine, PhaseGlyph } from "@/components/shotiq/ShotIQShell"
+import { SectionLabel, Card, MediaSurface, Stat, TrendLine } from "@/components/shotiq/ShotIQShell"
+import { PoseGlyph, MechanicGlyph, FlawFigure, WorkoutGlyph, type MechanicKind } from "@/components/shotiq/Glyphs"
 import { useHistory, CoachingTarget } from "@/components/shotiq/ResultsBits"
 
 const PHASES: [string, string][] = [
   ["SETUP", "0:00 – 0:02"], ["LOAD", "0:02 – 0:04"], ["RISE", "0:04 – 0:06"],
   ["RELEASE", "0:06 – 0:07"], ["FOLLOW-THROUGH", "0:07 – 0:10"],
 ]
-const MECHANICS: [string, string, string][] = [
-  ["Elbow Angle", "172°", "160° – 180°"], ["Wrist Angle", "21°", "15° – 30°"],
-  ["Release Height", "8'6\"", "7'8\" – 8'8\""], ["Body Alignment", "2°", "-5° – 5°"],
+// A distinct diagram per mechanic: joint angle, wrist flexion, height ruler,
+// body midline — canonical draws no two of these alike.
+const MECHANICS: [string, string, string, MechanicKind][] = [
+  ["Elbow Angle", "172°", "160° – 180°", "angle"], ["Wrist Angle", "21°", "15° – 30°", "wrist"],
+  ["Release Height", "8'6\"", "7'8\" – 8'8\"", "height"], ["Body Alignment", "2°", "-5° – 5°", "centerline"],
 ]
 
 export default function AnalysisOverviewPage() {
@@ -69,7 +72,7 @@ export default function AnalysisOverviewPage() {
           <div className="mt-[14px] flex items-start justify-between">
             {PHASES.map(([p, t]) => (
               <div key={p} className="text-center">
-                <PhaseGlyph active={p === "RELEASE"} />
+                <PoseGlyph phase={p} active={p === "RELEASE"} />
                 <div className={`mt-[3px] text-[10px] tracking-[0.05em] ${p === "RELEASE" ? "font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
                 <div className="text-[9px] text-[var(--shotiq-color-graphite)]">{t}</div>
               </div>
@@ -92,9 +95,9 @@ export default function AnalysisOverviewPage() {
 
           <SectionLabel className="mt-[20px] border-t border-[var(--shotiq-color-rule)] pt-[14px]">MECHANICS AT RELEASE</SectionLabel>
           <div className="mt-[6px] divide-y divide-[var(--shotiq-color-rule)]">
-            {MECHANICS.map(([m, v, range]) => (
+            {MECHANICS.map(([m, v, range, glyph]) => (
               <div key={m} className="flex items-center gap-[10px] py-[9px]">
-                <PhaseGlyph size={20} />
+                <MechanicGlyph kind={glyph} size={20} className="shrink-0" />
                 <span className="flex-1 text-[13px]">{m}</span>
                 <span className="shotiq-numeric text-[18px]">{hasData ? v : "—"}</span>
                 <span className="w-[64px] text-right">
@@ -118,13 +121,13 @@ export default function AnalysisOverviewPage() {
           </p>
           <div className="mt-[12px] flex items-center justify-center gap-[26px]">
             <div className="text-center">
-              <PhaseGlyph size={54} />
+              <FlawFigure kind="elbow" size={54} accent="var(--shotiq-color-reviewRed)" />
               <div className="shotiq-numeric text-[15px]">172°</div>
               <div className="text-[9px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">CURRENT</div>
             </div>
             <span className="text-[18px] text-[var(--shotiq-color-graphite)]">→</span>
             <div className="text-center">
-              <PhaseGlyph size={54} active />
+              <FlawFigure kind="elbow" size={54} accent="var(--shotiq-color-confirmGreen)" />
               <div className="shotiq-numeric text-[15px]">180°</div>
               <div className="text-[9px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">IDEAL</div>
             </div>
@@ -158,7 +161,7 @@ export default function AnalysisOverviewPage() {
         </div>
         <div className="flex items-center gap-[12px] px-[16px] py-[10px] xl:py-0">
           <SectionLabel className="w-[54px] shrink-0 leading-[13px]">TOP FLAW</SectionLabel>
-          <PhaseGlyph size={30} />
+          <FlawFigure kind="elbow" size={30} className="shrink-0" />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-x-[8px] gap-y-[2px]">
               <span className="whitespace-nowrap text-[14px] font-semibold">Elbow flare at release</span>
@@ -172,7 +175,9 @@ export default function AnalysisOverviewPage() {
         </div>
         <div className="flex items-center gap-[12px] px-[16px] py-[10px] xl:py-0">
           <SectionLabel className="w-[54px] shrink-0 leading-[13px]">NEXT TRAINING</SectionLabel>
-          <span className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-full bg-[var(--shotiq-color-analysisBlue)] text-white">◎</span>
+          <span className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-full bg-[var(--shotiq-color-analysisBlue)] text-white">
+            <WorkoutGlyph kind="release" size={22} />
+          </span>
           <div className="min-w-0 flex-1">
             <div className="text-[14px] font-semibold">Quick Release Builder</div>
             <div className="text-[11px] text-[var(--shotiq-color-graphite)]">20 min · Form Focus</div>
