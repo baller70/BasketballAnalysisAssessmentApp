@@ -137,7 +137,9 @@ private func captureCTA(_ title: String, icon: String? = nil,
         if let icon { Image(systemName: icon).font(.system(size: 18, weight: .medium)) }
         Text(title).font(.system(size: 17, weight: .semibold))
     }
-    .frame(maxWidth: .infinity).frame(height: 56)
+    // Was 56 — the same over-height primary CTA the review measured at 58pt on
+    // 018. Shares the canonical control height with PrimaryButton.
+    .frame(maxWidth: .infinity).frame(height: ShotIQType.controlHeight)
     .background(color, in: RoundedRectangle(cornerRadius: 8))
     .foregroundStyle(.white)
     .lineLimit(1)
@@ -150,7 +152,7 @@ private func captureOutline(_ title: String, icon: String? = nil) -> some View {
         if let icon { Image(systemName: icon).font(.system(size: 16)) }
         Text(title).font(.system(size: 16))
     }
-    .frame(maxWidth: .infinity).frame(height: 52)
+    .frame(maxWidth: .infinity).frame(height: ShotIQType.controlHeight)
     .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.rule))
     .foregroundStyle(ShotIQColor.ink)
     .lineLimit(1)
