@@ -27,7 +27,7 @@ private struct BrandLockup: View {
         VStack(alignment: .leading, spacing: 2) {
             Wordmark(size: size)
             Text("AI ANALYSIS")
-                .font(.system(size: size * 0.4, weight: .semibold))
+                .shotiqBody(size * 0.4, weight: .semibold)
                 .kerning(size * 0.12)
                 .foregroundStyle(ShotIQColor.graphite)
         }
@@ -52,7 +52,7 @@ private struct OrDivider: View {
     var body: some View {
         HStack(spacing: 14) {
             Rectangle().fill(ShotIQColor.rule).frame(height: 1)
-            Text("OR").font(.system(size: 12, weight: .semibold)).kerning(1)
+            Text("OR").shotiqBody(12, weight: .semibold).kerning(1)
                 .foregroundStyle(ShotIQColor.graphite).fixedSize()
             Rectangle().fill(ShotIQColor.rule).frame(height: 1)
         }
@@ -64,7 +64,7 @@ private struct OrDivider: View {
 private func primaryLabel(_ title: String, icon: String? = nil) -> some View {
     HStack(spacing: 10) {
         if let icon { Image(systemName: icon) }
-        Text(title).font(.system(size: 17, weight: .medium))
+        Text(title).shotiqBody(17, weight: .medium)
     }
     .frame(maxWidth: .infinity).frame(height: 54)
     .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: ShotIQRadius.control))
@@ -76,7 +76,7 @@ private func primaryLabel(_ title: String, icon: String? = nil) -> some View {
 private func secondaryLabel(_ title: String, icon: String? = nil) -> some View {
     HStack(spacing: 10) {
         if let icon { Image(systemName: icon) }
-        Text(title).font(.system(size: 17, weight: .semibold))
+        Text(title).shotiqBody(17, weight: .semibold)
     }
     .frame(maxWidth: .infinity).frame(height: 54)
     .overlay(RoundedRectangle(cornerRadius: ShotIQRadius.control).stroke(ShotIQColor.rule))
@@ -144,7 +144,7 @@ struct SplashView: View {          // 001 · ios.splash
                     VStack(alignment: .leading, spacing: 2) {
                         Wordmark(size: 46)
                         Text("AI ANALYSIS")
-                            .font(.system(size: 17, weight: .semibold))
+                            .shotiqBody(17, weight: .semibold)
                             .kerning(5)
                             .foregroundStyle(ShotIQColor.graphite)
                     }
@@ -156,7 +156,7 @@ struct SplashView: View {          // 001 · ios.splash
                     Text("SEE THE DETAILS.").shotiqDisplay(32)
                     (Text("BUILD ").foregroundColor(ShotIQColor.shotiqOrange)
                         + Text("THE HABIT.").foregroundColor(ShotIQColor.graphite))
-                        .font(.system(size: 25.6, weight: .heavy).width(.condensed))
+                        .shotiqCondensed(25.6, weight: .heavy)
                 }
                 .padding(.top, 64)
                 Spacer()
@@ -197,14 +197,14 @@ struct WelcomeView: View {         // 002 · ios.welcome
                             BrandLockup(size: 34)
                             Text("CAPTURE.").shotiqDisplay(46).padding(.top, 30)
                             Text("ANALYZE.")
-                                .font(.system(size: 36.8, weight: .heavy).width(.condensed))
+                                .shotiqCondensed(36.8, weight: .heavy)
                                 .foregroundStyle(ShotIQColor.shotiqOrange)
                                 .lineLimit(1).minimumScaleFactor(0.6)
                             Text("TRAIN.").shotiqDisplay(46)
                             Text("TRACK.").shotiqDisplay(46)
                             Rectangle().fill(ShotIQColor.rule).frame(height: 1).padding(.vertical, 14)
                             Text("Instant AI analysis. Clear insights. Smarter reps. Better results.")
-                                .font(.system(size: 15))
+                                .shotiqBody(15)
                                 .foregroundStyle(ShotIQColor.graphite)
                         }
                         // Hero: the canonical jump-shot frame.
@@ -215,7 +215,7 @@ struct WelcomeView: View {         // 002 · ios.welcome
                     HStack(spacing: 12) {
                         Rectangle().fill(ShotIQColor.rule).frame(height: 1)
                         Text("BUILT FOR YOUR GAME")
-                            .font(.system(size: 14, weight: .bold)).kerning(1)
+                            .shotiqBody(14, weight: .bold).kerning(1)
                             .foregroundStyle(ShotIQColor.ink).fixedSize()
                         Rectangle().fill(ShotIQColor.rule).frame(height: 1)
                     }
@@ -230,16 +230,18 @@ struct WelcomeView: View {         // 002 · ios.welcome
                                     .padding(.top, 12)
                             }
                             VStack(spacing: 6) {
-                                Image(systemName: f.0)
-                                    .font(.system(size: 24))
+                                // 002's four pillars are four different canonical
+                                // marks; CAPTURE and TRAIN shipped as two of the
+                                // three symbols the whole app was reusing.
+                                ShotIQConceptGlyph(concept: f.1, fallback: f.0, size: 26)
                                     .foregroundStyle(ShotIQColor.ink)
                                     .frame(height: 30)
                                 Text(f.1)
-                                    .font(.system(size: 13, weight: .heavy).width(.condensed))
+                                    .shotiqCondensed(13, weight: .heavy)
                                     .kerning(0.5)
                                     .foregroundStyle(f.2 ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
                                 Text(f.3)
-                                    .font(.system(size: 11))
+                                    .shotiqBody(11)
                                     .foregroundStyle(ShotIQColor.graphite)
                                     .multilineTextAlignment(.center)
                             }
@@ -254,7 +256,7 @@ struct WelcomeView: View {         // 002 · ios.welcome
                         }
                         NavigationLink { CreateAccountView() } label: {
                             Text("Create account")
-                                .font(.system(size: 17, weight: .medium))
+                                .shotiqBody(17, weight: .medium)
                                 .frame(maxWidth: .infinity).frame(height: 54)
                                 .overlay(RoundedRectangle(cornerRadius: ShotIQRadius.control)
                                     .stroke(ShotIQColor.shotiqOrange))
@@ -332,7 +334,7 @@ struct SignInView: View {          // 003 · ios.sign-in
                         .accessibilityIdentifier("signin-email")
                         if emailValid {
                             Text("Looks good.")
-                                .font(.system(size: 14)).foregroundStyle(ShotIQColor.confirmGreen)
+                                .shotiqBody(14).foregroundStyle(ShotIQColor.confirmGreen)
                                 .padding(.top, 6)
                         }
 
@@ -355,7 +357,7 @@ struct SignInView: View {          // 003 · ios.sign-in
                         .accessibilityIdentifier("signin-password")
                         if passwordValid {
                             Text("Password looks good.")
-                                .font(.system(size: 14)).foregroundStyle(ShotIQColor.confirmGreen)
+                                .shotiqBody(14).foregroundStyle(ShotIQColor.confirmGreen)
                                 .padding(.top, 6)
                         }
 
@@ -366,19 +368,19 @@ struct SignInView: View {          // 003 · ios.sign-in
                                         .font(.system(size: 19))
                                         .foregroundStyle(rememberMe ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
                                     Text("Remember me")
-                                        .font(.system(size: 15)).foregroundStyle(ShotIQColor.ink)
+                                        .shotiqBody(15).foregroundStyle(ShotIQColor.ink)
                                 }
                             }
                             Spacer()
                             NavigationLink { ForgotPasswordView() } label: {
-                                Text("Forgot password?").font(.system(size: 15))
+                                Text("Forgot password?").shotiqBody(15)
                                     .foregroundStyle(ShotIQColor.shotiqOrange)
                             }
                         }
                         .padding(.top, 18)
 
                         if let e = vm.error {
-                            Text(e).font(.system(size: 14)).foregroundStyle(ShotIQColor.reviewRed).padding(.top, 10)
+                            Text(e).shotiqBody(14).foregroundStyle(ShotIQColor.reviewRed).padding(.top, 10)
                                 .accessibilityIdentifier("signin-error")
                         }
 
@@ -405,10 +407,10 @@ struct SignInView: View {          // 003 · ios.sign-in
 
                         VStack(spacing: 10) {
                             Text("Don't have an account?")
-                                .font(.system(size: 15)).foregroundStyle(ShotIQColor.graphite)
+                                .shotiqBody(15).foregroundStyle(ShotIQColor.graphite)
                             NavigationLink { CreateAccountView() } label: {
                                 Text("Create account")
-                                    .font(.system(size: 17))
+                                    .shotiqBody(17)
                                     .foregroundStyle(ShotIQColor.shotiqOrange)
                             }
                         }
@@ -500,7 +502,7 @@ struct CreateAccountView: View {   // 004 · ios.create-account
                     }
                     .padding(.top, 8)
                     Text("Use at least 8 characters.")
-                        .font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite).padding(.top, 6)
+                        .shotiqBody(13).foregroundStyle(ShotIQColor.graphite).padding(.top, 6)
 
                     SectionLabel(text: "CONFIRM PASSWORD").padding(.top, 20)
                     FieldShell {
@@ -543,7 +545,7 @@ struct CreateAccountView: View {   // 004 · ios.create-account
 
                     if let error {
                         Text(error)
-                            .font(.system(size: 14)).foregroundStyle(ShotIQColor.reviewRed)
+                            .shotiqBody(14).foregroundStyle(ShotIQColor.reviewRed)
                             .padding(.top, 12)
                             .accessibilityIdentifier("signup-error")
                     }
@@ -633,7 +635,7 @@ struct VerifyEmailView: View {     // 005 · ios.verify-email
                         (Text("Enter the code we sent to\n")
                             + Text(email).fontWeight(.semibold).foregroundColor(ShotIQColor.ink)
                             + Text("."))
-                            .font(.system(size: 17))
+                            .shotiqBody(17)
                             .foregroundStyle(ShotIQColor.graphite)
                             .multilineTextAlignment(.center)
                             .padding(.top, 12)
@@ -685,7 +687,7 @@ struct VerifyEmailView: View {     // 005 · ios.verify-email
 
                         if let resendNote {
                             Text(resendNote)
-                                .font(.system(size: 14))
+                                .shotiqBody(14)
                                 .foregroundStyle(resendOK ? ShotIQColor.confirmGreen : ShotIQColor.reviewRed)
                                 .multilineTextAlignment(.center)
                                 .padding(.top, 10)
@@ -707,7 +709,7 @@ struct VerifyEmailView: View {     // 005 · ios.verify-email
 
                         HStack {
                             Text("DIDN'T GET THE EMAIL?")
-                                .font(.system(size: 14, weight: .bold)).kerning(0.5)
+                                .shotiqBody(14, weight: .bold).kerning(0.5)
                                 .foregroundStyle(ShotIQColor.ink)
                             Spacer()
                         }
@@ -721,7 +723,7 @@ struct VerifyEmailView: View {     // 005 · ios.verify-email
                                             .font(.system(size: 20))
                                             .foregroundStyle(ShotIQColor.ink)
                                             .frame(width: 32)
-                                        Text(text).font(.system(size: 16)).foregroundStyle(ShotIQColor.ink)
+                                        Text(text).shotiqBody(16).foregroundStyle(ShotIQColor.ink)
                                         Spacer()
                                         Image(systemName: "chevron.right")
                                             .font(.system(size: 13))
@@ -741,10 +743,10 @@ struct VerifyEmailView: View {     // 005 · ios.verify-email
                                 .font(.system(size: 34, weight: .light))
                                 .foregroundStyle(ShotIQColor.ink)
                             VStack(alignment: .leading, spacing: 3) {
-                                Text("Your account is safe").font(.system(size: 17, weight: .semibold))
+                                Text("Your account is safe").shotiqBody(17, weight: .semibold)
                                     .foregroundStyle(ShotIQColor.ink)
                                 Text("We'll never share your email or data.")
-                                    .font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
+                                    .shotiqBody(14).foregroundStyle(ShotIQColor.graphite)
                             }
                             Spacer()
                         }
@@ -792,7 +794,7 @@ struct ForgotPasswordView: View {  // 006 · ios.forgot-password
                                 Image(systemName: "arrow.left")
                                     .font(.system(size: 20, weight: .semibold))
                                 Text("BACK TO SIGN IN")
-                                    .font(.system(size: 13, weight: .bold)).kerning(1)
+                                    .shotiqBody(13, weight: .bold).kerning(1)
                             }
                             .foregroundStyle(ShotIQColor.graphite)
                         }
@@ -820,7 +822,7 @@ struct ForgotPasswordView: View {  // 006 · ios.forgot-password
                             HStack(spacing: 10) {
                                 Image(systemName: "camera.metering.center.weighted")
                                 Text(busy ? "SENDING…" : "SEND RESET LINK")
-                                    .font(.system(size: 18, weight: .heavy).width(.condensed))
+                                    .shotiqCondensed(18, weight: .heavy)
                                     .kerning(1.5)
                             }
                             .frame(maxWidth: .infinity).frame(height: 54)
@@ -832,7 +834,7 @@ struct ForgotPasswordView: View {  // 006 · ios.forgot-password
 
                         if let errorText {
                             Text(errorText)
-                                .font(.system(size: 14)).foregroundStyle(ShotIQColor.reviewRed)
+                                .shotiqBody(14).foregroundStyle(ShotIQColor.reviewRed)
                                 .padding(.top, 10)
                         }
 
@@ -848,10 +850,10 @@ struct ForgotPasswordView: View {  // 006 · ios.forgot-password
                                     }
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text("RESET LINK SENT")
-                                            .font(.system(size: 19, weight: .heavy).width(.condensed))
+                                            .shotiqCondensed(19, weight: .heavy)
                                             .foregroundStyle(ShotIQColor.ink)
                                         Text("Check your inbox for secure reset instructions.")
-                                            .font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
+                                            .shotiqBody(14).foregroundStyle(ShotIQColor.graphite)
                                     }
                                     Spacer()
                                 }
@@ -867,7 +869,7 @@ struct ForgotPasswordView: View {  // 006 · ios.forgot-password
                             HStack(spacing: 8) {
                                 Image(systemName: "key").font(.system(size: 15))
                                 Text(sent ? "Enter your new password" : "I already have a reset link")
-                                    .font(.system(size: 15, weight: .medium))
+                                    .shotiqBody(15, weight: .medium)
                             }
                             .foregroundStyle(ShotIQColor.shotiqOrange)
                         }
@@ -881,7 +883,7 @@ struct ForgotPasswordView: View {  // 006 · ios.forgot-password
                         Button { dismiss() } label: {
                             HStack(spacing: 8) {
                                 Text("BACK TO SIGN IN")
-                                    .font(.system(size: 15, weight: .bold)).kerning(1.5)
+                                    .shotiqBody(15, weight: .bold).kerning(1.5)
                                 Image(systemName: "chevron.right")
                                     .font(.system(size: 13, weight: .bold))
                             }
@@ -893,7 +895,7 @@ struct ForgotPasswordView: View {  // 006 · ios.forgot-password
                         Button { UIApplication.shared.open(supportGuideURL) } label: {
                             HStack(spacing: 8) {
                                 Image(systemName: "questionmark.circle").font(.system(size: 17))
-                                Text("Need help?").font(.system(size: 16)).underline()
+                                Text("Need help?").shotiqBody(16).underline()
                             }
                             .foregroundStyle(ShotIQColor.graphite)
                         }
@@ -968,13 +970,13 @@ struct ResetPasswordView: View {   // 007 · ios.reset-password
                                         Image(systemName: "arrow.left")
                                             .font(.system(size: 20, weight: .semibold))
                                         Text("BACK TO SIGN IN")
-                                            .font(.system(size: 13, weight: .bold)).kerning(1)
+                                            .shotiqBody(13, weight: .bold).kerning(1)
                                     }
                                     .foregroundStyle(ShotIQColor.graphite)
                                 }
                                 Text("RESET PASSWORD").shotiqDisplay(52).padding(.top, 18)
                                 Text("Enter a new password for your ShotIQ account. Make it strong and easy for you to remember.")
-                                    .font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
+                                    .shotiqBody(14).foregroundStyle(ShotIQColor.graphite)
                                     .padding(.top, 8)
                             }
                             ZStack {
@@ -993,10 +995,10 @@ struct ResetPasswordView: View {   // 007 · ios.reset-password
                                 .foregroundStyle(ShotIQColor.ink)
                             VStack(alignment: .leading, spacing: 3) {
                                 Text("RESET LINK VERIFIED")
-                                    .font(.system(size: 15, weight: .bold)).kerning(0.5)
+                                    .shotiqBody(15, weight: .bold).kerning(0.5)
                                     .foregroundStyle(ShotIQColor.ink)
                                 Text("This reset link is valid.\nYou can set a new password.")
-                                    .font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
+                                    .shotiqBody(14).foregroundStyle(ShotIQColor.graphite)
                             }
                             Spacer()
                         }
@@ -1026,7 +1028,7 @@ struct ResetPasswordView: View {   // 007 · ios.reset-password
                                     .frame(height: 6)
                             }
                             Text(p1.isEmpty ? "" : strengthLabel)
-                                .font(.system(size: 13, weight: .bold)).kerning(0.5)
+                                .shotiqBody(13, weight: .bold).kerning(0.5)
                                 .foregroundStyle(ShotIQColor.confirmGreen)
                                 .frame(width: 66, alignment: .leading)
                         }
@@ -1049,14 +1051,14 @@ struct ResetPasswordView: View {   // 007 · ios.reset-password
 
                         VStack(alignment: .leading, spacing: 12) {
                             Text("PASSWORD REQUIREMENTS")
-                                .font(.system(size: 14, weight: .bold)).kerning(0.5)
+                                .shotiqBody(14, weight: .bold).kerning(0.5)
                                 .foregroundStyle(ShotIQColor.ink)
                             ForEach(checks, id: \.0) { label, met in
                                 HStack(spacing: 10) {
                                     Image(systemName: met ? "checkmark.circle.fill" : "circle")
                                         .font(.system(size: 17))
                                         .foregroundStyle(met ? ShotIQColor.confirmGreen : ShotIQColor.muted)
-                                    Text(label).font(.system(size: 15)).foregroundStyle(ShotIQColor.ink)
+                                    Text(label).shotiqBody(15).foregroundStyle(ShotIQColor.ink)
                                 }
                             }
                         }
@@ -1071,14 +1073,14 @@ struct ResetPasswordView: View {   // 007 · ios.reset-password
                                     .font(.system(size: 18))
                                     .foregroundStyle(ShotIQColor.confirmGreen)
                                 Text(successText)
-                                    .font(.system(size: 14)).foregroundStyle(ShotIQColor.confirmGreen)
+                                    .shotiqBody(14).foregroundStyle(ShotIQColor.confirmGreen)
                                 Spacer()
                             }
                             .padding(.top, 20)
                         }
                         if let errorText {
                             Text(errorText)
-                                .font(.system(size: 14)).foregroundStyle(ShotIQColor.reviewRed)
+                                .shotiqBody(14).foregroundStyle(ShotIQColor.reviewRed)
                                 .padding(.top, 20)
                         }
 
@@ -1097,10 +1099,10 @@ struct ResetPasswordView: View {   // 007 · ios.reset-password
                                 .foregroundStyle(ShotIQColor.ink)
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("RESET LINK EXPIRED?")
-                                    .font(.system(size: 15, weight: .bold)).kerning(0.5)
+                                    .shotiqBody(15, weight: .bold).kerning(0.5)
                                     .foregroundStyle(ShotIQColor.ink)
                                 Text("For your security, reset links expire after 15 minutes.")
-                                    .font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
+                                    .shotiqBody(14).foregroundStyle(ShotIQColor.graphite)
                                 Button("Request a new reset link") { showForgot = true }
                                     .font(.system(size: 14))
                                     .foregroundStyle(ShotIQColor.analysisBlue)

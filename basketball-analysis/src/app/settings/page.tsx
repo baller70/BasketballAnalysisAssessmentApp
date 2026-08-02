@@ -6,8 +6,14 @@
  * Left settings rail (SETTINGS nav + QUICK ACTIONS) with the canonical
  * Profile & Account workspace: profile information form, performance summary,
  * the Notifications / Automation / Data & privacy summary cards, and the
- * Data Actions band. Connected devices and Preferences keep their full cards
- * below the fold so nothing that used to be reachable is lost.
+ * Data Actions band.
+ *
+ * The rail is a real section switcher, exactly as canonical 096 paints it: the
+ * Profile & account section fills the 1440x900 canvas on its own and Connected
+ * devices / Preferences are sibling sections, not an endless stack below the
+ * fold. Every section stays mounted (inactive ones carry the `hidden`
+ * attribute) so no control is ever removed from the document — they are one
+ * rail click away instead of one scroll away.
  *
  * Every control is real and auto-persists: toggles and selects PUT
  * /api/settings the moment they change, the avatar uploads through the same
@@ -348,13 +354,27 @@ export default function SettingsPage() {
     void signOut()
   }
 
+  // The rail switches sections. Profile / Notifications / Automation / Privacy
+  // all live on the one canonical overview board (canonical 096 paints their
+  // summary cards side by side there), so those four share a view and only
+  // move the highlight; Connected devices and Preferences are their own views.
+  const view: "overview" | "devices" | "preferences" =
+    activeSection === "devices" || activeSection === "preferences" ? activeSection : "overview"
+
   const goTo = (id: string) => {
     setActiveSection(id)
-    document.getElementById(`section-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" })
+    if (id === "devices" || id === "preferences") return
+    document.getElementById(`section-${id}`)?.scrollIntoView({ behavior: "smooth", block: "nearest" })
   }
 
+  const heading = view === "devices"
+    ? { title: "CONNECTED DEVICES", sub: "Manage where you're signed in and how this browser notifies you." }
+    : view === "preferences"
+      ? { title: "PREFERENCES", sub: "Reports, coaching cadence, and reminders." }
+      : { title: "PROFILE & ACCOUNT", sub: "Manage your profile, account, and personal settings." }
+
   const initials = (form.name || user?.displayName || user?.email || "You").slice(0, 2).toUpperCase()
-  const field = "h-[38px] w-full rounded-[5px] border border-[var(--shotiq-color-rule)] bg-white px-[10px] text-[13px] outline-none focus:border-[var(--shotiq-color-ink)]"
+  const field = "h-[36px] w-full rounded-[5px] border border-[var(--shotiq-color-rule)] bg-white px-[9px] text-[13px] outline-none focus:border-[var(--shotiq-color-ink)]"
   const lbl = "text-[9px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]"
 
   // Canonical summary row: label left, state + chevron right; the whole row
@@ -364,7 +384,7 @@ export default function SettingsPage() {
     onClick: () => void; testid?: string
   }) => (
     <button type="button" onClick={onClick} data-testid={testid}
-            className="flex w-full items-center justify-between py-[6px] text-left text-[13px] hover:bg-[var(--shotiq-color-warmCanvas)]">
+            className="flex w-full items-center justify-between py-[7px] text-left text-[13px] hover:bg-[var(--shotiq-color-warmCanvas)]">
       <span>{label}</span>
       <span className={`flex items-center gap-[5px] text-[12px] font-medium ${
         tone === "green" ? "text-[var(--shotiq-color-confirmGreen)]"
@@ -445,9 +465,9 @@ export default function SettingsPage() {
       <div className="min-w-0 flex-1 px-[26px] py-[18px]">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="shotiq-display text-[44px] leading-[46px]">PROFILE &amp; ACCOUNT</h1>
+            <h1 className="shotiq-display text-[44px] leading-[46px]">{heading.title}</h1>
             <p className="mt-[2px] text-[13px] text-[var(--shotiq-color-graphite)]">
-              Manage your profile, account, and personal settings.
+              {heading.sub}
             </p>
           </div>
           <span aria-live="polite" className={`pt-[8px] text-[12px] ${saveState === "error" ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-graphite)]"}`}>
@@ -456,6 +476,8 @@ export default function SettingsPage() {
           </span>
         </div>
 
+        {/* ============ section: Profile & account (canonical 096 board) ==== */}
+        <div hidden={view !== "overview"}>
         <div className="mt-[12px] flex gap-[16px]">
           {/* profile information */}
           <Card id="section-profile" className="min-w-0 flex-1 scroll-mt-[76px] p-[18px]">
@@ -463,7 +485,7 @@ export default function SettingsPage() {
               <SectionLabel>PROFILE INFORMATION</SectionLabel>
               <div className="text-right"><div className={lbl}>JOINED</div><div className="text-[12px]">Jan 14, 2024</div></div>
             </div>
-            <div className="mt-[8px] flex gap-[20px]">
+            <div className="mt-[8px] flex gap-[18px]">
               <div className="w-[118px] shrink-0 text-center">
                 <div className="mx-auto grid h-[118px] w-[118px] place-items-center overflow-hidden rounded-full bg-[var(--shotiq-color-rule)]">
                   {avatarUrl ? (
@@ -476,7 +498,7 @@ export default function SettingsPage() {
                 <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={onAvatarPick} />
                 <button type="button"
                         onClick={() => { if (avatarInputRef.current) { avatarInputRef.current.dataset.opened = String(Date.now()); avatarInputRef.current.click() } }}
-                        className="mt-[10px] h-[34px] w-full rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white text-[12px] hover:border-[var(--shotiq-color-ink)]">
+                        className="mt-[10px] h-[32px] w-full rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white text-[12px] hover:border-[var(--shotiq-color-ink)]">
                   Change photo
                 </button>
                 <button type="button" onClick={removeAvatar}
@@ -484,28 +506,32 @@ export default function SettingsPage() {
                   Remove photo
                 </button>
               </div>
-              <div className="min-w-0 flex-1">
-                <div className={lbl}>FULL NAME</div>
-                <input className={`${field} mt-[3px]`} value={form.name} data-testid="profile-name"
-                       onChange={(e) => setForm({ ...form, name: e.target.value })} />
-                <div className={`${lbl} mt-[10px]`}>EMAIL ADDRESS</div>
-                <input className={`${field} mt-[3px]`} value={form.email}
-                       onChange={(e) => setForm({ ...form, email: e.target.value })} />
-                <div className="mt-[10px] grid grid-cols-2 gap-[14px]">
-                  <div><div className={lbl}>HANDEDNESS</div>
-                    <select className={`${field} mt-[3px]`} value={form.hand} onChange={(e) => setForm({ ...form, hand: e.target.value })}>
-                      {["Right", "Left"].map((o) => <option key={o}>{o}</option>)}</select></div>
-                  <div><div className={lbl}>PLAY LEVEL</div>
-                    <select className={`${field} mt-[3px]`} value={form.level} onChange={(e) => setForm({ ...form, level: e.target.value })}>
-                      {["Beginner", "Intermediate", "Advanced", "Professional"].map((o) => <option key={o}>{o}</option>)}</select></div>
-                </div>
-                <div className="mt-[10px] grid grid-cols-4 gap-[14px]">
+              {/* Canonical stacks NAME / EMAIL / (hand, level) / (h, w, ws, pref)
+                  down one wide column. This workspace is 196px narrower than
+                  canonical's — the product's uniform app rail sits outside the
+                  settings rail — so the first four fields pair up two-per-row
+                  and the measurements row spans both. Same eight fields, same
+                  order, three rows instead of four. */}
+              <div className="grid min-w-0 flex-1 grid-cols-[0.82fr_1.18fr] gap-x-[14px] gap-y-[9px]">
+                <div><div className={lbl}>FULL NAME</div>
+                  <input className={`${field} mt-[2px]`} value={form.name} data-testid="profile-name"
+                         onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
+                <div><div className={lbl}>EMAIL ADDRESS</div>
+                  <input className={`${field} mt-[2px]`} value={form.email}
+                         onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
+                <div><div className={lbl}>HANDEDNESS</div>
+                  <select className={`${field} mt-[2px]`} value={form.hand} onChange={(e) => setForm({ ...form, hand: e.target.value })}>
+                    {["Right", "Left"].map((o) => <option key={o}>{o}</option>)}</select></div>
+                <div><div className={lbl}>PLAY LEVEL</div>
+                  <select className={`${field} mt-[2px]`} value={form.level} onChange={(e) => setForm({ ...form, level: e.target.value })}>
+                    {["Beginner", "Intermediate", "Advanced", "Professional"].map((o) => <option key={o}>{o}</option>)}</select></div>
+                <div className="col-span-2 grid grid-cols-[1fr_1.14fr_1fr_2fr] items-end gap-[8px]">
                   {([["HEIGHT", "height"], ["WEIGHT", "weight"], ["WINGSPAN", "wingspan"]] as const).map(([l, k]) => (
                     <div key={k}><div className={lbl}>{l}</div>
-                      <input className={`${field} mt-[3px]`} value={form[k]} onChange={(e) => setForm({ ...form, [k]: e.target.value })} /></div>
+                      <input className={`${field} mt-[2px] px-[6px]`} value={form[k]} onChange={(e) => setForm({ ...form, [k]: e.target.value })} /></div>
                   ))}
                   <div><div className={lbl}>SHOOTING PREFERENCE</div>
-                    <select className={`${field} mt-[3px]`} value={form.pref} onChange={(e) => setForm({ ...form, pref: e.target.value })}>
+                    <select className={`${field} mt-[2px] px-[7px]`} value={form.pref} onChange={(e) => setForm({ ...form, pref: e.target.value })}>
                       {["Catch & Shoot", "Off the Dribble", "Pull-Up"].map((o) => <option key={o}>{o}</option>)}</select></div>
                 </div>
               </div>
@@ -522,7 +548,7 @@ export default function SettingsPage() {
           </Card>
 
           {/* performance summary */}
-          <Card className="w-[500px] shrink-0 p-[18px]">
+          <Card className="flex w-[470px] shrink-0 flex-col p-[18px]">
             <SectionLabel>PERFORMANCE SUMMARY</SectionLabel>
             <div className="mt-[10px] flex gap-[20px]">
               <div className="w-[118px] shrink-0 border-r border-[var(--shotiq-color-rule)] pr-[16px]">
@@ -556,7 +582,10 @@ export default function SettingsPage() {
                 </div>
               </div>
             </div>
-            <div className="mt-[12px] flex items-center justify-around border-t border-[var(--shotiq-color-rule)] pt-[12px]">
+            {/* grows so the streak/points band sits on the card floor, as
+                canonical paints it, instead of leaving dead space below */}
+            <div className="mt-[12px] flex-1" aria-hidden="true" />
+            <div className="flex items-center justify-around border-t border-[var(--shotiq-color-rule)] pt-[12px]">
               <div className="flex items-center gap-[10px]">
                 <span className="shotiq-numeric text-[24px]">6</span>
                 <Film className="h-[22px] w-[22px]" strokeWidth={1.5} />
@@ -583,7 +612,7 @@ export default function SettingsPage() {
                 <div className="text-[11px] text-[var(--shotiq-color-graphite)]">Control how and when you receive updates.</div>
               </div>
             </div>
-            <div className="mt-[6px] divide-y divide-[var(--shotiq-color-rule)]">
+            <div className="mt-[8px] divide-y divide-[var(--shotiq-color-rule)]">
               <ToggleRow label="Training reminders" value={notifications.coachingTipsPush}
                          onToggle={() => setNotif("coachingTipsPush", !notifications.coachingTipsPush)} />
               <ToggleRow label="Weekly progress summary" value={notifications.weeklyReportEmail} testid="setting-weeklyReportEmail"
@@ -607,7 +636,7 @@ export default function SettingsPage() {
                 <div className="text-[11px] text-[var(--shotiq-color-graphite)]">Manage automated analysis and insights.</div>
               </div>
             </div>
-            <div className="mt-[6px] divide-y divide-[var(--shotiq-color-rule)]">
+            <div className="mt-[8px] divide-y divide-[var(--shotiq-color-rule)]">
               <ToggleRow label="Auto-analyze new shots" value={automation.analyticsRefreshEnabled}
                          onToggle={() => setAuto("analyticsRefreshEnabled", !automation.analyticsRefreshEnabled)} />
               <ToggleRow label="Form score updates" value={automation.modelUpdateEnabled}
@@ -631,7 +660,7 @@ export default function SettingsPage() {
                 <div className="text-[11px] text-[var(--shotiq-color-graphite)]">Control your data and privacy preferences.</div>
               </div>
             </div>
-            <div className="mt-[6px] divide-y divide-[var(--shotiq-color-rule)]">
+            <div className="mt-[8px] divide-y divide-[var(--shotiq-color-rule)]">
               <SummaryRow label="Profile visibility" value={privacy.includeInPeerComparisons ? "Public" : "Private"}
                           onClick={() => setPriv("includeInPeerComparisons", !privacy.includeInPeerComparisons)} />
               <SummaryRow label="Share analytics" value={privacy.shareProgressWithCoach ? "On" : "Off"}
@@ -645,7 +674,7 @@ export default function SettingsPage() {
         </div>
 
         {/* data actions band */}
-        <Card className="mt-[12px] flex items-center divide-x divide-[var(--shotiq-color-rule)] px-[8px] py-[12px]">
+        <Card className="mt-[12px] flex items-center divide-x divide-[var(--shotiq-color-rule)] px-[8px] py-[14px]">
           <div className="w-[250px] px-[16px]">
             <span className="shotiq-display text-[17px] leading-[18px]">DATA ACTIONS</span>
             <div className="mt-[2px] text-[11px] text-[var(--shotiq-color-graphite)]">Manage your data and analysis history.</div>
@@ -678,9 +707,11 @@ export default function SettingsPage() {
             </button>
           </div>
         </Card>
+        </div>
 
-        {/* below the fold: full device + preference controls stay reachable */}
-        <Card id="section-devices" className="mt-[16px] scroll-mt-[76px] p-[18px]">
+        {/* ============ section: Connected devices ========================== */}
+        <div hidden={view !== "devices"}>
+        <Card id="section-devices" className="mt-[12px] scroll-mt-[76px] p-[18px]">
           <div className="flex items-center gap-[10px]">
             <MonitorSmartphone className="h-[18px] w-[18px] text-[var(--shotiq-color-shotiqOrange)]" />
             <div>
@@ -720,8 +751,11 @@ export default function SettingsPage() {
             )}
           </div>
         </Card>
+        </div>
 
-        <Card id="section-preferences" className="mt-[16px] scroll-mt-[76px] p-[18px]">
+        {/* ============ section: Preferences =============================== */}
+        <div hidden={view !== "preferences"}>
+        <Card id="section-preferences" className="mt-[12px] scroll-mt-[76px] p-[18px]">
           <div className="flex items-center gap-[10px]">
             <SlidersHorizontal className="h-[18px] w-[18px] text-[var(--shotiq-color-shotiqOrange)]" />
             <div>
@@ -757,6 +791,7 @@ export default function SettingsPage() {
           </div>
         </Card>
 
+        {/* app-info band travels with Preferences so it stays reachable */}
         <Card className="mt-[16px] flex items-center divide-x divide-[var(--shotiq-color-rule)] px-[8px] py-[14px]">
           <div className="px-[16px]">
             <SectionLabel>ABOUT SHOTIQ</SectionLabel>
@@ -768,6 +803,7 @@ export default function SettingsPage() {
             <Link href="/privacy" className="text-[var(--shotiq-color-graphite)] hover:text-[var(--shotiq-color-ink)]">Privacy</Link>
           </div>
         </Card>
+        </div>
       </div>
     </div>
   )

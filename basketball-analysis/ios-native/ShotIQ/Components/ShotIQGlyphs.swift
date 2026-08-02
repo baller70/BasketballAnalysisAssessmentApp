@@ -350,6 +350,18 @@ struct CaptureReticleGlyph: View {
 enum MechanicKind {
     case elbowAngle, wristArc, releaseHeight, distance, jump, ballArc
     case centerline, balance, drift, impact, tempo, consistency
+    /// Apex of the flight path measured off the floor — canonical 041 "ARC HEIGHT".
+    /// Distinct from `releaseHeight` (a standing ruler) and from `ballArc`.
+    case arcHeight
+    /// The launch wedge at the hand — canonical 041 "RELEASE ANGLE", 070
+    /// "Release angle". A protractor corner, never a parabola.
+    case releaseAngle
+    /// Rotation on the ball — canonical 041 "SIDE SPIN", 053 "Backspin".
+    case spin
+    /// Dotted flight path between two timing nodes — canonical 041 "FLIGHT TIME".
+    case flightTime
+    /// Plan-view left/right deviation of the shot — canonical 070 "Shot shape".
+    case shotShape
 }
 
 struct MechanicGlyph: View {
@@ -459,6 +471,58 @@ struct MechanicGlyph: View {
                 p.node(18.6, 11.6, r: 1.4)
                 p.poly([CGPoint(x: 7, y: 12.6), CGPoint(x: 11, y: 11.2),
                         CGPoint(x: 15, y: 12.9), CGPoint(x: 18.6, y: 11.6)])
+            case .arcHeight:
+                // Canonical 041: a low node polyline whose apex is picked out, with
+                // the apex measured down to the rail. Not a parabola — the apex is
+                // what is being read, so the shoulders sit on the floor line.
+                p.poly([CGPoint(x: 3.6, y: 15.4), CGPoint(x: 7.2, y: 17.6),
+                        CGPoint(x: 12, y: 8.2), CGPoint(x: 16.8, y: 13.2),
+                        CGPoint(x: 20.4, y: 11)], dash: [1.6, 1.8])
+                p.node(3.6, 15.4, r: 1.3)
+                p.node(7.2, 17.6, r: 1.3, accent: true, filled: true)
+                p.node(12, 8.2, r: 1.5, accent: true, filled: true)
+                p.node(16.8, 13.2, r: 1.3, accent: true, filled: true)
+                p.node(20.4, 11, r: 1.3)
+            case .releaseAngle:
+                // Canonical 041/070: a protractor corner — the horizontal, the
+                // launch ray and the swept angle between them.
+                p.line(5, 18.5, 20, 18.5)
+                p.line(5, 18.5, 5, 6)
+                p.line(5, 18.5, 18.5, 7.5)
+                p.arc(5, 18.5, r: 7.2, from: -38, to: 0, accent: true, dash: [1.4, 1.8])
+                p.node(5, 18.5, r: 1.4, accent: true, filled: true)
+            case .spin:
+                // Canonical 041: the ball with its two rotation arrows. The ball
+                // seams are what separate it from `.accuracy`'s concentric target.
+                p.circle(12, 12, r: 4.6)
+                p.quad(CGPoint(x: 12, y: 7.4), CGPoint(x: 14.9, y: 12), CGPoint(x: 12, y: 16.6))
+                p.quad(CGPoint(x: 12, y: 7.4), CGPoint(x: 9.1, y: 12), CGPoint(x: 12, y: 16.6))
+                p.arc(12, 12, r: 7.6, from: 128, to: 202, accent: true)
+                p.arrowHead(at: CGPoint(x: 7.5, y: 9), from: CGPoint(x: 5.6, y: 11.4),
+                            span: 1.7, accent: true)
+                p.arc(12, 12, r: 7.6, from: -52, to: 22, accent: true)
+                p.arrowHead(at: CGPoint(x: 16.5, y: 15), from: CGPoint(x: 18.4, y: 12.6),
+                            span: 1.7, accent: true)
+            case .flightTime:
+                // Canonical 041: the dotted flight path between the two timing
+                // nodes — the *span*, not the height, is the measurement.
+                p.quad(CGPoint(x: 4.5, y: 15.5), CGPoint(x: 12, y: 3), CGPoint(x: 19.5, y: 15.5),
+                       dash: [1.5, 2])
+                p.node(4.5, 15.5, r: 1.8, filled: true)
+                p.node(19.5, 15.5, r: 1.8, filled: true)
+                p.line(4.5, 19.6, 19.5, 19.6, accent: true)
+                p.line(4.5, 18.4, 4.5, 20.8, accent: true)
+                p.line(19.5, 18.4, 19.5, 20.8, accent: true)
+            case .shotShape:
+                // Canonical 070: plan view down the court — the rim line, the
+                // dashed path and how far left or right of centre it finished.
+                p.line(4, 19.5, 20, 19.5)
+                p.node(6.5, 19.5, r: 1.4, accent: true, filled: true)
+                p.node(17.5, 19.5, r: 1.4, accent: true, filled: true)
+                p.line(12, 3.5, 12, 14, dash: [2, 2])
+                p.poly([CGPoint(x: 12, y: 5), CGPoint(x: 10.4, y: 10.6),
+                        CGPoint(x: 12.6, y: 14.4)], accent: true, dash: [1.4, 1.8])
+                p.node(12, 3.5, r: 1.5)
             }
         }
     }
@@ -470,10 +534,24 @@ extension MechanicKind {
     init(metricLabel: String) {
         let k = metricLabel.lowercased()
         switch true {
+        // Ordered longest-concept-first: "arc height" is neither `.releaseHeight`
+        // (which "height" alone would pick) nor `.ballArc` (which "arc" would),
+        // and "release angle" is not "elbow angle". Every arm below reaches a
+        // different diagram — that is the whole contract of this resolver.
+        case k.contains("arc height") || k.contains("apex"): self = .arcHeight
+        case k.contains("shot shape") || k.contains("shape"): self = .shotShape
+        case k.contains("spin"): self = .spin
+        case k.contains("flight") || k.contains("hang"): self = .flightTime
         case k.contains("elbow"): self = .elbowAngle
         case k.contains("wrist") || k.contains("snap"): self = .wristArc
+        case k.contains("release angle") || k.contains("launch"): self = .releaseAngle
         case k.contains("height"): self = .releaseHeight
         case k.contains("angle") || k.contains("arc"): self = .ballArc
+        // Before the balance arm: "distance" *contains* "stance", so
+        // "RELEASE DISTANCE" on 051 was resolving to the balance diagram and
+        // colliding with that screen's own BALANCE row.
+        case k.contains("distance") || k.contains("range") || k.contains("depth"):
+            self = .distance
         case k.contains("balance") || k.contains("base") || k.contains("stance")
             || k.contains("foot") || k.contains("knee") || k.contains("dip"): self = .balance
         case k.contains("lean") || k.contains("drift") || k.contains("align")
@@ -486,8 +564,6 @@ extension MechanicKind {
             || k.contains("time") || k.contains("rhythm"): self = .tempo
         case k.contains("consistency") || k.contains("repeat") || k.contains("stack"):
             self = .consistency
-        case k.contains("distance") || k.contains("range") || k.contains("depth"):
-            self = .distance
         default: self = .impact
         }
     }
@@ -712,8 +788,18 @@ enum StatMarkKind {
     case dayStreak
     /// Stacked rails — shots taken.
     case volume
-    /// Target with a struck centre — makes.
+    /// Target with a struck centre — the accuracy *rate*.
     case accuracy
+    /// Rim and net seen face on — makes, i.e. a count of balls that went in.
+    /// Distinct from `.accuracy` (a rate) and from `.volume` (attempts): 069
+    /// printed one mark for MAKES and MAKE %, and 062 printed near-identical
+    /// rings for SHOTS and MAKES.
+    case makes
+    /// Ring with the made share swept out — a percentage, not a count.
+    case makePercent
+    /// Rising node line with the gained step accented — points *earned* in a
+    /// session, against `.points` which is the lifetime token.
+    case pointsEarned
 }
 
 struct StatMarkGlyph: View {
@@ -721,6 +807,28 @@ struct StatMarkGlyph: View {
     var size: CGFloat = 20
     var accent: Color = ShotIQColor.shotiqOrange
     var label: String? = nil
+
+    /// The single resolver from a canonical stat caption to its mark. Every
+    /// screen that prints a stat strip goes through this one function, so the
+    /// same statistic cannot pick up two marks on two screens and — more to the
+    /// point — two statistics cannot end up sharing one. The arms are ordered
+    /// so that a longer caption is tested before any caption it contains
+    /// ("POINTS EARNED" before "POINTS", "MAKE %" before "MAKE").
+    static func kind(forStatLabel label: String) -> StatMarkKind? {
+        let k = label.uppercased()
+        switch true {
+        case k.contains("STREAK"): return .dayStreak
+        case k.contains("EARNED") || k.contains("GAINED"): return .pointsEarned
+        case k.contains("POINT"): return .points
+        case k.contains("FORM SCORE") || k.contains("SCORE"): return .formScore
+        case k.contains("MAKE %") || k.contains("MAKE%") || k.contains("PCT")
+            || k.contains("FG%"): return .makePercent
+        case k.contains("ACCURACY") || k.contains("SHOOTING %"): return .accuracy
+        case k.contains("MAKE") || k.contains("MADE"): return .makes
+        case k.contains("SHOT") || k.contains("ATTEMPT") || k.contains("REP"): return .volume
+        default: return nil
+        }
+    }
 
     var body: some View {
         ShotIQGlyph(size: size, accent: accent, label: label) { p in
@@ -762,6 +870,34 @@ struct StatMarkGlyph: View {
                 p.line(12, 21.6, 12, 20)
                 p.line(4, 12, 2.4, 12)
                 p.line(21.6, 12, 20, 12)
+            case .makes:
+                // Backboard, rim and net, face on — canonical 062's MAKES mark.
+                p.rect(5.5, 4.5, 13, 8, radius: 0.8)
+                p.rect(9.5, 8, 5, 4.5, radius: 0.4)
+                p.line(6.5, 14.5, 17.5, 14.5, accent: true)
+                p.poly([CGPoint(x: 7.6, y: 14.5), CGPoint(x: 9.4, y: 20),
+                        CGPoint(x: 14.6, y: 20), CGPoint(x: 16.4, y: 14.5)])
+                p.line(10.4, 14.5, 11.4, 20)
+                p.line(13.6, 14.5, 12.6, 20)
+            case .makePercent:
+                // A ring with the made share swept out of it — a rate.
+                p.circle(12, 12, r: 7.6, dash: [1.6, 2])
+                p.arc(12, 12, r: 7.6, from: -90, to: 135, accent: true)
+                p.node(12, 4.4, r: 1.5, accent: true, filled: true)
+                p.line(8.4, 15.4, 15.6, 8.6)
+                p.node(9.4, 9.6, r: 1.1)
+                p.node(14.6, 14.4, r: 1.1)
+            case .pointsEarned:
+                // Rising node line, the earned step picked out — a gain, not a
+                // lifetime balance (that is `.points`, the hexagon token).
+                p.poly([CGPoint(x: 3.6, y: 17.4), CGPoint(x: 8, y: 14.6),
+                        CGPoint(x: 12, y: 16.2), CGPoint(x: 16, y: 8.6),
+                        CGPoint(x: 20.4, y: 11.4)])
+                p.node(3.6, 17.4, r: 1.4)
+                p.node(8, 14.6, r: 1.4)
+                p.node(12, 16.2, r: 1.4)
+                p.node(16, 8.6, r: 1.8, accent: true, filled: true)
+                p.node(20.4, 11.4, r: 1.4)
             }
         }
     }
@@ -893,6 +1029,588 @@ struct NavGlyph: View {
     }
 }
 
+// MARK: - Dominant hand
+
+/// Canonical 011 draws the two hands as *mirrored* node constellations inside
+/// half-brackets: right-handed opens its brackets to the left and carries the
+/// accent nodes on the right, left-handed is the exact reflection. The shipped
+/// screen used `point.3.filled.connected...` against `point.3.connected...`,
+/// two SF marks that differ only in whether three dots are filled — which is
+/// what both graders read as "left and right render the same".
+enum HandKind { case right, left }
+
+struct HandGlyph: View {
+    var kind: HandKind
+    var size: CGFloat = 30
+    var accent: Color = ShotIQColor.shotiqOrange
+    var label: String? = nil
+
+    var body: some View {
+        ShotIQGlyph(size: size, accent: accent, label: label) { p in
+            // Drawn right-handed on the 24-grid, then reflected for the left.
+            let flip = kind == .left
+            func x(_ v: CGFloat) -> CGFloat { flip ? 24 - v : v }
+            // Two opposed corner brackets, on the shooting side.
+            p.poly([CGPoint(x: x(4), y: 8.5), CGPoint(x: x(4), y: 4),
+                    CGPoint(x: x(9), y: 4)])
+            p.poly([CGPoint(x: x(4), y: 15.5), CGPoint(x: x(4), y: 20),
+                    CGPoint(x: x(9), y: 20)])
+            // Wrist -> palm -> two fingers: the constellation itself is chiral,
+            // so the two marks stay apart even at row size.
+            p.poly([CGPoint(x: x(8), y: 16.6), CGPoint(x: x(10.6), y: 10),
+                    CGPoint(x: x(14.4), y: 7.2), CGPoint(x: x(18.4), y: 11)])
+            p.line(x(14.4), 7.2, x(15.6), 13.2)
+            p.node(x(8), 16.6, r: 1.6)
+            p.node(x(10.6), 10, r: 1.6, accent: true, filled: true)
+            p.node(x(14.4), 7.2, r: 1.6, accent: true, filled: true)
+            p.node(x(18.4), 11, r: 1.6, accent: true)
+            p.node(x(15.6), 13.2, r: 1.6)
+        }
+    }
+}
+
+extension HandKind {
+    /// Resolves "Right", "RIGHT-HANDED", "Left-handed" onto the matching mark.
+    init(handLabel: String) {
+        self = handLabel.lowercased().contains("left") ? .left : .right
+    }
+}
+
+// MARK: - Body measurements
+
+/// Canonical 009 and 070 draw one measuring instrument per measured quantity:
+/// a bracketed tick scale for age, a vertical rule for height, a beam for
+/// weight, an arms-out figure for wingspan. The shipped screens routed all four
+/// through `MechanicKind(metricLabel:)`, where only "height" matched — so
+/// WEIGHT, WINGSPAN and AGE all fell to `.impact`, and HEIGHT collided with
+/// RELEASE HEIGHT.
+enum BodyMetricKind { case age, height, weight, wingspan }
+
+struct BodyMetricGlyph: View {
+    var kind: BodyMetricKind
+    var size: CGFloat = 22
+    var accent: Color = ShotIQColor.shotiqOrange
+    var label: String? = nil
+
+    var body: some View {
+        ShotIQGlyph(size: size, accent: accent, label: label) { p in
+            switch kind {
+            case .age:
+                // Bracketed tick scale — elapsed years read off a framed rule.
+                p.captureBrackets(inset: 4.5, arm: 3.6, radius: 1.2)
+                p.line(12, 5.6, 12, 18.4)
+                p.line(12, 8.4, 15, 8.4, accent: true)
+                p.line(12, 12, 15, 12, accent: true)
+                p.line(12, 15.6, 15, 15.6, accent: true)
+                p.node(12, 5.2, r: 1.5, accent: true, filled: true)
+                p.node(12, 18.8, r: 1.5, accent: true, filled: true)
+            case .height:
+                // Standing rule: one vertical span between two capped ends.
+                p.poly([CGPoint(x: 7.5, y: 4), CGPoint(x: 5.5, y: 4),
+                        CGPoint(x: 5.5, y: 20), CGPoint(x: 7.5, y: 20)])
+                p.line(12, 5.6, 12, 18.4, accent: true, dash: [1.6, 1.8])
+                p.line(9.6, 9.4, 14.4, 9.4)
+                p.line(9.6, 14.6, 14.4, 14.6)
+                p.node(12, 4.4, r: 1.6, accent: true, filled: true)
+                p.node(12, 19.6, r: 1.6, accent: true, filled: true)
+            case .weight:
+                // Balance beam with a centre pointer — mass, read horizontally.
+                p.line(4, 14.5, 20, 14.5)
+                p.line(12, 14.5, 12, 9.5)
+                p.line(9, 9.5, 15, 9.5)
+                p.line(6, 18.5, 18, 18.5, dash: [2, 2])
+                p.node(4.4, 18.5, r: 1.6, accent: true, filled: true)
+                p.node(19.6, 18.5, r: 1.6, accent: true, filled: true)
+            case .wingspan:
+                // Front-on figure, arms out, span measured fingertip to fingertip.
+                p.circle(12, 6.4, r: 2.2)
+                p.line(12, 8.6, 12, 15)
+                p.line(4.6, 10.8, 19.4, 10.8)
+                p.line(12, 15, 9, 20.6)
+                p.line(12, 15, 15, 20.6)
+                p.line(3.6, 7.4, 20.4, 7.4, accent: true, dash: [1.6, 1.8])
+                p.node(3.6, 7.4, r: 1.6, accent: true, filled: true)
+                p.node(20.4, 7.4, r: 1.6, accent: true, filled: true)
+            }
+        }
+    }
+}
+
+/// Whole-word containment. Substring matching is how this family acquired its
+/// duplicates: "di-STANCE" resolved to the balance diagram and collided with
+/// 051's own BALANCE row, and "im-AGE" would have given "Upload image" the age
+/// ruler. Anything short enough to hide inside another word is matched as a
+/// word, not as a substring.
+func shotiqLabelHasWord(_ label: String, _ word: String) -> Bool {
+    label.lowercased()
+        .split(whereSeparator: { !$0.isLetter && !$0.isNumber })
+        .contains(Substring(word))
+}
+
+extension BodyMetricKind {
+    /// Resolves a canonical measurement label. Returns nil when the label is not
+    /// a body measurement, so the caller can fall through to `MechanicKind`
+    /// rather than being handed a wrong instrument.
+    init?(measurementLabel: String) {
+        let k = measurementLabel.lowercased()
+        // "release height" is a shot mechanic, not a body measurement — it must
+        // reach `MechanicKind.releaseHeight` and keep its own diagram.
+        if k.contains("release") { return nil }
+        switch true {
+        case shotiqLabelHasWord(k, "age") || k.contains("birth"): self = .age
+        case k.contains("wingspan") || shotiqLabelHasWord(k, "reach")
+            || shotiqLabelHasWord(k, "span"): self = .wingspan
+        case k.contains("weight") || shotiqLabelHasWord(k, "mass")
+            || shotiqLabelHasWord(k, "lbs"): self = .weight
+        case k.contains("height") || shotiqLabelHasWord(k, "tall"): self = .height
+        default: return nil
+        }
+    }
+}
+
+// MARK: - Shot types
+
+/// How the shot was created. Canonical 053 prints four unrelated node paths
+/// across SHOT BREAKDOWN; the shipped screen routed all four labels through
+/// `MechanicKind(metricLabel:)`, none matched, and all four fell to `.impact` —
+/// the "four identical marks" both graders named.
+enum ShotTypeKind { case catchShoot, pullUp, offDribble, stepBack, other }
+
+struct ShotTypeGlyph: View {
+    var kind: ShotTypeKind
+    var size: CGFloat = 26
+    var accent: Color = ShotIQColor.shotiqOrange
+    var label: String? = nil
+
+    var body: some View {
+        ShotIQGlyph(size: size, accent: accent, label: label) { p in
+            switch kind {
+            case .catchShoot:
+                // A closed catch-and-release loop: the pass arrives and leaves
+                // from the same spot, so the path is a ring.
+                p.circle(12, 12, r: 6.6, dash: [1.8, 2])
+                p.node(12, 5.4, r: 1.7, accent: true, filled: true)
+                p.node(18.6, 12, r: 1.7)
+                p.node(12, 18.6, r: 1.7, accent: true, filled: true)
+                p.node(5.4, 12, r: 1.7)
+            case .pullUp:
+                // Travel, then a hard stop and a vertical rise off two feet.
+                p.poly([CGPoint(x: 4, y: 19.5), CGPoint(x: 9.5, y: 17.5)], dash: [1.6, 1.8])
+                p.line(11.5, 16.5, 11.5, 6.5, accent: true)
+                p.arrowHead(at: CGPoint(x: 11.5, y: 6.2), from: CGPoint(x: 11.5, y: 10.5),
+                            accent: true)
+                p.node(9.5, 17.5, r: 1.7, filled: true)
+                p.node(15.5, 8.5, r: 1.7, accent: true, filled: true)
+                p.line(13, 15, 15.5, 10)
+            case .offDribble:
+                // Two bounces into the gather — the dribble path is the mark.
+                p.quad(CGPoint(x: 4.5, y: 8), CGPoint(x: 7, y: 20), CGPoint(x: 10, y: 9),
+                       dash: [1.5, 1.9])
+                p.quad(CGPoint(x: 10, y: 9), CGPoint(x: 13, y: 20), CGPoint(x: 16, y: 9),
+                       dash: [1.5, 1.9])
+                p.node(4.5, 8, r: 1.6)
+                p.node(10, 9, r: 1.6)
+                p.node(16, 9, r: 1.7, accent: true, filled: true)
+                p.line(17.5, 7.5, 20, 5, accent: true)
+            case .stepBack:
+                // Retreating step then the release — the path runs backwards.
+                p.poly([CGPoint(x: 19.5, y: 18), CGPoint(x: 13, y: 18)], accent: true)
+                p.arrowHead(at: CGPoint(x: 12.6, y: 18), from: CGPoint(x: 16, y: 18),
+                            accent: true)
+                p.node(19.5, 18, r: 1.7)
+                p.node(12.6, 18, r: 1.7, accent: true, filled: true)
+                p.line(9.5, 15.5, 9.5, 6.5)
+                p.node(9.5, 5.4, r: 1.7)
+            case .other:
+                // Unclassified: three loose attempts with no shared path.
+                p.node(6.5, 16.5, r: 1.7)
+                p.node(12, 8.5, r: 1.7, accent: true, filled: true)
+                p.node(17.5, 15, r: 1.7)
+                p.line(3.5, 20.5, 20.5, 20.5, dash: [2, 2])
+                p.line(6.5, 18.1, 6.5, 20.5, dash: [1.4, 1.6])
+                p.line(12, 10.2, 12, 20.5, dash: [1.4, 1.6])
+                p.line(17.5, 16.7, 17.5, 20.5, dash: [1.4, 1.6])
+            }
+        }
+    }
+}
+
+extension ShotTypeKind {
+    /// Resolves a canonical shot-type label. Nil when the string is not a shot
+    /// type, so callers keep their own mark instead of being given a wrong one.
+    init?(shotTypeLabel: String) {
+        let k = shotTypeLabel.lowercased()
+        switch true {
+        case k.contains("catch"): self = .catchShoot
+        case k.contains("pull"): self = .pullUp
+        case k.contains("dribble"): self = .offDribble
+        case k.contains("step back") || k.contains("step-back") || k.contains("stepback"):
+            self = .stepBack
+        case k == "other" || k.contains("other shot"): self = .other
+        default: return nil
+        }
+    }
+}
+
+// MARK: - Athletic ability
+
+/// Canonical 011 grades ability as one node arc over a tick rail, with the arc
+/// rising and the rail marker advancing across the three cards. The shipped
+/// screen used `figure.walk` / `figure.run` / `figure.basketball` — three
+/// different families, and `figure.basketball` again for seven other concepts.
+enum AbilityKind { case developing, advanced, elite }
+
+struct AbilityGlyph: View {
+    var kind: AbilityKind
+    var size: CGFloat = 30
+    var accent: Color = ShotIQColor.shotiqOrange
+    var label: String? = nil
+
+    var body: some View {
+        ShotIQGlyph(size: size, accent: accent, label: label) { p in
+            // The rail is shared; the arc height and the marker position are what
+            // separate the three grades.
+            p.line(4, 16.5, 20, 16.5)
+            for i in 0...7 { p.line(4.6 + CGFloat(i) * 2.2, 16.5, 4.6 + CGFloat(i) * 2.2, 18.4) }
+            let apex: CGFloat, markerX: CGFloat, spread: CGFloat
+            switch kind {
+            case .developing: apex = 11.6; markerX = 8.2; spread = 5.4
+            case .advanced: apex = 8.4; markerX = 12.0; spread = 4.6
+            case .elite: apex = 5.2; markerX = 15.8; spread = 3.4
+            }
+            p.poly([CGPoint(x: 12 - spread - 1.6, y: 14.6),
+                    CGPoint(x: 12 - spread, y: apex + 2.2),
+                    CGPoint(x: 12, y: apex),
+                    CGPoint(x: 12 + spread, y: apex + 2.2),
+                    CGPoint(x: 12 + spread + 1.6, y: 14.6)])
+            p.node(12 - spread - 1.6, 14.6, r: 1.5)
+            p.node(12 - spread, apex + 2.2, r: 1.5)
+            p.node(12, apex, r: 1.6)
+            p.node(12 + spread, apex + 2.2, r: 1.5)
+            p.node(12 + spread + 1.6, 14.6, r: 1.5)
+            p.poly([CGPoint(x: markerX - 1.5, y: 20.6), CGPoint(x: markerX, y: 18.6),
+                    CGPoint(x: markerX + 1.5, y: 20.6), CGPoint(x: markerX - 1.5, y: 20.6)],
+                   accent: true)
+        }
+    }
+}
+
+extension AbilityKind {
+    init?(abilityLabel: String) {
+        let k = abilityLabel.lowercased()
+        switch true {
+        case k.contains("develop") || k.contains("beginner") || k.contains("new"):
+            self = .developing
+        case k.contains("advanced") || k.contains("intermediate") || k.contains("consistent"):
+            self = .advanced
+        case k.contains("elite") || k.contains("pro"): self = .elite
+        default: return nil
+        }
+    }
+}
+
+// MARK: - Measured angle
+
+/// A protractor reading a *specific* angle. Canonical 011 (COMPACT / BALANCED /
+/// HIGH ARC) and 047 (YOUR ANGLE vs IDEAL RANGE) both compare angles side by
+/// side, so the mark has to carry the value: two figures at the same degrees
+/// would be the same mark, and that is correct — two figures at different
+/// degrees must not be. The shipped 047 drew `figure.basketball` twice.
+struct AngleWedgeGlyph: View {
+    /// Degrees above the horizontal, measured anticlockwise from the +x axis.
+    var degrees: Double
+    var size: CGFloat = 34
+    var accent: Color = ShotIQColor.shotiqOrange
+    var label: String? = nil
+
+    var body: some View {
+        ShotIQGlyph(size: size, accent: accent, label: label) { p in
+            let origin = CGPoint(x: 4.5, y: 19.5)
+            let reach: CGFloat = 15.5
+            let theta = degrees * .pi / 180
+            let tip = CGPoint(x: origin.x + reach * CGFloat(cos(theta)),
+                              y: origin.y - reach * CGFloat(sin(theta)))
+            p.line(origin.x, origin.y, origin.x + reach, origin.y)
+            p.line(origin.x, origin.y, tip.x, tip.y)
+            p.arc(origin.x, origin.y, r: 6.4, from: -degrees, to: 0, accent: true)
+            p.node(origin.x, origin.y, r: 1.5, accent: true, filled: true)
+            p.node(tip.x, tip.y, r: 1.5)
+        }
+    }
+}
+
+// MARK: - Supported media formats
+
+/// Canonical 022 gives each accepted container its own bracketed mark. The
+/// shipped screen printed the same filled `photo` symbol for JPG, PNG and HEIC.
+enum MediaFormatKind { case mp4, mov, jpg, png, heic }
+
+struct MediaFormatGlyph: View {
+    var kind: MediaFormatKind
+    var size: CGFloat = 24
+    var accent: Color = ShotIQColor.shotiqOrange
+    var label: String? = nil
+
+    var body: some View {
+        ShotIQGlyph(size: size, accent: accent, label: label) { p in
+            p.captureBrackets(inset: 3, arm: 4, radius: 1.4)
+            switch kind {
+            case .mp4:
+                // Frame run: four cells on a strip.
+                p.rect(6.5, 9, 11, 6, radius: 0.8)
+                p.line(9.25, 9, 9.25, 15)
+                p.line(12, 9, 12, 15)
+                p.line(14.75, 9, 14.75, 15)
+                p.node(12, 12, r: 1.2, accent: true, filled: true)
+            case .mov:
+                // Playhead on a rail — a timeline, not a strip.
+                p.line(6, 15.5, 18, 15.5)
+                p.poly([CGPoint(x: 10, y: 8), CGPoint(x: 15.5, y: 11.4),
+                        CGPoint(x: 10, y: 14.8), CGPoint(x: 10, y: 8)])
+                p.node(13, 15.5, r: 1.3, accent: true, filled: true)
+            case .jpg:
+                // Single still: one framed horizon with a subject node.
+                p.rect(6.5, 8.5, 11, 7, radius: 0.8)
+                p.poly([CGPoint(x: 7.6, y: 14), CGPoint(x: 10.6, y: 11),
+                        CGPoint(x: 13, y: 12.6), CGPoint(x: 16.4, y: 9.6)])
+                p.node(16.4, 9.6, r: 1.2, accent: true, filled: true)
+            case .png:
+                // Transparency: the checker corner is the whole point of PNG.
+                p.rect(6.5, 8.5, 11, 7, radius: 0.8)
+                p.line(6.5, 12, 17.5, 12)
+                p.line(12, 8.5, 12, 15.5)
+                p.rect(6.5, 8.5, 5.5, 3.5, radius: 0, accent: true, dash: [1.3, 1.5])
+                p.rect(12, 12, 5.5, 3.5, radius: 0, accent: true, dash: [1.3, 1.5])
+            case .heic:
+                // Stacked variants: HEIC carries more than one rendition.
+                p.rect(8.5, 7.5, 9.5, 6, radius: 0.8)
+                p.rect(6.5, 10.5, 9.5, 6, radius: 0.8)
+                p.node(11.2, 13.5, r: 1.3, accent: true, filled: true)
+            }
+        }
+    }
+}
+
+extension MediaFormatKind {
+    init?(formatLabel: String) {
+        switch formatLabel.uppercased() {
+        case "MP4": self = .mp4
+        case "MOV": self = .mov
+        case "JPG", "JPEG": self = .jpg
+        case "PNG": self = .png
+        case "HEIC", "HEIF": self = .heic
+        default: return nil
+        }
+    }
+}
+
+// MARK: - Release hand
+
+/// The ~44pt hand illustration canonical 041 prints beside the release-angle
+/// callout: forearm, relaxed fingers, and the measured wrist break dotted in.
+/// The shipped screen used `hand.point.up.left`, a filled cartoon hand that both
+/// graders called out by name.
+struct ReleaseHandGlyph: View {
+    var size: CGFloat = 44
+    var accent: Color = ShotIQColor.shotiqOrange
+    var label: String? = nil
+
+    var body: some View {
+        ShotIQGlyph(size: size, accent: accent, label: label) { p in
+            // Forearm.
+            p.line(8.2, 21.5, 10.2, 11.4)
+            p.line(12.6, 21.5, 13.8, 11.8)
+            // Back of the hand and the knuckle line.
+            p.quad(CGPoint(x: 10.2, y: 11.4), CGPoint(x: 11.4, y: 7.4),
+                   CGPoint(x: 15.4, y: 6.4))
+            p.quad(CGPoint(x: 13.8, y: 11.8), CGPoint(x: 16.4, y: 10.6),
+                   CGPoint(x: 17.6, y: 8.4))
+            // Relaxed fingers hanging over.
+            p.quad(CGPoint(x: 15.4, y: 6.4), CGPoint(x: 19.4, y: 6),
+                   CGPoint(x: 19.8, y: 9.2))
+            p.quad(CGPoint(x: 15.2, y: 8), CGPoint(x: 19, y: 7.8),
+                   CGPoint(x: 19.4, y: 10.6))
+            // The measured wrist break.
+            p.node(11.4, 13.6, r: 1.5, filled: true)
+            p.quad(CGPoint(x: 13.4, y: 14.6), CGPoint(x: 15.6, y: 16.6),
+                   CGPoint(x: 18, y: 15.4), accent: true, dash: [1.4, 1.8])
+            p.arrowHead(at: CGPoint(x: 18.4, y: 15.2), from: CGPoint(x: 16, y: 16.4),
+                        span: 1.7, accent: true)
+            p.node(14.6, 5.4, r: 1.6, accent: true, filled: true)
+        }
+    }
+}
+
+// MARK: - Coaching target
+
+/// The bracketed cue mark canonical prints on every "PRIMARY TARGET" and
+/// "COACHING TAKEAWAY" row (011, 017, 030, 062): capture brackets around a
+/// short node path with one accented segment. The shipped screens printed
+/// `camera.metering.center.weighted` here — the same symbol they also used for
+/// the Home tab, "Analyze video", "Set up camera" and six other concepts.
+struct CoachingTargetGlyph: View {
+    var size: CGFloat = 28
+    var accent: Color = ShotIQColor.shotiqOrange
+    var label: String? = nil
+
+    var body: some View {
+        ShotIQGlyph(size: size, accent: accent, label: label) { p in
+            p.captureBrackets(inset: 2.5, arm: 4.2, radius: 1.4)
+            p.poly([CGPoint(x: 7, y: 16.4), CGPoint(x: 10.4, y: 12.6),
+                    CGPoint(x: 14.6, y: 13.4)])
+            p.quad(CGPoint(x: 10.4, y: 12.6), CGPoint(x: 13.6, y: 7.4),
+                   CGPoint(x: 16.4, y: 9.6), accent: true, dash: [1.5, 1.8])
+            p.node(7, 16.4, r: 1.5)
+            p.node(10.4, 12.6, r: 1.5, accent: true, filled: true)
+            p.node(14.6, 13.4, r: 1.5)
+            p.node(16.4, 9.6, r: 1.5, accent: true)
+        }
+    }
+}
+
+// MARK: - Concept resolver
+
+/// Resolves a row's own caption onto the one bespoke mark for that concept, or
+/// to nothing when the family has no mark for it.
+///
+/// This exists because of how the duplicate marks got in. The screens carried an
+/// SF Symbol name per row, hand-picked, and three names —
+/// `camera.metering.center.weighted`, `point.3.connected.trianglepath.dotted`
+/// and `figure.basketball` — ended up standing in for about thirty unrelated
+/// concepts between them: the Home tab, "Analyze video", "Set up camera",
+/// "Sign in", "TRAIN", "Conditioning", "MAKES", "SHOT SHAPE", "ELITE",
+/// "LEFT-HANDED" and so on. Choosing from the caption instead makes that class
+/// of mistake unrepresentable: one concept, one mark.
+///
+/// Returning `nil` is a first-class answer. Where canonical has no bespoke mark
+/// for something (a chevron, a share tray, a lock) the caller keeps its system
+/// symbol — forcing a wrong diagram on it would trade one duplicate for another.
+enum ShotIQConcept {
+    case shotType(ShotTypeKind)
+    case hand(HandKind)
+    case body(BodyMetricKind)
+    case ability(AbilityKind)
+    case source(CaptureSource)
+    case readiness(ReadinessKind)
+    case mechanic(MechanicKind)
+    case phase(ShotPhase)
+    case stat(StatMarkKind)
+    case nav(NavMark)
+    case workout(WorkoutKind)
+    case cue(CueKind)
+    case coachingTarget
+    case captureReticle
+
+    /// Ordered most-specific first. Every arm reaches a different diagram.
+    static func resolve(_ caption: String) -> ShotIQConcept? {
+        let k = caption.lowercased()
+
+        // 1. Named entities that own a whole family.
+        if k.contains("handed") { return .hand(HandKind(handLabel: caption)) }
+        if let s = ShotTypeKind(shotTypeLabel: caption) { return .shotType(s) }
+
+        // 2. Shot phases, before mechanics — "follow-through" is a phase, and
+        //    routing it through the metric table would drop it on `.impact`.
+        if k.contains("follow-through") || k.contains("follow through") { return .phase(.follow) }
+        if k == "setup" || k == "load" || k == "rise" || k == "release phase" {
+            return .phase(ShotPhase(label: caption))
+        }
+
+        // 3. Measured quantities.
+        if let b = BodyMetricKind(measurementLabel: caption) { return .body(b) }
+        if k.contains("elbow") || k.contains("wrist") || k.contains("release height")
+            || k.contains("release angle") || k.contains("arc height") || k.contains("spin")
+            || k.contains("centered") || k.contains("centre") || k.contains("balance")
+            || k.contains("flight") || k.contains("tempo") || k.contains("consistency")
+            || k.contains("shot shape") || k.contains("alignment") || k.contains("flexion") {
+            return .mechanic(MechanicKind(metricLabel: caption))
+        }
+
+        // 3b. Ball path. 057's TARGET MECHANICS lists ELBOW STACK, WRIST
+        //     ALIGNMENT and RELEASE PATH side by side, so the third needs its
+        //     own diagram rather than falling through to a system symbol.
+        if k.contains("release path") || k.contains("shot path") { return .mechanic(.ballArc) }
+
+        // 4. Where media comes from. "Take photo" is a live capture and
+        //    "Choose from library" is a stored still — matching on the word
+        //    "photo" alone would give 022's two rows the same mark.
+        if k.contains("live camera") || k.contains("record live")
+            || k.contains("take photo") || k.contains("take a photo") {
+            return .source(.liveCamera)
+        }
+        if k.contains("upload video") || k.contains("choose video") { return .source(.uploadVideo) }
+        if k.contains("upload image") || k.contains("upload photo")
+            || k.contains("library") { return .source(.uploadImage) }
+
+        // 5. Capture readiness checks. 017's four-row checklist and 030's
+        //    setup rows each need four different bracket marks.
+        if k.contains("in frame") || k.contains("full body") || k.contains("full-body")
+            || k.contains("framing") || k.contains("what to capture") {
+            return .readiness(.framing)
+        }
+        if k.contains("lighting") || k.contains("exposure") || k.contains("environment") {
+            return .readiness(.lighting)
+        }
+        if k.contains("stable") || k.contains("steady") || k.contains("tripod")
+            || k.contains("camera position") { return .readiness(.stability) }
+        if k.contains("routine") || k.contains("athlete visible") { return .readiness(.athlete) }
+
+        // 6. Navigation and the four product pillars canonical draws on 002/017.
+        if k == "home" { return .nav(.home) }
+        if k.contains("capture your shot") || k == "capture" || k.contains("new capture") {
+            return .captureReticle
+        }
+        if k.contains("ai analysis") || k == "analyze" || k.contains("analyze a shot")
+            || k.contains("analyzing motion") || k.contains("detecting pose") {
+            return .cue(.tree)
+        }
+        // "MY DRILLS" sits directly beside "TRAIN" in 058's tab strip, so it
+        // needs its own mark rather than the Train rail.
+        if k.contains("my drills") || k.contains("saved drills") { return .workout(.ladder) }
+        if k == "train" || k.contains("workout") { return .nav(.train) }
+        if k.contains("track") || k.contains("progress") || k.contains("improve") {
+            return .nav(.progress)
+        }
+
+        // 7. Statistics.
+        if let s = StatMarkGlyph.kind(forStatLabel: caption) { return .stat(s) }
+
+        // 8. Coaching copy.
+        if k.contains("primary target") || k.contains("coaching") || k.contains("takeaway")
+            || k.contains("why this matters") { return .coachingTarget }
+        return nil
+    }
+}
+
+/// Draws the bespoke mark for a caption, falling back to a system symbol only
+/// when the family genuinely has no mark for that concept.
+struct ShotIQConceptGlyph: View {
+    var concept: String
+    var fallback: String
+    var size: CGFloat = 22
+    var accent: Color = ShotIQColor.shotiqOrange
+
+    var body: some View {
+        switch ShotIQConcept.resolve(concept) {
+        case .shotType(let k): ShotTypeGlyph(kind: k, size: size, accent: accent)
+        case .hand(let k): HandGlyph(kind: k, size: size, accent: accent)
+        case .body(let k): BodyMetricGlyph(kind: k, size: size, accent: accent)
+        case .ability(let k): AbilityGlyph(kind: k, size: size, accent: accent)
+        case .source(let k): CaptureSourceGlyph(source: k, size: size, accent: accent)
+        case .readiness(let k): ReadinessGlyph(kind: k, size: size, accent: accent)
+        case .mechanic(let k): MechanicGlyph(kind: k, size: size, accent: accent)
+        case .phase(let k): PhaseGlyph(phase: k, size: size)
+        case .stat(let k): StatMarkGlyph(kind: k, size: size, accent: accent)
+        case .nav(let k): NavGlyph(mark: k, size: size)
+        case .workout(let k): WorkoutGlyph(kind: k, size: size, accent: accent)
+        case .cue(let k): CueGlyph(kind: k, size: size, accent: accent)
+        case .coachingTarget: CoachingTargetGlyph(size: size, accent: accent)
+        case .captureReticle: CaptureReticleGlyph(size: size)
+        case .none: Image(systemName: fallback).font(.system(size: size * 0.8))
+        }
+    }
+}
+
 /// Profile tab: canonical prints the player's initials in a hairline box rather
 /// than a person silhouette.
 struct InitialsMark: View {
@@ -901,7 +1619,7 @@ struct InitialsMark: View {
     var active = false
     var body: some View {
         Text(initials)
-            .font(.system(size: size * 0.46, weight: .heavy).width(.condensed))
+            .shotiqCondensed(size * 0.46, weight: .heavy)
             .kerning(0.3)
             .foregroundStyle(active ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
             .frame(width: size, height: size * 0.86)
