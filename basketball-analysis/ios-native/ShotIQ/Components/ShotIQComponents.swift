@@ -423,7 +423,7 @@ struct PhaseStrip: View {
                 VStack(spacing: 4) {
                     PhaseGlyph(phase: phase, active: on, size: 28)
                     Text(phase.title)
-                        .font(.system(size: ShotIQType.caption, weight: on ? .bold : .regular))
+                        .font(.system(size: 9, weight: on ? .bold : .regular))
                         .kerning(0.5)
                         .foregroundStyle(on ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
                         .lineLimit(1).minimumScaleFactor(0.7)
@@ -542,7 +542,7 @@ struct ShotIQTabBar: View {
                             InitialsMark(initials: shotiqInitials(app.user), size: 21, active: tab == t)
                         }
                         Text(t.rawValue)
-                            .font(.system(size: ShotIQType.caption, weight: tab == t ? .bold : .regular))
+                            .font(.system(size: 10, weight: tab == t ? .bold : .regular))
                             .lineLimit(1)
                     }
                     .frame(maxWidth: .infinity, minHeight: 44)

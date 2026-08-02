@@ -255,9 +255,9 @@ struct CaptureGuideView: View {
 private struct CaptureSessionStats: View {
     var body: some View {
         HStack(alignment: .center, spacing: 18) {
-            StatBlock(value: "24", label: "SHOTS", valueSize: 30)
-            StatBlock(value: "15", label: "MAKES", valueSize: 30)
-            StatBlock(value: "62.5%", label: "MAKE %", valueSize: 30)
+            StatBlock(value: "24", label: "SHOTS", valueSize: ShotIQType.numeric)
+            StatBlock(value: "15", label: "MAKES", valueSize: ShotIQType.numeric)
+            StatBlock(value: "62.5%", label: "MAKE %", valueSize: ShotIQType.numeric)
             Spacer(minLength: 8)
             VStack(alignment: .trailing, spacing: 3) {
                 TrendLine(points: [2, 3.1, 2.6, 4.2], stroke: ShotIQColor.confirmGreen)

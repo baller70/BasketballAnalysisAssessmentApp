@@ -107,9 +107,9 @@ private func homeCanonicalFrame(_ key: String, height: CGFloat) -> some View {
 private struct HomeSessionStats: View {
     var body: some View {
         HStack(alignment: .center, spacing: 18) {
-            StatBlock(value: "24", label: "SHOTS", valueSize: 30)
-            StatBlock(value: "15", label: "MAKES", valueSize: 30)
-            StatBlock(value: "62.5%", label: "MAKE %", valueSize: 30)
+            StatBlock(value: "24", label: "SHOTS", valueSize: ShotIQType.numeric)
+            StatBlock(value: "15", label: "MAKES", valueSize: ShotIQType.numeric)
+            StatBlock(value: "62.5%", label: "MAKE %", valueSize: ShotIQType.numeric)
             Spacer(minLength: 8)
             VStack(alignment: .trailing, spacing: 3) {
                 TrendLine(points: [2, 3.1, 2.6, 4.2], stroke: ShotIQColor.confirmGreen)
@@ -571,9 +571,9 @@ struct HomeProfessionalView: View { // 019
                                 VStack(alignment: .leading, spacing: 8) {
                                     Text("Today at 8:24 AM").font(.system(size: 13)).foregroundStyle(ShotIQColor.ink)
                                     HStack(spacing: 16) {
-                                        StatBlock(value: "24", label: "SHOTS", valueSize: 22)
-                                        StatBlock(value: "15", label: "MAKES", valueSize: 22)
-                                        StatBlock(value: "62.5%", label: "MAKE %", valueSize: 22)
+                                        StatBlock(value: "24", label: "SHOTS", valueSize: ShotIQType.numeric)
+                                        StatBlock(value: "15", label: "MAKES", valueSize: ShotIQType.numeric)
+                                        StatBlock(value: "62.5%", label: "MAKE %", valueSize: ShotIQType.numeric)
                                     }
                                 }
                                 Spacer()
