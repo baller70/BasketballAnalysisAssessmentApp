@@ -184,12 +184,24 @@
    numeric` is Oswald standing in for the unlicensed DIN Condensed; see the
    note in app/layout.tsx.
    --------------------------------------------------------------------------- */
+/* Tungsten draws U+00B0 as a filled superscript "o", so every angle in the app
+   read "172º" instead of the canonical ring "172°". This face is Boxed scoped
+   to the single degree codepoint; putting it first in the display/numeric
+   stacks swaps only that glyph and leaves the digits on Tungsten. */
+@font-face {
+  font-family: "ShotIQ Degree";
+  src: url("/fonts/wilson-x/boxedsemibold.otf") format("opentype");
+  font-weight: 400 900;
+  font-display: swap;
+  unicode-range: U+00B0;
+}
+
 .shotiq-canonical {
   font-family: var(--font-shotiq-inter), "Boxed Medium", system-ui, sans-serif;
 }
 .shotiq-display,
 .shotiq-wordmark {
-  font-family: var(--font-shotiq-display), "Tungsten Bold", Impact, sans-serif;
+  font-family: "ShotIQ Degree", var(--font-shotiq-display), "Tungsten Bold", Impact, sans-serif;
   font-weight: 400;
 }
 .shotiq-wordmark {
@@ -197,6 +209,6 @@
   letter-spacing: 0.02em;
 }
 .shotiq-numeric {
-  font-family: var(--font-shotiq-numeric), "Tungsten Semibold", "DIN Condensed", sans-serif;
+  font-family: "ShotIQ Degree", var(--font-shotiq-numeric), "Tungsten Semibold", "DIN Condensed", sans-serif;
   font-weight: 600;
 }

@@ -296,16 +296,16 @@ export default function PlayerCardPage() {
           </Card>
 
           <div className="flex gap-[16px]">
-            <Card className="w-[330px] shrink-0 px-[20px] py-[16px]">
+            <Card className="w-[292px] shrink-0 px-[20px] py-[16px]">
               <div className="flex items-center justify-between">
                 <SectionLabel>EARNED BADGES</SectionLabel>
                 <Link href="/points" className="text-[11px] font-bold text-[var(--shotiq-color-analysisBlue)]">VIEW ALL</Link>
               </div>
               <Link href="/points" className="mt-[10px] block">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/images/canonical/086-badge-strip.png" alt="Earned badges" className="w-[292px]" />
+                <img src="/images/canonical/086-badge-strip.png" alt="Earned badges" className="w-[252px]" />
               </Link>
-              <div className="grid w-[292px] grid-cols-4 text-center">
+              <div className="grid w-[252px] grid-cols-4 text-center">
                 {[["CONSISTENT", "10 sessions", "60%+"], ["LOCKED IN", "5 sessions", "80%+"],
                   ["MECHANICS", "Form score", "80+"], ["STREAK", "5 days", "active"]].map(([t, a, b]) => (
                   <div key={t}>
@@ -325,15 +325,15 @@ export default function PlayerCardPage() {
                 {[["Pull-Up Jumper", "May 12, 2025 · 8:24 AM", "82", "/images/canonical/086-recent-1.png"],
                   ["Spot-Up Three", "May 11, 2025 · 6:15 PM", "78", "/images/canonical/086-recent-2.png"],
                   ["Transition Pull-Up", "May 10, 2025 · 4:02 PM", "75", "/images/canonical/086-recent-3.png"]].map(([t, d, s, img]) => (
-                  <Link key={String(t)} href="/results/demo/history" className="flex items-center gap-[12px] py-[8px] hover:bg-[var(--shotiq-color-warmCanvas)]">
+                  <Link key={String(t)} href="/results/demo/history" className="flex items-center gap-[10px] py-[8px] hover:bg-[var(--shotiq-color-warmCanvas)]">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={String(img)} alt="" className="h-[44px] w-[80px] shrink-0 rounded-[4px] object-cover" />
+                    <img src={String(img)} alt="" className="h-[40px] w-[72px] shrink-0 rounded-[4px] object-cover" />
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-[13px] font-semibold">{t}</div>
-                      <div className="text-[10px] text-[var(--shotiq-color-graphite)]">{d}</div>
+                      <div className="truncate text-[10px] text-[var(--shotiq-color-graphite)]">{d}</div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-[9px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">FORM SCORE</div>
+                    <div className="shrink-0 text-right">
+                      <div className="whitespace-nowrap text-[9px] font-bold tracking-[0.04em] text-[var(--shotiq-color-graphite)]">FORM SCORE</div>
                       <div className="flex items-center justify-end gap-[6px]">
                         <span className="shotiq-numeric text-[20px] leading-[22px]">{hasData ? String(s) : "—"}</span>
                         <span className="h-[7px] w-[7px] rounded-full bg-[var(--shotiq-color-analysisBlue)]" />

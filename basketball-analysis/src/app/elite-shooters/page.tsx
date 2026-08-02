@@ -351,9 +351,12 @@ export default function EliteShootersPage() {
                 <span className={`flex w-[48px] items-center justify-center gap-[3px] ${headCell}`}>
                   WSI <HelpCircle className="h-[10px] w-[10px]" /> <ChevronDown className="h-[10px] w-[10px]" />
                 </span>
-                <span className={`w-[66px] whitespace-nowrap text-center text-[8px] ${headCell}`}>RELEASE HEIGHT</span>
-                <span className={`w-[66px] whitespace-nowrap text-center text-[8px] ${headCell}`}>RELEASE TIME</span>
-                <span className={`w-[66px] whitespace-nowrap text-center text-[8px] ${headCell}`}>ELBOW ALIGNMENT</span>
+                {/* These three labels are wider than their 66px columns, so
+                    nowrap ran them into each other; wrap inside the column
+                    instead of bleeding past it. */}
+                <span className={`w-[66px] px-[3px] text-center text-[8px] leading-[10px] ${headCell}`}>RELEASE HEIGHT</span>
+                <span className={`w-[66px] px-[3px] text-center text-[8px] leading-[10px] ${headCell}`}>RELEASE TIME</span>
+                <span className={`w-[66px] px-[3px] text-center text-[8px] leading-[10px] ${headCell}`}>ELBOW ALIGNMENT</span>
                 <span className={`flex w-[84px] items-center justify-center gap-[3px] ${headCell}`}>
                   OVERALL <HelpCircle className="h-[10px] w-[10px]" />
                 </span>

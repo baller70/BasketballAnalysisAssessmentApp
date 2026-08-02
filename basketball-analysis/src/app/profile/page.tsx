@@ -4,12 +4,15 @@
 
 import React, { useEffect, useRef, useState } from "react"
 import Link from "next/link"
-import { ChevronDown, ChevronRight, CheckCircle2, Upload, Trash2, LogOut } from "lucide-react"
-import { SectionLabel, Card, TrendLine, Stat, PhaseGlyph } from "@/components/shotiq/ShotIQShell"
+import {
+  ChevronRight, CheckCircle2, Upload, Trash2, Bell,
+  Workflow, ShieldCheck, Film, Hexagon, type LucideIcon,
+} from "lucide-react"
+import { SectionLabel, Card, TrendLine, Stat } from "@/components/shotiq/ShotIQShell"
 import { useAuthStore } from "@/stores/authStore"
 
 export default function ProfileAccountPage() {
-  const { user, signOut } = useAuthStore()
+  const { user } = useAuthStore()
   const [form, setForm] = useState({ name: "", email: "", hand: "Right", level: "Advanced", height: "6' 4\"", weight: "195 lbs", wingspan: "6' 8\"", pref: "Catch & Shoot" })
   const [saved, setSaved] = useState(false)
   const [avatar, setAvatar] = useState<string | null>(null)
@@ -95,17 +98,17 @@ export default function ProfileAccountPage() {
     }
   }
 
-  const field = "h-[40px] w-full rounded-[5px] border border-[var(--shotiq-color-rule)] px-[10px] text-[13px] outline-none focus:border-[var(--shotiq-color-ink)]"
+  const field = "h-[38px] w-full rounded-[5px] border border-[var(--shotiq-color-rule)] px-[10px] text-[13px] outline-none focus:border-[var(--shotiq-color-ink)]"
   const lbl = "text-[9px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]"
 
   return (
     <div data-testid="screen-desktop-web-profile-settings" className="flex">
-      <div className="min-w-0 flex-1 px-[24px] py-[18px]">
+      <div className="min-w-0 flex-1 px-[24px] pb-[12px] pt-[16px]">
         <h1 className="shotiq-display text-[46px] leading-[48px]">PROFILE &amp; ACCOUNT</h1>
         <p className="mt-[2px] text-[13px] text-[var(--shotiq-color-graphite)]">Manage your profile, account, and personal settings.</p>
 
-        <div className="mt-[14px] flex gap-[16px]">
-          <Card className="min-w-0 flex-1 p-[18px]">
+        <div className="mt-[10px] flex gap-[16px]">
+          <Card className="min-w-0 flex-1 p-[16px]">
             <div className="flex items-start justify-between">
               <SectionLabel>PROFILE INFORMATION</SectionLabel>
               <div className="text-right"><div className={lbl}>JOINED</div><div className="text-[12px]">Jan 14, 2024</div></div>
@@ -113,14 +116,10 @@ export default function ProfileAccountPage() {
             <div className="mt-[10px] flex gap-[18px]">
               <div className="w-[120px] shrink-0 text-center">
                 <div className="mx-auto grid h-[110px] w-[110px] place-items-center overflow-hidden rounded-full bg-[var(--shotiq-color-rule)]">
-                  {avatar ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={avatar} alt="Profile photo" className="h-full w-full object-cover" />
-                  ) : (
-                    <span className="text-[26px] font-bold text-[var(--shotiq-color-graphite)]">
-                      {(form.name || "You").slice(0, 2).toUpperCase()}
-                    </span>
-                  )}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={avatar ?? "/images/canonical/096-avatar.png"}
+                       alt={avatar ? "Profile photo" : `${form.name || "Player"} profile photo`}
+                       className="h-full w-full object-cover" />
                 </div>
                 <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={onAvatarPick} />
                 <button type="button"
@@ -195,32 +194,35 @@ export default function ProfileAccountPage() {
             </div>
             <div className="mt-[14px] flex items-center justify-around border-t border-[var(--shotiq-color-rule)] pt-[12px]">
               <div className="flex items-center gap-[8px]"><span className="shotiq-numeric text-[22px]">6</span>
+                <Film className="h-[18px] w-[18px]" strokeWidth={1.5} />
                 <span className="text-[9px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">DAY STREAK</span></div>
               <div className="flex items-center gap-[8px]"><span className="shotiq-numeric text-[22px]">2,840</span>
+                <Hexagon className="h-[18px] w-[18px]" strokeWidth={1.5} />
                 <span className="text-[9px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">POINTS</span></div>
             </div>
           </Card>
         </div>
 
         {/* settings groups */}
-        <div className="mt-[16px] grid grid-cols-3 gap-[16px]">
-          {[["NOTIFICATIONS", "Control how and when you receive updates.",
+        <div className="mt-[12px] grid grid-cols-3 gap-[16px]">
+          {/* One mark per settings group — canonical never repeats a glyph here. */}
+          {([["NOTIFICATIONS", "Control how and when you receive updates.", Bell,
              [["Training reminders", "Enabled"], ["Weekly progress summary", "Enabled"], ["Goal updates", "Enabled"], ["New analysis ready", "Enabled"], ["Product updates", "Disabled"]]],
-            ["AUTOMATION", "Manage automated analysis and insights.",
+            ["AUTOMATION", "Manage automated analysis and insights.", Workflow,
              [["Auto-analyze new shots", "Enabled"], ["Form score updates", "Enabled"], ["Goal progress tracking", "Enabled"], ["Session insights", "Enabled"], ["Technique alerts", "Enabled"]]],
-            ["DATA & PRIVACY", "Control your data and privacy preferences.",
-             [["Profile visibility", "Private"], ["Share analytics", "Off"], ["Analytics usage", "Product improvement"], ["Delete account", "Delete"]]]].map(([head, sub, rows]) => (
-            <Card key={String(head)} className="p-[16px]">
+            ["DATA & PRIVACY", "Control your data and privacy preferences.", ShieldCheck,
+             [["Profile visibility", "Private"], ["Share analytics", "Off"], ["Analytics usage", "Product improvement"], ["Delete account", "Delete"]]]] as [string, string, LucideIcon, [string, string][]][]).map(([head, sub, Icon, rows]) => (
+            <Card key={head} className="p-[16px]">
               <div className="flex items-center gap-[10px]">
-                <PhaseGlyph size={26} />
+                <Icon className="h-[26px] w-[26px] shrink-0" strokeWidth={1.4} />
                 <div>
-                  <SectionLabel>{String(head)}</SectionLabel>
-                  <div className="text-[11px] text-[var(--shotiq-color-graphite)]">{String(sub)}</div>
+                  <SectionLabel>{head}</SectionLabel>
+                  <div className="text-[11px] text-[var(--shotiq-color-graphite)]">{sub}</div>
                 </div>
               </div>
               <div className="mt-[6px] divide-y divide-[var(--shotiq-color-rule)]">
-                {(rows as [string, string][]).map(([k, v]) => (
-                  <Link key={k} href="/settings" className="flex items-center justify-between py-[8px] text-[13px]">
+                {rows.map(([k, v]) => (
+                  <Link key={k} href="/settings" className="flex items-center justify-between py-[6px] text-[13px]">
                     <span>{k}</span>
                     <span className={`flex items-center gap-[6px] text-[12px] ${v === "Enabled" ? "text-[var(--shotiq-color-confirmGreen)]" : v === "Delete" ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-graphite)]"}`}>
                       {v} <ChevronRight className="h-[12px] w-[12px]" />
@@ -232,7 +234,7 @@ export default function ProfileAccountPage() {
           ))}
         </div>
 
-        <Card className="mt-[16px] flex items-center divide-x divide-[var(--shotiq-color-rule)] px-[8px] py-[14px]">
+        <Card className="mt-[12px] flex items-center divide-x divide-[var(--shotiq-color-rule)] px-[8px] py-[10px]">
           <div className="px-[16px]">
             <SectionLabel>DATA ACTIONS</SectionLabel>
             <div className="text-[11px] text-[var(--shotiq-color-graphite)]">Manage your data and analysis history.</div>

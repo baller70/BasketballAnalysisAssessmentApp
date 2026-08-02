@@ -9,18 +9,21 @@ import {
   Target, Dumbbell, UserCog, Settings2, ChevronRight, ChevronLeft, ArrowDown,
   type LucideIcon,
 } from "lucide-react"
-import { ShotIQShell, SectionLabel, Card, PhaseGlyph } from "@/components/shotiq/ShotIQShell"
+import { ShotIQShell, SectionLabel, Card } from "@/components/shotiq/ShotIQShell"
+import { FlawFigure, MechanicGlyph, CorrectionGlyph, WorkoutGlyph, type FlawKind } from "@/components/shotiq/Glyphs"
 import { useHistory } from "@/components/shotiq/ResultsBits"
 
-const FLAWS = [
-  { n: 1, title: "Elbow not stacked at release", impact: "HIGH IMPACT", desc: "Elbow drifts forward causing inconsistent release point.", affects: "AFFECTS 62% OF SHOTS", delta: "-8.3% IMPACT" },
-  { n: 2, title: "Slight wrist roll to the left", impact: "MEDIUM IMPACT", desc: "Ball rotates slightly left on release affecting accuracy.", affects: "AFFECTS 38% OF SHOTS", delta: "-4.1% IMPACT" },
-  { n: 3, title: "Release point too low", impact: "MEDIUM IMPACT", desc: "Release height below optimal window reduces arc.", affects: "AFFECTS 26% OF SHOTS", delta: "-3.1% IMPACT" },
+// Every flaw card carries its own pose diagram, with the faulty segment picked
+// out in the alert colour — the ~60px figure canonical prints on each card.
+const FLAWS: { n: number; title: string; impact: string; desc: string; affects: string; delta: string; glyph: FlawKind }[] = [
+  { n: 1, title: "Elbow not stacked at release", impact: "HIGH IMPACT", desc: "Elbow drifts forward causing inconsistent release point.", affects: "AFFECTS 62% OF SHOTS", delta: "-8.3% IMPACT", glyph: "elbow" },
+  { n: 2, title: "Slight wrist roll to the left", impact: "MEDIUM IMPACT", desc: "Ball rotates slightly left on release affecting accuracy.", affects: "AFFECTS 38% OF SHOTS", delta: "-4.1% IMPACT", glyph: "wrist" },
+  { n: 3, title: "Release point too low", impact: "MEDIUM IMPACT", desc: "Release height below optimal window reduces arc.", affects: "AFFECTS 26% OF SHOTS", delta: "-3.1% IMPACT", glyph: "release" },
 ]
 
-const LOWER_FLAWS = [
-  { n: 4, title: "Narrow base on catch", impact: "LOW IMPACT", desc: "Feet slightly inside shoulder width on the catch.", affects: "AFFECTS 14% OF SHOTS", delta: "-1.2% IMPACT" },
-  { n: 5, title: "Guide-hand thumb flick", impact: "LOW IMPACT", desc: "Occasional off-hand thumb movement at release.", affects: "AFFECTS 9% OF SHOTS", delta: "-0.8% IMPACT" },
+const LOWER_FLAWS: typeof FLAWS = [
+  { n: 4, title: "Narrow base on catch", impact: "LOW IMPACT", desc: "Feet slightly inside shoulder width on the catch.", affects: "AFFECTS 14% OF SHOTS", delta: "-1.2% IMPACT", glyph: "base" },
+  { n: 5, title: "Guide-hand thumb flick", impact: "LOW IMPACT", desc: "Occasional off-hand thumb movement at release.", affects: "AFFECTS 9% OF SHOTS", delta: "-0.8% IMPACT", glyph: "guide" },
 ]
 
 /** 085's own grouped sidebar (left-bar active state, per the canonical). */
@@ -126,7 +129,7 @@ export default function FlawsPage() {
         </div>
       </div>
 
-      <div className="mt-[14px] flex gap-[24px]">
+      <div className="mt-[10px] flex gap-[24px]">
         {/* flaw list */}
         <div className="w-[274px] shrink-0">
           <div className="flex items-center gap-[6px]">
@@ -141,8 +144,14 @@ export default function FlawsPage() {
                 <span className="flex-1 text-[14px] font-semibold leading-[18px]">{f.title}</span>
                 <ChevronRight className="mt-[2px] h-[13px] w-[13px] shrink-0 text-[var(--shotiq-color-graphite)]" />
               </div>
-              <span className={`mt-[7px] inline-block rounded-[3px] px-[6px] py-[2px] text-[9px] font-bold text-white ${f.impact === "HIGH IMPACT" ? "bg-[var(--shotiq-color-reviewRed)]" : f.impact === "LOW IMPACT" ? "bg-[var(--shotiq-color-graphite)]" : "bg-[var(--shotiq-color-shotiqOrange)]"}`}>{f.impact}</span>
-              <p className="mt-[6px] pr-[26px] text-[12px] leading-[16px] text-[var(--shotiq-color-graphite)]">{f.desc}</p>
+              {/* Canonical sets the pose diagram beside the impact copy. */}
+              <div className="flex items-start gap-[6px]">
+                <div className="min-w-0 flex-1">
+                  <span className={`mt-[7px] inline-block rounded-[3px] px-[6px] py-[2px] text-[9px] font-bold text-white ${f.impact === "HIGH IMPACT" ? "bg-[var(--shotiq-color-reviewRed)]" : f.impact === "LOW IMPACT" ? "bg-[var(--shotiq-color-graphite)]" : "bg-[var(--shotiq-color-shotiqOrange)]"}`}>{f.impact}</span>
+                  <p className="mt-[6px] text-[12px] leading-[16px] text-[var(--shotiq-color-graphite)]">{f.desc}</p>
+                </div>
+                <FlawFigure kind={f.glyph} size={56} className="mt-[6px] shrink-0" />
+              </div>
               <div className="mt-[9px] flex justify-between border-t border-[var(--shotiq-color-rule)] pt-[7px] text-[9px] tracking-[0.04em] text-[var(--shotiq-color-graphite)]">
                 <span>{f.affects}</span><span>{f.delta}</span>
               </div>
@@ -191,23 +200,24 @@ export default function FlawsPage() {
         <div className="w-[250px] shrink-0">
           <SectionLabel>FLAW INSIGHTS</SectionLabel>
           <Card className="mt-[8px] divide-y divide-[var(--shotiq-color-rule)]">
-            {[["Your elbow angle at release averages 118°.", "Goal range: 145° – 165°"],
-              ["Elbow drift moves release point forward by 2.6\" on average.", "Goal: Keep elbow over hip."],
-              ["Impact: -8.3% to make % on affected shots.", ""]].map(([t, goal], i) => (
+            {([["Your elbow angle at release averages 118°.", "Goal range: 145° – 165°", "angle"],
+              ["Elbow drift moves release point forward by 2.6\" on average.", "Goal: Keep elbow over hip.", "drift"],
+              ["Impact: -8.3% to make % on affected shots.", "", "impact"]] as const).map(([t, goal, glyph], i) => (
               <div key={i} className="flex gap-[10px] p-[11px]">
-                <PhaseGlyph size={26} />
+                <MechanicGlyph kind={glyph} size={26} className="shrink-0" />
                 <p className="text-[12px] leading-[16px]">{t}
                   {goal && <span className="block text-[var(--shotiq-color-confirmGreen)]">{goal}</span>}</p>
               </div>
             ))}
           </Card>
-          <div className="mt-[12px] flex items-center gap-[6px]">
-            <Target className="h-[13px] w-[13px]" /><SectionLabel>CORRECTIONS</SectionLabel>
-          </div>
+          {/* Canonical labels this section in type alone — the Target mark here
+              was a second use of the Goals nav glyph. */}
+          <SectionLabel className="mt-[12px]">CORRECTIONS</SectionLabel>
           <div className="mt-[7px] space-y-[6px]">
-            {["Stack elbow over shooting hip.", "Create a 90° angle at set point.", "Drive straight up through release."].map((t) => (
+            {([["Stack elbow over shooting hip.", "stack"], ["Create a 90° angle at set point.", "square"],
+               ["Drive straight up through release.", "drive"]] as const).map(([t, glyph]) => (
               <div key={t} className="flex items-center gap-[10px] rounded-[6px] bg-[var(--shotiq-color-warmCanvas)] px-[10px] py-[9px]">
-                <PhaseGlyph size={20} /><span className="text-[12px]">{t}</span>
+                <CorrectionGlyph kind={glyph} size={20} className="shrink-0" /><span className="text-[12px]">{t}</span>
               </div>
             ))}
           </div>
@@ -215,10 +225,7 @@ export default function FlawsPage() {
           <Card className="mt-[7px] p-[12px]">
             <div className="flex items-center gap-[10px]">
               <span className="grid h-[38px] w-[38px] place-items-center rounded-full bg-[var(--shotiq-color-analysisBlue)]">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.6" aria-hidden="true">
-                  <circle cx="7" cy="15" r="2.4" /><circle cx="15" cy="7" r="2.4" /><circle cx="17" cy="16" r="1.7" />
-                  <path d="M8.8 13.4 L13.2 8.8 M16.2 8.8 L16.7 14.3" />
-                </svg>
+                <WorkoutGlyph kind="release" size={20} className="text-white" />
               </span>
               <div className="flex-1">
                 <div className="text-[13px] font-semibold">Elbow Alignment Holds</div>
@@ -235,7 +242,7 @@ export default function FlawsPage() {
       </div>
 
       {/* bottom strip */}
-      <div className="mt-[14px] mb-[16px] flex gap-[24px] border-t border-[var(--shotiq-color-rule)] pt-[12px]">
+      <div className="mt-[8px] mb-[8px] flex gap-[24px] border-t border-[var(--shotiq-color-rule)] pt-[8px]">
         <div className="w-[500px] shrink-0">
           <SectionLabel>FLAW HISTORY</SectionLabel>
           <div className="mt-[4px] flex">
@@ -287,7 +294,7 @@ export default function FlawsPage() {
           </div>
           <div className="mt-[2px] divide-y divide-[var(--shotiq-color-rule)]">
             {[["Today at 8:24 AM", "24 shots", "-8.3%"], ["May 10, 2025 at 6:15 PM", "22 shots", "-9.6%"], ["May 7, 2025 at 5:02 PM", "25 shots", "-11.2%"]].map(([d, s, v]) => (
-              <Link key={d} href="/results/demo/history" className="flex items-center py-[10px] text-[12px]">
+              <Link key={d} href="/results/demo/history" className="flex items-center py-[8px] text-[12px]">
                 <span className="w-[170px]">{d}</span>
                 <span className="text-[var(--shotiq-color-graphite)]">{s}</span>
                 <span className="ml-auto font-bold text-[var(--shotiq-color-reviewRed)]">{v}</span>

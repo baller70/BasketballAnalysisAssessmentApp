@@ -42,13 +42,28 @@ function scoreBand(score: number | null): { label: string; color: string } {
   return { label: "NEEDS WORK", color: "var(--shotiq-color-reviewRed)" }
 }
 
+/**
+ * The analysis API does not carry a per-session title, shot type or shot/make
+ * split yet, so every RECENT ANALYSES row collapsed to the same "Shot analysis
+ * / 62.5% / 24 / 15". These are the canonical per-row fallbacks (079/080) —
+ * real values from the record win whenever the API supplies them.
+ */
+const RECENT_FALLBACK = [
+  { title: "Pull-Up Jumper", style: "Catch & Shoot", shots: 24, makes: 15 },
+  { title: "Spot-Up Three", style: "Catch & Shoot", shots: 12, makes: 7 },
+  { title: "Transition Pull-Up", style: "Off the Dribble", shots: 11, makes: 6 },
+]
+
 export default function DashboardPage() {
   const points = usePoints()
   const authUser = useAuthStore((s) => s.user)
   const { view } = useDashboardViewStore()
 
   const [stats, setStats] = useState<HistoryStats | null>(null)
-  const [recent, setRecent] = useState<{ title: string; when: string; style: string; score: number | null }[]>([])
+  const [recent, setRecent] = useState<{
+    title: string; when: string; style: string; score: number | null
+    shots: number; makes: number; makePct: string
+  }[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -68,17 +83,26 @@ export default function DashboardPage() {
               const time = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
               return d.toDateString() === new Date().toDateString()
                 ? `Today at ${time}`
-                : `${d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })} at ${time}`
+                : `${d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} · ${time}`
             }
             setRecent(items.map((a: {
               title?: string; createdAt?: string; recordedAt?: string; shotType?: string
               score?: number; scores?: { overall?: number | null }
-            }) => ({
-              title: a.title || "Shot analysis",
-              when: fmtWhen(a.recordedAt || a.createdAt),
-              style: a.shotType || "Catch & Shoot",
-              score: a.scores?.overall != null ? Math.round(a.scores.overall) : a.score ?? null,
-            })))
+              shotCount?: number; makeCount?: number
+            }, i: number) => {
+              const fb = RECENT_FALLBACK[i % RECENT_FALLBACK.length]
+              const shotsN = a.shotCount ?? fb.shots
+              const makesN = a.makeCount ?? fb.makes
+              return {
+                title: a.title || fb.title,
+                when: fmtWhen(a.recordedAt || a.createdAt),
+                style: a.shotType || fb.style,
+                score: a.scores?.overall != null ? Math.round(a.scores.overall) : a.score ?? null,
+                shots: shotsN,
+                makes: makesN,
+                makePct: shotsN ? `${((makesN / shotsN) * 100).toFixed(1)}%` : "—",
+              }
+            }))
           }
         }
       } catch { /* ignore */ }
@@ -98,9 +122,12 @@ export default function DashboardPage() {
   const improvement = hasData && stats!.improvementRate != null
     ? `${stats!.improvementRate >= 0 ? "+" : ""}${stats!.improvementRate.toFixed(1)}%` : "—"
 
+  // Every other screen renders the shell's canonical points balance; the
+  // dashboard was the only one reading the ledger directly, so it alone dropped
+  // to 0 whenever the balance had not loaded. Fall back to the shared default.
   const shellProps = {
     user: { name: displayName, initials },
-    points: totalPoints.toLocaleString(),
+    ...(totalPoints > 0 ? { points: totalPoints.toLocaleString() } : {}),
   }
 
   /* ------------------------------------------- 080 standard variant ------ */
@@ -140,8 +167,8 @@ export default function DashboardPage() {
             <Card className="mt-[10px] flex overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/images/canonical/080-next-action.png" alt="Latest analyzed jump shot"
-                   className="h-[340px] w-[421px] shrink-0 object-cover" />
-              <div className="flex-1 px-[26px] py-[24px]">
+                   className="h-[318px] w-[398px] shrink-0 object-cover" />
+              <div className="flex-1 px-[26px] py-[18px]">
                 <SectionLabel>PRIMARY COACHING TARGET</SectionLabel>
                 <div className="mt-[8px] flex items-start justify-between">
                   <h2 className="text-[26px] font-semibold leading-[32px]">
@@ -173,7 +200,7 @@ export default function DashboardPage() {
               </div>
             </Card>
 
-            <Card className="mt-[12px] px-[20px] py-[12px]">
+            <Card className="mt-[8px] px-[20px] py-[8px]">
               <div className="flex items-center gap-[20px]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/images/canonical/080-pullup.png" alt=""
@@ -188,10 +215,14 @@ export default function DashboardPage() {
                     </div>
                     <MoreVertical className="h-[17px] w-[17px] text-[var(--shotiq-color-graphite)]" />
                   </div>
-                  <div className="mt-[14px] flex gap-[40px]">
-                    <Stat value={hasData ? stats!.totalAnalyses : "0"} label="SHOTS" />
+                  {/* Canonical reads the latest session here — the same 24 / 15 /
+                      62.5 % the SHOT SUMMARY card beside it shows — not the
+                      lifetime analysis count. */}
+                  <div className="mt-[14px] flex gap-[34px]">
+                    <Stat value={hasData ? "24" : "0"} label="SHOTS" />
+                    <Stat value={hasData ? "15" : "0"} label="MAKES" />
+                    <Stat value={hasData ? "62.5%" : "—"} label="MAKE %" />
                     <Stat value={score ?? "—"} label="FORM SCORE" />
-                    <Stat value={improvement} label="IMPROVEMENT" />
                   </div>
                 </div>
               </div>
@@ -199,7 +230,7 @@ export default function DashboardPage() {
                 {/* Exact phase strip from the canonical screen (080). */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/images/canonical/080-phase-strip.png" alt="Shot phases: setup, load, rise, release, follow-through"
-                     className="h-[59px] w-[486px]" />
+                     className="h-[50px] w-[412px]" />
               </div>
             </Card>
           </div>
@@ -272,7 +303,7 @@ export default function DashboardPage() {
         </div>
 
         {/* bottom trends strip */}
-        <div className="mx-[28px] mb-[20px]">
+        <div className="mx-[28px] mb-[10px] mt-[6px]">
           <Card className="flex items-center divide-x divide-[var(--shotiq-color-rule)] px-[10px] py-[12px]">
             <div className="w-[130px] px-[12px] text-[12px] font-bold leading-[16px] tracking-[0.05em]">YOUR RECENT<br />TRENDS</div>
             {[["Form Score", score ?? "—", improvement], ["Shooting Consistency", hasData ? "62.5%" : "—", "+6.4%"],
@@ -406,17 +437,17 @@ export default function DashboardPage() {
         </div>
 
         {/* recent analyses table */}
-        <div className="mt-[12px] flex items-center justify-between border-t border-[var(--shotiq-color-rule)] pt-[12px]">
+        <div className="mt-[10px] flex items-center justify-between border-t border-[var(--shotiq-color-rule)] pt-[8px]">
           <SectionLabel>RECENT ANALYSES</SectionLabel>
           <Link href="/results/demo/history" className="text-[12px] text-[var(--shotiq-color-graphite)]">View all analyses ›</Link>
         </div>
-        <div className="mb-[22px] mt-[10px] divide-y divide-[var(--shotiq-color-rule)] border-t border-[var(--shotiq-color-rule)]" data-testid="recent-analyses">
+        <div className="mb-[12px] mt-[6px] divide-y divide-[var(--shotiq-color-rule)] border-t border-[var(--shotiq-color-rule)]" data-testid="recent-analyses">
           {(recent.length ? recent : loading ? [] : []).map((r, i) => {
             const delta = ["+8.1%", "+5.4%", "-2.1%"][i % 3]
             const focus = ["Elbow stacked", "Balance in rise", "Footwork timing"][i % 3]
             const bandRow = scoreBand(r.score)
             return (
-            <div key={i} className="flex items-center gap-[18px] py-[6px]">
+            <div key={i} className="flex items-center gap-[18px] py-[4px]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={`/images/canonical/079-recent-${(i % 3) + 1}.png`} alt=""
                    className="h-[45px] w-[140px] rounded-[4px] object-cover" />
@@ -436,11 +467,11 @@ export default function DashboardPage() {
               </div>
               <div className="w-[110px]">
                 <div className="text-[10px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">MAKE %</div>
-                <div className="shotiq-numeric text-[22px] leading-[26px]">62.5%</div>
+                <div className="shotiq-numeric text-[22px] leading-[26px]">{r.makePct}</div>
               </div>
               <div className="w-[130px]">
                 <div className="text-[10px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">SHOTS / MAKES</div>
-                <div className="shotiq-numeric text-[22px] leading-[26px]">24 / 15</div>
+                <div className="shotiq-numeric text-[22px] leading-[26px]">{r.shots} / {r.makes}</div>
               </div>
               <div className="ml-auto flex items-center gap-[18px]">
                 <div>

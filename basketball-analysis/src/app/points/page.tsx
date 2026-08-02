@@ -5,6 +5,7 @@
 import React, { useState } from "react"
 import { ChevronDown, Check, Lock } from "lucide-react"
 import { SectionLabel, Card, TrendLine, Stat } from "@/components/shotiq/ShotIQShell"
+import { CueGlyph } from "@/components/shotiq/Glyphs"
 import { usePoints } from "@/lib/points/pointsContext"
 
 const BADGES: [string, string, boolean, string, string][] = [
@@ -93,7 +94,10 @@ export default function AchievementsPointsPage() {
   const [category, setCategory] = useState("All categories")
   const [order, setOrder] = useState<"Newest first" | "A–Z" | "XP">("Newest first")
   const [menu, setMenu] = useState<null | "tier" | "category" | "order">(null)
-  const [unlockedOnly, setUnlockedOnly] = useState(false)
+  // Canonical 095 ships this on: the grid shows the badges actually in play
+  // (the core catalogue plus anything already earned), and "Load more badges"
+  // is what pulls in the rest.
+  const [unlockedOnly, setUnlockedOnly] = useState(true)
   const [loadedAll, setLoadedAll] = useState(false)
   const pool = loadedAll ? [...BADGES, ...EXTRA_BADGES] : BADGES
   const earned = pool.filter(([, , e]) => e).length
@@ -102,7 +106,7 @@ export default function AchievementsPointsPage() {
     .filter(({ b }) =>
       (tier === "All tiers" || (tier === "Earned") === b[2]) &&
       (category === "All categories" || b[4] === category) &&
-      (!unlockedOnly || b[2]))
+      (!unlockedOnly || b[2] || pool.indexOf(b) < BADGES.length))
   const sorted = [...badges]
   if (order === "A–Z") sorted.sort((x, y) => x.b[0].localeCompare(y.b[0]))
   if (order === "XP") sorted.sort((x, y) => parseInt(y.b[3].replace(/\D/g, "") || "0") - parseInt(x.b[3].replace(/\D/g, "") || "0"))
@@ -196,7 +200,7 @@ export default function AchievementsPointsPage() {
                     <div className="absolute left-0 top-[40px] z-30 w-[160px] rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white py-[4px] shadow-[0_8px_20px_rgba(17,17,17,0.10)]">
                       {(key === "tier" ? ["All tiers", "Earned", "Locked"] : ["All categories", "Technique", "Consistency", "Volume"]).map((o) => (
                         <button key={o} type="button"
-                                onClick={() => { key === "tier" ? setTier(o as typeof tier) : setCategory(o); setMenu(null); setSel(0) }}
+                                onClick={() => { if (key === "tier") setTier(o as typeof tier); else setCategory(o); setMenu(null); setSel(0) }}
                                 className={`flex h-[30px] w-full items-center px-[12px] text-[12px] hover:bg-[var(--shotiq-color-warmCanvas)] ${label === o ? "font-semibold text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
                           {o}
                         </button>
@@ -318,12 +322,14 @@ export default function AchievementsPointsPage() {
             <Card className="mt-[12px] p-[12px]">
               <div className="text-[10px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">LATEST MATCH</div>
               <div className="text-[12px]">May 12, 2025 at 8:24 AM</div>
-              <div className="mt-[8px] flex divide-x divide-[var(--shotiq-color-rule)]">
-                <div className="pr-[14px]"><Stat value="24" label="SHOTS" valueClass="text-[20px] leading-[24px]" /></div>
-                <div className="px-[14px]"><Stat value="15" label="MAKES" valueClass="text-[20px] leading-[24px]" /></div>
-                <div className="px-[14px]"><Stat value="62.5%" label="MAKE %" valueClass="text-[20px] leading-[24px]" /></div>
-                <div className="pl-[14px]"><div className="shotiq-numeric text-[20px] leading-[24px] text-[var(--shotiq-color-analysisBlue)]">82</div>
-                  <div className="text-[9px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">FORM SCORE</div></div>
+              {/* Canonical runs this row at ~24px — it is the headline of the
+                  badge panel, not a footnote. */}
+              <div className="mt-[8px] flex divide-x divide-[var(--shotiq-color-rule)] text-center">
+                <div className="flex-1 pr-[10px]"><Stat value="24" label="SHOTS" valueClass="text-[26px] leading-[30px]" /></div>
+                <div className="flex-1 px-[10px]"><Stat value="15" label="MAKES" valueClass="text-[26px] leading-[30px]" /></div>
+                <div className="flex-1 px-[10px]"><Stat value="62.5%" label="MAKE %" valueClass="text-[26px] leading-[30px]" /></div>
+                <div className="flex-1 pl-[10px]"><div className="shotiq-numeric text-[26px] leading-[30px] text-[var(--shotiq-color-analysisBlue)]">82</div>
+                  <div className="mt-[2px] whitespace-nowrap text-[9px] tracking-[0.04em] text-[var(--shotiq-color-graphite)]">FORM SCORE</div></div>
               </div>
             </Card>
             <SectionLabel className="mt-[12px]">REWARDS</SectionLabel>
@@ -336,7 +342,9 @@ export default function AchievementsPointsPage() {
                 <div><div className="text-[13px] font-bold">+250 XP</div><div className="text-[10px] text-[var(--shotiq-color-graphite)]">Points earned</div></div>
               </div>
               <div className="flex items-center gap-[8px] border-l border-[var(--shotiq-color-rule)] pl-[14px]">
-                <span className="grid h-[30px] w-[30px] place-items-center rounded-full bg-[var(--shotiq-color-analysisBlue)] text-white">◎</span>
+                <span className="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-full bg-[var(--shotiq-color-analysisBlue)] text-white">
+                  <CueGlyph kind="peak" size={18} accent="#fff" />
+                </span>
                 <div><div className="text-[13px] font-semibold">Stacked Release Frame</div><div className="text-[10px] text-[var(--shotiq-color-graphite)]">Profile customization</div></div>
               </div>
             </Card>

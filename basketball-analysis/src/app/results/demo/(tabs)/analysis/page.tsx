@@ -5,22 +5,28 @@
 import React from "react"
 import Link from "next/link"
 import { ChevronLeft, ChevronRight, Play, Maximize2 } from "lucide-react"
-import { SectionLabel, Card, MediaSurface, Stat, TrendLine, PhaseGlyph } from "@/components/shotiq/ShotIQShell"
+import { SectionLabel, Card, Stat, TrendLine } from "@/components/shotiq/ShotIQShell"
+import { PoseGlyph, MechanicGlyph, FlawFigure, WorkoutGlyph, type MechanicKind } from "@/components/shotiq/Glyphs"
 import { useHistory, CoachingTarget } from "@/components/shotiq/ResultsBits"
 
 const PHASES: [string, string][] = [
   ["SETUP", "0:00 – 0:02"], ["LOAD", "0:02 – 0:04"], ["RISE", "0:04 – 0:06"],
   ["RELEASE", "0:06 – 0:07"], ["FOLLOW-THROUGH", "0:07 – 0:10"],
 ]
-const MECHANICS: [string, string, string][] = [
-  ["Elbow Angle", "172°", "160° – 180°"], ["Wrist Angle", "21°", "15° – 30°"],
-  ["Release Height", "8'6\"", "7'8\" – 8'8\""], ["Body Alignment", "2°", "-5° – 5°"],
+// A distinct diagram per mechanic: joint angle, wrist flexion, height ruler,
+// body midline — canonical draws no two of these alike.
+const MECHANICS: [string, string, string, MechanicKind][] = [
+  ["Elbow Angle", "172°", "160° – 180°", "angle"], ["Wrist Angle", "21°", "15° – 30°", "wrist"],
+  ["Release Height", "8'6\"", "7'8\" – 8'8\"", "height"], ["Body Alignment", "2°", "-5° – 5°", "centerline"],
 ]
 
 export default function AnalysisOverviewPage() {
   const { hasData, score } = useHistory()
   const total = hasData ? 24 : 0
-  const [shot, setShot] = React.useState(1)
+  // Canonical opens on analysis 3 of 24 with film frame 4 scrubbed in; the two
+  // are independent (analysis counter vs. frame scrubber).
+  const [shot, setShot] = React.useState(3)
+  const [frame, setFrame] = React.useState(4)
   return (
     <div data-testid="screen-desktop-web-analysis-overview">
       <div className="flex items-start justify-between">
@@ -51,25 +57,42 @@ export default function AnalysisOverviewPage() {
       <div className="mt-[16px] flex gap-[20px]">
         {/* media + scrubber + phases */}
         <div className="w-[520px] shrink-0">
-          <MediaSurface width={520} height={335} />
-          <div className="mt-[8px] flex items-center gap-[10px]">
-            <span className="grid h-[34px] w-[34px] place-items-center rounded-[4px] border border-[var(--shotiq-color-rule)]">
-              <Play className="h-[14px] w-[14px]" fill="currentColor" />
+          {/* Canonical release frame with the pose overlay and the 172° call-out;
+              the scrub line rides the padding box so it can never clip out. */}
+          <div className="relative overflow-hidden rounded-[4px] bg-[#1B1D20]" style={{ height: 335 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/canonical/083-hero.png"
+                 alt="Analyzed release frame with pose skeleton and a 172 degree elbow call-out"
+                 className="absolute inset-0 h-full w-full object-cover" width={573} height={369} />
+            <span className="absolute inset-x-[10px] bottom-[8px] h-[3px] rounded-full bg-white/40">
+              <span className="absolute inset-y-0 left-0 w-[52%] rounded-full bg-white" />
+              <span className="absolute -top-[4px] left-[52%] h-[11px] w-[11px] -translate-x-1/2 rounded-full bg-white" />
             </span>
-            <div className="flex h-[42px] flex-1 gap-[3px] overflow-hidden rounded-[4px]">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <button key={i} type="button" aria-label={`Jump to segment ${i + 1}`} aria-pressed={i === (shot - 1) % 8}
-                        onClick={() => setShot(i + 1)}
-                        className={`flex-1 bg-[#1B1D20] ${i === (shot - 1) % 8 ? "ring-2 ring-inset ring-[var(--shotiq-color-shotiqOrange)]" : ""}`} />
-              ))}
+          </div>
+          <div className="mt-[8px] flex items-center gap-[10px]">
+            <button type="button" aria-label="Play"
+                    className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-[4px] border border-[var(--shotiq-color-rule)]">
+              <Play className="h-[14px] w-[14px]" fill="currentColor" />
+            </button>
+            <div className="relative min-w-0 flex-1 overflow-hidden rounded-[4px]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/images/canonical/083-filmstrip.png" alt="" className="block h-auto w-full"
+                   width={425} height={41} />
+              <div className="absolute inset-0 flex">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <button key={i} type="button" aria-label={`Jump to segment ${i + 1}`}
+                          aria-pressed={i === (frame - 1) % 8} onClick={() => setFrame(i + 1)}
+                          className="flex-1" />
+                ))}
+              </div>
             </div>
-            <span className="shotiq-numeric text-[13px]">0:07 / 0:24</span>
-            <Maximize2 className="h-[15px] w-[15px] text-[var(--shotiq-color-graphite)]" />
+            <span className="shotiq-numeric shrink-0 text-[13px]">0:07 / 0:24</span>
+            <Maximize2 className="h-[15px] w-[15px] shrink-0 text-[var(--shotiq-color-graphite)]" />
           </div>
           <div className="mt-[14px] flex items-start justify-between">
             {PHASES.map(([p, t]) => (
               <div key={p} className="text-center">
-                <PhaseGlyph active={p === "RELEASE"} />
+                <PoseGlyph phase={p} active={p === "RELEASE"} />
                 <div className={`mt-[3px] text-[10px] tracking-[0.05em] ${p === "RELEASE" ? "font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
                 <div className="text-[9px] text-[var(--shotiq-color-graphite)]">{t}</div>
               </div>
@@ -92,9 +115,9 @@ export default function AnalysisOverviewPage() {
 
           <SectionLabel className="mt-[20px] border-t border-[var(--shotiq-color-rule)] pt-[14px]">MECHANICS AT RELEASE</SectionLabel>
           <div className="mt-[6px] divide-y divide-[var(--shotiq-color-rule)]">
-            {MECHANICS.map(([m, v, range]) => (
+            {MECHANICS.map(([m, v, range, glyph]) => (
               <div key={m} className="flex items-center gap-[10px] py-[9px]">
-                <PhaseGlyph size={20} />
+                <MechanicGlyph kind={glyph} size={20} className="shrink-0" />
                 <span className="flex-1 text-[13px]">{m}</span>
                 <span className="shotiq-numeric text-[18px]">{hasData ? v : "—"}</span>
                 <span className="w-[64px] text-right">
@@ -118,13 +141,13 @@ export default function AnalysisOverviewPage() {
           </p>
           <div className="mt-[12px] flex items-center justify-center gap-[26px]">
             <div className="text-center">
-              <PhaseGlyph size={54} />
+              <FlawFigure kind="elbow" size={54} accent="var(--shotiq-color-reviewRed)" />
               <div className="shotiq-numeric text-[15px]">172°</div>
               <div className="text-[9px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">CURRENT</div>
             </div>
             <span className="text-[18px] text-[var(--shotiq-color-graphite)]">→</span>
             <div className="text-center">
-              <PhaseGlyph size={54} active />
+              <FlawFigure kind="elbow" size={54} accent="var(--shotiq-color-confirmGreen)" />
               <div className="shotiq-numeric text-[15px]">180°</div>
               <div className="text-[9px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">IDEAL</div>
             </div>
@@ -136,7 +159,9 @@ export default function AnalysisOverviewPage() {
               <div className="text-[12px] font-semibold text-[var(--shotiq-color-confirmGreen)]">92% Similarity</div>
               <Link href="/results/demo/compare" className="text-[12px] text-[var(--shotiq-color-analysisBlue)]">View comparison ›</Link>
             </div>
-            <MediaSurface width={130} height={78} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/canonical/083-elite.png" alt="Trae Young shooting form with pose overlay"
+                 className="block h-auto w-[130px] shrink-0 rounded-[4px]" width={151} height={106} />
           </div>
         </div>
       </div>
@@ -158,7 +183,7 @@ export default function AnalysisOverviewPage() {
         </div>
         <div className="flex items-center gap-[12px] px-[16px] py-[10px] xl:py-0">
           <SectionLabel className="w-[54px] shrink-0 leading-[13px]">TOP FLAW</SectionLabel>
-          <PhaseGlyph size={30} />
+          <FlawFigure kind="elbow" size={30} className="shrink-0" />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-x-[8px] gap-y-[2px]">
               <span className="whitespace-nowrap text-[14px] font-semibold">Elbow flare at release</span>
@@ -172,7 +197,9 @@ export default function AnalysisOverviewPage() {
         </div>
         <div className="flex items-center gap-[12px] px-[16px] py-[10px] xl:py-0">
           <SectionLabel className="w-[54px] shrink-0 leading-[13px]">NEXT TRAINING</SectionLabel>
-          <span className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-full bg-[var(--shotiq-color-analysisBlue)] text-white">◎</span>
+          <span className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-full bg-[var(--shotiq-color-analysisBlue)] text-white">
+            <WorkoutGlyph kind="release" size={22} />
+          </span>
           <div className="min-w-0 flex-1">
             <div className="text-[14px] font-semibold">Quick Release Builder</div>
             <div className="text-[11px] text-[var(--shotiq-color-graphite)]">20 min · Form Focus</div>

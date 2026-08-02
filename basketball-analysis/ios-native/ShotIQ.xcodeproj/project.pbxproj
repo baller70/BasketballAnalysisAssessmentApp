@@ -10,6 +10,7 @@
 		17D66724B6DE42A8B812C14A /* tungsten_semibold.otf in Resources */ = {isa = PBXBuildFile; fileRef = 868BDC6C6FC52670A10F9CD3 /* tungsten_semibold.otf */; };
 		19A14ABDC8E02B386C9A714C /* CameraService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2C7558F26B7588AA0972272 /* CameraService.swift */; };
 		1E79D017333BFCCC91057A30 /* ShotIQComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1082AE3FE8912AE6B47969 /* ShotIQComponents.swift */; };
+		3653FF1C1DFF8CAB00BD2BD5 /* CanonicalPhoto.swift in Sources */ = {isa = PBXBuildFile; fileRef = C52E59E41C43AE18E51BBC33 /* CanonicalPhoto.swift */; };
 		36F3277E8B2C123CBABE7D98 /* ShotIQApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38BCEA5007BFAFE4AA0C9F64 /* ShotIQApp.swift */; };
 		3EC1BBCF0000069613305A3D /* AuthFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90F9DD369D1CDE90145B5003 /* AuthFlow.swift */; };
 		494D3F0BB975462D2C699BB0 /* TrainingFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4CFDF0EEC8E7460A19711DE /* TrainingFlow.swift */; };
@@ -17,15 +18,16 @@
 		4B8B9E9003777D6A4B234B5F /* AnalysisFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03A277539C261467FFECE8 /* AnalysisFlow.swift */; };
 		519A38CD0839ADD0F0214188 /* boxedsemibold.otf in Resources */ = {isa = PBXBuildFile; fileRef = D6DF21163E007DAC625258DE /* boxedsemibold.otf */; };
 		59EAA017D3EA28E9825519B0 /* ShotIQUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B80E348AC504802FBFCEE2BE /* ShotIQUITests.swift */; };
-		A1B2C3D4E5F60718293A4B5D /* CanonicalScreenshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5C /* CanonicalScreenshotTests.swift */; };
 		71060C0C6C15EF00043BDC4C /* ShotIQTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = D38018B275DB53F75E8FB92C /* ShotIQTokens.swift */; };
 		7A0A5793869314120915A127 /* OnboardingFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10550E1AD3597AE434E97DFB /* OnboardingFlow.swift */; };
+		7EED063E1BFD716CAD2A465E /* CanonicalScreenshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2922EDBAAE9683357EA3C29D /* CanonicalScreenshotTests.swift */; };
 		881767E47EDBF3F5B38CC679 /* HomeFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9D8AB9A2AA75D7231A3DF13 /* HomeFlow.swift */; };
 		A8A844B65564DDBBCFB71D30 /* tungsten_medium.otf in Resources */ = {isa = PBXBuildFile; fileRef = 4AA480AA2A56A7F5DD4D495C /* tungsten_medium.otf */; };
 		ABEC9459F6FBA7FC1292117C /* boxedmedium.otf in Resources */ = {isa = PBXBuildFile; fileRef = FD571752957BF2990F80DC2C /* boxedmedium.otf */; };
 		AF255EAEE75CB55ABA2B10C0 /* tungsten_bold.otf in Resources */ = {isa = PBXBuildFile; fileRef = ED1132515D54BB1F7C7EB36F /* tungsten_bold.otf */; };
 		B9E8CDA3D4FF7A5D803BFA28 /* ShotIQTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F46C7A0A6EBBC1A7CE81E129 /* ShotIQTests.swift */; };
 		BAEA068CA76742A517947F56 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3ABB946C8ACBA7946DBFC56 /* APIClient.swift */; };
+		BEE885BAB8DCB5A40D763F22 /* ShotIQGlyphs.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6E323EC1FF54EEA33E1E0DD /* ShotIQGlyphs.swift */; };
 		BF4ED790459362F42F3BA027 /* tungsten_black.otf in Resources */ = {isa = PBXBuildFile; fileRef = 173C9C7C27E9EFDB40D8A184 /* tungsten_black.otf */; };
 		D366CF3B9BB408E1674F1F8D /* GoalsAnalyticsMediaProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD1B7FFC873C50CC28C73611 /* GoalsAnalyticsMediaProfile.swift */; };
 		D94A28C690FB79B9467D8EA4 /* boxedheavy.otf in Resources */ = {isa = PBXBuildFile; fileRef = 7DFDB038721B489270DBA1A5 /* boxedheavy.otf */; };
@@ -55,6 +57,7 @@
 		10550E1AD3597AE434E97DFB /* OnboardingFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingFlow.swift; sourceTree = "<group>"; };
 		173C9C7C27E9EFDB40D8A184 /* tungsten_black.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = tungsten_black.otf; sourceTree = "<group>"; };
 		1E03A277539C261467FFECE8 /* AnalysisFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisFlow.swift; sourceTree = "<group>"; };
+		2922EDBAAE9683357EA3C29D /* CanonicalScreenshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanonicalScreenshotTests.swift; sourceTree = "<group>"; };
 		38BCEA5007BFAFE4AA0C9F64 /* ShotIQApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShotIQApp.swift; sourceTree = "<group>"; };
 		3DB88B746B85C662B864EB2E /* CaptureFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureFlow.swift; sourceTree = "<group>"; };
 		4AA480AA2A56A7F5DD4D495C /* tungsten_medium.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = tungsten_medium.otf; sourceTree = "<group>"; };
@@ -66,9 +69,10 @@
 		90F9DD369D1CDE90145B5003 /* AuthFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthFlow.swift; sourceTree = "<group>"; };
 		A3ABB946C8ACBA7946DBFC56 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		B80E348AC504802FBFCEE2BE /* ShotIQUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShotIQUITests.swift; sourceTree = "<group>"; };
-		A1B2C3D4E5F60718293A4B5C /* CanonicalScreenshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanonicalScreenshotTests.swift; sourceTree = "<group>"; };
 		BD1B7FFC873C50CC28C73611 /* GoalsAnalyticsMediaProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoalsAnalyticsMediaProfile.swift; sourceTree = "<group>"; };
 		BFD80AB08FF5E5D07D90CCFB /* EliteFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EliteFlow.swift; sourceTree = "<group>"; };
+		C52E59E41C43AE18E51BBC33 /* CanonicalPhoto.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanonicalPhoto.swift; sourceTree = "<group>"; };
+		C6E323EC1FF54EEA33E1E0DD /* ShotIQGlyphs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShotIQGlyphs.swift; sourceTree = "<group>"; };
 		D2C7558F26B7588AA0972272 /* CameraService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraService.swift; sourceTree = "<group>"; };
 		D38018B275DB53F75E8FB92C /* ShotIQTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShotIQTokens.swift; sourceTree = "<group>"; };
 		D6DF21163E007DAC625258DE /* boxedsemibold.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = boxedsemibold.otf; sourceTree = "<group>"; };
@@ -204,7 +208,9 @@
 		CAB5C9672136AE71EE242332 /* Components */ = {
 			isa = PBXGroup;
 			children = (
+				C52E59E41C43AE18E51BBC33 /* CanonicalPhoto.swift */,
 				0A1082AE3FE8912AE6B47969 /* ShotIQComponents.swift */,
+				C6E323EC1FF54EEA33E1E0DD /* ShotIQGlyphs.swift */,
 			);
 			name = Components;
 			path = ShotIQ/Components;
@@ -221,7 +227,7 @@
 		E607D2BDA2299204A8A5C05E /* UITests */ = {
 			isa = PBXGroup;
 			children = (
-				A1B2C3D4E5F60718293A4B5C /* CanonicalScreenshotTests.swift */,
+				2922EDBAAE9683357EA3C29D /* CanonicalScreenshotTests.swift */,
 				B80E348AC504802FBFCEE2BE /* ShotIQUITests.swift */,
 			);
 			name = UITests;
@@ -369,7 +375,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A1B2C3D4E5F60718293A4B5D /* CanonicalScreenshotTests.swift in Sources */,
+				7EED063E1BFD716CAD2A465E /* CanonicalScreenshotTests.swift in Sources */,
 				59EAA017D3EA28E9825519B0 /* ShotIQUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -390,6 +396,7 @@
 				4B8B9E9003777D6A4B234B5F /* AnalysisFlow.swift in Sources */,
 				3EC1BBCF0000069613305A3D /* AuthFlow.swift in Sources */,
 				19A14ABDC8E02B386C9A714C /* CameraService.swift in Sources */,
+				3653FF1C1DFF8CAB00BD2BD5 /* CanonicalPhoto.swift in Sources */,
 				F70F48656AC9104E369FF1B9 /* CaptureFlow.swift in Sources */,
 				4A9E83E6C305639F91F88F6C /* EliteFlow.swift in Sources */,
 				D366CF3B9BB408E1674F1F8D /* GoalsAnalyticsMediaProfile.swift in Sources */,
@@ -397,6 +404,7 @@
 				7A0A5793869314120915A127 /* OnboardingFlow.swift in Sources */,
 				36F3277E8B2C123CBABE7D98 /* ShotIQApp.swift in Sources */,
 				1E79D017333BFCCC91057A30 /* ShotIQComponents.swift in Sources */,
+				BEE885BAB8DCB5A40D763F22 /* ShotIQGlyphs.swift in Sources */,
 				71060C0C6C15EF00043BDC4C /* ShotIQTokens.swift in Sources */,
 				494D3F0BB975462D2C699BB0 /* TrainingFlow.swift in Sources */,
 			);

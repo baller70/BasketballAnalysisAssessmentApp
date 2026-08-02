@@ -4,21 +4,44 @@
 
 import React, { useState } from "react"
 import Link from "next/link"
-import { Bookmark, ChevronRight, Check } from "lucide-react"
+import {
+  Bookmark, ChevronRight, Check, Zap, ListChecks, Compass, CalendarCheck,
+  Clock, SignalHigh, Waypoints, type LucideIcon,
+} from "lucide-react"
 import { SectionLabel, Card, TrendLine, Stat } from "@/components/shotiq/ShotIQShell"
 import { useHistory } from "@/components/shotiq/ResultsBits"
 
 const RECOMMENDED = [
-  { len: "05:28", title: "Footwork Into Release", meta: "5:30 · Advanced · Footwork", desc: "Build rhythm from the catch into a balanced, stacked release.", img: "/images/canonical/090-rec-1.png" },
-  { len: "06:12", title: "Elbow Stack Holds", meta: "6:15 · Intermediate · Shooting", desc: "Train elbow alignment and forearm verticality through the lift.", img: "/images/canonical/090-rec-2.png" },
-  { len: "06:58", title: "High Elbow Release", meta: "7:02 · Advanced · Shooting", desc: "Reinforce a high elbow path for a clean, consistent release.", img: "/images/canonical/090-rec-3.png" },
+  { len: "05:28", title: "Footwork Into Release", time: "5:30", level: "Advanced", focus: "Footwork", desc: "Build rhythm from the catch into a balanced, stacked release.", img: "/images/canonical/090-rec-1.png" },
+  { len: "06:12", title: "Elbow Stack Holds", time: "6:15", level: "Intermediate", focus: "Shooting", desc: "Train elbow alignment and forearm verticality through the lift.", img: "/images/canonical/090-rec-2.png" },
+  { len: "06:58", title: "High Elbow Release", time: "7:02", level: "Advanced", focus: "Shooting", desc: "Reinforce a high elbow path for a clean, consistent release.", img: "/images/canonical/090-rec-3.png" },
 ]
-const LIBRARY = [
-  ["06:38", "Catch & Set Series", "Intermediate · Shooting", "/images/canonical/090-lib-1.png"],
-  ["04:42", "One Dribble Pull-Up", "Beginner · Scoring", "/images/canonical/090-lib-2.png"],
-  ["05:19", "Transition Pull-Up", "Advanced · Scoring", "/images/canonical/090-lib-3.png"],
-  ["06:01", "Sideline Elevation", "Intermediate · Shooting", "/images/canonical/090-lib-4.png"],
+const LIBRARY: [string, string, string, string, string][] = [
+  ["06:38", "Catch & Set Series", "Intermediate", "Shooting", "/images/canonical/090-lib-1.png"],
+  ["04:42", "One Dribble Pull-Up", "Beginner", "Scoring", "/images/canonical/090-lib-2.png"],
+  ["05:19", "Transition Pull-Up", "Advanced", "Scoring", "/images/canonical/090-lib-3.png"],
+  ["06:01", "Sideline Elevation", "Intermediate", "Shooting", "/images/canonical/090-lib-4.png"],
 ]
+
+/** Canonical fronts each quick action with its own mark — none is repeated. */
+const QUICK_ACTIONS: [string, string, string, LucideIcon][] = [
+  ["My drills", "View and manage your saved drills.", "/training/drills?tab=saved", ListChecks],
+  ["Discover", "Find drills that match your goals.", "/training/drills?tab=discover", Compass],
+  ["Calendar", "Plan your week and stay consistent.", "/training/calendar", CalendarCheck],
+]
+
+/** Drill meta line: duration, difficulty, focus area — a mark each. */
+function DrillMeta({ time, level, focus, className = "" }: {
+  time?: string; level: string; focus: string; className?: string
+}) {
+  return (
+    <div className={`flex flex-wrap items-center gap-x-[10px] gap-y-[2px] text-[var(--shotiq-color-graphite)] ${className}`}>
+      {time && <span className="flex items-center gap-[4px]"><Clock className="h-[12px] w-[12px]" strokeWidth={1.6} />{time}</span>}
+      <span className="flex items-center gap-[4px]"><SignalHigh className="h-[12px] w-[12px]" strokeWidth={1.6} />{level}</span>
+      <span className="flex items-center gap-[4px]"><Waypoints className="h-[12px] w-[12px]" strokeWidth={1.6} />{focus}</span>
+    </div>
+  )
+}
 const WEEK: [string, string, boolean][] = [
   ["MON", "28 min", true], ["TUE", "30 min", false], ["WED", "25 min", false], ["THU", "35 min", false],
   ["FRI", "Rest", false], ["SAT", "40 min", false], ["SUN", "Rest", false],
@@ -28,7 +51,7 @@ export default function TrainingHubPage() {
   const { hasData } = useHistory()
   const slug = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, "-")
   const [saved, setSaved] = useState<Set<string>>(
-    () => new Set([...RECOMMENDED.map((r) => r.title), ...LIBRARY.map(([, t]) => String(t))]))
+    () => new Set([...RECOMMENDED.map((r) => r.title), ...LIBRARY.map(([, t]) => t)]))
   const toggleSave = (t: string) =>
     setSaved((s) => { const n = new Set(s); if (n.has(t)) n.delete(t); else n.add(t); return n })
   return (
@@ -40,19 +63,19 @@ export default function TrainingHubPage() {
         </p>
 
         <div className="mt-[14px] grid grid-cols-4 gap-[12px]">
-          <Link href="/training/drills/quick-start" className="flex items-center gap-[12px] rounded-[8px] bg-[var(--shotiq-color-shotiqOrange)] p-[14px] text-white">
-            <div className="flex-1"><div className="text-[15px] font-semibold">Quick start</div>
+          <Link href="/training/drills/quick-start" className="flex items-center gap-[10px] rounded-[8px] bg-[var(--shotiq-color-shotiqOrange)] p-[14px] text-white">
+            <Zap className="h-[22px] w-[22px] shrink-0" strokeWidth={1.6} />
+            <div className="min-w-0 flex-1"><div className="text-[15px] font-semibold">Quick start</div>
               <div className="text-[11px] opacity-90">Get a personalized workout in under 60 seconds.</div></div>
-            <ChevronRight className="h-[16px] w-[16px]" />
+            <ChevronRight className="h-[16px] w-[16px] shrink-0" />
           </Link>
-          {[["My drills", "View and manage your saved drills.", "/training/drills?tab=saved"],
-            ["Discover", "Find drills that match your goals.", "/training/drills?tab=discover"],
-            ["Calendar", "Plan your week and stay consistent.", "/training/calendar"]].map(([t, d, href]) => (
-            <Link key={String(t)} href={String(href)}
-                  className="flex items-center gap-[12px] rounded-[8px] border border-[var(--shotiq-color-rule)] bg-white p-[14px] hover:border-[var(--shotiq-color-graphite)]">
-              <div className="flex-1"><div className="text-[15px] font-semibold">{t}</div>
+          {QUICK_ACTIONS.map(([t, d, href, Icon]) => (
+            <Link key={t} href={href}
+                  className="flex items-center gap-[10px] rounded-[8px] border border-[var(--shotiq-color-rule)] bg-white p-[14px] hover:border-[var(--shotiq-color-graphite)]">
+              <Icon className="h-[22px] w-[22px] shrink-0" strokeWidth={1.6} />
+              <div className="min-w-0 flex-1"><div className="text-[15px] font-semibold">{t}</div>
                 <div className="text-[11px] text-[var(--shotiq-color-graphite)]">{d}</div></div>
-              <ChevronRight className="h-[16px] w-[16px] text-[var(--shotiq-color-graphite)]" />
+              <ChevronRight className="h-[16px] w-[16px] shrink-0 text-[var(--shotiq-color-graphite)]" />
             </Link>
           ))}
         </div>
@@ -78,7 +101,7 @@ export default function TrainingHubPage() {
               </div>
               <div className="p-[12px]">
                 <div className="text-[15px] font-semibold">{r.title}</div>
-                <div className="mt-[2px] text-[11px] text-[var(--shotiq-color-graphite)]">{r.meta}</div>
+                <DrillMeta time={r.time} level={r.level} focus={r.focus} className="mt-[3px] text-[11px]" />
                 <p className="mt-[6px] text-[12px] leading-[16px] text-[var(--shotiq-color-graphite)]">{r.desc}</p>
                 <Link href={`/training/drills/${slug(r.title)}`}
                       className="mt-[10px] flex h-[36px] items-center justify-center rounded-[5px] border-2 border-[var(--shotiq-color-shotiqOrange)] text-[13px] font-medium text-[var(--shotiq-color-shotiqOrange)]">
@@ -94,22 +117,22 @@ export default function TrainingHubPage() {
           <Link href="/training/drills?tab=saved" className="text-[12px] text-[var(--shotiq-color-analysisBlue)]">View all drills ›</Link>
         </div>
         <div className="mt-[8px] grid grid-cols-4 gap-[12px]">
-          {LIBRARY.map(([, t, meta, img]) => (
-            <Link key={String(t)} href={`/training/drills/${slug(String(t))}`}>
+          {LIBRARY.map(([, t, level, focus, img]) => (
+            <Link key={t} href={`/training/drills/${slug(t)}`}>
               <Card className="overflow-hidden">
                 <div className="relative">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={String(img)} alt="" className="h-[113px] w-full object-cover" />
-                  <button type="button" aria-pressed={saved.has(String(t))}
-                          aria-label={saved.has(String(t)) ? "Remove from my drills" : "Save drill"}
-                          onClick={(e) => { e.preventDefault(); toggleSave(String(t)) }}
+                  <img src={img} alt="" className="h-[113px] w-full object-cover" />
+                  <button type="button" aria-pressed={saved.has(t)}
+                          aria-label={saved.has(t) ? "Remove from my drills" : "Save drill"}
+                          onClick={(e) => { e.preventDefault(); toggleSave(t) }}
                           className="absolute right-[6px] top-[6px] grid h-[22px] w-[22px] place-items-center rounded-[4px] bg-black/40">
-                    <Bookmark className="h-[12px] w-[12px] text-white" fill={saved.has(String(t)) ? "currentColor" : "none"} />
+                    <Bookmark className="h-[12px] w-[12px] text-white" fill={saved.has(t) ? "currentColor" : "none"} />
                   </button>
                 </div>
                 <div className="p-[10px]">
                   <div className="text-[13px] font-semibold">{t}</div>
-                  <div className="text-[10px] text-[var(--shotiq-color-graphite)]">{meta}</div>
+                  <DrillMeta level={level} focus={focus} className="mt-[2px] text-[10px]" />
                 </div>
               </Card>
             </Link>
@@ -118,7 +141,7 @@ export default function TrainingHubPage() {
       </div>
 
       {/* right rail */}
-      <aside className="w-[340px] shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[18px]">
+      <aside className="w-[368px] shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[18px]">
         {/* Coaching target and form score used to live in this screen's bespoke
             left sidebar. Navigation is now uniform app-wide, so they moved here
             rather than being dropped — compact, so the rail still fits the fold. */}
@@ -205,19 +228,34 @@ export default function TrainingHubPage() {
           <SectionLabel>RECENT PERFORMANCE</SectionLabel>
           <Link href="/results/demo/history" className="text-[11px] text-[var(--shotiq-color-graphite)]">View all analyses ›</Link>
         </div>
+        {/* Canonical heads each column with the full tracked-caps label and sets
+            the value beneath it at ~19px — not an abbreviated label under a
+            shrunken number. */}
         <div className="mt-[4px] divide-y divide-[var(--shotiq-color-rule)]">
-          {[["Pull-Up Jumper", "Today at 8:24 AM · Catch & Shoot", "82", "62.5%", "24 / 15"],
+          {([["Pull-Up Jumper", "Today at 8:24 AM · Catch & Shoot", "82", "62.5%", "24 / 15"],
             ["Spot-Up Three", "May 11, 6:15 PM · Catch & Shoot", "78", "58.3%", "12 / 7"],
-            ["Transition Pull-Up", "May 10, 4:02 PM · Off the Dribble", "75", "54.5%", "11 / 6"]].map(([t, d, fs, mk, sm]) => (
-            <Link key={String(t)} href="/results/demo/history" className="flex items-center gap-[7px] py-[7px] hover:bg-[var(--shotiq-color-warmCanvas)]">
-              <TrendLine points={[2, 3.4, 2.6, 4]} width={30} height={24} stroke="var(--shotiq-color-shotiqOrange)" dotFill="var(--shotiq-color-shotiqOrange)" />
+            ["Transition Pull-Up", "May 10, 4:02 PM · Off the Dribble", "75", "54.5%", "11 / 6"]] as const).map(([t, d, fs, mk, sm]) => (
+            <Link key={t} href="/results/demo/history" className="flex items-center gap-[6px] py-[8px] hover:bg-[var(--shotiq-color-warmCanvas)]">
+              <TrendLine points={[2, 3.4, 2.6, 4]} width={26} height={24} stroke="var(--shotiq-color-shotiqOrange)" dotFill="var(--shotiq-color-shotiqOrange)" />
               <div className="min-w-0 flex-1">
                 <div className="truncate text-[13px] font-semibold">{t}</div>
                 <div className="truncate text-[10px] text-[var(--shotiq-color-graphite)]">{d}</div>
               </div>
-              <Stat value={hasData ? String(fs) : "—"} label="FORM" valueClass="text-[17px] leading-[19px]" />
-              <Stat value={hasData ? String(mk) : "—"} label="MAKE %" valueClass="text-[17px] leading-[19px]" />
-              <Stat value={hasData ? String(sm) : "—"} label="S / M" valueClass="text-[17px] leading-[19px]" />
+              <div className="shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[6px]">
+                <div className="text-[8px] tracking-[0.04em] text-[var(--shotiq-color-graphite)]">FORM SCORE</div>
+                <div className="flex items-baseline gap-[4px]">
+                  <span className="shotiq-numeric text-[19px] leading-[21px]">{hasData ? fs : "—"}</span>
+                  <span className="text-[9px] text-[var(--shotiq-color-analysisBlue)]">Good</span>
+                </div>
+              </div>
+              <div className="shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[6px]">
+                <div className="text-[8px] tracking-[0.04em] text-[var(--shotiq-color-graphite)]">MAKE %</div>
+                <div className="shotiq-numeric text-[19px] leading-[21px]">{hasData ? mk : "—"}</div>
+              </div>
+              <div className="shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[6px]">
+                <div className="text-[8px] tracking-[0.04em] text-[var(--shotiq-color-graphite)]">SHOTS / MAKES</div>
+                <div className="shotiq-numeric text-[19px] leading-[21px]">{hasData ? sm : "—"}</div>
+              </div>
             </Link>
           ))}
         </div>

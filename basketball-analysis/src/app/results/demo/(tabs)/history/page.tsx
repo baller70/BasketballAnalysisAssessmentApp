@@ -5,7 +5,8 @@
 import React, { useState } from "react"
 import Link from "next/link"
 import { Calendar, ChevronDown, SlidersHorizontal, Share, X, ChevronLeft, ChevronRight } from "lucide-react"
-import { SectionLabel, Card, TrendLine, PhaseGlyph, Stat } from "@/components/shotiq/ShotIQShell"
+import { SectionLabel, Card, TrendLine } from "@/components/shotiq/ShotIQShell"
+import { CueGlyph } from "@/components/shotiq/Glyphs"
 import { useHistory } from "@/components/shotiq/ResultsBits"
 
 const DEMO_ROWS: [string, string, string, string, string, string][] = [
@@ -137,25 +138,23 @@ export default function AnalysisHistoryPage() {
         {/* summary strip */}
         <div className="mt-[12px] flex items-center divide-x divide-[var(--shotiq-color-rule)] border-b border-[var(--shotiq-color-rule)] px-[8px] pb-[16px] pt-[6px]">
           <div className="px-[16px]">
-            <div className="text-[10px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">AVERAGE FORM SCORE</div>
-            <div className="flex items-end gap-[8px]">
-              <span className="shotiq-numeric text-[34px] leading-[38px]">{score ?? "—"}</span>
-              <span className="pb-[8px] text-[11px] text-[var(--shotiq-color-analysisBlue)]">● Good</span>
-            </div>
+            <div className="text-[11px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">AVERAGE FORM SCORE</div>
+            <div className="shotiq-numeric text-[40px] leading-[44px]">{score ?? "—"}</div>
+            <div className="text-[12px] text-[var(--shotiq-color-analysisBlue)]">● Good</div>
           </div>
           <div className="px-[16px]">
-            <div className="text-[10px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">SHOTS</div>
-            <div className="shotiq-numeric text-[34px] leading-[38px]">{hasData ? "24" : "0"}</div>
-            <div className="text-[11px] text-[var(--shotiq-color-graphite)]">Total</div>
+            <div className="text-[11px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">SHOTS</div>
+            <div className="shotiq-numeric text-[40px] leading-[44px]">{hasData ? "24" : "0"}</div>
+            <div className="text-[12px] text-[var(--shotiq-color-graphite)]">Total</div>
           </div>
           <div className="px-[16px]">
-            <div className="text-[10px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">MAKES</div>
-            <div className="shotiq-numeric text-[34px] leading-[38px]">{hasData ? "15" : "0"}</div>
-            <div className="text-[11px] text-[var(--shotiq-color-graphite)]">Total</div>
+            <div className="text-[11px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">MAKES</div>
+            <div className="shotiq-numeric text-[40px] leading-[44px]">{hasData ? "15" : "0"}</div>
+            <div className="text-[12px] text-[var(--shotiq-color-graphite)]">Total</div>
           </div>
           <div className="px-[16px]">
-            <div className="text-[10px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">MAKE %</div>
-            <div className="shotiq-numeric text-[34px] leading-[38px]">{hasData ? "62.5%" : "—"}</div>
+            <div className="text-[11px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">MAKE %</div>
+            <div className="shotiq-numeric text-[40px] leading-[44px]">{hasData ? "62.5%" : "—"}</div>
           </div>
           <div className="flex-1 px-[16px]">
             <div className="text-[10px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">{metric.toUpperCase()} TREND</div>
@@ -201,7 +200,7 @@ export default function AnalysisHistoryPage() {
                     ))}
                   </span>{conf}
                 </td>
-                <td><PhaseGlyph size={22} /></td>
+                <td><CueGlyph kind="peak" size={22} /></td>
                 <td>
                   <span className="flex items-center gap-[2px]">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -252,8 +251,14 @@ export default function AnalysisHistoryPage() {
               <div className="shotiq-numeric text-[26px] text-[var(--shotiq-color-shotiqOrange)]">{rows[sel]?.[1] ?? "—"}</div>
               <div className="h-[5px] rounded-full bg-[var(--shotiq-color-rule)]"><div className="h-full w-[82%] rounded-full bg-[var(--shotiq-color-shotiqOrange)]" /></div>
             </div>
-            <div className="flex-1 p-[12px]"><Stat value={rows[sel]?.[3] ?? "—"} label="MAKE %" valueClass="text-[24px] leading-[28px]" /></div>
-            <div className="flex-1 p-[12px]"><Stat value={rows[sel]?.[4] ?? "—"} label="SHOTS / MAKES" valueClass="text-[24px] leading-[28px]" /></div>
+            <div className="flex-1 p-[12px]">
+              <div className="text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">MAKE %</div>
+              <div className="shotiq-numeric text-[26px] leading-[30px]">{rows[sel]?.[3] ?? "—"}</div>
+            </div>
+            <div className="flex-1 p-[12px]">
+              <div className="text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">SHOTS / MAKES</div>
+              <div className="shotiq-numeric text-[26px] leading-[30px]">{rows[sel]?.[4] ?? "—"}</div>
+            </div>
           </div>
           <div className="flex divide-x divide-[var(--shotiq-color-rule)]">
             <div className="flex-1 p-[12px]">
@@ -266,7 +271,7 @@ export default function AnalysisHistoryPage() {
             <div className="flex-1 p-[12px]">
               <div className="text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">FOCUS</div>
               <div className="mt-[2px] flex items-center gap-[8px]">
-                <PhaseGlyph size={24} /><span className="text-[11px] leading-[14px]">Keep elbow stacked through release</span>
+                <CueGlyph kind="peak" size={24} className="shrink-0" /><span className="text-[11px] leading-[14px]">Keep elbow stacked through release</span>
               </div>
             </div>
           </div>
