@@ -5,18 +5,27 @@ import SwiftUI
 
 // MARK: - Shared training helpers (canonical 054 look)
 
-/// Light placeholder standing in for court photography (canonical thumbnails).
+/// Court photography slot. `photo` is a canonical crop key (see
+/// `CanonicalPhoto`); without one the slot keeps the light placeholder it used
+/// before, so thumbnails with no canonical frame degrade instead of vanishing.
 struct PhotoThumb: View {
     var width: CGFloat? = nil
     var height: CGFloat
     var icon: String = "figure.basketball"
+    var photo: String? = nil
     var body: some View {
-        RoundedRectangle(cornerRadius: 6)
-            .fill(ShotIQColor.warmCanvas)
-            .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.rule))
-            .overlay(Image(systemName: icon).font(.system(size: min(height, 44) * 0.42))
-                .foregroundStyle(ShotIQColor.muted))
-            .frame(width: width, height: height)
+        Group {
+            if let photo {
+                CanonicalPhoto(photo, width: width, height: height, cornerRadius: 6)
+            } else {
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(ShotIQColor.warmCanvas)
+                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(ShotIQColor.rule))
+                    .overlay(Image(systemName: icon).font(.system(size: min(height, 44) * 0.42))
+                        .foregroundStyle(ShotIQColor.muted))
+                    .frame(width: width, height: height)
+            }
+        }
     }
 }
 
@@ -68,6 +77,8 @@ struct TrainingHomeView: View {     // 054
          ("Elbow Alignment Series", ["15 min", "Form Focus", "All Levels"], "Train a stacked elbow and straight line."),
          ("Catch & Shoot Flow", ["12 min", "Game Speed", "All Levels"], "Smooth rhythm from catch to follow-through.")]
     }
+    /// Canonical 054 carries a court frame on the first two saved-drill rows.
+    private let savedDrillPhotos = ["054-visual-003", "054-visual-002"]
     var body: some View {
         CanonicalScreen(testID: "screen-ios-training-home") {
             ScrollView {
@@ -130,7 +141,8 @@ struct TrainingHomeView: View {     // 054
                                 ForEach(Array(savedDrills.enumerated()), id: \.offset) { i, d in
                                     NavigationLink { DrillDetailView(name: d.0) } label: {
                                         HStack(spacing: 10) {
-                                            PhotoThumb(width: 84, height: 76)
+                                            PhotoThumb(width: 84, height: 76,
+                                                       photo: i < savedDrillPhotos.count ? savedDrillPhotos[i] : nil)
                                             PhaseGlyph(active: i == 0, size: 28)
                                             VStack(alignment: .leading, spacing: 5) {
                                                 Text(d.0).shotiqBody(15, weight: .semibold)
@@ -165,7 +177,7 @@ struct TrainingHomeView: View {     // 054
                         NavigationLink { ShotTrackerView() } label: {
                             ShotIQCard {
                                 HStack(spacing: 0) {
-                                    PhotoThumb(width: 100, height: 128)
+                                    PhotoThumb(width: 100, height: 128, photo: "054-visual-001")
                                     VStack(alignment: .leading, spacing: 8) {
                                         Text("Quick Release Builder").shotiqBody(15, weight: .semibold)
                                             .lineLimit(1).minimumScaleFactor(0.8)
@@ -236,7 +248,7 @@ struct QuickStartView: View {       // 055
                             .fixedSize(horizontal: false, vertical: true)
                             .padding(.top, 6)
                         HStack(alignment: .top, spacing: 16) {
-                            PhotoThumb(height: 190).frame(maxWidth: .infinity)
+                            PhotoThumb(height: 190, photo: "055-visual-001").frame(maxWidth: .infinity)
                             VStack(alignment: .leading, spacing: 6) {
                                 MicroLabel(text: "FORM SCORE")
                                 Text("82").font(.custom("Tungsten-Semibold", size: 52))
@@ -511,7 +523,9 @@ struct DiscoverDrillsView: View {   // 056
                             NavigationLink { DrillDetailView(name: d.0) } label: {
                                 ShotIQCard {
                                     HStack(spacing: 0) {
-                                        PhotoThumb(width: 104, height: 158)
+                                        // Canonical 056 only carries a frame for STACK & SHOOT.
+                                        PhotoThumb(width: 104, height: 158,
+                                                   photo: d.0 == "STACK & SHOOT" ? "056-visual-001" : nil)
                                         VStack(alignment: .leading, spacing: 8) {
                                             HStack(alignment: .top) {
                                                 Text(d.0).shotiqDisplay(20).lineLimit(1)
@@ -629,7 +643,7 @@ struct DrillDetailView: View {      // 057
                                     .font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
-                            PhotoThumb(width: 138, height: 160)
+                            PhotoThumb(width: 138, height: 160, photo: "057-visual-001")
                                 .overlay(alignment: .bottomTrailing) {
                                     VStack(spacing: 2) {
                                         Text("FORM SCORE").font(.system(size: 7, weight: .semibold)).kerning(0.5)
@@ -821,6 +835,12 @@ struct MyDrillsView: View {         // 058
         ("1-2 Step Finishing", "Finish at the rim using quick 1-2 step footwork and control", "RISE", 16, 12, "75.0%", "Apr 28, 2025")
     ]
     private let phases = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
+    /// Canonical 058 frames, keyed by drill so sorting/filtering keeps each
+    /// card with the photograph the design pairs it with.
+    private let drillPhotos = ["Quick Release Builder": "058-visual-002",
+                               "Stationary Pound Dribble": "058-visual-001",
+                               "Speed Dribble Combo": "058-visual-003",
+                               "1-2 Step Finishing": "058-visual-004"]
     private var visibleDrills: [(String, String, String, Int, Int, String, String)] {
         var out = drills.filter { phaseFilter == "All phases" || $0.2 == phaseFilter }
         if sortMode == "Best accuracy" {
@@ -956,7 +976,7 @@ struct MyDrillsView: View {         // 058
         ShotIQCard {
             HStack(alignment: .top, spacing: 12) {
                 NavigationLink { DrillDetailView(name: d.0) } label: {
-                    PhotoThumb(width: 84, height: 150)
+                    PhotoThumb(width: 84, height: 150, photo: drillPhotos[d.0])
                 }
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(alignment: .top, spacing: 8) {
@@ -1106,7 +1126,7 @@ struct WorkoutCalendarView: View {  // 059
                                 }
                                 if dayCardExpanded {
                                 HStack(alignment: .top, spacing: 12) {
-                                    PhotoThumb(width: 112, height: 128)
+                                    PhotoThumb(width: 112, height: 128, photo: "059-visual-001")
                                     VStack(alignment: .leading, spacing: 6) {
                                         Text("COMBO LADDER").shotiqDisplay(22)
                                         HStack(spacing: 5) {
@@ -1348,7 +1368,7 @@ struct DrillExecutionView: View {   // 060
                         }
                         .padding(.top, 10)
                         ZStack(alignment: .top) {
-                            MediaSurface(height: 290)
+                            CanonicalMediaSurface(key: "060-visual-002", height: 290)
                             HStack {
                                 Menu {
                                     ForEach(["FRONT VIEW", "SIDE VIEW", "REAR VIEW"], id: \.self) { v in
@@ -1718,7 +1738,7 @@ struct WorkoutCompletionView: View { // 062
                         .padding(.top, 16)
                         ShotIQCard {
                             HStack(spacing: 0) {
-                                PhotoThumb(width: 200, height: 210)
+                                PhotoThumb(width: 200, height: 210, photo: "062-visual-001")
                                 VStack(alignment: .leading, spacing: 6) {
                                     MicroLabel(text: "FORM SCORE")
                                     Text("82").font(.custom("Tungsten-Semibold", size: 58))

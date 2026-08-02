@@ -272,7 +272,7 @@ export default function BiomechanicsWorkspacePage() {
 
       <div className="mt-[8px] flex gap-[16px]">
         {/* frame viewer */}
-        <div className="w-[656px] shrink-0">
+        <div className="w-[600px] shrink-0">
           <div className="relative">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/images/canonical/084-hero.png" alt="Release frame with skeleton overlay"
@@ -331,7 +331,7 @@ export default function BiomechanicsWorkspacePage() {
 
         {/* metrics panel */}
         <Card className="min-w-0 flex-1 px-[18px] py-[12px]">
-          <nav className="flex gap-[18px] border-b border-[var(--shotiq-color-rule)]">
+          <nav className="flex gap-[12px] border-b border-[var(--shotiq-color-rule)]">
             {["METRICS", "COACHING TARGET", "NOTES", "HISTORY"].map((t) => (
               <button key={t} type="button" onClick={() => setTab(t)} aria-current={tab === t ? "true" : undefined}
                       className={`relative whitespace-nowrap pb-[8px] text-[11px] font-bold tracking-[0.05em] ${tab === t ? "" : "text-[var(--shotiq-color-graphite)]"}`}>
@@ -346,14 +346,14 @@ export default function BiomechanicsWorkspacePage() {
               <div className="divide-y divide-[var(--shotiq-color-rule)]">
                 {MEASUREMENTS.map(([m, v, ideal, band]) => (
                   <button key={m} type="button" onClick={() => setMetric(m)} data-testid={`metric-${m.toLowerCase().replace(/\s+/g, "-")}`}
-                          className="flex w-full items-center gap-[10px] py-[8px] text-left hover:bg-[var(--shotiq-color-warmCanvas)]">
+                          className="flex w-full items-center gap-[8px] py-[8px] text-left hover:bg-[var(--shotiq-color-warmCanvas)]">
                     <PhaseGlyph size={22} />
-                    <div className="flex-1">
-                      <div className="text-[13px] font-semibold">{m}</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="whitespace-nowrap text-[13px] font-semibold">{m}</div>
                       <div className="text-[10px] text-[var(--shotiq-color-graphite)]">{ideal}</div>
                     </div>
-                    <span className="shotiq-numeric text-[19px]">{hasData ? v : "—"}</span>
-                    <span className={`rounded-[4px] px-[8px] py-[2px] text-[10px] font-bold ${band === "Good" ? "bg-[var(--shotiq-color-confirmGreen)]/10 text-[var(--shotiq-color-confirmGreen)]" : "bg-[var(--shotiq-color-shotiqOrange)]/10 text-[var(--shotiq-color-shotiqOrange)]"}`}>{band}</span>
+                    <span className="shotiq-numeric shrink-0 text-[19px]">{hasData ? v : "—"}</span>
+                    <span className={`shrink-0 whitespace-nowrap rounded-[4px] px-[6px] py-[2px] text-[10px] font-bold ${band === "Good" ? "bg-[var(--shotiq-color-confirmGreen)]/10 text-[var(--shotiq-color-confirmGreen)]" : "bg-[var(--shotiq-color-shotiqOrange)]/10 text-[var(--shotiq-color-shotiqOrange)]"}`}>{band}</span>
                     <ChevronRight className="h-[13px] w-[13px] text-[var(--shotiq-color-muted)]" />
                   </button>
                 ))}
@@ -362,7 +362,7 @@ export default function BiomechanicsWorkspacePage() {
               <div className="mt-[4px] space-y-[7px]">
                 {CONFIDENCE.map(([m, v]) => (
                   <div key={m} className="flex items-center gap-[10px]">
-                    <span className="w-[130px] text-[12px]">{m}</span>
+                    <span className="w-[112px] shrink-0 text-[12px]">{m}</span>
                     <div className="h-[5px] flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
                       <div className="h-full rounded-full bg-[var(--shotiq-color-analysisBlue)]" style={{ width: `${v}%` }} />
                     </div>
@@ -381,7 +381,7 @@ export default function BiomechanicsWorkspacePage() {
         </Card>
 
         {/* right rail */}
-        <div className="w-[248px] shrink-0">
+        <div className="w-[235px] shrink-0">
           <Card className="p-[16px]"><CoachingTarget /></Card>
           <Card className="mt-[12px] p-[16px]">
             <SectionLabel>COACHING INSIGHTS</SectionLabel>

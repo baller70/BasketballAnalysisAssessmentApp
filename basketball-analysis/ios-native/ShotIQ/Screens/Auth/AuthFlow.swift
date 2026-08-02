@@ -199,17 +199,8 @@ struct WelcomeView: View {         // 002 · ios.welcome
                                 .font(.system(size: 15))
                                 .foregroundStyle(ShotIQColor.graphite)
                         }
-                        // Hero: jump-shot media placeholder with pose glyph.
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 12).fill(ShotIQColor.warmCanvas)
-                            VStack(spacing: 16) {
-                                Image(systemName: "figure.basketball")
-                                    .font(.system(size: 60, weight: .light))
-                                    .foregroundStyle(ShotIQColor.graphite)
-                                PhaseGlyph(active: true, size: 36)
-                            }
-                        }
-                        .frame(width: 168, height: 400)
+                        // Hero: the canonical jump-shot frame.
+                        CanonicalPhoto("002-visual-005", width: 168, height: 400, cornerRadius: 12)
                     }
                     .padding(.top, 24)
 

@@ -17,6 +17,7 @@
 		4B8B9E9003777D6A4B234B5F /* AnalysisFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E03A277539C261467FFECE8 /* AnalysisFlow.swift */; };
 		519A38CD0839ADD0F0214188 /* boxedsemibold.otf in Resources */ = {isa = PBXBuildFile; fileRef = D6DF21163E007DAC625258DE /* boxedsemibold.otf */; };
 		59EAA017D3EA28E9825519B0 /* ShotIQUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B80E348AC504802FBFCEE2BE /* ShotIQUITests.swift */; };
+		A1B2C3D4E5F60718293A4B5D /* CanonicalScreenshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5C /* CanonicalScreenshotTests.swift */; };
 		71060C0C6C15EF00043BDC4C /* ShotIQTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = D38018B275DB53F75E8FB92C /* ShotIQTokens.swift */; };
 		7A0A5793869314120915A127 /* OnboardingFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10550E1AD3597AE434E97DFB /* OnboardingFlow.swift */; };
 		881767E47EDBF3F5B38CC679 /* HomeFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9D8AB9A2AA75D7231A3DF13 /* HomeFlow.swift */; };
@@ -65,6 +66,7 @@
 		90F9DD369D1CDE90145B5003 /* AuthFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthFlow.swift; sourceTree = "<group>"; };
 		A3ABB946C8ACBA7946DBFC56 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		B80E348AC504802FBFCEE2BE /* ShotIQUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShotIQUITests.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A4B5C /* CanonicalScreenshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanonicalScreenshotTests.swift; sourceTree = "<group>"; };
 		BD1B7FFC873C50CC28C73611 /* GoalsAnalyticsMediaProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoalsAnalyticsMediaProfile.swift; sourceTree = "<group>"; };
 		BFD80AB08FF5E5D07D90CCFB /* EliteFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EliteFlow.swift; sourceTree = "<group>"; };
 		D2C7558F26B7588AA0972272 /* CameraService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraService.swift; sourceTree = "<group>"; };
@@ -219,6 +221,7 @@
 		E607D2BDA2299204A8A5C05E /* UITests */ = {
 			isa = PBXGroup;
 			children = (
+				A1B2C3D4E5F60718293A4B5C /* CanonicalScreenshotTests.swift */,
 				B80E348AC504802FBFCEE2BE /* ShotIQUITests.swift */,
 			);
 			name = UITests;
@@ -366,6 +369,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A1B2C3D4E5F60718293A4B5D /* CanonicalScreenshotTests.swift in Sources */,
 				59EAA017D3EA28E9825519B0 /* ShotIQUITests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -162,7 +162,9 @@ struct AnalysisProcessingView: View { // 036
                             .padding(.top, 16)
                             SectionLabel(text: "LIVE FRAME PREVIEW").padding(.top, 20)
                             HStack(alignment: .top, spacing: 16) {
-                                ZStack { MediaSurface(height: 200); SkeletonOverlay() }
+                                // Canonical live-frame preview: the pose overlay is already
+                                // burned into this crop, so no SkeletonOverlay on top.
+                                CanonicalMediaSurface(key: "036-visual-001", height: 200)
                                     .frame(maxWidth: .infinity)
                                 FormScorePanel(numeralSize: 56, barWidth: 90)
                                     .frame(width: 110, alignment: .leading)
@@ -371,8 +373,13 @@ struct AnalysisResultOverviewView: View { // 038
                         .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
                         VStack(alignment: .leading, spacing: 0) {
                             HStack(alignment: .top, spacing: 18) {
-                                ZStack { MediaSurface(height: 220); SkeletonOverlay() }
-                                    .frame(maxWidth: .infinity)
+                                // This crop covers the gym behind the shooter and carries no
+                                // baked-in pose, so the app's overlay still draws on top.
+                                ZStack {
+                                    CanonicalMediaSurface(key: "038-visual-001", height: 220)
+                                    SkeletonOverlay()
+                                }
+                                .frame(maxWidth: .infinity)
                                 VStack(alignment: .leading, spacing: 0) {
                                     NavigationLink { FormScoreView() } label: {
                                         FormScorePanel(numeralSize: 62, barWidth: 96)
@@ -436,8 +443,8 @@ struct AnalysisResultOverviewView: View { // 038
                             NavigationLink { EliteMatchView() } label: {
                                 ShotIQCard {
                                     HStack(spacing: 14) {
-                                        RoundedRectangle(cornerRadius: 6).fill(ShotIQColor.rule)
-                                            .frame(width: 84, height: 104)
+                                        // Elite reference shooter photo from the canonical render.
+                                        CanonicalPhoto("038-visual-002", width: 84, height: 104, cornerRadius: 6)
                                         VStack(alignment: .leading, spacing: 4) {
                                             Text("KLAY THOMPSON").shotiqDisplay(22)
                                             Text("Golden State Warriors").font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
@@ -728,7 +735,8 @@ struct AnalysisErrorView: View {    // 040
                             }
                             .padding(.top, 10)
                             HStack(alignment: .top, spacing: 16) {
-                                ZStack { MediaSurface(height: 250); SkeletonOverlay() }
+                                // Pose overlay is baked into the canonical crop.
+                                CanonicalMediaSurface(key: "040-visual-003", height: 250)
                                     .frame(maxWidth: .infinity)
                                 VStack(alignment: .leading, spacing: 0) {
                                     FormScorePanel(numeralSize: 56, barWidth: 110)
@@ -790,6 +798,17 @@ struct AnalysisErrorView: View {    // 040
 struct ShotBreakdownView: View {    // 041
     @Environment(\.dismiss) private var dismiss
     private let phases = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
+    /// Canonical filmstrip crops, matched to their column on the 853x1844 render.
+    /// LOAD has no crop in the asset set, so that cell keeps the dark surface.
+    private static func phaseFrameKey(_ phase: String) -> String? {
+        switch phase {
+        case "SETUP": return "041-visual-001"
+        case "RISE": return "041-visual-003"
+        case "RELEASE": return "041-visual-002"
+        case "FOLLOW-THROUGH": return "041-visual-004"
+        default: return nil
+        }
+    }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-shot-breakdown") {
             VStack(spacing: 0) {
@@ -829,12 +848,17 @@ struct ShotBreakdownView: View {    // 041
                             ForEach(phases, id: \.self) { p in
                                 NavigationLink { FrameDetailSkeletonView() } label: {
                                     VStack(spacing: 8) {
-                                        ZStack {
-                                            RoundedRectangle(cornerRadius: 2)
-                                                .fill(Color(red: 0.106, green: 0.114, blue: 0.125))
-                                            SkeletonOverlay()
+                                        if let key = Self.phaseFrameKey(p) {
+                                            // Canonical phase frame — pose overlay already in the pixels.
+                                            CanonicalPhoto(key, height: 190, cornerRadius: 2)
+                                        } else {
+                                            ZStack {
+                                                RoundedRectangle(cornerRadius: 2)
+                                                    .fill(Color(red: 0.106, green: 0.114, blue: 0.125))
+                                                SkeletonOverlay()
+                                            }
+                                            .frame(height: 190)
                                         }
-                                        .frame(height: 190)
                                         Text(p).font(.system(size: 9, weight: p == "RELEASE" ? .bold : .regular))
                                             .kerning(0.4)
                                             .foregroundStyle(p == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
@@ -1279,8 +1303,9 @@ struct AnnotationToolbarView: View { // 043
                             .padding(.top, 12)
                             ZStack(alignment: .topLeading) {
                                 ZStack {
-                                    MediaSurface(height: 430)
-                                    SkeletonOverlay()
+                                    // Canonical annotation frame — release-angle callout and
+                                    // pose overlay are already burned into the crop.
+                                    CanonicalMediaSurface(key: "043-visual-001", height: 430)
                                     annotationCanvas
                                 }
                                 .contentShape(Rectangle())
@@ -2068,11 +2093,17 @@ struct FlawsOverviewView: View {    // 046
                         Text(confidence).font(.custom("Tungsten-Semibold", size: 24)).foregroundStyle(ShotIQColor.ink)
                         TrendLine(points: [40, 55, 48, 62, 58, 74], stroke: tint).frame(width: 54, height: 20)
                     }
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 4).fill(Color(red: 0.106, green: 0.114, blue: 0.125))
-                        SkeletonOverlay()
+                    // Only the second flaw card has a canonical crop; the others keep
+                    // the dark surface so the row stays consistent.
+                    if rank == 2 {
+                        CanonicalPhoto("046-visual-001", width: 120, height: 108, cornerRadius: 4)
+                    } else {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 4).fill(Color(red: 0.106, green: 0.114, blue: 0.125))
+                            SkeletonOverlay()
+                        }
+                        .frame(width: 120, height: 108)
                     }
-                    .frame(width: 120, height: 108)
                     HStack(spacing: 5) {
                         Text(cta).font(.system(size: 12, weight: .semibold))
                             .lineLimit(1).minimumScaleFactor(0.7)
@@ -2100,6 +2131,17 @@ struct FlawDetailView: View {       // 047
     @State private var goFrames = false
     @State private var goDrill = false
     private let frames = ["LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH", "RESET"]
+    /// Canonical evidence-frame crops, matched to their column on the 853x1844
+    /// render. FOLLOW-THROUGH has no crop, so that cell keeps the dark surface.
+    private static func evidenceFrameKey(_ frame: String) -> String? {
+        switch frame {
+        case "LOAD": return "047-visual-004"
+        case "RISE": return "047-visual-001"
+        case "RELEASE": return "047-visual-002"
+        case "RESET": return "047-visual-003"
+        default: return nil
+        }
+    }
     var body: some View {
         CanonicalScreen(testID: "screen-ios-flaw-detail") {
             VStack(spacing: 0) {
@@ -2154,12 +2196,19 @@ struct FlawDetailView: View {       // 047
                             HStack(spacing: 4) {
                                 ForEach(frames, id: \.self) { f in
                                     VStack(spacing: 6) {
-                                        ZStack {
-                                            RoundedRectangle(cornerRadius: 4)
-                                                .fill(Color(red: 0.106, green: 0.114, blue: 0.125))
-                                            SkeletonOverlay()
+                                        Group {
+                                            if let key = Self.evidenceFrameKey(f) {
+                                                // Canonical evidence frame — pose overlay is in the pixels.
+                                                CanonicalPhoto(key, height: 150, cornerRadius: 4)
+                                            } else {
+                                                ZStack {
+                                                    RoundedRectangle(cornerRadius: 4)
+                                                        .fill(Color(red: 0.106, green: 0.114, blue: 0.125))
+                                                    SkeletonOverlay()
+                                                }
+                                                .frame(height: 150)
+                                            }
                                         }
-                                        .frame(height: 150)
                                         .overlay(RoundedRectangle(cornerRadius: 4)
                                             .stroke(f == "RELEASE" ? ShotIQColor.shotiqOrange : .clear, lineWidth: 2))
                                         Text(f).font(.system(size: 8, weight: f == "RELEASE" ? .bold : .regular))

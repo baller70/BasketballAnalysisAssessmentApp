@@ -656,7 +656,7 @@ struct GoalDetailView: View {       // 065
                         .padding(.top, 10)
                         SectionLabel(text: "TECHNIQUE SNAPSHOT").padding(.top, 22)
                         HStack(alignment: .top, spacing: 12) {
-                            PhotoThumb(width: 118, height: 148)
+                            PhotoThumb(width: 118, height: 148, photo: "065-visual-001")
                             VStack(alignment: .leading, spacing: 10) {
                                 VStack(alignment: .leading, spacing: 4) {
                                     MicroLabel(text: "ELBOW STACK ANGLE")
@@ -999,6 +999,11 @@ struct AnalyticsCardsView: View {   // 066
                score: 70, delta: "-3", deltaLabel: "NEEDS REVIEW", deltaColor: ShotIQColor.reviewRed,
                daysAgo: 16, kind: "Photo")]
     }
+    /// Canonical 066 frames, keyed by session so filtering keeps each card
+    /// with the photograph the design pairs it with. The top card has none.
+    private let sessionPhotos = ["Off the Dribble": "066-visual-001",
+                                 "Pull-Up Jumper": "066-visual-002",
+                                 "Mid-Range Work": "066-visual-003"]
     private var filteredSessions: [AnalysisSession] {
         sessions.filter { s in
             let inRange: Bool
@@ -1126,7 +1131,7 @@ struct AnalyticsCardsView: View {   // 066
     private func sessionCard(_ s: AnalysisSession) -> some View {
         ShotIQCard {
             HStack(alignment: .top, spacing: 0) {
-                PhotoThumb(width: 112, height: 186)
+                PhotoThumb(width: 112, height: 186, photo: sessionPhotos[s.name])
                     .overlay(alignment: .bottomLeading) {
                         Text("\(s.score)").font(.custom("Tungsten-Semibold", size: 24))
                             .foregroundStyle(ShotIQColor.shotiqOrange)
@@ -1513,6 +1518,10 @@ struct MyMediaView: View {          // 068
         .init(title: "Cone Progression", time: "7:28 AM", score: "90", grade: "EXCELLENT",
               color: ShotIQColor.confirmGreen, kind: "Images")
     ]
+    /// Canonical 068 grid frames, in the tile order above; the second tile has
+    /// no canonical crop and keeps the placeholder.
+    private let todayPhotos: [String?] = ["068-visual-002", nil, "068-visual-001",
+                                          "068-visual-005", "068-visual-004", "068-visual-003"]
     private var filteredToday: [(Int, MediaItem)] {
         var items = Array(today.enumerated()).filter { pair in
             (segment == "All" || pair.element.kind == segment)
@@ -1631,7 +1640,7 @@ struct MyMediaView: View {          // 068
                                         if selectedTiles.contains(i) { selectedTiles.remove(i) }
                                         else { selectedTiles.insert(i) }
                                     } label: {
-                                        mediaTile(t, duration: "0:0\((i + 3) % 9)")
+                                        mediaTile(t, duration: "0:0\((i + 3) % 9)", photo: photoKey(i))
                                             .overlay(alignment: .topLeading) {
                                                 Image(systemName: selectedTiles.contains(i)
                                                       ? "checkmark.circle.fill" : "circle")
@@ -1644,7 +1653,7 @@ struct MyMediaView: View {          // 068
                                     .buttonStyle(.plain)
                                 } else {
                                     NavigationLink { MediaDetailView() } label: {
-                                        mediaTile(t, duration: "0:0\((i + 3) % 9)")
+                                        mediaTile(t, duration: "0:0\((i + 3) % 9)", photo: photoKey(i))
                                     }
                                 }
                             }
@@ -1706,9 +1715,12 @@ struct MyMediaView: View {          // 068
             .foregroundStyle(active ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
         }
     }
-    private func mediaTile(_ t: MediaItem, duration: String) -> some View {
+    private func photoKey(_ i: Int) -> String? {
+        todayPhotos.indices.contains(i) ? todayPhotos[i] : nil
+    }
+    private func mediaTile(_ t: MediaItem, duration: String, photo: String? = nil) -> some View {
         VStack(alignment: .leading, spacing: 5) {
-            PhotoThumb(height: 112)
+            PhotoThumb(height: 112, photo: photo)
                 .overlay(alignment: .bottomLeading) {
                     Text(duration).font(.custom("Tungsten-Semibold", size: 11))
                         .foregroundStyle(.white)
@@ -1810,7 +1822,7 @@ struct MediaDetailView: View {      // 069
                     .overlay(HRule(), alignment: .bottom)
                     VStack(alignment: .leading, spacing: 0) {
                         ZStack {
-                            MediaSurface(height: 310, duration: "6:12")
+                            CanonicalMediaSurface(key: "069-visual-002", height: 310, duration: "6:12")
                             Button { playing.toggle() } label: {
                                 Circle().fill(.white.opacity(0.9)).frame(width: 52, height: 52)
                                     .overlay(Image(systemName: playing ? "pause.fill" : "play.fill")

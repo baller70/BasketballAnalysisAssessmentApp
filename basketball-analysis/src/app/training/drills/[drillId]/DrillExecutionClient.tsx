@@ -184,7 +184,7 @@ export default function DrillExecutionClient() {
               {PHASES.map((p) => (
                 <div key={p} className="w-[80px] text-center">
                   <PhaseGlyph active={p === "RELEASE"} size={26} />
-                  <div className={`mt-[2px] text-[10px] tracking-[0.05em] ${p === "RELEASE" ? "font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
+                  <div className={`mt-[2px] whitespace-nowrap text-[10px] tracking-[0.05em] ${p === "RELEASE" ? "font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
                 </div>
               ))}
             </div>
@@ -199,29 +199,36 @@ export default function DrillExecutionClient() {
           {/* controls */}
           <div className="mt-[16px] flex gap-[12px]">
             <button type="button" onClick={() => mark(true)} data-testid="mark-make"
-                    className="flex h-[44px] items-center gap-[9px] rounded-[6px] border-2 border-[var(--shotiq-color-confirmGreen)] px-[20px] text-[14px] font-medium text-[var(--shotiq-color-confirmGreen)]">
+                    className="flex h-[44px] items-center gap-[9px] rounded-[6px] border-2 border-[var(--shotiq-color-confirmGreen)] whitespace-nowrap px-[20px] text-[14px] font-medium text-[var(--shotiq-color-confirmGreen)]">
               <CircleCheck className="h-[17px] w-[17px]" /> Mark make
             </button>
             <button type="button" onClick={() => mark(false)} data-testid="mark-miss"
-                    className="flex h-[44px] items-center gap-[9px] rounded-[6px] border-2 border-[var(--shotiq-color-reviewRed)] px-[20px] text-[14px] font-medium text-[var(--shotiq-color-reviewRed)]">
+                    className="flex h-[44px] items-center gap-[9px] rounded-[6px] border-2 border-[var(--shotiq-color-reviewRed)] whitespace-nowrap px-[20px] text-[14px] font-medium text-[var(--shotiq-color-reviewRed)]">
               <CircleX className="h-[17px] w-[17px]" /> Mark miss
             </button>
             <button type="button" onClick={undo} disabled={!shots.length} data-testid="undo-shot"
-                    className="flex h-[44px] items-center gap-[9px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[20px] text-[14px] disabled:opacity-50">
+                    className="flex h-[44px] items-center gap-[9px] rounded-[6px] border border-[var(--shotiq-color-rule)] whitespace-nowrap px-[20px] text-[14px] disabled:opacity-50">
               <Undo2 className="h-[16px] w-[16px]" /> Undo
             </button>
-            <div className="ml-auto flex gap-[10px]">
+          </div>
+
+          {/* Canonical 091 splits the controls over two rows: the shot marks sit
+              left on row one, the workout controls right-align on row two. One
+              row no longer fits now that the unified sidebar narrows the body,
+              and every label was wrapping to two lines. */}
+          <div className="mt-[10px] flex justify-end gap-[10px]">
+            <div className="flex gap-[10px]">
               <button type="button" onClick={() => setPaused(!paused)} data-testid="pause-workout"
-                      className="flex h-[44px] items-center gap-[9px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] px-[18px] text-[14px] font-medium text-white">
+                      className="flex h-[44px] items-center gap-[9px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] whitespace-nowrap px-[18px] text-[14px] font-medium text-white">
                 {paused ? <Play className="h-[15px] w-[15px]" /> : <Pause className="h-[15px] w-[15px]" />}
                 {paused ? "Resume workout" : "Pause workout"}
               </button>
               <button type="button" onClick={() => setCompleted(true)} data-testid="end-workout"
-                      className="flex h-[44px] items-center gap-[9px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[16px] text-[14px]">
+                      className="flex h-[44px] items-center gap-[9px] rounded-[6px] border border-[var(--shotiq-color-rule)] whitespace-nowrap px-[16px] text-[14px]">
                 <Square className="h-[13px] w-[13px]" fill="currentColor" /> End workout
               </button>
               <button type="button" onClick={() => setMuted(!muted)}
-                      className="flex h-[44px] items-center gap-[9px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[16px] text-[14px]">
+                      className="flex h-[44px] items-center gap-[9px] rounded-[6px] border border-[var(--shotiq-color-rule)] whitespace-nowrap px-[16px] text-[14px]">
                 {muted ? <Volume2 className="h-[16px] w-[16px]" /> : <VolumeX className="h-[16px] w-[16px]" />}
                 {muted ? "Unmute coaching" : "Mute coaching"}
               </button>
@@ -292,14 +299,14 @@ export default function DrillExecutionClient() {
               <Stat3 v={String(makes)} l="MAKES" c="var(--shotiq-color-confirmGreen)" />
               <Stat3 v={String(misses)} l="MISSES" c="var(--shotiq-color-reviewRed)" />
             </div>
-            <div className="mt-[14px] flex flex-wrap gap-[6px]">
+            <div className="mt-[14px] flex flex-nowrap items-center justify-between gap-[2px]">
               {Array.from({ length: 24 }).map((_, i) => {
                 const s = last24[i]
                 return s == null
-                  ? <span key={i} className="h-[11px] w-[11px] rounded-full border border-[var(--shotiq-color-rule)]" />
+                  ? <span key={i} className="h-[9px] w-[9px] shrink-0 rounded-full border border-[var(--shotiq-color-rule)]" />
                   : s.made
-                    ? <CircleCheck key={i} className="h-[12px] w-[12px] text-[var(--shotiq-color-confirmGreen)]" />
-                    : <CircleX key={i} className="h-[12px] w-[12px] text-[var(--shotiq-color-reviewRed)]" />
+                    ? <CircleCheck key={i} className="h-[10px] w-[10px] shrink-0 text-[var(--shotiq-color-confirmGreen)]" />
+                    : <CircleX key={i} className="h-[10px] w-[10px] shrink-0 text-[var(--shotiq-color-reviewRed)]" />
               })}
             </div>
             <div className="mt-[10px] border-t border-[var(--shotiq-color-rule)] pt-[8px] text-center text-[10px] tracking-[0.08em] text-[var(--shotiq-color-graphite)]">
@@ -362,7 +369,7 @@ export default function DrillExecutionClient() {
                   {PHASES.map((p) => (
                     <div key={p} className="text-center">
                       <PhaseGlyph active={p === "RELEASE"} size={26} />
-                      <div className={`text-[9px] tracking-[0.05em] ${p === "RELEASE" ? "font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
+                      <div className={`text-[9px] tracking-[0.05em] whitespace-nowrap ${p === "RELEASE" ? "font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
                     </div>
                   ))}
                 </div>

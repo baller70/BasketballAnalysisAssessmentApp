@@ -42,7 +42,34 @@ const POINT_EVENTS: [string, string, string][] = [
   ["May 9, 2025 · 7:33 PM", "Analysis session completed", "+130 XP"],
 ]
 
-function Hex({ earned, size = 84 }: { earned: boolean; size?: number }) {
+/**
+ * Canonical 095 draws a distinct emblem per badge. Those ten emblems are
+ * region-cropped from the canonical render into public/images/canonical; any
+ * badge outside that set (the "load more" catalogue) falls back to the generic
+ * mark below so the grid never shows a broken image.
+ */
+const BADGE_GLYPH: Record<string, string> = {
+  "STACKED RELEASE": "stacked-release",
+  "CLEAN ARC": "clean-arc",
+  "BALANCED BASE": "balanced-base",
+  "HIGH ELBOW SET": "high-elbow-set",
+  "QUICK RELEASE": "quick-release",
+  "DEEP RANGE": "deep-range",
+  "STREAK BUILDER": "streak-builder",
+  "PERFECT FORM": "perfect-form",
+  "VOLUME SHOOTER": "volume-shooter",
+  "CLUTCH PERFORMER": "clutch-performer",
+}
+
+function Hex({ earned, size = 84, name }: { earned: boolean; size?: number; name?: string }) {
+  const slug = name ? BADGE_GLYPH[name] : undefined
+  if (slug) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={`/images/canonical/095-badge-${slug}.png`} alt=""
+           className="mx-auto object-contain" style={{ width: size, height: size * 1.1 }} />
+    )
+  }
   const c = earned ? "var(--shotiq-color-ink)" : "var(--shotiq-color-muted)"
   return (
     <svg width={size} height={size * 1.1} viewBox="0 0 52 58" aria-hidden="true">
@@ -94,24 +121,24 @@ export default function AchievementsPointsPage() {
             <p className="mt-[4px] text-[13px] text-[var(--shotiq-color-graphite)]">Track your progress. Earn badges. Build your edge.</p>
           </div>
           <div className="flex gap-[12px]">
-            <Card className="w-[190px] px-[14px] py-[10px]">
+            <Card className="w-[190px] px-[14px] py-[13px]">
               <div className="text-[9px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">TOTAL XP</div>
-              <div className="flex items-center gap-[8px]">
+              <div className="mt-[6px] flex items-center gap-[8px]">
                 <svg width="26" height="29" viewBox="0 0 26 29" aria-hidden="true">
                   <polygon points="13,1 25,7.75 25,21.25 13,28 1,21.25 1,7.75" fill="none" stroke="var(--shotiq-color-ink)" strokeWidth="1.6" />
                   <text x="13" y="18" textAnchor="middle" fontSize="9" fontWeight="700" fill="var(--shotiq-color-ink)">JE</text>
                 </svg>
-                <div className="shotiq-numeric text-[26px] leading-[30px]">{totalPoints.toLocaleString()} <span className="text-[12px]">XP</span></div>
+                <div className="shotiq-numeric text-[29px] leading-[32px]">{totalPoints.toLocaleString()} <span className="text-[12px]">XP</span></div>
               </div>
               <div className="mt-[4px] h-[5px] rounded-full bg-[var(--shotiq-color-rule)]">
                 <div className="h-full w-[80%] rounded-full bg-[var(--shotiq-color-shotiqOrange)]" /></div>
               <div className="mt-[3px] text-[9px] text-[var(--shotiq-color-graphite)]">Next tier at 3,500 XP</div>
             </Card>
-            <Card className="w-[190px] px-[14px] py-[10px]">
+            <Card className="w-[190px] px-[14px] py-[13px]">
               <div className="text-[9px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">CURRENT TIER</div>
-              <div className="flex items-end justify-between">
+              <div className="mt-[6px] flex items-end justify-between">
                 <div>
-                  <div className="text-[19px] font-bold text-[var(--shotiq-color-analysisBlue)]">LEVEL 7</div>
+                  <div className="text-[22px] font-bold leading-[24px] text-[var(--shotiq-color-analysisBlue)]">LEVEL 7</div>
                   <div className="text-[10px] text-[var(--shotiq-color-graphite)]">Technician</div>
                 </div>
                 <TrendLine points={[2, 3, 2.4, 3.4, 4]} width={54} height={28} stroke="var(--shotiq-color-ink)" dotFill="var(--shotiq-color-ink)" />
@@ -119,18 +146,24 @@ export default function AchievementsPointsPage() {
               <div className="mt-[4px] h-[5px] rounded-full bg-[var(--shotiq-color-rule)]">
                 <div className="h-full w-[65%] rounded-full bg-[var(--shotiq-color-analysisBlue)]" /></div>
             </Card>
-            <Card className="w-[190px] px-[14px] py-[10px]">
+            <Card className="w-[190px] px-[14px] py-[13px]">
               <div className="text-[9px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">BADGES EARNED</div>
               {/* Canonical catalogue spans 36 badges across the seasons; this
                   page ships the first two rows (see Load more). */}
-              <div className="shotiq-numeric text-[24px] leading-[28px]">{earned + 14} / 36 <span className="text-[12px]">50%</span></div>
+              <div className="mt-[6px] flex items-baseline justify-between">
+                <span className="shotiq-numeric text-[27px] leading-[30px]">{earned + 14} / 36</span>
+                <span className="text-[12px] text-[var(--shotiq-color-graphite)]">50%</span>
+              </div>
               <div className="mt-[4px] h-[5px] rounded-full bg-[var(--shotiq-color-rule)]">
                 <div className="h-full w-[50%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" /></div>
             </Card>
-            <Card className="w-[160px] px-[14px] py-[10px]">
+            <Card className="w-[160px] px-[14px] py-[13px]">
               <div className="text-[9px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">LONGEST STREAK</div>
-              <div className="flex items-center justify-between">
-                <div><span className="shotiq-numeric text-[24px]">6</span><span className="ml-[4px] text-[10px] text-[var(--shotiq-color-graphite)]">Days</span></div>
+              <div className="mt-[6px] flex items-center justify-between">
+                <div>
+                  <div className="shotiq-numeric text-[27px] leading-[30px]">6</div>
+                  <div className="text-[10px] text-[var(--shotiq-color-graphite)]">Days</div>
+                </div>
                 <TrendLine points={[2, 3, 2.4, 4, 3.2]} width={54} height={30} stroke="var(--shotiq-color-ink)" dotFill="var(--shotiq-color-ink)" />
               </div>
             </Card>
@@ -202,7 +235,7 @@ export default function AchievementsPointsPage() {
                 <button key={t} type="button" id={`badge-${i}`} onClick={() => setSel(i)} aria-pressed={sel === i}
                         className={`relative rounded-[8px] border p-[12px] text-center ${sel === i ? "border-2 border-[var(--shotiq-color-shotiqOrange)]" : "border-[var(--shotiq-color-rule)]"}`}>
                   {e && <span className="absolute right-[8px] top-[8px] grid h-[16px] w-[16px] place-items-center rounded-full bg-[var(--shotiq-color-confirmGreen)]"><Check className="h-[10px] w-[10px] text-white" /></span>}
-                  <div className={e ? "" : "opacity-45"}><Hex earned={e} /></div>
+                  <div><Hex earned={e} name={t} /></div>
                   <div className="mt-[4px] text-[11px] font-bold tracking-[0.03em]">{t}</div>
                   <div className="mt-[2px] text-[10px] leading-[13px] text-[var(--shotiq-color-graphite)]">{d}</div>
                   <div className={`mt-[6px] text-[10px] font-bold ${e ? "text-[var(--shotiq-color-confirmGreen)]" : "text-[var(--shotiq-color-graphite)]"}`}>
@@ -258,7 +291,7 @@ export default function AchievementsPointsPage() {
           <aside className="w-[330px] shrink-0">
             <SectionLabel>BADGE DETAILS</SectionLabel>
             <div className="mt-[8px] flex items-center gap-[14px]">
-              <Hex earned={selBadge[2]} size={70} />
+              <Hex earned={selBadge[2]} size={92} name={selBadge[0]} />
               <div>
                 <div className="text-[17px] font-bold tracking-[0.02em]">{selBadge[0]}</div>
                 <div className="text-[12px] text-[var(--shotiq-color-analysisBlue)]">Technique</div>

@@ -173,7 +173,7 @@ export default function EliteShootersPage() {
           </div>
 
           {RADIO_GROUPS.map((g) => (
-            <div key={g.id} className="mt-[7px] border-t border-[var(--shotiq-color-rule)] pt-[6px]">
+            <div key={g.id} className="mt-[5px] border-t border-[var(--shotiq-color-rule)] pt-[4px]">
               <button type="button" onClick={() => toggleGroup(g.id, openGroups, setOpenGroups)}
                       aria-expanded={openGroups.has(g.id)}
                       className="flex w-full items-center justify-between text-[14px] font-semibold">
@@ -183,7 +183,7 @@ export default function EliteShootersPage() {
                   : <ChevronDown className="h-[13px] w-[13px] text-[var(--shotiq-color-graphite)]" />}
               </button>
               {openGroups.has(g.id) && (
-                <div className="mt-[5px] space-y-[4px]">
+                <div className="mt-[4px] space-y-[3px]">
                   {g.options.map((o) => (
                     <label key={o} className="flex cursor-pointer items-center gap-[10px] text-[12px]">
                       <input type="radio" name={`filter-${g.id}`} className="sr-only"
@@ -208,9 +208,9 @@ export default function EliteShootersPage() {
                         loLabel="0" hiLabel="100" label="WSI Range" />
           </div>
 
-          <div className="mt-[14px] border-t border-[var(--shotiq-color-rule)]">
+          <div className="mt-[8px] border-t border-[var(--shotiq-color-rule)]">
             {EXTRA_FILTERS.map((g) => (
-              <div key={g.id} className="border-b border-[var(--shotiq-color-rule)] py-[5px]">
+              <div key={g.id} className="border-b border-[var(--shotiq-color-rule)] py-[3px]">
                 <button type="button" onClick={() => toggleGroup(g.id, extraOpen, setExtraOpen)}
                         aria-expanded={extraOpen.has(g.id)}
                         className="flex w-full items-center gap-[9px] text-[12px]">
@@ -242,7 +242,7 @@ export default function EliteShootersPage() {
         </aside>
 
         {/* ------------------------------------------------------ main table */}
-        <div className="min-w-0 flex-1 px-[24px] pt-[12px]">
+        <div className="min-w-0 flex-1 px-[16px] pt-[12px]">
           <div className="flex items-start justify-between">
             <div>
               <h1 className="shotiq-display text-[40px] leading-[42px]">ELITE SHOOTERS DATABASE</h1>
@@ -341,72 +341,72 @@ export default function EliteShootersPage() {
               </div>
               {/* column headers */}
               <div className="flex items-center border-b border-[var(--shotiq-color-rule)] py-[7px]">
-                <span className="w-[30px]"><span className="block h-[14px] w-[14px] rounded-[3px] border border-[var(--shotiq-color-muted)]" /></span>
-                <span className={`w-[258px] pl-[62px] ${headCell}`}>SHOOTER</span>
-                <span className={`w-[44px] text-center ${headCell}`}>HAND</span>
-                <span className={`w-[48px] text-center ${headCell}`}>LEVEL</span>
-                <span className={`w-[40px] text-center ${headCell}`}>HT</span>
-                <span className={`w-[38px] text-center ${headCell}`}>AGE</span>
-                <span className={`w-[74px] text-center ${headCell}`}>CAREER</span>
-                <span className={`flex w-[56px] items-center justify-center gap-[3px] ${headCell}`}>
+                <span className="w-[24px]"><span className="block h-[14px] w-[14px] rounded-[3px] border border-[var(--shotiq-color-muted)]" /></span>
+                <span className={`w-[200px] pl-[50px] ${headCell}`}>SHOOTER</span>
+                <span className={`w-[34px] text-center ${headCell}`}>HAND</span>
+                <span className={`w-[34px] text-center ${headCell}`}>LEVEL</span>
+                <span className={`w-[34px] text-center ${headCell}`}>HT</span>
+                <span className={`w-[32px] text-center ${headCell}`}>AGE</span>
+                <span className={`w-[66px] text-center ${headCell}`}>CAREER</span>
+                <span className={`flex w-[48px] items-center justify-center gap-[3px] ${headCell}`}>
                   WSI <HelpCircle className="h-[10px] w-[10px]" /> <ChevronDown className="h-[10px] w-[10px]" />
                 </span>
-                <span className={`w-[78px] whitespace-nowrap text-center text-[8px] ${headCell}`}>RELEASE HEIGHT</span>
-                <span className={`w-[78px] whitespace-nowrap text-center text-[8px] ${headCell}`}>RELEASE TIME</span>
-                <span className={`w-[78px] whitespace-nowrap text-center text-[8px] ${headCell}`}>ELBOW ALIGNMENT</span>
-                <span className={`flex w-[100px] items-center justify-center gap-[3px] ${headCell}`}>
+                <span className={`w-[66px] whitespace-nowrap text-center text-[8px] ${headCell}`}>RELEASE HEIGHT</span>
+                <span className={`w-[66px] whitespace-nowrap text-center text-[8px] ${headCell}`}>RELEASE TIME</span>
+                <span className={`w-[66px] whitespace-nowrap text-center text-[8px] ${headCell}`}>ELBOW ALIGNMENT</span>
+                <span className={`flex w-[84px] items-center justify-center gap-[3px] ${headCell}`}>
                   OVERALL <HelpCircle className="h-[10px] w-[10px]" />
                 </span>
-                <span className={`w-[104px] text-center ${headCell}`}>KEY MATCH</span>
+                <span className={`w-[92px] text-center ${headCell}`}>KEY MATCH</span>
                 <span className={`min-w-0 flex-1 text-center ${headCell}`}>ACTION</span>
               </div>
 
               {filtered.map((r) => (
                 <div key={r.name}
                      className="flex items-center border-b border-[var(--shotiq-color-rule)] py-[5px]">
-                  <span className="w-[30px]">
+                  <span className="w-[24px]">
                     <button type="button" role="checkbox" aria-checked={selected.has(r.name)}
                             aria-label={`Select ${r.name}`} onClick={() => toggleRow(r.name)}
                             className={`grid h-[15px] w-[15px] place-items-center rounded-[3px] border ${selected.has(r.name) ? "border-[var(--shotiq-color-shotiqOrange)] bg-[var(--shotiq-color-shotiqOrange)]" : "border-[var(--shotiq-color-muted)]"}`}>
                       {selected.has(r.name) && <Check className="h-[10px] w-[10px] text-white" strokeWidth={3.2} />}
                     </button>
                   </span>
-                  <span className="flex w-[258px] items-center gap-[10px]">
+                  <span className="flex w-[200px] items-center gap-[8px]">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={r.thumb} alt="" className="h-[55px] w-[102px] shrink-0 rounded-[5px] object-cover" />
+                    <img src={r.thumb} alt="" className="h-[48px] w-[76px] shrink-0 rounded-[5px] object-cover" />
                     <span className="min-w-0">
                       <Link href={`/elite-shooters/${r.slug}`} className="block truncate text-[14px] font-semibold hover:underline">{r.name}</Link>
                       <span className="block text-[11px] text-[var(--shotiq-color-graphite)]">{fmt(r.attempts)} attempts</span>
                     </span>
                   </span>
-                  <span className="w-[44px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.hand}</span>
-                  <span className="w-[48px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.level}</span>
-                  <span className="w-[40px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.ht}</span>
-                  <span className="w-[38px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.age}</span>
-                  <span className="w-[74px] text-center">
+                  <span className="w-[34px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.hand}</span>
+                  <span className="w-[34px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.level}</span>
+                  <span className="w-[34px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.ht}</span>
+                  <span className="w-[32px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.age}</span>
+                  <span className="w-[66px] text-center">
                     <span className="block text-[14px] font-bold">{r.careerPct.toFixed(1)}%</span>
                     <span className="block text-[10px] text-[var(--shotiq-color-graphite)]">{fmt(r.makes)} / {fmt(r.attempts)}</span>
                   </span>
-                  <span className="shotiq-numeric w-[56px] text-center text-[24px] leading-[26px] text-[var(--shotiq-color-analysisBlue)]">{r.wsi}</span>
-                  <span className="w-[78px] text-center">
+                  <span className="shotiq-numeric w-[48px] text-center text-[22px] leading-[26px] text-[var(--shotiq-color-analysisBlue)]">{r.wsi}</span>
+                  <span className="w-[66px] text-center">
                     <span className="block text-[14px] font-bold">{r.relH}</span>
                     <span className="block text-[10px] text-[var(--shotiq-color-graphite)]">{r.relHBand}</span>
                   </span>
-                  <span className="w-[78px] text-center">
+                  <span className="w-[66px] text-center">
                     <span className="block text-[14px] font-bold">{r.relT}</span>
                     <span className="block text-[10px] text-[var(--shotiq-color-graphite)]">Quick</span>
                   </span>
-                  <span className="w-[78px] text-center">
+                  <span className="w-[66px] text-center">
                     <span className="block text-[14px] font-bold">{r.elbow}</span>
                     <span className="block text-[10px] text-[var(--shotiq-color-graphite)]">Stacked</span>
                   </span>
-                  <span className="w-[100px] px-[12px] text-center">
+                  <span className="w-[84px] px-[6px] text-center">
                     <span className="block text-[15px] font-bold">{r.overall}%</span>
-                    <span className="mx-auto mt-[3px] block h-[3px] w-[70px] rounded-full bg-[var(--shotiq-color-rule)]">
+                    <span className="mx-auto mt-[3px] block h-[3px] w-[62px] rounded-full bg-[var(--shotiq-color-rule)]">
                       <span className="block h-full rounded-full bg-[var(--shotiq-color-analysisBlue)]" style={{ width: `${r.overall}%` }} />
                     </span>
                   </span>
-                  <span className="w-[104px] border-l border-[var(--shotiq-color-rule)] text-center">
+                  <span className="w-[92px] border-l border-[var(--shotiq-color-rule)] text-center">
                     <span className="block text-[12px]">{r.keyMatch[0]}</span>
                     <span className="block text-[12px] font-semibold">{r.keyMatch[1]}</span>
                   </span>

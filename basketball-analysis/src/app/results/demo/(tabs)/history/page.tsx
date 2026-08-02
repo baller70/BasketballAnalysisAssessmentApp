@@ -73,13 +73,13 @@ export default function AnalysisHistoryPage() {
         <div className="flex items-start justify-between">
           <div>
             <h1 className="shotiq-display text-[48px] leading-[50px]">ANALYSIS HISTORY</h1>
-            <p className="mt-[4px] text-[13px] text-[var(--shotiq-color-graphite)]">Review and track your shooting performance over time.</p>
+            <p className="mt-[4px] whitespace-nowrap text-[13px] text-[var(--shotiq-color-graphite)]">Review and track your shooting performance over time.</p>
           </div>
           <div className="flex gap-[10px] pt-[4px]">
             <div className="relative">
               <button type="button" aria-expanded={menu === "range"}
                       onClick={() => setMenu((m) => (m === "range" ? null : "range"))}
-                      className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-[13px]">
+                      className="flex h-[42px] items-center gap-[8px] whitespace-nowrap rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-[13px]">
                 <Calendar className="h-[14px] w-[14px]" /> {range[1]} <ChevronDown className="h-[12px] w-[12px]" />
               </button>
               {menu === "range" && (
@@ -96,7 +96,7 @@ export default function AnalysisHistoryPage() {
             <div className="relative">
               <button type="button" aria-expanded={menu === "metric"}
                       onClick={() => setMenu((m) => (m === "metric" ? null : "metric"))}
-                      className="flex h-[42px] flex-col justify-center rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-left">
+                      className="flex h-[42px] flex-col justify-center whitespace-nowrap rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-left">
                 <span className="text-[9px] text-[var(--shotiq-color-graphite)]">Select metric</span>
                 <span className="flex items-center gap-[6px] text-[13px]">{metric} <ChevronDown className="h-[11px] w-[11px]" /></span>
               </button>
@@ -135,7 +135,7 @@ export default function AnalysisHistoryPage() {
         )}
 
         {/* summary strip */}
-        <Card className="mt-[12px] flex items-center divide-x divide-[var(--shotiq-color-rule)] px-[8px] py-[12px]">
+        <div className="mt-[12px] flex items-center divide-x divide-[var(--shotiq-color-rule)] border-b border-[var(--shotiq-color-rule)] px-[8px] pb-[16px] pt-[6px]">
           <div className="px-[16px]">
             <div className="text-[10px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">AVERAGE FORM SCORE</div>
             <div className="flex items-end gap-[8px]">
@@ -143,9 +143,20 @@ export default function AnalysisHistoryPage() {
               <span className="pb-[8px] text-[11px] text-[var(--shotiq-color-analysisBlue)]">● Good</span>
             </div>
           </div>
-          <div className="px-[16px]"><Stat value={hasData ? "24" : "0"} label="SHOTS · Total" valueClass="text-[26px] leading-[30px]" /></div>
-          <div className="px-[16px]"><Stat value={hasData ? "15" : "0"} label="MAKES · Total" valueClass="text-[26px] leading-[30px]" /></div>
-          <div className="px-[16px]"><Stat value={hasData ? "62.5%" : "—"} label="MAKE %" valueClass="text-[26px] leading-[30px]" /></div>
+          <div className="px-[16px]">
+            <div className="text-[10px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">SHOTS</div>
+            <div className="shotiq-numeric text-[34px] leading-[38px]">{hasData ? "24" : "0"}</div>
+            <div className="text-[11px] text-[var(--shotiq-color-graphite)]">Total</div>
+          </div>
+          <div className="px-[16px]">
+            <div className="text-[10px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">MAKES</div>
+            <div className="shotiq-numeric text-[34px] leading-[38px]">{hasData ? "15" : "0"}</div>
+            <div className="text-[11px] text-[var(--shotiq-color-graphite)]">Total</div>
+          </div>
+          <div className="px-[16px]">
+            <div className="text-[10px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">MAKE %</div>
+            <div className="shotiq-numeric text-[34px] leading-[38px]">{hasData ? "62.5%" : "—"}</div>
+          </div>
           <div className="flex-1 px-[16px]">
             <div className="text-[10px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">{metric.toUpperCase()} TREND</div>
             <div className="flex items-center gap-[12px]">
@@ -154,7 +165,7 @@ export default function AnalysisHistoryPage() {
                 <div className="text-[9px] text-[var(--shotiq-color-graphite)]">vs previous 6</div></div>
             </div>
           </div>
-        </Card>
+        </div>
 
         {/* sessions table */}
         <div className="mt-[14px] flex items-center gap-[10px]">
@@ -165,7 +176,7 @@ export default function AnalysisHistoryPage() {
           <thead>
             <tr className="text-left text-[9px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">
               {["DATE / TIME ↓", "FORM SCORE", "MAKE %", "SHOTS / MAKES", "CONFIDENCE", "FOCUS", "MEDIA", ""].map((h) => (
-                <th key={h} className="py-[6px] font-bold">{h}</th>
+                <th key={h} className="py-[8px] font-bold">{h}</th>
               ))}
             </tr>
           </thead>
@@ -173,7 +184,7 @@ export default function AnalysisHistoryPage() {
             {rows.map(([d, fs, band, mk, sm, conf], i) => (
               <tr key={i} onClick={() => setSel(i)}
                   className={`cursor-pointer ${sel === i ? "outline outline-1 outline-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
-                <td className="py-[9px]">
+                <td className="py-[16px]">
                   <span className={`mr-[8px] inline-block h-[12px] w-[12px] rounded-full border-2 align-middle ${sel === i ? "border-[var(--shotiq-color-shotiqOrange)] bg-[var(--shotiq-color-shotiqOrange)]" : "border-[var(--shotiq-color-rule)]"}`} />
                   {d}
                 </td>

@@ -136,7 +136,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <SectionLabel className="mt-[20px]">NEXT ACTION</SectionLabel>
+            <SectionLabel className="mt-[14px]">NEXT ACTION</SectionLabel>
             <Card className="mt-[10px] flex overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/images/canonical/080-next-action.png" alt="Latest analyzed jump shot"
@@ -149,7 +149,7 @@ export default function DashboardPage() {
                   </h2>
                   <ChevronRight className="mt-[8px] h-[20px] w-[20px] text-[var(--shotiq-color-graphite)]" />
                 </div>
-                <div className="mt-[18px] border-t border-[var(--shotiq-color-rule)] pt-[16px]">
+                <div className="mt-[12px] border-t border-[var(--shotiq-color-rule)] pt-[12px]">
                   <span className="rounded-[4px] border border-[var(--shotiq-color-confirmGreen)] px-[8px] py-[3px] text-[11px] font-bold tracking-[0.05em] text-[var(--shotiq-color-confirmGreen)]">
                     ACTIVE GOAL
                   </span>
@@ -167,13 +167,13 @@ export default function DashboardPage() {
                   </button>
                 </div>
                 <Link href="/results/demo/analysis" data-testid="cta-view-analysis"
-                      className="mt-[16px] flex h-[46px] w-full items-center justify-center gap-[10px] rounded-[6px] bg-[var(--shotiq-color-analysisBlue)] text-[15px] font-medium text-white">
+                      className="mt-[12px] flex h-[44px] w-full items-center justify-center gap-[10px] rounded-[6px] bg-[var(--shotiq-color-analysisBlue)] text-[15px] font-medium text-white">
                   <Crosshair className="h-[17px] w-[17px]" /> View analysis
                 </Link>
               </div>
             </Card>
 
-            <Card className="mt-[16px] px-[20px] py-[16px]">
+            <Card className="mt-[12px] px-[20px] py-[12px]">
               <div className="flex items-center gap-[20px]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/images/canonical/080-pullup.png" alt=""
@@ -222,7 +222,7 @@ export default function DashboardPage() {
               ))}
             </Card>
 
-            <SectionLabel className="mt-[20px]">SHOT SUMMARY (LATEST SESSION)</SectionLabel>
+            <SectionLabel className="mt-[14px]">SHOT SUMMARY (LATEST SESSION)</SectionLabel>
             <Card className="mt-[10px] flex items-center gap-[26px] px-[20px] py-[18px]">
               <Stat value={hasData ? "24" : "0"} label="SHOTS" />
               <Stat value={hasData ? "15" : "0"} label="MAKES" />
@@ -233,7 +233,7 @@ export default function DashboardPage() {
               </div>
             </Card>
 
-            <Card className="mt-[16px] flex divide-x divide-[var(--shotiq-color-rule)]">
+            <Card className="mt-[10px] flex divide-x divide-[var(--shotiq-color-rule)]">
               <div className="flex-1 px-[18px] py-[16px]">
                 <SectionLabel>MECHANICS TREND</SectionLabel>
                 <TrendLine points={[2, 3, 2.5, 4, 3.5, 5]} width={150} height={52} />
@@ -249,7 +249,7 @@ export default function DashboardPage() {
               </div>
             </Card>
 
-            <div className="mt-[20px] flex items-center justify-between">
+            <div className="mt-[14px] flex items-center justify-between">
               <SectionLabel>RECENT ANALYSES</SectionLabel>
               <Link href="/results/demo/history" className="text-[12px] text-[var(--shotiq-color-graphite)]">View all analyses ›</Link>
             </div>
