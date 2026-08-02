@@ -2010,6 +2010,9 @@ struct MediaDetailView: View {      // 069
 struct ProfileView: View {          // 070
     @EnvironmentObject var app: AppState
     @State private var showEditProfile = false
+    /// The wordmark bar's gear used to be inert on this screen (TopBar's
+    /// onSettings defaults to a no-op); on Profile it opens the settings hub.
+    @State private var showSettings = false
     @State private var bio = "Dedicated to the details. Constantly working to build a repeatable, efficient shot with elite consistency."
     @State private var enhancingBio = false
     @State private var bioError: String?
@@ -2036,7 +2039,7 @@ struct ProfileView: View {          // 070
         CanonicalScreen(testID: "screen-ios-profile") {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    TopBar()
+                    TopBar(onSettings: { showSettings = true })
                     VStack(alignment: .leading, spacing: 0) {
                         HStack(spacing: 16) {
                             ZStack(alignment: .bottomTrailing) {
@@ -2109,34 +2112,37 @@ struct ProfileView: View {          // 070
                             .padding(14)
                         }
                         .padding(.top, 12)
-                        ShotIQCard {
-                            VStack(alignment: .leading, spacing: 12) {
-                                SectionLabel(text: "PLAYER CARD")
-                                HStack(spacing: 14) {
-                                    ZStack {
-                                        RoundedRectangle(cornerRadius: 8).fill(ShotIQColor.ink)
-                                            .frame(width: 140, height: 94)
-                                        VStack(spacing: 5) {
-                                            HStack(spacing: 0) {
-                                                Text("SHOT").font(.system(size: 9, weight: .black).width(.condensed))
+                        // The whole card opens the player card: the section header
+                        // and the "View player card" line used to be separate
+                        // elements, and only the inner line was tappable.
+                        NavigationLink { PlayerCardView() } label: {
+                            ShotIQCard {
+                                VStack(alignment: .leading, spacing: 12) {
+                                    SectionLabel(text: "PLAYER CARD")
+                                    HStack(spacing: 14) {
+                                        ZStack {
+                                            RoundedRectangle(cornerRadius: 8).fill(ShotIQColor.ink)
+                                                .frame(width: 140, height: 94)
+                                            VStack(spacing: 5) {
+                                                HStack(spacing: 0) {
+                                                    Text("SHOT").font(.system(size: 9, weight: .black).width(.condensed))
+                                                        .foregroundStyle(.white)
+                                                    Text("IQ").font(.system(size: 9, weight: .black).width(.condensed))
+                                                        .foregroundStyle(ShotIQColor.shotiqOrange)
+                                                }
+                                                Text(shotiqInitials(app.user))
+                                                    .font(.system(size: 28, weight: .heavy).width(.condensed))
                                                     .foregroundStyle(.white)
-                                                Text("IQ").font(.system(size: 9, weight: .black).width(.condensed))
-                                                    .foregroundStyle(ShotIQColor.shotiqOrange)
+                                                Text((app.user?.displayName ?? "Jordan Ellis").uppercased())
+                                                    .font(.system(size: 8, weight: .semibold)).kerning(1)
+                                                    .foregroundStyle(.white)
+                                                    .lineLimit(1).minimumScaleFactor(0.7)
                                             }
-                                            Text(shotiqInitials(app.user))
-                                                .font(.system(size: 28, weight: .heavy).width(.condensed))
-                                                .foregroundStyle(.white)
-                                            Text((app.user?.displayName ?? "Jordan Ellis").uppercased())
-                                                .font(.system(size: 8, weight: .semibold)).kerning(1)
-                                                .foregroundStyle(.white)
-                                                .lineLimit(1).minimumScaleFactor(0.7)
                                         }
-                                    }
-                                    VStack(alignment: .leading, spacing: 8) {
-                                        Text("Share your profile and latest highlights.")
-                                            .font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
-                                            .fixedSize(horizontal: false, vertical: true)
-                                        NavigationLink { PlayerCardView() } label: {
+                                        VStack(alignment: .leading, spacing: 8) {
+                                            Text("Share your profile and latest highlights.")
+                                                .font(.system(size: 13)).foregroundStyle(ShotIQColor.graphite)
+                                                .fixedSize(horizontal: false, vertical: true)
                                             HStack(spacing: 5) {
                                                 Text("View player card").font(.system(size: 14, weight: .semibold))
                                                 Image(systemName: "chevron.right").font(.system(size: 11))
@@ -2145,9 +2151,13 @@ struct ProfileView: View {          // 070
                                         }
                                     }
                                 }
+                                .padding(14)
                             }
-                            .padding(14)
                         }
+                        .buttonStyle(.plain)
+                        .accessibilityElement(children: .combine)
+                        .accessibilityLabel("Player card")
+                        .accessibilityIdentifier("Player card")
                         .padding(.top, 12)
                         ShotIQCard {
                             VStack(alignment: .leading, spacing: 10) {
@@ -2223,11 +2233,11 @@ struct ProfileView: View {          // 070
                         .padding(.top, 12)
                         SectionLabel(text: "MORE").padding(.top, 20)
                         VStack(spacing: 0) {
-                            row("person.crop.square", "Player card", AnyView(PlayerCardView()))
-                            row("photo.stack", "My media", AnyView(MyMediaView()))
-                            row("target", "Goals", AnyView(GoalsView()))
-                            row("gearshape", "Settings", AnyView(SettingsHubView()))
-                            row("square.and.arrow.up", "Share results", AnyView(ShareResultsView()))
+                            row("person.crop.square", "Player card") { PlayerCardView() }
+                            row("photo.stack", "My media") { MyMediaView() }
+                            row("target", "Goals") { GoalsView() }
+                            row("gearshape", "Settings") { SettingsHubView() }
+                            row("square.and.arrow.up", "Share results") { ShareResultsView() }
                         }
                         .padding(.top, 4)
                         Button { app.signOut() } label: {
@@ -2245,6 +2255,7 @@ struct ProfileView: View {          // 070
             }
         }
         .sheet(isPresented: $showEditProfile) { EditProfileSheet() }
+        .navigationDestination(isPresented: $showSettings) { SettingsHubView() }
     }
     private func profileStat(_ value: String, _ label: String) -> some View {
         VStack(spacing: 3) {
@@ -2304,8 +2315,13 @@ struct ProfileView: View {          // 070
             }
         }
     }
-    private func row(_ icon: String, _ t: String, _ dest: AnyView) -> some View {
-        NavigationLink { dest } label: {
+    /// MORE list row. The destination is built lazily and keeps its concrete
+    /// type — the previous `AnyView(...)` argument was constructed eagerly on
+    /// every body pass and erased the destination's identity, so a pushed screen
+    /// could be torn down again the moment ProfileView re-rendered.
+    private func row<D: View>(_ icon: String, _ t: String,
+                              @ViewBuilder _ dest: @escaping () -> D) -> some View {
+        NavigationLink { dest() } label: {
             HStack(spacing: 14) {
                 Image(systemName: icon).frame(width: 28)
                 Text(t).shotiqBody(16)
@@ -2315,6 +2331,8 @@ struct ProfileView: View {          // 070
             .padding(.vertical, 14).foregroundStyle(ShotIQColor.ink)
             .overlay(HRule(), alignment: .bottom)
         }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier(t)
     }
 }
 
@@ -2733,7 +2751,11 @@ struct ShareResultsView: View {     // 072
         .background(.white)
         .overlay(Rectangle().stroke(ShotIQColor.rule))
     }
+    /// Renders the share card once. Without the guard this re-assigned state
+    /// that the share row's own `if let renderedCard` branch depends on, so the
+    /// `.task` attached to that row re-fired and the screen re-rendered forever.
     @MainActor private func renderCard() {
+        guard renderedCard == nil else { return }
         let renderer = ImageRenderer(content: snapshotCard)
         renderer.scale = 3
         renderedCard = renderer.uiImage
@@ -2868,7 +2890,6 @@ struct ShareResultsView: View {     // 072
                         ShareLink(item: shareText) { shareOption("ellipsis", "More", ShotIQColor.ink) }
                     }
                     .padding(.horizontal, 20).padding(.top, 12)
-                    .task { renderCard() }
                     HStack(spacing: 6) {
                         Image(systemName: "lock").font(.system(size: 11))
                         Text("Private media, session clips, and personal notes are not included.")
@@ -2879,6 +2900,9 @@ struct ShareResultsView: View {     // 072
                     .padding(.horizontal, 20)
                     .padding(.top, 14).padding(.bottom, 30)
                 }
+                // Rendered once for the whole screen, not from inside the share
+                // row whose contents depend on the rendered image.
+                .task { renderCard() }
             }
         }
     }

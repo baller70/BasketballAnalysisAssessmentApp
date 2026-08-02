@@ -101,9 +101,15 @@ fileprivate struct FormScorePanel: View {
 }
 
 struct AnalysisProcessingView: View { // 036
+    /// One route out of processing. Two `navigationDestination(isPresented:)`
+    /// modifiers on the same view conflict — the second silently wins — so the
+    /// screen drives a single item-based destination instead.
+    enum ProcessingRoute: Hashable { case results, takingLonger }
+    /// Processing that is still running after this is no longer "a moment":
+    /// canonical 037 takes over and offers notify / keep waiting / cancel.
+    private static let longRunningThreshold: Duration = .seconds(12)
     @State private var pct = 0.12
-    @State private var long = false
-    @State private var done = false
+    @State private var route: ProcessingRoute?
     private let steps: [(String, String, Int)] = [ // icon, label, state: 0 done, 1 active, 2 queued
         ("viewfinder", "Upload complete", 0),
         ("point.3.connected.trianglepath.dotted", "Detecting pose & landmarks", 1),
@@ -195,14 +201,26 @@ struct AnalysisProcessingView: View { // 036
             }
         }
         .task {
+            // Watchdog: if the pipeline is still going when the threshold passes,
+            // hand over to the analysis-taking-longer screen (canonical 037).
+            let watchdog = Task { @MainActor in
+                try? await Task.sleep(for: Self.longRunningThreshold)
+                guard !Task.isCancelled, route == nil else { return }
+                route = .takingLonger
+            }
+            defer { watchdog.cancel() }
             for _ in 0..<8 {
                 try? await Task.sleep(for: .seconds(0.5))
                 pct = min(0.94, pct + 0.11)
             }
-            done = true
+            if route == nil { route = .results }
         }
-        .navigationDestination(isPresented: $done) { AnalysisResultOverviewView() }
-        .navigationDestination(isPresented: $long) { AnalysisTakingLongerView() }
+        .navigationDestination(item: $route) { r in
+            switch r {
+            case .results: AnalysisResultOverviewView()
+            case .takingLonger: AnalysisTakingLongerView()
+            }
+        }
     }
 }
 
@@ -486,6 +504,8 @@ struct AnalysisResultOverviewView: View { // 038
                                 .padding(.horizontal, 16).frame(height: 52)
                                 .overlay(RoundedRectangle(cornerRadius: ShotIQRadius.control).stroke(ShotIQColor.rule))
                             }
+                            .buttonStyle(.plain)
+                            .accessibilityIdentifier("Share analysis")
                             .padding(.top, 10)
                             Spacer(minLength: 24)
                         }
@@ -683,8 +703,10 @@ struct NoAnalysisYetView: View {    // 039
 }
 
 struct AnalysisErrorView: View {    // 040
-    @State private var retry = false
-    @State private var chooseFrame = false
+    /// Single item-based route: stacking two `navigationDestination(isPresented:)`
+    /// modifiers on one view makes only the last one work.
+    enum ErrorRoute: Hashable { case retry, chooseFrame }
+    @State private var route: ErrorRoute?
     var body: some View {
         CanonicalScreen(testID: "screen-ios-analysis-error") {
             VStack(spacing: 0) {
@@ -716,11 +738,11 @@ struct AnalysisErrorView: View {    // 040
                             .overlay(RoundedRectangle(cornerRadius: 8).stroke(ShotIQColor.reviewRed))
                             .padding(.top, 14)
                             PrimaryButton(title: "Try analysis again", icon: "viewfinder", color: ShotIQColor.analysisBlue) {
-                                retry = true
+                                route = .retry
                             }
                             .padding(.top, 14)
                             HStack(spacing: 12) {
-                                Button { chooseFrame = true } label: {
+                                Button { route = .chooseFrame } label: {
                                     halfButton("point.3.connected.trianglepath.dotted", "Choose another frame")
                                 }
                                 .buttonStyle(.plain)
@@ -780,8 +802,12 @@ struct AnalysisErrorView: View {    // 040
                 }
             }
         }
-        .navigationDestination(isPresented: $retry) { AnalyzeHubView() }
-        .navigationDestination(isPresented: $chooseFrame) { FrameDetailSkeletonView() }
+        .navigationDestination(item: $route) { r in
+            switch r {
+            case .retry: AnalyzeHubView()
+            case .chooseFrame: FrameDetailSkeletonView()
+            }
+        }
     }
     private func halfButton(_ icon: String, _ title: String) -> some View {
         HStack(spacing: 8) {
@@ -2128,8 +2154,10 @@ struct FlawDetailView: View {       // 047
     @State private var addingGoal = false
     @State private var addedGoal = false
     @State private var goalError: String?
-    @State private var goFrames = false
-    @State private var goDrill = false
+    /// Single item-based route: two `navigationDestination(isPresented:)`
+    /// modifiers on one view conflict and only the last one presents.
+    enum FlawRoute: Hashable { case frames, drill }
+    @State private var route: FlawRoute?
     private let frames = ["LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH", "RESET"]
     /// Canonical evidence-frame crops, matched to their column on the 853x1844
     /// render. FOLLOW-THROUGH has no crop, so that cell keeps the dark surface.
@@ -2288,7 +2316,7 @@ struct FlawDetailView: View {       // 047
                                 .disabled(addingGoal || addedGoal)
                                 .opacity(addingGoal ? 0.6 : 1)
                                 SecondaryButton(title: "View affected frames", icon: "film") {
-                                    goFrames = true
+                                    route = .frames
                                 }
                             }
                             .padding(.top, 14)
@@ -2297,7 +2325,7 @@ struct FlawDetailView: View {       // 047
                                     .padding(.top, 6)
                             }
                             PrimaryButton(title: "Start recommended drill", icon: "figure.basketball") {
-                                goDrill = true
+                                route = .drill
                             }
                             .padding(.top, 10)
                             Spacer(minLength: 24)
@@ -2307,8 +2335,12 @@ struct FlawDetailView: View {       // 047
                 }
             }
         }
-        .navigationDestination(isPresented: $goFrames) { FrameDetailSkeletonView() }
-        .navigationDestination(isPresented: $goDrill) { DrillExecutionView(drillName: "Towel Elbow Stack") }
+        .navigationDestination(item: $route) { r in
+            switch r {
+            case .frames: FrameDetailSkeletonView()
+            case .drill: DrillExecutionView(drillName: "Towel Elbow Stack")
+            }
+        }
     }
     /// Goals live on the web backend — POST /api/goals (name is the only required field).
     private func addToGoals() {

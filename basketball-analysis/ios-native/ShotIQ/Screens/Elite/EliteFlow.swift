@@ -225,6 +225,8 @@ struct PlayerCardView: View {       // 048
                                 .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 8))
                                 .foregroundStyle(.white)
                             }
+                            .buttonStyle(.plain)
+                            .accessibilityIdentifier("Customize card")
                             NavigationLink { ShareResultsView() } label: {
                                 VStack(spacing: 8) {
                                     Image(systemName: "point.3.connected.trianglepath.dotted").font(.system(size: 20))
