@@ -5,6 +5,36 @@ import SwiftUI
 
 // MARK: - Typography helpers bound to the sidecar token roles
 
+/// Canonical type scale, in points.
+///
+/// Taken from the iOS sidecars, not from screenshots: the canonical canvas is
+/// 853px wide against a 393pt device, so `pt = canvas_px x 0.4607`. These are the
+/// median measured sizes per role across all 72 screens:
+///
+///   role     canvas px   pt
+///   h1          70.0    32.3
+///   h2          42.0    19.4
+///   numeric     33.5    15.4
+///   h4          28.0    12.9
+///   body        26.0    12.0
+///   caption     16.0     7.4
+///
+/// Sizes are set per role against this table — never by one blanket multiplier,
+/// and never by comparing rendered glyph heights between Inter/Bebas/DIN and the
+/// app's Wilson X Connect faces, which do not share metrics.
+enum ShotIQType {
+    static let h1: CGFloat = 32.3
+    static let h2: CGFloat = 19.4
+    static let numeric: CGFloat = 15.4
+    static let h4: CGFloat = 12.9
+    static let body: CGFloat = 12.0
+    static let caption: CGFloat = 7.4
+    /// The sidecar has no button role. Canonical CTA labels measure 1.18x the
+    /// body line in the same typeface on 003/018, so the role is derived rather
+    /// than looked up.
+    static let button: CGFloat = 15.5
+}
+
 /// Wilson X Connect body face for a requested weight. Font.Weight is not
 /// Comparable, so the mapping is an explicit switch.
 func shotiqBoxedFace(_ weight: Font.Weight) -> String {
@@ -26,13 +56,16 @@ extension View {
             .minimumScaleFactor(0.5)
     }
     /// Wilson X numerals (Tungsten Semibold), replacing DIN Condensed.
-    func shotiqNumeric(_ size: CGFloat) -> some View {
+    func shotiqNumeric(_ size: CGFloat = ShotIQType.numeric) -> some View {
         font(.custom("Tungsten-Semibold", size: size)).foregroundStyle(ShotIQColor.ink)
             .lineLimit(1)
             .minimumScaleFactor(0.6)
     }
     /// Wilson X body face (Boxed): Medium / Semibold / Heavy by weight.
-    func shotiqBody(_ size: CGFloat = 16, weight: Font.Weight = .regular) -> some View {
+    /// Defaulted to the canonical `body` role — it used to default to 16pt
+    /// against a 12pt target, which is the upstream cause of most of the
+    /// mid-word wrapping, truncation and clipped CTAs on the shipped screens.
+    func shotiqBody(_ size: CGFloat = ShotIQType.body, weight: Font.Weight = .regular) -> some View {
         font(.custom(shotiqBoxedFace(weight), size: size)).foregroundStyle(ShotIQColor.ink)
     }
 }
@@ -58,7 +91,7 @@ struct SectionLabel: View {
     let text: String
     var body: some View {
         Text(text)
-            .font(.system(size: 12, weight: .bold))
+            .font(.system(size: ShotIQType.h4, weight: .bold))
             .kerning(0.8)
             .foregroundStyle(ShotIQColor.ink)
     }
@@ -107,17 +140,43 @@ struct TopBar: View {
     }
 }
 
-/// One stat in the header strip: small line icon, DIN numeral, tiny caps label.
+/// One stat in the header strip: bespoke line mark, condensed numeral, tiny caps
+/// label.
+///
+/// The mark is chosen from the *concept* (the caps label), not from the SF
+/// Symbol name a screen happens to pass, so the same statistic never gets two
+/// different marks and two statistics never share one. `icon` is kept as the
+/// fallback for concepts canonical draws with a plain system-style icon.
 struct HeaderStat: View {
     var icon: String
     var value: String
     var label: String
+    /// Explicit override when the label alone is ambiguous.
+    var mark: StatMarkKind? = nil
+
+    /// Maps a canonical stat label onto its bespoke mark.
+    private var resolvedMark: StatMarkKind? {
+        if let mark { return mark }
+        let k = label.uppercased()
+        if k.contains("STREAK") { return .dayStreak }
+        if k.contains("POINT") { return .points }
+        if k.contains("FORM SCORE") || k.contains("SCORE") { return .formScore }
+        if k.contains("MAKE") || k.contains("SHOOTING") || k.contains("ACCURACY") { return .accuracy }
+        if k.contains("SHOT") || k.contains("ATTEMPT") || k.contains("REP") { return .volume }
+        return nil
+    }
+
     var body: some View {
         VStack(spacing: 3) {
-            Image(systemName: icon).font(.system(size: 17)).foregroundStyle(ShotIQColor.ink)
-            Text(value).font(.custom("Tungsten-Semibold", size: 24)).foregroundStyle(ShotIQColor.ink)
+            if let resolvedMark {
+                StatMarkGlyph(kind: resolvedMark, size: 19).foregroundStyle(ShotIQColor.ink)
+            } else {
+                Image(systemName: icon).font(.system(size: 17)).foregroundStyle(ShotIQColor.ink)
+            }
+            Text(value).font(.custom("Tungsten-Semibold", size: ShotIQType.numeric))
+                .foregroundStyle(ShotIQColor.ink)
                 .lineLimit(1).minimumScaleFactor(0.7)
-            Text(label).font(.system(size: 9, weight: .medium)).kerning(0.6)
+            Text(label).font(.system(size: ShotIQType.caption, weight: .medium)).kerning(0.6)
                 .foregroundStyle(ShotIQColor.graphite)
         }
     }
@@ -133,8 +192,9 @@ struct PlayerHeader: View {
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
-                Text(name.uppercased()).shotiqDisplay(38)
-                Text(subtitle).font(.system(size: 14)).foregroundStyle(ShotIQColor.graphite)
+                Text(name.uppercased()).shotiqDisplay(38)   // 38 x 0.86 = 32.7pt vs h1 32.3
+                Text(subtitle).font(.system(size: ShotIQType.body))
+                    .foregroundStyle(ShotIQColor.graphite)
             }
             Spacer(minLength: 8)
             HeaderStat(icon: "film", value: streak, label: "DAY STREAK")
@@ -157,7 +217,7 @@ struct PrimaryButton: View {
         Button(action: action) {
             HStack(spacing: 10) {
                 if let icon { Image(systemName: icon) }
-                Text(title).font(.system(size: 17, weight: .medium))
+                Text(title).font(.system(size: ShotIQType.button, weight: .medium))
             }
             .frame(maxWidth: .infinity).frame(height: 54)
             .background(color, in: RoundedRectangle(cornerRadius: ShotIQRadius.control))
@@ -175,7 +235,7 @@ struct SecondaryButton: View {
         Button(action: action) {
             HStack(spacing: 10) {
                 if let icon { Image(systemName: icon) }
-                Text(title).font(.system(size: 17))
+                Text(title).font(.system(size: ShotIQType.button))
             }
             .frame(maxWidth: .infinity).frame(height: 54)
             .background(RoundedRectangle(cornerRadius: ShotIQRadius.control).stroke(ShotIQColor.rule))
@@ -199,27 +259,118 @@ struct ShotIQCard<Content: View>: View {
 
 // MARK: - Data-driven trend line (SwiftUI Path — sidecar contract: no rasters)
 
+/// Canonical charts are bounded and labelled: hairline gridlines, tick labels on
+/// both axes, a tinted area under the line and a value callout on the last
+/// point. The bare-polyline form is still the default so the 86x28 sparkline in
+/// a stats row stays a sparkline — the chrome is opted into per call site.
 struct TrendLine: View {
     let points: [Double]
     var stroke: Color = ShotIQColor.confirmGreen
+    /// Tinted area between the line and the plot floor.
+    var areaFill = false
+    /// Horizontal hairlines behind the series (plus verticals when x labels
+    /// are supplied).
+    var gridlines = false
+    /// Tick labels along the bottom axis, left-to-right.
+    var xLabels: [String] = []
+    /// Tick labels up the left axis, top-to-bottom (max first).
+    var yLabels: [String] = []
+    /// Value callout pinned to the final point.
+    var endBadge: String? = nil
+    /// Open nodes on every sample. Off for dense series.
+    var showsNodes = true
+
+    private var gutterLeft: CGFloat { yLabels.isEmpty ? 4 : 26 }
+    private var gutterBottom: CGFloat { xLabels.isEmpty ? 4 : 13 }
+    private var gutterRight: CGFloat { endBadge == nil ? 4 : 34 }
+
     var body: some View {
         GeometryReader { geo in
             let maxV = points.max() ?? 1, minV = points.min() ?? 0
             let span = max(maxV - minV, 0.0001)
-            let pad: CGFloat = 4
+            let plot = CGRect(x: gutterLeft, y: 5,
+                              width: max(geo.size.width - gutterLeft - gutterRight, 1),
+                              height: max(geo.size.height - 5 - gutterBottom, 1))
             let coords = points.enumerated().map { i, p in
-                CGPoint(x: pad + CGFloat(i) / CGFloat(max(points.count - 1, 1)) * (geo.size.width - 2 * pad),
-                        y: geo.size.height - pad - CGFloat((p - minV) / span) * (geo.size.height - 2 * pad))
+                CGPoint(x: plot.minX + CGFloat(i) / CGFloat(max(points.count - 1, 1)) * plot.width,
+                        y: plot.maxY - CGFloat((p - minV) / span) * plot.height)
             }
-            ZStack {
+            ZStack(alignment: .topLeading) {
+                if gridlines {
+                    ForEach(0..<4, id: \.self) { i in
+                        let y = plot.minY + plot.height * CGFloat(i) / 3
+                        Rectangle().fill(ShotIQColor.rule)
+                            .frame(width: plot.width, height: 1)
+                            .position(x: plot.midX, y: y)
+                    }
+                    ForEach(xLabels.indices, id: \.self) { i in
+                        let x = plot.minX + plot.width * CGFloat(i) / CGFloat(max(xLabels.count - 1, 1))
+                        Rectangle().fill(ShotIQColor.rule.opacity(0.7))
+                            .frame(width: 1, height: plot.height)
+                            .position(x: x, y: plot.midY)
+                    }
+                }
+
+                if areaFill, coords.count > 1 {
+                    Path { p in
+                        p.move(to: CGPoint(x: coords[0].x, y: plot.maxY))
+                        coords.forEach { p.addLine(to: $0) }
+                        p.addLine(to: CGPoint(x: coords[coords.count - 1].x, y: plot.maxY))
+                        p.closeSubpath()
+                    }
+                    .fill(stroke.opacity(0.12))
+                }
+
                 Path { p in
                     guard let first = coords.first else { return }
                     p.move(to: first)
                     coords.dropFirst().forEach { p.addLine(to: $0) }
                 }
                 .stroke(stroke, style: StrokeStyle(lineWidth: 1.6, lineCap: .round, lineJoin: .round))
-                ForEach(coords.indices, id: \.self) { i in
-                    Circle().fill(stroke).frame(width: 5.5, height: 5.5).position(coords[i])
+
+                if showsNodes {
+                    ForEach(coords.indices, id: \.self) { i in
+                        Circle().fill(stroke).frame(width: 5.5, height: 5.5).position(coords[i])
+                    }
+                }
+
+                // Axis frame: canonical charts are bounded on the left and floor.
+                if gridlines || !yLabels.isEmpty || !xLabels.isEmpty {
+                    Rectangle().fill(ShotIQColor.rule)
+                        .frame(width: 1, height: plot.height)
+                        .position(x: plot.minX, y: plot.midY)
+                    Rectangle().fill(ShotIQColor.rule)
+                        .frame(width: plot.width, height: 1)
+                        .position(x: plot.midX, y: plot.maxY)
+                }
+
+                ForEach(yLabels.indices, id: \.self) { i in
+                    Text(yLabels[i])
+                        .font(.system(size: ShotIQType.caption, weight: .medium))
+                        .foregroundStyle(ShotIQColor.graphite)
+                        .frame(width: gutterLeft - 4, alignment: .trailing)
+                        .position(x: (gutterLeft - 4) / 2,
+                                  y: plot.minY + plot.height * CGFloat(i) / CGFloat(max(yLabels.count - 1, 1)))
+                }
+
+                ForEach(xLabels.indices, id: \.self) { i in
+                    Text(xLabels[i])
+                        .font(.system(size: ShotIQType.caption, weight: .medium))
+                        .foregroundStyle(ShotIQColor.graphite)
+                        .fixedSize()
+                        .position(x: plot.minX + plot.width * CGFloat(i) / CGFloat(max(xLabels.count - 1, 1)),
+                                  y: plot.maxY + gutterBottom / 2 + 1)
+                }
+
+                if let endBadge, let last = coords.last {
+                    Text(endBadge)
+                        .font(.custom("Tungsten-Semibold", size: ShotIQType.caption + 2.6))
+                        .foregroundStyle(stroke)
+                        .lineLimit(1).fixedSize()
+                        .padding(.horizontal, 4).padding(.vertical, 1)
+                        .background(stroke.opacity(0.12), in: RoundedRectangle(cornerRadius: 3))
+                        .position(x: min(last.x + gutterRight / 2 + 2, geo.size.width - gutterRight / 2),
+                                  y: max(last.y, 8))
                 }
             }
         }
@@ -259,50 +410,24 @@ struct ScoreBar: View {
     }
 }
 
-// MARK: - Pose phase glyph (parametric, recolourable)
-
-struct PhaseGlyph: View {
-    var active = false
-    var size: CGFloat = 30
-    var body: some View {
-        let c: Color = active ? ShotIQColor.shotiqOrange : ShotIQColor.ink
-        Canvas { ctx, sz in
-            let s = sz.width / 30
-            var body = Path()
-            body.move(to: CGPoint(x: 17 * s, y: 8 * s))
-            body.addLine(to: CGPoint(x: 15 * s, y: 15 * s))
-            body.addLine(to: CGPoint(x: 11 * s, y: 21 * s))
-            body.move(to: CGPoint(x: 15 * s, y: 15 * s))
-            body.addLine(to: CGPoint(x: 18 * s, y: 21 * s))
-            body.move(to: CGPoint(x: 17 * s, y: 9.5 * s))
-            body.addLine(to: CGPoint(x: 22 * s, y: 7 * s))
-            body.addLine(to: CGPoint(x: 24 * s, y: 3 * s))
-            ctx.stroke(body, with: .color(c), style: StrokeStyle(lineWidth: 1.6 * s, lineCap: .round))
-            ctx.stroke(Path(ellipseIn: CGRect(x: 14.4 * s, y: 2.4 * s, width: 5.2 * s, height: 5.2 * s)),
-                       with: .color(c), lineWidth: 1.6 * s)
-            let ball = Path(ellipseIn: CGRect(x: 23.2 * s, y: 0.7 * s, width: 3.6 * s, height: 3.6 * s))
-            if active { ctx.fill(ball, with: .color(c)) } else { ctx.stroke(ball, with: .color(c), lineWidth: 1.4 * s) }
-        }
-        .frame(width: size, height: size)
-        .accessibilityHidden(true)
-    }
-}
-
 // MARK: - Phase strip
+//
+// `PhaseGlyph` and the five poses now live in Components/ShotIQGlyphs.swift.
 
 struct PhaseStrip: View {
     var active = "RELEASE"
-    private let phases = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
     var body: some View {
         HStack(alignment: .top) {
-            ForEach(phases, id: \.self) { p in
+            ForEach(ShotPhase.allCases, id: \.self) { phase in
+                let on = ShotPhase(label: active) == phase
                 VStack(spacing: 4) {
-                    PhaseGlyph(active: p == active, size: 28)
-                    Text(p)
-                        .font(.system(size: 9, weight: p == active ? .bold : .regular))
+                    PhaseGlyph(phase: phase, active: on, size: 28)
+                    Text(phase.title)
+                        .font(.system(size: ShotIQType.caption, weight: on ? .bold : .regular))
                         .kerning(0.5)
-                        .foregroundStyle(p == active ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
-                    if p == active {
+                        .foregroundStyle(on ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
+                        .lineLimit(1).minimumScaleFactor(0.7)
+                    if on {
                         Rectangle().fill(ShotIQColor.shotiqOrange).frame(width: 40, height: 3)
                     }
                 }
@@ -345,11 +470,12 @@ struct StatBlock: View {
     let value: String
     let label: String
     var color: Color = ShotIQColor.ink
-    var valueSize: CGFloat = 26
+    var valueSize: CGFloat = ShotIQType.numeric
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(value).font(.custom("Tungsten-Semibold", size: valueSize)).foregroundStyle(color)
-            Text(label).font(.system(size: 10, weight: .medium)).kerning(0.7)
+                .lineLimit(1).minimumScaleFactor(0.7)
+            Text(label).font(.system(size: ShotIQType.caption, weight: .medium)).kerning(0.7)
                 .foregroundStyle(ShotIQColor.graphite)
         }
     }
@@ -392,18 +518,31 @@ enum RootTab: String, CaseIterable {
         case .progress: "chart.line.uptrend.xyaxis"; case .profile: "person.crop.circle"
         }
     }
+    /// Canonical draws five unrelated bespoke marks here — a framing reticle, a
+    /// node graph, a rail, a rising node arc, and the player's initials.
+    var navMark: NavMark? {
+        switch self {
+        case .home: .home; case .analyze: .capture; case .training: .train
+        case .progress: .progress; case .profile: nil
+        }
+    }
 }
 
 struct ShotIQTabBar: View {
     @Binding var tab: RootTab
+    @EnvironmentObject private var app: AppState
     var body: some View {
         HStack {
             ForEach(RootTab.allCases, id: \.self) { t in
                 Button { tab = t } label: {
                     VStack(spacing: 5) {
-                        Image(systemName: t.icon).font(.system(size: 21))
+                        if let mark = t.navMark {
+                            NavGlyph(mark: mark, size: 21, active: tab == t)
+                        } else {
+                            InitialsMark(initials: shotiqInitials(app.user), size: 21, active: tab == t)
+                        }
                         Text(t.rawValue)
-                            .font(.system(size: 10, weight: tab == t ? .bold : .regular))
+                            .font(.system(size: ShotIQType.caption, weight: tab == t ? .bold : .regular))
                             .lineLimit(1)
                     }
                     .frame(maxWidth: .infinity, minHeight: 44)

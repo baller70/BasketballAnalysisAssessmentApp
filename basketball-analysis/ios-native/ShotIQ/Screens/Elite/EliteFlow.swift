@@ -307,7 +307,7 @@ struct PlayerCardView: View {       // 048
     }
     private func phaseScore(_ phase: String, _ score: String, _ tint: Color, _ active: Bool) -> some View {
         VStack(spacing: 4) {
-            PhaseGlyph(active: active, size: 28)
+            PhaseGlyph(phase: phase, active: active, size: 28)
             Text(phase).font(.system(size: 8, weight: active ? .bold : .regular)).kerning(0.4)
                 .foregroundStyle(active ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
                 .lineLimit(1).minimumScaleFactor(0.6)
@@ -1587,7 +1587,8 @@ struct EliteShooterDetailView: View { // 053
     }
     private func breakdownCol(_ label: String, _ pct: String, _ shots: String) -> some View {
         VStack(spacing: 4) {
-            PhaseGlyph(size: 26)
+            MechanicGlyph(kind: .init(metricLabel: label), size: 26)
+                .foregroundStyle(ShotIQColor.ink)
             Text(label).font(.system(size: 11)).foregroundStyle(ShotIQColor.ink)
                 .lineLimit(1).minimumScaleFactor(0.6)
             Text(pct).font(.custom("Tungsten-Semibold", size: 24)).foregroundStyle(ShotIQColor.ink)

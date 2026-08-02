@@ -96,7 +96,7 @@ struct TrainingHomeView: View {     // 054
                             }
                             Spacer(minLength: 8)
                             VStack(spacing: 8) {
-                                PhaseGlyph(active: true, size: 54)
+                                CorrectionGlyph(kind: .stack, size: 54).foregroundStyle(ShotIQColor.ink)
                                 Image(systemName: "checkmark.circle")
                                     .font(.system(size: 19))
                                     .foregroundStyle(ShotIQColor.shotiqOrange)
@@ -143,7 +143,8 @@ struct TrainingHomeView: View {     // 054
                                         HStack(spacing: 10) {
                                             PhotoThumb(width: 84, height: 76,
                                                        photo: i < savedDrillPhotos.count ? savedDrillPhotos[i] : nil)
-                                            PhaseGlyph(active: i == 0, size: 28)
+                                            WorkoutGlyph(kind: .init(drillName: d.0), size: 28)
+                                                .foregroundStyle(i == 0 ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
                                             VStack(alignment: .leading, spacing: 5) {
                                                 Text(d.0).shotiqBody(15, weight: .semibold)
                                                     .lineLimit(1).minimumScaleFactor(0.8)
@@ -439,7 +440,7 @@ struct DiscoverDrillsView: View {   // 056
                         SectionLabel(text: "RECOMMENDED FOR YOUR TARGET").padding(.top, 18)
                         ShotIQCard {
                             HStack(alignment: .top, spacing: 12) {
-                                PhaseGlyph(active: true, size: 44)
+                                CorrectionGlyph(kind: .stack, size: 44).foregroundStyle(ShotIQColor.ink)
                                     .padding(9)
                                     .overlay(RoundedRectangle(cornerRadius: 8)
                                         .stroke(ShotIQColor.rule, style: StrokeStyle(lineWidth: 1, dash: [4])))
@@ -461,7 +462,9 @@ struct DiscoverDrillsView: View {   // 056
                                     HStack(spacing: 14) {
                                         ForEach(["Elbow flare", "Early wrist bend", "Left lean"], id: \.self) { f in
                                             HStack(spacing: 5) {
-                                                PhaseGlyph(size: 16)
+                                                FlawFigure(kind: .init(flawLabel: f), size: 16,
+                                                           accent: ShotIQColor.reviewRed)
+                                                    .foregroundStyle(ShotIQColor.graphite)
                                                 Text(f).font(.system(size: 11)).foregroundStyle(ShotIQColor.ink)
                                                     .lineLimit(1).minimumScaleFactor(0.7)
                                             }
@@ -550,7 +553,8 @@ struct DiscoverDrillsView: View {   // 056
                                             HStack(spacing: 8) {
                                                 HStack(spacing: 4) {
                                                     ForEach(0..<4, id: \.self) { i in
-                                                        PhaseGlyph(active: i == 3, size: 15)
+                                                        PhaseGlyph(phase: ShotPhase.allCases[i],
+                                                                   active: i == 3, size: 15)
                                                     }
                                                 }
                                                 Text("Release").font(.system(size: 11, weight: .medium))
@@ -727,7 +731,8 @@ struct DrillDetailView: View {      // 057
                                 SectionLabel(text: "TARGET MECHANICS")
                                 ForEach(mechanics, id: \.0) { m in
                                     HStack(alignment: .top, spacing: 8) {
-                                        PhaseGlyph(size: 18)
+                                        MechanicGlyph(kind: .init(metricLabel: m.0), size: 18)
+                                            .foregroundStyle(ShotIQColor.ink)
                                         VStack(alignment: .leading, spacing: 1) {
                                             Text(m.0).font(.system(size: 12, weight: .semibold))
                                             Text(m.1).font(.system(size: 10)).foregroundStyle(ShotIQColor.graphite)
@@ -997,7 +1002,7 @@ struct MyDrillsView: View {         // 058
                     HStack(spacing: 16) {
                         ForEach(phases, id: \.self) { p in
                             VStack(spacing: 3) {
-                                PhaseGlyph(active: p == d.2, size: 18)
+                                PhaseGlyph(phase: p, active: p == d.2, size: 18)
                                 Rectangle().fill(p == d.2 ? ShotIQColor.shotiqOrange : .clear)
                                     .frame(width: 18, height: 2)
                             }
@@ -1049,7 +1054,7 @@ struct WorkoutCalendarView: View {  // 059
                     VStack(alignment: .leading, spacing: 0) {
                         // Primary target strip
                         HStack(spacing: 10) {
-                            PhaseGlyph(size: 28)
+                            CorrectionGlyph(kind: .stack, size: 28).foregroundStyle(ShotIQColor.ink)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("PRIMARY TARGET").font(.system(size: 9, weight: .semibold)).kerning(0.6)
                                     .foregroundStyle(ShotIQColor.graphite)
@@ -1138,7 +1143,7 @@ struct WorkoutCalendarView: View {  // 059
                                             .fixedSize(horizontal: false, vertical: true)
                                         HStack(spacing: 12) {
                                             ForEach(["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"], id: \.self) { p in
-                                                PhaseGlyph(active: p == "RELEASE", size: 16)
+                                                PhaseGlyph(phase: p, active: p == "RELEASE", size: 16)
                                             }
                                         }
                                     }
@@ -1331,7 +1336,7 @@ struct DrillExecutionView: View {   // 060
                                 }
                                 Spacer(minLength: 4)
                                 VRule(height: 58)
-                                PhaseGlyph(size: 40)
+                                CorrectionGlyph(kind: .stack, size: 40).foregroundStyle(ShotIQColor.ink)
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text("FOCUS AREA").font(.system(size: 9, weight: .semibold)).kerning(0.5)
                                         .foregroundStyle(ShotIQColor.graphite)
@@ -1622,7 +1627,7 @@ struct ShotTrackerView: View {      // 061
                             ForEach([("SETUP", "100%"), ("LOAD", "100%"), ("RISE", "100%"),
                                      ("RELEASE", "98%"), ("FOLLOW-THROUGH", "100%")], id: \.0) { p in
                                 VStack(spacing: 3) {
-                                    PhaseGlyph(active: p.0 == "RELEASE", size: 26)
+                                    PhaseGlyph(phase: p.0, active: p.0 == "RELEASE", size: 26)
                                     Text(p.0).font(.system(size: 8, weight: p.0 == "RELEASE" ? .bold : .regular))
                                         .kerning(0.3)
                                         .foregroundStyle(p.0 == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
@@ -1760,7 +1765,7 @@ struct WorkoutCompletionView: View { // 062
                             ForEach([("SETUP", "80"), ("LOAD", "78"), ("RISE", "84"),
                                      ("RELEASE", "82"), ("FOLLOW-THROUGH", "85")], id: \.0) { p in
                                 VStack(spacing: 4) {
-                                    PhaseGlyph(active: p.0 == "RELEASE", size: 28)
+                                    PhaseGlyph(phase: p.0, active: p.0 == "RELEASE", size: 28)
                                     Text(p.0).font(.system(size: 8, weight: p.0 == "RELEASE" ? .bold : .regular))
                                         .kerning(0.3)
                                         .foregroundStyle(p.0 == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
@@ -1774,7 +1779,7 @@ struct WorkoutCompletionView: View { // 062
                         .padding(.top, 10)
                         ShotIQCard {
                             HStack(spacing: 14) {
-                                PhaseGlyph(size: 38)
+                                CorrectionGlyph(kind: .stack, size: 38).foregroundStyle(ShotIQColor.ink)
                                     .padding(10)
                                     .overlay(Circle().stroke(ShotIQColor.rule))
                                 VStack(alignment: .leading, spacing: 6) {
