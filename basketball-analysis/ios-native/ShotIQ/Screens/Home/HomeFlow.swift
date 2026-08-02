@@ -72,8 +72,10 @@ struct HomeHeader: View {
 /// Orange filled CTA label used inside NavigationLinks (canonical primary CTA).
 private func homeCTALabel(_ title: String, icon: String = "camera.metering.center.weighted") -> some View {
     HStack(spacing: 10) {
-        Image(systemName: icon).font(.system(size: 19, weight: .medium))
-        Text(title).font(.system(size: 18, weight: .semibold))
+        // Canonical prints its capture reticle on the primary CTA, not a
+        // metering symbol.
+        CaptureReticleGlyph(size: 19)
+        Text(title).font(.system(size: ShotIQType.button + 1, weight: .semibold))
     }
     .frame(maxWidth: .infinity).frame(height: 58)
     .background(ShotIQColor.shotiqOrange, in: RoundedRectangle(cornerRadius: 8))
@@ -398,8 +400,8 @@ struct HomeStandardView: View {    // 018
                         ShotIQCard {
                             HStack(spacing: 14) {
                                 Circle().fill(ShotIQColor.analysisBlue).frame(width: 52, height: 52)
-                                    .overlay(Image(systemName: "point.topleft.down.curvedto.point.bottomright.up")
-                                        .font(.system(size: 20)).foregroundStyle(.white))
+                                    .overlay(WorkoutGlyph(kind: .init(drillName: "Quick Release Builder"), size: 22)
+                                        .foregroundStyle(.white))
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text("Quick Release Builder").font(.system(size: 16, weight: .semibold))
                                         .foregroundStyle(ShotIQColor.ink)
@@ -422,7 +424,14 @@ struct HomeStandardView: View {    // 018
 
     private func optionCard(_ icon: String, _ title: String) -> some View {
         VStack(spacing: 10) {
-            Image(systemName: icon).font(.system(size: 26)).foregroundStyle(ShotIQColor.ink)
+            Group {
+                if let source = CaptureSource(sourceLabel: title) {
+                    CaptureSourceGlyph(source: source, size: 26)
+                } else {
+                    Image(systemName: icon).font(.system(size: 26))
+                }
+            }
+            .foregroundStyle(ShotIQColor.ink)
             Text(title).font(.system(size: 14, weight: .medium)).foregroundStyle(ShotIQColor.ink)
                 .lineLimit(1).minimumScaleFactor(0.7)
         }
@@ -493,7 +502,7 @@ struct HomeProfessionalView: View { // 019
                     HStack(alignment: .top) {
                         ForEach(phaseScores, id: \.0) { p, v in
                             VStack(spacing: 4) {
-                                PhaseGlyph(active: p == "RELEASE", size: 28)
+                                PhaseGlyph(phase: p, active: p == "RELEASE", size: 28)
                                 Text(p).font(.system(size: 9, weight: p == "RELEASE" ? .bold : .regular)).kerning(0.5)
                                     .foregroundStyle(p == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.graphite)
                                     .lineLimit(1).minimumScaleFactor(0.6)
@@ -527,7 +536,8 @@ struct HomeProfessionalView: View { // 019
                     HStack(alignment: .top, spacing: 4) {
                         ForEach(trends, id: \.0) { label, value, delta, up in
                             VStack(spacing: 4) {
-                                PhaseGlyph(size: 22)
+                                MechanicGlyph(kind: .init(metricLabel: label), size: 22)
+                                    .foregroundStyle(ShotIQColor.ink)
                                 Text(label).font(.system(size: 8, weight: .medium)).kerning(0.4)
                                     .foregroundStyle(ShotIQColor.graphite)
                                     .lineLimit(1).minimumScaleFactor(0.6)
@@ -585,7 +595,16 @@ struct HomeProfessionalView: View { // 019
 
     private func quickAction(_ icon: String, _ title: String) -> some View {
         HStack(spacing: 10) {
-            Image(systemName: icon).font(.system(size: 19)).foregroundStyle(ShotIQColor.ink)
+            Group {
+                if title.lowercased().contains("capture") {
+                    CaptureReticleGlyph(size: 19)
+                } else if let source = CaptureSource(sourceLabel: title) {
+                    CaptureSourceGlyph(source: source, size: 19)
+                } else {
+                    Image(systemName: icon).font(.system(size: 19))
+                }
+            }
+            .foregroundStyle(ShotIQColor.ink)
             Text(title).font(.system(size: 15, weight: .medium)).foregroundStyle(ShotIQColor.ink)
                 .lineLimit(1).minimumScaleFactor(0.7)
         }

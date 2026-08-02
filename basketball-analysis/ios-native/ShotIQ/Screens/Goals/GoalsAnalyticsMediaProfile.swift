@@ -181,10 +181,17 @@ struct GoalsView: View {            // 063
                         }
                         .buttonStyle(.plain)
                     }
+                    // Canonical charts are bounded and labelled: gridlines, tick
+                    // labels on both axes, a tinted area fill and an end-point badge.
                     TrendLine(points: trendMetric == "Form Score"
                               ? [58, 59, 55, 62, 60, 57, 64, 66, 70, 68, 74, 72, 75, 79, 76, 80, 82]
                               : [48, 50, 47, 52, 55, 53, 56, 58, 57, 60, 59, 61, 62, 63, 62, 64, 64],
-                              stroke: ShotIQColor.shotiqOrange)
+                              stroke: ShotIQColor.shotiqOrange,
+                              areaFill: true, gridlines: true,
+                              xLabels: ["W1", "W5", "W9", "W13", "W17"],
+                              yLabels: ["100", "75", "50", "25"],
+                              endBadge: trendMetric == "Form Score" ? "82" : "64",
+                              showsNodes: false)
                         .frame(height: 84)
                 }
                 VStack(alignment: .leading, spacing: 10) {
@@ -462,7 +469,7 @@ struct CreateGoalView: View {       // 064
                         }
                         .padding(.top, 14)
                         HStack(alignment: .top, spacing: 12) {
-                            PhaseGlyph(active: true, size: 34)
+                            MechanicGlyph(kind: .elbowAngle, size: 34).foregroundStyle(ShotIQColor.ink)
                             VStack(alignment: .leading, spacing: 3) {
                                 Text("Measured from RISE through RELEASE.")
                                     .font(.system(size: 13, weight: .semibold))
@@ -648,7 +655,10 @@ struct GoalDetailView: View {       // 065
                                 Text("TREND (LAST 7 SESSIONS)").font(.system(size: 9, weight: .semibold)).kerning(0.5)
                                     .foregroundStyle(ShotIQColor.graphite)
                                 TrendLine(points: [40, 48, 55, 60, 66, 72],
-                                          stroke: ShotIQColor.shotiqOrange)
+                                          stroke: ShotIQColor.shotiqOrange,
+                                          areaFill: true, gridlines: true,
+                                          xLabels: ["S1", "S3", "S5", "S7"],
+                                          endBadge: "72")
                                     .frame(height: 84)
                             }
                             .frame(maxWidth: .infinity)
@@ -1165,7 +1175,7 @@ struct AnalyticsCardsView: View {   // 066
                     }
                     HStack(spacing: 7) {
                         ForEach(["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"], id: \.self) { p in
-                            PhaseGlyph(active: p == "RELEASE", size: 15)
+                            PhaseGlyph(phase: p, active: p == "RELEASE", size: 15)
                         }
                     }
                     HStack(alignment: .bottom) {
@@ -1314,7 +1324,11 @@ struct AnalyticsDetailedView: View { // 067
                                 }
                                 .frame(width: 82, alignment: .leading)
                                 TrendLine(points: [68, 66.5, 69, 72.5, 68.5, 71, 73.5, 77, 76.2],
-                                          stroke: ShotIQColor.confirmGreen)
+                                          stroke: ShotIQColor.confirmGreen,
+                                          areaFill: true, gridlines: true,
+                                          xLabels: ["APR", "MAY"],
+                                          yLabels: ["80", "72", "64"],
+                                          endBadge: "78.2%")
                                     .frame(height: 92)
                                 VStack(alignment: .leading, spacing: 4) {
                                     MicroLabel(text: "LATEST")
@@ -1335,7 +1349,7 @@ struct AnalyticsDetailedView: View { // 067
                                 HStack(alignment: .top, spacing: 6) {
                                     ForEach(scorecard, id: \.0) { p in
                                         VStack(spacing: 4) {
-                                            PhaseGlyph(active: p.0 == "RELEASE", size: 24)
+                                            PhaseGlyph(phase: p.0, active: p.0 == "RELEASE", size: 24)
                                             Text(p.0).font(.system(size: 7, weight: .bold)).kerning(0.2)
                                                 .foregroundStyle(p.0 == "RELEASE" ? ShotIQColor.shotiqOrange : ShotIQColor.ink)
                                                 .lineLimit(1).minimumScaleFactor(0.55)
@@ -2268,7 +2282,9 @@ struct ProfileView: View {          // 070
     }
     private func physCol(_ icon: String, _ value: String, _ label: String) -> some View {
         VStack(spacing: 5) {
-            Image(systemName: icon).font(.system(size: 19)).foregroundStyle(ShotIQColor.ink)
+            // One measurement diagram per measured quantity.
+            MechanicGlyph(kind: .init(metricLabel: label), size: 19)
+                .foregroundStyle(ShotIQColor.ink)
             Text(value).font(.custom("Tungsten-Semibold", size: 22)).foregroundStyle(ShotIQColor.ink)
                 .lineLimit(1).minimumScaleFactor(0.6)
             Text(label).font(.system(size: 7.5, weight: .medium)).kerning(0.3)

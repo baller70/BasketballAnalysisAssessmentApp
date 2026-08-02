@@ -398,8 +398,17 @@ struct AnalyzeHubView: View {       // 021
 
     private func hubOption(_ icon: String, _ t: String, _ d: String) -> some View {
         VStack(spacing: 8) {
-            Image(systemName: icon).font(.system(size: 26)).foregroundStyle(ShotIQColor.ink)
-                .frame(height: 44)
+            // Canonical draws a different diagram per source, not a photo/film/
+            // broadcast triple out of the system set.
+            Group {
+                if let source = CaptureSource(sourceLabel: t) {
+                    CaptureSourceGlyph(source: source, size: 26)
+                } else {
+                    Image(systemName: icon).font(.system(size: 26))
+                }
+            }
+            .foregroundStyle(ShotIQColor.ink)
+            .frame(height: 44)
             Text(t).font(.system(size: 14, weight: .semibold)).foregroundStyle(ShotIQColor.ink)
                 .lineLimit(1).minimumScaleFactor(0.7)
             Text(d).font(.system(size: 11)).foregroundStyle(ShotIQColor.graphite)
@@ -809,11 +818,11 @@ struct UploadQualityCheckView: View { // 024
                     .padding(.horizontal, 20).padding(.top, 8)
 
                     HStack(alignment: .center, spacing: 14) {
-                        PhaseGlyph(size: 30)
+                        ReadinessGlyph(kind: .framing, size: 30).foregroundStyle(ShotIQColor.ink)
                         Text("Best framing: side view, full body in frame, shooting hand and ball fully visible.")
                             .font(.system(size: 13)).foregroundStyle(ShotIQColor.ink)
                         Spacer()
-                        Image(systemName: "figure.basketball").font(.system(size: 22)).foregroundStyle(ShotIQColor.ink)
+                        ReadinessGlyph(kind: .athlete, size: 22).foregroundStyle(ShotIQColor.ink)
                             .padding(8)
                             .overlay(Rectangle().stroke(ShotIQColor.shotiqOrange, style: StrokeStyle(lineWidth: 1.5, dash: [4, 3])))
                     }
@@ -1565,7 +1574,8 @@ struct LiveCameraSetupView: View {  // 028
                             setupRow("figure.stand", "FULL-BODY IN FRAME", "From head to shoes with space around.")
                             setupRow("rectangle.dashed", "HOOP VISIBLE", "Backboard and rim clearly visible.")
                             HStack(spacing: 14) {
-                                PhaseGlyph(size: 26).frame(width: 34)
+                                ReadinessGlyph(kind: .athlete, size: 26)
+                                    .foregroundStyle(ShotIQColor.ink).frame(width: 34)
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text("SHOOTING HAND").font(.system(size: 14, weight: .heavy).width(.condensed)).kerning(0.5)
                                         .foregroundStyle(ShotIQColor.ink)
@@ -1704,7 +1714,7 @@ struct HoopCalibrationView: View {  // 029
                         .accessibilityLabel("Hoop calibration viewfinder — press and hold, then drag, to move the crosshair")
                         .overlay(alignment: .bottom) {
                             HStack(spacing: 10) {
-                                PhaseGlyph(size: 26)
+                                ReadinessGlyph(kind: .framing, size: 26).foregroundStyle(.white)
                                 Text("Center the hoop in the frame.\nAlign the rim with the crosshair.")
                                     .font(.system(size: 14)).foregroundStyle(.white)
                             }
@@ -2204,7 +2214,7 @@ struct LiveFormFeedbackView: View { // 033
 
                     ShotIQCard {
                         HStack(alignment: .center, spacing: 16) {
-                            PhaseGlyph(size: 54)
+                            CorrectionGlyph(kind: .stack, size: 54).foregroundStyle(ShotIQColor.ink)
                             VStack(alignment: .leading, spacing: 6) {
                                 Text("LIVE FEEDBACK").font(.system(size: 10, weight: .bold)).kerning(0.7)
                                     .foregroundStyle(ShotIQColor.graphite)
@@ -2428,7 +2438,8 @@ struct ShotDetectedView: View {     // 034
                     HStack(alignment: .top, spacing: 0) {
                         ForEach(context, id: \.0) { t, d in
                             VStack(alignment: .center, spacing: 4) {
-                                PhaseGlyph(size: 22)
+                                ReadinessGlyph(kind: .init(contextLabel: t), size: 22)
+                                    .foregroundStyle(ShotIQColor.ink)
                                 Text(t).font(.system(size: 11, weight: .semibold)).foregroundStyle(ShotIQColor.ink)
                                     .lineLimit(1).minimumScaleFactor(0.6)
                                 Text(d).font(.system(size: 10)).foregroundStyle(ShotIQColor.graphite)

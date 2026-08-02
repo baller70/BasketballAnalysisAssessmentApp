@@ -556,7 +556,8 @@ struct AnalysisResultOverviewView: View { // 038
     }
     private func matchLine(_ icon: String, _ label: String, _ value: String) -> some View {
         HStack(spacing: 6) {
-            Image(systemName: icon).font(.system(size: 11)).foregroundStyle(ShotIQColor.ink).frame(width: 14)
+            MechanicGlyph(kind: .init(metricLabel: label), size: 13)
+                .foregroundStyle(ShotIQColor.ink).frame(width: 14)
             Text(label).font(.system(size: 12)).foregroundStyle(ShotIQColor.graphite)
             Text(value).font(.system(size: 12, weight: .semibold)).foregroundStyle(ShotIQColor.analysisBlue)
         }
@@ -693,7 +694,14 @@ struct NoAnalysisYetView: View {    // 039
     }
     private func sourceCard(_ icon: String, _ label: String) -> some View {
         VStack(spacing: 10) {
-            Image(systemName: icon).font(.system(size: 26, weight: .light)).foregroundStyle(ShotIQColor.ink)
+            Group {
+                if let source = CaptureSource(sourceLabel: label) {
+                    CaptureSourceGlyph(source: source, size: 26)
+                } else {
+                    Image(systemName: icon).font(.system(size: 26, weight: .light))
+                }
+            }
+            .foregroundStyle(ShotIQColor.ink)
             Text(label).font(.system(size: 14)).foregroundStyle(ShotIQColor.ink)
                 .lineLimit(1).minimumScaleFactor(0.7)
         }
@@ -1003,7 +1011,8 @@ struct ShotBreakdownView: View {    // 041
     }
     private func breakdownStat(_ icon: String, _ label: String, _ value: String, _ unit: String?) -> some View {
         VStack(spacing: 5) {
-            Image(systemName: icon).font(.system(size: 20, weight: .light)).foregroundStyle(ShotIQColor.ink)
+            MechanicGlyph(kind: .init(metricLabel: label), size: 20)
+                .foregroundStyle(ShotIQColor.ink)
                 .frame(height: 26)
             Text(label).font(.system(size: 8, weight: .semibold)).kerning(0.4)
                 .foregroundStyle(ShotIQColor.graphite)
@@ -1315,7 +1324,7 @@ struct AnnotationToolbarView: View { // 043
                             }
                             .padding(.top, 6)
                             HStack(spacing: 12) {
-                                PhaseGlyph(active: true, size: 34)
+                                CorrectionGlyph(kind: .stack, size: 34).foregroundStyle(ShotIQColor.ink)
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text("PRIMARY TARGET").font(.system(size: 11, weight: .semibold)).kerning(0.7)
                                         .foregroundStyle(ShotIQColor.graphite)
@@ -1600,7 +1609,10 @@ struct FormScoreView: View {        // 044
                                             Text(m.uppercased()).font(.system(size: 9, weight: .bold)).kerning(0.4)
                                                 .foregroundStyle(ShotIQColor.ink)
                                                 .lineLimit(1).minimumScaleFactor(0.5)
-                                            PhaseGlyph(active: verdict == "NEEDS WORK", size: 30)
+                                            MechanicGlyph(kind: .init(metricLabel: m), size: 30,
+                                                          accent: verdict == "NEEDS WORK"
+                                                              ? ShotIQColor.reviewRed : ShotIQColor.shotiqOrange)
+                                                .foregroundStyle(ShotIQColor.ink)
                                             Text("\(Int(v * 100))").font(.custom("Tungsten-Semibold", size: 30))
                                                 .foregroundStyle(ShotIQColor.shotiqOrange)
                                             Text(verdict).font(.system(size: 8, weight: .bold)).kerning(0.3)
@@ -1637,7 +1649,7 @@ struct FormScoreView: View {        // 044
                             .padding(.top, 6)
                             SectionLabel(text: "KEY INSIGHT").padding(.top, 22)
                             HStack(alignment: .top, spacing: 14) {
-                                PhaseGlyph(active: true, size: 44)
+                                CueGlyph(kind: .extensionLine, size: 44).foregroundStyle(ShotIQColor.ink)
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("Elbow separation at load is causing inconsistency at release.")
                                         .font(.system(size: 15, weight: .semibold)).foregroundStyle(ShotIQColor.ink)
@@ -2109,7 +2121,8 @@ struct FlawsOverviewView: View {    // 046
                         .padding(.top, 4)
                     Text("TREND (LAST 6 SESSIONS)").font(.system(size: 9, weight: .semibold)).kerning(0.5)
                         .foregroundStyle(ShotIQColor.graphite).padding(.top, 8)
-                    TrendLine(points: [52, 74, 78, 50, 64, 48, 60], stroke: tint)
+                    TrendLine(points: [52, 74, 78, 50, 64, 48, 60], stroke: tint,
+                              areaFill: true, gridlines: true, endBadge: "60")
                         .frame(height: 40).padding(.top, 4)
                 }
                 VStack(alignment: .leading, spacing: 8) {
