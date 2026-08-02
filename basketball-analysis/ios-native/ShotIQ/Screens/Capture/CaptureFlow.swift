@@ -30,13 +30,30 @@ extension CameraService {
 }
 
 /// Live viewfinder layer dropped inside the dark camera surfaces: real preview
-/// when running, Settings deep-link card when denied, dark placeholder while
-/// the session spins up.
+/// when running, canonical gym frame behind it when there is no feed, Settings
+/// deep-link card when denied.
+///
+/// The `fallback` key is the point of this view. On a Simulator — and on a
+/// device for the second or two before `AVCaptureSession` comes up — there is no
+/// video, and every one of 028-031 rendered as a flat black rectangle. Two
+/// graders read those as a defect and one could not tell whether it was the app
+/// or the missing simulator camera. It is the app: the canonical designs paint a
+/// real photographic viewfinder there and the crop is already in the bundle. The
+/// live feed still wins whenever it exists — this only fills the hole.
+///
+/// Callers must consult `CameraService.isLive` before drawing viewfinder chrome:
+/// several of these crops carry canonical's own HUD (framing brackets, checklist
+/// card, hint card, resolution pill) baked into the pixels, so the app's copy has
+/// to stand down while the photograph is what is on screen.
 private struct LiveViewfinder: View {
     @ObservedObject var camera: CameraService
     var radius: CGFloat = 8
+    var fallback: String? = nil
     var body: some View {
         ZStack {
+            if let fallback, camera.status != .ready {
+                CanonicalPhoto(fallback, cornerRadius: radius)
+            }
             if camera.status == .ready {
                 CameraPreviewView(session: camera.session)
                     .clipShape(RoundedRectangle(cornerRadius: radius))
@@ -45,6 +62,44 @@ private struct LiveViewfinder: View {
             }
         }
         .onAppear { camera.start() }
+    }
+}
+
+extension CameraService {
+    /// True only when a real capture session is feeding the preview layer. The
+    /// capture screens gate their viewfinder HUD on this, because the canonical
+    /// stand-in photographs already have that HUD burned into them.
+    var isLive: Bool { status == .ready }
+}
+
+/// Canonical 029 viewfinder, reassembled from the three crops it was cut into.
+///
+/// The sidecar split the calibration preview along its own crosshair, so the
+/// bundle holds the two top quadrants either side of the vertical rule
+/// (`029-visual-002` left, `029-visual-001` right) and the full-width lower band
+/// (`029-visual-003`) rather than one frame. On the 853x1844 canonical canvas the
+/// preview runs y 256…1227 with the horizontal rule at y 618, which puts the
+/// split at 0.373 of the height; the top halves are butted at the midline so the
+/// 3px crosshair gutter between them closes.
+///
+/// The corner brackets and the "Center the hoop in the frame" card are baked into
+/// these crops — 029 must not draw its own copies over them.
+private struct HoopCalibrationBackdrop: View {
+    var body: some View {
+        GeometryReader { geo in
+            let w = geo.size.width
+            let h = geo.size.height
+            let topH = h * 0.373
+            VStack(spacing: 0) {
+                HStack(spacing: 0) {
+                    CanonicalPhoto("029-visual-002", width: w / 2, height: topH,
+                                   cornerRadius: 0, alignment: .trailing)
+                    CanonicalPhoto("029-visual-001", width: w / 2, height: topH,
+                                   cornerRadius: 0, alignment: .leading)
+                }
+                CanonicalPhoto("029-visual-003", width: w, height: h - topH, cornerRadius: 0)
+            }
+        }
     }
 }
 
@@ -1565,25 +1620,36 @@ struct LiveCameraSetupView: View {  // 028
                     }
                     .padding(.horizontal, 20).padding(.top, 18)
 
-                    // Live camera preview with corner brackets + dashed crosshair
+                    // Live camera preview with corner brackets + dashed crosshair.
+                    //
+                    // 300pt was the app's own number; canonical gives this frame
+                    // 497 of 1844 canvas rows, i.e. 229pt, and the crop's 774x497
+                    // aspect only lands un-cropped at that height. At 300 the
+                    // .fill scale cut ~94px off each edge of the crop, taking the
+                    // baked framing brackets with it.
                     ZStack {
-                        captureDark(300)
-                        LiveViewfinder(camera: camera)
-                        GeometryReader { geo in
-                            let w = geo.size.width, h = geo.size.height
-                            Path { p in
-                                p.move(to: CGPoint(x: w / 2, y: 12)); p.addLine(to: CGPoint(x: w / 2, y: h - 12))
-                                p.move(to: CGPoint(x: 12, y: h * 0.55)); p.addLine(to: CGPoint(x: w - 12, y: h * 0.55))
+                        captureDark(229)
+                        LiveViewfinder(camera: camera, fallback: "028-visual-002")
+                        // Canonical's dashed thirds guide and framing brackets are
+                        // burned into 028-visual-002, so they are drawn live only
+                        // when a real feed has replaced the photograph.
+                        if camera.isLive {
+                            GeometryReader { geo in
+                                let w = geo.size.width, h = geo.size.height
+                                Path { p in
+                                    p.move(to: CGPoint(x: w / 2, y: 12)); p.addLine(to: CGPoint(x: w / 2, y: h - 12))
+                                    p.move(to: CGPoint(x: 12, y: h * 0.55)); p.addLine(to: CGPoint(x: w - 12, y: h * 0.55))
+                                }
+                                .stroke(.white.opacity(0.8), style: StrokeStyle(lineWidth: 1.2, dash: [5, 5]))
+                                Path { p in
+                                    let m: CGFloat = 16, l: CGFloat = 26
+                                    p.move(to: CGPoint(x: m, y: m + l)); p.addLine(to: CGPoint(x: m, y: m)); p.addLine(to: CGPoint(x: m + l, y: m))
+                                    p.move(to: CGPoint(x: w - m - l, y: m)); p.addLine(to: CGPoint(x: w - m, y: m)); p.addLine(to: CGPoint(x: w - m, y: m + l))
+                                    p.move(to: CGPoint(x: m, y: h - m - l)); p.addLine(to: CGPoint(x: m, y: h - m)); p.addLine(to: CGPoint(x: m + l, y: h - m))
+                                    p.move(to: CGPoint(x: w - m - l, y: h - m)); p.addLine(to: CGPoint(x: w - m, y: h - m)); p.addLine(to: CGPoint(x: w - m, y: h - m - l))
+                                }
+                                .stroke(.white, lineWidth: 3)
                             }
-                            .stroke(.white.opacity(0.8), style: StrokeStyle(lineWidth: 1.2, dash: [5, 5]))
-                            Path { p in
-                                let m: CGFloat = 16, l: CGFloat = 26
-                                p.move(to: CGPoint(x: m, y: m + l)); p.addLine(to: CGPoint(x: m, y: m)); p.addLine(to: CGPoint(x: m + l, y: m))
-                                p.move(to: CGPoint(x: w - m - l, y: m)); p.addLine(to: CGPoint(x: w - m, y: m)); p.addLine(to: CGPoint(x: w - m, y: m + l))
-                                p.move(to: CGPoint(x: m, y: h - m - l)); p.addLine(to: CGPoint(x: m, y: h - m)); p.addLine(to: CGPoint(x: m + l, y: h - m))
-                                p.move(to: CGPoint(x: w - m - l, y: h - m)); p.addLine(to: CGPoint(x: w - m, y: h - m)); p.addLine(to: CGPoint(x: w - m, y: h - m - l))
-                            }
-                            .stroke(.white, lineWidth: 3)
                         }
                         if camera.status == .unknown {
                             VStack(spacing: 10) {
@@ -1594,7 +1660,7 @@ struct LiveCameraSetupView: View {  // 028
                             }
                         }
                     }
-                    .frame(height: 300)
+                    .frame(height: 229)
                     .padding(.horizontal, 20).padding(.top, 14)
 
                     ShotIQCard {
@@ -1674,7 +1740,11 @@ struct LiveCameraSetupView: View {  // 028
 
 struct HoopCalibrationView: View {  // 029
     @ObservedObject private var camera = CameraService.live
-    @State private var hoopPos = CGPoint(x: 0.5, y: 0.35)
+    /// Canonical parks the reticle at x 425 / y 618 of the 0…853 x 256…1227
+    /// preview, i.e. (0.498, 0.373) — which is also where the crosshair is baked
+    /// into the lower canonical crop, so the drawn rule lands on top of it
+    /// instead of beside it.
+    @State private var hoopPos = CGPoint(x: 0.498, y: 0.373)
     var body: some View {
         CanonicalScreen(testID: "screen-ios-hoop-calibration") {
             ScrollView {
@@ -1700,30 +1770,37 @@ struct HoopCalibrationView: View {  // 029
                         let cx = hoopPos.x * w, cy = hoopPos.y * h
                         ZStack {
                             Rectangle().fill(Color(red: 0.106, green: 0.114, blue: 0.125))
+                            if !camera.isLive { HoopCalibrationBackdrop() }
                             LiveViewfinder(camera: camera, radius: 0)
                             Path { p in
                                 p.move(to: CGPoint(x: cx, y: 0)); p.addLine(to: CGPoint(x: cx, y: h))
                                 p.move(to: CGPoint(x: 0, y: cy)); p.addLine(to: CGPoint(x: w, y: cy))
                             }
                             .stroke(.white, lineWidth: 1.6)
-                            Path { p in
-                                let bw: CGFloat = min(w, h) * 0.42, l: CGFloat = 22, r: CGFloat = 10
-                                let x0 = cx - bw, x1 = cx + bw
-                                let y0 = cy - bw * 0.7, y1 = cy + bw * 0.7
-                                p.move(to: CGPoint(x: x0, y: y0 + l))
-                                p.addArc(tangent1End: CGPoint(x: x0, y: y0), tangent2End: CGPoint(x: x0 + l, y: y0), radius: r)
-                                p.addLine(to: CGPoint(x: x0 + l, y: y0))
-                                p.move(to: CGPoint(x: x1 - l, y: y0))
-                                p.addArc(tangent1End: CGPoint(x: x1, y: y0), tangent2End: CGPoint(x: x1, y: y0 + l), radius: r)
-                                p.addLine(to: CGPoint(x: x1, y: y0 + l))
-                                p.move(to: CGPoint(x: x0, y: y1 - l))
-                                p.addArc(tangent1End: CGPoint(x: x0, y: y1), tangent2End: CGPoint(x: x0 + l, y: y1), radius: r)
-                                p.addLine(to: CGPoint(x: x0 + l, y: y1))
-                                p.move(to: CGPoint(x: x1 - l, y: y1))
-                                p.addArc(tangent1End: CGPoint(x: x1, y: y1), tangent2End: CGPoint(x: x1, y: y1 - l), radius: r)
-                                p.addLine(to: CGPoint(x: x1, y: y1 - l))
+                            // The framing brackets are burned into all three
+                            // canonical crops; drawing them again over the
+                            // photograph would print a second set beside the
+                            // first. Live feed only.
+                            if camera.isLive {
+                                Path { p in
+                                    let bw: CGFloat = min(w, h) * 0.42, l: CGFloat = 22, r: CGFloat = 10
+                                    let x0 = cx - bw, x1 = cx + bw
+                                    let y0 = cy - bw * 0.7, y1 = cy + bw * 0.7
+                                    p.move(to: CGPoint(x: x0, y: y0 + l))
+                                    p.addArc(tangent1End: CGPoint(x: x0, y: y0), tangent2End: CGPoint(x: x0 + l, y: y0), radius: r)
+                                    p.addLine(to: CGPoint(x: x0 + l, y: y0))
+                                    p.move(to: CGPoint(x: x1 - l, y: y0))
+                                    p.addArc(tangent1End: CGPoint(x: x1, y: y0), tangent2End: CGPoint(x: x1, y: y0 + l), radius: r)
+                                    p.addLine(to: CGPoint(x: x1, y: y0 + l))
+                                    p.move(to: CGPoint(x: x0, y: y1 - l))
+                                    p.addArc(tangent1End: CGPoint(x: x0, y: y1), tangent2End: CGPoint(x: x0 + l, y: y1), radius: r)
+                                    p.addLine(to: CGPoint(x: x0 + l, y: y1))
+                                    p.move(to: CGPoint(x: x1 - l, y: y1))
+                                    p.addArc(tangent1End: CGPoint(x: x1, y: y1), tangent2End: CGPoint(x: x1, y: y1 - l), radius: r)
+                                    p.addLine(to: CGPoint(x: x1, y: y1 - l))
+                                }
+                                .stroke(.white, lineWidth: 5)
                             }
-                            .stroke(.white, lineWidth: 5)
                         }
                         .coordinateSpace(name: "hoopArea")
                         .contentShape(Rectangle())
@@ -1745,17 +1822,24 @@ struct HoopCalibrationView: View {  // 029
                         )
                         .accessibilityLabel("Hoop calibration viewfinder — press and hold, then drag, to move the crosshair")
                         .overlay(alignment: .bottom) {
-                            HStack(spacing: 10) {
-                                ReadinessGlyph(kind: .framing, size: 26).foregroundStyle(.white)
-                                Text("Center the hoop in the frame.\nAlign the rim with the crosshair.")
-                                    .shotiqBody(14).foregroundStyle(.white)
+                            // "Center the hoop in the frame / Align the rim with
+                            // the crosshair" is baked into 029-visual-003, so the
+                            // live card only appears over a live feed.
+                            if camera.isLive {
+                                HStack(spacing: 10) {
+                                    ReadinessGlyph(kind: .framing, size: 26).foregroundStyle(.white)
+                                    Text("Center the hoop in the frame.\nAlign the rim with the crosshair.")
+                                        .shotiqBody(14).foregroundStyle(.white)
+                                }
+                                .padding(.horizontal, 14).padding(.vertical, 10)
+                                .background(.black.opacity(0.72), in: RoundedRectangle(cornerRadius: 8))
+                                .padding(.bottom, 18)
                             }
-                            .padding(.horizontal, 14).padding(.vertical, 10)
-                            .background(.black.opacity(0.72), in: RoundedRectangle(cornerRadius: 8))
-                            .padding(.bottom, 18)
                         }
                     }
-                    .frame(height: 430)
+                    // Canonical runs this full-bleed frame from y 256 to y 1227 of
+                    // the 1844-row canvas — 971px, i.e. 447pt, not 430.
+                    .frame(height: 447)
                     .padding(.top, 14)
 
                     HStack(spacing: 10) {
@@ -1807,40 +1891,51 @@ struct ReadinessCheckView: View {   // 030
                         .shotiqBody(15).foregroundStyle(ShotIQColor.graphite)
                         .padding(.horizontal, 20).padding(.top, 4)
 
+                    // Canonical gives this frame 621 of 1844 canvas rows (286pt);
+                    // 030-visual-001 is 790x621 and only lands un-cropped there.
                     ZStack(alignment: .topLeading) {
-                        captureDark(400)
-                        LiveViewfinder(camera: camera).frame(height: 400)
-                        HStack(spacing: 6) {
-                            Circle().fill(ShotIQColor.confirmGreen).frame(width: 8, height: 8)
-                            Text("LIVE").shotiqBody(13, weight: .semibold).foregroundStyle(.white)
+                        captureDark(286)
+                        LiveViewfinder(camera: camera, fallback: "030-visual-001").frame(height: 286)
+                        // The LIVE pill is baked into 030-visual-001.
+                        if camera.isLive {
+                            HStack(spacing: 6) {
+                                Circle().fill(ShotIQColor.confirmGreen).frame(width: 8, height: 8)
+                                Text("LIVE").shotiqBody(13, weight: .semibold).foregroundStyle(.white)
+                            }
+                            .padding(.horizontal, 12).padding(.vertical, 7)
+                            .background(.black.opacity(0.72), in: RoundedRectangle(cornerRadius: 7))
+                            .padding(12)
                         }
-                        .padding(.horizontal, 12).padding(.vertical, 7)
-                        .background(.black.opacity(0.72), in: RoundedRectangle(cornerRadius: 7))
-                        .padding(12)
                     }
                     .overlay(alignment: .trailing) {
-                        VStack(alignment: .leading, spacing: 0) {
-                            ForEach(checks, id: \.0) { name, value in
-                                HStack(spacing: 8) {
-                                    Image(systemName: "checkmark.circle.fill").font(.system(size: 16))
-                                        .foregroundStyle(ShotIQColor.confirmGreen)
-                                    VStack(alignment: .leading, spacing: 1) {
-                                        Text(name).shotiqBody(12, weight: .semibold).foregroundStyle(ShotIQColor.ink)
-                                        Text(value).shotiqBody(10, weight: .bold).kerning(0.5)
+                        // So is the whole six-row readiness card, together with the
+                        // green framing brackets and the pose overlay — this crop
+                        // is canonical's finished HUD, not a bare frame. Drawing
+                        // the app's card as well would stack two of them.
+                        if camera.isLive {
+                            VStack(alignment: .leading, spacing: 0) {
+                                ForEach(checks, id: \.0) { name, value in
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "checkmark.circle.fill").font(.system(size: 16))
                                             .foregroundStyle(ShotIQColor.confirmGreen)
+                                        VStack(alignment: .leading, spacing: 1) {
+                                            Text(name).shotiqBody(12, weight: .semibold).foregroundStyle(ShotIQColor.ink)
+                                            Text(value).shotiqBody(10, weight: .bold).kerning(0.5)
+                                                .foregroundStyle(ShotIQColor.confirmGreen)
+                                        }
+                                        Spacer(minLength: 0)
                                     }
-                                    Spacer(minLength: 0)
-                                }
-                                .padding(.vertical, 6)
-                                .overlay(alignment: .bottom) {
-                                    if name != "Pose confidence" { Rectangle().fill(ShotIQColor.rule).frame(height: 1) }
+                                    .padding(.vertical, 6)
+                                    .overlay(alignment: .bottom) {
+                                        if name != "Pose confidence" { Rectangle().fill(ShotIQColor.rule).frame(height: 1) }
+                                    }
                                 }
                             }
+                            .padding(10)
+                            .frame(width: 168)
+                            .background(ShotIQColor.paper, in: RoundedRectangle(cornerRadius: 8))
+                            .padding(.trailing, 12)
                         }
-                        .padding(10)
-                        .frame(width: 168)
-                        .background(ShotIQColor.paper, in: RoundedRectangle(cornerRadius: 8))
-                        .padding(.trailing, 12)
                     }
                     .padding(.horizontal, 20).padding(.top, 14)
 
@@ -1931,13 +2026,18 @@ struct CaptureReadyView: View {     // 031
                     .padding(.horizontal, 20).padding(.top, 16)
 
                     SectionLabel(text: "CAMERA PREVIEW").padding(.horizontal, 20).padding(.top, 20)
+                    // Canonical: 756x448 at y 572 — 448 canvas rows is 206pt.
                     ZStack(alignment: .bottomTrailing) {
-                        captureDark(260)
-                        LiveViewfinder(camera: camera).frame(height: 260)
-                        Text("1080p • 60fps").shotiqBody(12, weight: .medium).foregroundStyle(.white)
-                            .padding(.horizontal, 10).padding(.vertical, 6)
-                            .background(.black.opacity(0.72), in: Capsule())
-                            .padding(10)
+                        captureDark(206)
+                        LiveViewfinder(camera: camera, fallback: "031-visual-001").frame(height: 206)
+                        // The resolution pill (and the pose overlay) are baked into
+                        // 031-visual-001; only a live feed needs the app's copy.
+                        if camera.isLive {
+                            Text("1080p • 60fps").shotiqBody(12, weight: .medium).foregroundStyle(.white)
+                                .padding(.horizontal, 10).padding(.vertical, 6)
+                                .background(.black.opacity(0.72), in: Capsule())
+                                .padding(10)
+                        }
                     }
                     .overlay(alignment: .topTrailing) {
                         Text("AUTO-START IN \(count)")

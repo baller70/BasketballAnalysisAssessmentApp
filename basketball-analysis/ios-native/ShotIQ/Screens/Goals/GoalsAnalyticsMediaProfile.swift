@@ -1862,13 +1862,19 @@ struct MediaDetailView: View {      // 069
                             .padding(10)
                         }
                         .padding(.top, 14)
+                        // Canonical's scrubber strip is eight frames of the clip,
+                        // not eight beige rectangles. The bundle holds two crops of
+                        // this take: 069-visual-002 (x 108…698, the de-chromed
+                        // middle the hero above uses) and 069-visual-004, the wider
+                        // x 23…828 frame that also takes in the duration and speed
+                        // pills. The wide one cannot back the hero — its baked pills
+                        // would land next to the live ones — but at 48pt the pills
+                        // fall outside the .fill crop and it is simply the frame.
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 6) {
                                 ForEach(0..<8, id: \.self) { i in
                                     Button { selectedFrame = i } label: {
-                                        RoundedRectangle(cornerRadius: 5)
-                                            .fill(ShotIQColor.warmCanvas)
-                                            .frame(width: 48, height: 38)
+                                        CanonicalPhoto("069-visual-004", width: 48, height: 38, cornerRadius: 5)
                                             .overlay(RoundedRectangle(cornerRadius: 5)
                                                 .stroke(i == selectedFrame ? ShotIQColor.shotiqOrange : ShotIQColor.rule,
                                                         lineWidth: i == selectedFrame ? 2 : 1))
@@ -1887,7 +1893,10 @@ struct MediaDetailView: View {      // 069
                         SectionLabel(text: "LINKED ANALYSIS").padding(.top, 18)
                         ShotIQCard {
                             HStack(spacing: 12) {
-                                PhotoThumb(width: 62, height: 48, icon: "chart.xyaxis.line")
+                                // Canonical's linked-analysis row shows a frame of
+                                // the same clip, not a placeholder tile.
+                                PhotoThumb(width: 62, height: 48, icon: "chart.xyaxis.line",
+                                           photo: "069-visual-004")
                                 VStack(alignment: .leading, spacing: 3) {
                                     HStack(spacing: 4) {
                                         // The date and the "Open analysis" pill

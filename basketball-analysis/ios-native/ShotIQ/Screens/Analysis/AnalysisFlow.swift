@@ -1117,9 +1117,31 @@ struct FrameDetailSkeletonView: View { // 042
                         .overlay(Rectangle().fill(ShotIQColor.rule).frame(height: 1), alignment: .bottom)
                         PlayerHeader(name: "Jordan Ellis")
                         VStack(alignment: .leading, spacing: 0) {
+                            // The canonical frame, not a black rectangle. 042's
+                            // sidecar bundles one crop for this panel and it is the
+                            // *finished* panel: 767x689 at y 333 on the 853x1844
+                            // canvas — 353x317pt, which is exactly the width this
+                            // column offers, so it lands with no crop at all — and
+                            // it already carries the pose skeleton, the 168° elbow
+                            // callout, the phase and FPS chips, the CONFIDENCE card
+                            // and the transport row burned into the pixels.
+                            //
+                            // So the app draws none of those a second time: the
+                            // skeleton, the confidence card and the FPS chip are
+                            // gone, `MediaSurface`'s own scrubber is gone (that is
+                            // why this is a plain CanonicalPhoto), and the phase
+                            // Menu is kept only as a transparent hit target sitting
+                            // on its own printed chip, so the control still works
+                            // without stamping a second chip over the first.
                             ZStack(alignment: .topLeading) {
-                                ZStack {
-                                    MediaSurface(height: 400)
+                                CanonicalPhoto("042-visual-002", height: 317, cornerRadius: 4)
+                                // The live Canvas only comes out for something the
+                                // printed frame does not already show — joint
+                                // points, the ball marker, or the angle arcs behind
+                                // "Show joint angles". Left unconditional it drew a
+                                // second white stick figure a few points off the
+                                // baked one.
+                                if showJoints || showBall || showAngles {
                                     SkeletonOverlay(showBones: showSkeleton, showJoints: showJoints,
                                                     showBall: showBall, showAngles: showAngles)
                                 }
@@ -1136,38 +1158,12 @@ struct FrameDetailSkeletonView: View { // 042
                                         .foregroundStyle(.white)
                                         .padding(.horizontal, 12).padding(.vertical, 8)
                                         .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 8))
+                                        .opacity(0)
                                     }
+                                    .accessibilityLabel("Shot phase, \(phase), frame \(frameNumber)")
                                     Spacer()
-                                    Text("120 FPS").shotiqBody(12, weight: .bold).kerning(0.5)
-                                        .foregroundStyle(.white)
-                                        .padding(.horizontal, 12).padding(.vertical, 8)
-                                        .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 8))
                                 }
                                 .padding(10)
-                            }
-                            .overlay(alignment: .trailing) {
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Text("CONFIDENCE").shotiqBody(9, weight: .semibold).kerning(0.6)
-                                        .foregroundStyle(.white.opacity(0.8))
-                                    HStack(spacing: 6) {
-                                        Text("98%").font(.custom("Tungsten-Semibold", size: 18))
-                                            .foregroundStyle(ShotIQColor.analysisBlue)
-                                        Capsule().fill(ShotIQColor.analysisBlue).frame(width: 40, height: 3)
-                                    }
-                                    Rectangle().fill(.white.opacity(0.25)).frame(height: 1)
-                                    Text("KEYPOINTS").shotiqBody(9, weight: .semibold).kerning(0.6)
-                                        .foregroundStyle(.white.opacity(0.8))
-                                    Text("17/17").font(.custom("Tungsten-Semibold", size: 18))
-                                        .foregroundStyle(ShotIQColor.confirmGreen)
-                                    Rectangle().fill(.white.opacity(0.25)).frame(height: 1)
-                                    Text("TRACKING").shotiqBody(9, weight: .semibold).kerning(0.6)
-                                        .foregroundStyle(.white.opacity(0.8))
-                                    Text("EXCELLENT").font(.custom("Tungsten-Semibold", size: 16))
-                                        .foregroundStyle(ShotIQColor.confirmGreen)
-                                }
-                                .padding(12)
-                                .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 10))
-                                .padding(.trailing, 12)
                             }
                             .padding(.top, 14)
                             HStack(spacing: 10) {

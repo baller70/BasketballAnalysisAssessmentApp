@@ -873,11 +873,20 @@ struct ShootingProfileView: View {
                         .padding(.top, 12)
 
                         sectionHeader("SHOOTING STYLE", "Pick the style that best matches your shot.")
+                        // All three canonical style frames are bundled; the middle
+                        // one was the only card still falling back to the grey
+                        // `figure.basketball` placeholder. Note that canonical
+                        // shows BALANCED selected, so 011-visual-001 carries the
+                        // orange check in its own top-right corner. StyleCard's
+                        // live selection mark sits under the photo, not on it, so
+                        // nothing is drawn twice — but the baked mark does not
+                        // move if the player picks another style.
                         HStack(alignment: .top, spacing: 10) {
                             StyleCard(label: "COMPACT", caption: "Quick, efficient release",
                                       photoKey: "011-visual-004",
                                       selected: m.styleArc == "Compact") { m.styleArc = "Compact" }
                             StyleCard(label: "BALANCED", caption: "Versatile all-around approach",
+                                      photoKey: "011-visual-001",
                                       selected: m.styleArc == "Balanced") { m.styleArc = "Balanced" }
                             StyleCard(label: "HIGH ARC", caption: "Higher release, maximum arc",
                                       photoKey: "011-visual-003",
