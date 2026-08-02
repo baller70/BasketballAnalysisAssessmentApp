@@ -275,7 +275,8 @@ export default function DashboardPage() {
                 [hasData ? String(stats!.totalAnalyses) : "0", "TOTAL ANALYSES", "All time", "var(--shotiq-color-ink)"],
                 [score != null ? String(score) : "—", "AVG. FORM SCORE", band.label.toLowerCase(), "var(--shotiq-color-analysisBlue)"],
                 [hasData ? String(stats!.totalAnalyses * 24) : "0", "TOTAL SHOTS", "All time", "var(--shotiq-color-ink)"],
-                [improvement, "IMPROVEMENT", "vs last 30 days", "var(--shotiq-color-confirmGreen)"],
+                [improvement, "IMPROVEMENT", "vs last 30 days",
+                 deltaPct != null && deltaPct < 0 ? "var(--shotiq-color-reviewRed)" : "var(--shotiq-color-confirmGreen)"],
               ].map(([v, l, sub, c]) => (
                 // The tile labels are single-line in canonical; the tracking was
                 // pushing "AVG. FORM SCORE" onto a second row inside the 430px
