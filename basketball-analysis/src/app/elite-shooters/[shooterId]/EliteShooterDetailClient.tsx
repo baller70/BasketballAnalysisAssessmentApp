@@ -29,11 +29,26 @@ interface ApiShooter {
   id: number; dbId: number | null; name: string; team: string; league: string
   era: string; tier: string; position: string; height: number; weight: number
   careerPct?: number; careerFreeThrowPct: number
+  careerFieldGoalPct?: number | null; careerThreePct?: number | null
+  careerEfgPct?: number | null; careerTsPct?: number | null
+  careerThreeMade?: number | null; careerThreeAttempts?: number | null
   measurements: Measurements
   strengths?: string[]; weaknesses?: string[]; description?: string
   approvedFormImages: string[]
   imageUrl?: string
 }
+
+/**
+ * eFG%, TS% and the 3PM/3PA totals need box-score rows, which only exist for
+ * shooters the server has persisted. Both helpers render an em dash rather than
+ * a placeholder so a static-fallback shooter never shows another player's
+ * numbers — these six figures used to be hardcoded constants shared by every
+ * shooter on the route.
+ */
+const pct = (v: number | null | undefined) =>
+  v == null ? "\u2014" : `${v.toFixed(1)}%`
+const count = (v: number | null | undefined) =>
+  v == null ? "\u2014" : v.toLocaleString("en-US")
 
 const DETAIL_TABS = ["OVERVIEW", "MECHANICS", "FORM GALLERY", "CAREER STATS", "STRENGTHS", "OPPORTUNITIES", "BIO"]
 const PHASES = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
@@ -343,9 +358,10 @@ export default function EliteShooterDetailClient() {
           {/* Canonical sets these figures large enough to fill the panel —
               the shrunken version left ~90px of dead space under them. */}
           <div className="mt-[12px] grid grid-cols-6 divide-x divide-[var(--shotiq-color-rule)] pb-[10px] text-center">
-            {[["3P%", shooter.careerPct != null ? `${shooter.careerPct.toFixed(1)}%` : "—"],
-              ["3PM", "3,748"], ["3PA", "8,760"],
-              ["FT%", `${shooter.careerFreeThrowPct.toFixed(1)}%`], ["eFG%", "60.6%"], ["TS%", "66.2%"]].map(([k, v]) => (
+            {[["3P%", pct(shooter.careerThreePct ?? shooter.careerPct)],
+              ["3PM", count(shooter.careerThreeMade)], ["3PA", count(shooter.careerThreeAttempts)],
+              ["FT%", pct(shooter.careerFreeThrowPct)], ["eFG%", pct(shooter.careerEfgPct)],
+              ["TS%", pct(shooter.careerTsPct)]].map(([k, v]) => (
               <div key={k} className="px-[3px]">
                 <div className="text-[11px] text-[var(--shotiq-color-graphite)]">{k}</div>
                 <div className="shotiq-numeric mt-[6px] text-[23px] leading-[26px]">{v}</div>

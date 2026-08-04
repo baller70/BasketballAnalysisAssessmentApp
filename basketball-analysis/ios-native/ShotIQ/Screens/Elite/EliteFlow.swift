@@ -77,14 +77,15 @@ fileprivate struct PlayerCardExportView: View {
     }
 }
 
-/// Career shooting rates arrive from the API as 0-1 fractions (the seed carries
-/// `careerPct: 0.459`, i.e. 45.9%). Every display site formatted them with
-/// "%.1f%%" and no multiply, so a 62.5% shooter printed as "0.5%" and an 87.5%
-/// free-throw shooter as "0.9%". One formatter now owns the conversion so the
-/// five sites cannot drift apart again.
-func shotiqPercentText(_ fraction: Double?) -> String {
-    guard let fraction else { return "—" }
-    return String(format: "%.1f%%", fraction * 100)
+/// Career shooting rates arrive from /api/shooters already scaled 0-100 —
+/// `src/data/eliteShooters.ts` carries `careerPct: 43.0`, and the route passes
+/// it through untouched. The UITest seed below used to carry 0-1 fractions
+/// instead, which is why 053 rendered "0.5%" for a 45.9% shooter: the seed and
+/// the API disagreed, not the formatter. The seed now matches the API and one
+/// formatter owns every display site so the five cannot drift apart again.
+func shotiqPercentText(_ percent: Double?) -> String {
+    guard let percent else { return "—" }
+    return String(format: "%.1f%%", percent)
 }
 
 struct PlayerCardView: View {       // 048
@@ -624,10 +625,15 @@ final class EliteViewModel: ObservableObject {
         // Test-only: one canned shooter so 052/053 have a row to open without
         // reaching /api/shooters.
         if UITestHooks.demoData {
+            // Published career rates, 0-100, on the same scale /api/shooters
+            // serves. This seed used to carry 0-1 fractions, which is the whole
+            // reason 052/053 rendered "0.5%".
             shooters = [EliteShooterDTO(id: 1, name: "Klay Thompson", team: "Warriors",
                                         league: "NBA", era: "Modern", tier: "Elite",
                                         position: "SG", height: 78, weight: 215,
-                                        careerPct: 0.459, careerFreeThrowPct: 0.855,
+                                        careerPct: 41.3, careerFreeThrowPct: 85.3,
+                                        careerFieldGoalPct: 45.7, careerThreePct: 41.3,
+                                        careerEfgPct: 54.8, careerTsPct: 58.6,
                                         approvedFormImages: nil)]
             return
         }
@@ -1146,7 +1152,7 @@ struct EliteShootersView: View {    // 052
         if position != "All Positions" { out = out.filter { $0.position == position } }
         if league != "More Filters" { out = out.filter { $0.league == league } }
         switch sortKey {
-        case "FG%": out.sort { ($0.careerPct ?? 0) > ($1.careerPct ?? 0) }
+        case "FG%": out.sort { ($0.careerFieldGoalPct ?? 0) > ($1.careerFieldGoalPct ?? 0) }
         case "Name": out.sort { $0.name < $1.name }
         default: break // WSI — canonical server order
         }
@@ -1320,7 +1326,7 @@ struct EliteShootersView: View {    // 052
                             VStack(spacing: 3) {
                                 Text("FG%").shotiqMicroCaps()
                                     .foregroundStyle(ShotIQColor.graphite)
-                                Text(shotiqPercentText(s.careerPct))
+                                Text(shotiqPercentText(s.careerFieldGoalPct))
                                     .font(.custom("Tungsten-Semibold", size: 22)).foregroundStyle(ShotIQColor.ink)
                                     .lineLimit(1).minimumScaleFactor(0.7)
                             }
@@ -1443,10 +1449,11 @@ struct EliteShooterDetailView: View { // 053
                                 }
                                 Spacer()
                                 Button {
-                                    let fg = shotiqPercentText(shooter.careerPct)
+                                    let fg = shotiqPercentText(shooter.careerFieldGoalPct)
+                                    let tp = shotiqPercentText(shooter.careerThreePct ?? shooter.careerPct)
                                     info = EliteInfoNote(
                                         title: shooter.name,
-                                        message: "\(shooter.position) • \(shooter.team) (\(shooter.league)). \(shooter.tier ?? "Elite") \(shooter.era ?? "era") shooter standing \(shooter.height / 12)'\(shooter.height % 12)\" at \(shooter.weight) lb, with a \(fg) career field-goal percentage and \(shotiqPercentText(shooter.careerFreeThrowPct)) from the line.")
+                                        message: "\(shooter.position) • \(shooter.team) (\(shooter.league)). \(shooter.tier ?? "Elite") \(shooter.era ?? "era") shooter standing \(shooter.height / 12)'\(shooter.height % 12)\" at \(shooter.weight) lb, shooting \(fg) from the field, \(tp) from three and \(shotiqPercentText(shooter.careerFreeThrowPct)) from the line.")
                                 } label: {
                                     HStack(spacing: 3) {
                                         Text("View bio").shotiqBody(14).foregroundStyle(ShotIQColor.shotiqOrange)
@@ -1459,15 +1466,19 @@ struct EliteShooterDetailView: View { // 053
                             .padding(.top, 18)
                             .id("section-OVERVIEW")
                             HStack(alignment: .top, spacing: 12) {
+                                // Canonical 053 shows five shooting rates here —
+                                // FG%, 3P%, FT%, eFG%, TS% — not height/weight.
                                 ShotIQCard {
                                     HStack(spacing: 0) {
-                                        summaryStat("FG%", shotiqPercentText(shooter.careerPct))
+                                        summaryStat("FG%", shotiqPercentText(shooter.careerFieldGoalPct))
+                                        Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 38)
+                                        summaryStat("3P%", shotiqPercentText(shooter.careerThreePct ?? shooter.careerPct))
                                         Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 38)
                                         summaryStat("FT%", shotiqPercentText(shooter.careerFreeThrowPct))
                                         Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 38)
-                                        summaryStat("HEIGHT", "\(shooter.height / 12)'\(shooter.height % 12)\"")
+                                        summaryStat("eFG%", shotiqPercentText(shooter.careerEfgPct))
                                         Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 38)
-                                        summaryStat("WEIGHT", "\(shooter.weight) lb")
+                                        summaryStat("TS%", shotiqPercentText(shooter.careerTsPct))
                                     }
                                     .padding(.vertical, 14)
                                 }
@@ -1609,7 +1620,7 @@ struct EliteShooterDetailView: View { // 053
                                         .stroke(savedReference ? ShotIQColor.shotiqOrange : ShotIQColor.rule))
                                 }
                                 .buttonStyle(.plain)
-                                ShareLink(item: "Studying \(shooter.name)'s shooting form on ShotIQ — \(shotiqPercentText(shooter.careerPct)) career FG. 🏀") {
+                                ShareLink(item: "Studying \(shooter.name)'s shooting form on ShotIQ — \(shotiqPercentText(shooter.careerFieldGoalPct)) career FG. 🏀") {
                                     Image(systemName: "square.and.arrow.up").font(.system(size: 17))
                                         .foregroundStyle(ShotIQColor.ink)
                                         .frame(width: 52, height: 52)
@@ -1636,7 +1647,10 @@ struct EliteShooterDetailView: View { // 053
             Text(label).shotiqBody(10, weight: .medium).kerning(0.5)
                 .foregroundStyle(ShotIQColor.graphite)
                 .lineLimit(1).minimumScaleFactor(0.6)
+            // Five columns share the card on 053, so the widest value ("100.0%")
+            // is allowed to shrink rather than truncate.
             Text(value).font(.custom("Tungsten-Semibold", size: 24)).foregroundStyle(ShotIQColor.ink)
+                .lineLimit(1).minimumScaleFactor(0.6)
         }
         .frame(maxWidth: .infinity)
     }
