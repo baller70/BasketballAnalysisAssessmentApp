@@ -24,6 +24,7 @@ import {
 } from "lucide-react"
 import { useAuthStore } from "@/stores/authStore"
 import { PoseGlyph, StreakGlyph, PointsGlyph } from "@/components/shotiq/Glyphs"
+import { PhoneChrome } from "@/components/shotiq/ShotIQPhoneChrome"
 
 export type IconType = LucideIcon
 
@@ -102,10 +103,15 @@ export function ShotIQShell({
       className="shotiq-canonical relative mx-auto flex w-full max-w-[1440px] flex-col bg-[var(--shotiq-color-paper)] text-[var(--shotiq-color-ink)]"
       style={{ minHeight: 900 }}
     >
+      {/* Canonical phone chrome — top bar + five-item bottom tab bar, below the
+          tablet breakpoint only. See ShotIQPhoneChrome.tsx for the measured
+          geometry. It is display:none above md, so desktop is byte-identical. */}
+      <PhoneChrome />
+
       {/* ---------------------------------------------------------- topbar */}
       <header
         data-testid="region-topbar"
-        className="flex h-[65px] shrink-0 items-center border-b border-[var(--shotiq-color-rule)] pl-[20px] pr-[18px]"
+        className="hidden h-[65px] shrink-0 items-center border-b border-[var(--shotiq-color-rule)] pl-[20px] pr-[18px] md:flex"
       >
         <Link href="/dashboard" className="shotiq-wordmark mr-[64px] text-[21px] leading-none">
           SHOT<span className="text-[var(--shotiq-color-shotiqOrange)]">IQ</span>
@@ -246,7 +252,11 @@ export function ShotIQShell({
         <UnifiedSidebar />
 
         {/* ---------------------------------------------------- screen body */}
-        <div data-testid="region-main" className="min-w-0 flex-1">
+        {/* `shotiq-phone-flow` is inert above the tablet breakpoint; below it,
+            it reflows the desktop column layouts to a single 393pt column
+            (globals.css). The bottom pad clears the fixed tab bar. */}
+        <div data-testid="region-main"
+             className="shotiq-phone-flow min-w-0 flex-1 pb-[61px] md:pb-0">
           {children}
         </div>
       </div>
@@ -504,7 +514,7 @@ export function Ring({ pct, size = 96, stroke = 8, color = "var(--shotiq-color-s
  * 3px left indicator. Row and heading heights are sized so the full menu fits
  * the 900px canvas below the 65px topbar without scrolling.
  */
-const SIDEBAR_GROUPS: {
+export const SIDEBAR_GROUPS: {
   heading: string
   items: { label: string; href: string; icon: IconType }[]
 }[] = [
@@ -541,7 +551,7 @@ const SIDEBAR_GROUPS: {
   ]},
 ]
 
-const SIDEBAR_FOOTER: { label: string; href: string; icon: IconType }[] = [
+export const SIDEBAR_FOOTER: { label: string; href: string; icon: IconType }[] = [
   { label: "Profile", href: "/profile", icon: User },
   { label: "Onboarding", href: "/onboarding", icon: Rocket },
   { label: "Settings", href: "/settings", icon: Settings },
@@ -550,7 +560,7 @@ const SIDEBAR_FOOTER: { label: string; href: string; icon: IconType }[] = [
 
 /** Legal pages are real routes but not tabs; they sit in a compact footer line
  *  so every destination is reachable without eating a full nav row. */
-const SIDEBAR_LEGAL: { label: string; href: string }[] = [
+export const SIDEBAR_LEGAL: { label: string; href: string }[] = [
   { label: "Privacy", href: "/privacy" },
   { label: "Terms", href: "/terms" },
 ]
@@ -585,7 +595,7 @@ export function UnifiedSidebar() {
 
   return (
     <nav data-testid="region-sidebar" aria-label="Primary"
-         className="flex w-[196px] shrink-0 flex-col border-r border-[var(--shotiq-color-rule)] pt-[8px]">
+         className="hidden w-[196px] shrink-0 flex-col border-r border-[var(--shotiq-color-rule)] pt-[8px] md:flex">
       <div className="min-h-0 flex-1 overflow-y-auto">
         {SIDEBAR_GROUPS.map((g) => (
           <div key={g.heading} className="mb-[4px]">

@@ -16,35 +16,83 @@ import {
   Search, ChevronDown, ChevronUp, HelpCircle, GitCompare, X, Check,
   LayoutGrid, List, RotateCcw, CalendarClock,
 } from "lucide-react"
-import { MechanicGlyph, type MechanicKind } from "@/components/shotiq/Glyphs"
+import { MechanicGlyph, PoseGlyph, type MechanicKind } from "@/components/shotiq/Glyphs"
+import { ALL_ELITE_SHOOTERS } from "@/data/eliteShooters"
 
 interface Row {
-  name: string; slug: string; attempts: number; hand: string; level: string
-  ht: string; htIn: number; age: number; careerPct: number; makes: number
-  wsi: number; relH: string; relHBand: string; relT: string; elbow: string
-  overall: number; keyMatch: [string, string]; pos: "Guard" | "Wing" | "Big"
-  thumb: string
+  name: string; slug: string; attempts: number | null; hand: string; level: string
+  ht: string; htIn: number; age: number | null; careerPct: number; makes: number | null
+  wsi: number; relH: string; relHBand: string; relT: string | null; elbow: string | null
+  overall: number | null; keyMatch: [string, string] | null; pos: "Guard" | "Wing" | "Big"
+  thumb: string | null
+  /** The six reference shooters canonical 088 lists, with measured mechanics. */
+  featured?: boolean
 }
 
-const ROWS: Row[] = [
-  { name: "Stephen Curry", slug: "stephen-curry", attempts: 7892, hand: "R", level: "NBA", ht: "6'2\"", htIn: 74, age: 36, careerPct: 48.7, makes: 3842, wsi: 94, relH: "7'0\"", relHBand: "High", relT: "0.52s", elbow: "12°", overall: 89, keyMatch: ["Release Time", "+0.01s"], pos: "Guard", thumb: "/images/canonical/088-row-1.png" },
-  { name: "Klay Thompson", slug: "klay-thompson", attempts: 6615, hand: "R", level: "NBA", ht: "6'6\"", htIn: 78, age: 34, careerPct: 43.9, makes: 2905, wsi: 90, relH: "7'2\"", relHBand: "High", relT: "0.54s", elbow: "10°", overall: 85, keyMatch: ["Elbow Alignment", "+2°"], pos: "Guard", thumb: "/images/canonical/088-row-2.png" },
-  { name: "Kyrie Irving", slug: "kyrie-irving", attempts: 6200, hand: "R", level: "NBA", ht: "6'2\"", htIn: 74, age: 32, careerPct: 46.3, makes: 2873, wsi: 89, relH: "6'11\"", relHBand: "High", relT: "0.51s", elbow: "8°", overall: 83, keyMatch: ["Release Height", "-1\""], pos: "Guard", thumb: "/images/canonical/088-row-3.png" },
-  { name: "Damian Lillard", slug: "damian-lillard", attempts: 7150, hand: "R", level: "NBA", ht: "6'2\"", htIn: 74, age: 33, careerPct: 44.1, makes: 3154, wsi: 87, relH: "6'10\"", relHBand: "High", relT: "0.53s", elbow: "9°", overall: 81, keyMatch: ["Release Time", "+0.02s"], pos: "Guard", thumb: "/images/canonical/088-row-4.png" },
-  { name: "Kevin Durant", slug: "kevin-durant", attempts: 10534, hand: "R", level: "NBA", ht: "6'10\"", htIn: 82, age: 35, careerPct: 50.2, makes: 5287, wsi: 86, relH: "7'6\"", relHBand: "Very High", relT: "0.56s", elbow: "11°", overall: 78, keyMatch: ["Release Height", "+4\""], pos: "Wing", thumb: "/images/canonical/088-row-5.png" },
-  { name: "JJ Redick", slug: "jj-redick", attempts: 4486, hand: "R", level: "NBA", ht: "6'4\"", htIn: 76, age: 39, careerPct: 46.8, makes: 2099, wsi: 85, relH: "6'9\"", relHBand: "High", relT: "0.55s", elbow: "13°", overall: 76, keyMatch: ["Elbow Alignment", "+3°"], pos: "Guard", thumb: "/images/canonical/088-row-6.png" },
+const FEATURED: Row[] = [
+  { name: "Stephen Curry", slug: "stephen-curry", attempts: 7892, hand: "R", level: "NBA", ht: "6'2\"", htIn: 74, age: 36, careerPct: 48.7, makes: 3842, wsi: 94, relH: "7'0\"", relHBand: "High", relT: "0.52s", elbow: "12°", overall: 89, keyMatch: ["Release Time", "+0.01s"], pos: "Guard", thumb: "/images/canonical/088-row-1.png", featured: true },
+  { name: "Klay Thompson", slug: "klay-thompson", attempts: 6615, hand: "R", level: "NBA", ht: "6'6\"", htIn: 78, age: 34, careerPct: 43.9, makes: 2905, wsi: 90, relH: "7'2\"", relHBand: "High", relT: "0.54s", elbow: "10°", overall: 85, keyMatch: ["Elbow Alignment", "+2°"], pos: "Guard", thumb: "/images/canonical/088-row-2.png", featured: true },
+  { name: "Kyrie Irving", slug: "kyrie-irving", attempts: 6200, hand: "R", level: "NBA", ht: "6'2\"", htIn: 74, age: 32, careerPct: 46.3, makes: 2873, wsi: 89, relH: "6'11\"", relHBand: "High", relT: "0.51s", elbow: "8°", overall: 83, keyMatch: ["Release Height", "-1\""], pos: "Guard", thumb: "/images/canonical/088-row-3.png", featured: true },
+  { name: "Damian Lillard", slug: "damian-lillard", attempts: 7150, hand: "R", level: "NBA", ht: "6'2\"", htIn: 74, age: 33, careerPct: 44.1, makes: 3154, wsi: 87, relH: "6'10\"", relHBand: "High", relT: "0.53s", elbow: "9°", overall: 81, keyMatch: ["Release Time", "+0.02s"], pos: "Guard", thumb: "/images/canonical/088-row-4.png", featured: true },
+  { name: "Kevin Durant", slug: "kevin-durant", attempts: 10534, hand: "R", level: "NBA", ht: "6'10\"", htIn: 82, age: 35, careerPct: 50.2, makes: 5287, wsi: 86, relH: "7'6\"", relHBand: "Very High", relT: "0.56s", elbow: "11°", overall: 78, keyMatch: ["Release Height", "+4\""], pos: "Wing", thumb: "/images/canonical/088-row-5.png", featured: true },
+  { name: "JJ Redick", slug: "jj-redick", attempts: 4486, hand: "R", level: "NBA", ht: "6'4\"", htIn: 76, age: 39, careerPct: 46.8, makes: 2099, wsi: 85, relH: "6'9\"", relHBand: "High", relT: "0.55s", elbow: "13°", overall: 76, keyMatch: ["Elbow Alignment", "+3°"], pos: "Guard", thumb: "/images/canonical/088-row-6.png", featured: true },
 ]
 
-const fmt = (n: number) => n.toLocaleString("en-US")
+const fmt = (n: number | null) => (n == null ? "—" : n.toLocaleString("en-US"))
 
-// The canonical screen advertises the full catalog size while listing the
-// featured reference rows.
-const CATALOG_SIZE = 158
+/**
+ * The rest of the table is the app's real reference catalog — the same 328
+ * shooters /api/shooters serves. Until now the table was six hard-coded rows,
+ * all right-handed NBA guards/wings, under a header that advertised a
+ * 158-shooter database: every narrowing filter emptied it (R10 defect M4).
+ *
+ * Only fields the catalog actually holds are mapped. Release time, elbow
+ * alignment, attempt volume and similarity-to-you are per-analysis measurements
+ * the catalog does not carry, so those cells read "—" rather than being
+ * invented; release height comes from the catalog's own (tier-estimated)
+ * biomechanics block.
+ */
+const LEFT_HANDED = new Set([
+  "James Harden", "Manu Ginobili", "Manu Ginóbili", "Lonzo Ball", "Goran Dragic",
+  "Goran Dragić", "Josh Giddey", "Davis Bertans", "Bob Cousy", "Chris Bosh",
+  "Lamar Odom", "Nikola Mirotic", "Mike Dunleavy", "Toni Kukoc", "Toni Kukoč",
+  "Michael Redd", "Brandon Roy", "Gilbert Arenas", "Derrick Rose", "Marcus Morris",
+])
+
+const feetInches = (inches: number) => `${Math.floor(inches / 12)}'${Math.round(inches % 12)}"`
+const slugify = (n: string) => n.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")
+
+const CATALOG: Row[] = ALL_ELITE_SHOOTERS
+  .filter((sh) => sh.careerPct != null)
+  .map((sh): Row => {
+    const pos: Row["pos"] =
+      sh.position === "POWER_FORWARD" || sh.position === "CENTER" ? "Big"
+        : sh.position === "SMALL_FORWARD" || sh.position === "FORWARD" ? "Wing" : "Guard"
+    const level = sh.league === "NBA" ? "NBA" : sh.league === "WNBA" ? "WNBA" : "College"
+    const relHeight = sh.measurements?.releaseHeight ?? 0
+    return {
+      name: sh.name, slug: slugify(sh.name), attempts: null,
+      hand: LEFT_HANDED.has(sh.name) ? "L" : "R",
+      level, ht: feetInches(sh.height), htIn: sh.height, age: null,
+      careerPct: sh.careerPct as number, makes: null,
+      wsi: sh.overallScore,
+      relH: relHeight ? feetInches(relHeight) : "—",
+      relHBand: relHeight >= 110 ? "Very High" : "High",
+      relT: null, elbow: null, overall: null, keyMatch: null, pos, thumb: null,
+    }
+  })
+
+const ROWS: Row[] = [
+  ...FEATURED,
+  ...CATALOG.filter((c) => !FEATURED.some((f) => f.name === c.name)),
+]
 
 const RADIO_GROUPS: { id: "hand" | "pos" | "level"; label: string; options: string[] }[] = [
   { id: "hand", label: "Handedness", options: ["All", "Right", "Left"] },
   { id: "pos", label: "Position", options: ["All", "Guard", "Wing", "Big"] },
-  { id: "level", label: "Level", options: ["All", "NBA", "College", "International"] },
+  // The catalog holds NBA, WNBA and college shooters. "International" was an
+  // option nothing could ever match.
+  { id: "level", label: "Level", options: ["All", "NBA", "WNBA", "College"] },
 ]
 
 // Each facet carries the bespoke diagram for the quantity it filters on.
@@ -133,7 +181,9 @@ export default function EliteShootersPage() {
       (radios.hand === "All" || (radios.hand === "Right" ? r.hand === "R" : r.hand === "L")) &&
       (radios.pos === "All" || r.pos === radios.pos) &&
       (radios.level === "All" || r.level === radios.level) &&
-      r.attempts >= attempts[0] && (attempts[1] >= 10000 || r.attempts <= attempts[1]) &&
+      // Attempt volume is only known for the featured reference rows; a row
+      // without it passes while the minimum is still at its floor.
+      (r.attempts == null ? attempts[0] <= 100 : r.attempts >= attempts[0] && (attempts[1] >= 10000 || r.attempts <= attempts[1])) &&
       r.wsi >= wsiRange[0] && r.wsi <= wsiRange[1])
     const relhChecks = extraChecks["relh"]
     if (relhChecks?.size) out = out.filter((r) => relhChecks.has(r.relHBand))
@@ -141,17 +191,24 @@ export default function EliteShootersPage() {
     if (hChecks?.size) out = out.filter((r) =>
       (hChecks.has("Under 6'4\"") && r.htIn < 76) || (hChecks.has("6'4\" and above") && r.htIn >= 76))
     const aChecks = extraChecks["age"]
-    if (aChecks?.size) out = out.filter((r) =>
-      (aChecks.has("Under 34") && r.age < 34) || (aChecks.has("34 and above") && r.age >= 34))
+    if (aChecks?.size) out = out.filter((r) => r.age != null &&
+      ((aChecks.has("Under 34") && r.age < 34) || (aChecks.has("34 and above") && r.age >= 34)))
     out = [...out]
     if (sort === "WSI") out.sort((a, b) => b.wsi - a.wsi)
     if (sort === "Career %") out.sort((a, b) => b.careerPct - a.careerPct)
-    if (sort === "Attempts") out.sort((a, b) => b.attempts - a.attempts)
+    if (sort === "Attempts") out.sort((a, b) => (b.attempts ?? -1) - (a.attempts ?? -1))
     if (sort === "Name A–Z") out.sort((a, b) => a.name.localeCompare(b.name))
+    // The featured reference shooters lead the table in every ordering — they
+    // are the rows with measured mechanics and a similarity score.
+    out.sort((a, b) => Number(!!b.featured) - Number(!!a.featured))
     return out
   }, [query, radios, attempts, wsiRange, extraChecks, sort])
 
-  const unfiltered = filtered.length === ROWS.length
+  // The table area shows one screenful; the count line reports the real size of
+  // the match (it used to print a 158 literal whenever nothing was filtered,
+  // over six rows that were the entire dataset).
+  const PAGE = layout === "list" ? 6 : 8
+  const page = filtered.slice(0, PAGE)
   const toggleRow = (name: string) =>
     setSelected((s) => { const n = new Set(s); if (n.has(name)) n.delete(name); else n.add(name); return n })
   const pair = ROWS.filter((r) => selected.has(r.name)).slice(0, 2)
@@ -292,7 +349,7 @@ export default function EliteShootersPage() {
                      className="w-full bg-transparent text-[13px] outline-none placeholder:text-[var(--shotiq-color-muted)]" />
             </div>
             <span className="ml-auto text-[12px] text-[var(--shotiq-color-graphite)]">
-              {unfiltered ? CATALOG_SIZE : filtered.length} shooters
+              {fmt(filtered.length)} shooters
             </span>
             <div className="relative ml-[16px]">
               <button type="button" aria-expanded={menu === "sort"}
@@ -376,7 +433,7 @@ export default function EliteShootersPage() {
                 <span className={`w-[111px] shrink-0 self-stretch border-l border-[var(--shotiq-color-rule)] text-center ${headCell}`}>ACTION</span>
               </div>
 
-              {filtered.map((r) => (
+              {page.map((r) => (
                 // Canonical's row pitch is 65.2px (rules at 243/302/361/420/
                 // 479/538 vs the shipped 241/307/373/438/502/567 — 37px of
                 // cumulative compression over six rows), and canonical draws
@@ -391,20 +448,30 @@ export default function EliteShootersPage() {
                     </button>
                   </span>
                   <span className="flex w-[220px] items-center gap-[8px]">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={r.thumb} alt="" className="h-[48px] w-[86px] shrink-0 rounded-[5px] object-cover" />
+                    {r.thumb ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={r.thumb} alt="" className="h-[48px] w-[86px] shrink-0 rounded-[5px] object-cover" />
+                    ) : (
+                      <span className="grid h-[48px] w-[86px] shrink-0 place-items-center rounded-[5px] bg-[#1B1D20]">
+                        <span className="text-white"><PoseGlyph phase="release" size={26} /></span>
+                      </span>
+                    )}
                     <span className="min-w-0">
                       <Link href={`/elite-shooters/${r.slug}`} className="block truncate text-[14px] font-semibold hover:underline">{r.name}</Link>
-                      <span className="block text-[11px] text-[var(--shotiq-color-graphite)]">{fmt(r.attempts)} attempts</span>
+                      <span className="block text-[11px] text-[var(--shotiq-color-graphite)]">
+                        {r.attempts != null ? `${fmt(r.attempts)} attempts` : "Career 3PT reference"}
+                      </span>
                     </span>
                   </span>
                   <span className="w-[42px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.hand}</span>
                   <span className="w-[41px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.level}</span>
                   <span className="w-[37px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.ht}</span>
-                  <span className="w-[42px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.age}</span>
+                  <span className="w-[42px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.age ?? "—"}</span>
                   <span className="w-[56px] text-center">
                     <span className="block text-[14px] font-bold">{r.careerPct.toFixed(1)}%</span>
-                    <span className="block whitespace-nowrap text-[9px] text-[var(--shotiq-color-graphite)]">{fmt(r.makes)} / {fmt(r.attempts)}</span>
+                    <span className="block whitespace-nowrap text-[9px] text-[var(--shotiq-color-graphite)]">
+                      {r.makes != null && r.attempts != null ? `${fmt(r.makes)} / ${fmt(r.attempts)}` : "career 3PT"}
+                    </span>
                   </span>
                   <span className="shotiq-numeric w-[58px] text-center text-[22px] leading-[26px] text-[var(--shotiq-color-analysisBlue)]">{r.wsi}</span>
                   <span className="w-[60px] self-stretch border-l border-[var(--shotiq-color-rule)] text-center">
@@ -412,25 +479,27 @@ export default function EliteShootersPage() {
                     <span className="block text-[10px] text-[var(--shotiq-color-graphite)]">{r.relHBand}</span>
                   </span>
                   <span className="w-[60px] text-center">
-                    <span className="block text-[14px] font-bold">{r.relT}</span>
-                    <span className="block text-[10px] text-[var(--shotiq-color-graphite)]">Quick</span>
+                    <span className="block text-[14px] font-bold">{r.relT ?? "—"}</span>
+                    {r.relT && <span className="block text-[10px] text-[var(--shotiq-color-graphite)]">Quick</span>}
                   </span>
                   <span className="w-[63px] text-center">
-                    <span className="block text-[14px] font-bold">{r.elbow}</span>
-                    <span className="block text-[10px] text-[var(--shotiq-color-graphite)]">Stacked</span>
+                    <span className="block text-[14px] font-bold">{r.elbow ?? "—"}</span>
+                    {r.elbow && <span className="block text-[10px] text-[var(--shotiq-color-graphite)]">Stacked</span>}
                   </span>
                   <span className="w-[93px] self-stretch border-l border-[var(--shotiq-color-rule)] px-[6px] text-center">
-                    <span className="block text-[15px] font-bold">{r.overall}%</span>
-                    <span className="mx-auto mt-[3px] block h-[3px] w-[62px] rounded-full bg-[var(--shotiq-color-rule)]">
-                      <span className="block h-full rounded-full bg-[var(--shotiq-color-analysisBlue)]" style={{ width: `${r.overall}%` }} />
-                    </span>
+                    <span className="block text-[15px] font-bold">{r.overall != null ? `${r.overall}%` : "—"}</span>
+                    {r.overall != null && (
+                      <span className="mx-auto mt-[3px] block h-[3px] w-[62px] rounded-full bg-[var(--shotiq-color-rule)]">
+                        <span className="block h-full rounded-full bg-[var(--shotiq-color-analysisBlue)]" style={{ width: `${r.overall}%` }} />
+                      </span>
+                    )}
                   </span>
                   {/* Canonical sets KEY MATCH left-aligned in regular grey at a 70px
                       advance (cap 11); 12px bold black ran it to 103px and put the
                       final glyph 2px from the ACTION rule. */}
                   <span className="w-[101px] pl-[10px] text-left text-[var(--shotiq-color-graphite)]">
-                    <span className="block whitespace-nowrap text-[9px]">{r.keyMatch[0]}</span>
-                    <span className="block text-[9px]">{r.keyMatch[1]}</span>
+                    <span className="block whitespace-nowrap text-[9px]">{r.keyMatch?.[0] ?? "Run an analysis"}</span>
+                    <span className="block text-[9px]">{r.keyMatch?.[1] ?? "to compare"}</span>
                   </span>
                   <span className="w-[111px] shrink-0 self-stretch border-l border-[var(--shotiq-color-rule)] text-center">
                     <Link href={`/elite-shooters/${r.slug}`}
@@ -448,14 +517,20 @@ export default function EliteShootersPage() {
             </div>
           ) : (
             <div className="mt-[12px] grid grid-cols-4 gap-[14px]">
-              {filtered.map((r) => (
+              {page.map((r) => (
                 <Link key={r.name} href={`/elite-shooters/${r.slug}`}
                       className="overflow-hidden rounded-[8px] border border-[var(--shotiq-color-rule)] bg-white">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={r.thumb} alt={r.name} className="h-[140px] w-full object-cover" />
+                  {r.thumb ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={r.thumb} alt={r.name} className="h-[140px] w-full object-cover" />
+                  ) : (
+                    <span className="grid h-[140px] w-full place-items-center bg-[#1B1D20]">
+                      <span className="text-white"><PoseGlyph phase="release" size={54} /></span>
+                    </span>
+                  )}
                   <div className="p-[12px]">
                     <div className="truncate text-[15px] font-semibold">{r.name}</div>
-                    <div className="text-[11px] text-[var(--shotiq-color-graphite)]">{fmt(r.attempts)} attempts · {r.level}</div>
+                    <div className="text-[11px] text-[var(--shotiq-color-graphite)]">{r.attempts != null ? `${fmt(r.attempts)} attempts · ` : ""}{r.level}</div>
                     <div className="mt-[8px] flex items-center justify-between border-t border-[var(--shotiq-color-rule)] pt-[8px]">
                       <span><span className="block text-[16px] font-bold">{r.careerPct.toFixed(1)}%</span>
                         <span className="block text-[9px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">CAREER</span></span>
@@ -484,12 +559,14 @@ export default function EliteShootersPage() {
               <div className="mt-[4px] flex gap-[10px]">
                 {pair.map((r) => (
                   <div key={r.name} className="flex w-[178px] items-center gap-[8px] rounded-[7px] border border-[var(--shotiq-color-rule)] p-[6px]">
-                    {trayImg[r.name] ? (
+                    {trayImg[r.name] || r.thumb ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={trayImg[r.name]} alt="" className="h-[42px] w-[46px] shrink-0 rounded-[4px] object-cover" />
+                      <img src={trayImg[r.name] ?? r.thumb ?? ""} alt=""
+                           className="h-[42px] w-[46px] shrink-0 rounded-[4px] object-cover" />
                     ) : (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={r.thumb} alt="" className="h-[42px] w-[46px] shrink-0 rounded-[4px] object-cover" />
+                      <span className="grid h-[42px] w-[46px] shrink-0 place-items-center rounded-[4px] bg-[#1B1D20]">
+                        <span className="text-white"><PoseGlyph phase="release" size={22} /></span>
+                      </span>
                     )}
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[12px] font-semibold">{r.name}</span>

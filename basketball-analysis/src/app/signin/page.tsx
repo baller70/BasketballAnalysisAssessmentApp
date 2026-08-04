@@ -109,19 +109,19 @@ export default function SignInPage() {
   return (
     <div
       data-testid="screen-desktop-web-sign-in"
-      className="shotiq-canonical mx-auto flex w-full max-w-[1440px] flex-col bg-[var(--shotiq-color-paper)] text-[var(--shotiq-color-ink)]"
+      className="shotiq-canonical shotiq-phone-flow mx-auto flex w-full max-w-[1440px] flex-col bg-[var(--shotiq-color-paper)] text-[var(--shotiq-color-ink)]"
       style={{ minHeight: 900 }}
     >
       {/* ---------------------------------------------------------- topbar */}
       <header
-        className="flex h-[57px] shrink-0 items-center justify-between border-b border-[var(--shotiq-color-rule)] pl-[20px] pr-[24px]"
+        className="flex h-[39px] shrink-0 items-center justify-between border-b border-[var(--shotiq-color-rule)] pl-[18px] pr-[18px] md:h-[57px] md:pl-[20px] md:pr-[24px]"
         data-testid="region-topbar"
       >
-        <span className="shotiq-wordmark text-[21px] leading-none tracking-[0.02em]">
+        <span className="shotiq-wordmark text-[18px] leading-none tracking-[0.02em] md:text-[21px]">
           SHOT<span className="text-[var(--shotiq-color-shotiqOrange)]">IQ</span>
         </span>
 
-        <div className="flex items-center">
+        <div className="hidden items-center md:flex">
           {/* Decorative on the sign-in screen — nobody is signed in yet, so
               this is a static chip, not an interactive control. */}
           <div className="flex items-center gap-[10px] pr-[22px]">
@@ -154,7 +154,7 @@ export default function SignInPage() {
         <UnifiedSidebar />
 
         {/* --------------------------------------------------- form column */}
-        <section className="w-[394px] shrink-0 border-r border-[var(--shotiq-color-rule)] px-[46px] pt-[48px]">
+        <section className="w-[394px] shrink-0 border-r-0 border-[var(--shotiq-color-rule)] px-[18px] pt-[28px] md:border-r md:px-[46px] md:pt-[48px]">
           {/* 46px drew a 32px cap against canonical's 44px. */}
           <PageTitle size={63}>WELCOME BACK</PageTitle>
           <p className="mt-[10px] text-[15px] text-[var(--shotiq-color-graphite)]">
@@ -236,7 +236,7 @@ export default function SignInPage() {
             the media surface (below) rather than by the FORM SCORE card, which
             keeps its canonical 346px width — the card is the dense element and
             is the one that breaks first when squeezed. */}
-        <section className="flex-1 px-[32px] pt-[34px]" data-testid="region-main">
+        <section className="hidden flex-1 px-[32px] pt-[34px] md:block" data-testid="region-main">
           {/* 40px drew a 28px cap against canonical's 34px. */}
           <h2 className="shotiq-display text-[49px] leading-[51px]">
             AI ANALYSIS. BETTER MECHANICS. BETTER RESULTS.

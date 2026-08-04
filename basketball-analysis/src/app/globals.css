@@ -278,3 +278,129 @@
   font-family: "ShotIQ Degree", var(--font-shotiq-numeric), "Tungsten Medium", "DIN Condensed", sans-serif;
   font-weight: 400;
 }
+
+
+/* ===========================================================================
+   PHONE FLOW - the 393pt reflow layer.                        (max-width: md)
+
+   The app's screen bodies were authored for the 1440x900 desktop canvas: fixed
+   side-by-side columns (`w-[520px] shrink-0` next to `min-w-0 flex-1`) inside
+   non-wrapping flex rows. At 393pt that laid out to a median document width of
+   1074px - the phone could only ever see the left third of every screen, which
+   is what broke 58 of 61 iOS captures regardless of what chrome sat around them.
+
+   This layer is scoped to `.shotiq-phone-flow` (ShotIQShell's screen body) and
+   gated behind the tablet breakpoint, so the desktop rendering is untouched:
+   above 768px not one declaration here applies.
+
+   It deliberately does NOT restyle anything - no colour, no type, no spacing.
+   It only removes the desktop layout's assumption that it has 1244px of column
+   to work with. Three rules, in increasing specificity:
+
+     1. desktop rows wrap, so sibling columns stack instead of running off-screen
+     2. nothing may be wider than the column it sits in
+     3. a known fixed desktop column becomes a full-width row of the stack
+
+   Rule 2 is the safety net that also catches columns added after this was
+   written; rule 3 is what actually produces a clean single-column stack for the
+   64 fixed columns the codebase declares today.
+   ======================================================================== */
+@media (max-width: 767.98px) {
+  /* 1 - desktop column rows wrap into a stack. A row only wraps if its content
+         genuinely does not fit, so rows that already fit are unaffected. */
+  .shotiq-phone-flow .flex:not(.flex-col):not(.flex-nowrap):not(.flex-col-reverse) {
+    flex-wrap: wrap;
+  }
+
+  /* 2 - nothing exceeds its column. Resolved against the containing block, so
+         an icon at its natural size is untouched and only over-wide boxes are
+         pulled in. SVG internals are exempt: their geometry is viewBox-relative.
+         Elements inside a deliberate horizontal scroller keep their width. */
+  .shotiq-phone-flow *:not(svg):not(svg *):not(.overflow-x-auto *):not(.overflow-x-scroll *) {
+    max-width: 100%;
+  }
+
+  /* 3 - the fixed desktop columns, enumerated from the source (every `w-[Npx]`
+         with N >= 240px). Each becomes one full-width row of the single-column
+         stack rather than a shrunken sliver beside its sibling. */
+  .shotiq-phone-flow .w-\[242px\],
+  .shotiq-phone-flow .w-\[249px\],
+  .shotiq-phone-flow .w-\[250px\],
+  .shotiq-phone-flow .w-\[255px\],
+  .shotiq-phone-flow .w-\[260px\],
+  .shotiq-phone-flow .w-\[262px\],
+  .shotiq-phone-flow .w-\[268px\],
+  .shotiq-phone-flow .w-\[274px\],
+  .shotiq-phone-flow .w-\[275px\],
+  .shotiq-phone-flow .w-\[281px\],
+  .shotiq-phone-flow .w-\[292px\],
+  .shotiq-phone-flow .w-\[293px\],
+  .shotiq-phone-flow .w-\[300px\],
+  .shotiq-phone-flow .w-\[306px\],
+  .shotiq-phone-flow .w-\[318px\],
+  .shotiq-phone-flow .w-\[330px\],
+  .shotiq-phone-flow .w-\[350px\],
+  .shotiq-phone-flow .w-\[374px\],
+  .shotiq-phone-flow .w-\[376px\],
+  .shotiq-phone-flow .w-\[380px\],
+  .shotiq-phone-flow .w-\[384px\],
+  .shotiq-phone-flow .w-\[392px\],
+  .shotiq-phone-flow .w-\[394px\],
+  .shotiq-phone-flow .w-\[399px\],
+  .shotiq-phone-flow .w-\[404px\],
+  .shotiq-phone-flow .w-\[420px\],
+  .shotiq-phone-flow .w-\[430px\],
+  .shotiq-phone-flow .w-\[440px\],
+  .shotiq-phone-flow .w-\[448px\],
+  .shotiq-phone-flow .w-\[452px\],
+  .shotiq-phone-flow .w-\[464px\],
+  .shotiq-phone-flow .w-\[486px\],
+  .shotiq-phone-flow .w-\[492px\],
+  .shotiq-phone-flow .w-\[500px\],
+  .shotiq-phone-flow .w-\[520px\],
+  .shotiq-phone-flow .w-\[523px\],
+  .shotiq-phone-flow .w-\[543px\],
+  .shotiq-phone-flow .w-\[550px\],
+  .shotiq-phone-flow .w-\[600px\],
+  .shotiq-phone-flow .w-\[620px\],
+  .shotiq-phone-flow .w-\[656px\],
+  .shotiq-phone-flow .w-\[660px\] {
+    width: 100%;
+    flex-basis: 100%;
+    flex-grow: 1;
+  }
+
+  /* Desktop multi-column grids collapse. Canonical's phone screens are one
+     column of full-width cards, or two for the small stat/action tiles. */
+  .shotiq-phone-flow .grid-cols-3,
+  .shotiq-phone-flow .grid-cols-4,
+  .shotiq-phone-flow .grid-cols-5,
+  .shotiq-phone-flow .grid-cols-6,
+  .shotiq-phone-flow .grid-cols-8,
+  .shotiq-phone-flow .grid-cols-12 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* A calendar month is 7 columns on any device; collapsing it would be wrong. */
+  .shotiq-phone-flow .grid-cols-7 { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+
+  /* Arbitrary track lists (`grid-cols-[355fr_380fr_412fr]`, and eight more) are
+     the desktop workspace splits. `fr` carries an automatic `min-content`
+     minimum, so even the fractional ones refuse to compress below the widest
+     word in each track — which is why /settings still measured 574px and
+     /results/demo/goals 616px with every other rule already applied. They
+     collapse to the single column canonical draws.
+
+     `.shotiq-keep-cols` opts a subtree out: the SESSIONS table on
+     /results/demo/history is a record whose eight columns are measured off the
+     canonical 093 render, so it keeps them and pans inside its own scroller
+     rather than being stacked into meaningless cells. */
+  .shotiq-phone-flow [class*="grid-cols-["]:not(.shotiq-keep-cols [class*="grid-cols-["]) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Media keeps its aspect once its width is capped by rule 2. */
+  .shotiq-phone-flow img,
+  .shotiq-phone-flow video,
+  .shotiq-phone-flow canvas { height: auto; }
+}

@@ -10,6 +10,7 @@ import {
 import { ShotIQShell, SectionLabel, Card, TrendLine, PageTitle } from "@/components/shotiq/ShotIQShell"
 import { PoseFigure } from "@/components/shotiq/Glyphs"
 import { useHistory, CoachingTarget, sessionDelta, formatDelta } from "@/components/shotiq/ResultsBits"
+import { useShotClip, ClipFrame } from "@/components/shotiq/ShotClip"
 
 // One bespoke diagram per measured quantity — canonical never repeats a glyph
 // down this list (angle, height ruler, distance tape, lift, ball arc, midline).
@@ -66,6 +67,21 @@ const CONFIDENCE: [string, number][] = [
 ]
 const PHASES = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
 
+/**
+ * 084-strip is a nine-frame film whose first cell starts 12px into the 624px
+ * asset and whose last ends at 608 — so its cells are on a 66.2px pitch, not on
+ * nine equal ninths. Selection rings, hit targets and the playhead are placed
+ * from that pitch, which is what puts the default ring exactly where canonical
+ * painted its (now un-baked) marker.
+ */
+const STRIP_W = 624, STRIP_L = 12, STRIP_R = 608, FRAMES = 9
+const CELL = (STRIP_R - STRIP_L) / FRAMES / STRIP_W
+const FRAME_INSET = STRIP_L / STRIP_W
+const cellLeft = (i: number) => FRAME_INSET + CELL * i
+const cellCentre = (i: number) => cellLeft(i) + CELL / 2
+/** Canonical's marker sat ~6px proud of the cell on each side. */
+const RING_OUT = 6 / STRIP_W
+
 export default function BiomechanicsWorkspacePage() {
   const { hasData, score, items } = useHistory()
   // Same session-over-session delta the rest of the app prints — this readout
@@ -75,7 +91,12 @@ export default function BiomechanicsWorkspacePage() {
   const [overlays, setOverlays] = useState({ Skeleton: true, Joints: true, Annotations: true })
   // Annotation ink tools live behind the fourth toggle (canonical toolbar).
   const [inkTools, setInkTools] = useState(false)
-  const [frame, setFrame] = useState(4)
+  // The frame strip is a real scrubber now: it drives the frame in the viewer,
+  // the playhead marker and the selection ring (which used to be suppressed on
+  // frame 5 because the asset had canonical's marker baked into it — that is
+  // painted out in 084-strip-clean.png and drawn live instead). R10 defect H4.
+  const clip = useShotClip({ frames: 9, start: 6 })
+  const frame = clip.frame
   const [moreOpen, setMoreOpen] = useState(false)
   const [exporting, setExporting] = useState(false)
   // Metric drill-down (iOS 045 counterpart).
@@ -252,9 +273,11 @@ export default function BiomechanicsWorkspacePage() {
         {/* frame viewer */}
         <div className="w-[600px] shrink-0">
           <div className="relative">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/canonical/084-hero.png" alt="Release frame with skeleton overlay"
-                 className="block h-[428px] w-[656px] rounded-[6px] object-cover" width={656} height={451} />
+            <ClipFrame still="/images/canonical/084-hero.png"
+                       stillAlt="Release frame with skeleton overlay"
+                       stillFrame={4} strip="/images/canonical/084-strip-clean.png"
+                       frames={9} frame={frame} stripInset={FRAME_INSET}
+                       className="block h-[428px] w-[656px] rounded-[6px] object-cover" />
             {/* Annotation ink layer — active while a tool is selected. */}
             {overlays.Annotations && (
               <canvas ref={canvasRef} width={656} height={451} data-testid="annotation-canvas"
@@ -295,28 +318,40 @@ export default function BiomechanicsWorkspacePage() {
               letting it keep the asset's own 6:1 aspect left ~30px of dead
               white at the foot of this column. */}
           <div className="mt-[30px] flex items-stretch gap-[10px]">
-            <ChevronLeft className="h-[16px] w-[16px] shrink-0 self-center text-[var(--shotiq-color-ink)]" />
+            {/* The chevrons either side of the strip look like frame steppers,
+                so they are frame steppers — they used to be bare icons. */}
+            <button type="button" onClick={() => clip.step(-1)} aria-label="Previous frame"
+                    data-testid="frame-prev" className="shrink-0 self-center">
+              <ChevronLeft className="h-[16px] w-[16px] text-[var(--shotiq-color-ink)]" />
+            </button>
             <div className="min-w-0 flex-1">
               <div className="relative h-[12px]">
                 <span className="absolute bottom-0 flex h-[12px] w-[10px] -translate-x-1/2 flex-col items-center"
-                      style={{ left: `${(4 + 0.5) * (100 / 9)}%` }} aria-hidden="true">
+                      data-testid="frame-playhead"
+                      style={{ left: `${cellCentre(frame) * 100}%` }} aria-hidden="true">
                   <span className="block h-0 w-0 border-x-[4px] border-b-[5px] border-x-transparent border-b-[var(--shotiq-color-shotiqOrange)]" />
                   <span className="block w-[2px] flex-1 bg-[var(--shotiq-color-shotiqOrange)]" />
                 </span>
               </div>
               <div className="relative">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/images/canonical/084-strip.png" alt="" className="block h-[110px] w-full" width={624} height={104} />
-                <div className="absolute inset-0 flex">
-                  {Array.from({ length: 9 }).map((_, i) => (
-                    <button key={i} type="button" onClick={() => setFrame(i)} aria-label={`frame ${i + 1}`}
-                            aria-current={frame === i ? "true" : undefined}
-                            className={`h-full flex-1 rounded-[4px] ${frame === i && i !== 4 ? "ring-2 ring-[var(--shotiq-color-shotiqOrange)]" : ""}`} />
-                  ))}
-                </div>
+                <img src="/images/canonical/084-strip-clean.png" alt="" className="block h-[110px] w-full" width={624} height={104} />
+                {/* Hit targets and the ring are aligned to the film's real cell
+                    pitch (the asset insets its first cell by 12 of 624px), not
+                    to nine equal ninths of the whole asset. */}
+                {Array.from({ length: 9 }).map((_, i) => (
+                  <button key={i} type="button" onClick={() => clip.seekFrame(i)} aria-label={`frame ${i + 1}`}
+                          data-testid={`frame-${i}`}
+                          aria-current={frame === i ? "true" : undefined}
+                          className={`absolute inset-y-0 rounded-[4px] ${frame === i ? "ring-2 ring-[var(--shotiq-color-shotiqOrange)]" : ""}`}
+                          style={{ left: `${(cellLeft(i) - RING_OUT) * 100}%`, width: `${(CELL + RING_OUT * 2) * 100}%` }} />
+                ))}
               </div>
             </div>
-            <ChevronRight className="h-[16px] w-[16px] shrink-0 self-center text-[var(--shotiq-color-ink)]" />
+            <button type="button" onClick={() => clip.step(1)} aria-label="Next frame"
+                    data-testid="frame-next" className="shrink-0 self-center">
+              <ChevronRight className="h-[16px] w-[16px] text-[var(--shotiq-color-ink)]" />
+            </button>
           </div>
         </div>
 

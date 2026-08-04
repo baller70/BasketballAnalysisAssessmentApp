@@ -7,36 +7,45 @@ import Link from "next/link"
 import { Search, Upload, SlidersHorizontal, ChevronDown, Trash2, Calendar, Share2, X, ChevronRight } from "lucide-react"
 import { SectionLabel, Card, MediaSurface, PhaseGlyph } from "@/components/shotiq/ShotIQShell"
 
-interface MediaItem { id: string; title: string; time: string; style: string; score: number | null; status: string; len: string; img?: string }
+interface MediaItem {
+  id: string; title: string; time: string; style: string; score: number | null
+  status: string; len: string; img?: string
+  // Every facet the FILTERS rail offers is carried on the item, so no filter
+  // group can be drawn without something behind it (R10 defect M1: SOURCE,
+  // SHOT RESULT and HAND were rendered but never consulted).
+  source: "iOS Capture" | "Web Upload"
+  result: "Make" | "Miss"
+  hand: "Right" | "Left"
+}
 
 const cimg = (n: string) => `/images/canonical/${n}.png`
 
 const DEMO: Record<string, MediaItem[]> = {
   "TODAY · May 12, 2025": [
-    { id: "1", title: "Pull-Up Jumper", time: "8:24 AM", style: "Catch & Shoot", score: 82, status: "Analyzed", len: "0:07", img: cimg("094-t1") },
-    { id: "2", title: "Spot-Up Three", time: "8:21 AM", style: "Catch & Shoot", score: 78, status: "Analyzed", len: "0:06", img: cimg("094-t2") },
-    { id: "3", title: "Transition Pull-Up", time: "8:18 AM", style: "Off the Dribble", score: 75, status: "Analyzed", len: "0:05", img: cimg("094-t3") },
-    { id: "4", title: "Pull-Up Jumper", time: "8:15 AM", style: "Off the Dribble", score: 68, status: "Review", len: "0:06", img: cimg("094-t4") },
-    { id: "5", title: "Spot-Up Three", time: "8:12 AM", style: "Catch & Shoot", score: null, status: "Not analyzed", len: "0:04", img: cimg("094-t5") },
-    { id: "6", title: "Pull-Up Jumper", time: "8:09 AM", style: "Off the Dribble", score: null, status: "Not analyzed", len: "0:07", img: cimg("094-t6") },
+    { id: "1", title: "Pull-Up Jumper", time: "8:24 AM", style: "Catch & Shoot", score: 82, status: "Analyzed", len: "0:07", img: cimg("094-t1") , source: "iOS Capture", result: "Make", hand: "Right" },
+    { id: "2", title: "Spot-Up Three", time: "8:21 AM", style: "Catch & Shoot", score: 78, status: "Analyzed", len: "0:06", img: cimg("094-t2") , source: "iOS Capture", result: "Make", hand: "Right" },
+    { id: "3", title: "Transition Pull-Up", time: "8:18 AM", style: "Off the Dribble", score: 75, status: "Analyzed", len: "0:05", img: cimg("094-t3") , source: "Web Upload", result: "Miss", hand: "Right" },
+    { id: "4", title: "Pull-Up Jumper", time: "8:15 AM", style: "Off the Dribble", score: 68, status: "Review", len: "0:06", img: cimg("094-t4") , source: "iOS Capture", result: "Miss", hand: "Left" },
+    { id: "5", title: "Spot-Up Three", time: "8:12 AM", style: "Catch & Shoot", score: null, status: "Not analyzed", len: "0:04", img: cimg("094-t5") , source: "Web Upload", result: "Make", hand: "Right" },
+    { id: "6", title: "Pull-Up Jumper", time: "8:09 AM", style: "Off the Dribble", score: null, status: "Not analyzed", len: "0:07", img: cimg("094-t6") , source: "iOS Capture", result: "Miss", hand: "Right" },
   ],
   "YESTERDAY · May 11, 2025": [
-    { id: "7", title: "Spot-Up Three", time: "6:15 PM", style: "Catch & Shoot", score: 78, status: "Analyzed", len: "0:06", img: cimg("094-y1") },
-    { id: "8", title: "Pull-Up Jumper", time: "6:12 PM", style: "Off the Dribble", score: 76, status: "Analyzed", len: "0:05", img: cimg("094-y2") },
-    { id: "9", title: "Transition Pull-Up", time: "6:08 PM", style: "Off the Dribble", score: 62, status: "Review", len: "0:07", img: cimg("094-y3") },
-    { id: "10", title: "Catch & Shoot", time: "6:05 PM", style: "Catch & Shoot", score: 84, status: "Analyzed", len: "0:04", img: cimg("094-y4") },
-    { id: "11", title: "Pull-Up Jumper", time: "6:02 PM", style: "Off the Dribble", score: null, status: "Not analyzed", len: "0:06", img: cimg("094-y5") },
-    { id: "12", title: "Spot-Up Three", time: "5:59 PM", style: "Catch & Shoot", score: null, status: "Not analyzed", len: "0:05", img: cimg("094-y6") },
+    { id: "7", title: "Spot-Up Three", time: "6:15 PM", style: "Catch & Shoot", score: 78, status: "Analyzed", len: "0:06", img: cimg("094-y1") , source: "iOS Capture", result: "Make", hand: "Right" },
+    { id: "8", title: "Pull-Up Jumper", time: "6:12 PM", style: "Off the Dribble", score: 76, status: "Analyzed", len: "0:05", img: cimg("094-y2") , source: "iOS Capture", result: "Miss", hand: "Right" },
+    { id: "9", title: "Transition Pull-Up", time: "6:08 PM", style: "Off the Dribble", score: 62, status: "Review", len: "0:07", img: cimg("094-y3") , source: "Web Upload", result: "Miss", hand: "Left" },
+    { id: "10", title: "Catch & Shoot", time: "6:05 PM", style: "Catch & Shoot", score: 84, status: "Analyzed", len: "0:04", img: cimg("094-y4") , source: "iOS Capture", result: "Make", hand: "Right" },
+    { id: "11", title: "Pull-Up Jumper", time: "6:02 PM", style: "Off the Dribble", score: null, status: "Not analyzed", len: "0:06", img: cimg("094-y5") , source: "Web Upload", result: "Make", hand: "Right" },
+    { id: "12", title: "Spot-Up Three", time: "5:59 PM", style: "Catch & Shoot", score: null, status: "Not analyzed", len: "0:05", img: cimg("094-y6") , source: "iOS Capture", result: "Miss", hand: "Right" },
   ],
   "SATURDAY · May 10, 2025": [
-    { id: "13", title: "Transition Pull-Up", time: "4:02 PM", style: "Off the Dribble", score: 75, status: "Analyzed", len: "0:06", img: cimg("094-s1") },
-    { id: "14", title: "Spot-Up Three", time: "3:58 PM", style: "Catch & Shoot", score: 74, status: "Analyzed", len: "0:05", img: cimg("094-s2") },
-    { id: "15", title: "Pull-Up Jumper", time: "3:55 PM", style: "Off the Dribble", score: 71, status: "Review", len: "0:04", img: cimg("094-s3") },
-    { id: "16", title: "Catch & Shoot", time: "3:51 PM", style: "Catch & Shoot", score: 79, status: "Analyzed", len: "0:07", img: cimg("094-s4") },
-    { id: "17", title: "Pull-Up Jumper", time: "3:48 PM", style: "Off the Dribble", score: null, status: "Not analyzed", len: "0:05", img: cimg("094-s5") },
-    { id: "18", title: "Spot-Up Three", time: "3:44 PM", style: "Catch & Shoot", score: null, status: "Not analyzed", len: "0:06", img: cimg("094-s6") },
-    { id: "19", title: "Transition Pull-Up", time: "3:40 PM", style: "Off the Dribble", score: 73, status: "Analyzed", len: "0:05", img: cimg("094-s1") },
-    { id: "20", title: "Catch & Shoot", time: "3:36 PM", style: "Catch & Shoot", score: 77, status: "Analyzed", len: "0:04", img: cimg("094-s2") },
+    { id: "13", title: "Transition Pull-Up", time: "4:02 PM", style: "Off the Dribble", score: 75, status: "Analyzed", len: "0:06", img: cimg("094-s1") , source: "iOS Capture", result: "Make", hand: "Right" },
+    { id: "14", title: "Spot-Up Three", time: "3:58 PM", style: "Catch & Shoot", score: 74, status: "Analyzed", len: "0:05", img: cimg("094-s2") , source: "Web Upload", result: "Make", hand: "Right" },
+    { id: "15", title: "Pull-Up Jumper", time: "3:55 PM", style: "Off the Dribble", score: 71, status: "Review", len: "0:04", img: cimg("094-s3") , source: "iOS Capture", result: "Miss", hand: "Left" },
+    { id: "16", title: "Catch & Shoot", time: "3:51 PM", style: "Catch & Shoot", score: 79, status: "Analyzed", len: "0:07", img: cimg("094-s4") , source: "iOS Capture", result: "Make", hand: "Right" },
+    { id: "17", title: "Pull-Up Jumper", time: "3:48 PM", style: "Off the Dribble", score: null, status: "Not analyzed", len: "0:05", img: cimg("094-s5") , source: "Web Upload", result: "Miss", hand: "Right" },
+    { id: "18", title: "Spot-Up Three", time: "3:44 PM", style: "Catch & Shoot", score: null, status: "Not analyzed", len: "0:06", img: cimg("094-s6") , source: "iOS Capture", result: "Miss", hand: "Right" },
+    { id: "19", title: "Transition Pull-Up", time: "3:40 PM", style: "Off the Dribble", score: 73, status: "Analyzed", len: "0:05", img: cimg("094-s1") , source: "iOS Capture", result: "Make", hand: "Right" },
+    { id: "20", title: "Catch & Shoot", time: "3:36 PM", style: "Catch & Shoot", score: 77, status: "Analyzed", len: "0:04", img: cimg("094-s2") , source: "Web Upload", result: "Make", hand: "Right" },
   ],
 }
 
@@ -46,13 +55,25 @@ const DECLARED_COUNT: Record<string, string> = {
   "SATURDAY · May 10, 2025": "8 items",
 }
 
-const FILTERS: [string, [string, number][]][] = [
-  ["SOURCE", [["All sources", -1], ["iOS Capture", 86], ["Web Upload", 24]]],
-  ["ANALYSIS STATUS", [["All status", -1], ["Analyzed", 72], ["Review", 18], ["Not analyzed", 20], ["Processing", 0]]],
-  ["WORKOUT", [["All workouts", -1], ["Catch & Shoot", 32], ["Off the Dribble", 18], ["Pull-Up Jumper", 16], ["Spot-Up Three", 12], ["Transition", 10]]],
-  ["SHOT RESULT", [["All results", -1], ["Make", 38], ["Miss", 38]]],
-  ["HAND", [["All hands", -1], ["Right", 76], ["Left", 10]]],
+/**
+ * The filter rail. Every group names the item field it reads, so a group can
+ * never be drawn without being wired (R10 defect M1), and the option counts
+ * beside the labels are computed from the library itself rather than painted
+ * as literals that disagreed with it ("Analyzed 72" over eleven analyzed
+ * items).
+ */
+const FILTERS: { head: string; all: string; field: keyof MediaItem | "workout"; options: string[] }[] = [
+  { head: "SOURCE", all: "All sources", field: "source", options: ["iOS Capture", "Web Upload"] },
+  { head: "ANALYSIS STATUS", all: "All status", field: "status", options: ["Analyzed", "Review", "Not analyzed", "Processing"] },
+  { head: "WORKOUT", all: "All workouts", field: "workout", options: ["Catch & Shoot", "Off the Dribble", "Pull-Up Jumper", "Spot-Up Three", "Transition"] },
+  { head: "SHOT RESULT", all: "All results", field: "result", options: ["Make", "Miss"] },
+  { head: "HAND", all: "All hands", field: "hand", options: ["Right", "Left"] },
 ]
+
+/** An item matches a WORKOUT option by shot style or by session title. */
+const matchesOption = (m: MediaItem, field: string, option: string) =>
+  field === "workout" ? m.style === option || m.title === option
+    : String(m[field as keyof MediaItem]) === option
 
 // Canonical prints a status swatch beside every ANALYSIS STATUS and SHOT RESULT
 // option; SOURCE, WORKOUT and HAND options carry none.
@@ -73,7 +94,7 @@ export default function MediaLibraryPage() {
   const [empty, setEmpty] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [checked, setChecked] = useState<Record<string, string>>(() =>
-    Object.fromEntries(FILTERS.map(([head, opts]) => [head, String(opts[0][0])])))
+    Object.fromEntries(FILTERS.map((g) => [g.head, g.all])))
   const [range, setRange] = useState(RANGES[0])
   const [sort, setSort] = useState<(typeof SORTS)[number]>("Newest")
   const [menu, setMenu] = useState<null | "range" | "sort">(null)
@@ -82,9 +103,16 @@ export default function MediaLibraryPage() {
   // Filter button — which canonical also draws — moves focus into that column
   // rather than showing or hiding it.
   const filtersRef = useRef<HTMLElement | null>(null)
+  // Clicking Filter used to move focus programmatically, which a mouse click
+  // never paints (:focus-visible is false), so nothing at all changed on screen
+  // (R10 defect M3). It is now a real toggle: the column is picked out while it
+  // is on, and the button carries the pressed state.
+  const [filtersOn, setFiltersOn] = useState(false)
   const focusFilters = () => {
-    const first = filtersRef.current?.querySelector<HTMLElement>("input, button")
-    first?.focus()
+    setFiltersOn((on) => {
+      if (!on) filtersRef.current?.querySelector<HTMLElement>("input, button")?.focus()
+      return !on
+    })
   }
   useEffect(() => {
     fetch("/api/media", { credentials: "include" }).then((r) => (r.ok ? r.json() : null))
@@ -93,15 +121,15 @@ export default function MediaLibraryPage() {
         if (Array.isArray(list) && list.length === 0) { setGroups({}); setEmpty(true) }
       }).catch(() => {})
   }, [])
-  const statusFilter = checked["ANALYSIS STATUS"]
-  const workoutFilter = checked["WORKOUT"]
+  // Every group in the rail is consulted, not just two of the five.
+  const passesFilters = React.useCallback((m: MediaItem) =>
+    FILTERS.every((g) => checked[g.head] === g.all || matchesOption(m, g.field, checked[g.head])), [checked])
   const shown = useMemo(() => {
     const out: Record<string, MediaItem[]> = {}
     for (const [day, items] of Object.entries(groups)) {
       if (range[0] === "1" && !day.startsWith("TODAY")) continue
       let list = items.filter((m) =>
-        (statusFilter.startsWith("All") || m.status === statusFilter) &&
-        (workoutFilter.startsWith("All") || m.style === workoutFilter || m.title === workoutFilter) &&
+        passesFilters(m) &&
         (!query.trim() || m.title.toLowerCase().includes(query.trim().toLowerCase())))
       list = [...list]
       if (sort === "Oldest") list.reverse()
@@ -109,11 +137,20 @@ export default function MediaLibraryPage() {
       if (list.length) out[day] = list
     }
     return out
-  }, [groups, statusFilter, workoutFilter, range, sort, query])
+  }, [groups, passesFilters, range, sort, query])
+
+  /** Option counts, computed from the library the grid is drawn from. */
+  const counts = useMemo(() => {
+    const all = Object.values(groups).flat()
+    const out: Record<string, number> = {}
+    for (const g of FILTERS) for (const o of g.options)
+      out[`${g.head}:${o}`] = all.filter((m) => matchesOption(m, g.field, o)).length
+    return out
+  }, [groups])
   const total = Object.values(shown).flat().length
   const toggle = (id: string) => setSelected((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n })
   const clearAll = () => {
-    setChecked(Object.fromEntries(FILTERS.map(([head, opts]) => [head, String(opts[0][0])])))
+    setChecked(Object.fromEntries(FILTERS.map((g) => [g.head, g.all])))
     setRange(RANGES[0]); setSort("Newest"); setSelected(new Set())
   }
   const deleteSelected = () => {
@@ -178,7 +215,10 @@ export default function MediaLibraryPage() {
           straight into the media grid, whose tiles were measuring 16% under
           canonical's purely because the content column was that much narrower. */}
       <aside ref={filtersRef} id="media-filters" data-testid="media-filters"
-             className="w-[186px] shrink-0 overflow-hidden border-r border-[var(--shotiq-color-rule)] px-[14px] pt-[16px]">
+             className={`w-[186px] shrink-0 overflow-hidden border-r px-[14px] pt-[16px] transition-colors ${
+               filtersOn
+                 ? "border-[var(--shotiq-color-shotiqOrange)] bg-[var(--shotiq-color-warmCanvas)]"
+                 : "border-[var(--shotiq-color-rule)]"}`}>
         <div className="flex items-center justify-between">
           <SectionLabel>FILTERS</SectionLabel>
           <button type="button" onClick={clearAll} className="text-[11px] text-[var(--shotiq-color-shotiqOrange)]">Clear all</button>
@@ -203,20 +243,27 @@ export default function MediaLibraryPage() {
             </div>
           )}
         </div>
-        {FILTERS.map(([head, opts]) => (
-          <div key={head} className="mt-[14px]">
-            <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">{head}</div>
-            {opts.map(([label, n]) => (
-              <label key={String(label)} className="mt-[6px] flex items-center gap-[8px] text-[12px]">
-                <input type="checkbox" checked={checked[head] === String(label)}
-                       onChange={() => setChecked((c) => ({ ...c, [head]: String(label) }))}
+        {FILTERS.map((g) => (
+          <div key={g.head} className="mt-[14px]">
+            <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">{g.head}</div>
+            {[g.all, ...g.options].map((label) => (
+              <label key={label} className="mt-[6px] flex items-center gap-[8px] text-[12px]">
+                {/* Checkbox semantics: one option per group is in force, and
+                    clicking the option that is already checked clears it back
+                    to the group's "All" — before, a checked box could not be
+                    unchecked at all (R10 defect M2). */}
+                <input type="checkbox" checked={checked[g.head] === label}
+                       onChange={() => setChecked((c) => ({
+                         ...c, [g.head]: c[g.head] === label ? g.all : label }))}
                        className="h-[13px] w-[13px] shrink-0 accent-[var(--shotiq-color-shotiqOrange)]" />
-                {OPTION_DOT[String(label)] && (
+                {OPTION_DOT[label] && (
                   <span className="h-[7px] w-[7px] shrink-0 rounded-full"
-                        style={{ background: OPTION_DOT[String(label)] }} />
+                        style={{ background: OPTION_DOT[label] }} />
                 )}
                 <span className="flex-1 truncate">{label}</span>
-                {n >= 0 && <span className="text-[11px] text-[var(--shotiq-color-graphite)]">{n}</span>}
+                {label !== g.all && (
+                  <span className="text-[11px] text-[var(--shotiq-color-graphite)]">{counts[`${g.head}:${label}`] ?? 0}</span>
+                )}
               </label>
             ))}
           </div>
@@ -241,7 +288,11 @@ export default function MediaLibraryPage() {
               <Upload className="h-[14px] w-[14px]" /> Upload
             </Link>
             <button type="button" aria-controls="media-filters" onClick={focusFilters}
-                    className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-[13px]">
+                    aria-pressed={filtersOn} data-testid="media-filter-toggle"
+                    className={`flex h-[42px] items-center gap-[8px] rounded-[6px] border px-[14px] text-[13px] ${
+                      filtersOn
+                        ? "border-[var(--shotiq-color-shotiqOrange)] text-[var(--shotiq-color-shotiqOrange)]"
+                        : "border-[var(--shotiq-color-rule)]"}`}>
               <SlidersHorizontal className="h-[14px] w-[14px]" /> Filter
             </button>
             <div className="relative">

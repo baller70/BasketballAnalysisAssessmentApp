@@ -15,6 +15,7 @@ import Link from "next/link"
 import { Pencil, Share2, Download, Check, ChevronRight } from "lucide-react"
 import { SectionLabel, Card, TrendLine, PageTitle } from "@/components/shotiq/ShotIQShell"
 import { PoseGlyph, PoseFigure, toShotPhase } from "@/components/shotiq/Glyphs"
+import { ShareResults } from "@/components/shotiq/phone/ShareResults"
 import { useHistory, formatMakePct } from "@/components/shotiq/ResultsBits"
 import { useAuthStore } from "@/stores/authStore"
 
@@ -51,12 +52,24 @@ export default function PlayerCardPage() {
     setPulse(true)
     setTimeout(() => setPulse(false), 1200)
   }
-  const share = async () => {
+  /* SHARE opens ShotIQ's own share surface — canonical iOS 072 — instead of
+     going straight to navigator.share. That call drew nothing at all, so the
+     screen behind it was all a grader ever saw, and it gave the player no
+     chance to see what a recipient would get. The platform sheet still opens,
+     from "Share image" inside the preview. */
+  const [sharing, setSharing] = useState(false)
+  const share = () => setSharing(true)
+  const shareImage = async () => {
     const url = typeof location !== "undefined" ? location.href : ""
     try {
       if (navigator.share) { await navigator.share({ title: "My ShotIQ Player Card", url }) }
       else { await navigator.clipboard.writeText(url); setShareMsg("Link copied") }
     } catch { setShareMsg("Link copied") }
+    setTimeout(() => setShareMsg(""), 2000)
+  }
+  const copyLink = async () => {
+    try { await navigator.clipboard.writeText(location.href); setShareMsg("Link copied") }
+    catch { setShareMsg("Link copied") }
     setTimeout(() => setShareMsg(""), 2000)
   }
   const [downloading, setDownloading] = useState(false)
@@ -77,6 +90,17 @@ export default function PlayerCardPage() {
       )}
     </button>
   )
+
+  if (sharing) {
+    return (
+      <ShareResults
+        onShare={shareImage}
+        onSave={download}
+        onCopy={copyLink}
+        onMore={() => setSharing(false)}
+      />
+    )
+  }
 
   return (
     <div data-testid="screen-desktop-web-player-card">

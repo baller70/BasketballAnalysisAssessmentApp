@@ -23,6 +23,7 @@ import { SectionLabel, Card, TrendLine, PageTitle, GoalPercent } from "@/compone
 import { PoseFigure } from "@/components/shotiq/Glyphs"
 import { ShotIQShell } from "@/components/shotiq/ShotIQShell"
 import { useHistory, formatDelta, formatMakePct } from "@/components/shotiq/ResultsBits"
+import { useShotClip, useFullscreen, ClipFrame, phaseAt, clock } from "@/components/shotiq/ShotClip"
 
 interface HistoryStats {
   totalAnalyses: number
@@ -55,6 +56,11 @@ export default function ResultsOverviewPage() {
   const [loading, setLoading] = useState(true)
   const [index, setIndex] = useState(3) // canonical "3 OF 24"
   const [shared, setShared] = useState(false)
+  // The real transport: one clock behind the play button, the scrub head, the
+  // readout, the filmstrip selection and the phase strip.
+  const clip = useShotClip({ frames: 8 })
+  const stageRef = React.useRef<HTMLDivElement>(null)
+  const full = useFullscreen(stageRef)
 
   useEffect(() => {
     let cancelled = false
@@ -147,30 +153,55 @@ export default function ResultsOverviewPage() {
         {/* media column */}
         <div className="w-[543px] shrink-0">
           <div className="relative">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/canonical/083-hero.png" alt="Analyzed shot frame with skeleton overlay"
-                 className="block w-[543px] rounded-[4px]" width={573} height={369} />
-            <button type="button" aria-label="Play"
+            {/* The playback surface. Paused on the release frame it is the
+                canonical still, pixel for pixel; under way it paints the frame
+                the playhead is on. */}
+            <div ref={stageRef} className="bg-[var(--shotiq-color-paper)]">
+              <ClipFrame still="/images/canonical/083-hero.png"
+                         stillAlt="Analyzed shot frame with skeleton overlay"
+                         stillFrame={4} strip="/images/canonical/083-filmstrip.png"
+                         frames={8} frame={clip.frame}
+                         className="block h-[350px] w-[543px] rounded-[4px] object-cover" />
+            </div>
+            <button type="button" aria-label={clip.playing ? "Pause" : "Play"}
+                    aria-pressed={clip.playing} onClick={clip.toggle} data-testid="clip-play"
                     className="absolute -bottom-[23px] left-[1px] grid h-[32px] w-[32px] place-items-center rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white shadow-[0_2px_6px_rgba(17,17,17,0.12)]">
-              <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 1.5 L10.5 6 L2.5 10.5 Z" fill="var(--shotiq-color-ink)" /></svg>
+              {clip.playing
+                ? <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 1.5 h3 v9 h-3 z M6.5 1.5 h3 v9 h-3 z" fill="var(--shotiq-color-ink)" /></svg>
+                : <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 1.5 L10.5 6 L2.5 10.5 Z" fill="var(--shotiq-color-ink)" /></svg>}
             </button>
           </div>
           {/* frame scrubber */}
           <div className="mt-[9px] flex items-center">
-            <div className="relative ml-[36px]">
+            {/* The strip is the scrub track: eight seek targets under the film,
+                with the head riding the actual playhead. The orange marker on
+                the fourth cell is part of canonical's own film crop. */}
+            <div className="relative ml-[36px] w-[399px]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/images/canonical/083-filmstrip.png" alt="" className="block h-[39px] w-[399px]" width={425} height={41} />
-              <span className="absolute -top-[9px] left-[59%] h-[15px] w-[15px] -translate-x-1/2 rounded-full border border-[var(--shotiq-color-rule)] bg-white shadow-[0_1px_3px_rgba(17,17,17,0.25)]" />
+              <div className="absolute inset-0 flex">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <button key={i} type="button" className="h-full flex-1" data-testid={`clip-seek-${i}`}
+                          aria-label={`Seek to frame ${i + 1} of 8`} aria-pressed={clip.frame === i}
+                          onClick={() => clip.seekFrame(i)} />
+                ))}
+              </div>
+              <span aria-hidden="true" data-testid="clip-head"
+                    className="pointer-events-none absolute -top-[9px] h-[15px] w-[15px] -translate-x-1/2 rounded-full border border-[var(--shotiq-color-rule)] bg-white shadow-[0_1px_3px_rgba(17,17,17,0.25)]"
+                    style={{ left: `${clip.pct * 100}%` }} />
             </div>
-            <span className="shotiq-numeric ml-[24px] text-[13px]">0:07 <span className="text-[var(--shotiq-color-graphite)]">/ 0:24</span></span>
-            <button type="button" aria-label="Fullscreen" className="ml-auto">
+            <span className="shotiq-numeric ml-[24px] text-[13px]" data-testid="clip-readout">
+              {clock(clip.time)} <span className="text-[var(--shotiq-color-graphite)]">/ {clock(clip.duration)}</span>
+            </span>
+            <button type="button" aria-label="Fullscreen" aria-pressed={full.isFull}
+                    onClick={full.toggle} data-testid="clip-fullscreen" className="ml-auto">
               <Maximize className="h-[16px] w-[16px]" strokeWidth={1.8} />
             </button>
           </div>
           {/* phase strip */}
           <div className="mt-[14px] flex items-start">
             {PHASES.map((p, i) => {
-              const active = p.label === "RELEASE"
+              const active = p.label === phaseAt(clip.time)
               return (
                 <React.Fragment key={p.label}>
                   {/* Canonical's connector is a SOLID hairline with one dot on

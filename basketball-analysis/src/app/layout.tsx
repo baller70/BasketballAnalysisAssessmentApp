@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import localFont from "next/font/local"
 import { Russo_One } from "next/font/google"
 import "./globals.css"
@@ -85,6 +85,20 @@ const tungstenNumeric = localFont({
 export const metadata: Metadata = {
   title: "Basketball Shooting Mechanics Analysis",
   description: "Advanced biomechanical analysis of basketball shooting form with AI-powered feedback and elite shooter comparison",
+}
+
+/**
+ * `viewportFit: "cover"` is what makes `env(safe-area-inset-*)` resolve to real
+ * numbers inside the Capacitor WKWebView, which the phone chrome's top bar and
+ * bottom tab bar add to their own measured heights. On desktop and in the
+ * 393x852 capture there is no notch, the insets stay 0, and the rendering is
+ * unchanged — the rest of these values are Next.js's own defaults, spelled out
+ * because declaring `viewport` at all replaces the default tag.
+ */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 }
 
 export default function RootLayout({

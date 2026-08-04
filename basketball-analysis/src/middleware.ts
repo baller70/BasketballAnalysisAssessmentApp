@@ -7,6 +7,13 @@ import { verifySessionToken, AUTH_COOKIE_NAME } from '@/lib/authToken'
 // accidentally ship without auth. This also closes a prior gap where routes in
 // neither list (e.g. /media, the user's gallery) fell through as public.
 const PUBLIC_ROUTES = [
+  // The launch surface (001-splash) and the signed-out landing screen
+  // (002-welcome). `/` used to be default-denied, so a signed-out launch was
+  // rewritten to /signin before the splash could ever paint. `matchesRoute`
+  // only ever matches '/' exactly — `'/' + '/'` is not a prefix of any path —
+  // so this does not open the rest of the app.
+  '/',
+  '/welcome',
   '/signin',
   '/signup',
   '/forgot-password',

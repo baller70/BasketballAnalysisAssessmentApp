@@ -163,6 +163,25 @@ export default function UploadPage() {
           <p className="mt-[4px] text-[14px] text-[var(--shotiq-color-graphite)]">
             Upload a clear photo or video of your shot for AI analysis.
           </p>
+          {/* Entry into canonical iOS 015: ShotIQ's own photo-access primer.
+              The platform prompt can only be asked once, so the app explains
+              what it reads and why BEFORE the picker opens — the same
+              pre-permission pattern /video-analysis uses for the camera. Once
+              the primer has been seen it is skipped and this goes straight to
+              the picker. */}
+          <button
+            type="button"
+            data-testid="upload-choose-library"
+            onClick={() => {
+              let seen = false
+              try { seen = localStorage.getItem("shotiq-photo-primer-seen") === "1" } catch { /* private mode */ }
+              if (seen) document.querySelector<HTMLInputElement>('input[type="file"]')?.click()
+              else router.push("/upload/photo-access")
+            }}
+            className="mt-[12px] flex h-[40px] items-center gap-[10px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[16px] text-[14px]"
+          >
+            Choose from library
+          </button>
         </div>
 
         {/* Mode Tabs */}

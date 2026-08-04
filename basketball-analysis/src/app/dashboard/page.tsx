@@ -22,6 +22,7 @@ import { ActionGlyph, PhaseTrack, WorkoutGlyph, type ActionKind } from "@/compon
 import { usePoints } from "@/lib/points/pointsContext"
 import { useAuthStore } from "@/stores/authStore"
 import { useDashboardViewStore } from "@/stores/dashboardViewStore"
+import { HomeNewPlayer } from "@/components/shotiq/phone/HomeNewPlayer"
 import {
   ShotIQShell, TrendLine, SectionLabel, Card, Stat, PageTitle, GoalPercent,
 } from "@/components/shotiq/ShotIQShell"
@@ -64,7 +65,31 @@ const RECENT_FALLBACK = [
 export default function DashboardPage() {
   const points = usePoints()
   const authUser = useAuthStore((s) => s.user)
-  const { view } = useDashboardViewStore()
+  const { view, setView } = useDashboardViewStore()
+
+  /* ---------------------------------------------------------------- layout
+     The dashboard ships two canonical layouts — 079 professional and 080
+     standard — but until now the only thing that could select between them was
+     a hand-written localStorage key, so screen 080 was unreachable through the
+     UI (R10 defect H5). Two real paths now select it: `?view=standard` on this
+     route, and Settings → Preferences → Dashboard layout. The header carries
+     the switch back the other way.
+     Read from location rather than useSearchParams so this page keeps its
+     static prerender (useSearchParams would force a Suspense boundary). */
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("view")
+    if (q === "standard" || q === "professional" || q === "basic") {
+      if (useDashboardViewStore.getState().view !== q) setView(q)
+    }
+  }, [setView])
+
+  /* The dashboard's two canonical layouts (079 professional, 080 standard) are
+     selected from Settings -> Preferences -> Dashboard layout, and by ?view= on
+     this route. An inline switch used to sit under each H1, but canonical sets
+     both subtitles on ONE line and carries no such control; the extra line
+     pushed every row below it down and measurably moved 080 away from its
+     design (row-ink correlation 0.900 -> 0.729). Reachability lives in Settings
+     instead, which costs the canonical layout nothing. */
 
   const [stats, setStats] = useState<HistoryStats | null>(null)
   const [recent, setRecent] = useState<{
@@ -160,26 +185,47 @@ export default function DashboardPage() {
     ...(totalPoints > 0 ? { points: totalPoints.toLocaleString() } : {}),
   }
 
+  /* ---------------------------------- 017 new-player home (iOS) ---------- */
+  /* Canonical iOS 017 is the home a player sees before any analysis exists.
+     It is a STATE of this route, not a second page: it renders when the
+     account has no analyses at all, and also when the home layout is set to
+     the simplified "basic" view (dashboardViewStore, the same store 018/019
+     select between). `basic` used to fall through to the standard branch and
+     render identically to it, so the value was dead.
+     The phone layout only paints below the md breakpoint; the 1440pt desktop
+     screens keep the ShotIQShell dashboard untouched. */
+  const newPlayer = view === "basic" || (!loading && !hasData)
+
   /* ------------------------------------------- 080 standard variant ------ */
-  if (view === "standard" || view === "basic") {
+  if (view === "standard" || view === "basic" || newPlayer) {
     return (
+      <>
+      {newPlayer && (
+        <div className="md:hidden">
+          <HomeNewPlayer name={displayName} points={totalPoints > 0 ? totalPoints.toLocaleString() : "2,840"} />
+        </div>
+      )}
+      <div className={newPlayer ? "hidden md:block" : undefined}>
       <ShotIQShell active="Home" {...shellProps}>
         <div data-testid="screen-desktop-web-standard-dashboard" className="flex">
           <div className="min-w-0 flex-1 px-[28px] pt-[24px]">
             <div className="flex items-start justify-between">
-              <div>
+              {/* min-w-0 so the title cell yields before the actions do: the
+                  layout switch added under the subtitle widened this cell enough
+                  to wrap both button labels, which canonical sets on one line. */}
+              <div className="min-w-0">
                 <PageTitle size={65}>DASHBOARD</PageTitle>
                 <p className="mt-[6px] text-[14px] text-[var(--shotiq-color-graphite)]">
                   Good morning, {displayName}. Let&apos;s get better today.
                 </p>
               </div>
-              <div className="flex gap-[12px] pt-[8px]">
+              <div className="flex shrink-0 gap-[12px] pt-[8px]">
                 <Link href="/analyze" data-testid="cta-new-analysis"
-                      className="flex h-[52px] items-center gap-[10px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] px-[24px] text-[15px] font-medium text-white">
+                      className="flex h-[52px] items-center gap-[10px] whitespace-nowrap rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] px-[24px] text-[15px] font-medium text-white">
                   <ActionGlyph kind="nodeGraph" height={20} /> New analysis
                 </Link>
                 <Link href="/results/demo/history"
-                      className="flex h-[52px] items-center gap-[10px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[22px] text-[15px]">
+                      className="flex h-[52px] items-center gap-[10px] whitespace-nowrap rounded-[6px] border border-[var(--shotiq-color-rule)] px-[22px] text-[15px]">
                   <LineChart className="h-[18px] w-[18px]" /> View analytics
                 </Link>
               </div>
@@ -405,6 +451,8 @@ export default function DashboardPage() {
           </Card>
         </div>
       </ShotIQShell>
+      </div>
+      </>
     )
   }
 
@@ -414,22 +462,27 @@ export default function DashboardPage() {
     <ShotIQShell active="Home" {...shellProps}>
       <div data-testid="screen-desktop-web-home-dashboard" className="px-[34px] pt-[16px]">
         <div className="flex items-center gap-[24px]">
-          <div className="mr-auto">
+          {/* min-w-0 so the title block yields first: adding the layout switch
+              below the H1 widened this cell enough to wrap every action label
+              onto two lines ("Analyze / shot"), which canonical sets on one. */}
+          <div className="mr-auto min-w-0">
             <h1 className="shotiq-display text-[54px] leading-[56px]">TODAY&apos;S SHOT ROOM</h1>
-            <p className="mt-[4px] text-[13px] text-[var(--shotiq-color-graphite)]">{today}</p>
+            <p className="mt-[4px] text-[13px] text-[var(--shotiq-color-graphite)]">
+              {today}
+            </p>
           </div>
           {/* Canonical marks these four with its own node-graph family, each on
               its own aspect ratio (the film gate is 60x25, the live-camera node
               run 78x27) at a ~34px height — not four 20px square UI glyphs. */}
           <Link href="/analyze" data-testid="cta-analyze-shot"
-                className="flex h-[56px] items-center gap-[12px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] px-[26px] text-[15px] font-medium text-white">
+                className="flex h-[56px] shrink-0 items-center gap-[12px] whitespace-nowrap rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] px-[26px] text-[15px] font-medium text-white">
             <ActionGlyph kind="analyze" height={30} accent="#fff" /> Analyze shot
           </Link>
           {([["Upload image", "/upload", "uploadImage", 34],
              ["Upload video", "/upload", "uploadVideo", 25],
              ["Live camera", "/video-analysis", "liveCamera", 27]] as [string, string, ActionKind, number][]).map(([t, href, kind, h]) => (
             <Link key={t} href={href}
-                  className="flex h-[56px] items-center gap-[14px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[22px] text-[14px]">
+                  className="flex h-[56px] shrink-0 items-center gap-[14px] whitespace-nowrap rounded-[6px] border border-[var(--shotiq-color-rule)] px-[22px] text-[14px]">
               <ActionGlyph kind={kind} height={h} /> {t}
             </Link>
           ))}

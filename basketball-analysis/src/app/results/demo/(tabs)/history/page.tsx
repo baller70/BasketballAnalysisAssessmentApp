@@ -251,6 +251,12 @@ export default function AnalysisHistoryPage() {
             one. A <table> with divide-y gave 37px rows, a hairline under every
             row, and a square outline (border-radius does not apply to a
             table-row), so the rows are a grid now. */}
+        {/* At 393pt the eight measured columns cannot compress without losing the
+            table; canonical keeps the session record intact, so the table keeps
+            its real column widths and pans inside its own scroller instead of
+            pushing the document past the phone. Inert above the breakpoint. */}
+        <div className="shotiq-keep-cols -mx-[2px] overflow-x-auto px-[2px] md:mx-0 md:overflow-x-visible md:px-0">
+        <div className="min-w-[820px] md:min-w-0">
         <div className={`mt-[6px] grid ${COLS} pl-[14px] text-left shotiq-microcaps text-[var(--shotiq-color-graphite)]`}>
           {["DATE / TIME ↓", "FORM SCORE", "MAKE %", "SHOTS / MAKES", "CONFIDENCE", "FOCUS", "MEDIA", ""].map((h) => (
             <div key={h} className="py-[8px]">{h}</div>
@@ -308,6 +314,8 @@ export default function AnalysisHistoryPage() {
               {loading ? "Loading history…" : "No sessions yet — run your first analysis."}
             </div>
           )}
+        </div>
+        </div>
         </div>
         {rows.length > 0 && (
           <div className="mt-[14px] flex items-center justify-center gap-[10px] text-[12px]">

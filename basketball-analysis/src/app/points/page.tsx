@@ -3,7 +3,8 @@
 /** /points — canonical 095-web-achievements-points, using the points context. */
 
 import React, { useState } from "react"
-import { ChevronDown, Check, Lock, ArrowUpDown } from "lucide-react"
+import Link from "next/link"
+import { ChevronDown, Check, Lock, ArrowUpDown, X } from "lucide-react"
 import { SectionLabel, Card, TrendLine, Stat, PageTitle } from "@/components/shotiq/ShotIQShell"
 import { CueGlyph } from "@/components/shotiq/Glyphs"
 import { usePoints } from "@/lib/points/pointsContext"
@@ -126,10 +127,23 @@ export default function AchievementsPointsPage() {
   if (order === "A–Z") sorted.sort((x, y) => x.b[0].localeCompare(y.b[0]))
   if (order === "XP") sorted.sort((x, y) => parseInt(y.b[3].replace(/\D/g, "") || "0") - parseInt(x.b[3].replace(/\D/g, "") || "0"))
   const selBadge = pool[sel] ?? pool[0]
+  // The rail's primary CTA used to only setTab("BADGES") (already BADGES) and
+  // scrollIntoView on a page that is exactly 900px tall and does not scroll, so
+  // it moved nothing at all (R10 defect H6). It now opens the achievement
+  // itself — the badge, how it is earned, progress and the reward — and still
+  // brings the badge grid and the matching tile into view behind the sheet.
+  const [achievement, setAchievement] = useState(false)
   const viewAchievement = () => {
     setTab("BADGES")
     document.getElementById(`badge-${sel}`)?.scrollIntoView({ behavior: "smooth", block: "center" })
+    setAchievement(true)
   }
+  React.useEffect(() => {
+    if (!achievement) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setAchievement(false) }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [achievement])
 
   return (
     <div data-testid="screen-desktop-web-achievements-points" className="flex">
@@ -404,6 +418,53 @@ export default function AchievementsPointsPage() {
           </aside>
         </div>
       </div>
+
+      {/* Achievement sheet — what "View achievement" opens. */}
+      {achievement && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-6"
+             onClick={() => setAchievement(false)}>
+          <Card data-testid="achievement-detail" className="w-full max-w-[440px] p-[22px]"
+                role="dialog" aria-modal="true" aria-label={`${selBadge[0]} achievement`}
+                onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between">
+              <SectionLabel>ACHIEVEMENT</SectionLabel>
+              <button type="button" onClick={() => setAchievement(false)} aria-label="Close"
+                      data-testid="achievement-detail-close"
+                      className="grid h-[30px] w-[30px] place-items-center rounded-[5px] border border-[var(--shotiq-color-rule)]">
+                <X className="h-[14px] w-[14px]" />
+              </button>
+            </div>
+            <div className="mt-[10px] flex items-center gap-[16px]">
+              <Hex earned={selBadge[2]} size={96} name={selBadge[0]} className="shrink-0" />
+              <div className="min-w-0">
+                <div className="text-[20px] font-bold leading-[24px]">{selBadge[0]}</div>
+                <div className="text-[12px] text-[var(--shotiq-color-analysisBlue)]">{selBadge[4]}</div>
+                <span className={`mt-[6px] inline-block rounded-[4px] border px-[8px] py-[2px] text-[10px] font-bold ${
+                  selBadge[2]
+                    ? "border-[var(--shotiq-color-confirmGreen)] text-[var(--shotiq-color-confirmGreen)]"
+                    : "border-[var(--shotiq-color-graphite)] text-[var(--shotiq-color-graphite)]"}`}>
+                  {selBadge[2] ? "EARNED" : `LOCKED · ${selBadge[3]}`}
+                </span>
+              </div>
+            </div>
+            <p className="mt-[12px] text-[13px] leading-[19px] text-[var(--shotiq-color-graphite)]">{selBadge[1]}</p>
+            <div className="mt-[12px] border-t border-[var(--shotiq-color-rule)] pt-[10px]">
+              <SectionLabel>YOUR PROGRESS</SectionLabel>
+              <div className="mt-[6px] flex items-center gap-[10px]">
+                <div className="h-[6px] flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
+                  <div className="h-full rounded-full bg-[var(--shotiq-color-confirmGreen)]"
+                       style={{ width: selBadge[2] ? "100%" : "40%" }} />
+                </div>
+                <span className="text-[12px]">{selBadge[2] ? "5 / 5" : "2 / 5"}</span>
+              </div>
+            </div>
+            <Link href="/results/demo/training" data-testid="achievement-train"
+                  className="mt-[16px] flex h-[42px] items-center justify-center rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] text-[14px] font-medium text-white">
+              {selBadge[2] ? "Keep the streak going ↗" : "Train toward this badge ↗"}
+            </Link>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }
