@@ -44,7 +44,7 @@
 import React from "react"
 import { useRouter } from "next/navigation"
 import { PhoneScreen } from "@/components/shotiq/PhoneShell"
-import { ReadinessGlyph, ActionGlyph, PoseGlyph } from "@/components/shotiq/Glyphs"
+import { ReadinessGlyph, ActionGlyph, PoseGlyph, StreakGlyph, PointsGlyph } from "@/components/shotiq/Glyphs"
 import {
   ORANGE, GREEN, BLUE, GRAPHITE, RULE, INK,
   CaptureIdentity, PhaseStrip, CameraFrame, CheckDot, Chevron, Bracketed, Head,
@@ -84,14 +84,14 @@ function Primer({ onContinue, onSkip }: { onContinue: () => void; onSkip: () => 
           not the two-mark cluster the rest of the family uses (y50.7-113.3) */}
       <div className="flex items-start justify-between pt-[11px]">
         <div className="min-w-0">
-          <div className="shotiq-display text-[29px] leading-[30px] tracking-[0.04em]">JORDAN ELLIS</div>
-          <div className="mt-[5px] text-[10.5px] leading-[12px]" style={{ color: GRAPHITE }}>Right-handed • Advanced</div>
+          <div className="shotiq-display text-[27px] leading-[28px] tracking-[0.04em]">JORDAN ELLIS</div>
+          <div className="mt-[5px] whitespace-nowrap text-[10.5px] leading-[12px]" style={{ color: GRAPHITE }}>Right-handed • Advanced</div>
         </div>
         <div className="flex shrink-0 items-start text-center">
           <div className="w-[62px]">
             <div className="shotiq-numeric text-[19px] leading-[19px]">82</div>
-            <div className="shotiq-microcaps mt-[3px] text-[8px] leading-[9px]" style={{ color: GRAPHITE }}>FORM SCORE</div>
-            <div className="mt-[4px] text-[8.5px] leading-[10px]" style={{ color: GRAPHITE }}>{TARGET}</div>
+            <div className="shotiq-microcaps mt-[3px] whitespace-nowrap text-[8px] leading-[9px]" style={{ color: GRAPHITE }}>FORM SCORE</div>
+            <div className="mt-[4px] text-[8px] leading-[9.5px]" style={{ color: GRAPHITE }}>{TARGET}</div>
           </div>
           <span aria-hidden="true" className="mx-[6px] h-[57px] w-px" style={{ background: RULE }} />
           <div className="w-[34px]">
@@ -99,34 +99,34 @@ function Primer({ onContinue, onSkip }: { onContinue: () => void; onSkip: () => 
               <div key={l} className={i ? "mt-[2px]" : undefined}>
                 <div className={`shotiq-numeric text-[15px] leading-[16px] ${i === 1 ? "" : ""}`}
                      style={i === 1 ? { color: GREEN } : undefined}>{v}</div>
-                <div className="shotiq-microcaps text-[7.5px] leading-[8px]" style={{ color: GRAPHITE }}>{l}</div>
+                <div className="shotiq-microcaps whitespace-nowrap text-[7.5px] leading-[8px]" style={{ color: GRAPHITE }}>{l}</div>
               </div>
             ))}
           </div>
-          <span aria-hidden="true" className="mx-[6px] h-[57px] w-px" style={{ background: RULE }} />
-          <div className="w-[36px]">
+          <span aria-hidden="true" className="mx-[7px] h-[57px] w-px" style={{ background: RULE }} />
+          <div className="w-[40px]">
             <div className="shotiq-numeric text-[17px] leading-[18px]">6</div>
-            <div className="shotiq-microcaps mt-[3px] text-[7.5px] leading-[8px]" style={{ color: GRAPHITE }}>DAY STREAK</div>
+            <div className="shotiq-microcaps mt-[3px] whitespace-nowrap text-[7.5px] leading-[8px]" style={{ color: GRAPHITE }}>DAY STREAK</div>
           </div>
-          <span aria-hidden="true" className="mx-[6px] h-[57px] w-px" style={{ background: RULE }} />
-          <div className="w-[42px]">
-            <span className="flex justify-center"><ActionGlyph kind="nodeClimb" height={19} /></span>
+          <span aria-hidden="true" className="mx-[7px] h-[57px] w-px" style={{ background: RULE }} />
+          <div className="w-[40px]">
+            <span className="flex justify-center"><PointsGlyph size={19} /></span>
             <div className="shotiq-numeric mt-[2px] text-[17px] leading-[18px]">2,840</div>
             <div className="shotiq-microcaps mt-[2px] text-[7.5px] leading-[8px]" style={{ color: GRAPHITE }}>POINTS</div>
           </div>
         </div>
       </div>
 
-      <Head cap={32.3} className="mt-[24px]">LIVE SHOT CAPTURE</Head>
-      <Head cap={16.1} className="mt-[8px]" tone={GRAPHITE} style={{ letterSpacing: "0.16em" }}>HOW IT WORKS</Head>
-      <div className="mt-[7px] h-px" style={{ background: RULE }} />
-      <p className="mt-[11px] text-[13.5px] leading-[19.5px]" style={{ color: GRAPHITE }}>
+      <Head cap={32.3} className="mt-[1px]">LIVE SHOT CAPTURE</Head>
+      <Head cap={16.1} className="mt-[5px]" tone={GRAPHITE} style={{ letterSpacing: "0.16em" }}>HOW IT WORKS</Head>
+      <div className="mt-[5px] h-px" style={{ background: RULE }} />
+      <p className="mt-[9px] text-[13.5px] leading-[19.5px]" style={{ color: GRAPHITE }}>
         Live capture uses your camera to record your shot
         <br />so ShotIQ can analyze your mechanics in real time.
       </p>
 
-      <Head cap={13.8} className="mt-[17px]">WHAT WE RECORD</Head>
-      <div className="mt-[11px] flex">
+      <Head cap={13.8} className="mt-[13px]">WHAT WE RECORD</Head>
+      <div className="mt-[9px] flex">
         {RECORDS.map(([src, title, body], i) => (
           <React.Fragment key={src}>
             {i > 0 && <span aria-hidden="true" className="mx-[10px] w-px self-stretch" style={{ background: RULE }} />}
@@ -134,26 +134,26 @@ function Primer({ onContinue, onSkip }: { onContinue: () => void; onSkip: () => 
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={`${IMG}/${src}.jpg`} alt="" width={103} height={113}
                    className="block h-[113px] w-full rounded-[3px] object-cover" />
-              <div className="mt-[11px] text-[12.5px] font-semibold leading-[14px]">{title}</div>
-              <div className="mt-[6px] text-[10.5px] leading-[13.5px]" style={{ color: GRAPHITE }}>{body}</div>
+              <div className="mt-[9px] whitespace-nowrap text-[11.5px] font-semibold leading-[13px] tracking-[-0.02em]">{title}</div>
+              <div className="mt-[4px] text-[10px] leading-[12.4px]" style={{ color: GRAPHITE }}>{body}</div>
             </div>
           </React.Fragment>
         ))}
       </div>
 
-      <div className="mt-[13px] flex items-start gap-[11px] rounded-[6px] border p-[11px]"
+      <div className="mt-[1px] flex items-start gap-[11px] rounded-[6px] border p-[8px]"
            style={{ borderColor: RULE, background: "var(--shotiq-color-warmCanvas)" }}>
         <ShieldGlyph size={29} />
         <div className="min-w-0">
-          <div className="text-[13px] font-semibold leading-[15px]">Your privacy matters</div>
-          <p className="mt-[4px] text-[10.5px] leading-[13px]" style={{ color: GRAPHITE }}>
+          <div className="text-[13px] font-semibold leading-[14px]">Your privacy matters</div>
+          <p className="mt-[4px] text-[10.5px] leading-[12.5px]" style={{ color: GRAPHITE }}>
             Videos are securely processed to generate your analysis.
             <br />We do not share or use your videos for anything else.
           </p>
         </div>
       </div>
 
-      <div className="mt-[14px] flex items-start justify-between">
+      <div className="mt-[8px] flex items-start justify-between">
         <div className="w-[178px] shrink-0">
           <Head cap={14.7}>WHEN YOU&rsquo;LL SEE THIS</Head>
           <p className="mt-[9px] text-[11px] leading-[14px]" style={{ color: GRAPHITE }}>
@@ -161,22 +161,22 @@ function Primer({ onContinue, onSkip }: { onContinue: () => void; onSkip: () => 
           </p>
         </div>
         {/* the iOS permission alert, as canonical mocks it (x216-357, y543.7-636.7) */}
-        <div className="-mt-[9px] w-[141px] shrink-0 rounded-[7px] border text-center"
+        <div className="-mt-[9px] h-[93px] w-[141px] shrink-0 overflow-hidden rounded-[7px] border text-center"
              style={{ borderColor: RULE, background: "var(--shotiq-color-warmCanvas)" }}>
-          <div className="px-[10px] pt-[10px] text-[11.5px] font-semibold leading-[14px]">
+          <div className="px-[9px] pt-[7px] text-[11px] font-semibold leading-[13px]">
             &ldquo;ShotIQ&rdquo; Would Like to Access the Camera
           </div>
-          <p className="mt-[6px] px-[9px] pb-[9px] text-[9.5px] leading-[12px]" style={{ color: GRAPHITE }}>
+          <p className="mt-[4px] px-[8px] text-[9px] leading-[11px]" style={{ color: GRAPHITE }}>
             ShotIQ uses your camera to record live shots and analyze your form.
           </p>
-          <div className="flex border-t text-[11.5px]" style={{ borderColor: RULE, color: BLUE }}>
-            <span className="flex-1 border-r py-[6px]" style={{ borderColor: RULE }}>Don&rsquo;t Allow</span>
-            <span className="flex-1 py-[6px]">Allow</span>
+          <div className="mt-[4px] flex border-t text-[11px]" style={{ borderColor: RULE, color: BLUE }}>
+            <span className="flex-1 border-r py-[4px]" style={{ borderColor: RULE }}>Don&rsquo;t Allow</span>
+            <span className="flex-1 py-[4px]">Allow</span>
           </div>
         </div>
       </div>
 
-      <Head cap={13.8} className="mt-[14px]">HOW TO ALLOW</Head>
+      <Head cap={13.8} className="mt-[9px]">HOW TO ALLOW</Head>
       <div className="mt-[8px] flex items-start">
         {[
           [<GearGlyph key="g" size={26} />, "Open Settings", ""],
@@ -195,18 +195,18 @@ function Primer({ onContinue, onSkip }: { onContinue: () => void; onSkip: () => 
             )}
             <div className="flex-1 text-center">
               <span className="flex h-[26px] items-center justify-center">{glyph}</span>
-              <div className="mt-[7px] text-[10px] leading-[12px]" style={{ color: GRAPHITE }}>{l1}</div>
-              {l2 ? <div className="text-[10px] leading-[12px]" style={{ color: GRAPHITE }}>{l2}</div> : null}
+              <div className="mt-[6px] whitespace-nowrap text-[10px] leading-[11.5px]" style={{ color: GRAPHITE }}>{l1}</div>
+              {l2 ? <div className="whitespace-nowrap text-[10px] leading-[11.5px]" style={{ color: GRAPHITE }}>{l2}</div> : null}
             </div>
           </React.Fragment>
         ))}
       </div>
 
-      <div className="mt-[9px] h-px" style={{ background: RULE }} />
-      <div className="mt-[8px] flex items-start justify-between">
+      <div className="mt-[5px] h-px" style={{ background: RULE }} />
+      <div className="mt-[5px] flex items-start justify-between">
         <div className="min-w-0">
           <Head cap={13.8}>GOOD TO KNOW</Head>
-          <ul className="mt-[6px] space-y-[3px] text-[10.5px] leading-[13px]" style={{ color: GRAPHITE }}>
+          <ul className="mt-[6px] space-y-[2px] text-[10.5px] leading-[12.5px]" style={{ color: GRAPHITE }}>
             {["You can change this anytime in Settings.",
               "Camera access is required for live shot capture.",
               "This permission does not affect your saved videos."].map((t) => (
@@ -222,7 +222,7 @@ function Primer({ onContinue, onSkip }: { onContinue: () => void; onSkip: () => 
       </div>
 
       <button type="button" onClick={onContinue} data-testid="capture-primer-continue"
-              className="mt-[9px] flex h-[30px] w-full items-center justify-center rounded-[5px] text-[15px] font-semibold text-white"
+              className="mt-[7px] flex h-[30px] w-full items-center justify-center rounded-[5px] text-[15px] font-semibold text-white"
               style={{ background: GREEN }}>
         Continue
       </button>
@@ -253,33 +253,33 @@ function Setup({
 }) {
   return (
     <PhoneScreen testid="screen-ios-live-camera-setup" pad={18} headerH={40} tab="home">
-      <CaptureIdentity cap={22.1} className="pt-[14px]" />
+      <CaptureIdentity cap={22.1} className="pt-[7px]" />
 
-      {/* stat card, y109.7-167.2 */}
-      <div className="mt-[12px] flex items-stretch rounded-[6px] border" style={{ borderColor: RULE }}>
-        <div className="flex items-center gap-[8px] py-[8px] pl-[10px] pr-[10px]">
+      {/* stat card, canonical y109.7-167.2 (57.5 tall), dividers at x124.6 and x287.5 */}
+      <div className="mt-[10px] flex h-[57px] items-stretch rounded-[6px] border" style={{ borderColor: RULE }}>
+        <div className="flex w-[106px] shrink-0 items-center gap-[4px] pl-[8px]">
           <div>
-            <div className="shotiq-microcaps text-[8px] leading-[9px]" style={{ color: GRAPHITE }}>FORM SCORE</div>
-            <div className="mt-[3px] flex items-baseline gap-[3px]">
-              <span className="shotiq-numeric text-[22px] leading-[22px]" style={{ color: BLUE }}>82</span>
-              <span className="text-[10px]" style={{ color: GRAPHITE }}>/100</span>
+            <div className="shotiq-microcaps whitespace-nowrap text-[7.5px] leading-[8px]" style={{ color: GRAPHITE }}>FORM SCORE</div>
+            <div className="mt-[2px] flex items-baseline gap-[2px]">
+              <span className="shotiq-numeric text-[20px] leading-[20px]" style={{ color: BLUE }}>82</span>
+              <span className="text-[9px]" style={{ color: GRAPHITE }}>/100</span>
             </div>
           </div>
-          <Spark width={44} height={26} />
+          <Spark width={42} height={24} />
         </div>
         {[["24", "SHOTS"], ["15", "MAKES"], ["62.5%", "ACCURACY"]].map(([v, l]) => (
-          <div key={l} className="flex-1 border-l py-[9px] pl-[9px]" style={{ borderColor: RULE }}>
+          <div key={l} className="flex-1 border-l pl-[8px] pt-[11px]" style={{ borderColor: RULE }}>
             <div className="shotiq-numeric text-[17px] leading-[18px]">{v}</div>
-            <div className="shotiq-microcaps mt-[3px] text-[7.5px] leading-[8px]" style={{ color: GRAPHITE }}>{l}</div>
+            <div className="shotiq-microcaps mt-[3px] whitespace-nowrap text-[7.5px] leading-[8px]" style={{ color: GRAPHITE }}>{l}</div>
           </div>
         ))}
-        <div className="w-[92px] shrink-0 border-l py-[9px] pl-[9px] pr-[6px]" style={{ borderColor: RULE }}>
-          <div className="shotiq-microcaps text-[7.5px] leading-[8px]" style={{ color: GRAPHITE }}>PRIMARY TARGET</div>
-          <div className="mt-[3px] text-[9.5px] leading-[12px]">{TARGET}</div>
+        <div className="w-[99px] shrink-0 border-l pl-[8px] pr-[3px] pt-[10px]" style={{ borderColor: RULE }}>
+          <div className="shotiq-microcaps whitespace-nowrap text-[7.5px] leading-[8px]" style={{ color: GRAPHITE }}>PRIMARY TARGET</div>
+          <div className="mt-[3px] text-[8.5px] leading-[10.5px]">{TARGET}</div>
         </div>
       </div>
 
-      <div className="mt-[16px] flex items-start justify-between">
+      <div className="mt-[14px] flex items-start justify-between">
         <div className="min-w-0">
           <Head cap={22.1}>LIVE CAMERA SETUP</Head>
           <p className="mt-[9px] text-[11px] leading-[13px]" style={{ color: GRAPHITE }}>
@@ -287,26 +287,26 @@ function Setup({
           </p>
         </div>
         <button type="button" data-testid="capture-switch-camera"
-                className="flex h-[38px] w-[99px] shrink-0 items-center justify-center gap-[7px] rounded-[6px] border text-[11.5px]"
+                className="flex h-[38px] w-[99px] shrink-0 items-center justify-center gap-[6px] whitespace-nowrap rounded-[6px] border text-[11px]"
                 style={{ borderColor: RULE }}>
-          <SwitchCamGlyph size={17} /> Switch camera
+          <SwitchCamGlyph size={16} /> Switch camera
         </button>
       </div>
 
       <CameraFrame src={`${IMG}/ios-028-frame.jpg`} width={357} height={230} stream={stream}
-                   radius={4} className="mt-[11px]" onStart={onStart}
+                   radius={4} className="mt-[10px]" onStart={onStart}
                    label="Start the camera preview" />
 
       {/* checklist card, y473.6-663.0, rows ruled at 521.8 / 568.5 / 615.0 */}
-      <div className="mt-[9px] rounded-[6px] border" style={{ borderColor: RULE }}>
+      <div className="mt-[8px] rounded-[6px] border" style={{ borderColor: RULE }}>
         {SETUP_CHECKS.map(([kind, title, body]) => (
-          <div key={title} className="flex items-center gap-[13px] border-b px-[13px] py-[9px]" style={{ borderColor: RULE }}>
-            <Bracketed size={35} stroke={INK}>
-              <ReadinessGlyph kind={kind} size={19} />
+          <div key={title} className="flex h-[46px] items-center gap-[12px] border-b px-[12px]" style={{ borderColor: RULE }}>
+            <Bracketed size={33} stroke={INK}>
+              <ReadinessGlyph kind={kind} size={18} />
             </Bracketed>
             <div className="min-w-0 flex-1">
               <Head cap={13}>{title}</Head>
-              <div className="mt-[5px] text-[10.5px] leading-[12px]" style={{ color: GRAPHITE }}>{body}</div>
+              <div className="mt-[4px] whitespace-nowrap text-[10px] leading-[11px]" style={{ color: GRAPHITE }}>{body}</div>
             </div>
             <span className="grid h-[19px] w-[19px] shrink-0 place-items-center rounded-full border-[1.6px]"
                   style={{ borderColor: GREEN }}>
@@ -317,17 +317,17 @@ function Setup({
             </span>
           </div>
         ))}
-        <div className="flex items-center gap-[13px] px-[13px] py-[9px]">
-          <Bracketed size={35} stroke={INK}><PoseGlyph phase="setup" size={19} /></Bracketed>
+        <div className="flex h-[46px] items-center gap-[12px] px-[12px]">
+          <Bracketed size={33} stroke={INK}><PoseGlyph phase="setup" size={18} /></Bracketed>
           <div className="min-w-0 flex-1">
             <Head cap={13}>SHOOTING HAND</Head>
-            <div className="mt-[5px] text-[10.5px]" style={{ color: GRAPHITE }}>Confirm your dominant shooting hand.</div>
+            <div className="mt-[4px] whitespace-nowrap text-[10px] leading-[11px]" style={{ color: GRAPHITE }}>Confirm your dominant shooting hand.</div>
           </div>
           <div className="flex shrink-0 overflow-hidden rounded-[3px] border" style={{ borderColor: RULE }}>
             {(["LEFT", "RIGHT"] as const).map((h) => (
               <button key={h} type="button" onClick={() => onHand(h)} aria-pressed={hand === h}
                       data-testid={`capture-hand-${h.toLowerCase()}`}
-                      className="shotiq-display px-[13px] py-[6px] text-[14px] leading-[15px]"
+                      className="shotiq-display px-[11px] py-[5px] text-[14px] leading-[15px]"
                       style={hand === h ? { background: ORANGE, color: "#fff" } : { color: INK }}>
                 {h}
               </button>
@@ -337,17 +337,17 @@ function Setup({
       </div>
 
       <button type="button" onClick={onStart} data-testid="capture-setup-start"
-              className="mt-[8px] flex h-[33px] w-full items-center justify-center gap-[11px] rounded-[6px] text-[15px] font-semibold text-white"
+              className="mt-[7px] flex h-[33px] w-full items-center justify-center gap-[11px] rounded-[6px] text-[15px] font-semibold text-white"
               style={{ background: ORANGE }}>
         <ActionGlyph kind="analyze" height={19} accent="#fff" /> Set up camera
       </button>
       <button type="button" onClick={onUpload}
-              className="mt-[4px] flex h-[29px] w-full items-center justify-center gap-[10px] rounded-[6px] border text-[13px]"
+              className="mt-[3px] flex h-[29px] w-full items-center justify-center gap-[10px] rounded-[6px] border text-[13px]"
               style={{ borderColor: RULE }}>
         <UploadGlyph size={16} /> Use uploaded video
       </button>
 
-      <PhaseStrip active="SETUP" figure={28} label={9} className="mt-[8px]" />
+      <PhaseStrip active="SETUP" figure={28} label={9} className="mt-[6px]" />
     </PhoneScreen>
   )
 }
@@ -371,13 +371,13 @@ function Calibrate({
         </div>
         <div className="flex shrink-0 items-start text-center">
           <div className="w-[62px]">
-            <span className="flex h-[20px] items-center justify-center"><ActionGlyph kind="uploadVideo" height={18} /></span>
+            <span className="flex h-[20px] items-center justify-center"><StreakGlyph size={36} /></span>
             <div className="shotiq-numeric mt-[5px] text-[19px] leading-[14px]">6</div>
-            <div className="shotiq-microcaps mt-[5px] text-[8.6px] leading-[7px]" style={{ color: GRAPHITE }}>DAY STREAK</div>
+            <div className="shotiq-microcaps mt-[5px] whitespace-nowrap text-[8.6px] leading-[7px]" style={{ color: GRAPHITE }}>DAY STREAK</div>
           </div>
           <span aria-hidden="true" className="mx-[9px] mt-[1px] h-[52px] w-px" style={{ background: RULE }} />
           <div className="w-[54px]">
-            <span className="flex h-[20px] items-center justify-center"><ActionGlyph kind="nodeClimb" height={20} /></span>
+            <span className="flex h-[20px] items-center justify-center"><PointsGlyph size={20} /></span>
             <div className="shotiq-numeric mt-[5px] text-[19px] leading-[14px]">2,840</div>
             <div className="shotiq-microcaps mt-[5px] text-[8.6px] leading-[7px]" style={{ color: GRAPHITE }}>POINTS</div>
           </div>
@@ -443,19 +443,19 @@ function Readiness({
 }) {
   return (
     <PhoneScreen testid="screen-ios-readiness-check" pad={22} headerH={44} tab="home">
-      <CaptureIdentity cap={24} className="pt-[13px]" />
+      <CaptureIdentity cap={24} className="pt-[11px]" />
       <div className="mt-[9px] h-px" style={{ background: RULE }} />
 
-      <div className="mt-[13px] flex items-center gap-[16px]">
+      <div className="mt-[11px] flex items-center gap-[16px]">
         <BackArrow w={15} />
         <span className="shotiq-microcaps text-[10px] leading-[10px]" style={{ color: GRAPHITE }}>AI ANALYSIS</span>
       </div>
       <Head cap={32.3} className="mt-[10px]">READINESS CHECK</Head>
-      <p className="mt-[10px] text-[12.5px] leading-[14px]" style={{ color: GRAPHITE }}>
+      <p className="mt-[8px] text-[12.5px] leading-[14px]" style={{ color: GRAPHITE }}>
         Get everything green to capture your best analysis.
       </p>
 
-      <div className="mt-[10px]" style={{ marginLeft: -8, marginRight: -8 }}>
+      <div className="mt-[8px]" style={{ marginLeft: -8, marginRight: -8 }}>
         <CameraFrame src={`${IMG}/ios-030-frame.jpg`} width={365} height={287} stream={stream}
                      radius={7} onStart={onStart} label="Start the camera preview">
           <span className="pointer-events-none absolute left-[10px] top-[10px] flex items-center gap-[6px] rounded-[5px] px-[9px] py-[5px]"
@@ -464,15 +464,16 @@ function Readiness({
             <span className="text-[11px] font-semibold text-white">LIVE</span>
           </span>
           {/* the live readiness list, x261.2-368.6 y308.2-496.2 of the canonical */}
-          <div className="pointer-events-none absolute right-[10px] top-[91px] w-[108px] overflow-hidden rounded-[6px] bg-white">
+          {/* canonical x261.2-368.6, y308.2-496.2 — six 31.3pt rows */}
+          <div className="pointer-events-none absolute right-[10px] top-[88px] w-[108px] overflow-hidden rounded-[6px] bg-white">
             {READY_ROWS.map(([kind, label, value], i) => (
-              <div key={label} className={`flex items-center gap-[6px] px-[7px] py-[6px] ${i ? "border-t" : ""}`}
+              <div key={label} className={`flex h-[31px] items-center gap-[5px] px-[6px] ${i ? "border-t" : ""}`}
                    style={{ borderColor: RULE }}>
-                <CheckDot size={15} />
-                <ReadinessGlyph kind={kind} size={14} />
+                <CheckDot size={14} />
+                <ReadinessGlyph kind={kind} size={13} />
                 <div className="min-w-0">
-                  <div className="text-[9.5px] leading-[11px]">{label}</div>
-                  <div className="text-[8.5px] font-semibold leading-[10px]" style={{ color: GREEN }}>{value}</div>
+                  <div className="whitespace-nowrap text-[9px] leading-[10px]">{label}</div>
+                  <div className="text-[8px] font-semibold leading-[9px]" style={{ color: GREEN }}>{value}</div>
                 </div>
               </div>
             ))}
@@ -480,11 +481,11 @@ function Readiness({
         </CameraFrame>
       </div>
 
-      <div className="shotiq-microcaps mt-[12px] text-[9.5px]" style={{ color: GRAPHITE }}>SHOT PHASE</div>
+      <div className="shotiq-microcaps mt-[10px] text-[9.5px]" style={{ color: GRAPHITE }}>SHOT PHASE</div>
       <PhaseStrip active="RELEASE" figure={29} label={9} className="mt-[5px]" />
 
-      <div className="mt-[13px] flex items-center rounded-[6px] border py-[9px]" style={{ borderColor: RULE }}>
-        <span className="flex w-[62px] shrink-0 justify-center"><ActionGlyph kind="nodeClimb" height={26} /></span>
+      <div className="mt-[11px] flex items-center rounded-[6px] border py-[8px]" style={{ borderColor: RULE }}>
+        <span className="flex w-[62px] shrink-0 justify-center"><ActionGlyph kind="nodeClimb" height={26} accent={ORANGE} /></span>
         <span aria-hidden="true" className="mr-[11px] h-[42px] w-px" style={{ background: RULE }} />
         <div className="min-w-0 flex-1">
           <div className="shotiq-microcaps text-[9.5px]" style={{ color: GRAPHITE }}>PRIMARY COACHING TARGET</div>
@@ -549,11 +550,11 @@ function Ready({
           <React.Fragment key={name}>
             {i > 0 && <span aria-hidden="true" className="mx-[6px] w-px self-stretch" style={{ background: RULE }} />}
             <div className="flex-1">
-              <div className="flex items-center gap-[5px]">
+              <div className="flex items-center gap-[4px]">
                 <CheckDot size={13} />
-                <span className="text-[11px] font-semibold leading-[13px]">{name}</span>
+                <span className="whitespace-nowrap text-[10.5px] font-semibold leading-[13px]">{name}</span>
               </div>
-              <div className="mt-[5px] pl-[18px] text-[9.5px] leading-[11px]" style={{ color: GRAPHITE }}>{sub}</div>
+              <div className="mt-[5px] whitespace-nowrap pl-[17px] text-[9.5px] leading-[11px]" style={{ color: GRAPHITE }}>{sub}</div>
             </div>
           </React.Fragment>
         ))}
@@ -643,21 +644,21 @@ function Recording({
   const pct = shots ? `${((makes / shots) * 100).toFixed(1)}%` : "0.0%"
   return (
     <PhoneScreen testid="screen-ios-live-recording" pad={17} headerH={36} tab="home">
-      <CaptureIdentity cap={28.6} className="pt-[18px]" />
+      <CaptureIdentity cap={28.6} className="pt-[14px]" />
 
-      <div className="mt-[26px] flex items-center gap-[10px]">
+      <div className="mt-[17px] flex items-center gap-[10px]">
         <span className="h-[8px] w-[8px] rounded-full" style={{ background: ORANGE }} />
         <span className="shotiq-display text-[16px] leading-[16px] tracking-[0.03em]" style={{ color: ORANGE }}>LIVE RECORDING</span>
         <span className="ml-[15px] text-[12px]" style={{ color: GRAPHITE }}>Session time {mmss(seconds)}</span>
       </div>
 
       <CameraFrame src={`${IMG}/ios-032-frame.jpg`} width={362} height={364} stream={stream}
-                   radius={7} className="mt-[11px]" onStart={onStart} label="Start the camera preview">
-        <div className="pointer-events-none absolute left-[13px] top-[19px] w-[125px]">
-          <div className="shotiq-microcaps text-[10px] leading-[11px] text-white">CONFIDENCE</div>
-          <div className="shotiq-numeric mt-[3px] text-[30px] leading-[30px]" style={{ color: "#25C46A" }}>92%</div>
-          <div className="mt-[4px] h-[7px] w-full rounded-full bg-white/85">
-            <div className="h-full rounded-full" style={{ width: "82%", background: "#1B8F4C" }} />
+                   radius={7} className="mt-[9px]" onStart={onStart} label="Start the camera preview">
+        <div className="pointer-events-none absolute left-[10px] top-[13px] w-[78px]">
+          <div className="shotiq-microcaps text-[9.5px] leading-[10px] text-white">CONFIDENCE</div>
+          <div className="shotiq-numeric mt-[3px] text-[28px] leading-[28px]" style={{ color: "#25C46A" }}>92%</div>
+          <div className="mt-[3px] h-[6px] w-full rounded-full bg-white/90">
+            <div className="h-full rounded-full" style={{ width: "80%", background: "#1B8F4C" }} />
           </div>
         </div>
         <div className="pointer-events-none absolute right-[13px] top-[13px] rounded-[6px] px-[11px] py-[7px] text-center"
@@ -669,9 +670,9 @@ function Recording({
         </div>
         <div className="pointer-events-none absolute right-[10px] top-[128px] w-[76px] text-right">
           {[["SHOTS", String(shots)], ["MAKES", String(makes)], ["MAKE %", pct]].map(([l, v], i) => (
-            <div key={l} className={i ? "mt-[7px] border-t border-white/60 pt-[7px]" : ""}>
-              <div className="shotiq-microcaps text-[9.5px] leading-[10px] text-white">{l}</div>
-              <div className="shotiq-numeric mt-[1px] text-[26px] leading-[27px] text-white">{v}</div>
+            <div key={l} className={i ? "mt-[6px] border-t border-white/60 pt-[6px]" : ""}>
+              <div className="shotiq-microcaps whitespace-nowrap text-[9px] leading-[10px] text-white">{l}</div>
+              <div className="shotiq-numeric mt-[1px] text-[25px] leading-[26px] text-white">{v}</div>
             </div>
           ))}
         </div>
@@ -682,7 +683,7 @@ function Recording({
       </CameraFrame>
 
       <button type="button" onClick={onCue} data-testid="capture-open-cue"
-              className="mt-[13px] flex w-full items-center rounded-[6px] border px-[11px] py-[9px] text-left"
+              className="mt-[11px] flex w-full items-center rounded-[6px] border px-[11px] py-[8px] text-left"
               style={{ borderColor: RULE }}>
         <div className="min-w-0 flex-1">
           <div className="shotiq-microcaps text-[9.5px]" style={{ color: GRAPHITE }}>PRIMARY COACHING TARGET</div>
@@ -691,7 +692,7 @@ function Recording({
         <Chevron h={14} />
       </button>
 
-      <div className="mt-[12px] flex rounded-[6px] border py-[10px]" style={{ borderColor: RULE }}>
+      <div className="mt-[9px] flex rounded-[6px] border py-[8px]" style={{ borderColor: RULE }}>
         {[
           [<StopwatchGlyph key="a" size={19} />, "REPS REMAINING", "00:42"],
           [<StopwatchGlyph key="b" size={19} />, "ROUND TIMER", "00:42"],
@@ -700,16 +701,16 @@ function Recording({
         ].map(([glyph, label, value], i) => (
           <React.Fragment key={String(label)}>
             {i > 0 && <span aria-hidden="true" className="w-px self-stretch" style={{ background: RULE }} />}
-            <div className="flex-1 px-[6px] text-center">
+            <div className="flex-1 px-[3px] text-center">
               <span className="flex h-[19px] items-center justify-center">{glyph}</span>
-              <div className="shotiq-microcaps mt-[6px] text-[8.5px] leading-[9px]" style={{ color: GRAPHITE }}>{label}</div>
+              <div className="shotiq-microcaps mt-[6px] whitespace-nowrap text-[7.6px] leading-[8px]" style={{ color: GRAPHITE }}>{label}</div>
               <div className="shotiq-numeric mt-[6px] text-[21px] leading-[21px]">{value}</div>
             </div>
           </React.Fragment>
         ))}
       </div>
 
-      <div className="mt-[11px] flex items-start justify-center gap-[45px]">
+      <div className="mt-[9px] flex items-start justify-center gap-[45px]">
         <div className="text-center">
           <button type="button" onClick={onPause} data-testid="capture-pause"
                   className="grid h-[42px] w-[42px] place-items-center rounded-full border"
@@ -754,9 +755,9 @@ function Feedback({
 }) {
   return (
     <PhoneScreen testid="screen-ios-live-form-feedback" pad={21} headerH={36} tabBar={false}>
-      <CaptureIdentity cap={24.9} className="pt-[17px]" />
+      <CaptureIdentity cap={24.9} className="pt-[13px]" />
 
-      <div className="mt-[30px] flex items-center justify-between">
+      <div className="mt-[22px] flex items-center justify-between">
         <Head cap={12.4}>LIVE FORM FEEDBACK</Head>
         <span className="flex items-center gap-[7px] text-[12px]" style={{ color: BLUE }}>
           <span className="h-[7px] w-[7px] rounded-full" style={{ background: BLUE }} /> Demo
@@ -764,27 +765,28 @@ function Feedback({
       </div>
 
       <CameraFrame src={`${IMG}/ios-033-frame.jpg`} width={351} height={366} stream={stream}
-                   radius={7} className="mt-[9px]" onStart={onStart} label="Start the camera preview">
+                   radius={7} className="mt-[7px]" onStart={onStart} label="Start the camera preview">
         <span className="pointer-events-none absolute left-[10px] top-[10px] flex items-center gap-[6px] rounded-[5px] px-[9px] py-[5px]"
               style={{ background: "#26282B" }}>
           <span className="h-[7px] w-[7px] rounded-full" style={{ background: ORANGE }} />
           <span className="text-[11px] font-semibold text-white">LIVE</span>
         </span>
         {/* LATEST RESULT card, canonical x279.2-373.0 y247.4-428.9 */}
+        {/* canonical x279.2-373.0, y247.4-428.9 — 93.8 x 181.5 flush right */}
         <button type="button" onClick={onShot} data-testid="capture-latest-result"
-                className="absolute right-0 top-[94px] w-[94px] rounded-l-[7px] bg-white px-[11px] py-[12px] text-left">
+                className="absolute right-0 top-[94px] h-[182px] w-[94px] rounded-l-[7px] bg-white px-[11px] py-[13px] text-left">
           <div className="shotiq-microcaps text-[9.5px]" style={{ color: GRAPHITE }}>LATEST RESULT</div>
-          <Head cap={11} className="mt-[8px]">FORM SCORE</Head>
-          <div className="shotiq-numeric mt-[3px] text-[46px] leading-[46px]" style={{ color: ORANGE }}>82</div>
-          <div className="mt-[5px] h-[5px] w-full rounded-full" style={{ background: RULE }}>
+          <Head cap={11} className="mt-[9px]">FORM SCORE</Head>
+          <div className="shotiq-numeric mt-[4px] text-[45px] leading-[45px]" style={{ color: ORANGE }}>82</div>
+          <div className="mt-[6px] h-[5px] w-full rounded-full" style={{ background: RULE }}>
             <div className="h-full rounded-full" style={{ width: "82%", background: ORANGE }} />
           </div>
-          <div className="shotiq-display mt-[8px] text-[13px] leading-[13px]" style={{ color: BLUE }}>GOOD</div>
-          <p className="mt-[5px] text-[10.5px] leading-[13px]" style={{ color: GRAPHITE }}>Keep building consistency.</p>
+          <div className="shotiq-display mt-[9px] text-[13px] leading-[13px]" style={{ color: BLUE }}>GOOD</div>
+          <p className="mt-[6px] text-[10.5px] leading-[13px]" style={{ color: GRAPHITE }}>Keep building consistency.</p>
         </button>
       </CameraFrame>
 
-      <div className="mt-[6px] flex items-center rounded-[6px] border py-[10px]" style={{ borderColor: RULE }}>
+      <div className="mt-[5px] flex items-center rounded-[6px] border py-[9px]" style={{ borderColor: RULE }}>
         <span className="flex w-[67px] shrink-0 justify-center">
           <Bracketed size={44} stroke={INK}><ActionGlyph kind="nodeGraph" height={17} /></Bracketed>
         </span>
@@ -805,9 +807,9 @@ function Feedback({
         </div>
       </div>
 
-      <PhaseStrip active="RELEASE" figure={29} label={9} className="mt-[12px]" />
+      <PhaseStrip active="RELEASE" figure={29} label={9} className="mt-[8px]" />
 
-      <div className="mt-[14px] flex items-start justify-center gap-[62px]">
+      <div className="mt-[10px] flex items-start justify-center gap-[62px]">
         <div className="text-center">
           <button type="button" onClick={onMute} aria-pressed={muted}
                   className="grid h-[44px] w-[44px] place-items-center rounded-full border"
@@ -827,7 +829,7 @@ function Feedback({
       </div>
 
       <button type="button" onClick={onKeep} data-testid="capture-keep-shooting"
-              className="mx-auto mt-[13px] flex h-[41px] w-[328px] items-center justify-center rounded-[6px] text-[18px] font-semibold text-white"
+              className="mx-auto mt-[9px] flex h-[41px] w-[328px] items-center justify-center rounded-[6px] text-[18px] font-semibold text-white"
               style={{ background: GREEN }}>
         Keep shooting
       </button>
@@ -854,22 +856,22 @@ function ShotDetected({
 }) {
   return (
     <PhoneScreen testid="screen-ios-shot-detected" pad={17} headerH={34} tab="home">
-      <CaptureIdentity cap={25.3} className="pt-[16px]" />
+      <CaptureIdentity cap={25.3} className="pt-[13px]" />
 
-      <div className="shotiq-microcaps mt-[24px] flex items-center gap-[8px] text-[9.5px]" style={{ color: GRAPHITE }}>
+      <div className="shotiq-microcaps mt-[16px] flex items-center gap-[8px] text-[9.5px]" style={{ color: GRAPHITE }}>
         ANALYSIS <Chevron h={9} /> <span style={{ color: INK }}>SHOT DETECTED</span>
       </div>
 
       <div className="mt-[8px] rounded-[6px] border" style={{ borderColor: RULE }}>
-        <div className="flex items-center gap-[16px] px-[10px] pt-[11px]">
+        <div className="flex items-center gap-[16px] px-[10px] pt-[9px]">
           <Head cap={19.4}>SHOT {index}</Head>
-          <span className="shotiq-display rounded-[4px] border px-[10px] py-[3px] text-[19px] leading-[19px]"
+          <span className="shotiq-display flex h-[19px] items-center rounded-[4px] border px-[9px] text-[17px] leading-[17px]"
                 style={{ borderColor: ORANGE, color: ORANGE }}>SHOT DETECTED</span>
         </div>
-        <div className="mt-[10px] flex items-center px-[10px]">
+        <div className="mt-[9px] flex items-center px-[10px]">
           <span className="mr-[9px]"><StopwatchGlyph size={22} /></span>
           <div className="min-w-0">
-            <div className="text-[15px] font-semibold leading-[17px]">8:24:10 AM</div>
+            <div className="text-[14px] font-semibold leading-[16px]">8:24:10 AM</div>
             <div className="mt-[2px] text-[11px] leading-[12px]" style={{ color: GRAPHITE }}>Today</div>
           </div>
           <span aria-hidden="true" className="mx-[19px] h-[25px] w-px" style={{ background: RULE }} />
@@ -882,40 +884,40 @@ function ShotDetected({
 
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={`${IMG}/ios-034-frame.jpg`} alt="Detected shot, release phase" width={344} height={225}
-             className="mx-auto mt-[10px] block h-[225px] w-[344px] rounded-[4px] object-cover" />
+             className="mx-auto mt-[8px] block h-[225px] w-[344px] rounded-[4px] object-cover" />
 
         <PhaseStrip active="RELEASE" figure={29} label={9} className="mx-[10px] mt-[10px]" />
 
         <div className="mt-[11px] h-px" style={{ background: RULE }} />
         <div className="flex">
-          <div className="flex-1 px-[11px] py-[10px]">
-            <div className="shotiq-microcaps text-[9px]" style={{ color: GRAPHITE }}>FORM SCORE</div>
-            <div className="mt-[6px] flex items-center gap-[10px]">
-              <span className="shotiq-numeric text-[46px] leading-[46px]" style={{ color: ORANGE }}>82</span>
-              <div className="flex-1">
+          <div className="w-[183px] shrink-0 px-[11px] py-[8px]">
+            <div className="shotiq-microcaps whitespace-nowrap text-[9px]" style={{ color: GRAPHITE }}>FORM SCORE</div>
+            <div className="mt-[5px] flex items-start gap-[10px]">
+              <span className="shotiq-numeric text-[42px] leading-[42px]" style={{ color: ORANGE }}>82</span>
+              <div className="flex-1 pt-[10px]">
                 <div className="h-[5px] w-full rounded-full" style={{ background: RULE }}>
                   <div className="h-full rounded-full" style={{ width: "82%", background: ORANGE }} />
                 </div>
                 <div className="shotiq-display mt-[7px] text-[13px] leading-[13px]" style={{ color: BLUE }}>GOOD</div>
-                <div className="mt-[5px] text-[10.5px] leading-[12px]" style={{ color: GRAPHITE }}>Keep building consistency.</div>
+                <div className="mt-[5px] whitespace-nowrap text-[10px] leading-[11px]" style={{ color: GRAPHITE }}>Keep building consistency.</div>
               </div>
             </div>
           </div>
           <span aria-hidden="true" className="w-px self-stretch" style={{ background: RULE }} />
-          <div className="flex w-[176px] shrink-0 items-start px-[11px] py-[10px]">
+          <div className="flex min-w-0 flex-1 items-start px-[11px] py-[8px]">
             <div className="min-w-0 flex-1">
               <div className="shotiq-microcaps text-[9px]" style={{ color: GRAPHITE }}>PRIMARY COACHING TARGET</div>
-              <div className="mt-[7px] text-[16px] font-semibold leading-[19px]">{TARGET}</div>
+              <div className="mt-[7px] text-[15px] font-semibold leading-[18px]">{TARGET}</div>
             </div>
-            <span className="mt-[22px] pl-[8px]"><Chevron h={13} /></span>
+            <span className="mt-[22px] pl-[6px]"><Chevron h={13} /></span>
           </div>
         </div>
       </div>
 
-      <Head cap={13.5} className="mt-[13px]">CONFIRM THIS RESULT</Head>
-      <p className="mt-[7px] text-[12px] leading-[13px]" style={{ color: GRAPHITE }}>Was this a shot attempt?</p>
+      <Head cap={13.5} className="mt-[11px]">CONFIRM THIS RESULT</Head>
+      <p className="mt-[6px] text-[12px] leading-[13px]" style={{ color: GRAPHITE }}>Was this a shot attempt?</p>
 
-      <div className="mt-[11px] flex gap-[12px]">
+      <div className="mt-[10px] flex gap-[12px]">
         <button type="button" onClick={onConfirm} data-testid="capture-confirm-make"
                 className="flex h-[52px] flex-1 flex-col items-center justify-center gap-[6px] rounded-[6px] text-white"
                 style={{ background: GREEN }}>
@@ -936,7 +938,7 @@ function ShotDetected({
         </button>
       </div>
 
-      <div className="mt-[13px] flex items-center gap-[9px]">
+      <div className="mt-[11px] flex items-center gap-[9px]">
         <Head cap={11.5} tone={GRAPHITE}>SHOT CONTEXT</Head>
         <span className="h-px flex-1" style={{ background: RULE }} />
       </div>
@@ -944,11 +946,11 @@ function ShotDetected({
         {CONTEXT.map(([glyph, a, b], i) => (
           <React.Fragment key={a}>
             {i > 0 && <span aria-hidden="true" className="w-px self-stretch" style={{ background: RULE }} />}
-            <div className="flex flex-1 items-center gap-[7px] px-[6px]">
+            <div className="flex flex-1 items-center gap-[5px] px-[4px]">
               <span className="shrink-0">{glyph}</span>
               <div className="min-w-0">
-                <div className="text-[11px] leading-[13px]">{a}</div>
-                <div className="text-[11px] leading-[13px]" style={{ color: GRAPHITE }}>{b}</div>
+                <div className="whitespace-nowrap text-[10px] leading-[12px]">{a}</div>
+                <div className="whitespace-nowrap text-[10px] leading-[12px]" style={{ color: GRAPHITE }}>{b}</div>
               </div>
             </div>
           </React.Fragment>
@@ -977,36 +979,36 @@ function Review({ onAnalyze, onDiscard, onBack }: { onAnalyze: () => void; onDis
         <BackArrow w={14} /> Back to session summary
       </button>
 
-      <div className="mt-[14px] flex items-start justify-between">
+      <div className="mt-[11px] flex items-start justify-between">
         <Head cap={31.3}>CAPTURE REVIEW</Head>
         <span className="flex shrink-0 items-center gap-[8px] rounded-[5px] border px-[9px] py-[6px]"
               style={{ borderColor: RULE, background: "var(--shotiq-color-warmCanvas)" }}>
-          <ActionGlyph kind="uploadVideo" height={16} />
+          <StreakGlyph size={34} />
           <span className="text-center">
             <span className="shotiq-numeric block text-[19px] leading-[19px]">24</span>
             <span className="shotiq-microcaps block text-[8.5px] leading-[10px]" style={{ color: GRAPHITE }}>SHOTS</span>
           </span>
         </span>
       </div>
-      <p className="mt-[10px] text-[12.5px] leading-[15px]" style={{ color: GRAPHITE }}>
+      <p className="mt-[4px] text-[12.5px] leading-[15px]" style={{ color: GRAPHITE }}>
         We flagged 3 shots for review.
         <br />Confirm, correct, or discard each shot.
       </p>
 
-      <div className="mt-[21px] flex">
+      <div className="mt-[13px] flex">
         {[["15", "MAKES", INK], ["62.5%", "MAKE %", INK], ["3", "NEED REVIEW", ORANGE],
           ["6", "DISCARDED", INK], ["00:20:04", "PRACTICE TIME", INK]].map(([v, l, c], i) => (
           <React.Fragment key={l}>
             {i > 0 && <span aria-hidden="true" className="w-px self-stretch" style={{ background: RULE }} />}
-            <div className="flex-1 px-[5px] text-center">
+            <div className="flex-1 px-[2px] text-center">
               <div className="shotiq-numeric text-[20px] leading-[20px]" style={{ color: c }}>{v}</div>
-              <div className="shotiq-microcaps mt-[7px] text-[8.5px] leading-[9px]" style={{ color: GRAPHITE }}>{l}</div>
+              <div className="shotiq-microcaps mt-[7px] whitespace-nowrap text-[7.6px] leading-[9px]" style={{ color: GRAPHITE }}>{l}</div>
             </div>
           </React.Fragment>
         ))}
       </div>
 
-      <div className="mt-[17px] flex gap-[12px]">
+      <div className="mt-[10px] flex gap-[10px]">
         {[["all", "All (24)"], ["needs", "Needs review (3)"], ["confirmed", "Confirmed (15)"], ["discarded", "Discarded (6)"]].map(([k, l]) => (
           <button key={k} type="button" onClick={() => setFilter(k)} aria-pressed={filter === k}
                   className="flex h-[29px] flex-1 items-center justify-center whitespace-nowrap rounded-[5px] border px-[4px] text-[11.5px]"
@@ -1016,8 +1018,8 @@ function Review({ onAnalyze, onDiscard, onBack }: { onAnalyze: () => void; onDis
         ))}
       </div>
 
-      <div className="mt-[14px] h-px" style={{ background: RULE }} />
-      <div className="mt-[13px] flex items-center justify-between">
+      <div className="mt-[10px] h-px" style={{ background: RULE }} />
+      <div className="mt-[10px] flex items-center justify-between">
         <Head cap={13.8}>NEEDS REVIEW (3)</Head>
         <span className="flex items-center gap-[7px] text-[11.5px]" style={{ color: GRAPHITE }}>
           Review lowest confidence first
@@ -1028,23 +1030,23 @@ function Review({ onAnalyze, onDiscard, onBack }: { onAnalyze: () => void; onDis
       </div>
 
       {FLAGGED.map(([thumb, title, when, flaw, dur, conf], i) => (
-        <div key={title} className="mt-[9px] flex overflow-hidden rounded-[6px] border" style={{ borderColor: RULE }}>
+        <div key={title} className="mt-[7px] flex h-[123px] overflow-hidden rounded-[6px] border" style={{ borderColor: RULE }}>
           <div className="relative shrink-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={`${IMG}/${thumb}.jpg`} alt="" width={145} height={123}
-                 className="block h-[123px] w-[145px] object-cover" />
+                 className="block h-[121px] w-[145px] object-cover" />
             <span className="absolute bottom-[7px] left-[7px] rounded-[3px] px-[6px] py-[2px] text-[10px] text-white"
                   style={{ background: "rgba(16,17,19,.85)" }}>{CLIP_LEN[i]}</span>
           </div>
-          <div className="flex min-w-0 flex-1 items-start px-[11px] py-[9px]">
+          <div className="flex min-w-0 flex-1 items-start px-[10px] py-[8px]">
             <div className="min-w-0 flex-1">
               <Head cap={14}>{title}</Head>
-              <div className="mt-[6px] text-[11px]" style={{ color: GRAPHITE }}>{when}</div>
-              <div className="mt-[6px] flex items-center gap-[8px] text-[11px]"><PoseGlyph phase="release" size={15} /> {flaw}</div>
-              <div className="mt-[5px] flex items-center gap-[8px] text-[11px]"><PulseGlyph size={15} /> Low confidence</div>
-              <div className="mt-[5px] flex items-center gap-[8px] text-[11px]"><ActionGlyph kind="uploadVideo" height={11} /> {dur}</div>
+              <div className="mt-[5px] text-[10.5px] leading-[12px]" style={{ color: GRAPHITE }}>{when}</div>
+              <div className="mt-[5px] flex items-center gap-[7px] whitespace-nowrap text-[10.5px] leading-[13px]"><PoseGlyph phase="release" size={14} /> {flaw}</div>
+              <div className="mt-[4px] flex items-center gap-[7px] whitespace-nowrap text-[10.5px] leading-[13px]"><PulseGlyph size={14} /> Low confidence</div>
+              <div className="mt-[4px] flex items-center gap-[7px] whitespace-nowrap text-[10.5px] leading-[13px]"><ActionGlyph kind="uploadVideo" height={10} /> {dur}</div>
             </div>
-            <div className="w-[78px] shrink-0 text-center">
+            <div className="w-[74px] shrink-0 text-center">
               <span className="relative block">
                 <ConfidenceArc value={conf} size={54} />
                 <span className="shotiq-numeric absolute inset-x-0 bottom-[1px] text-[19px] leading-[19px]">{conf}</span>
@@ -1058,7 +1060,7 @@ function Review({ onAnalyze, onDiscard, onBack }: { onAnalyze: () => void; onDis
       ))}
 
       <button type="button" onClick={onDiscard}
-              className="mt-[12px] flex h-[28px] w-full items-center justify-center gap-[10px] rounded-[5px] border text-[13px]"
+              className="mt-[10px] flex h-[28px] w-full items-center justify-center gap-[10px] rounded-[5px] border text-[13px]"
               style={{ borderColor: RULE }}>
         <TrashGlyph size={17} /> Discard session
       </button>
@@ -1084,7 +1086,11 @@ export function LiveCapture({ initial = "setup" }: { initial?: CaptureState }) {
   const [hand, setHand] = React.useState<"LEFT" | "RIGHT">("RIGHT")
   const [facing, setFacing] = React.useState<"user" | "environment">("environment")
   const [stream, setStream] = React.useState<MediaStream | null>(null)
+  /* 03:18 is the session time canonical 032 draws. The clock advances once the
+     take actually starts; a deep-linked state is a still of the take, not a new
+     one, so it holds at the canonical reading rather than drifting. */
   const [seconds, setSeconds] = React.useState(198)
+  const [running, setRunning] = React.useState(false)
   const [paused, setPaused] = React.useState(false)
   const [muted, setMuted] = React.useState(false)
   const [shots, setShots] = React.useState(24)
@@ -1108,10 +1114,10 @@ export function LiveCapture({ initial = "setup" }: { initial?: CaptureState }) {
   React.useEffect(() => () => { stream?.getTracks().forEach((t) => t.stop()) }, [stream])
 
   React.useEffect(() => {
-    if (state !== "recording" || paused) return
+    if (state !== "recording" || paused || !running) return
     const id = window.setInterval(() => setSeconds((s) => s + 1), 1000)
     return () => window.clearInterval(id)
-  }, [state, paused])
+  }, [state, paused, running])
 
   const primed = () => {
     try { return window.localStorage.getItem(PRIMED_KEY) === "1" } catch { return false }
@@ -1147,7 +1153,7 @@ export function LiveCapture({ initial = "setup" }: { initial?: CaptureState }) {
                         onHelp={() => setState("primer")} />
     case "ready":
       return <Ready stream={stream} onStart={() => void openCamera()}
-                    onRecord={() => { setSeconds(0); setState("recording") }}
+                    onRecord={() => { setSeconds(0); setRunning(true); setState("recording") }}
                     onAdjust={() => setState("setup")} onCancel={() => setState("setup")} />
     case "recording":
       return <Recording stream={stream} onStart={() => void openCamera()}

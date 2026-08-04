@@ -57,7 +57,7 @@ export function ShotBreakdown({
       {/* title + stat cluster ------------------------------------------- */}
       <div className="mt-[11px] flex items-start justify-between px-[19px]">
         <div className="min-w-0">
-          <div className="shotiq-display text-[49px] leading-[42px] tracking-[0.02em]">SHOT BREAKDOWN</div>
+          <div className="shotiq-display whitespace-nowrap text-[36px] leading-[32px] tracking-[0.02em]">SHOT BREAKDOWN</div>
           <div className="mt-[5px] text-[12.5px] leading-[14px]" style={{ color: GRAPHITE }}>
             Shot {shot} &nbsp;•&nbsp; {when}
           </div>
@@ -78,11 +78,11 @@ export function ShotBreakdown({
       </div>
 
       {/* filmstrip: five phase frames, each carrying its joint angle ----- */}
-      <div className="mt-[13px] px-[16px]">
+      <div className="mt-[11px] px-[16px]">
         <div className="overflow-hidden rounded-[5px] border" style={{ borderColor: RULE }}>
           <div className="flex">
             {PHASE_STILLS.map((s, i) => (
-              <div key={s} className="relative min-w-0 flex-1 border-l first:border-l-0" style={{ height: 220, borderColor: "rgba(255,255,255,.55)" }}>
+              <div key={s} className="relative min-w-0 flex-1 border-l first:border-l-0" style={{ height: 205, borderColor: "rgba(255,255,255,.55)" }}>
                 <Frame src={s} w="100%" h="100%" radius={0} alt={`${PHASES[i]} frame`} />
                 {ANGLES[i] && (
                   <span className="shotiq-numeric absolute left-[6px] top-[38%] text-[11px] leading-[11px]"
@@ -95,7 +95,7 @@ export function ShotBreakdown({
           </div>
           <div className="flex border-t" style={{ borderColor: RULE }}>
             {PHASES.map((p, i) => (
-              <div key={p} className="min-w-0 flex-1 border-l py-[8px] text-center first:border-l-0" style={{ borderColor: RULE }}>
+              <div key={p} className="min-w-0 flex-1 border-l py-[6px] text-center first:border-l-0" style={{ borderColor: RULE }}>
                 <span className="shotiq-display block leading-[10px] tracking-[0.04em]"
                       style={{ fontSize: capDisplay(21), color: i === 3 ? ORANGE : INK }}>{p}</span>
               </div>
@@ -105,12 +105,12 @@ export function ShotBreakdown({
       </div>
 
       {/* form score + the four ball-flight mechanics -------------------- */}
-      <Panel className="mx-[16px] mt-[17px]" data-testid="breakdown-form-score">
+      <Panel className="mx-[16px] mt-[11px]" data-testid="breakdown-form-score">
         <button type="button" onClick={onScore} className="flex w-full items-start px-[13px] pb-[10px] pt-[11px] text-left">
           <div className="min-w-0 flex-1">
             <div className="shotiq-section-label text-[12.5px] leading-[13px] tracking-[0.075em]">FORM SCORE</div>
             <div className="flex items-end gap-[11px]">
-              <span className="shotiq-numeric leading-[0.78]" style={{ fontSize: 74, color: ORANGE }}>{score}</span>
+              <span className="shotiq-numeric leading-[0.78]" style={{ fontSize: 66, color: ORANGE }}>{score}</span>
               <span className="pb-[13px]"><ScoreBar score={score} width={118} height={7} /></span>
             </div>
           </div>
@@ -119,14 +119,14 @@ export function ShotBreakdown({
             <div className="mt-[4px] text-[12.5px] leading-[14.5px]">Keep building<br />consistency.</div>
           </div>
         </button>
-        <div className="flex divide-x border-t py-[10px]" style={{ borderColor: RULE, ["--tw-divide-opacity" as string]: 1 }}>
+        <div className="flex divide-x border-t py-[7px]" style={{ borderColor: RULE, ["--tw-divide-opacity" as string]: 1 }}>
           {MECHANICS.map(([kind, label, value, unit]) => (
             <div key={label} className="min-w-0 flex-1 px-[4px] text-center" style={{ borderColor: RULE }}>
               <span className="flex h-[24px] items-center justify-center" style={{ color: INK }}>
                 <MechanicGlyph kind={kind} size={24} accent={INK} />
               </span>
-              <Micro className="mt-[9px]" size={8}>{label}</Micro>
-              <div className="shotiq-numeric mt-[7px] text-[22px] leading-[18px]">
+              <Micro className="mt-[7px]" size={8}>{label}</Micro>
+              <div className="shotiq-numeric mt-[6px] text-[22px] leading-[18px]">
                 {value}{unit && <span className="ml-[2px] text-[11px]">{unit}</span>}
               </div>
               <div className="shotiq-display mt-[6px] text-[12px] leading-[10px] tracking-[0.04em]" style={{ color: BLUE }}>GOOD</div>
@@ -136,20 +136,20 @@ export function ShotBreakdown({
       </Panel>
 
       {/* phase coaching -------------------------------------------------- */}
-      <Panel className="mx-[16px] mt-[16px] px-[13px] pb-[11px] pt-[11px]">
+      <Panel className="mx-[16px] mt-[9px] px-[13px] pb-[8px] pt-[8px]">
         <div className="flex gap-[10px]">
           <div className="min-w-0 flex-1">
             <div className="shotiq-section-label text-[12px] leading-[12px] tracking-[0.08em]">PHASE COACHING</div>
             <div className="mt-[5px] flex items-center gap-[9px]">
-              <span className="text-[25px] font-semibold leading-[26px]">Release</span>
+              <span className="text-[23px] font-semibold leading-[24px]">Release</span>
               <PoseFigure phase="release" active height={30} />
             </div>
             <span aria-hidden="true" className="mt-[3px] block h-[2px] w-[46px]" style={{ background: ORANGE }} />
-            <p className="mt-[8px] text-[12.5px] leading-[15px]">
+            <p className="mt-[6px] text-[12.5px] leading-[14px]">
               Great elevation and alignment. Focus on snapping wrist down to create more backspin.
             </p>
           </div>
-          <div className="relative w-[128px] shrink-0">
+          <div className="relative w-[114px] shrink-0">
             <ReleaseHandDiagram />
             <span className="absolute bottom-[2px] right-0 rounded-[4px] border px-[6px] py-[3px] text-center"
                   style={{ borderColor: RULE }}>
@@ -158,7 +158,7 @@ export function ShotBreakdown({
             </span>
           </div>
         </div>
-        <Panel className="mt-[9px] flex h-[30px] w-[190px] items-center px-[10px]">
+        <Panel className="mt-[6px] flex h-[26px] w-[190px] items-center px-[10px]">
           <ActionGlyph kind="analyze" height={15} />
           <span className="ml-[9px] text-[13.5px] leading-[15px]">Open release frame</span>
           <span className="ml-auto"><Chev size={12} /></span>
@@ -166,9 +166,9 @@ export function ShotBreakdown({
       </Panel>
 
       {/* shot context ---------------------------------------------------- */}
-      <Panel className="mx-[16px] mt-[13px] px-[10px] pb-[9px] pt-[9px]">
+      <Panel className="mx-[16px] mt-[9px] px-[10px] pb-[7px] pt-[7px]">
         <div className="shotiq-section-label text-[12px] leading-[12px] tracking-[0.08em]">SHOT CONTEXT</div>
-        <div className="mt-[8px] flex divide-x divide-[var(--shotiq-color-rule)]">
+        <div className="mt-[6px] flex divide-x divide-[var(--shotiq-color-rule)]">
           {([
             [<ActionGlyph key="a" kind="nodeGraph" height={16} />, "Catch & Shoot", "Shot Type", INK],
             [<MapPin key="b" className="h-[17px] w-[17px]" strokeWidth={1.6} />, "Right Corner", "Court Location", INK],
@@ -193,7 +193,7 @@ export function ShotBreakdown({
  *  dashed in the accent — not a node graph. */
 function ReleaseHandDiagram() {
   return (
-    <svg viewBox="0 0 128 96" width="128" height="96" fill="none" aria-hidden="true" className="block">
+    <svg viewBox="0 0 128 96" width="114" height="86" fill="none" aria-hidden="true" className="block">
       <g stroke={INK} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M40 92 L52 44 C55 32 62 22 72 16" />
         <path d="M52 44 C58 34 68 26 80 22" />

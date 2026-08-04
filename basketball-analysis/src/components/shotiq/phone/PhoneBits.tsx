@@ -168,7 +168,7 @@ export function MiniStat({ glyph, value, label, w = 64 }: {
     <div className="text-center" style={{ width: w }}>
       <span className="flex h-[19px] items-center justify-center">{glyph}</span>
       <div className="shotiq-numeric mt-[3px] text-[16px] leading-[16px]">{value}</div>
-      <div className="shotiq-microcaps mt-[2px] text-[7.5px] leading-[8px]" style={{ color: GRAPHITE }}>{label}</div>
+      <div className="shotiq-microcaps mt-[2px]" style={{ fontSize: 7.5, lineHeight: "8px", color: GRAPHITE }}>{label}</div>
     </div>
   )
 }
@@ -193,13 +193,39 @@ export function StatCells({
   )
 }
 
+/**
+ * A canonical photo crop, zoomed past its own chrome.
+ *
+ * The library crops cut for the DESKTOP screens carry the overlay the desktop
+ * card drew on them — a duration badge, a bookmark, a status pip in the
+ * corners. Canonical's phone screens show the photograph alone, so the crop is
+ * scaled about its centre until those corners fall outside the box. `zoom` is
+ * per call site because the badge inset differs between the 090 (drill) and 094
+ * (media) families.
+ */
+export function Shot({
+  src, className = "", zoom = 1.34, position = "50% 45%", style, alt = "",
+}: {
+  src: string; className?: string; zoom?: number; position?: string
+  style?: React.CSSProperties; alt?: string
+}) {
+  return (
+    <span className={`block overflow-hidden ${className}`} style={style}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt={alt} aria-hidden={alt ? undefined : "true"}
+           className="block h-full w-full max-w-none object-cover"
+           style={{ transform: `scale(${zoom})`, objectPosition: position }} />
+    </span>
+  )
+}
+
 /** Section eyebrow — canonical sets these at a 9px cap in graphite. */
 export function Eyebrow({ children, className = "", tone = GRAPHITE }: {
   children: React.ReactNode; className?: string; tone?: string
 }) {
   return (
-    <div className={`shotiq-section-label text-[10px] leading-[11px] tracking-[0.09em] ${className}`}
-         style={{ color: tone }}>{children}</div>
+    <div className={`shotiq-section-label tracking-[0.09em] ${className}`}
+ style={{ fontSize: 10, lineHeight: "11px", color: tone }}>{children}</div>
   )
 }
 

@@ -29,7 +29,7 @@ import {
 import { PhoneScreen, PhoneHeading } from "@/components/shotiq/PhoneShell"
 import {
   PhoneTop, Wordmark, GearLink, BackChevron, PhoneAction, Eyebrow, PhoneCard,
-  MiniStat, StatCells, RULE, ORANGE, GREEN, BLUE, GRAPHITE,
+  MiniStat, StatCells, Shot, RULE, ORANGE, GREEN, BLUE, GRAPHITE,
 } from "@/components/shotiq/phone/PhoneBits"
 import {
   StreakGlyph, PointsGlyph, ActionGlyph, CueGlyph, MechanicGlyph, PoseFigure,
@@ -111,9 +111,7 @@ export function GoalsList({ onCreate, onOpen }: { onCreate: () => void; onOpen: 
             </p>
           </div>
           <span className="relative shrink-0">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/canonical/092-thumb-1.png" alt="" aria-hidden="true"
-                 className="h-[112px] w-[150px] rounded-[4px] object-cover" />
+            <Shot src="/images/canonical/092-thumb-1.png" zoom={1.3} className="h-[112px] w-[150px] rounded-[4px]" />
           </span>
         </button>
 
@@ -123,7 +121,7 @@ export function GoalsList({ onCreate, onOpen }: { onCreate: () => void; onOpen: 
             <span className="shotiq-numeric text-[40px] leading-[36px]" style={{ color: ORANGE }}>68</span>
             <span className="shotiq-numeric mb-[4px] text-[16px]" style={{ color: ORANGE }}>%</span>
             <span className="mb-[3px] min-w-0">
-              <span className="shotiq-microcaps block text-[8px] leading-[9px]" style={{ color: GREEN }}>ON TRACK</span>
+              <span className="shotiq-microcaps block" style={{ fontSize: 8, lineHeight: "9px", color: GREEN }}>ON TRACK</span>
               <span className="mt-[2px] block text-[8.5px] leading-[10px]" style={{ color: GRAPHITE }}>Keep it up</span>
             </span>
           </div>
@@ -139,7 +137,7 @@ export function GoalsList({ onCreate, onOpen }: { onCreate: () => void; onOpen: 
                ["MAKE %", "64.1%", "▲ 4.3%", "vs goal start"]] as const).map(([l, v, d, sub], i) => (
               <div key={l} className="min-w-0 flex-1 pl-[9px] first:pl-0"
                    style={i ? { borderLeft: `1px solid ${RULE}` } : undefined}>
-                <div className="shotiq-microcaps text-[7.5px] leading-[8px]" style={{ color: GRAPHITE }}>{l}</div>
+                <div className="shotiq-microcaps" style={{ fontSize: 7.5, lineHeight: "8px", color: GRAPHITE }}>{l}</div>
                 <div className="shotiq-numeric mt-[4px] text-[22px] leading-[22px]">{v}</div>
                 <div className="mt-[3px] text-[8px] leading-[10px]" style={{ color: i ? GREEN : GRAPHITE }}>{d}</div>
                 {sub && <div className="text-[7.5px] leading-[9px]" style={{ color: GRAPHITE }}>{sub}</div>}
@@ -203,7 +201,7 @@ export function GoalsList({ onCreate, onOpen }: { onCreate: () => void; onOpen: 
 
         <div className="mb-[16px] mt-[11px] flex items-center justify-center gap-[7px] pt-[10px]"
              style={{ borderTop: `1px solid ${RULE}` }}>
-          <span className="shotiq-microcaps text-[9px]" style={{ color: GRAPHITE }}>GOAL INSIGHTS</span>
+          <span className="shotiq-microcaps" style={{ fontSize: 9, color: GRAPHITE }}>GOAL INSIGHTS</span>
           <ChevronDown className="h-[11px] w-[11px]" style={{ color: GRAPHITE }} />
         </div>
       </div>
@@ -228,15 +226,15 @@ export function CreateGoal({ onCancel, onCreate }: { onCancel: () => void; onCre
   return (
     <PhoneScreen testid="screen-ios-create-goal" tab="progress" pad={0} header={false}>
       <PhoneTop left={<Wordmark />} right={<>
-        <span className="flex items-center gap-[6px]">
-          <PointsGlyph size={18} />
-          <span className="text-right">
-            <span className="shotiq-numeric block text-[11px] leading-[11px]">2,840</span>
-            <span className="shotiq-microcaps block text-[6.5px] leading-[7px]" style={{ color: GRAPHITE }}>POINTS</span>
-          </span>
-        </span>
-        <GearLink />
-      </>} />
+ <span className="flex items-center gap-[6px]">
+ <PointsGlyph size={18} />
+ <span className="text-right">
+ <span className="shotiq-numeric block">2,840</span>
+ <span className="shotiq-microcaps block" style={{ fontSize: 11, lineHeight: "11px", color: GRAPHITE }}>POINTS</span>
+ </span>
+ </span>
+ <GearLink />
+ </>} />
 
       <div className="px-[18px]">
         <div className="flex items-center gap-[7px] pt-[11px]">
@@ -291,9 +289,8 @@ export function CreateGoal({ onCancel, onCreate }: { onCancel: () => void; onCre
 
         <Eyebrow className="mt-[11px]">TARGET</Eyebrow>
         <div className="mt-[7px] flex items-center gap-[11px] rounded-[6px] p-[8px]" style={{ border: `1px solid ${RULE}` }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/images/canonical/092-key-mechanic.png" alt="" aria-hidden="true"
-               className="h-[80px] w-[104px] shrink-0 rounded-[3px] object-cover" />
+          <Shot src="/images/canonical/092-thumb-3.png" zoom={1.32}
+                className="h-[80px] w-[104px] shrink-0 rounded-[3px]" />
           <span className="min-w-0 flex-1 text-[12.5px] font-medium leading-[16px]">Keep elbow stacked through release</span>
           <ChevronRight className="h-[14px] w-[14px] shrink-0" style={{ color: GRAPHITE }} />
         </div>
@@ -399,9 +396,7 @@ export function GoalDetail({ onBack, onLog }: { onBack: () => void; onLog: () =>
 
         <div className="relative mt-[7px]">
           <div className="absolute right-0 top-0">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/canonical/092-thumb-1.png" alt="" aria-hidden="true"
-                 className="h-[104px] w-[136px] rounded-[4px] object-cover" />
+            <Shot src="/images/canonical/092-thumb-1.png" zoom={1.3} className="h-[104px] w-[136px] rounded-[4px]" />
           </div>
           <PhoneHeading size={31} className="w-[212px]">KEEP ELBOW STACKED THROUGH RELEASE</PhoneHeading>
           <p className="mt-[8px] w-[212px] text-[9px] leading-[12px]" style={{ color: GRAPHITE }}>
@@ -420,14 +415,14 @@ export function GoalDetail({ onBack, onLog }: { onBack: () => void; onLog: () =>
           <div className="min-w-0 flex-1 px-[10px] py-[9px]" style={{ borderLeft: `1px solid ${RULE}` }}>
             <Eyebrow>FORM SCORE IMPACT</Eyebrow>
             <div className="shotiq-numeric mt-[4px] text-[19px] leading-[20px]" style={{ color: BLUE }}>+6–10</div>
-            <div className="shotiq-microcaps mt-[3px] text-[7px]" style={{ color: GRAPHITE }}>POTENTIAL</div>
+            <div className="shotiq-microcaps mt-[3px]" style={{ fontSize: 7, color: GRAPHITE }}>POTENTIAL</div>
           </div>
         </PhoneCard>
 
         <div className="mt-[12px] flex items-start gap-[13px]">
           <div className="w-[124px] shrink-0">
             <Eyebrow>GOAL PROGRESS</Eyebrow>
-            <div className="shotiq-microcaps mt-[6px] text-[7px]" style={{ color: GRAPHITE }}>OVERALL PROGRESS</div>
+            <div className="shotiq-microcaps mt-[6px]" style={{ fontSize: 7, color: GRAPHITE }}>OVERALL PROGRESS</div>
             <div className="shotiq-numeric mt-[3px] text-[34px] leading-[32px]" style={{ color: ORANGE }}>68%</div>
             <div className="mt-[6px] h-[4px] w-full rounded-full" style={{ background: RULE }}>
               <div className="h-full rounded-full" style={{ width: "68%", background: ORANGE }} />
@@ -451,15 +446,14 @@ export function GoalDetail({ onBack, onLog }: { onBack: () => void; onLog: () =>
         {/* --------------------------------------- technique snapshot */}
         <Eyebrow className="mt-[13px]">TECHNIQUE SNAPSHOT</Eyebrow>
         <div className="mt-[8px] flex items-start gap-[11px]">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/images/canonical/092-key-mechanic.png" alt="" aria-hidden="true"
-               className="h-[118px] w-[104px] shrink-0 rounded-[4px] object-cover" />
+          <Shot src="/images/canonical/092-thumb-2.png" zoom={1.4}
+                className="h-[118px] w-[104px] shrink-0 rounded-[4px]" />
           <div className="min-w-0 flex-1">
             <div className="flex items-start gap-[9px]">
               <div className="min-w-0 flex-1">
-                <div className="shotiq-microcaps text-[7px]" style={{ color: GRAPHITE }}>ELBOW STACK ANGLE</div>
+                <div className="shotiq-microcaps" style={{ fontSize: 7, color: GRAPHITE }}>ELBOW STACK ANGLE</div>
                 <div className="shotiq-numeric mt-[3px] text-[19px] leading-[19px]" style={{ color: ORANGE }}>87°</div>
-                <div className="shotiq-microcaps text-[6.5px]" style={{ color: GRAPHITE }}>AVG</div>
+                <div className="shotiq-microcaps" style={{ fontSize: 6.5, color: GRAPHITE }}>AVG</div>
                 <div className="relative mt-[6px] h-[4px] w-full rounded-full" style={{ background: RULE }}>
                   <span className="absolute inset-y-0 rounded-full" style={{ left: "42%", width: "17%", background: GREEN }} />
                   <span className="absolute top-[-3px] h-[10px] w-[2px]" style={{ left: "45%", background: ORANGE }} />
@@ -469,17 +463,17 @@ export function GoalDetail({ onBack, onLog }: { onBack: () => void; onLog: () =>
                 </div>
               </div>
               <div className="w-[84px] shrink-0 rounded-[4px] px-[7px] py-[6px]" style={{ border: `1px solid ${RULE}` }}>
-                <div className="shotiq-microcaps text-[6.5px]" style={{ color: GRAPHITE }}>TARGET RANGE</div>
+                <div className="shotiq-microcaps" style={{ fontSize: 6.5, color: GRAPHITE }}>TARGET RANGE</div>
                 <div className="shotiq-numeric mt-[3px] text-[13px] leading-[14px]" style={{ color: GREEN }}>85°–95°</div>
               </div>
             </div>
             <div className="mt-[8px] flex gap-[8px]">
               {([["VERTICAL ALIGNMENT", "92%", "centerline"], ["LATERAL DRIFT", "4.2°", "drift"]] as const).map(([l, v, m]) => (
                 <div key={l} className="min-w-0 flex-1 rounded-[4px] px-[7px] py-[6px]" style={{ border: `1px solid ${RULE}` }}>
-                  <div className="shotiq-microcaps truncate text-[6.5px]" style={{ color: GRAPHITE }}>{l}</div>
+                  <div className="shotiq-microcaps truncate" style={{ fontSize: 6.5, color: GRAPHITE }}>{l}</div>
                   <div className="mt-[3px] flex items-center gap-[6px]">
                     <span className="min-w-0">
-                      <span className="shotiq-microcaps block text-[7px]" style={{ color: GREEN }}>GOOD</span>
+                      <span className="shotiq-microcaps block" style={{ fontSize: 7, color: GREEN }}>GOOD</span>
                       <span className="shotiq-numeric block text-[13px] leading-[14px]">{v}</span>
                     </span>
                     <span className="ml-auto shrink-0"><MechanicGlyph kind={m} size={22} /></span>
@@ -509,7 +503,7 @@ export function GoalDetail({ onBack, onLog }: { onBack: () => void; onLog: () =>
               </span>
               <span className="w-[34px] shrink-0 text-center">
                 <span className="shotiq-numeric block text-[11px] leading-[12px]">{shots}</span>
-                <span className="shotiq-microcaps block text-[6px]" style={{ color: GRAPHITE }}>SHOTS</span>
+                <span className="shotiq-microcaps block" style={{ fontSize: 6, color: GRAPHITE }}>SHOTS</span>
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block text-[8px] leading-[10px]" style={{ color: GRAPHITE }}>{date}</span>
@@ -518,11 +512,11 @@ export function GoalDetail({ onBack, onLog }: { onBack: () => void; onLog: () =>
               </span>
               <span className="w-[42px] shrink-0 text-center">
                 <span className="shotiq-numeric block text-[10px] leading-[11px]" style={{ color: BLUE }}>{ang}</span>
-                <span className="shotiq-microcaps block text-[6px]" style={{ color: GRAPHITE }}>ELBOW</span>
+                <span className="shotiq-microcaps block" style={{ fontSize: 6, color: GRAPHITE }}>ELBOW</span>
               </span>
               <span className="w-[44px] shrink-0 text-center">
                 <span className="shotiq-numeric block text-[10px] leading-[11px]" style={{ color: ORANGE }}>{score}</span>
-                <span className="shotiq-microcaps block text-[6px]" style={{ color: GRAPHITE }}>GOAL SCORE</span>
+                <span className="shotiq-microcaps block" style={{ fontSize: 6, color: GRAPHITE }}>GOAL SCORE</span>
               </span>
               <ChevronRight className="h-[12px] w-[12px] shrink-0" style={{ color: GRAPHITE }} />
             </div>
@@ -550,7 +544,7 @@ export function GoalDetail({ onBack, onLog }: { onBack: () => void; onLog: () =>
           {MILESTONES.map(([l, note, st]) => (
             <div key={l} className="min-w-0 flex-1 rounded-[5px] px-[7px] py-[7px] text-center"
                  style={{ border: `1px solid ${st === "active" ? ORANGE : RULE}`, background: st === "active" ? "#FFF6F2" : "#fff" }}>
-              <div className="shotiq-microcaps truncate text-[6.5px] leading-[8px]" style={{ color: GRAPHITE }}>{l}</div>
+              <div className="shotiq-microcaps truncate" style={{ fontSize: 6.5, lineHeight: "8px", color: GRAPHITE }}>{l}</div>
               <div className="mt-[4px] flex items-center justify-center gap-[4px]">
                 {st === "done" && <Check className="h-[10px] w-[10px]" style={{ color: GREEN }} strokeWidth={3} />}
                 {st === "locked" && <Lock className="h-[9px] w-[9px]" style={{ color: GRAPHITE }} />}

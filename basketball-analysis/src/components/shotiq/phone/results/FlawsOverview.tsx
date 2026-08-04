@@ -86,13 +86,13 @@ export function FlawsOverview({
             <Chev size={15} color={INK} />
             <span className="shotiq-display text-[17px] leading-[17px] tracking-[0.06em]" style={{ color: GRAPHITE }}>ANALYSIS</span>
           </a>
-          <h1 className="shotiq-display mt-[3px] text-[36px] leading-[30px] tracking-[0.02em]">FLAWS OVERVIEW</h1>
+          <h1 className="shotiq-display mt-[2px] text-[36px] leading-[29px] tracking-[0.02em]">FLAWS OVERVIEW</h1>
         </div>
         <StreakPoints streak={streak} points={points} className="pt-[2px]" />
       </div>
 
       {/* primary coaching target ------------------------------------------ */}
-      <Panel className="mx-[15px] mt-[10px] flex items-center px-[13px] py-[9px]"
+      <Panel className="mx-[15px] mt-[8px] flex items-center px-[13px] py-[7px]"
              style={{ background: "var(--shotiq-color-warmCanvas)" }}>
         <div className="min-w-0">
           <div className="shotiq-section-label text-[11.5px] leading-[12px] tracking-[0.08em]">PRIMARY COACHING TARGET</div>
@@ -101,22 +101,22 @@ export function FlawsOverview({
         <span className="ml-auto pl-[10px]"><Chev size={16} /></span>
       </Panel>
 
-      <p className="mt-[10px] px-[16px] text-[13px] leading-[15px]" style={{ color: GRAPHITE }}>
+      <p className="mt-[8px] px-[16px] text-[13px] leading-[15px]" style={{ color: GRAPHITE }}>
         AI analysis detected {FLAWS.length} priority flaws impacting your shot efficiency.
       </p>
 
       {FLAWS.map((f, i) => <FlawCard key={f.slug} flaw={f} primary={i === 0} onOpen={onOpen} />)}
 
       {/* add all --------------------------------------------------------- */}
-      <div className="mx-[15px] mt-[10px] flex items-center gap-[10px] rounded-[7px] px-[12px] py-[9px]"
+      <div className="mx-[15px] mt-[7px] flex items-center gap-[10px] rounded-[7px] px-[12px] py-[6px]"
            style={{ background: "#EDF3FD" }}>
-        <span style={{ color: BLUE }}><PoseFigure phase="rise" height={30} /></span>
+        <span style={{ color: BLUE }}><PoseFigure phase="rise" height={22} /></span>
         <span className="min-w-0">
-          <span className="block text-[14.5px] font-semibold leading-[16px]">Add all {FLAWS.length} flaws to your training plan</span>
+          <span className="block text-[14px] font-semibold leading-[15px]">Add all {FLAWS.length} flaws to your training plan</span>
           <span className="block text-[12px] leading-[14px]" style={{ color: GRAPHITE }}>Get personalized drills to fix these issues.</span>
         </span>
         <a href="/results/demo/training"
-           className="ml-auto flex h-[30px] shrink-0 items-center gap-[6px] rounded-[6px] px-[12px] text-[13.5px] text-white"
+           className="ml-auto flex h-[26px] shrink-0 items-center gap-[6px] rounded-[6px] px-[12px] text-[13.5px] text-white"
            style={{ background: BLUE }}>
           Add all to plan<Chev size={13} color="#fff" />
         </a>
@@ -127,10 +127,10 @@ export function FlawsOverview({
 
 function FlawCard({ flaw, primary, onOpen }: { flaw: Flaw; primary?: boolean; onOpen?: (slug: string) => void }) {
   return (
-    <Panel className="mx-[15px] mt-[9px] px-[11px] pb-[10px] pt-[9px]">
+    <Panel className="mx-[15px] mt-[6px] px-[11px] pb-[6px] pt-[6px]">
       {/* header row: rank, title, impact chip | confidence + spark -------- */}
       <div className="flex items-start">
-        <span className="grid h-[24px] w-[24px] shrink-0 place-items-center rounded-[4px] text-[15px] text-white"
+        <span className="grid h-[21px] w-[21px] shrink-0 place-items-center rounded-[4px] text-[14px] text-white"
               style={{ background: flaw.tone }}>{flaw.n}</span>
         <span className="ml-[9px] min-w-0 flex-1">
           <span className="flex flex-wrap items-center gap-x-[9px] gap-y-[3px]">
@@ -143,22 +143,22 @@ function FlawCard({ flaw, primary, onOpen }: { flaw: Flaw; primary?: boolean; on
           <span className="shotiq-microcaps block leading-[10px]" style={{ fontSize: 8, color: GRAPHITE }}>CONFIDENCE</span>
           <span className="mt-[2px] flex items-end gap-[7px]">
             <span className="shotiq-numeric text-[21px] leading-[19px]">{flaw.confidence}</span>
-            <Spark w={82} h={26} stroke={flaw.tone} values={[0.28, 0.5, 0.36, 0.44, 0.58, 0.5, 0.74, 0.9]} />
+            <Spark w={82} h={22} stroke={flaw.tone} values={[0.28, 0.5, 0.36, 0.44, 0.58, 0.5, 0.74, 0.9]} />
           </span>
         </span>
       </div>
 
       {/* body: copy + phases + trend | still + action --------------------- */}
-      <div className="mt-[7px] flex gap-[11px]">
+      <div className="mt-[5px] flex gap-[11px]">
         <div className="min-w-0 flex-1">
-          <p className="text-[13px] leading-[16px]">{flaw.desc}</p>
-          <div className="shotiq-microcaps mt-[8px] leading-[10px]" style={{ fontSize: 8, color: GRAPHITE }}>AFFECTED PHASES</div>
-          <MiniPhases active={flaw.phase} tone={flaw.tone} className="mt-[4px]" />
-          <div className="shotiq-microcaps mt-[9px] leading-[10px]" style={{ fontSize: 8, color: GRAPHITE }}>TREND (LAST 6 SESSIONS)</div>
-          <TrendPlot values={flaw.trend} tone={flaw.tone} tint={flaw.tint} className="mt-[3px]" />
+          <p className="text-[12.5px] leading-[13px]">{flaw.desc}</p>
+          <div className="shotiq-microcaps mt-[5px] leading-[10px]" style={{ fontSize: 8, color: GRAPHITE }}>AFFECTED PHASES</div>
+          <MiniPhases active={flaw.phase} tone={flaw.tone} className="mt-[2px]" />
+          <div className="shotiq-microcaps mt-[4px] leading-[10px]" style={{ fontSize: 8, color: GRAPHITE }}>TREND (LAST 6 SESSIONS)</div>
+          <TrendPlot values={flaw.trend} tone={flaw.tone} tint={flaw.tint} className="mt-[2px]" />
         </div>
         <div className="w-[133px] shrink-0">
-          <span className="relative block overflow-hidden rounded-[4px]" style={{ height: primary ? 108 : 96 }}>
+          <span className="relative block overflow-hidden rounded-[4px]" style={{ height: primary ? 86 : 70 }}>
             <Frame src={flaw.still} w="100%" h="100%" radius={0} alt={`${flaw.title} on your ${flaw.phase.toLowerCase()} frame`} />
             <span className="shotiq-numeric absolute right-[8px] top-[34%] text-[12px] text-white"
                   style={{ textShadow: "0 1px 2px rgba(0,0,0,.6)" }}>{flaw.angle}</span>
@@ -166,14 +166,14 @@ function FlawCard({ flaw, primary, onOpen }: { flaw: Flaw; primary?: boolean; on
           {primary ? (
             <button type="button" onClick={() => onOpen?.(flaw.slug)}
                     data-testid={`flaw-open-${flaw.slug}`}
-                    className="mt-[7px] flex h-[32px] w-full items-center justify-center gap-[8px] rounded-[6px] text-[14px] text-white"
+                    className="mt-[5px] flex h-[28px] w-full items-center justify-center gap-[8px] rounded-[6px] text-[14px] text-white"
                     style={{ background: flaw.tone }}>
               {flaw.cta}<Chev size={13} color="#fff" />
             </button>
           ) : (
             <button type="button" onClick={() => onOpen?.(flaw.slug)}
                     data-testid={`flaw-open-${flaw.slug}`}
-                    className="mt-[7px] flex h-[32px] w-full items-center justify-center gap-[8px] rounded-[6px] border text-[14px]"
+                    className="mt-[5px] flex h-[28px] w-full items-center justify-center gap-[8px] rounded-[6px] border text-[14px]"
                     style={{ borderColor: RULE }}>
               {flaw.cta}<Chev size={13} />
             </button>
@@ -196,7 +196,7 @@ function MiniPhases({ active, tone, className = "" }: { active: string; tone: st
         <React.Fragment key={p}>
           {i > 0 && <span aria-hidden="true" className="mt-[13px] h-px min-w-[5px] flex-1" style={{ background: RULE }} />}
           <span className="shrink-0 text-center">
-            <PoseFigure phase={p.toLowerCase().startsWith("follow") ? "follow" : p.toLowerCase()} active={p === active} height={26} className="mx-auto" />
+            <PoseFigure phase={p.toLowerCase().startsWith("follow") ? "follow" : p.toLowerCase()} active={p === active} height={17} className="mx-auto" />
             <span className="shotiq-display mt-[2px] block whitespace-nowrap leading-[10px] tracking-[0.03em]"
                   style={{ fontSize: 9, color: p === active ? tone : GRAPHITE }}>{p}</span>
             {p === active && <span aria-hidden="true" className="mt-[2px] block h-[1.6px] w-full" style={{ background: tone }} />}
@@ -212,12 +212,12 @@ function MiniPhases({ active, tone, className = "" }: { active: string; tone: st
 function TrendPlot({ values, tone, tint, className = "" }: { values: number[]; tone: string; tint: string; className?: string }) {
   return (
     <div className={`flex items-start gap-[5px] ${className}`}>
-      <span className="w-[26px] shrink-0 pt-[1px] text-right text-[8px] leading-[13px]" style={{ color: GRAPHITE }}>
+      <span className="w-[26px] shrink-0 pt-[1px] text-right text-[8px] leading-[8px]" style={{ color: GRAPHITE }}>
         100%<br />50%<br />0%
       </span>
       <span className="relative block min-w-0 flex-1">
-        <span aria-hidden="true" className="absolute inset-x-0 top-[13px] block h-[26px]" style={{ background: tint }} />
-        <svg viewBox="0 0 160 42" preserveAspectRatio="none" height="42" className="relative block w-full" aria-hidden="true">
+        <span aria-hidden="true" className="absolute inset-x-0 top-[7px] block h-[14px]" style={{ background: tint }} />
+        <svg viewBox="0 0 160 42" preserveAspectRatio="none" height="24" className="relative block w-full" aria-hidden="true">
           <line x1="0" x2="160" y1="1" y2="1" stroke={RULE} strokeWidth="1" />
           <line x1="0" x2="160" y1="41" y2="41" stroke={RULE} strokeWidth="1" />
           <polyline fill="none" stroke={tone} strokeWidth="1.6"

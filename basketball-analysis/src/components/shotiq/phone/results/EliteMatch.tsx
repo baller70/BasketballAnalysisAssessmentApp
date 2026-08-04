@@ -86,7 +86,7 @@ export function EliteMatch({
       <div className="mt-[6px] px-[42px] text-[13px] leading-[14px]" style={{ color: GRAPHITE }}>Compare mechanics</div>
 
       {/* dual-portrait card ------------------------------------------------- */}
-      <Panel className="mx-[14px] mt-[9px] flex gap-[6px] px-[10px] pb-[9px] pt-[10px]">
+      <Panel className="mx-[14px] mt-[7px] flex gap-[6px] px-[9px] pb-[6px] pt-[7px]">
         <div className="w-[64px] shrink-0">
           <div className="shotiq-display text-[19px] leading-[19px] tracking-[0.03em]">JORDAN</div>
           <div className="shotiq-display text-[19px] leading-[19px] tracking-[0.03em]">ELLIS</div>
@@ -100,10 +100,10 @@ export function EliteMatch({
             </div>
           ))}
         </div>
-        <Frame src="086-film-2" w={82} h={148} radius={4} alt={`${name} at release`} className="shrink-0" />
+        <Frame src="086-film-2" w={76} h={120} radius={4} alt={`${name} at release`} className="shrink-0" />
         <div className="min-w-0 flex-1 text-center">
           <div className="shotiq-display text-[19px] leading-[19px] tracking-[0.04em]">ELITE MATCH</div>
-          <div className="shotiq-numeric leading-[0.86]" style={{ fontSize: 52, color: BLUE }}>
+          <div className="shotiq-numeric leading-[0.86]" style={{ fontSize: 42, color: BLUE }}>
             {match}<span style={{ fontSize: 30 }}>%</span>
           </div>
           <div className="shotiq-display text-[15px] leading-[15px] tracking-[0.04em]" style={{ color: GRAPHITE }}>OVERALL<br />SIMILARITY</div>
@@ -117,7 +117,7 @@ export function EliteMatch({
             {shared} <span className="text-[11px]" style={{ color: GRAPHITE }}>OF</span> {of}
           </div>
         </div>
-        <Frame src="086-film-5" w={82} h={148} radius={4} alt={`${reference} at release`} className="shrink-0" />
+        <Frame src="086-film-5" w={76} h={120} radius={4} alt={`${reference} at release`} className="shrink-0" />
         <div className="w-[64px] shrink-0 text-right">
           <div className="shotiq-display text-[19px] leading-[19px] tracking-[0.03em]">ELITE<br />GUARD</div>
           <div className="mt-[2px] text-[9.5px] leading-[11px]" style={{ color: GRAPHITE }}>Reference Profile</div>
@@ -127,13 +127,13 @@ export function EliteMatch({
       </Panel>
 
       {/* two rows ------------------------------------------------------------- */}
-      <div className="mt-[9px] flex gap-[10px] px-[14px]">
-        <Panel className="flex h-[32px] flex-1 items-center px-[11px]">
+      <div className="mt-[7px] flex gap-[10px] px-[14px]">
+        <Panel className="flex h-[28px] flex-1 items-center px-[11px]">
           <FileText className="h-[15px] w-[15px]" strokeWidth={1.6} />
           <span className="ml-[9px] text-[13.5px] leading-[15px]">View elite profile</span>
           <span className="ml-auto"><Chev size={13} /></span>
         </Panel>
-        <Panel className="flex h-[32px] flex-1 items-center px-[11px]">
+        <Panel className="flex h-[28px] flex-1 items-center px-[11px]">
           <Users className="h-[15px] w-[15px]" strokeWidth={1.6} />
           <span className="ml-[9px] text-[13.5px] leading-[15px]">Choose another shooter</span>
           <span className="ml-auto"><Chev size={13} /></span>
@@ -141,17 +141,17 @@ export function EliteMatch({
       </div>
 
       {/* mechanics comparison --------------------------------------------------- */}
-      <div className="mt-[11px] flex items-center px-[15px]">
+      <div className="mt-[8px] flex items-center px-[15px]">
         <span className="shotiq-display text-[24px] leading-[24px] tracking-[0.03em]">MECHANICS COMPARISON</span>
         <span className="ml-auto flex items-center gap-[11px] text-[11.5px]">
           <span className="flex items-center gap-[4px]"><Dot c={ORANGE} />You</span>
           <span className="flex items-center gap-[4px]"><Dot c={BLUE} />Elite</span>
         </span>
       </div>
-      <div className="mt-[3px] px-[15px]">
+      <div className="mt-[2px] px-[15px]">
         {ROWS.map(([kind, label, unit, you, ref_, diff]) => (
-          <div key={label} className="flex items-center gap-[9px] border-t py-[6px]" style={{ borderColor: RULE }}>
-            <span className="shrink-0" style={{ color: INK }}><MechanicGlyph kind={kind} size={30} accent={INK} /></span>
+          <div key={label} className="flex items-center gap-[9px] border-t py-[2px]" style={{ borderColor: RULE }}>
+            <span className="shrink-0" style={{ color: INK }}><MechanicGlyph kind={kind} size={26} accent={INK} /></span>
             <span className="w-[82px] shrink-0">
               <span className="block text-[12.5px] font-medium leading-[14px]">{label}</span>
               <span className="block text-[10.5px] leading-[12px]" style={{ color: GRAPHITE }}>{unit}</span>
@@ -174,7 +174,7 @@ export function EliteMatch({
       </div>
 
       {/* release-frame match ------------------------------------------------------ */}
-      <div className="mt-[10px] flex items-center px-[14px]">
+      <div className="mt-[7px] flex items-center px-[14px]">
         <span className="shotiq-display text-[24px] leading-[24px] tracking-[0.03em]">RELEASE FRAME MATCH</span>
         <span className="ml-auto flex items-center gap-[6px] text-[11px]" style={{ color: GRAPHITE }}>
           Average frame alignment
@@ -186,7 +186,7 @@ export function EliteMatch({
               className="mt-[5px] block w-full px-[14px]">
         <span className="flex gap-[3px]">
           {[...PHASE_STILLS, "086-film-6", "086-film-1"].map((s, i) => (
-            <span key={`${s}-${i}`} className="relative block min-w-0 flex-1 overflow-hidden rounded-[3px]" style={{ height: 66 }}>
+            <span key={`${s}-${i}`} className="relative block min-w-0 flex-1 overflow-hidden rounded-[3px]" style={{ height: 58 }}>
               <Frame src={s} w="100%" h="100%" radius={0} />
               {i === 3 && <span aria-hidden="true" className="absolute inset-0" style={{ boxShadow: `inset 0 0 0 2.5px ${ORANGE}` }} />}
             </span>
@@ -197,7 +197,7 @@ export function EliteMatch({
       </button>
 
       {/* target alignment ------------------------------------------------------------ */}
-      <Panel className="mx-[14px] mt-[9px] flex items-center px-[12px] py-[8px]">
+      <Panel className="mx-[14px] mt-[6px] flex items-center px-[12px] py-[5px]">
         <span className="min-w-0">
           <span className="shotiq-section-label block text-[11.5px] leading-[12px] tracking-[0.08em]">PRIMARY COACHING TARGET ALIGNMENT</span>
           <span className="mt-[4px] block truncate text-[16px] font-semibold leading-[18px]">Keep elbow stacked through release</span>
@@ -212,7 +212,7 @@ export function EliteMatch({
       </Panel>
 
       {/* shot rail --------------------------------------------------------------------- */}
-      <div className="mt-[10px] flex items-start gap-[9px] px-[15px]">
+      <div className="mt-[7px] flex items-start gap-[9px] px-[15px]">
         <span className="shotiq-display shrink-0 pt-[22px] text-[15px] leading-[15px] tracking-[0.05em]" style={{ color: GRAPHITE }}>SHOT RAIL</span>
         <span className="flex min-w-0 flex-1 items-start">
           {RAIL.map(([p, tone], i) => (
@@ -222,7 +222,7 @@ export function EliteMatch({
                       style={{ backgroundImage: "repeating-linear-gradient(to right,#B9BCBF 0 3px,transparent 3px 6px)" }} />
               )}
               <span className="shrink-0 text-center">
-                <PoseFigure phase={p.toLowerCase().startsWith("follow") ? "follow" : p.toLowerCase()} active={p === "RELEASE"} height={30} className="mx-auto" />
+                <PoseFigure phase={p.toLowerCase().startsWith("follow") ? "follow" : p.toLowerCase()} active={p === "RELEASE"} height={26} className="mx-auto" />
                 <span className="shotiq-display mt-[2px] block whitespace-nowrap leading-[10px] tracking-[0.04em]"
                       style={{ fontSize: 9, color: p === "RELEASE" ? ORANGE : GRAPHITE }}>{p}</span>
                 <span className="mt-[4px] flex justify-center">

@@ -74,34 +74,34 @@ export function FormScore({
       <span aria-hidden="true" className="mx-[22px] mt-[6px] block h-px" style={{ background: RULE }} />
 
       {/* score block ---------------------------------------------------- */}
-      <div className="mt-[13px] px-[22px]">
+      <div className="mt-[10px] px-[22px]">
         <SectionHead cap={23} info>FORM SCORE</SectionHead>
         <div className="mt-[3px] flex items-start">
-          <span className="shotiq-numeric leading-[0.78]" style={{ fontSize: 73, color: ORANGE }}>{score}</span>
+          <span className="shotiq-numeric leading-[0.78]" style={{ fontSize: 56, color: ORANGE }}>{score}</span>
           <span className="ml-[13px] pt-[6px]">
             <span className="shotiq-display block text-[17px] leading-[17px] tracking-[0.04em]" style={{ color: BLUE }}>GOOD</span>
             <span className="mt-[5px] block text-[12.5px] leading-[14.5px]">Keep building<br />consistency.</span>
           </span>
           <span className="ml-auto pt-[4px] text-right">
             <span className="flex items-start gap-[4px]">
-              <Spark w={110} h={34} values={[0.18, 0.5, 0.28, 0.72]} dots
+              <Spark w={110} h={30} values={[0.18, 0.5, 0.28, 0.72]} dots
                      dotColor={(i) => (i === 1 || i === 3 ? GREEN : GRAPHITE)} />
               <TrendArrow size={15} />
             </span>
-            <span className="mt-[5px] block text-[12px] leading[13px]">
+            <span className="mt-[5px] block text-[12px] leading-[13px]">
               <span style={{ color: GREEN }}>{delta}</span>{" "}
               <span style={{ color: GRAPHITE }}>vs last session</span>
             </span>
           </span>
         </div>
-        <span className="mt-[4px] block"><ScoreBar score={score} width={183} height={7} /></span>
-        <div className="mt-[10px] flex gap-[9px]">
-          <Panel className="flex h-[34px] flex-1 items-center px-[10px]">
+        <span className="mt-[2px] block"><ScoreBar score={score} width={183} height={7} /></span>
+        <div className="mt-[7px] flex gap-[9px]">
+          <Panel className="flex h-[29px] flex-1 items-center px-[10px]">
             <FileText className="h-[15px] w-[15px]" strokeWidth={1.6} />
             <span className="ml-[8px] text-[13.5px] leading-[15px]">View score method</span>
             <span className="ml-auto"><Chev size={13} /></span>
           </Panel>
-          <Panel className="flex h-[34px] flex-1 items-center px-[10px]">
+          <Panel className="flex h-[29px] flex-1 items-center px-[10px]">
             <MechanicGlyph kind="impact" size={15} accent={INK} />
             <span className="ml-[8px] text-[13.5px] leading-[15px]">Compare session</span>
             <span className="ml-auto"><Chev size={13} /></span>
@@ -110,50 +110,53 @@ export function FormScore({
       </div>
 
       {/* form breakdown --------------------------------------------------- */}
-      <SectionHead cap={22} className="mt-[13px] px-[22px]">FORM BREAKDOWN</SectionHead>
+      <SectionHead cap={22} className="mt-[9px] px-[22px]">FORM BREAKDOWN</SectionHead>
       <div className="mt-[6px] flex gap-[6px] px-[21px]">
         {BREAKDOWN.map(([label, n, verdict, l1, l2]) => (
-          <Panel key={label} className="min-w-0 flex-1 px-[3px] pb-[9px] pt-[8px] text-center">
+          <Panel key={label} className="min-w-0 flex-1 px-[3px] pb-[6px] pt-[6px] text-center">
             <div className="shotiq-display leading-[10px] tracking-[0.035em]" style={{ fontSize: capDisplay(19) }}>{label}</div>
-            <span className="mt-[7px] flex h-[30px] items-center justify-center">
-              <PoseGlyph phase="release" size={30} accent={ORANGE} />
+            <span className="mt-[4px] flex h-[24px] items-center justify-center">
+              <PoseGlyph phase="release" size={24} accent={ORANGE} />
             </span>
-            <div className="shotiq-numeric mt-[4px] text-[24px] leading[24px]" style={{ color: ORANGE }}>{n}</div>
+            <div className="shotiq-numeric mt-[2px] text-[22px] leading-[20px]" style={{ color: ORANGE }}>{n}</div>
             <div className="shotiq-display mt-[3px] leading-[9px] tracking-[0.035em]"
                  style={{ fontSize: capDisplay(18), color: verdict === "GOOD" ? BLUE : RED }}>{verdict}</div>
-            <div className="mt-[6px] text-[10px] leading-[12px]">{l1}<br />{l2}</div>
+            <div className="mt-[4px] text-[10px] leading-[11px]">{l1}<br />{l2}</div>
           </Panel>
         ))}
       </div>
 
       {/* confidence -------------------------------------------------------- */}
-      <div className="mt-[12px] flex items-start px-[22px]">
-        <div className="shrink-0">
-          <SectionHead cap={22} info>CONFIDENCE</SectionHead>
-          <div className="shotiq-numeric mt-[3px] text-[38px] leading-[38px]" style={{ color: BLUE }}>
-            76<span className="text-[22px]">%</span>
-          </div>
-        </div>
-        <div className="ml-[10px] pt-[26px] text-[13px] leading-[15px]" style={{ color: BLUE }}>MODERATE</div>
-        <div className="ml-[13px] min-w-0 flex-1 pt-[24px] text-[12px] leading-[15px]">
-          Form is repeatable in games, with room to tighten elbow.
-        </div>
-        <div className="ml-[10px] shrink-0 pt-[22px]">
-          <Spark w={148} h={44} stroke={BLUE} dots={false} fill="rgba(45,108,223,.12)"
-                 values={[0.32, 0.55, 0.36, 0.62, 0.3, 0.24, 0.48, 0.34, 0.68, 0.92]} />
+      {/* Canonical sets CONFIDENCE as one 40pt band: the label above the
+          numeral on the left, the verdict, the sentence and the wave all
+          sharing the numeral's baseline. */}
+      <div className="mt-[9px] px-[22px]">
+        <SectionHead cap={22} info>CONFIDENCE</SectionHead>
+        <div className="mt-[1px] flex items-end">
+          <span className="shotiq-numeric shrink-0 text-[30px] leading-[28px]" style={{ color: BLUE }}>
+            76<span className="text-[18px]">%</span>
+          </span>
+          <span className="ml-[9px] shrink-0 pb-[4px] text-[12.5px] leading-[13px]" style={{ color: BLUE }}>MODERATE</span>
+          <span className="ml-[12px] min-w-0 flex-1 pb-[2px] text-[12px] leading-[14px]">
+            Form is repeatable in games, with room to tighten elbow.
+          </span>
+          <span className="ml-[10px] shrink-0">
+            <Spark w={148} h={26} stroke={BLUE} dots={false} fill="rgba(45,108,223,.12)"
+                   values={[0.32, 0.55, 0.36, 0.62, 0.3, 0.24, 0.48, 0.34, 0.68, 0.92]} />
+          </span>
         </div>
       </div>
 
       {/* key insight -------------------------------------------------------- */}
-      <SectionHead cap={23} className="mt-[10px] px-[22px]">KEY INSIGHT</SectionHead>
-      <div className="mx-[21px] mt-[6px] flex items-center gap-[11px] rounded-[6px] px-[12px] py-[10px]"
+      <SectionHead cap={23} className="mt-[8px] px-[22px]">KEY INSIGHT</SectionHead>
+      <div className="mx-[21px] mt-[5px] flex items-center gap-[11px] rounded-[6px] px-[12px] py-[6px]"
            style={{ background: "var(--shotiq-color-warmCanvas)" }}>
-        <PoseGlyph phase="load" size={54} accent={ORANGE} />
+        <PoseGlyph phase="load" size={38} accent={ORANGE} />
         <div className="min-w-0 flex-1">
-          <div className="text-[13.5px] font-medium leading-[16px]">
+          <div className="text-[13.5px] font-medium leading-[15px]">
             Elbow separation at load is causing inconsistency at release.
           </div>
-          <div className="mt-[2px] text-[12.5px] leading-[15px]" style={{ color: GRAPHITE }}>
+          <div className="mt-[1px] text-[12.5px] leading-[14px]" style={{ color: GRAPHITE }}>
             Focus on keeping your elbow stacked over your hip through the rise and into release.
           </div>
         </div>
@@ -167,18 +170,18 @@ export function FormScore({
       </div>
 
       {/* metric details table ------------------------------------------------ */}
-      <SectionHead cap={22} info className="mt-[11px] px-[22px]">METRIC DETAILS</SectionHead>
-      <div className="mt-[6px] px-[22px]">
-        <div className="flex items-end pb-[4px] text-[9.5px]" style={{ color: GRAPHITE }}>
+      <SectionHead cap={22} info className="mt-[8px] px-[22px]">METRIC DETAILS</SectionHead>
+      <div className="mt-[3px] px-[22px]">
+        <div className="flex items-end pb-[2px] text-[9.5px]" style={{ color: GRAPHITE }}>
           <span className="w-[88px] shrink-0">METRIC</span>
           <span className="w-[40px] shrink-0">SCORE</span>
           <span className="min-w-0 flex-1 pl-[62px]">DETAILS</span>
           <span className="w-[42px] shrink-0 text-right">IMPACT</span>
         </div>
         {ROWS.map(([label, n, detail, impact, warn]) => (
-          <div key={label} className="flex items-center border-t py-[5px] text-[12px] leading[14px]" style={{ borderColor: RULE }}>
+          <div key={label} className="flex items-center border-t py-[0px] text-[12px] leading-[14px]" style={{ borderColor: RULE }}>
             <span className="w-[88px] shrink-0 font-medium">{label}</span>
-            <span className="shotiq-numeric w-[40px] shrink-0 text-[16px]">{n}</span>
+            <span className="shotiq-numeric w-[40px] shrink-0 text-[16px] leading-[16px]">{n}</span>
             <span className="w-[110px] shrink-0 overflow-hidden rounded-full" style={{ height: 5, background: "#E4E5E6" }}>
               <span className="block h-full rounded-full" style={{ width: `${n}%`, background: warn ? ORANGE : BLUE }} />
             </span>
@@ -188,7 +191,7 @@ export function FormScore({
         ))}
       </div>
 
-      <div className="mt-[8px] px-[22px]">
+      <div className="mt-[6px] px-[22px]">
         <PrimaryBar className="!h-[24px] !text-[14.5px]" href="/results/demo/biomechanics?view=metric"
                     trailing={<Chev size={14} color="#fff" />}>
           Review weakest metric
@@ -196,12 +199,12 @@ export function FormScore({
       </div>
 
       {/* session summary -------------------------------------------------- */}
-      <div className="mt-[11px] px-[22px]">
+      <div className="mt-[8px] px-[22px]">
         <SectionHead cap={19} info>SESSION SUMMARY</SectionHead>
         <div className="mt-[4px] flex items-start divide-x divide-[var(--shotiq-color-rule)]">
           {([[shots, "SHOTS"], [makes, "MAKES"], [pct, "MAKE %"]] as [string, string][]).map(([v, l]) => (
             <div key={l} className="flex-1 pr-[8px] [&:not(:first-child)]:pl-[10px]">
-              <div className="shotiq-numeric text-[24px] leading[24px]">{v}</div>
+              <div className="shotiq-numeric text-[22px] leading-[20px]">{v}</div>
               <Micro className="mt-[4px]">{l}</Micro>
             </div>
           ))}
@@ -210,7 +213,7 @@ export function FormScore({
               <Spark w={92} h={26} values={[0.2, 0.5, 0.3, 0.75]} dotColor={(i) => (i === 1 || i === 3 ? GREEN : GRAPHITE)} />
               <TrendArrow size={13} />
             </span>
-            <span className="mt-[3px] block text-[11px] leading[12px]">
+            <span className="mt-[3px] block text-[11px] leading-[12px]">
               <span style={{ color: GREEN }}>{delta}</span>{" "}
               <span style={{ color: GRAPHITE }}>vs last session</span>
             </span>

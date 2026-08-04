@@ -50,8 +50,8 @@ export function PhotoComparison({
       bar={<ResultsBar variant="back-title" height={46} onBack={onBack} title="COMPARE SHOOTERS" trailing={<ShareIcon />} />}
     >
       {/* the two shooters -------------------------------------------------- */}
-      <div className="mt-[12px] flex items-center gap-[9px] px-[19px]">
-        <Frame src="081-player-headshot" w={57} h={57} radius={999} alt={name} className="shrink-0" />
+      <div className="mt-[9px] flex items-center gap-[9px] px-[19px]">
+        <Frame src="081-player-headshot" w={50} h={50} radius={999} alt={name} className="shrink-0" />
         <div className="min-w-0 flex-1">
           <div className="shotiq-display text-[24px] leading-[24px] tracking-[0.03em]">{name.toUpperCase()}</div>
           <div className="text-[11.5px] leading-[13px]" style={{ color: GRAPHITE }}>You • Right • Advanced</div>
@@ -76,11 +76,11 @@ export function PhotoComparison({
             </span>
           </div>
         </div>
-        <Frame src="089-headshot" w={57} h={57} radius={999} alt={reference} className="shrink-0" />
+        <Frame src="089-headshot" w={50} h={50} radius={999} alt={reference} className="shrink-0" />
       </div>
 
       {/* stat sextet ---------------------------------------------------------- */}
-      <div className="mt-[10px] flex px-[19px]">
+      <div className="mt-[7px] flex px-[19px]">
         {([[shots, "SHOTS"], [makes, "MAKES"], [pct, "ACCURACY"]] as [string, string][]).map(([v, l], i) => (
           <div key={l} className={`flex-1 text-center ${i ? "border-l" : ""}`} style={{ borderColor: RULE }}>
             <div className="shotiq-numeric text-[21px] leading-[21px]">{v}</div>
@@ -96,9 +96,9 @@ export function PhotoComparison({
       </div>
 
       {/* the frame pair --------------------------------------------------------- */}
-      <div className="mx-[15px] mt-[10px] flex gap-[3px] overflow-hidden rounded-[5px]">
+      <div className="mx-[15px] mt-[8px] flex gap-[3px] overflow-hidden rounded-[5px]">
         {([["YOU", "086-film-4", ORANGE, "162°"], [reference.toUpperCase(), "086-film-5", BLUE, "174°"]] as [string, string, string, string][]).map(([label, still, tone, angle]) => (
-          <div key={label} className="relative min-w-0 flex-1" style={{ height: 285 }}>
+          <div key={label} className="relative min-w-0 flex-1" style={{ height: 262 }}>
             <Frame src={still} w="100%" h="100%" radius={0} alt={`${label} at release`} />
             <SkeletonOverlay node={tone} />
             <span className="absolute left-[9px] top-[9px] flex items-center gap-[6px] text-[13px] font-semibold text-white"
@@ -111,12 +111,12 @@ export function PhotoComparison({
         ))}
       </div>
 
-      <PhaseRail className="mt-[8px] px-[26px]" active="RELEASE" figure={30} label={9.6} />
+      <PhaseRail className="mt-[6px] px-[26px]" active="RELEASE" figure={30} label={9.6} />
 
       {/* comparison rows ---------------------------------------------------------- */}
-      <div className="mt-[9px] px-[26px]">
+      <div className="mt-[6px] px-[26px]">
         {ROWS.map(([kind, label, sub, you, diff, ref_]) => (
-          <div key={label} className="flex items-center border-t py-[7px]" style={{ borderColor: RULE }}>
+          <div key={label} className="flex items-center border-t py-[3px]" style={{ borderColor: RULE }}>
             <span className="shrink-0" style={{ color: INK }}><MechanicGlyph kind={kind} size={26} accent={ORANGE} /></span>
             <span className="ml-[8px] w-[92px] shrink-0">
               <span className="shotiq-display block leading-[12px] tracking-[0.04em]" style={{ fontSize: 12 }}>{label}</span>
@@ -133,16 +133,16 @@ export function PhotoComparison({
       </div>
 
       {/* actions ---------------------------------------------------------------------- */}
-      <div className="mt-[8px] flex gap-[9px] px-[23px]">
-        <Panel className="flex h-[33px] flex-1 items-center justify-center gap-[7px]">
+      <div className="mt-[6px] flex gap-[9px] px-[23px]">
+        <Panel className="flex h-[29px] flex-1 items-center justify-center gap-[7px]">
           <ActionGlyph kind="skeletonDots" height={15} />
           <span className="text-[13px] leading-[15px]">Overlay skeletons</span>
         </Panel>
-        <Panel className="flex h-[33px] flex-1 items-center justify-center gap-[7px]">
+        <Panel className="flex h-[29px] flex-1 items-center justify-center gap-[7px]">
           <MoveHorizontal className="h-[15px] w-[15px]" strokeWidth={1.7} />
           <span className="text-[13px] leading-[15px]">Swipe phases</span>
         </Panel>
-        <Panel className="flex h-[33px] flex-1 items-center justify-center gap-[7px]">
+        <Panel className="flex h-[29px] flex-1 items-center justify-center gap-[7px]">
           <Bookmark className="h-[14px] w-[14px]" strokeWidth={1.7} />
           <span className="text-[13px] leading-[15px]">Save comparison</span>
         </Panel>

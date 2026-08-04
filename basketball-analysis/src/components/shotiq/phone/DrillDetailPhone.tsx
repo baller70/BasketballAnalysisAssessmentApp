@@ -40,7 +40,7 @@ import {
 import { PhoneScreen, PhoneHeading } from "@/components/shotiq/PhoneShell"
 import {
   PhoneTop, Wordmark, GearLink, BackChevron, PhoneAction, Eyebrow, PhaseRail,
-  PhoneCard, MiniStat, StatCells, RULE, ORANGE, GREEN, BLUE, GRAPHITE,
+  PhoneCard, MiniStat, StatCells, Shot, RULE, ORANGE, GREEN, BLUE, GRAPHITE,
 } from "@/components/shotiq/phone/PhoneBits"
 import {
   StreakGlyph, PointsGlyph, ActionGlyph, CueGlyph, PoseFigure, MechanicGlyph,
@@ -67,12 +67,15 @@ function Identity({ score }: { score?: string }) {
 
 /* --------------------------------------------------------------- 057 */
 
+/* Canonical's step-by-step is five PHOTOGRAPHS of the shot, not five diagrams:
+   the 091-cue-* crops are node figures and read as icons at this size. These are
+   the five stills the media library already ships. */
 const STEPS: [string, string, string][] = [
-  ["SETUP", "Feet shoulder-width. Ball in shooting pocket. Elbow in.", "091-cue-balance"],
-  ["LOAD", "Dip into a smooth gather. Keep elbow tucked and stacked.", "091-cue-elbow"],
-  ["RISE", "Extend up. Keep elbow under ball and aligned.", "091-cue-apex"],
-  ["RELEASE", "Release at full extension. Wrist snaps over.", "091-cue-follow"],
-  ["FOLLOW-THROUGH", "Hold tall finish. Elbow stacked, fingers down.", "091-cue-shoulders"],
+  ["SETUP", "Feet shoulder-width. Ball in shooting pocket. Elbow in.", "094-t4"],
+  ["LOAD", "Dip into a smooth gather. Keep elbow tucked and stacked.", "094-t3"],
+  ["RISE", "Extend up. Keep elbow under ball and aligned.", "094-t2"],
+  ["RELEASE", "Release at full extension. Wrist snaps over.", "094-t1"],
+  ["FOLLOW-THROUGH", "Hold tall finish. Elbow stacked, fingers down.", "094-y1"],
 ]
 const EQUIPMENT: [string, string][] = [
   ["Basketball", "1"], ["Cones", "2–3"], ["Spot", "Free throw line"], ["Location", "Any court"],
@@ -105,7 +108,7 @@ export function DrillDetail({ title, onStart, saved, onSave }: {
             <img src="/images/canonical/091-thumb.png" alt="" aria-hidden="true"
                  className="h-[112px] w-[160px] rounded-[4px] object-cover" />
             <span className="absolute bottom-[6px] right-[6px] rounded-[3px] bg-white px-[5px] py-[2px] text-center">
-              <span className="shotiq-microcaps block text-[5.5px] leading-[6px]" style={{ color: GRAPHITE }}>FORM SCORE</span>
+              <span className="shotiq-microcaps block" style={{ fontSize: 5.5, lineHeight: "6px", color: GRAPHITE }}>FORM SCORE</span>
               <span className="shotiq-numeric block text-[15px] leading-[15px]" style={{ color: ORANGE }}>82</span>
             </span>
           </div>
@@ -122,13 +125,13 @@ export function DrillDetail({ title, onStart, saved, onSave }: {
             <div key={l} className="min-w-0 flex-1 pl-[8px] first:pl-0"
                  style={i ? { borderLeft: `1px solid ${RULE}` } : undefined}>
               <MechanicGlyph kind={m} size={20} />
-              <div className="shotiq-microcaps mt-[4px] whitespace-nowrap text-[6.5px] leading-[7px]" style={{ color: GRAPHITE }}>{l}</div>
+              <div className="shotiq-microcaps mt-[4px] whitespace-nowrap" style={{ fontSize: 6.5, lineHeight: "7px", color: GRAPHITE }}>{l}</div>
               <div className="mt-[2px] text-[9.5px] leading-[11px]">{v}</div>
             </div>
           ))}
         </div>
 
-        <div className="mt-[14px] pt-[11px]" style={{ borderTop: `1px solid ${RULE}` }}>
+        <div className="mt-[11px] pt-[9px]" style={{ borderTop: `1px solid ${RULE}` }}>
           <Eyebrow>WHAT IT BUILDS</Eyebrow>
           <div className="mt-[7px] flex items-start gap-[12px]">
             <p className="w-[168px] shrink-0 text-[9px] leading-[12px]" style={{ color: GRAPHITE }}>
@@ -139,14 +142,14 @@ export function DrillDetail({ title, onStart, saved, onSave }: {
               {([["ELBOW STACK", "angle"], ["WRIST ALIGNMENT", "wrist"], ["RELEASE PATH", "arc"]] as const).map(([l, m]) => (
                 <span key={l} className="flex min-w-0 flex-col items-center text-center">
                   <MechanicGlyph kind={m} size={30} />
-                  <span className="shotiq-microcaps mt-[5px] text-[6px] leading-[7px]" style={{ color: GRAPHITE }}>{l}</span>
+                  <span className="shotiq-microcaps mt-[5px]" style={{ fontSize: 6, lineHeight: "7px", color: GRAPHITE }}>{l}</span>
                 </span>
               ))}
             </div>
           </div>
         </div>
 
-        <div className="mt-[13px] pt-[11px]" style={{ borderTop: `1px solid ${RULE}` }}>
+        <div className="mt-[11px] pt-[9px]" style={{ borderTop: `1px solid ${RULE}` }}>
           <Eyebrow>EQUIPMENT &amp; SETUP</Eyebrow>
           <div className="mt-[8px] flex gap-[7px]">
             {EQUIPMENT.map(([l, v], i) => (
@@ -162,16 +165,15 @@ export function DrillDetail({ title, onStart, saved, onSave }: {
           </div>
         </div>
 
-        <div className="mt-[13px] pt-[11px]" style={{ borderTop: `1px solid ${RULE}` }}>
+        <div className="mt-[11px] pt-[9px]" style={{ borderTop: `1px solid ${RULE}` }}>
           <Eyebrow>STEP-BY-STEP</Eyebrow>
           <div className="mt-[8px] flex items-start gap-[3px]">
             {STEPS.map(([label, note, img], i) => (
               <React.Fragment key={label}>
                 <div className="min-w-0 flex-1">
                   <div className="relative">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={`/images/canonical/${img}.png`} alt="" aria-hidden="true"
-                         className="block h-[64px] w-full rounded-[3px] object-cover" />
+                    <Shot src={`/images/canonical/${img}.png`} zoom={1.5}
+                          className="h-[64px] w-full rounded-[3px]" />
                     <span className="absolute left-[3px] top-[3px] grid h-[13px] w-[13px] place-items-center rounded-full text-[7px] font-bold text-white"
                           style={{ background: ORANGE }}>{i + 1}</span>
                   </div>
@@ -187,7 +189,7 @@ export function DrillDetail({ title, onStart, saved, onSave }: {
           </div>
         </div>
 
-        <div className="mt-[13px] flex items-start gap-[14px] pt-[11px]" style={{ borderTop: `1px solid ${RULE}` }}>
+        <div className="mt-[11px] flex items-start gap-[14px] pt-[9px]" style={{ borderTop: `1px solid ${RULE}` }}>
           <div className="w-[150px] shrink-0">
             <Eyebrow>COACHING CUE</Eyebrow>
             <p className="mt-[7px] text-[11.5px] italic leading-[15px]">
@@ -210,7 +212,7 @@ export function DrillDetail({ title, onStart, saved, onSave }: {
           </div>
         </div>
 
-        <div className="mt-[13px] pt-[11px]" style={{ borderTop: `1px solid ${RULE}` }}>
+        <div className="mt-[11px] pt-[9px]" style={{ borderTop: `1px solid ${RULE}` }}>
           <Eyebrow>DRILL PREVIEW (AI OVERLAY)</Eyebrow>
           <div className="mt-[8px] flex items-center gap-[11px]">
             <div className="relative min-w-0 flex-1">
@@ -231,7 +233,7 @@ export function DrillDetail({ title, onStart, saved, onSave }: {
           </div>
         </div>
 
-        <div className="mb-[16px] mt-[13px] flex gap-[8px]">
+        <div className="mb-[12px] mt-[11px] flex gap-[8px]">
           <PhoneAction tone="orange" height={40} className="flex-1" onClick={onStart} testid="phone-start-drill">
             <Play className="h-[14px] w-[14px]" fill="currentColor" /> Start drill
           </PhoneAction>
@@ -269,7 +271,7 @@ export function DrillExecution({
           <PhoneHeading size={30}>DRILL EXECUTION</PhoneHeading>
           <span className="text-[10px]" style={{ color: GRAPHITE }}>Set {set} of {sets}</span>
           <span className="ml-auto text-right">
-            <span className="shotiq-microcaps block text-[7px] leading-[8px]" style={{ color: GRAPHITE }}>TARGET</span>
+            <span className="shotiq-microcaps block" style={{ fontSize: 7, lineHeight: "8px", color: GRAPHITE }}>TARGET</span>
             <span className="block text-[11px] leading-[13px]">{target} makes</span>
           </span>
         </div>
@@ -281,7 +283,7 @@ export function DrillExecution({
           </div>
           <PoseFigure phase="release" height={44} active />
           <span className="w-[74px] shrink-0">
-            <span className="shotiq-microcaps block text-[6.5px] leading-[8px]" style={{ color: GRAPHITE }}>FOCUS AREA</span>
+            <span className="shotiq-microcaps block" style={{ fontSize: 6.5, lineHeight: "8px", color: GRAPHITE }}>FOCUS AREA</span>
             <span className="mt-[2px] block text-[8.5px] leading-[10px]">Elbow alignment at release</span>
           </span>
         </PhoneCard>
@@ -378,7 +380,7 @@ export function ShotTracker({
           <span className="shotiq-display min-w-0 text-[14px] leading-[15px]">20-MINUTE TRAINING SESSION</span>
           <span className="ml-auto shrink-0 text-right">
             <span className="shotiq-numeric block text-[13px] leading-[14px]">03:18</span>
-            <span className="shotiq-microcaps block text-[6.5px] leading-[7px]" style={{ color: GRAPHITE }}>REMAINING</span>
+            <span className="shotiq-microcaps block" style={{ fontSize: 6.5, lineHeight: "7px", color: GRAPHITE }}>REMAINING</span>
           </span>
           <button type="button" className="flex shrink-0 items-center gap-[5px] text-[9.5px]" style={{ color: ORANGE }}>
             <Pause className="h-[11px] w-[11px]" fill="currentColor" /> PAUSE WORKOUT
@@ -421,7 +423,7 @@ export function ShotTracker({
             <div className="mt-[9px] pt-[8px]" style={{ borderTop: `1px solid ${RULE}` }}>
               <Eyebrow>CURRENT STREAK</Eyebrow>
               <div className="shotiq-numeric mt-[3px] text-[26px] leading-[25px]" style={{ color: GREEN }}>{streak}</div>
-              <div className="shotiq-microcaps mt-[2px] text-[7.5px]" style={{ color: GRAPHITE }}>MAKES</div>
+              <div className="shotiq-microcaps mt-[2px]" style={{ fontSize: 7.5, color: GRAPHITE }}>MAKES</div>
             </div>
 
             <div className="mt-[9px] pt-[8px]" style={{ borderTop: `1px solid ${RULE}` }}>
@@ -550,27 +552,26 @@ export function WorkoutComplete({
                  style={i ? { borderLeft: `1px solid ${RULE}` } : undefined}>
               <span className="flex h-[26px] items-center justify-center">{g as React.ReactNode}</span>
               <div className="shotiq-numeric mt-[5px] text-[22px] leading-[22px]" style={{ color: tone as string }}>{v as string}</div>
-              <div className="shotiq-microcaps mt-[3px] text-[7px] leading-[8px]" style={{ color: GRAPHITE }}>{l as string}</div>
+              <div className="shotiq-microcaps mt-[3px]" style={{ fontSize: 7, lineHeight: "8px", color: GRAPHITE }}>{l as string}</div>
             </div>
           ))}
         </PhoneCard>
 
         <div className="mt-[12px] flex items-stretch gap-[11px]">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/images/canonical/091-hero.png" alt="" aria-hidden="true"
-               className="h-[178px] w-[232px] shrink-0 rounded-[4px] object-cover" />
+          <Shot src="/images/canonical/091-hero.png" zoom={1.2}
+                className="h-[162px] w-[214px] shrink-0 rounded-[4px]" />
           <div className="min-w-0 flex-1">
             <Eyebrow>FORM SCORE</Eyebrow>
             <div className="shotiq-numeric mt-[4px] text-[52px] leading-[48px]" style={{ color: ORANGE }}>82</div>
             <div className="mt-[7px] h-[4px] w-full rounded-full" style={{ background: RULE }}>
               <div className="h-full rounded-full" style={{ width: "82%", background: ORANGE }} />
             </div>
-            <div className="shotiq-microcaps mt-[9px] text-[9px]" style={{ color: GREEN }}>GOOD</div>
+            <div className="shotiq-microcaps mt-[9px]" style={{ fontSize: 9, color: GREEN }}>GOOD</div>
             <p className="mt-[4px] text-[9.5px] leading-[12px]" style={{ color: GRAPHITE }}>Keep building consistency.</p>
           </div>
         </div>
 
-        <Eyebrow className="mt-[13px]">PHASE BREAKDOWN</Eyebrow>
+        <Eyebrow className="mt-[11px]">PHASE BREAKDOWN</Eyebrow>
         <div className="mt-[8px] flex items-end">
           {PHASES.map((p, i) => {
             const on = p === "RELEASE"
@@ -586,7 +587,7 @@ export function WorkoutComplete({
           })}
         </div>
 
-        <PhoneCard className="mt-[12px] flex items-center gap-[11px] px-[11px] py-[10px]">
+        <PhoneCard className="mt-[10px] flex items-center gap-[11px] px-[11px] py-[9px]">
           <PoseFigure phase="release" height={38} active />
           <div className="min-w-0 flex-1">
             <Eyebrow>PRIMARY TARGET</Eyebrow>
@@ -616,7 +617,7 @@ export function WorkoutComplete({
               style={{ border: `1px solid ${RULE}` }}>
           <CueGlyph kind="saved" size={30} accent={BLUE} />
           <span className="min-w-0 flex-1">
-            <span className="shotiq-microcaps block text-[7px] leading-[8px]" style={{ color: GRAPHITE }}>NEXT RECOMMENDATION</span>
+            <span className="shotiq-microcaps block" style={{ fontSize: 7, lineHeight: "8px", color: GRAPHITE }}>NEXT RECOMMENDATION</span>
             <span className="mt-[3px] block text-[11.5px] font-medium leading-[14px]">Quick Release Builder</span>
             <span className="mt-[2px] block text-[8px] leading-[10px]" style={{ color: GRAPHITE }}>
               15 min • Form Focus<br />Build alignment and repeatable release.
@@ -625,7 +626,7 @@ export function WorkoutComplete({
           <ChevronRight className="h-[14px] w-[14px] shrink-0" style={{ color: GRAPHITE }} />
         </Link>
 
-        <div className="mb-[16px] mt-[12px] flex gap-[8px]">
+        <div className="mb-[12px] mt-[10px] flex gap-[8px]">
           <button type="button" onClick={onReview}
                   className="flex h-[38px] flex-1 items-center justify-center gap-[7px] rounded-[6px] text-[11px]"
                   style={{ border: `1px solid ${ORANGE}`, color: ORANGE }}>

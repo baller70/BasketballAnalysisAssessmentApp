@@ -27,7 +27,7 @@ import { ChevronRight, ChevronLeft, Check, Minus, Plus, X } from "lucide-react"
 import { PhoneScreen, PhoneHeading } from "@/components/shotiq/PhoneShell"
 import {
   PhoneTop, Wordmark, GearLink, PhoneAction, Eyebrow, PhaseRail, PhoneCard,
-  MiniStat, StatCells, RULE, ORANGE, GREEN, BLUE, GRAPHITE,
+  MiniStat, StatCells, Shot, RULE, ORANGE, GREEN, BLUE, GRAPHITE,
 } from "@/components/shotiq/phone/PhoneBits"
 import {
   StreakGlyph, PointsGlyph, ActionGlyph, CueGlyph, PoseFigure, MechanicGlyph,
@@ -98,7 +98,7 @@ export function TrainingHome({ drills, onQuickStart }: {
         </div>
 
         {/* ------------------------------------------------ saved drills */}
-        <div className="mt-[15px] flex items-center">
+        <div className="mt-[12px] flex items-center">
           <Eyebrow>SAVED DRILLS</Eyebrow>
           <Link href="/training/drills?tab=saved" className="ml-auto flex items-center gap-[4px] text-[9.5px]"
                 style={{ color: GRAPHITE }}>
@@ -109,9 +109,7 @@ export function TrainingHome({ drills, onQuickStart }: {
           {drills.slice(0, 3).map((d) => (
             <Link key={d.id} href={`/training/drills/${d.id}`}
                   className="flex items-stretch gap-[10px] py-[8px]" style={{ borderTop: `1px solid ${RULE}` }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={d.img} alt="" aria-hidden="true"
-                   className="h-[62px] w-[76px] shrink-0 rounded-[4px] object-cover" />
+              <Shot src={d.img} zoom={1.42} className="h-[56px] w-[70px] shrink-0 rounded-[4px]" />
               <span className="min-w-0 flex-1">
                 <span className="block text-[12.5px] font-semibold leading-[15px]">{d.title}</span>
                 <span className="mt-[2px] block text-[9px] leading-[11px]" style={{ color: GRAPHITE }}>{d.note}</span>
@@ -133,16 +131,15 @@ export function TrainingHome({ drills, onQuickStart }: {
           <span className="ml-auto text-[9px]" style={{ color: GRAPHITE }}>Today at 8:24 AM</span>
         </div>
         <PhoneCard className="mt-[8px] flex items-stretch gap-[11px] p-[9px]">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/images/canonical/090-rec-1.png" alt="" aria-hidden="true"
-               className="h-[92px] w-[104px] shrink-0 rounded-[4px] object-cover" />
+          <Shot src="/images/canonical/090-rec-1.png" zoom={1.4}
+                className="h-[84px] w-[96px] shrink-0 rounded-[4px]" />
           <div className="min-w-0 flex-1">
             <div className="text-[12.5px] font-semibold leading-[15px]">Quick Release Builder</div>
             <StatCells className="mt-[7px]" valueSize={15} labelSize={7}
                        cells={[{ v: "24", l: "SHOTS" }, { v: "15", l: "MAKES" }, { v: "62.5%", l: "MAKE %" }]} />
             <div className="mt-[7px] flex items-end gap-[8px]">
               <div className="min-w-0 flex-1">
-                <div className="shotiq-microcaps text-[7px] leading-[8px]" style={{ color: GRAPHITE }}>FORM SCORE</div>
+                <div className="shotiq-microcaps" style={{ fontSize: 7, lineHeight: "8px", color: GRAPHITE }}>FORM SCORE</div>
                 <div className="mt-[1px] h-[3px] w-full rounded-full" style={{ background: RULE }}>
                   <div className="h-full rounded-full" style={{ width: "82%", background: ORANGE }} />
                 </div>
@@ -157,7 +154,7 @@ export function TrainingHome({ drills, onQuickStart }: {
           </div>
         </PhoneCard>
 
-        <PhaseRail className="mb-[16px] mt-[14px]" figure={26} label={7} />
+        <PhaseRail className="mb-[12px] mt-[11px]" figure={24} label={7} />
       </div>
     </PhoneScreen>
   )
@@ -197,9 +194,8 @@ export function QuickStart({ onStart }: { onStart: () => void }) {
 
         <div className="mt-[11px] flex items-start gap-[13px]">
           <div className="relative shrink-0">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/canonical/090-rec-2.png" alt="" aria-hidden="true"
-                 className="h-[152px] w-[136px] rounded-[4px] object-cover" />
+            <Shot src="/images/canonical/090-rec-2.png" zoom={1.35}
+                  className="h-[152px] w-[136px] rounded-[4px]" />
             <span className="absolute right-[6px] top-[26px] rounded-[3px] bg-white px-[5px] py-[2px] text-[9px] font-semibold"
                   style={{ color: ORANGE }}>87°</span>
             <span className="absolute bottom-[34px] left-[6px] rounded-[3px] bg-white px-[5px] py-[2px] text-[9px] font-semibold"
@@ -211,7 +207,7 @@ export function QuickStart({ onStart }: { onStart: () => void }) {
             <div className="mt-[6px] h-[4px] w-full rounded-full" style={{ background: RULE }}>
               <div className="h-full rounded-full" style={{ width: "82%", background: ORANGE }} />
             </div>
-            <div className="shotiq-microcaps mt-[8px] text-[9px] leading-[10px]" style={{ color: GREEN }}>GOOD</div>
+            <div className="shotiq-microcaps mt-[8px]" style={{ fontSize: 9, lineHeight: "10px", color: GREEN }}>GOOD</div>
             <p className="mt-[4px] text-[9.5px] leading-[12px]" style={{ color: GRAPHITE }}>Keep building consistency.</p>
           </div>
         </div>
@@ -235,11 +231,11 @@ export function QuickStart({ onStart }: { onStart: () => void }) {
              ["MAKE TARGET", makes, "MAKES", "Recommended 50–65%", setMakes, "impact"]] as const).map(
             ([head, val, unit, note, set, mark]) => (
               <PhoneCard key={head} className="min-w-0 flex-1 px-[10px] py-[10px]">
-                <div className="shotiq-microcaps text-[7.5px] leading-[8px]" style={{ color: GRAPHITE }}>{head}</div>
+                <div className="shotiq-microcaps" style={{ fontSize: 7.5, lineHeight: "8px", color: GRAPHITE }}>{head}</div>
                 <div className="mt-[5px] flex items-start">
                   <div className="min-w-0">
                     <div className="shotiq-numeric text-[27px] leading-[26px]">{val}</div>
-                    <div className="shotiq-microcaps mt-[3px] text-[7.5px] leading-[8px]" style={{ color: GRAPHITE }}>{unit}</div>
+                    <div className="shotiq-microcaps mt-[3px]" style={{ fontSize: 7.5, lineHeight: "8px", color: GRAPHITE }}>{unit}</div>
                   </div>
                   <span className="ml-auto shrink-0"><MechanicGlyph kind={mark} size={34} /></span>
                 </div>
@@ -350,7 +346,7 @@ export function WorkoutCalendar({ onOpen }: { onOpen: () => void }) {
           {[["24", "SHOTS"], ["15", "MAKES"], ["62.5%", "FG%"]].map(([v, l]) => (
             <div key={l} className="w-[42px] text-center">
               <div className="shotiq-numeric text-[12px] leading-[13px]">{v}</div>
-              <div className="shotiq-microcaps mt-[2px] text-[6.5px] leading-[7px]" style={{ color: GRAPHITE }}>{l}</div>
+              <div className="shotiq-microcaps mt-[2px]" style={{ fontSize: 6.5, lineHeight: "7px", color: GRAPHITE }}>{l}</div>
             </div>
           ))}
         </div>
@@ -369,8 +365,8 @@ export function WorkoutCalendar({ onOpen }: { onOpen: () => void }) {
             and broke to "S/U/N". */}
         <div className="mt-[10px] grid grid-cols-7">
           {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((d) => (
-            <div key={d} className="shotiq-microcaps whitespace-nowrap text-center text-[8px] leading-[9px]"
-                 style={{ color: GRAPHITE }}>{d}</div>
+            <div key={d} className="shotiq-microcaps whitespace-nowrap text-center"
+ style={{ fontSize: 8, lineHeight: "9px", color: GRAPHITE }}>{d}</div>
           ))}
         </div>
         <div className="mt-[6px] grid grid-cols-7 gap-y-[2px]" data-testid="phone-calendar-grid">
@@ -400,9 +396,8 @@ export function WorkoutCalendar({ onOpen }: { onOpen: () => void }) {
           <ChevronRight className="ml-auto h-[13px] w-[13px] rotate-[-90deg]" style={{ color: GRAPHITE }} />
         </div>
         <PhoneCard className="mt-[8px] flex items-stretch gap-[10px] p-[9px]">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/images/canonical/090-rec-3.png" alt="" aria-hidden="true"
-               className="h-[98px] w-[104px] shrink-0 rounded-[4px] object-cover" />
+          <Shot src="/images/canonical/090-rec-3.png" zoom={1.4}
+                className="h-[98px] w-[104px] shrink-0 rounded-[4px]" />
           <div className="min-w-0 flex-1">
             <div className="shotiq-display text-[16px] leading-[17px]">COMBO LADDER</div>
             <div className="mt-[3px] text-[9px] leading-[11px]" style={{ color: GRAPHITE }}>Day 4 of 7 • 17 min</div>

@@ -25,7 +25,7 @@ import { Check, AlertCircle, ChevronRight, RotateCcw, RotateCw, Crop, Camera } f
 import { PhoneScreen, PhoneHeading } from "@/components/shotiq/PhoneShell"
 import {
   PhoneTop, Wordmark, GearLink, BackChevron, PhoneAction, Eyebrow, StatCells,
-  MiniStat, PhaseRail, PhoneCard, RULE, ORANGE, GREEN, BLUE, GRAPHITE,
+  MiniStat, PhaseRail, PhoneCard, Shot, RULE, ORANGE, GREEN, BLUE, GRAPHITE,
 } from "@/components/shotiq/phone/PhoneBits"
 import { StreakGlyph, PointsGlyph, ActionGlyph, QualityGlyph, FilmingGlyph } from "@/components/shotiq/Glyphs"
 
@@ -91,7 +91,7 @@ export function PhotoUploadSource({ onLibrary, onCamera, onCancel }: {
                  style={{ border: `1px solid ${RULE}` }}>
               <FormatMark kind={mark} />
               <div className="shotiq-display mt-[7px] text-[11px] leading-[12px]">{ext}</div>
-              <div className="shotiq-microcaps mt-[3px] text-[7px] leading-[8px]" style={{ color: GRAPHITE }}>{kind}</div>
+              <div className="shotiq-microcaps mt-[3px]" style={{ fontSize: 7, lineHeight: "8px", color: GRAPHITE }}>{kind}</div>
             </div>
           ))}
         </div>
@@ -102,9 +102,7 @@ export function PhotoUploadSource({ onLibrary, onCamera, onCancel }: {
             <div key={badge} className="min-w-0 flex-1 overflow-hidden rounded-[6px]"
                  style={{ border: `1px solid ${RULE}` }}>
               <div className="relative">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={`/images/canonical/${img}.png`} alt="" aria-hidden="true"
-                     className="block h-[150px] w-full object-cover" />
+                <Shot src={`/images/canonical/${img}.png`} className="h-[150px] w-full" zoom={1.4} />
                 <span className="absolute left-[8px] top-[8px] rounded-[3px] px-[6px] py-[3px] text-[8px] font-semibold text-white"
                       style={{ background: tone }}>{badge}</span>
               </div>
@@ -114,7 +112,7 @@ export function PhotoUploadSource({ onLibrary, onCamera, onCancel }: {
                   <Check className="h-[9px] w-[9px]" style={{ color: tone }} strokeWidth={3} />
                 </span>
                 <div className="min-w-0">
-                  <div className="shotiq-microcaps text-[9px] leading-[10px]" style={{ color: tone }}>{verdict}</div>
+                  <div className="shotiq-microcaps" style={{ fontSize: 9, lineHeight: "10px", color: tone }}>{verdict}</div>
                   <div className="mt-[3px] text-[8.5px] leading[11px]" style={{ color: GRAPHITE, lineHeight: "11px" }}>{note}</div>
                 </div>
               </div>
@@ -163,12 +161,12 @@ export function PhotoReviewCrop({ src, onRetake, onCrop, onUse, onBack }: {
   return (
     <PhoneScreen testid="screen-ios-photo-review-crop" tab="capture" pad={0} header={false}>
       <PhoneTop height={44} left={<BackChevron onClick={onBack} />} center={
-        <span className="block text-center">
-          <span className="shotiq-wordmark block text-[15.5px] leading-[16px] tracking-[0.14em]">
-            SHOT<span style={{ color: ORANGE }}>IQ</span>
-          </span>
-          <span className="shotiq-microcaps block text-[7px] leading-[9px]" style={{ color: GRAPHITE }}>AI ANALYSIS</span>
-        </span>} />
+ <span className="block text-center">
+ <span className="shotiq-wordmark block tracking-[0.14em]">
+ SHOT<span style={{ fontSize: 15.5, lineHeight: "16px", color: ORANGE }}>IQ</span>
+ </span>
+ <span className="shotiq-microcaps block" style={{ color: GRAPHITE }}>AI ANALYSIS</span>
+ </span>} />
 
       <div className="flex items-start px-[18px] pt-[11px]">
         <div className="min-w-0">
@@ -185,10 +183,8 @@ export function PhotoReviewCrop({ src, onRetake, onCrop, onUse, onBack }: {
 
       {/* --------------------------------------------------- crop frame */}
       <div className="relative mx-[8px] mt-[10px] overflow-hidden" style={{ height: 352 }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={src} alt="Photo under review"
-             className="block h-full w-full object-cover"
-             style={{ transform: `rotate(${angle}deg)` }} />
+        <Shot src={src} alt="Photo under review" className="h-full w-full" zoom={1.4}
+              style={{ transform: `rotate(${angle}deg)` }} />
         <span className="absolute left-[9px] top-[9px] rounded-[3px] bg-black/65 px-[7px] py-[3px] text-[9px] font-medium text-white">3:4</span>
         {/* rule-of-thirds guides */}
         {[1, 2].map((i) => (
@@ -197,16 +193,16 @@ export function PhotoReviewCrop({ src, onRetake, onCrop, onUse, onBack }: {
             <span aria-hidden="true" className="absolute bg-white/55" style={{ top: `${(i * 100) / 3}%`, left: 30, right: 30, height: 1 }} />
           </React.Fragment>
         ))}
-        {/* corner brackets */}
-        {([["left", "top"], ["right", "top"], ["left", "bottom"], ["right", "bottom"]] as const).map(([x, y]) => (
-          <span key={`${x}${y}`} aria-hidden="true" className="absolute h-[30px] w-[30px]"
-                style={{
-                  [x]: 30, [y]: 34,
-                  [`border${x === "left" ? "Left" : "Right"}Width`]: 2,
-                  [`border${y === "top" ? "Top" : "Bottom"}Width`]: 2,
-                  borderColor: "#fff", borderStyle: "solid",
-                } as React.CSSProperties} />
-        ))}
+        {/* Corner brackets. Canonical insets the crop frame 30 from the sides
+            and 34 from the top and bottom, and draws an L at each corner. */}
+        <span aria-hidden="true" className="absolute left-[30px] top-[34px] h-[30px] w-[30px]"
+              style={{ borderLeft: "2px solid #fff", borderTop: "2px solid #fff" }} />
+        <span aria-hidden="true" className="absolute right-[30px] top-[34px] h-[30px] w-[30px]"
+              style={{ borderRight: "2px solid #fff", borderTop: "2px solid #fff" }} />
+        <span aria-hidden="true" className="absolute bottom-[34px] left-[30px] h-[30px] w-[30px]"
+              style={{ borderLeft: "2px solid #fff", borderBottom: "2px solid #fff" }} />
+        <span aria-hidden="true" className="absolute bottom-[34px] right-[30px] h-[30px] w-[30px]"
+              style={{ borderRight: "2px solid #fff", borderBottom: "2px solid #fff" }} />
         <div className="absolute inset-x-[9px] bottom-[9px] flex items-center gap-[8px] rounded-[4px] bg-black/60 px-[9px] py-[7px]">
           <AlertCircle className="h-[11px] w-[11px] shrink-0 text-white" strokeWidth={1.8} />
           <span className="text-[8.5px] leading-[11px] text-white">
@@ -302,8 +298,7 @@ export function UploadQualityCheck({ src, fileName = "IMG_4521.MOV", onContinue,
         </p>
 
         <div className="relative mt-[10px] overflow-hidden rounded-[4px]">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={src} alt="" aria-hidden="true" className="block h-[168px] w-full object-cover" />
+          <Shot src={src} className="h-[168px] w-full" zoom={1.4} />
           <span className="absolute left-[9px] top-[8px] text-[9px] font-medium leading-[12px] text-white">
             {fileName}<br />
             <span className="text-[7.5px] opacity-90">00:04 • 1080p • 30fps</span>

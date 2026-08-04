@@ -11,7 +11,7 @@
  */
 
 import React from "react"
-import { PoseFigure, StreakGlyph, PointsGlyph } from "@/components/shotiq/Glyphs"
+import { PoseFigure, PoseGlyph, StreakGlyph, PointsGlyph } from "@/components/shotiq/Glyphs"
 
 export const ORANGE = "var(--shotiq-color-shotiqOrange)"
 export const GREEN = "var(--shotiq-color-confirmGreen)"
@@ -59,10 +59,10 @@ export function CaptureIdentity({
   return (
     <div className={`flex items-start justify-between ${className}`}>
       <div className="min-w-0">
-        <div className="shotiq-display" style={{ fontSize: cap / 0.705, lineHeight: `${cap * 1.12}px`, letterSpacing: "0.04em" }}>
+        <div className="shotiq-display" style={{ fontSize: cap / 0.705, lineHeight: `${cap * 1.04}px`, letterSpacing: "0.04em" }}>
           {name.toUpperCase()}
         </div>
-        <div className="mt-[7px] text-[11px] leading-[12px] tracking-[-0.02em]" style={{ color: GRAPHITE }}>
+        <div className="mt-[8px] whitespace-nowrap text-[11px] leading-[12px] tracking-[-0.02em]" style={{ color: GRAPHITE }}>
           {sub}
         </div>
       </div>
@@ -72,7 +72,7 @@ export function CaptureIdentity({
         <div className="w-[62px] text-center">
           <span className="flex h-[20px] items-center justify-center"><StreakGlyph size={36} /></span>
           <div className="shotiq-numeric mt-[5px] text-[19px] leading-[14px]">{streak}</div>
-          <div className="shotiq-microcaps mt-[5px] text-[8.6px] leading-[7px]" style={{ color: GRAPHITE }}>DAY STREAK</div>
+          <div className="shotiq-microcaps mt-[5px] whitespace-nowrap text-[8.6px] leading-[7px]" style={{ color: GRAPHITE }}>DAY STREAK</div>
         </div>
         <span aria-hidden="true" className="mx-[9px] mt-[1px] h-[52px] w-px" style={{ background: RULE }} />
         <div className="w-[54px] text-center">
@@ -115,16 +115,23 @@ export function PhaseStrip({
           )}
           <span className="relative shrink-0 px-[3px] text-center">
             {brackets && i === idx && (
-              <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 -top-[3px]"
-                    style={{ height: figure + 6 }}>
+              <span aria-hidden="true" className="pointer-events-none absolute left-1/2 -top-[2px]"
+                    style={{ width: figure + 8, height: figure + 4, marginLeft: -(figure + 8) / 2 }}>
                 <svg width="100%" height="100%" viewBox="0 0 40 40" preserveAspectRatio="none" fill="none"
-                     stroke={accent} strokeWidth="2.4">
-                  <path d="M1 11V1h10M29 1h10v10M39 29v10H29M11 39H1V29" />
+                     stroke={accent} strokeWidth="3">
+                  <path d="M1.5 12V1.5h10.5M28 1.5h10.5V12M38.5 28v10.5H28M12 38.5H1.5V28" />
                 </svg>
               </span>
             )}
-            <PoseFigure phase={KEYS[i]} active={i === idx && accent === ORANGE}
-                        tone={tone === "dark" ? "dark" : "light"} height={figure} className="mx-auto" />
+            {/* On the live frame the pose has to be white line-art over
+                photography; the canonical dark crops carry the player-card bar
+                with them and would paint a black tile on the video. */}
+            {tone === "dark"
+              ? <span className="mx-auto flex justify-center" style={{ color: i === idx ? accent : "#fff" }}>
+                  <PoseGlyph phase={KEYS[i]} size={figure} />
+                </span>
+              : <PoseFigure phase={KEYS[i]} active={KEYS[i] === "release" || (i === idx && accent === ORANGE)}
+                            height={figure} className="mx-auto" />}
             <span className="shotiq-display mt-[4px] block whitespace-nowrap leading-[1.05]"
                   style={{ fontSize: label, letterSpacing: "0.05em", color: i === idx ? accent : dim }}>
               {p}

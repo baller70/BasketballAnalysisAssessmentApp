@@ -55,7 +55,7 @@ export function ResultsTabs({ active = "ANALYSIS RESULT" }: { active?: string })
   const router = useRouter()
   return (
     <div className="relative">
-      <div className="flex items-end gap-[13px] overflow-x-hidden px-[16px]">
+      <div className="flex items-end justify-between px-[15px]">
         {TABS.map(([label, href]) => {
           const on = label === active
           return (
@@ -63,7 +63,7 @@ export function ResultsTabs({ active = "ANALYSIS RESULT" }: { active?: string })
                     data-testid={`results-tab-${label.split(" ")[0].toLowerCase()}`}
                     className="shrink-0 pb-[9px]">
               <span className="shotiq-display block whitespace-nowrap leading-[9px] tracking-[0.055em]"
-                    style={{ fontSize: capDisplay(19), color: on ? ORANGE : INK }}>
+                    style={{ fontSize: capDisplay(17), color: on ? ORANGE : INK }}>
                 {label}
               </span>
               <span aria-hidden="true" className="mt-[8px] block h-[2px] rounded-full"
@@ -104,18 +104,18 @@ export function AnalysisOverview({
       <ResultsTabs active="ANALYSIS RESULT" />
 
       {/* hero still + score column ------------------------------------- */}
-      <div className="mt-[9px] flex gap-[16px] px-[12px]">
+      <div className="mt-[8px] flex gap-[16px] px-[12px]">
         <div className="relative h-[220px] w-[207px] shrink-0 overflow-hidden rounded-[4px]">
           <Frame src="086-film-4" w="100%" h="100%" radius={0} alt="Your release frame with the pose graph traced over it" />
           <SkeletonOverlay />
         </div>
         <div className="min-w-0 flex-1">
           <div className="shotiq-section-label text-[13px] leading-[13px] tracking-[0.075em]">FORM SCORE</div>
-          <div className="shotiq-numeric mt-[3px] leading-[0.8]" style={{ fontSize: 82, color: ORANGE }}>{score}</div>
+          <div className="shotiq-numeric mt-[3px] leading-[0.8]" style={{ fontSize: 74, color: ORANGE }}>{score}</div>
           <ScoreBar score={score} width={89} height={6.5} />
-          <div className="shotiq-display mt-[13px] text-[17px] leading-[17px] tracking-[0.04em]" style={{ color: BLUE }}>GOOD</div>
+          <div className="shotiq-display mt-[8px] text-[17px] leading-[17px] tracking-[0.04em]" style={{ color: BLUE }}>GOOD</div>
           <div className="mt-[5px] text-[12.5px] leading-[14.5px]">Keep building<br />consistency.</div>
-          <div className="mt-[16px] flex items-end">
+          <div className="mt-[12px] flex items-end">
             {([[shots, "SHOTS", "analyze"], [makes, "MAKES", "uploadVideo"], [pct, "MAKE %", "gauge"]] as const).map(([v, l, g]) => (
               <div key={l} className="flex-1">
                 <span className="flex h-[24px] items-end" style={{ color: INK }}>
@@ -132,10 +132,10 @@ export function AnalysisOverview({
       </div>
 
       {/* phase rail ----------------------------------------------------- */}
-      <PhaseRail className="mt-[15px] px-[16px]" active="RELEASE" figure={30} label={9.6} />
+      <PhaseRail className="mt-[10px] px-[16px]" active="RELEASE" figure={30} label={9.6} />
 
       {/* primary coaching target ---------------------------------------- */}
-      <Panel className="mx-[13px] mt-[15px] flex items-center px-[14px] py-[12px]">
+      <Panel className="mx-[13px] mt-[7px] flex items-center px-[14px] py-[7px]">
         <div className="min-w-0">
           <div className="shotiq-section-label text-[11.5px] leading-[12px] tracking-[0.08em]">PRIMARY COACHING TARGET</div>
           <div className="mt-[6px] truncate text-[17px] font-semibold leading-[19px]">Keep elbow stacked through release</div>
@@ -144,18 +144,18 @@ export function AnalysisOverview({
       </Panel>
 
       {/* six key metrics ------------------------------------------------- */}
-      <SectionHead cap={21} info className="mt-[15px] px-[14px]">YOUR SIX KEY METRICS</SectionHead>
-      <Panel className="mx-[13px] mt-[6px] flex divide-x divide-[var(--shotiq-color-rule)] py-[9px]">
+      <SectionHead cap={21} info className="mt-[6px] px-[14px]">YOUR SIX KEY METRICS</SectionHead>
+      <Panel className="mx-[13px] mt-[6px] flex divide-x divide-[var(--shotiq-color-rule)] pb-[9px] pt-[7px]">
         {METRICS.map(([kind, label, value, unit, verdict]) => (
           <div key={label} className="min-w-0 flex-1 px-[3px] text-center">
             <span className="flex h-[36px] items-center justify-center" style={{ color: INK }}>
-              <MechanicGlyph kind={kind} size={34} />
+              <MechanicGlyph kind={kind} size={33} />
             </span>
-            <div className="shotiq-microcaps mt-[7px] leading-[8px]" style={{ fontSize: 7, color: GRAPHITE }}>{label}</div>
-            <div className="shotiq-numeric mt-[7px] leading-[15px]" style={{ fontSize: 19 }}>
+            <div className="shotiq-microcaps mt-[8px] leading-[6px]" style={{ fontSize: 7, color: GRAPHITE }}>{label}</div>
+            <div className="shotiq-numeric mt-[8px] leading-[14px]" style={{ fontSize: 19 }}>
               {value}{unit && <span style={{ fontSize: 12 }}>{unit}</span>}
             </div>
-            <div className="shotiq-microcaps mt-[6px] leading-[8px]"
+            <div className="shotiq-microcaps mt-[6px] leading-[6px]"
                  style={{ fontSize: 7, color: verdict === "EXCELLENT" ? GREEN : BLUE }}>{verdict}</div>
           </div>
         ))}
@@ -163,7 +163,7 @@ export function AnalysisOverview({
 
       {/* elite match ----------------------------------------------------- */}
       <SectionHead
-        cap={20} info className="mt-[14px] px-[14px]"
+        cap={20} info className="mt-[7px] px-[14px]"
         right={
           <span className="flex items-center gap-[3px] text-[11.5px]" style={{ color: BLUE }}>
             How it works<Chev size={12} color={BLUE} />
@@ -172,12 +172,12 @@ export function AnalysisOverview({
       >
         ELITE MATCH
       </SectionHead>
-      <Panel className="mx-[13px] mt-[5px] flex items-center gap-[11px] p-[9px]">
-        <Frame src="083-elite" w={96} h={78} radius={3} alt="Klay Thompson at release" />
+      <Panel className="mx-[13px] mt-[4px] flex items-center gap-[11px] p-[5px]">
+        <Frame src="083-elite" w={90} h={72} radius={3} alt="Klay Thompson at release" />
         <div className="min-w-0 flex-1">
           <div className="shotiq-display text-[22px] leading-[21px] tracking-[0.035em]">KLAY THOMPSON</div>
           <div className="mt-[2px] text-[11px] leading-[12px]" style={{ color: GRAPHITE }}>Golden State Warriors</div>
-          <div className="mt-[5px] space-y-[3px]">
+          <div className="mt-[4px] space-y-[2px]">
             {([["angle", "Release Angle", "51°"], ["centerline", "Elbow Alignment", "95%"], ["arc", "Shot Arc", "46°"]] as [MechanicKind, string, string][]).map(([k, l, v]) => (
               <div key={l} className="flex items-center gap-[6px]">
                 <span style={{ color: INK }}><MechanicGlyph kind={k} size={13} /></span>
@@ -194,7 +194,7 @@ export function AnalysisOverview({
       </Panel>
 
       {/* actions --------------------------------------------------------- */}
-      <div className="mt-[10px] px-[13px]">
+      <div className="mt-[4px] px-[13px]">
         <PrimaryBar
           testid="overview-view-breakdown"
           href="/results/demo/analysis"

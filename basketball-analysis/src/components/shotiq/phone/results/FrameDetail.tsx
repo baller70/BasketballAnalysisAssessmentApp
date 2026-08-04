@@ -64,7 +64,7 @@ export function FrameDetail({
         </span>
         <span className="flex shrink-0 items-center gap-[7px]">
           <ActionGlyph kind="uploadVideo" height={15} />
-          <span className="text-[12.5px] leading[13px]">View sequence</span>
+          <span className="text-[12.5px] leading-[13px]">View sequence</span>
         </span>
       </div>
       <span aria-hidden="true" className="mx-[19px] mt-[7px] block h-px" style={{ background: RULE }} />
@@ -72,7 +72,7 @@ export function FrameDetail({
       <ResultsIdentity className="mt-[10px] px-[19px]" name={name} streak={streak} points={points} />
 
       {/* frame viewer ---------------------------------------------------- */}
-      <div className="relative mx-[18px] mt-[10px] h-[318px] overflow-hidden rounded-[6px]">
+      <div className="relative mx-[18px] mt-[8px] h-[310px] overflow-hidden rounded-[6px]">
         <Frame src="086-film-4" w="100%" h="100%" radius={0} alt={`Frame ${frame} of the release, pose graph traced`} />
         <SkeletonOverlay />
         <span className="absolute left-[10px] top-[9px] flex items-center gap-[7px] rounded-[6px] px-[10px] py-[5px] text-[12.5px] text-white"
@@ -111,32 +111,32 @@ export function FrameDetail({
       </div>
 
       {/* overlay toggles -------------------------------------------------- */}
-      <div className="mt-[10px] flex gap-[8px] px-[17px]">
+      <div className="mt-[8px] flex gap-[8px] px-[17px]">
         {TOGGLES.map(([label, kind, on]) => (
           <Panel key={label}
                  data-testid={`overlay-${label.split(" ")[0].toLowerCase()}`}
-                 className="min-w-0 flex-1 py-[9px] text-center"
+                 className="min-w-0 flex-1 py-[7px] text-center"
                  style={on ? { borderColor: ORANGE } : undefined}>
             <button type="button" onClick={label === "Annotations" ? onAnnotate : undefined} className="block w-full">
               <span className="flex h-[19px] items-center justify-center" style={{ color: on ? ORANGE : INK }}>
                 <ActionGlyph kind={kind} height={18} accent={on ? ORANGE : INK} />
               </span>
-              <span className="mt-[9px] block text-[12.5px] leading[13px]" style={{ color: on ? ORANGE : INK }}>{label}</span>
+              <span className="mt-[9px] block text-[12.5px] leading-[13px]" style={{ color: on ? ORANGE : INK }}>{label}</span>
             </button>
           </Panel>
         ))}
       </div>
 
       {/* phase rail -------------------------------------------------------- */}
-      <PhaseRail className="mt-[13px] px-[16px]" active="RELEASE" figure={28} label={9.4} />
+      <PhaseRail className="mt-[10px] px-[16px]" active="RELEASE" figure={28} label={9.4} />
 
       {/* frame strip ------------------------------------------------------- */}
-      <div className="mt-[11px] flex items-center gap-[7px] px-[17px]">
+      <div className="mt-[8px] flex items-center gap-[7px] px-[17px]">
         <Panel className="flex h-[44px] w-[59px] shrink-0 flex-col items-center justify-center">
-          <span className="flex items-center gap-[3px] text-[12px] leading[13px]">
+          <span className="flex items-center gap-[3px] text-[12px] leading-[13px]">
             <span className="rotate-180"><Chev size={11} color={INK} /></span>Previous
           </span>
-          <span className="text-[10px] leading[12px]" style={{ color: GRAPHITE }}>Frame {frame - 1}</span>
+          <span className="text-[10px] leading-[12px]" style={{ color: GRAPHITE }}>Frame {frame - 1}</span>
         </Panel>
         <div className="flex min-w-0 flex-1 gap-[3px]">
           {PHASE_STILLS.map((s, i) => (
@@ -147,25 +147,25 @@ export function FrameDetail({
           ))}
         </div>
         <Panel className="flex h-[44px] w-[59px] shrink-0 flex-col items-center justify-center">
-          <span className="flex items-center gap-[3px] text-[12px] leading[13px]">Next<Chev size={11} color={INK} /></span>
-          <span className="text-[10px] leading[12px]" style={{ color: GRAPHITE }}>Frame {frame + 1}</span>
+          <span className="flex items-center gap-[3px] text-[12px] leading-[13px]">Next<Chev size={11} color={INK} /></span>
+          <span className="text-[10px] leading-[12px]" style={{ color: GRAPHITE }}>Frame {frame + 1}</span>
         </Panel>
       </div>
       <ScrubRuler className="mx-[41px] mt-[4px]" />
 
       {/* summary row -------------------------------------------------------- */}
-      <div className="mt-[13px] flex items-start divide-x divide-[var(--shotiq-color-rule)] px-[17px]">
+      <div className="mt-[9px] flex items-start divide-x divide-[var(--shotiq-color-rule)] px-[17px]">
         <div className="w-[86px] shrink-0 pr-[8px]">
           <Micro size={8}>FORM SCORE</Micro>
           <div className="flex items-end gap-[6px]">
-            <span className="shotiq-numeric text-[27px] leading[26px]" style={{ color: ORANGE }}>{score}</span>
+            <span className="shotiq-numeric text-[27px] leading-[26px]" style={{ color: ORANGE }}>{score}</span>
             <span className="pb-[6px]"><ScoreBar score={score} width={44} height={5} /></span>
           </div>
-          <div className="shotiq-display text-[12px] leading[12px] tracking-[0.04em]" style={{ color: BLUE }}>GOOD</div>
+          <div className="shotiq-display text-[12px] leading-[12px] tracking-[0.04em]" style={{ color: BLUE }}>GOOD</div>
         </div>
         {([[shots, "SHOTS"], [makes, "MAKES"], [pct, "MAKE %"]] as [string, string][]).map(([v, l]) => (
           <div key={l} className="flex-1 px-[8px] text-center">
-            <div className="shotiq-numeric text-[21px] leading[21px]">{v}</div>
+            <div className="shotiq-numeric text-[21px] leading-[21px]">{v}</div>
             <Micro className="mt-[4px]">{l}</Micro>
           </div>
         ))}
@@ -181,7 +181,7 @@ export function FrameDetail({
         </button>
       </div>
 
-      <div className="mt-[9px] px-[18px]">
+      <div className="mt-[7px] px-[18px]">
         <PrimaryBar testid="frame-joint-angles" className="!h-[30px]" onClick={onMetric}
                     glyph={<MechanicGlyph kind="angle" size={17} accent="#fff" />}>
           Show joint angles

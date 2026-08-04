@@ -73,26 +73,26 @@ export function AnalyticsDetailed({ onCards }: { onCards?: () => void }) {
         />
       }
     >
-      <div className="mt-[9px] px-[15px]">
-        <h1 className="shotiq-display text-[38px] leading-[31px] tracking-[0.015em]">ANALYSIS HISTORY</h1>
-        <p className="mt-[6px] text-[12.5px] leading-[14px]" style={{ color: GRAPHITE }}>
+      <div className="mt-[7px] px-[15px]">
+        <h1 className="shotiq-display text-[34px] leading-[28px] tracking-[0.015em]">ANALYSIS HISTORY</h1>
+        <p className="mt-[4px] text-[12.5px] leading-[13px]" style={{ color: GRAPHITE }}>
           Track your mechanics. See what moves the needle.
         </p>
       </div>
 
       {/* filters ----------------------------------------------------------- */}
-      <div className="mt-[10px] flex gap-[9px] px-[15px]">
-        <Panel className="flex h-[32px] flex-1 items-center gap-[8px] px-[11px]">
+      <div className="mt-[8px] flex gap-[9px] px-[15px]">
+        <Panel className="flex h-[28px] flex-1 items-center gap-[8px] px-[11px]">
           <CalendarDays className="h-[15px] w-[15px]" strokeWidth={1.6} />
           <span className="text-[13.5px] leading-[15px]">Last 30 days</span>
           <span className="ml-auto"><Caret /></span>
         </Panel>
-        <Panel className="flex h-[32px] flex-1 items-center gap-[8px] px-[11px]">
+        <Panel className="flex h-[28px] flex-1 items-center gap-[8px] px-[11px]">
           <ActionGlyph kind="nodeClimb" height={14} accent={ORANGE} />
           <span className="text-[13.5px] leading-[15px]">Release Consistency</span>
           <span className="ml-auto"><Caret /></span>
         </Panel>
-        <Panel className="flex h-[32px] flex-1 items-center gap-[7px] px-[11px]">
+        <Panel className="flex h-[28px] flex-1 items-center gap-[7px] px-[11px]">
           <span className="text-[13px] leading-[15px]" style={{ color: GRAPHITE }}>Confidence:</span>
           <span className="text-[13px] leading-[15px]" style={{ color: GREEN }}>High</span>
           <Info className="ml-auto h-[13px] w-[13px]" strokeWidth={1.7} style={{ color: GRAPHITE }} />
@@ -100,10 +100,10 @@ export function AnalyticsDetailed({ onCards }: { onCards?: () => void }) {
       </div>
 
       {/* trend card ---------------------------------------------------------- */}
-      <Panel className="mx-[14px] mt-[10px] flex items-center gap-[13px] px-[13px] py-[10px]">
+      <Panel className="mx-[14px] mt-[7px] flex items-center gap-[13px] px-[13px] py-[6px]">
         <div className="w-[96px] shrink-0">
           <div className="shotiq-display text-[17px] leading-[17px] tracking-[0.05em]" style={{ color: GRAPHITE }}>TREND</div>
-          <div className="shotiq-numeric mt-[1px] text-[38px] leading-[36px]" style={{ color: GREEN }}>+6.4%</div>
+          <div className="shotiq-numeric mt-[1px] text-[32px] leading-[30px]" style={{ color: GREEN }}>+6.4%</div>
           <div className="mt-[2px] text-[11px] leading-[13px]" style={{ color: GRAPHITE }}>vs previous 30 days</div>
         </div>
         <div className="min-w-0 flex-1">
@@ -116,30 +116,30 @@ export function AnalyticsDetailed({ onCards }: { onCards?: () => void }) {
         </div>
         <div className="w-[94px] shrink-0 text-right">
           <div className="shotiq-display text-[17px] leading-[17px] tracking-[0.05em]" style={{ color: GRAPHITE }}>LATEST</div>
-          <div className="shotiq-numeric mt-[1px] text-[36px] leading-[34px]" style={{ color: GREEN }}>78.2%</div>
+          <div className="shotiq-numeric mt-[1px] text-[30px] leading-[28px]" style={{ color: GREEN }}>78.2%</div>
           <Micro className="mt-[2px]" size={8}>MAY 24</Micro>
         </div>
       </Panel>
 
       {/* mechanics scorecard ---------------------------------------------------- */}
-      <div className="mt-[11px] flex items-center px-[15px]">
+      <div className="mt-[7px] flex items-center px-[15px]">
         <span className="shotiq-display text-[24px] leading-[24px] tracking-[0.03em]">MECHANICS SCORECARD</span>
         <Info className="ml-[6px] h-[12px] w-[12px]" strokeWidth={1.8} style={{ color: GRAPHITE }} />
       </div>
-      <Panel className="mx-[14px] mt-[5px] flex gap-[7px] p-[8px]">
+      <Panel className="mx-[14px] mt-[4px] flex gap-[7px] p-[5px]">
         {SCORECARD.map(([p, v, d, verdict, tone]) => (
-          <Panel key={p} className="min-w-0 flex-1 px-[3px] pb-[8px] pt-[7px] text-center">
-            <span className="flex h-[42px] items-center justify-center">
-              <PoseFigure phase={p.toLowerCase().startsWith("follow") ? "follow" : p.toLowerCase()} active={p === "RELEASE"} height={42} />
+          <Panel key={p} className="min-w-0 flex-1 px-[3px] pb-[5px] pt-[5px] text-center">
+            <span className="flex h-[30px] items-center justify-center">
+              <PoseFigure phase={p.toLowerCase().startsWith("follow") ? "follow" : p.toLowerCase()} active={p === "RELEASE"} height={30} />
             </span>
-            <div className="shotiq-display mt-[5px] leading-[10px] tracking-[0.04em]"
+            <div className="shotiq-display mt-[4px] leading-[10px] tracking-[0.04em]"
                  style={{ fontSize: 9.4, color: p === "RELEASE" ? ORANGE : INK }}>{p}</div>
-            <div className="mt-[6px] flex items-baseline justify-center gap-[4px]">
-              <span className="shotiq-numeric text-[23px] leading-[21px]">{v}</span>
+            <div className="mt-[4px] flex items-baseline justify-center gap-[4px]">
+              <span className="shotiq-numeric text-[21px] leading-[19px]">{v}</span>
               <span className="text-[11px]" style={{ color: GREEN }}>{d}</span>
             </div>
-            <div className="shotiq-display mt-[4px] leading-[10px] tracking-[0.04em]" style={{ fontSize: 10, color: tone }}>{verdict}</div>
-            <span className="mx-auto mt-[5px] block h-[4px] w-[86%] overflow-hidden rounded-full" style={{ background: "#E2E3E4" }}>
+            <div className="shotiq-display mt-[3px] leading-[10px] tracking-[0.04em]" style={{ fontSize: 10, color: tone }}>{verdict}</div>
+            <span className="mx-auto mt-[4px] block h-[4px] w-[86%] overflow-hidden rounded-full" style={{ background: "#E2E3E4" }}>
               <span className="block h-full rounded-full" style={{ width: `${v}%`, background: tone }} />
             </span>
           </Panel>
@@ -147,7 +147,7 @@ export function AnalyticsDetailed({ onCards }: { onCards?: () => void }) {
       </Panel>
 
       {/* session comparison ------------------------------------------------------- */}
-      <div className="shotiq-display mt-[10px] px-[16px] text-[24px] leading-[24px] tracking-[0.03em]">SESSION COMPARISON</div>
+      <div className="shotiq-display mt-[7px] px-[16px] text-[24px] leading-[24px] tracking-[0.03em]">SESSION COMPARISON</div>
       <div className="mt-[4px] px-[16px]">
         <div className="flex items-end pb-[4px]">
           <span className="shotiq-microcaps w-[104px] shrink-0 leading-[10px]" style={{ fontSize: 8, color: GRAPHITE }}>METRIC</span>
@@ -163,11 +163,11 @@ export function AnalyticsDetailed({ onCards }: { onCards?: () => void }) {
           </span>
         </div>
         {TABLE.map(([metric, a, b, c, change, info]) => (
-          <div key={metric} className="flex items-center border-t py-[4px]" style={{ borderColor: RULE }}>
+          <div key={metric} className="flex items-center border-t py-[0px]" style={{ borderColor: RULE }}>
             <span className="flex w-[104px] shrink-0 items-center gap-[4px] text-[11.5px] leading-[14px]">
               {metric}{info && <Info className="h-[9px] w-[9px] shrink-0" strokeWidth={2} style={{ color: GRAPHITE }} />}
             </span>
-            <span className="shotiq-numeric min-w-0 flex-1 text-center text-[15px]" style={{ background: "#FDF0EC", color: ORANGE }}>{a}</span>
+            <span className="shotiq-numeric min-w-0 flex-1 text-center text-[15px] leading-[17px]" style={{ background: "#FDF0EC", color: ORANGE }}>{a}</span>
             <span className="shotiq-numeric min-w-0 flex-1 text-center text-[15px]">{b}</span>
             <span className="shotiq-numeric min-w-0 flex-1 text-center text-[15px]">{c}</span>
             <span className="w-[76px] shrink-0 text-center text-[12px]" style={{ color: change.startsWith("-") ? RED : GREEN }}>{change}</span>
@@ -176,13 +176,13 @@ export function AnalyticsDetailed({ onCards }: { onCards?: () => void }) {
       </div>
 
       {/* release arc range ---------------------------------------------------------- */}
-      <Panel className="mx-[14px] mt-[10px] flex items-center gap-[10px] px-[13px] py-[9px]">
+      <Panel className="mx-[14px] mt-[6px] flex items-center gap-[10px] px-[13px] py-[3px]">
         <div className="w-[104px] shrink-0">
           <div className="flex items-center">
             <span className="shotiq-display text-[22px] leading-[22px] tracking-[0.03em]">RELEASE ARC RANGE</span>
           </div>
           <Micro className="mt-[5px]" size={8}>AVG ARC</Micro>
-          <div className="shotiq-numeric text-[34px] leading-[32px]" style={{ color: ORANGE }}>50.4°</div>
+          <div className="shotiq-numeric text-[28px] leading-[26px]" style={{ color: ORANGE }}>50.4°</div>
           <div className="shotiq-microcaps mt-[2px] leading-[10px]" style={{ fontSize: 8, color: GRAPHITE }}>IDEAL: 48°–52°</div>
         </div>
         <div className="min-w-0 flex-1">
@@ -194,23 +194,23 @@ export function AnalyticsDetailed({ onCards }: { onCards?: () => void }) {
         </div>
         <div className="w-[92px] shrink-0 text-center">
           <Micro size={8}>CONSISTENCY</Micro>
-          <div className="shotiq-numeric mt-[2px] text-[30px] leading-[28px]" style={{ color: BLUE }}>78.2%</div>
+          <div className="shotiq-numeric mt-[2px] text-[26px] leading-[24px]" style={{ color: BLUE }}>78.2%</div>
           <div className="mt-[2px] text-[11px] leading-[12px]" style={{ color: GRAPHITE }}>±3.6°</div>
         </div>
       </Panel>
 
       {/* shot rail summary -------------------------------------------------------------- */}
-      <div className="mt-[10px] flex items-center px-[15px]">
+      <div className="mt-[7px] flex items-center px-[15px]">
         <span className="shotiq-display text-[24px] leading-[24px] tracking-[0.03em]">SHOT RAIL SUMMARY</span>
         <Info className="ml-[6px] h-[12px] w-[12px]" strokeWidth={1.8} style={{ color: GRAPHITE }} />
       </div>
-      <div className="mt-[4px] flex items-start px-[15px]">
+      <div className="mt-[3px] flex items-start px-[15px]">
         {RAIL.map(([p, v, tone], i) => (
           <React.Fragment key={p}>
             {i > 0 && <span aria-hidden="true" className="mt-[24px] h-[2px] min-w-[6px] flex-1" style={{ background: tone }} />}
             <span className="shrink-0 text-center">
-              <PoseFigure phase={p.toLowerCase().startsWith("follow") ? "follow" : p.toLowerCase()} active={p === "RELEASE"} height={32} className="mx-auto" />
-              <span className="mx-auto mt-[3px] block h-[9px] w-[9px] rounded-full" style={{ background: tone }} />
+              <PoseFigure phase={p.toLowerCase().startsWith("follow") ? "follow" : p.toLowerCase()} active={p === "RELEASE"} height={24} className="mx-auto" />
+              <span className="mx-auto mt-[2px] block h-[8px] w-[8px] rounded-full" style={{ background: tone }} />
               <span className="shotiq-display mt-[3px] block whitespace-nowrap leading-[10px] tracking-[0.04em]"
                     style={{ fontSize: 8.6, color: p === "RELEASE" ? ORANGE : GRAPHITE }}>{p}</span>
               <span className="shotiq-numeric mt-[2px] block text-[13px] leading-[13px]" style={{ color: tone }}>{v}</span>
@@ -221,7 +221,7 @@ export function AnalyticsDetailed({ onCards }: { onCards?: () => void }) {
       <div className="mt-[5px] flex gap-[5px] px-[14px]">
         {RAIL.map(([p, , tone], i) => (
           <span key={p} className="block min-w-0 flex-1 overflow-hidden rounded-[3px]">
-            <Frame src={`086-film-${i + 1}`} w="100%" h={66} radius={0} alt={`${p} frame`} />
+            <Frame src={`086-film-${i + 1}`} w="100%" h={56} radius={0} alt={`${p} frame`} />
             <span className="shotiq-microcaps block py-[3px] text-center leading-[10px] text-white"
                   style={{ fontSize: 7.6, background: tone }}>{p}</span>
           </span>
@@ -241,7 +241,7 @@ function ArcTrend() {
   const X = (i: number) => 26 + (i * (w - 32)) / (vals.length - 1)
   const Y = (v: number) => h - 8 - ((v - 60) / 22) * (h - 20)
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="block w-full" height={h} aria-hidden="true">
+    <svg viewBox={`0 0 ${w} ${h}`} className="block w-full" height={h - 12} aria-hidden="true">
       {[80, 70, 60].map((t, i) => (
         <g key={t}>
           <line x1="24" x2={w - 4} y1={8 + i * 19} y2={8 + i * 19} stroke={RULE} strokeWidth="1" />
@@ -258,7 +258,7 @@ function ArcTrend() {
  *  shaded and the average drawn as a needle. */
 function ArcGauge() {
   return (
-    <svg viewBox="0 0 170 74" className="block w-full" height={72} aria-hidden="true">
+    <svg viewBox="0 0 170 74" className="block w-full" height={48} aria-hidden="true">
       <path d="M14 68 A71 71 0 0 1 156 68" fill="none" stroke="#D5D7D9" strokeWidth="1.4" />
       <path d="M85 68 L70 8 L100 8 Z" fill="rgba(253,55,1,.14)" />
       <path d="M30 68 A55 55 0 0 1 140 68" fill="none" stroke={ORANGE} strokeWidth="2.6" />

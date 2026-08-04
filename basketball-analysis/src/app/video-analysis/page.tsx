@@ -17,6 +17,7 @@ import { SectionLabel, Card, Stat, GoalPercent } from "@/components/shotiq/ShotI
 import { FormScoreCell, useHistory } from "@/components/shotiq/ResultsBits"
 import { PoseGlyph, PoseFigure } from "@/components/shotiq/Glyphs"
 import { HoopCalibrationOverlay, rimCalibrationStorageKey } from "@/components/live/HoopCalibrationOverlay"
+import { LiveCapture, isCaptureState, type CaptureState } from "@/components/shotiq/phone/LiveCapture"
 import type { RimCalibration } from "@/lib/vision/objectTracking"
 
 const PHASES = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
@@ -47,6 +48,16 @@ type CaptureReview = { url: string; seconds: number; shots: boolean[] }
 export default function LiveCapturePage() {
   // Form score comes from the shared history hook, like every other screen.
   const { score } = useHistory()
+  /* `?state=` deep-links one state of the phone capture flow. It selects the
+     SAME branch the flow's own buttons select, so the harness can reach any of
+     the nine canonical states without depending on a camera device. Read from
+     location rather than useSearchParams so the route needs no Suspense
+     boundary and the desktop render is unaffected. */
+  const [phoneState, setPhoneState] = useState<CaptureState>("setup")
+  useEffect(() => {
+    const s = new URLSearchParams(window.location.search).get("state")
+    if (isCaptureState(s)) setPhoneState(s)
+  }, [])
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const recorderRef = useRef<MediaRecorder | null>(null)
@@ -179,7 +190,13 @@ export default function LiveCapturePage() {
     : shots.length ? `${Math.round((makes / shots.length) * 100)}%` : "—"
 
   return (
-    <div data-testid="screen-desktop-web-live-capture" className="px-[16px] pb-[8px] pt-[12px]">
+    <>
+    {/* The phone serves the nine canonical live-capture states (iOS 014,
+        028-035) from one flow; the desktop tree below is canonical 082 and is
+        untouched. `LiveCapture` renders nothing above the tablet breakpoint —
+        it portals into <body>, so a `md:hidden` wrapper could not hold it. */}
+    <LiveCapture initial={phoneState} />
+    <div data-testid="screen-desktop-web-live-capture" className="hidden px-[16px] pb-[8px] pt-[12px] md:block">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="shotiq-display flex items-center gap-[14px] text-[53px] leading-[55px]">
@@ -526,5 +543,6 @@ export default function LiveCapturePage() {
         </div>
       )}
     </div>
+    </>
   )
 }

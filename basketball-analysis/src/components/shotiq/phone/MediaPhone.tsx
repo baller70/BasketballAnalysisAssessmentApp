@@ -30,7 +30,7 @@ import {
 import { PhoneScreen, PhoneHeading } from "@/components/shotiq/PhoneShell"
 import {
   PhoneTop, Wordmark, GearLink, BackChevron, PhoneAction, Eyebrow, PhoneCard,
-  MiniStat, StatCells, RULE, ORANGE, GREEN, BLUE, GRAPHITE,
+  MiniStat, StatCells, Shot, RULE, ORANGE, GREEN, BLUE, GRAPHITE,
 } from "@/components/shotiq/phone/PhoneBits"
 import { StreakGlyph, PointsGlyph, PoseFigure, MechanicGlyph } from "@/components/shotiq/Glyphs"
 
@@ -90,14 +90,14 @@ export function MyMedia({ groups, onOpen, onUpload }: {
           </span>
         </PhoneCard>
 
-        <div className="mt-[12px] flex items-end">
-          <div className="min-w-0">
-            <PhoneHeading size={37}>MY MEDIA</PhoneHeading>
-            <p className="mt-[5px] text-[9.5px] leading-[12px]" style={{ color: GRAPHITE }}>
+        <div className="mt-[12px] flex items-end gap-[10px]">
+          <div className="min-w-0 flex-1">
+            <PhoneHeading size={37} className="whitespace-nowrap">MY MEDIA</PhoneHeading>
+            <p className="mt-[5px] w-[188px] text-[9.5px] leading-[12px]" style={{ color: GRAPHITE }}>
               Review your shots and training sessions.
             </p>
           </div>
-          <PhoneAction tone="orange" height={34} className="ml-auto w-[104px] shrink-0 text-[12px]"
+          <PhoneAction tone="orange" height={34} className="w-[96px] shrink-0 text-[12px]"
                        onClick={onUpload} testid="phone-media-upload">
             <Upload className="h-[13px] w-[13px]" strokeWidth={1.8} /> Upload
           </PhoneAction>
@@ -137,8 +137,7 @@ export function MyMedia({ groups, onOpen, onUpload }: {
                 <button key={m.id} type="button" onClick={() => onOpen(m.id)}
                         data-testid={`phone-media-open-${m.id}`} className="min-w-0 text-left">
                   <span className="relative block overflow-hidden rounded-[4px]">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={m.img} alt="" aria-hidden="true" className="block h-[110px] w-full object-cover" />
+                    <Shot src={m.img} zoom={1.34} className="h-[110px] w-full" />
                     <span className="absolute bottom-[5px] left-[5px] rounded-[2px] bg-black/65 px-[4px] py-[1px] text-[7.5px] text-white">
                       {m.live ? "LIVE" : m.len}
                     </span>
@@ -155,7 +154,7 @@ export function MyMedia({ groups, onOpen, onUpload }: {
                     {m.score != null && (
                       <span className="ml-auto shrink-0 text-right">
                         <span className="shotiq-numeric block text-[13px] leading-[13px]" style={{ color: TONE(m.score) }}>{m.score}</span>
-                        <span className="shotiq-microcaps block text-[6px] leading-[7px]" style={{ color: TONE(m.score) }}>{VERDICT(m.score)}</span>
+                        <span className="shotiq-microcaps block" style={{ fontSize: 6, lineHeight: "7px", color: TONE(m.score) }}>{VERDICT(m.score)}</span>
                       </span>
                     )}
                   </span>
@@ -185,8 +184,7 @@ export function MediaDetail({ item, frames, onBack }: {
 
       {/* --------------------------------------------------- player */}
       <div className="relative mx-[8px] mt-[8px] overflow-hidden rounded-[4px]">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={item.img} alt={item.title} className="block h-[282px] w-full object-cover" />
+        <Shot src={item.img} alt={item.title} zoom={1.3} className="h-[268px] w-full" />
         <span className="absolute left-[9px] top-[8px] text-[10px] font-medium text-white">6:12</span>
         <span className="absolute right-[9px] top-[8px] rounded-[3px] bg-black/60 px-[6px] py-[2px] text-[8.5px] text-white">SLOW 1.0x</span>
         <button type="button" aria-label="Play"
@@ -201,20 +199,19 @@ export function MediaDetail({ item, frames, onBack }: {
           <button key={i} type="button" onClick={() => setFrame(i)} aria-label={`Frame ${i + 1}`}
                   className="min-w-0 flex-1 overflow-hidden rounded-[2px]"
                   style={{ outline: i === frame ? `1.8px solid ${ORANGE}` : "none", outlineOffset: -1 }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={f} alt="" aria-hidden="true" className="block h-[52px] w-full object-cover" />
+            <Shot src={f} zoom={1.5} className="h-[52px] w-full" />
           </button>
         ))}
       </div>
 
       <div className="px-[18px]">
-        <Eyebrow className="mt-[12px]">CAPTURE DETAILS</Eyebrow>
+        <Eyebrow className="mt-[10px]">CAPTURE DETAILS</Eyebrow>
         <div className="shotiq-display mt-[6px] text-[21px] leading-[22px]">MAY 21, 2025 • 8:24 AM</div>
         <div className="mt-[4px] text-[9.5px] leading-[12px]" style={{ color: GRAPHITE }}>
           Indoor Court • iPhone 15 Pro • 1080p • 60fps
         </div>
 
-        <Eyebrow className="mt-[12px]">LINKED ANALYSIS</Eyebrow>
+        <Eyebrow className="mt-[10px]">LINKED ANALYSIS</Eyebrow>
         <PhoneCard className="mt-[7px] flex items-center gap-[10px] p-[8px]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/images/canonical/092-thumb-2.png" alt="" aria-hidden="true"
@@ -240,7 +237,7 @@ export function MediaDetail({ item, frames, onBack }: {
           <ChevronRight className="h-[13px] w-[13px] shrink-0" style={{ color: GRAPHITE }} />
         </PhoneCard>
 
-        <Eyebrow className="mt-[12px]">SHOT EVENTS</Eyebrow>
+        <Eyebrow className="mt-[10px]">SHOT EVENTS</Eyebrow>
         <div className="mt-[7px] flex">
           {([["24", "SHOTS", "angle"], ["15", "MAKES", "wrist"], ["62.5%", "MAKE %", "arc"],
              ["6", "DAY STREAK", "impact"], ["2,840", "POINTS", "centerline"]] as const).map(([v, l, m], i) => (
@@ -248,12 +245,12 @@ export function MediaDetail({ item, frames, onBack }: {
                  style={i ? { borderLeft: `1px solid ${RULE}` } : undefined}>
               <span className="flex h-[24px] items-center justify-center"><MechanicGlyph kind={m} size={22} /></span>
               <div className="shotiq-numeric mt-[4px] text-[15px] leading-[16px]">{v}</div>
-              <div className="shotiq-microcaps mt-[2px] whitespace-nowrap text-[6.5px] leading-[7px]" style={{ color: GRAPHITE }}>{l}</div>
+              <div className="shotiq-microcaps mt-[2px] whitespace-nowrap" style={{ fontSize: 6.5, lineHeight: "7px", color: GRAPHITE }}>{l}</div>
             </div>
           ))}
         </div>
 
-        <div className="mt-[12px] flex items-center gap-[10px] pt-[10px]" style={{ borderTop: `1px solid ${RULE}` }}>
+        <div className="mt-[10px] flex items-center gap-[10px] pt-[9px]" style={{ borderTop: `1px solid ${RULE}` }}>
           <div className="min-w-0 flex-1">
             <Eyebrow>PRIMARY COACHING TARGET</Eyebrow>
             <div className="mt-[5px] text-[14px] leading-[17px]">Keep elbow stacked through release</div>
@@ -261,7 +258,7 @@ export function MediaDetail({ item, frames, onBack }: {
           <ChevronRight className="h-[15px] w-[15px] shrink-0" style={{ color: GRAPHITE }} />
         </div>
 
-        <Eyebrow className="mt-[12px]">ACTIONS</Eyebrow>
+        <Eyebrow className="mt-[10px]">ACTIONS</Eyebrow>
         <div className="mt-[7px] flex gap-[7px]">
           {([["Play", Play], ["Share", Share2], ["Download", Download], ["Delete", Trash2]] as const).map(([l, I]) => (
             <button key={l} type="button" data-testid={`phone-media-${l.toLowerCase()}`}
@@ -274,7 +271,7 @@ export function MediaDetail({ item, frames, onBack }: {
         </div>
 
         {confirm && (
-          <div className="mb-[16px] mt-[9px] flex items-center gap-[10px] rounded-[6px] px-[10px] py-[9px]"
+          <div className="mb-[12px] mt-[8px] flex items-center gap-[10px] rounded-[6px] px-[10px] py-[8px]"
                style={{ border: `1px solid ${RED}`, background: "#FFF5F4" }}>
             <Trash2 className="h-[17px] w-[17px] shrink-0" style={{ color: RED }} strokeWidth={1.7} />
             <span className="min-w-0 flex-1">

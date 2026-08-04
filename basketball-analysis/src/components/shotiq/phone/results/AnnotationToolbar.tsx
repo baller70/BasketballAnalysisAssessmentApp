@@ -72,7 +72,7 @@ export function AnnotationToolbar({
         <span className="shotiq-display absolute left-1/2 -translate-x-1/2 text-[20px] leading-[20px] tracking-[0.045em]">
           ANALYSIS — ANNOTATION
         </span>
-        <span className="ml-auto text-[13px] leading[14px]" style={{ color: GRAPHITE }}>Frame {frame} / {frames}</span>
+        <span className="ml-auto text-[13px] leading-[14px]" style={{ color: GRAPHITE }}>Frame {frame} / {frames}</span>
       </div>
       <span aria-hidden="true" className="mt-[8px] block h-px" style={{ background: RULE }} />
 
@@ -89,13 +89,13 @@ export function AnnotationToolbar({
         {([[String(score), "FORM SCORE"], [shots, "SHOTS"], [makes, "MAKES"], [pct, "%"]] as [string, string][]).map(([v, l], i) => (
           <div key={l} className={`${i === 0 ? "w-[82px]" : "w-[64px]"} shrink-0 text-center`}>
             <Micro size={8.4}>{l}</Micro>
-            <div className="shotiq-numeric mt-[6px] text-[23px] leading[22px]">{v}</div>
+            <div className="shotiq-numeric mt-[6px] text-[23px] leading-[22px]">{v}</div>
           </div>
         ))}
       </div>
 
       {/* primary target -------------------------------------------------- */}
-      <Panel className="mx-[15px] mt-[9px] flex items-center gap-[11px] px-[12px] py-[9px]"
+      <Panel className="mx-[15px] mt-[7px] flex items-center gap-[11px] px-[12px] py-[7px]"
              style={{ background: "var(--shotiq-color-warmCanvas)" }}>
         <MechanicGlyph kind="angle" size={30} accent={ORANGE} />
         <span className="min-w-0">
@@ -107,7 +107,7 @@ export function AnnotationToolbar({
       </Panel>
 
       {/* annotation canvas ----------------------------------------------- */}
-      <div data-testid="annotation-canvas" className="relative mx-[15px] mt-[8px] h-[373px] overflow-hidden rounded-[6px]">
+      <div data-testid="annotation-canvas" className="relative mx-[15px] mt-[7px] h-[366px] overflow-hidden rounded-[6px]">
         <Frame src="086-film-4" w="100%" h="100%" radius={0} alt={`Frame ${frame}, annotated`} />
         <SkeletonOverlay />
         {/* the two measured angles canonical draws on the canvas */}
@@ -138,24 +138,24 @@ export function AnnotationToolbar({
         </span>
       </div>
 
-      <PhaseRail className="mt-[9px] px-[15px]" active="RELEASE" figure={26} label={9} />
+      <PhaseRail className="mt-[7px] px-[15px]" active="RELEASE" figure={26} label={9} />
 
       {/* annotation tools ------------------------------------------------ */}
-      <div data-testid="annotation-toolbar" className="mt-[11px] px-[15px]">
+      <div data-testid="annotation-toolbar" className="mt-[8px] px-[15px]">
         <div className="shotiq-display text-[19px] leading-[19px] tracking-[0.05em]" style={{ color: GRAPHITE }}>
           ANNOTATION TOOLS
         </div>
         <div className="mt-[7px] flex gap-[6px]">
           {TOOLS.map(([label, glyph, disabled]) => (
-            <Panel key={label} className="min-w-0 flex-1 py-[8px] text-center" style={disabled ? { opacity: 0.42 } : undefined}>
+            <Panel key={label} className="min-w-0 flex-1 py-[6px] text-center" style={disabled ? { opacity: 0.42 } : undefined}>
               <span className="flex h-[19px] items-center justify-center" style={{ color: INK }}>{glyph}</span>
-              <span className="mt-[9px] block text-[11.5px] leading[12px]">{label}</span>
+              <span className="mt-[7px] block text-[11.5px] leading-[12px]">{label}</span>
             </Panel>
           ))}
         </div>
       </div>
 
-      <div className="mt-[9px] px-[15px]">
+      <div className="mt-[7px] px-[15px]">
         <PrimaryBar testid="annotations-save" tone="green" className="!h-[30px]" onClick={onSave}>
           Save annotations
         </PrimaryBar>

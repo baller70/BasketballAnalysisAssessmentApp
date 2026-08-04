@@ -64,13 +64,13 @@ export function PlayerCard({
       }
     >
       {/* portrait + identity ---------------------------------------------- */}
-      <div className="mt-[11px] flex gap-[14px] px-[13px]">
+      <div className="mt-[9px] flex gap-[14px] px-[13px]">
         <Frame src="086-card-photo" w={114} h={147} radius={6}
                alt={`${name} at the set point`} className="shrink-0" />
         <div className="min-w-0 flex-1">
           <div className="shotiq-display text-[47px] leading-[42px] tracking-[0.015em]">{name.toUpperCase()}</div>
           <div className="mt-[4px] text-[13.5px] leading-[15px]" style={{ color: GRAPHITE }}>Right-handed • Advanced</div>
-          <div className="mt-[13px] flex divide-x divide-[var(--shotiq-color-rule)]">
+          <div className="mt-[11px] flex divide-x divide-[var(--shotiq-color-rule)]">
             {([[<StreakGlyph key="a" size={42} />, streak, "DAY STREAK"],
                [<PointsGlyph key="b" size={23} />, points, "POINTS"],
                [<ActionGlyph key="c" kind="analyze" height={24} />, shots, "SHOTS TODAY"]] as [React.ReactNode, string, string][]).map(([g, v, l]) => (
@@ -85,7 +85,7 @@ export function PlayerCard({
       </div>
 
       {/* form score ---------------------------------------------------------- */}
-      <Panel className="mx-[13px] mt-[14px] flex items-center px-[13px] py-[9px]">
+      <Panel className="mx-[13px] mt-[10px] flex items-center px-[13px] py-[6px]">
         <div className="shotiq-section-label w-[92px] shrink-0 text-[13px] leading-[14px] tracking-[0.075em]">FORM SCORE</div>
         <div className="shrink-0">
           <div className="shotiq-numeric leading-[0.78]" style={{ fontSize: 62, color: ORANGE }}>{score}</div>
@@ -103,7 +103,7 @@ export function PlayerCard({
       </Panel>
 
       {/* archetype / target / badge -------------------------------------------- */}
-      <div className="mt-[13px] flex divide-x divide-[var(--shotiq-color-rule)] px-[15px]">
+      <div className="mt-[10px] flex divide-x divide-[var(--shotiq-color-rule)] px-[15px]">
         {([
           ["ARCHETYPE", <PoseGlyph key="a" phase="release" size={54} accent={ORANGE} />, "Balanced Shooter", "Smooth, repeatable, and well-aligned mechanics.", false],
           ["PRIMARY TARGET", <PoseFigure key="b" phase="release" active height={54} />, "Keep elbow stacked through release", "Maintain vertical alignment for a cleaner release.", true],
@@ -111,7 +111,7 @@ export function PlayerCard({
         ] as [string, React.ReactNode, string, string, boolean][]).map(([label, glyph, title, copy]) => (
           <div key={label} className="min-w-0 flex-1 px-[9px] text-center">
             <div className="shotiq-display leading-[11px] tracking-[0.05em]" style={{ fontSize: capDisplay(22), color: GRAPHITE }}>{label}</div>
-            <span className="mt-[8px] flex h-[52px] items-center justify-center">{glyph}</span>
+            <span className="mt-[6px] flex h-[48px] items-center justify-center">{glyph}</span>
             <div className="mt-[7px] text-[13px] font-semibold leading-[15px]">{title}</div>
             <div className="mt-[4px] text-[11.5px] leading-[13.5px]" style={{ color: GRAPHITE }}>{copy}</div>
           </div>
@@ -119,7 +119,7 @@ export function PlayerCard({
       </div>
 
       {/* measurements ----------------------------------------------------------- */}
-      <div className="mt-[14px] px-[15px]">
+      <div className="mt-[11px] px-[15px]">
         <div className="shotiq-display text-[21px] leading-[21px] tracking-[0.03em]">MEASUREMENTS</div>
         <div className="mt-[6px] flex divide-x divide-[var(--shotiq-color-rule)]">
           {MEASUREMENTS.map(([l, v, m]) => (
@@ -133,7 +133,7 @@ export function PlayerCard({
       </div>
 
       {/* shot breakdown ---------------------------------------------------------- */}
-      <div className="mt-[13px] px-[15px]">
+      <div className="mt-[10px] px-[15px]">
         <div className="flex items-baseline gap-[6px]">
           <span className="shotiq-display text-[21px] leading-[21px] tracking-[0.03em]">SHOT BREAKDOWN</span>
           <span className="shotiq-display text-[13px] leading-[13px] tracking-[0.05em]" style={{ color: GRAPHITE }}>(TODAY)</span>
@@ -159,7 +159,7 @@ export function PlayerCard({
       </div>
 
       {/* mechanics overview --------------------------------------------------------- */}
-      <div className="mt-[12px] px-[15px]">
+      <div className="mt-[9px] px-[15px]">
         <div className="shotiq-display text-[21px] leading-[21px] tracking-[0.03em]">MECHANICS OVERVIEW</div>
         <div className="mt-[3px] flex items-start">
           {PHASE_SCORES.map(([p, v, tone], i) => (
@@ -178,7 +178,7 @@ export function PlayerCard({
       </div>
 
       {/* actions ---------------------------------------------------------------------- */}
-      <div className="mt-[10px] flex gap-[8px] px-[15px]">
+      <div className="mt-[7px] flex gap-[8px] px-[15px]">
         <button type="button" onClick={onCustomize} data-testid="player-customize"
                 className="flex h-[48px] flex-1 flex-col items-center justify-center gap-[5px] rounded-[5px] text-[14px] text-white"
                 style={{ background: ORANGE }}>

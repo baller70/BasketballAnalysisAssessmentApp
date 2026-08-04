@@ -166,7 +166,12 @@ export function ResultsScreen({
   return (
     <PhoneScreen testid={testid} tab={tab} pad={0} header={false} tabBar={tabBar}>
       {bar}
-      <div style={{ paddingBottom: tabBar ? 62 : 0 }}>{children}</div>
+      {/* Canonical sets these screens tight: the body face runs at roughly a
+          1.15 ratio, not the 1.5 a bare `text-[13px]` inherits. Left unpinned
+          it added 100-300pt to every screen in the family and pushed the
+          primary CTA under the tab bar — which is what took 043's green from
+          canonical's 30.5 permille to zero. */}
+      <div className="leading-[1.15]" style={{ paddingBottom: tabBar ? 62 : 0 }}>{children}</div>
     </PhoneScreen>
   )
 }
@@ -189,20 +194,20 @@ export function ResultsIdentity({
   return (
     <div className={`flex items-start justify-between ${className}`}>
       <div className="min-w-0">
-        <div className="shotiq-display text-[34px] leading-[33px] tracking-[0.045em]">{name.toUpperCase()}</div>
+        <div className="shotiq-display text-[34px] leading-[31px] tracking-[0.045em]">{name.toUpperCase()}</div>
         <div className="mt-[2px] text-[11.6px] leading-[13px] tracking-[-0.02em]" style={{ color: GRAPHITE }}>{sub}</div>
       </div>
       <div className="flex shrink-0 items-start">
         <div className="w-[76px] text-center">
-          <span className="flex h-[19px] items-center justify-center"><StreakGlyph size={39} /></span>
-          <div className="shotiq-numeric mt-[3px] text-[19px] leading-[16px]">{streak}</div>
-          <div className="shotiq-microcaps mt-[4px] text-[8.4px] leading-[8px]" style={{ color: GRAPHITE }}>DAY STREAK</div>
+          <span className="flex h-[17px] items-center justify-center"><StreakGlyph size={39} /></span>
+          <div className="shotiq-numeric mt-[3px] text-[19px] leading-[15px]">{streak}</div>
+          <div className="shotiq-microcaps mt-[3px] text-[8.4px] leading-[8px]" style={{ color: GRAPHITE }}>DAY STREAK</div>
         </div>
         <span aria-hidden="true" className="mx-[7px] mt-[1px] h-[50px] w-px" style={{ background: RULE }} />
         <div className="w-[60px] text-center">
-          <span className="flex h-[19px] items-center justify-center"><PointsGlyph size={21} /></span>
-          <div className="shotiq-numeric mt-[3px] text-[19px] leading-[16px]">{points}</div>
-          <div className="shotiq-microcaps mt-[4px] text-[8.4px] leading-[8px]" style={{ color: GRAPHITE }}>POINTS</div>
+          <span className="flex h-[17px] items-center justify-center"><PointsGlyph size={21} /></span>
+          <div className="shotiq-numeric mt-[3px] text-[19px] leading-[15px]">{points}</div>
+          <div className="shotiq-microcaps mt-[3px] text-[8.4px] leading-[8px]" style={{ color: GRAPHITE }}>POINTS</div>
         </div>
       </div>
     </div>
@@ -217,14 +222,14 @@ export function StreakPoints({
   return (
     <div className={`flex shrink-0 items-start ${className}`}>
       <div className="w-[74px] text-center">
-        <span className="flex h-[19px] items-center justify-center"><StreakGlyph size={39} /></span>
-        <div className="shotiq-numeric mt-[3px] text-[19px] leading-[16px]">{streak}</div>
+        <span className="flex h-[17px] items-center justify-center"><StreakGlyph size={39} /></span>
+        <div className="shotiq-numeric mt-[3px] text-[19px] leading-[15px]">{streak}</div>
         <Micro className="mt-[4px]">DAY STREAK</Micro>
       </div>
       <span aria-hidden="true" className="mx-[6px] h-[48px] w-px" style={{ background: RULE }} />
       <div className="w-[58px] text-center">
-        <span className="flex h-[19px] items-center justify-center"><PointsGlyph size={21} /></span>
-        <div className="shotiq-numeric mt-[3px] text-[19px] leading-[16px]">{points}</div>
+        <span className="flex h-[17px] items-center justify-center"><PointsGlyph size={21} /></span>
+        <div className="shotiq-numeric mt-[3px] text-[19px] leading-[15px]">{points}</div>
         <Micro className="mt-[4px]">POINTS</Micro>
       </div>
     </div>
@@ -253,8 +258,8 @@ export function SectionHead({
 }: { children: React.ReactNode; cap?: number; info?: boolean; right?: React.ReactNode; className?: string }) {
   return (
     <div className={`flex items-center ${className}`}>
-      <span className="shotiq-display leading-none tracking-[0.03em]"
-            style={{ fontSize: capDisplay(cap), color: INK }}>{children}</span>
+      <span className="shotiq-display tracking-[0.03em]"
+            style={{ fontSize: capDisplay(cap), lineHeight: `${P(cap)}px`, color: INK }}>{children}</span>
       {info && <Info className="ml-[5px] h-[11px] w-[11px] shrink-0" strokeWidth={1.8} style={{ color: GRAPHITE }} />}
       {right && <span className="ml-auto flex items-center">{right}</span>}
     </div>

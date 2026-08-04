@@ -30,7 +30,7 @@ import { Search, SlidersHorizontal, Bookmark, ChevronDown, MoreHorizontal, Chevr
 import { PhoneScreen, PhoneHeading } from "@/components/shotiq/PhoneShell"
 import {
   PhoneTop, Wordmark, GearLink, PhoneAction, Eyebrow, PhaseRail, PhoneCard,
-  MiniStat, RULE, ORANGE, GRAPHITE,
+  MiniStat, Shot, RULE, ORANGE, GRAPHITE,
 } from "@/components/shotiq/phone/PhoneBits"
 import {
   StreakGlyph, PointsGlyph, ActionGlyph, FlawFigure, PoseFigure, CueGlyph,
@@ -151,9 +151,7 @@ export function DiscoverDrills({ drills, saved, onToggleSave }: {
                   build painted one black video tile per row. */}
               <span className="flex shrink-0 gap-[1px] overflow-hidden rounded-[4px]">
                 {d.strip.map((s, i) => (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img key={i} src={s} alt="" aria-hidden="true"
-                       className="h-[88px] w-[37px] object-cover" />
+                  <Shot key={i} src={s} zoom={1.5} className="h-[88px] w-[37px]" />
                 ))}
               </span>
               <div className="min-w-0 flex-1">
@@ -223,7 +221,7 @@ export function MyDrills({ drills, onAnalyze }: { drills: LibraryDrill[]; onAnal
         </div>
 
         <div className="mt-[10px] flex items-center">
-          <span className="shotiq-microcaps text-[9px]" style={{ color: GRAPHITE }}>{drills.length} DRILLS</span>
+          <span className="shotiq-microcaps" style={{ fontSize: 9, color: GRAPHITE }}>{drills.length} DRILLS</span>
           <span className="ml-auto flex items-center gap-[12px] text-[9.5px]" style={{ color: GRAPHITE }}>
             <span className="flex items-center gap-[4px]">Sort: Newest <ChevronDown className="h-[9px] w-[9px]" /></span>
             <span className="flex items-center gap-[4px]">Filter <SlidersHorizontal className="h-[10px] w-[10px]" /></span>
@@ -235,9 +233,7 @@ export function MyDrills({ drills, onAnalyze }: { drills: LibraryDrill[]; onAnal
           {drills.slice(0, 4).map((d) => (
             <div key={d.id} className="flex items-stretch gap-[10px] py-[9px]"
                  style={{ borderTop: `1px solid ${RULE}` }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={d.portrait} alt="" aria-hidden="true"
-                   className="h-[142px] w-[84px] shrink-0 rounded-[4px] object-cover" />
+              <Shot src={d.portrait} zoom={1.45} className="h-[142px] w-[84px] shrink-0 rounded-[4px]" />
               <div className="min-w-0 flex-1">
                 <div className="flex items-start gap-[8px]">
                   <span className="shotiq-display min-w-0 flex-1 text-[14px] leading-[15px]">{d.title.toUpperCase()}</span>
@@ -254,8 +250,8 @@ export function MyDrills({ drills, onAnalyze }: { drills: LibraryDrill[]; onAnal
                       <div key={l} className="min-w-0 flex-1 pl-[7px] first:pl-0"
                            style={i ? { borderLeft: `1px solid ${RULE}` } : undefined}>
                         <div className="shotiq-numeric text-[12px] leading-[13px]">{v}</div>
-                        <div className="shotiq-microcaps mt-[2px] whitespace-nowrap text-[6px] leading-[7px]"
-                             style={{ color: GRAPHITE }}>{l}</div>
+                        <div className="shotiq-microcaps mt-[2px]"
+ style={{ fontSize: 6, lineHeight: "7px", color: GRAPHITE }}>{l}</div>
                       </div>
                     ))}
                 </div>

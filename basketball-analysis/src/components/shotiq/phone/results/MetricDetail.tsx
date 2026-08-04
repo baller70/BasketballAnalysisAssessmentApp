@@ -89,49 +89,49 @@ export function MetricDetail({
       <span aria-hidden="true" className="mt-[8px] block h-px" style={{ background: RULE }} />
 
       {/* session stats + score -------------------------------------------- */}
-      <div className="mt-[10px] flex items-start px-[17px]">
+      <div className="mt-[8px] flex items-start px-[17px]">
         <div className="flex min-w-0 flex-1 divide-x divide-[var(--shotiq-color-rule)] pr-[14px]">
           {([[shots, "SHOTS"], [makes, "MAKES"], [pct, "SHOOTING %"]] as [string, string][]).map(([v, l]) => (
             <div key={l} className="flex-1 text-center">
-              <div className="shotiq-numeric text-[25px] leading-[25px]">{v}</div>
+              <div className="shotiq-numeric text-[20px] leading-[19px]">{v}</div>
               <Micro className="mt-[5px]">{l}</Micro>
             </div>
           ))}
         </div>
-        <Panel className="w-[152px] shrink-0 px-[11px] pb-[10px] pt-[8px]" style={{ background: "var(--shotiq-color-warmCanvas)" }}>
+        <Panel className="w-[144px] shrink-0 px-[10px] pb-[5px] pt-[4px]" style={{ background: "var(--shotiq-color-warmCanvas)" }}>
           <div className="shotiq-section-label text-[12px] leading-[12px] tracking-[0.075em]">FORM SCORE</div>
-          <div className="shotiq-numeric mt-[1px] text-[34px] leading-[32px]" style={{ color: ORANGE }}>{score}</div>
-          <span className="mt-[3px] block"><ScoreBar score={score} width={128} height={5} /></span>
+          <div className="shotiq-numeric mt-[1px] text-[26px] leading-[24px]" style={{ color: ORANGE }}>{score}</div>
+          <span className="mt-[3px] block"><ScoreBar score={score} width={122} height={5} /></span>
         </Panel>
       </div>
 
       {/* title ------------------------------------------------------------- */}
-      <div className="mt-[9px] px-[17px]">
-        <h1 className="shotiq-display text-[42px] leading-[36px] tracking-[0.01em]">{metric}</h1>
-        <div className="mt-[6px] text-[13px] leading-[14px]" style={{ color: GRAPHITE }}>{phase} &nbsp;•&nbsp; {hand}</div>
+      <div className="mt-[7px] px-[17px]">
+        <h1 className="shotiq-display text-[38px] leading-[32px] tracking-[0.01em]">{metric}</h1>
+        <div className="mt-[4px] text-[13px] leading-[14px]" style={{ color: GRAPHITE }}>{phase} &nbsp;•&nbsp; {hand}</div>
       </div>
 
       {/* photo + read-out --------------------------------------------------- */}
-      <Panel className="mx-[17px] mt-[10px] flex overflow-hidden">
-        <div className="relative w-[190px] shrink-0" style={{ height: 266 }}>
+      <Panel className="mx-[17px] mt-[8px] flex overflow-hidden">
+        <div className="relative w-[176px] shrink-0" style={{ height: 232 }}>
           <Frame src="086-film-4" w="100%" h="100%" radius={0} alt={`Your ${metric.toLowerCase()} at ${phase.toLowerCase()}`} />
           <SkeletonOverlay />
           <span aria-hidden="true" className="absolute left-[52%] top-[26%] h-[26px] w-[19px] rounded-br-full" style={{ background: ORANGE }} />
           <span className="shotiq-numeric absolute left-[63%] top-[31%] rounded-[4px] bg-white px-[7px] py-[3px] text-[15px]">{value}{unit}</span>
         </div>
-        <div className="min-w-0 flex-1 px-[13px] py-[11px]">
+        <div className="min-w-0 flex-1 px-[12px] py-[8px]">
           <div className="shotiq-section-label text-[13px] leading-[13px] tracking-[0.075em]">MEASURED</div>
-          <div className="shotiq-numeric mt-[1px] text-[57px] leading-[54px]">{value}{unit}</div>
+          <div className="shotiq-numeric mt-[1px] text-[48px] leading-[44px]">{value}{unit}</div>
           <div className="shotiq-display text-[16px] leading-[17px] tracking-[0.04em]" style={{ color: GRAPHITE }}>{metric}</div>
-          <span aria-hidden="true" className="my-[9px] block h-px" style={{ background: RULE }} />
+          <span aria-hidden="true" className="my-[6px] block h-px" style={{ background: RULE }} />
 
           <div className="shotiq-section-label text-[13px] leading-[13px] tracking-[0.075em]">ELITE RANGE</div>
-          <div className="shotiq-numeric mt-[1px] text-[27px] leading-[28px]" style={{ color: GREEN }}>{low} — {high}</div>
+          <div className="shotiq-numeric mt-[1px] text-[24px] leading-[25px]" style={{ color: GREEN }}>{low} — {high}</div>
           <EliteSlider />
           <div className="mt-[2px] flex justify-between text-[10.5px]" style={{ color: GRAPHITE }}>
             <span>{floor}</span><span>{ceiling}</span>
           </div>
-          <span aria-hidden="true" className="my-[9px] block h-px" style={{ background: RULE }} />
+          <span aria-hidden="true" className="my-[6px] block h-px" style={{ background: RULE }} />
 
           <div className="shotiq-section-label text-[13px] leading-[13px] tracking-[0.075em]">CONFIDENCE</div>
           <div className="mt-[2px] flex items-end gap-[9px]">
@@ -144,32 +144,32 @@ export function MetricDetail({
       </Panel>
 
       {/* why it matters ----------------------------------------------------- */}
-      <Panel className="mx-[17px] mt-[9px] flex items-center gap-[10px] px-[13px] py-[10px]">
+      <Panel className="mx-[17px] mt-[7px] flex items-center gap-[10px] px-[13px] py-[7px]">
         <div className="min-w-0 flex-1">
           <div className="shotiq-display text-[21px] leading-[21px] tracking-[0.03em]">WHY IT MATTERS</div>
-          <p className="mt-[6px] text-[12.5px] leading-[15.5px]" style={{ color: GRAPHITE }}>
+          <p className="mt-[4px] text-[12px] leading-[13.5px]" style={{ color: GRAPHITE }}>
             A stacked elbow (near 90°) improves shot consistency by aligning force from your legs through your shoulder to the ball.
           </p>
         </div>
         <span className="shrink-0 border-l pl-[12px]" style={{ borderColor: RULE }}>
-          <MechanicGlyph kind="angle" size={62} accent={BLUE} />
+          <MechanicGlyph kind="angle" size={44} accent={BLUE} />
         </span>
       </Panel>
 
       {/* correction cue ------------------------------------------------------ */}
-      <Panel className="mx-[17px] mt-[9px] flex gap-[11px] px-[13px] py-[10px]">
+      <Panel className="mx-[17px] mt-[7px] flex gap-[11px] px-[13px] py-[7px]">
         <div className="w-[176px] shrink-0">
           <div className="shotiq-display text-[21px] leading-[21px] tracking-[0.03em]">CORRECTION CUE</div>
           <div className="mt-[5px] text-[13.5px] leading-[16px]" style={{ color: BLUE }}>Keep elbow stacked under the ball</div>
-          <p className="mt-[3px] text-[12.5px] leading-[15px]" style={{ color: GRAPHITE }}>
+          <p className="mt-[2px] text-[12px] leading-[13.5px]" style={{ color: GRAPHITE }}>
             Avoid flaring out. Drive your elbow up and keep it under the ball at release.
           </p>
         </div>
         <div className="flex min-w-0 flex-1 border-l pl-[11px]" style={{ borderColor: RULE }}>
           {([["stack", "TOO FLARED", false], ["square", "STACKED", true], ["drive", "BEHIND BODY", false]] as ["stack" | "square" | "drive", string, boolean][]).map(([k, l, ok]) => (
             <div key={l} className="min-w-0 flex-1 text-center">
-              <span className="flex h-[46px] items-center justify-center"><CorrectionGlyph kind={k} size={44} /></span>
-              <span className="mt-[5px] flex justify-center">{ok ? <TickDisc size={15} /> : <CrossDisc size={15} />}</span>
+              <span className="flex h-[34px] items-center justify-center"><CorrectionGlyph kind={k} size={32} /></span>
+              <span className="mt-[3px] flex justify-center">{ok ? <TickDisc size={14} /> : <CrossDisc size={14} />}</span>
               <span className="shotiq-microcaps mt-[4px] block leading-[9px]"
                     style={{ fontSize: 7.4, color: ok ? GREEN : GRAPHITE }}>{l}</span>
             </div>
@@ -178,9 +178,9 @@ export function MetricDetail({
       </Panel>
 
       {/* jump-off rows --------------------------------------------------------- */}
-      <Panel className="mx-[17px] mt-[9px] divide-y divide-[var(--shotiq-color-rule)]">
+      <Panel className="mx-[17px] mt-[7px] divide-y divide-[var(--shotiq-color-rule)]">
         {([["View frame", "See this rep at release", "uploadVideo"], ["Compare elite range", "See how you stack up", "nodeGraph"]] as const).map(([t, s, g]) => (
-          <div key={t} className="flex items-center gap-[11px] px-[13px] py-[8px]">
+          <div key={t} className="flex items-center gap-[11px] px-[13px] py-[3px]">
             <ActionGlyph kind={g} height={17} />
             <span className="min-w-0">
               <span className="block text-[14.5px] font-medium leading-[16px]">{t}</span>
@@ -191,11 +191,11 @@ export function MetricDetail({
         ))}
       </Panel>
 
-      <div className="mt-[8px] px-[17px]">
+      <div className="mt-[6px] px-[17px]">
         <PrimaryBar className="!h-[26px]" href="/results/demo/training">Add to training plan</PrimaryBar>
       </div>
 
-      <PhaseRail className="mt-[7px] px-[22px]" active="RELEASE" figure={26} label={9} />
+      <PhaseRail className="mt-[6px] px-[22px]" active="RELEASE" figure={26} label={9} />
     </ResultsScreen>
   )
 }

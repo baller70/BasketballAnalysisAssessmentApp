@@ -61,15 +61,15 @@ export function AnalyticsCards({
       <ResultsIdentity className="mt-[9px] px-[15px]" name={name} streak={streak} points={points} />
 
       {/* title + filters ---------------------------------------------------- */}
-      <div className="mt-[12px] flex items-center px-[15px]">
+      <div className="mt-[9px] flex items-center px-[15px]">
         <span className="shotiq-display text-[33px] leading-[28px] tracking-[0.02em]">AI ANALYSIS HISTORY</span>
         <span className="ml-auto flex gap-[8px]">
-          <Panel className="flex h-[30px] items-center gap-[7px] px-[10px]">
+          <Panel className="flex h-[27px] items-center gap-[7px] px-[10px]">
             <CalendarDays className="h-[14px] w-[14px]" strokeWidth={1.6} />
             <span className="text-[13px] leading-[14px]">All time</span>
             <Caret />
           </Panel>
-          <Panel className="flex h-[30px] items-center gap-[7px] px-[10px]">
+          <Panel className="flex h-[27px] items-center gap-[7px] px-[10px]">
             <SlidersHorizontal className="h-[14px] w-[14px]" strokeWidth={1.6} />
             <span className="text-[13px] leading-[14px]">All media</span>
             <Caret />
@@ -78,12 +78,12 @@ export function AnalyticsCards({
       </div>
 
       {/* trend card ---------------------------------------------------------- */}
-      <Panel className="mx-[14px] mt-[11px] px-[13px] pb-[10px] pt-[10px]">
+      <Panel className="mx-[14px] mt-[8px] px-[13px] pb-[7px] pt-[7px]">
         <div className="flex items-start gap-[14px]">
           <div className="w-[112px] shrink-0">
             <div className="shotiq-display text-[21px] leading-[21px] tracking-[0.03em]">FORM SCORE TREND</div>
             <div className="mt-[2px] flex items-end gap-[9px]">
-              <span className="shotiq-numeric text-[46px] leading-[42px]" style={{ color: ORANGE }}>{score}</span>
+              <span className="shotiq-numeric text-[36px] leading-[32px]" style={{ color: ORANGE }}>{score}</span>
               <span className="shotiq-display pb-[7px] text-[16px] leading-[16px] tracking-[0.04em]" style={{ color: BLUE }}>GOOD</span>
             </div>
             <div className="mt-[4px] text-[12px] leading-[14px]">Keep elbow stacked through release.</div>
@@ -99,9 +99,9 @@ export function AnalyticsCards({
           </div>
         </div>
 
-        <PhaseRail className="mt-[10px]" active="RELEASE" figure={30} label={9.6} />
+        <PhaseRail className="mt-[5px]" active="RELEASE" figure={26} label={9.2} />
 
-        <div className="mt-[11px] flex divide-x divide-[var(--shotiq-color-rule)] border-t pt-[9px]" style={{ borderColor: RULE }}>
+        <div className="mt-[7px] flex divide-x divide-[var(--shotiq-color-rule)] border-t pt-[6px]" style={{ borderColor: RULE }}>
           {([[shots, "SHOTS", INK], [makes, "MAKES", INK], [pct, "ACCURACY", INK], [delta, "VS PREVIOUS 30 DAYS", GREEN]] as [string, string, string][]).map(([v, l, c]) => (
             <div key={l} className="min-w-0 flex-1 text-center">
               <div className="shotiq-numeric text-[24px] leading-[22px]" style={{ color: c }}>{v}</div>
@@ -112,7 +112,7 @@ export function AnalyticsCards({
       </Panel>
 
       {/* session cards -------------------------------------------------------- */}
-      <div className="mt-[12px] flex items-center px-[14px]">
+      <div className="mt-[8px] flex items-center px-[14px]">
         <span className="shotiq-display text-[24px] leading-[24px] tracking-[0.03em]">ANALYSIS SESSIONS</span>
         <button type="button" onClick={onDetailed} data-testid="analytics-view-all"
                 className="ml-auto flex items-center gap-[3px] text-[13.5px]" style={{ color: ORANGE }}>
@@ -120,7 +120,7 @@ export function AnalyticsCards({
         </button>
       </div>
 
-      <div className="mt-[5px] space-y-[6px] px-[13px]">
+      <div className="mt-[4px] space-y-[5px] px-[13px]">
         {SESSIONS.map((s) => <SessionCard key={s.title} s={s} />)}
       </div>
     </ResultsScreen>
@@ -130,7 +130,7 @@ export function AnalyticsCards({
 function SessionCard({ s }: { s: Session }) {
   return (
     <div className="flex gap-[11px]">
-      <span className="relative block w-[130px] shrink-0 overflow-hidden rounded-[4px]" style={{ height: 100 }}>
+      <span className="relative block w-[120px] shrink-0 overflow-hidden rounded-[4px]" style={{ height: 80 }}>
         <Frame src={s.still} w="100%" h="100%" radius={0} alt={`${s.title} session`} />
         <span className="shotiq-numeric absolute bottom-[7px] right-[8px] text-[22px]" style={{ color: ORANGE, textShadow: "0 1px 3px rgba(0,0,0,.6)" }}>{s.score}</span>
       </span>
@@ -138,7 +138,7 @@ function SessionCard({ s }: { s: Session }) {
         <span className="flex items-start">
           <span className="min-w-0">
             <span className="block text-[12.5px] leading-[14px]" style={{ color: GRAPHITE }}>{s.when}</span>
-            <span className="block truncate text-[21px] font-semibold leading-[24px]">{s.title}</span>
+            <span className="block truncate text-[19px] font-semibold leading-[21px]">{s.title}</span>
           </span>
           <MoreVertical className="ml-auto h-[15px] w-[15px] shrink-0" strokeWidth={1.6} style={{ color: GRAPHITE }} />
         </span>
@@ -152,18 +152,18 @@ function SessionCard({ s }: { s: Session }) {
         </span>
         <span className="mt-[4px] flex items-start">
           {["setup", "load", "rise", "release", "follow"].map((p) => (
-            <PoseFigure key={p} phase={p} active={p === "release"} height={22} className="mr-[7px]" />
+            <PoseFigure key={p} phase={p} active={p === "release"} height={18} className="mr-[6px]" />
           ))}
         </span>
       </span>
       <span className="w-[100px] shrink-0">
-        <span className="grid h-[48px] w-full place-items-center rounded-[5px]" style={{ background: s.tint }}>
+        <span className="grid h-[38px] w-full place-items-center rounded-[5px]" style={{ background: s.tint }}>
           <span className="text-center">
             <span className="shotiq-numeric block text-[19px] leading-[18px]" style={{ color: s.tone }}>{s.delta}</span>
             <span className="shotiq-microcaps block leading-[10px]" style={{ fontSize: 7.6, color: s.tone }}>{s.deltaLabel}</span>
           </span>
         </span>
-        <a href="/results/demo" className="mt-[6px] flex h-[30px] w-full items-center justify-center gap-[7px] rounded-[5px] text-[13.5px] text-white"
+        <a href="/results/demo" className="mt-[5px] flex h-[26px] w-full items-center justify-center gap-[7px] rounded-[5px] text-[13.5px] text-white"
            style={{ background: ORANGE }}>
           Open session<Chev size={12} color="#fff" />
         </a>
@@ -178,7 +178,7 @@ function Caret() {
 
 /** Canonical prints the value above every node and dashes the connecting line. */
 function TrendChart() {
-  const w = 214, h = 62
+  const w = 214, h = 54
   const vals = TREND.map(([, v]) => v)
   const min = 64, max = 84
   const X = (i: number) => 10 + (i * (w - 20)) / (vals.length - 1)

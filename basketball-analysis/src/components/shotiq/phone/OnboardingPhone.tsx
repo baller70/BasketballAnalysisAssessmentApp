@@ -39,7 +39,7 @@ import { Check, Lightbulb, ChevronRight, Info } from "lucide-react"
 import { PhoneScreen, PhoneHeading } from "@/components/shotiq/PhoneShell"
 import {
   PhoneTop, Wordmark, GearLink, PhoneCard, PhoneAction, Eyebrow, StepMeter,
-  StatCells, MiniStat, PhaseRail, RULE, ORANGE, GREEN, BLUE, GRAPHITE,
+  StatCells, MiniStat, PhaseRail, Shot, RULE, ORANGE, GREEN, BLUE, GRAPHITE,
 } from "@/components/shotiq/phone/PhoneBits"
 import {
   StreakGlyph, PointsGlyph, PoseFigure, MechanicGlyph, ActionGlyph, FlawFigure,
@@ -111,9 +111,12 @@ export function OnboardingIntro({ onStart, onSkip, onSignOut, name = "Jordan" }:
 
       <div className="relative px-[18px]">
         {/* Canonical bleeds the hero to the right edge, x243-363 of 393. */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/images/canonical/078-hero.png" alt="" aria-hidden="true"
-             className="pointer-events-none absolute right-[-18px] top-[38px] h-[300px] w-[168px] max-w-none object-cover object-[62%_18%]" />
+        {/* 078-hero is a 466x322 landscape crop; the phone box is portrait, so
+            `object-cover` alone already crops it hard. Zoom stays at 1 — at 1.5
+            the figure lost its head and feet, and canonical shows the whole
+            player. */}
+        <Shot src="/images/canonical/078-hero.png" zoom={1} position="59% 20%"
+              className="pointer-events-none absolute right-[-18px] top-[36px] h-[330px] w-[152px]" />
 
         <StepMeter step={1} steps={4} w={130} className="relative pt-[13px]" />
         <Eyebrow className="relative mt-[9px]">STEP 1 OF 4</Eyebrow>
@@ -164,19 +167,19 @@ export function OnboardingIntro({ onStart, onSkip, onSignOut, name = "Jordan" }:
         <div className="w-[54px] shrink-0 text-center">
           <span className="flex h-[22px] items-center justify-center"><StreakGlyph size={40} /></span>
           <div className="shotiq-numeric mt-[4px] text-[16px] leading-[16px]">6</div>
-          <div className="shotiq-microcaps mt-[3px] text-[7.5px] leading-[8px]" style={{ color: GRAPHITE }}>DAY STREAK</div>
+          <div className="shotiq-microcaps mt-[3px]" style={{ fontSize: 7.5, lineHeight: "8px", color: GRAPHITE }}>DAY STREAK</div>
         </div>
         <div className="w-[62px] shrink-0 text-center">
           <span className="flex h-[22px] items-center justify-center"><PointsGlyph size={22} /></span>
           <div className="shotiq-numeric mt-[4px] text-[16px] leading-[16px]">2,840</div>
-          <div className="shotiq-microcaps mt-[3px] text-[7.5px] leading-[8px]" style={{ color: GRAPHITE }}>POINTS</div>
+          <div className="shotiq-microcaps mt-[3px]" style={{ fontSize: 7.5, lineHeight: "8px", color: GRAPHITE }}>POINTS</div>
         </div>
         <div className="w-[58px] shrink-0 text-center">
           <span className="flex h-[22px] items-center justify-center">
             <ActionGlyph kind="analyze" height={20} />
           </span>
           <div className="shotiq-numeric mt-[4px] text-[16px] leading-[16px]" style={{ color: ORANGE }}>82</div>
-          <div className="shotiq-microcaps mt-[3px] text-[7.5px] leading-[8px]" style={{ color: GRAPHITE }}>FORM SCORE</div>
+          <div className="shotiq-microcaps mt-[3px]" style={{ fontSize: 7.5, lineHeight: "8px", color: GRAPHITE }}>FORM SCORE</div>
         </div>
         <div className="min-w-0 flex-1 pl-[10px] text-center" style={{ borderLeft: `1px solid ${RULE}` }}>
           <span className="flex h-[22px] items-center justify-center gap-[3px]">
@@ -184,7 +187,7 @@ export function OnboardingIntro({ onStart, onSkip, onSignOut, name = "Jordan" }:
               <PoseFigure key={p} phase={p} height={20} active={p === "release"} />
             ))}
           </span>
-          <div className="shotiq-microcaps mt-[4px] text-[7.5px] leading-[8px]" style={{ color: GRAPHITE }}>PRIMARY TARGET</div>
+          <div className="shotiq-microcaps mt-[4px]" style={{ fontSize: 7.5, lineHeight: "8px", color: GRAPHITE }}>PRIMARY TARGET</div>
           <div className="mt-[2px] text-[9px] leading-[11px]">Keep elbow stacked<br />through release</div>
         </div>
       </PhoneCard>
@@ -195,7 +198,7 @@ export function OnboardingIntro({ onStart, onSkip, onSignOut, name = "Jordan" }:
           <div key={l} className="min-w-0 flex-1 text-center"
                style={i ? { borderLeft: `1px solid ${RULE}` } : undefined}>
             <div className="shotiq-numeric text-[15px] leading-[16px]">{v}</div>
-            <div className="shotiq-microcaps mt-[4px] text-[7.5px] leading-[8px]" style={{ color: GRAPHITE }}>{l}</div>
+            <div className="shotiq-microcaps mt-[4px]" style={{ fontSize: 7.5, lineHeight: "8px", color: GRAPHITE }}>{l}</div>
           </div>
         ))}
       </div>
@@ -502,7 +505,7 @@ export function ShootingProfile({
           {[["24", "SHOTS"], ["15", "MAKES"], ["62.5%", "ACCURACY"], ["6", "DAY STREAK"], ["2,840", "POINTS"]].map(([v, l]) => (
             <div key={l} className="w-[41px] text-center">
               <div className="shotiq-numeric text-[11px] leading-[12px]">{v}</div>
-              <div className="shotiq-microcaps mt-[2px] text-[6px] leading-[7px]" style={{ color: GRAPHITE }}>{l}</div>
+              <div className="shotiq-microcaps mt-[2px]" style={{ fontSize: 6, lineHeight: "7px", color: GRAPHITE }}>{l}</div>
             </div>
           ))}
         </div>
@@ -517,7 +520,7 @@ export function ShootingProfile({
       </div>
 
       <div className="px-[18px]">
-        <div className="shotiq-display mt-[15px] text-[15px] leading-[16px]">DOMINANT HAND</div>
+        <div className="shotiq-display mt-[12px] text-[15px] leading-[16px]">DOMINANT HAND</div>
         <p className="mt-[4px] text-[9.5px] leading-[12px]" style={{ color: GRAPHITE }}>The hand you use to shoot.</p>
         <div className="mt-[8px] flex gap-[9px]">
           {["RIGHT-HANDED", "LEFT-HANDED"].map((t) => {
@@ -534,7 +537,7 @@ export function ShootingProfile({
           })}
         </div>
 
-        <div className="shotiq-display mt-[16px] text-[15px] leading-[16px]">ATHLETIC ABILITY</div>
+        <div className="shotiq-display mt-[12px] text-[15px] leading-[16px]">ATHLETIC ABILITY</div>
         <p className="mt-[4px] text-[9.5px] leading-[12px]" style={{ color: GRAPHITE }}>
           How would you describe your athletic ability?
         </p>
@@ -551,7 +554,7 @@ export function ShootingProfile({
           })}
         </div>
 
-        <div className="shotiq-display mt-[16px] text-[15px] leading-[16px]">SHOOTING STYLE</div>
+        <div className="shotiq-display mt-[12px] text-[15px] leading-[16px]">SHOOTING STYLE</div>
         <p className="mt-[4px] text-[9.5px] leading-[12px]" style={{ color: GRAPHITE }}>
           Pick the style that best matches your shot.
         </p>
@@ -563,9 +566,7 @@ export function ShootingProfile({
                       data-testid={`phone-style-${t.split(" ")[0].toLowerCase()}`}
                       className="relative min-w-0 flex-1 overflow-hidden rounded-[6px] text-left"
                       style={{ border: `1px solid ${on ? ORANGE : RULE}`, background: on ? "#FFF6F2" : "#fff" }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={`/images/canonical/${img}.png`} alt="" aria-hidden="true"
-                     className="block h-[82px] w-full object-cover" />
+                <Shot src={`/images/canonical/${img}.png`} className="h-[74px] w-full" zoom={1.45} />
                 {on && (
                   <span className="absolute right-[5px] top-[5px] grid h-[13px] w-[13px] place-items-center rounded-full"
                         style={{ background: ORANGE }}>
@@ -586,7 +587,7 @@ export function ShootingProfile({
           })}
         </div>
 
-        <div className="mt-[13px] flex items-start gap-[11px]">
+        <div className="mt-[10px] flex items-start gap-[11px]">
           <MechanicGlyph kind="centerline" size={26} />
           <div className="min-w-0">
             <div className="text-[10.5px] font-medium leading-[13px]">Why this matters</div>
@@ -596,7 +597,7 @@ export function ShootingProfile({
           </div>
         </div>
 
-        <div className="mb-[16px] mt-[12px] flex items-center gap-[10px]">
+        <div className="mb-[14px] mt-[10px] flex items-center gap-[10px]">
           <button type="button" onClick={onBack}
                   className="flex h-[38px] shrink-0 items-center gap-[7px] px-[6px] text-[13px]">
             <svg width="9" height="15" viewBox="0 0 9 15" aria-hidden="true">
@@ -648,7 +649,7 @@ export function OnboardingReview({
                   <rect key={i} x={i * 4.5} y={9 - i * 3.4} width="3" height={3 + i * 3.4} fill={BLUE} />
                 ))}
               </svg>
-              <span className="shotiq-microcaps text-[8.5px] leading-[9px]" style={{ color: BLUE }}>INTERMEDIATE TIER</span>
+              <span className="shotiq-microcaps" style={{ fontSize: 8.5, lineHeight: "9px", color: BLUE }}>INTERMEDIATE TIER</span>
             </div>
             <div className="mt-[3px] text-[8.5px] leading-[10px]" style={{ color: GRAPHITE }}>Built from your profile and data</div>
           </div>
@@ -675,7 +676,7 @@ export function OnboardingReview({
                  style={i ? { borderLeft: `1px solid ${RULE}` } : undefined}>
               <span className="flex h-[21px] items-center justify-center">{g as React.ReactNode}</span>
               <div className="shotiq-numeric mt-[4px] text-[17px] leading-[17px]" style={{ color: tone as string }}>{v as string}</div>
-              <div className="shotiq-microcaps mt-[3px] text-[7px] leading-[8px]" style={{ color: GRAPHITE }}>{l as string}</div>
+              <div className="shotiq-microcaps mt-[3px]" style={{ fontSize: 7, lineHeight: "8px", color: GRAPHITE }}>{l as string}</div>
             </div>
           ))}
         </PhoneCard>
