@@ -2,7 +2,7 @@
 
 /** /media — canonical 094-web-media-library, backed by /api/media. */
 
-import React, { useEffect, useMemo, useState } from "react"
+import React, { useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { Search, Upload, SlidersHorizontal, ChevronDown, Trash2, Calendar, Share2, X, ChevronRight } from "lucide-react"
 import { SectionLabel, Card, MediaSurface, PhaseGlyph } from "@/components/shotiq/ShotIQShell"
@@ -54,6 +54,17 @@ const FILTERS: [string, [string, number][]][] = [
   ["HAND", [["All hands", -1], ["Right", 76], ["Left", 10]]],
 ]
 
+// Canonical prints a status swatch beside every ANALYSIS STATUS and SHOT RESULT
+// option; SOURCE, WORKOUT and HAND options carry none.
+const OPTION_DOT: Record<string, string> = {
+  "Analyzed": "var(--shotiq-color-analysisBlue)",
+  "Review": "var(--shotiq-color-shotiqOrange)",
+  "Not analyzed": "var(--shotiq-color-eyebrow)",
+  "Processing": "var(--shotiq-color-muted)",
+  "Make": "var(--shotiq-color-confirmGreen)",
+  "Miss": "var(--shotiq-color-reviewRed)",
+}
+
 const RANGES: [string, string][] = [["7", "May 6 – May 12, 2025"], ["1", "Today only"], ["30", "Apr 12 – May 12, 2025"]]
 const SORTS = ["Newest", "Oldest", "Score"] as const
 
@@ -66,8 +77,15 @@ export default function MediaLibraryPage() {
   const [range, setRange] = useState(RANGES[0])
   const [sort, setSort] = useState<(typeof SORTS)[number]>("Newest")
   const [menu, setMenu] = useState<null | "range" | "sort">(null)
-  const [railOpen, setRailOpen] = useState(false)
   const [query, setQuery] = useState("")
+  // The FILTERS column is always drawn (canonical 094 draws it). The toolbar's
+  // Filter button — which canonical also draws — moves focus into that column
+  // rather than showing or hiding it.
+  const filtersRef = useRef<HTMLElement | null>(null)
+  const focusFilters = () => {
+    const first = filtersRef.current?.querySelector<HTMLElement>("input, button")
+    first?.focus()
+  }
   useEffect(() => {
     fetch("/api/media", { credentials: "include" }).then((r) => (r.ok ? r.json() : null))
       .then((d) => {
@@ -145,9 +163,58 @@ export default function MediaLibraryPage() {
     s === "Analyzed" ? "var(--shotiq-color-confirmGreen)" : s === "Review" ? "var(--shotiq-color-shotiqOrange)" : "var(--shotiq-color-muted)"
 
   return (
-    <div data-testid="screen-desktop-web-media-library" className="flex h-[835px] flex-col">
+    <div data-testid="screen-desktop-web-media-library" className="flex h-[835px]">
+      {/* ------------------------------------------------------ filters column
+          Canonical 094 draws a persistent FILTERS column at the left edge of
+          the content area, 219px of the 1440px canvas. It is a filter panel,
+          not navigation, so it does not compete with the one nav sidebar —
+          and it deliberately carries no `region-sidebar` test id. */}
+      <aside ref={filtersRef} id="media-filters" data-testid="media-filters"
+             className="w-[219px] shrink-0 overflow-hidden border-r border-[var(--shotiq-color-rule)] px-[20px] pt-[16px]">
+        <div className="flex items-center justify-between">
+          <SectionLabel>FILTERS</SectionLabel>
+          <button type="button" onClick={clearAll} className="text-[11px] text-[var(--shotiq-color-shotiqOrange)]">Clear all</button>
+        </div>
+        <div className="mt-[12px] text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">DATE RANGE</div>
+        <div className="relative">
+          <button type="button" aria-expanded={menu === "range"}
+                  onClick={() => setMenu((m) => (m === "range" ? null : "range"))}
+                  className="mt-[6px] flex h-[36px] w-full items-center gap-[6px] rounded-[5px] border border-[var(--shotiq-color-rule)] px-[8px] text-[11px]">
+            <Calendar className="h-[12px] w-[12px]" /> {range[1]} <ChevronDown className="ml-auto h-[11px] w-[11px]" />
+          </button>
+          {menu === "range" && (
+            <div className="absolute left-0 top-[42px] z-30 w-full rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white py-[4px] shadow-[0_8px_20px_rgba(17,17,17,0.10)]">
+              {RANGES.map((r) => (
+                <button key={r[0]} type="button" onClick={() => { setRange(r); setMenu(null) }}
+                        className={`flex h-[28px] w-full items-center px-[8px] text-[11px] hover:bg-[var(--shotiq-color-warmCanvas)] ${range[0] === r[0] ? "font-semibold text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
+                  {r[1]}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        {FILTERS.map(([head, opts]) => (
+          <div key={head} className="mt-[14px]">
+            <div className="text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">{head}</div>
+            {opts.map(([label, n]) => (
+              <label key={String(label)} className="mt-[6px] flex items-center gap-[8px] text-[12px]">
+                <input type="checkbox" checked={checked[head] === String(label)}
+                       onChange={() => setChecked((c) => ({ ...c, [head]: String(label) }))}
+                       className="h-[13px] w-[13px] shrink-0 accent-[var(--shotiq-color-shotiqOrange)]" />
+                {OPTION_DOT[String(label)] && (
+                  <span className="h-[7px] w-[7px] shrink-0 rounded-full"
+                        style={{ background: OPTION_DOT[String(label)] }} />
+                )}
+                <span className="flex-1 truncate">{label}</span>
+                {n >= 0 && <span className="text-[11px] text-[var(--shotiq-color-graphite)]">{n}</span>}
+              </label>
+            ))}
+          </div>
+        ))}
+      </aside>
+
       {/* content */}
-      <div className="flex min-h-0 flex-1 flex-col px-[24px] py-[16px]">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col px-[24px] py-[16px]">
         <div className="flex items-start justify-between">
           <div>
             <h1 className="shotiq-display text-[44px] leading-[46px]">MEDIA LIBRARY</h1>
@@ -163,8 +230,8 @@ export default function MediaLibraryPage() {
             <Link href="/upload" className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-[13px]">
               <Upload className="h-[14px] w-[14px]" /> Upload
             </Link>
-            <button type="button" aria-expanded={railOpen} onClick={() => setRailOpen((v) => !v)}
-                    className={`flex h-[42px] items-center gap-[8px] rounded-[6px] border px-[14px] text-[13px] ${railOpen ? "border-[var(--shotiq-color-shotiqOrange)] text-[var(--shotiq-color-shotiqOrange)]" : "border-[var(--shotiq-color-rule)]"}`}>
+            <button type="button" aria-controls="media-filters" onClick={focusFilters}
+                    className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-[13px]">
               <SlidersHorizontal className="h-[14px] w-[14px]" /> Filter
             </button>
             <div className="relative">
@@ -193,51 +260,6 @@ export default function MediaLibraryPage() {
           </div>
         </div>
 
-        {/* Filters live in the content column, opened from the Filter button.
-            They used to stand as a SECOND full-height rail beside the one nav
-            rail, which cost ~200px of the 1440px canvas before any content. */}
-        {railOpen && (
-          <Card className="mt-[10px] flex items-start gap-[20px] px-[16px] py-[12px]">
-            <div className="w-[150px] shrink-0">
-              <div className="flex items-center justify-between">
-                <SectionLabel>FILTERS</SectionLabel>
-                <button type="button" onClick={clearAll} className="text-[11px] text-[var(--shotiq-color-shotiqOrange)]">Clear all</button>
-              </div>
-              <div className="mt-[8px] text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">DATE RANGE</div>
-              <div className="relative">
-                <button type="button" aria-expanded={menu === "range"}
-                        onClick={() => setMenu((m) => (m === "range" ? null : "range"))}
-                        className="mt-[6px] flex h-[32px] w-full items-center gap-[6px] rounded-[5px] border border-[var(--shotiq-color-rule)] px-[8px] text-[11px]">
-                  <Calendar className="h-[12px] w-[12px]" /> {range[1]} <ChevronDown className="ml-auto h-[11px] w-[11px]" />
-                </button>
-                {menu === "range" && (
-                  <div className="absolute left-0 top-[38px] z-30 w-full rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white py-[4px] shadow-[0_8px_20px_rgba(17,17,17,0.10)]">
-                    {RANGES.map((r) => (
-                      <button key={r[0]} type="button" onClick={() => { setRange(r); setMenu(null) }}
-                              className={`flex h-[28px] w-full items-center px-[8px] text-[11px] hover:bg-[var(--shotiq-color-warmCanvas)] ${range[0] === r[0] ? "font-semibold text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
-                        {r[1]}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-            {FILTERS.map(([head, opts]) => (
-              <div key={head} className="min-w-0 flex-1">
-                <div className="text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">{head}</div>
-                {opts.map(([label, n]) => (
-                  <label key={String(label)} className="mt-[5px] flex items-center gap-[8px] text-[12px]">
-                    <input type="checkbox" checked={checked[head] === String(label)}
-                           onChange={() => setChecked((c) => ({ ...c, [head]: String(label) }))}
-                           className="h-[13px] w-[13px] accent-[var(--shotiq-color-shotiqOrange)]" />
-                    <span className="flex-1 truncate">{label}</span>
-                    {n >= 0 && <span className="text-[11px] text-[var(--shotiq-color-graphite)]">{n}</span>}
-                  </label>
-                ))}
-              </div>
-            ))}
-          </Card>
-        )}
         <div className="mt-[10px] flex items-center justify-between border-b border-[var(--shotiq-color-rule)] pb-[8px] text-[12px] text-[var(--shotiq-color-graphite)]">
           <label className="flex items-center gap-[8px]">
             <input type="checkbox" className="h-[13px] w-[13px]" readOnly checked={selected.size > 0} /> {selected.size} selected

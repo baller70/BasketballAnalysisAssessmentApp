@@ -14,7 +14,7 @@ import React, { useMemo, useState } from "react"
 import Link from "next/link"
 import {
   Search, ChevronDown, ChevronUp, HelpCircle, GitCompare, X, Check,
-  LayoutGrid, List, RotateCcw, CalendarClock, SlidersHorizontal,
+  LayoutGrid, List, RotateCcw, CalendarClock,
 } from "lucide-react"
 import { MechanicGlyph, type MechanicKind } from "@/components/shotiq/Glyphs"
 
@@ -110,8 +110,6 @@ export default function EliteShootersPage() {
   const [view, setView] = useState<(typeof VIEWS)[number]>("Career")
   const [menu, setMenu] = useState<null | "sort" | "view" | "wsi">(null)
   const [layout, setLayout] = useState<"list" | "grid">("list")
-  // Filters open in the content column instead of standing as a second rail.
-  const [filtersOpen, setFiltersOpen] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(() => new Set(["Klay Thompson", "Kyrie Irving"]))
 
   const toggleGroup = (id: string, set: Set<string>, setter: (s: Set<string>) => void) => {
@@ -168,23 +166,19 @@ export default function EliteShootersPage() {
     <div data-testid="screen-desktop-web-elite-shooters-database"
          className={`flex flex-col ${pair.length >= 2 ? "h-[835px]" : "min-h-full"}`}>
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        {/* ------------------------------------------------------ main table */}
-        <div className="relative min-w-0 flex-1 px-[20px] pt-[12px]">
-          {/* Filters open as a panel inside the content column. They used to
-              stand as a SECOND full-height rail beside the one nav rail, which
-              spent ~176px of the 1440px canvas before any data was shown. */}
-          {filtersOpen && (
-            <>
-            <button type="button" aria-label="Close filters" onClick={() => setFiltersOpen(false)}
-                    className="fixed inset-0 z-30 cursor-default bg-transparent" />
-            <div data-testid="elite-filters"
-                 className="absolute left-[20px] top-[92px] z-40 w-[660px] rounded-[8px] border border-[var(--shotiq-color-rule)] bg-white p-[16px] shadow-[0_10px_28px_rgba(17,17,17,0.12)]">
-              <div className="flex items-center justify-between pb-[8px]">
-                <span className="shotiq-display text-[19px] leading-[20px]">FILTERS</span>
-                <button type="button" onClick={resetFilters}
-                        className="text-[11px] font-medium text-[var(--shotiq-color-shotiqOrange)]">Clear all</button>
-              </div>
-              <div className="grid grid-cols-3 gap-x-[22px]">
+        {/* --------------------------------------------------- filters column
+            Canonical 088 draws a persistent FILTERS column at the left edge of
+            the content area, 210px of the 1440px canvas. It is a filter panel,
+            not navigation, so it does not compete with the one nav sidebar —
+            and it deliberately carries no `region-sidebar` test id. */}
+        <aside data-testid="elite-filters"
+               className="w-[210px] shrink-0 overflow-hidden border-r border-[var(--shotiq-color-rule)] px-[16px] pb-[6px] pt-[8px]">
+          <div className="flex items-center justify-between">
+            <span className="shotiq-display text-[19px] leading-[20px]">FILTERS</span>
+            <button type="button" onClick={resetFilters}
+                    className="text-[11px] font-medium text-[var(--shotiq-color-shotiqOrange)]">Clear all</button>
+          </div>
+
           {RADIO_GROUPS.map((g) => (
             <div key={g.id} className="mt-[3px] border-t border-[var(--shotiq-color-rule)] pt-[3px]">
               <button type="button" onClick={() => toggleGroup(g.id, openGroups, setOpenGroups)}
@@ -211,11 +205,14 @@ export default function EliteShootersPage() {
             </div>
           ))}
 
+          {/* Canonical rules each slider off separately, not the pair together. */}
           <div className="mt-[5px] border-t border-[var(--shotiq-color-rule)] pt-[1px]">
             <DualSlider min={100} max={10000} lo={attempts[0]} hi={attempts[1]}
                         onLo={(v) => setAttempts(([, h]) => [v, h])} onHi={(v) => setAttempts(([l]) => [l, v])}
                         loLabel="100" hiLabel="10,000+"
                         label={<>Min. Attempts <span className="font-normal text-[var(--shotiq-color-graphite)]">(Career)</span></>} />
+          </div>
+          <div className="mt-[5px] border-t border-[var(--shotiq-color-rule)] pt-[1px]">
             <DualSlider min={0} max={100} lo={wsiRange[0]} hi={wsiRange[1]}
                         onLo={(v) => setWsiRange(([, h]) => [v, h])} onHi={(v) => setWsiRange(([l]) => [l, v])}
                         loLabel="0" hiLabel="100" label="WSI Range" />
@@ -254,10 +251,10 @@ export default function EliteShootersPage() {
               <RotateCcw className="h-[12px] w-[12px]" /> Reset filters
             </button>
           </div>
-              </div>
-            </div>
-            </>
-          )}
+        </aside>
+
+        {/* ------------------------------------------------------ main table */}
+        <div className="min-w-0 flex-1 px-[10px] pt-[12px]">
           <div className="flex items-start justify-between">
             <div>
               <h1 className="shotiq-display text-[40px] leading-[42px]">ELITE SHOOTERS DATABASE</h1>
@@ -288,11 +285,6 @@ export default function EliteShootersPage() {
           </div>
 
           <div className="mt-[12px] flex items-center">
-            <button type="button" aria-expanded={filtersOpen} data-testid="elite-filters-toggle"
-                    onClick={() => setFiltersOpen((v) => !v)}
-                    className={`mr-[12px] flex h-[36px] items-center gap-[8px] rounded-[6px] border px-[14px] text-[13px] ${filtersOpen ? "border-[var(--shotiq-color-shotiqOrange)] text-[var(--shotiq-color-shotiqOrange)]" : "border-[var(--shotiq-color-rule)]"}`}>
-              <SlidersHorizontal className="h-[14px] w-[14px]" /> Filters
-            </button>
             <div className="flex h-[36px] w-[384px] items-center gap-[9px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[12px]">
               <Search className="h-[13px] w-[13px] text-[var(--shotiq-color-graphite)]" />
               <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search shooters..."
@@ -352,34 +344,35 @@ export default function EliteShootersPage() {
 
           {layout === "list" ? (
             <div className="mt-[10px]">
-              {/* group header band */}
+              {/* group header band. Column budget: the filters column takes
+                  210px of the 1244px content area, so the table is fitted to
+                  the remaining 1014px rather than the panel being shrunk. */}
               <div className="flex border-b border-[var(--shotiq-color-rule)] pb-[2px]">
-                <div className="w-[482px]" />
+                <div className="w-[464px]" />
                 <div className={`w-[252px] border-l border-[var(--shotiq-color-rule)] text-center ${headCell}`}>MECHANICS SUMMARY</div>
-                <div className={`w-[180px] border-l border-[var(--shotiq-color-rule)] text-center ${headCell}`}>SIMILARITY TO YOU</div>
+                <div className={`w-[176px] border-l border-[var(--shotiq-color-rule)] text-center ${headCell}`}>SIMILARITY TO YOU</div>
                 <div className="min-w-0 flex-1 border-l border-[var(--shotiq-color-rule)]" />
               </div>
               {/* column headers */}
               <div className="flex items-center border-b border-[var(--shotiq-color-rule)] py-[7px]">
                 <span className="w-[24px]"><span className="block h-[14px] w-[14px] rounded-[3px] border border-[var(--shotiq-color-muted)]" /></span>
-                <span className={`w-[200px] pl-[50px] ${headCell}`}>SHOOTER</span>
+                <span className={`w-[192px] pl-[50px] ${headCell}`}>SHOOTER</span>
                 <span className={`w-[34px] text-center ${headCell}`}>HAND</span>
-                <span className={`w-[34px] text-center ${headCell}`}>LEVEL</span>
-                <span className={`w-[34px] text-center ${headCell}`}>HT</span>
-                <span className={`w-[32px] text-center ${headCell}`}>AGE</span>
-                <span className={`w-[76px] text-center ${headCell}`}>CAREER</span>
+                <span className={`w-[32px] text-center ${headCell}`}>LEVEL</span>
+                <span className={`w-[32px] text-center ${headCell}`}>HT</span>
+                <span className={`w-[30px] text-center ${headCell}`}>AGE</span>
+                <span className={`w-[72px] text-center ${headCell}`}>CAREER</span>
                 <span className={`flex w-[48px] items-center justify-center gap-[3px] ${headCell}`}>
                   WSI <HelpCircle className="h-[10px] w-[10px]" /> <ChevronDown className="h-[10px] w-[10px]" />
                 </span>
-                {/* Width recovered from the filter rail and the page gutters so
-                    these labels sit on one line, as canonical prints them. */}
+                {/* Held on one line, as canonical prints them. */}
                 <span className={`w-[84px] self-stretch whitespace-nowrap border-l border-[var(--shotiq-color-rule)] px-[2px] text-center text-[9px] tracking-[0.03em] ${headCell}`}>RELEASE HEIGHT</span>
                 <span className={`w-[84px] whitespace-nowrap px-[2px] text-center text-[9px] tracking-[0.03em] ${headCell}`}>RELEASE TIME</span>
                 <span className={`w-[84px] whitespace-nowrap px-[2px] text-center text-[9px] tracking-[0.03em] ${headCell}`}>ELBOW ALIGNMENT</span>
                 <span className={`flex w-[84px] self-stretch items-center justify-center gap-[3px] border-l border-[var(--shotiq-color-rule)] ${headCell}`}>
                   OVERALL <HelpCircle className="h-[10px] w-[10px]" />
                 </span>
-                <span className={`w-[96px] text-center ${headCell}`}>KEY MATCH</span>
+                <span className={`w-[92px] text-center ${headCell}`}>KEY MATCH</span>
                 <span className={`w-[116px] shrink-0 self-stretch border-l border-[var(--shotiq-color-rule)] text-center ${headCell}`}>ACTION</span>
               </div>
 
@@ -393,7 +386,7 @@ export default function EliteShootersPage() {
                       {selected.has(r.name) && <Check className="h-[10px] w-[10px] text-white" strokeWidth={3.2} />}
                     </button>
                   </span>
-                  <span className="flex w-[200px] items-center gap-[8px]">
+                  <span className="flex w-[192px] items-center gap-[8px]">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={r.thumb} alt="" className="h-[48px] w-[76px] shrink-0 rounded-[5px] object-cover" />
                     <span className="min-w-0">
@@ -402,10 +395,10 @@ export default function EliteShootersPage() {
                     </span>
                   </span>
                   <span className="w-[34px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.hand}</span>
-                  <span className="w-[34px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.level}</span>
-                  <span className="w-[34px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.ht}</span>
-                  <span className="w-[32px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.age}</span>
-                  <span className="w-[76px] text-center">
+                  <span className="w-[32px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.level}</span>
+                  <span className="w-[32px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.ht}</span>
+                  <span className="w-[30px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.age}</span>
+                  <span className="w-[72px] text-center">
                     <span className="block text-[14px] font-bold">{r.careerPct.toFixed(1)}%</span>
                     <span className="block whitespace-nowrap text-[10px] text-[var(--shotiq-color-graphite)]">{fmt(r.makes)} / {fmt(r.attempts)}</span>
                   </span>
@@ -428,7 +421,7 @@ export default function EliteShootersPage() {
                       <span className="block h-full rounded-full bg-[var(--shotiq-color-analysisBlue)]" style={{ width: `${r.overall}%` }} />
                     </span>
                   </span>
-                  <span className="w-[96px] text-center">
+                  <span className="w-[92px] text-center">
                     <span className="block whitespace-nowrap text-[12px]">{r.keyMatch[0]}</span>
                     <span className="block text-[12px] font-semibold">{r.keyMatch[1]}</span>
                   </span>

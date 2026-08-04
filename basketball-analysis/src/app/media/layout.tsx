@@ -2,8 +2,10 @@
 
 /**
  * Canonical shell wrapper for /media.
- * The canonical 094 screen paints its own FILTERS sidebar inside the page,
- * so the shell's icon rail is suppressed here (topbar only).
+ *
+ * The canonical 094 screen paints its own FILTERS column inside the page. That
+ * is a filter panel, not navigation, so it sits beside — not instead of — the
+ * one unified nav sidebar the shell supplies.
  */
 
 import { ShotIQShell } from "@/components/shotiq/ShotIQShell"
