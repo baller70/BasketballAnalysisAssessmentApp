@@ -722,17 +722,19 @@ struct ExperienceBodyTypeView: View {
                             .shotiqBody(16).foregroundStyle(ShotIQColor.graphite).padding(.top, 8)
 
                         QuestionLabel(text: "WHAT BEST DESCRIBES YOUR EXPERIENCE?").padding(.top, 24)
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 10) {
-                                ForEach(experienceOptions, id: \.0) { value, label, caption, icon in
-                                    OptionCard(icon: icon, label: label, caption: caption,
-                                               selected: m.experience == value) {
-                                        m.experience = value
-                                    }
-                                    .frame(width: 112)
+                        // Canonical prints all five tiers across the 353pt content
+                        // width, roughly 64pt each. Pinning them to 112pt inside a
+                        // horizontal ScrollView showed three and hid ELITE and
+                        // PROFESSIONAL behind a swipe with no affordance — two
+                        // choices a user could not see, on a required question.
+                        HStack(alignment: .top, spacing: 6) {
+                            ForEach(experienceOptions, id: \.0) { value, label, caption, icon in
+                                OptionCard(icon: icon, label: label, caption: caption,
+                                           selected: m.experience == value) {
+                                    m.experience = value
                                 }
+                                .frame(maxWidth: .infinity)
                             }
-                            .padding(.vertical, 2)
                         }
                         .padding(.top, 12)
 

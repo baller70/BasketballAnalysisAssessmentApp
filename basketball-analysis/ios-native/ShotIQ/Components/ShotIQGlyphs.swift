@@ -1258,7 +1258,10 @@ extension ShotTypeKind {
 /// rising and the rail marker advancing across the three cards. The shipped
 /// screen used `figure.walk` / `figure.run` / `figure.basketball` — three
 /// different families, and `figure.basketball` again for seven other concepts.
-enum AbilityKind { case developing, advanced, elite }
+/// Five grades, because canonical 010 offers five and they must not share a
+/// mark. The three original values keep their exact geometry so no screen that
+/// already draws them shifts; the two new ones interleave.
+enum AbilityKind { case developing, intermediate, advanced, elite, professional }
 
 struct AbilityGlyph: View {
     var kind: AbilityKind
@@ -1275,8 +1278,10 @@ struct AbilityGlyph: View {
             let apex: CGFloat, markerX: CGFloat, spread: CGFloat
             switch kind {
             case .developing: apex = 11.6; markerX = 8.2; spread = 5.4
+            case .intermediate: apex = 10.0; markerX = 10.1; spread = 5.0
             case .advanced: apex = 8.4; markerX = 12.0; spread = 4.6
             case .elite: apex = 5.2; markerX = 15.8; spread = 3.4
+            case .professional: apex = 3.8; markerX = 17.6; spread = 2.8
             }
             p.poly([CGPoint(x: 12 - spread - 1.6, y: 14.6),
                     CGPoint(x: 12 - spread, y: apex + 2.2),
@@ -1301,9 +1306,15 @@ extension AbilityKind {
         switch true {
         case k.contains("develop") || k.contains("beginner") || k.contains("new"):
             self = .developing
-        case k.contains("advanced") || k.contains("intermediate") || k.contains("consistent"):
-            self = .advanced
-        case k.contains("elite") || k.contains("pro"): self = .elite
+        // "intermediate" and "advanced" used to fold into one mark, as did
+        // "elite" and "pro" — so canonical 010's five tiers drew as three, with
+        // two adjacent pairs identical. Order matters: the more specific tier is
+        // tested before the one whose word it would otherwise be caught by.
+        case k.contains("intermediate") || k.contains("consistent"):
+            self = .intermediate
+        case k.contains("advanced"): self = .advanced
+        case k.contains("elite"): self = .elite
+        case k.contains("pro"): self = .professional
         default: return nil
         }
     }
