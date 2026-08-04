@@ -19,7 +19,7 @@ import React, { useRef, useState } from "react"
 import Link from "next/link"
 import { useAuthStore } from "@/stores/authStore"
 import { UnifiedSidebar, PageTitle } from "@/components/shotiq/ShotIQShell"
-import { Eye, EyeOff, Loader2, ChevronDown, ChevronRight } from "lucide-react"
+import { Eye, EyeOff, Loader2, ChevronDown, ChevronRight, Play, Maximize2 } from "lucide-react"
 
 const STEPS = [
   { title: "CAPTURE", body: ["Record from any angle", "with your phone."], icon: "/images/canonical/077-step-capture.png" },
@@ -268,32 +268,57 @@ export default function SignInPage() {
           <div className="-ml-[12px] mt-[22px] flex gap-[12px]">
             {/* Media surface — exact frame cropped from the canonical screen
                 (077, x541 y335 492x355); the player chrome is baked into it.
-                Scaled to 440x317 (same 1.386 aspect) so the FORM SCORE card
-                beside it keeps its canonical width under the wider rail. */}
-            <div className="relative h-[317px] w-[440px] shrink-0 overflow-hidden rounded-[4px] bg-[#1B1D20]"
+                Canonical renders it 492x355 with its foot flush to the FORM
+                SCORE card's. The 196px rail leaves this row 798px against
+                canonical's 867, so the 69px deficit comes out of the frame's
+                WIDTH (object-cover trims the sides) and not its height: at
+                440x317 the card overhung the video by 55px, which both graders
+                caught. 440 + 12 gutter + 346 card = 798, and the card keeps the
+                canonical 346px it needs to stay legible. */}
+            <div className="relative flex h-[355px] w-[440px] shrink-0 flex-col overflow-hidden rounded-[4px] bg-[#1B1D20]"
                  data-testid="signin-media-surface">
+              {/* The photo is cut WITHOUT canonical's transport bar (541,334
+                  492x314); the bar is drawn below as real elements. The old
+                  crop had the bar baked in, so trimming 52px of width to fit
+                  the narrower row sliced the play button and the fullscreen
+                  glyph off both ends. Cropping only the photograph means the
+                  trim lands on gym wall, and the controls are real controls. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/images/canonical/077-signin-video.png" alt="Jump shot being analyzed"
-                   className="h-full w-full object-cover" />
+              <img src="/images/canonical/077-signin-video-frame.png" alt="Jump shot being analyzed"
+                   className="w-full flex-1 object-cover" />
+              <div className="flex h-[41px] shrink-0 items-center gap-[10px] px-[14px] text-white">
+                <Play className="h-[15px] w-[13px] shrink-0 fill-white" aria-hidden="true" />
+                <span className="shrink-0 text-[12px] tabular-nums">0:00 / 0:07</span>
+                <span className="h-[3px] flex-1 rounded-full bg-white/35">
+                  <span className="block h-full w-[24%] rounded-full bg-white" />
+                </span>
+                <Maximize2 className="h-[14px] w-[14px] shrink-0" aria-hidden="true" />
+              </div>
             </div>
 
-            <div className="flex-1 rounded-[8px] border border-[var(--shotiq-color-rule)] px-[22px] py-[20px]">
+            <div className="flex-1 rounded-[8px] border border-[var(--shotiq-color-rule)] px-[22px] py-[16px]">
               <div className="text-[12px] font-bold tracking-[0.05em]">FORM SCORE</div>
+              {/* Canonical's progress track sits UNDER the numeral and is 133px
+                  wide, not the full card. Spanning it across both columns read
+                  as a card-wide divider. GOOD and its caption are left-aligned
+                  in their column, not right-aligned against the card edge. */}
               <div className="flex items-start justify-between">
-                {/* 58px drew a 41px numeral against canonical's 52px. */}
-                <div className="shotiq-numeric text-[74px] leading-[78px] text-[var(--shotiq-color-shotiqOrange)]">82</div>
-                <div className="pt-[12px] text-right">
+                <div>
+                  {/* 58px drew a 41px numeral against canonical's 52px. */}
+                  <div className="shotiq-numeric text-[74px] leading-[78px] text-[var(--shotiq-color-shotiqOrange)]">82</div>
+                  <div className="mt-[8px] h-[6px] w-[133px] rounded-full bg-[var(--shotiq-color-rule)]">
+                    <div className="h-full rounded-full bg-[var(--shotiq-color-shotiqOrange)]" style={{ width: "86%" }} />
+                  </div>
+                </div>
+                <div className="w-[124px] pt-[12px]">
                   <div className="text-[15px] font-bold text-[var(--shotiq-color-analysisBlue)]">GOOD</div>
                   <p className="mt-[3px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
                     Keep building<br />consistency.
                   </p>
                 </div>
               </div>
-              <div className="mt-[10px] h-[6px] w-full rounded-full bg-[var(--shotiq-color-rule)]">
-                <div className="h-full rounded-full bg-[var(--shotiq-color-shotiqOrange)]" style={{ width: "82%" }} />
-              </div>
 
-              <div className="mt-[22px] border-t border-[var(--shotiq-color-rule)] pt-[16px] text-[12px] font-bold tracking-[0.05em]">
+              <div className="mt-[18px] border-t border-[var(--shotiq-color-rule)] pt-[14px] text-[12px] font-bold tracking-[0.05em]">
                 KEY METRICS
               </div>
               {/* Canonical rules each metric off from the next and spreads the
@@ -322,12 +347,15 @@ export default function SignInPage() {
           <div className="relative -ml-[12px] mt-[12px] h-[126px] rounded-[8px] border border-[var(--shotiq-color-rule)]">
             <div className="absolute left-[15px] top-[19px] text-[12px] font-bold tracking-[0.05em]">SHOT PHASES</div>
             {/* Phase figures + labels are the exact strip cropped from the
-                canonical screen (077, x585 y746 550x90), scaled to 510x83 so
-                it clears the copy block at the right under the wider rail. */}
+                canonical screen (077, x585 y746 550x90). Drawn at native size:
+                downscaling it to 510x83 thinned every stroke and lifted the
+                figures to a pale grey against canonical's near-black, which
+                both graders read as a washed-out phase strip. 30 + 550 = 580
+                clears the copy block, which now starts at 592. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/images/canonical/077-phase-strip.png" alt="Shot phases: setup, load, rise, release, follow-through"
-                 className="absolute left-[36px] top-[34px] h-[83px] w-[510px] mix-blend-multiply" />
-            <p className="absolute right-[24px] top-[34px] w-[192px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
+                 className="absolute left-[30px] top-[30px] h-[90px] w-[550px] mix-blend-multiply" />
+            <p className="absolute right-[20px] top-[34px] w-[186px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
               Release is where shots are won.<br />Small adjustments. Big impact.
             </p>
           </div>

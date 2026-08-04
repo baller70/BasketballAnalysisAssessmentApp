@@ -285,8 +285,16 @@ export default function MediaLibraryPage() {
           const count = groupUnfiltered ? DECLARED_COUNT[day] : `${items.length} items`
           return (
           <div key={day} className="mt-[16px]">
+            {/* Canonical sets the day and its date at two different weights and
+                colours — "TODAY" bold black, the date medium grey, both 12px.
+                Running the whole string through SectionLabel gave the date the
+                same weight as the day and set the header ~40% wider. */}
             <div className="flex items-center justify-between">
-              <SectionLabel>{day}</SectionLabel>
+              <div className="flex items-baseline gap-[6px] text-[12px]">
+                <span className="font-bold tracking-[0.06em]">{day.split(" \u00b7 ")[0]}</span>
+                <span className="text-[var(--shotiq-color-graphite)]">&middot;</span>
+                <span className="font-medium text-[var(--shotiq-color-graphite)]">{day.split(" \u00b7 ")[1] ?? ""}</span>
+              </div>
               <span className="text-[11px] text-[var(--shotiq-color-graphite)]">{count ?? ""}</span>
             </div>
             <div className="mt-[8px] grid grid-cols-6 gap-[14px]">
@@ -322,12 +330,14 @@ export default function MediaLibraryPage() {
                   <button type="button" onClick={() => setDetail({ item: m, day })}
                           className="block w-full p-[9px] text-left hover:bg-[var(--shotiq-color-warmCanvas)]">
                     <div className="truncate text-[12px] font-semibold">{m.title}</div>
-                    <div className="truncate text-[10px] text-[var(--shotiq-color-graphite)]">{m.time} · {m.style}</div>
+                    <div className="truncate text-[10px] text-[var(--shotiq-color-graphite)]">{m.time} &bull; {m.style}</div>
                     {/* Canonical sets the form score at ~17px so it leads the
                         card's status line. */}
+                    {/* Canonical leaves ~24px between the score and its status
+                        word; at 6px the two read as one run-on token. */}
                     <div className="mt-[4px] flex items-center gap-[6px] text-[11px]">
                       <span className="h-[7px] w-[7px] rounded-full" style={{ background: statusColor(m.status) }} />
-                      <span className="shotiq-numeric text-[17px] leading-[19px]">{m.score ?? "—"}</span>
+                      <span className="shotiq-numeric mr-[16px] text-[17px] leading-[19px]">{m.score ?? "—"}</span>
                       <span className={m.status === "Analyzed" ? "text-[var(--shotiq-color-analysisBlue)]" : "text-[var(--shotiq-color-graphite)]"}>{m.status}</span>
                     </div>
                   </button>
