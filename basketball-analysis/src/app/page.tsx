@@ -142,6 +142,29 @@ const DISPLAY_WEIGHT = {
   WebkitTextStrokeWidth: '0.55px',
 } as const
 
+/** AI ANALYSIS is the third run that has to be weight-solved, and it is solved
+ *  the same way the display lines are. Boxed registers 400/600/800, and the
+ *  `font-medium` this element carried resolved DOWN to 400 — measured, the two
+ *  render identically — which drew the run 6.0% short in stem and 10-11% short
+ *  in ink area at EVERY coverage level from 0.25 to 0.90. Boxed Semibold
+ *  overshoots (stem +7.5%, area ratio 1.02-1.10), and there is no cut between,
+ *  so the stroke carries it exactly as on the display lines. Solved jointly
+ *  with the size and the tracking, because the stroke inflates cap height and
+ *  the size then has to come back down, and the advance follows the size:
+ *
+ *    size/stroke/track       adv  cap      stem    area ratio .25 -> .90
+ *    canonical               390  32.305   5.624   1.000 x6
+ *    21.15 / 0    / .3034    390  32.109   5.289   0.922 .888 .906 .899 .926 .955
+ *    21.15 / 600  / .3034    390  32.11    6.045   1.022 1.001 1.024 1.035 1.081 1.100
+ *    20.95 / .250 / .3107    390  32.37    5.587   1.021 .986 .998 1.001 1.023 1.000
+ *
+ *  The last row is what ships: it straddles 1.0 across the whole ladder, where
+ *  the shipped run sat under it at every level. */
+const MICROCAPS_WEIGHT = {
+  fontWeight: 500,
+  WebkitTextStrokeWidth: '0.25px',
+} as const
+
 /** Inter-class grotesque, weight solved against canonical — see above. */
 const WORDMARK = {
   fontFamily: 'var(--font-geist-sans)',
@@ -197,7 +220,7 @@ export default function Home() {
       <div
         data-splash="aianalysis"
         className="absolute left-[147.94px] top-[291.16px] font-medium leading-[23px] text-[var(--shotiq-color-graphite)]"
-        style={{ fontSize: '21.15px', letterSpacing: '0.3034em', wordSpacing: '-2.76px', transform: 'translateY(0.553px)' }}
+        style={{ ...MICROCAPS_WEIGHT, fontSize: '20.95px', letterSpacing: '0.3107em', wordSpacing: '-2.76px', transform: 'translateY(0.553px)' }}
       >
         AI ANALYSIS
       </div>
