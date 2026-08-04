@@ -1064,6 +1064,9 @@ struct WorkoutCalendarView: View {  // 059
     private var isDataMonth: Bool { monthIndex == 4 }
     private let completed: Set<Int> = [4, 5, 6, 9, 12, 15, 18]
     private let missed: Set<Int> = [10, 17]
+    /// Canonical greys 24 with no marker and no duration — the legend's
+    /// "no workout" state. 31 falls outside the scheduled range already.
+    private let noWorkout: Set<Int> = [24]
     private let minutes: [Int: String] = [4: "18 min", 5: "17 min", 6: "20 min", 9: "15 min",
                                           12: "17 min", 15: "15 min", 18: "18 min"]
     private let weekdayNames = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"]
@@ -1116,7 +1119,13 @@ struct WorkoutCalendarView: View {  // 059
                                     .foregroundStyle(ShotIQColor.graphite)
                             }
                             if isDataMonth {
-                                ForEach([27, 28, 29, 30], id: \.self) { d in adjacentCell(d) }
+                                // Offset ids, exactly as the trailing run below does.
+                                // These April cells print 27-30, and so do May's real
+                                // 27-30 further down the SAME LazyVGrid — identical
+                                // \.self ids in one grid collide, SwiftUI keeps the
+                                // first of each and silently drops the later four, so
+                                // the month ended at 26 with 31 stranded.
+                                ForEach(227...230, id: \.self) { d in adjacentCell(d - 200) }
                             }
                             ForEach(1...daysInMonth[monthIndex], id: \.self) { d in dayCell(d) }
                             if isDataMonth {
@@ -1226,7 +1235,7 @@ struct WorkoutCalendarView: View {  // 059
                         Image(systemName: "xmark.circle").font(.system(size: 12))
                             .foregroundStyle(ShotIQColor.reviewRed)
                         Text("Missed").shotiqBody(7).foregroundStyle(ShotIQColor.reviewRed)
-                    } else if d >= 8 && d <= 30 {
+                    } else if d >= 8 && d <= 30 && !noWorkout.contains(d) {
                         Circle().stroke(ShotIQColor.shotiqOrange, lineWidth: 1.3)
                             .frame(width: 12, height: 12)
                         Text("20 min").shotiqBody(7).foregroundStyle(ShotIQColor.graphite)
