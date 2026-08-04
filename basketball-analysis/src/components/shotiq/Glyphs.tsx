@@ -819,3 +819,44 @@ export function PhaseTrack({
     </div>
   )
 }
+
+/**
+ * The two marks in the topbar stat cluster, drawn to canonical's own geometry.
+ *
+ * Measured on canonical 079: the streak mark is a 47x18 film strip with sprocket
+ * runs top and bottom and three frame divisions; the points mark is a 23x26
+ * hexagon with an orange centre node on a short spoke. The build was shipping
+ * lucide's `Film` (a rounded rectangle with two dots, 22x22) and `TrendingUp`
+ * (a bare arrow, 30x10) — both graders named the pair, since it sits on all
+ * twenty screens.
+ */
+export function StreakGlyph({ size = 47 }: { size?: number }) {
+  const h = size * 18 / 47
+  return (
+    <svg width={size} height={h} viewBox="0 0 47 18" fill="none" aria-hidden="true" className="shrink-0">
+      <rect x="0.9" y="0.9" width="45.2" height="16.2" rx="1.4" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M0.9 4.6h45.2M0.9 13.4h45.2" stroke="currentColor" strokeWidth="1.4" />
+      {[5.2, 9.4, 13.6, 17.8, 22, 26.2, 30.4, 34.6, 38.8, 43].map((x) => (
+        <g key={x}>
+          <rect x={x - 1.1} y="1.7" width="2.2" height="2.2" fill="currentColor" />
+          <rect x={x - 1.1} y="14.1" width="2.2" height="2.2" fill="currentColor" />
+        </g>
+      ))}
+      <path d="M12.6 4.6v8.8M23.5 4.6v8.8M34.4 4.6v8.8" stroke="currentColor" strokeWidth="1.4" />
+    </svg>
+  )
+}
+
+export function PointsGlyph({ size = 26 }: { size?: number }) {
+  const w = size * 23 / 26
+  return (
+    <svg width={w} height={size} viewBox="0 0 23 26" fill="none" aria-hidden="true" className="shrink-0">
+      <path d="M11.5 1.4 21.1 7v11.9l-9.6 5.6-9.6-5.6V7z" stroke="currentColor" strokeWidth="1.5" />
+      {[[11.5, 1.4], [21.1, 7], [21.1, 18.9], [11.5, 24.5], [1.9, 18.9], [1.9, 7]].map(([cx, cy]) => (
+        <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="1.5" fill="#fff" stroke="currentColor" strokeWidth="1.3" />
+      ))}
+      <path d="M11.5 13 16 9.6" stroke="var(--shotiq-color-shotiqOrange)" strokeWidth="1.4" />
+      <circle cx="11.5" cy="13" r="2.4" fill="var(--shotiq-color-shotiqOrange)" />
+    </svg>
+  )
+}

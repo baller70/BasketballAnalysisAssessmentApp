@@ -23,7 +23,7 @@ import {
   SlidersHorizontal, Rocket, type LucideIcon,
 } from "lucide-react"
 import { useAuthStore } from "@/stores/authStore"
-import { PoseGlyph } from "@/components/shotiq/Glyphs"
+import { PoseGlyph, StreakGlyph, PointsGlyph } from "@/components/shotiq/Glyphs"
 
 export type IconType = LucideIcon
 
@@ -121,17 +121,20 @@ export function ShotIQShell({
           </button>
 
           <div className="flex h-[38px] items-center gap-[10px] border-l border-[var(--shotiq-color-rule)] px-[20px]">
-            <Film className="h-[22px] w-[22px]" strokeWidth={1.5} />
+            <StreakGlyph size={44} />
             <div className="text-left">
-              <div className="shotiq-numeric text-[17px] leading-[18px]">{streak}</div>
+              {/* Canonical sets these at cap 18; 17px of the condensed face draws
+                  12-13. Ink density already matched at 0.388 against 0.389, so
+                  the weight was right and only the size was wrong. */}
+              <div className="shotiq-numeric text-[23px] leading-[24px]">{streak}</div>
               <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">DAY STREAK</div>
             </div>
           </div>
 
           <div className="flex h-[38px] items-center gap-[10px] border-l border-[var(--shotiq-color-rule)] px-[20px]">
-            <TrendingUp className="h-[20px] w-[20px]" strokeWidth={1.6} />
+            <PointsGlyph size={25} />
             <div className="text-left">
-              <div className="shotiq-numeric text-[17px] leading-[18px]">{points}</div>
+              <div className="shotiq-numeric text-[23px] leading-[24px]">{points}</div>
               <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">POINTS</div>
             </div>
           </div>
