@@ -89,16 +89,20 @@ import { ShotIQMark, ShotArcDiagram, CourtWatermark, MARK, DIAGRAM } from '@/com
  * The previous build used Semibold, which measured +14% stem, +11% ink and a
  * visibly heavier line against canonical in a 2x crop.
  *
- * Tracking on line 2 is 0.0435em rather than the 0.0429em that zeroed its
- * advance under the project harness's rasteriser. Chromium hints glyphs unless
- * it is launched with --font-render-hinting=none, and the two rasterisations
- * disagree on this line by 3-4 device px of advance. 0.0435em is the point at
- * which NOTHING gets worse: the unhinted advance stays at 398 against
- * canonical's 397, the hinted one goes 394 -> 396, and the inter-glyph gap
- * moves toward canonical's 7.45 in both (6.64 -> 6.82 unhinted, 6.36 -> 6.64
- * hinted). 0.0448em would zero the hinted advance but push the unhinted one to
- * 400, trading one error for another. Line 1 is deliberately NOT tightened, for
- * the reason below.
+ * Neither display line's tracking is tuned to close its ADVANCE, and that is a
+ * measured decision rather than an omission. Chromium hints glyphs unless it is
+ * launched with --font-render-hinting=none, which the project harness passes
+ * and a bare `chromium.launch()` does not, and the two rasterisations of THIS
+ * PAGE disagree by 2-4 device px on both lines:
+ *
+ *   line 1   canonical adv 403 gap 7.36 | unhinted 403 / 6.82 | hinted 407 / 7.09
+ *   line 2   canonical adv 397 gap 7.45 | unhinted 397 / 6.82 | hinted 395 / 6.55
+ *
+ * Line 2 was tried at 0.0435em: on the page it left the hinted render bit-for
+ * -bit unchanged (395 / 6.55 / x0 229) and moved the unhinted advance off its
+ * exact 397 to 399. The rounding step is ~2 device px and the two rasterisers
+ * round opposite ways, so there is no value that improves one without damaging
+ * the other. 0.0429em keeps the unhinted advance exact and is kept.
  *
  * Line 1's tracking is NOT tuned to close its advance. Under the hinted
  * rasteriser it measures 408 against canonical's 403; the whole of that lands
@@ -261,7 +265,7 @@ export default function Home() {
       </div>
       <div
         data-splash="line2"
-        className="shotiq-display absolute inset-x-0 top-[570.53px] text-center leading-[41px] tracking-[0.0435em]"
+        className="shotiq-display absolute inset-x-0 top-[570.53px] text-center leading-[41px] tracking-[0.0429em]"
         style={{ ...DISPLAY_WEIGHT, WebkitTextStrokeWidth: '0.535px', fontSize: '36.36px', wordSpacing: '2.10px', paddingLeft: '1.38px', transform: 'translateY(-0.341px)' }}
       >
         <span className="text-[var(--shotiq-color-shotiqOrange)]">BUILD</span>{" "}
