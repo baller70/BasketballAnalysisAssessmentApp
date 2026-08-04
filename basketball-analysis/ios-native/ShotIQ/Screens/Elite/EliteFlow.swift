@@ -77,6 +77,16 @@ fileprivate struct PlayerCardExportView: View {
     }
 }
 
+/// Career shooting rates arrive from the API as 0-1 fractions (the seed carries
+/// `careerPct: 0.459`, i.e. 45.9%). Every display site formatted them with
+/// "%.1f%%" and no multiply, so a 62.5% shooter printed as "0.5%" and an 87.5%
+/// free-throw shooter as "0.9%". One formatter now owns the conversion so the
+/// five sites cannot drift apart again.
+func shotiqPercentText(_ fraction: Double?) -> String {
+    guard let fraction else { return "—" }
+    return String(format: "%.1f%%", fraction * 100)
+}
+
 struct PlayerCardView: View {       // 048
     @EnvironmentObject var app: AppState
     @State private var cardImage: Image?
@@ -1310,7 +1320,7 @@ struct EliteShootersView: View {    // 052
                             VStack(spacing: 3) {
                                 Text("FG%").shotiqMicroCaps()
                                     .foregroundStyle(ShotIQColor.graphite)
-                                Text(s.careerPct.map { String(format: "%.1f%%", $0) } ?? "—")
+                                Text(shotiqPercentText(s.careerPct))
                                     .font(.custom("Tungsten-Semibold", size: 22)).foregroundStyle(ShotIQColor.ink)
                                     .lineLimit(1).minimumScaleFactor(0.7)
                             }
@@ -1433,10 +1443,10 @@ struct EliteShooterDetailView: View { // 053
                                 }
                                 Spacer()
                                 Button {
-                                    let fg = shooter.careerPct.map { String(format: "%.1f%%", $0) } ?? "—"
+                                    let fg = shotiqPercentText(shooter.careerPct)
                                     info = EliteInfoNote(
                                         title: shooter.name,
-                                        message: "\(shooter.position) • \(shooter.team) (\(shooter.league)). \(shooter.tier ?? "Elite") \(shooter.era ?? "era") shooter standing \(shooter.height / 12)'\(shooter.height % 12)\" at \(shooter.weight) lb, with a \(fg) career field-goal percentage and \(String(format: "%.1f%%", shooter.careerFreeThrowPct)) from the line.")
+                                        message: "\(shooter.position) • \(shooter.team) (\(shooter.league)). \(shooter.tier ?? "Elite") \(shooter.era ?? "era") shooter standing \(shooter.height / 12)'\(shooter.height % 12)\" at \(shooter.weight) lb, with a \(fg) career field-goal percentage and \(shotiqPercentText(shooter.careerFreeThrowPct)) from the line.")
                                 } label: {
                                     HStack(spacing: 3) {
                                         Text("View bio").shotiqBody(14).foregroundStyle(ShotIQColor.shotiqOrange)
@@ -1451,9 +1461,9 @@ struct EliteShooterDetailView: View { // 053
                             HStack(alignment: .top, spacing: 12) {
                                 ShotIQCard {
                                     HStack(spacing: 0) {
-                                        summaryStat("FG%", shooter.careerPct.map { String(format: "%.1f%%", $0) } ?? "—")
+                                        summaryStat("FG%", shotiqPercentText(shooter.careerPct))
                                         Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 38)
-                                        summaryStat("FT%", String(format: "%.1f%%", shooter.careerFreeThrowPct))
+                                        summaryStat("FT%", shotiqPercentText(shooter.careerFreeThrowPct))
                                         Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 38)
                                         summaryStat("HEIGHT", "\(shooter.height / 12)'\(shooter.height % 12)\"")
                                         Rectangle().fill(ShotIQColor.rule).frame(width: 1, height: 38)
@@ -1599,7 +1609,7 @@ struct EliteShooterDetailView: View { // 053
                                         .stroke(savedReference ? ShotIQColor.shotiqOrange : ShotIQColor.rule))
                                 }
                                 .buttonStyle(.plain)
-                                ShareLink(item: "Studying \(shooter.name)'s shooting form on ShotIQ — \(shooter.careerPct.map { String(format: "%.1f%%", $0) } ?? "elite") career FG. 🏀") {
+                                ShareLink(item: "Studying \(shooter.name)'s shooting form on ShotIQ — \(shotiqPercentText(shooter.careerPct)) career FG. 🏀") {
                                     Image(systemName: "square.and.arrow.up").font(.system(size: 17))
                                         .foregroundStyle(ShotIQColor.ink)
                                         .frame(width: 52, height: 52)
