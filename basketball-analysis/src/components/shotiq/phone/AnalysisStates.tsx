@@ -210,9 +210,9 @@ export function AnalysisTakingLonger({ onKeepWaiting, onCancel }: {
     <PhoneScreen testid="screen-ios-analysis-taking-longer" tab="home" pad={20.3}>
       <PhoneIdentity className="pt-[11px]" />
 
-      <div className="mt-[13px] rounded-[8px] border border-[var(--shotiq-color-rule)] px-[16px] pb-[14px] pt-[16px]">
+      <div className="mt-[13px] rounded-[8px] border border-[var(--shotiq-color-rule)] px-[16px] pb-[10px] pt-[12px]">
         <div className="flex justify-center">
-          <svg width="72" height="72" viewBox="0 0 72 72" aria-hidden="true" className="block">
+          <svg width="66" height="66" viewBox="0 0 72 72" aria-hidden="true" className="block">
             <circle cx="36" cy="36" r="33" fill="none" stroke="var(--shotiq-color-rule)" strokeWidth="3" strokeDasharray="4 5" />
             <path d="M36 3a33 33 0 0 1 0 66" fill="none" stroke={BLUE} strokeWidth="3.4" strokeLinecap="round" />
             <g>
@@ -224,13 +224,13 @@ export function AnalysisTakingLonger({ onKeepWaiting, onCancel }: {
             </g>
           </svg>
         </div>
-        <PhoneHeading size={27} className="mt-[13px] text-center">ANALYSIS TAKING LONGER</PhoneHeading>
-        <p className="mt-[9px] text-center text-[11.5px] leading-[14px] text-[var(--shotiq-color-graphite)]">
+        <PhoneHeading size={27} className="mt-[9px] text-center">ANALYSIS TAKING LONGER</PhoneHeading>
+        <p className="mt-[7px] text-center text-[11.5px] leading-[14px] text-[var(--shotiq-color-graphite)]">
           High-quality biomechanical analysis can take several<br />
           minutes. Your shot is being processed in the background.
         </p>
 
-        <div className="mt-[13px] flex items-start">
+        <div className="mt-[9px] flex items-start">
           {([["Upload complete", "100%", "upload", false],
              ["Analyzing motion", "Estimating key angles", "pose", true],
              ["Building insights", "Pending", "plan", false]] as
@@ -238,7 +238,7 @@ export function AnalysisTakingLonger({ onKeepWaiting, onCancel }: {
             <React.Fragment key={t}>
               {i > 0 && <span aria-hidden="true" className="mt-[16px] h-px min-w-[10px] flex-1 bg-[var(--shotiq-color-rule)]" />}
               <span className="shrink-0 basis-[100px] text-center">
-                <span className="flex h-[32px] items-center justify-center" style={{ color: on ? BLUE : "var(--shotiq-color-ink)" }}>
+                <span className="flex h-[28px] items-center justify-center" style={{ color: on ? BLUE : "var(--shotiq-color-ink)" }}>
                   {kind === "upload" ? (
                     <svg width="34" height="20" viewBox="0 0 34 20" aria-hidden="true" className="block">
                       <rect x="1" y="1" width="32" height="18" rx="1.2" fill="none" stroke="currentColor" strokeWidth="1.5" />
@@ -255,7 +255,7 @@ export function AnalysisTakingLonger({ onKeepWaiting, onCancel }: {
                     </svg>
                   ) : <StageGlyph kind="plan" />}
                 </span>
-                <span className="mt-[7px] block text-[10.5px] leading-[12px]">{t}</span>
+                <span className="mt-[5px] block text-[10.5px] leading-[12px]">{t}</span>
                 <span className="mt-[3px] block text-[10.5px] leading-[12px]"
                       style={{ color: on ? BLUE : "var(--shotiq-color-graphite)" }}>{s}</span>
               </span>
@@ -263,7 +263,7 @@ export function AnalysisTakingLonger({ onKeepWaiting, onCancel }: {
           ))}
         </div>
 
-        <div className="mt-[13px] flex items-start gap-[14px] border-t border-[var(--shotiq-color-rule)] pt-[13px]">
+        <div className="mt-[9px] flex items-start gap-[14px] border-t border-[var(--shotiq-color-rule)] pt-[9px]">
           <ClockGlyph size={40} tone="#111111" />
           <div className="min-w-0">
             <div className="text-[13.5px] font-semibold leading-[15px]">We&apos;ll notify you when it&apos;s ready</div>
@@ -275,7 +275,7 @@ export function AnalysisTakingLonger({ onKeepWaiting, onCancel }: {
       </div>
 
       <button type="button" data-testid="notify-when-ready"
-              className="mt-[8px] flex h-[32.2px] w-full items-center justify-center gap-[12px] rounded-[6px] text-[15px] font-medium text-white"
+              className="mt-[6px] flex h-[32.2px] w-full items-center justify-center gap-[12px] rounded-[6px] text-[15px] font-medium text-white"
               style={{ background: BLUE }}>
         <svg width="16" height="18" viewBox="0 0 16 18" aria-hidden="true">
           <path d="M8 1.4a5 5 0 0 1 5 5v4l1.6 2.6H1.4L3 10.4v-4a5 5 0 0 1 5-5Z" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinejoin="round" />
@@ -284,7 +284,7 @@ export function AnalysisTakingLonger({ onKeepWaiting, onCancel }: {
         Notify me when ready
       </button>
       <button type="button" onClick={onKeepWaiting} data-testid="keep-waiting"
-              className="mt-[6px] flex h-[30.4px] w-full items-center justify-center gap-[10px] rounded-[6px] border border-[var(--shotiq-color-rule)] text-[14px]">
+              className="mt-[4px] flex h-[30.4px] w-full items-center justify-center gap-[10px] rounded-[6px] border border-[var(--shotiq-color-rule)] text-[14px]">
         <svg width="15" height="15" viewBox="0 0 15 15" aria-hidden="true">
           <path d="M13.2 7.5A5.7 5.7 0 0 1 3.4 11.5M1.8 7.5A5.7 5.7 0 0 1 11.6 3.5" fill="none" stroke="#111" strokeWidth="1.4" strokeLinecap="round" />
           <path d="M11.6 0.8v3h-3M3.4 14.2v-3h3" fill="none" stroke="#111" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
@@ -292,14 +292,14 @@ export function AnalysisTakingLonger({ onKeepWaiting, onCancel }: {
         Keep waiting
       </button>
       <button type="button" onClick={onCancel} data-testid="cancel-analysis"
-              className="mt-[6px] flex h-[30.4px] w-full items-center justify-center gap-[10px] rounded-[6px] border border-[var(--shotiq-color-rule)] text-[14px]">
+              className="mt-[4px] flex h-[30.4px] w-full items-center justify-center gap-[10px] rounded-[6px] border border-[var(--shotiq-color-rule)] text-[14px]">
         <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
           <path d="M1.6 1.6l10.8 10.8M12.4 1.6L1.6 12.4" fill="none" stroke="#111" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
         Cancel analysis
       </button>
 
-      <div className="mt-[13px] flex items-baseline justify-between">
+      <div className="mt-[9px] flex items-baseline justify-between">
         <PhoneHeading size={18}>ANALYSIS QUEUE</PhoneHeading>
         <span className="text-[11px] leading-[12px] text-[var(--shotiq-color-graphite)]">1 ahead of you</span>
       </div>
@@ -317,7 +317,7 @@ export function AnalysisTakingLonger({ onKeepWaiting, onCancel }: {
         </div>
       </div>
 
-      <PhaseTrack className="mt-[10px]" figure={36} label={11} underline />
+      <PhaseTrack className="mt-[7px]" figure={36} label={11} underline />
 
       <div className="mt-[8px] border-t border-[var(--shotiq-color-rule)] pt-[9px]">
         <PhoneCoachingTarget />

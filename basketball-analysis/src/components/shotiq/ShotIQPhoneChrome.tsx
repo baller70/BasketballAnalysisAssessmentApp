@@ -52,7 +52,7 @@
 import React from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { X, ChevronRight, LogOut, Menu } from "lucide-react"
+import { X, ChevronRight, LogOut, Settings } from "lucide-react"
 import { useAuthStore } from "@/stores/authStore"
 import { SIDEBAR_GROUPS, SIDEBAR_FOOTER, SIDEBAR_LEGAL, type IconType } from "@/components/shotiq/ShotIQShell"
 
@@ -61,7 +61,13 @@ import { SIDEBAR_GROUPS, SIDEBAR_FOOTER, SIDEBAR_LEGAL, type IconType } from "@/
 const TOPBAR_H = 39      // 84px canonical = 38.7pt, incl. the 1px hairline
 const GUTTER = 18        // 39px canonical = 18.0pt
 const TABBAR_H = 61      // 132px canonical = 60.8pt, incl. the 1px hairline
-const TAB_ICON = 24      // 52px canonical = 24.0pt, and the declared icon grid
+/**
+ * The icon BOX. The glyphs are drawn on the 24 grid the sidecars declare, but a
+ * 24-grid drawing carries the family's optical margin, so at a 24px box the ink
+ * measured 44 canonical px against canonical's 52. The box is sized so the INK
+ * lands on canonical's 24.0pt: 24 x 52/44 = 28.4.
+ */
+const TAB_ICON = 28
 
 /* ------------------------------------------------------------- tab glyphs */
 
@@ -205,11 +211,15 @@ export function PhoneTopBar({ onMenu, menuOpen }: { onMenu: () => void; menuOpen
         aria-expanded={menuOpen}
         aria-label={menuOpen ? "Close menu" : "Open menu"}
         data-testid="phone-menu-button"
-        className="-mr-[6px] flex h-[32px] w-[32px] items-center justify-center"
+        className="-mr-[3px] flex h-[32px] w-[32px] items-center justify-center"
       >
+        {/* Canonical 018 draws a gear here and canonical 020 - the sheet it
+            opens - draws the X that closes it. Measured: canonical's mark inks
+            43x42px; a 20px hamburger inked 28 and the gear at 24px inked 48, so
+            the box is 21px. The -3px pull sets the ink gutter to canonical's 44. */}
         {menuOpen
           ? <X className="h-[21px] w-[21px]" strokeWidth={1.8} />
-          : <Menu className="h-[20px] w-[20px]" strokeWidth={1.8} />}
+          : <Settings className="h-[21px] w-[21px]" strokeWidth={1.8} />}
       </button>
     </header>
   )
@@ -311,12 +321,15 @@ export function PhoneTabBar() {
                   active
                     ? "text-[var(--shotiq-color-shotiqOrange)]"
                     : "text-[var(--shotiq-color-ink)]"}`}
-                // 19px canonical (8.8pt) from the hairline to the icon ink top.
-                style={{ paddingTop: 9 }}>
+                // Canonical puts 19px (8.8pt) between the hairline and the icon
+                // INK. The 28px box carries ~10px of that above the ink itself,
+                // so the padding supplies the remaining 9px: 4 CSS px.
+                style={{ paddingTop: 4 }}>
             <TabGlyph kind={t.key} active={active} />
-            {/* 10px canonical (4.6pt) icon-to-label gap; cap 14px (6.5pt), which
-                the body face draws at 0.68em -> 9.5px. */}
-            <span style={{ marginTop: 5, fontSize: 9.5, lineHeight: "11px" }}
+            {/* The 10px (4.6pt) canonical icon-to-label gap is already spent by
+                the box margin under the glyph, so the label needs no extra top.
+                Cap: 9.5px drew a 16px cap against canonical's 14 -> 8.5px. */}
+            <span style={{ marginTop: 0, fontSize: 8.5, lineHeight: "10px" }}
                   className={active
                     ? "text-[var(--shotiq-color-shotiqOrange)]"
                     : "text-[var(--shotiq-color-graphite)]"}>
