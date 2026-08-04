@@ -1208,13 +1208,17 @@ struct OnboardingReviewView: View {
                         Rectangle().fill(ShotIQColor.rule).frame(height: 1).padding(.top, 16)
 
                         HStack(alignment: .top, spacing: 14) {
-                            ZStack {
-                                Circle().fill(ShotIQColor.warmCanvas)
-                                Text(shotiqInitials(app.user))
-                                    .shotiqCondensed(24, weight: .heavy)
-                                    .foregroundStyle(ShotIQColor.graphite)
-                            }
-                            .frame(width: 74, height: 74)
+                            // Canonical prints the player's headshot here, not
+                            // initials. Its sidecar declares no photo region for
+                            // this screen, so the crop pipeline had no source and
+                            // the app fell back to a monogram — the photograph is
+                            // in the render regardless, and is now cut from it.
+                            // If the asset were ever missing, CanonicalPhoto paints
+                            // its dark surface rather than a monogram, so the crop
+                            // is bundled alongside this change, not assumed.
+                            CanonicalPhoto("013-avatar", width: 74, height: 74,
+                                           cornerRadius: 37)
+                                .overlay(Circle().stroke(ShotIQColor.rule, lineWidth: 1))
                             VStack(alignment: .leading, spacing: 4) {
                                 Text((app.user?.displayName ?? "Player").uppercased())
                                     .shotiqCondensed(26, weight: .heavy)
