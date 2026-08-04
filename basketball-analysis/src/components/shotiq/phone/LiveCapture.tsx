@@ -90,7 +90,7 @@ function Primer({ onContinue, onSkip }: { onContinue: () => void; onSkip: () => 
         <div className="flex shrink-0 items-start text-center">
           <div className="w-[62px]">
             <div className="shotiq-numeric text-[19px] leading-[19px]">82</div>
-            <div className="shotiq-microcaps mt-[3px] whitespace-nowrap text-[8px] leading-[9px]" style={{ color: GRAPHITE }}>FORM SCORE</div>
+            <div className="shotiq-microcaps mt-[3px] whitespace-nowrap leading-[9px]" style={{ "--shotiq-microcaps-size": "8px", color: GRAPHITE } as React.CSSProperties} >FORM SCORE</div>
             <div className="mt-[4px] text-[8px] leading-[9.5px]" style={{ color: GRAPHITE }}>{TARGET}</div>
           </div>
           <span aria-hidden="true" className="mx-[6px] h-[57px] w-px" style={{ background: RULE }} />
@@ -448,7 +448,7 @@ function Readiness({
 
       <div className="mt-[11px] flex items-center gap-[16px]">
         <BackArrow w={15} />
-        <span className="shotiq-microcaps text-[10px] leading-[10px]" style={{ color: GRAPHITE }}>AI ANALYSIS</span>
+        <span className="shotiq-microcaps leading-[10px]" style={{ "--shotiq-microcaps-size": "10px", color: GRAPHITE } as React.CSSProperties} >AI ANALYSIS</span>
       </div>
       <Head cap={32.3} className="mt-[10px]">READINESS CHECK</Head>
       <p className="mt-[8px] text-[12.5px] leading-[14px]" style={{ color: GRAPHITE }}>
@@ -589,7 +589,7 @@ function Ready({
         {[["24", "SHOTS"], ["15", "MAKES"], ["62.5%", "MAKE %"]].map(([v, l]) => (
           <div key={l} className="flex-1">
             <div className="shotiq-numeric text-[22px] leading-[24px]">{v}</div>
-            <div className="shotiq-microcaps mt-[4px] text-[9px] leading-[10px]" style={{ color: GRAPHITE }}>{l}</div>
+            <div className="shotiq-microcaps mt-[4px] leading-[10px]" style={{ "--shotiq-microcaps-size": "9px", color: GRAPHITE } as React.CSSProperties} >{l}</div>
           </div>
         ))}
         <div className="w-[105px] shrink-0">
@@ -671,7 +671,7 @@ function Recording({
         <div className="pointer-events-none absolute right-[10px] top-[128px] w-[76px] text-right">
           {[["SHOTS", String(shots)], ["MAKES", String(makes)], ["MAKE %", pct]].map(([l, v], i) => (
             <div key={l} className={i ? "mt-[6px] border-t border-white/60 pt-[6px]" : ""}>
-              <div className="shotiq-microcaps whitespace-nowrap text-[9px] leading-[10px] text-white">{l}</div>
+              <div className="shotiq-microcaps whitespace-nowrap leading-[10px] text-white" style={{ "--shotiq-microcaps-size": "9px" } as React.CSSProperties}>{l}</div>
               <div className="shotiq-numeric mt-[1px] text-[25px] leading-[26px] text-white">{v}</div>
             </div>
           ))}
@@ -719,7 +719,7 @@ function Recording({
               ? <svg width="15" height="17" viewBox="0 0 15 17" aria-hidden="true"><path d="M2 1.5 13 8.5 2 15.5z" fill={INK} /></svg>
               : <svg width="13" height="17" viewBox="0 0 13 17" aria-hidden="true"><rect x="0" y="0" width="4.4" height="17" fill={INK} /><rect x="8.6" y="0" width="4.4" height="17" fill={INK} /></svg>}
           </button>
-          <div className="shotiq-microcaps mt-[6px] text-[9px]" style={{ color: GRAPHITE }}>PAUSE</div>
+          <div className="shotiq-microcaps mt-[6px]" style={{ "--shotiq-microcaps-size": "9px", color: GRAPHITE } as React.CSSProperties} >PAUSE</div>
         </div>
         <div className="text-center">
           <button type="button" onClick={onStop} data-testid="capture-stop-recording"
@@ -735,7 +735,7 @@ function Recording({
                   style={{ borderColor: RULE }} aria-label="End round">
             <FlagGlyph size={19} />
           </button>
-          <div className="shotiq-microcaps mt-[6px] text-[9px]" style={{ color: GRAPHITE }}>END ROUND</div>
+          <div className="shotiq-microcaps mt-[6px]" style={{ "--shotiq-microcaps-size": "9px", color: GRAPHITE } as React.CSSProperties} >END ROUND</div>
         </div>
       </div>
     </PhoneScreen>
@@ -891,7 +891,7 @@ function ShotDetected({
         <div className="mt-[11px] h-px" style={{ background: RULE }} />
         <div className="flex">
           <div className="w-[183px] shrink-0 px-[11px] py-[8px]">
-            <div className="shotiq-microcaps whitespace-nowrap text-[9px]" style={{ color: GRAPHITE }}>FORM SCORE</div>
+            <div className="shotiq-microcaps whitespace-nowrap" style={{ "--shotiq-microcaps-size": "9px", color: GRAPHITE } as React.CSSProperties} >FORM SCORE</div>
             <div className="mt-[5px] flex items-start gap-[10px]">
               <span className="shotiq-numeric text-[42px] leading-[42px]" style={{ color: ORANGE }}>82</span>
               <div className="flex-1 pt-[10px]">
@@ -906,7 +906,7 @@ function ShotDetected({
           <span aria-hidden="true" className="w-px self-stretch" style={{ background: RULE }} />
           <div className="flex min-w-0 flex-1 items-start px-[11px] py-[8px]">
             <div className="min-w-0 flex-1">
-              <div className="shotiq-microcaps text-[9px]" style={{ color: GRAPHITE }}>PRIMARY COACHING TARGET</div>
+              <div className="shotiq-microcaps" style={{ "--shotiq-microcaps-size": "9px", color: GRAPHITE } as React.CSSProperties} >PRIMARY COACHING TARGET</div>
               <div className="mt-[7px] text-[15px] font-semibold leading-[18px]">{TARGET}</div>
             </div>
             <span className="mt-[22px] pl-[6px]"><Chevron h={13} /></span>

@@ -46,7 +46,7 @@ export function PlayerBio({
     <PhoneScreen testid="screen-ios-player-bio" tab="home" pad={19.4} headerH={46}>
       {/* ------------------------------------------------- step + meter */}
       <div className="flex items-center pt-[12px]">
-        <span className="shotiq-section-label whitespace-nowrap text-[14px] leading-[15px] tracking-[0.09em] text-[var(--shotiq-color-graphite)]">
+        <span className="shotiq-section-label whitespace-nowrap leading-[15px] tracking-[0.09em] text-[var(--shotiq-color-graphite)]" style={{ "--shotiq-label-size": "14px" } as React.CSSProperties}>
           ONBOARDING {step} OF {steps}
         </span>
         <span className="ml-auto flex w-[198px] gap-[6px]">
@@ -142,7 +142,7 @@ export function PlayerBio({
 
       {/* --------------------------------------------- AI-enhanced preview */}
       <div className="mt-[7px] rounded-[8px] border border-[var(--shotiq-color-rule)] px-[10px] pb-[5px] pt-[6px]">
-        <div className="shotiq-section-label text-[11px] leading-[12px] tracking-[0.08em] text-[var(--shotiq-color-graphite)]">
+        <div className="shotiq-section-label leading-[12px] tracking-[0.08em] text-[var(--shotiq-color-graphite)]" style={{ "--shotiq-label-size": "11px" } as React.CSSProperties}>
           AI-ENHANCED PREVIEW
         </div>
         <div className="mt-[6px] flex items-center gap-[13px]">

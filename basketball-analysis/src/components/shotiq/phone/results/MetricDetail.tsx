@@ -99,33 +99,33 @@ export function MetricDetail({
           ))}
         </div>
         <Panel className="w-[144px] shrink-0 px-[10px] pb-[5px] pt-[4px]" style={{ background: "var(--shotiq-color-warmCanvas)" }}>
-          <div className="shotiq-section-label text-[12px] leading-[12px] tracking-[0.075em]">FORM SCORE</div>
+          <div className="shotiq-section-label leading-[12px] tracking-[0.075em]" style={{ "--shotiq-label-size": "12px" } as React.CSSProperties}>FORM SCORE</div>
           <div className="shotiq-numeric mt-[1px] text-[26px] leading-[24px]" style={{ color: ORANGE }}>{score}</div>
           <span className="mt-[3px] block"><ScoreBar score={score} width={122} height={5} /></span>
         </Panel>
       </div>
 
       {/* title ------------------------------------------------------------- */}
-      <div className="mt-[7px] px-[17px]">
+      <div className="mt-[6px] px-[17px]">
         <h1 className="shotiq-display text-[35px] leading-[29px] tracking-[0.01em]">{metric}</h1>
         <div className="mt-[4px] text-[13px] leading-[14px]" style={{ color: GRAPHITE }}>{phase} &nbsp;•&nbsp; {hand}</div>
       </div>
 
       {/* photo + read-out --------------------------------------------------- */}
       <Panel className="mx-[17px] mt-[6px] flex overflow-hidden">
-        <div className="relative w-[176px] shrink-0" style={{ height: 218 }}>
+        <div className="relative w-[176px] shrink-0" style={{ height: 196 }}>
           <Frame src="086-film-4" w="100%" h="100%" radius={0} pos="50% 18%" alt={`Your ${metric.toLowerCase()} at ${phase.toLowerCase()}`} />
           <SkeletonOverlay />
           <span aria-hidden="true" className="absolute left-[52%] top-[26%] h-[26px] w-[19px] rounded-br-full" style={{ background: ORANGE }} />
           <span className="shotiq-numeric absolute left-[63%] top-[31%] rounded-[4px] bg-white px-[7px] py-[3px] text-[15px]">{value}{unit}</span>
         </div>
         <div className="min-w-0 flex-1 px-[12px] py-[8px]">
-          <div className="shotiq-section-label text-[13px] leading-[13px] tracking-[0.075em]">MEASURED</div>
+          <div className="shotiq-section-label leading-[13px] tracking-[0.075em]" style={{ "--shotiq-label-size": "13px" } as React.CSSProperties}>MEASURED</div>
           <div className="shotiq-numeric mt-[1px] text-[44px] leading-[40px]">{value}{unit}</div>
           <div className="shotiq-display text-[16px] leading-[17px] tracking-[0.04em]" style={{ color: GRAPHITE }}>{metric}</div>
           <span aria-hidden="true" className="my-[6px] block h-px" style={{ background: RULE }} />
 
-          <div className="shotiq-section-label text-[13px] leading-[13px] tracking-[0.075em]">ELITE RANGE</div>
+          <div className="shotiq-section-label leading-[13px] tracking-[0.075em]" style={{ "--shotiq-label-size": "13px" } as React.CSSProperties}>ELITE RANGE</div>
           <div className="shotiq-numeric mt-[1px] text-[24px] leading-[25px]" style={{ color: GREEN }}>{low} — {high}</div>
           <EliteSlider />
           <div className="mt-[2px] flex justify-between text-[10.5px]" style={{ color: GRAPHITE }}>
@@ -133,7 +133,7 @@ export function MetricDetail({
           </div>
           <span aria-hidden="true" className="my-[6px] block h-px" style={{ background: RULE }} />
 
-          <div className="shotiq-section-label text-[13px] leading-[13px] tracking-[0.075em]">CONFIDENCE</div>
+          <div className="shotiq-section-label leading-[13px] tracking-[0.075em]" style={{ "--shotiq-label-size": "13px" } as React.CSSProperties}>CONFIDENCE</div>
           <div className="mt-[2px] flex items-end gap-[9px]">
             <span className="shotiq-display text-[22px] leading-[22px] tracking-[0.04em]" style={{ color: BLUE }}>HIGH</span>
             <span className="shotiq-numeric text-[22px] leading-[22px]" style={{ color: BLUE }}>92%</span>
@@ -144,7 +144,7 @@ export function MetricDetail({
       </Panel>
 
       {/* why it matters ----------------------------------------------------- */}
-      <Panel className="mx-[17px] mt-[7px] flex items-center gap-[10px] px-[13px] py-[7px]">
+      <Panel className="mx-[17px] mt-[6px] flex items-center gap-[10px] px-[13px] py-[5px]">
         <div className="min-w-0 flex-1">
           <div className="shotiq-display text-[21px] leading-[21px] tracking-[0.03em]">WHY IT MATTERS</div>
           <p className="mt-[4px] text-[12px] leading-[13.5px]" style={{ color: GRAPHITE }}>
@@ -157,7 +157,7 @@ export function MetricDetail({
       </Panel>
 
       {/* correction cue ------------------------------------------------------ */}
-      <Panel className="mx-[17px] mt-[7px] flex gap-[11px] px-[13px] py-[7px]">
+      <Panel className="mx-[17px] mt-[6px] flex gap-[11px] px-[13px] py-[5px]">
         <div className="w-[176px] shrink-0">
           <div className="shotiq-display text-[21px] leading-[21px] tracking-[0.03em]">CORRECTION CUE</div>
           <div className="mt-[5px] text-[13.5px] leading-[16px]" style={{ color: BLUE }}>Keep elbow stacked under the ball</div>
@@ -178,7 +178,7 @@ export function MetricDetail({
       </Panel>
 
       {/* jump-off rows --------------------------------------------------------- */}
-      <Panel className="mx-[17px] mt-[7px] divide-y divide-[var(--shotiq-color-rule)]">
+      <Panel className="mx-[17px] mt-[6px] divide-y divide-[var(--shotiq-color-rule)]">
         {([["View frame", "See this rep at release", "uploadVideo"], ["Compare elite range", "See how you stack up", "nodeGraph"]] as const).map(([t, s, g]) => (
           <div key={t} className="flex items-center gap-[11px] px-[13px] py-[3px]">
             <ActionGlyph kind={g} height={17} />
@@ -191,7 +191,7 @@ export function MetricDetail({
         ))}
       </Panel>
 
-      <div className="mt-[6px] px-[17px]">
+      <div className="mt-[5px] px-[17px]">
         <PrimaryBar className="!h-[26px]" href="/results/demo/training">Add to training plan</PrimaryBar>
       </div>
 

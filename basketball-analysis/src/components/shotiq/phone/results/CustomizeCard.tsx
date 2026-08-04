@@ -70,7 +70,7 @@ export function CustomizeCard({
 
       {/* live preview card ------------------------------------------------ */}
       <div data-testid="card-preview" className="mx-[23px] mt-[6px] overflow-hidden rounded-[7px] border" style={{ borderColor: RULE }}>
-        <div className="flex h-[31px] items-center justify-between px-[13px]" style={{ background: accent }}>
+        <div className="flex h-[34px] items-center justify-between px-[13px]" style={{ background: accent }}>
           <span className="shotiq-wordmark text-[16px] leading-none tracking-[0.1em] text-white">SHOTIQ</span>
           <span className="shotiq-display text-[13px] leading-none tracking-[0.26em] text-white">AI ANALYSIS</span>
         </div>
@@ -79,7 +79,7 @@ export function CustomizeCard({
             <div className="min-w-0">
               <div className="shotiq-display text-[40px] leading-[34px] tracking-[0.02em]">{first.toUpperCase()}</div>
               <div className="shotiq-display text-[40px] leading-[34px] tracking-[0.02em]">{last.toUpperCase()}</div>
-              <div className="shotiq-microcaps mt-[6px] text-[9px] leading-[10px]" style={{ color: GRAPHITE }}>
+              <div className="shotiq-microcaps mt-[6px] leading-[10px]" style={{ "--shotiq-microcaps-size": "9px", color: GRAPHITE } as React.CSSProperties} >
                 RIGHT-HANDED • ADVANCED
               </div>
             </div>
@@ -104,9 +104,9 @@ export function CustomizeCard({
               <SkeletonOverlay />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="shotiq-section-label text-[13px] leading-[13px] tracking-[0.075em]">FORM SCORE</div>
-              <div className="shotiq-numeric leading-[0.8]" style={{ fontSize: 62, color: accent }}>{score}</div>
-              <ScoreBar score={score} width={82} height={7} />
+              <div className="shotiq-section-label leading-[13px] tracking-[0.075em]" style={{ "--shotiq-label-size": "13px" } as React.CSSProperties}>FORM SCORE</div>
+              <div className="shotiq-numeric leading-[0.8]" style={{ fontSize: 70, color: accent }}>{score}</div>
+              <ScoreBar score={score} width={96} height={8} />
               <div className="shotiq-display mt-[7px] text-[16px] leading-[16px] tracking-[0.04em]" style={{ color: BLUE }}>GOOD</div>
               <div className="mt-[3px] text-[12px] leading-[14px]">Keep elbow stacked through release.</div>
               <div className="mt-[9px] flex divide-x divide-[var(--shotiq-color-rule)] border-t pt-[7px]" style={{ borderColor: RULE }}>
@@ -171,7 +171,7 @@ export function CustomizeCard({
 
       <div className="mt-[9px] px-[23px]">
         <button type="button" onClick={onSave} data-testid="card-save"
-                className="flex h-[34px] w-full items-center justify-center rounded-[6px] text-[16px] font-medium text-white"
+                className="flex h-[36px] w-full items-center justify-center rounded-[6px] text-[16px] font-medium text-white"
                 style={{ background: accent }}>
           Save card
         </button>

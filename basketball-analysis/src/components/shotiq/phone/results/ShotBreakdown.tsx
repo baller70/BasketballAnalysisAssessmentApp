@@ -139,7 +139,7 @@ export function ShotBreakdown({
       <Panel className="mx-[16px] mt-[9px] px-[13px] pb-[8px] pt-[8px]">
         <div className="flex gap-[10px]">
           <div className="min-w-0 flex-1">
-            <div className="shotiq-section-label text-[12px] leading-[12px] tracking-[0.08em]">PHASE COACHING</div>
+            <div className="shotiq-section-label leading-[12px] tracking-[0.08em]" style={{ "--shotiq-label-size": "12px" } as React.CSSProperties}>PHASE COACHING</div>
             <div className="mt-[5px] flex items-center gap-[9px]">
               <span className="text-[23px] font-semibold leading-[24px]">Release</span>
               <PoseFigure phase="release" active height={30} />
@@ -167,7 +167,7 @@ export function ShotBreakdown({
 
       {/* shot context ---------------------------------------------------- */}
       <Panel className="mx-[16px] mt-[9px] px-[10px] pb-[7px] pt-[7px]">
-        <div className="shotiq-section-label text-[12px] leading-[12px] tracking-[0.08em]">SHOT CONTEXT</div>
+        <div className="shotiq-section-label leading-[12px] tracking-[0.08em]" style={{ "--shotiq-label-size": "12px" } as React.CSSProperties}>SHOT CONTEXT</div>
         <div className="mt-[6px] flex divide-x divide-[var(--shotiq-color-rule)]">
           {([
             [<ActionGlyph key="a" kind="nodeGraph" height={16} />, "Catch & Shoot", "Shot Type", INK],

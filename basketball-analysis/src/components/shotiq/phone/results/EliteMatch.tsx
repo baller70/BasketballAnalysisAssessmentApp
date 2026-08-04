@@ -100,10 +100,10 @@ export function EliteMatch({
             </div>
           ))}
         </div>
-        <Frame src="086-film-2" w={74} h={112} radius={4} pos="50% 20%" alt={`${name} at release`} className="shrink-0" />
+        <Frame src="086-film-2" w={74} h={104} radius={4} pos="50% 20%" alt={`${name} at release`} className="shrink-0" />
         <div className="min-w-0 flex-1 text-center">
           <div className="shotiq-display text-[19px] leading-[19px] tracking-[0.04em]">ELITE MATCH</div>
-          <div className="shotiq-numeric leading-[0.86]" style={{ fontSize: 42, color: BLUE }}>
+          <div className="shotiq-numeric leading-[0.86]" style={{ fontSize: 38, color: BLUE }}>
             {match}<span style={{ fontSize: 30 }}>%</span>
           </div>
           <div className="shotiq-display text-[15px] leading-[15px] tracking-[0.04em]" style={{ color: GRAPHITE }}>OVERALL<br />SIMILARITY</div>
@@ -117,7 +117,7 @@ export function EliteMatch({
             {shared} <span className="text-[11px]" style={{ color: GRAPHITE }}>OF</span> {of}
           </div>
         </div>
-        <Frame src="086-film-5" w={74} h={112} radius={4} pos="50% 20%" alt={`${reference} at release`} className="shrink-0" />
+        <Frame src="086-film-5" w={74} h={104} radius={4} pos="50% 20%" alt={`${reference} at release`} className="shrink-0" />
         <div className="w-[64px] shrink-0 text-right">
           <div className="shotiq-display text-[19px] leading-[19px] tracking-[0.03em]">ELITE<br />GUARD</div>
           <div className="mt-[2px] text-[9.5px] leading-[11px]" style={{ color: GRAPHITE }}>Reference Profile</div>
@@ -127,7 +127,7 @@ export function EliteMatch({
       </Panel>
 
       {/* two rows ------------------------------------------------------------- */}
-      <div className="mt-[7px] flex gap-[10px] px-[14px]">
+      <div className="mt-[5px] flex gap-[10px] px-[14px]">
         <Panel className="flex h-[28px] flex-1 items-center px-[11px]">
           <FileText className="h-[15px] w-[15px]" strokeWidth={1.6} />
           <span className="ml-[9px] text-[13.5px] leading-[15px]">View elite profile</span>
@@ -141,7 +141,7 @@ export function EliteMatch({
       </div>
 
       {/* mechanics comparison --------------------------------------------------- */}
-      <div className="mt-[8px] flex items-center px-[15px]">
+      <div className="mt-[6px] flex items-center px-[15px]">
         <span className="shotiq-display text-[24px] leading-[24px] tracking-[0.03em]">MECHANICS COMPARISON</span>
         <span className="ml-auto flex items-center gap-[11px] text-[11.5px]">
           <span className="flex items-center gap-[4px]"><Dot c={ORANGE} />You</span>
@@ -174,7 +174,7 @@ export function EliteMatch({
       </div>
 
       {/* release-frame match ------------------------------------------------------ */}
-      <div className="mt-[7px] flex items-center px-[14px]">
+      <div className="mt-[5px] flex items-center px-[14px]">
         <span className="shotiq-display text-[24px] leading-[24px] tracking-[0.03em]">RELEASE FRAME MATCH</span>
         <span className="ml-auto flex items-center gap-[6px] text-[11px]" style={{ color: GRAPHITE }}>
           Average frame alignment
@@ -197,7 +197,7 @@ export function EliteMatch({
       </button>
 
       {/* target alignment ------------------------------------------------------------ */}
-      <Panel className="mx-[14px] mt-[6px] flex items-center px-[12px] py-[5px]">
+      <Panel className="mx-[14px] mt-[5px] flex items-center px-[12px] py-[4px]">
         <span className="min-w-0">
           <span className="shotiq-section-label block text-[11.5px] leading-[12px] tracking-[0.08em]">PRIMARY COACHING TARGET ALIGNMENT</span>
           <span className="mt-[4px] block truncate text-[16px] font-semibold leading-[18px]">Keep elbow stacked through release</span>

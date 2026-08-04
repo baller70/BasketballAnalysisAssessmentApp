@@ -106,7 +106,7 @@ export function NoAnalysisYet({
 
       <div className="mt-[16px] flex items-baseline justify-between">
         <PhoneHeading size={19}>ANALYSIS HISTORY</PhoneHeading>
-        <span className="shotiq-microcaps text-[11px] leading-[12px] text-[var(--shotiq-color-graphite)]">0 ANALYSES</span>
+        <span className="shotiq-microcaps leading-[12px] text-[var(--shotiq-color-graphite)]" style={{ "--shotiq-microcaps-size": "11px" } as React.CSSProperties}>0 ANALYSES</span>
       </div>
 
       <div className="mt-[3px] -mb-[22px] flex justify-center"><EmptyDiagram width={186} /></div>
@@ -125,7 +125,7 @@ export function NoAnalysisYet({
       </div>
 
       <div className="mt-[3px] border-t border-[var(--shotiq-color-rule)] pt-[7px]">
-        <div className="shotiq-section-label text-[11px] leading-[12px] tracking-[0.08em] text-[var(--shotiq-color-graphite)]">
+        <div className="shotiq-section-label leading-[12px] tracking-[0.08em] text-[var(--shotiq-color-graphite)]" style={{ "--shotiq-label-size": "11px" } as React.CSSProperties}>
           LATEST SESSION
         </div>
         <PhoneSessionStrip className="mt-[6px]" />

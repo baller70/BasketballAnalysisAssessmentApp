@@ -86,7 +86,7 @@ export function PlayerCard({
 
       {/* form score ---------------------------------------------------------- */}
       <Panel className="mx-[13px] mt-[10px] flex items-center px-[13px] py-[6px]">
-        <div className="shotiq-section-label w-[92px] shrink-0 text-[13px] leading-[14px] tracking-[0.075em]">FORM SCORE</div>
+        <div className="shotiq-section-label w-[92px] shrink-0 leading-[14px] tracking-[0.075em]" style={{ "--shotiq-label-size": "13px" } as React.CSSProperties}>FORM SCORE</div>
         <div className="shrink-0">
           <div className="shotiq-numeric leading-[0.78]" style={{ fontSize: 62, color: ORANGE }}>{score}</div>
           <ScoreBar score={score} width={108} height={7} />

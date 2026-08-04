@@ -57,25 +57,25 @@ export function FlawDetail({
       tab="home"
       bar={<ResultsBar variant="back-wordmark" height={38} onBack={onBack} trailing={<ShareIcon />} />}
     >
-      <ResultsIdentity className="mt-[8px] px-[21px]" name={name} streak={streak} points={points} />
+      <ResultsIdentity className="mt-[6px] px-[21px]" name={name} streak={streak} points={points} />
       <span aria-hidden="true" className="mt-[7px] block h-px" style={{ background: RULE }} />
 
       {/* title + score --------------------------------------------------- */}
       <div className="mt-[8px] flex items-start px-[21px]">
         <div className="min-w-0 flex-1">
-          <div className="shotiq-section-label text-[12px] leading-[12px] tracking-[0.08em]">FLAW DETAIL</div>
+          <div className="shotiq-section-label leading-[12px] tracking-[0.08em]" style={{ "--shotiq-label-size": "12px" } as React.CSSProperties}>FLAW DETAIL</div>
           <h1 className="shotiq-display mt-[2px] text-[26px] leading-[25px] tracking-[0.02em]">{title}</h1>
           <p className="mt-[5px] text-[12.5px] leading-[14px]">{desc}</p>
         </div>
         <div className="ml-[12px] w-[104px] shrink-0 text-right">
-          <div className="shotiq-section-label text-[12px] leading-[12px] tracking-[0.08em]">FORM SCORE</div>
+          <div className="shotiq-section-label leading-[12px] tracking-[0.08em]" style={{ "--shotiq-label-size": "12px" } as React.CSSProperties}>FORM SCORE</div>
           <div className="shotiq-numeric text-[36px] leading-[34px]" style={{ color: ORANGE }}>{score}</div>
           <span className="ml-auto block w-[104px]"><ScoreBar score={score} width={104} height={5.5} /></span>
         </div>
       </div>
 
       {/* meta chips ------------------------------------------------------- */}
-      <div className="mt-[7px] flex divide-x divide-[var(--shotiq-color-rule)] px-[21px]">
+      <div className="mt-[5px] flex divide-x divide-[var(--shotiq-color-rule)] px-[21px]">
         {([[<MechanicGlyph key="1" kind="impact" size={16} accent={INK} />, phase],
            [<MechanicGlyph key="2" kind="drift" size={16} accent={INK} />, impact],
            [<MechanicGlyph key="3" kind="arc" size={16} accent={INK} />, confidence]] as [React.ReactNode, string][]).map(([g, l], i) => (
@@ -166,7 +166,7 @@ export function FlawDetail({
       {/* recommended drill ------------------------------------------------------ */}
       <div className="mt-[6px] px-[21px]">
         <div className="shotiq-display text-[19px] leading-[19px] tracking-[0.05em]" style={{ color: GRAPHITE }}>RECOMMENDED DRILL</div>
-        <Panel className="mt-[4px] flex items-center gap-[11px] p-[6px]">
+        <Panel className="mt-[3px] flex items-center gap-[11px] p-[5px]">
           <Frame src="090-lib-1" w={68} h={50} radius={4} alt="Towel Elbow Stack drill" />
           <span className="min-w-0 flex-1">
             <span className="block text-[14.5px] font-semibold leading-[16px]">Towel Elbow Stack</span>
@@ -181,7 +181,7 @@ export function FlawDetail({
       </div>
 
       {/* actions ------------------------------------------------------------------ */}
-      <div className="mt-[7px] flex gap-[10px] px-[21px]">
+      <div className="mt-[5px] flex gap-[10px] px-[21px]">
         <Panel className="flex h-[27px] flex-1 items-center justify-center gap-[8px]">
           <Bookmark className="h-[14px] w-[14px]" strokeWidth={1.7} />
           <span className="text-[13.5px] leading-[15px]">Add to goals</span>

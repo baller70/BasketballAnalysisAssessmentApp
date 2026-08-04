@@ -156,7 +156,7 @@ export function AnalysisProcessing({ pct = 64 }: { pct?: number }) {
         <img src="/images/canonical/083-hero.png" alt="Frame from the clip being analyzed"
              className="h-[145px] w-[255px] shrink-0 rounded-[4px] object-cover" />
         <div className="min-w-0 flex-1 pt-[24px]">
-          <div className="shotiq-section-label text-[11px] leading-[12px] tracking-[0.08em] text-[var(--shotiq-color-graphite)]">
+          <div className="shotiq-section-label leading-[12px] tracking-[0.08em] text-[var(--shotiq-color-graphite)]" style={{ "--shotiq-label-size": "11px" } as React.CSSProperties}>
             FORM SCORE
           </div>
           <div className="shotiq-numeric mt-[2px] text-[52px] leading-[52px]" style={{ color: ORANGE }}>82</div>
@@ -407,7 +407,7 @@ export function AnalysisError({ onRetry, reason = "Not enough of your body was v
           </svg>
         </div>
         <div className="min-w-0 flex-1">
-          <div className="shotiq-section-label text-[11px] leading-[12px] tracking-[0.08em] text-[var(--shotiq-color-graphite)]">
+          <div className="shotiq-section-label leading-[12px] tracking-[0.08em] text-[var(--shotiq-color-graphite)]" style={{ "--shotiq-label-size": "11px" } as React.CSSProperties}>
             FORM SCORE
           </div>
           <div className="shotiq-numeric mt-[2px] text-[52px] leading-[52px]" style={{ color: ORANGE }}>82</div>
@@ -419,7 +419,7 @@ export function AnalysisError({ onRetry, reason = "Not enough of your body was v
             Keep building<br />consistency.
           </div>
           <PhoneHeading size={16} className="mt-[15px]">SHOT QUALITY</PhoneHeading>
-          <div className="shotiq-microcaps mt-[6px] text-[9px] leading-[10px] text-[var(--shotiq-color-graphite)]">FRAME 18/48</div>
+          <div className="shotiq-microcaps mt-[6px] leading-[10px] text-[var(--shotiq-color-graphite)]" style={{ "--shotiq-microcaps-size": "9px" } as React.CSSProperties}>FRAME 18/48</div>
           <div className="relative mt-[5px] h-[26px] w-[92px] rounded-[2px] border border-[#111111]">
             <span className="absolute inset-y-0 left-[23px] w-px bg-[#111111]" />
             <span className="absolute inset-y-0 left-[46px] w-px bg-[#111111]" />
@@ -438,7 +438,7 @@ export function AnalysisError({ onRetry, reason = "Not enough of your body was v
         <PhoneCoachingTarget />
       </div>
       <div className="mt-[7px] border-t border-[var(--shotiq-color-rule)] pt-[9px]">
-        <div className="shotiq-section-label text-[11px] leading-[12px] tracking-[0.08em] text-[var(--shotiq-color-graphite)]">
+        <div className="shotiq-section-label leading-[12px] tracking-[0.08em] text-[var(--shotiq-color-graphite)]" style={{ "--shotiq-label-size": "11px" } as React.CSSProperties}>
           LATEST SESSION
         </div>
         <PhoneSessionStrip className="mt-[5px]" />

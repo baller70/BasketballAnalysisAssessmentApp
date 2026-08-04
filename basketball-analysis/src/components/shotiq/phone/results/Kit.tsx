@@ -297,7 +297,7 @@ export function ScoreBlock({
 }) {
   return (
     <div className={className}>
-      {label && <div className="shotiq-section-label text-[13px] leading-[13px] tracking-[0.075em]">FORM SCORE</div>}
+      {label && <div className="shotiq-section-label leading-[13px] tracking-[0.075em]" style={{ "--shotiq-label-size": "13px" } as React.CSSProperties}>FORM SCORE</div>}
       <div className="shotiq-numeric mt-[2px] leading-[0.82]" style={{ fontSize: numeral, color: ORANGE }}>{score}</div>
       <ScoreBar score={score} width={barWidth} height={6.5} />
       <div className="shotiq-display mt-[8px] text-[16px] leading-[16px] tracking-[0.04em]" style={{ color: BLUE }}>{verdict}</div>

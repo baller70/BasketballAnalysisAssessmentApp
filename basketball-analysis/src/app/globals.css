@@ -247,11 +247,17 @@
    #262626, against the shipped #4B4D4F. The old role was 14px of the body face
    at 0.06em, which measures cap 10 and advance 90 for FORM SCORE against
    canonical's 11 and 60: half again too wide and a cap short. */
+/* Sized through custom properties, NOT bare declarations. These roles are
+   defined after Tailwind's utility layer, so a bare `font-size` here beats any
+   `text-[Npx]` on the same element on source order — the utility is silently
+   discarded. 39 call sites were authoring a size that never applied; 059's day
+   headers, written at 8px, measured cap 19 against canonical's 14. The default
+   is unchanged, so every desktop element keeps the value it has today. */
 .shotiq-section-label {
   font-family: "ShotIQ Degree", var(--font-shotiq-display), "Tungsten Medium", sans-serif;
   font-weight: 400;
-  font-size: 15px;
-  line-height: 15px;
+  font-size: var(--shotiq-label-size, 15px);
+  line-height: var(--shotiq-label-leading, var(--shotiq-label-size, 15px));
   letter-spacing: 0.08em;
   color: var(--shotiq-color-eyebrow);
 }
@@ -259,11 +265,12 @@
 .shotiq-microcaps {
   font-family: "ShotIQ Degree", var(--font-shotiq-display), "Tungsten Medium", sans-serif;
   font-weight: 400;
-  font-size: 12px;
+  font-size: var(--shotiq-microcaps-size, 12px);
   /* The condensed face carries a 9px cap in a 12px em, and `normal` leading
      would put that in a 14.4px line box where the old 10px label sat in 12px.
-     Left unpinned it added 4px to the height of every screen in the build. */
-  line-height: 12px;
+     Left unpinned it added 4px to the height of every screen in the build — so
+     leading tracks the size rather than going free. */
+  line-height: var(--shotiq-microcaps-leading, var(--shotiq-microcaps-size, 12px));
   letter-spacing: 0.148em;
 }
 

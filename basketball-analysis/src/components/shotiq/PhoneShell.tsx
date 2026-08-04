@@ -292,7 +292,7 @@ export function PhoneSessionStrip({
       {[[shots, "SHOTS"], [makes, "MAKES"], [pct, "MAKE %"]].map(([v, l]) => (
         <div key={l} className="flex-1 pr-[10px] first:pl-0 [&:not(:first-child)]:pl-[12px]">
           <div className="shotiq-numeric text-[21px] leading-[23px]">{v}</div>
-          <div className="shotiq-microcaps mt-[3px] text-[9px] leading-[10px] text-[var(--shotiq-color-graphite)]">{l}</div>
+          <div className="shotiq-microcaps mt-[3px] leading-[10px] text-[var(--shotiq-color-graphite)]" style={{ "--shotiq-microcaps-size": "9px" } as React.CSSProperties}>{l}</div>
         </div>
       ))}
       <div className="flex-[1.3] pl-[12px]">
@@ -341,7 +341,7 @@ export function PhoneCoachingTarget({
   return (
     <div className={`flex items-center justify-between ${className}`}>
       <div className="min-w-0">
-        <div className="shotiq-section-label text-[11px] leading-[12px] tracking-[0.08em] text-[var(--shotiq-color-graphite)]">
+        <div className="shotiq-section-label leading-[12px] tracking-[0.08em] text-[var(--shotiq-color-graphite)]" style={{ "--shotiq-label-size": "11px" } as React.CSSProperties}>
           {label}
         </div>
         <div className="mt-[6px] truncate text-[16px] leading-[19px]">{text}</div>

@@ -62,9 +62,9 @@ export function FormScore({
       tab="home"
       bar={<ResultsBar variant="wordmark" height={42} trailing={<GearLink />} />}
     >
-      <ResultsIdentity className="mt-[6px] px-[22px]" name={name} streak={streak} points={points} />
+      <ResultsIdentity className="mt-[5px] px-[22px]" name={name} streak={streak} points={points} />
 
-      <div className="mt-[8px] flex items-center px-[22px]">
+      <div className="mt-[6px] flex items-center px-[22px]">
         <a href="/results/demo/analysis" className="flex items-center gap-[7px]">
           <Chev size={16} color={INK} />
           <span className="text-[17px] font-medium leading-[18px]">Back to analysis</span>
@@ -95,7 +95,7 @@ export function FormScore({
           </span>
         </div>
         <span className="mt-[2px] block"><ScoreBar score={score} width={183} height={7} /></span>
-        <div className="mt-[7px] flex gap-[9px]">
+        <div className="mt-[5px] flex gap-[9px]">
           <Panel className="flex h-[26px] flex-1 items-center px-[10px]">
             <FileText className="h-[15px] w-[15px]" strokeWidth={1.6} />
             <span className="ml-[8px] text-[13.5px] leading-[15px]">View score method</span>
@@ -110,13 +110,13 @@ export function FormScore({
       </div>
 
       {/* form breakdown --------------------------------------------------- */}
-      <SectionHead cap={22} className="mt-[9px] px-[22px]">FORM BREAKDOWN</SectionHead>
-      <div className="mt-[6px] flex gap-[6px] px-[21px]">
+      <SectionHead cap={22} className="mt-[7px] px-[22px]">FORM BREAKDOWN</SectionHead>
+      <div className="mt-[4px] flex gap-[6px] px-[21px]">
         {BREAKDOWN.map(([label, n, verdict, l1, l2]) => (
-          <Panel key={label} className="min-w-0 flex-1 px-[3px] pb-[6px] pt-[6px] text-center">
+          <Panel key={label} className="min-w-0 flex-1 px-[3px] pb-[5px] pt-[5px] text-center">
             <div className="shotiq-display leading-[10px] tracking-[0.035em]" style={{ fontSize: capDisplay(19) }}>{label}</div>
-            <span className="mt-[4px] flex h-[24px] items-center justify-center">
-              <PoseGlyph phase="release" size={24} accent={ORANGE} />
+            <span className="mt-[3px] flex h-[22px] items-center justify-center">
+              <PoseGlyph phase="release" size={22} accent={ORANGE} />
             </span>
             <div className="shotiq-numeric mt-[2px] text-[22px] leading-[20px]" style={{ color: ORANGE }}>{n}</div>
             <div className="shotiq-display mt-[3px] leading-[9px] tracking-[0.035em]"
@@ -130,14 +130,14 @@ export function FormScore({
       {/* Canonical sets CONFIDENCE as one 40pt band: the label above the
           numeral on the left, the verdict, the sentence and the wave all
           sharing the numeral's baseline. */}
-      <div className="mt-[9px] px-[22px]">
+      <div className="mt-[7px] px-[22px]">
         <SectionHead cap={22} info>CONFIDENCE</SectionHead>
         <div className="mt-[1px] flex items-end">
           <span className="shotiq-numeric shrink-0 text-[30px] leading-[28px]" style={{ color: BLUE }}>
             76<span className="text-[18px]">%</span>
           </span>
           <span className="ml-[9px] shrink-0 pb-[4px] text-[12.5px] leading-[13px]" style={{ color: BLUE }}>MODERATE</span>
-          <span className="ml-[12px] min-w-0 flex-1 pb-[2px] text-[11.5px] leading-[13px]">
+          <span className="ml-[12px] min-w-0 flex-1 pb-[2px] text-[11px] leading-[12.5px]">
             Form is repeatable in games, with room to tighten elbow.
           </span>
           <span className="ml-[10px] shrink-0">
@@ -149,7 +149,7 @@ export function FormScore({
 
       {/* key insight -------------------------------------------------------- */}
       <SectionHead cap={23} className="mt-[8px] px-[22px]">KEY INSIGHT</SectionHead>
-      <div className="mx-[21px] mt-[5px] flex items-center gap-[11px] rounded-[6px] px-[12px] py-[6px]"
+      <div className="mx-[21px] mt-[4px] flex items-center gap-[11px] rounded-[6px] px-[12px] py-[5px]"
            style={{ background: "var(--shotiq-color-warmCanvas)" }}>
         <PoseGlyph phase="load" size={38} accent={ORANGE} />
         <div className="min-w-0 flex-1">
@@ -170,22 +170,22 @@ export function FormScore({
       </div>
 
       {/* metric details table ------------------------------------------------ */}
-      <SectionHead cap={22} info className="mt-[8px] px-[22px]">METRIC DETAILS</SectionHead>
+      <SectionHead cap={22} info className="mt-[6px] px-[22px]">METRIC DETAILS</SectionHead>
       <div className="mt-[3px] px-[22px]">
         <div className="flex items-end pb-[2px] text-[9.5px]" style={{ color: GRAPHITE }}>
-          <span className="w-[88px] shrink-0">METRIC</span>
-          <span className="w-[40px] shrink-0">SCORE</span>
-          <span className="min-w-0 flex-1 pl-[62px]">DETAILS</span>
+          <span className="w-[74px] shrink-0">METRIC</span>
+          <span className="w-[32px] shrink-0">SCORE</span>
+          <span className="min-w-0 flex-1 pl-[36px]">DETAILS</span>
           <span className="w-[42px] shrink-0 text-right">IMPACT</span>
         </div>
         {ROWS.map(([label, n, detail, impact, warn]) => (
           <div key={label} className="flex items-center border-t py-[0px] text-[12px] leading-[14px]" style={{ borderColor: RULE }}>
-            <span className="w-[88px] shrink-0 font-medium">{label}</span>
-            <span className="shotiq-numeric w-[40px] shrink-0 text-[16px] leading-[16px]">{n}</span>
-            <span className="w-[110px] shrink-0 overflow-hidden rounded-full" style={{ height: 5, background: "#E4E5E6" }}>
+            <span className="w-[74px] shrink-0 font-medium">{label}</span>
+            <span className="shotiq-numeric w-[32px] shrink-0 text-[16px] leading-[16px]">{n}</span>
+            <span className="w-[84px] shrink-0 overflow-hidden rounded-full" style={{ height: 5, background: "#E4E5E6" }}>
               <span className="block h-full rounded-full" style={{ width: `${n}%`, background: warn ? ORANGE : BLUE }} />
             </span>
-            <span className="min-w-0 flex-1 truncate pl-[10px]">{detail}</span>
+            <span className="min-w-0 flex-1 truncate pl-[9px] text-[11px]">{detail}</span>
             <span className="w-[42px] shrink-0 text-right">{impact}</span>
           </div>
         ))}
@@ -199,7 +199,7 @@ export function FormScore({
       </div>
 
       {/* session summary -------------------------------------------------- */}
-      <div className="mt-[8px] px-[22px]">
+      <div className="mt-[6px] px-[22px]">
         <SectionHead cap={19} info>SESSION SUMMARY</SectionHead>
         <div className="mt-[4px] flex items-start divide-x divide-[var(--shotiq-color-rule)]">
           {([[shots, "SHOTS"], [makes, "MAKES"], [pct, "MAKE %"]] as [string, string][]).map(([v, l]) => (

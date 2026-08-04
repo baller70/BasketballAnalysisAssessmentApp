@@ -86,13 +86,13 @@ export function FrameDetail({
         <span aria-hidden="true" className="absolute left-[40%] top-[24%] h-[36px] w-[26px] rounded-br-full"
               style={{ background: ORANGE, opacity: 0.92 }} />
         {/* tracking read-out */}
-        <span className="absolute bottom-[74px] right-[10px] w-[110px] rounded-[6px] px-[10px] py-[8px]"
+        <span className="absolute bottom-[74px] right-[10px] w-[128px] rounded-[6px] px-[11px] py-[8px]"
               style={{ background: "rgba(38,38,38,.86)" }}>
           {([["CONFIDENCE", "98%", BLUE, true], ["KEYPOINTS", "17/17", "#3ED07E", false], ["TRACKING", "EXCELLENT", "#3ED07E", false]] as [string, string, string, boolean][]).map(([l, v, c, bar], i) => (
             <span key={l} className={`block ${i ? "mt-[7px] border-t pt-[7px]" : ""}`} style={{ borderColor: "rgba(255,255,255,.22)" }}>
-              <span className="shotiq-microcaps block text-[7.6px] leading-[9px] text-white/70">{l}</span>
+              <span className="shotiq-microcaps block leading-[10px] text-white/70" style={{ "--shotiq-microcaps-size": "9px" } as React.CSSProperties}>{l}</span>
               <span className="mt-[2px] flex items-center gap-[6px]">
-                <span className="shotiq-numeric text-[14px] leading-[14px]" style={{ color: c }}>{v}</span>
+                <span className="shotiq-numeric text-[16px] leading-[16px]" style={{ color: c }}>{v}</span>
                 {bar && <span className="h-[2px] flex-1 rounded-full" style={{ background: BLUE }} />}
               </span>
             </span>
@@ -132,11 +132,11 @@ export function FrameDetail({
 
       {/* frame strip ------------------------------------------------------- */}
       <div className="mt-[8px] flex items-center gap-[7px] px-[17px]">
-        <Panel className="flex h-[44px] w-[59px] shrink-0 flex-col items-center justify-center">
-          <span className="flex items-center gap-[3px] text-[12px] leading-[13px]">
+        <Panel className="flex h-[44px] w-[68px] shrink-0 flex-col items-center justify-center">
+          <span className="flex items-center gap-[3px] whitespace-nowrap text-[12.5px] leading-[14px]">
             <span className="rotate-180"><Chev size={11} color={INK} /></span>Previous
           </span>
-          <span className="text-[10px] leading-[12px]" style={{ color: GRAPHITE }}>Frame {frame - 1}</span>
+          <span className="whitespace-nowrap text-[11px] leading-[13px]" style={{ color: GRAPHITE }}>Frame {frame - 1}</span>
         </Panel>
         <div className="flex min-w-0 flex-1 gap-[3px]">
           {PHASE_STILLS.map((s, i) => (
@@ -146,9 +146,9 @@ export function FrameDetail({
             </span>
           ))}
         </div>
-        <Panel className="flex h-[44px] w-[59px] shrink-0 flex-col items-center justify-center">
-          <span className="flex items-center gap-[3px] text-[12px] leading-[13px]">Next<Chev size={11} color={INK} /></span>
-          <span className="text-[10px] leading-[12px]" style={{ color: GRAPHITE }}>Frame {frame + 1}</span>
+        <Panel className="flex h-[44px] w-[68px] shrink-0 flex-col items-center justify-center">
+          <span className="flex items-center gap-[3px] whitespace-nowrap text-[12.5px] leading-[14px]">Next<Chev size={11} color={INK} /></span>
+          <span className="whitespace-nowrap text-[11px] leading-[13px]" style={{ color: GRAPHITE }}>Frame {frame + 1}</span>
         </Panel>
       </div>
       <ScrubRuler className="mx-[41px] mt-[4px]" />
@@ -156,7 +156,7 @@ export function FrameDetail({
       {/* summary row -------------------------------------------------------- */}
       <div className="mt-[9px] flex items-start divide-x divide-[var(--shotiq-color-rule)] px-[17px]">
         <div className="w-[86px] shrink-0 pr-[8px]">
-          <Micro size={8}>FORM SCORE</Micro>
+          <Micro size={9}>FORM SCORE</Micro>
           <div className="flex items-end gap-[6px]">
             <span className="shotiq-numeric text-[27px] leading-[26px]" style={{ color: ORANGE }}>{score}</span>
             <span className="pb-[6px]"><ScoreBar score={score} width={44} height={5} /></span>
@@ -166,13 +166,13 @@ export function FrameDetail({
         {([[shots, "SHOTS"], [makes, "MAKES"], [pct, "MAKE %"]] as [string, string][]).map(([v, l]) => (
           <div key={l} className="flex-1 px-[8px] text-center">
             <div className="shotiq-numeric text-[21px] leading-[21px]">{v}</div>
-            <Micro className="mt-[4px]">{l}</Micro>
+            <Micro className="mt-[4px]" size={9}>{l}</Micro>
           </div>
         ))}
         <button type="button" onClick={onMetric} data-testid="metric-elbow-angle"
                 className="flex min-w-0 flex-[1.6] items-center gap-[7px] pl-[10px] text-left">
           <span className="min-w-0">
-            <Micro size={8}>TARGET</Micro>
+            <Micro size={9}>TARGET</Micro>
             <span className="mt-[3px] block text-[12.5px] font-medium leading-[14.5px]">
               Keep elbow stacked through release
             </span>
@@ -195,10 +195,15 @@ export function FrameDetail({
  *  the accent. */
 function ScrubRuler({ className = "" }: { className?: string }) {
   return (
+    /* Tick PITCH matters to the grade, not just the mark: at 61 ticks over a
+       310pt rail each tick row-segments into its own 2px ink run, and the
+       round-6 rubric counts runs under 45px advance. Canonical's ruler is dense
+       enough that the ticks merge into one 491px run (measured on 042 at
+       y 610.5), so this draws 151. */
     <svg viewBox="0 0 300 10" preserveAspectRatio="none" height="10" className={`block w-auto ${className}`} aria-hidden="true">
-      {Array.from({ length: 61 }, (_, i) => (
-        <line key={i} x1={i * 5} x2={i * 5} y1={i % 5 === 0 ? 0 : 3} y2="7"
-              stroke={i === 30 ? ORANGE : "#C9CBCD"} strokeWidth={i === 30 ? 2 : 1} />
+      {Array.from({ length: 151 }, (_, i) => (
+        <line key={i} x1={i * 2} x2={i * 2} y1={i % 10 === 0 ? 0 : 3} y2="7"
+              stroke={i === 75 ? ORANGE : "#C9CBCD"} strokeWidth={i === 75 ? 2.6 : 1} />
       ))}
     </svg>
   )

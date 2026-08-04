@@ -132,9 +132,9 @@ function FlawCard({ flaw, primary, onOpen }: { flaw: Flaw; primary?: boolean; on
       <div className="flex items-start">
         <span className="grid h-[21px] w-[21px] shrink-0 place-items-center rounded-[4px] text-[14px] text-white"
               style={{ background: flaw.tone }}>{flaw.n}</span>
-        <span className="ml-[9px] min-w-0 flex-1">
+        <span className="ml-[9px] min-w-0 flex-1 overflow-hidden">
           <span className="flex items-center gap-x-[8px]">
-            <span className="shotiq-display whitespace-nowrap leading-[17px] tracking-[0.03em]" style={{ fontSize: capDisplay(35) }}>{flaw.title}</span>
+            <span className="shotiq-display min-w-0 truncate leading-[17px] tracking-[0.03em]" style={{ fontSize: capDisplay(32) }}>{flaw.title}</span>
             <span className="shotiq-microcaps shrink-0 whitespace-nowrap rounded-[4px] px-[5px] py-[2px] leading-[9px]"
                   style={{ fontSize: 7.2, background: flaw.tint, color: flaw.tone }}>{flaw.impact}</span>
           </span>
@@ -159,7 +159,7 @@ function FlawCard({ flaw, primary, onOpen }: { flaw: Flaw; primary?: boolean; on
         </div>
         <div className="w-[126px] shrink-0">
           <span className="relative block overflow-hidden rounded-[4px]" style={{ height: primary ? 78 : 64 }}>
-            <Frame src={flaw.still} w="100%" h="100%" radius={0} pos="50% 22%" alt={`${flaw.title} on your ${flaw.phase.toLowerCase()} frame`} />
+            <Frame src={flaw.still} w="100%" h="100%" radius={0} pos="50% 34%" alt={`${flaw.title} on your ${flaw.phase.toLowerCase()} frame`} />
             <span className="shotiq-numeric absolute right-[8px] top-[34%] text-[12px] text-white"
                   style={{ textShadow: "0 1px 2px rgba(0,0,0,.6)" }}>{flaw.angle}</span>
           </span>

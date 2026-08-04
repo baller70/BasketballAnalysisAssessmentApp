@@ -105,7 +105,7 @@ export function ShareResults({ onShare, onSave, onCopy, onMore }: {
               <StreakGlyph size={38} />
               <div>
                 <div className="shotiq-numeric text-[17px] leading-[17px]">6</div>
-                <div className="shotiq-microcaps mt-[3px] text-[8px] leading-[8px] text-[var(--shotiq-color-graphite)]">DAY STREAK</div>
+                <div className="shotiq-microcaps mt-[3px] leading-[8px] text-[var(--shotiq-color-graphite)]" style={{ "--shotiq-microcaps-size": "8px" } as React.CSSProperties}>DAY STREAK</div>
               </div>
             </div>
             <span aria-hidden="true" className="h-[34px] w-px bg-[var(--shotiq-color-rule)]" />
@@ -113,7 +113,7 @@ export function ShareResults({ onShare, onSave, onCopy, onMore }: {
               <PointsGlyph size={20} />
               <div>
                 <div className="shotiq-numeric text-[17px] leading-[17px]">2,840</div>
-                <div className="shotiq-microcaps mt-[3px] text-[8px] leading-[8px] text-[var(--shotiq-color-graphite)]">POINTS</div>
+                <div className="shotiq-microcaps mt-[3px] leading-[8px] text-[var(--shotiq-color-graphite)]" style={{ "--shotiq-microcaps-size": "8px" } as React.CSSProperties}>POINTS</div>
               </div>
             </div>
           </div>
@@ -127,7 +127,7 @@ export function ShareResults({ onShare, onSave, onCopy, onMore }: {
             </div>
           </div>
           <div className="shrink-0 text-center">
-            <div className="shotiq-section-label text-[11px] leading-[12px] tracking-[0.08em] text-[var(--shotiq-color-graphite)]">
+            <div className="shotiq-section-label leading-[12px] tracking-[0.08em] text-[var(--shotiq-color-graphite)]" style={{ "--shotiq-label-size": "11px" } as React.CSSProperties}>
               FORM SCORE
             </div>
             <div className="shotiq-numeric mt-[1px] text-[48px] leading-[48px]" style={{ color: ORANGE }}>82</div>
@@ -139,7 +139,7 @@ export function ShareResults({ onShare, onSave, onCopy, onMore }: {
 
         <div className="mt-[10px] flex items-start border-t border-[var(--shotiq-color-rule)] pt-[11px]">
           <div className="min-w-0 flex-1">
-            <div className="shotiq-section-label text-[11px] leading-[12px] tracking-[0.08em] text-[var(--shotiq-color-graphite)]">
+            <div className="shotiq-section-label leading-[12px] tracking-[0.08em] text-[var(--shotiq-color-graphite)]" style={{ "--shotiq-label-size": "11px" } as React.CSSProperties}>
               PRIMARY COACHING TARGET
             </div>
             <div className="mt-[7px] text-[16px] font-medium leading-[18px]">Keep elbow stacked through release</div>
@@ -189,7 +189,7 @@ export function ShareResults({ onShare, onSave, onCopy, onMore }: {
           {[["24", "SHOTS"], ["15", "MAKES"], ["62.5%", "MAKE %"]].map(([v, l]) => (
             <div key={l} className="min-w-0 flex-1">
               <div className="shotiq-numeric text-[22px] leading-[24px]">{v}</div>
-              <div className="shotiq-microcaps mt-[3px] text-[9px] leading-[10px] text-[var(--shotiq-color-graphite)]">{l}</div>
+              <div className="shotiq-microcaps mt-[3px] leading-[10px] text-[var(--shotiq-color-graphite)]" style={{ "--shotiq-microcaps-size": "9px" } as React.CSSProperties}>{l}</div>
             </div>
           ))}
           <div className="min-w-0 flex-[1.5]">

@@ -116,7 +116,7 @@ export function OnboardingIntro({ onStart, onSkip, onSignOut, name = "Jordan" }:
             the figure lost its head and feet, and canonical shows the whole
             player. */}
         <Shot src="/images/canonical/078-hero.png" zoom={1} position="59% 20%"
-              className="pointer-events-none absolute right-[-18px] top-[36px] h-[330px] w-[152px]" />
+              className="pointer-events-none absolute right-[-18px] top-[36px] h-[306px] w-[152px]" />
 
         <StepMeter step={1} steps={4} w={130} className="relative pt-[13px]" />
         <Eyebrow className="relative mt-[9px]">STEP 1 OF 4</Eyebrow>
@@ -134,7 +134,7 @@ export function OnboardingIntro({ onStart, onSkip, onSignOut, name = "Jordan" }:
       {/* ------------------------------------------------ benefit rows */}
       <div className="mt-[11px]">
         {BENEFITS.map(([t, d, img], i) => (
-          <div key={t} className="flex items-start gap-[16px] px-[18px] py-[10px]"
+          <div key={t} className="flex items-start gap-[16px] px-[18px] py-[8px]"
                style={{ borderTop: `1px solid ${RULE}` }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={`/images/canonical/${img}.png`} alt="" aria-hidden="true"
@@ -148,7 +148,7 @@ export function OnboardingIntro({ onStart, onSkip, onSignOut, name = "Jordan" }:
       </div>
 
       {/* --------------------------------------------- about your data */}
-      <div className="mx-[18px] mt-[11px] flex items-start gap-[14px] rounded-[6px] px-[14px] py-[10px]"
+      <div className="mx-[18px] mt-[9px] flex items-start gap-[14px] rounded-[6px] px-[14px] py-[9px]"
            style={{ border: `1px solid ${RULE}` }}>
         <span className="mt-[1px] grid h-[27px] w-[27px] shrink-0 place-items-center rounded-full"
               style={{ border: `1.4px dashed ${ORANGE}` }}>
@@ -193,7 +193,7 @@ export function OnboardingIntro({ onStart, onSkip, onSignOut, name = "Jordan" }:
       </PhoneCard>
 
       {/* ------------------------------------------------ stat tiles */}
-      <div className="mx-[18px] mt-[11px] flex rounded-[6px] py-[10px]" style={{ border: `1px solid ${RULE}` }}>
+      <div className="mx-[18px] mt-[9px] flex rounded-[6px] py-[8px]" style={{ border: `1px solid ${RULE}` }}>
         {[["24", "SHOTS"], ["15", "MAKES"], ["62.5%", "ACCURACY"], ["RIGHT", "HANDED"]].map(([v, l], i) => (
           <div key={l} className="min-w-0 flex-1 text-center"
                style={i ? { borderLeft: `1px solid ${RULE}` } : undefined}>
