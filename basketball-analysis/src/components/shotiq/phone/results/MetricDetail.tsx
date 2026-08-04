@@ -66,8 +66,8 @@ export function MetricDetail({
       }
     >
       {/* identity strip --------------------------------------------------- */}
-      <div className="mt-[9px] flex items-center px-[17px]">
-        <span className="grid h-[31px] w-[31px] shrink-0 place-items-center rounded-full text-[12px] text-white" style={{ background: "#1B1B1B" }}>JE</span>
+      <div className="mt-[7px] flex items-center px-[17px]">
+        <span className="grid h-[27px] w-[27px] shrink-0 place-items-center rounded-full text-[12px] text-white" style={{ background: "#1B1B1B" }}>JE</span>
         <span className="ml-[10px] min-w-0">
           <span className="block text-[15px] font-medium leading-[17px]">Jordan Ellis</span>
           <span className="block text-[11.5px] leading-[13px]" style={{ color: GRAPHITE }}>{hand} • Advanced</span>
@@ -89,7 +89,7 @@ export function MetricDetail({
       <span aria-hidden="true" className="mt-[8px] block h-px" style={{ background: RULE }} />
 
       {/* session stats + score -------------------------------------------- */}
-      <div className="mt-[8px] flex items-start px-[17px]">
+      <div className="mt-[6px] flex items-start px-[17px]">
         <div className="flex min-w-0 flex-1 divide-x divide-[var(--shotiq-color-rule)] pr-[14px]">
           {([[shots, "SHOTS"], [makes, "MAKES"], [pct, "SHOOTING %"]] as [string, string][]).map(([v, l]) => (
             <div key={l} className="flex-1 text-center">
@@ -107,21 +107,21 @@ export function MetricDetail({
 
       {/* title ------------------------------------------------------------- */}
       <div className="mt-[7px] px-[17px]">
-        <h1 className="shotiq-display text-[38px] leading-[32px] tracking-[0.01em]">{metric}</h1>
+        <h1 className="shotiq-display text-[35px] leading-[29px] tracking-[0.01em]">{metric}</h1>
         <div className="mt-[4px] text-[13px] leading-[14px]" style={{ color: GRAPHITE }}>{phase} &nbsp;•&nbsp; {hand}</div>
       </div>
 
       {/* photo + read-out --------------------------------------------------- */}
-      <Panel className="mx-[17px] mt-[8px] flex overflow-hidden">
-        <div className="relative w-[176px] shrink-0" style={{ height: 232 }}>
-          <Frame src="086-film-4" w="100%" h="100%" radius={0} alt={`Your ${metric.toLowerCase()} at ${phase.toLowerCase()}`} />
+      <Panel className="mx-[17px] mt-[6px] flex overflow-hidden">
+        <div className="relative w-[176px] shrink-0" style={{ height: 218 }}>
+          <Frame src="086-film-4" w="100%" h="100%" radius={0} pos="50% 18%" alt={`Your ${metric.toLowerCase()} at ${phase.toLowerCase()}`} />
           <SkeletonOverlay />
           <span aria-hidden="true" className="absolute left-[52%] top-[26%] h-[26px] w-[19px] rounded-br-full" style={{ background: ORANGE }} />
           <span className="shotiq-numeric absolute left-[63%] top-[31%] rounded-[4px] bg-white px-[7px] py-[3px] text-[15px]">{value}{unit}</span>
         </div>
         <div className="min-w-0 flex-1 px-[12px] py-[8px]">
           <div className="shotiq-section-label text-[13px] leading-[13px] tracking-[0.075em]">MEASURED</div>
-          <div className="shotiq-numeric mt-[1px] text-[48px] leading-[44px]">{value}{unit}</div>
+          <div className="shotiq-numeric mt-[1px] text-[44px] leading-[40px]">{value}{unit}</div>
           <div className="shotiq-display text-[16px] leading-[17px] tracking-[0.04em]" style={{ color: GRAPHITE }}>{metric}</div>
           <span aria-hidden="true" className="my-[6px] block h-px" style={{ background: RULE }} />
 
@@ -183,7 +183,7 @@ export function MetricDetail({
           <div key={t} className="flex items-center gap-[11px] px-[13px] py-[3px]">
             <ActionGlyph kind={g} height={17} />
             <span className="min-w-0">
-              <span className="block text-[14.5px] font-medium leading-[16px]">{t}</span>
+              <span className="block text-[13.5px] font-medium leading-[15px]">{t}</span>
               <span className="block text-[11.5px] leading-[13px]" style={{ color: GRAPHITE }}>{s}</span>
             </span>
             <span className="ml-auto"><Chev size={15} /></span>

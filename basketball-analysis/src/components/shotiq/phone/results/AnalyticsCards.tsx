@@ -58,7 +58,7 @@ export function AnalyticsCards({
       tab="progress"
       bar={<ResultsBar variant="wordmark" height={38} trailing={<GearLink />} />}
     >
-      <ResultsIdentity className="mt-[9px] px-[15px]" name={name} streak={streak} points={points} />
+      <ResultsIdentity className="mt-[7px] px-[15px]" name={name} streak={streak} points={points} />
 
       {/* title + filters ---------------------------------------------------- */}
       <div className="mt-[9px] flex items-center px-[15px]">
@@ -78,7 +78,7 @@ export function AnalyticsCards({
       </div>
 
       {/* trend card ---------------------------------------------------------- */}
-      <Panel className="mx-[14px] mt-[8px] px-[13px] pb-[7px] pt-[7px]">
+      <Panel className="mx-[14px] mt-[7px] px-[13px] pb-[5px] pt-[6px]">
         <div className="flex items-start gap-[14px]">
           <div className="w-[112px] shrink-0">
             <div className="shotiq-display text-[21px] leading-[21px] tracking-[0.03em]">FORM SCORE TREND</div>
@@ -120,7 +120,7 @@ export function AnalyticsCards({
         </button>
       </div>
 
-      <div className="mt-[4px] space-y-[5px] px-[13px]">
+      <div className="mt-[3px] space-y-[4px] px-[13px]">
         {SESSIONS.map((s) => <SessionCard key={s.title} s={s} />)}
       </div>
     </ResultsScreen>
@@ -130,15 +130,15 @@ export function AnalyticsCards({
 function SessionCard({ s }: { s: Session }) {
   return (
     <div className="flex gap-[11px]">
-      <span className="relative block w-[120px] shrink-0 overflow-hidden rounded-[4px]" style={{ height: 80 }}>
-        <Frame src={s.still} w="100%" h="100%" radius={0} alt={`${s.title} session`} />
+      <span className="relative block w-[120px] shrink-0 overflow-hidden rounded-[4px]" style={{ height: 74 }}>
+        <Frame src={s.still} w="100%" h="100%" radius={0} pos="50% 24%" alt={`${s.title} session`} />
         <span className="shotiq-numeric absolute bottom-[7px] right-[8px] text-[22px]" style={{ color: ORANGE, textShadow: "0 1px 3px rgba(0,0,0,.6)" }}>{s.score}</span>
       </span>
       <span className="min-w-0 flex-1">
         <span className="flex items-start">
           <span className="min-w-0">
             <span className="block text-[12.5px] leading-[14px]" style={{ color: GRAPHITE }}>{s.when}</span>
-            <span className="block truncate text-[19px] font-semibold leading-[21px]">{s.title}</span>
+            <span className="block truncate text-[18px] font-semibold leading-[19px]">{s.title}</span>
           </span>
           <MoreVertical className="ml-auto h-[15px] w-[15px] shrink-0" strokeWidth={1.6} style={{ color: GRAPHITE }} />
         </span>

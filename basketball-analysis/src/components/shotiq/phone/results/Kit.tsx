@@ -396,16 +396,20 @@ export function SecondaryBar({
  * (public/images/canonical), the same library the desktop screens draw from.
  */
 export function Frame({
-  src, alt = "", w, h, className = "", radius = 4, style,
+  src, alt = "", w, h, className = "", radius = 4, pos = "50% 50%", style,
 }: {
   src: string; alt?: string; w?: number | string; h?: number | string
-  className?: string; radius?: number; style?: React.CSSProperties
+  className?: string; radius?: number
+  /** object-position. A landscape crop of these portrait stills otherwise
+   *  lands on the shorts; canonical frames the head and the shooting arm. */
+  pos?: string
+  style?: React.CSSProperties
 }) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img src={`/images/canonical/${src}.png`} alt={alt} aria-hidden={alt ? undefined : "true"}
          className={`block object-cover ${className}`}
-         style={{ width: w, height: h, borderRadius: radius, ...style }} />
+         style={{ width: w, height: h, borderRadius: radius, objectPosition: pos, ...style }} />
   )
 }
 

@@ -73,7 +73,7 @@ export function FrameDetail({
 
       {/* frame viewer ---------------------------------------------------- */}
       <div className="relative mx-[18px] mt-[8px] h-[310px] overflow-hidden rounded-[6px]">
-        <Frame src="086-film-4" w="100%" h="100%" radius={0} alt={`Frame ${frame} of the release, pose graph traced`} />
+        <Frame src="086-film-4" w="100%" h="100%" radius={0} pos="50% 20%" alt={`Frame ${frame} of the release, pose graph traced`} />
         <SkeletonOverlay />
         <span className="absolute left-[10px] top-[9px] flex items-center gap-[7px] rounded-[6px] px-[10px] py-[5px] text-[12.5px] text-white"
               style={{ background: "rgba(28,28,28,.82)" }}>

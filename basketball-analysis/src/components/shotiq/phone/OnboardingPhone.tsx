@@ -132,9 +132,9 @@ export function OnboardingIntro({ onStart, onSkip, onSignOut, name = "Jordan" }:
       </div>
 
       {/* ------------------------------------------------ benefit rows */}
-      <div className="mt-[15px]">
+      <div className="mt-[11px]">
         {BENEFITS.map(([t, d, img], i) => (
-          <div key={t} className="flex items-start gap-[16px] px-[18px] py-[13px]"
+          <div key={t} className="flex items-start gap-[16px] px-[18px] py-[10px]"
                style={{ borderTop: `1px solid ${RULE}` }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={`/images/canonical/${img}.png`} alt="" aria-hidden="true"
@@ -148,7 +148,7 @@ export function OnboardingIntro({ onStart, onSkip, onSignOut, name = "Jordan" }:
       </div>
 
       {/* --------------------------------------------- about your data */}
-      <div className="mx-[18px] mt-[14px] flex items-start gap-[14px] rounded-[6px] px-[14px] py-[12px]"
+      <div className="mx-[18px] mt-[11px] flex items-start gap-[14px] rounded-[6px] px-[14px] py-[10px]"
            style={{ border: `1px solid ${RULE}` }}>
         <span className="mt-[1px] grid h-[27px] w-[27px] shrink-0 place-items-center rounded-full"
               style={{ border: `1.4px dashed ${ORANGE}` }}>
@@ -163,7 +163,7 @@ export function OnboardingIntro({ onStart, onSkip, onSignOut, name = "Jordan" }:
       </div>
 
       {/* ------------------------------------------------- data card */}
-      <PhoneCard className="mx-[18px] mt-[12px] flex items-center px-[10px] py-[11px]">
+      <PhoneCard className="mx-[18px] mt-[10px] flex items-center px-[10px] py-[9px]">
         <div className="w-[54px] shrink-0 text-center">
           <span className="flex h-[22px] items-center justify-center"><StreakGlyph size={40} /></span>
           <div className="shotiq-numeric mt-[4px] text-[16px] leading-[16px]">6</div>
@@ -203,7 +203,7 @@ export function OnboardingIntro({ onStart, onSkip, onSignOut, name = "Jordan" }:
         ))}
       </div>
 
-      <div className="mx-[18px] mb-[16px] mt-[13px]">
+      <div className="mx-[18px] mb-[12px] mt-[10px]">
         <PhoneAction tone="orange" height={33} onClick={onStart} testid="onboarding-start">
           <ActionGlyph kind="analyze" height={17} accent="#fff" /> Build my player profile
         </PhoneAction>
@@ -587,7 +587,7 @@ export function ShootingProfile({
           })}
         </div>
 
-        <div className="mt-[10px] flex items-start gap-[11px]">
+        <div className="mt-[8px] flex items-start gap-[11px]">
           <MechanicGlyph kind="centerline" size={26} />
           <div className="min-w-0">
             <div className="text-[10.5px] font-medium leading-[13px]">Why this matters</div>
@@ -597,7 +597,7 @@ export function ShootingProfile({
           </div>
         </div>
 
-        <div className="mb-[14px] mt-[10px] flex items-center gap-[10px]">
+        <div className="mb-[12px] mt-[8px] flex items-center gap-[10px]">
           <button type="button" onClick={onBack}
                   className="flex h-[38px] shrink-0 items-center gap-[7px] px-[6px] text-[13px]">
             <svg width="9" height="15" viewBox="0 0 9 15" aria-hidden="true">

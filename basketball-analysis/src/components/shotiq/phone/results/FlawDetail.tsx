@@ -86,12 +86,12 @@ export function FlawDetail({
       </div>
 
       {/* evidence frames ---------------------------------------------------- */}
-      <div className="mt-[9px] px-[19px]">
+      <div className="mt-[7px] px-[19px]">
         <div className="shotiq-display text-[19px] leading-[19px] tracking-[0.05em]" style={{ color: GRAPHITE }}>EVIDENCE FRAMES</div>
         <div className="mt-[5px] flex gap-[1px] overflow-hidden rounded-[3px]">
           {PHASE_STILLS.map((s, i) => (
             <span key={s} className="relative block min-w-0 flex-1" style={{ height: 112 }}>
-              <Frame src={s} w="100%" h="100%" radius={0} alt={`${FRAMES[i]} frame`} />
+              <Frame src={s} w="100%" h="100%" radius={0} pos="50% 26%" alt={`${FRAMES[i]} frame`} />
               {(i === 1 || i === 3) && (
                 <span aria-hidden="true" className="absolute inset-y-0 left-1/2 w-px"
                       style={{ backgroundImage: "repeating-linear-gradient(to bottom,#fff 0 5px,transparent 5px 10px)" }} />
@@ -164,7 +164,7 @@ export function FlawDetail({
       </div>
 
       {/* recommended drill ------------------------------------------------------ */}
-      <div className="mt-[8px] px-[21px]">
+      <div className="mt-[6px] px-[21px]">
         <div className="shotiq-display text-[19px] leading-[19px] tracking-[0.05em]" style={{ color: GRAPHITE }}>RECOMMENDED DRILL</div>
         <Panel className="mt-[4px] flex items-center gap-[11px] p-[6px]">
           <Frame src="090-lib-1" w={68} h={50} radius={4} alt="Towel Elbow Stack drill" />

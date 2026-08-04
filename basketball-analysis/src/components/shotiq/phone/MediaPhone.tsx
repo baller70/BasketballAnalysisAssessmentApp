@@ -184,7 +184,7 @@ export function MediaDetail({ item, frames, onBack }: {
 
       {/* --------------------------------------------------- player */}
       <div className="relative mx-[8px] mt-[8px] overflow-hidden rounded-[4px]">
-        <Shot src={item.img} alt={item.title} zoom={1.3} className="h-[268px] w-full" />
+        <Shot src={item.img} alt={item.title} zoom={1.3} className="h-[252px] w-full" />
         <span className="absolute left-[9px] top-[8px] text-[10px] font-medium text-white">6:12</span>
         <span className="absolute right-[9px] top-[8px] rounded-[3px] bg-black/60 px-[6px] py-[2px] text-[8.5px] text-white">SLOW 1.0x</span>
         <button type="button" aria-label="Play"
@@ -199,14 +199,14 @@ export function MediaDetail({ item, frames, onBack }: {
           <button key={i} type="button" onClick={() => setFrame(i)} aria-label={`Frame ${i + 1}`}
                   className="min-w-0 flex-1 overflow-hidden rounded-[2px]"
                   style={{ outline: i === frame ? `1.8px solid ${ORANGE}` : "none", outlineOffset: -1 }}>
-            <Shot src={f} zoom={1.5} className="h-[52px] w-full" />
+            <Shot src={f} zoom={1.5} className="h-[46px] w-full" />
           </button>
         ))}
       </div>
 
       <div className="px-[18px]">
         <Eyebrow className="mt-[10px]">CAPTURE DETAILS</Eyebrow>
-        <div className="shotiq-display mt-[6px] text-[21px] leading-[22px]">MAY 21, 2025 • 8:24 AM</div>
+        <div className="shotiq-display mt-[5px] text-[20px] leading-[21px]">MAY 21, 2025 • 8:24 AM</div>
         <div className="mt-[4px] text-[9.5px] leading-[12px]" style={{ color: GRAPHITE }}>
           Indoor Court • iPhone 15 Pro • 1080p • 60fps
         </div>

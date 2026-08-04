@@ -99,14 +99,14 @@ export function AnalysisOverview({
       tab="home"
       bar={<ResultsBar variant="wordmark" height={42} trailing={<GearLink />} />}
     >
-      <ResultsIdentity className="mt-[8px] px-[16px]" name={name} streak={streak} points={points} />
+      <ResultsIdentity className="mt-[6px] px-[16px]" name={name} streak={streak} points={points} />
 
       <ResultsTabs active="ANALYSIS RESULT" />
 
       {/* hero still + score column ------------------------------------- */}
-      <div className="mt-[8px] flex gap-[16px] px-[12px]">
+      <div className="mt-[7px] flex gap-[16px] px-[12px]">
         <div className="relative h-[220px] w-[207px] shrink-0 overflow-hidden rounded-[4px]">
-          <Frame src="086-film-4" w="100%" h="100%" radius={0} alt="Your release frame with the pose graph traced over it" />
+          <Frame src="086-film-4" w="100%" h="100%" radius={0} pos="50% 22%" alt="Your release frame with the pose graph traced over it" />
           <SkeletonOverlay />
         </div>
         <div className="min-w-0 flex-1">
@@ -115,7 +115,7 @@ export function AnalysisOverview({
           <ScoreBar score={score} width={89} height={6.5} />
           <div className="shotiq-display mt-[8px] text-[17px] leading-[17px] tracking-[0.04em]" style={{ color: BLUE }}>GOOD</div>
           <div className="mt-[5px] text-[12.5px] leading-[14.5px]">Keep building<br />consistency.</div>
-          <div className="mt-[12px] flex items-end">
+          <div className="mt-[10px] flex items-end">
             {([[shots, "SHOTS", "analyze"], [makes, "MAKES", "uploadVideo"], [pct, "MAKE %", "gauge"]] as const).map(([v, l, g]) => (
               <div key={l} className="flex-1">
                 <span className="flex h-[24px] items-end" style={{ color: INK }}>

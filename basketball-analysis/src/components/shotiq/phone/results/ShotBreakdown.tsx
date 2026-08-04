@@ -83,7 +83,7 @@ export function ShotBreakdown({
           <div className="flex">
             {PHASE_STILLS.map((s, i) => (
               <div key={s} className="relative min-w-0 flex-1 border-l first:border-l-0" style={{ height: 205, borderColor: "rgba(255,255,255,.55)" }}>
-                <Frame src={s} w="100%" h="100%" radius={0} alt={`${PHASES[i]} frame`} />
+                <Frame src={s} w="100%" h="100%" radius={0} pos="50% 30%" alt={`${PHASES[i]} frame`} />
                 {ANGLES[i] && (
                   <span className="shotiq-numeric absolute left-[6px] top-[38%] text-[11px] leading-[11px]"
                         style={{ color: i === 3 ? ORANGE : "#fff", textShadow: "0 1px 2px rgba(0,0,0,.55)" }}>

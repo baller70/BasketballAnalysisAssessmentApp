@@ -99,7 +99,7 @@ export function PhotoComparison({
       <div className="mx-[15px] mt-[8px] flex gap-[3px] overflow-hidden rounded-[5px]">
         {([["YOU", "086-film-4", ORANGE, "162°"], [reference.toUpperCase(), "086-film-5", BLUE, "174°"]] as [string, string, string, string][]).map(([label, still, tone, angle]) => (
           <div key={label} className="relative min-w-0 flex-1" style={{ height: 262 }}>
-            <Frame src={still} w="100%" h="100%" radius={0} alt={`${label} at release`} />
+            <Frame src={still} w="100%" h="100%" radius={0} pos="50% 22%" alt={`${label} at release`} />
             <SkeletonOverlay node={tone} />
             <span className="absolute left-[9px] top-[9px] flex items-center gap-[6px] text-[13px] font-semibold text-white"
                   style={{ textShadow: "0 1px 3px rgba(0,0,0,.65)" }}>

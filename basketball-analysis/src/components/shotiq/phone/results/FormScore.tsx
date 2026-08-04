@@ -62,9 +62,9 @@ export function FormScore({
       tab="home"
       bar={<ResultsBar variant="wordmark" height={42} trailing={<GearLink />} />}
     >
-      <ResultsIdentity className="mt-[8px] px-[22px]" name={name} streak={streak} points={points} />
+      <ResultsIdentity className="mt-[6px] px-[22px]" name={name} streak={streak} points={points} />
 
-      <div className="mt-[11px] flex items-center px-[22px]">
+      <div className="mt-[8px] flex items-center px-[22px]">
         <a href="/results/demo/analysis" className="flex items-center gap-[7px]">
           <Chev size={16} color={INK} />
           <span className="text-[17px] font-medium leading-[18px]">Back to analysis</span>
@@ -74,10 +74,10 @@ export function FormScore({
       <span aria-hidden="true" className="mx-[22px] mt-[6px] block h-px" style={{ background: RULE }} />
 
       {/* score block ---------------------------------------------------- */}
-      <div className="mt-[10px] px-[22px]">
+      <div className="mt-[8px] px-[22px]">
         <SectionHead cap={23} info>FORM SCORE</SectionHead>
         <div className="mt-[3px] flex items-start">
-          <span className="shotiq-numeric leading-[0.78]" style={{ fontSize: 56, color: ORANGE }}>{score}</span>
+          <span className="shotiq-numeric leading-[0.78]" style={{ fontSize: 50, color: ORANGE }}>{score}</span>
           <span className="ml-[13px] pt-[6px]">
             <span className="shotiq-display block text-[17px] leading-[17px] tracking-[0.04em]" style={{ color: BLUE }}>GOOD</span>
             <span className="mt-[5px] block text-[12.5px] leading-[14.5px]">Keep building<br />consistency.</span>
@@ -96,12 +96,12 @@ export function FormScore({
         </div>
         <span className="mt-[2px] block"><ScoreBar score={score} width={183} height={7} /></span>
         <div className="mt-[7px] flex gap-[9px]">
-          <Panel className="flex h-[29px] flex-1 items-center px-[10px]">
+          <Panel className="flex h-[26px] flex-1 items-center px-[10px]">
             <FileText className="h-[15px] w-[15px]" strokeWidth={1.6} />
             <span className="ml-[8px] text-[13.5px] leading-[15px]">View score method</span>
             <span className="ml-auto"><Chev size={13} /></span>
           </Panel>
-          <Panel className="flex h-[29px] flex-1 items-center px-[10px]">
+          <Panel className="flex h-[26px] flex-1 items-center px-[10px]">
             <MechanicGlyph kind="impact" size={15} accent={INK} />
             <span className="ml-[8px] text-[13.5px] leading-[15px]">Compare session</span>
             <span className="ml-auto"><Chev size={13} /></span>
@@ -121,7 +121,7 @@ export function FormScore({
             <div className="shotiq-numeric mt-[2px] text-[22px] leading-[20px]" style={{ color: ORANGE }}>{n}</div>
             <div className="shotiq-display mt-[3px] leading-[9px] tracking-[0.035em]"
                  style={{ fontSize: capDisplay(18), color: verdict === "GOOD" ? BLUE : RED }}>{verdict}</div>
-            <div className="mt-[4px] text-[10px] leading-[11px]">{l1}<br />{l2}</div>
+            <div className="mt-[3px] text-[9.5px] leading-[10.5px]">{l1}<br />{l2}</div>
           </Panel>
         ))}
       </div>
@@ -137,7 +137,7 @@ export function FormScore({
             76<span className="text-[18px]">%</span>
           </span>
           <span className="ml-[9px] shrink-0 pb-[4px] text-[12.5px] leading-[13px]" style={{ color: BLUE }}>MODERATE</span>
-          <span className="ml-[12px] min-w-0 flex-1 pb-[2px] text-[12px] leading-[14px]">
+          <span className="ml-[12px] min-w-0 flex-1 pb-[2px] text-[11.5px] leading-[13px]">
             Form is repeatable in games, with room to tighten elbow.
           </span>
           <span className="ml-[10px] shrink-0">
@@ -153,10 +153,10 @@ export function FormScore({
            style={{ background: "var(--shotiq-color-warmCanvas)" }}>
         <PoseGlyph phase="load" size={38} accent={ORANGE} />
         <div className="min-w-0 flex-1">
-          <div className="text-[13.5px] font-medium leading-[15px]">
+          <div className="text-[12.5px] font-medium leading-[14px]">
             Elbow separation at load is causing inconsistency at release.
           </div>
-          <div className="mt-[1px] text-[12.5px] leading-[14px]" style={{ color: GRAPHITE }}>
+          <div className="mt-[1px] text-[11.5px] leading-[13px]" style={{ color: GRAPHITE }}>
             Focus on keeping your elbow stacked over your hip through the rise and into release.
           </div>
         </div>

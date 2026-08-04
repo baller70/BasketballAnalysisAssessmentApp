@@ -65,7 +65,7 @@ export function PlayerCard({
     >
       {/* portrait + identity ---------------------------------------------- */}
       <div className="mt-[9px] flex gap-[14px] px-[13px]">
-        <Frame src="086-card-photo" w={114} h={147} radius={6}
+        <Frame src="086-card-photo" w={114} h={147} radius={6} pos="50% 8%"
                alt={`${name} at the set point`} className="shrink-0" />
         <div className="min-w-0 flex-1">
           <div className="shotiq-display text-[47px] leading-[42px] tracking-[0.015em]">{name.toUpperCase()}</div>
@@ -91,11 +91,11 @@ export function PlayerCard({
           <div className="shotiq-numeric leading-[0.78]" style={{ fontSize: 62, color: ORANGE }}>{score}</div>
           <ScoreBar score={score} width={108} height={7} />
         </div>
-        <div className="ml-[16px] min-w-0 flex-1">
+        <div className="ml-[14px] w-[104px] shrink-0">
           <div className="shotiq-display text-[16px] leading-[16px] tracking-[0.04em]" style={{ color: BLUE }}>GOOD</div>
-          <div className="mt-[3px] text-[12.5px] leading-[14.5px]">Keep building<br />consistency.</div>
+          <div className="mt-[3px] text-[12px] leading-[13.5px]">Keep building<br />consistency.</div>
         </div>
-        <div className="w-[92px] shrink-0 border-l pl-[12px] text-center" style={{ borderColor: RULE }}>
+        <div className="ml-auto w-[86px] shrink-0 border-l pl-[10px] text-center" style={{ borderColor: RULE }}>
           <div className="shotiq-numeric text-[24px] leading-[22px]">{pct}</div>
           <Micro className="mt-[4px]">MAKE %</Micro>
           <div className="mt-[5px] text-[12.5px] leading-[14px]" style={{ color: GRAPHITE }}>{makes} / {shots}</div>
@@ -112,8 +112,8 @@ export function PlayerCard({
           <div key={label} className="min-w-0 flex-1 px-[9px] text-center">
             <div className="shotiq-display leading-[11px] tracking-[0.05em]" style={{ fontSize: capDisplay(22), color: GRAPHITE }}>{label}</div>
             <span className="mt-[6px] flex h-[48px] items-center justify-center">{glyph}</span>
-            <div className="mt-[7px] text-[13px] font-semibold leading-[15px]">{title}</div>
-            <div className="mt-[4px] text-[11.5px] leading-[13.5px]" style={{ color: GRAPHITE }}>{copy}</div>
+            <div className="mt-[6px] text-[12.5px] font-semibold leading-[14px]">{title}</div>
+            <div className="mt-[3px] text-[11px] leading-[12.5px]" style={{ color: GRAPHITE }}>{copy}</div>
           </div>
         ))}
       </div>

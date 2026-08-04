@@ -366,7 +366,7 @@ export function WorkoutCalendar({ onOpen }: { onOpen: () => void }) {
         <div className="mt-[10px] grid grid-cols-7">
           {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((d) => (
             <div key={d} className="shotiq-microcaps whitespace-nowrap text-center"
- style={{ fontSize: 8, lineHeight: "9px", color: GRAPHITE }}>{d}</div>
+                 style={{ fontSize: 9, lineHeight: "10px", color: GRAPHITE }}>{d}</div>
           ))}
         </div>
         <div className="mt-[6px] grid grid-cols-7 gap-y-[2px]" data-testid="phone-calendar-grid">

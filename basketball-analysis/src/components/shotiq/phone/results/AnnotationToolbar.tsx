@@ -108,7 +108,7 @@ export function AnnotationToolbar({
 
       {/* annotation canvas ----------------------------------------------- */}
       <div data-testid="annotation-canvas" className="relative mx-[15px] mt-[7px] h-[366px] overflow-hidden rounded-[6px]">
-        <Frame src="086-film-4" w="100%" h="100%" radius={0} alt={`Frame ${frame}, annotated`} />
+        <Frame src="086-film-4" w="100%" h="100%" radius={0} pos="50% 20%" alt={`Frame ${frame}, annotated`} />
         <SkeletonOverlay />
         {/* the two measured angles canonical draws on the canvas */}
         <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden="true">
