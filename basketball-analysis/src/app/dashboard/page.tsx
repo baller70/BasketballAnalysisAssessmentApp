@@ -16,9 +16,9 @@
 import React, { useEffect, useState } from "react"
 import Link from "next/link"
 import {
-  Crosshair, ImagePlus, Video, Radio, ChevronRight, LineChart,
-  Activity, MoreVertical, Info, type LucideIcon,
+  ChevronRight, LineChart, MoreVertical, Info,
 } from "lucide-react"
+import { ActionGlyph, PhaseTrack, WorkoutGlyph, type ActionKind } from "@/components/shotiq/Glyphs"
 import { usePoints } from "@/lib/points/pointsContext"
 import { useAuthStore } from "@/stores/authStore"
 import { useDashboardViewStore } from "@/stores/dashboardViewStore"
@@ -176,7 +176,7 @@ export default function DashboardPage() {
               <div className="flex gap-[12px] pt-[8px]">
                 <Link href="/analyze" data-testid="cta-new-analysis"
                       className="flex h-[52px] items-center gap-[10px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] px-[24px] text-[15px] font-medium text-white">
-                  <Crosshair className="h-[18px] w-[18px]" /> New analysis
+                  <ActionGlyph kind="nodeGraph" height={20} /> New analysis
                 </Link>
                 <Link href="/results/demo/history"
                       className="flex h-[52px] items-center gap-[10px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[22px] text-[15px]">
@@ -189,8 +189,12 @@ export default function DashboardPage() {
             <Card className="mt-[10px] flex overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/images/canonical/080-next-action.png" alt="Latest analyzed jump shot"
-                   className="h-[318px] w-[398px] shrink-0 object-cover" />
-              <div className="flex-1 px-[26px] py-[18px]">
+                   className="h-[318px] w-[380px] shrink-0 object-cover" />
+              {/* The rail leaves this column 60px under canonical's 331px of
+                  content box, which is what shortened the goal track (240 vs
+                  292) and the primary button (285 vs 330); the padding and the
+                  still-oversized still both give some of it back. */}
+              <div className="flex-1 px-[22px] py-[18px]">
                 <SectionLabel>PRIMARY COACHING TARGET</SectionLabel>
                 <div className="mt-[8px] flex items-start justify-between">
                   <h2 className="text-[26px] font-semibold leading-[32px]">
@@ -217,7 +221,7 @@ export default function DashboardPage() {
                 </div>
                 <Link href="/results/demo/analysis" data-testid="cta-view-analysis"
                       className="mt-[12px] flex h-[44px] w-full items-center justify-center gap-[10px] rounded-[6px] bg-[var(--shotiq-color-analysisBlue)] text-[15px] font-medium text-white">
-                  <Crosshair className="h-[17px] w-[17px]" /> View analysis
+                  <ActionGlyph kind="analyze" height={18} /> View analysis
                 </Link>
               </div>
             </Card>
@@ -257,11 +261,12 @@ export default function DashboardPage() {
                   </div>
                 </div>
               </div>
-              <div className="mt-[14px] border-t border-[var(--shotiq-color-rule)] pt-[10px]">
-                {/* Exact phase strip from the canonical screen (080). */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/images/canonical/080-phase-strip.png" alt="Shot phases: setup, load, rise, release, follow-through"
-                     className="h-[50px] w-[412px]" />
+              {/* No rule above the strip — canonical draws none there — and no
+                  tinted band: the strip used to be a downscaled bitmap of the
+                  canonical crop, which put its own #FDFDFD paper on the card as
+                  a visible block and shrank the labels to an 8px cap. */}
+              <div className="mt-[12px] w-[486px]">
+                <PhaseTrack figure={32} label={13} checks />
               </div>
             </Card>
           </div>
@@ -274,7 +279,10 @@ export default function DashboardPage() {
             <Card className="mt-[10px] flex divide-x divide-[var(--shotiq-color-rule)] px-[6px] py-[16px] text-center">
               {[
                 [hasData ? String(stats!.totalAnalyses) : "0", "TOTAL ANALYSES", "All time", "var(--shotiq-color-ink)"],
-                [score != null ? String(score) : "—", "AVG. FORM SCORE", band.label.toLowerCase(), "var(--shotiq-color-analysisBlue)"],
+                // Canonical sets this sublabel sentence-case ("Good"), like
+                // every other verdict on the screen — not lowercase.
+                [score != null ? String(score) : "—", "AVG. FORM SCORE",
+                 band.label.charAt(0) + band.label.slice(1).toLowerCase(), "var(--shotiq-color-analysisBlue)"],
                 [hasData ? String(stats!.totalShots ?? "—") : "0", "TOTAL SHOTS", "All time", "var(--shotiq-color-ink)"],
                 [improvement, "IMPROVEMENT", "vs last 30 days",
                  deltaPct != null && deltaPct < 0 ? "var(--shotiq-color-reviewRed)" : "var(--shotiq-color-confirmGreen)"],
@@ -306,7 +314,17 @@ export default function DashboardPage() {
             <Card className="mt-[10px] flex divide-x divide-[var(--shotiq-color-rule)]">
               <div className="flex-1 px-[18px] py-[16px]">
                 <SectionLabel>MECHANICS TREND</SectionLabel>
-                <TrendLine points={trend} width={150} height={52} />
+                {/* Canonical sets a rising arrow at the sparkline's top right;
+                    it was missing entirely on this variant. */}
+                <div className="flex items-start gap-[4px]">
+                  <TrendLine points={trend} width={150} height={52} />
+                  <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" className="mt-[4px]"
+                       style={{ transform: deltaPct != null && deltaPct < 0 ? "scaleY(-1)" : undefined }}>
+                    <path d="M3 13 L13 3 M6 3 H13 V10" fill="none"
+                          stroke={deltaPct != null && deltaPct < 0 ? "var(--shotiq-color-reviewRed)" : "var(--shotiq-color-confirmGreen)"}
+                          strokeWidth="1.6" />
+                  </svg>
+                </div>
                 <div className={`text-[11px] ${improvementTone}`}>{improvement} vs last 7 days</div>
               </div>
               <div className="w-[150px] px-[18px] py-[16px]">
@@ -400,19 +418,21 @@ export default function DashboardPage() {
             <h1 className="shotiq-display text-[54px] leading-[56px]">TODAY&apos;S SHOT ROOM</h1>
             <p className="mt-[4px] text-[13px] text-[var(--shotiq-color-graphite)]">{today}</p>
           </div>
+          {/* Canonical marks these four with its own node-graph family, each on
+              its own aspect ratio (the film gate is 60x25, the live-camera node
+              run 78x27) at a ~34px height — not four 20px square UI glyphs. */}
           <Link href="/analyze" data-testid="cta-analyze-shot"
                 className="flex h-[56px] items-center gap-[12px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] px-[26px] text-[15px] font-medium text-white">
-            <Crosshair className="h-[18px] w-[18px]" /> Analyze shot
+            <ActionGlyph kind="analyze" height={30} accent="#fff" /> Analyze shot
           </Link>
-          {[["Upload image", "/upload", ImagePlus], ["Upload video", "/upload", Video], ["Live camera", "/video-analysis", Radio]].map(([t, href, I]) => {
-            const Icon = I as LucideIcon
-            return (
-              <Link key={String(t)} href={String(href)}
-                    className="flex h-[56px] items-center gap-[12px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[22px] text-[14px]">
-                <Icon className="h-[26px] w-[26px]" strokeWidth={1.4} /> {String(t)}
-              </Link>
-            )
-          })}
+          {([["Upload image", "/upload", "uploadImage", 34],
+             ["Upload video", "/upload", "uploadVideo", 25],
+             ["Live camera", "/video-analysis", "liveCamera", 27]] as [string, string, ActionKind, number][]).map(([t, href, kind, h]) => (
+            <Link key={t} href={href}
+                  className="flex h-[56px] items-center gap-[14px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[22px] text-[14px]">
+              <ActionGlyph kind={kind} height={h} /> {t}
+            </Link>
+          ))}
         </div>
 
         {/* The 196px rail costs this row ~110px against canonical's 88px icon
@@ -420,16 +440,19 @@ export default function DashboardPage() {
             coaching-target headline still sets on one line. */}
         <div className="mt-[16px] flex gap-[20px]">
           {/* latest analysis */}
-          <div className="w-[500px] shrink-0">
+          {/* Canonical's frame is 595x366 and its column runs to y646, level with
+              the rail beside it. At 500x311 the column stopped 56px short and
+              that shortfall showed up as dead paper above RECENT ANALYSES. */}
+          <div className="w-[520px] shrink-0">
             <SectionLabel>LATEST ANALYSIS</SectionLabel>
             {/* Exact frame cropped from the canonical screen (079, x122 y216 588x366). */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/images/canonical/079-latest-analysis.png" alt="Latest analyzed jump shot"
-                 className="mt-[10px] h-[311px] w-[500px] rounded-[4px] object-cover" />
-            {/* Phase figures + labels: exact strip from the canonical screen. */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/canonical/079-phase-strip.png" alt="Shot phases: setup, load, rise, release, follow-through"
-                 className="mt-[4px] h-[60px] w-[500px]" />
+                 className="mt-[10px] h-[352px] w-[520px] rounded-[4px] object-cover" />
+            {/* Drawn, not a bitmap. The 588px canonical strip crop squeezed into
+                this 500px column dropped the labels to an 8px cap and printed
+                its own #FDFDFD paper as a band across the video's foot. */}
+            <PhaseTrack className="mt-[8px]" figure={40} label={12} underline />
           </div>
 
           {/* form score column */}
@@ -488,8 +511,9 @@ export default function DashboardPage() {
 
             <SectionLabel className="mt-[22px] border-t border-[var(--shotiq-color-rule)] pt-[18px]">NEXT WORKOUT</SectionLabel>
             <Card className="mt-[10px] flex items-center gap-[16px] px-[18px] py-[16px]">
-              <span className="grid h-[46px] w-[46px] place-items-center rounded-full bg-[var(--shotiq-color-analysisBlue)]">
-                <Activity className="h-[22px] w-[22px] text-white" strokeWidth={1.8} />
+              {/* Canonical's workout mark is the node graph, not a pulse. */}
+              <span className="grid h-[46px] w-[46px] place-items-center rounded-full bg-[var(--shotiq-color-analysisBlue)] text-white">
+                <WorkoutGlyph kind="release" size={24} />
               </span>
               <div className="min-w-0 flex-1">
                 <div className="text-[16px] font-semibold">Quick Release Builder</div>

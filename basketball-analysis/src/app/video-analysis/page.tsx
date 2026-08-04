@@ -179,7 +179,7 @@ export default function LiveCapturePage() {
     : shots.length ? `${Math.round((makes / shots.length) * 100)}%` : "—"
 
   return (
-    <div data-testid="screen-desktop-web-live-capture" className="px-[26px] pb-[8px] pt-[12px]">
+    <div data-testid="screen-desktop-web-live-capture" className="px-[16px] pb-[8px] pt-[12px]">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="shotiq-display flex items-center gap-[14px] text-[53px] leading-[55px]">
@@ -234,7 +234,7 @@ export default function LiveCapturePage() {
         </div>
       </div>
 
-      <div className="mt-[10px] flex gap-[18px]">
+      <div className="mt-[10px] flex gap-[14px]">
         {/* live surface */}
         <div className="min-w-0 flex-1">
           {/* The idle poster carries the canonical FPS badge and session timer
@@ -322,15 +322,21 @@ export default function LiveCapturePage() {
               </div>
             </Card>
           )}
-          <div className="mt-[14px] flex items-center justify-around rounded-full border border-[var(--shotiq-color-rule)] py-[8px]">
-            {PHASES.map((p) => (
-              <div key={p} className="text-center">
-                <PoseFigure phase={p} active={p === "RELEASE"} height={38} className="mx-auto" />
-                <div className={`text-[10px] tracking-[0.06em] ${p === "RELEASE" ? "relative pb-[3px] font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>
-                  {p}
-                  {p === "RELEASE" && <span className="absolute inset-x-[-4px] bottom-0 h-[2px] bg-[var(--shotiq-color-shotiqOrange)]" />}
+          {/* Canonical's phase track is a 44px pill with the figures riding up
+              over its top edge and hairline connectors running between them —
+              boxing the whole figure inside made the pill 73px tall. */}
+          <div className="mt-[30px] flex h-[44px] items-center rounded-full border border-[var(--shotiq-color-rule)] px-[18px]">
+            {PHASES.map((p, i) => (
+              <React.Fragment key={p}>
+                {i > 0 && <span className="mt-[6px] h-px min-w-[16px] flex-1 bg-[var(--shotiq-color-rule)]" />}
+                <div className="shrink-0 px-[10px] text-center">
+                  <PoseFigure phase={p} active={p === "RELEASE"} height={36} className="mx-auto -mt-[17px]" />
+                  <div className={`mt-[1px] text-[10px] tracking-[0.03em] ${p === "RELEASE" ? "relative pb-[3px] font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>
+                    {p}
+                    {p === "RELEASE" && <span className="absolute inset-x-[-4px] bottom-0 h-[2px] bg-[var(--shotiq-color-shotiqOrange)]" />}
+                  </div>
                 </div>
-              </div>
+              </React.Fragment>
             ))}
           </div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -341,13 +347,13 @@ export default function LiveCapturePage() {
         {/* Trimmed vertical padding: the rail used to run ~100px past the foot of
             the capture column, and that overhang was the white band above SHOT
             RAIL. Canonical leaves ~30px there. */}
-        <div className="w-[462px] shrink-0 space-y-[8px]">
+        <div className="w-[448px] shrink-0 space-y-[8px]">
           <Card className="px-[18px] py-[13px]">
             <div className="flex items-center justify-between">
               <SectionLabel>CAPTURE READINESS</SectionLabel>
               <span className="shotiq-display text-[14px] text-[var(--shotiq-color-confirmGreen)]" title={live ? "Live checks passing" : "Preview — start the camera to run live checks"}>GOOD</span>
             </div>
-            <div className="mt-[12px] flex divide-x divide-[var(--shotiq-color-rule)]">
+            <div className="mt-[12px] flex">
               {READINESS.map(([r, glyph]) => (
                 <div key={r} className="flex-1 px-[4px] text-center">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -386,9 +392,14 @@ export default function LiveCapturePage() {
                 <ChevronRight className="h-[15px] w-[15px] text-[var(--shotiq-color-graphite)]" />
               </div>
               <div className="mt-[8px] text-[10px] font-bold tracking-[0.06em]">TARGET PROGRESS</div>
+              {/* The bar tracks THIS session against its shot target — 24 of 25
+                  logged — while 72% beside it is the standing goal figure. It
+                  was drawing the goal figure twice, which left the track 74%
+                  full against canonical's near-complete bar. */}
               <div className="mt-[4px] flex items-center gap-[10px]">
                 <div className="h-[6px] flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
-                  <div className="h-full w-[72%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" /></div>
+                  <div className="h-full rounded-full bg-[var(--shotiq-color-confirmGreen)]"
+                       style={{ width: `${Math.min(100, Math.round((statShots / 25) * 100))}%` }} /></div>
                 <GoalPercent size={12}>72%</GoalPercent>
               </div>
               <p className="mt-[6px] text-[11px] text-[var(--shotiq-color-graphite)]">Improving release consistency and arm alignment.</p>
@@ -419,15 +430,18 @@ export default function LiveCapturePage() {
       <div className="mt-[10px] border-t border-[var(--shotiq-color-rule)] pt-[8px]">
         <div className="flex items-center">
           <span className="shotiq-display text-[19px]">SHOT RAIL</span>
-          <span className="ml-auto mr-[430px] text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">
+          <span className="ml-auto mr-[430px] text-[11px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">
             {statShots} SHOTS
           </span>
         </div>
         <div className="mt-[8px] flex items-start">
-          <div className="flex flex-1 items-start gap-[14px] overflow-x-auto pr-[20px]">
+          {/* Canonical spreads the 24 markers across the whole band and sets the
+              numerals in the body face — the condensed numeric cut at 11px read
+              as ~9px of bold, half canonical's advance width. */}
+          <div className="flex flex-1 items-start justify-between pr-[20px]">
             {railStates.map((state, i) => (
               <div key={i} className="w-[18px] text-center">
-                <div className={`shotiq-numeric text-[11px] ${state === "live" ? "text-[var(--shotiq-color-analysisBlue)]" : ""}`}>{i + 1}</div>
+                <div className={`text-[12px] leading-[14px] ${state === "live" ? "text-[var(--shotiq-color-analysisBlue)]" : ""}`}>{i + 1}</div>
                 {state === "make" && (
                   <span className="mx-auto mt-[4px] grid h-[15px] w-[15px] place-items-center rounded-full bg-[var(--shotiq-color-confirmGreen)]"><Check className="h-[9px] w-[9px] text-white" strokeWidth={3} /></span>
                 )}
@@ -456,7 +470,7 @@ export default function LiveCapturePage() {
               <span className="grid h-[15px] w-[15px] place-items-center rounded-full border-2 border-[var(--shotiq-color-analysisBlue)]"><span className="h-[5px] w-[5px] rounded-full bg-[var(--shotiq-color-analysisBlue)]" /></span> LIVE
             </span>
             <Link href="/results/demo/analysis"
-                  className="ml-[14px] flex h-[46px] items-center gap-[10px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[18px] text-[13px]">
+                  className="ml-[14px] flex h-[52px] items-center gap-[10px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[26px] text-[13px]">
               <Film className="h-[15px] w-[15px]" strokeWidth={1.6} /> Review last shot
             </Link>
           </div>

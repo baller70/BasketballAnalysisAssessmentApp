@@ -16,9 +16,9 @@ import React, { useCallback, useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
-  Image as ImageIcon, Film, Upload, FolderUp, ChevronRight, HelpCircle,
-  ArrowLeft, Crosshair, ScanLine,
+  Image as ImageIcon, Upload, ChevronRight, HelpCircle, ArrowLeft,
 } from "lucide-react"
+import { ActionGlyph, type ActionKind } from "@/components/shotiq/Glyphs"
 import { PoseAnalysis } from "@/components/analysis/PoseAnalysis"
 import { useAnalysisStore } from "@/stores/analysisStore"
 import { enqueueVideoUpload, uploadQueueStorage } from "@/lib/upload/uploadQueue"
@@ -135,25 +135,29 @@ export default function AnalyzeWorkspacePage() {
               <button type="button" data-testid="choose-media"
                       onClick={() => { if (inputRef.current) { inputRef.current.accept = ACCEPT; inputRef.current.click() } }}
                       className="flex h-[116px] flex-col items-center justify-center gap-[10px] rounded-[8px] border-2 border-dashed border-[var(--shotiq-color-shotiqOrange)] text-[var(--shotiq-color-shotiqOrange)]">
-                <FolderUp className="h-[34px] w-[34px]" strokeWidth={1.4} />
+                {/* Canonical's mark here is a document with an up arrow, not a
+                    folder; the tile marks also run ~40px, not 28-34px. */}
+                <ActionGlyph kind="chooseMedia" height={42} />
                 <span className="text-[14px] font-medium">Choose media</span>
               </button>
-              {[["Upload image", ImageIcon, () => {
+              {([["Upload image", null, 34, () => {
                   if (inputRef.current) { inputRef.current.accept = "image/*"; inputRef.current.click() }
                 }],
-                ["Upload video", Film, () => {
+                ["Upload video", "uploadVideo", 26, () => {
                   if (inputRef.current) { inputRef.current.accept = "video/*"; inputRef.current.click() }
                 }],
-                ["Live camera", ScanLine, () => router.push("/video-analysis")]].map(([t, I, fn]) => {
-                const Icon = I as typeof ImageIcon
-                return (
-                  <button key={String(t)} type="button" onClick={fn as () => void}
-                          className="flex h-[116px] flex-col items-center justify-center gap-[10px] rounded-[8px] border border-[var(--shotiq-color-rule)]">
-                    <Icon className="h-[32px] w-[32px]" strokeWidth={1.3} />
-                    <span className="text-[14px]">{String(t)}</span>
-                  </button>
-                )
-              })}
+                ["Live camera", "liveCamera", 28, () => router.push("/video-analysis")]] as
+                [string, ActionKind | null, number, () => void][]).map(([t, kind, h, fn]) => (
+                <button key={t} type="button" onClick={fn}
+                        className="flex h-[124px] flex-col items-center justify-center gap-[12px] rounded-[8px] border border-[var(--shotiq-color-rule)]">
+                  {/* Canonical draws the video tile as a film gate with a red
+                      centre marker and the camera tile as the node run, not a
+                      filmstrip grid and a focus bracket. */}
+                  {kind ? <ActionGlyph kind={kind} height={h} />
+                        : <ImageIcon className="h-[38px] w-[38px]" strokeWidth={1.3} />}
+                  <span className="text-[14px]">{t}</span>
+                </button>
+              ))}
             </div>
 
             {/* drop zone */}
@@ -205,9 +209,11 @@ export default function AnalyzeWorkspacePage() {
                 <FormScoreCell score={score} size={44} numeral={62} className="flex-1 pr-[14px]" />
                 <div className="flex-1 pl-[14px]">
                   <SectionLabel>PRIMARY TARGET</SectionLabel>
-                  <div className="mt-[4px] flex items-start justify-between">
+                  {/* The chevron is centred on the two-line title, as canonical
+                      sets it — `items-start` parked it inline with line 1. */}
+                  <div className="mt-[4px] flex items-center justify-between">
                     <p className="text-[14px] font-semibold leading-[19px]">Keep elbow stacked<br />through release</p>
-                    <ChevronRight className="h-[15px] w-[15px] text-[var(--shotiq-color-graphite)]" />
+                    <ChevronRight className="h-[15px] w-[15px] shrink-0 text-[var(--shotiq-color-graphite)]" />
                   </div>
                   <span className="mt-[8px] inline-block rounded-[4px] border border-[var(--shotiq-color-confirmGreen)] px-[6px] py-[2px] text-[10px] font-bold text-[var(--shotiq-color-confirmGreen)]">ACTIVE GOAL</span>
                   <div className="mt-[8px] flex items-center gap-[8px]">
@@ -241,14 +247,17 @@ export default function AnalyzeWorkspacePage() {
         {/* Queue and checks are one bordered container split by an internal
             hairline — canonical never gutters these two apart. */}
         <div className="mt-[12px] flex gap-[16px]">
-          <Card className="flex w-[600px] shrink-0 divide-x divide-[var(--shotiq-color-rule)]">
-            <div className="w-[318px] shrink-0 px-[18px] py-[16px]">
+          <Card className="flex w-[660px] shrink-0 divide-x divide-[var(--shotiq-color-rule)]">
+            {/* Canonical gives the queue 375px so its empty state is a 342x186
+                box with ~58px of paper each side of the caption; at 318px the
+                box shrank to 281x135 and the caption ran to the dashes. */}
+            <div className="w-[376px] shrink-0 px-[18px] py-[16px]">
               <SectionLabel>UPLOAD QUEUE ({files.length})</SectionLabel>
               <p className="mt-[4px] text-[12px] text-[var(--shotiq-color-graphite)]">
                 Files you add will appear here. You can add more or start analysis.
               </p>
               {files.length === 0 ? (
-                <div className="mt-[14px] flex h-[150px] flex-col items-center justify-center rounded-[8px] border-2 border-dashed border-[var(--shotiq-color-rule)]">
+                <div className="mt-[14px] flex h-[182px] flex-col items-center justify-center rounded-[8px] border-2 border-dashed border-[var(--shotiq-color-rule)]">
                   <TrendLine points={[3, 1.6, 2.4, 4]} width={70} height={30}
                              stroke="var(--shotiq-color-analysisBlue)" dotFill="var(--shotiq-color-analysisBlue)" />
                   <div className="mt-[8px] text-[15px] font-semibold">No media added yet</div>
@@ -257,7 +266,7 @@ export default function AnalyzeWorkspacePage() {
                   </div>
                 </div>
               ) : (
-                <ul className="mt-[14px] max-h-[150px] divide-y divide-[var(--shotiq-color-rule)] overflow-auto" data-testid="upload-queue-list">
+                <ul className="mt-[14px] max-h-[182px] divide-y divide-[var(--shotiq-color-rule)] overflow-auto" data-testid="upload-queue-list">
                   {files.map((f, i) => (
                     <li key={`${f.name}-${i}`} className="flex items-center justify-between py-[8px] text-[13px]">
                       <span className="truncate pr-[10px]">{f.name}</span>
@@ -329,7 +338,7 @@ export default function AnalyzeWorkspacePage() {
           <button type="button" onClick={analyzeSelected} disabled={!files.length || busy}
                   data-testid="analyze-selected"
                   className="flex h-[54px] items-center gap-[10px] rounded-[6px] bg-[var(--shotiq-color-analysisBlue)] px-[30px] text-[15px] font-medium text-white disabled:cursor-not-allowed">
-            <Crosshair className="h-[17px] w-[17px]" /> {busy ? "Queueing…" : "Analyze selected"}
+            <ActionGlyph kind="nodeGraph" height={18} accent="#fff" /> {busy ? "Queueing…" : "Analyze selected"}
           </button>
         </div>
       </div>

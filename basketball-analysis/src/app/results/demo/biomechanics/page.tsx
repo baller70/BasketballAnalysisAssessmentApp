@@ -146,7 +146,7 @@ export default function BiomechanicsWorkspacePage() {
 
   return (
     <ShotIQShell active="Analyze">
-    <div data-testid="screen-desktop-web-biomechanics-workspace" className="px-[26px] pt-[14px]">
+    <div data-testid="screen-desktop-web-biomechanics-workspace" className="px-[16px] pt-[14px]">
       <div className="flex items-start justify-between">
         <div>
           <div className="text-[11px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">
@@ -248,13 +248,13 @@ export default function BiomechanicsWorkspacePage() {
         </Card>
       </div>
 
-      <div className="mt-[8px] flex gap-[16px]">
+      <div className="mt-[8px] flex gap-[14px]">
         {/* frame viewer */}
         <div className="w-[600px] shrink-0">
           <div className="relative">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/images/canonical/084-hero.png" alt="Release frame with skeleton overlay"
-                 className="block w-[656px] rounded-[6px]" width={656} height={451} />
+                 className="block h-[428px] w-[656px] rounded-[6px] object-cover" width={656} height={451} />
             {/* Annotation ink layer — active while a tool is selected. */}
             {overlays.Annotations && (
               <canvas ref={canvasRef} width={656} height={451} data-testid="annotation-canvas"
@@ -290,20 +290,33 @@ export default function BiomechanicsWorkspacePage() {
               </button>
             </Card>
           )}
-          <div className="mt-[16px] flex items-center gap-[4px]">
-            <ChevronLeft className="h-[18px] w-[18px] shrink-0 text-[var(--shotiq-color-ink)]" />
-            <div className="relative min-w-0 flex-1">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/images/canonical/084-strip.png" alt="" className="block w-full" width={624} height={104} />
-              <div className="absolute inset-0 flex">
-                {Array.from({ length: 9 }).map((_, i) => (
-                  <button key={i} type="button" onClick={() => setFrame(i)} aria-label={`frame ${i + 1}`}
-                          aria-current={frame === i ? "true" : undefined}
-                          className={`h-full flex-1 rounded-[4px] ${frame === i && i !== 4 ? "ring-2 ring-[var(--shotiq-color-shotiqOrange)]" : ""}`} />
-                ))}
+          {/* Canonical carries an orange stem-and-head marker from the timeline
+              down onto the selected frame, and renders the strip 121px tall —
+              letting it keep the asset's own 6:1 aspect left ~30px of dead
+              white at the foot of this column. */}
+          <div className="mt-[30px] flex items-stretch gap-[10px]">
+            <ChevronLeft className="h-[16px] w-[16px] shrink-0 self-center text-[var(--shotiq-color-ink)]" />
+            <div className="min-w-0 flex-1">
+              <div className="relative h-[12px]">
+                <span className="absolute bottom-0 flex h-[12px] w-[10px] -translate-x-1/2 flex-col items-center"
+                      style={{ left: `${(4 + 0.5) * (100 / 9)}%` }} aria-hidden="true">
+                  <span className="block h-0 w-0 border-x-[4px] border-b-[5px] border-x-transparent border-b-[var(--shotiq-color-shotiqOrange)]" />
+                  <span className="block w-[2px] flex-1 bg-[var(--shotiq-color-shotiqOrange)]" />
+                </span>
+              </div>
+              <div className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/images/canonical/084-strip.png" alt="" className="block h-[110px] w-full" width={624} height={104} />
+                <div className="absolute inset-0 flex">
+                  {Array.from({ length: 9 }).map((_, i) => (
+                    <button key={i} type="button" onClick={() => setFrame(i)} aria-label={`frame ${i + 1}`}
+                            aria-current={frame === i ? "true" : undefined}
+                            className={`h-full flex-1 rounded-[4px] ${frame === i && i !== 4 ? "ring-2 ring-[var(--shotiq-color-shotiqOrange)]" : ""}`} />
+                  ))}
+                </div>
               </div>
             </div>
-            <ChevronRight className="h-[18px] w-[18px] shrink-0 text-[var(--shotiq-color-ink)]" />
+            <ChevronRight className="h-[16px] w-[16px] shrink-0 self-center text-[var(--shotiq-color-ink)]" />
           </div>
         </div>
 
@@ -324,25 +337,28 @@ export default function BiomechanicsWorkspacePage() {
               <div className="divide-y divide-[var(--shotiq-color-rule)]">
                 {MEASUREMENTS.map(([m, v, ideal, band, glyph]) => (
                   <button key={m} type="button" onClick={() => setMetric(m)} data-testid={`metric-${m.toLowerCase().replace(/\s+/g, "-")}`}
-                          className="flex w-full items-center gap-[8px] py-[12px] text-left hover:bg-[var(--shotiq-color-warmCanvas)]">
+                          className="flex w-full items-center gap-[10px] py-[9px] text-left hover:bg-[var(--shotiq-color-warmCanvas)]">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={`/images/canonical/${glyph}.png`} alt="" aria-hidden="true"
                          className="block h-[28px] w-[26px] max-w-none shrink-0 object-contain" />
-                    <div className="min-w-0 flex-1">
-                      <div className="whitespace-nowrap text-[13px] font-semibold">{m}</div>
-                      <div className="text-[10px] text-[var(--shotiq-color-graphite)]">{ideal}</div>
+                    <div className="min-w-0 flex-1 whitespace-nowrap text-[12px] font-medium">{m}</div>
+                    {/* Canonical pairs the ideal range with the *value*: reading
+                        stacks right-aligned under the number, not under the
+                        metric name on the far left. */}
+                    <div className="shrink-0 text-right">
+                      <div className="shotiq-numeric text-[19px] leading-[21px]">{hasData ? v : "—"}</div>
+                      <div className="mt-[1px] text-[10px] leading-[12px] text-[var(--shotiq-color-graphite)]">{ideal}</div>
                     </div>
-                    <span className="shotiq-numeric shrink-0 text-[19px]">{hasData ? v : "—"}</span>
                     {/* Tailwind's /10 opacity modifier does not apply to a raw
                         var() colour, so these pills were rendering as bare text
-                        with no fill or border. */}
-                    <span className="shrink-0 whitespace-nowrap rounded-[4px] border px-[7px] py-[2px] text-[10px] font-bold"
+                        with no fill or border. Canonical draws a tinted fill and
+                        no border at all. */}
+                    <span className="shrink-0 whitespace-nowrap rounded-[4px] px-[7px] py-[4px] text-[10px] font-bold"
                           style={band === "Good"
-                            ? { background: "rgba(22,138,85,0.10)", borderColor: "rgba(22,138,85,0.35)", color: "var(--shotiq-color-confirmGreen)" }
-                            : { background: "rgba(253, 55, 1,0.10)", borderColor: "rgba(253, 55, 1,0.40)", color: "var(--shotiq-color-shotiqOrange)" }}>
+                            ? { background: "rgba(22,138,85,0.10)", color: "var(--shotiq-color-confirmGreen)" }
+                            : { background: "rgba(253, 55, 1,0.10)", color: "var(--shotiq-color-shotiqOrange)" }}>
                       {band}
                     </span>
-                    <ChevronRight className="h-[13px] w-[13px] text-[var(--shotiq-color-muted)]" />
                   </button>
                 ))}
               </div>
@@ -350,13 +366,15 @@ export default function BiomechanicsWorkspacePage() {
               {/* Canonical fills this panel to the card's foot; the rows were
                   packed tight enough to leave ~90px of dead white below them. */}
               <div className="mt-[8px] space-y-[13px]">
-                {CONFIDENCE.map(([m, v]) => (
+                {CONFIDENCE.map(([m, v], i) => (
                   <div key={m} className="flex items-center gap-[10px]">
-                    <span className="w-[118px] shrink-0 text-[12px]">{m}</span>
+                    {/* Canonical sets the summary row apart from the three
+                        component rows by weight and size, not by position. */}
+                    <span className={`w-[104px] shrink-0 text-[12px] ${i === 0 ? "font-semibold" : ""}`}>{m}</span>
                     <div className="h-[6px] flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
                       <div className="h-full rounded-full bg-[var(--shotiq-color-analysisBlue)]" style={{ width: `${v}%` }} />
                     </div>
-                    <span className="shotiq-numeric w-[38px] text-right text-[13px]">{v}%</span>
+                    <span className="shotiq-numeric w-[30px] text-right text-[13px]">{v}%</span>
                   </div>
                 ))}
               </div>
@@ -373,10 +391,11 @@ export default function BiomechanicsWorkspacePage() {
         {/* right rail */}
         <div className="w-[235px] shrink-0">
           <Card className="p-[16px]"><CoachingTarget /></Card>
-          {/* Insights and the suggested focus are one container divided by a
-              hairline — canonical never gutters this pair apart. */}
-          <Card className="mt-[12px] divide-y divide-[var(--shotiq-color-rule)]">
-            <div className="p-[16px]">
+          {/* Canonical sets COACHING INSIGHTS loose on the paper between two
+              bordered cards — it is the only unbordered block in this rail, and
+              wrapping it made the rail read as three identical panels. */}
+          <div className="mt-[12px]">
+            <div className="px-[4px] pb-[14px]">
               <SectionLabel>COACHING INSIGHTS</SectionLabel>
               <div className="mt-[8px] space-y-[10px]">
                 {[["✓", "Solid alignment at release. Elbow tracking is in a good range.", "var(--shotiq-color-confirmGreen)"],
@@ -389,7 +408,7 @@ export default function BiomechanicsWorkspacePage() {
                 ))}
               </div>
             </div>
-            <div className="p-[16px]">
+            <Card className="p-[16px]">
               <SectionLabel>SUGGESTED FOCUS</SectionLabel>
               <div className="mt-[10px] flex items-center gap-[12px]">
                 {/* Canonical rings this one large: the ball's path drifting off
@@ -413,8 +432,8 @@ export default function BiomechanicsWorkspacePage() {
                     className="mt-[6px] flex h-[34px] items-center justify-center rounded-[5px] border border-[var(--shotiq-color-rule)] text-[12px]">
                 View related drills ›
               </Link>
-            </div>
-          </Card>
+            </Card>
+          </div>
         </div>
       </div>
 
@@ -441,10 +460,10 @@ export default function BiomechanicsWorkspacePage() {
                 <div>
                   <div className="text-[9px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">CURRENT</div>
                   <div className="shotiq-numeric text-[38px] leading-[42px] text-[var(--shotiq-color-shotiqOrange)]">{hasData ? v : "—"}</div>
-                  <span className="mt-[2px] inline-block rounded-[4px] border px-[8px] py-[2px] text-[10px] font-bold"
+                  <span className="mt-[2px] inline-block rounded-[4px] px-[8px] py-[3px] text-[10px] font-bold"
                         style={band === "Good"
-                          ? { background: "rgba(22,138,85,0.10)", borderColor: "rgba(22,138,85,0.35)", color: "var(--shotiq-color-confirmGreen)" }
-                          : { background: "rgba(253, 55, 1,0.10)", borderColor: "rgba(253, 55, 1,0.40)", color: "var(--shotiq-color-shotiqOrange)" }}>
+                          ? { background: "rgba(22,138,85,0.10)", color: "var(--shotiq-color-confirmGreen)" }
+                          : { background: "rgba(253, 55, 1,0.10)", color: "var(--shotiq-color-shotiqOrange)" }}>
                     {band}
                   </span>
                 </div>

@@ -69,8 +69,14 @@ export default function TrainingHubPage() {
     () => new Set([...RECOMMENDED.map((r) => r.title), ...LIBRARY.map(([, t]) => t)]))
   const toggleSave = (t: string) =>
     setSaved((s) => { const n = new Set(s); if (n.has(t)) n.delete(t); else n.add(t); return n })
+  // Canonical splits this page at two different column boundaries: the hero and
+  // drill grid run against a narrow status rail, and below them SAVED LIBRARY
+  // runs against a much wider RECENT PERFORMANCE panel. Running one 368px rail
+  // down the whole page forced RECENT PERFORMANCE to restack every row onto two
+  // lines. Two rows, two boundaries.
   return (
-    <div data-testid="screen-desktop-web-training-hub" className="flex gap-[20px]">
+    <div data-testid="screen-desktop-web-training-hub">
+    <div className="flex gap-[20px]">
       <div className="min-w-0 flex-1">
         <PageTitle size={64}>TRAINING HUB</PageTitle>
         <p className="mt-[4px] text-[14px] text-[var(--shotiq-color-graphite)]">
@@ -102,7 +108,7 @@ export default function TrainingHubPage() {
             <SectionLabel>RECOMMENDED FOR YOUR GOAL</SectionLabel>
             <div className="text-[12px]">Based on <span className="font-semibold text-[var(--shotiq-color-confirmGreen)]">Keep elbow stacked through release</span></div>
           </div>
-          <Link href="/training/drills?tab=recommended" className="text-[12px] text-[var(--shotiq-color-analysisBlue)]">View all recommendations ›</Link>
+          <Link href="/training/drills?tab=recommended" className="text-[12px] text-[var(--shotiq-color-graphite)]">View all recommendations ›</Link>
         </div>
         <div className="mt-[10px] grid grid-cols-3 gap-[14px]">
           {RECOMMENDED.map((r) => (
@@ -136,63 +142,44 @@ export default function TrainingHubPage() {
           ))}
         </div>
 
-        <div className="mt-[12px] flex items-center justify-between">
-          <SectionLabel>SAVED LIBRARY</SectionLabel>
-          <Link href="/training/drills?tab=saved" className="text-[12px] text-[var(--shotiq-color-analysisBlue)]">View all drills ›</Link>
-        </div>
-        <div className="mt-[8px] grid grid-cols-4 gap-[12px]">
-          {LIBRARY.map(([, t, level, focus, img]) => (
-            <Link key={t} href={`/training/drills/${slug(t)}`}>
-              <Card className="overflow-hidden">
-                <div className="relative">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={img} alt="" className="h-[113px] w-full object-cover" />
-                  <button type="button" aria-pressed={saved.has(t)}
-                          aria-label={saved.has(t) ? "Remove from my drills" : "Save drill"}
-                          onClick={(e) => { e.preventDefault(); toggleSave(t) }}
-                          className="absolute right-[6px] top-[6px] grid h-[22px] w-[22px] place-items-center rounded-[4px] bg-black/40">
-                    <Bookmark className="h-[12px] w-[12px] text-white" fill={saved.has(t) ? "currentColor" : "none"} />
-                  </button>
-                </div>
-                <div className="p-[10px]">
-                  <div className="text-[13px] font-semibold">{t}</div>
-                  <DrillMeta level={level} focus={focus} className="mt-[2px] text-[10px]" />
-                </div>
-              </Card>
-            </Link>
-          ))}
-        </div>
       </div>
 
       {/* right rail */}
-      <aside className="w-[368px] shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[18px]">
+      <aside className="w-[404px] shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[18px]">
         {/* Coaching target and form score used to live in this screen's bespoke
             left sidebar. Navigation is now uniform app-wide, so they moved here
-            rather than being dropped — compact, so the rail still fits the fold. */}
-        <div className="flex items-start justify-between gap-[10px]">
-          <SectionLabel className="text-[var(--shotiq-color-graphite)]">COACHING TARGET</SectionLabel>
-          {/* The one shared form-score module rather than a hand-set numeral +
-              verdict pair (see FormScoreCell). */}
-          <FormScoreCell score={score} size={22} label={null} caption={null} className="shrink-0" />
-        </div>
-        <Link href="/results/demo/goals" className="mt-[4px] flex items-center justify-between gap-[6px]">
-          <span className="truncate text-[14px] font-semibold leading-[18px]">Keep elbow stacked through release</span>
-          <ChevronRight className="h-[13px] w-[13px] shrink-0 text-[var(--shotiq-color-graphite)]" />
+            rather than being dropped. Canonical stacks the block — heading,
+            title, badge, goal line + percent, bar, then the form-score module —
+            and never truncates the goal string; this used to cram all of it and
+            the 82/GOOD pair onto one 348px line. */}
+        <SectionLabel className="text-[var(--shotiq-color-graphite)]">COACHING TARGET</SectionLabel>
+        <Link href="/results/demo/goals" className="mt-[5px] flex items-start justify-between gap-[8px]">
+          <span className="text-[17px] font-semibold leading-[21px]">Keep elbow stacked through release</span>
+          <ChevronRight className="mt-[3px] h-[14px] w-[14px] shrink-0 text-[var(--shotiq-color-graphite)]" />
         </Link>
-        <div className="mt-[6px] flex items-center gap-[8px]">
-          <span className="shrink-0 rounded-[3px] border border-[var(--shotiq-color-confirmGreen)] px-[6px] py-[1px] text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-confirmGreen)]">
+        <div className="mt-[6px]">
+          <span className="inline-block rounded-[3px] border border-[var(--shotiq-color-confirmGreen)] px-[6px] py-[1px] text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-confirmGreen)]">
             ACTIVE GOAL
           </span>
-          <span className="truncate text-[11px] text-[var(--shotiq-color-graphite)]">Improve release consistency</span>
-          <GoalPercent size={15} className="ml-auto">72%</GoalPercent>
         </div>
-        <div className="mt-[4px] h-[5px] rounded-full bg-[var(--shotiq-color-rule)]">
+        <div className="mt-[6px] flex items-baseline gap-[10px]">
+          <span className="min-w-0 flex-1 text-[11px] leading-[15px] text-[var(--shotiq-color-graphite)]">Improve release consistency and arm alignment</span>
+          <GoalPercent size={15} className="shrink-0">72%</GoalPercent>
+        </div>
+        <div className="mt-[5px] h-[5px] rounded-full bg-[var(--shotiq-color-rule)]">
           <div className="h-full w-[72%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" />
+        </div>
+        {/* The one shared form-score module rather than a hand-set numeral +
+            verdict pair (see FormScoreCell). Canonical stacks it under the
+            target with a sentence-case label, not a caps eyebrow. */}
+        <div className="mt-[8px]">
+          <div className="text-[11px] text-[var(--shotiq-color-graphite)]">Form score</div>
+          <FormScoreCell score={score} size={28} numeral={34} label={null} layout="below" />
         </div>
 
         <div className="mt-[8px] flex items-center justify-between border-t border-[var(--shotiq-color-rule)] pt-[8px]">
           <SectionLabel>TODAY&apos;S SNAPSHOT</SectionLabel>
-          <span className="text-[11px] text-[var(--shotiq-color-graphite)]">Today</span>
+          <span className="text-[11px] text-[var(--shotiq-color-graphite)]">Today at 8:24 AM</span>
         </div>
         {/* Hairline-divided and evenly distributed, as canonical sets it. */}
         <div className="mt-[8px] flex divide-x divide-[var(--shotiq-color-rule)]">
@@ -209,8 +196,8 @@ export default function TrainingHubPage() {
           </div>
         </div>
 
-        <SectionLabel className="mt-[8px] border-t border-[var(--shotiq-color-rule)] pt-[8px]">UP NEXT</SectionLabel>
-        <Card className="mt-[8px] p-[12px]">
+        <SectionLabel className="mt-[6px] border-t border-[var(--shotiq-color-rule)] pt-[6px]">UP NEXT</SectionLabel>
+        <Card className="mt-[8px] p-[10px]">
           <Link href="/training/drills/quick-start-workout" className="flex items-center gap-[12px]">
             <TrendLine points={[2, 4, 3, 5]} width={44} height={30} stroke="var(--shotiq-color-shotiqOrange)" dotFill="var(--shotiq-color-shotiqOrange)" />
             <div className="flex-1">
@@ -225,11 +212,11 @@ export default function TrainingHubPage() {
           </Link>
         </Card>
 
-        <div className="mt-[8px] flex items-center justify-between">
+        <div className="mt-[6px] flex items-center justify-between">
           <SectionLabel>THIS WEEK&apos;S PLAN</SectionLabel>
-          <Link href="/training/calendar" className="text-[11px] text-[var(--shotiq-color-analysisBlue)]">View calendar</Link>
+          <Link href="/training/calendar" className="text-[11px] text-[var(--shotiq-color-graphite)]">View calendar</Link>
         </div>
-        <Card className="mt-[8px] p-[10px]">
+        <Card className="mt-[8px] p-[8px]">
           <div className="flex gap-[4px]">
             {WEEK.map(([d, len, active]) => (
               <Link key={d} href="/training/calendar"
@@ -251,45 +238,83 @@ export default function TrainingHubPage() {
           </div>
         </Card>
 
-        <div className="mt-[8px] flex items-center justify-between">
-          <SectionLabel>RECENT PERFORMANCE</SectionLabel>
-          <Link href="/results/demo/history" className="text-[11px] text-[var(--shotiq-color-graphite)]">View all analyses ›</Link>
+      </aside>
+    </div>
+
+    {/* Second band — canonical moves the column boundary left here so the
+        performance panel gets 540px and each analysis fits one row. */}
+    <div className="mt-[12px] flex gap-[20px]">
+      <div className="w-[620px] shrink-0">
+        <div className="flex items-center justify-between">
+          <SectionLabel>SAVED LIBRARY</SectionLabel>
+          <Link href="/training/drills?tab=saved" className="text-[12px] text-[var(--shotiq-color-graphite)]">View all drills ›</Link>
         </div>
-        {/* The rail is too narrow to seat the identity and three metric columns
-            on one line, so the metrics restack under the title rather than
-            shrinking their labels to 6px and truncating them. */}
-        <div className="mt-[4px] divide-y divide-[var(--shotiq-color-rule)]">
-          {(recent as readonly (readonly [string, string, string, string, string])[]).map(([t, d, fs, mk, sm]) => (
-            <Link key={t} href="/results/demo/history" className="block py-[5px] hover:bg-[var(--shotiq-color-warmCanvas)]">
-              <div className="flex items-center gap-[8px]">
-                <TrendLine points={[2, 3.4, 2.6, 4]} width={30} height={26} stroke="var(--shotiq-color-shotiqOrange)" dotFill="var(--shotiq-color-shotiqOrange)" />
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-[13px] font-semibold">{t}</div>
-                  <div className="truncate text-[11px] text-[var(--shotiq-color-graphite)]">{d}</div>
+        <div className="mt-[8px] grid grid-cols-4 gap-[12px]">
+          {LIBRARY.map(([, t, level, focus, img]) => (
+            <Link key={t} href={`/training/drills/${slug(t)}`}>
+              <Card className="overflow-hidden">
+                <div className="relative">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={img} alt="" className="h-[88px] w-full object-cover" />
+                  <button type="button" aria-pressed={saved.has(t)}
+                          aria-label={saved.has(t) ? "Remove from my drills" : "Save drill"}
+                          onClick={(e) => { e.preventDefault(); toggleSave(t) }}
+                          className="absolute right-[6px] top-[6px] grid h-[22px] w-[22px] place-items-center rounded-[4px] bg-black/40">
+                    <Bookmark className="h-[12px] w-[12px] text-white" fill={saved.has(t) ? "currentColor" : "none"} />
+                  </button>
                 </div>
-                <ChevronRight className="h-[14px] w-[14px] shrink-0 text-[var(--shotiq-color-graphite)]" />
-              </div>
-              <div className="mt-[4px] grid grid-cols-3 divide-x divide-[var(--shotiq-color-rule)]">
-                <div className="pr-[10px]">
-                  <div className="text-[9px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">FORM SCORE</div>
-                  <div className="flex items-baseline gap-[5px]">
-                    <span className="shotiq-numeric text-[18px] leading-[20px]">{hasData ? fs : "—"}</span>
-                    <span className="text-[10px] text-[var(--shotiq-color-analysisBlue)]">● Good</span>
-                  </div>
+                <div className="p-[10px]">
+                  <div className="text-[13px] font-semibold">{t}</div>
+                  <DrillMeta level={level} focus={focus} className="mt-[2px] flex-nowrap gap-x-[7px] text-[9px]" />
                 </div>
-                <div className="px-[10px]">
-                  <div className="text-[9px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">MAKE %</div>
-                  <div className="shotiq-numeric text-[18px] leading-[20px]">{hasData ? mk : "—"}</div>
-                </div>
-                <div className="pl-[10px]">
-                  <div className="whitespace-nowrap text-[9px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">SHOTS / MAKES</div>
-                  <div className="shotiq-numeric text-[18px] leading-[20px]">{hasData ? sm : "—"}</div>
-                </div>
-              </div>
+              </Card>
             </Link>
           ))}
         </div>
-      </aside>
+      </div>
+
+      <div className="min-w-0 flex-1 border-l border-[var(--shotiq-color-rule)] pl-[18px]">
+        <div className="flex items-center justify-between">
+          <SectionLabel>RECENT PERFORMANCE</SectionLabel>
+          <Link href="/results/demo/history" className="text-[12px] text-[var(--shotiq-color-graphite)]">View all analyses ›</Link>
+        </div>
+        {/* One row per analysis: mark | identity | three ruled metric cells |
+            chevron, at canonical's 59px pitch. The metrics used to restack
+            under the title because this panel was only 368px wide. */}
+        <div className="mt-[4px] divide-y divide-[var(--shotiq-color-rule)]">
+          {(recent as readonly (readonly [string, string, string, string, string])[]).map(([t, d, fs, mk, sm]) => (
+            <Link key={t} href="/results/demo/history"
+                  className="flex items-center gap-[9px] py-[10px] hover:bg-[var(--shotiq-color-warmCanvas)]">
+              <TrendLine points={[2, 3.4, 2.6, 4]} width={38} height={30}
+                         stroke="var(--shotiq-color-ink)" dotFill="var(--shotiq-color-ink)"
+                         dotAccent="var(--shotiq-color-shotiqOrange)" className="shrink-0" />
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-[14px] font-semibold">{t}</div>
+                <div className="truncate text-[10px] text-[var(--shotiq-color-graphite)]">{d}</div>
+              </div>
+              <div className="w-[96px] shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[10px]">
+                <div className="text-[9px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">FORM SCORE</div>
+                <div className="flex items-baseline gap-[5px]">
+                  <span className="shotiq-numeric text-[20px] leading-[24px]">{hasData ? fs : "—"}</span>
+                  <span className="flex items-center gap-[4px] text-[11px] text-[var(--shotiq-color-graphite)]">
+                    <span className="inline-block h-[7px] w-[7px] rounded-full bg-[var(--shotiq-color-analysisBlue)]" />Good
+                  </span>
+                </div>
+              </div>
+              <div className="w-[70px] shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[10px]">
+                <div className="text-[9px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">MAKE %</div>
+                <div className="shotiq-numeric text-[20px] leading-[24px]">{hasData ? mk : "—"}</div>
+              </div>
+              <div className="w-[86px] shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[10px]">
+                <div className="whitespace-nowrap text-[9px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">SHOTS / MAKES</div>
+                <div className="shotiq-numeric text-[20px] leading-[24px]">{hasData ? sm : "—"}</div>
+              </div>
+              <ChevronRight className="h-[16px] w-[16px] shrink-0 text-[var(--shotiq-color-graphite)]" />
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
     </div>
   )
 }

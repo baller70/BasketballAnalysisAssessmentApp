@@ -227,7 +227,7 @@ export default function EliteShooterDetailClient() {
       {/* body */}
       <div className="mt-[6px] flex gap-[14px]">
         {/* hero media + phases */}
-        <div className="w-[326px] shrink-0">
+        <div className="w-[318px] shrink-0">
           <div className="relative h-[254px] overflow-hidden rounded-[6px] bg-[#1B1D20]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={heroFrame} alt={`${shooter.name} form frame`} className="h-full w-full object-cover" />
@@ -239,7 +239,7 @@ export default function EliteShooterDetailClient() {
             {PHASES.map((p) => (
               <div key={p} className="text-center">
                 <PoseFigure phase={toShotPhase(p)} active={p === "RELEASE"} height={29} className="mx-auto" />
-                <div className={`mt-[2px] text-[8px] tracking-[0.05em] ${p === "RELEASE" ? "font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
+                <div className={`mt-[2px] text-[10px] font-bold leading-[12px] tracking-[0.05em] ${p === "RELEASE" ? "text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
                 {p === "RELEASE" && <div className="mx-auto mt-[2px] h-[2px] w-[36px] bg-[var(--shotiq-color-shotiqOrange)]" />}
               </div>
             ))}
@@ -283,7 +283,10 @@ export default function EliteShooterDetailClient() {
                     <td className={`whitespace-nowrap pr-[8px] pt-[2px] align-top font-semibold ${top}`}>{val}</td>
                     <td className={`whitespace-nowrap pr-[8px] pt-[2px] align-top text-[var(--shotiq-color-graphite)] ${top}`}>{range}</td>
                     <td className={`whitespace-nowrap pr-[8px] pt-[2px] align-top ${top}`}>{you}</td>
-                    <td className={`whitespace-nowrap pt-[2px] align-top ${top} ${diff.startsWith("+") ? "text-[var(--shotiq-color-confirmGreen)]" : diff === "—" ? "" : "text-[var(--shotiq-color-reviewRed)]"}`}>{diff}</td>
+                    {/* DIFF is the gap to the elite reference, so canonical
+                        prints every one of them red — a "+1.5" here means
+                        1.5 further from the model, not an improvement. */}
+                    <td className={`whitespace-nowrap pt-[2px] align-top ${top} ${diff === "—" ? "" : "text-[var(--shotiq-color-reviewRed)]"}`}>{diff}</td>
                   </tr>
                 )
               }))}
@@ -295,22 +298,41 @@ export default function EliteShooterDetailClient() {
         </Card>
 
         {/* form gallery */}
-        <Card className="w-[452px] shrink-0 px-[18px] py-[10px]">
+        <Card className="w-[464px] shrink-0 px-[10px] py-[10px]">
           <div className="flex items-center justify-between">
             <SectionLabel>SHOOTING FORM GALLERY</SectionLabel>
             <button type="button" onClick={() => setTab("FORM GALLERY")}
                     className="text-[12px] text-[var(--shotiq-color-analysisBlue)]">View all</button>
           </div>
-          <div className="mt-[10px] flex items-center gap-[5px]">
+          <div className="mt-[16px] flex items-center gap-[3px]">
             <button type="button" aria-label="Previous frame" disabled={frame === 0} className="disabled:opacity-40"
                     onClick={() => setFrame((f) => Math.max(0, f - 1))}>
               <ChevronLeft className="h-[16px] w-[16px] shrink-0 text-[var(--shotiq-color-graphite)]" />
             </button>
             {PHASES.map((p, i) => (
               <button key={p} type="button" onClick={() => setFrame(i)}
-                      className={`relative h-[134px] w-[76px] overflow-hidden rounded-[6px] bg-[#1B1D20] ${frame === i ? "ring-2 ring-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={galleryFor(i)} alt={p} className="h-full w-full object-cover" />
+                      className="relative h-[175px] w-[78px] shrink-0 rounded-[6px]">
+                {/* The frame clips its own photograph; the selection mark stands
+                    outside it on the card's paper, so it cannot be inside the
+                    clipping box. */}
+                <span className="block h-full w-full overflow-hidden rounded-[6px] bg-[#1B1D20]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={galleryFor(i)} alt={p} className="h-full w-full object-cover" />
+                </span>
+                {frame === i && (
+                  /* Canonical marks the selected frame with an orange node mark
+                     standing above it and leaves the frame itself unbordered. */
+                  <svg width="11" height="19" viewBox="0 0 11 19" aria-hidden="true"
+                       className="absolute left-1/2 top-[-13px] -translate-x-1/2 overflow-visible"
+                       fill="none" stroke="var(--shotiq-color-shotiqOrange)" strokeWidth="1.3"
+                       strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M1.6 1.9 L5.5 6.4 L9.4 1.9" />
+                    <circle cx="1.6" cy="1.9" r="1.3" />
+                    <circle cx="9.4" cy="1.9" r="1.3" />
+                    <path d="M5.5 6.4 V9.4" />
+                    <circle cx="5.5" cy="14.6" r="2" fill="var(--shotiq-color-shotiqOrange)" />
+                  </svg>
+                )}
               </button>
             ))}
             <button type="button" aria-label="Next frame" disabled={frame >= PHASES.length - 1} className="disabled:opacity-40"
@@ -318,7 +340,7 @@ export default function EliteShooterDetailClient() {
               <ChevronRight className="h-[16px] w-[16px] shrink-0 text-[var(--shotiq-color-graphite)]" />
             </button>
           </div>
-          <div className="mt-[6px] flex justify-between px-[18px]">
+          <div className="mt-[6px] flex justify-between px-[24px]">
             {PHASES.map((p, i) => (
               <button key={p} type="button" onClick={() => setFrame(i)} className="text-center">
                 <div className={`text-[9px] tracking-[0.05em] ${frame === i ? "font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
@@ -326,15 +348,15 @@ export default function EliteShooterDetailClient() {
               </button>
             ))}
           </div>
-          <div className="relative mt-[6px] h-[8px] px-[18px]">
-            <div className="absolute inset-x-[18px] top-[3px] h-[2px] rounded-full bg-[var(--shotiq-color-rule)]" />
-            <div className="absolute inset-x-[18px] top-0 flex justify-between">
+          <div className="relative mt-[6px] h-[8px] px-[24px]">
+            <div className="absolute inset-x-[24px] top-[3px] h-[2px] rounded-full bg-[var(--shotiq-color-rule)]" />
+            <div className="absolute inset-x-[24px] top-0 flex justify-between">
               {PHASES.map((p, i) => (
                 <span key={p} className={`h-[8px] w-[8px] rounded-full ${frame === i ? "bg-[var(--shotiq-color-shotiqOrange)]" : i === 0 ? "bg-[var(--shotiq-color-analysisBlue)]" : "bg-[var(--shotiq-color-graphite)]"}`} />
               ))}
             </div>
           </div>
-          <div className="mt-[10px] grid grid-cols-4 divide-x divide-[var(--shotiq-color-rule)] border-t border-[var(--shotiq-color-rule)] pt-[10px] text-[12px]">
+          <div className="mt-[10px] grid grid-cols-4 divide-x divide-[var(--shotiq-color-rule)] border-t border-[var(--shotiq-color-rule)] px-[8px] pt-[10px] text-[12px]">
             {[["Capture", `${shooter.league} Game`, "May 10, 2025"], ["Distance", "24.0 ft", "Right Wing"],
               ["Shot Type", "Catch & Shoot", "3PT"], ["Result", "Made", ""]].map(([k, v, sub]) => (
               <div key={k} className="px-[10px] first:pl-0">
@@ -382,32 +404,35 @@ export default function EliteShooterDetailClient() {
         {/* One bordered container, internal hairline — canonical does not draw
             STRENGTHS and OPPORTUNITIES as two detached cards. */}
         <Card className="flex min-w-0 flex-1 divide-x divide-[var(--shotiq-color-rule)]">
-          <div className="min-w-0 flex-1 px-[14px] py-[6px]">
+          <div className="min-w-0 flex-1 px-[10px] py-[6px]">
             <SectionLabel>STRENGTHS</SectionLabel>
-            <ul className="mt-[6px] space-y-[5px] text-[12px]">
+            {/* 12px ran every one of these to a second line inside the 253px
+                column; canonical's own items measure a 146px advance where ours
+                measured 190px at 12px. */}
+            <ul className="mt-[6px] space-y-[6px] text-[11px] leading-[15px]">
               {(shooter.strengths?.length ? shooter.strengths : [
                 "Elite release consistency and speed", "Excellent balance and body control",
                 "High, repeatable release point", "Outstanding shooting range and accuracy",
                 "Quick load and efficient energy transfer"]).slice(0, 5).map((s) => (
-                <li key={s} className="flex items-start gap-[8px]">
-                  <Check className="mt-[2px] h-[14px] w-[14px] shrink-0 text-[var(--shotiq-color-confirmGreen)]" /> {s}
+                <li key={s} className="flex items-start gap-[6px]">
+                  <Check className="mt-[1px] h-[12px] w-[12px] shrink-0 text-[var(--shotiq-color-confirmGreen)]" /> {s}
                 </li>
               ))}
             </ul>
           </div>
-          <div className="min-w-0 flex-1 border-l border-[var(--shotiq-color-rule)] px-[14px] py-[6px]">
+          <div className="min-w-0 flex-1 border-l border-[var(--shotiq-color-rule)] px-[10px] py-[6px]">
             <SectionLabel>OPPORTUNITIES</SectionLabel>
             {/* Canonical marks each opportunity with its own orange diagram —
                 one shape per issue, never a repeated black figure. */}
-            <ul className="mt-[6px] space-y-[5px] text-[12px]">
+            <ul className="mt-[6px] space-y-[6px] text-[11px] leading-[15px]">
               {(shooter.weaknesses?.length ? shooter.weaknesses : [
                 "Slight loss of balance on long range", "Front foot alignment can drift",
                 "Lower hold time in follow-through", "Maintain elbow stack on fatigue",
                 "Improve reset consistency in transitions"]).slice(0, 5).map((s, i) => (
-                <li key={s} className="flex items-start gap-[8px]">
+                <li key={s} className="flex items-start gap-[6px]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={OPPORTUNITY_GLYPHS[i % OPPORTUNITY_GLYPHS.length]} alt="" aria-hidden="true"
-                       className="mt-[3px] block h-[13px] w-[15px] max-w-none shrink-0 object-contain" />
+                       className="mt-[2px] block h-[12px] w-[14px] max-w-none shrink-0 object-contain" />
                   {s}
                 </li>
               ))}

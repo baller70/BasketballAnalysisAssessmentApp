@@ -45,7 +45,7 @@ export default function FlawsPage() {
             Identify weaknesses. Focus your fixes. Track your progress.
           </p>
         </div>
-        <Card className="flex h-[96px] min-w-0 flex-1 items-center pl-[14px]">
+        <Card className="flex h-[106px] min-w-0 flex-1 items-center pl-[14px]">
           {/* The one shared form-score module (see FormScoreCell) — short bar
               under the numeral, left-aligned verdict beside it. */}
           <FormScoreCell score={score} size={38} numeral={55} className="w-[214px] shrink-0 pr-[10px]" />
@@ -67,14 +67,20 @@ export default function FlawsPage() {
             <div className="text-[10px] leading-[12px]"><span className={`font-bold ${delta != null && delta < 0 ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-confirmGreen)]"}`}>{formatDelta(delta)}</span><br />
               <span className="text-[var(--shotiq-color-graphite)]">vs last session</span></div>
           </div>
-          <div className="ml-[10px] flex min-w-0 flex-1 flex-col justify-center self-stretch border-l border-[var(--shotiq-color-rule)] py-[10px] pl-[14px] pr-[14px]">
-            <div className="flex items-center justify-between gap-[8px]">
-              <SectionLabel>PRIMARY COACHING TARGET</SectionLabel>
-              <ChevronRight className="h-[14px] w-[14px] shrink-0 text-[var(--shotiq-color-graphite)]" />
+          <div className="ml-[10px] flex min-w-0 flex-1 flex-col justify-center self-stretch border-l border-[var(--shotiq-color-rule)] py-[10px] pl-[14px] pr-[18px]">
+            <SectionLabel>PRIMARY COACHING TARGET</SectionLabel>
+            {/* Canonical hangs the disclosure off the goal itself, gives the
+                ACTIVE GOAL chip a line of its own, and runs the bar the full
+                width beneath it — badge and bar side by side cut the track
+                from 222px to 140px. */}
+            <div className="mt-[2px] flex items-center justify-between gap-[10px]">
+              <span className="whitespace-nowrap text-[14px] font-semibold leading-[19px]">Keep elbow stacked through release</span>
+              <ChevronRight className="h-[15px] w-[15px] shrink-0 text-[var(--shotiq-color-graphite)]" />
             </div>
-            <div className="mt-[2px] whitespace-nowrap text-[15px] font-semibold leading-[20px]">Keep elbow stacked through release</div>
-            <div className="mt-[5px] flex items-center gap-[10px]">
-              <span className="shrink-0 rounded-[4px] border border-[var(--shotiq-color-confirmGreen)] px-[7px] py-[2px] text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-confirmGreen)]">ACTIVE GOAL</span>
+            <div className="mt-[5px]">
+              <span className="inline-block rounded-[4px] border border-[var(--shotiq-color-confirmGreen)] px-[7px] py-[2px] text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-confirmGreen)]">ACTIVE GOAL</span>
+            </div>
+            <div className="mt-[6px] flex items-center gap-[10px]">
               <div className="h-[5px] min-w-0 flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
                 <div className="h-full w-[72%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" /></div>
               <GoalPercent size={15}>72%</GoalPercent>
@@ -92,16 +98,24 @@ export default function FlawsPage() {
           </div>
           {visible.map((f, i) => (
             <button key={f.n} type="button" onClick={() => setSel(i)} aria-pressed={sel === i}
-                    className={`mt-[10px] w-full rounded-[8px] border p-[13px] text-left ${sel === i ? "border-[var(--shotiq-color-shotiqOrange)]" : "border-[var(--shotiq-color-rule)]"}`}>
+                    className={`mt-[10px] w-full rounded-[8px] border p-[11px] text-left ${sel === i ? "border-[var(--shotiq-color-shotiqOrange)]" : "border-[var(--shotiq-color-rule)]"}`}>
               <div className="flex items-start gap-[9px]">
-                <span className="mt-[2px] grid h-[19px] w-[19px] shrink-0 place-items-center rounded-[4px] bg-[var(--shotiq-color-shotiqOrange)] text-[11px] font-bold text-white">{f.n}</span>
+                <span className="mt-[1px] grid h-[19px] w-[19px] shrink-0 place-items-center rounded-[4px] bg-[var(--shotiq-color-shotiqOrange)] text-[11px] font-bold text-white">{f.n}</span>
                 <span className="flex-1 text-[14px] font-semibold leading-[18px]">{f.title}</span>
-                <ChevronRight className="mt-[2px] h-[13px] w-[13px] shrink-0 text-[var(--shotiq-color-graphite)]" />
               </div>
-              {/* Canonical sets the pose diagram beside the impact copy. */}
-              <div className="flex items-start gap-[6px]">
+              {/* Canonical sets the pose diagram beside the impact copy, and
+                  hangs the disclosure vertically centred against that block —
+                  not up on the title line. */}
+              <div className="flex items-center gap-[6px]">
                 <div className="min-w-0 flex-1">
-                  <span className={`mt-[7px] inline-block rounded-[3px] px-[6px] py-[2px] text-[9px] font-bold text-white ${f.impact === "HIGH IMPACT" ? "bg-[var(--shotiq-color-reviewRed)]" : f.impact === "LOW IMPACT" ? "bg-[var(--shotiq-color-graphite)]" : "bg-[var(--shotiq-color-shotiqOrange)]"}`}>{f.impact}</span>
+                  {/* Canonical's impact chips are a tinted fill with coloured
+                      text — a solid fill with white text shouts over the card. */}
+                  <span className="mt-[7px] inline-block rounded-[3px] px-[6px] py-[2px] text-[9px] font-bold"
+                        style={f.impact === "HIGH IMPACT"
+                          ? { background: "rgba(217,45,32,0.10)", color: "var(--shotiq-color-reviewRed)" }
+                          : f.impact === "LOW IMPACT"
+                            ? { background: "rgba(95,100,107,0.12)", color: "var(--shotiq-color-graphite)" }
+                            : { background: "rgba(253,55,1,0.10)", color: "var(--shotiq-color-shotiqOrange)" }}>{f.impact}</span>
                   <p className="mt-[6px] text-[12px] leading-[16px] text-[var(--shotiq-color-graphite)]">{f.desc}</p>
                 </div>
                 {f.mark
@@ -109,8 +123,9 @@ export default function FlawsPage() {
                   ? <img src={`/images/canonical/${f.mark}.png`} alt="" aria-hidden="true"
                          className="mt-[6px] block h-[68px] w-auto max-w-none shrink-0" />
                   : <FlawFigure kind={f.glyph} size={56} className="mt-[6px] shrink-0" />}
+                <ChevronRight className="h-[14px] w-[14px] shrink-0 text-[var(--shotiq-color-graphite)]" />
               </div>
-              <div className="mt-[9px] flex justify-between border-t border-[var(--shotiq-color-rule)] pt-[7px] text-[9px] tracking-[0.04em] text-[var(--shotiq-color-graphite)]">
+              <div className="mt-[7px] flex justify-between border-t border-[var(--shotiq-color-rule)] pt-[6px] text-[9px] text-[var(--shotiq-color-graphite)]">
                 <span>{f.affects}</span><span>{f.delta}</span>
               </div>
             </button>
@@ -161,11 +176,11 @@ export default function FlawsPage() {
             {([["Your elbow angle at release averages 118°.", "Goal range: 145° – 165°", "085-insight-1"],
               ["Elbow drift moves release point forward by 2.6\" on average.", "Goal: Keep elbow over hip.", "085-insight-2"],
               ["Impact: -8.3% to make % on affected shots.", "", "085-insight-3"]] as const).map(([t, goal, glyph], i) => (
-              <div key={i} className="flex gap-[10px] p-[11px]">
+              <div key={i} className="flex gap-[10px] px-[11px] py-[8px]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={`/images/canonical/${glyph}.png`} alt="" aria-hidden="true"
-                     className="block h-[44px] w-[42px] max-w-none shrink-0 object-contain" />
-                <p className="text-[12px] leading-[16px]">{t}
+                     className="block h-[40px] w-[40px] max-w-none shrink-0 object-contain" />
+                <p className="text-[12px] leading-[15px]">{t}
                   {goal && <span className="block text-[var(--shotiq-color-confirmGreen)]">{goal}</span>}</p>
               </div>
             ))}
@@ -178,15 +193,18 @@ export default function FlawsPage() {
           <Card className="mt-[7px] divide-y divide-[var(--shotiq-color-rule)]">
             {([["Stack elbow over shooting hip.", "085-correction-1"], ["Create a 90° angle at set point.", "085-correction-2"],
                ["Drive straight up through release.", "085-correction-3"]] as const).map(([t, glyph]) => (
-              <div key={t} className="flex items-center gap-[10px] px-[11px] py-[9px]">
+              <div key={t} className="flex items-center gap-[10px] px-[11px] py-[7px]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={`/images/canonical/${glyph}.png`} alt="" aria-hidden="true"
-                     className="block h-[26px] w-[21px] max-w-none shrink-0 object-contain" /><span className="text-[12px]">{t}</span>
+                     className="block h-[22px] w-[19px] max-w-none shrink-0 object-contain" /><span className="text-[12px]">{t}</span>
               </div>
             ))}
           </Card>
           <SectionLabel className="mt-[8px]">RECOMMENDED DRILLS</SectionLabel>
-          <Card className="mt-[7px] p-[12px]">
+          {/* Canonical borders the drill row alone and drops START DRILL beneath
+              it as a full-rail-width bar — nesting the button inside the card
+              cost it 44px of width. */}
+          <Card className="mt-[7px] p-[9px]">
             <div className="flex items-center gap-[10px]">
               <span className="grid h-[38px] w-[38px] place-items-center rounded-full bg-[var(--shotiq-color-analysisBlue)]">
                 <WorkoutGlyph kind="release" size={20} className="text-white" />
@@ -197,11 +215,11 @@ export default function FlawsPage() {
               </div>
               <ChevronRight className="h-[14px] w-[14px] text-[var(--shotiq-color-graphite)]" />
             </div>
-            <Link href="/training/drills/elbow-alignment-holds"
-                  className="mt-[10px] flex h-[36px] items-center justify-center rounded-[4px] bg-[var(--shotiq-color-shotiqOrange)] text-[12px] font-bold tracking-[0.05em] text-white">
-              START DRILL
-            </Link>
           </Card>
+          <Link href="/training/drills/elbow-alignment-holds"
+                className="mt-[3px] flex h-[28px] items-center justify-center rounded-[4px] bg-[var(--shotiq-color-shotiqOrange)] text-[12px] font-bold tracking-[0.05em] text-white">
+            START DRILL
+          </Link>
         </div>
       </div>
 
@@ -234,6 +252,10 @@ export default function FlawsPage() {
                       <path d={d} fill="none" stroke="var(--shotiq-color-shotiqOrange)" strokeWidth="2" />
                       {pts.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="3" fill="var(--shotiq-color-shotiqOrange)" />)}
                       <circle cx="370" cy="52" r="7" fill="none" stroke="var(--shotiq-color-shotiqOrange)" strokeWidth="2" />
+                      {/* Canonical calls the terminal value out directly above
+                          the last node, not adrift at the plot's right edge. */}
+                      <text x="374" y="38" textAnchor="middle" fontSize="15" fontWeight="700"
+                            fill="var(--shotiq-color-shotiqOrange)">-8.3%</text>
                     </>
                   )
                 })()}
@@ -242,7 +264,6 @@ export default function FlawsPage() {
                 {["APR 26", "APR 28", "APR 30", "MAY 2", "MAY 5", "MAY 7", "MAY 10", "MAY 12"].map((d) => <span key={d}>{d}</span>)}
               </div>
             </div>
-            <div className="pl-[6px] pt-[36px] text-[14px] font-bold text-[var(--shotiq-color-shotiqOrange)]">-8.3%</div>
           </div>
         </div>
         <div className="w-[210px] shrink-0">
@@ -258,7 +279,7 @@ export default function FlawsPage() {
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between">
             <SectionLabel>RECENT SESSIONS</SectionLabel>
-            <Link href="/results/demo/history" className="text-[12px] text-[var(--shotiq-color-analysisBlue)]">View all history</Link>
+            <Link href="/results/demo/history" className="text-[12px] text-[var(--shotiq-color-graphite)]">View all history</Link>
           </div>
           <div className="mt-[2px] divide-y divide-[var(--shotiq-color-rule)]">
             {[["Today at 8:24 AM", "24 shots", "-8.3%"], ["May 10, 2025 at 6:15 PM", "22 shots", "-9.6%"], ["May 7, 2025 at 5:02 PM", "25 shots", "-11.2%"]].map(([d, s, v]) => (

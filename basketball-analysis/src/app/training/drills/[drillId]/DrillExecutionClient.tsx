@@ -29,6 +29,9 @@ import { PoseFigure, WorkoutGlyph } from "@/components/shotiq/Glyphs"
 
 const PHASES = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
 const SET_SECONDS = 360 // 06:00 per set
+// Canonical's SHOT TRACKER strip: 11 logged marks + 3 empty placeholders.
+const MARK_REAL = 11
+const MARK_SLOTS = 14
 const TOTAL_SETS = 3
 
 /**
@@ -127,6 +130,8 @@ export default function DrillExecutionClient() {
   const setsCompleted = Math.min(TOTAL_SETS, Math.floor(elapsed / SET_SECONDS))
   const mmss = (s: number) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`
   const last24 = useMemo(() => shots.slice(-24), [shots])
+  // Canonical's strip is 11 logged marks then three empty placeholders.
+  const lastMarks = useMemo(() => shots.slice(-MARK_REAL), [shots])
   // Canonical paints nine frames on the history strip with the newest ringed LIVE.
   const historyStrip = useMemo(() => shots.slice(-9), [shots])
 
@@ -175,36 +180,50 @@ export default function DrillExecutionClient() {
             <Maximize className="absolute bottom-[12px] right-[12px] h-[17px] w-[17px] text-white" />
           </div>
 
-          {/* phase scrubber */}
+          {/* Phase scrubber. Canonical centres a dot under EVERY phase label —
+              measured dot centres 265/421/552/665/837 against the same label
+              centres — and runs a short thick orange segment into the active
+              dot. The dots used to be pinned at 8/30/52/84% of the rail with
+              the active one at 62%, which left the orange dot ~70px left of the
+              RELEASE label it marks and no traversed segment at all. Sharing
+              one flex row with the labels is what keeps them registered. */}
           <div className="mt-[12px] px-[10px]">
-            <div className="flex justify-between">
-              {PHASES.map((p) => (
-                <div key={p} className="w-[80px] text-center">
-                  <PoseFigure phase={p} active={p === "RELEASE"} height={36} className="mx-auto" />
-                  <div className={`mt-[2px] whitespace-nowrap text-[10px] tracking-[0.05em] ${p === "RELEASE" ? "font-bold text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
-                </div>
-              ))}
-            </div>
-            <div className="relative mt-[6px] h-[3px] rounded-full bg-[var(--shotiq-color-rule)]">
-              <div className="absolute left-[62%] top-1/2 h-[13px] w-[13px] -translate-y-1/2 rounded-full bg-[var(--shotiq-color-shotiqOrange)]" />
-              {[8, 30, 52, 84].map((x) => (
-                <span key={x} className="absolute top-1/2 h-[8px] w-[8px] -translate-y-1/2 rounded-full bg-[var(--shotiq-color-graphite)]" style={{ left: `${x}%` }} />
-              ))}
+            <div className="relative flex justify-between">
+              <span aria-hidden="true"
+                    className="pointer-events-none absolute inset-x-0 bottom-[5px] h-[3px] rounded-full bg-[var(--shotiq-color-rule)]" />
+              {PHASES.map((p) => {
+                const active = p === "RELEASE"
+                return (
+                  <div key={p} className="relative z-[1] w-[80px] text-center">
+                    <PoseFigure phase={p} active={active} height={36} className="mx-auto" />
+                    <div className={`shotiq-display mt-[2px] whitespace-nowrap text-[12px] leading-[13px] tracking-[0.075em] [text-rendering:geometricPrecision] ${active ? "text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-ink)]"}`}>{p}</div>
+                    <span className="mt-[6px] flex h-[13px] items-center justify-center">
+                      {active && (
+                        <span aria-hidden="true"
+                              className="absolute bottom-[5px] right-1/2 h-[3px] w-[26px] rounded-full bg-[var(--shotiq-color-shotiqOrange)]" />
+                      )}
+                      <span className={`relative rounded-full ${active
+                        ? "h-[13px] w-[13px] bg-[var(--shotiq-color-shotiqOrange)]"
+                        : "h-[8px] w-[8px] bg-[var(--shotiq-color-graphite)]"}`} />
+                    </span>
+                  </div>
+                )
+              })}
             </div>
           </div>
 
           {/* controls */}
           <div className="mt-[16px] flex gap-[12px]">
             <button type="button" onClick={() => mark(true)} data-testid="mark-make"
-                    className="flex h-[44px] items-center gap-[9px] rounded-[6px] border-2 border-[var(--shotiq-color-confirmGreen)] whitespace-nowrap px-[20px] text-[14px] font-medium text-[var(--shotiq-color-confirmGreen)]">
+                    className="flex h-[44px] w-[145px] items-center justify-center gap-[9px] rounded-[6px] border-2 border-[var(--shotiq-color-confirmGreen)] whitespace-nowrap text-[14px] font-medium text-[var(--shotiq-color-confirmGreen)]">
               <CircleCheck className="h-[17px] w-[17px]" /> Mark make
             </button>
             <button type="button" onClick={() => mark(false)} data-testid="mark-miss"
-                    className="flex h-[44px] items-center gap-[9px] rounded-[6px] border-2 border-[var(--shotiq-color-reviewRed)] whitespace-nowrap px-[20px] text-[14px] font-medium text-[var(--shotiq-color-reviewRed)]">
+                    className="flex h-[44px] w-[145px] items-center justify-center gap-[9px] rounded-[6px] border-2 border-[var(--shotiq-color-reviewRed)] whitespace-nowrap text-[14px] font-medium text-[var(--shotiq-color-reviewRed)]">
               <CircleX className="h-[17px] w-[17px]" /> Mark miss
             </button>
             <button type="button" onClick={undo} disabled={!shots.length} data-testid="undo-shot"
-                    className="flex h-[44px] items-center gap-[9px] rounded-[6px] border border-[var(--shotiq-color-rule)] whitespace-nowrap px-[20px] text-[14px] disabled:opacity-50">
+                    className="flex h-[44px] w-[145px] items-center justify-center gap-[9px] rounded-[6px] border border-[var(--shotiq-color-rule)] whitespace-nowrap text-[14px] disabled:opacity-50">
               <Undo2 className="h-[16px] w-[16px]" /> Undo
             </button>
           </div>
@@ -238,24 +257,30 @@ export default function DrillExecutionClient() {
             {historyStrip.map((s, i) => {
               const live = i === historyStrip.length - 1
               return (
-                <div key={`${s.n}-${i}`}
-                     className={`relative h-[92px] w-[76px] shrink-0 overflow-hidden rounded-[4px] bg-[#1B1D20] ${live ? "ring-2 ring-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/images/canonical/091-thumb.png" alt="" className="absolute inset-0 h-full w-full object-cover" />
-                  <span className="absolute left-[6px] top-[6px] text-[11px] font-bold text-white">{s.n}</span>
-                  <span className="absolute right-[5px] top-[5px]">
-                    {s.made
-                      ? <CircleCheck className="h-[15px] w-[15px] text-[var(--shotiq-color-confirmGreen)]" fill="white" />
-                      : <CircleX className="h-[15px] w-[15px] text-[var(--shotiq-color-reviewRed)]" fill="white" />}
-                  </span>
-                  {/* per-frame dot track, canonical bottom rail of each card */}
-                  <span className="absolute inset-x-[6px] bottom-[5px] flex justify-between">
-                    {Array.from({ length: 8 }).map((_, d) => (
-                      <span key={d} className={`h-[3px] w-[3px] rounded-full ${
-                        d === 3 ? "bg-[var(--shotiq-color-shotiqOrange)]" : "bg-white/55"}`} />
+                <div key={`${s.n}-${i}`} className="shrink-0">
+                  <div className={`relative h-[92px] w-[76px] overflow-hidden rounded-[6px] bg-[#1B1D20] ${live ? "ring-2 ring-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/images/canonical/091-thumb.png" alt="" className="absolute inset-0 h-full w-full object-cover" />
+                    {/* Canonical sets the shot number on a dark rounded chip and
+                        its make/miss mark on a ~20px filled disc; both were
+                        floating unbacked on the photo. */}
+                    <span className="absolute left-[4px] top-[4px] grid h-[19px] min-w-[21px] place-items-center rounded-[5px] bg-[rgba(16,17,19,0.86)] px-[4px] text-[12px] font-bold text-white">{s.n}</span>
+                    <span className="absolute right-[4px] top-[4px]">
+                      {s.made
+                        ? <CircleCheck className="h-[19px] w-[19px] text-white" fill="var(--shotiq-color-confirmGreen)" strokeWidth={2.2} />
+                        : <CircleX className="h-[19px] w-[19px] text-white" fill="var(--shotiq-color-reviewRed)" strokeWidth={2.2} />}
+                    </span>
+                    {live && <span className="absolute bottom-[6px] left-1/2 -translate-x-1/2 text-[10px] font-bold text-[var(--shotiq-color-shotiqOrange)]">◆ LIVE</span>}
+                  </div>
+                  {/* Canonical's per-frame progress row sits BELOW the frame in
+                      grey. Inside the frame at 55% white it disappeared against
+                      the gym wall and only the orange dot survived. */}
+                  <span className="mt-[5px] flex justify-between px-[4px]">
+                    {Array.from({ length: 6 }).map((_, d) => (
+                      <span key={d} className={`h-[5px] w-[5px] rounded-full ${
+                        live && d === 5 ? "bg-[var(--shotiq-color-shotiqOrange)]" : "bg-[var(--shotiq-color-rule)]"}`} />
                     ))}
                   </span>
-                  {live && <span className="absolute bottom-[12px] left-1/2 -translate-x-1/2 text-[9px] font-bold text-[var(--shotiq-color-shotiqOrange)]">◆ LIVE</span>}
                 </div>
               )
             })}
@@ -296,9 +321,12 @@ export default function DrillExecutionClient() {
                 the three cells used to run on with no separator at all. */}
             <div className="flex items-center">
               <div className="shrink-0 pr-[16px]">
-                <Ring pct={pct / 100} size={96} color="var(--shotiq-color-confirmGreen)">
+                {/* Canonical sets the donut's own reading at cap 16 (advance 48);
+                    at 19px this face gave cap 12.5, so the card's focal number
+                    read two sizes down. The stroke is a shade heavier too. */}
+                <Ring pct={pct / 100} size={96} stroke={9} color="var(--shotiq-color-confirmGreen)">
                   <div className="text-center">
-                    <div className="shotiq-numeric text-[19px]">{pct.toFixed(1)}%</div>
+                    <div className="shotiq-numeric text-[26px] leading-[28px]">{pct.toFixed(1)}%</div>
                     <div className="text-[8px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">MAKE %</div>
                   </div>
                 </Ring>
@@ -311,17 +339,34 @@ export default function DrillExecutionClient() {
                 <Stat3 v={String(misses)} l="MISSES" c="var(--shotiq-color-reviewRed)" />
               </div>
             </div>
-            <div className="mt-[14px] flex flex-nowrap items-center justify-between gap-[2px]">
-              {Array.from({ length: 24 }).map((_, i) => {
-                const s = last24[i]
-                return s == null
-                  ? <span key={i} className="h-[9px] w-[9px] shrink-0 rounded-full border border-[var(--shotiq-color-rule)]" />
-                  : s.made
-                    ? <CircleCheck key={i} className="h-[10px] w-[10px] shrink-0 text-[var(--shotiq-color-confirmGreen)]" />
-                    : <CircleX key={i} className="h-[10px] w-[10px] shrink-0 text-[var(--shotiq-color-reviewRed)]" />
+            {/* Canonical draws 11 heavy 13px marks — open green rings for makes,
+                solid red discs with a white cross for misses — grouped 5 + 6,
+                followed by three pale placeholders, over an axis that ends in an
+                arrowhead. 24 uniform 10px lucide glyphs at 100% width read as a
+                pale dotted line instead of a shot log. */}
+            <div className="mt-[14px] flex items-center gap-[7px]">
+              {Array.from({ length: MARK_SLOTS }).map((_, i) => {
+                const s = lastMarks[i]
+                const gap = i === 5 ? "ml-[10px]" : ""
+                if (s == null) {
+                  return <span key={i} className={`h-[13px] w-[13px] shrink-0 rounded-full border-[1.6px] border-[var(--shotiq-color-rule)] ${gap}`} />
+                }
+                return s.made
+                  ? <span key={i} className={`h-[13px] w-[13px] shrink-0 rounded-full border-[2.6px] border-[var(--shotiq-color-confirmGreen)] ${gap}`} />
+                  : (
+                    <span key={i} className={`grid h-[13px] w-[13px] shrink-0 place-items-center rounded-full bg-[var(--shotiq-color-reviewRed)] ${gap}`}>
+                      <CircleX className="h-[11px] w-[11px] text-white" strokeWidth={2.6} />
+                    </span>
+                  )
               })}
             </div>
-            <div className="mt-[10px] border-t border-[var(--shotiq-color-rule)] pt-[8px] text-center text-[10px] tracking-[0.08em] text-[var(--shotiq-color-graphite)]">
+            <div className="mt-[8px] flex items-center text-[var(--shotiq-color-rule)]">
+              <span aria-hidden="true" className="h-[1px] flex-1 bg-current" />
+              <svg width="9" height="9" viewBox="0 0 9 9" aria-hidden="true" className="-ml-[1px] shrink-0">
+                <path d="M0.5 0.5 L8 4.5 L0.5 8.5" fill="none" stroke="currentColor" strokeWidth="1.2" />
+              </svg>
+            </div>
+            <div className="mt-[8px] text-center text-[10px] tracking-[0.08em] text-[var(--shotiq-color-graphite)]">
               LAST 24 SHOTS
             </div>
           </Card>
@@ -336,7 +381,7 @@ export default function DrillExecutionClient() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={`/images/canonical/${glyph}.png`} alt="" aria-hidden="true"
                      className="block h-[38px] w-auto max-w-none shrink-0" />
-                <div className="min-w-0 flex-1 border-l border-[var(--shotiq-color-rule)] pl-[14px]">
+                <div className="min-w-0 flex-1">
                   <div className="text-[14px] font-semibold">{t}</div>
                   <div className="text-[12px] text-[var(--shotiq-color-graphite)]">{d}</div>
                 </div>

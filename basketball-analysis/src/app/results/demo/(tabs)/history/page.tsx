@@ -28,6 +28,31 @@ const RANGES: [string, string, number][] = [
   ["7", "May 6 – May 12, 2025", 6], ["14", "Apr 28 – May 12, 2025", 8], ["30", "Apr 12 – May 12, 2025", 8],
 ]
 const METRICS = ["Form Score", "Make %", "Confidence"]
+// Canonical's SESSIONS columns, measured off the 093 render: the table spans
+// x 155→1000 and starts DATE at +37, FORM SCORE +187, MAKE % +297,
+// SHOTS / MAKES +387, CONFIDENCE +497, FOCUS +597, MEDIA +672.
+const COLS = "grid-cols-[156px_110px_90px_110px_100px_75px_152px_1fr]"
+
+/**
+ * The FOCUS column mark. Canonical draws a dark node sketch with hollow joints
+ * and a single coloured apex node — red on sessions that sit below the player's
+ * running average, green on the ones at or above it. The shared CueGlyph fills
+ * four of its five nodes with one accent, which is why every row read as a flat
+ * green graph; this is local so the shared glyph family stays untouched.
+ */
+function FocusMark({ below }: { below: boolean }) {
+  const apex = below ? "var(--shotiq-color-reviewRed)" : "var(--shotiq-color-confirmGreen)"
+  const hollow = { fill: "var(--shotiq-color-paper)", stroke: "var(--shotiq-color-ink)", strokeWidth: 1.4 }
+  return (
+    <svg width={26} height={26} viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 7 L6.5 17 M12 7 L17.5 17" fill="none" stroke="var(--shotiq-color-ink)" strokeWidth={1.6} strokeLinecap="round" />
+      <path d="M6.5 17 H17.5" fill="none" stroke="var(--shotiq-color-ink)" strokeWidth={1.6} strokeLinecap="round" />
+      <circle cx={6.5} cy={17} r={2.2} {...hollow} />
+      <circle cx={17.5} cy={17} r={2.2} {...hollow} />
+      <circle cx={12} cy={6.4} r={2.6} fill={apex} />
+    </svg>
+  )
+}
 const METRIC_TRENDS: Record<string, number[]> = {
   "Form Score": [72, 75, 73, 78, 76, 80, 79, 82],
   "Make %": [48, 52, 50, 55, 57, 56, 60, 62.5],
@@ -58,10 +83,17 @@ export default function AnalysisHistoryPage() {
       ] as [string, string, string, string, string, string])
     : hasData || items.length ? DEMO_ROWS : []
   const demoMode = !usable.length && allRows.length > 0
-  const rows = allRows.slice(0, usable.length ? undefined : range[2])
-    .filter((r) => band === "All" || r[2] === band)
+  // Running average across the loaded range — what the FOCUS mark colours by.
+  const avgScore = allRows.length
+    ? allRows.reduce((a, r) => a + (Number(r[1]) || 0), 0) / allRows.length
+    : 0
+  // One page is range[2] rows whether the sessions are live or demo. With the
+  // rows restored to canonical's 57px pitch, an unpaged live history ran past
+  // the fold and pushed the pagination off-screen.
+  const banded = allRows.filter((r) => band === "All" || r[2] === band)
+  const rows = banded.slice(0, range[2])
   // The canonical screen reports the full session count behind the first page.
-  const totalSessions = demoMode && band === "All" ? 12 : rows.length
+  const totalSessions = demoMode && band === "All" ? 12 : banded.length
   // Summary strip: real totals across the loaded range, never a literal.
   const totalShots = stats?.totalShots ?? null
   const totalMakes = stats?.totalMakes ?? null
@@ -90,18 +122,23 @@ export default function AnalysisHistoryPage() {
   }
 
   return (
-    <div data-testid="screen-desktop-web-analytics-history" className="flex gap-[18px]">
-      <div className="min-w-0 flex-1">
-        <div className="flex items-start justify-between">
+    <div data-testid="screen-desktop-web-analytics-history">
+      {/* Canonical's date-range / metric / Filter / Export toolbar is
+          page-level: it spans the full width above BOTH columns (653→1321,
+          i.e. past the SELECTED SESSION rail at 1028). Confining it to the
+          left column squeezed the same five controls into ~500px, undersized
+          Filter and Export, and left the rail starting level with the page
+          title instead of below the toolbar. */}
+      <div className="flex items-start justify-between">
           <div>
             <PageTitle size={59}>ANALYSIS HISTORY</PageTitle>
             <p className="mt-[4px] whitespace-nowrap text-[13px] text-[var(--shotiq-color-graphite)]">Review and track your shooting performance over time.</p>
           </div>
-          <div className="flex gap-[10px] pt-[4px]">
+          <div className="flex gap-[18px] pt-[4px]">
             <div className="relative">
               <button type="button" aria-expanded={menu === "range"}
                       onClick={() => setMenu((m) => (m === "range" ? null : "range"))}
-                      className="flex h-[42px] items-center gap-[8px] whitespace-nowrap rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-[13px]">
+                      className="flex h-[45px] w-[207px] items-center gap-[8px] whitespace-nowrap rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-[13px]">
                 <Calendar className="h-[14px] w-[14px]" /> {range[1]} <ChevronDown className="h-[12px] w-[12px]" />
               </button>
               {menu === "range" && (
@@ -118,9 +155,9 @@ export default function AnalysisHistoryPage() {
             <div className="relative">
               <button type="button" aria-expanded={menu === "metric"}
                       onClick={() => setMenu((m) => (m === "metric" ? null : "metric"))}
-                      className="flex h-[42px] flex-col justify-center whitespace-nowrap rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-left">
+                      className="flex h-[45px] w-[187px] flex-col justify-center whitespace-nowrap rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-left">
                 <span className="text-[9px] text-[var(--shotiq-color-graphite)]">Select metric</span>
-                <span className="flex items-center gap-[6px] text-[13px]">{metric} <ChevronDown className="h-[11px] w-[11px]" /></span>
+                <span className="flex w-full items-center justify-between text-[13px]">{metric} <ChevronDown className="h-[11px] w-[11px]" /></span>
               </button>
               {menu === "metric" && (
                 <div className="absolute left-0 top-[46px] z-30 w-[170px] rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white py-[4px] shadow-[0_8px_20px_rgba(17,17,17,0.10)]">
@@ -134,11 +171,11 @@ export default function AnalysisHistoryPage() {
               )}
             </div>
             <button type="button" aria-expanded={filterOpen} onClick={() => setFilterOpen((v) => !v)}
-                    className={`flex h-[42px] items-center gap-[8px] rounded-[6px] border px-[14px] text-[13px] ${filterOpen || band !== "All" ? "border-[var(--shotiq-color-shotiqOrange)] text-[var(--shotiq-color-shotiqOrange)]" : "border-[var(--shotiq-color-rule)]"}`}>
+                    className={`flex h-[45px] w-[112px] items-center justify-center gap-[8px] rounded-[6px] border text-[13px] ${filterOpen || band !== "All" ? "border-[var(--shotiq-color-shotiqOrange)] text-[var(--shotiq-color-shotiqOrange)]" : "border-[var(--shotiq-color-rule)]"}`}>
               <SlidersHorizontal className="h-[14px] w-[14px]" /> Filter{band !== "All" ? `: ${band}` : ""}
             </button>
             <button type="button" onClick={exportCsv} disabled={!rows.length}
-                    className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[14px] text-[13px] disabled:opacity-40">
+                    className="flex h-[45px] w-[106px] items-center justify-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] text-[13px] disabled:opacity-40">
               <Share className="h-[14px] w-[14px]" /> Export
             </button>
           </div>
@@ -156,10 +193,15 @@ export default function AnalysisHistoryPage() {
           </div>
         )}
 
+      {/* Body columns open BELOW the page-level toolbar, so the SELECTED
+          SESSION rail starts under it (canonical y≈205) instead of level with
+          the page title. */}
+      <div className="mt-[6px] flex gap-[18px]">
+      <div className="min-w-0 flex-1">
         {/* summary strip */}
         {/* Canonical rules every cell off with a hairline and distributes them
             across the strip; the cells used to bunch against the left edge. */}
-        <div className="mt-[10px] flex items-stretch divide-x divide-[var(--shotiq-color-rule)] border-b border-[var(--shotiq-color-rule)] pb-[10px] pt-[4px]">
+        <div className="flex items-stretch divide-x divide-[var(--shotiq-color-rule)] border-b border-[var(--shotiq-color-rule)] pb-[10px] pt-[4px]">
           {/* This cell carries the longest label in the strip; an equal share
               broke it onto two lines where canonical keeps it on one. */}
           <div className="min-w-0 flex-[1.45] pr-[16px]">
@@ -185,13 +227,12 @@ export default function AnalysisHistoryPage() {
           </div>
           <div className="min-w-0 flex-[1.9] pl-[16px]">
             <div className="text-[10px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">{metric.toUpperCase()} TREND</div>
-            <div className="flex items-center gap-[12px]">
-              <TrendLine points={trendPoints} width={220} height={44} />
-              {/* The one computed session-over-session delta; this used to be a
-                  hard-coded +8.1% that disagreed with the dashboard. */}
-              <div><div className={`text-[12px] font-bold ${delta != null && delta < 0 ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-confirmGreen)]"}`}>{formatDelta(delta)}</div>
-                <div className="text-[9px] text-[var(--shotiq-color-graphite)]">vs last session</div></div>
-            </div>
+            {/* Canonical stacks the delta BELOW the sparkline, left-aligned.
+                Beside it, "vs last session" had only ~60px and wrapped to two
+                lines in 9px type, and the mark itself lost 60px of width. */}
+            <TrendLine points={trendPoints} width={212} height={44} />
+            <div className={`text-[12px] font-bold ${delta != null && delta < 0 ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-confirmGreen)]"}`}>{formatDelta(delta)}</div>
+            <div className="text-[10px] text-[var(--shotiq-color-graphite)]">vs last session</div>
           </div>
         </div>
 
@@ -200,55 +241,67 @@ export default function AnalysisHistoryPage() {
           <SectionLabel>SESSIONS</SectionLabel>
           <span className="text-[12px] text-[var(--shotiq-color-graphite)]">{totalSessions} sessions</span>
         </div>
-        <table className="mt-[6px] w-full text-[12px]">
-          <thead>
-            <tr className="text-left text-[9px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">
-              {["DATE / TIME ↓", "FORM SCORE", "MAKE %", "SHOTS / MAKES", "CONFIDENCE", "FOCUS", "MEDIA", ""].map((h) => (
-                <th key={h} className="py-[8px] font-bold">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[var(--shotiq-color-rule)]">
-            {rows.map(([d, fs, band, mk, sm, conf], i) => (
-              <tr key={i} onClick={() => setSel(i)}
-                  className={`cursor-pointer ${sel === i ? "outline outline-1 outline-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
-                <td className="py-[9px]">
-                  <span className={`mr-[8px] inline-block h-[12px] w-[12px] rounded-full border-2 align-middle ${sel === i ? "border-[var(--shotiq-color-shotiqOrange)] bg-[var(--shotiq-color-shotiqOrange)]" : "border-[var(--shotiq-color-rule)]"}`} />
-                  {d}
-                </td>
-                <td><span className="shotiq-numeric text-[18px]">{fs}</span>
-                  <span className={`ml-[6px] text-[10px] ${band === "Good" ? "text-[var(--shotiq-color-analysisBlue)]" : "text-[var(--shotiq-color-graphite)]"}`}>● {band}</span></td>
-                <td className="shotiq-numeric text-[16px]">{mk}</td>
-                <td className="shotiq-numeric text-[16px]">{sm}</td>
-                <td>
-                  <span className="mr-[6px] inline-flex gap-[2px]">
-                    {[0, 1, 2, 3].map((b) => (
-                      <span key={b} className={`h-[8px] w-[8px] rounded-[2px] ${
-                        conf === "High" ? "bg-[var(--shotiq-color-confirmGreen)]"
-                          : b < 2 ? "bg-[var(--shotiq-color-analysisBlue)]" : "bg-[var(--shotiq-color-rule)]"}`} />
-                    ))}
-                  </span>{conf}
-                </td>
-                <td><CueGlyph kind="peak" size={22} /></td>
-                <td>
-                  <span className="flex items-center gap-[2px]">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="/images/canonical/093-strip.png" alt="" className="h-[24px] w-[84px] rounded-[2px] object-cover" />
-                    <span className="grid h-[24px] w-[22px] place-items-center rounded-[2px] bg-[var(--shotiq-color-muted)] text-[9px] font-bold text-white">{ROW_EXTRA[i % ROW_EXTRA.length]}</span>
-                  </span>
-                </td>
-                <td><ChevronRight className="h-[13px] w-[13px] text-[var(--shotiq-color-graphite)]" /></td>
-              </tr>
-            ))}
-            {!rows.length && (
-              <tr><td colSpan={8} className="py-[26px] text-center text-[13px] text-[var(--shotiq-color-graphite)]">
-                {loading ? "Loading history…" : "No sessions yet — run your first analysis."}
-              </td></tr>
-            )}
-          </tbody>
-        </table>
+        {/* Canonical lays these out as free-standing rows on a 57px pitch with
+            NO separator between them and a 10px-radius outline on the selected
+            one. A <table> with divide-y gave 37px rows, a hairline under every
+            row, and a square outline (border-radius does not apply to a
+            table-row), so the rows are a grid now. */}
+        <div className={`mt-[6px] grid ${COLS} pl-[14px] text-left text-[10px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]`}>
+          {["DATE / TIME ↓", "FORM SCORE", "MAKE %", "SHOTS / MAKES", "CONFIDENCE", "FOCUS", "MEDIA", ""].map((h) => (
+            <div key={h} className="py-[8px]">{h}</div>
+          ))}
+        </div>
+        <div>
+          {rows.map(([d, fs, rowBand, mk, sm, conf], i) => (
+            <div key={i} role="button" tabIndex={0} onClick={() => setSel(i)}
+                 onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setSel(i) }}
+                 className={`grid ${COLS} h-[57px] cursor-pointer items-center rounded-[10px] pl-[14px] ${
+                   sel === i ? "shadow-[0_0_0_1.5px_var(--shotiq-color-shotiqOrange)]" : ""}`}>
+              <div className="flex items-center gap-[10px] text-[12px]">
+                {/* Canonical marks the selected row with an orange ring around a
+                    centre dot, not a solid disc. */}
+                <span className={`grid h-[14px] w-[14px] shrink-0 place-items-center rounded-full border-2 ${
+                  sel === i ? "border-[var(--shotiq-color-shotiqOrange)]" : "border-[var(--shotiq-color-rule)]"}`}>
+                  {sel === i && <span className="block h-[6px] w-[6px] rounded-full bg-[var(--shotiq-color-shotiqOrange)]" />}
+                </span>
+                <span className="whitespace-nowrap">{d}</span>
+              </div>
+              <div className="flex items-baseline gap-[7px]">
+                <span className="shotiq-numeric text-[22px]">{fs}</span>
+                {/* Canonical sets the band grey at ~13px with a blue mark; it
+                    was 10px and entirely blue, which read as a second link. */}
+                <span className="whitespace-nowrap text-[13px] text-[var(--shotiq-color-graphite)]">
+                  <span className={rowBand === "Good" ? "text-[var(--shotiq-color-analysisBlue)]" : "text-[var(--shotiq-color-muted)]"}>●</span> {rowBand}
+                </span>
+              </div>
+              <div className="shotiq-numeric text-[19px]">{mk}</div>
+              <div className="shotiq-numeric whitespace-nowrap text-[19px]">{sm}</div>
+              <div className="flex items-center gap-[6px] text-[12px]">
+                <span className="inline-flex gap-[2px]">
+                  {[0, 1, 2, 3].map((b) => (
+                    <span key={b} className={`h-[9px] w-[9px] rounded-[2px] ${
+                      conf === "High" ? "bg-[var(--shotiq-color-confirmGreen)]"
+                        : b < 2 ? "bg-[var(--shotiq-color-analysisBlue)]" : "bg-[var(--shotiq-color-rule)]"}`} />
+                  ))}
+                </span>{conf}
+              </div>
+              <div><FocusMark below={Number(fs) < avgScore} /></div>
+              <div className="flex items-center gap-[2px]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/images/canonical/093-strip.png" alt="" className="h-[30px] w-[122px] rounded-[2px] object-cover" />
+                <span className="grid h-[30px] w-[28px] place-items-center rounded-[2px] bg-[var(--shotiq-color-muted)] text-[10px] font-bold text-white">{ROW_EXTRA[i % ROW_EXTRA.length]}</span>
+              </div>
+              <div className="justify-self-end pr-[10px]"><ChevronRight className="h-[15px] w-[15px] text-[var(--shotiq-color-graphite)]" /></div>
+            </div>
+          ))}
+          {!rows.length && (
+            <div className="py-[26px] text-center text-[13px] text-[var(--shotiq-color-graphite)]">
+              {loading ? "Loading history…" : "No sessions yet — run your first analysis."}
+            </div>
+          )}
+        </div>
         {rows.length > 0 && (
-          <div className="mt-[10px] flex items-center justify-center gap-[10px] text-[12px]">
+          <div className="mt-[14px] flex items-center justify-center gap-[10px] text-[12px]">
             {/* Counts the rows actually rendered — this read "1–8" while ten
                 rows were on screen. */}
             Showing 1–{rows.length} of {totalSessions}
@@ -329,6 +382,7 @@ export default function AnalysisHistoryPage() {
           Compare sessions
         </Link>
       </aside>
+      </div>
     </div>
   )
 }

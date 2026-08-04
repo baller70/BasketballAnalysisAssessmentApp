@@ -52,7 +52,10 @@ export default function ComparePage() {
              ["overlays", "Overlay skeletons"],
              ["phase", phase.charAt(0) + phase.slice(1).toLowerCase()]] as const).map(([key, label]) => (
             <div key={key} className="relative">
+              {/* Canonical sizes these three to 166 / 189 / 175px; the phase
+                  select was collapsing to its content at 122px. */}
               <button type="button" aria-expanded={menu === key}
+                      style={{ minWidth: key === "phase" ? 175 : key === "overlays" ? 189 : 166 }}
                       onClick={() => setMenu((m) => (m === key ? null : key))}
                       className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[16px] text-[13px]">
                 {/* Canonical marks each control: shooters, skeleton overlays, the
@@ -60,7 +63,7 @@ export default function ComparePage() {
                 {key === "shooters" && <Users className="h-[15px] w-[15px]" strokeWidth={1.6} />}
                 {key === "overlays" && <Layers className="h-[15px] w-[15px]" strokeWidth={1.6} />}
                 {key === "phase" && <PoseFigure phase={toShotPhase(phase)} height={20} className="shrink-0" />}
-                {label} <ChevronDown className="h-[13px] w-[13px] text-[var(--shotiq-color-graphite)]" />
+                {label} <ChevronDown className="ml-auto h-[13px] w-[13px] shrink-0 text-[var(--shotiq-color-graphite)]" />
               </button>
               {menu === key && (
                 <div className="absolute right-0 top-[46px] z-30 w-[230px] rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white py-[4px] shadow-[0_8px_20px_rgba(17,17,17,0.10)]">
@@ -188,7 +191,7 @@ export default function ComparePage() {
                 <button type="button" onClick={() => setPhase(p)} aria-pressed={p === phase} className="shrink-0 text-center">
                   <PoseFigure phase={p} active={p === phase} height={42}
                               tone={side ? "elite" : "light"} className="mx-auto" />
-                  <div className={`text-[9px] tracking-[0.04em] ${p === phase ? (side ? "font-bold text-[var(--shotiq-color-analysisBlue)]" : "font-bold text-[var(--shotiq-color-shotiqOrange)]") : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
+                  <div className={`shotiq-display text-[11px] leading-[12px] tracking-[0.06em] ${p === phase ? (side ? "text-[var(--shotiq-color-analysisBlue)]" : "text-[var(--shotiq-color-shotiqOrange)]") : "text-[var(--shotiq-color-graphite)]"}`}>{p}</div>
                 </button>
               </React.Fragment>
             ))}
@@ -208,8 +211,11 @@ export default function ComparePage() {
         <Card className="w-[242px] shrink-0 px-[18px] py-[8px]">
           <SectionLabel>FORM SCORE</SectionLabel>
           <div className="mt-[8px] flex items-center gap-[14px]">
-            <Ring pct={(score ?? 0) / 100} size={80}>
-              <div className="text-center"><span className="shotiq-numeric text-[26px]">{score ?? "—"}</span><span className="block text-[9px] text-[var(--shotiq-color-graphite)]">/100</span></div>
+            <Ring pct={(score ?? 0) / 100} size={90} stroke={9}>
+              <div className="text-center">
+                <span className="shotiq-numeric text-[39px] leading-[38px] text-[var(--shotiq-color-shotiqOrange)]">{score ?? "—"}</span>
+                <span className="block text-[11px] leading-[13px] text-[var(--shotiq-color-graphite)]">/100</span>
+              </div>
             </Ring>
             <div>
               <div className="text-[14px] font-bold text-[var(--shotiq-color-analysisBlue)]">GOOD</div>
@@ -218,7 +224,8 @@ export default function ComparePage() {
           </div>
           {/* Stat row: hairline-divided and evenly distributed across the
               panel, as canonical sets it. */}
-          <div className="mt-[12px] grid grid-cols-3 divide-x divide-[var(--shotiq-color-rule)] border-t border-[var(--shotiq-color-rule)] pt-[10px] text-center">
+          {/* Canonical draws no rule between the donut and this strip. */}
+          <div className="mt-[10px] grid grid-cols-3 divide-x divide-[var(--shotiq-color-rule)] pt-[6px] text-center">
             <Stat value={hasData ? "24" : "0"} label="SHOTS" valueClass="text-[20px] leading-[22px]" />
             <Stat value={hasData ? "15" : "0"} label="MAKES" valueClass="text-[20px] leading-[22px]" />
             <Stat value={hasData ? "62.5%" : "—"} label="MAKE %" valueClass="text-[20px] leading-[22px]" />
@@ -229,22 +236,27 @@ export default function ComparePage() {
         <div className="min-w-0 flex-1 px-[18px] py-[8px]">
           <SectionLabel>KEY DIFFERENCES</SectionLabel>
           <table className="mt-[6px] w-full text-[12px]">
-            <thead><tr className="text-left text-[9px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">
-              <th className="py-[4px] font-bold">METRIC</th><th className="font-bold">YOU</th><th className="font-bold">ELITE</th><th className="font-bold">DIFFERENCE</th></tr></thead>
-            <tbody className="divide-y divide-[var(--shotiq-color-rule)]">
+            {/* Canonical rules none of these seven rows off, and centres YOU /
+                ELITE / DIFFERENCE under their own headers. */}
+            <thead><tr className="text-[9px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">
+              <th className="py-[4px] text-left font-bold">METRIC</th>
+              <th className="w-[56px] text-center font-bold">YOU</th>
+              <th className="w-[56px] text-center font-bold">ELITE</th>
+              <th className="w-[66px] text-center font-bold">DIFFERENCE</th></tr></thead>
+            <tbody>
               {DIFFS.map(([m, you, el, d]) => (
                 <tr key={m}>
-                  <td className="py-[2px] pr-[8px]">{m}</td>
-                  <td className="pr-[8px] font-semibold text-[var(--shotiq-color-shotiqOrange)]">{you}</td>
-                  <td className="pr-[8px] font-semibold text-[var(--shotiq-color-analysisBlue)]">{el}</td>
-                  <td>{d}</td>
+                  <td className="whitespace-nowrap py-[2px] pr-[8px]">{m}</td>
+                  <td className="text-center font-semibold text-[var(--shotiq-color-shotiqOrange)]">{you}</td>
+                  <td className="text-center font-semibold text-[var(--shotiq-color-analysisBlue)]">{el}</td>
+                  <td className="text-center">{d}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
 
-        <div className="w-[302px] shrink-0 border-l border-[var(--shotiq-color-rule)] px-[18px] py-[8px]">
+        <div className="w-[306px] shrink-0 border-l border-[var(--shotiq-color-rule)] px-[16px] py-[8px]">
           <SectionLabel>WHY THE DIFFERENCE MATTERS</SectionLabel>
           <div className="mt-[6px] space-y-[8px]">
             {([["Slightly lower release angle reduces margin for error on longer shots.", "087-insight-1"],
@@ -261,14 +273,14 @@ export default function ComparePage() {
           </div>
         </div>
 
-        <div className="w-[238px] shrink-0 border-l border-[var(--shotiq-color-rule)] px-[14px] py-[8px]">
+        <div className="w-[268px] shrink-0 border-l border-[var(--shotiq-color-rule)] px-[14px] py-[8px]">
           <SectionLabel>TOP MATCHES</SectionLabel>
           {/* Label, bar and percentage each own a column, so the figure never
               lands on top of the end of its own bar. */}
           <div className="mt-[10px] space-y-[10px]">
             {MATCH.map(([p, v]) => (
               <div key={p} className="flex items-center gap-[8px]">
-                <span className={`w-[98px] shrink-0 whitespace-nowrap text-[10px] font-bold tracking-[0.02em] ${p === "RELEASE" ? "text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</span>
+                <span className={`w-[86px] shrink-0 whitespace-nowrap text-[10px] font-bold tracking-[0] ${p === "RELEASE" ? "text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>{p}</span>
                 <span className="h-[4px] min-w-0 flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
                   <span className={`block h-full rounded-full ${p === "RELEASE" ? "bg-[var(--shotiq-color-shotiqOrange)]" : "bg-[var(--shotiq-color-analysisBlue)]"}`} style={{ width: `${v}%` }} />
                 </span>

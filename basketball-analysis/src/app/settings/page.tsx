@@ -384,7 +384,7 @@ export default function SettingsPage() {
     onClick: () => void; testid?: string
   }) => (
     <button type="button" onClick={onClick} data-testid={testid}
-            className="flex w-full items-center justify-between py-[7px] text-left text-[13px] hover:bg-[var(--shotiq-color-warmCanvas)]">
+            className="flex w-full items-center justify-between py-[6px] text-left text-[12px] leading-[18px] hover:bg-[var(--shotiq-color-warmCanvas)]">
       <span>{label}</span>
       <span className={`flex items-center gap-[5px] text-[12px] font-medium ${
         tone === "green" ? "text-[var(--shotiq-color-confirmGreen)]"
@@ -506,17 +506,17 @@ export default function SettingsPage() {
                   Remove photo
                 </button>
               </div>
-              {/* Canonical stacks NAME / EMAIL / (hand, level) / (h, w, ws, pref)
-                  down one wide column. This workspace is 196px narrower than
-                  canonical's — the product's uniform app rail sits outside the
-                  settings rail — so the first four fields pair up two-per-row
-                  and the measurements row spans both. Same eight fields, same
-                  order, three rows instead of four. */}
-              <div className="grid min-w-0 flex-1 grid-cols-[0.82fr_1.18fr] gap-x-[14px] gap-y-[9px]">
-                <div><div className={lbl}>FULL NAME</div>
+              {/* Canonical stacks NAME / EMAIL each across the card's full field
+                  column, then pairs HANDEDNESS / PLAY LEVEL, then runs the four
+                  measurement fields along one row. Four rows, same eight fields,
+                  same order. NAME and EMAIL used to share a row, which cost the
+                  card 40px of height and squeezed the email value flush to its
+                  own border. */}
+              <div className="grid min-w-0 flex-1 grid-cols-2 gap-x-[14px] gap-y-[9px]">
+                <div className="col-span-2"><div className={lbl}>FULL NAME</div>
                   <input className={`${field} mt-[2px]`} value={form.name} data-testid="profile-name"
                          onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
-                <div><div className={lbl}>EMAIL ADDRESS</div>
+                <div className="col-span-2"><div className={lbl}>EMAIL ADDRESS</div>
                   <input className={`${field} mt-[2px]`} value={form.email}
                          onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
                 <div><div className={lbl}>HANDEDNESS</div>
@@ -530,7 +530,7 @@ export default function SettingsPage() {
                     the row so "Catch & Shoot" sets in full. Fixed widths, not
                     fractions, so the select can never be squeezed to
                     "Catch & Shoo" again. */}
-                <div className="col-span-2 grid grid-cols-[50px_60px_50px_1fr] items-end gap-[6px]">
+                <div className="col-span-2 grid grid-cols-[58px_58px_58px_1fr] items-end gap-[6px]">
                   {([["HEIGHT", "height"], ["WEIGHT", "weight"], ["WINGSPAN", "wingspan"]] as const).map(([l, k]) => (
                     <div key={k}><div className={lbl}>{l}</div>
                       <input className={`${field} mt-[2px] px-[6px]`} value={form[k]} onChange={(e) => setForm({ ...form, [k]: e.target.value })} /></div>
@@ -580,13 +580,18 @@ export default function SettingsPage() {
                     the three numerals left and leave the trend cell twice as
                     wide as its neighbours. */}
                 <div className="mt-[14px] flex items-center divide-x divide-[var(--shotiq-color-rule)]">
-                  <div className="min-w-0 flex-1 pr-[12px]"><Stat value={shots ?? "—"} label="SHOTS" valueClass="text-[22px] leading-[26px]" /></div>
-                  <div className="min-w-0 flex-1 px-[12px]"><Stat value={makes ?? "—"} label="MAKES" valueClass="text-[22px] leading-[26px]" /></div>
-                  <div className="min-w-0 flex-1 px-[12px]"><Stat value={formatMakePct(shots, makes)} label="MAKE %" valueClass="text-[22px] leading-[26px]" /></div>
-                  <div className="min-w-0 flex-[1.35] pl-[12px] text-right">
-                    <TrendLine points={[3, 2.5, 3.4, 3, 4]} width={80} height={28} />
-                    {/* Shared computed delta, not a hand-written +8.1%. */}
-                    <div className={`whitespace-nowrap text-[9px] ${delta != null && delta < 0 ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-confirmGreen)]"}`}>{formatDelta(delta)} vs last session</div>
+                  <div className="min-w-0 flex-1 whitespace-nowrap pr-[12px]"><Stat value={shots ?? "—"} label="SHOTS" valueClass="text-[22px] leading-[26px]" /></div>
+                  <div className="min-w-0 flex-1 whitespace-nowrap px-[12px]"><Stat value={makes ?? "—"} label="MAKES" valueClass="text-[22px] leading-[26px]" /></div>
+                  <div className="min-w-0 flex-1 whitespace-nowrap px-[12px]"><Stat value={formatMakePct(shots, makes)} label="MAKE %" valueClass="text-[22px] leading-[26px]" /></div>
+                  <div className="w-[146px] shrink-0 pl-[12px] text-right">
+                    <TrendLine points={[3, 2.5, 3.4, 3, 4]} width={80} height={28} className="ml-auto" />
+                    {/* Shared computed delta, not a hand-written +8.1%. The
+                        caption is small-caps in canonical and sets inside the
+                        cell; sentence case at 11px ran it past the card edge. */}
+                    <div className={`whitespace-nowrap text-[8px] ${delta != null && delta < 0 ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-confirmGreen)]"}`}>
+                      <span className="font-bold">{formatDelta(delta)}</span>
+                      <span className="ml-[3px] text-[var(--shotiq-color-graphite)]">VS LAST SESSION</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -694,8 +699,9 @@ export default function SettingsPage() {
               all of it used to come out of the two description columns, which
               wrapped to four lines where canonical takes two. The label column
               and the gutters give it back instead. */}
-          <div className="w-[170px] px-[14px]">
+          <div className="w-[224px] px-[10px]">
             <span className="shotiq-display text-[17px] leading-[18px]">DATA ACTIONS</span>
+            {/* canonical sets this caption on one line; 170px broke it in two */}
             <div className="mt-[2px] text-[11px] text-[var(--shotiq-color-graphite)]">Manage your data and analysis history.</div>
           </div>
           <div className="flex flex-1 items-center gap-[8px] px-[10px]">

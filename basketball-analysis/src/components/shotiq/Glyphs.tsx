@@ -648,3 +648,174 @@ export function ReadinessGlyph({
     </Svg>
   )
 }
+
+/* ------------------------------------------------- primary-action marks */
+
+export type ActionKind =
+  | "analyze" | "uploadImage" | "uploadVideo" | "liveCamera"
+  | "chooseMedia" | "nodeGraph"
+
+/**
+ * The four marks canonical puts on the primary actions (079 header, 081 media
+ * tiles, 080/081 submit buttons).
+ *
+ * These are NOT square: measured off canonical 079 the upload-image bracket is
+ * 48x36, the film-gate 60x25 and the live-camera node run 78x27. Every generic
+ * icon set draws them on a 24x24 grid, which is why the shipped row read as
+ * four small square glyphs where canonical draws four wide diagrams. Each kind
+ * therefore carries its own intrinsic box and is scaled by HEIGHT, so the
+ * aspect ratio survives.
+ */
+const ACTION_BOX: Record<ActionKind, [number, number]> = {
+  analyze: [34, 34],
+  uploadImage: [48, 36],
+  uploadVideo: [60, 26],
+  liveCamera: [80, 30],
+  chooseMedia: [34, 46],
+  nodeGraph: [32, 22],
+}
+
+export function ActionGlyph({
+  kind, height = 34, className = "", accent = ORANGE, title,
+}: { kind: ActionKind; height?: number } & GlyphProps) {
+  const [bw, bh] = ACTION_BOX[kind]
+  const width = Math.round((height * bw) / bh)
+  // Keep the drawn stroke ~1.7 device px whatever height the caller asks for.
+  const sw = 1.7 * (bh / height)
+  const paper = "var(--shotiq-color-paper)"
+  return (
+    <svg width={width} height={height} viewBox={`0 0 ${bw} ${bh}`}
+         className={`block max-w-none ${className}`}
+         fill="none" stroke="currentColor" strokeWidth={sw}
+         strokeLinecap="round" strokeLinejoin="round"
+         role={title ? "img" : undefined} aria-hidden={title ? undefined : "true"}
+         aria-label={title}>
+      {kind === "analyze" && (
+        <>
+          <path d="M2.5 11 V5 A2.5 2.5 0 0 1 5 2.5 H11 M23 2.5 H29 A2.5 2.5 0 0 1 31.5 5 V11 M31.5 23 V29 A2.5 2.5 0 0 1 29 31.5 H23 M11 31.5 H5 A2.5 2.5 0 0 1 2.5 29 V23" />
+          <circle cx="17" cy="17" r="4.4" fill="currentColor" stroke="none" />
+        </>
+      )}
+      {kind === "uploadImage" && (
+        <>
+          <path d="M1.5 11 V1.5 H11 M37 1.5 H46.5 V11 M46.5 25 V34.5 H37 M11 34.5 H1.5 V25" />
+          <path d="M14.8 14.5 L26.6 20.8 L36 14.5" />
+          <path d="M14.8 17.5 V26.3" strokeDasharray="1.6 2" />
+          {[[14.8, 14.5], [26.6, 20.8], [36, 14.5], [14.8, 29.3]].map(([x, y]) => (
+            <circle key={`${x}-${y}`} cx={x} cy={y} r="2.9" fill={paper} stroke={accent} strokeWidth={sw * 1.25} />
+          ))}
+        </>
+      )}
+      {kind === "uploadVideo" && (
+        <>
+          <rect x="1.2" y="2" width="57.6" height="21.6" />
+          <path d="M20.4 2 V23.6 M39.6 2 V23.6" />
+          <path d="M10.8 9.6 V16 M30 9.6 V16 M49.2 9.6 V16" strokeWidth={sw * 1.5} />
+          <path d="M39.6 0.8 V25.2" stroke={accent} strokeWidth={sw * 1.2} />
+          <circle cx="39.6" cy="6.4" r="2.9" fill={paper} stroke={accent} strokeWidth={sw * 1.3} />
+        </>
+      )}
+      {kind === "liveCamera" && (
+        <>
+          <path d="M4.6 15 L13.3 22.5 L24.6 6 L39.6 22.5 L57.7 5.6 L63.3 24.4 L76.4 14.4" />
+          {[[4.6, 15], [13.3, 22.5], [24.6, 6], [57.7, 5.6], [63.3, 24.4], [76.4, 14.4]].map(([x, y]) => (
+            <circle key={`${x}-${y}`} cx={x} cy={y} r="2.7" fill={paper} stroke="currentColor" />
+          ))}
+          <circle cx="39.6" cy="22.5" r="5.4" fill={paper} stroke={accent} strokeWidth={sw * 1.3} />
+        </>
+      )}
+      {kind === "chooseMedia" && (
+        <>
+          <path d="M2 2 H21 L31.5 12.5 V44 H2 Z" />
+          <path d="M21 2 V12.5 H31.5" />
+          <path d="M16.8 44 V18" />
+          <path d="M8.4 26.4 L16.8 18 L25.2 26.4" />
+        </>
+      )}
+      {kind === "nodeGraph" && (
+        <>
+          <path d="M9.9 16.4 L23.4 5.6" />
+          <circle cx="3.4" cy="12.6" r="3" />
+          <circle cx="9.9" cy="16.4" r="3" />
+          <circle cx="23.4" cy="5.6" r="3.9" />
+          <path d="M26 8.6 L27.6 11.6" />
+        </>
+      )}
+    </svg>
+  )
+}
+
+/* ---------------------------------------------------------- phase track */
+
+const TRACK_PHASES: { key: ShotPhase; label: string }[] = [
+  { key: "setup", label: "SETUP" }, { key: "load", label: "LOAD" },
+  { key: "rise", label: "RISE" }, { key: "release", label: "RELEASE" },
+  { key: "follow", label: "FOLLOW-THROUGH" },
+]
+
+/**
+ * The five-phase timeline as canonical draws it: canonical pose crops on plain
+ * white, a hairline connector between them, and the label set in the condensed
+ * display face directly under each figure.
+ *
+ * 079 and 080 used to paste a downscaled bitmap of the whole strip, which put
+ * the crop's own #FDFDFD paper on the page as a visible band and shrank the
+ * labels to an 8px cap. Measured against canonical the labels are a 9px cap on
+ * 079/080 and 11px on 083 — always in the condensed face, never the body face,
+ * which is why matching the cap in the body face made them 50% too wide.
+ */
+export function PhaseTrack({
+  active = "RELEASE", figure = 30, label = 13, checks = false,
+  underline = false, className = "",
+}: {
+  active?: string
+  /** Pose height in CSS px. */
+  figure?: number
+  /** Label font size in px (condensed face). */
+  label?: number
+  /** Draw canonical's green completion tick on every phase before the active one (080). */
+  checks?: boolean
+  /** Rule the active label, as 079 does. */
+  underline?: boolean
+  className?: string
+}) {
+  const activeIdx = TRACK_PHASES.findIndex((p) => p.label === active)
+  return (
+    <div className={`flex items-start ${className}`}>
+      {TRACK_PHASES.map((p, i) => {
+        const on = i === activeIdx
+        return (
+          <React.Fragment key={p.key}>
+            {i > 0 && (
+              <span className="flex min-w-0 flex-1 items-center gap-[8px] px-[8px]"
+                    style={{ height: figure }} aria-hidden="true">
+                {checks && i - 1 < activeIdx && (
+                  <span className="grid h-[15px] w-[15px] shrink-0 place-items-center rounded-full bg-[var(--shotiq-color-confirmGreen)]">
+                    <svg width="9" height="9" viewBox="0 0 12 12">
+                      <path d="M2.4 6.4 L4.9 9 L9.6 3.4" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                )}
+                <span className="h-px min-w-[8px] flex-1 bg-[var(--shotiq-color-rule)]" />
+              </span>
+            )}
+            <span className="shrink-0 text-center">
+              <PoseFigure phase={p.key} active={on} height={figure} className="mx-auto" />
+              <span className="shotiq-display mt-[3px] block whitespace-nowrap leading-[1.05]"
+                    style={{
+                      fontSize: label,
+                      letterSpacing: "0.05em",
+                      color: on ? ORANGE : "var(--shotiq-color-graphite)",
+                    }}>
+                {p.label}
+              </span>
+              {underline && on && (
+                <span aria-hidden="true" className="mx-auto mt-[2px] block h-[2px] w-full bg-[var(--shotiq-color-shotiqOrange)]" />
+              )}
+            </span>
+          </React.Fragment>
+        )
+      })}
+    </div>
+  )
+}

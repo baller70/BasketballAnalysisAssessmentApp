@@ -216,7 +216,10 @@ export function FormScoreCell({
   const barWidth = Math.round(size * 2.3)
   const barHeight = Math.max(4, Math.round(size / 7))
   const verdictSize = Math.max(11, Math.round(size * 0.33))
-  const captionSize = Math.max(10, Math.round(size * 0.27))
+  // Canonical's caption is a fixed 12-13px secondary line at every module
+  // scale — it does not grow with the numeral. Scaling it off `size` set it at
+  // 19px on 079, where it outweighed the "GOOD" verdict above it.
+  const captionSize = Math.min(13, Math.max(10, Math.round(size * 0.27)))
 
   const numeralBlock = (
     <div style={{ width: layout === "below" ? undefined : barWidth }}>

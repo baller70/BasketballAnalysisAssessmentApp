@@ -92,20 +92,21 @@ export default function ResultsOverviewPage() {
             May 12, 2025&ensp;·&ensp;8:24 AM&ensp;·&ensp;Catch &amp; Shoot&ensp;·&ensp;Right Hand
           </p>
         </div>
-        <div className="mt-[18px] flex items-center gap-[18px]">
+        <div className="mt-[18px] flex items-center gap-[16px]">
           {/* Share and Export used to live in this screen's own left rail. That
-              rail is gone (one menu sidebar app-wide), so the two actions moved
-              into the header action row — they are the only place either one is
-              reachable from. */}
+              rail is gone (one menu sidebar app-wide), and nothing else in the
+              app can share or export an analysis, so they stay here — but as
+              quiet text actions, so canonical's PREV / N OF M / NEXT remains the
+              only button group in the header. */}
           <button type="button" onClick={share} data-testid="overview-share"
-                  className="flex h-[34px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[16px] text-[12px] font-bold tracking-[0.05em]">
+                  className="flex h-[34px] items-center gap-[7px] text-[12px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">
             {shared
               ? <Check className="h-[13px] w-[13px] text-[var(--shotiq-color-confirmGreen)]" strokeWidth={2.2} />
               : <Share2 className="h-[13px] w-[13px]" strokeWidth={1.8} />}
             {shared ? "COPIED" : "SHARE"}
           </button>
           <button type="button" onClick={doExport} data-testid="overview-export"
-                  className="flex h-[34px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[16px] text-[12px] font-bold tracking-[0.05em]">
+                  className="flex h-[34px] items-center gap-[7px] text-[12px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">
             <Download className="h-[13px] w-[13px]" strokeWidth={1.8} />
             EXPORT
           </button>
@@ -172,17 +173,23 @@ export default function ResultsOverviewPage() {
               const active = p.label === "RELEASE"
               return (
                 <React.Fragment key={p.label}>
+                  {/* Canonical's connector is a SOLID hairline with one dot on
+                      it; the half nearest RELEASE is orange. The dashed
+                      segments flanking the dot were ours, not canonical's. */}
                   {i > 0 && (
-                    <div className="mt-[15px] flex flex-1 items-center gap-[4px] px-[4px]">
-                      <span className={`h-px flex-1 border-t ${i === 3 || i === 4 ? "border-[var(--shotiq-color-shotiqOrange)]" : "border-dashed border-[var(--shotiq-color-muted)]"}`} />
-                      <span className={`h-[8px] w-[8px] rounded-full ${i === 3 || i === 4 ? "bg-[var(--shotiq-color-shotiqOrange)]" : "bg-[var(--shotiq-color-muted)]"}`} />
-                      <span className={`h-px flex-1 border-t ${i === 3 || i === 4 ? "border-[var(--shotiq-color-shotiqOrange)]" : "border-dashed border-[var(--shotiq-color-muted)]"}`} />
+                    <div className="mt-[19px] flex flex-1 items-center px-[4px]">
+                      <span className={`h-px flex-1 ${i === 4 ? "bg-[var(--shotiq-color-shotiqOrange)]" : "bg-[var(--shotiq-color-muted)]"}`} />
+                      <span className={`h-[9px] w-[9px] shrink-0 rounded-full ${i === 3 || i === 4 ? "bg-[var(--shotiq-color-shotiqOrange)]" : "bg-[var(--shotiq-color-muted)]"}`} />
+                      <span className={`h-px flex-1 ${i === 3 ? "bg-[var(--shotiq-color-shotiqOrange)]" : "bg-[var(--shotiq-color-muted)]"}`} />
                     </div>
                   )}
                   <div className="shrink-0 text-center" style={{ width: i === 4 ? 108 : 78 }}>
                     <PoseFigure phase={p.label} active={active} height={41} className="mx-auto" />
-                    <div className={`mt-[4px] whitespace-nowrap text-[10px] font-bold tracking-[0.04em] ${active ? "text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>{p.label}</div>
-                    <div className="shotiq-numeric mt-[1px] whitespace-nowrap text-[10px] text-[var(--shotiq-color-graphite)]">{p.time}</div>
+                    {/* Canonical sets the label in the condensed display face at
+                        an 11px cap and the time range in the body face, grey —
+                        not the condensed numeric face at an 8px cap. */}
+                    <div className={`shotiq-display mt-[4px] whitespace-nowrap text-[15px] leading-[16px] tracking-[0.06em] ${active ? "text-[var(--shotiq-color-shotiqOrange)]" : ""}`}>{p.label}</div>
+                    <div className="mt-[2px] whitespace-nowrap text-[11px] leading-[13px] text-[var(--shotiq-color-graphite)]">{p.time}</div>
                   </div>
                 </React.Fragment>
               )
@@ -211,7 +218,7 @@ export default function ResultsOverviewPage() {
                 is how canonical spaces these four rows. */}
             <div className="mt-[2px] flex flex-1 flex-col">
               {MECHANICS.map((m) => (
-                <div key={m.name} className="flex flex-1 items-center border-b border-[var(--shotiq-color-rule)] py-[5px] last:border-b-0">
+                <div key={m.name} className="flex flex-1 items-center py-[5px]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={m.icon} alt="" className="h-[30px] w-[28px] object-contain" />
                   <span className="ml-[8px] w-[92px] text-[12px]">{m.name}</span>

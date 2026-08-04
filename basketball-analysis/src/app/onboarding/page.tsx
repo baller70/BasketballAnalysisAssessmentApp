@@ -91,46 +91,66 @@ export default function OnboardingPage() {
   return (
     <div data-testid="screen-desktop-web-onboarding" className="flex min-h-full flex-col">
      <div className="flex flex-1">
-      {/* form — the wizard steps ride a horizontal bar above the card rather
-          than a second vertical rail stacked on the app rail, which cost the
-          form and the WHY IT MATTERS hero ~200px of width between them. */}
-      <div className="flex min-w-0 flex-1 flex-col px-[30px] py-[18px]">
+      {/* Wizard step column. Canonical runs the four steps as a vertical list
+          inside the content area — an in-body horizontal tab strip plus a
+          "Step 2 of 4" meter is a control canonical never draws, and it exiled
+          the progress card into the right rail. */}
+      <div className="flex w-[186px] shrink-0 flex-col border-r border-[var(--shotiq-color-rule)] pb-[22px] pt-[26px]">
+        {STEPS.map(([s, Icon], i) => (
+          <button key={s} type="button" onClick={() => setStep(i + 1)} aria-current={step === i + 1 ? "true" : undefined}
+                  className={`relative flex h-[44px] shrink-0 items-center gap-[14px] pl-[26px] text-[13px] font-bold tracking-[0.04em] ${
+                    step === i + 1
+                      ? "bg-[var(--shotiq-color-warmCanvas)] text-[var(--shotiq-color-shotiqOrange)]"
+                      : "text-[var(--shotiq-color-ink)]"} ${i ? "mt-[13px]" : ""}`}>
+            {step === i + 1 && <span className="absolute inset-y-0 left-0 w-[3px] bg-[var(--shotiq-color-shotiqOrange)]" />}
+            {Icon
+              ? <Icon className="h-[20px] w-[20px] shrink-0" strokeWidth={1.5} />
+              : <PoseFigure phase="setup" height={22} active={step === i + 1} className="shrink-0" />}
+            {s.toUpperCase()}
+          </button>
+        ))}
+        {/* Canonical's "Your progress" card — the flow position, the step it
+            names, its bar, why the questions are asked, and the escape hatch.
+            It closes the step column; in the right rail it took 210px out of
+            WHY IT MATTERS. */}
+        <Card data-testid="onboarding-progress" className="mx-[8px] mt-auto px-[11px] py-[11px]">
+          <div className="text-[13px]">Your progress</div>
+          <div className="mt-[3px] text-[12px] text-[var(--shotiq-color-graphite)]">
+            Step {progressStep} of {STEPS.length}
+          </div>
+          <div className="mt-[2px] text-[13px] font-semibold">{progressName}</div>
+          <div className="mt-[8px] h-[6px] rounded-full bg-[var(--shotiq-color-rule)]">
+            <div className="h-full rounded-full bg-[var(--shotiq-color-shotiqOrange)]"
+                 style={{ width: `${(progressStep / STEPS.length) * 100}%` }} />
+          </div>
+          <p className="mt-[8px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
+            Questions help ShotIQ personalize your analysis, feedback, and training.
+          </p>
+          <button type="button" onClick={finish}
+                  className="mt-[10px] flex items-center gap-[8px] border-t border-[var(--shotiq-color-rule)] pt-[10px] text-[13px]">
+            <Save className="h-[14px] w-[14px]" /> Save and finish later
+          </button>
+        </Card>
+      </div>
+
+      {/* form — canonical bounds this region with hairlines rather than a
+          rounded card, which is what buys the field grid its width. */}
+      <div className="flex min-w-0 flex-1 flex-col px-[26px] py-[18px]">
         {/* 52px drew a 37px cap on JORDAN against canonical's 49px. */}
         <PageTitle size={70}>WELCOME, {first.toUpperCase()}</PageTitle>
         <p className="mt-[4px] max-w-[560px] text-[14px] text-[var(--shotiq-color-graphite)]">
           Let&apos;s measure your baseline so ShotIQ can deliver personalized analysis and training that match your game.
         </p>
 
-        <div className="mt-[12px] flex items-end gap-[26px] border-b border-[var(--shotiq-color-rule)]">
-          {STEPS.map(([s, Icon], i) => (
-            <button key={s} type="button" onClick={() => setStep(i + 1)} aria-current={step === i + 1 ? "true" : undefined}
-                    className={`relative flex items-center gap-[8px] pb-[9px] text-[12px] font-bold tracking-[0.05em] ${
-                      step === i + 1 ? "text-[var(--shotiq-color-shotiqOrange)]" : "text-[var(--shotiq-color-graphite)]"}`}>
-              {Icon
-                ? <Icon className="h-[16px] w-[16px] shrink-0" strokeWidth={1.6} />
-                : <PoseFigure phase="setup" height={18} active={step === i + 1} className="shrink-0" />}
-              {s.toUpperCase()}
-              {step === i + 1 && <span className="absolute inset-x-0 bottom-0 h-[3px] bg-[var(--shotiq-color-shotiqOrange)]" />}
-            </button>
-          ))}
-          <div className="ml-auto flex items-center gap-[10px] pb-[8px]">
-            <span className="text-[11px] text-[var(--shotiq-color-graphite)]">Step {progressStep} of {STEPS.length}</span>
-            <span className="block h-[6px] w-[120px] rounded-full bg-[var(--shotiq-color-rule)]">
-              <span className="block h-full rounded-full bg-[var(--shotiq-color-shotiqOrange)]"
-                    style={{ width: `${(progressStep / STEPS.length) * 100}%` }} />
-            </span>
-          </div>
-        </div>
-
-        {/* The card runs down to the phase band and carries the Back / Save /
-            Continue row inside it, under a hairline — canonical's arrangement.
-            Loose beneath the card it left ~95px of white above the band. */}
-        <Card className="mt-[14px] flex flex-1 flex-col p-[22px]">
+        {/* The region runs down to the phase band and carries the Back / Save /
+            Continue row inside it, under a hairline — canonical's arrangement. */}
+        <div className="mt-[16px] flex flex-1 flex-col border-t border-[var(--shotiq-color-rule)] pt-[28px]">
           <div className="flex items-center justify-between">
             <SectionLabel>TELL US ABOUT YOU</SectionLabel>
             <span className="text-[11px] text-[var(--shotiq-color-graphite)]">All fields required</span>
           </div>
-          <div className="mt-[14px] grid grid-cols-2 gap-x-[26px] gap-y-[16px]">
+          {/* Canonical's field rows sit on a 93px pitch; 84px packed them. */}
+          <div className="mt-[26px] grid grid-cols-2 gap-x-[26px] gap-y-[26px]">
             <div>
               <div className={lbl}>DOMINANT HAND <Info className="h-[10px] w-[10px]" /></div>
               <div className="mt-[6px] flex overflow-hidden rounded-[5px] border border-[var(--shotiq-color-rule)]">
@@ -204,25 +224,30 @@ export default function OnboardingPage() {
               </div>
             </div>
           </div>
-          <div className="mt-[16px]">
+          {/* This is the form's focal control: canonical gives it an 81px box,
+              a 36px node-graph mark and 17px value text, not the same 46px
+              select as PLAYING LEVEL. */}
+          <div className="mt-[30px]">
             <div className={lbl}>PRIMARY GOAL (CHOOSE ONE) <Info className="h-[10px] w-[10px]" /></div>
-            <div className="relative mt-[6px]">
-              <div className={`${box} flex w-full items-center gap-[12px]`}>
+            <div className="relative mt-[8px]">
+              <div className="flex h-[81px] w-full items-center gap-[18px] rounded-[5px] border border-[var(--shotiq-color-rule)] bg-white px-[16px]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/images/canonical/078-goal-mark.png" alt="" aria-hidden="true"
-                     className="block h-[30px] w-auto max-w-none shrink-0" />
+                     className="block h-[36px] w-auto max-w-none shrink-0" />
                 <select value={goal} onChange={(e) => setGoal(e.target.value)}
-                        className="h-full flex-1 appearance-none bg-transparent outline-none">
+                        className="h-full flex-1 appearance-none bg-transparent text-[17px] outline-none">
                   {GOALS.map((g) => <option key={g}>{g}</option>)}
                 </select>
-                <ChevronDown className="pointer-events-none h-[14px] w-[14px] text-[var(--shotiq-color-graphite)]" />
+                <ChevronDown className="pointer-events-none h-[16px] w-[16px] text-[var(--shotiq-color-graphite)]" />
               </div>
             </div>
           </div>
 
         <div className="mt-auto flex items-center justify-between border-t border-[var(--shotiq-color-rule)] pt-[16px]">
-          <button type="button" onClick={() => setStep(Math.max(1, step - 1))} disabled={step === 1}
-                  className="flex h-[44px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[16px] text-[14px] disabled:opacity-40">
+          {/* Canonical draws Back enabled on this step. On the first card there
+              is nothing behind it in the wizard, so it leaves onboarding. */}
+          <button type="button" onClick={() => (step === 1 ? router.push("/dashboard") : setStep(step - 1))}
+                  className="flex h-[44px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[16px] text-[14px]">
             <ChevronLeft className="h-[14px] w-[14px]" /> Back
           </button>
           <div className="flex items-center gap-[16px]">
@@ -235,57 +260,40 @@ export default function OnboardingPage() {
             </button>
           </div>
         </div>
-        </Card>
+        </div>
 
       </div>
 
       {/* why it matters rail — canonical draws the hero and the copy inside one
           bordered container, not loose on the paper. */}
-      <aside className="w-[430px] shrink-0 border-l border-[var(--shotiq-color-rule)] px-[22px] py-[16px]">
+      <aside className="w-[430px] shrink-0 border-l border-[var(--shotiq-color-rule)] px-[16px] py-[16px]">
         <Card className="overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/images/canonical/078-hero.png" alt="Shooter at release with elbow flex and release angle called out"
-               className="h-[252px] w-full object-cover" width={466} height={322} />
-          <div className="border-t border-[var(--shotiq-color-rule)] px-[18px] py-[14px]">
+               className="h-[270px] w-full object-cover" width={466} height={322} />
+          <div className="border-t border-[var(--shotiq-color-rule)] px-[18px] py-[16px]">
             <SectionLabel>WHY IT MATTERS</SectionLabel>
-            <p className="mt-[6px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
+            <p className="mt-[8px] text-[13px] leading-[19px] text-[var(--shotiq-color-graphite)]">
               Measuring your profile helps ShotIQ benchmark your mechanics and build feedback that&apos;s tailored to you.
             </p>
-            <div className="mt-[10px] space-y-[10px]">
+            {/* Canonical's benefit rows run on a 70px pitch with the figure
+                OUTSIDE the hairline; the rail relocation squeezed them to 46px
+                and put the mark inside the rule. */}
+            <div className="mt-[16px] space-y-[28px]">
               {BENEFITS.map(([t, d, mark]) => (
-                <div key={t} className="flex items-start gap-[12px] border-l border-[var(--shotiq-color-rule)] pl-[12px]">
+                <div key={t} className="flex items-center gap-[14px]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={`/images/canonical/${mark}.png`} alt="" aria-hidden="true"
-                       className="block h-[34px] w-auto max-w-none shrink-0" />
-                  <div>
-                    <div className="text-[13px] font-semibold">{t}</div>
-                    <div className="text-[11px] text-[var(--shotiq-color-graphite)]">{d}</div>
+                       className="block h-[42px] w-auto max-w-none shrink-0" />
+                  <div className="border-l border-[var(--shotiq-color-rule)] pl-[14px]">
+                    <div className="text-[14px] font-semibold leading-[19px]">{t}</div>
+                    <div className="mt-[2px] text-[12px] leading-[16px] text-[var(--shotiq-color-graphite)]">{d}</div>
                   </div>
                 </div>
               ))}
             </div>
           </div>
         </Card>
-          {/* Canonical's "Your progress" card — the flow position, the step it
-              names, its bar, why the questions are asked, and the escape hatch. */}
-          <Card data-testid="onboarding-progress" className="mt-[12px] px-[16px] py-[12px]">
-            <div className="text-[13px]">Your progress</div>
-            <div className="mt-[4px] text-[12px] text-[var(--shotiq-color-graphite)]">
-              Step {progressStep} of {STEPS.length}
-            </div>
-            <div className="mt-[2px] text-[13px] font-semibold">{progressName}</div>
-            <div className="mt-[8px] h-[6px] rounded-full bg-[var(--shotiq-color-rule)]">
-              <div className="h-full rounded-full bg-[var(--shotiq-color-shotiqOrange)]"
-                   style={{ width: `${(progressStep / STEPS.length) * 100}%` }} />
-            </div>
-            <p className="mt-[8px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
-              Questions help ShotIQ personalize your analysis, feedback, and training.
-            </p>
-            <button type="button" onClick={finish}
-                    className="mt-[10px] flex items-center gap-[8px] border-t border-[var(--shotiq-color-rule)] pt-[10px] text-[13px]">
-              <Save className="h-[14px] w-[14px]" /> Save and finish later
-            </button>
-          </Card>
       </aside>
      </div>
 
