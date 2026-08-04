@@ -19,7 +19,14 @@
   --shotiq-color-muted: #A7AAB0;
   --shotiq-color-paper: #FFFFFF;
   --shotiq-color-reviewRed: #D92D20;
-  --shotiq-color-rule: #D9D9D4;
+  /* Measured off six canonical screens (096, 090, 092, 093, 082, 087) by
+     finding rows that run uniformly darker than the paper above and below them
+     and taking the median: 235-243, median (239,240,240). The shipped #D9D9D4
+     is (217,217,212) — against 253 paper that is 36 of contrast where canonical
+     draws 14, so every grid line, card border and divider in the build read
+     about 2.5x too strong. Also neutral now: the old value was warm (blue 212
+     against red 217) where canonical is faintly cool. */
+  --shotiq-color-rule: #EBECED;
   --shotiq-color-shotiqOrange: #FD3701;
   --shotiq-color-warmCanvas: #F7F7F4;
 
