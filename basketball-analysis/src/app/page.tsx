@@ -27,39 +27,48 @@ import { ShotIQMark, ShotArcDiagram, CourtWatermark, MARK, DIAGRAM } from '@/com
  * threshold measures the grey runs a cap short of the black ones at identical
  * type size.
  *
- *   element                canonical device px            CSS pt
- *   mark plate             x132.2 y534.7 153.6x147.1      x60.91 y246.36 70.77x67.77
- *   SHOTIQ ink             x323   y541   389x79           x148.82 y249.25
- *   AI ANALYSIS ink        x322   y642   390x33           x148.36 y295.79
- *   diagram ink            x278   y776   295x289          x128.08 y357.53 135.91x133.15
- *   "SEE THE DETAILS."     x225   y1160  403x60           centred on 196.5
- *   "BUILD THE HABIT."     x228   y1250  397x58           centred on 196.5
+ * Canonical, all in device px. Cap heights are the sub-pixel distance between
+ * the 50%-coverage crossings on the one glyph in each string that is nothing
+ * but a stem — the I — so the number is independent of ink colour; "top" is
+ * that glyph's own top edge, which is what a band bbox reads.
  *
- * Ink colours, sampled from eroded stroke interiors so no antialiased edge is
- * in the sample: SHOT and "SEE THE DETAILS." (2,2,1); IQ and BUILD (251,60,0);
- * AI ANALYSIS and "THE HABIT." (96,95,95). Those map onto --shotiq-color-ink,
- * --shotiq-color-shotiqOrange and --shotiq-color-graphite; the greys read
- * neutral in the canonical PNG because its chroma subsampling flattens the
- * token's small blue lean, and the token is what the sidecar declares.
+ *   element                 x     top       size      cap     ink
+ *   mark plate            132.18 534.71  153.70x146.94   —    (plate, 50% edges)
+ *   SHOTIQ                323    541.84  adv 389       73.90  14121
+ *   AI ANALYSIS           322    641.58  adv 390       32.27   3416
+ *   shot-arc diagram      278    776     295x289         —     5676 (2431 orange)
+ *   "SEE THE DETAILS."    225   1160.53  adv 403       58.27   9618
+ *   "BUILD THE HABIT."    228   1249.86  adv 397       56.28   9530
+ *
+ * Two things about placing those numbers, both measured rather than assumed.
+ * Chromium snaps an <img>'s paint box AND a text baseline to whole device
+ * pixels, so `top` alone cannot express a fraction: every value of `top` in a
+ * 1px window put the plate's edge on the same device row. The residue is
+ * carried on a `transform`, which is not snapped for the image (see MARK in
+ * BrandMarks) and is snapped for text — so the text elements land on the
+ * nearest device row and the residual is reported, not hidden.
  *
  * The wordmark is NOT .shotiq-wordmark here. The sidecar's `brand` role is
- * Inter 900, and canonical draws it that way: at cap 79 it advances 389, i.e.
- * 4.94 per unit cap, with a near-circular O at 0.94 per unit cap. Boxed Heavy —
+ * Inter 900, and canonical draws a normal-width grotesque: at cap 73.9 it
+ * advances 389, i.e. 5.26 per unit cap, with a near-circular O. Boxed Heavy —
  * the widest cut in the Wilson X pack, which .shotiq-wordmark binds — advances
- * 3.48 per unit cap with an O at 0.57, so the logo set 111px (28%) short of
- * canonical and no amount of tracking closes a per-glyph gap that wide. Geist,
- * already loaded on <body>, is the Inter-class grotesque in the build, and it
- * is a VARIABLE face, so the weight can be solved rather than picked. Rendered
- * at canonical's cap of 79 device px:
+ * 3.48 per unit cap, so the logo set 111px (28%) short of canonical and no
+ * amount of tracking closes a per-glyph gap that wide. Geist, already loaded on
+ * <body>, is the Inter-class grotesque in the build, and it is a VARIABLE face,
+ * so the weight can be solved rather than picked. Rendered at canonical's cap
+ * of 74 device px, against canonical's 14121 ink / 389 advance:
  *
- *     weight  advance  ink px  density        canonical: 389 / 14108 / 0.460
- *       700     377    13533   0.454
- *       740     380    14294   0.476
- *       800     384    15020   0.495
- *       900     391    16593   0.537
+ *     weight   ink    advance
+ *       650   13486     382
+ *       670   13723     384
+ *       690   14250     385
+ *       710   14443     387
+ *       740   14911     389
  *
- * 740 carries canonical's ink; 1.84 device px (0.01817em) of tracking then
- * carries the advance, landing 389 / 14163 / 0.461 against 389 / 14108 / 0.460.
+ * 690 carries canonical's ink to +0.9%; 0.005em of tracking then carries the
+ * advance, landing 14176 / 389 against 14121 / 389. The earlier solve read
+ * canonical's cap as 79 — that is the Q's descender, not the cap — and picked
+ * 740, which measured +5.4% ink and a 4.2% fat stem at the corrected size.
  * Scoped to this element so the desktop header, which shares .shotiq-wordmark,
  * is untouched.
  *
@@ -80,10 +89,13 @@ import { ShotIQMark, ShotArcDiagram, CourtWatermark, MARK, DIAGRAM } from '@/com
  * The previous build used Semibold, which measured +14% stem, +11% ink and a
  * visibly heavier line against canonical in a 2x crop.
  *
- * Sizes are per line because canonical sets the two lines differently: the
- * sub-pixel cap height of the I, from its own 50%-coverage crossings, is 58.27
- * on "SEE THE DETAILS." and 56.14 on "BUILD THE HABIT." — 3.7% apart, which a
- * binary threshold reads as 58 and 57 and can easily be dismissed as noise.
+ * Sizes AND stroke are per line because canonical sets the two lines
+ * differently. The sub-pixel cap height of the I is 58.27 on "SEE THE DETAILS."
+ * and 56.28 on "BUILD THE HABIT." — 3.4% apart, which a binary threshold reads
+ * as 58 and 57 and can easily be dismissed as noise. Canonical's second line is
+ * also drawn a little lighter than its first: 9530 ink over a 397 advance
+ * against 9618 over 403, and its I stem measures 7.52 against the first line's
+ * 7.77. So line 2 takes 0.535px of stroke where line 1 takes 0.55.
  *
  * Colour. Canonical's three ink roles, each read off eroded stroke interiors
  * with the antialiased edge thrown away (n = 1601-2804 px per sample):
@@ -122,7 +134,9 @@ const SPLASH_INK = {
   '--shotiq-color-shotiqOrange': '#FC4904',
 } as React.CSSProperties
 
-/** Tungsten Medium + a 0.55px stroke — solved against canonical's stem, above. */
+/** Tungsten Medium + a 0.55px stroke — solved against canonical's stem, above.
+ *  Line 2 overrides the width to 0.535px; canonical draws it fractionally
+ *  lighter than line 1. */
 const DISPLAY_WEIGHT = {
   fontWeight: 400,
   WebkitTextStrokeWidth: '0.55px',
