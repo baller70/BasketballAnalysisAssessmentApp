@@ -6,14 +6,14 @@
 :root {
   /* colors */
   --shotiq-color-analysisBlue: #2D6CDF;
-  --shotiq-color-confirmGreen: #168A55;
+  /* Measured, not taken from the sidecar name table. The most common exact
+     green fill across all 20 canonical desktop screens clusters at (0-1,
+     109-111, 52-54); across the 72 canonical iOS screens at (3-8, 111-115,
+     64-68), whose looser red and blue are the compression on those larger
+     canvases. The shipped #168A55 is (22,138,85) — markedly lighter and less
+     saturated than either. Both platforms carried the same wrong value. */
+  --shotiq-color-confirmGreen: #056F38;
   --shotiq-color-graphite: #5F646B;
-  /* Card eyebrow ink. Measured, not chosen: the all-caps caption elements in the
-     20 canonical desktop renders were sampled at their own sidecar bounds and
-     their darkest decile has a median of rgb(75,77,79). They are NOT uniform —
-     the range runs from near-black to graphite — so this is the middle of a real
-     spread rather than a single canonical value. Shipping graphite made every
-     eyebrow the lightest end of that range at once. */
   /* Section-label ink, sampled from canonical 083's FORM SCORE (39,38,38),
      PRIMARY COACHING TARGET (37,37,37) and KEY INSIGHT (35,35,35). The previous
      #4B4D4F was set as the median of a measured spread that had swept in body

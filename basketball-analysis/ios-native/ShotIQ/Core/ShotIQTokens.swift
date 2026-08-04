@@ -8,8 +8,14 @@ import SwiftUI
 public enum ShotIQColor {
     /// #2D6CDF
     public static let analysisBlue = Color(red: 0.176471, green: 0.423529, blue: 0.874510)
-    /// #168A55
-    public static let confirmGreen = Color(red: 0.086275, green: 0.541176, blue: 0.333333)
+    /// #056F38
+    ///
+    /// Measured rather than taken from the sidecar name table. The most common
+    /// exact green fill across the 72 canonical iOS screens clusters at
+    /// (3-8, 111-115, 64-68), and across the 20 canonical desktop screens at
+    /// (0-1, 109-111, 52-54). The shipped #168A55 is (22,138,85) — markedly
+    /// lighter and less saturated than either, on both platforms.
+    public static let confirmGreen = Color(red: 0.019608, green: 0.435294, blue: 0.219608)
     /// #5F646B
     public static let graphite = Color(red: 0.372549, green: 0.392157, blue: 0.419608)
     /// #111111
