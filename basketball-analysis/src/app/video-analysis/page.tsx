@@ -13,7 +13,7 @@
 import React, { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { Pause, Play, SwitchCamera, VolumeX, Volume2, Square, Film, Check, X, Camera, Crosshair, Download, Trash2, Save, ShieldCheck, ChevronRight } from "lucide-react"
-import { SectionLabel, Card, Stat } from "@/components/shotiq/ShotIQShell"
+import { SectionLabel, Card, Stat, GoalPercent } from "@/components/shotiq/ShotIQShell"
 import { FormScoreCell, useHistory } from "@/components/shotiq/ResultsBits"
 import { PoseGlyph, PoseFigure } from "@/components/shotiq/Glyphs"
 import { HoopCalibrationOverlay, rimCalibrationStorageKey } from "@/components/live/HoopCalibrationOverlay"
@@ -182,7 +182,7 @@ export default function LiveCapturePage() {
     <div data-testid="screen-desktop-web-live-capture" className="px-[26px] pb-[8px] pt-[12px]">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="shotiq-display flex items-center gap-[14px] text-[46px] leading-[48px]">
+          <h1 className="shotiq-display flex items-center gap-[14px] text-[53px] leading-[55px]">
             LIVE CAPTURE
             {/* The status has to agree with the CTA beside it. This read
                 "● RECORDING" in the orange live colour even while the camera
@@ -338,8 +338,11 @@ export default function LiveCapturePage() {
         </div>
 
         {/* right rail */}
-        <div className="w-[462px] shrink-0 space-y-[14px]">
-          <Card className="p-[18px]">
+        {/* Trimmed vertical padding: the rail used to run ~100px past the foot of
+            the capture column, and that overhang was the white band above SHOT
+            RAIL. Canonical leaves ~30px there. */}
+        <div className="w-[462px] shrink-0 space-y-[8px]">
+          <Card className="px-[18px] py-[13px]">
             <div className="flex items-center justify-between">
               <SectionLabel>CAPTURE READINESS</SectionLabel>
               <span className="shotiq-display text-[14px] text-[var(--shotiq-color-confirmGreen)]" title={live ? "Live checks passing" : "Preview — start the camera to run live checks"}>GOOD</span>
@@ -359,12 +362,12 @@ export default function LiveCapturePage() {
             </div>
             <p className="mt-[10px] text-[12px] text-[var(--shotiq-color-graphite)]">Keep going. Great capture quality.</p>
           </Card>
-          <Card className="p-[18px]">
-            <div className="flex items-center justify-between border-b border-[var(--shotiq-color-rule)] pb-[10px]">
+          <Card className="px-[18px] py-[13px]">
+            <div className="flex items-center justify-between border-b border-[var(--shotiq-color-rule)] pb-[8px]">
               <SectionLabel>SESSION STATS</SectionLabel>
               <span className="text-[11px] text-[var(--shotiq-color-graphite)]">Today at 8:24 AM</span>
             </div>
-            <div className="mt-[12px] flex items-center">
+            <div className="mt-[9px] flex items-center">
               <Stat value={String(statShots)} label="SHOTS" valueClass="text-[28px] leading-[32px]" />
               <div className="mx-[16px] h-[36px] w-px bg-[var(--shotiq-color-rule)]" />
               <Stat value={String(statMakes)} label="MAKES" valueClass="text-[28px] leading-[32px]" />
@@ -373,10 +376,10 @@ export default function LiveCapturePage() {
               {/* The one shared form-score module (see FormScoreCell): the
                   numeral was undersized and the verdict block squeezed into an
                   86px column beside it. */}
-              <FormScoreCell score={score} size={34}
+              <FormScoreCell score={score} size={34} numeral={52}
                              className="ml-auto shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[16px]" />
             </div>
-            <div className="mt-[14px] border-t border-[var(--shotiq-color-rule)] pt-[12px]">
+            <div className="mt-[10px] border-t border-[var(--shotiq-color-rule)] pt-[10px]">
               <SectionLabel>PRIMARY COACHING TARGET</SectionLabel>
               <div className="mt-[2px] flex items-center justify-between">
                 <span className="text-[17px] font-semibold">Keep elbow stacked through release</span>
@@ -386,12 +389,12 @@ export default function LiveCapturePage() {
               <div className="mt-[4px] flex items-center gap-[10px]">
                 <div className="h-[6px] flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
                   <div className="h-full w-[72%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" /></div>
-                <span className="shotiq-numeric text-[12px]">72%</span>
+                <GoalPercent size={12}>72%</GoalPercent>
               </div>
               <p className="mt-[6px] text-[11px] text-[var(--shotiq-color-graphite)]">Improving release consistency and arm alignment.</p>
             </div>
           </Card>
-          <Card className="p-[18px]">
+          <Card className="px-[18px] py-[13px]">
             <div className="flex items-center justify-between border-b border-[var(--shotiq-color-rule)] pb-[8px]">
               <SectionLabel>LIVE COACHING CUE</SectionLabel><span className="shotiq-numeric text-[12px]">1 / 1</span>
             </div>

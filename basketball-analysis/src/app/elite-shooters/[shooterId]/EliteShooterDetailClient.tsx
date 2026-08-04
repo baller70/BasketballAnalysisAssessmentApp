@@ -17,7 +17,7 @@ import { useParams } from "next/navigation"
 import {
   ChevronLeft, ChevronRight, Bookmark, GitCompare, Check, Play,
 } from "lucide-react"
-import { TrendLine, SectionLabel, Card, Stat } from "@/components/shotiq/ShotIQShell"
+import { TrendLine, SectionLabel, Card, Stat, PageTitle } from "@/components/shotiq/ShotIQShell"
 import { useHistory, formatDelta, formatMakePct } from "@/components/shotiq/ResultsBits"
 import { PoseFigure, toShotPhase } from "@/components/shotiq/Glyphs"
 
@@ -162,7 +162,7 @@ export default function EliteShooterDetailClient() {
         <img src={headshot} alt={shooter.name}
              className="h-[137px] w-[102px] shrink-0 rounded-[4px] object-cover" />
         <div>
-          <h1 className="shotiq-display text-[38px] leading-[40px]">{shooter.name.toUpperCase()}</h1>
+          <PageTitle size={44}>{shooter.name.toUpperCase()}</PageTitle>
           <div className="mt-[2px] text-[13px] text-[var(--shotiq-color-graphite)]">
             {shooter.team} &nbsp;|&nbsp; {posLabel} &nbsp;|&nbsp; Right Handed
           </div>
@@ -334,7 +334,7 @@ export default function EliteShooterDetailClient() {
 
       {/* bottom band */}
       <div className="mb-[8px] mt-[6px] flex gap-[10px]">
-        <Card className="flex w-[372px] shrink-0 flex-col px-[14px] py-[6px]">
+        <Card className="flex w-[380px] shrink-0 flex-col px-[14px] py-[6px]">
           <div className="flex items-center justify-between">
             <SectionLabel>CAREER SHOOTING STATS</SectionLabel>
             <button type="button" onClick={() => setTab("CAREER STATS")}
@@ -399,7 +399,12 @@ export default function EliteShooterDetailClient() {
           </div>
         </Card>
 
-        <Card className="w-[248px] shrink-0 px-[14px] py-[6px]">
+        {/* 248px was ~70px under the width canonical gives this card, and the
+            bio paid for it by running to five and six lines where canonical
+            takes three or four. The extra width also shortens the whole band,
+            which is where the dead space under STRENGTHS and under the career
+            stat row came from. */}
+        <Card className="w-[306px] shrink-0 px-[14px] py-[6px]">
           <SectionLabel>ABOUT {shooter.name.toUpperCase()}</SectionLabel>
           <p className="mt-[6px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
             {shooter.description ?? `Revolutionized the game with unmatched shooting range, quick release, and elite shot-making off the dribble. Known for conditioning, work ethic, and relentless pursuit of improvement.`}

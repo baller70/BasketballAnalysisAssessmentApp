@@ -18,7 +18,7 @@
 import React, { useRef, useState } from "react"
 import Link from "next/link"
 import { useAuthStore } from "@/stores/authStore"
-import { UnifiedSidebar } from "@/components/shotiq/ShotIQShell"
+import { UnifiedSidebar, PageTitle } from "@/components/shotiq/ShotIQShell"
 import { Eye, EyeOff, Loader2, ChevronDown, ChevronRight } from "lucide-react"
 
 const STEPS = [
@@ -155,7 +155,8 @@ export default function SignInPage() {
 
         {/* --------------------------------------------------- form column */}
         <section className="w-[394px] shrink-0 border-r border-[var(--shotiq-color-rule)] px-[46px] pt-[48px]">
-          <h1 className="shotiq-display text-[46px] leading-[50px]">WELCOME BACK</h1>
+          {/* 46px drew a 32px cap against canonical's 44px. */}
+          <PageTitle size={63}>WELCOME BACK</PageTitle>
           <p className="mt-[10px] text-[15px] text-[var(--shotiq-color-graphite)]">
             Sign in to continue your training.
           </p>
@@ -236,7 +237,8 @@ export default function SignInPage() {
             keeps its canonical 346px width — the card is the dense element and
             is the one that breaks first when squeezed. */}
         <section className="flex-1 px-[32px] pt-[34px]" data-testid="region-main">
-          <h2 className="shotiq-display text-[40px] leading-[44px]">
+          {/* 40px drew a 28px cap against canonical's 34px. */}
+          <h2 className="shotiq-display text-[49px] leading-[51px]">
             AI ANALYSIS. BETTER MECHANICS. BETTER RESULTS.
           </h2>
           <p className="mt-[8px] text-[15px] text-[var(--shotiq-color-graphite)]">
@@ -278,7 +280,8 @@ export default function SignInPage() {
             <div className="flex-1 rounded-[8px] border border-[var(--shotiq-color-rule)] px-[22px] py-[20px]">
               <div className="text-[12px] font-bold tracking-[0.05em]">FORM SCORE</div>
               <div className="flex items-start justify-between">
-                <div className="shotiq-numeric text-[58px] leading-[62px] text-[var(--shotiq-color-shotiqOrange)]">82</div>
+                {/* 58px drew a 41px numeral against canonical's 52px. */}
+                <div className="shotiq-numeric text-[74px] leading-[78px] text-[var(--shotiq-color-shotiqOrange)]">82</div>
                 <div className="pt-[12px] text-right">
                   <div className="text-[15px] font-bold text-[var(--shotiq-color-analysisBlue)]">GOOD</div>
                   <p className="mt-[3px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">

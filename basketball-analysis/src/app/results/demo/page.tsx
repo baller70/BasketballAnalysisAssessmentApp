@@ -19,7 +19,7 @@ import {
   ArrowLeft, ChevronLeft, ChevronRight, Crosshair, Maximize,
   Share2, Download, Check,
 } from "lucide-react"
-import { SectionLabel, Card, TrendLine } from "@/components/shotiq/ShotIQShell"
+import { SectionLabel, Card, TrendLine, PageTitle, GoalPercent } from "@/components/shotiq/ShotIQShell"
 import { PoseFigure } from "@/components/shotiq/Glyphs"
 import { ShotIQShell } from "@/components/shotiq/ShotIQShell"
 import { useHistory, formatDelta, formatMakePct } from "@/components/shotiq/ResultsBits"
@@ -87,7 +87,7 @@ export default function ResultsOverviewPage() {
           <ArrowLeft className="h-[22px] w-[22px]" strokeWidth={2} />
         </button>
         <div className="mr-auto">
-          <h1 className="shotiq-display text-[46px] leading-[48px]">ANALYSIS OVERVIEW</h1>
+          <PageTitle size={58}>ANALYSIS OVERVIEW</PageTitle>
           <p className="mt-[2px] text-[13px] text-[var(--shotiq-color-graphite)]">
             May 12, 2025&ensp;·&ensp;8:24 AM&ensp;·&ensp;Catch &amp; Shoot&ensp;·&ensp;Right Hand
           </p>
@@ -193,10 +193,10 @@ export default function ResultsOverviewPage() {
         {/* score + coaching card */}
         <Card className="flex min-w-0 flex-1 rounded-[8px]">
           {/* form score + mechanics */}
-          <div className="w-[290px] shrink-0 border-r border-[var(--shotiq-color-rule)] px-[17px] pt-[16px]">
+          <div className="flex w-[290px] shrink-0 flex-col border-r border-[var(--shotiq-color-rule)] px-[17px] pb-[10px] pt-[16px]">
             <SectionLabel>FORM SCORE</SectionLabel>
             <div className="mt-[4px] flex items-end gap-[6px]">
-              <span className="shotiq-numeric text-[60px] leading-[54px] text-[var(--shotiq-color-shotiqOrange)]">82</span>
+              <span className="shotiq-numeric text-[85px] leading-[77px] text-[var(--shotiq-color-shotiqOrange)]">82</span>
               <span className="shotiq-numeric text-[19px] text-[var(--shotiq-color-muted)]">/100</span>
             </div>
             <div className="mt-[10px] h-[9px] w-full rounded-full bg-[var(--shotiq-color-rule)]">
@@ -206,16 +206,19 @@ export default function ResultsOverviewPage() {
             <p className="mt-[2px] w-[110px] text-[13px] leading-[18px] text-[var(--shotiq-color-graphite)]">Keep building consistency.</p>
 
             <SectionLabel className="mt-[14px]">MECHANICS AT RELEASE</SectionLabel>
-            <div className="mt-[2px]">
+            {/* The list takes the column's spare height instead of stacking at
+                the top and leaving ~120px of void above the card floor, which
+                is how canonical spaces these four rows. */}
+            <div className="mt-[2px] flex flex-1 flex-col">
               {MECHANICS.map((m) => (
-                <div key={m.name} className="flex items-center border-b border-[var(--shotiq-color-rule)] py-[5px] last:border-b-0">
+                <div key={m.name} className="flex flex-1 items-center border-b border-[var(--shotiq-color-rule)] py-[5px] last:border-b-0">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={m.icon} alt="" className="h-[30px] w-[28px] object-contain" />
                   <span className="ml-[8px] w-[92px] text-[12px]">{m.name}</span>
-                  <span className="shotiq-numeric ml-auto text-[20px]">{m.value}</span>
+                  <span className="shotiq-numeric ml-auto text-[27px]">{m.value}</span>
                   <span className="ml-[12px] w-[62px] text-right">
-                    <span className="block text-[11px] font-bold leading-[13px] text-[var(--shotiq-color-confirmGreen)]">IDEAL</span>
-                    <span className="shotiq-numeric block text-[10px] leading-[12px] text-[var(--shotiq-color-graphite)]">{m.ideal}</span>
+                    <span className="block text-[14px] font-bold leading-[16px] text-[var(--shotiq-color-confirmGreen)]">IDEAL</span>
+                    <span className="shotiq-numeric block text-[13px] leading-[15px] text-[var(--shotiq-color-graphite)]">{m.ideal}</span>
                   </span>
                 </div>
               ))}
@@ -239,7 +242,7 @@ export default function ResultsOverviewPage() {
               <div className="h-[6px] flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
                 <div className="h-full w-[72%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" />
               </div>
-              <span className="shotiq-numeric text-[13px]">72%</span>
+              <GoalPercent size={17}>72%</GoalPercent>
             </div>
 
             <div className="mt-[12px] border-t border-[var(--shotiq-color-rule)] pt-[10px]">
@@ -272,15 +275,19 @@ export default function ResultsOverviewPage() {
         </Card>
       </div>
 
-      {/* bottom strip */}
-      <div className="mt-[18px] mb-[14px] flex gap-[16px]">
-        <Card className="flex h-[145px] w-[509px] shrink-0 flex-col px-[18px] pt-[12px]">
+      {/* Bottom strip. Canonical draws ONE bordered card here, divided by two
+          internal hairlines (its rules land at 58 % and 79 % of the card); this
+          shipped as three detached cards. TOP FLAW takes a slightly larger
+          share than canonical's because its description otherwise runs to a
+          third line at the type size this app sets it in. */}
+      <Card className="mt-[18px] mb-[14px] flex h-[145px] divide-x divide-[var(--shotiq-color-rule)]">
+        <div className="flex w-[42%] shrink-0 flex-col px-[18px] pt-[12px]">
           <SectionLabel>ANALYSIS SUMMARY</SectionLabel>
           <div className="mt-[12px] flex flex-1 items-start">
             {([[String(liveShots ?? "—"), "SHOTS"], [String(liveMakes ?? "—"), "MAKES"],
                [formatMakePct(liveShots, liveMakes), "MAKE %"],
                [liveScore != null ? String(liveScore) : "—", "FORM SCORE"]] as const).map(([v, l], i) => (
-              <div key={l} className={`pr-[20px] text-center ${i > 0 ? "border-l border-[var(--shotiq-color-rule)] pl-[20px]" : ""}`}>
+              <div key={l} className={`pr-[16px] text-center ${i > 0 ? "border-l border-[var(--shotiq-color-rule)] pl-[16px]" : ""}`}>
                 <div className="shotiq-numeric text-[27px] leading-[30px]">{v}</div>
                 <div className="mt-[4px] text-[10px] tracking-[0.07em] text-[var(--shotiq-color-graphite)]">{l}</div>
                 {l === "FORM SCORE" && (
@@ -299,9 +306,9 @@ export default function ResultsOverviewPage() {
               <div className="text-[11px] text-[var(--shotiq-color-graphite)]">vs last session</div>
             </div>
           </div>
-        </Card>
+        </div>
 
-        <Card className="h-[145px] min-w-0 flex-1 px-[16px] pt-[12px]">
+        <div className="min-w-0 flex-1 px-[16px] pt-[12px]">
           <SectionLabel>TOP FLAW</SectionLabel>
           <Link href="/results/demo/flaws" className="mt-[6px] flex items-center gap-[10px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -317,9 +324,9 @@ export default function ResultsOverviewPage() {
             </span>
             <ChevronRight className="h-[16px] w-[16px] shrink-0 text-[var(--shotiq-color-graphite)]" />
           </Link>
-        </Card>
+        </div>
 
-        <Card className="h-[145px] w-[370px] shrink-0 px-[18px] pt-[12px]">
+        <div className="w-[29%] shrink-0 px-[18px] pt-[12px]">
           <SectionLabel>NEXT TRAINING</SectionLabel>
           <Link href="/results/demo/training" className="mt-[10px] flex items-center gap-[14px]">
             <span className="grid h-[50px] w-[50px] shrink-0 place-items-center rounded-full bg-[var(--shotiq-color-analysisBlue)]">
@@ -335,8 +342,8 @@ export default function ResultsOverviewPage() {
             </span>
             <ChevronRight className="h-[16px] w-[16px] shrink-0 text-[var(--shotiq-color-graphite)]" />
           </Link>
-        </Card>
-      </div>
+        </div>
+      </Card>
       </>
       )}
     </div>

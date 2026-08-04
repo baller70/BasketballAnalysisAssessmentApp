@@ -4,7 +4,7 @@
 
 import React, { useState } from "react"
 import { ChevronDown, Check, Lock } from "lucide-react"
-import { SectionLabel, Card, TrendLine, Stat } from "@/components/shotiq/ShotIQShell"
+import { SectionLabel, Card, TrendLine, Stat, PageTitle } from "@/components/shotiq/ShotIQShell"
 import { CueGlyph } from "@/components/shotiq/Glyphs"
 import { usePoints } from "@/lib/points/pointsContext"
 
@@ -121,7 +121,7 @@ export default function AchievementsPointsPage() {
       <div className="min-w-0 flex-1 px-[24px] py-[18px]">
         <div className="flex items-start justify-between gap-[16px]">
           <div>
-            <h1 className="shotiq-display text-[46px] leading-[48px]">ACHIEVEMENTS &amp; POINTS</h1>
+            <PageTitle size={55}>ACHIEVEMENTS &amp; POINTS</PageTitle>
             <p className="mt-[4px] text-[13px] text-[var(--shotiq-color-graphite)]">Track your progress. Earn badges. Build your edge.</p>
           </div>
           <div className="flex gap-[12px]">

@@ -367,6 +367,55 @@ export function SectionLabel({ children, className = "" }: { children: React.Rea
   )
 }
 
+/**
+ * THE page-title role. Every canonical screen opens with one of these and each
+ * one used to spell the role out for itself (`shotiq-display text-[46px]
+ * leading-[48px]`), so the face, the weight and the size/leading relationship
+ * were re-decided twenty times over — and twenty of them had drifted small.
+ *
+ * `size` stays per screen because canonical's own titles are not one size: at
+ * 1:1 their cap heights run from 28px (088 ELITE SHOOTERS DATABASE) to 46px
+ * (080 DASHBOARD). What this component owns is everything else — the display
+ * face and the leading, which is always `size + 2`, the ratio the screens had
+ * already converged on.
+ *
+ * Sizes are set from measurement, never by eye: cap height in the shipped PNG
+ * against cap height in `canonical-desktop/<screen>.png` at 1:1. Our display
+ * face draws a cap at 0.705em, so `size = canonical cap / 0.705`.
+ */
+export function PageTitle({
+  size, children, className = "", ...rest
+}: { size: number } & React.HTMLAttributes<HTMLHeadingElement>) {
+  return (
+    <h1 {...rest} className={`shotiq-display ${className}`}
+        style={{ fontSize: size, lineHeight: `${size + 2}px`, ...(rest.style ?? {}) }}>
+      {children}
+    </h1>
+  )
+}
+
+/**
+ * The percent that closes a coaching-target progress bar ("72%").
+ *
+ * Nine screens drew this by hand and five of them set it in `shotiq-numeric` —
+ * a condensed semibold face — at 11-15px. At those sizes the mark measures
+ * 8-9px tall and ~1.5x as wide as it is tall, where canonical's measures 9-13px
+ * tall and ~2x as wide: same nominal font-size, half the presence. It reads as
+ * a smudge rather than a number.
+ *
+ * So this is the body face at a cap-matched size (canonical cap / 0.727), and
+ * the numeric face is deliberately absent. Colour is left to the caller: the
+ * canonical instances are not one colour (080 samples rgb(65,70,82), 083
+ * rgb(20,16,22)), so there is nothing to standardise on.
+ */
+export function GoalPercent({
+  children, size = 15, className = "",
+}: { children: React.ReactNode; size?: number; className?: string }) {
+  return (
+    <span className={`shrink-0 ${className}`} style={{ fontSize: size }}>{children}</span>
+  )
+}
+
 /** Canonical card container. */
 export function Card({ children, className = "", ...rest }: React.HTMLAttributes<HTMLDivElement>) {
   return (

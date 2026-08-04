@@ -15,7 +15,7 @@ import {
   ChevronLeft, ChevronDown, ArrowRight, Save, Info, Ruler, SlidersHorizontal,
   ClipboardList, type LucideIcon,
 } from "lucide-react"
-import { SectionLabel, Card } from "@/components/shotiq/ShotIQShell"
+import { SectionLabel, Card, PageTitle } from "@/components/shotiq/ShotIQShell"
 import { PoseFigure } from "@/components/shotiq/Glyphs"
 import { useAuthStore } from "@/stores/authStore"
 import { useProfileStore } from "@/stores/profileStore"
@@ -94,8 +94,9 @@ export default function OnboardingPage() {
       {/* form — the wizard steps ride a horizontal bar above the card rather
           than a second vertical rail stacked on the app rail, which cost the
           form and the WHY IT MATTERS hero ~200px of width between them. */}
-      <div className="min-w-0 flex-1 px-[30px] py-[18px]">
-        <h1 className="shotiq-display text-[52px] leading-[54px]">WELCOME, {first.toUpperCase()}</h1>
+      <div className="flex min-w-0 flex-1 flex-col px-[30px] py-[18px]">
+        {/* 52px drew a 37px cap on JORDAN against canonical's 49px. */}
+        <PageTitle size={70}>WELCOME, {first.toUpperCase()}</PageTitle>
         <p className="mt-[4px] max-w-[560px] text-[14px] text-[var(--shotiq-color-graphite)]">
           Let&apos;s measure your baseline so ShotIQ can deliver personalized analysis and training that match your game.
         </p>
@@ -121,7 +122,10 @@ export default function OnboardingPage() {
           </div>
         </div>
 
-        <Card className="mt-[14px] p-[22px]">
+        {/* The card runs down to the phase band and carries the Back / Save /
+            Continue row inside it, under a hairline — canonical's arrangement.
+            Loose beneath the card it left ~95px of white above the band. */}
+        <Card className="mt-[14px] flex flex-1 flex-col p-[22px]">
           <div className="flex items-center justify-between">
             <SectionLabel>TELL US ABOUT YOU</SectionLabel>
             <span className="text-[11px] text-[var(--shotiq-color-graphite)]">All fields required</span>
@@ -215,9 +219,8 @@ export default function OnboardingPage() {
               </div>
             </div>
           </div>
-        </Card>
 
-        <div className="mt-[14px] flex items-center justify-between">
+        <div className="mt-auto flex items-center justify-between border-t border-[var(--shotiq-color-rule)] pt-[16px]">
           <button type="button" onClick={() => setStep(Math.max(1, step - 1))} disabled={step === 1}
                   className="flex h-[44px] items-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[16px] text-[14px] disabled:opacity-40">
             <ChevronLeft className="h-[14px] w-[14px]" /> Back
@@ -232,6 +235,7 @@ export default function OnboardingPage() {
             </button>
           </div>
         </div>
+        </Card>
 
       </div>
 

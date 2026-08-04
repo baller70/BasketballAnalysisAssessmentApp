@@ -5,7 +5,7 @@
 import React, { useEffect, useState } from "react"
 import Link from "next/link"
 import { ChevronDown, RefreshCcw, Bookmark, MoreVertical, Play, ChevronLeft, ChevronRight, Users, Layers } from "lucide-react"
-import { SectionLabel, Card, Ring, Stat } from "@/components/shotiq/ShotIQShell"
+import { SectionLabel, Card, Ring, Stat, PageTitle } from "@/components/shotiq/ShotIQShell"
 import { PoseFigure, WorkoutGlyph, toShotPhase } from "@/components/shotiq/Glyphs"
 import { useHistory } from "@/components/shotiq/ResultsBits"
 
@@ -44,7 +44,7 @@ export default function ComparePage() {
     <div data-testid="screen-desktop-web-elite-comparison">
       <div className="flex items-start justify-between gap-[14px]">
         <div>
-          <h1 className="shotiq-display text-[42px] leading-[44px]">ELITE COMPARISON</h1>
+          <PageTitle size={48}>ELITE COMPARISON</PageTitle>
           <p className="mt-[2px] text-[14px] text-[var(--shotiq-color-graphite)]">See how your mechanics compare to elite-level form.</p>
         </div>
         <div className="flex gap-[10px] pt-[4px]">
@@ -105,7 +105,9 @@ export default function ComparePage() {
       </div>
 
       {/* dual viewers */}
-      <div className="mt-[8px] flex items-start gap-[14px]">
+      {/* mt-2, not mt-8: the cap-matched title above is 6px taller and the screen
+          has to stay on the 900px canvas. */}
+      <div className="mt-[2px] flex items-start gap-[14px]">
         {(["YOU", "ELITE REFERENCE"] as const).map((side, sideIdx) => (
           <React.Fragment key={side}>
           {sideIdx === 1 && (
@@ -171,7 +173,7 @@ export default function ComparePage() {
       </div>
 
       {/* phase selector */}
-      <div className="mt-[6px] flex items-center gap-[16px]">
+      <div className="mt-[4px] flex items-center gap-[16px]">
         <SectionLabel>SELECT PHASE</SectionLabel>
         {[0, 1].map((side) => (
           <div key={side} className="flex flex-1 items-center gap-[6px] px-[10px]">
@@ -197,10 +199,13 @@ export default function ComparePage() {
         ))}
       </div>
 
-      {/* analysis band — canonical draws these four panels inside one bordered
-          container split by vertical hairlines. */}
-      <Card className="mt-[8px] flex">
-        <div className="w-[250px] shrink-0 px-[18px] py-[8px]">
+      {/* Analysis band. Canonical groups these four panels as TWO containers:
+          FORM SCORE stands alone (x 172–424) and KEY DIFFERENCES / WHY THE
+          DIFFERENCE MATTERS / TOP MATCHES share the second (441–1401) with
+          internal hairlines at 805 and 1133. This shipped as a single card
+          holding all four. */}
+      <div className="mt-[6px] flex gap-[16px]">
+        <Card className="w-[242px] shrink-0 px-[18px] py-[8px]">
           <SectionLabel>FORM SCORE</SectionLabel>
           <div className="mt-[8px] flex items-center gap-[14px]">
             <Ring pct={(score ?? 0) / 100} size={80}>
@@ -218,9 +223,10 @@ export default function ComparePage() {
             <Stat value={hasData ? "15" : "0"} label="MAKES" valueClass="text-[20px] leading-[22px]" />
             <Stat value={hasData ? "62.5%" : "—"} label="MAKE %" valueClass="text-[20px] leading-[22px]" />
           </div>
-        </div>
+        </Card>
 
-        <div className="min-w-0 flex-1 border-l border-[var(--shotiq-color-rule)] px-[18px] py-[8px]">
+        <Card className="flex min-w-0 flex-1">
+        <div className="min-w-0 flex-1 px-[18px] py-[8px]">
           <SectionLabel>KEY DIFFERENCES</SectionLabel>
           <table className="mt-[6px] w-full text-[12px]">
             <thead><tr className="text-left text-[9px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">
@@ -238,7 +244,7 @@ export default function ComparePage() {
           </table>
         </div>
 
-        <div className="w-[292px] shrink-0 border-l border-[var(--shotiq-color-rule)] px-[18px] py-[8px]">
+        <div className="w-[302px] shrink-0 border-l border-[var(--shotiq-color-rule)] px-[18px] py-[8px]">
           <SectionLabel>WHY THE DIFFERENCE MATTERS</SectionLabel>
           <div className="mt-[6px] space-y-[8px]">
             {([["Slightly lower release angle reduces margin for error on longer shots.", "087-insight-1"],
@@ -271,10 +277,11 @@ export default function ComparePage() {
             ))}
           </div>
         </div>
-      </Card>
+        </Card>
+      </div>
 
       {/* footer band — one container, internal hairline, per canonical */}
-      <Card className="mb-[4px] mt-[4px] flex">
+      <Card className="mb-[2px] mt-[2px] flex">
         <div className="flex flex-1 items-center gap-[14px] px-[20px] py-[10px]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/images/canonical/087-focus-mark.png" alt="" aria-hidden="true"

@@ -13,7 +13,7 @@
 import React, { useState } from "react"
 import Link from "next/link"
 import { Pencil, Share2, Download, Check, ChevronRight } from "lucide-react"
-import { SectionLabel, Card, TrendLine } from "@/components/shotiq/ShotIQShell"
+import { SectionLabel, Card, TrendLine, PageTitle } from "@/components/shotiq/ShotIQShell"
 import { PoseGlyph, PoseFigure, toShotPhase } from "@/components/shotiq/Glyphs"
 import { useHistory, formatMakePct } from "@/components/shotiq/ResultsBits"
 import { useAuthStore } from "@/stores/authStore"
@@ -82,7 +82,7 @@ export default function PlayerCardPage() {
     <div data-testid="screen-desktop-web-player-card">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="shotiq-display text-[48px] leading-[50px]">PLAYER CARD</h1>
+          <PageTitle size={58}>PLAYER CARD</PageTitle>
           <p className="mt-[4px] text-[14px] text-[var(--shotiq-color-graphite)]">
             Showcase your form. Track your progress. Share your game.
           </p>

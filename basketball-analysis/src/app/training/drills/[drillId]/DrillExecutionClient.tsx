@@ -23,7 +23,7 @@ import {
   Globe, SignalHigh, Clock, Pen, type LucideIcon,
 } from "lucide-react"
 import {
-  ShotIQShell, SectionLabel, Card,
+  ShotIQShell, SectionLabel, Card, PageTitle,
 } from "@/components/shotiq/ShotIQShell"
 import { PoseFigure, WorkoutGlyph } from "@/components/shotiq/Glyphs"
 
@@ -149,7 +149,7 @@ export default function DrillExecutionClient() {
           </div>
           <div className="mt-[4px] flex items-center justify-between">
             <div className="flex items-center gap-[12px]">
-              <h1 className="shotiq-display text-[42px] leading-[46px]">{drillName.toUpperCase()}</h1>
+              <PageTitle size={47}>{drillName.toUpperCase()}</PageTitle>
               <span className="rounded-full border border-[var(--shotiq-color-rule)] px-[12px] py-[3px] text-[12px]">Drill</span>
             </div>
             <button type="button" onClick={() => router.push("/results/demo/training")}
@@ -292,16 +292,24 @@ export default function DrillExecutionClient() {
 
           <SectionLabel className="mt-[18px]">SHOT TRACKER</SectionLabel>
           <Card className="mt-[8px] px-[20px] py-[16px]" data-testid="shot-tracker">
-            <div className="flex items-center justify-between">
-              <Ring pct={pct / 100} size={96} color="var(--shotiq-color-confirmGreen)">
-                <div className="text-center">
-                  <div className="shotiq-numeric text-[19px]">{pct.toFixed(1)}%</div>
-                  <div className="text-[8px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">MAKE %</div>
-                </div>
-              </Ring>
-              <Stat3 v={String(shots.length)} l="SHOTS" c="var(--shotiq-color-ink)" />
-              <Stat3 v={String(makes)} l="MAKES" c="var(--shotiq-color-confirmGreen)" />
-              <Stat3 v={String(misses)} l="MISSES" c="var(--shotiq-color-reviewRed)" />
+            {/* Canonical rules SHOTS | MAKES | MISSES off from one another;
+                the three cells used to run on with no separator at all. */}
+            <div className="flex items-center">
+              <div className="shrink-0 pr-[16px]">
+                <Ring pct={pct / 100} size={96} color="var(--shotiq-color-confirmGreen)">
+                  <div className="text-center">
+                    <div className="shotiq-numeric text-[19px]">{pct.toFixed(1)}%</div>
+                    <div className="text-[8px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">MAKE %</div>
+                  </div>
+                </Ring>
+              </div>
+              <div className="flex min-w-0 flex-1 items-center justify-around">
+                <Stat3 v={String(shots.length)} l="SHOTS" c="var(--shotiq-color-ink)" />
+                <span aria-hidden="true" className="h-[38px] w-px shrink-0 bg-[var(--shotiq-color-rule)]" />
+                <Stat3 v={String(makes)} l="MAKES" c="var(--shotiq-color-confirmGreen)" />
+                <span aria-hidden="true" className="h-[38px] w-px shrink-0 bg-[var(--shotiq-color-rule)]" />
+                <Stat3 v={String(misses)} l="MISSES" c="var(--shotiq-color-reviewRed)" />
+              </div>
             </div>
             <div className="mt-[14px] flex flex-nowrap items-center justify-between gap-[2px]">
               {Array.from({ length: 24 }).map((_, i) => {

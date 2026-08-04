@@ -23,7 +23,7 @@ import { PoseAnalysis } from "@/components/analysis/PoseAnalysis"
 import { useAnalysisStore } from "@/stores/analysisStore"
 import { enqueueVideoUpload, uploadQueueStorage } from "@/lib/upload/uploadQueue"
 import {
-  ShotIQShell, TrendLine, SectionLabel, Card, Stat,
+  ShotIQShell, TrendLine, SectionLabel, Card, Stat, PageTitle, GoalPercent,
 } from "@/components/shotiq/ShotIQShell"
 import {
   useHistory, scoreSeries, sessionDelta, formatDelta, FormScoreCell, formatMakePct,
@@ -125,7 +125,7 @@ export default function AnalyzeWorkspacePage() {
       <div data-testid="screen-desktop-web-analyze-workspace" className="flex min-h-full flex-col px-[28px] pt-[16px]">
         <div className="flex">
           <div className="min-w-0 flex-1 pr-[26px]">
-            <h1 className="shotiq-display text-[50px] leading-[52px]">UPLOAD &amp; ANALYZE</h1>
+            <PageTitle size={58}>UPLOAD &amp; ANALYZE</PageTitle>
             <p className="mt-[6px] text-[14px] text-[var(--shotiq-color-graphite)]">
               Add your footage to get AI-powered shooting analysis.
             </p>
@@ -202,7 +202,7 @@ export default function AnalyzeWorkspacePage() {
                 {/* The one shared form-score module (see FormScoreCell): the bar
                     used to stretch the whole cell instead of sitting under the
                     numeral. */}
-                <FormScoreCell score={score} size={44} className="flex-1 pr-[14px]" />
+                <FormScoreCell score={score} size={44} numeral={62} className="flex-1 pr-[14px]" />
                 <div className="flex-1 pl-[14px]">
                   <SectionLabel>PRIMARY TARGET</SectionLabel>
                   <div className="mt-[4px] flex items-start justify-between">
@@ -214,7 +214,7 @@ export default function AnalyzeWorkspacePage() {
                     <div className="h-[5px] flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
                       <div className="h-full w-[72%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" />
                     </div>
-                    <span className="text-[11px]">72%</span>
+                    <GoalPercent size={12}>72%</GoalPercent>
                   </div>
                 </div>
               </div>

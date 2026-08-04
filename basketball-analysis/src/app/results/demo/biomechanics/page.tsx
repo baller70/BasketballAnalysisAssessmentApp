@@ -7,7 +7,7 @@ import Link from "next/link"
 import {
   ChevronLeft, ChevronRight, Upload, MoreVertical, Pencil, Minus, Eraser, X,
 } from "lucide-react"
-import { ShotIQShell, SectionLabel, Card, TrendLine } from "@/components/shotiq/ShotIQShell"
+import { ShotIQShell, SectionLabel, Card, TrendLine, PageTitle } from "@/components/shotiq/ShotIQShell"
 import { PoseFigure } from "@/components/shotiq/Glyphs"
 import { useHistory, CoachingTarget, sessionDelta, formatDelta } from "@/components/shotiq/ResultsBits"
 
@@ -146,13 +146,13 @@ export default function BiomechanicsWorkspacePage() {
 
   return (
     <ShotIQShell active="Analyze">
-    <div data-testid="screen-desktop-web-biomechanics-workspace" className="px-[26px] pt-[16px]">
+    <div data-testid="screen-desktop-web-biomechanics-workspace" className="px-[26px] pt-[14px]">
       <div className="flex items-start justify-between">
         <div>
           <div className="text-[11px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">
             <Link href="/results/demo/history">ANALYSES</Link>&ensp;›&ensp;PULL-UP JUMPER
           </div>
-          <h1 className="shotiq-display mt-[2px] text-[44px] leading-[46px]">ANALYSIS — PULL-UP JUMPER</h1>
+          <PageTitle size={52} className="mt-[2px]">ANALYSIS — PULL-UP JUMPER</PageTitle>
           <p className="mt-[4px] text-[13px] text-[var(--shotiq-color-graphite)]">
             {hasData ? "May 12, 2025 at 8:24 AM · Catch & Shoot · Right Hand" : "Run an analysis to populate this workspace."}
           </p>
@@ -160,7 +160,7 @@ export default function BiomechanicsWorkspacePage() {
         <div className="mt-[8px] flex items-center divide-x divide-[var(--shotiq-color-rule)]">
           <div className="px-[18px] text-center">
             <div className="text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">FORM SCORE</div>
-            <div className="shotiq-numeric text-[30px] leading-[34px] text-[var(--shotiq-color-shotiqOrange)]">{score ?? "—"}</div>
+            <div className="shotiq-numeric text-[45px] leading-[49px] text-[var(--shotiq-color-shotiqOrange)]">{score ?? "—"}</div>
             <div className="mx-auto h-[4px] w-[46px] rounded-full bg-[var(--shotiq-color-rule)]">
               <div className="h-full rounded-full bg-[var(--shotiq-color-shotiqOrange)]" style={{ width: `${score ?? 0}%` }} /></div>
           </div>

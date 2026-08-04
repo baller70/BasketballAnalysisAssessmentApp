@@ -8,7 +8,7 @@ import {
   Bookmark, ChevronRight, Check, CalendarCheck,
   Clock, SignalHigh, Waypoints,
 } from "lucide-react"
-import { SectionLabel, Card, TrendLine, Stat } from "@/components/shotiq/ShotIQShell"
+import { SectionLabel, Card, TrendLine, Stat, PageTitle, GoalPercent } from "@/components/shotiq/ShotIQShell"
 import { CueGlyph, type CueKind } from "@/components/shotiq/Glyphs"
 import {
   useHistory, FormScoreCell, formatDelta, formatMakePct, formatShotsMakes, scoreSeries,
@@ -72,7 +72,7 @@ export default function TrainingHubPage() {
   return (
     <div data-testid="screen-desktop-web-training-hub" className="flex gap-[20px]">
       <div className="min-w-0 flex-1">
-        <h1 className="shotiq-display text-[44px] leading-[46px]">TRAINING HUB</h1>
+        <PageTitle size={64}>TRAINING HUB</PageTitle>
         <p className="mt-[4px] text-[14px] text-[var(--shotiq-color-graphite)]">
           Turn your analysis into better reps. Targeted drills. Smarter workouts. Real progress.
         </p>
@@ -184,7 +184,7 @@ export default function TrainingHubPage() {
             ACTIVE GOAL
           </span>
           <span className="truncate text-[11px] text-[var(--shotiq-color-graphite)]">Improve release consistency</span>
-          <span className="ml-auto shrink-0 text-[13px] font-semibold">72%</span>
+          <GoalPercent size={15} className="ml-auto">72%</GoalPercent>
         </div>
         <div className="mt-[4px] h-[5px] rounded-full bg-[var(--shotiq-color-rule)]">
           <div className="h-full w-[72%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" />

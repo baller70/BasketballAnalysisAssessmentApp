@@ -28,7 +28,7 @@ import {
   User, Bell, Clock, MonitorSmartphone, SlidersHorizontal,
   ChevronRight, CheckCircle2, Film, Hexagon,
 } from "lucide-react"
-import { SectionLabel, Card, TrendLine, Stat } from "@/components/shotiq/ShotIQShell"
+import { SectionLabel, Card, TrendLine, Stat, GoalPercent } from "@/components/shotiq/ShotIQShell"
 import { useHistory, formatDelta, formatMakePct } from "@/components/shotiq/ResultsBits"
 import { useAuthStore } from "@/stores/authStore"
 import { csrfFetch } from "@/lib/api/csrfFetch"
@@ -525,7 +525,12 @@ export default function SettingsPage() {
                 <div><div className={lbl}>PLAY LEVEL</div>
                   <select className={`${field} mt-[2px]`} value={form.level} onChange={(e) => setForm({ ...form, level: e.target.value })}>
                     {["Beginner", "Intermediate", "Advanced", "Professional"].map((o) => <option key={o}>{o}</option>)}</select></div>
-                <div className="col-span-2 grid grid-cols-[1fr_1.14fr_1fr_2fr] items-end gap-[8px]">
+                {/* The three measurement fields hold two or three glyphs each;
+                    canonical gives the shooting-preference select the rest of
+                    the row so "Catch & Shoot" sets in full. Fixed widths, not
+                    fractions, so the select can never be squeezed to
+                    "Catch & Shoo" again. */}
+                <div className="col-span-2 grid grid-cols-[50px_60px_50px_1fr] items-end gap-[6px]">
                   {([["HEIGHT", "height"], ["WEIGHT", "weight"], ["WINGSPAN", "wingspan"]] as const).map(([l, k]) => (
                     <div key={k}><div className={lbl}>{l}</div>
                       <input className={`${field} mt-[2px] px-[6px]`} value={form[k]} onChange={(e) => setForm({ ...form, [k]: e.target.value })} /></div>
@@ -568,16 +573,20 @@ export default function SettingsPage() {
                 <div className="mt-[6px] text-[11px] text-[var(--shotiq-color-graphite)]">Improve release consistency and arm alignment</div>
                 <div className="mt-[4px] flex items-center gap-[8px]">
                   <div className="h-[5px] flex-1 rounded-full bg-[var(--shotiq-color-rule)]"><div className="h-full w-[72%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" /></div>
-                  <span className="text-[11px]">72%</span>
+                  <GoalPercent size={14}>72%</GoalPercent>
                 </div>
-                <div className="mt-[14px] flex items-center gap-[8px] divide-x divide-[var(--shotiq-color-rule)]">
-                  <Stat value={shots ?? "—"} label="SHOTS" valueClass="text-[22px] leading-[26px]" />
-                  <div className="pl-[14px]"><Stat value={makes ?? "—"} label="MAKES" valueClass="text-[22px] leading-[26px]" /></div>
-                  <div className="pl-[14px]"><Stat value={formatMakePct(shots, makes)} label="MAKE %" valueClass="text-[22px] leading-[26px]" /></div>
-                  <div className="pl-[14px] text-right">
+                {/* Canonical rules each cell off from the next and gives the
+                    four cells an even share of the strip; this used to bunch
+                    the three numerals left and leave the trend cell twice as
+                    wide as its neighbours. */}
+                <div className="mt-[14px] flex items-center divide-x divide-[var(--shotiq-color-rule)]">
+                  <div className="min-w-0 flex-1 pr-[12px]"><Stat value={shots ?? "—"} label="SHOTS" valueClass="text-[22px] leading-[26px]" /></div>
+                  <div className="min-w-0 flex-1 px-[12px]"><Stat value={makes ?? "—"} label="MAKES" valueClass="text-[22px] leading-[26px]" /></div>
+                  <div className="min-w-0 flex-1 px-[12px]"><Stat value={formatMakePct(shots, makes)} label="MAKE %" valueClass="text-[22px] leading-[26px]" /></div>
+                  <div className="min-w-0 flex-[1.35] pl-[12px] text-right">
                     <TrendLine points={[3, 2.5, 3.4, 3, 4]} width={80} height={28} />
                     {/* Shared computed delta, not a hand-written +8.1%. */}
-                    <div className={`text-[9px] ${delta != null && delta < 0 ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-confirmGreen)]"}`}>{formatDelta(delta)} vs last session</div>
+                    <div className={`whitespace-nowrap text-[9px] ${delta != null && delta < 0 ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-confirmGreen)]"}`}>{formatDelta(delta)} vs last session</div>
                   </div>
                 </div>
               </div>
@@ -585,16 +594,22 @@ export default function SettingsPage() {
             {/* grows so the streak/points band sits on the card floor, as
                 canonical paints it, instead of leaving dead space below */}
             <div className="mt-[12px] flex-1" aria-hidden="true" />
-            <div className="flex items-center justify-around border-t border-[var(--shotiq-color-rule)] pt-[12px]">
-              <div className="flex items-center gap-[10px]">
+            {/* Canonical halves this band with a hairline and sets each
+                caption under its mark rather than beside it. */}
+            <div className="flex divide-x divide-[var(--shotiq-color-rule)] border-t border-[var(--shotiq-color-rule)] pt-[12px]">
+              <div className="flex flex-1 items-center justify-center gap-[10px]">
                 <span className="shotiq-numeric text-[24px]">6</span>
-                <Film className="h-[22px] w-[22px]" strokeWidth={1.5} />
-                <span className="text-[9px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">DAY STREAK</span>
+                <div className="text-center">
+                  <Film className="mx-auto h-[22px] w-[22px]" strokeWidth={1.5} />
+                  <div className="mt-[2px] text-[9px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">DAY STREAK</div>
+                </div>
               </div>
-              <div className="flex items-center gap-[10px]">
+              <div className="flex flex-1 items-center justify-center gap-[10px]">
                 <Hexagon className="h-[22px] w-[22px]" strokeWidth={1.5} />
-                <span className="shotiq-numeric text-[24px]">2,840</span>
-                <span className="text-[9px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">POINTS</span>
+                <div className="text-center">
+                  <div className="shotiq-numeric text-[24px] leading-[26px]">2,840</div>
+                  <div className="mt-[2px] text-[9px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">POINTS</div>
+                </div>
               </div>
             </div>
           </Card>
@@ -675,11 +690,15 @@ export default function SettingsPage() {
 
         {/* data actions band */}
         <Card className="mt-[12px] flex items-center divide-x divide-[var(--shotiq-color-rule)] px-[8px] py-[14px]">
-          <div className="w-[250px] px-[16px]">
+          {/* The 196px app rail costs this band ~190px against canonical's, and
+              all of it used to come out of the two description columns, which
+              wrapped to four lines where canonical takes two. The label column
+              and the gutters give it back instead. */}
+          <div className="w-[170px] px-[14px]">
             <span className="shotiq-display text-[17px] leading-[18px]">DATA ACTIONS</span>
             <div className="mt-[2px] text-[11px] text-[var(--shotiq-color-graphite)]">Manage your data and analysis history.</div>
           </div>
-          <div className="flex flex-1 items-center gap-[14px] px-[18px]">
+          <div className="flex flex-1 items-center gap-[8px] px-[10px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/images/canonical/096-action-export.png" alt="" aria-hidden="true"
                  className="block h-[45px] w-[41px] max-w-none shrink-0 object-contain" />
@@ -688,11 +707,11 @@ export default function SettingsPage() {
               <div className="text-[11px] text-[var(--shotiq-color-graphite)]">Download a copy of all your shots, analyses, sessions, and account data.</div>
             </div>
             <button type="button" onClick={exportData} disabled={exporting === "working"}
-                    className="h-[38px] shrink-0 rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white px-[14px] text-[13px] disabled:opacity-60">
+                    className="h-[38px] shrink-0 whitespace-nowrap rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white px-[12px] text-[13px] disabled:opacity-60">
               {exporting === "working" ? "Exporting…" : exporting === "done" ? "Downloaded ✓" : exporting === "error" ? "Failed — retry" : "Export all data"}
             </button>
           </div>
-          <div className="flex flex-1 items-center gap-[14px] px-[18px]">
+          <div className="flex flex-1 items-center gap-[8px] px-[10px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/images/canonical/096-action-clear.png" alt="" aria-hidden="true"
                  className="block h-[46px] w-[40px] max-w-none shrink-0 object-contain" />
@@ -701,7 +720,7 @@ export default function SettingsPage() {
               <div className="text-[11px] text-[var(--shotiq-color-graphite)]">Permanently delete all shots, analyses, and session history.</div>
             </div>
             <button type="button" onClick={clearHistory} disabled={clearing === "working"}
-                    className="h-[38px] shrink-0 rounded-[6px] border border-[var(--shotiq-color-reviewRed)] px-[14px] text-[13px] text-[var(--shotiq-color-reviewRed)] disabled:opacity-60">
+                    className="h-[38px] shrink-0 whitespace-nowrap rounded-[6px] border border-[var(--shotiq-color-reviewRed)] px-[12px] text-[13px] text-[var(--shotiq-color-reviewRed)] disabled:opacity-60">
               {clearing === "confirm" ? "Click again to confirm" : clearing === "working" ? "Clearing…"
                 : clearing === "done" ? "History cleared" : clearing === "error" ? "Failed — retry" : "Clear history"}
             </button>

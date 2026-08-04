@@ -7,7 +7,7 @@ import Link from "next/link"
 import {
   Pencil, MoreVertical, Check, ChevronRight, X,
 } from "lucide-react"
-import { ShotIQShell, SectionLabel, Card, TrendLine } from "@/components/shotiq/ShotIQShell"
+import { ShotIQShell, SectionLabel, Card, TrendLine, PageTitle } from "@/components/shotiq/ShotIQShell"
 import { WorkoutGlyph, type WorkoutKind } from "@/components/shotiq/Glyphs"
 import {
   useHistory, StatStrip, formatDelta, formatMakePct, scoreSeries,
@@ -91,10 +91,10 @@ export default function GoalsPlanPage() {
 
   return (
     <ShotIQShell active="Progress">
-    <div data-testid="screen-desktop-web-goals-plan" className="px-[26px] pb-[14px] pt-[18px]">
+    <div data-testid="screen-desktop-web-goals-plan" className="px-[26px] pb-[10px] pt-[14px]">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="shotiq-display text-[44px] leading-[46px]">GOALS &amp; PLAN</h1>
+          <PageTitle size={52}>GOALS &amp; PLAN</PageTitle>
           <p className="mt-[4px] text-[14px] text-[var(--shotiq-color-graphite)]">Stay focused. Track progress. Build better mechanics.</p>
         </div>
         <div className="flex items-center gap-[12px]">
@@ -110,9 +110,12 @@ export default function GoalsPlanPage() {
         </div>
       </div>
 
-      <div className="mt-[8px] grid grid-cols-3 gap-[16px]">
+      {/* Canonical does not run three equal thirds here: the primary-goal card
+          is the widest of the three (417 / 404 / 383). Equal thirds broke the
+          goal title onto two lines and "VS LAST SESSION" onto two. */}
+      <div className="mt-[8px] grid grid-cols-[1.12fr_0.97fr_0.91fr] gap-[16px]">
         {/* primary goal */}
-        <Card className="p-[16px]">
+        <Card className="flex flex-col p-[16px]">
           <div className="text-[11px] font-bold tracking-[0.06em] text-[var(--shotiq-color-confirmGreen)]">PRIMARY GOAL</div>
           <h2 className="mt-[6px] text-[22px] font-semibold leading-[28px]">{primary.title}</h2>
           <div className="mt-[8px] flex items-center gap-[10px] text-[12px] text-[var(--shotiq-color-graphite)]">
@@ -129,6 +132,7 @@ export default function GoalsPlanPage() {
           {/* Hairline-ruled and evenly distributed, as canonical sets it — the
               cells used to sit in a left-clustered gap row with no rules. */}
           <StatStrip className="mt-[10px] border-t border-[var(--shotiq-color-rule)] pt-[10px]"
+                     cellClass="text-center whitespace-nowrap"
                      valueClass="text-[20px] leading-[22px]"
                      cells={[
                        { value: hasData ? shots ?? "—" : "0", label: "SHOTS" },
@@ -138,10 +142,14 @@ export default function GoalsPlanPage() {
                          accent: delta != null && delta < 0
                            ? "var(--shotiq-color-reviewRed)" : "var(--shotiq-color-confirmGreen)" },
                      ]} />
-          <SectionLabel className="mt-[10px] border-t border-[var(--shotiq-color-rule)] pt-[10px]">PROGRESS TREND</SectionLabel>
+          {/* The card used to stack every block at the top and leave ~180px of
+              white above its floor; the two lower sections now take that slack
+              the way canonical spends it. */}
+          <div className="mt-[10px] flex flex-1 flex-col justify-center border-t border-[var(--shotiq-color-rule)] pt-[10px]">
+          <SectionLabel>PROGRESS TREND</SectionLabel>
           <div className="flex items-center gap-[12px]">
-            <div>
-              <TrendLine points={scoreSeries(items, 8).length >= 2 ? scoreSeries(items, 8) : [2, 2.6, 2.2, 3, 2.7, 3.4, 3.2, 4]} width={230} height={50} />
+            <div className="min-w-0 flex-1">
+              <TrendLine points={scoreSeries(items, 8).length >= 2 ? scoreSeries(items, 8) : [2, 2.6, 2.2, 3, 2.7, 3.4, 3.2, 4]} width={268} height={72} />
               <div className="flex justify-between pr-[6px] text-[9px] tracking-[0.03em] text-[var(--shotiq-color-graphite)]">
                 {["Apr 13", "Apr 20", "Apr 27", "May 4", "May 11"].map((d) => <span key={d}>{d}</span>)}
                 <span className="font-bold text-[var(--shotiq-color-confirmGreen)]">TODAY</span>
@@ -149,10 +157,12 @@ export default function GoalsPlanPage() {
             </div>
             <div className="text-right">
               <div className={`text-[16px] font-bold ${delta != null && delta < 0 ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-confirmGreen)]"}`}>{formatDelta(delta)}</div>
-              <div className="text-[9px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">VS LAST SESSION</div>
+              <div className="whitespace-nowrap text-[9px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">VS LAST SESSION</div>
             </div>
           </div>
-          <SectionLabel className="mt-[8px] border-t border-[var(--shotiq-color-rule)] pt-[10px]">KEY MECHANIC FOCUS</SectionLabel>
+          </div>
+          <div className="mt-[8px] flex flex-1 flex-col justify-center border-t border-[var(--shotiq-color-rule)] pt-[10px]">
+          <SectionLabel>KEY MECHANIC FOCUS</SectionLabel>
           <div className="mt-[6px] flex items-center gap-[12px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/images/canonical/092-key-mechanic.png" alt="" aria-hidden="true"
@@ -168,7 +178,8 @@ export default function GoalsPlanPage() {
               <div className="shotiq-numeric text-[13px]">7/10</div>
             </div>
           </div>
-          <div className="mt-[8px] flex gap-[10px]">
+          </div>
+          <div className="mt-auto flex gap-[10px] pt-[10px]">
             <button type="button"
                     onClick={() => { setForm({ title: primary.title, description: primary.description ?? "" }); setModal("edit") }}
                     className="flex h-[42px] flex-1 items-center justify-center gap-[8px] rounded-[6px] border border-[var(--shotiq-color-rule)] text-[13px]">

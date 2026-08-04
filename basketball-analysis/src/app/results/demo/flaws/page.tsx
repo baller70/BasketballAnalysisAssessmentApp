@@ -5,7 +5,7 @@
 import React, { useState } from "react"
 import Link from "next/link"
 import { ChevronRight, ChevronLeft, ArrowDown } from "lucide-react"
-import { ShotIQShell, SectionLabel, Card } from "@/components/shotiq/ShotIQShell"
+import { ShotIQShell, SectionLabel, Card, PageTitle, GoalPercent } from "@/components/shotiq/ShotIQShell"
 import { FlawFigure, WorkoutGlyph, type FlawKind } from "@/components/shotiq/Glyphs"
 import { useHistory, FormScoreCell, formatDelta, formatMakePct } from "@/components/shotiq/ResultsBits"
 
@@ -40,7 +40,7 @@ export default function FlawsPage() {
           loose block beside it. */}
       <div className="flex items-start gap-[16px]">
         <div className="w-[374px] shrink-0">
-          <h1 className="shotiq-display text-[46px] leading-[48px]">FLAWS &amp; CORRECTIONS</h1>
+          <PageTitle size={55}>FLAWS &amp; CORRECTIONS</PageTitle>
           <p className="mt-[4px] whitespace-nowrap text-[14px] text-[var(--shotiq-color-graphite)]">
             Identify weaknesses. Focus your fixes. Track your progress.
           </p>
@@ -48,7 +48,7 @@ export default function FlawsPage() {
         <Card className="flex h-[96px] min-w-0 flex-1 items-center pl-[14px]">
           {/* The one shared form-score module (see FormScoreCell) — short bar
               under the numeral, left-aligned verdict beside it. */}
-          <FormScoreCell score={score} size={38} className="w-[214px] shrink-0 pr-[10px]" />
+          <FormScoreCell score={score} size={38} numeral={55} className="w-[214px] shrink-0 pr-[10px]" />
           {[[shots ?? "—", "SHOTS"], [makes ?? "—", "MAKES"], [formatMakePct(shots, makes), "MAKE %"]].map(([v, l]) => (
             <div key={String(l)} className="w-[66px] shrink-0 border-l border-[var(--shotiq-color-rule)] px-[6px] text-center">
               <div className="shotiq-numeric text-[24px] leading-[28px]">{hasData ? v : "—"}</div>
@@ -77,7 +77,7 @@ export default function FlawsPage() {
               <span className="shrink-0 rounded-[4px] border border-[var(--shotiq-color-confirmGreen)] px-[7px] py-[2px] text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-confirmGreen)]">ACTIVE GOAL</span>
               <div className="h-[5px] min-w-0 flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
                 <div className="h-full w-[72%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" /></div>
-              <span className="shrink-0 text-[13px] font-semibold">72%</span>
+              <GoalPercent size={15}>72%</GoalPercent>
             </div>
           </div>
         </Card>

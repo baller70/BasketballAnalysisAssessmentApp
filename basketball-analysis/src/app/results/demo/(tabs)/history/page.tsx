@@ -5,7 +5,7 @@
 import React, { useState } from "react"
 import Link from "next/link"
 import { Calendar, ChevronDown, SlidersHorizontal, Share, X, ChevronLeft, ChevronRight } from "lucide-react"
-import { SectionLabel, Card, TrendLine } from "@/components/shotiq/ShotIQShell"
+import { SectionLabel, Card, TrendLine, PageTitle } from "@/components/shotiq/ShotIQShell"
 import { CueGlyph } from "@/components/shotiq/Glyphs"
 import {
   useHistory, formatDelta, formatMakePct, formatShotsMakes, makePct,
@@ -94,7 +94,7 @@ export default function AnalysisHistoryPage() {
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="shotiq-display text-[48px] leading-[50px]">ANALYSIS HISTORY</h1>
+            <PageTitle size={59}>ANALYSIS HISTORY</PageTitle>
             <p className="mt-[4px] whitespace-nowrap text-[13px] text-[var(--shotiq-color-graphite)]">Review and track your shooting performance over time.</p>
           </div>
           <div className="flex gap-[10px] pt-[4px]">
@@ -160,8 +160,10 @@ export default function AnalysisHistoryPage() {
         {/* Canonical rules every cell off with a hairline and distributes them
             across the strip; the cells used to bunch against the left edge. */}
         <div className="mt-[10px] flex items-stretch divide-x divide-[var(--shotiq-color-rule)] border-b border-[var(--shotiq-color-rule)] pb-[10px] pt-[4px]">
-          <div className="min-w-0 flex-1 pr-[16px]">
-            <div className="text-[11px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">AVERAGE FORM SCORE</div>
+          {/* This cell carries the longest label in the strip; an equal share
+              broke it onto two lines where canonical keeps it on one. */}
+          <div className="min-w-0 flex-[1.45] pr-[16px]">
+            <div className="whitespace-nowrap text-[11px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">AVERAGE FORM SCORE</div>
             <div className="shotiq-numeric text-[40px] leading-[44px]">{score ?? "—"}</div>
             <div className="text-[12px] text-[var(--shotiq-color-analysisBlue)]">● Good</div>
           </div>
