@@ -229,6 +229,33 @@
 
    Three independent strings landing on the same tracking is the check that this
    is the face, not a coincidence of one string. */
+/* Canonical's section labels ("FORM SCORE", "PRIMARY COACHING TARGET",
+   "KEY INSIGHT"). Both round-7 graders independently reported this as the single
+   largest gap in the build, on eight screens each, and their measurements agree:
+   canonical reads as a heading, ours read as a caption.
+
+   Canonical draws them in the condensed face, near-black and tight — NOT the
+   body face in grey with loose tracking. Measured on 083, then solved for the
+   size and tracking that reproduce cap height and advance together:
+
+     label                     canonical      15/16px Tungsten Medium   tracking
+     FORM SCORE                cap 11 adv 60  cap 11 adv 50             0.074em
+     PRIMARY COACHING TARGET   cap 11 adv 135 cap 11 adv 109            0.079em
+     KEY INSIGHT               cap 12 adv 63  cap 12 adv 49             0.087em
+
+   Ink sampled from the same three: (39,38,38), (37,37,37), (35,35,35) — near
+   #262626, against the shipped #4B4D4F. The old role was 14px of the body face
+   at 0.06em, which measures cap 10 and advance 90 for FORM SCORE against
+   canonical's 11 and 60: half again too wide and a cap short. */
+.shotiq-section-label {
+  font-family: "ShotIQ Degree", var(--font-shotiq-display), "Tungsten Medium", sans-serif;
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 15px;
+  letter-spacing: 0.08em;
+  color: var(--shotiq-color-eyebrow);
+}
+
 .shotiq-microcaps {
   font-family: "ShotIQ Degree", var(--font-shotiq-display), "Tungsten Medium", sans-serif;
   font-weight: 400;

@@ -14,7 +14,12 @@
      the range runs from near-black to graphite — so this is the middle of a real
      spread rather than a single canonical value. Shipping graphite made every
      eyebrow the lightest end of that range at once. */
-  --shotiq-color-eyebrow: #4B4D4F;
+  /* Section-label ink, sampled from canonical 083's FORM SCORE (39,38,38),
+     PRIMARY COACHING TARGET (37,37,37) and KEY INSIGHT (35,35,35). The previous
+     #4B4D4F was set as the median of a measured spread that had swept in body
+     captions as well as labels, and it read a full step lighter than canonical
+     on every screen. One grader called it pure #000; the pixels say #262626. */
+  --shotiq-color-eyebrow: #262626;
   --shotiq-color-ink: #111111;
   --shotiq-color-muted: #A7AAB0;
   --shotiq-color-paper: #FFFFFF;

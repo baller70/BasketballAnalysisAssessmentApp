@@ -363,7 +363,7 @@ export function PhaseGlyph({ active = false, size = 30 }: { active?: boolean; si
  */
 export function SectionLabel({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`text-[14px] font-medium tracking-[0.06em] text-[var(--shotiq-color-eyebrow)] ${className}`}>{children}</div>
+    <div className={`shotiq-section-label ${className}`}>{children}</div>
   )
 }
 
