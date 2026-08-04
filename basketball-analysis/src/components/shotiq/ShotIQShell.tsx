@@ -353,10 +353,17 @@ export function PhaseGlyph({ active = false, size = 30 }: { active?: boolean; si
  * `letterSpacing` is deliberately not taken from the sidecars: the field reads
  * 0 on all 638 text elements, so it is not measured and carries no signal. The
  * existing 0.06em tracking stands.
+ *
+ * The colour is measured from the renders, not from the sidecar's token name.
+ * The sidecar calls these "graphite", but sampling each label at its own bounds
+ * shows a spread from near-black to graphite with a median of rgb(75,77,79) —
+ * and the token name is demonstrably unreliable here, since two of the sampled
+ * labels it calls graphite are actually orange and green in the render. Taking
+ * the name at face value made every eyebrow the lightest end of the spread.
  */
 export function SectionLabel({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`text-[14px] font-medium tracking-[0.06em] text-[var(--shotiq-color-graphite)] ${className}`}>{children}</div>
+    <div className={`text-[14px] font-medium tracking-[0.06em] text-[var(--shotiq-color-eyebrow)] ${className}`}>{children}</div>
   )
 }
 

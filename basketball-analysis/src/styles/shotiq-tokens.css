@@ -8,6 +8,13 @@
   --shotiq-color-analysisBlue: #2D6CDF;
   --shotiq-color-confirmGreen: #168A55;
   --shotiq-color-graphite: #5F646B;
+  /* Card eyebrow ink. Measured, not chosen: the all-caps caption elements in the
+     20 canonical desktop renders were sampled at their own sidecar bounds and
+     their darkest decile has a median of rgb(75,77,79). They are NOT uniform —
+     the range runs from near-black to graphite — so this is the middle of a real
+     spread rather than a single canonical value. Shipping graphite made every
+     eyebrow the lightest end of that range at once. */
+  --shotiq-color-eyebrow: #4B4D4F;
   --shotiq-color-ink: #111111;
   --shotiq-color-muted: #A7AAB0;
   --shotiq-color-paper: #FFFFFF;
