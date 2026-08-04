@@ -50,7 +50,7 @@ const pt = (devicePx: number) => +(devicePx / DSF).toFixed(2)
  * 2x asset moves the 50%-coverage edge: asked for a left edge at 132.70 it
  * draws one at 131.82, so the box is placed 0.38 device px right and 0.84 down
  * of the raw numbers to put the drawn edges on canonical's 132.20 / 534.72. */
-export const MARK = { x: pt(133.08), y: pt(534.36), w: pt(153.3), h: pt(146.9) }
+export const MARK = { x: pt(133.6), y: pt(534.9), w: pt(153.3), h: pt(146.9) }
 
 export function ShotIQMark({ width = MARK.w, height = MARK.h }: { width?: number; height?: number }) {
   return (
@@ -80,7 +80,7 @@ export function ShotIQMark({ width = MARK.w, height = MARK.h }: { width?: number
  * pose graph (min -> 0) and for the orange arc (blue -> ~0). Round-trips
  * against the canonical crop at mean absolute error 1.2/255.
  * ------------------------------------------------------------------------ */
-export const DIAGRAM = { x: pt(278), y: pt(775.6), w: pt(295), h: pt(289) }
+export const DIAGRAM = { x: pt(278), y: pt(775.9), w: pt(295), h: pt(289.6) }
 
 export function ShotArcDiagram({ width = DIAGRAM.w, height = DIAGRAM.h }: { width?: number; height?: number }) {
   return (

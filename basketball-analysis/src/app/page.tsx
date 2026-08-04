@@ -150,14 +150,14 @@ export default function Home() {
       <div
         data-splash="line1"
         className="shotiq-display absolute inset-x-0 top-[530px] text-center text-[37.98px] leading-[41px] tracking-[0.026em] text-[var(--shotiq-color-ink)]"
-        style={{ ...DISPLAY_WEIGHT, wordSpacing: '1.61px' }}
+        style={{ ...DISPLAY_WEIGHT, wordSpacing: '1.61px', paddingLeft: '0.92px' }}
       >
         SEE THE DETAILS.
       </div>
       <div
         data-splash="line2"
-        className="shotiq-display absolute inset-x-0 top-[571.5px] text-center text-[37.98px] leading-[41px] tracking-[0.0145em]"
-        style={{ ...DISPLAY_WEIGHT, wordSpacing: '2.53px' }}
+        className="shotiq-display absolute inset-x-0 top-[571.6px] text-center text-[37.98px] leading-[41px] tracking-[0.0145em]"
+        style={{ ...DISPLAY_WEIGHT, wordSpacing: '2.53px', paddingLeft: '0.92px' }}
       >
         <span className="text-[var(--shotiq-color-shotiqOrange)]">BUILD</span>{" "}
         <span className="text-[var(--shotiq-color-graphite)]">THE HABIT.</span>
