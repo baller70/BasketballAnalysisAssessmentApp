@@ -249,8 +249,10 @@ export function SettingsHubPhone({
         {/* profile card */}
         <div className="mt-[14px] rounded-[7px] bg-white" style={{ border: `1px solid ${RULE}` }}>
           <div className="flex items-center gap-[14px] px-[12px] py-[12px]">
-            <Frame src={avatar.replace("/images/canonical/", "").replace(".png", "")}
-                   w={70} h={70} radius={35} pos="50% 32%" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={avatar} alt="" aria-hidden="true"
+                 className="block h-[70px] w-[70px] shrink-0 rounded-full object-cover"
+                 style={{ objectPosition: "50% 32%" }} />
             <div className="min-w-0">
               <div className="shotiq-display text-[29px] leading-[28px] tracking-[0.035em]">{name.toUpperCase()}</div>
               <div className="mt-[4px] text-[12.5px] leading-[14px]" style={{ color: GRAPHITE }}>

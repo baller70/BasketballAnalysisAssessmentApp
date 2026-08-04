@@ -16,6 +16,8 @@ import Link from "next/link"
 import { ArrowLeft, Video, User } from "lucide-react"
 import { SectionLabel, Card } from "@/components/shotiq/ShotIQShell"
 import { VideoReview, type ClipMeta } from "@/components/shotiq/phone/VideoReview"
+import { VideoUploadPhone } from "@/components/shotiq/phone/VideoUploadPhone"
+import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"
 import { ActionGlyph } from "@/components/shotiq/Glyphs"
 
 /** MB/KB, matching the way the rest of the upload flow prints sizes. */
@@ -30,6 +32,7 @@ export default function VideoAnalysisPage() {
      its dropzone out for the 1440pt canvas. Metadata is read off the chosen
      file and, where the container cannot be probed in this environment,
      falls back to the clip defaults the review screen documents. */
+  const isPhone = usePhoneViewport()
   const [clip, setClip] = React.useState<ClipMeta | null>(null)
   const fileRef = React.useRef<HTMLInputElement>(null)
 
@@ -78,15 +81,17 @@ export default function VideoAnalysisPage() {
 
   return (
     <>
-      {/* Phone entry point into 027. The desktop uploader below keeps its own
-          dropzone; at 393pt that control lays out off-canvas. */}
-      <div className="md:hidden mx-auto w-full max-w-[393px] px-[20.7px] pt-[16px]">
-        <button type="button" data-testid="phone-choose-video"
-                onClick={() => fileRef.current?.click()}
-                className="flex h-[46px] w-full items-center justify-center gap-[14px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] text-[15px] font-medium text-white">
-          <ActionGlyph kind="uploadVideo" height={22} accent="#fff" /> Choose video
-        </button>
-      </div>
+      {/* Canonical iOS 026 is a whole screen, not one button. Round 6 painted
+          an orphan orange "Choose video" ABOVE the page's own back link, so the
+          element order inverted and the dropzone, the two action cards, the
+          FRAMING GUIDE photo pair, the profile summary and the phase rail never
+          existed. The desktop uploader below is untouched. */}
+      {isPhone && (
+        <VideoUploadPhone
+          onChoose={() => fileRef.current?.click()}
+          onRecord={() => router.push("/video-analysis")}
+        />
+      )}
       <input ref={fileRef} type="file" accept="video/*,image/*" className="hidden"
              data-testid="video-choose-input"
              onChange={(e) => onPick(e.target.files?.[0])} />
@@ -96,7 +101,8 @@ export default function VideoAnalysisPage() {
          to sit ~95px below the 900px fold, where a user has to scroll past the
          whole uploader to find out they exist (R10 defect M8). They now open
          beside the uploader, above the fold. */
-      <main data-testid="screen-desktop-web-video-upload" className="mx-auto max-w-[1180px] px-[26px] py-[18px]">
+      <main data-testid="screen-desktop-web-video-upload"
+            className={`mx-auto max-w-[1180px] px-[26px] py-[18px] ${isPhone ? "hidden" : ""}`}>
         <Link href="/video-analysis"
               className="flex items-center gap-2 text-[13px] text-[var(--shotiq-color-graphite)] hover:text-[var(--shotiq-color-shotiqOrange)]">
           <ArrowLeft className="h-4 w-4" /> Back to live capture

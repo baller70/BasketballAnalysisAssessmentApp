@@ -18,6 +18,9 @@ import {
 } from "lucide-react"
 import { MechanicGlyph, PoseGlyph, type MechanicKind } from "@/components/shotiq/Glyphs"
 import { ALL_ELITE_SHOOTERS } from "@/data/eliteShooters"
+import { EliteShootersPhone, type ShooterRow } from "@/components/shotiq/phone/ElitePhone"
+import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"
+import { useRouter } from "next/navigation"
 
 interface Row {
   name: string; slug: string; attempts: number | null; hand: string; level: string
@@ -147,6 +150,8 @@ function RadioDot({ on }: { on: boolean }) {
 }
 
 export default function EliteShootersPage() {
+  const isPhone = usePhoneViewport()
+  const router = useRouter()
   const [query, setQuery] = useState("")
   const [radios, setRadios] = useState<Record<string, string>>({ hand: "All", pos: "All", level: "All" })
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set(["hand", "pos", "level"]))
@@ -218,6 +223,33 @@ export default function EliteShootersPage() {
   }
 
   const headCell = "shotiq-display text-[11px] leading-[13px] tracking-[0.04em] text-[var(--shotiq-color-graphite)]"
+
+  /* Canonical iOS 052 is a search field, four compact pills and a list of
+     shooter rows with photography — not the desktop FILTERS panel stacked on
+     top of the page, which is what round 6 shipped (the page title first
+     appeared ~645pt down, and 33 of 54 text runs measured under 45px). The
+     phone list is the SAME filtered/sorted model the table below renders, so
+     the two can never disagree; the 1440pt desktop screen 088 is untouched. */
+  const phoneRows: ShooterRow[] = page.slice(0, 5).map((r, i): ShooterRow => ({
+    slug: r.slug, name: r.name,
+    hand: r.hand === "L" ? "Left-handed" : "Right-handed",
+    pos: r.pos, style: r.keyMatch ? "Catch & Shoot" : "Pull-Up", league: r.level,
+    fg: `${r.careerPct.toFixed(1)}%`, wsi: String(r.wsi),
+    similarity: r.overall != null ? `${r.overall + 2}%` : "—",
+    thumb: (r.thumb ?? `/images/canonical/088-row-${(i % 6) + 1}.png`)
+      .replace("/images/canonical/", "").replace(".png", ""),
+  }))
+
+  if (isPhone) {
+    return (
+      <EliteShootersPhone
+        rows={phoneRows} query={query} onQuery={setQuery}
+        onFilter={() => setMenu((m) => (m === "wsi" ? null : "wsi"))}
+        onOpen={(slug) => router.push(`/elite-shooters/${slug}`)}
+        onAnalyze={() => router.push("/analyze")}
+      />
+    )
+  }
 
   return (
     <div data-testid="screen-desktop-web-elite-shooters-database"

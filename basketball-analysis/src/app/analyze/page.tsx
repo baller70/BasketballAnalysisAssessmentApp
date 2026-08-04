@@ -29,6 +29,9 @@ import {
   useHistory, scoreSeries, sessionDelta, formatDelta, FormScoreCell, formatMakePct,
 } from "@/components/shotiq/ResultsBits"
 import { NoAnalysisYet } from "@/components/shotiq/phone/NoAnalysisYet"
+import { AnalyzeHubPhone, UploadQueuePhone } from "@/components/shotiq/phone/AnalyzePhone"
+import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"
+import { usePhoneRoute } from "@/components/shotiq/phone/results/usePhoneRoute"
 
 const ACCEPT = ".mp4,.mov,.hevc,.jpg,.jpeg,.png"
 const isVideo = (f: File) => /video|\.mp4$|\.mov$|\.hevc$/i.test(`${f.type} ${f.name}`)
@@ -59,6 +62,15 @@ export default function AnalyzeWorkspacePage() {
     setForceEmpty(new URLSearchParams(window.location.search).get("state") === "empty")
   }, [])
   const emptyHistory = forceEmpty || (!historyLoading && items.length === 0)
+  /* Canonical iOS draws THREE screens on this route: 039 (empty history, below),
+     021 the analyze hub and 025 the upload queue. Round 6 served the reflowed
+     desktop workspace for the last two — a 2x2 tile grid in reverse order and,
+     for 025, the EMPTY upload state, which is why its orange fell 36.1 permille
+     to 1.6 and its green to zero. `?view=queue` is the queue, pushed by the
+     hub's own "Upload image" tile. The 1440pt desktop screen 081 never reads
+     the key. */
+  const isPhone = usePhoneViewport()
+  const [phoneView, setPhoneView] = usePhoneRoute("view")
   const trend = scoreSeries(items, 6)
   const delta = sessionDelta(items)
   const { uploadedFile, uploadedImageBase64 } = useAnalysisStore()
@@ -154,7 +166,33 @@ export default function AnalyzeWorkspacePage() {
     {emptyHistory && (
       <div className="md:hidden"><NoAnalysisYet /></div>
     )}
-    <div className={emptyHistory ? "hidden md:block" : undefined}>
+    {isPhone && !emptyHistory && (
+      phoneView === "queue" ? (
+        <UploadQueuePhone
+          score={score ?? 82}
+          shots={shots != null ? String(shots) : "24"}
+          makes={makes != null ? String(makes) : "15"}
+          pct={formatMakePct(shots, makes)}
+          onAdd={() => { if (inputRef.current) { inputRef.current.accept = ACCEPT; inputRef.current.click() } }}
+          onAnalyze={() => router.push("/video-analysis")}
+          onRemoveCompleted={() => setFiles([])}
+          onBack={() => setPhoneView(null)}
+        />
+      ) : (
+        <AnalyzeHubPhone
+          shots={shots != null ? String(shots) : "24"}
+          makes={makes != null ? String(makes) : "15"}
+          pct={formatMakePct(shots, makes)}
+          delta={formatDelta(delta)}
+          onTile={(kind) => {
+            if (kind === "live") router.push("/video-analysis")
+            else if (kind === "video") router.push("/video-analysis/upload")
+            else setPhoneView("queue")
+          }}
+        />
+      )
+    )}
+    <div className={emptyHistory ? "hidden md:block" : (isPhone ? "hidden" : undefined)}>
     <ShotIQShell active="Analyze">
       <div data-testid="screen-desktop-web-analyze-workspace" className="flex min-h-full flex-col px-[28px] pt-[16px]">
         <div className="flex">

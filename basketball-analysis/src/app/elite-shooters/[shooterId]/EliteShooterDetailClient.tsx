@@ -20,6 +20,8 @@ import {
 import { TrendLine, SectionLabel, Card, Stat, PageTitle } from "@/components/shotiq/ShotIQShell"
 import { useHistory, formatDelta, formatMakePct } from "@/components/shotiq/ResultsBits"
 import { PoseFigure, toShotPhase } from "@/components/shotiq/Glyphs"
+import { EliteShooterDetailPhone } from "@/components/shotiq/phone/ElitePhone"
+import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"
 
 interface Measurements {
   shoulderAngle: number; elbowAngle: number; hipAngle: number; kneeAngle: number
@@ -80,6 +82,7 @@ const OPPORTUNITY_GLYPHS = [1, 2, 3, 4, 5].map((i) => `/images/canonical/089-opp
 
 export default function EliteShooterDetailClient() {
   const params = useParams<{ shooterId: string }>()
+  const isPhone = usePhoneViewport()
   // "Your" numbers on this comparison strip are the signed-in user's, read from
   // the one shared history hook rather than written into the markup.
   const { shots: myShots, makes: myMakes, delta: myDelta } = useHistory()
@@ -150,6 +153,56 @@ export default function EliteShooterDetailClient() {
     const last = groups[groups.length - 1]
     if (last && last.phase === r[0]) last.items.push(r)
     else groups.push({ phase: r[0], items: [r] })
+  }
+
+  /* Canonical iOS 053 is its own composition: a full-bleed hero, FIVE tabs on
+     one row, the career table, the shot breakdown, the mechanics snapshot and
+     the reference-frame strip — and its accent is ORANGE. Round 6 shipped the
+     reflowed desktop screen, whose dominant saturated colour measured blue
+     #246CD8 at 37,110px, with seven tabs on two rows. The 1440pt desktop
+     screen 089 below is untouched. */
+  if (isPhone) {
+    const strip = (i: number) => (photos[i] || CANON_GALLERY[i])
+      .replace("/images/canonical/", "").replace(/\.png$/, "")
+    return (
+      <EliteShooterDetailPhone
+        name={shooter.name}
+        hand="Right-handed"
+        pos={posLabel}
+        team={shooter.team}
+        era={shooter.league}
+        blurb={[
+          (shooter.description ?? "Elite reference shooter.").split(". ")[0] + ".",
+          `${shooter.tier} tier • ${heightLabel}`,
+        ]}
+        score={82}
+        note="High-level, repeatable form."
+        tier={String(Math.round(shooter.careerFreeThrowPct ?? 0)) || "—"}
+        tierLabel={(shooter.tier || "ELITE").toUpperCase()}
+        career={[["FG%", pct(shooter.careerFieldGoalPct ?? shooter.careerPct)],
+                 ["3P%", pct(shooter.careerThreePct ?? shooter.careerPct)],
+                 ["FT%", pct(shooter.careerFreeThrowPct)],
+                 ["eFG%", pct(shooter.careerEfgPct)],
+                 ["TS%", pct(shooter.careerTsPct)]]}
+        breakdown={[["Catch & Shoot", "62.5%", "15 SHOTS"], ["Pull-Up", "20.8%", "5 SHOTS"],
+                    ["Off Dribble", "12.5%", "3 SHOTS"], ["Other", "4.2%", "1 SHOT"]]}
+        mechanics={[["Elbow Angle", `${Math.round(m.elbowAngle)}\u00b0`, "load"],
+                    ["Release Height", heightLabel, "rise"],
+                    ["Release Angle", `${Math.round(m.releaseAngle)}\u00b0`, "release"],
+                    ["Backspin", "3,200", "follow"],
+                    ["Balance", "88%", "setup"]]}
+        strengths={shooter.strengths?.length ? shooter.strengths
+          : ["Quick, repeatable release", "High shooting arc", "Consistent base and balance"]}
+        weaknesses={shooter.weaknesses?.length ? shooter.weaknesses
+          : ["Slight elbow flare in load", "Lower body under-utilized", "Off dribble rhythm"]}
+        hero={(headshot).replace("/images/canonical/", "").replace(/\.png$/, "")}
+        frames={[0, 1, 2, 3, 4].map(strip)}
+        tab={tab === "OVERVIEW" ? "OVERVIEW" : tab}
+        onTab={setTab}
+        onCompare={() => { window.location.assign("/results/demo/compare") }}
+        onSave={() => setSaved((v) => !v)}
+      />
+    )
   }
 
   return (

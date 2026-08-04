@@ -30,6 +30,9 @@ import {
 } from "lucide-react"
 import { SectionLabel, Card, TrendLine, Stat, GoalPercent } from "@/components/shotiq/ShotIQShell"
 import { useHistory, formatDelta, formatMakePct } from "@/components/shotiq/ResultsBits"
+import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"
+import { usePhoneRoute } from "@/components/shotiq/phone/results/usePhoneRoute"
+import { SettingsHubPhone, NotificationPrimerPhone } from "@/components/shotiq/phone/SettingsPhone"
 import { useAuthStore } from "@/stores/authStore"
 import { useDashboardViewStore, type DashboardView } from "@/stores/dashboardViewStore"
 import { csrfFetch } from "@/lib/api/csrfFetch"
@@ -111,7 +114,16 @@ export default function SettingsPage() {
   const { user, updateUser } = useAuthStore()
   // Shot counts and the session-over-session delta come from the one shared
   // history hook — this panel used to print a hard-coded +8.1%.
-  const { shots, makes, delta } = useHistory()
+  const { shots, makes, delta, score: liveScore } = useHistory()
+  /* Canonical iOS draws TWO screens on this route — 071 the settings hub and
+     016 the notification permission primer — and round 6 shipped one surface
+     for both (app-vs-app mean abs diff 4.68 against canonical-vs-canonical
+     48.96). `?panel=notifications` is the primer: pushed as a history entry by
+     the hub's own Notifications row, so a player reaches it by tapping and the
+     back gesture returns to the hub, and the capture harness reaches it by
+     navigating. The 1440pt desktop screen 096 never reads the key. */
+  const isPhone = usePhoneViewport()
+  const [phonePanel, setPhonePanel] = usePhoneRoute("panel")
   const [notifications, setNotifications] = useState(DEFAULT_NOTIFICATIONS)
   const [automation, setAutomation] = useState(DEFAULT_AUTOMATION)
   const [privacy, setPrivacy] = useState(DEFAULT_PRIVACY)
@@ -422,7 +434,50 @@ export default function SettingsPage() {
     </div>
   )
 
+  const notifOnCount = [
+    notifications.milestonePush, notifications.coachingTipsPush,
+    notifications.improvementAlertPush, notifications.motivationalMessagesPush,
+    notifications.reminderPush,
+  ].filter(Boolean).length
+  const autoActiveCount = [
+    automation.analyticsRefreshEnabled, automation.dataBackupEnabled,
+    automation.weeklyReportEnabled, automation.coachAlertsEnabled,
+  ].filter(Boolean).length
+
   return (
+    <>
+    {isPhone && (
+      phonePanel === "notifications" ? (
+        <NotificationPrimerPhone
+          name={form.name || user?.displayName || "Jordan Ellis"}
+          hand={`${form.hand}-handed`} level={form.level}
+          score={liveScore ?? 82}
+          shots={shots != null ? String(shots) : "24"}
+          makes={makes != null ? String(makes) : "15"}
+          pct={formatMakePct(shots, makes)}
+          onEnable={() => { void requestNotifications() }}
+          onDismiss={() => setPhonePanel(null)}
+        />
+      ) : (
+        <SettingsHubPhone
+          name={form.name || user?.displayName || "Jordan Ellis"}
+          hand={`${form.hand}-handed`} level={form.level}
+          score={liveScore ?? 82}
+          shots={shots != null ? String(shots) : "24"}
+          makes={makes != null ? String(makes) : "15"}
+          pct={formatMakePct(shots, makes)}
+          delta={formatDelta(delta)}
+          avatar={avatarUrl ?? "/images/canonical/096-avatar.png"}
+          notificationsOn={notifOnCount}
+          automationActive={autoActiveCount}
+          dirty={saveState !== "saving"}
+          onNotifications={() => setPhonePanel("notifications")}
+          onSave={() => { void persist({ notifications, automation, privacy }) }}
+          onSignOut={() => { void signOut() }}
+        />
+      )
+    )}
+    <div className={isPhone ? "hidden" : undefined}>
     <div data-testid="screen-desktop-web-settings-hub" className="flex min-h-full">
       {/* ------------------------------------------------- settings sidebar */}
       <aside className="w-[207px] shrink-0 border-r border-[var(--shotiq-color-rule)] pb-[20px] pt-[20px]">
@@ -1036,5 +1091,7 @@ export default function SettingsPage() {
         </div>
       </div>
     </div>
+    </div>
+    </>
   )
 }

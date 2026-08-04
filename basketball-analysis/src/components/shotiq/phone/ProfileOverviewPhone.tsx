@@ -35,7 +35,7 @@
 import React from "react"
 import Link from "next/link"
 import { PhoneScreen } from "@/components/shotiq/PhoneShell"
-import { Chev, Frame, Micro, SectionHead } from "@/components/shotiq/phone/results/Kit"
+import { Chev, Micro, SectionHead } from "@/components/shotiq/phone/results/Kit"
 import { ActionGlyph } from "@/components/shotiq/Glyphs"
 
 const RULE = "var(--shotiq-color-rule)"
@@ -128,7 +128,7 @@ export function ProfileOverviewPhone({
     ["Catch & Shoot Review", "May 11, 2024"],
     ["Mid-Range Mechanics", "May 10, 2024"],
   ] as [string, string][],
-  avatar = "096-avatar",
+  avatar = "/images/canonical/096-avatar.png",
   onEdit,
 }: {
   name?: string; sub?: string; streak?: string; points?: string
@@ -147,7 +147,10 @@ export function ProfileOverviewPhone({
       <div style={{ paddingLeft: 17.5, paddingRight: 17.5, paddingBottom: 70 }}>
         <div className="flex items-center gap-[16px] pt-[12px]">
           <span className="relative block shrink-0">
-            <Frame src={avatar} w={102} h={102} radius={51} pos="50% 30%" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={avatar} alt="" aria-hidden="true"
+                 className="block h-[102px] w-[102px] rounded-full object-cover"
+                 style={{ objectPosition: "50% 30%" }} />
             <button type="button" onClick={onEdit} aria-label="Change photo"
                     data-testid="phone-profile-avatar-edit"
                     className="absolute bottom-[1px] right-[-2px] grid h-[34px] w-[34px] place-items-center rounded-full bg-white"

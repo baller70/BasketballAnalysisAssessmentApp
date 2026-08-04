@@ -23,6 +23,9 @@ import { usePoints } from "@/lib/points/pointsContext"
 import { useAuthStore } from "@/stores/authStore"
 import { useDashboardViewStore } from "@/stores/dashboardViewStore"
 import { HomeNewPlayer } from "@/components/shotiq/phone/HomeNewPlayer"
+import { HomeProfessionalPhone, ProfileMenuPhone } from "@/components/shotiq/phone/HomeProPhone"
+import { usePhoneViewport } from "@/components/shotiq/phone/usePhoneViewport"
+import { usePhoneRoute } from "@/components/shotiq/phone/results/usePhoneRoute"
 import {
   ShotIQShell, TrendLine, SectionLabel, Card, Stat, PageTitle, GoalPercent,
 } from "@/components/shotiq/ShotIQShell"
@@ -66,6 +69,8 @@ export default function DashboardPage() {
   const points = usePoints()
   const authUser = useAuthStore((s) => s.user)
   const { view, setView } = useDashboardViewStore()
+  const isPhone = usePhoneViewport()
+  const [phoneMenu, setPhoneMenu] = usePhoneRoute("menu")
 
   /* ---------------------------------------------------------------- layout
      The dashboard ships two canonical layouts — 079 professional and 080
@@ -458,7 +463,45 @@ export default function DashboardPage() {
 
   /* --------------------------------------------- 079 professional -------- */
   const today = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })
+  /* Canonical iOS draws TWO screens on this route — 019 the professional home
+     and 020 the profile overflow sheet. Round 6 reflowed the 1440pt dashboard
+     into 393pt instead, which left a 2px interior divider at x=447px (206pt)
+     running 76% of the viewport height; canonical has zero interior vertical
+     rules on any of the 72. The sheet is `?menu=1`, pushed by tapping your own
+     name on 019, so it has a URL, a back gesture and a deterministic route for
+     the harness. The desktop tree below is untouched. */
   return (
+    <>
+    {isPhone && (
+      phoneMenu ? (
+        <ProfileMenuPhone
+          name={displayName} streak="6"
+          points={totalPoints > 0 ? totalPoints.toLocaleString() : "2,840"}
+          score={score ?? 82}
+          shots={latestShots != null ? String(latestShots) : "24"}
+          makes={latestMakes != null ? String(latestMakes) : "15"}
+          pct={latestMakePct}
+          delta={improvement}
+          mode={view === "professional" ? "analysis" : "training"}
+          onMode={(m) => setView(m === "analysis" ? "professional" : "standard")}
+          onClose={() => setPhoneMenu(null)}
+          onSignOut={() => { window.location.assign("/signin") }}
+        />
+      ) : (
+        <HomeProfessionalPhone
+          name={displayName} streak="6"
+          points={totalPoints > 0 ? totalPoints.toLocaleString() : "2,840"}
+          score={score ?? 82}
+          shots={latestShots != null ? String(latestShots) : "24"}
+          makes={latestMakes != null ? String(latestMakes) : "15"}
+          pct={latestMakePct}
+          delta={improvement}
+          when={recent[0]?.when ?? "Today at 8:24 AM"}
+          onMenu={() => setPhoneMenu("1")}
+        />
+      )
+    )}
+    <div className={isPhone ? "hidden" : undefined}>
     <ShotIQShell active="Home" {...shellProps}>
       <div data-testid="screen-desktop-web-home-dashboard" className="px-[34px] pt-[16px]">
         <div className="flex items-center gap-[24px]">
@@ -660,5 +703,7 @@ export default function DashboardPage() {
         </Card>
       </div>
     </ShotIQShell>
+    </div>
+    </>
   )
 }
