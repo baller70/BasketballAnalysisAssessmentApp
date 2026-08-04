@@ -45,7 +45,9 @@ export default function ComparePage() {
       <div className="flex items-start justify-between gap-[14px]">
         <div>
           <PageTitle size={48}>ELITE COMPARISON</PageTitle>
-          <p className="mt-[2px] text-[14px] text-[var(--shotiq-color-graphite)]">See how your mechanics compare to elite-level form.</p>
+          {/* Canonical sets the subtitle at cap 12 and leaves 10px under the
+              title; 14px on a +8px gap read as a detached second line. */}
+          <p className="-mt-[4px] text-[12px] text-[var(--shotiq-color-graphite)]">See how your mechanics compare to elite-level form.</p>
         </div>
         <div className="flex gap-[10px] pt-[4px]">
           {([["shooters", elite ? `Shooter: ${elite.name}` : "Choose shooters"],
@@ -211,7 +213,9 @@ export default function ComparePage() {
         <Card className="w-[242px] shrink-0 px-[18px] py-[8px]">
           <SectionLabel>FORM SCORE</SectionLabel>
           <div className="mt-[8px] flex items-center gap-[14px]">
-            <Ring pct={(score ?? 0) / 100} size={90} stroke={9}>
+            {/* Canonical draws a fine 7px ring on a 95px outer diameter; 9px on 90
+                made the gauge read as a heavy donut (ink density .379 vs .286). */}
+            <Ring pct={(score ?? 0) / 100} size={95} stroke={6.5}>
               <div className="text-center">
                 <span className="shotiq-numeric text-[39px] leading-[38px] text-[var(--shotiq-color-shotiqOrange)]">{score ?? "—"}</span>
                 <span className="block text-[11px] leading-[13px] text-[var(--shotiq-color-graphite)]">/100</span>
@@ -303,7 +307,9 @@ export default function ComparePage() {
             <p className="text-[13px] text-[var(--shotiq-color-graphite)]">Keep elbow stacked through release to improve your release angle and consistency.</p>
           </div>
         </div>
-        <div className="flex w-[420px] shrink-0 items-center gap-[14px] border-l border-[var(--shotiq-color-rule)] px-[20px] py-[10px]">
+        {/* Canonical splits this band 57:43, not 65:35 — NEXT BEST WORKOUT was
+            ~95px narrower than its share. */}
+        <div className="flex w-[43%] shrink-0 items-center gap-[14px] border-l border-[var(--shotiq-color-rule)] px-[20px] py-[10px]">
           <span className="grid h-[42px] w-[42px] shrink-0 place-items-center rounded-full bg-[var(--shotiq-color-analysisBlue)] text-white">
             <WorkoutGlyph kind="release" size={22} />
           </span>

@@ -177,7 +177,9 @@ export default function AchievementsPointsPage() {
                   <div className="h-full w-[50%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" /></div>
               </div>
             </Card>
-            <Card className="w-[160px] px-[14px] py-[18px]">
+            {/* Canonical runs this card at 190px, the same as TOTAL XP; at 160
+                it was the only card in the row out of proportion with itself. */}
+            <Card className="w-[190px] px-[14px] py-[18px]">
               <div className="text-[9px] font-bold tracking-[0.06em] text-[var(--shotiq-color-graphite)]">LONGEST STREAK</div>
               <div className="mt-[6px] flex items-center justify-between">
                 <div>
@@ -253,9 +255,13 @@ export default function AchievementsPointsPage() {
             <div className="mt-[8px] grid grid-cols-5 gap-[14px]">
               {sorted.map(({ b: [t, d, e, xp], i }) => (
                 <button key={t} type="button" id={`badge-${i}`} onClick={() => setSel(i)} aria-pressed={sel === i}
-                        className={`relative flex h-[222px] flex-col rounded-[8px] border p-[12px] text-center ${sel === i ? "border-2 border-[var(--shotiq-color-shotiqOrange)]" : "border-[var(--shotiq-color-rule)]"}`}>
+                        className={`relative flex h-[210px] flex-col rounded-[8px] border p-[12px] text-center ${sel === i ? "border-2 border-[var(--shotiq-color-shotiqOrange)]" : "border-[var(--shotiq-color-rule)]"}`}>
                   {e && <span className="absolute right-[8px] top-[8px] grid h-[16px] w-[16px] place-items-center rounded-full bg-[var(--shotiq-color-confirmGreen)]"><Check className="h-[10px] w-[10px] text-white" /></span>}
-                  <div><Hex earned={e} name={t} /></div>
+                  {/* Canonical's card is 211px tall around a 99px hexagon and
+                      leaves ~17px between the caption and the EARNED/XP line.
+                      A 222px card around a 90px hex left 40px of void in every
+                      earned tile — ten of them on screen at once. */}
+                  <div><Hex earned={e} name={t} size={95} /></div>
                   <div className="mt-[4px] text-[11px] font-bold tracking-[0.03em]">{t}</div>
                   {/* Fixed card height + a floored footer: canonical lands every
                       XP/EARNED line on one baseline across the row, which a

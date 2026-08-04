@@ -49,7 +49,10 @@ const SEEDED_RESULTS = [
 const SEEDED_SHOTS = SEEDED_RESULTS.map((made, i) => ({ n: i + 1, made }))
 const SEEDED_ELAPSED = 144 // 02:24
 
-function Ring({ pct, size = 96, stroke = 8, color = "var(--shotiq-color-shotiqOrange)", children }: {
+/** Canonical draws both gauges on this page as a fine 7px ring — measured
+ *  across the horizontal through each centre. The 8–9px default read as a
+ *  heavy donut. */
+function Ring({ pct, size = 96, stroke = 7, color = "var(--shotiq-color-shotiqOrange)", children }: {
   pct: number; size?: number; stroke?: number; color?: string; children?: React.ReactNode
 }) {
   const r = (size - stroke) / 2
@@ -215,15 +218,15 @@ export default function DrillExecutionClient() {
           {/* controls */}
           <div className="mt-[16px] flex gap-[12px]">
             <button type="button" onClick={() => mark(true)} data-testid="mark-make"
-                    className="flex h-[44px] w-[145px] items-center justify-center gap-[9px] rounded-[6px] border-2 border-[var(--shotiq-color-confirmGreen)] whitespace-nowrap text-[14px] font-medium text-[var(--shotiq-color-confirmGreen)]">
+                    className="flex h-[40px] w-[145px] items-center justify-center gap-[9px] rounded-[6px] border-2 border-[var(--shotiq-color-confirmGreen)] whitespace-nowrap text-[14px] font-medium text-[var(--shotiq-color-confirmGreen)]">
               <CircleCheck className="h-[17px] w-[17px]" /> Mark make
             </button>
             <button type="button" onClick={() => mark(false)} data-testid="mark-miss"
-                    className="flex h-[44px] w-[145px] items-center justify-center gap-[9px] rounded-[6px] border-2 border-[var(--shotiq-color-reviewRed)] whitespace-nowrap text-[14px] font-medium text-[var(--shotiq-color-reviewRed)]">
+                    className="flex h-[40px] w-[145px] items-center justify-center gap-[9px] rounded-[6px] border-2 border-[var(--shotiq-color-reviewRed)] whitespace-nowrap text-[14px] font-medium text-[var(--shotiq-color-reviewRed)]">
               <CircleX className="h-[17px] w-[17px]" /> Mark miss
             </button>
             <button type="button" onClick={undo} disabled={!shots.length} data-testid="undo-shot"
-                    className="flex h-[44px] w-[145px] items-center justify-center gap-[9px] rounded-[6px] border border-[var(--shotiq-color-rule)] whitespace-nowrap text-[14px] disabled:opacity-50">
+                    className="flex h-[40px] w-[145px] items-center justify-center gap-[9px] rounded-[6px] border border-[var(--shotiq-color-rule)] whitespace-nowrap text-[14px] disabled:opacity-50">
               <Undo2 className="h-[16px] w-[16px]" /> Undo
             </button>
           </div>
@@ -235,16 +238,16 @@ export default function DrillExecutionClient() {
           <div className="mt-[10px] flex justify-end gap-[10px]">
             <div className="flex gap-[10px]">
               <button type="button" onClick={() => setPaused(!paused)} data-testid="pause-workout"
-                      className="flex h-[44px] items-center gap-[9px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] whitespace-nowrap px-[18px] text-[14px] font-medium text-white">
+                      className="flex h-[40px] items-center gap-[9px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] whitespace-nowrap px-[18px] text-[14px] font-medium text-white">
                 {paused ? <Play className="h-[15px] w-[15px]" /> : <Pause className="h-[15px] w-[15px]" />}
                 {paused ? "Resume workout" : "Pause workout"}
               </button>
               <button type="button" onClick={() => setCompleted(true)} data-testid="end-workout"
-                      className="flex h-[44px] items-center gap-[9px] rounded-[6px] border border-[var(--shotiq-color-rule)] whitespace-nowrap px-[16px] text-[14px]">
+                      className="flex h-[40px] items-center gap-[9px] rounded-[6px] border border-[var(--shotiq-color-rule)] whitespace-nowrap px-[16px] text-[14px]">
                 <Square className="h-[13px] w-[13px]" fill="currentColor" /> End workout
               </button>
               <button type="button" onClick={() => setMuted(!muted)}
-                      className="flex h-[44px] items-center gap-[9px] rounded-[6px] border border-[var(--shotiq-color-rule)] whitespace-nowrap px-[16px] text-[14px]">
+                      className="flex h-[40px] items-center gap-[9px] rounded-[6px] border border-[var(--shotiq-color-rule)] whitespace-nowrap px-[16px] text-[14px]">
                 {muted ? <Volume2 className="h-[16px] w-[16px]" /> : <VolumeX className="h-[16px] w-[16px]" />}
                 {muted ? "Unmute coaching" : "Mute coaching"}
               </button>
@@ -252,35 +255,40 @@ export default function DrillExecutionClient() {
           </div>
 
           {/* shot history */}
-          <SectionLabel className="mt-[18px]">SHOT HISTORY</SectionLabel>
-          <div className="mb-[16px] mt-[8px] flex items-center gap-[6px] overflow-x-auto" data-testid="shot-history">
+          <SectionLabel className="mt-[12px]">SHOT HISTORY</SectionLabel>
+          {/* Canonical encloses the whole strip in one pale card and gives every
+              frame a white footer strip INSIDE its own tile: the per-frame dot
+              row on the finished shots, "◆ LIVE" on the newest. The label used
+              to be absolutely positioned over the photo, where the tile's own
+              bottom border cut the glyphs in half. */}
+          <div className="mb-[10px] mt-[6px] flex items-center gap-[6px] overflow-x-auto rounded-[8px] border border-[var(--shotiq-color-rule)] bg-[var(--shotiq-color-paper)] px-[10px] py-[5px]" data-testid="shot-history">
             {historyStrip.map((s, i) => {
               const live = i === historyStrip.length - 1
               return (
-                <div key={`${s.n}-${i}`} className="shrink-0">
-                  <div className={`relative h-[92px] w-[76px] overflow-hidden rounded-[6px] bg-[#1B1D20] ${live ? "ring-2 ring-[var(--shotiq-color-shotiqOrange)]" : ""}`}>
+                <div key={`${s.n}-${i}`}
+                     className={`shrink-0 rounded-[7px] p-[4px] ${live ? "border-2 border-[var(--shotiq-color-shotiqOrange)] bg-white" : "border-2 border-transparent"}`}>
+                  <div className="relative h-[86px] w-[64px] overflow-hidden rounded-[5px] bg-[#1B1D20]">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src="/images/canonical/091-thumb.png" alt="" className="absolute inset-0 h-full w-full object-cover" />
                     {/* Canonical sets the shot number on a dark rounded chip and
                         its make/miss mark on a ~20px filled disc; both were
                         floating unbacked on the photo. */}
-                    <span className="absolute left-[4px] top-[4px] grid h-[19px] min-w-[21px] place-items-center rounded-[5px] bg-[rgba(16,17,19,0.86)] px-[4px] text-[12px] font-bold text-white">{s.n}</span>
-                    <span className="absolute right-[4px] top-[4px]">
+                    <span className="absolute left-[3px] top-[3px] grid h-[18px] min-w-[20px] place-items-center rounded-[5px] bg-[rgba(16,17,19,0.86)] px-[4px] text-[11px] font-bold text-white">{s.n}</span>
+                    <span className="absolute right-[3px] top-[3px]">
                       {s.made
-                        ? <CircleCheck className="h-[19px] w-[19px] text-white" fill="var(--shotiq-color-confirmGreen)" strokeWidth={2.2} />
-                        : <CircleX className="h-[19px] w-[19px] text-white" fill="var(--shotiq-color-reviewRed)" strokeWidth={2.2} />}
+                        ? <CircleCheck className="h-[18px] w-[18px] text-white" fill="var(--shotiq-color-confirmGreen)" strokeWidth={2.2} />
+                        : <CircleX className="h-[18px] w-[18px] text-white" fill="var(--shotiq-color-reviewRed)" strokeWidth={2.2} />}
                     </span>
-                    {live && <span className="absolute bottom-[6px] left-1/2 -translate-x-1/2 text-[10px] font-bold text-[var(--shotiq-color-shotiqOrange)]">◆ LIVE</span>}
                   </div>
-                  {/* Canonical's per-frame progress row sits BELOW the frame in
-                      grey. Inside the frame at 55% white it disappeared against
-                      the gym wall and only the orange dot survived. */}
-                  <span className="mt-[5px] flex justify-between px-[4px]">
-                    {Array.from({ length: 6 }).map((_, d) => (
-                      <span key={d} className={`h-[5px] w-[5px] rounded-full ${
-                        live && d === 5 ? "bg-[var(--shotiq-color-shotiqOrange)]" : "bg-[var(--shotiq-color-rule)]"}`} />
-                    ))}
-                  </span>
+                  {live ? (
+                    <div className="mt-[4px] flex h-[11px] items-center justify-center whitespace-nowrap text-[10px] font-bold leading-[11px] text-[var(--shotiq-color-shotiqOrange)]">◆ LIVE</div>
+                  ) : (
+                    <span className="mt-[4px] flex h-[11px] items-center justify-between px-[3px]">
+                      {Array.from({ length: 6 }).map((_, d) => (
+                        <span key={d} className="h-[5px] w-[5px] rounded-full bg-[var(--shotiq-color-rule)]" />
+                      ))}
+                    </span>
+                  )}
                 </div>
               )
             })}
@@ -324,7 +332,7 @@ export default function DrillExecutionClient() {
                 {/* Canonical sets the donut's own reading at cap 16 (advance 48);
                     at 19px this face gave cap 12.5, so the card's focal number
                     read two sizes down. The stroke is a shade heavier too. */}
-                <Ring pct={pct / 100} size={96} stroke={9} color="var(--shotiq-color-confirmGreen)">
+                <Ring pct={pct / 100} size={96} stroke={7} color="var(--shotiq-color-confirmGreen)">
                   <div className="text-center">
                     <div className="shotiq-numeric text-[26px] leading-[28px]">{pct.toFixed(1)}%</div>
                     <div className="text-[8px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">MAKE %</div>
@@ -339,23 +347,23 @@ export default function DrillExecutionClient() {
                 <Stat3 v={String(misses)} l="MISSES" c="var(--shotiq-color-reviewRed)" />
               </div>
             </div>
-            {/* Canonical draws 11 heavy 13px marks — open green rings for makes,
-                solid red discs with a white cross for misses — grouped 5 + 6,
-                followed by three pale placeholders, over an axis that ends in an
-                arrowhead. 24 uniform 10px lucide glyphs at 100% width read as a
-                pale dotted line instead of a shot log. */}
-            <div className="mt-[14px] flex items-center gap-[7px]">
+            {/* Canonical draws these marks at 10px on a 20px pitch — open green
+                rings for makes, solid red discs with a white cross for misses —
+                grouped 5 + 6, followed by three pale placeholders, over an axis
+                that ends in an arrowhead. 13px marks read 30% heavy; the gutter
+                grows to hold the pitch. */}
+            <div className="mt-[14px] flex items-center gap-[10px]">
               {Array.from({ length: MARK_SLOTS }).map((_, i) => {
                 const s = lastMarks[i]
                 const gap = i === 5 ? "ml-[10px]" : ""
                 if (s == null) {
-                  return <span key={i} className={`h-[13px] w-[13px] shrink-0 rounded-full border-[1.6px] border-[var(--shotiq-color-rule)] ${gap}`} />
+                  return <span key={i} className={`h-[10px] w-[10px] shrink-0 rounded-full border-[1.5px] border-[var(--shotiq-color-rule)] ${gap}`} />
                 }
                 return s.made
-                  ? <span key={i} className={`h-[13px] w-[13px] shrink-0 rounded-full border-[2.6px] border-[var(--shotiq-color-confirmGreen)] ${gap}`} />
+                  ? <span key={i} className={`h-[10px] w-[10px] shrink-0 rounded-full border-[2.2px] border-[var(--shotiq-color-confirmGreen)] ${gap}`} />
                   : (
-                    <span key={i} className={`grid h-[13px] w-[13px] shrink-0 place-items-center rounded-full bg-[var(--shotiq-color-reviewRed)] ${gap}`}>
-                      <CircleX className="h-[11px] w-[11px] text-white" strokeWidth={2.6} />
+                    <span key={i} className={`grid h-[10px] w-[10px] shrink-0 place-items-center rounded-full bg-[var(--shotiq-color-reviewRed)] ${gap}`}>
+                      <CircleX className="h-[9px] w-[9px] text-white" strokeWidth={2.8} />
                     </span>
                   )
               })}

@@ -79,7 +79,7 @@ export default function ResultsOverviewPage() {
 
   return (
     <ShotIQShell active="Analyze">
-    <div data-testid="screen-results-overview" className="pl-[21px] pr-[24px] pt-[16px]">
+    <div data-testid="screen-results-overview" className="pl-[21px] pr-[18px] pt-[16px]">
       {/* header */}
       <div className="flex items-start">
         <button type="button" aria-label="Back" onClick={() => router.push("/dashboard")}
@@ -143,13 +143,13 @@ export default function ResultsOverviewPage() {
         </Card>
       ) : (
       <>
-      <div className="mt-[14px] flex gap-[24px]">
+      <div className="mt-[14px] flex gap-[20px]">
         {/* media column */}
-        <div className="w-[573px] shrink-0">
+        <div className="w-[543px] shrink-0">
           <div className="relative">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/images/canonical/083-hero.png" alt="Analyzed shot frame with skeleton overlay"
-                 className="block w-[573px] rounded-[4px]" width={573} height={369} />
+                 className="block w-[543px] rounded-[4px]" width={573} height={369} />
             <button type="button" aria-label="Play"
                     className="absolute -bottom-[23px] left-[1px] grid h-[32px] w-[32px] place-items-center rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white shadow-[0_2px_6px_rgba(17,17,17,0.12)]">
               <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 1.5 L10.5 6 L2.5 10.5 Z" fill="var(--shotiq-color-ink)" /></svg>
@@ -157,12 +157,12 @@ export default function ResultsOverviewPage() {
           </div>
           {/* frame scrubber */}
           <div className="mt-[9px] flex items-center">
-            <div className="relative ml-[38px]">
+            <div className="relative ml-[36px]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/images/canonical/083-filmstrip.png" alt="" className="block h-[41px] w-[425px]" width={425} height={41} />
+              <img src="/images/canonical/083-filmstrip.png" alt="" className="block h-[39px] w-[399px]" width={425} height={41} />
               <span className="absolute -top-[9px] left-[59%] h-[15px] w-[15px] -translate-x-1/2 rounded-full border border-[var(--shotiq-color-rule)] bg-white shadow-[0_1px_3px_rgba(17,17,17,0.25)]" />
             </div>
-            <span className="shotiq-numeric ml-[32px] text-[13px]">0:07 <span className="text-[var(--shotiq-color-graphite)]">/ 0:24</span></span>
+            <span className="shotiq-numeric ml-[24px] text-[13px]">0:07 <span className="text-[var(--shotiq-color-graphite)]">/ 0:24</span></span>
             <button type="button" aria-label="Fullscreen" className="ml-auto">
               <Maximize className="h-[16px] w-[16px]" strokeWidth={1.8} />
             </button>
@@ -200,13 +200,16 @@ export default function ResultsOverviewPage() {
         {/* score + coaching card */}
         <Card className="flex min-w-0 flex-1 rounded-[8px]">
           {/* form score + mechanics */}
-          <div className="flex w-[290px] shrink-0 flex-col border-r border-[var(--shotiq-color-rule)] px-[17px] pb-[10px] pt-[16px]">
+          <div className="flex w-[275px] shrink-0 flex-col border-r border-[var(--shotiq-color-rule)] px-[14px] pb-[10px] pt-[16px]">
             <SectionLabel>FORM SCORE</SectionLabel>
-            <div className="mt-[4px] flex items-end gap-[6px]">
+            <div className="mt-[4px] flex items-baseline gap-[6px]">
               <span className="shotiq-numeric text-[85px] leading-[77px] text-[var(--shotiq-color-shotiqOrange)]">82</span>
-              <span className="shotiq-numeric text-[19px] text-[var(--shotiq-color-muted)]">/100</span>
+              {/* Canonical sets "/100" at cap 16 over a 30px advance and rests
+                  it on the same baseline as the 82; the default line box lifted
+                  it 12px clear of that baseline. */}
+              <span className="shotiq-numeric text-[24px] text-[var(--shotiq-color-muted)]">/100</span>
             </div>
-            <div className="mt-[10px] h-[9px] w-full rounded-full bg-[var(--shotiq-color-rule)]">
+            <div className="mt-[10px] h-[9px] w-[70%] rounded-full bg-[var(--shotiq-color-rule)]">
               <div className="h-full w-[82%] rounded-full bg-[var(--shotiq-color-shotiqOrange)]" />
             </div>
             <div className="shotiq-display mt-[10px] text-[18px] text-[var(--shotiq-color-analysisBlue)]">GOOD</div>
@@ -237,10 +240,10 @@ export default function ResultsOverviewPage() {
           </div>
 
           {/* coaching target / key insight / elite match */}
-          <div className="min-w-0 flex-1 px-[17px] pt-[16px]">
+          <div className="min-w-0 flex-1 px-[14px] pt-[16px]">
             <SectionLabel>PRIMARY COACHING TARGET</SectionLabel>
             <Link href="/results/demo/goals" className="mt-[2px] flex items-center justify-between">
-              <span className="whitespace-nowrap text-[18px] font-semibold">Keep elbow stacked through release</span>
+              <span className="whitespace-nowrap text-[17px] font-semibold">Keep elbow stacked through release</span>
               <ChevronRight className="h-[17px] w-[17px] shrink-0 text-[var(--shotiq-color-graphite)]" />
             </Link>
             <span className="mt-[8px] inline-block rounded-[5px] border border-[var(--shotiq-color-confirmGreen)] px-[10px] py-[3px] text-[11px] font-bold tracking-[0.05em] text-[var(--shotiq-color-confirmGreen)]">ACTIVE GOAL</span>
@@ -288,7 +291,7 @@ export default function ResultsOverviewPage() {
           share than canonical's because its description otherwise runs to a
           third line at the type size this app sets it in. */}
       <Card className="mt-[18px] mb-[14px] flex h-[145px] divide-x divide-[var(--shotiq-color-rule)]">
-        <div className="flex w-[42%] shrink-0 flex-col px-[18px] pt-[12px]">
+        <div className="flex w-[47%] shrink-0 flex-col px-[18px] pt-[12px]">
           <SectionLabel>ANALYSIS SUMMARY</SectionLabel>
           <div className="mt-[12px] flex flex-1 items-start">
             {([[String(liveShots ?? "—"), "SHOTS"], [String(liveMakes ?? "—"), "MAKES"],
@@ -315,17 +318,20 @@ export default function ResultsOverviewPage() {
           </div>
         </div>
 
-        <div className="min-w-0 flex-1 px-[16px] pt-[12px]">
+        <div className="min-w-0 flex-1 px-[9px] pt-[12px]">
           <SectionLabel>TOP FLAW</SectionLabel>
-          <Link href="/results/demo/flaws" className="mt-[6px] flex items-center gap-[10px]">
+          {/* Canonical gives this description ~186px and holds it to two
+              lines; the cell only clears that at canonical’s own 22.7% share
+              once the glyph and gutters come back to canonical’s 48px/8px. */}
+          <Link href="/results/demo/flaws" className="mt-[6px] flex items-center gap-[7px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/canonical/083-flaw-glyph.png" alt="" className="h-[80px] w-[50px] object-contain" />
+            <img src="/images/canonical/083-flaw-glyph.png" alt="" className="h-[68px] w-[42px] object-contain" />
             <span className="min-w-0 flex-1">
               <span className="flex items-center gap-[8px]">
                 <span className="whitespace-nowrap text-[13px] font-semibold">Elbow flare at release</span>
                 <span className="shrink-0 whitespace-nowrap rounded-[4px] border border-[var(--shotiq-color-shotiqOrange)] px-[6px] py-[2px] text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-shotiqOrange)]">HIGH IMPACT</span>
               </span>
-              <span className="mt-[6px] block text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
+              <span className="mt-[6px] block text-[11px] leading-[15px] text-[var(--shotiq-color-graphite)]">
                 Elbow moves outward slightly during release, reducing alignment.
               </span>
             </span>
@@ -333,7 +339,7 @@ export default function ResultsOverviewPage() {
           </Link>
         </div>
 
-        <div className="w-[29%] shrink-0 px-[18px] pt-[12px]">
+        <div className="w-[30.6%] shrink-0 px-[18px] pt-[12px]">
           <SectionLabel>NEXT TRAINING</SectionLabel>
           <Link href="/results/demo/training" className="mt-[10px] flex items-center gap-[14px]">
             <span className="grid h-[50px] w-[50px] shrink-0 place-items-center rounded-full bg-[var(--shotiq-color-analysisBlue)]">

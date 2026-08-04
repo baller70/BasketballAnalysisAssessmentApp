@@ -160,7 +160,7 @@ export default function EliteShootersPage() {
     "Kyrie Irving": "/images/canonical/088-tray-kyrie.png",
   }
 
-  const headCell = "text-[9px] font-bold tracking-[0.07em] text-[var(--shotiq-color-graphite)]"
+  const headCell = "shotiq-display text-[11px] leading-[13px] tracking-[0.04em] text-[var(--shotiq-color-graphite)]"
 
   return (
     <div data-testid="screen-desktop-web-elite-shooters-database"
@@ -348,32 +348,32 @@ export default function EliteShootersPage() {
                   210px of the 1244px content area, so the table is fitted to
                   the remaining 1014px rather than the panel being shrunk. */}
               <div className="flex border-b border-[var(--shotiq-color-rule)] pb-[2px]">
-                <div className="w-[464px]" />
-                <div className={`w-[252px] border-l border-[var(--shotiq-color-rule)] text-center ${headCell}`}>MECHANICS SUMMARY</div>
-                <div className={`w-[176px] border-l border-[var(--shotiq-color-rule)] text-center ${headCell}`}>SIMILARITY TO YOU</div>
+                <div className="w-[520px]" />
+                <div className={`w-[183px] border-l border-[var(--shotiq-color-rule)] text-center ${headCell}`}>MECHANICS SUMMARY</div>
+                <div className={`w-[194px] border-l border-[var(--shotiq-color-rule)] text-center ${headCell}`}>SIMILARITY TO YOU</div>
                 <div className="min-w-0 flex-1 border-l border-[var(--shotiq-color-rule)]" />
               </div>
               {/* column headers */}
               <div className="flex items-center border-b border-[var(--shotiq-color-rule)] py-[7px]">
                 <span className="w-[24px]"><span className="block h-[14px] w-[14px] rounded-[3px] border border-[var(--shotiq-color-muted)]" /></span>
-                <span className={`w-[192px] pl-[50px] ${headCell}`}>SHOOTER</span>
-                <span className={`w-[34px] text-center ${headCell}`}>HAND</span>
-                <span className={`w-[32px] text-center ${headCell}`}>LEVEL</span>
-                <span className={`w-[32px] text-center ${headCell}`}>HT</span>
-                <span className={`w-[30px] text-center ${headCell}`}>AGE</span>
-                <span className={`w-[72px] text-center ${headCell}`}>CAREER</span>
-                <span className={`flex w-[48px] items-center justify-center gap-[3px] ${headCell}`}>
+                <span className={`w-[220px] pl-[62px] ${headCell}`}>SHOOTER</span>
+                <span className={`w-[42px] text-center ${headCell}`}>HAND</span>
+                <span className={`w-[41px] text-center ${headCell}`}>LEVEL</span>
+                <span className={`w-[37px] text-center ${headCell}`}>HT</span>
+                <span className={`w-[42px] text-center ${headCell}`}>AGE</span>
+                <span className={`w-[56px] text-center ${headCell}`}>CAREER</span>
+                <span className={`flex w-[58px] items-center justify-center gap-[3px] ${headCell}`}>
                   WSI <HelpCircle className="h-[10px] w-[10px]" /> <ChevronDown className="h-[10px] w-[10px]" />
                 </span>
                 {/* Held on one line, as canonical prints them. */}
-                <span className={`w-[84px] self-stretch whitespace-nowrap border-l border-[var(--shotiq-color-rule)] px-[2px] text-center text-[9px] tracking-[0.03em] ${headCell}`}>RELEASE HEIGHT</span>
-                <span className={`w-[84px] whitespace-nowrap px-[2px] text-center text-[9px] tracking-[0.03em] ${headCell}`}>RELEASE TIME</span>
-                <span className={`w-[84px] whitespace-nowrap px-[2px] text-center text-[9px] tracking-[0.03em] ${headCell}`}>ELBOW ALIGNMENT</span>
-                <span className={`flex w-[84px] self-stretch items-center justify-center gap-[3px] border-l border-[var(--shotiq-color-rule)] ${headCell}`}>
+                <span className={`w-[60px] self-stretch whitespace-nowrap border-l border-[var(--shotiq-color-rule)] px-[2px] text-center ${headCell}`}>RELEASE HEIGHT</span>
+                <span className={`w-[60px] whitespace-nowrap px-[2px] text-center ${headCell}`}>RELEASE TIME</span>
+                <span className={`w-[63px] whitespace-nowrap px-[2px] text-center ${headCell}`}>ELBOW ALIGNMENT</span>
+                <span className={`flex w-[93px] self-stretch items-center justify-center gap-[3px] border-l border-[var(--shotiq-color-rule)] ${headCell}`}>
                   OVERALL <HelpCircle className="h-[10px] w-[10px]" />
                 </span>
-                <span className={`w-[92px] text-center ${headCell}`}>KEY MATCH</span>
-                <span className={`w-[116px] shrink-0 self-stretch border-l border-[var(--shotiq-color-rule)] text-center ${headCell}`}>ACTION</span>
+                <span className={`w-[101px] text-center ${headCell}`}>KEY MATCH</span>
+                <span className={`w-[111px] shrink-0 self-stretch border-l border-[var(--shotiq-color-rule)] text-center ${headCell}`}>ACTION</span>
               </div>
 
               {filtered.map((r) => (
@@ -386,46 +386,49 @@ export default function EliteShootersPage() {
                       {selected.has(r.name) && <Check className="h-[10px] w-[10px] text-white" strokeWidth={3.2} />}
                     </button>
                   </span>
-                  <span className="flex w-[192px] items-center gap-[8px]">
+                  <span className="flex w-[220px] items-center gap-[8px]">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={r.thumb} alt="" className="h-[48px] w-[76px] shrink-0 rounded-[5px] object-cover" />
+                    <img src={r.thumb} alt="" className="h-[48px] w-[86px] shrink-0 rounded-[5px] object-cover" />
                     <span className="min-w-0">
                       <Link href={`/elite-shooters/${r.slug}`} className="block truncate text-[14px] font-semibold hover:underline">{r.name}</Link>
                       <span className="block text-[11px] text-[var(--shotiq-color-graphite)]">{fmt(r.attempts)} attempts</span>
                     </span>
                   </span>
-                  <span className="w-[34px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.hand}</span>
-                  <span className="w-[32px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.level}</span>
-                  <span className="w-[32px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.ht}</span>
-                  <span className="w-[30px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.age}</span>
-                  <span className="w-[72px] text-center">
+                  <span className="w-[42px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.hand}</span>
+                  <span className="w-[41px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.level}</span>
+                  <span className="w-[37px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.ht}</span>
+                  <span className="w-[42px] text-center text-[12px] text-[var(--shotiq-color-graphite)]">{r.age}</span>
+                  <span className="w-[56px] text-center">
                     <span className="block text-[14px] font-bold">{r.careerPct.toFixed(1)}%</span>
-                    <span className="block whitespace-nowrap text-[10px] text-[var(--shotiq-color-graphite)]">{fmt(r.makes)} / {fmt(r.attempts)}</span>
+                    <span className="block whitespace-nowrap text-[9px] text-[var(--shotiq-color-graphite)]">{fmt(r.makes)} / {fmt(r.attempts)}</span>
                   </span>
-                  <span className="shotiq-numeric w-[48px] text-center text-[22px] leading-[26px] text-[var(--shotiq-color-analysisBlue)]">{r.wsi}</span>
-                  <span className="w-[84px] self-stretch border-l border-[var(--shotiq-color-rule)] text-center">
+                  <span className="shotiq-numeric w-[58px] text-center text-[22px] leading-[26px] text-[var(--shotiq-color-analysisBlue)]">{r.wsi}</span>
+                  <span className="w-[60px] self-stretch border-l border-[var(--shotiq-color-rule)] text-center">
                     <span className="block text-[14px] font-bold">{r.relH}</span>
                     <span className="block text-[10px] text-[var(--shotiq-color-graphite)]">{r.relHBand}</span>
                   </span>
-                  <span className="w-[84px] text-center">
+                  <span className="w-[60px] text-center">
                     <span className="block text-[14px] font-bold">{r.relT}</span>
                     <span className="block text-[10px] text-[var(--shotiq-color-graphite)]">Quick</span>
                   </span>
-                  <span className="w-[84px] text-center">
+                  <span className="w-[63px] text-center">
                     <span className="block text-[14px] font-bold">{r.elbow}</span>
                     <span className="block text-[10px] text-[var(--shotiq-color-graphite)]">Stacked</span>
                   </span>
-                  <span className="w-[84px] self-stretch border-l border-[var(--shotiq-color-rule)] px-[6px] text-center">
+                  <span className="w-[93px] self-stretch border-l border-[var(--shotiq-color-rule)] px-[6px] text-center">
                     <span className="block text-[15px] font-bold">{r.overall}%</span>
                     <span className="mx-auto mt-[3px] block h-[3px] w-[62px] rounded-full bg-[var(--shotiq-color-rule)]">
                       <span className="block h-full rounded-full bg-[var(--shotiq-color-analysisBlue)]" style={{ width: `${r.overall}%` }} />
                     </span>
                   </span>
-                  <span className="w-[92px] text-center">
-                    <span className="block whitespace-nowrap text-[12px]">{r.keyMatch[0]}</span>
-                    <span className="block text-[12px] font-semibold">{r.keyMatch[1]}</span>
+                  {/* Canonical sets KEY MATCH left-aligned in regular grey at a 70px
+                      advance (cap 11); 12px bold black ran it to 103px and put the
+                      final glyph 2px from the ACTION rule. */}
+                  <span className="w-[101px] pl-[10px] text-left text-[var(--shotiq-color-graphite)]">
+                    <span className="block whitespace-nowrap text-[9px]">{r.keyMatch[0]}</span>
+                    <span className="block text-[9px]">{r.keyMatch[1]}</span>
                   </span>
-                  <span className="w-[116px] shrink-0 self-stretch border-l border-[var(--shotiq-color-rule)] text-center">
+                  <span className="w-[111px] shrink-0 self-stretch border-l border-[var(--shotiq-color-rule)] text-center">
                     <Link href={`/elite-shooters/${r.slug}`}
                           className="inline-flex h-[29px] w-[108px] items-center justify-center rounded-[5px] border border-[var(--shotiq-color-shotiqOrange)] text-[12px] text-[var(--shotiq-color-shotiqOrange)] hover:bg-[var(--shotiq-color-shotiqOrange)] hover:text-white">
                       View shooter

@@ -384,7 +384,7 @@ export default function SettingsPage() {
     onClick: () => void; testid?: string
   }) => (
     <button type="button" onClick={onClick} data-testid={testid}
-            className="flex w-full items-center justify-between py-[6px] text-left text-[12px] leading-[18px] hover:bg-[var(--shotiq-color-warmCanvas)]">
+            className="flex w-full items-center justify-between py-[5px] text-left text-[12px] leading-[19px] hover:bg-[var(--shotiq-color-warmCanvas)]">
       <span>{label}</span>
       <span className={`flex items-center gap-[5px] text-[12px] font-medium ${
         tone === "green" ? "text-[var(--shotiq-color-confirmGreen)]"
@@ -437,23 +437,28 @@ export default function SettingsPage() {
         </nav>
         <div className="mx-[21px] my-[12px] border-t border-[var(--shotiq-color-rule)]" />
         <div className="px-[21px] shotiq-display text-[15px] leading-[16px]">QUICK ACTIONS</div>
+        {/* Canonical paints every QUICK ACTION row plain — only "Profile &
+            account" above carries a selected background. A hover fill here
+            reads as a second selected row (and a stale pointer left over from
+            a previous page paints it in a static capture), so these three
+            respond on focus only. */}
         <nav className="mt-[8px]" aria-label="Quick actions">
           <button type="button" onClick={exportData}
-                  className="flex w-full items-center gap-[13px] px-[21px] py-[12px] text-left text-[13px] hover:bg-[var(--shotiq-color-warmCanvas)]">
+                  className="flex w-full items-center gap-[13px] px-[21px] py-[12px] text-left text-[13px] focus-visible:bg-[var(--shotiq-color-warmCanvas)] focus-visible:outline-none">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/images/canonical/096-quick-export.png" alt="" aria-hidden="true"
                  className="block h-[32px] w-[31px] max-w-none shrink-0 object-contain" />
             {exporting === "working" ? "Exporting…" : exporting === "done" ? "Downloaded ✓" : "Export all data"}
           </button>
           <button type="button" onClick={clearHistory}
-                  className="flex w-full items-center gap-[13px] px-[21px] py-[12px] text-left text-[13px] hover:bg-[var(--shotiq-color-warmCanvas)]">
+                  className="flex w-full items-center gap-[13px] px-[21px] py-[12px] text-left text-[13px] focus-visible:bg-[var(--shotiq-color-warmCanvas)] focus-visible:outline-none">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/images/canonical/096-quick-clear.png" alt="" aria-hidden="true"
                  className="block h-[33px] w-[30px] max-w-none shrink-0 object-contain" />
             {clearing === "confirm" ? "Confirm clear?" : clearing === "working" ? "Clearing…" : clearing === "done" ? "History cleared" : "Clear history"}
           </button>
           <button type="button" onClick={signOut}
-                  className="flex w-full items-center gap-[13px] px-[21px] py-[12px] text-left text-[13px] hover:bg-[var(--shotiq-color-warmCanvas)]">
+                  className="flex w-full items-center gap-[13px] px-[21px] py-[12px] text-left text-[13px] focus-visible:bg-[var(--shotiq-color-warmCanvas)] focus-visible:outline-none">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/images/canonical/096-quick-signout.png" alt="" aria-hidden="true"
                  className="block h-[32px] w-[30px] max-w-none shrink-0 object-contain" /> Sign out
@@ -525,12 +530,15 @@ export default function SettingsPage() {
                 <div><div className={lbl}>PLAY LEVEL</div>
                   <select className={`${field} mt-[2px]`} value={form.level} onChange={(e) => setForm({ ...form, level: e.target.value })}>
                     {["Beginner", "Intermediate", "Advanced", "Professional"].map((o) => <option key={o}>{o}</option>)}</select></div>
-                {/* The three measurement fields hold two or three glyphs each;
-                    canonical gives the shooting-preference select the rest of
-                    the row so "Catch & Shoot" sets in full. Fixed widths, not
-                    fractions, so the select can never be squeezed to
-                    "Catch & Shoo" again. */}
-                <div className="col-span-2 grid grid-cols-[58px_58px_58px_1fr] items-end gap-[6px]">
+                {/* Canonical gives each measurement field 56px around a 40px
+                    value — 8px of breathing room either side — and hands the
+                    rest of the row to the shooting-preference select so
+                    "Catch & Shoot" sets in full. This face sets "195 lbs" 5px
+                    wider than canonical's, so 58px boxes cut the final "s" in
+                    half at the WEIGHT border; 62px restores the padding, and
+                    the 5px gutter keeps the select wide enough for its label
+                    plus the chevron. */}
+                <div className="col-span-2 grid grid-cols-[62px_62px_62px_1fr] items-end gap-[5px]">
                   {([["HEIGHT", "height"], ["WEIGHT", "weight"], ["WINGSPAN", "wingspan"]] as const).map(([l, k]) => (
                     <div key={k}><div className={lbl}>{l}</div>
                       <input className={`${field} mt-[2px] px-[6px]`} value={form[k]} onChange={(e) => setForm({ ...form, [k]: e.target.value })} /></div>
@@ -622,7 +630,7 @@ export default function SettingsPage() {
 
         {/* summary cards — every row is a live, persisted control */}
         <div className="mt-[12px] grid grid-cols-3 gap-[16px]">
-          <Card id="section-notifications" className="scroll-mt-[76px] p-[16px]">
+          <Card id="section-notifications" className="scroll-mt-[76px] px-[16px] pb-[8px] pt-[16px]">
             <div className="flex items-center gap-[10px]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/images/canonical/096-mark-notifications.png" alt="" aria-hidden="true"
@@ -646,7 +654,7 @@ export default function SettingsPage() {
             </div>
           </Card>
 
-          <Card id="section-automation" className="scroll-mt-[76px] p-[16px]">
+          <Card id="section-automation" className="scroll-mt-[76px] px-[16px] pb-[8px] pt-[16px]">
             <div className="flex items-center gap-[10px]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/images/canonical/096-mark-automation.png" alt="" aria-hidden="true"
@@ -670,7 +678,7 @@ export default function SettingsPage() {
             </div>
           </Card>
 
-          <Card id="section-privacy" className="scroll-mt-[76px] p-[16px]">
+          <Card id="section-privacy" className="scroll-mt-[76px] px-[16px] pb-[8px] pt-[16px]">
             <div className="flex items-center gap-[10px]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/images/canonical/096-mark-privacy.png" alt="" aria-hidden="true"
@@ -694,15 +702,15 @@ export default function SettingsPage() {
         </div>
 
         {/* data actions band */}
-        <Card className="mt-[12px] flex items-center divide-x divide-[var(--shotiq-color-rule)] px-[8px] py-[14px]">
+        <Card className="mt-[12px] flex items-center divide-x divide-[var(--shotiq-color-rule)] px-[8px] py-[22px]">
           {/* The 196px app rail costs this band ~190px against canonical's, and
               all of it used to come out of the two description columns, which
               wrapped to four lines where canonical takes two. The label column
               and the gutters give it back instead. */}
-          <div className="w-[224px] px-[10px]">
+          <div className="w-[208px] px-[10px]">
             <span className="shotiq-display text-[17px] leading-[18px]">DATA ACTIONS</span>
             {/* canonical sets this caption on one line; 170px broke it in two */}
-            <div className="mt-[2px] text-[11px] text-[var(--shotiq-color-graphite)]">Manage your data and analysis history.</div>
+            <div className="mt-[2px] whitespace-nowrap text-[10px] text-[var(--shotiq-color-graphite)]">Manage your data and analysis history.</div>
           </div>
           <div className="flex flex-1 items-center gap-[8px] px-[10px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -710,7 +718,7 @@ export default function SettingsPage() {
                  className="block h-[45px] w-[41px] max-w-none shrink-0 object-contain" />
             <div className="min-w-0 flex-1">
               <div className="text-[13px] font-semibold">Export all data</div>
-              <div className="text-[11px] text-[var(--shotiq-color-graphite)]">Download a copy of all your shots, analyses, sessions, and account data.</div>
+              <div className="text-[10px] leading-[14px] text-[var(--shotiq-color-graphite)]">Download a copy of all your shots, analyses, sessions, and account data.</div>
             </div>
             <button type="button" onClick={exportData} disabled={exporting === "working"}
                     className="h-[38px] shrink-0 whitespace-nowrap rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white px-[12px] text-[13px] disabled:opacity-60">
@@ -817,7 +825,7 @@ export default function SettingsPage() {
         </Card>
 
         {/* app-info band travels with Preferences so it stays reachable */}
-        <Card className="mt-[16px] flex items-center divide-x divide-[var(--shotiq-color-rule)] px-[8px] py-[14px]">
+        <Card className="mt-[16px] flex items-center divide-x divide-[var(--shotiq-color-rule)] px-[8px] py-[22px]">
           <div className="px-[16px]">
             <SectionLabel>ABOUT SHOTIQ</SectionLabel>
             <div className="text-[11px] text-[var(--shotiq-color-graphite)]">Version 1.0 · AI-powered shooting analysis.{loaded ? "" : " Loading settings…"}</div>

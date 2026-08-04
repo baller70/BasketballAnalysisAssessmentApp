@@ -199,8 +199,11 @@ export default function AnalysisHistoryPage() {
       <div className="mt-[6px] flex gap-[18px]">
       <div className="min-w-0 flex-1">
         {/* summary strip */}
-        {/* Canonical rules every cell off with a hairline and distributes them
-            across the strip; the cells used to bunch against the left edge. */}
+        {/* Canonical rules this strip into THREE groups, not five cells: the
+            average score, then the shots / makes / make-% triplet as one
+            unruled block, then the trend. A hairline after every cell (four
+            rules where canonical draws two, at x=300 and x=664) boxed each
+            number separately and destroyed that grouping. */}
         <div className="flex items-stretch divide-x divide-[var(--shotiq-color-rule)] border-b border-[var(--shotiq-color-rule)] pb-[10px] pt-[4px]">
           {/* This cell carries the longest label in the strip; an equal share
               broke it onto two lines where canonical keeps it on one. */}
@@ -209,20 +212,22 @@ export default function AnalysisHistoryPage() {
             <div className="shotiq-numeric text-[40px] leading-[44px]">{score ?? "—"}</div>
             <div className="text-[12px] text-[var(--shotiq-color-analysisBlue)]">● Good</div>
           </div>
-          <div className="min-w-0 flex-1 px-[16px]">
-            <div className="text-[11px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">SHOTS</div>
-            <div className="shotiq-numeric text-[40px] leading-[44px]">{totalShots ?? (hasData ? "—" : "0")}</div>
-            <div className="text-[12px] text-[var(--shotiq-color-graphite)]">Total</div>
-          </div>
-          <div className="min-w-0 flex-1 px-[16px]">
-            <div className="text-[11px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">MAKES</div>
-            <div className="shotiq-numeric text-[40px] leading-[44px]">{totalMakes ?? (hasData ? "—" : "0")}</div>
-            <div className="text-[12px] text-[var(--shotiq-color-graphite)]">Total</div>
-          </div>
-          <div className="min-w-0 flex-1 px-[16px]">
-            <div className="text-[11px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">MAKE %</div>
-            <div className="shotiq-numeric text-[40px] leading-[44px]">
-              {overallMakePct == null ? "—" : `${overallMakePct.toFixed(1)}%`}
+          <div className="flex min-w-0 flex-[3] px-[16px]">
+            <div className="min-w-0 flex-1">
+              <div className="text-[11px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">SHOTS</div>
+              <div className="shotiq-numeric text-[40px] leading-[44px]">{totalShots ?? (hasData ? "—" : "0")}</div>
+              <div className="text-[12px] text-[var(--shotiq-color-graphite)]">Total</div>
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-[11px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">MAKES</div>
+              <div className="shotiq-numeric text-[40px] leading-[44px]">{totalMakes ?? (hasData ? "—" : "0")}</div>
+              <div className="text-[12px] text-[var(--shotiq-color-graphite)]">Total</div>
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-[11px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">MAKE %</div>
+              <div className="shotiq-numeric text-[40px] leading-[44px]">
+                {overallMakePct == null ? "—" : `${overallMakePct.toFixed(1)}%`}
+              </div>
             </div>
           </div>
           <div className="min-w-0 flex-[1.9] pl-[16px]">
@@ -332,8 +337,17 @@ export default function AnalysisHistoryPage() {
           <div className="flex divide-x divide-[var(--shotiq-color-rule)]">
             <div className="flex-1 p-[12px]">
               <div className="text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">FORM SCORE</div>
-              <div className="shotiq-numeric text-[26px] text-[var(--shotiq-color-shotiqOrange)]">{rows[sel]?.[1] ?? "—"}</div>
-              <div className="h-[5px] rounded-full bg-[var(--shotiq-color-rule)]">
+              {/* Canonical sets this reading near-black and puts its blue-dot
+                  band qualifier on the same baseline; orange is the bar's
+                  colour here, not the numeral's, and the qualifier was
+                  missing entirely. */}
+              <div className="flex items-baseline gap-[7px]">
+                <span className="shotiq-numeric text-[26px] leading-[30px]">{rows[sel]?.[1] ?? "—"}</span>
+                <span className="flex items-center gap-[4px] whitespace-nowrap text-[11px] text-[var(--shotiq-color-analysisBlue)]">
+                  <span className="inline-block h-[6px] w-[6px] rounded-full bg-[var(--shotiq-color-analysisBlue)]" />{rows[sel]?.[2] ?? "Good"}
+                </span>
+              </div>
+              <div className="mt-[2px] h-[5px] rounded-full bg-[var(--shotiq-color-rule)]">
                 <div className="h-full rounded-full bg-[var(--shotiq-color-shotiqOrange)]"
                      style={{ width: `${Math.max(0, Math.min(100, Number(rows[sel]?.[1]) || 0))}%` }} />
               </div>

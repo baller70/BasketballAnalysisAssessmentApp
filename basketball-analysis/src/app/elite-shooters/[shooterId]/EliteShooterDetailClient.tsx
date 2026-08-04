@@ -172,10 +172,13 @@ export default function EliteShooterDetailClient() {
       </div>
 
       {/* identity + form score band */}
-      <div className="mt-[6px] flex items-center gap-[24px]">
+      <div className="mt-[6px] flex items-center gap-[18px]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
+        {/* Canonical frames the full head-and-shoulders with margin on every
+            side. The old 102x137 box was narrower than the bust, so
+            object-cover cut the right shoulder and the jersey mid-torso. */}
         <img src={headshot} alt={shooter.name}
-             className="h-[137px] w-[102px] shrink-0 rounded-[4px] object-cover" />
+             className="h-[140px] w-[148px] shrink-0 rounded-[4px] object-contain" />
         <div>
           <PageTitle size={44}>{shooter.name.toUpperCase()}</PageTitle>
           <div className="mt-[2px] text-[13px] text-[var(--shotiq-color-graphite)]">
@@ -187,7 +190,7 @@ export default function EliteShooterDetailClient() {
             <span className="rounded-[4px] border border-[var(--shotiq-color-confirmGreen)] px-[10px] py-[3px] text-[12px] text-[var(--shotiq-color-confirmGreen)]">Active</span>
           </div>
         </div>
-        <div className="ml-[10px] w-[212px] shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[20px]">
+        <div className="w-[206px] shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[20px]">
           <SectionLabel>FORM SCORE</SectionLabel>
           <div className="shotiq-numeric text-[46px] leading-[50px] text-[var(--shotiq-color-analysisBlue)]">82</div>
           <div className="h-[7px] w-[150px] rounded-full bg-[var(--shotiq-color-rule)]">
@@ -201,11 +204,11 @@ export default function EliteShooterDetailClient() {
         <div className="flex min-w-0 flex-1 items-center">
           {([[myShots ?? "—", "SHOTS"], [myMakes ?? "—", "MAKES"],
              [formatMakePct(myShots, myMakes), "MAKE %"]] as const).map(([v, l]) => (
-            <div key={l} className="min-w-0 flex-1 border-l border-[var(--shotiq-color-rule)] px-[14px]">
+            <div key={l} className="min-w-0 flex-1 border-l border-[var(--shotiq-color-rule)] px-[11px]">
               <Stat value={v} label={l} valueClass="text-[26px] leading-[30px]" />
             </div>
           ))}
-          <div className="min-w-0 flex-1 border-l border-[var(--shotiq-color-rule)] pl-[14px] text-center">
+          <div className="min-w-0 flex-1 border-l border-[var(--shotiq-color-rule)] px-[8px] text-center">
             <TrendLine points={[3, 2.4, 3.6, 3, 4.4]} width={110} height={40} />
             {/* The shared computed delta; this was a hard-coded +8.1%. */}
             <div className={`text-[11px] ${myDelta != null && myDelta < 0 ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-confirmGreen)]"}`}>{formatDelta(myDelta)} vs last session</div>
@@ -228,14 +231,19 @@ export default function EliteShooterDetailClient() {
       <div className="mt-[6px] flex gap-[14px]">
         {/* hero media + phases */}
         <div className="w-[318px] shrink-0">
-          <div className="relative h-[254px] overflow-hidden rounded-[6px] bg-[#1B1D20]">
+          {/* Canonical's frame is 328x332 — very nearly square (0.99). The
+              254px box letterboxed it to 1.25 and lost a quarter of the
+              subject's height. */}
+          <div className="relative h-[321px] overflow-hidden rounded-[6px] bg-[#1B1D20]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={heroFrame} alt={`${shooter.name} form frame`} className="h-full w-full object-cover" />
-            <span className="absolute bottom-[10px] left-[10px] grid h-[34px] w-[34px] place-items-center rounded-full bg-black/70">
-              <Play className="h-[15px] w-[15px] text-white" fill="white" />
-            </span>
           </div>
+          {/* Canonical stands the play control at the head of the phase row on
+              the white paper below the frame, not over the photograph. */}
           <div className="mt-[8px] flex items-center justify-between px-[4px]">
+            <span className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-full bg-[#2B2D30]">
+              <Play className="h-[14px] w-[14px] text-white" fill="white" />
+            </span>
             {PHASES.map((p) => (
               <div key={p} className="text-center">
                 <PoseFigure phase={toShotPhase(p)} active={p === "RELEASE"} height={29} className="mx-auto" />
@@ -255,7 +263,12 @@ export default function EliteShooterDetailClient() {
               <span className="flex items-center gap-[5px]"><span className="h-[9px] w-[9px] rounded-[2px] bg-[var(--shotiq-color-shotiqOrange)]" /> You</span>
             </div>
           </div>
-          <table className="mt-[6px] w-full text-[12px]" data-testid="mechanics-table">
+          {/* Canonical sets this table two notches below body copy: "Hold Time"
+              measures ink 7 / advance 39 there against 9 / 53 at 12px here.
+              The row pitch stays canonical's 25px, so the leading carries what
+              the type gives back. This is local to the table — the shared body
+              scale measures correct across the build and must not move. */}
+          <table className="mt-[6px] w-full text-[9px]" data-testid="mechanics-table">
             <thead>
               <tr className="text-left shotiq-microcaps text-[var(--shotiq-color-graphite)]">
                 <th className="py-[2px] font-bold">PHASE</th><th className="font-bold">METRIC</th>
@@ -263,7 +276,7 @@ export default function EliteShooterDetailClient() {
                 <th className="whitespace-nowrap font-bold">ELITE RANGE</th><th className="font-bold">YOU</th><th className="font-bold">DIFF</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="leading-[23px]">
               {groups.map((g, gi) => g.items.map(([phase, metric, val, range, you, diff], ri) => {
                 const top = gi > 0 && ri === 0 ? "border-t border-[var(--shotiq-color-rule)]" : ""
                 const hot = phase === "RELEASE"
@@ -371,7 +384,10 @@ export default function EliteShooterDetailClient() {
 
       {/* bottom band */}
       <div className="mb-[8px] mt-[6px] flex gap-[10px]">
-        <Card className="flex w-[380px] shrink-0 flex-col px-[14px] py-[6px]">
+        {/* Canonical leaves 15px above the eyebrow and 22px under the honours
+            strip; 6px pushed all of that slack into the middle of the card,
+            where it read as 77px of dead white over the divider. */}
+        <Card className="flex w-[380px] shrink-0 flex-col px-[14px] py-[12px]">
           <div className="flex items-center justify-between">
             <SectionLabel>CAREER SHOOTING STATS</SectionLabel>
             <button type="button" onClick={() => setTab("CAREER STATS")}
@@ -379,7 +395,7 @@ export default function EliteShooterDetailClient() {
           </div>
           {/* Canonical sets these figures large enough to fill the panel —
               the shrunken version left ~90px of dead space under them. */}
-          <div className="mt-[12px] grid grid-cols-6 divide-x divide-[var(--shotiq-color-rule)] pb-[10px] text-center">
+          <div className="mt-[20px] grid grid-cols-6 divide-x divide-[var(--shotiq-color-rule)] pb-[10px] text-center">
             {[["3P%", pct(shooter.careerThreePct ?? shooter.careerPct)],
               ["3PM", count(shooter.careerThreeMade)], ["3PA", count(shooter.careerThreeAttempts)],
               ["FT%", pct(shooter.careerFreeThrowPct)], ["eFG%", pct(shooter.careerEfgPct)],
@@ -393,7 +409,7 @@ export default function EliteShooterDetailClient() {
           </div>
           {/* Pinned to the foot of the card so the panel fills its height
               instead of leaving ~90px of dead space under the stat row. */}
-          <div className="mt-auto flex flex-wrap items-center gap-x-[5px] gap-y-[2px] border-t border-[var(--shotiq-color-rule)] pb-[6px] pt-[12px] text-[11px] font-semibold">
+          <div className="mt-auto flex flex-wrap items-center gap-x-[5px] gap-y-[2px] border-t border-[var(--shotiq-color-rule)] pt-[12px] text-[11px] font-semibold">
             <span className="whitespace-nowrap">4× NBA Champion</span><span className="text-[var(--shotiq-color-rule)]">|</span>
             <span className="whitespace-nowrap">2× MVP</span><span className="text-[var(--shotiq-color-rule)]">|</span>
             <span className="whitespace-nowrap">10× All-Star</span><span className="text-[var(--shotiq-color-rule)]">|</span>
@@ -447,7 +463,11 @@ export default function EliteShooterDetailClient() {
             stat row came from. */}
         <Card className="w-[306px] shrink-0 px-[14px] py-[6px]">
           <SectionLabel>ABOUT {shooter.name.toUpperCase()}</SectionLabel>
-          <p className="mt-[6px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
+          {/* Canonical runs this bio at ~53 characters a line on a 12.3px
+              pitch (ink 9); 12px/17px gave 38 characters, a fifth line, and
+              ~40px of surplus card height that showed up as dead white in the
+              career panel beside it. */}
+          <p className="mt-[6px] text-[10px] leading-[13px] text-[var(--shotiq-color-graphite)]">
             {shooter.description ?? `Revolutionized the game with unmatched shooting range, quick release, and elite shot-making off the dribble. Known for conditioning, work ethic, and relentless pursuit of improvement.`}
           </p>
           {/* Bold label, plain value — and tight enough gutters that

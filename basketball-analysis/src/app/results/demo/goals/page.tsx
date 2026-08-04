@@ -118,12 +118,16 @@ export default function GoalsPlanPage() {
         <Card className="flex flex-col p-[16px]">
           <div className="text-[11px] font-bold tracking-[0.06em] text-[var(--shotiq-color-confirmGreen)]">PRIMARY GOAL</div>
           <h2 className="mt-[6px] text-[22px] font-semibold leading-[28px]">{primary.title}</h2>
-          <div className="mt-[8px] flex items-center gap-[10px] text-[12px] text-[var(--shotiq-color-graphite)]">
+          {/* Canonical spends this card's height on its own blocks — 27px
+              between the title and the ACTIVE row, 27 to the description, 25 to
+              the bar. The tight 8/10/8 rhythm finished the content 109px early
+              and dumped the difference into one dead gap above the button. */}
+          <div className="mt-[18px] flex items-center gap-[10px] text-[12px] text-[var(--shotiq-color-graphite)]">
             <span className="rounded-[4px] border border-[var(--shotiq-color-confirmGreen)] px-[8px] py-[2px] text-[10px] font-bold text-[var(--shotiq-color-confirmGreen)]">ACTIVE</span>
             Started May 10, 2025 · Target date Jun 10, 2025 <Pencil className="h-[12px] w-[12px]" />
           </div>
-          <p className="mt-[10px] text-[13px] text-[var(--shotiq-color-graphite)]">Improve release consistency and arm alignment</p>
-          <div className="mt-[8px] flex items-center gap-[10px]">
+          <p className="mt-[20px] text-[13px] text-[var(--shotiq-color-graphite)]">Improve release consistency and arm alignment</p>
+          <div className="mt-[16px] flex items-center gap-[10px]">
             <div className="h-[7px] flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
               <div className="h-full rounded-full bg-[var(--shotiq-color-confirmGreen)]" style={{ width: `${pct}%` }} />
             </div>
@@ -132,7 +136,7 @@ export default function GoalsPlanPage() {
           {/* Hairline-ruled and evenly distributed, as canonical sets it — the
               cells used to sit in a left-clustered gap row with no rules. */}
           {/* pr keeps the trend cell off the card border — canonical leaves ~31px */}
-          <StatStrip className="mt-[10px] border-t border-[var(--shotiq-color-rule)] pr-[16px] pt-[10px]"
+          <StatStrip className="mt-[16px] border-t border-[var(--shotiq-color-rule)] pr-[16px] pt-[16px]"
                      cellClass="text-center whitespace-nowrap"
                      valueClass="text-[20px] leading-[22px]"
                      cells={[
@@ -146,11 +150,11 @@ export default function GoalsPlanPage() {
           {/* The card used to stack every block at the top and leave ~180px of
               white above its floor; the two lower sections now take that slack
               the way canonical spends it. */}
-          <div className="mt-[12px] border-t border-[var(--shotiq-color-rule)] pt-[12px]">
+          <div className="mt-[18px] border-t border-[var(--shotiq-color-rule)] pt-[16px]">
           <SectionLabel>PROGRESS TREND</SectionLabel>
           <div className="flex items-center gap-[12px]">
             <div className="min-w-0 flex-1">
-              <TrendLine points={scoreSeries(items, 8).length >= 2 ? scoreSeries(items, 8) : [2, 2.6, 2.2, 3, 2.7, 3.4, 3.2, 4]} width={268} height={92} />
+              <TrendLine points={scoreSeries(items, 8).length >= 2 ? scoreSeries(items, 8) : [2, 2.6, 2.2, 3, 2.7, 3.4, 3.2, 4]} width={268} height={116} />
               <div className="flex justify-between pr-[6px] text-[9px] tracking-[0.03em] text-[var(--shotiq-color-graphite)]">
                 {["Apr 13", "Apr 20", "Apr 27", "May 4", "May 11"].map((d) => <span key={d}>{d}</span>)}
                 <span className="font-bold text-[var(--shotiq-color-confirmGreen)]">TODAY</span>
@@ -165,21 +169,27 @@ export default function GoalsPlanPage() {
           {/* Canonical leaves ~50px between the trend's x-axis labels and this
               heading and draws NO rule there; a full-width divider plus two
               justify-center flex children spread the gap to ~136px. */}
-          <div className="mt-[34px]">
+          <div className="mt-[42px]">
           <SectionLabel>KEY MECHANIC FOCUS</SectionLabel>
-          <div className="mt-[6px] flex items-center gap-[12px]">
+          <div className="mt-[10px] flex items-stretch gap-[12px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/images/canonical/092-key-mechanic.png" alt="" aria-hidden="true"
-                 className="block h-[76px] w-auto max-w-none shrink-0" />
-            <div className="flex-1">
+                 className="block h-[98px] w-auto max-w-none shrink-0 self-center" />
+            <div className="flex-1 self-center">
               <div className="text-[14px] font-semibold">Elbow vertical at release</div>
               <p className="text-[11px] text-[var(--shotiq-color-graphite)]">Maintain a stacked arm position to improve consistency and accuracy.</p>
             </div>
-            <div className="text-right">
-              <div className="text-[9px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">IMPACT</div>
-              <div className="text-[13px] font-bold text-[var(--shotiq-color-confirmGreen)]">High</div>
-              <div className="mt-[3px] text-[9px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">CONFIDENCE</div>
-              <div className="shotiq-numeric text-[13px]">7/10</div>
+            {/* Canonical rules this pair off with a hairline at x=490 and
+                centres the four lines in the column on a 21 / 32 / 21 rhythm;
+                the app ran them right-aligned against the card border on a
+                14 / 22 / 14 stack — 35% denser and with no divider at all.
+                "7/10" is a display value there (cap 12–14, near-black), not the
+                caption-sized numeral this used to set. */}
+            <div className="flex w-[86px] shrink-0 flex-col justify-center border-l border-[var(--shotiq-color-rule)] pl-[14px] text-center">
+              <div className="text-[9px] leading-[10px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">IMPACT</div>
+              <div className="mt-[10px] text-[15px] font-bold leading-[17px] text-[var(--shotiq-color-confirmGreen)]">High</div>
+              <div className="mt-[15px] text-[9px] leading-[10px] tracking-[0.05em] text-[var(--shotiq-color-graphite)]">CONFIDENCE</div>
+              <div className="mt-[8px] shotiq-numeric text-[17px] leading-[19px] text-[var(--shotiq-color-ink)]">7/10</div>
             </div>
           </div>
           </div>

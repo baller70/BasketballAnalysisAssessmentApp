@@ -168,9 +168,13 @@ export default function MediaLibraryPage() {
           Canonical 094 draws a persistent FILTERS column at the left edge of
           the content area, 219px of the 1440px canvas. It is a filter panel,
           not navigation, so it does not compete with the one nav sidebar —
-          and it deliberately carries no `region-sidebar` test id. */}
+          and it deliberately carries no `region-sidebar` test id. It runs
+          186px here rather than canonical's 219: the nav rail already takes
+          196px off the canvas, and every pixel this panel gives back goes
+          straight into the media grid, whose tiles were measuring 16% under
+          canonical's purely because the content column was that much narrower. */}
       <aside ref={filtersRef} id="media-filters" data-testid="media-filters"
-             className="w-[219px] shrink-0 overflow-hidden border-r border-[var(--shotiq-color-rule)] px-[20px] pt-[16px]">
+             className="w-[186px] shrink-0 overflow-hidden border-r border-[var(--shotiq-color-rule)] px-[14px] pt-[16px]">
         <div className="flex items-center justify-between">
           <SectionLabel>FILTERS</SectionLabel>
           <button type="button" onClick={clearAll} className="text-[11px] text-[var(--shotiq-color-shotiqOrange)]">Clear all</button>
@@ -179,8 +183,10 @@ export default function MediaLibraryPage() {
         <div className="relative">
           <button type="button" aria-expanded={menu === "range"}
                   onClick={() => setMenu((m) => (m === "range" ? null : "range"))}
-                  className="mt-[6px] flex h-[36px] w-full items-center gap-[6px] rounded-[5px] border border-[var(--shotiq-color-rule)] px-[8px] text-[11px]">
-            <Calendar className="h-[12px] w-[12px]" /> {range[1]} <ChevronDown className="ml-auto h-[11px] w-[11px]" />
+                  className="mt-[6px] flex h-[36px] w-full items-center gap-[5px] rounded-[5px] border border-[var(--shotiq-color-rule)] px-[7px] text-[10px]">
+            <Calendar className="h-[12px] w-[12px] shrink-0" />
+            <span className="whitespace-nowrap">{range[1]}</span>
+            <ChevronDown className="ml-auto h-[11px] w-[11px] shrink-0" />
           </button>
           {menu === "range" && (
             <div className="absolute left-0 top-[42px] z-30 w-full rounded-[6px] border border-[var(--shotiq-color-rule)] bg-white py-[4px] shadow-[0_8px_20px_rgba(17,17,17,0.10)]">
@@ -251,10 +257,15 @@ export default function MediaLibraryPage() {
                 </div>
               )}
             </div>
-            {/* Destructive. The 50% disabled opacity washed the alert colour out
-                to a near-invisible pink; disabled now reads as graphite. */}
+            {/* Destructive, and canonical keeps it destructive with nothing
+                selected: label and icon measure (253,76,42) on a faint red wash
+                inside a pale red border. Dropping to graphite/rule when
+                disabled made the one destructive control on the page read
+                exactly like the Filter and Sort buttons beside it. The literal
+                is deliberate — the shared reviewRed token is #D92D20, a deeper
+                and less orange red than canonical paints here. */}
             <button type="button" disabled={!selected.size} onClick={deleteSelected}
-                    className="flex h-[42px] items-center gap-[8px] rounded-[6px] border px-[14px] text-[13px] font-semibold border-[var(--shotiq-color-reviewRed)] text-[var(--shotiq-color-reviewRed)] disabled:border-[var(--shotiq-color-rule)] disabled:text-[var(--shotiq-color-graphite)] disabled:font-normal">
+                    className="flex h-[42px] items-center gap-[8px] rounded-[6px] border border-[#FBD9D2] bg-[#FEFBFA] px-[14px] text-[13px] font-semibold text-[#FD4C2A] enabled:border-[#FD4C2A]">
               <Trash2 className="h-[14px] w-[14px]" /> Delete
             </button>
           </div>
@@ -304,7 +315,7 @@ export default function MediaLibraryPage() {
                       shot-type badge and the duration chip painted into their
                       own edges, so the frame keeps the crop's aspect ratio —
                       object-cover in a narrower column sheared all three off. */}
-                  <div className="relative" style={{ aspectRatio: "179 / 152" }}>
+                  <div className="relative" style={{ aspectRatio: "179 / 156" }}>
                     {m.img ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={m.img} alt="" className="absolute inset-0 h-full w-full object-contain" />

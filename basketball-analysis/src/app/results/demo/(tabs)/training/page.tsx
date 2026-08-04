@@ -78,27 +78,73 @@ export default function TrainingHubPage() {
     <div data-testid="screen-desktop-web-training-hub">
     <div className="flex gap-[20px]">
       <div className="min-w-0 flex-1">
-        <PageTitle size={64}>TRAINING HUB</PageTitle>
+        {/* Coaching target and form score are canonical's page-rail footer.
+            Navigation is uniform app-wide now, so they had been parked at the
+            TOP of the right column — which pushed TODAY'S SNAPSHOT 230px down
+            the page and squeezed THIS WEEK'S PLAN's day tiles to 53px against
+            canonical's 82. They ride the title row instead: the block is out of
+            the right column, the right column reopens at canonical's order and
+            offsets, and the page pays nothing for it because the title band was
+            already this tall. */}
+        <div className="flex items-start justify-between gap-[24px]">
+          <PageTitle size={64}>TRAINING HUB</PageTitle>
+          <div className="flex w-[492px] shrink-0 gap-[14px] border-l border-[var(--shotiq-color-rule)] pl-[16px]">
+            <div className="min-w-0 flex-1">
+              <SectionLabel className="text-[var(--shotiq-color-graphite)]">COACHING TARGET</SectionLabel>
+              <Link href="/results/demo/goals" className="mt-[2px] flex items-start justify-between gap-[8px]">
+                <span className="text-[15px] font-semibold leading-[18px]">Keep elbow stacked through release</span>
+                <ChevronRight className="mt-[2px] h-[13px] w-[13px] shrink-0 text-[var(--shotiq-color-graphite)]" />
+              </Link>
+              <div className="mt-[3px] flex items-center gap-[8px]">
+                <span className="inline-block rounded-[3px] border border-[var(--shotiq-color-confirmGreen)] px-[5px] py-[1px] text-[9px] font-bold leading-[11px] tracking-[0.05em] text-[var(--shotiq-color-confirmGreen)]">
+                  ACTIVE GOAL
+                </span>
+                <span className="min-w-0 flex-1 whitespace-nowrap text-[10px] leading-[12px] text-[var(--shotiq-color-graphite)]">Improve release consistency and arm alignment</span>
+              </div>
+              <div className="mt-[4px] flex items-center gap-[8px]">
+                <div className="h-[5px] flex-1 rounded-full bg-[var(--shotiq-color-rule)]">
+                  <div className="h-full w-[72%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" />
+                </div>
+                <GoalPercent size={13} className="shrink-0">72%</GoalPercent>
+              </div>
+            </div>
+            {/* The one shared form-score module rather than a hand-set numeral +
+                verdict pair (see FormScoreCell). */}
+            <div className="w-[132px] shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[12px]">
+              <div className="text-[10px] leading-[12px] text-[var(--shotiq-color-graphite)]">Form score</div>
+              <FormScoreCell score={score} size={24} numeral={30} label={null} caption={null} layout="beside" />
+            </div>
+          </div>
+        </div>
         <p className="mt-[4px] text-[14px] text-[var(--shotiq-color-graphite)]">
           Turn your analysis into better reps. Targeted drills. Smarter workouts. Real progress.
         </p>
 
-        <div className="mt-[12px] grid grid-cols-4 gap-[12px]">
-          <Link href="/training/drills/quick-start" className="flex items-center gap-[10px] rounded-[8px] bg-[var(--shotiq-color-shotiqOrange)] p-[14px] text-white">
-            <CueGlyph kind="shoulders" size={26} accent="#FFFFFF" className="shrink-0" />
+        {/* Canonical does not run four equal quarters here — the cards measure
+            197 / 161 / 152 / 171. Equal quarters starved "Quick start" and
+            "Calendar" of the width their copy needs and broke both onto a third
+            line, which is 14px of page height nobody asked for. */}
+        <div className="mt-[12px] grid grid-cols-[222fr_168fr_170fr_174fr] gap-[12px]">
+          {/* The card copy sets 10px here, not 11: measured on the matched
+              string "Get a personalized workout", canonical's line runs 26
+              glyphs in 97px at ink height 7 and this face was setting the same
+              copy at ink height 8 and 5.1px per glyph — enough to break every
+              card onto a third line. */}
+          <Link href="/training/drills/quick-start" className="flex items-center gap-[9px] rounded-[8px] bg-[var(--shotiq-color-shotiqOrange)] p-[13px] text-white">
+            <CueGlyph kind="shoulders" size={24} accent="#FFFFFF" className="shrink-0" />
             <div className="min-w-0 flex-1"><div className="text-[15px] font-semibold">Quick start</div>
-              <div className="text-[11px] opacity-90">Get a personalized workout in under 60 seconds.</div></div>
-            <ChevronRight className="h-[16px] w-[16px] shrink-0" />
+              <div className="text-[10px] leading-[13px] opacity-90">Get a personalized workout in under 60 seconds.</div></div>
+            <ChevronRight className="h-[15px] w-[15px] shrink-0" />
           </Link>
           {QUICK_ACTIONS.map(([t, d, href, mark]) => (
             <Link key={t} href={href}
-                  className="flex items-center gap-[10px] rounded-[8px] border border-[var(--shotiq-color-rule)] bg-white p-[14px] hover:border-[var(--shotiq-color-graphite)]">
+                  className="flex items-center gap-[9px] rounded-[8px] border border-[var(--shotiq-color-rule)] bg-white p-[13px] hover:border-[var(--shotiq-color-graphite)]">
               {mark === "calendar"
-                ? <CalendarCheck className="h-[24px] w-[24px] shrink-0" strokeWidth={1.5} />
-                : <CueGlyph kind={mark} size={26} accent="var(--shotiq-color-shotiqOrange)" className="shrink-0" />}
+                ? <CalendarCheck className="h-[22px] w-[22px] shrink-0" strokeWidth={1.5} />
+                : <CueGlyph kind={mark} size={24} accent="var(--shotiq-color-shotiqOrange)" className="shrink-0" />}
               <div className="min-w-0 flex-1"><div className="text-[15px] font-semibold">{t}</div>
-                <div className="text-[11px] text-[var(--shotiq-color-graphite)]">{d}</div></div>
-              <ChevronRight className="h-[16px] w-[16px] shrink-0 text-[var(--shotiq-color-graphite)]" />
+                <div className="text-[10px] leading-[13px] text-[var(--shotiq-color-graphite)]">{d}</div></div>
+              <ChevronRight className="h-[15px] w-[15px] shrink-0 text-[var(--shotiq-color-graphite)]" />
             </Link>
           ))}
         </div>
@@ -145,39 +191,10 @@ export default function TrainingHubPage() {
       </div>
 
       {/* right rail */}
-      <aside className="w-[404px] shrink-0 border-l border-[var(--shotiq-color-rule)] pl-[18px]">
-        {/* Coaching target and form score used to live in this screen's bespoke
-            left sidebar. Navigation is now uniform app-wide, so they moved here
-            rather than being dropped. Canonical stacks the block — heading,
-            title, badge, goal line + percent, bar, then the form-score module —
-            and never truncates the goal string; this used to cram all of it and
-            the 82/GOOD pair onto one 348px line. */}
-        <SectionLabel className="text-[var(--shotiq-color-graphite)]">COACHING TARGET</SectionLabel>
-        <Link href="/results/demo/goals" className="mt-[5px] flex items-start justify-between gap-[8px]">
-          <span className="text-[17px] font-semibold leading-[21px]">Keep elbow stacked through release</span>
-          <ChevronRight className="mt-[3px] h-[14px] w-[14px] shrink-0 text-[var(--shotiq-color-graphite)]" />
-        </Link>
-        <div className="mt-[6px]">
-          <span className="inline-block rounded-[3px] border border-[var(--shotiq-color-confirmGreen)] px-[6px] py-[1px] text-[9px] font-bold tracking-[0.05em] text-[var(--shotiq-color-confirmGreen)]">
-            ACTIVE GOAL
-          </span>
-        </div>
-        <div className="mt-[6px] flex items-baseline gap-[10px]">
-          <span className="min-w-0 flex-1 text-[11px] leading-[15px] text-[var(--shotiq-color-graphite)]">Improve release consistency and arm alignment</span>
-          <GoalPercent size={15} className="shrink-0">72%</GoalPercent>
-        </div>
-        <div className="mt-[5px] h-[5px] rounded-full bg-[var(--shotiq-color-rule)]">
-          <div className="h-full w-[72%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" />
-        </div>
-        {/* The one shared form-score module rather than a hand-set numeral +
-            verdict pair (see FormScoreCell). Canonical stacks it under the
-            target with a sentence-case label, not a caps eyebrow. */}
-        <div className="mt-[8px]">
-          <div className="text-[11px] text-[var(--shotiq-color-graphite)]">Form score</div>
-          <FormScoreCell score={score} size={28} numeral={34} label={null} layout="below" />
-        </div>
-
-        <div className="mt-[8px] flex items-center justify-between border-t border-[var(--shotiq-color-rule)] pt-[8px]">
+      <aside className="flex w-[404px] shrink-0 flex-col border-l border-[var(--shotiq-color-rule)] pl-[18px]">
+        {/* Canonical's right column opens on TODAY'S SNAPSHOT, level with the
+            page title, then UP NEXT, then THIS WEEK'S PLAN. */}
+        <div className="flex items-center justify-between">
           <SectionLabel>TODAY&apos;S SNAPSHOT</SectionLabel>
           <span className="text-[11px] text-[var(--shotiq-color-graphite)]">Today at 8:24 AM</span>
         </div>
@@ -196,7 +213,12 @@ export default function TrainingHubPage() {
           </div>
         </div>
 
-        <SectionLabel className="mt-[6px] border-t border-[var(--shotiq-color-rule)] pt-[6px]">UP NEXT</SectionLabel>
+        {/* Canonical spends this column's slack between the blocks — 128px
+            under the snapshot, 28 under UP NEXT — rather than packing them at
+            the top. Proportional spacers, so they collapse to nothing if the
+            column ever becomes the taller of the two. */}
+        <div className="min-h-[6px] flex-[8]" aria-hidden="true" />
+        <SectionLabel className="border-t border-[var(--shotiq-color-rule)] pt-[6px]">UP NEXT</SectionLabel>
         <Card className="mt-[8px] p-[10px]">
           <Link href="/training/drills/quick-start-workout" className="flex items-center gap-[12px]">
             <TrendLine points={[2, 4, 3, 5]} width={44} height={30} stroke="var(--shotiq-color-shotiqOrange)" dotFill="var(--shotiq-color-shotiqOrange)" />
@@ -212,17 +234,21 @@ export default function TrainingHubPage() {
           </Link>
         </Card>
 
-        <div className="mt-[6px] flex items-center justify-between">
+        <div className="min-h-[6px] flex-[2]" aria-hidden="true" />
+        <div className="flex items-center justify-between">
           <SectionLabel>THIS WEEK&apos;S PLAN</SectionLabel>
           <Link href="/training/calendar" className="text-[11px] text-[var(--shotiq-color-graphite)]">View calendar</Link>
         </div>
+        {/* Canonical's day tiles are 82px tall and carry a readable sparkline;
+            squeezed to 53px by the block that used to sit above them, the marks
+            collapsed into a smudge. */}
         <Card className="mt-[8px] p-[8px]">
           <div className="flex gap-[4px]">
             {WEEK.map(([d, len, active]) => (
               <Link key={d} href="/training/calendar"
-                    className={`min-w-0 flex-1 rounded-[5px] border p-[4px] text-center ${active ? "border-2 border-[var(--shotiq-color-shotiqOrange)]" : "border-[var(--shotiq-color-rule)]"}`}>
+                    className={`min-w-0 flex-1 rounded-[5px] border p-[8px] text-center ${active ? "border-2 border-[var(--shotiq-color-shotiqOrange)]" : "border-[var(--shotiq-color-rule)]"}`}>
                 <div className="text-[9px] font-bold">{d}</div>
-                <TrendLine points={[2, 3, 2.4, 3.6]} width={24} height={17}
+                <TrendLine points={[2, 3, 2.4, 3.6]} width={33} height={15} className="mx-auto my-[12px]"
                            stroke={len === "Rest" ? "var(--shotiq-color-muted)" : "var(--shotiq-color-ink)"} dotFill={len === "Rest" ? "var(--shotiq-color-muted)" : "var(--shotiq-color-ink)"} />
                 <div className="text-[8px] text-[var(--shotiq-color-graphite)]">{len}</div>
               </Link>
@@ -255,7 +281,10 @@ export default function TrainingHubPage() {
               <Card className="overflow-hidden">
                 <div className="relative">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={img} alt="" className="h-[88px] w-full object-cover" />
+                  {/* Canonical crops these at 141x109 — aspect 1.29. An 88px
+                      frame on a 146px card gave 1.64 and turned the strip into
+                      a letterbox row. */}
+                  <img src={img} alt="" className="h-[113px] w-full object-cover" />
                   <button type="button" aria-pressed={saved.has(t)}
                           aria-label={saved.has(t) ? "Remove from my drills" : "Save drill"}
                           onClick={(e) => { e.preventDefault(); toggleSave(t) }}

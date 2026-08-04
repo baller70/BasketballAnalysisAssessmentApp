@@ -98,10 +98,15 @@ export default function OnboardingPage() {
       <div className="flex w-[186px] shrink-0 flex-col border-r border-[var(--shotiq-color-rule)] pb-[22px] pt-[26px]">
         {STEPS.map(([s, Icon], i) => (
           <button key={s} type="button" onClick={() => setStep(i + 1)} aria-current={step === i + 1 ? "true" : undefined}
-                  className={`relative flex h-[44px] shrink-0 items-center gap-[14px] pl-[26px] text-[13px] font-bold tracking-[0.04em] ${
+                  /* Canonical sets the step names in the condensed display
+                     face: cap 13 over an 80px advance for MEASUREMENTS. The
+                     body face at 13px bold drew cap 10 over 103px — smaller
+                     letters spread 29% wider, and blacker than canonical's
+                     slate. */
+                  className={`shotiq-display relative flex h-[44px] shrink-0 items-center gap-[14px] pl-[26px] text-[18px] leading-[20px] tracking-[0.01em] ${
                     step === i + 1
                       ? "bg-[var(--shotiq-color-warmCanvas)] text-[var(--shotiq-color-shotiqOrange)]"
-                      : "text-[var(--shotiq-color-ink)]"} ${i ? "mt-[13px]" : ""}`}>
+                      : "text-[#2B2F37]"} ${i ? "mt-[13px]" : ""}`}>
             {step === i + 1 && <span className="absolute inset-y-0 left-0 w-[3px] bg-[var(--shotiq-color-shotiqOrange)]" />}
             {Icon
               ? <Icon className="h-[20px] w-[20px] shrink-0" strokeWidth={1.5} />
@@ -135,22 +140,29 @@ export default function OnboardingPage() {
 
       {/* form — canonical bounds this region with hairlines rather than a
           rounded card, which is what buys the field grid its width. */}
-      <div className="flex min-w-0 flex-1 flex-col px-[26px] py-[18px]">
-        {/* 52px drew a 37px cap on JORDAN against canonical's 49px. */}
-        <PageTitle size={70}>WELCOME, {first.toUpperCase()}</PageTitle>
-        <p className="mt-[4px] max-w-[560px] text-[14px] text-[var(--shotiq-color-graphite)]">
-          Let&apos;s measure your baseline so ShotIQ can deliver personalized analysis and training that match your game.
-        </p>
+      <div className="flex min-w-0 flex-1 flex-col py-[18px] pr-[13px]">
+        <div className="px-[26px]">
+          {/* 52px drew a 37px cap on JORDAN against canonical's 49px. */}
+          <PageTitle size={70}>WELCOME, {first.toUpperCase()}</PageTitle>
+          <p className="mt-[4px] max-w-[560px] text-[14px] text-[var(--shotiq-color-graphite)]">
+            Let&apos;s measure your baseline so ShotIQ can deliver personalized analysis and training that match your game.
+          </p>
+        </div>
 
-        {/* The region runs down to the phase band and carries the Back / Save /
-            Continue row inside it, under a hairline — canonical's arrangement. */}
-        <div className="mt-[16px] flex flex-1 flex-col border-t border-[var(--shotiq-color-rule)] pt-[28px]">
+        {/* Canonical bounds the whole form in one card — borders at x=223 and
+            x=933 running y=231 to y=790, with a single internal hairline over
+            the Back / Save / Continue row. A lone top rule left the panel with
+            no left, right or bottom edge at all. */}
+        <Card className="mt-[26px] flex flex-1 flex-col px-[26px] pb-[16px] pt-[24px]">
           <div className="flex items-center justify-between">
-            <SectionLabel>TELL US ABOUT YOU</SectionLabel>
+            {/* A heading, not an eyebrow: canonical draws this in the display
+                face at a 19px cap in pure black, twice the cap of the field
+                labels under it. */}
+            <div className="shotiq-display text-[27px] leading-[29px] text-[#000000]">TELL US ABOUT YOU</div>
             <span className="text-[11px] text-[var(--shotiq-color-graphite)]">All fields required</span>
           </div>
           {/* Canonical's field rows sit on a 93px pitch; 84px packed them. */}
-          <div className="mt-[26px] grid grid-cols-2 gap-x-[26px] gap-y-[26px]">
+          <div className="mt-[26px] grid grid-cols-2 gap-x-[30px] gap-y-[26px]">
             <div>
               <div className={lbl}>DOMINANT HAND <Info className="h-[10px] w-[10px]" /></div>
               <div className="mt-[6px] flex overflow-hidden rounded-[5px] border border-[var(--shotiq-color-rule)]">
@@ -200,14 +212,17 @@ export default function OnboardingPage() {
             </div>
             <div>
               <div className={lbl}>HEIGHT <Info className="h-[10px] w-[10px]" /></div>
-              <div className="mt-[6px] flex gap-[8px]">
-                <div className={`${box} flex flex-1 items-center justify-between`}>
+              {/* Canonical draws HEIGHT as ONE control with an internal
+                  divider between feet and inches, not two detached boxes with
+                  a gap between them. */}
+              <div className={`${box} mt-[6px] flex items-stretch px-0`}>
+                <div className="flex flex-1 items-center justify-between px-[12px]">
                   <input type="number" value={ft} data-testid="height-ft"
                          onChange={(e) => store.setHeight((+e.target.value || 0) * 12 + inch)}
                          className="w-[46px] outline-none" />
                   <span className="text-[12px] text-[var(--shotiq-color-graphite)]">ft</span>
                 </div>
-                <div className={`${box} flex flex-1 items-center justify-between`}>
+                <div className="flex flex-1 items-center justify-between border-l border-[var(--shotiq-color-rule)] px-[12px]">
                   <input type="number" value={inch}
                          onChange={(e) => store.setHeight(ft * 12 + (+e.target.value || 0))}
                          className="w-[46px] outline-none" />
@@ -243,7 +258,8 @@ export default function OnboardingPage() {
             </div>
           </div>
 
-        <div className="mt-auto flex items-center justify-between border-t border-[var(--shotiq-color-rule)] pt-[16px]">
+        {/* Canonical's footer hairline runs the full width of the card. */}
+        <div className="-mx-[26px] mt-auto flex items-center justify-between border-t border-[var(--shotiq-color-rule)] px-[26px] pt-[16px]">
           {/* Canonical draws Back enabled on this step. On the first card there
               is nothing behind it in the wizard, so it leaves onboarding. */}
           <button type="button" onClick={() => (step === 1 ? router.push("/dashboard") : setStep(step - 1))}
@@ -260,7 +276,7 @@ export default function OnboardingPage() {
             </button>
           </div>
         </div>
-        </div>
+        </Card>
 
       </div>
 
