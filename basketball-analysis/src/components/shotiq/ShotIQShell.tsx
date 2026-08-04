@@ -461,7 +461,7 @@ export function MediaSurface({
 }
 
 /** Inline stat block: numeric value over tracked caps label. */
-export function Stat({ value, label, valueClass = "text-[24px] leading-[28px]", accent }: {
+export function Stat({ value, label, valueClass = "text-[29px] leading-[32px]", accent }: {
   value: React.ReactNode; label: string; valueClass?: string; accent?: string
 }) {
   return (

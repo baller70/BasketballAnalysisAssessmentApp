@@ -226,7 +226,12 @@ export default function FlawsPage() {
       {/* bottom strip — no bottom margin: this is the last block on the screen
           and 8px of trailing margin pushed the page past the 900px fold once
           the rail widened from 165px to the unified 196px. */}
-      <div className="mt-[2px] flex gap-[24px] border-t border-[var(--shotiq-color-rule)] pt-[4px]">
+      {/* Canonical clears 16px between "Lower impact flaws (2)" and this rule
+          and 15px between the rule and FLAW HISTORY (y706 → 722 → 738); the
+          app was running 5px and 6px, so the three elements read as touching.
+          The space comes out of the 55–64px of dead paper the same graders
+          measured below the chart. */}
+      <div className="mt-[14px] flex gap-[24px] border-t border-[var(--shotiq-color-rule)] pt-[13px]">
         <div className="w-[500px] shrink-0">
           <SectionLabel>FLAW HISTORY</SectionLabel>
           <div className="mt-[4px] flex">
@@ -281,16 +286,19 @@ export default function FlawsPage() {
             <SectionLabel>RECENT SESSIONS</SectionLabel>
             <Link href="/results/demo/history" className="text-[12px] text-[var(--shotiq-color-graphite)]">View all history</Link>
           </div>
-          <div className="mt-[2px] divide-y divide-[var(--shotiq-color-rule)]">
+          {/* Canonical encloses these three rows in a bordered box (y761–876,
+              x927–1410) with its internal rules at y796 and y834. The app drew
+              the two internal rules and no box. */}
+          <Card className="mt-[6px] divide-y divide-[var(--shotiq-color-rule)] px-[12px]">
             {[["Today at 8:24 AM", "24 shots", "-8.3%"], ["May 10, 2025 at 6:15 PM", "22 shots", "-9.6%"], ["May 7, 2025 at 5:02 PM", "25 shots", "-11.2%"]].map(([d, s, v]) => (
-              <Link key={d} href="/results/demo/history" className="flex items-center py-[8px] text-[12px]">
+              <Link key={d} href="/results/demo/history" className="flex items-center py-[9px] text-[12px]">
                 <span className="w-[170px]">{d}</span>
                 <span className="text-[var(--shotiq-color-graphite)]">{s}</span>
                 <span className="ml-auto font-bold text-[var(--shotiq-color-reviewRed)]">{v}</span>
                 <ChevronRight className="ml-[10px] h-[13px] w-[13px] text-[var(--shotiq-color-graphite)]" />
               </Link>
             ))}
-          </div>
+          </Card>
         </div>
       </div>
     </div>

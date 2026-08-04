@@ -19,7 +19,7 @@ import React, { useRef, useState } from "react"
 import Link from "next/link"
 import { useAuthStore } from "@/stores/authStore"
 import { UnifiedSidebar, PageTitle } from "@/components/shotiq/ShotIQShell"
-import { Eye, EyeOff, Loader2, ChevronDown, ChevronRight, Play, Maximize2 } from "lucide-react"
+import { Eye, EyeOff, Loader2, ChevronDown, ChevronRight, Play, Maximize } from "lucide-react"
 
 const STEPS = [
   { title: "CAPTURE", body: ["Record from any angle", "with your phone."], icon: "/images/canonical/077-step-capture.png" },
@@ -253,7 +253,7 @@ export default function SignInPage() {
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={s.icon} alt="" className="max-h-[58px] w-auto" />
                   </div>
-                  <div className="text-[14px] font-bold tracking-[0.05em]">{s.title}</div>
+                  <div className="shotiq-section-label">{s.title}</div>
                   <p className="mt-[7px] text-[12px] leading-[17px] text-[var(--shotiq-color-graphite)]">
                     {s.body.map((b) => <span key={b} className="block">{b}</span>)}
                   </p>
@@ -289,15 +289,22 @@ export default function SignInPage() {
               <div className="flex h-[41px] shrink-0 items-center gap-[10px] px-[14px] text-white">
                 <Play className="h-[15px] w-[13px] shrink-0 fill-white" aria-hidden="true" />
                 <span className="shrink-0 text-[12px] tabular-nums">0:00 / 0:07</span>
-                <span className="h-[3px] flex-1 rounded-full bg-white/35">
-                  <span className="block h-full w-[24%] rounded-full bg-white" />
-                </span>
-                <Maximize2 className="h-[14px] w-[14px] shrink-0" aria-hidden="true" />
+                {/* The unfilled part of the track was `bg-white/35` on a
+                    `<span>` and did not paint at all: both graders measured the
+                    light run at 87px (the fill alone) against canonical's
+                    ~309px (x654→963), i.e. ~220px of dead bar. Drawn as a real
+                    block with an explicit rgba so the whole track is visible. */}
+                <div className="h-[3px] min-w-0 flex-1 rounded-full bg-[rgba(255,255,255,0.45)]">
+                  <div className="h-full w-[24%] rounded-full bg-white" />
+                </div>
+                {/* Canonical draws four corner brackets here, not a diagonal
+                    double-arrow. */}
+                <Maximize className="h-[14px] w-[14px] shrink-0" aria-hidden="true" />
               </div>
             </div>
 
             <div className="flex-1 rounded-[8px] border border-[var(--shotiq-color-rule)] px-[22px] py-[16px]">
-              <div className="text-[12px] font-bold tracking-[0.05em]">FORM SCORE</div>
+              <div className="shotiq-section-label">FORM SCORE</div>
               {/* Canonical's progress track sits UNDER the numeral and is 133px
                   wide, not the full card. Spanning it across both columns read
                   as a card-wide divider. GOOD and its caption are left-aligned
@@ -318,7 +325,7 @@ export default function SignInPage() {
                 </div>
               </div>
 
-              <div className="mt-[18px] border-t border-[var(--shotiq-color-rule)] pt-[14px] text-[12px] font-bold tracking-[0.05em]">
+              <div className="shotiq-section-label mt-[18px] border-t border-[var(--shotiq-color-rule)] pt-[14px]">
                 KEY METRICS
               </div>
               {/* Canonical rules each metric off from the next and spreads the
@@ -332,7 +339,7 @@ export default function SignInPage() {
                 ))}
               </dl>
 
-              <div className="mt-[20px] border-t border-[var(--shotiq-color-rule)] pt-[16px] text-[12px] font-bold tracking-[0.05em]">
+              <div className="shotiq-section-label mt-[20px] border-t border-[var(--shotiq-color-rule)] pt-[16px]">
                 PRIMARY FOCUS
               </div>
               <div className="mt-[8px] flex items-center justify-between gap-[6px]">
@@ -345,7 +352,7 @@ export default function SignInPage() {
           </div>
 
           <div className="relative -ml-[12px] mt-[12px] h-[126px] rounded-[8px] border border-[var(--shotiq-color-rule)]">
-            <div className="absolute left-[15px] top-[19px] text-[12px] font-bold tracking-[0.05em]">SHOT PHASES</div>
+            <div className="shotiq-section-label absolute left-[15px] top-[19px]">SHOT PHASES</div>
             {/* Phase figures + labels are the exact strip cropped from the
                 canonical screen (077, x585 y746 550x90). Drawn at native size:
                 downscaling it to 510x83 thinned every stroke and lifted the

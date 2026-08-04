@@ -298,7 +298,7 @@ export default function ResultsOverviewPage() {
                [formatMakePct(liveShots, liveMakes), "MAKE %"],
                [liveScore != null ? String(liveScore) : "—", "FORM SCORE"]] as const).map(([v, l], i) => (
               <div key={l} className={`pr-[16px] text-center ${i > 0 ? "border-l border-[var(--shotiq-color-rule)] pl-[16px]" : ""}`}>
-                <div className="shotiq-numeric text-[27px] leading-[30px]">{v}</div>
+                <div className="shotiq-numeric text-[30px] leading-[33px]">{v}</div>
                 <div className="mt-[4px] shotiq-microcaps text-[var(--shotiq-color-graphite)]">{l}</div>
                 {l === "FORM SCORE" && (
                   <div className="mt-[6px] flex items-center justify-center gap-[6px] text-[12px]">
@@ -307,8 +307,11 @@ export default function ResultsOverviewPage() {
                 )}
               </div>
             ))}
-            <div className="ml-auto pt-[2px] text-center">
-              <div className="shotiq-microcaps">TREND</div>
+            {/* Canonical hangs "vs last session" under the DELTA, right-
+                aligned; centring it under the sparkline regrouped the block and
+                opened a gap between FORM SCORE and TREND. */}
+            <div className="ml-auto pl-[8px] pt-[2px] text-right">
+              <div className="shotiq-microcaps text-left">TREND</div>
               <div className="flex items-end gap-[6px]">
                 <TrendLine points={[2.2, 2.0, 2.8, 2.4, 3.4]} width={104} height={40} stroke="var(--shotiq-color-ink)" />
                 <span className={`pb-[4px] text-[12px] font-medium ${delta != null && delta < 0 ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-confirmGreen)]"}`}>{formatDelta(delta)}</span>

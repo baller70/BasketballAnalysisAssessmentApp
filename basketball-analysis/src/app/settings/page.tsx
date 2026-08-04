@@ -425,7 +425,7 @@ export default function SettingsPage() {
             return (
               <button key={id} type="button" onClick={() => goTo(id)}
                       aria-current={active ? "true" : undefined}
-                      className={`relative flex w-full items-center gap-[13px] px-[21px] py-[13px] text-left text-[13px] ${
+                      className={`relative flex w-full items-center gap-[13px] px-[21px] py-[19px] text-left text-[13px] ${
                         active
                           ? "bg-[var(--shotiq-color-warmCanvas)] font-semibold text-[var(--shotiq-color-shotiqOrange)]"
                           : "text-[var(--shotiq-color-ink)] hover:bg-[var(--shotiq-color-warmCanvas)]"}`}>
@@ -488,10 +488,12 @@ export default function SettingsPage() {
           <Card id="section-profile" className="min-w-0 flex-1 scroll-mt-[76px] p-[18px]">
             <div className="flex items-start justify-between">
               <SectionLabel>PROFILE INFORMATION</SectionLabel>
-              <div className="text-right"><div className={lbl}>JOINED</div><div className="text-[12px]">Jan 14, 2024</div></div>
+              <div className="text-right"><div className="shotiq-section-label text-[var(--shotiq-color-graphite)]">JOINED</div><div className="text-[12px]">Jan 14, 2024</div></div>
             </div>
+            {/* Canonical rules the photo column off from the field column —
+                a 1px (239,239,240) hairline at x=384 running ~255px. */}
             <div className="mt-[8px] flex gap-[18px]">
-              <div className="w-[118px] shrink-0 text-center">
+              <div className="w-[136px] shrink-0 border-r border-[#EFEFF0] pr-[18px] text-center">
                 <div className="mx-auto grid h-[118px] w-[118px] place-items-center overflow-hidden rounded-full bg-[var(--shotiq-color-rule)]">
                   {avatarUrl ? (
                     <Image src={avatarUrl} alt="Profile photo" width={118} height={118} className="h-full w-full object-cover" unoptimized />
@@ -538,10 +540,16 @@ export default function SettingsPage() {
                     half at the WEIGHT border; 62px restores the padding, and
                     the 5px gutter keeps the select wide enough for its label
                     plus the chevron. */}
-                <div className="col-span-2 grid grid-cols-[62px_62px_62px_1fr] items-end gap-[5px]">
+                {/* Canonical does NOT butt these four together: it gives each
+                    gutter a hairline down the middle of it — fields at
+                    401–458 / 502–558 / 603–660 / 698–872 with rules at x=480,
+                    581 and 682, i.e. ~22px of air either side of each rule.
+                    The app ran a 5px gutter and no rules at all. */}
+                <div className="col-span-2 grid grid-cols-[62px_62px_62px_1fr] items-end gap-[16px]">
                   {([["HEIGHT", "height"], ["WEIGHT", "weight"], ["WINGSPAN", "wingspan"]] as const).map(([l, k]) => (
-                    <div key={k}><div className={lbl}>{l}</div>
-                      <input className={`${field} mt-[2px] px-[6px]`} value={form[k]} onChange={(e) => setForm({ ...form, [k]: e.target.value })} /></div>
+                    <div key={k} className="relative"><div className={lbl}>{l}</div>
+                      <input className={`${field} mt-[2px] px-[6px]`} value={form[k]} onChange={(e) => setForm({ ...form, [k]: e.target.value })} />
+                      <span aria-hidden="true" className="absolute bottom-0 right-[-9px] h-[34px] w-px bg-[#EFEFF0]" /></div>
                   ))}
                   <div><div className={lbl}>SHOOTING PREFERENCE</div>
                     <select className={`${field} mt-[2px] px-[7px]`} value={form.pref} onChange={(e) => setForm({ ...form, pref: e.target.value })}>
@@ -561,18 +569,23 @@ export default function SettingsPage() {
           </Card>
 
           {/* performance summary */}
-          <Card className="flex w-[470px] shrink-0 flex-col p-[18px]">
+          {/* Canonical splits this row 658 : 507 (1.30:1); the app ran 498 : 469
+              (1.06:1), which is where the profile form lost the width its four
+              measurement fields and their rules need. The trend cell inside
+              this card gives back what the card gives up, so the SHOTS / MAKES
+              / MAKE % cells do not get any narrower than they already were. */}
+          <Card className="flex w-[430px] shrink-0 flex-col p-[18px]">
             <SectionLabel>PERFORMANCE SUMMARY</SectionLabel>
             <div className="mt-[10px] flex gap-[20px]">
               <div className="w-[118px] shrink-0 border-r border-[var(--shotiq-color-rule)] pr-[16px]">
-                <div className={lbl}>FORM SCORE</div>
+                <div className="shotiq-section-label text-[var(--shotiq-color-graphite)]">FORM SCORE</div>
                 <div className="shotiq-numeric text-[52px] leading-[56px] text-[var(--shotiq-color-shotiqOrange)]">82</div>
                 <div className="h-[6px] rounded-full bg-[var(--shotiq-color-rule)]"><div className="h-full w-[82%] rounded-full bg-[var(--shotiq-color-shotiqOrange)]" /></div>
                 <div className="mt-[6px] text-[13px] font-bold text-[var(--shotiq-color-analysisBlue)]">GOOD</div>
                 <div className="text-[10px] text-[var(--shotiq-color-graphite)]">Keep building consistency.</div>
               </div>
               <div className="min-w-0 flex-1">
-                <div className={lbl}>PRIMARY COACHING TARGET</div>
+                <div className="shotiq-section-label text-[var(--shotiq-color-graphite)]">PRIMARY COACHING TARGET</div>
                 <Link href="/results/demo/goals" className="mt-[2px] flex items-center justify-between">
                   <span className="text-[16px] font-semibold">Keep elbow stacked through release</span>
                   <ChevronRight className="h-[14px] w-[14px] text-[var(--shotiq-color-graphite)]" />
@@ -591,7 +604,7 @@ export default function SettingsPage() {
                   <div className="min-w-0 flex-1 whitespace-nowrap pr-[12px]"><Stat value={shots ?? "—"} label="SHOTS" valueClass="text-[22px] leading-[26px]" /></div>
                   <div className="min-w-0 flex-1 whitespace-nowrap px-[12px]"><Stat value={makes ?? "—"} label="MAKES" valueClass="text-[22px] leading-[26px]" /></div>
                   <div className="min-w-0 flex-1 whitespace-nowrap px-[12px]"><Stat value={formatMakePct(shots, makes)} label="MAKE %" valueClass="text-[22px] leading-[26px]" /></div>
-                  <div className="w-[146px] shrink-0 pl-[12px] text-right">
+                  <div className="w-[112px] shrink-0 pl-[10px] text-right">
                     <TrendLine points={[3, 2.5, 3.4, 3, 4]} width={80} height={28} className="ml-auto" />
                     {/* Shared computed delta, not a hand-written +8.1%. The
                         caption is small-caps in canonical and sets inside the
@@ -629,7 +642,10 @@ export default function SettingsPage() {
         </div>
 
         {/* summary cards — every row is a live, persisted control */}
-        <div className="mt-[12px] grid grid-cols-3 gap-[16px]">
+        {/* Canonical's bottom row is NOT three equal thirds: the cards measure
+            355 / 380 / 412 (x231–585, 602–983, 997–1411), a 1 : 1.070 : 1.161
+            ramp that follows the length of each card's copy. */}
+        <div className="mt-[12px] grid grid-cols-[355fr_380fr_412fr] gap-[16px]">
           <Card id="section-notifications" className="scroll-mt-[76px] px-[16px] pb-[8px] pt-[16px]">
             <div className="flex items-center gap-[10px]">
               {/* eslint-disable-next-line @next/next/no-img-element */}

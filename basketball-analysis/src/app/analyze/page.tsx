@@ -229,9 +229,9 @@ export default function AnalyzeWorkspacePage() {
                 {/* Hairline-ruled and spread across the card, as canonical draws
                     it; the trend plots the real score history. */}
                 <div className="mt-[8px] flex items-center divide-x divide-[var(--shotiq-color-rule)]">
-                  <div className="flex-1 pr-[12px]"><Stat value={shots ?? "—"} label="SHOTS" valueClass="text-[20px] leading-[24px]" /></div>
-                  <div className="flex-1 px-[12px]"><Stat value={makes ?? "—"} label="MAKES" valueClass="text-[20px] leading-[24px]" /></div>
-                  <div className="flex-1 px-[12px]"><Stat value={formatMakePct(shots, makes)} label="MAKE %" valueClass="text-[20px] leading-[24px]" /></div>
+                  <div className="flex-1 pr-[12px]"><Stat value={shots ?? "—"} label="SHOTS" valueClass="text-[24px] leading-[28px]" /></div>
+                  <div className="flex-1 px-[12px]"><Stat value={makes ?? "—"} label="MAKES" valueClass="text-[24px] leading-[28px]" /></div>
+                  <div className="flex-1 px-[12px]"><Stat value={formatMakePct(shots, makes)} label="MAKE %" valueClass="text-[24px] leading-[28px]" /></div>
                   <div className="shrink-0 pl-[12px] text-right">
                     <TrendLine points={trend} width={84} height={30} />
                     <div className={`text-[10px] ${delta != null && delta < 0 ? "text-[var(--shotiq-color-reviewRed)]" : "text-[var(--shotiq-color-confirmGreen)]"}`}>
@@ -282,7 +282,8 @@ export default function AnalyzeWorkspacePage() {
               <p className="mt-[4px] text-[12px] text-[var(--shotiq-color-graphite)]">We&apos;ll run these checks before analysis.</p>
               <ul className="mt-[10px] divide-y divide-[var(--shotiq-color-rule)]">
                 {CHECKS.map(([t, d, kind]) => (
-                  <li key={t} className="flex items-center gap-[12px] py-[8px]">
+                  // Canonical's row pitch here is 48px; the app was at 53 (+10%).
+                  <li key={t} className="flex items-center gap-[12px] py-[6px]">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={`/images/canonical/${kind}.png`} alt="" aria-hidden="true"
                          className="block h-[26px] w-[38px] max-w-none shrink-0 object-contain" />

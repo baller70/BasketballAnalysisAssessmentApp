@@ -353,7 +353,10 @@ export default function LiveCapturePage() {
               <SectionLabel>CAPTURE READINESS</SectionLabel>
               <span className="shotiq-display text-[14px] text-[var(--shotiq-color-confirmGreen)]" title={live ? "Live checks passing" : "Preview — start the camera to run live checks"}>GOOD</span>
             </div>
-            <div className="mt-[12px] flex">
+            {/* Canonical rules the four cells off from one another — vertical
+                hairlines at x=1045, 1161 and 1271 running the height of the
+                cell (verified by column scan, 87–92% coverage). */}
+            <div className="mt-[12px] flex divide-x divide-[var(--shotiq-color-rule)]">
               {READINESS.map(([r, glyph]) => (
                 <div key={r} className="flex-1 px-[4px] text-center">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -430,7 +433,7 @@ export default function LiveCapturePage() {
       <div className="mt-[10px] border-t border-[var(--shotiq-color-rule)] pt-[8px]">
         <div className="flex items-center">
           <span className="shotiq-display text-[19px]">SHOT RAIL</span>
-          <span className="ml-auto mr-[430px] text-[11px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">
+          <span className="shotiq-microcaps ml-auto mr-[430px] text-[var(--shotiq-color-graphite)]">
             {statShots} SHOTS
           </span>
         </div>
@@ -438,7 +441,7 @@ export default function LiveCapturePage() {
           {/* Canonical spreads the 24 markers across the whole band and sets the
               numerals in the body face — the condensed numeric cut at 11px read
               as ~9px of bold, half canonical's advance width. */}
-          <div className="flex flex-1 items-start justify-between pr-[20px]">
+          <div className="flex flex-1 items-start justify-between pr-[6px]">
             {railStates.map((state, i) => (
               <div key={i} className="w-[18px] text-center">
                 <div className={`text-[12px] leading-[14px] ${state === "live" ? "text-[var(--shotiq-color-analysisBlue)]" : ""}`}>{i + 1}</div>
@@ -457,7 +460,12 @@ export default function LiveCapturePage() {
               </div>
             ))}
           </div>
-          <div className="flex shrink-0 items-center gap-[16px] pt-[8px]">
+          {/* Canonical spaces the 24 markers at a 40px pitch; the app was at
+              34.4 because the legend and the review button were taking 42px
+              more of the band than canonical gives them. The rail also starts
+              at x=222 here against canonical's full bleed from x=0, so the
+              remaining shortfall is the 196px rail, not the spacing. */}
+          <div className="flex shrink-0 items-center gap-[12px] pt-[8px]">
             <button type="button" onClick={() => mark(true)} data-testid="rail-make"
                     className="flex items-center gap-[6px] text-[11px] font-bold tracking-[0.05em]">
               <span className="grid h-[15px] w-[15px] place-items-center rounded-full bg-[var(--shotiq-color-confirmGreen)]"><Check className="h-[9px] w-[9px] text-white" strokeWidth={3} /></span> MAKE
@@ -470,7 +478,7 @@ export default function LiveCapturePage() {
               <span className="grid h-[15px] w-[15px] place-items-center rounded-full border-2 border-[var(--shotiq-color-analysisBlue)]"><span className="h-[5px] w-[5px] rounded-full bg-[var(--shotiq-color-analysisBlue)]" /></span> LIVE
             </span>
             <Link href="/results/demo/analysis"
-                  className="ml-[14px] flex h-[52px] items-center gap-[10px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[26px] text-[13px]">
+                  className="ml-[10px] flex h-[52px] items-center gap-[10px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[18px] text-[13px]">
               <Film className="h-[15px] w-[15px]" strokeWidth={1.6} /> Review last shot
             </Link>
           </div>

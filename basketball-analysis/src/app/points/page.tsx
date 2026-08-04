@@ -62,6 +62,19 @@ const BADGE_GLYPH: Record<string, string> = {
   "CLUTCH PERFORMER": "clutch-performer",
 }
 
+/** Badge-tile headline: the condensed display face at cap 14 (see the call
+ *  site). Set inline because `.shotiq-section-label` is declared after the
+ *  Tailwind utility layer, so a `text-[19px]` utility loses the cascade to the
+ *  role's own 15px — and the role's defaults are owned elsewhere this round. */
+const BADGE_TITLE: React.CSSProperties = {
+  fontFamily: '"ShotIQ Degree", var(--font-shotiq-display), "Tungsten Medium", sans-serif',
+  fontWeight: 400,
+  fontSize: "19px",
+  lineHeight: "19px",
+  letterSpacing: "0.04em",
+  color: "var(--shotiq-color-ink)",
+}
+
 function Hex({ earned, size = 84, name, className = "mx-auto" }: {
   earned: boolean; size?: number; name?: string; className?: string
 }) {
@@ -262,7 +275,15 @@ export default function AchievementsPointsPage() {
                       A 222px card around a 90px hex left 40px of void in every
                       earned tile — ten of them on screen at once. */}
                   <div><Hex earned={e} name={t} size={95} /></div>
-                  <div className="mt-[4px] text-[11px] font-bold tracking-[0.03em]">{t}</div>
+                  {/* The badge NAME is the tile's headline. Measured on
+                      canonical 095: "STACKED RELEASE" is cap 14 over an
+                      advance of 96, against the shipped cap 8 / advance 98 —
+                      the app was setting the title SMALLER than its own
+                      caption on all ten tiles. cap 14 at advance 96 is only
+                      reachable in the condensed face (6.9 advance-units per
+                      cap; the body face runs 12.3), which puts it at 19px on
+                      the section-label ramp with the same 0.08em tracking. */}
+                  <div className="mt-[4px]" style={BADGE_TITLE}>{t}</div>
                   {/* Fixed card height + a floored footer: canonical lands every
                       XP/EARNED line on one baseline across the row, which a
                       description that wraps to one line on some cards and two
@@ -348,14 +369,14 @@ export default function AchievementsPointsPage() {
               <span className="text-[12px]">{selBadge[2] ? "5 / 5" : "2 / 5"}</span>
             </div>
             <Card className="mt-[12px] p-[12px]">
-              <div className="text-[10px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">LATEST MATCH</div>
+              <div className="shotiq-section-label text-[var(--shotiq-color-graphite)]">LATEST MATCH</div>
               <div className="text-[12px]">May 12, 2025 at 8:24 AM</div>
               {/* Canonical runs this row at ~24px — it is the headline of the
                   badge panel, not a footnote. */}
               <div className="mt-[8px] flex divide-x divide-[var(--shotiq-color-rule)] text-center">
-                <div className="flex-1 pr-[10px]"><Stat value="24" label="SHOTS" valueClass="text-[26px] leading-[30px]" /></div>
-                <div className="flex-1 px-[10px]"><Stat value="15" label="MAKES" valueClass="text-[26px] leading-[30px]" /></div>
-                <div className="flex-1 px-[10px]"><Stat value="62.5%" label="MAKE %" valueClass="text-[26px] leading-[30px]" /></div>
+                <div className="flex-1 pr-[10px]"><Stat value="24" label="SHOTS" valueClass="text-[31px] leading-[35px]" /></div>
+                <div className="flex-1 px-[10px]"><Stat value="15" label="MAKES" valueClass="text-[31px] leading-[35px]" /></div>
+                <div className="flex-1 px-[10px]"><Stat value="62.5%" label="MAKE %" valueClass="text-[31px] leading-[35px]" /></div>
                 <div className="flex-1 pl-[10px]"><div className="shotiq-numeric text-[26px] leading-[30px] text-[var(--shotiq-color-analysisBlue)]">82</div>
                   <div className="mt-[2px] whitespace-nowrap text-[9px] tracking-[0.04em] text-[var(--shotiq-color-graphite)]">FORM SCORE</div></div>
               </div>

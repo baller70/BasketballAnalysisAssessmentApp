@@ -382,7 +382,7 @@ export default function DashboardPage() {
           <Card className="flex items-center divide-x divide-[var(--shotiq-color-rule)] px-[4px] py-[12px]">
             {/* 92px could not hold "YOUR RECENT" on one line, so the label ran
                 to three rows where canonical takes two. */}
-            <div className="w-[112px] shrink-0 px-[10px] text-[12px] font-bold leading-[16px] tracking-[0.04em]">
+            <div className="shotiq-section-label w-[112px] shrink-0 px-[10px] leading-[17px]">
               <span className="block whitespace-nowrap">YOUR RECENT</span>
               <span className="block whitespace-nowrap">TRENDS</span>
             </div>
@@ -395,7 +395,7 @@ export default function DashboardPage() {
               <div key={l} className="flex min-w-0 flex-1 items-center gap-[8px] px-[10px]">
                 <div className="min-w-0">
                   <div className="whitespace-nowrap text-[11px] text-[var(--shotiq-color-graphite)]">{l}</div>
-                  <div className="shotiq-numeric text-[22px] leading-[26px]">{v}</div>
+                  <div className="shotiq-numeric text-[26px] leading-[30px]">{v}</div>
                 </div>
                 <TrendLine points={pts} width={72} height={30}
                            stroke="var(--shotiq-color-analysisBlue)" dotFill="var(--shotiq-color-analysisBlue)" />
@@ -532,11 +532,17 @@ export default function DashboardPage() {
             short hairline; this shipped as bare rows with no box and no column
             rules, and with the trend/focus group pushed right by `ml-auto`,
             which opened ~90px of dead width in the middle of every row. */}
-        <div className="mt-[10px] flex items-center justify-between pt-[2px]">
+        {/* Canonical separates the upper dashboard from this section with a
+            full-width hairline ABOVE the heading (y=657, x125–1414), not just
+            the card's own top border 36px lower. */}
+        <div className="mt-[16px] flex items-center justify-between border-t border-[var(--shotiq-color-rule)] pt-[12px]">
           <SectionLabel>RECENT ANALYSES</SectionLabel>
           <Link href="/results/demo/history" className="text-[12px] text-[var(--shotiq-color-graphite)]">View all analyses ›</Link>
         </div>
-        <Card className="mb-[12px] mt-[6px] divide-y divide-[var(--shotiq-color-rule)]" data-testid="recent-analyses">
+        {/* Row pitch runs 58px in canonical against the shipped 54 — three
+            rows of it, which is most of the dead paper the graders measured at
+            the foot of the page. */}
+        <Card className="mb-[12px] mt-[8px] divide-y divide-[var(--shotiq-color-rule)]" data-testid="recent-analyses">
           {(recent.length ? recent : loading ? [] : []).map((r, i) => {
             // Per-row delta and per-row shape, both read off this row's own
             // slice of history: the row that fell draws a falling line.
@@ -545,7 +551,7 @@ export default function DashboardPage() {
             const focus = ["Elbow stacked", "Balance in rise", "Footwork timing"][i % 3]
             const bandRow = scoreBand(r.score)
             return (
-            <div key={i} className="flex items-center gap-[12px] py-[4px] pl-[10px] pr-[10px]">
+            <div key={i} className="flex items-center gap-[12px] py-[6px] pl-[10px] pr-[10px]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={`/images/canonical/079-recent-${(i % 3) + 1}.png`} alt=""
                    className="h-[45px] w-[140px] shrink-0 rounded-[4px] object-cover" />

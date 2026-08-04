@@ -457,7 +457,7 @@ export default function DrillExecutionClient() {
                   <WorkoutGlyph kind="release" size={20} />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[10px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">NEXT RECOMMENDATION</span>
+                  <span className="shotiq-section-label block text-[var(--shotiq-color-graphite)]">NEXT RECOMMENDATION</span>
                   <span className="block text-[14px] font-semibold">Elbow Stack Builder</span>
                   <span className="block text-[11px] text-[var(--shotiq-color-graphite)]">15 min · Form Focus</span>
                 </span>

@@ -208,30 +208,30 @@ export default function AnalysisHistoryPage() {
           {/* This cell carries the longest label in the strip; an equal share
               broke it onto two lines where canonical keeps it on one. */}
           <div className="min-w-0 flex-[1.45] pr-[16px]">
-            <div className="whitespace-nowrap text-[11px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">AVERAGE FORM SCORE</div>
+            <div className="shotiq-section-label whitespace-nowrap">AVERAGE FORM SCORE</div>
             <div className="shotiq-numeric text-[40px] leading-[44px]">{score ?? "—"}</div>
             <div className="text-[12px] text-[var(--shotiq-color-analysisBlue)]">● Good</div>
           </div>
           <div className="flex min-w-0 flex-[3] px-[16px]">
             <div className="min-w-0 flex-1">
-              <div className="text-[11px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">SHOTS</div>
+              <div className="shotiq-section-label">SHOTS</div>
               <div className="shotiq-numeric text-[40px] leading-[44px]">{totalShots ?? (hasData ? "—" : "0")}</div>
               <div className="text-[12px] text-[var(--shotiq-color-graphite)]">Total</div>
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-[11px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">MAKES</div>
+              <div className="shotiq-section-label">MAKES</div>
               <div className="shotiq-numeric text-[40px] leading-[44px]">{totalMakes ?? (hasData ? "—" : "0")}</div>
               <div className="text-[12px] text-[var(--shotiq-color-graphite)]">Total</div>
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-[11px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">MAKE %</div>
+              <div className="shotiq-section-label">MAKE %</div>
               <div className="shotiq-numeric text-[40px] leading-[44px]">
                 {overallMakePct == null ? "—" : `${overallMakePct.toFixed(1)}%`}
               </div>
             </div>
           </div>
           <div className="min-w-0 flex-[1.9] pl-[16px]">
-            <div className="text-[10px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">{metric.toUpperCase()} TREND</div>
+            <div className="shotiq-section-label">{metric.toUpperCase()} TREND</div>
             {/* Canonical stacks the delta BELOW the sparkline, left-aligned.
                 Beside it, "vs last session" had only ~60px and wrapped to two
                 lines in 9px type, and the mark itself lost 60px of width. */}
@@ -281,7 +281,11 @@ export default function AnalysisHistoryPage() {
               </div>
               <div className="shotiq-numeric text-[19px]">{mk}</div>
               <div className="shotiq-numeric whitespace-nowrap text-[19px]">{sm}</div>
-              <div className="flex items-center gap-[6px] text-[12px]">
+              {/* Canonical sets the confidence WORD in the muted grey role at
+                  cap 10 (118,118,120); the app was setting it near-black
+                  (22,17,17) at cap 13 on all eight rows, which read as a
+                  second value in the row rather than a qualifier. */}
+              <div className="flex items-center gap-[6px] text-[11px] text-[var(--shotiq-color-graphite)]">
                 <span className="inline-flex gap-[2px]">
                   {[0, 1, 2, 3].map((b) => (
                     <span key={b} className={`h-[9px] w-[9px] rounded-[2px] ${

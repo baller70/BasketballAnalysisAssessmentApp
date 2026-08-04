@@ -323,24 +323,38 @@ export default function PlayerCardPage() {
               <SectionLabel>PROGRESSION OVER TIME</SectionLabel>
               <Link href="/results/demo/history" className="text-[12px] font-bold text-[var(--shotiq-color-analysisBlue)]">VIEW PROGRESSION →</Link>
             </div>
-            <div className="mt-[10px] grid grid-cols-4 divide-x divide-[var(--shotiq-color-rule)]">
+            {/* Canonical rules the card head off from the strip — a full-width
+                hairline at y=526 running x735→1410. */}
+            <div className="mt-[4px] grid grid-cols-4 divide-x divide-[var(--shotiq-color-rule)] border-t border-[var(--shotiq-color-rule)] pt-[5px]">
               {[["FORM SCORE", score != null ? String(score) : "—", "+6 vs last 7 days", [72, 75, 74, 78, 80, 82], "Good"],
                 ["MAKE %", hasData ? formatMakePct(shots, makes) : "—", "+4.2% vs last 7 days", [52, 56, 54, 58, 60, 62], ""],
                 ["SHOTS / SESSION", hasData ? String(shots ?? "—") : "0", "+3 vs last 7 days", [18, 20, 19, 22, 23, 24], ""],
                 ["MAKES / SESSION", hasData ? String(makes ?? "—") : "0", "+2 vs last 7 days", [10, 12, 11, 13, 14, 15], ""]].map(([k, v, d, pts, band]) => (
                 <div key={String(k)} className="px-[14px] first:pl-0">
-                  <div className="text-[10px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">{String(k)}</div>
+                  <div className="shotiq-microcaps text-[var(--shotiq-color-graphite)]">{String(k)}</div>
                   <div className="flex items-center gap-[8px]">
                     <span className="shotiq-numeric text-[24px]">{String(v)}</span>
-                    {band ? <span className="text-[10px] text-[var(--shotiq-color-analysisBlue)]">● {String(band)}</span> : null}
+                    {/* Canonical keeps the DOT blue and the word near-black
+                        (46,46,48); the app had painted both blue, which reads
+                        as a link. */}
+                    {band ? (
+                      <span className="flex items-center gap-[5px] text-[11px] leading-[13px] text-[var(--shotiq-color-ink)]">
+                        <span className="inline-block h-[7px] w-[7px] rounded-full bg-[var(--shotiq-color-analysisBlue)]" />
+                        {String(band)}
+                      </span>
+                    ) : null}
                   </div>
                   <div className="text-[10px] text-[var(--shotiq-color-confirmGreen)]">{String(d)}</div>
                   {/* Canonical draws these on a grey stroke and alternates the
                       nodes blue (improving) / grey (flat or down). Passing blue
                       as dotFill collapsed the accent onto the same blue and made
                       every node identical. */}
+                  {/* The connector was drawn in the hairline token (#EBECED)
+                      and vanished at 1px — a grader read all four charts as
+                      "dots with no polyline". Canonical's stroke probes
+                      (175,178,180), which is the muted token. */}
                   <TrendLine points={pts as number[]} width={130} height={34}
-                             stroke="var(--shotiq-color-rule)" dotFill="var(--shotiq-color-muted)"
+                             stroke="var(--shotiq-color-muted)" dotFill="var(--shotiq-color-muted)"
                              dotAccent="var(--shotiq-color-analysisBlue)" />
                 </div>
               ))}

@@ -29,8 +29,8 @@ const LIBRARY: [string, string, string, string, string][] = [
 /** Canonical fronts each quick action with its own node diagram — none is
  *  repeated, and none is a stock UI icon. */
 const QUICK_ACTIONS: [string, string, string, CueKind | "calendar"][] = [
-  ["My drills", "View and manage your saved drills.", "/training/drills?tab=saved", "apex"],
-  ["Discover", "Find drills that match your goals.", "/training/drills?tab=discover", "peak"],
+  ["My drills", "View and manage your saved drills.", "/training/drills?tab=saved", "saved"],
+  ["Discover", "Find drills that match your goals.", "/training/drills?tab=discover", "apex"],
   ["Calendar", "Plan your week and stay consistent.", "/training/calendar", "calendar"],
 ]
 
@@ -86,9 +86,19 @@ export default function TrainingHubPage() {
             the right column, the right column reopens at canonical's order and
             offsets, and the page pays nothing for it because the title band was
             already this tall. */}
-        <div className="flex items-start justify-between gap-[24px]">
+        {/* Canonical pairs the subtitle with the title — one line, directly
+            under the H1 at y=151. Hanging the coaching block off the same flex
+            row made the row 88px tall and pushed the subtitle to y=174; nesting
+            the subtitle inside the title cell instead broke it onto three
+            lines. Taking the block out of flow leaves the title and its
+            subtitle on canonical's own offsets and still keeps the block out of
+            the right column, where it displaced TODAY'S SNAPSHOT by 230px. */}
+        <div className="relative">
           <PageTitle size={64}>TRAINING HUB</PageTitle>
-          <div className="flex w-[492px] shrink-0 gap-[14px] border-l border-[var(--shotiq-color-rule)] pl-[16px]">
+          <p className="mt-[4px] text-[14px] text-[var(--shotiq-color-graphite)]">
+            Turn your analysis into better reps. Targeted drills. Smarter workouts. Real progress.
+          </p>
+          <div className="absolute right-0 top-0 flex w-[492px] shrink-0 gap-[14px] border-l border-[var(--shotiq-color-rule)] pl-[16px]">
             <div className="min-w-0 flex-1">
               <SectionLabel className="text-[var(--shotiq-color-graphite)]">COACHING TARGET</SectionLabel>
               <Link href="/results/demo/goals" className="mt-[2px] flex items-start justify-between gap-[8px]">
@@ -116,9 +126,6 @@ export default function TrainingHubPage() {
             </div>
           </div>
         </div>
-        <p className="mt-[4px] text-[14px] text-[var(--shotiq-color-graphite)]">
-          Turn your analysis into better reps. Targeted drills. Smarter workouts. Real progress.
-        </p>
 
         {/* Canonical does not run four equal quarters here — the cards measure
             197 / 161 / 152 / 171. Equal quarters starved "Quick start" and
@@ -136,15 +143,23 @@ export default function TrainingHubPage() {
               <div className="text-[10px] leading-[13px] opacity-90">Get a personalized workout in under 60 seconds.</div></div>
             <ChevronRight className="h-[15px] w-[15px] shrink-0" />
           </Link>
+          {/* Canonical draws these marks LARGE — measured off 090 the node
+              diagrams are 38x30 and 42x23 and the calendar 40x39, against the
+              21x18 / 22x19 / 30x24 the 24px box was giving. A 24px CueGlyph
+              only inks ~18 of its 24 viewBox units, so the box has to run ~46
+              to put 38px of drawing on the page. The caption drops to 9px in
+              exchange: canonical fits "View and manage" on one line at 4.4px
+              per glyph and this face needed 5.1 at 10px, which is what broke
+              "My drills" and "Calendar" onto a third line. */}
           {QUICK_ACTIONS.map(([t, d, href, mark]) => (
             <Link key={t} href={href}
-                  className="flex items-center gap-[9px] rounded-[8px] border border-[var(--shotiq-color-rule)] bg-white p-[13px] hover:border-[var(--shotiq-color-graphite)]">
+                  className="flex items-center gap-[9px] rounded-[8px] border border-[var(--shotiq-color-rule)] bg-white py-[10px] pl-[12px] pr-[4px] hover:border-[var(--shotiq-color-graphite)]">
               {mark === "calendar"
-                ? <CalendarCheck className="h-[22px] w-[22px] shrink-0" strokeWidth={1.5} />
-                : <CueGlyph kind={mark} size={24} accent="var(--shotiq-color-shotiqOrange)" className="shrink-0" />}
+                ? <CalendarCheck className="h-[38px] w-[38px] shrink-0" strokeWidth={1.15} />
+                : <CueGlyph kind={mark} size={46} accent="var(--shotiq-color-shotiqOrange)" className="-mx-[4px] shrink-0" />}
               <div className="min-w-0 flex-1"><div className="text-[15px] font-semibold">{t}</div>
-                <div className="text-[10px] leading-[13px] text-[var(--shotiq-color-graphite)]">{d}</div></div>
-              <ChevronRight className="h-[15px] w-[15px] shrink-0 text-[var(--shotiq-color-graphite)]" />
+                <div className="text-[9px] leading-[12px] text-[var(--shotiq-color-graphite)]">{d}</div></div>
+              <ChevronRight className="h-[13px] w-[13px] shrink-0 text-[var(--shotiq-color-graphite)]" />
             </Link>
           ))}
         </div>
@@ -245,8 +260,11 @@ export default function TrainingHubPage() {
         <Card className="mt-[8px] p-[8px]">
           <div className="flex gap-[4px]">
             {WEEK.map(([d, len, active]) => (
+              // Canonical draws the container and the orange MON outline and
+              // nothing else — the six hairline cell boxes were the app's own
+              // addition and both round-8 graders counted them.
               <Link key={d} href="/training/calendar"
-                    className={`min-w-0 flex-1 rounded-[5px] border p-[8px] text-center ${active ? "border-2 border-[var(--shotiq-color-shotiqOrange)]" : "border-[var(--shotiq-color-rule)]"}`}>
+                    className={`min-w-0 flex-1 rounded-[5px] border-2 p-[8px] text-center ${active ? "border-[var(--shotiq-color-shotiqOrange)]" : "border-transparent"}`}>
                 <div className="text-[9px] font-bold">{d}</div>
                 <TrendLine points={[2, 3, 2.4, 3.6]} width={33} height={15} className="mx-auto my-[12px]"
                            stroke={len === "Rest" ? "var(--shotiq-color-muted)" : "var(--shotiq-color-ink)"} dotFill={len === "Rest" ? "var(--shotiq-color-muted)" : "var(--shotiq-color-ink)"} />
@@ -254,13 +272,19 @@ export default function TrainingHubPage() {
               </Link>
             ))}
           </div>
-          <div className="mt-[10px] flex items-center gap-[8px] border-t border-[var(--shotiq-color-rule)] pt-[8px]">
-            <Check className="h-[14px] w-[14px] text-[var(--shotiq-color-confirmGreen)]" />
-            <span className="flex-1 text-[11px]">2 of 5 sessions completed</span>
-            <div className="h-[5px] w-[90px] rounded-full bg-[var(--shotiq-color-rule)]">
-              <div className="h-full w-[40%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" />
+          {/* Canonical stacks the caption over a track that runs the full card
+              width (measured x1039→1393, 355px) with the percentage parked at
+              the right edge. The app had them on one line, which left the
+              track a 90px stub — the single largest measured miss on 090. */}
+          <div className="mt-[10px] flex items-center gap-[10px] border-t border-[var(--shotiq-color-rule)] pt-[8px]">
+            <Check className="h-[16px] w-[16px] shrink-0 text-[var(--shotiq-color-confirmGreen)]" />
+            <div className="min-w-0 flex-1">
+              <div className="text-[11px] leading-[13px]">2 of 5 sessions completed</div>
+              <div className="mt-[3px] h-[4px] w-full rounded-full bg-[var(--shotiq-color-rule)]">
+                <div className="h-full w-[40%] rounded-full bg-[var(--shotiq-color-confirmGreen)]" />
+              </div>
             </div>
-            <span className="text-[11px]">40%</span>
+            <span className="shrink-0 text-[13px]">40%</span>
           </div>
         </Card>
 

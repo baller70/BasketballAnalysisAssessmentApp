@@ -377,8 +377,12 @@ export default function EliteShootersPage() {
               </div>
 
               {filtered.map((r) => (
+                // Canonical's row pitch is 65.2px (rules at 243/302/361/420/
+                // 479/538 vs the shipped 241/307/373/438/502/567 — 37px of
+                // cumulative compression over six rows), and canonical draws
+                // NO rule under the last row.
                 <div key={r.name}
-                     className="flex items-center border-b border-[var(--shotiq-color-rule)] py-[5px]">
+                     className="flex items-center border-b border-[var(--shotiq-color-rule)] py-[8px] last:border-b-0">
                   <span className="w-[24px]">
                     <button type="button" role="checkbox" aria-checked={selected.has(r.name)}
                             aria-label={`Select ${r.name}`} onClick={() => toggleRow(r.name)}
@@ -473,7 +477,7 @@ export default function EliteShootersPage() {
             <span className="my-[8px] w-[4px] shrink-0 rounded-full bg-[var(--shotiq-color-analysisBlue)]" />
             <div className="shrink-0 pt-[2px]">
               <div className="flex items-center gap-[12px]">
-                <span className="text-[11px] font-bold tracking-[0.05em]">COMPARING ({pair.length})</span>
+                <span className="shotiq-section-label">COMPARING ({pair.length})</span>
                 <button type="button" onClick={() => setSelected(new Set())}
                         className="text-[11px] text-[var(--shotiq-color-shotiqOrange)]">Clear</button>
               </div>
@@ -567,7 +571,7 @@ export default function EliteShootersPage() {
               ))}
             </div>
             <div className="w-[228px] shrink-0 rounded-[8px] border border-[var(--shotiq-color-rule)] px-[12px] py-[8px]">
-              <div className="text-[11px] font-bold tracking-[0.05em]">KEY TAKEAWAYS</div>
+              <div className="shotiq-section-label">KEY TAKEAWAYS</div>
               <div className="mt-[6px] space-y-[4px] text-[10px] leading-[14px]">
                 <div className="flex gap-[6px]"><Check className="h-[11px] w-[11px] shrink-0 text-[var(--shotiq-color-confirmGreen)]" /> Both maintain strong elbow stacking</div>
                 <div className="flex gap-[6px]"><Check className="h-[11px] w-[11px] shrink-0 text-[var(--shotiq-color-confirmGreen)]" /> {pair[1].name.split(" ")[0]} has a faster release by 0.03s</div>

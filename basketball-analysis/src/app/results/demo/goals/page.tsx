@@ -8,7 +8,7 @@ import {
   Pencil, MoreVertical, MoreHorizontal, Check, CircleCheck, ChevronRight, X,
 } from "lucide-react"
 import { ShotIQShell, SectionLabel, Card, TrendLine, PageTitle } from "@/components/shotiq/ShotIQShell"
-import { WorkoutGlyph, type WorkoutKind } from "@/components/shotiq/Glyphs"
+import { WorkoutGlyph, type WorkoutKind, ActionGlyph } from "@/components/shotiq/Glyphs"
 import {
   useHistory, StatStrip, formatDelta, formatMakePct, scoreSeries,
 } from "@/components/shotiq/ResultsBits"
@@ -101,11 +101,11 @@ export default function GoalsPlanPage() {
           {notice && <span className="text-[12px] font-medium text-[var(--shotiq-color-confirmGreen)]">{notice}</span>}
           <button type="button" onClick={() => { setForm({ title: "", description: "" }); setModal("create") }}
                   className="flex h-[48px] items-center gap-[10px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] px-[22px] text-[14px] font-medium text-white">
-            <TrendLine points={[2, 4, 3, 5]} width={26} height={16} stroke="#fff" dotFill="#fff" /> Create goal
+            <ActionGlyph kind="nodeClimb" height={22} /> Create goal
           </button>
           <button type="button" onClick={logProgress}
                   className="flex h-[48px] items-center gap-[10px] rounded-[6px] border border-[var(--shotiq-color-rule)] px-[22px] text-[14px]">
-            <TrendLine points={[2, 3, 4]} width={26} height={16} stroke="var(--shotiq-color-ink)" dotFill="var(--shotiq-color-ink)" /> Log progress
+            <ActionGlyph kind="nodeGraph" height={20} /> Log progress
           </button>
         </div>
       </div>
@@ -116,7 +116,10 @@ export default function GoalsPlanPage() {
       <div className="mt-[8px] grid grid-cols-[1.12fr_0.97fr_0.91fr] gap-[16px]">
         {/* primary goal */}
         <Card className="flex flex-col p-[16px]">
-          <div className="text-[11px] font-bold tracking-[0.06em] text-[var(--shotiq-color-confirmGreen)]">PRIMARY GOAL</div>
+          {/* The role owns `color`, and it is declared after the utility layer, so a
+              `text-[…]` class loses the cascade to it — canonical draws this one
+              eyebrow green (2,75,4), so the colour has to come in as a style. */}
+          <div className="shotiq-section-label" style={{ color: "var(--shotiq-color-confirmGreen)" }}>PRIMARY GOAL</div>
           <h2 className="mt-[6px] text-[22px] font-semibold leading-[28px]">{primary.title}</h2>
           {/* Canonical spends this card's height on its own blocks — 27px
               between the title and the ACTIVE row, 27 to the description, 25 to
@@ -138,7 +141,7 @@ export default function GoalsPlanPage() {
           {/* pr keeps the trend cell off the card border — canonical leaves ~31px */}
           <StatStrip className="mt-[16px] border-t border-[var(--shotiq-color-rule)] pr-[16px] pt-[16px]"
                      cellClass="text-center whitespace-nowrap"
-                     valueClass="text-[20px] leading-[22px]"
+                     valueClass="text-[24px] leading-[26px]"
                      cells={[
                        { value: hasData ? shots ?? "—" : "0", label: "SHOTS" },
                        { value: hasData ? makes ?? "—" : "0", label: "MAKES" },
@@ -358,7 +361,7 @@ export default function GoalsPlanPage() {
             </div>
             <button type="button" onClick={() => { setForm({ title: "", description: "" }); setModal("create") }}
                     className="mt-[16px] flex h-[52px] w-full items-center justify-center gap-[10px] rounded-[6px] bg-[var(--shotiq-color-shotiqOrange)] text-[14px] font-medium text-white">
-              <TrendLine points={[2, 4, 3, 5]} width={26} height={16} stroke="#fff" dotFill="#fff" /> Create goal
+              <ActionGlyph kind="nodeClimb" height={22} /> Create goal
             </button>
           </Card>
         </div>

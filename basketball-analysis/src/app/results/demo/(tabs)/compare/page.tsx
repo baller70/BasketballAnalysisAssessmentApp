@@ -4,15 +4,15 @@
 
 import React, { useEffect, useState } from "react"
 import Link from "next/link"
-import { ChevronDown, RefreshCcw, Bookmark, MoreVertical, Play, ChevronLeft, ChevronRight, Users, Layers } from "lucide-react"
+import { ChevronDown, RefreshCcw, Bookmark, MoreVertical, Play, ChevronLeft, ChevronRight, Users } from "lucide-react"
 import { SectionLabel, Card, Ring, Stat, PageTitle } from "@/components/shotiq/ShotIQShell"
-import { PoseFigure, WorkoutGlyph, toShotPhase } from "@/components/shotiq/Glyphs"
+import { PoseFigure, WorkoutGlyph, toShotPhase, ActionGlyph } from "@/components/shotiq/Glyphs"
 import { useHistory } from "@/components/shotiq/ResultsBits"
 
 interface Shooter { id: number; name: string; position?: string }
 const PHASES = ["SETUP", "LOAD", "RISE", "RELEASE", "FOLLOW-THROUGH"]
 const DIFFS: [string, string, string, string][] = [
-  ["Release Angle", "52°", "56°", "-4°"], ["Release Height", "7'1\"", "7'4\"", "-3\""],
+  ["Release Angle", "52°", "56°", "-4°"], ["Release Height", "7′1″", "7′4″", "-3″"],
   ["Release Time", "0.64s", "0.62s", "+0.02s"], ["Elbow Angle at Release", "92°", "78°", "+14°"],
   ["Wrist Flexion", "21°", "28°", "-7°"], ["Shot Arc", "Medium", "High", "—"], ["Balance at Release", "Good", "Great", "—"],
 ]
@@ -63,7 +63,8 @@ export default function ComparePage() {
                 {/* Canonical marks each control: shooters, skeleton overlays, the
                     selected phase pose. */}
                 {key === "shooters" && <Users className="h-[15px] w-[15px]" strokeWidth={1.6} />}
-                {key === "overlays" && <Layers className="h-[15px] w-[15px]" strokeWidth={1.6} />}
+                {/* Canonical marks this with a dotted node cloud, not a layers stack. */}
+                {key === "overlays" && <ActionGlyph kind="skeletonDots" height={18} />}
                 {key === "phase" && <PoseFigure phase={toShotPhase(phase)} height={20} className="shrink-0" />}
                 {label} <ChevronDown className="ml-auto h-[13px] w-[13px] shrink-0 text-[var(--shotiq-color-graphite)]" />
               </button>
@@ -101,7 +102,10 @@ export default function ComparePage() {
         </div>
       </div>
       <div className="mt-[6px] flex items-center justify-between">
-        <Link href="/results/demo/history" className="text-[12px] text-[var(--shotiq-color-graphite)]">‹ Back to analyses</Link>
+        {/* Canonical draws a chevron here, not a literal guillemet character. */}
+        <Link href="/results/demo/history" className="flex items-center gap-[4px] text-[12px] text-[var(--shotiq-color-graphite)]">
+          <ChevronLeft className="h-[13px] w-[13px]" strokeWidth={1.8} /> Back to analyses
+        </Link>
         <button type="button" onClick={() => setSaved((v) => !v)} aria-pressed={saved}
                 className={`flex items-center gap-[6px] text-[12px] ${saved ? "text-[var(--shotiq-color-confirmGreen)]" : "text-[var(--shotiq-color-graphite)]"}`}>
           <Bookmark className="h-[13px] w-[13px]" fill={saved ? "currentColor" : "none"} />
@@ -130,7 +134,12 @@ export default function ComparePage() {
               left edge, so each viewer keeps its crop's aspect ratio and the
               pair shares width proportionally — cover-cropping the elite panel
               sheared "ELITE REFERENCE / Darius Garland" off its left edge. */}
-          <div className="min-w-0 flex-1" style={{ flexGrow: sideIdx ? 595 : 534, flexBasis: 0 }}>
+          {/* Canonical wraps video + scrubber + filmstrip in one bordered card
+              (y181–522, x808–1401 on the elite panel) with ~10px of internal
+              padding. The app ran the three parts loose, so the filmstrip went
+              edge-to-edge with no padding and no box. */}
+          <div className="min-w-0 flex-1 rounded-[8px] border border-[var(--shotiq-color-rule)] p-[10px]"
+               style={{ flexGrow: sideIdx ? 595 : 534, flexBasis: 0 }}>
             <div className="relative overflow-hidden rounded-[6px] bg-[#1B1D20]"
                  style={{ aspectRatio: sideIdx ? "595 / 256" : "534 / 256" }}>
               {pristine ? (
@@ -144,7 +153,7 @@ export default function ComparePage() {
                   <div className={`text-[14px] font-semibold ${sideIdx ? "text-[var(--shotiq-color-analysisBlue)]" : ""}`}>
                     {sideIdx ? (elite?.name ?? "Elite Guard") : "You"}
                   </div>
-                  {[["RELEASE ANGLE", sideIdx ? "56°" : "52°"], ["RELEASE HEIGHT", sideIdx ? "7'4\"" : "7'1\""], ["RELEASE TIME", sideIdx ? "0.62s" : "0.64s"]].map(([k, v]) => (
+                  {[["RELEASE ANGLE", sideIdx ? "56°" : "52°"], ["RELEASE HEIGHT", sideIdx ? "7′4″" : "7′1″"], ["RELEASE TIME", sideIdx ? "0.62s" : "0.64s"]].map(([k, v]) => (
                     <div key={k} className="mt-[6px]">
                       <div className="text-[8px] tracking-[0.08em] text-white/60">{k}</div>
                       <div className={`shotiq-numeric text-[18px] leading-[20px] ${sideIdx ? "text-[var(--shotiq-color-analysisBlue)]" : "text-[var(--shotiq-color-shotiqOrange)]"}`}>{v}</div>
@@ -239,7 +248,9 @@ export default function ComparePage() {
         <Card className="flex min-w-0 flex-1">
         <div className="min-w-0 flex-1 px-[18px] py-[8px]">
           <SectionLabel>KEY DIFFERENCES</SectionLabel>
-          <table className="mt-[6px] w-full text-[12px]">
+          {/* Canonical's row pitch here is 19.3px over seven rows; the app was
+              running 21.8 (+13%), which added 17px to the panel. */}
+          <table className="mt-[6px] w-full text-[12px] leading-[17px]">
             {/* Canonical rules none of these seven rows off, and centres YOU /
                 ELITE / DIFFERENCE under their own headers. */}
             <thead><tr className="text-[9px] tracking-[0.06em] text-[var(--shotiq-color-graphite)]">
@@ -250,7 +261,7 @@ export default function ComparePage() {
             <tbody>
               {DIFFS.map(([m, you, el, d]) => (
                 <tr key={m}>
-                  <td className="whitespace-nowrap py-[2px] pr-[8px]">{m}</td>
+                  <td className="whitespace-nowrap py-[1px] pr-[8px]">{m}</td>
                   <td className="text-center font-semibold text-[var(--shotiq-color-shotiqOrange)]">{you}</td>
                   <td className="text-center font-semibold text-[var(--shotiq-color-analysisBlue)]">{el}</td>
                   <td className="text-center">{d}</td>

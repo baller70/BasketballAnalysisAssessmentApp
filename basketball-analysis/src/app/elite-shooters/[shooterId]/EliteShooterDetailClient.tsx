@@ -217,7 +217,10 @@ export default function EliteShooterDetailClient() {
       </div>
 
       {/* detail tabs */}
-      <nav className="mt-[4px] flex gap-[30px] border-b border-[var(--shotiq-color-rule)]" aria-label="Shooter detail">
+      {/* Canonical draws TWO rules here — one at y=256 closing the identity
+          header (x171–1420) and the tab underline 34px below it at y=290. The
+          app shipped only the underline. */}
+      <nav className="mt-[10px] flex gap-[30px] border-b border-t border-[var(--shotiq-color-rule)] pt-[12px]" aria-label="Shooter detail">
         {DETAIL_TABS.map((t) => (
           <button key={t} type="button" onClick={() => setTab(t)} aria-current={tab === t ? "true" : undefined}
                   className={`relative pb-[7px] text-[12px] font-bold tracking-[0.05em] ${tab === t ? "text-[var(--shotiq-color-analysisBlue)]" : "text-[var(--shotiq-color-graphite)]"}`}>

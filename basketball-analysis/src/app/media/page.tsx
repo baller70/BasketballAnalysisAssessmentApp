@@ -162,8 +162,12 @@ export default function MediaLibraryPage() {
   const statusColor = (s: string) =>
     s === "Analyzed" ? "var(--shotiq-color-confirmGreen)" : s === "Review" ? "var(--shotiq-color-shotiqOrange)" : "var(--shotiq-color-muted)"
 
+  // Canonical's 094 canvas is #FBFBFB, not paper white — probed at (600,480),
+  // (1000,480), (1420,300) and (110,300), all (251,251,251). On pure white
+  // every card in the grid loses its tonal separation and has only its 1px
+  // border left to sit on.
   return (
-    <div data-testid="screen-desktop-web-media-library" className="flex h-[835px]">
+    <div data-testid="screen-desktop-web-media-library" className="flex h-[835px] bg-[#FBFBFB]">
       {/* ------------------------------------------------------ filters column
           Canonical 094 draws a persistent FILTERS column at the left edge of
           the content area, 219px of the 1440px canvas. It is a filter panel,
@@ -271,7 +275,9 @@ export default function MediaLibraryPage() {
           </div>
         </div>
 
-        <div className="mt-[10px] flex items-center justify-between border-b border-[var(--shotiq-color-rule)] pb-[8px] text-[12px] text-[var(--shotiq-color-graphite)]">
+        {/* Canonical bounds this selection bar with rules TOP and BOTTOM
+            (y=145 and y=183); the app drew only the lower one. */}
+        <div className="mt-[10px] flex items-center justify-between border-b border-t border-[var(--shotiq-color-rule)] pb-[8px] pt-[8px] text-[12px] text-[var(--shotiq-color-graphite)]">
           <label className="flex items-center gap-[8px]">
             <input type="checkbox" className="h-[13px] w-[13px]" readOnly checked={selected.size > 0} /> {selected.size} selected
           </label>
@@ -295,7 +301,10 @@ export default function MediaLibraryPage() {
           const groupUnfiltered = items.length === (groups[day]?.length ?? 0)
           const count = groupUnfiltered ? DECLARED_COUNT[day] : `${items.length} items`
           return (
-          <div key={day} className="mt-[16px]">
+          // Canonical rules each date section off from the one above it —
+          // full-width hairlines at y=474 and y=746 (x240–1436). The app ran
+          // the three groups together on white space alone.
+          <div key={day} className="mt-[16px] first:mt-0 [&+div]:border-t [&+div]:border-[var(--shotiq-color-rule)] [&+div]:pt-[16px]">
             {/* Canonical sets the day and its date at two different weights and
                 colours — "TODAY" bold black, the date medium grey, both 12px.
                 Running the whole string through SectionLabel gave the date the
@@ -397,7 +406,7 @@ export default function MediaLibraryPage() {
             <div className="mt-[12px] flex items-center gap-[12px] rounded-[6px] border border-[var(--shotiq-color-rule)] p-[12px]">
               <span className="h-[10px] w-[10px] shrink-0 rounded-full" style={{ background: statusColor(detail.item.status) }} />
               <div className="min-w-0 flex-1">
-                <div className="text-[10px] font-bold tracking-[0.05em] text-[var(--shotiq-color-graphite)]">LINKED ANALYSIS</div>
+                <div className="shotiq-section-label text-[var(--shotiq-color-graphite)]">LINKED ANALYSIS</div>
                 <div className="text-[13px] font-semibold">
                   {detail.item.status === "Not analyzed" ? "Not analyzed yet" : `${detail.item.status} · Form score ${detail.item.score ?? "—"}`}
                 </div>

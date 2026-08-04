@@ -420,7 +420,7 @@ export function FlawFigure({
 
 /* -------------------------------------------------- node cue diagrams */
 
-export type CueKind = "peak" | "apex" | "shoulders" | "extension" | "base" | "tree"
+export type CueKind = "peak" | "apex" | "shoulders" | "extension" | "base" | "tree" | "saved"
 
 /**
  * Node-and-link cue diagram: canonical's dominant motif on coaching cards.
@@ -442,10 +442,13 @@ export function CueGlyph({
           {node(16.5, 19, true)}{node(20.5, 16.5, true)}
         </>
       )}
+      {/* An even four-node zigzag with the accent on the third node, as
+          canonical draws the Discover mark on 090. The old path put two long
+          segments against two short ones and bunched the last three nodes. */}
       {kind === "apex" && (
         <>
-          <path d="M5 19.5 L10.5 7 L16 11 L20 8.5" strokeDasharray="0" />
-          {node(5, 19.5, true)}{node(10.5, 7, true)}{node(16, 11)}{node(20, 8.5)}
+          <path d="M4.5 18 L10 6.5 L15 15 L20.5 5.5" />
+          {node(4.5, 18)}{node(10, 6.5)}{node(15, 15, true)}{node(20.5, 5.5)}
         </>
       )}
       {kind === "shoulders" && (
@@ -466,6 +469,17 @@ export function CueGlyph({
         <>
           <path d="M12 4.5 V12 M12 12 L7 20 M12 12 L17 20 M6.5 9.5 H17.5" />
           {node(12, 4.5)}{node(7, 20, true)}{node(17, 20, true)}
+        </>
+      )}
+      {/* Canonical's "My drills" mark on 090: a closed five-node link — two
+          shoulders, a dropped centre node and a base bar. It was borrowing the
+          open "apex" zigzag, which is the Discover mark. */}
+      {kind === "saved" && (
+        <>
+          <path d="M4.5 5.5 L12 12.5 L19.5 5.5" />
+          <path d="M4.5 5.5 V18.5 H19.5 V5.5" />
+          {node(4.5, 5.5)}{node(19.5, 5.5)}{node(12, 12.5, true)}
+          {node(4.5, 18.5)}{node(19.5, 18.5)}
         </>
       )}
       {kind === "tree" && (
@@ -653,7 +667,7 @@ export function ReadinessGlyph({
 
 export type ActionKind =
   | "analyze" | "uploadImage" | "uploadVideo" | "liveCamera"
-  | "chooseMedia" | "nodeGraph"
+  | "chooseMedia" | "nodeGraph" | "nodeClimb" | "skeletonDots"
 
 /**
  * The four marks canonical puts on the primary actions (079 header, 081 media
@@ -673,6 +687,12 @@ const ACTION_BOX: Record<ActionKind, [number, number]> = {
   liveCamera: [80, 30],
   chooseMedia: [34, 46],
   nodeGraph: [32, 22],
+  // Canonical's "Create goal" mark on 092: four OPEN nodes climbing right,
+  // not a filled trend polyline.
+  nodeClimb: [34, 30],
+  // Canonical's "Overlay skeletons" mark on 087: a dotted node cloud, not a
+  // stacked-layers icon.
+  skeletonDots: [30, 28],
 }
 
 export function ActionGlyph({
@@ -730,6 +750,24 @@ export function ActionGlyph({
           <path d="M21 2 V12.5 H31.5" />
           <path d="M16.8 44 V18" />
           <path d="M8.4 26.4 L16.8 18 L25.2 26.4" />
+        </>
+      )}
+      {kind === "nodeClimb" && (
+        <>
+          <path d="M5.5 25 L12 18.5 L17.5 22 L27 7.5" />
+          <circle cx="5.5" cy="25" r="3.4" fill={paper} />
+          <circle cx="12" cy="18.5" r="3.4" fill={paper} />
+          <circle cx="17.5" cy="22" r="3.4" fill={paper} />
+          <circle cx="27" cy="7.5" r="4.2" fill={paper} />
+        </>
+      )}
+      {kind === "skeletonDots" && (
+        <>
+          {[[7, 5], [15, 3.5], [22.5, 6], [4.5, 12], [11.5, 11], [19, 12.5], [25.5, 11],
+            [7.5, 19], [15, 18], [22, 20], [11, 25.5], [19.5, 25]].map(([x, y]) => (
+            <circle key={`${x}-${y}`} cx={x} cy={y} r="1.5" fill="currentColor" stroke="none" />
+          ))}
+          <path d="M7 5 L15 3.5 M11.5 11 L19 12.5 M7.5 19 L15 18 L22 20" strokeDasharray="1.4 2" />
         </>
       )}
       {kind === "nodeGraph" && (
