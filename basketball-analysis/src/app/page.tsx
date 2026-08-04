@@ -131,10 +131,10 @@ const DISPLAY_WEIGHT = {
 /** Inter-class grotesque, weight solved against canonical — see above. */
 const WORDMARK = {
   fontFamily: 'var(--font-geist-sans)',
-  fontWeight: 740,
+  fontWeight: 690,
   fontSize: 47.96,
   lineHeight: '47.96px',
-  letterSpacing: '-0.0027em',
+  letterSpacing: '0.005em',
 } as const
 
 export default function Home() {
@@ -168,22 +168,22 @@ export default function Home() {
     >
       <CourtWatermark />
 
-      <div className="absolute" style={{ left: MARK.x, top: MARK.y }}>
+      <div className="absolute" style={{ left: MARK.x, top: MARK.y, transform: MARK.transform, transformOrigin: '0 0' }}>
         <ShotIQMark />
       </div>
 
       <div
         data-splash="wordmark"
-        className="absolute left-[146.4px] top-[243.7px]"
-        style={WORDMARK}
+        className="absolute left-[146.4px] top-[244.02px]"
+        style={{ ...WORDMARK, transform: 'translateY(-0.147px)' }}
       >
         <span style={{ color: 'var(--shotiq-color-ink)' }}>SHOT</span>
         <span style={{ color: 'var(--shotiq-color-shotiqOrange)' }}>IQ</span>
       </div>
       <div
         data-splash="aianalysis"
-        className="absolute left-[147.94px] top-[291.9px] font-medium leading-[23px] text-[var(--shotiq-color-graphite)]"
-        style={{ fontSize: '21.15px', letterSpacing: '0.3034em', wordSpacing: '-2.76px' }}
+        className="absolute left-[147.94px] top-[291.16px] font-medium leading-[23px] text-[var(--shotiq-color-graphite)]"
+        style={{ fontSize: '21.15px', letterSpacing: '0.3034em', wordSpacing: '-2.76px', transform: 'translateY(0.553px)' }}
       >
         AI ANALYSIS
       </div>
@@ -194,15 +194,15 @@ export default function Home() {
 
       <div
         data-splash="line1"
-        className="shotiq-display absolute inset-x-0 top-[530.4px] text-center leading-[41px] tracking-[0.039em] text-[var(--shotiq-color-ink)]"
-        style={{ ...DISPLAY_WEIGHT, fontSize: '37.76px', wordSpacing: '1.21px', paddingLeft: '0.92px' }}
+        className="shotiq-display absolute inset-x-0 top-[530.65px] text-center leading-[41px] tracking-[0.0406em] text-[var(--shotiq-color-ink)]"
+        style={{ ...DISPLAY_WEIGHT, fontSize: '37.76px', wordSpacing: '1.21px', paddingLeft: '1.38px', transform: 'translateY(-0.442px)' }}
       >
         SEE THE DETAILS.
       </div>
       <div
         data-splash="line2"
-        className="shotiq-display absolute inset-x-0 top-[572.1px] text-center leading-[41px] tracking-[0.0345em]"
-        style={{ ...DISPLAY_WEIGHT, fontSize: '36.36px', wordSpacing: '2.10px', paddingLeft: '0.92px' }}
+        className="shotiq-display absolute inset-x-0 top-[570.53px] text-center leading-[41px] tracking-[0.0429em]"
+        style={{ ...DISPLAY_WEIGHT, WebkitTextStrokeWidth: '0.535px', fontSize: '36.36px', wordSpacing: '2.10px', paddingLeft: '1.38px', transform: 'translateY(-0.341px)' }}
       >
         <span className="text-[var(--shotiq-color-shotiqOrange)]">BUILD</span>{" "}
         <span className="text-[var(--shotiq-color-graphite)]">THE HABIT.</span>

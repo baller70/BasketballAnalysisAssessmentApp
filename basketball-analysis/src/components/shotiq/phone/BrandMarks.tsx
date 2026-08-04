@@ -54,7 +54,19 @@ const pt = (devicePx: number) => +(devicePx / DSF).toFixed(2)
  * B681.07 against canonical's L132.18 R285.88 T534.71 B681.65, so the request
  * is moved -1.94 / +1.25 and the box grown 1.80 wide and 0.67 short. Verified
  * by re-measuring the render, not by assuming the correction applied. */
-export const MARK = { x: pt(131.66), y: pt(536.15), w: pt(155.1), h: pt(146.23) }
+/* `ty` is the sub-pixel remainder. A plain `top` cannot carry it: Chromium
+ * snaps an <img>'s paint box to whole CSS px, so every `top` between 246.4
+ * and 247.0 drew the plate's 50%-coverage edge at the same 533.46 or 535.56
+ * device px — a 2.17px quantum straddling canonical's 534.71 with no value
+ * in between. A transform is not snapped, so the wrapper carries the
+ * remainder: measured 0.1px of translate moves the drawn edge 0.22 device
+ * px, which is exactly the scale factor, and the drawn height is unchanged. */
+export const MARK = {
+  x: pt(132.02), y: pt(534.45), w: pt(154.60), h: pt(147.15),
+  /* sub-pixel remainder on position, and the residual scale correction: the
+     snapped box draws 154.20 x 147.75 where canonical is 153.70 x 146.94. */
+  transform: 'translate(0.166px, 0.576px) scale(0.99676, 0.99452)',
+}
 
 export function ShotIQMark({ width = MARK.w, height = MARK.h }: { width?: number; height?: number }) {
   return (
