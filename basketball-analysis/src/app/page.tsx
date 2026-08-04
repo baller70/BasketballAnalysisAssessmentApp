@@ -63,17 +63,51 @@ import { ShotIQMark, ShotArcDiagram, CourtWatermark, MARK, DIAGRAM } from '@/com
  * Scoped to this element so the desktop header, which shares .shotiq-wordmark,
  * is untouched.
  *
- * The two display lines carry an explicit weight for the same reason, in the
- * other direction. `.shotiq-display` binds 400 to Tungsten Medium, which is the
- * measured right cut for the desktop headings — but on this screen canonical's
- * "SEE THE DETAILS." carries 9607 ink px where Medium draws 8337 (-13%) and
- * Semibold 10691 (+11%), and canonical's T stem measures 7.4 device px against
- * Medium's 6.0 and Semibold's 8.6. The pack has no cut in between and Tungsten
- * is not variable, so Semibold is simply the nearer of the two, on ink, on stem
- * and by eye. It also carries the per-word advance better: "THE" measures 81
- * against Semibold's 80 and Medium's 77. The weight is set inline because
- * `.shotiq-display` is declared after Tailwind's utility layer and would
- * silently discard a `font-semibold` class, exactly as it does a `text-[Npx]`.
+ * The two display lines sit between the two cuts the pack owns, and the gap is
+ * measured, not guessed. Sampling the stem of the I in DETAILS by coverage
+ * integral — the one glyph that is nothing but a stem, so it reads weight with
+ * no letterform in the way — canonical draws 7.73 device px. Tungsten Medium
+ * (the 400 `.shotiq-display` binds) draws 6.55 and Tungsten Semibold 8.81:
+ * -15% and +14%. Total ink says the same thing, 8173 against canonical's 9618
+ * and 10668. Tungsten is not variable and the pack has nothing between Medium
+ * and Semibold, so the cut alone cannot land it.
+ *
+ * Medium plus a 0.55px text stroke can. The stroke is centred on the contour,
+ * so it adds ~1.19 device px to every stem and takes Medium's 6.55 to 7.74
+ * against canonical's 7.73 — and unlike Semibold it keeps Medium's glyph
+ * proportions, which the phone display ramp in globals.css measured as the
+ * right ones (Medium 96.9% of canonical's width per unit cap, Semibold 104.8%).
+ * The previous build used Semibold, which measured +14% stem, +11% ink and a
+ * visibly heavier line against canonical in a 2x crop.
+ *
+ * Sizes are per line because canonical sets the two lines differently: the
+ * sub-pixel cap height of the I, from its own 50%-coverage crossings, is 58.27
+ * on "SEE THE DETAILS." and 56.14 on "BUILD THE HABIT." — 3.7% apart, which a
+ * binary threshold reads as 58 and 57 and can easily be dismissed as noise.
+ *
+ * Colour. Canonical's three ink roles, each read off eroded stroke interiors
+ * with the antialiased edge thrown away (n = 1601-2804 px per sample):
+ *
+ *   role      canonical core     token             this screen
+ *   ink       (2.5, 2.1, 1.9)    #111111 (17)      #000000
+ *   graphite  (111.4, 110.9, 110.8) / (112.3, 112.1, 111.8)
+ *                                #5F646B (95,100,107)   #6F6F6F
+ *   orange    (250.8, 73.1, 4.6) / (250.5, 77.4, 7.5)
+ *                                #FD3701 (253,55,1)     #FC4904
+ *
+ * Canonical's paper reads 254 and its plate interior 22 against the 20 the
+ * asset was composited at, so the render carries a ~2-level lift at the black
+ * end; undoing it puts canonical's ink on #000000 and its grey on #6F6F6F.
+ * The graphite gap is not a lift — canonical's grey is NEUTRAL (R=G=B within
+ * one level on both samples) where the token leans blue by 12 levels, which is
+ * visible side by side at 1:1 in "THE HABIT."
+ *
+ * These are set as screen-scoped values of the SAME `--shotiq-color-*`
+ * properties, not as new tokens and not as literals at the call sites: every
+ * colour reference on this screen is still `var(--shotiq-color-…)`. They are
+ * scoped rather than corrected globally because ink, graphite and orange carry
+ * the 20 desktop screens that currently grade B+, and this screen is not the
+ * evidence base for changing what they are everywhere.
  *
  * SPLASH_HOLD_MS is the product dwell. `sessionStorage['shotiq-splash-hold']`
  * pins the screen open instead — the deterministic entry the capture harness
@@ -81,16 +115,26 @@ import { ShotIQMark, ShotArcDiagram, CourtWatermark, MARK, DIAGRAM } from '@/com
  */
 const SPLASH_HOLD_MS = 1600
 
-/** Tungsten Semibold — solved against canonical's ink, see the note above. */
-const DISPLAY_WEIGHT = { fontWeight: 600 } as const
+/** Canonical's ink roles for this screen — see the colour table above. */
+const SPLASH_INK = {
+  '--shotiq-color-ink': '#000000',
+  '--shotiq-color-graphite': '#6F6F6F',
+  '--shotiq-color-shotiqOrange': '#FC4904',
+} as React.CSSProperties
+
+/** Tungsten Medium + a 0.55px stroke — solved against canonical's stem, above. */
+const DISPLAY_WEIGHT = {
+  fontWeight: 400,
+  WebkitTextStrokeWidth: '0.55px',
+} as const
 
 /** Inter-class grotesque, weight solved against canonical — see above. */
 const WORDMARK = {
   fontFamily: 'var(--font-geist-sans)',
   fontWeight: 740,
-  fontSize: 46.66,
-  lineHeight: '46.66px',
-  letterSpacing: '0.01817em',
+  fontSize: 47.96,
+  lineHeight: '47.96px',
+  letterSpacing: '-0.0027em',
 } as const
 
 export default function Home() {
@@ -120,6 +164,7 @@ export default function Home() {
     <div
       data-testid="screen-ios-splash"
       className="shotiq-canonical relative mx-auto min-h-[852px] w-full max-w-[393px] overflow-hidden bg-[var(--shotiq-color-paper)]"
+      style={SPLASH_INK}
     >
       <CourtWatermark />
 
@@ -129,7 +174,7 @@ export default function Home() {
 
       <div
         data-splash="wordmark"
-        className="absolute left-[146.86px] top-[244.1px]"
+        className="absolute left-[146.4px] top-[243.7px]"
         style={WORDMARK}
       >
         <span style={{ color: 'var(--shotiq-color-ink)' }}>SHOT</span>
@@ -137,8 +182,8 @@ export default function Home() {
       </div>
       <div
         data-splash="aianalysis"
-        className="absolute left-[147.94px] top-[291.9px] text-[21.6px] font-medium leading-[23px] text-[var(--shotiq-color-graphite)]"
-        style={{ letterSpacing: '0.2862em', wordSpacing: '-2.76px' }}
+        className="absolute left-[147.94px] top-[291.9px] font-medium leading-[23px] text-[var(--shotiq-color-graphite)]"
+        style={{ fontSize: '21.15px', letterSpacing: '0.3034em', wordSpacing: '-2.76px' }}
       >
         AI ANALYSIS
       </div>
@@ -149,15 +194,15 @@ export default function Home() {
 
       <div
         data-splash="line1"
-        className="shotiq-display absolute inset-x-0 top-[530px] text-center text-[37.98px] leading-[41px] tracking-[0.026em] text-[var(--shotiq-color-ink)]"
-        style={{ ...DISPLAY_WEIGHT, wordSpacing: '1.61px', paddingLeft: '0.92px' }}
+        className="shotiq-display absolute inset-x-0 top-[530.4px] text-center leading-[41px] tracking-[0.039em] text-[var(--shotiq-color-ink)]"
+        style={{ ...DISPLAY_WEIGHT, fontSize: '37.76px', wordSpacing: '1.21px', paddingLeft: '0.92px' }}
       >
         SEE THE DETAILS.
       </div>
       <div
         data-splash="line2"
-        className="shotiq-display absolute inset-x-0 top-[571.6px] text-center text-[37.98px] leading-[41px] tracking-[0.0145em]"
-        style={{ ...DISPLAY_WEIGHT, wordSpacing: '2.53px', paddingLeft: '0.92px' }}
+        className="shotiq-display absolute inset-x-0 top-[572.1px] text-center leading-[41px] tracking-[0.0345em]"
+        style={{ ...DISPLAY_WEIGHT, fontSize: '36.36px', wordSpacing: '2.10px', paddingLeft: '0.92px' }}
       >
         <span className="text-[var(--shotiq-color-shotiqOrange)]">BUILD</span>{" "}
         <span className="text-[var(--shotiq-color-graphite)]">THE HABIT.</span>

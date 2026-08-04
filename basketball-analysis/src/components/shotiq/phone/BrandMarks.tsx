@@ -47,10 +47,14 @@ const pt = (devicePx: number) => +(devicePx / DSF).toFixed(2)
  * absolute error 8.9/255, all of it 1px edge registration.
  * ------------------------------------------------------------------------ */
 /* Offset off the raw measurement by the amount Chromium's own resampling of a
- * 2x asset moves the 50%-coverage edge: asked for a left edge at 132.70 it
- * draws one at 131.82, so the box is placed 0.38 device px right and 0.84 down
- * of the raw numbers to put the drawn edges on canonical's 132.20 / 534.72. */
-export const MARK = { x: pt(133.6), y: pt(534.9), w: pt(153.3), h: pt(146.9) }
+ * 2x asset moves the 50%-coverage edge. The box below is not the canonical
+ * rectangle; it is the request that MAKES Chromium draw the canonical
+ * rectangle. Solved by asking for x133.60 y534.90 153.30x146.90 and measuring
+ * what came out — the 50%-coverage edges landed at L134.12 R286.02 T533.46
+ * B681.07 against canonical's L132.18 R285.88 T534.71 B681.65, so the request
+ * is moved -1.94 / +1.25 and the box grown 1.80 wide and 0.67 short. Verified
+ * by re-measuring the render, not by assuming the correction applied. */
+export const MARK = { x: pt(131.66), y: pt(536.15), w: pt(155.1), h: pt(146.23) }
 
 export function ShotIQMark({ width = MARK.w, height = MARK.h }: { width?: number; height?: number }) {
   return (
