@@ -325,7 +325,7 @@ export default function PlayerCardPage() {
             </div>
             {/* Canonical rules the card head off from the strip — a full-width
                 hairline at y=526 running x735→1410. */}
-            <div className="mt-[4px] grid grid-cols-4 divide-x divide-[var(--shotiq-color-rule)] border-t border-[var(--shotiq-color-rule)] pt-[5px]">
+            <div className="mt-[9px] grid grid-cols-4 divide-x divide-[var(--shotiq-color-rule)] border-t border-[var(--shotiq-color-rule)] pt-[10px]">
               {[["FORM SCORE", score != null ? String(score) : "—", "+6 vs last 7 days", [72, 75, 74, 78, 80, 82], "Good"],
                 ["MAKE %", hasData ? formatMakePct(shots, makes) : "—", "+4.2% vs last 7 days", [52, 56, 54, 58, 60, 62], ""],
                 ["SHOTS / SESSION", hasData ? String(shots ?? "—") : "0", "+3 vs last 7 days", [18, 20, 19, 22, 23, 24], ""],

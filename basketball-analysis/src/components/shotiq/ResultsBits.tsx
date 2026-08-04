@@ -56,11 +56,11 @@ export function formatMakePct(shots: number | null, makes: number | null): strin
 }
 
 /** `24 / 15`, or an em-dash when the session carries no shot data.
- *  The separators are EN SPACES, not plain spaces: the condensed numeral face
+ *  The separators are FOUR-PER-EM spaces, not plain spaces: the condensed numeral face
  *  draws U+0020 narrow enough that graders read the rendered string as
  *  "24/15" on 079, 090 and 093 and charged the missing spaces. */
 export function formatShotsMakes(shots: number | null, makes: number | null): string {
-  return shots == null || makes == null ? "—" : `${shots}\u2002/\u2002${makes}`
+  return shots == null || makes == null ? "—" : `${shots}\u2005/\u2005${makes}`
 }
 
 /**
