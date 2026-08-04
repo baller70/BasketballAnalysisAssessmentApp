@@ -70,6 +70,8 @@ config/
 !scripts/simulator-screenshots.sh
 !scripts/simshots-pick-device.py
 !scripts/simshots-export-attachments.py
+!scripts/imagegen/
+!scripts/imagegen/**
 
 # ShotIQ product specifications and automated tests are source-controlled.
 !basketball-analysis/docs/
